@@ -14,6 +14,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .domain import connect_persistence, extract_domain, extract_openapi, merge_domain_nodes
 from .model import Edge, KnowledgeGraph, Node
 
 SCHEMA_VERSION = 1
@@ -33,6 +34,11 @@ EXTENSIONS = {
     ".md": "markdown",
     ".mdx": "markdown",
     ".rst": "markdown",
+    ".sql": "sql",
+    ".yaml": "config",
+    ".yml": "config",
+    ".properties": "config",
+    ".json": "json",
 }
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".idea", ".vscode", ".venv", "venv", "env",
@@ -60,6 +66,7 @@ JVM_FUN = re.compile(r"^\s*(?:(?:public|private|protected|internal|override|susp
 JAVA_METHOD = re.compile(r"^\s*(?:public|private|protected|static|final|synchronized|abstract|\w+[<>?,.\[\]]*\s+)+\s+(\w+)\s*\(([^;{}]*)\)\s*(?:throws\s+[^{}]+)?\{", re.M)
 JS_DECL = re.compile(r"^\s*(?:export\s+)?(?:(?:async\s+)?function|class)\s+(\w+)\s*(?:\(([^\n]*)\))?", re.M)
 JS_ARROW = re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(([^\n]*)\)\s*=>", re.M)
+TS_TYPE = re.compile(r"^\s*(?:export\s+)?(?:interface|type|enum)\s+(\w+)", re.M)
 GO_DECL = re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(\w+)\s*\(([^\n]*)\)", re.M)
 RUST_DECL = re.compile(r"^\s*(?:pub\s+)?(?:async\s+)?(?:fn|struct|enum|trait|mod)\s+(\w+)(?:\s*<[^>]+>)?\s*(?:\(([^\n]*)\))?", re.M)
 MD_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$", re.M)
@@ -103,7 +110,7 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
     elif language == "jvm":
         patterns = [("type", JVM_TYPE), ("function", JVM_FUN), ("function", JAVA_METHOD)]
     elif language == "javascript":
-        patterns = [("symbol", JS_DECL), ("function", JS_ARROW)]
+        patterns = [("symbol", JS_DECL), ("function", JS_ARROW), ("type", TS_TYPE)]
     elif language == "go":
         patterns = [("function", GO_DECL)]
     elif language == "rust":
@@ -125,9 +132,11 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
     lines = text.splitlines()
     for kind, pattern in patterns:
         for match in pattern.finditer(text):
-            name = match.group(2) if kind == "type" else match.group(1)
+            name = match.group(2) if kind == "type" and match.lastindex and match.lastindex >= 2 else match.group(1)
             if not name:
                 continue
+            if language == "javascript" and Path(path).suffix.lower() in {".tsx", ".jsx"} and name[:1].isupper() and (kind == "function" or "function" in match.group(0)):
+                kind = "component"
             line = _line_for(text, match.start())
             key = (line, name)
             if key in occupied:
@@ -278,8 +287,22 @@ def scan_repository(root: Path) -> KnowledgeGraph:
                     )
                 )
 
+    domain_nodes: list[Node] = []
+    for relative, text in content_by_file.items():
+        file_id = file_nodes[relative].id
+        language = EXTENSIONS[Path(relative).suffix.lower()]
+        found_nodes, found_edges = extract_domain(relative, text, language, file_id, symbols_by_file[relative])
+        domain_nodes.extend(found_nodes)
+        edges.update(found_edges)
+        openapi_nodes, openapi_edges = extract_openapi(relative, text, file_id)
+        domain_nodes.extend(openapi_nodes)
+        edges.update(openapi_edges)
+
+    domain_nodes = merge_domain_nodes(domain_nodes)
+    edges.update(connect_persistence(symbols_by_file, content_by_file, domain_nodes))
     nodes = [*file_nodes.values()]
     nodes.extend(symbol for symbols in symbols_by_file.values() for symbol in symbols)
+    nodes.extend(domain_nodes)
     nodes.sort(key=lambda node: (node.path, node.line or 0, node.kind, node.name))
     return KnowledgeGraph(
         schema_version=SCHEMA_VERSION,

@@ -35,6 +35,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
     symbols = [node for node in graph.nodes if node.kind != "file"]
     imports = [edge for edge in graph.edges if edge.kind == "imports"]
     calls = [edge for edge in graph.edges if edge.kind == "calls"]
+    domain_edges = [edge for edge in graph.edges if edge.kind not in {"contains", "imports", "calls"}]
+    by_kind = {kind: sum(node.kind == kind for node in graph.nodes) for kind in (
+        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route", "external_service", "technology"
+    )}
     by_path: dict[str, list] = {}
     for symbol in symbols:
         by_path.setdefault(symbol.path, []).append(symbol)
@@ -49,6 +53,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         f"- Symbols and sections: {len(symbols)}",
         f"- Internal imports: {len(imports)}",
         f"- Heuristic cross-file calls: {len(calls)}",
+        f"- PostgreSQL tables/columns: {by_kind['db_table']}/{by_kind['db_column']}",
+        f"- Kafka topics: {by_kind['kafka_topic']}",
+        f"- API endpoints: {by_kind['api_endpoint']}",
+        f"- TypeScript frontend routes: {by_kind['frontend_route']}",
         f"- Generated: {graph.generated_at}",
         "",
         "## Files and symbols",
@@ -67,6 +75,7 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         lines.append("")
 
     paths = {node.id: node.path for node in graph.nodes}
+    node_index = {node.id: node for node in graph.nodes}
     lines.extend(["## Internal relationships", ""])
     for edge in imports:
         lines.append(f"- `{paths.get(edge.source, edge.source)}` imports `{paths.get(edge.target, edge.target)}` (`{edge.evidence}`)")
@@ -74,9 +83,16 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         target = next((node for node in graph.nodes if node.id == edge.target), None)
         target_label = f"{edge.target.split(':')[-1]} in `{target.path}`" if target else edge.target
         lines.append(f"- `{paths.get(edge.source, edge.source)}` may call `{target_label}` ({edge.evidence})")
-    if not imports and not calls:
+    for edge in domain_edges:
+        source = node_index.get(edge.source)
+        target = node_index.get(edge.target)
+        source_label = source.path if source and source.kind == "file" else f"{source.name} in `{source.path}`" if source else edge.source
+        target_label = f"{target.kind} `{target.name}` in `{target.path}`" if target else edge.target
+        evidence = f" — {edge.evidence}" if edge.evidence else ""
+        lines.append(f"- `{source_label}` **{edge.kind}** {target_label}{evidence}")
+    if not imports and not calls and not domain_edges:
         lines.append("- No internal relationships were detected.")
-    lines.extend(["", "## Reading this graph", "", "File and symbol locations are repository-relative. `contains` edges bind declarations to their files. `imports` edges are resolved from local import statements. `calls` edges are conservative name matches and must be verified before relying on them.", ""])
+    lines.extend(["", "## Reading this graph", "", "File and symbol locations are repository-relative. `contains` edges bind declarations to their files. Domain edges such as `maps_to_table`, `consumes`, and `calls_endpoint` record annotations, SQL definitions, configuration, or literal paths found in source. `calls` edges are conservative name matches and must be verified before relying on them.", ""])
     return "\n".join(lines)
 
 
@@ -87,7 +103,7 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
     outgoing: dict[str, list[str]] = {}
     nodes = {node.id: node for node in graph.nodes}
     for edge in graph.edges:
-        if edge.kind in {"imports", "calls"}:
+        if edge.kind != "contains":
             target = nodes.get(edge.target)
             if target:
                 outgoing.setdefault(edge.source, []).append(f"{edge.kind} {target.name} ({target.path})")
