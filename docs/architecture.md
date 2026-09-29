@@ -5,9 +5,9 @@ kgmaker has four small layers:
 1. `scanner.py` walks the repository, skips generated and sensitive paths, and extracts files, declarations, local imports, and conservative call candidates.
 2. `domain.py` extracts PostgreSQL schema objects, Kotlin/JVM persistence links, Kafka topics, service/API references, OpenAPI endpoints, and TypeScript app routes.
 3. `model.py` holds stable node and edge records.
-4. `semantic.py` prepares stable node inventories, validates agent-written concept/edge fragments against a graph fingerprint, and merges only fresh results.
+4. `semantic.py` prepares stable node inventories, tracks source hashes per file, prepares Git-diff update packets, validates scoped agent patches, and merges only affected changes while preserving unrelated semantics.
 5. `store.py` writes the machine-readable graph and a readable Markdown map, and prepares a compact session context.
-6. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic preparation/validation, and the Copilot hook command.
+6. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, and the Copilot hook command.
 
 The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md` and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker check` compares a fresh render against the committed Markdown snapshot and can run in CI without the local JSON index.
 
@@ -20,7 +20,7 @@ The local index is built from repository source. No source files are sent to a s
 - `consumes`, `produces`, and `configures_topic` come from Kafka annotations, client calls, or explicit configuration values.
 - `declares_endpoint` and `calls_endpoint` come from Spring/Ktor annotations, common HTTP client calls, or OpenAPI paths. Matching method/path pairs share one endpoint node.
 - `defines_route` comes from TypeScript/JavaScript `app/` or `pages/` file conventions.
-- Agent-authored edges carry `EXTRACTED`, `INFERRED`, or `AMBIGUOUS` confidence, a score, a source file/line, and an evidence note. A semantic artifact is merged only when its graph fingerprint still matches the current structural scan.
+- Agent-authored edges carry `EXTRACTED`, `INFERRED`, or `AMBIGUOUS` confidence, a score, a source file/line, an evidence note, and the hash of the cited file in the artifact's file map. Changing an unrelated file leaves the edge valid. Changing its cited file marks that evidence stale; `semantic update` asks Copilot to review only changed files, their nearby graph context, and affected semantic entries. The patch is scoped by an update ID and cannot remove unrelated entries.
 
 These are source-pattern parsers, not Kotlin/TypeScript compilers, SQL engines, or complete YAML parsers. Dynamic URLs, indirect topic names, custom annotations, complex OpenAPI documents, and generated schemas may be missed. The `kgmaker` Copilot custom agent can explain behavior from source and keep semantic notes in `.kgmaker/NOTES.md`.
 

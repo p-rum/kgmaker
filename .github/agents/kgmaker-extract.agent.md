@@ -7,20 +7,41 @@ include-custom-instructions: true
 
 You produce the optional semantic relationship layer for kgmaker. The running Copilot agent is the model; do not request provider API keys and do not invoke external model APIs.
 
-## Workflow
+## Initial extraction
 
-1. Run `kgmaker scan` to create the current structural graph.
-2. Run `kgmaker semantic prepare`. It writes `.kgmaker/semantic-input.json`, containing the graph fingerprint, file hashes, and every stable node ID. The manifest contains no source-file contents.
-3. Read the manifest, then inspect relevant source files in this repository. Use its exact node IDs. Do not invent or rewrite IDs for code symbols, tables, Kafka topics, routes, or API endpoints.
-4. Create `.kgmaker/semantic.json` using the schema below. Add only useful architectural/domain relationships that the deterministic graph does not already contain. Create a `concept` node when a named business rule, invariant, flow, or rationale needs an anchor in the graph.
-5. Run `kgmaker semantic validate`. Fix validation errors, then run `kgmaker scan` to merge the semantic layer into `.kgmaker/GRAPH.md` and the local graph.
+1. Run `kgmaker scan` and `kgmaker semantic prepare`.
+2. Read `.kgmaker/semantic-input.json`, inspect the relevant source files, and write the full `.kgmaker/semantic.json` artifact using the schema below.
+3. Copy the `files` path-to-SHA-256 map from the input manifest into the artifact. The manifest contains stable node IDs and signatures, not source contents.
+4. Run `kgmaker semantic validate`, fix errors, then run `kgmaker scan`.
+
+## Incremental update
+
+1. After a code or documentation change, run `kgmaker semantic update --base <base-ref>`. Use the merge base of the branch/PR (for example `origin/main`) or the commit before the change. Add `--note path/to/change-note.md` when the diff does not explain the intent.
+2. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`. The JSON contains bounded diffs, changed-file hashes, changed declarations, their immediate graph neighborhood, and only semantic entries that may need review. Sensitive file paths are listed without their content.
+3. Inspect the changed source files as needed. Create `.kgmaker/semantic-patch.json` with the packet's exact `update_id`, replacement concepts and relationships, and optional removals:
+
+```json
+{
+  "schema_version": 1,
+  "update_id": "copy from semantic-update.json",
+  "nodes": [],
+  "edges": [],
+  "remove_nodes": [],
+  "remove_edges": []
+}
+```
+
+4. For `remove_edges`, copy the affected edge's `source`, `target`, and `kind`. Only entries included in the change packet may be removed. New entries must cite changed or previously affected files and use IDs from the packet/current graph.
+5. Run `kgmaker semantic apply`, then `kgmaker semantic validate`, then `kgmaker scan`. `apply` replaces evidence tied to changed files or affected nodes while preserving unrelated semantic entries. If the packet is stale, regenerate it and the patch.
+
+Use `kgmaker semantic prepare` instead for the first extraction or a deliberate full refresh. Do not paste the whole repository or rewrite unaffected semantic entries during an incremental update.
 
 The artifact must have this shape:
 
 ```json
 {
-  "schema_version": 1,
-  "graph_fingerprint": "copy exactly from semantic-input.json",
+  "schema_version": 2,
+  "files": {"docs/domain.md": "sha256 copied from semantic-input.json"},
   "nodes": [
     {"id": "concept:<source_file>:<slug>", "name": "Human-readable concept", "source_file": "docs/domain.md", "source_line": 12, "summary": "Short grounded explanation"}
   ],
@@ -32,6 +53,6 @@ The artifact must have this shape:
 
 Concept IDs use the exact source path and a slug made by lowercasing the concept name and replacing each run of non-ASCII-alphanumeric characters with `_`, then trimming `_`: `concept:<source_file>:<slug>`. Use only node IDs in the input manifest or concept IDs defined in this artifact.
 
-Relations must come from `semantic-input.json`. `EXTRACTED` means the source states the link explicitly and always uses score `1.0`. `INFERRED` uses exactly one of `0.55`, `0.65`, `0.75`, `0.85`, or `0.95`; use `AMBIGUOUS` with a score from `0.1` to `0.3` when evidence is uncertain. Every edge needs a concise evidence note and the repository-relative file and line that supports the claim. Never turn an existing `INFERRED` static-call edge into a fact. Do not copy source files into the artifact, include secrets, or claim a link merely because names are similar.
+Relations must come from the `relations` list in `semantic-input.json` for initial extraction or `semantic-update.json` for an incremental patch. `EXTRACTED` means the source states the link explicitly and always uses score `1.0`. `INFERRED` uses exactly one of `0.55`, `0.65`, `0.75`, `0.85`, or `0.95`; use `AMBIGUOUS` with a score from `0.1` to `0.3` when evidence is uncertain. Every edge needs a concise evidence note and the repository-relative file and line that supports the claim. Never turn an existing `INFERRED` static-call edge into a fact. Do not copy source files into the artifact, include secrets, or claim a link merely because names are similar.
 
-If the graph changes after preparation, validation will reject the stale fingerprint. Run `kgmaker semantic prepare` again before producing a replacement artifact.
+Each semantic entry is validated against the hash of its cited source file. Changes to unrelated files do not invalidate untouched semantic entries. Use `kgmaker semantic update` to review only affected entries.

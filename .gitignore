@@ -7,3 +7,6 @@ __pycache__/
 
 # Local kgmaker index
 .kgmaker/semantic-input.json
+.kgmaker/semantic-update.json
+.kgmaker/semantic-update.md
+.kgmaker/semantic-patch.json

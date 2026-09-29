@@ -5,9 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_validate
+from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_apply, semantic_update, semantic_validate
 from kgmaker.scanner import scan_repository
-from kgmaker.semantic import SEMANTIC_FILE, apply_semantic_layer, build_semantic_input, concept_id
+from kgmaker.semantic import (
+    SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE,
+    apply_semantic_layer, build_semantic_input, concept_id,
+)
 from kgmaker.store import load_graph, render_context, render_markdown, save_graph
 
 
@@ -86,6 +89,10 @@ class ScannerTests(unittest.TestCase):
             extract_agent = root / ".github" / "agents" / "kgmaker-extract.agent.md"
             self.assertTrue(extract_agent.exists())
             self.assertIn("semantic validate", extract_agent.read_text(encoding="utf-8"))
+            self.assertIn("semantic update", extract_agent.read_text(encoding="utf-8"))
+            ignored = (root / ".gitignore").read_text(encoding="utf-8")
+            self.assertIn(".kgmaker/semantic-update.json", ignored)
+            self.assertIn(".kgmaker/semantic-patch.json", ignored)
 
     def test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -111,8 +118,8 @@ class ScannerTests(unittest.TestCase):
                 "summary": "The rule is checked before publishing an order.",
             }
             artifact = {
-                "schema_version": 1,
-                "graph_fingerprint": manifest["graph_fingerprint"],
+                "schema_version": 2,
+                "files": manifest["files"],
                 "nodes": [concept],
                 "edges": [{
                     "source": service.id,
@@ -126,7 +133,7 @@ class ScannerTests(unittest.TestCase):
                 }],
             }
             semantic_path = root / SEMANTIC_FILE
-            semantic_path.parent.mkdir(parents=True)
+            semantic_path.parent.mkdir(parents=True, exist_ok=True)
             semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
 
             self.assertEqual(semantic_validate(root), 0)
@@ -148,16 +155,85 @@ class ScannerTests(unittest.TestCase):
             artifact["edges"][0]["target"] = "missing-node"
             semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
             _, _, error = apply_semantic_layer(scan_repository(root), root)
-            self.assertIn("unknown node ID", error or "")
+            self.assertIn("reference removed or stale nodes", error or "")
 
             artifact["edges"][0]["target"] = concept["id"]
             semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
-            (root / "OrderService.kt").write_text(
-                "class OrderService {\n  fun publish() {}\n  fun cancel() {}\n}\n", encoding="utf-8"
+            (root / "docs" / "domain.md").write_text(
+                "# Domain\nThe order lifecycle rule changed after publishing.\n", encoding="utf-8"
             )
             _, counts, error = apply_semantic_layer(scan_repository(root), root)
             self.assertEqual(counts, (0, 0))
-            self.assertIn("different graph", error or "")
+            self.assertIn("docs/domain.md", error or "")
+
+    def test_semantic_update_refreshes_only_affected_entries(self) -> None:
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "service.py").write_text("def before():\n    return True\n", encoding="utf-8")
+            (root / "other.py").write_text("def stable():\n    return True\n", encoding="utf-8")
+            (root / "domain.md").write_text("# Domain\nOrder rules are documented.\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            subprocess.run(["git", "-C", str(root), "add", "service.py", "other.py", "domain.md"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "baseline"], check=True)
+            base = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+
+            baseline = scan_repository(root)
+            save_graph(baseline, root)
+            service = next(node for node in baseline.nodes if node.name == "before")
+            stable = next(node for node in baseline.nodes if node.name == "stable")
+            concept = {
+                "id": concept_id("domain.md", "Order rules"), "name": "Order rules",
+                "source_file": "domain.md", "source_line": 2, "summary": "Order rules.",
+            }
+            artifact = {
+                "schema_version": 2,
+                "files": baseline.files,
+                "nodes": [concept],
+                "edges": [
+                    {"source": service.id, "target": concept["id"], "kind": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "domain.md", "source_line": 2, "evidence": "Service implements documented order rules."},
+                    {"source": stable.id, "target": concept["id"], "kind": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "domain.md", "source_line": 2, "evidence": "The domain note explicitly references stable."},
+                ],
+            }
+            semantic_path = root / SEMANTIC_FILE
+            semantic_path.parent.mkdir(parents=True, exist_ok=True)
+            semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
+            (root / "service.py").write_text("def after():\n    return True\n", encoding="utf-8")
+            current = scan_repository(root)
+            from contextlib import redirect_stdout
+            import io
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(semantic_update(root, base), 0)
+            update = json.loads((root / SEMANTIC_UPDATE_FILE).read_text(encoding="utf-8"))
+            self.assertTrue((root / ".kgmaker" / "semantic-update.md").exists())
+            review_note = (root / ".kgmaker" / "semantic-update.md").read_text(encoding="utf-8")
+            self.assertIn("before", review_note)
+            self.assertIn("after", review_note)
+            self.assertEqual([item["path"] for item in update["changed_files"]], ["service.py"])
+            self.assertEqual(len(update["affected_semantic_edges"]), 1)
+            new_service = next(node for node in current.nodes if node.name == "after")
+            patch = {
+                "schema_version": 1,
+                "update_id": update["update_id"],
+                "nodes": [],
+                "edges": [{"source": new_service.id, "target": concept["id"], "kind": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "domain.md", "source_line": 2, "evidence": "Updated service implements documented order rules."}],
+                "remove_nodes": [], "remove_edges": [],
+            }
+            (root / SEMANTIC_UPDATE_FILE).write_text(json.dumps(update), encoding="utf-8")
+            (root / SEMANTIC_PATCH_FILE).write_text(json.dumps(patch), encoding="utf-8")
+            self.assertEqual(semantic_apply(root), 0)
+            saved = json.loads(semantic_path.read_text(encoding="utf-8"))
+            self.assertEqual(len(saved["edges"]), 2)
+            self.assertIn(new_service.id, {edge["source"] for edge in saved["edges"]})
+            self.assertIn(stable.id, {edge["source"] for edge in saved["edges"]})
+            self.assertEqual(semantic_validate(root), 0)
+            (root / "service.py").write_text("def changed_again():\n    return False\n", encoding="utf-8")
+            from contextlib import redirect_stderr
+            with redirect_stderr(io.StringIO()):
+                self.assertEqual(semantic_apply(root), 2)
 
     def test_hook_emits_session_context_json(self) -> None:
         import io

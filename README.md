@@ -35,6 +35,8 @@ kgmaker check [--root PATH]
 kgmaker docs [--root PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
+kgmaker semantic update [--root PATH] [--base REF] [--note PATH]
+kgmaker semantic apply [--root PATH]
 kgmaker semantic validate [--root PATH]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 ```
@@ -44,7 +46,9 @@ kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 - `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown graph snapshot, so it works in CI without `.kgmaker/graph.json`.
 - `docs` regenerates `.kgmaker/GRAPH.md` from the local machine index.
 - `impact FILE` lists transitive dependents through imports and name-based calls. Imports are exact path matches; `calls` are candidates and may be wrong when names collide.
-- `semantic prepare` writes a local inventory of stable graph IDs and file hashes, without copying source contents. The `kgmaker-extract` Copilot agent uses it to create `.kgmaker/semantic.json` with concepts and evidence-backed relationships; `semantic validate` checks IDs, provenance, confidence, and graph freshness. A later `scan` merges only a valid, fresh semantic artifact into the graph. Commit `semantic.json` if the project wants to share agent-authored knowledge.
+- `semantic prepare` writes a local inventory of stable graph IDs and per-file hashes, without copying source contents. The `kgmaker-extract` Copilot agent uses it for the first `.kgmaker/semantic.json` extraction.
+- `semantic update --base REF` creates a bounded change packet and a review note from Git diff, changed declarations, their immediate graph neighborhood, and only affected semantic entries. Use `--note path/to/change-note.md` to add intent that is not apparent from the diff. The custom agent writes `.kgmaker/semantic-patch.json`; `semantic apply` replaces only affected entries, and `semantic validate` verifies the result. Unrelated relationships survive unchanged. Generated update files stay local and are ignored by Git.
+- Semantic artifacts track evidence per source-file hash, so a change in one file does not invalidate every relationship. If an evidence file changes, its relationships are skipped until the focused update is applied. Commit `.kgmaker/semantic.json` if the project wants to share agent-authored knowledge.
 - `query` ranks relevant files and declarations, then includes one-hop graph neighbors.
 - The Copilot hook calls `hook-context`, which refreshes the index and emits the session context in Copilot's hook format. Hook errors fail open so they do not interrupt a Copilot session.
 
@@ -58,7 +62,7 @@ The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-
 
 ## Copilot workflow
 
-The generated `.github/agents/kgmaker.agent.md` provides an optional specialist for architecture questions. `.github/agents/kgmaker-extract.agent.md` runs the separate semantic extraction workflow. Both are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
+The generated `.github/agents/kgmaker.agent.md` provides an optional specialist for architecture questions. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. Both are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 
