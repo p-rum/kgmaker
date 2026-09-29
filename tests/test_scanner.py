@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kgmaker.cli import hook_context, init
+from kgmaker.cli import check, docs, hook_context, impact, init
 from kgmaker.scanner import scan_repository
 from kgmaker.store import load_graph, save_graph
 
@@ -94,6 +94,40 @@ class ScannerTests(unittest.TestCase):
             result = json.loads(output.getvalue())
             self.assertIn("additionalContext", result)
             self.assertIn("app.py", result["additionalContext"])
+
+    def test_impact_reports_exact_transitive_import_dependents(self) -> None:
+        import io
+        from contextlib import redirect_stdout
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "core.py").write_text("def load():\n    return True\n", encoding="utf-8")
+            (root / "service.py").write_text("from core import load\n", encoding="utf-8")
+            (root / "api.py").write_text("from service import handle\n", encoding="utf-8")
+            save_graph(scan_repository(root), root)
+            output = io.StringIO()
+
+            with redirect_stdout(output):
+                result = impact(root, ["core.py"])
+
+            self.assertEqual(result, 0)
+            self.assertIn("service.py (1 hop; exact: import)", output.getvalue())
+            self.assertIn("api.py (2 hops; exact: import)", output.getvalue())
+
+    def test_check_detects_stale_graph_and_docs_regenerate_markdown(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "app.py"
+            source.write_text("def first():\n    pass\n", encoding="utf-8")
+            save_graph(scan_repository(root), root)
+            self.assertEqual(check(root), 0)
+
+            source.write_text("def second():\n    pass\n", encoding="utf-8")
+            self.assertEqual(check(root), 2)
+            markdown = root / ".kgmaker" / "GRAPH.md"
+            markdown.write_text("stale", encoding="utf-8")
+            self.assertEqual(docs(root), 0)
+            self.assertIn("first", markdown.read_text(encoding="utf-8"))
 
     def test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

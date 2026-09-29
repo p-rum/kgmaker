@@ -57,7 +57,6 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         f"- Kafka topics: {by_kind['kafka_topic']}",
         f"- API endpoints: {by_kind['api_endpoint']}",
         f"- TypeScript frontend routes: {by_kind['frontend_route']}",
-        f"- Generated: {graph.generated_at}",
         "",
         "## Files and symbols",
         "",

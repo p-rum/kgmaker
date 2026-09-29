@@ -28,12 +28,20 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 ```text
 kgmaker init [--root PATH] [--force]
 kgmaker scan [--root PATH]
+kgmaker build [--root PATH]
+kgmaker update [--root PATH]
 kgmaker status [--root PATH]
+kgmaker check [--root PATH]
+kgmaker docs [--root PATH]
+kgmaker impact [--root PATH] FILE [FILE ...]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 ```
 
 - `scan` writes `.kgmaker/graph.json` and a readable `.kgmaker/GRAPH.md`; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`.
-- `status` compares indexed source hashes with the current repository.
+- `build` and `update` currently perform a full scan, like `scan`.
+- `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown graph snapshot, so it works in CI without `.kgmaker/graph.json`.
+- `docs` regenerates `.kgmaker/GRAPH.md` from the local machine index.
+- `impact FILE` lists transitive dependents through imports and name-based calls. Imports are exact path matches; `calls` are candidates and may be wrong when names collide.
 - `query` ranks relevant files and declarations, then includes one-hop graph neighbors.
 - The Copilot hook calls `hook-context`, which refreshes the index and emits the session context in Copilot's hook format. Hook errors fail open so they do not interrupt a Copilot session.
 
@@ -58,4 +66,4 @@ python -m pip install -e .
 python -m unittest discover -s tests -v
 ```
 
-The application is intentionally dependency-free at runtime. Graph output is deterministic apart from its generation timestamp.
+The application is intentionally dependency-free at runtime. The Markdown graph is deterministic; the ignored JSON index also records its generation time.

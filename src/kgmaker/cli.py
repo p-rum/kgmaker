@@ -9,7 +9,7 @@ from pathlib import Path
 
 from . import __version__
 from .scanner import scan_repository
-from .store import GRAPH_FILE, MARKDOWN_FILE, load_graph, render_context, save_graph
+from .store import GRAPH_FILE, MARKDOWN_FILE, load_graph, render_context, render_markdown, save_graph
 
 HOOK_CONFIG = Path(".github/hooks/kgmaker.json")
 AGENT_FILE = Path(".github/agents/kgmaker.agent.md")
@@ -127,6 +127,108 @@ def status(root: Path) -> int:
     return 2
 
 
+def check(root: Path) -> int:
+    """CI-friendly validation of the committed, deterministic graph document."""
+    graph = scan_repository(root)
+    markdown_path = root / MARKDOWN_FILE
+    expected = render_markdown(graph)
+    try:
+        current = markdown_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        current = ""
+    if current != expected:
+        print("Graph documentation is missing or stale. Run `kgmaker scan` and commit `.kgmaker/GRAPH.md`.")
+        return 2
+    file_count = sum(node.kind == "file" for node in graph.nodes)
+    print(f"Graph documentation is current: {file_count} files, {len(graph.nodes)} nodes, {len(graph.edges)} relationships.")
+    return 0
+
+
+def docs(root: Path) -> int:
+    """Regenerate the readable graph document from the stored graph."""
+    graph = load_graph(root)
+    if graph is None:
+        print("No readable graph found. Run `kgmaker scan` first.", file=sys.stderr)
+        return 1
+    markdown_path = root / MARKDOWN_FILE
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_markdown(graph), encoding="utf-8")
+    print(f"Generated: {markdown_path.relative_to(root)}")
+    return 0
+
+
+def impact(root: Path, changed_files: list[str]) -> int:
+    """Show files that depend on changed files via imports and call candidates."""
+    graph = load_graph(root)
+    if graph is None:
+        print("No readable graph found. Run `kgmaker scan` first.", file=sys.stderr)
+        return 1
+
+    root = root.resolve()
+    file_nodes = {node.id: node.path for node in graph.nodes if node.kind == "file"}
+    node_by_id = {node.id: node for node in graph.nodes}
+    path_nodes = set(file_nodes.values())
+    seeds: set[str] = set()
+    for raw_path in changed_files:
+        candidate = Path(raw_path)
+        try:
+            resolved = (candidate if candidate.is_absolute() else root / candidate).resolve()
+            relative = resolved.relative_to(root).as_posix()
+        except (OSError, ValueError):
+            print(f"Path is outside the repository: {raw_path}", file=sys.stderr)
+            return 2
+        if relative not in path_nodes:
+            print(f"File is not in the graph: {raw_path}", file=sys.stderr)
+            return 2
+        seeds.add(relative)
+
+    # Edges point from a consumer to its dependency. Reverse them to find consumers.
+    dependents: dict[str, set[tuple[str, str]]] = {}
+    for edge in graph.edges:
+        if edge.kind == "imports":
+            source_path = file_nodes.get(edge.source)
+            target_path = file_nodes.get(edge.target)
+            relation = "import"
+        elif edge.kind == "calls":
+            source_path = file_nodes.get(edge.source)
+            target = node_by_id.get(edge.target)
+            target_path = target.path if target else None
+            relation = "candidate call"
+        else:
+            continue
+        if source_path and target_path and source_path != target_path:
+            dependents.setdefault(target_path, set()).add((source_path, relation))
+
+    distance: dict[str, int] = {path: 0 for path in seeds}
+    relations: dict[str, set[str]] = {}
+    queue = sorted(seeds)
+    cursor = 0
+    while cursor < len(queue):
+        dependency = queue[cursor]
+        cursor += 1
+        next_distance = distance[dependency] + 1
+        for dependent, relation in sorted(dependents.get(dependency, set())):
+            if dependent in seeds:
+                continue
+            relations.setdefault(dependent, set()).add(relation)
+            if dependent not in distance:
+                distance[dependent] = next_distance
+                queue.append(dependent)
+
+    print("Potential impact for: " + ", ".join(sorted(seeds)))
+    impacted = sorted((path for path in distance if path not in seeds), key=lambda path: (distance[path], path))
+    if not impacted:
+        print("No dependent files found in the current graph.")
+        return 0
+    for path in impacted:
+        kinds = ", ".join(sorted(relations.get(path, set())))
+        confidence = "exact" if kinds == "import" else "candidate" if kinds == "candidate call" else "mixed"
+        hops = distance[path]
+        print(f"- {path} ({hops} hop{'s' if hops != 1 else ''}; {confidence}: {kinds})")
+    print("Import links are source-resolved; call links are name-based candidates. Review source before acting.")
+    return 0
+
+
 def query(root: Path, terms: str, limit: int = 10) -> int:
     graph = load_graph(root)
     if graph is None:
@@ -182,8 +284,22 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser = sub.add_parser("scan", help="scan source files and update the local graph")
     scan_parser.add_argument("--root", type=Path, default=Path.cwd())
 
+    for command in ("build", "update"):
+        alias_parser = sub.add_parser(command, help=f"{command} the repository graph (full scan)")
+        alias_parser.add_argument("--root", type=Path, default=Path.cwd())
+
     status_parser = sub.add_parser("status", help="check whether the stored graph matches current source")
     status_parser.add_argument("--root", type=Path, default=Path.cwd())
+
+    check_parser = sub.add_parser("check", help="CI check: fail if the stored graph is missing or stale")
+    check_parser.add_argument("--root", type=Path, default=Path.cwd())
+
+    docs_parser = sub.add_parser("docs", help="regenerate the readable graph document")
+    docs_parser.add_argument("--root", type=Path, default=Path.cwd())
+
+    impact_parser = sub.add_parser("impact", help="show dependents of changed files")
+    impact_parser.add_argument("files", nargs="+", help="changed repository-relative file paths")
+    impact_parser.add_argument("--root", type=Path, default=Path.cwd())
 
     query_parser = sub.add_parser("query", help="find likely files and declarations")
     query_parser.add_argument("terms", nargs="+", help="words to search in graph names, paths and summaries")
@@ -201,10 +317,14 @@ def main() -> None:
     root = args.root.resolve()
     if args.command == "init":
         code = init(root, args.force)
-    elif args.command == "scan":
+    elif args.command in {"scan", "build", "update"}:
         code = scan(root)
-    elif args.command == "status":
+    elif args.command in {"status", "check"}:
         code = status(root)
+    elif args.command == "docs":
+        code = docs(root)
+    elif args.command == "impact":
+        code = impact(root, args.files)
     elif args.command == "query":
         code = query(root, " ".join(args.terms), args.limit)
     elif args.command == "hook-context":

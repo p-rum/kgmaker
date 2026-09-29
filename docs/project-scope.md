@@ -23,3 +23,7 @@ kgmaker is a custom, repository-local knowledge graph tool designed specifically
 The CLI scans Python, Java, Kotlin, JavaScript, TypeScript, Go, Rust, Markdown, reStructuredText, SQL, YAML, properties, and OpenAPI JSON. It creates file/declaration nodes plus database tables/columns, JPA mappings, Kafka topics, API endpoints, and TypeScript file-based routes. Copilot CLI receives a compact context at session start; users can ask the optional custom agent to explain architecture and maintain verified semantic notes.
 
 The index is a navigation aid rather than a substitute for source inspection. Ambiguous references are omitted and heuristic relationships are labeled as such. Kotlin, SQL, OpenAPI YAML, and framework integration are supported with conservative pattern-based parsing, not full language grammars.
+
+## Graph workflows
+
+`kgmaker impact FILE` walks reverse import relationships and name-based call candidates to show likely dependents of changed files. Import edges are path-resolved; call edges remain heuristic. `kgmaker check` rebuilds the graph in memory and verifies that the committed `.kgmaker/GRAPH.md` matches, so GitHub Actions can reject stale documentation without access to the ignored local JSON index. `build` and `update` currently perform a full scan; incremental parsing and rename detection remain future work.
