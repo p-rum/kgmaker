@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "python -m kgmaker.cli hook-context",
+        "powershell": "python -m kgmaker.cli hook-context",
+        "cwd": ".",
+        "timeoutSec": 30
+      }
+    ]
+  }
+}
