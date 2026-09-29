@@ -86,6 +86,14 @@ class ScannerTests(unittest.TestCase):
 
             self.assertEqual(existing.read_text(encoding="utf-8"), "user-managed")
             self.assertTrue((root / ".github" / "agents" / "kgmaker.agent.md").exists())
+            architect_agent = root / ".github" / "agents" / "kgmaker-architect.agent.md"
+            self.assertTrue(architect_agent.exists())
+            architect_content = architect_agent.read_text(encoding="utf-8")
+            self.assertIn("infer: true", architect_content)
+            self.assertIn("read-only repository context scout", architect_content)
+            self.assertIn("kgmaker query", architect_content)
+            instructions = (root / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+            self.assertIn("consult the `kgmaker-architect` custom agent", instructions)
             extract_agent = root / ".github" / "agents" / "kgmaker-extract.agent.md"
             self.assertTrue(extract_agent.exists())
             self.assertIn("semantic validate", extract_agent.read_text(encoding="utf-8"))

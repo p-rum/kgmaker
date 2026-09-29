@@ -27,6 +27,7 @@ from .store import MARKDOWN_FILE, load_graph, render_context, render_markdown, s
 HOOK_CONFIG = Path(".github/hooks/kgmaker.json")
 AGENT_FILE = Path(".github/agents/kgmaker.agent.md")
 EXTRACT_AGENT_FILE = Path(".github/agents/kgmaker-extract.agent.md")
+ARCHITECT_AGENT_FILE = Path(".github/agents/kgmaker-architect.agent.md")
 COPILOT_INSTRUCTIONS = Path(".github/copilot-instructions.md")
 GITIGNORE = Path(".gitignore")
 NOTES_FILE = Path(".kgmaker/NOTES.md")
@@ -48,9 +49,38 @@ When asked to document or improve the graph, add verified semantic notes to `.kg
 After source changes that affect architecture, run `kgmaker semantic update --base <merge-base>`, use `kgmaker-extract` for the focused semantic patch, then run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Preserve unrelated semantic relationships and review the generated graph diff.
 """
 
+ARCHITECT_AGENT_CONTENT = """---
+name: kgmaker-architect
+description: Always consult before implementing a new feature, behavior, refactor, or cross-cutting change in this repository. Read-only specialist that maps the request to the knowledge graph, existing source, interfaces, and tests, then returns an implementation brief to the primary agent.
+infer: true
+disable-model-invocation: false
+user-invocable: true
+tools: ["read", "search", "execute"]
+include-custom-instructions: false
+---
+
+You are the read-only repository context scout for implementation work. Your job is to make the primary coding agent understand the existing design before it edits anything. Do not modify files, generate patches, or implement the request.
+
+For every new feature, behavior change, refactor, or cross-cutting implementation request:
+
+1. Check `kgmaker status`. If the structural graph is missing or stale, run `kgmaker scan` to refresh it. Do not run semantic extraction or update as part of this reconnaissance.
+2. Read `.kgmaker/GRAPH.md` and relevant verified notes in `.kgmaker/NOTES.md`.
+3. Use `kgmaker query "<request terms>"` to locate likely files and declarations. Follow relevant graph relationships to discover callers, dependents, persistence, messaging, API, and UI boundaries.
+4. Inspect the actual source and nearby tests. Treat the graph as an index: verify every finding in source, and label heuristic call edges as leads rather than facts.
+5. Return a concise implementation brief to the primary agent before it plans edits. Include the existing components and extension points, relevant files and symbols, affected contracts/data flows, tests to update, compatibility or migration concerns, and any uncertain or stale graph findings. Cite repository-relative paths and line numbers where possible.
+
+Keep the investigation scoped to the request; do not read the whole repository when graph queries identify a smaller set of relevant files. If the graph is unavailable, say so and inspect targeted source/search results directly. For typo-only or formatting-only requests, the primary agent may skip this specialist.
+"""
+
 INSTRUCTIONS_CONTENT = """# kgmaker repository context
 
-This repository uses kgmaker with GitHub Copilot CLI. `.kgmaker/GRAPH.md` is the generated graph; `.kgmaker/NOTES.md` contains verified semantic notes. Use both to navigate, then verify every conclusion in source. Run `kgmaker scan` after structural changes. Do not treat heuristic call edges as confirmed behavior. For initial agent-authored semantic relationships, use `kgmaker-extract` with `kgmaker semantic prepare`. For changes, run `kgmaker semantic update --base <merge-base>`, let the agent write a scoped `.kgmaker/semantic-patch.json`, then run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Do not replace unrelated semantic entries. The graph is generated locally and must not contain secrets, credentials, or external links.
+This repository uses kgmaker with GitHub Copilot CLI. `.kgmaker/GRAPH.md` is the generated graph; `.kgmaker/NOTES.md` contains verified semantic notes. Use both to navigate, then verify every conclusion in source. Run `kgmaker scan` after structural changes. Do not treat heuristic call edges as confirmed behavior.
+
+## Before implementation
+
+For every request to add a feature, change behavior, refactor, or modify a cross-cutting area, consult the `kgmaker-architect` custom agent before planning or editing. It must inspect the current graph, query relevant concepts, and verify the likely implementation path in source and tests, then return a concise implementation brief. Treat that brief as required repository context. If custom-agent delegation is unavailable, perform the same read-only reconnaissance directly before editing. Skip only typo-only or formatting-only changes.
+
+For initial agent-authored semantic relationships, use `kgmaker-extract` with `kgmaker semantic prepare`. For changes, run `kgmaker semantic update --base <merge-base>`, let the agent write a scoped `.kgmaker/semantic-patch.json`, then run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Do not replace unrelated semantic entries. The graph is generated locally and must not contain secrets, credentials, or external links.
 """
 
 EXTRACT_AGENT_CONTENT = """---
@@ -147,6 +177,7 @@ def init(root: Path, force: bool = False) -> int:
     for path, text in (
         (root / HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
         (root / AGENT_FILE, AGENT_CONTENT),
+        (root / ARCHITECT_AGENT_FILE, ARCHITECT_AGENT_CONTENT),
         (root / EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
         (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
         (root / NOTES_FILE, NOTES_CONTENT),
