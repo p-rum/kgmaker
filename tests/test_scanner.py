@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kgmaker.cli import check, docs, hook_context, impact, init
+from kgmaker.cli import check, docs, hook_context, impact, init, main
 from kgmaker.scanner import scan_repository
 from kgmaker.store import load_graph, save_graph
 
@@ -128,6 +128,19 @@ class ScannerTests(unittest.TestCase):
             markdown.write_text("stale", encoding="utf-8")
             self.assertEqual(docs(root), 0)
             self.assertIn("first", markdown.read_text(encoding="utf-8"))
+
+    def test_check_command_works_without_local_json_index(self) -> None:
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "app.py").write_text("def start():\n    pass\n", encoding="utf-8")
+            save_graph(scan_repository(root), root)
+            (root / ".kgmaker" / "graph.json").unlink()
+            with patch("sys.argv", ["kgmaker", "check", "--root", str(root)]):
+                with self.assertRaises(SystemExit) as error:
+                    main()
+            self.assertEqual(error.exception.code, 0)
 
     def test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

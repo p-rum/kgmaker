@@ -319,8 +319,10 @@ def main() -> None:
         code = init(root, args.force)
     elif args.command in {"scan", "build", "update"}:
         code = scan(root)
-    elif args.command in {"status", "check"}:
+    elif args.command == "status":
         code = status(root)
+    elif args.command == "check":
+        code = check(root)
     elif args.command == "docs":
         code = docs(root)
     elif args.command == "impact":

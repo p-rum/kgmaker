@@ -4,9 +4,9 @@
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
 - Files indexed: 11
-- Symbols and sections: 85
+- Symbols and sections: 86
 - Internal imports: 10
-- Heuristic cross-file calls: 70
+- Heuristic cross-file calls: 73
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -119,9 +119,10 @@
 - **function** `test_hook_emits_session_context_json` line 82 — `test_hook_emits_session_context_json(self)`
 - **function** `test_impact_reports_exact_transitive_import_dependents` line 97 — `test_impact_reports_exact_transitive_import_dependents(self)`
 - **function** `test_check_detects_stale_graph_and_docs_regenerate_markdown` line 116 — `test_check_detects_stale_graph_and_docs_regenerate_markdown(self)`
-- **function** `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema` line 131 — `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self)`
-- **function** `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml` line 166 — `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml(self)`
-- **function** `test_links_openapi_server_and_typescript_client_paths` line 198 — `test_links_openapi_server_and_typescript_client_paths(self)`
+- **function** `test_check_command_works_without_local_json_index` line 131 — `test_check_command_works_without_local_json_index(self)`
+- **function** `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema` line 144 — `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self)`
+- **function** `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml` line 179 — `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml(self)`
+- **function** `test_links_openapi_server_and_typescript_client_paths` line 211 — `test_links_openapi_server_and_typescript_client_paths(self)`
 
 ## Internal relationships
 
@@ -188,22 +189,25 @@
 - `tests/test_scanner.py` may call `259 in `src/kgmaker/cli.py`` (name match at line 92)
 - `tests/test_scanner.py` may call `158 in `src/kgmaker/cli.py`` (name match at line 111)
 - `tests/test_scanner.py` may call `69 in `src/kgmaker/cli.py`` (name match at line 78)
+- `tests/test_scanner.py` may call `312 in `src/kgmaker/cli.py`` (name match at line 142)
 - `tests/test_scanner.py` may call `312 in `src/kgmaker/cli.py`` (name match at line 17)
-- `tests/test_scanner.py` may call `312 in `src/kgmaker/cli.py`` (name match at line 254)
+- `tests/test_scanner.py` may call `312 in `src/kgmaker/cli.py`` (name match at line 267)
 - `tests/test_scanner.py` may call `312 in `src/kgmaker/cli.py`` (name match at line 89)
 - `tests/test_scanner.py` may call `36 in `src/kgmaker/model.py`` (name match at line 40)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 107)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 122)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 157)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 190)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 138)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 170)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 20)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 238)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 203)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 251)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 37)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 46)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 65)
 - `tests/test_scanner.py` may call `23 in `src/kgmaker/store.py`` (name match at line 49)
 - `tests/test_scanner.py` may call `13 in `src/kgmaker/store.py`` (name match at line 107)
 - `tests/test_scanner.py` may call `13 in `src/kgmaker/store.py`` (name match at line 122)
+- `tests/test_scanner.py` may call `13 in `src/kgmaker/store.py`` (name match at line 138)
 - `tests/test_scanner.py` may call `13 in `src/kgmaker/store.py`` (name match at line 47)
 - `src/kgmaker/domain.py` **connects_to** technology `PostgreSQL` in `src/kgmaker/domain.py` — PostgreSQL driver or connection string
 - `src/kgmaker/domain.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration
