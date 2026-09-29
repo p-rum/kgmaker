@@ -152,7 +152,14 @@ def _entity_edges(text: str, path: str, symbols: list[Node], tables: dict[str, N
         table_name = name_match.group(1) if name_match else SNAKE_BOUNDARY.sub("_", symbol.name).lower()
         candidates = [node for key, node in tables.items() if key.split(".")[-1] == _canon(table_name).split(".")[-1]]
         if len(candidates) == 1:
-            edges.append(Edge(symbol.id, candidates[0].id, "maps_to_table", "@Table annotation" if name_match else "inferred from @Entity class name"))
+            edges.append(Edge(
+                symbol.id,
+                candidates[0].id,
+                "maps_to_table",
+                "@Table annotation" if name_match else "inferred from @Entity class name",
+                confidence="EXTRACTED" if name_match else "INFERRED",
+                confidence_score=1.0 if name_match else 0.75,
+            ))
             table = candidates[0]
             start = symbol.line or 1
             next_type_lines = [node.line for node in type_symbols if node.line and node.line > start]

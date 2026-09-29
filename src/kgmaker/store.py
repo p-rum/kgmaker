@@ -37,8 +37,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
     calls = [edge for edge in graph.edges if edge.kind == "calls"]
     domain_edges = [edge for edge in graph.edges if edge.kind not in {"contains", "imports", "calls"}]
     by_kind = {kind: sum(node.kind == kind for node in graph.nodes) for kind in (
-        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route", "external_service", "technology"
+        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route", "external_service", "technology", "concept"
     )}
+    inferred_edges = sum(edge.confidence == "INFERRED" for edge in graph.edges)
+    ambiguous_edges = sum(edge.confidence == "AMBIGUOUS" for edge in graph.edges)
     by_path: dict[str, list] = {}
     for symbol in symbols:
         by_path.setdefault(symbol.path, []).append(symbol)
@@ -57,6 +59,8 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         f"- Kafka topics: {by_kind['kafka_topic']}",
         f"- API endpoints: {by_kind['api_endpoint']}",
         f"- TypeScript frontend routes: {by_kind['frontend_route']}",
+        f"- Semantic concepts: {by_kind['concept']}",
+        f"- Inferred/ambiguous relationships: {inferred_edges}/{ambiguous_edges}",
         "",
         "## Files and symbols",
         "",
@@ -77,17 +81,17 @@ def render_markdown(graph: KnowledgeGraph) -> str:
     node_index = {node.id: node for node in graph.nodes}
     lines.extend(["## Internal relationships", ""])
     for edge in imports:
-        lines.append(f"- `{paths.get(edge.source, edge.source)}` imports `{paths.get(edge.target, edge.target)}` (`{edge.evidence}`)")
+        lines.append(f"- `{paths.get(edge.source, edge.source)}` imports `{paths.get(edge.target, edge.target)}` ({_edge_details(edge)})")
     for edge in calls:
         target = next((node for node in graph.nodes if node.id == edge.target), None)
         target_label = f"{edge.target.split(':')[-1]} in `{target.path}`" if target else edge.target
-        lines.append(f"- `{paths.get(edge.source, edge.source)}` may call `{target_label}` ({edge.evidence})")
+        lines.append(f"- `{paths.get(edge.source, edge.source)}` may call `{target_label}` ({_edge_details(edge)})")
     for edge in domain_edges:
         source = node_index.get(edge.source)
         target = node_index.get(edge.target)
         source_label = source.path if source and source.kind == "file" else f"{source.name} in `{source.path}`" if source else edge.source
         target_label = f"{target.kind} `{target.name}` in `{target.path}`" if target else edge.target
-        evidence = f" — {edge.evidence}" if edge.evidence else ""
+        evidence = f" — {_edge_details(edge)}"
         lines.append(f"- `{source_label}` **{edge.kind}** {target_label}{evidence}")
     if not imports and not calls and not domain_edges:
         lines.append("- No internal relationships were detected.")
@@ -105,7 +109,8 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
         if edge.kind != "contains":
             target = nodes.get(edge.target)
             if target:
-                outgoing.setdefault(edge.source, []).append(f"{edge.kind} {target.name} ({target.path})")
+                confidence = "" if edge.confidence == "EXTRACTED" else f" [{edge.confidence} {edge.confidence_score:.2f}]"
+                outgoing.setdefault(edge.source, []).append(f"{edge.kind} {target.name} ({target.path}){confidence}")
 
     lines = [
         "## kgmaker repository context",
@@ -134,3 +139,13 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
     if len(result) > limit:
         result = result[: limit - 80].rsplit("\n", 1)[0] + "\n… graph context truncated; run `kgmaker query`."
     return result
+
+
+def _edge_details(edge) -> str:
+    details = [edge.evidence] if edge.evidence else []
+    if edge.source_file:
+        location = f"{edge.source_file}:{edge.source_line}" if edge.source_line else edge.source_file
+        details.append(location)
+    if edge.confidence != "EXTRACTED":
+        details.append(f"{edge.confidence} {edge.confidence_score:.2f}")
+    return "; ".join(details) or edge.confidence

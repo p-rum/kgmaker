@@ -8,11 +8,21 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .model import KnowledgeGraph
 from .scanner import scan_repository
+from .semantic import (
+    SEMANTIC_FILE,
+    SEMANTIC_INPUT_FILE,
+    SemanticValidationError,
+    apply_semantic_layer,
+    build_semantic_input,
+    validate_semantic_data,
+)
 from .store import GRAPH_FILE, MARKDOWN_FILE, load_graph, render_context, render_markdown, save_graph
 
 HOOK_CONFIG = Path(".github/hooks/kgmaker.json")
 AGENT_FILE = Path(".github/agents/kgmaker.agent.md")
+EXTRACT_AGENT_FILE = Path(".github/agents/kgmaker-extract.agent.md")
 COPILOT_INSTRUCTIONS = Path(".github/copilot-instructions.md")
 GITIGNORE = Path(".gitignore")
 NOTES_FILE = Path(".kgmaker/NOTES.md")
@@ -36,7 +46,46 @@ After source changes that affect architecture, run `kgmaker scan` and review the
 
 INSTRUCTIONS_CONTENT = """# kgmaker repository context
 
-This repository uses kgmaker with GitHub Copilot CLI. `.kgmaker/GRAPH.md` is a local structural map of the repository; `.kgmaker/NOTES.md` contains verified semantic notes. Use both to navigate, then verify every conclusion in source. Run `kgmaker scan` after structural changes. Do not treat heuristic call edges as confirmed behavior. The graph is generated locally and must not contain secrets, credentials, or external links.
+This repository uses kgmaker with GitHub Copilot CLI. `.kgmaker/GRAPH.md` is the generated graph; `.kgmaker/NOTES.md` contains verified semantic notes. Use both to navigate, then verify every conclusion in source. Run `kgmaker scan` after structural changes. Do not treat heuristic call edges as confirmed behavior. For agent-authored semantic relationships, use the `kgmaker-extract` custom agent; validate its `.kgmaker/semantic.json` with `kgmaker semantic validate` before rescanning. The graph is generated locally and must not contain secrets, credentials, or external links.
+"""
+
+EXTRACT_AGENT_CONTENT = """---
+name: kgmaker-extract
+description: Builds a provenance-backed semantic layer on top of kgmaker's deterministic repository graph.
+tools: ["*"]
+include-custom-instructions: true
+---
+
+You produce the optional semantic relationship layer for kgmaker. The running Copilot agent is the model; do not request provider API keys and do not invoke external model APIs.
+
+## Workflow
+
+1. Run `kgmaker scan` to create the current structural graph.
+2. Run `kgmaker semantic prepare`. It writes `.kgmaker/semantic-input.json`, containing the graph fingerprint, file hashes, and every stable node ID. The manifest contains no source-file contents.
+3. Read the manifest, then inspect relevant source files in this repository. Use its exact node IDs. Do not invent or rewrite IDs for code symbols, tables, Kafka topics, routes, or API endpoints.
+4. Create `.kgmaker/semantic.json` using the schema below. Add only useful architectural/domain relationships that the deterministic graph does not already contain. Create a `concept` node when a named business rule, invariant, flow, or rationale needs an anchor in the graph.
+5. Run `kgmaker semantic validate`. Fix validation errors, then run `kgmaker scan` to merge the semantic layer into `.kgmaker/GRAPH.md` and the local graph.
+
+The artifact must have this shape:
+
+```json
+{
+  "schema_version": 1,
+  "graph_fingerprint": "copy exactly from semantic-input.json",
+  "nodes": [
+    {"id": "concept:<source_file>:<slug>", "name": "Human-readable concept", "source_file": "docs/domain.md", "source_line": 12, "summary": "Short grounded explanation"}
+  ],
+  "edges": [
+    {"source": "existing-or-concept-node-id", "target": "existing-or-concept-node-id", "kind": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "docs/domain.md", "source_line": 12, "evidence": "The source says this service enforces the published-order rule."}
+  ]
+}
+```
+
+Concept IDs use the exact source path and a slug made by lowercasing the concept name and replacing each run of non-ASCII-alphanumeric characters with `_`, then trimming `_`: `concept:<source_file>:<slug>`. Use only node IDs in the input manifest or concept IDs defined in this artifact.
+
+Relations must come from `semantic-input.json`. `EXTRACTED` means the source states the link explicitly and always uses score `1.0`. `INFERRED` uses exactly one of `0.55`, `0.65`, `0.75`, `0.85`, or `0.95`; use `AMBIGUOUS` with a score from `0.1` to `0.3` when evidence is uncertain. Every edge needs a concise evidence note and the repository-relative file and line that supports the claim. Never turn an existing `INFERRED` static-call edge into a fact. Do not copy source files into the artifact, include secrets, or claim a link merely because names are similar.
+
+If the graph changes after preparation, validation will reject the stale fingerprint. Run `kgmaker semantic prepare` again before producing a replacement artifact.
 """
 
 NOTES_CONTENT = """# Repository knowledge notes
@@ -73,21 +122,23 @@ def init(root: Path, force: bool = False) -> int:
     for path, text in (
         (root / HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
         (root / AGENT_FILE, AGENT_CONTENT),
+        (root / EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
         (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
         (root / NOTES_FILE, NOTES_CONTENT),
     ):
         if _write_if_missing(path, text, force=force):
             written.append(path.relative_to(root).as_posix())
 
-    ignore_entry = ".kgmaker/graph.json\n"
+    ignore_entries = [".kgmaker/graph.json", ".kgmaker/semantic-input.json"]
     gitignore_path = root / GITIGNORE
     if not gitignore_path.exists():
-        gitignore_path.write_text(ignore_entry, encoding="utf-8")
+        gitignore_path.write_text("\n".join(ignore_entries) + "\n", encoding="utf-8")
         written.append(".gitignore")
     else:
         existing = gitignore_path.read_text(encoding="utf-8")
-        if ".kgmaker/graph.json" not in existing:
-            gitignore_path.write_text(existing.rstrip() + "\n\n# Local kgmaker index\n" + ignore_entry, encoding="utf-8")
+        missing = [entry for entry in ignore_entries if entry not in existing.splitlines()]
+        if missing:
+            gitignore_path.write_text(existing.rstrip() + "\n\n# Local kgmaker index\n" + "\n".join(missing) + "\n", encoding="utf-8")
             written.append(".gitignore")
 
     print("Initialized kgmaker in this repository.")
@@ -97,13 +148,17 @@ def init(root: Path, force: bool = False) -> int:
 
 
 def scan(root: Path) -> int:
-    graph = scan_repository(root)
+    graph, semantic_counts, semantic_error = apply_semantic_layer(scan_repository(root), root)
     graph_path, markdown_path = save_graph(graph, root)
     file_count = sum(node.kind == "file" for node in graph.nodes)
     symbol_count = len(graph.nodes) - file_count
     print(f"Indexed {file_count} files, {symbol_count} declarations/sections, and {len(graph.edges)} relationships.")
     print(f"Machine index: {graph_path.relative_to(root)}")
     print(f"Human view: {markdown_path.relative_to(root)}")
+    if semantic_counts != (0, 0):
+        print(f"Semantic layer: {semantic_counts[0]} concepts, {semantic_counts[1]} relationships.")
+    if semantic_error:
+        print(f"Semantic layer skipped: {semantic_error}", file=sys.stderr)
     return 0
 
 
@@ -112,14 +167,17 @@ def status(root: Path) -> int:
     if graph is None:
         print("No readable graph found. Run `kgmaker scan`.")
         return 1
-    live = scan_repository(root)
+    live, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
     indexed = graph.files
     changed = sorted(path for path, digest in live.files.items() if indexed.get(path) != digest)
     removed = sorted(set(indexed) - set(live.files))
-    if not changed and not removed:
+    graph_changed = graph.nodes != live.nodes or graph.edges != live.edges
+    if not changed and not removed and not graph_changed and not semantic_error:
         print(f"Graph is current: {len(indexed)} files, {len(graph.nodes)} nodes, {len(graph.edges)} relationships.")
         return 0
-    print(f"Graph is stale: {len(changed)} changed/new and {len(removed)} removed files. Run `kgmaker scan`.")
+    print(f"Graph is stale: {len(changed)} changed/new, {len(removed)} removed files, semantic/graph differences: {graph_changed}. Run `kgmaker scan`.")
+    if semantic_error:
+        print(f"  semantic layer: {semantic_error}")
     for path in changed[:10]:
         print(f"  changed: {path}")
     for path in removed[:10]:
@@ -129,7 +187,10 @@ def status(root: Path) -> int:
 
 def check(root: Path) -> int:
     """CI-friendly validation of the committed, deterministic graph document."""
-    graph = scan_repository(root)
+    graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+    if semantic_error:
+        print(f"Semantic artifact is stale or invalid: {semantic_error}")
+        return 2
     markdown_path = root / MARKDOWN_FILE
     expected = render_markdown(graph)
     try:
@@ -154,6 +215,35 @@ def docs(root: Path) -> int:
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(render_markdown(graph), encoding="utf-8")
     print(f"Generated: {markdown_path.relative_to(root)}")
+    return 0
+
+
+def semantic_prepare(root: Path) -> int:
+    """Write the stable node inventory used by the Copilot extraction agent."""
+    graph = scan_repository(root)
+    manifest = build_semantic_input(graph)
+    output = root / SEMANTIC_INPUT_FILE
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Prepared {len(graph.files)} files and {len(graph.nodes)} node IDs for semantic extraction.")
+    print(f"Graph fingerprint: {manifest['graph_fingerprint']}")
+    print(f"Agent input: {output.relative_to(root)}")
+    print(f"Agent output: {(root / SEMANTIC_FILE).relative_to(root)}")
+    return 0
+
+
+def semantic_validate(root: Path) -> int:
+    """Validate an agent-written artifact against a fresh structural scan."""
+    artifact = root / SEMANTIC_FILE
+    try:
+        data = json.loads(artifact.read_text(encoding="utf-8"))
+        graph = scan_repository(root)
+        nodes, edges = validate_semantic_data(data, graph, root)
+    except (OSError, UnicodeError, json.JSONDecodeError, SemanticValidationError) as error:
+        print(f"Semantic artifact invalid: {error}", file=sys.stderr)
+        return 2
+    print(f"Semantic artifact is valid: {len(nodes)} concepts, {len(edges)} relationships.")
+    print("Run `kgmaker scan` to merge it into the graph.")
     return 0
 
 
@@ -261,7 +351,9 @@ def query(root: Path, terms: str, limit: int = 10) -> int:
 def hook_context(root: Path) -> int:
     """Refresh the graph and emit sessionStart additionalContext as JSON."""
     try:
-        graph = scan_repository(root)
+        graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+        if semantic_error:
+            print(f"kgmaker semantic layer skipped: {semantic_error}", file=sys.stderr)
         save_graph(graph, root)
         context = render_context(graph, root=root)
         sys.stdout.write(json.dumps({"additionalContext": context}, ensure_ascii=False) + "\n")
@@ -297,6 +389,13 @@ def build_parser() -> argparse.ArgumentParser:
     docs_parser = sub.add_parser("docs", help="regenerate the readable graph document")
     docs_parser.add_argument("--root", type=Path, default=Path.cwd())
 
+    semantic_parser = sub.add_parser("semantic", help="prepare or validate the optional agent-authored semantic layer")
+    semantic_sub = semantic_parser.add_subparsers(dest="semantic_command", required=True)
+    semantic_prepare_parser = semantic_sub.add_parser("prepare", help="write a stable node inventory for the Copilot extraction agent")
+    semantic_prepare_parser.add_argument("--root", type=Path, default=Path.cwd())
+    semantic_validate_parser = semantic_sub.add_parser("validate", help="validate .kgmaker/semantic.json against current source")
+    semantic_validate_parser.add_argument("--root", type=Path, default=Path.cwd())
+
     impact_parser = sub.add_parser("impact", help="show dependents of changed files")
     impact_parser.add_argument("files", nargs="+", help="changed repository-relative file paths")
     impact_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -325,6 +424,10 @@ def main() -> None:
         code = check(root)
     elif args.command == "docs":
         code = docs(root)
+    elif args.command == "semantic" and args.semantic_command == "prepare":
+        code = semantic_prepare(root)
+    elif args.command == "semantic" and args.semantic_command == "validate":
+        code = semantic_validate(root)
     elif args.command == "impact":
         code = impact(root, args.files)
     elif args.command == "query":

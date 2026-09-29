@@ -23,6 +23,10 @@ class Edge:
     target: str
     kind: str
     evidence: str | None = None
+    confidence: str = "EXTRACTED"
+    confidence_score: float = 1.0
+    source_file: str | None = None
+    source_line: int | None = None
 
 
 @dataclass

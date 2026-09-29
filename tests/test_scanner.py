@@ -5,9 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kgmaker.cli import check, docs, hook_context, impact, init, main
+from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_validate
 from kgmaker.scanner import scan_repository
-from kgmaker.store import load_graph, save_graph
+from kgmaker.semantic import SEMANTIC_FILE, apply_semantic_layer, build_semantic_input, concept_id
+from kgmaker.store import load_graph, render_context, render_markdown, save_graph
 
 
 class ScannerTests(unittest.TestCase):
@@ -25,6 +26,9 @@ class ScannerTests(unittest.TestCase):
             imports = [edge for edge in graph.edges if edge.kind == "imports"]
             self.assertEqual(len(imports), 1)
             self.assertEqual(imports[0].evidence, "service")
+            call = next(edge for edge in graph.edges if edge.kind == "calls")
+            self.assertEqual(call.confidence, "INFERRED")
+            self.assertEqual(call.confidence_score, 0.85)
 
     def test_skips_secrets_and_dependency_folders(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -79,6 +83,81 @@ class ScannerTests(unittest.TestCase):
 
             self.assertEqual(existing.read_text(encoding="utf-8"), "user-managed")
             self.assertTrue((root / ".github" / "agents" / "kgmaker.agent.md").exists())
+            extract_agent = root / ".github" / "agents" / "kgmaker-extract.agent.md"
+            self.assertTrue(extract_agent.exists())
+            self.assertIn("semantic validate", extract_agent.read_text(encoding="utf-8"))
+
+    def test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "OrderService.kt").write_text(
+                "class OrderService {\n  fun publish() {}\n}\n", encoding="utf-8"
+            )
+            docs_dir = root / "docs"
+            docs_dir.mkdir()
+            (docs_dir / "domain.md").write_text(
+                "# Domain\nThe order lifecycle rule is enforced before publishing.\n", encoding="utf-8"
+            )
+            structural = scan_repository(root)
+            manifest = build_semantic_input(structural)
+            manifest_text = json.dumps(manifest)
+            self.assertNotIn("The order lifecycle rule", manifest_text)
+            service = next(node for node in structural.nodes if node.name == "OrderService")
+            concept = {
+                "id": concept_id("docs/domain.md", "Order lifecycle rule"),
+                "name": "Order lifecycle rule",
+                "source_file": "docs/domain.md",
+                "source_line": 2,
+                "summary": "The rule is checked before publishing an order.",
+            }
+            artifact = {
+                "schema_version": 1,
+                "graph_fingerprint": manifest["graph_fingerprint"],
+                "nodes": [concept],
+                "edges": [{
+                    "source": service.id,
+                    "target": concept["id"],
+                    "kind": "implements",
+                    "confidence": "INFERRED",
+                    "confidence_score": 0.85,
+                    "source_file": "docs/domain.md",
+                    "source_line": 2,
+                    "evidence": "The domain document says the check occurs before publishing.",
+                }],
+            }
+            semantic_path = root / SEMANTIC_FILE
+            semantic_path.parent.mkdir(parents=True)
+            semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
+
+            self.assertEqual(semantic_validate(root), 0)
+            merged, counts, error = apply_semantic_layer(structural, root)
+            self.assertIsNone(error)
+            self.assertEqual(counts, (1, 1))
+            relation = next(edge for edge in merged.edges if edge.kind == "implements")
+            self.assertEqual(relation.source_file, "docs/domain.md")
+            self.assertEqual(relation.confidence, "INFERRED")
+            self.assertIn("INFERRED 0.85", render_markdown(merged))
+            self.assertIn("Order lifecycle rule", render_context(merged, root=root))
+
+            artifact["edges"][0]["source_line"] = 999
+            semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
+            _, _, error = apply_semantic_layer(scan_repository(root), root)
+            self.assertIn("points past the end", error or "")
+
+            artifact["edges"][0]["source_line"] = 2
+            artifact["edges"][0]["target"] = "missing-node"
+            semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
+            _, _, error = apply_semantic_layer(scan_repository(root), root)
+            self.assertIn("unknown node ID", error or "")
+
+            artifact["edges"][0]["target"] = concept["id"]
+            semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
+            (root / "OrderService.kt").write_text(
+                "class OrderService {\n  fun publish() {}\n  fun cancel() {}\n}\n", encoding="utf-8"
+            )
+            _, counts, error = apply_semantic_layer(scan_repository(root), root)
+            self.assertEqual(counts, (0, 0))
+            self.assertIn("different graph", error or "")
 
     def test_hook_emits_session_context_json(self) -> None:
         import io

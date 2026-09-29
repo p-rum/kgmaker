@@ -284,6 +284,8 @@ def scan_repository(root: Path) -> KnowledgeGraph:
                         destinations[0].id,
                         "calls",
                         f"name match at line {_line_for(text, match.start())}",
+                        confidence="INFERRED",
+                        confidence_score=0.85,
                     )
                 )
 
