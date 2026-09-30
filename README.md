@@ -76,4 +76,3 @@ python -m unittest discover -s tests -v
 ```
 
 The application is intentionally dependency-free at runtime. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
-

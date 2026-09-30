@@ -34,4 +34,3 @@ The generated repository hook subscribes to Copilot CLI `sessionStart`. It refre
 ## Extension points
 
 Add language-specific declaration/import extraction in `scanner.py`. Keep new edge types explicit about their evidence and confidence. Add renderers or graph storage backends only when there is a concrete user need; the current data contract is deliberately plain JSON and requires no database.
-

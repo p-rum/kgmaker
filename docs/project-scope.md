@@ -31,4 +31,3 @@ Local Confluence support is implemented by `kgmaker.confluence`: recursive HTML 
 ## Graph workflows
 
 `kgmaker impact FILE` walks reverse import relationships and name-based call candidates to show likely dependents of changed files. Import edges are path-resolved; call edges remain heuristic. `kgmaker scan` and `kgmaker docs` generate `.kgmaker/GRAPH.md` (readable repository map with a GitHub-renderable Mermaid architecture diagram) and `.kgmaker/GRAPH.mmd` (standalone Mermaid source). `kgmaker check` rebuilds the graph in memory and verifies both committed views, so GitHub Actions can reject stale documentation without access to the ignored local JSON index. `build` and `update` currently perform a full scan; incremental parsing and rename detection remain future work.
-

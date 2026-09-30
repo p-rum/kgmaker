@@ -546,4 +546,3 @@ def documentation_check(root: Path, confluence_dir: str | None = None, report: s
     contradictions = sum(item.status in {"CONTRADICTED_BY_CODE", "DIAGRAM_CONTRADICTS_CODE"} for item in assertions)
     review = sum(item.status not in {"VERIFIED_BY_CODE", "CONTRADICTED_BY_CODE", "DIAGRAM_CONTRADICTS_CODE"} for item in assertions)
     return len(documents), contradictions, review, report_path
-
