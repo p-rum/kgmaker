@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_apply, semantic_update, semantic_validate
+from kgmaker.confluence import documentation_check, ingest_export, merge_into_graph, render_report, validate_documents
 from kgmaker.scanner import scan_repository
 from kgmaker.semantic import (
     SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE,
@@ -15,6 +16,64 @@ from kgmaker.store import load_graph, render_context, render_markdown, render_me
 
 
 class ScannerTests(unittest.TestCase):
+    def test_confluence_html_parser_resolves_pages_mermaid_and_drawio(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "export"
+            source_fixture = Path(__file__).parents[1] / "fixtures" / "confluence-export"
+            import shutil
+            shutil.copytree(source_fixture, export)
+
+            documents, attachments, _ = ingest_export(export, root)
+
+            payment = next(document for document in documents if document.file == "Payment-Architecture.html")
+            self.assertEqual(payment.title, "Payment Architecture")
+            self.assertIn("Customer-Onboarding.html", next(document for document in documents if document.file == "index.html").internal_links)
+            self.assertIn("attachments/payment-flow.drawio", payment.attachments)
+            self.assertTrue(any(diagram["kind"] == "MERMAID" for diagram in payment.diagrams))
+            self.assertTrue(any(item["file"] == "attachments/payment-flow.drawio" for item in attachments))
+            self.assertIn(("PaymentService", "CONNECTS_TO", "LegacyGateway"), next(item for item in attachments if item["file"].endswith("payment-flow.drawio"))["relations"])
+
+    def test_confluence_code_is_truth_and_report_preserves_stale_documentation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "confluence-export"
+            source_fixture = Path(__file__).parents[1] / "fixtures" / "confluence-export"
+            import shutil
+            shutil.copytree(source_fixture, export)
+            (root / "payment.py").write_text(
+                "from fraud import FraudService\n\nclass PaymentService:\n    def process(self):\n        return FraudService()\n",
+                encoding="utf-8",
+            )
+            (root / "fraud.py").write_text("class FraudService:\n    pass\n", encoding="utf-8")
+            graph = scan_repository(root)
+            documents, attachments, _ = ingest_export(export, root)
+            assertions = validate_documents(documents, graph)
+
+            payment_assertions = [item for item in assertions if item.subject == "PaymentService"]
+            self.assertTrue(any(item.status == "VERIFIED_BY_CODE" for item in payment_assertions))
+            self.assertTrue(any(item.status == "DIAGRAM_CONTRADICTS_CODE" for item in payment_assertions))
+            self.assertTrue(any(item.status == "NOT_VERIFIABLE_FROM_CODE" for item in assertions))
+            merged = merge_into_graph(graph, documents, attachments, assertions)
+            report_path = root / "docs/generated/confluence-inconsistencies.md"
+            render_report(assertions, report_path, export)
+            report = report_path.read_text(encoding="utf-8")
+            self.assertIn("DIAGRAM_CONTRADICTS_CODE", report)
+            self.assertIn("LegacyGateway", report)
+            self.assertIn("Fraud validation exists", report)
+            self.assertTrue(any(node.kind == "confluence_document" for node in merged.nodes))
+
+    def test_docs_check_accepts_external_export_and_custom_report(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "external-docs"
+            export.mkdir()
+            (export / "page.html").write_text("<html><title>Page</title><body><h1>Page</h1><p>External process must be approved.</p></body></html>", encoding="utf-8")
+            (root / "service.py").write_text("class Service: pass\n", encoding="utf-8")
+            result, contradictions, review, report = documentation_check(root, str(export), "out/report.md", scan_repository(root))
+            self.assertEqual((result, contradictions), (1, 0))
+            self.assertGreaterEqual(review, 1)
+            self.assertTrue(report.exists())
     def test_extracts_python_symbols_and_internal_imports(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -477,3 +536,4 @@ class ScannerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

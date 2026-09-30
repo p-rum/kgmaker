@@ -1,0 +1,7 @@
+<mxfile><diagram name="Payment"><mxGraphModel><root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="payment" value="PaymentService" vertex="1" parent="1"/>
+<mxCell id="legacy" value="LegacyGateway" vertex="1" parent="1"/>
+<mxCell id="edge" edge="1" source="payment" target="legacy" parent="1"/>
+</root></mxGraphModel></diagram></mxfile>
+

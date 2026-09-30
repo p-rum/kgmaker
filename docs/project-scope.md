@@ -10,6 +10,7 @@ kgmaker is a custom, repository-local knowledge graph tool designed specifically
 - Offer an optional GitHub Copilot custom agent that users can adapt or pair with their own agents.
 - Offer an optional agent-authored semantic layer, separate from deterministic source extraction and validated against stable graph IDs and file hashes.
 - Keep graph generation local, inspectable, and independent of model API keys.
+- Ingest local Confluence HTML exports as an optional knowledge source without Confluence credentials or online synchronization; keep source code authoritative and produce actionable inconsistency reports.
 
 ## Out of scope
 
@@ -25,6 +26,9 @@ The CLI scans Python, Java, Kotlin, JavaScript, TypeScript, Go, Rust, Markdown, 
 
 The index is a navigation aid rather than a substitute for source inspection. Ambiguous references are omitted and heuristic relationships are labeled as such. Kotlin, SQL, OpenAPI YAML, and framework integration are supported with conservative pattern-based parsing, not full language grammars.
 
+Local Confluence support is implemented by `kgmaker.confluence`: recursive HTML discovery, page reconstruction, internal-link resolution, attachment/image discovery, Mermaid and Draw.io/XML parsing, artifact hashing, unified graph evidence, and code-vs-documentation validation. The export is never modified. `docs check` can run independently of a full rebuild and writes `docs/generated/confluence-inconsistencies.md`; missing code entities are placed in review categories unless deterministic code evidence proves a contradiction.
+
 ## Graph workflows
 
 `kgmaker impact FILE` walks reverse import relationships and name-based call candidates to show likely dependents of changed files. Import edges are path-resolved; call edges remain heuristic. `kgmaker scan` and `kgmaker docs` generate `.kgmaker/GRAPH.md` (readable repository map with a GitHub-renderable Mermaid architecture diagram) and `.kgmaker/GRAPH.mmd` (standalone Mermaid source). `kgmaker check` rebuilds the graph in memory and verifies both committed views, so GitHub Actions can reject stale documentation without access to the ignored local JSON index. `build` and `update` currently perform a full scan; incremental parsing and rename detection remain future work.
+

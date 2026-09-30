@@ -27,12 +27,12 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 ```text
 kgmaker init [--root PATH] [--force]
-kgmaker scan [--root PATH] [--no-docs]
-kgmaker build [--root PATH] [--no-docs]
-kgmaker update [--root PATH] [--no-docs]
+kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
+kgmaker build [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
+kgmaker update [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker status [--root PATH]
 kgmaker check [--root PATH]
-kgmaker docs [--root PATH]
+kgmaker docs [check|report] [--root PATH] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
 kgmaker semantic update [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
@@ -43,6 +43,8 @@ kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 
 - `scan` writes `.kgmaker/graph.json`, generated architecture documentation in `.kgmaker/GRAPH.md`, and a standalone Mermaid diagram in `.kgmaker/GRAPH.mmd`. The Markdown embeds the diagram for GitHub rendering; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`. Use `--no-docs` to update only the machine index and skip both generated views; `kgmaker docs` can create them later.
 - `build` and `update` currently perform a full scan, like `scan`.
+- `--confluence-dir` adds a local, read-only multi-file Confluence HTML export. The path may be absolute or relative to the repository root; configuration under `documentation.confluence.directory` is used when the flag is absent. No Confluence API, credentials, crawling, or write-back is performed. Code-derived implementation facts take precedence over documentation.
+- `docs check` (or `docs report`) validates the export without requiring a full graph rebuild. It parses HTML structurally, resolves local links, detects Mermaid/Draw.io/XML and image attachments, writes `docs/generated/confluence-inconsistencies.md` by default, and keeps `.kgmaker/confluence-index.json` hashes plus a reverse documentation index for focused revalidation. HTML and diagrams remain unchanged.
 - `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown documentation and Mermaid diagram, so it works in CI without `.kgmaker/graph.json`.
 - `docs` regenerates `.kgmaker/GRAPH.md` and `.kgmaker/GRAPH.mmd` from the local machine index. The diagram groups code declarations by file and shows imports plus detected database, Kafka, API, frontend, and semantic relationships. Heuristic call edges are left out to keep the architecture view readable.
 - `impact FILE` lists transitive dependents through imports and name-based calls. Imports are exact path matches; `calls` are candidates and may be wrong when names collide.
@@ -74,3 +76,4 @@ python -m unittest discover -s tests -v
 ```
 
 The application is intentionally dependency-free at runtime. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+

@@ -10,3 +10,5 @@ __pycache__/
 .kgmaker/semantic-update.json
 .kgmaker/semantic-update.md
 .kgmaker/semantic-patch.json
+.kgmaker/confluence-index.json
+

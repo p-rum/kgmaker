@@ -1,0 +1,12 @@
+<!doctype html><html><head><title>Payment Architecture</title></head><body>
+<nav>Export navigation</nav>
+<h1>Payment Architecture</h1>
+<h2>Fraud validation</h2>
+<p>PaymentService calls FraudService.</p>
+<p>Fraud validation exists because transactions above the internal threshold require additional verification.</p>
+<pre class="language-mermaid">flowchart LR
+  PaymentService --> FraudService
+</pre>
+<p><a href="attachments/payment-flow.drawio">Payment flow</a></p>
+</body></html>
+
