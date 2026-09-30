@@ -4,15 +4,15 @@
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
 - Files indexed: 12
-- Symbols and sections: 106
+- Symbols and sections: 107
 - Internal imports: 13
-- Heuristic cross-file calls: 113
+- Heuristic cross-file calls: 115
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
 - TypeScript frontend routes: 0
 - Semantic concepts: 0
-- Inferred/ambiguous relationships: 113/0
+- Inferred/ambiguous relationships: 115/0
 
 ## Architecture diagram
 
@@ -82,19 +82,19 @@ flowchart LR
 ### `src/kgmaker/cli.py`
 - **function** `_write_if_missing` line 165 — `_write_if_missing(path: Path, text: str, force: bool = False)`
 - **function** `init` line 173 — `init(root: Path, force: bool = False)`
-- **function** `scan` line 208 — `scan(root: Path)`
-- **function** `status` line 224 — `status(root: Path)`
-- **function** `check` line 247 — `check(root: Path)`
-- **function** `docs` line 276 — `docs(root: Path)`
-- **function** `semantic_prepare` line 292 — `semantic_prepare(root: Path)`
-- **function** `semantic_update` line 306 — `semantic_update(root: Path, base_ref: str, note_path: str | None = None)`
-- **function** `semantic_apply` line 369 — `semantic_apply(root: Path)`
-- **function** `semantic_validate` line 389 — `semantic_validate(root: Path)`
-- **function** `impact` line 404 — `impact(root: Path, changed_files: list[str])`
-- **function** `query` line 476 — `query(root: Path, terms: str, limit: int = 10)`
-- **function** `hook_context` line 505 — `hook_context(root: Path)`
-- **function** `build_parser` line 521 — `build_parser`
-- **function** `main` line 573 — `main`
+- **function** `scan` line 208 — `scan(root: Path, generate_docs: bool = True)`
+- **function** `status` line 227 — `status(root: Path)`
+- **function** `check` line 250 — `check(root: Path)`
+- **function** `docs` line 279 — `docs(root: Path)`
+- **function** `semantic_prepare` line 295 — `semantic_prepare(root: Path)`
+- **function** `semantic_update` line 309 — `semantic_update(root: Path, base_ref: str, note_path: str | None = None)`
+- **function** `semantic_apply` line 372 — `semantic_apply(root: Path)`
+- **function** `semantic_validate` line 392 — `semantic_validate(root: Path)`
+- **function** `impact` line 407 — `impact(root: Path, changed_files: list[str])`
+- **function** `query` line 479 — `query(root: Path, terms: str, limit: int = 10)`
+- **function** `hook_context` line 508 — `hook_context(root: Path)`
+- **function** `build_parser` line 524 — `build_parser`
+- **function** `main` line 578 — `main`
 
 ### `src/kgmaker/domain.py`
 - **technology** `Kafka`
@@ -158,30 +158,31 @@ flowchart LR
 - **function** `apply_semantic_layer` line 509 — `apply_semantic_layer(graph: KnowledgeGraph, root: Path)`
 
 ### `src/kgmaker/store.py`
-- **function** `save_graph` line 14 — `save_graph(graph: KnowledgeGraph, root: Path)`
-- **function** `load_graph` line 26 — `load_graph(root: Path)`
-- **function** `render_markdown` line 34 — `render_markdown(graph: KnowledgeGraph)`
-- **function** `render_mermaid` line 111 — `render_mermaid(graph: KnowledgeGraph)`
-- **function** `render_context` line 162 — `render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None = None)`
-- **function** `_edge_details` line 204 — `_edge_details(edge)`
+- **function** `save_graph` line 14 — `save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True)`
+- **function** `load_graph` line 27 — `load_graph(root: Path)`
+- **function** `render_markdown` line 35 — `render_markdown(graph: KnowledgeGraph)`
+- **function** `render_mermaid` line 112 — `render_mermaid(graph: KnowledgeGraph)`
+- **function** `render_context` line 163 — `render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None = None)`
+- **function** `_edge_details` line 205 — `_edge_details(edge)`
 
 ### `tests/test_scanner.py`
 - **class** `ScannerTests` line 15 — `ScannerTests(unittest.TestCase)`
 - **function** `test_extracts_python_symbols_and_internal_imports` line 18 — `test_extracts_python_symbols_and_internal_imports(self)`
 - **function** `test_skips_secrets_and_dependency_folders` line 35 — `test_skips_secrets_and_dependency_folders(self)`
 - **function** `test_persists_and_loads_graph` line 48 — `test_persists_and_loads_graph(self)`
-- **function** `test_mermaid_visualization_groups_symbols_and_shows_imports` line 63 — `test_mermaid_visualization_groups_symbols_and_shows_imports(self)`
-- **function** `test_resolves_python_package_relative_import` line 78 — `test_resolves_python_package_relative_import(self)`
-- **function** `test_init_preserves_existing_user_files` line 93 — `test_init_preserves_existing_user_files(self)`
-- **function** `test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges` line 120 — `test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges(self)`
-- **function** `test_semantic_update_refreshes_only_affected_entries` line 192 — `test_semantic_update_refreshes_only_affected_entries(self)`
-- **function** `test_hook_emits_session_context_json` line 261 — `test_hook_emits_session_context_json(self)`
-- **function** `test_impact_reports_exact_transitive_import_dependents` line 276 — `test_impact_reports_exact_transitive_import_dependents(self)`
-- **function** `test_check_detects_stale_graph_and_docs_regenerate_markdown` line 295 — `test_check_detects_stale_graph_and_docs_regenerate_markdown(self)`
-- **function** `test_check_command_works_without_local_json_index` line 316 — `test_check_command_works_without_local_json_index(self)`
-- **function** `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema` line 329 — `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self)`
-- **function** `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml` line 364 — `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml(self)`
-- **function** `test_links_openapi_server_and_typescript_client_paths` line 396 — `test_links_openapi_server_and_typescript_client_paths(self)`
+- **function** `test_scan_no_docs_skips_markdown_and_mermaid_but_keeps_index` line 63 — `test_scan_no_docs_skips_markdown_and_mermaid_but_keeps_index(self)`
+- **function** `test_mermaid_visualization_groups_symbols_and_shows_imports` line 81 — `test_mermaid_visualization_groups_symbols_and_shows_imports(self)`
+- **function** `test_resolves_python_package_relative_import` line 96 — `test_resolves_python_package_relative_import(self)`
+- **function** `test_init_preserves_existing_user_files` line 111 — `test_init_preserves_existing_user_files(self)`
+- **function** `test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges` line 138 — `test_semantic_layer_uses_stable_ids_and_rejects_stale_or_dangling_edges(self)`
+- **function** `test_semantic_update_refreshes_only_affected_entries` line 210 — `test_semantic_update_refreshes_only_affected_entries(self)`
+- **function** `test_hook_emits_session_context_json` line 279 — `test_hook_emits_session_context_json(self)`
+- **function** `test_impact_reports_exact_transitive_import_dependents` line 294 — `test_impact_reports_exact_transitive_import_dependents(self)`
+- **function** `test_check_detects_stale_graph_and_docs_regenerate_markdown` line 313 — `test_check_detects_stale_graph_and_docs_regenerate_markdown(self)`
+- **function** `test_check_command_works_without_local_json_index` line 334 — `test_check_command_works_without_local_json_index(self)`
+- **function** `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema` line 347 — `test_maps_kotlin_entities_repositories_and_columns_to_postgres_schema(self)`
+- **function** `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml` line 382 — `test_finds_kafka_topics_and_postgres_connection_from_kotlin_and_yaml(self)`
+- **function** `test_links_openapi_server_and_typescript_client_paths` line 414 — `test_links_openapi_server_and_typescript_client_paths(self)`
 
 ## Internal relationships
 
@@ -198,34 +199,34 @@ flowchart LR
 - `tests/test_scanner.py` imports `src/kgmaker/scanner.py` (kgmaker.scanner)
 - `tests/test_scanner.py` imports `src/kgmaker/semantic.py` (kgmaker.semantic)
 - `tests/test_scanner.py` imports `src/kgmaker/store.py` (kgmaker.store)
-- `src/kgmaker/__main__.py` may call `573 in `src/kgmaker/cli.py`` (name match at line 3; INFERRED 0.85)
+- `src/kgmaker/__main__.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 3; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 211; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 231; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 251; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 296; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 311; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 376; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 396; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 510; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 234; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 254; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 299; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 314; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 379; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 399; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 513; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 211; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 231; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 251; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 510; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `397 in `src/kgmaker/semantic.py`` (name match at line 377; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `49 in `src/kgmaker/semantic.py`` (name match at line 297; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `93 in `src/kgmaker/semantic.py`` (name match at line 397; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `26 in `src/kgmaker/store.py`` (name match at line 227; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `26 in `src/kgmaker/store.py`` (name match at line 280; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `26 in `src/kgmaker/store.py`` (name match at line 310; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `26 in `src/kgmaker/store.py`` (name match at line 408; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `26 in `src/kgmaker/store.py`` (name match at line 479; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `162 in `src/kgmaker/store.py`` (name match at line 514; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `34 in `src/kgmaker/store.py`` (name match at line 256; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `34 in `src/kgmaker/store.py`` (name match at line 286; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `111 in `src/kgmaker/store.py`` (name match at line 258; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `111 in `src/kgmaker/store.py`` (name match at line 288; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 234; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 254; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 513; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `397 in `src/kgmaker/semantic.py`` (name match at line 380; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `49 in `src/kgmaker/semantic.py`` (name match at line 300; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `93 in `src/kgmaker/semantic.py`` (name match at line 400; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `27 in `src/kgmaker/store.py`` (name match at line 230; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `27 in `src/kgmaker/store.py`` (name match at line 283; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `27 in `src/kgmaker/store.py`` (name match at line 313; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `27 in `src/kgmaker/store.py`` (name match at line 411; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `27 in `src/kgmaker/store.py`` (name match at line 482; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `163 in `src/kgmaker/store.py`` (name match at line 517; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `35 in `src/kgmaker/store.py`` (name match at line 259; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `35 in `src/kgmaker/store.py`` (name match at line 289; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `112 in `src/kgmaker/store.py`` (name match at line 261; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `112 in `src/kgmaker/store.py`` (name match at line 291; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `14 in `src/kgmaker/store.py`` (name match at line 212; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `14 in `src/kgmaker/store.py`` (name match at line 513; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `14 in `src/kgmaker/store.py`` (name match at line 516; INFERRED 0.85)
 - `src/kgmaker/domain.py` may call `21 in `src/kgmaker/model.py`` (name match at line 118; INFERRED 0.85)
 - `src/kgmaker/domain.py` may call `21 in `src/kgmaker/model.py`` (name match at line 135; INFERRED 0.85)
 - `src/kgmaker/domain.py` may call `21 in `src/kgmaker/model.py`` (name match at line 155; INFERRED 0.85)
@@ -259,57 +260,59 @@ flowchart LR
 - `src/kgmaker/scanner.py` may call `515 in `src/kgmaker/domain.py`` (name match at line 303; INFERRED 0.85)
 - `src/kgmaker/semantic.py` may call `21 in `src/kgmaker/model.py`` (name match at line 189; INFERRED 0.85)
 - `src/kgmaker/semantic.py` may call `10 in `src/kgmaker/model.py`` (name match at line 140; INFERRED 0.85)
-- `src/kgmaker/store.py` may call `52 in `src/kgmaker/model.py`` (name match at line 31; INFERRED 0.85)
+- `src/kgmaker/store.py` may call `52 in `src/kgmaker/model.py`` (name match at line 32; INFERRED 0.85)
 - `src/kgmaker/store.py` may call `40 in `src/kgmaker/model.py`` (name match at line 22; INFERRED 0.85)
-- `tests/test_scanner.py` may call `247 in `src/kgmaker/cli.py`` (name match at line 302; INFERRED 0.85)
-- `tests/test_scanner.py` may call `247 in `src/kgmaker/cli.py`` (name match at line 306; INFERRED 0.85)
-- `tests/test_scanner.py` may call `247 in `src/kgmaker/cli.py`` (name match at line 309; INFERRED 0.85)
-- `tests/test_scanner.py` may call `276 in `src/kgmaker/cli.py`` (name match at line 313; INFERRED 0.85)
-- `tests/test_scanner.py` may call `505 in `src/kgmaker/cli.py`` (name match at line 271; INFERRED 0.85)
-- `tests/test_scanner.py` may call `404 in `src/kgmaker/cli.py`` (name match at line 290; INFERRED 0.85)
-- `tests/test_scanner.py` may call `173 in `src/kgmaker/cli.py`` (name match at line 101; INFERRED 0.85)
-- `tests/test_scanner.py` may call `573 in `src/kgmaker/cli.py`` (name match at line 21; INFERRED 0.85)
-- `tests/test_scanner.py` may call `573 in `src/kgmaker/cli.py`` (name match at line 268; INFERRED 0.85)
-- `tests/test_scanner.py` may call `573 in `src/kgmaker/cli.py`` (name match at line 327; INFERRED 0.85)
-- `tests/test_scanner.py` may call `573 in `src/kgmaker/cli.py`` (name match at line 452; INFERRED 0.85)
-- `tests/test_scanner.py` may call `369 in `src/kgmaker/cli.py`` (name match at line 251; INFERRED 0.85)
-- `tests/test_scanner.py` may call `369 in `src/kgmaker/cli.py`` (name match at line 260; INFERRED 0.85)
-- `tests/test_scanner.py` may call `306 in `src/kgmaker/cli.py`` (name match at line 233; INFERRED 0.85)
-- `tests/test_scanner.py` may call `389 in `src/kgmaker/cli.py`` (name match at line 163; INFERRED 0.85)
-- `tests/test_scanner.py` may call `389 in `src/kgmaker/cli.py`` (name match at line 256; INFERRED 0.85)
+- `tests/test_scanner.py` may call `250 in `src/kgmaker/cli.py`` (name match at line 320; INFERRED 0.85)
+- `tests/test_scanner.py` may call `250 in `src/kgmaker/cli.py`` (name match at line 324; INFERRED 0.85)
+- `tests/test_scanner.py` may call `250 in `src/kgmaker/cli.py`` (name match at line 327; INFERRED 0.85)
+- `tests/test_scanner.py` may call `279 in `src/kgmaker/cli.py`` (name match at line 331; INFERRED 0.85)
+- `tests/test_scanner.py` may call `279 in `src/kgmaker/cli.py`` (name match at line 78; INFERRED 0.85)
+- `tests/test_scanner.py` may call `508 in `src/kgmaker/cli.py`` (name match at line 289; INFERRED 0.85)
+- `tests/test_scanner.py` may call `407 in `src/kgmaker/cli.py`` (name match at line 308; INFERRED 0.85)
+- `tests/test_scanner.py` may call `173 in `src/kgmaker/cli.py`` (name match at line 119; INFERRED 0.85)
+- `tests/test_scanner.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 21; INFERRED 0.85)
+- `tests/test_scanner.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 286; INFERRED 0.85)
+- `tests/test_scanner.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 345; INFERRED 0.85)
+- `tests/test_scanner.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 470; INFERRED 0.85)
+- `tests/test_scanner.py` may call `578 in `src/kgmaker/cli.py`` (name match at line 72; INFERRED 0.85)
+- `tests/test_scanner.py` may call `372 in `src/kgmaker/cli.py`` (name match at line 269; INFERRED 0.85)
+- `tests/test_scanner.py` may call `372 in `src/kgmaker/cli.py`` (name match at line 278; INFERRED 0.85)
+- `tests/test_scanner.py` may call `309 in `src/kgmaker/cli.py`` (name match at line 251; INFERRED 0.85)
+- `tests/test_scanner.py` may call `392 in `src/kgmaker/cli.py`` (name match at line 181; INFERRED 0.85)
+- `tests/test_scanner.py` may call `392 in `src/kgmaker/cli.py`` (name match at line 274; INFERRED 0.85)
 - `tests/test_scanner.py` may call `40 in `src/kgmaker/model.py`` (name match at line 47; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 132; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 175; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 181; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 189; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 208; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 229; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 106; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 150; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 193; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 199; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 207; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 226; INFERRED 0.85)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 24; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 286; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 301; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 323; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 355; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 388; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 436; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 247; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 304; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 319; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 341; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 373; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 406; INFERRED 0.85)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 44; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 454; INFERRED 0.85)
 - `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 53; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 69; INFERRED 0.85)
-- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 88; INFERRED 0.85)
-- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 164; INFERRED 0.85)
-- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 175; INFERRED 0.85)
-- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 181; INFERRED 0.85)
-- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 189; INFERRED 0.85)
-- `tests/test_scanner.py` may call `49 in `src/kgmaker/semantic.py`` (name match at line 133; INFERRED 0.85)
-- `tests/test_scanner.py` may call `32 in `src/kgmaker/semantic.py`` (name match at line 138; INFERRED 0.85)
-- `tests/test_scanner.py` may call `32 in `src/kgmaker/semantic.py`` (name match at line 213; INFERRED 0.85)
-- `tests/test_scanner.py` may call `26 in `src/kgmaker/store.py`` (name match at line 56; INFERRED 0.85)
-- `tests/test_scanner.py` may call `162 in `src/kgmaker/store.py`` (name match at line 171; INFERRED 0.85)
-- `tests/test_scanner.py` may call `34 in `src/kgmaker/store.py`` (name match at line 170; INFERRED 0.85)
-- `tests/test_scanner.py` may call `111 in `src/kgmaker/store.py`` (name match at line 71; INFERRED 0.85)
-- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 209; INFERRED 0.85)
-- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 286; INFERRED 0.85)
-- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 301; INFERRED 0.85)
-- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 323; INFERRED 0.85)
+- `tests/test_scanner.py` may call `216 in `src/kgmaker/scanner.py`` (name match at line 87; INFERRED 0.85)
+- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 182; INFERRED 0.85)
+- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 193; INFERRED 0.85)
+- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 199; INFERRED 0.85)
+- `tests/test_scanner.py` may call `509 in `src/kgmaker/semantic.py`` (name match at line 207; INFERRED 0.85)
+- `tests/test_scanner.py` may call `49 in `src/kgmaker/semantic.py`` (name match at line 151; INFERRED 0.85)
+- `tests/test_scanner.py` may call `32 in `src/kgmaker/semantic.py`` (name match at line 156; INFERRED 0.85)
+- `tests/test_scanner.py` may call `32 in `src/kgmaker/semantic.py`` (name match at line 231; INFERRED 0.85)
+- `tests/test_scanner.py` may call `27 in `src/kgmaker/store.py`` (name match at line 56; INFERRED 0.85)
+- `tests/test_scanner.py` may call `163 in `src/kgmaker/store.py`` (name match at line 189; INFERRED 0.85)
+- `tests/test_scanner.py` may call `35 in `src/kgmaker/store.py`` (name match at line 188; INFERRED 0.85)
+- `tests/test_scanner.py` may call `112 in `src/kgmaker/store.py`` (name match at line 89; INFERRED 0.85)
+- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 227; INFERRED 0.85)
+- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 304; INFERRED 0.85)
+- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 319; INFERRED 0.85)
+- `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 341; INFERRED 0.85)
 - `tests/test_scanner.py` may call `14 in `src/kgmaker/store.py`` (name match at line 54; INFERRED 0.85)
 - `src/kgmaker/domain.py` **connects_to** technology `PostgreSQL` in `src/kgmaker/domain.py` — PostgreSQL driver or connection string
 - `src/kgmaker/domain.py` **uses_messaging** technology `Kafka` in `src/kgmaker/domain.py` — Kafka import, client, annotation, or configuration

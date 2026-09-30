@@ -27,9 +27,9 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 ```text
 kgmaker init [--root PATH] [--force]
-kgmaker scan [--root PATH]
-kgmaker build [--root PATH]
-kgmaker update [--root PATH]
+kgmaker scan [--root PATH] [--no-docs]
+kgmaker build [--root PATH] [--no-docs]
+kgmaker update [--root PATH] [--no-docs]
 kgmaker status [--root PATH]
 kgmaker check [--root PATH]
 kgmaker docs [--root PATH]
@@ -41,7 +41,7 @@ kgmaker semantic validate [--root PATH]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 ```
 
-- `scan` writes `.kgmaker/graph.json`, generated architecture documentation in `.kgmaker/GRAPH.md`, and a standalone Mermaid diagram in `.kgmaker/GRAPH.mmd`. The Markdown embeds the diagram for GitHub rendering; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`.
+- `scan` writes `.kgmaker/graph.json`, generated architecture documentation in `.kgmaker/GRAPH.md`, and a standalone Mermaid diagram in `.kgmaker/GRAPH.mmd`. The Markdown embeds the diagram for GitHub rendering; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`. Use `--no-docs` to update only the machine index and skip both generated views; `kgmaker docs` can create them later.
 - `build` and `update` currently perform a full scan, like `scan`.
 - `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown documentation and Mermaid diagram, so it works in CI without `.kgmaker/graph.json`.
 - `docs` regenerates `.kgmaker/GRAPH.md` and `.kgmaker/GRAPH.mmd` from the local machine index. The diagram groups code declarations by file and shows imports plus detected database, Kafka, API, frontend, and semantic relationships. Heuristic call edges are left out to keep the architecture view readable.

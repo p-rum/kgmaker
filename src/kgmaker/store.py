@@ -13,15 +13,16 @@ MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
-def save_graph(graph: KnowledgeGraph, root: Path) -> tuple[Path, Path]:
+def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True) -> tuple[Path, Path]:
     state_dir = root / STATE_DIR
     state_dir.mkdir(parents=True, exist_ok=True)
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
     mermaid_path = root / MERMAID_FILE
     graph_path.write_text(json.dumps(graph.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    mermaid_path.write_text(render_mermaid(graph), encoding="utf-8")
-    markdown_path.write_text(render_markdown(graph), encoding="utf-8")
+    if generate_docs:
+        mermaid_path.write_text(render_mermaid(graph), encoding="utf-8")
+        markdown_path.write_text(render_markdown(graph), encoding="utf-8")
     return graph_path, markdown_path
 
 

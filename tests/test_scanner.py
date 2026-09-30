@@ -61,6 +61,24 @@ class ScannerTests(unittest.TestCase):
             self.assertTrue((root / ".kgmaker" / "GRAPH.md").exists())
             self.assertTrue((root / ".kgmaker" / "GRAPH.mmd").exists())
 
+    def test_scan_no_docs_skips_markdown_and_mermaid_but_keeps_index(self) -> None:
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "app.py").write_text("def start():\n    pass\n", encoding="utf-8")
+            with patch("sys.argv", ["kgmaker", "scan", "--root", str(root), "--no-docs"]):
+                with self.assertRaises(SystemExit) as error:
+                    main()
+
+            self.assertEqual(error.exception.code, 0)
+            self.assertTrue((root / ".kgmaker" / "graph.json").exists())
+            self.assertFalse((root / ".kgmaker" / "GRAPH.md").exists())
+            self.assertFalse((root / ".kgmaker" / "GRAPH.mmd").exists())
+            self.assertEqual(docs(root), 0)
+            self.assertTrue((root / ".kgmaker" / "GRAPH.md").exists())
+            self.assertTrue((root / ".kgmaker" / "GRAPH.mmd").exists())
+
     def test_mermaid_visualization_groups_symbols_and_shows_imports(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

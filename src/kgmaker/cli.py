@@ -207,15 +207,18 @@ def init(root: Path, force: bool = False) -> int:
     return 0
 
 
-def scan(root: Path) -> int:
+def scan(root: Path, generate_docs: bool = True) -> int:
     graph, semantic_counts, semantic_error = apply_semantic_layer(scan_repository(root), root)
-    graph_path, markdown_path = save_graph(graph, root)
+    graph_path, markdown_path = save_graph(graph, root, generate_docs=generate_docs)
     file_count = sum(node.kind == "file" for node in graph.nodes)
     symbol_count = len(graph.nodes) - file_count
     print(f"Indexed {file_count} files, {symbol_count} declarations/sections, and {len(graph.edges)} relationships.")
     print(f"Machine index: {graph_path.relative_to(root)}")
-    print(f"Human view: {markdown_path.relative_to(root)}")
-    print(f"Diagram: {(root / MERMAID_FILE).relative_to(root)}")
+    if generate_docs:
+        print(f"Human view: {markdown_path.relative_to(root)}")
+        print(f"Diagram: {(root / MERMAID_FILE).relative_to(root)}")
+    else:
+        print("Documentation and diagram generation skipped (--no-docs).")
     if semantic_counts != (0, 0):
         print(f"Semantic layer: {semantic_counts[0]} concepts, {semantic_counts[1]} relationships.")
     if semantic_error:
@@ -531,10 +534,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan_parser = sub.add_parser("scan", help="scan source files and update the local graph")
     scan_parser.add_argument("--root", type=Path, default=Path.cwd())
+    scan_parser.add_argument("--no-docs", action="store_true", help="skip writing GRAPH.md and GRAPH.mmd")
 
     for command in ("build", "update"):
         alias_parser = sub.add_parser(command, help=f"{command} the repository graph (full scan)")
         alias_parser.add_argument("--root", type=Path, default=Path.cwd())
+        alias_parser.add_argument("--no-docs", action="store_true", help="skip writing GRAPH.md and GRAPH.mmd")
 
     status_parser = sub.add_parser("status", help="check whether the stored graph matches current source")
     status_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -579,7 +584,7 @@ def main() -> None:
     if args.command == "init":
         code = init(root, args.force)
     elif args.command in {"scan", "build", "update"}:
-        code = scan(root)
+        code = scan(root, generate_docs=not args.no_docs)
     elif args.command == "status":
         code = status(root)
     elif args.command == "check":
