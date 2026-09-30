@@ -18,6 +18,8 @@ SEMANTIC_UPDATE_MARKDOWN = Path(".kgmaker/semantic-update.md")
 SEMANTIC_PATCH_FILE = Path(".kgmaker/semantic-patch.json")
 SEMANTIC_SCHEMA_VERSION = 2
 SEMANTIC_UPDATE_SCHEMA_VERSION = 1
+DEFAULT_SEMANTIC_TOKEN_BUDGET = 4_000
+CHARS_PER_TOKEN_ESTIMATE = 4
 SEMANTIC_RELATIONS = {
     "calls", "implements", "references", "cites", "owns", "models", "validates",
     "persists_to", "publishes", "consumes", "calls_endpoint", "depends_on", "uses",
@@ -224,8 +226,17 @@ def build_semantic_update(
     note_path: str | None = None,
     previous_graph: KnowledgeGraph | None = None,
     max_diff_chars: int = 16_000,
+    token_budget: int | None = None,
 ) -> dict[str, Any]:
     """Build a token-bounded change packet from Git diff and the relevant graph neighborhood."""
+    if token_budget is not None and (isinstance(token_budget, bool) or not isinstance(token_budget, int) or token_budget < 1):
+        raise SemanticValidationError("token budget must be a positive integer")
+    if isinstance(max_diff_chars, bool) or not isinstance(max_diff_chars, int) or max_diff_chars < 1:
+        raise SemanticValidationError("max diff chars must be a positive integer")
+    effective_token_budget = token_budget or min(
+        DEFAULT_SEMANTIC_TOKEN_BUDGET, max(1, max_diff_chars // CHARS_PER_TOKEN_ESTIMATE)
+    )
+    diff_budget = min(max_diff_chars, effective_token_budget * CHARS_PER_TOKEN_ESTIMATE)
     root = root.resolve()
     repo_root = Path(_run_git(root, "rev-parse", "--show-toplevel").strip()).resolve()
     if repo_root != root:
@@ -249,7 +260,7 @@ def build_semantic_update(
     changed = {path: status for path, status in changed.items() if path in eligible_paths}
 
     changed_files: list[dict[str, Any]] = []
-    budget = max_diff_chars
+    budget = diff_budget
     for path, status in sorted(changed.items()):
         if _is_sensitive_path(path):
             changed_files.append({"path": path, "status": status, "sensitive": True, "diff": ""})
@@ -271,7 +282,8 @@ def build_semantic_update(
             diff_text = _run_git(root, "diff", "--no-ext-diff", "--no-color", "--unified=3", resolved_base, "--", path, check=False)
         truncated = len(diff_text) > budget
         if truncated:
-            diff_text = diff_text[:max(0, budget)] + "\n[diff truncated to fit the semantic update context budget]\n"
+            marker = "\n[diff truncated]\n"
+            diff_text = diff_text[:max(0, budget - len(marker))] + marker
         budget = max(0, budget - len(diff_text))
         changed_files.append({
             "path": path,
@@ -389,6 +401,8 @@ def build_semantic_update(
         "affected_semantic_edges": affected_semantic_edges,
         "change_note": note,
         "legacy_artifact": legacy_artifact,
+        "token_budget": effective_token_budget,
+        "estimated_diff_tokens": sum(len(item.get("diff", "")) for item in changed_files) // CHARS_PER_TOKEN_ESTIMATE,
     }
     core["update_id"] = hashlib.sha256(
         json.dumps(core, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")

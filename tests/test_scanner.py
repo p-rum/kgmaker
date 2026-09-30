@@ -248,10 +248,13 @@ class ScannerTests(unittest.TestCase):
             from contextlib import redirect_stdout
             import io
             with redirect_stdout(io.StringIO()):
-                self.assertEqual(semantic_update(root, base), 0)
+                self.assertEqual(semantic_update(root, base, token_budget=10), 0)
             update = json.loads((root / SEMANTIC_UPDATE_FILE).read_text(encoding="utf-8"))
             self.assertTrue((root / ".kgmaker" / "semantic-update.md").exists())
             review_note = (root / ".kgmaker" / "semantic-update.md").read_text(encoding="utf-8")
+            self.assertEqual(update["token_budget"], 10)
+            self.assertLessEqual(update["estimated_diff_tokens"], 10)
+            self.assertIn("Requested token budget (approx.): 10", review_note)
             self.assertIn("before", review_note)
             self.assertIn("after", review_note)
             self.assertEqual([item["path"] for item in update["changed_files"]], ["service.py"])
@@ -291,6 +294,12 @@ class ScannerTests(unittest.TestCase):
             result = json.loads(output.getvalue())
             self.assertIn("additionalContext", result)
             self.assertIn("app.py", result["additionalContext"])
+
+            limited = io.StringIO()
+            with redirect_stdout(limited):
+                self.assertEqual(hook_context(root, token_budget=100), 0)
+            limited_result = json.loads(limited.getvalue())
+            self.assertLessEqual(len(limited_result["additionalContext"]), 400)
 
     def test_impact_reports_exact_transitive_import_dependents(self) -> None:
         import io

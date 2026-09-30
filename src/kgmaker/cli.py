@@ -10,6 +10,7 @@ from pathlib import Path
 from . import __version__
 from .scanner import scan_repository
 from .semantic import (
+    CHARS_PER_TOKEN_ESTIMATE,
     SEMANTIC_FILE,
     SEMANTIC_INPUT_FILE,
     SEMANTIC_PATCH_FILE,
@@ -101,8 +102,8 @@ You produce the optional semantic relationship layer for kgmaker. The running Co
 
 ## Incremental update
 
-1. After a code or documentation change, run `kgmaker semantic update --base <base-ref>`. Use the merge base of the branch/PR (for example `origin/main`) or the commit before the change. Add `--note path/to/change-note.md` when the diff does not explain the intent.
-2. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`. The JSON contains bounded diffs, changed-file hashes, changed declarations, their immediate graph neighborhood, and only semantic entries that may need review. Sensitive file paths are listed without their content.
+1. After a code or documentation change, run `kgmaker semantic update --base <base-ref>`. Use the merge base of the branch/PR (for example `origin/main`) or the commit before the change. Add `--note path/to/change-note.md` when the diff does not explain the intent. Use `--token-budget N` to cap the approximate changed-file context sent to this agent (about four characters per token); the default is about 4,000 tokens.
+2. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`. The JSON contains bounded diffs, changed-file hashes, changed declarations, their immediate graph neighborhood, and only semantic entries that may need review. Sensitive file paths are listed without their content. Respect the requested token budget and keep the generated patch concise; the limit controls kgmaker's context packet, while the host Copilot model may apply its own output limits.
 3. Inspect the changed source files as needed. Create `.kgmaker/semantic-patch.json` with the packet's exact `update_id`, replacement concepts and relationships, and optional removals:
 
 ```json
@@ -308,12 +309,12 @@ def semantic_prepare(root: Path) -> int:
     return 0
 
 
-def semantic_update(root: Path, base_ref: str, note_path: str | None = None) -> int:
+def semantic_update(root: Path, base_ref: str, note_path: str | None = None, token_budget: int | None = None) -> int:
     """Prepare a token-bounded semantic update package from Git changes."""
     previous_graph = load_graph(root)
     graph = scan_repository(root)
     try:
-        update = build_semantic_update(graph, root, base_ref, note_path, previous_graph)
+        update = build_semantic_update(graph, root, base_ref, note_path, previous_graph, token_budget=token_budget)
     except SemanticValidationError as error:
         print(f"Could not prepare semantic update: {error}", file=sys.stderr)
         return 2
@@ -347,6 +348,8 @@ Changed files: {len(update['changed_files'])}
 Affected graph nodes: {len(update['context_nodes'])}  
 Existing semantic entries to review: {len(update['affected_semantic_nodes'])} concepts and {len(update['affected_semantic_edges'])} relationships  
 Diffs truncated by context budget: {truncated_diffs}  
+Requested token budget (approx.): {update['token_budget']}  
+Estimated diff tokens: {update['estimated_diff_tokens']}  
 Nearby graph context truncated: {update['context_nodes_truncated'] or update['context_edges_truncated']}
 {note}{legacy}
 ## Changed paths
@@ -507,14 +510,17 @@ def query(root: Path, terms: str, limit: int = 10) -> int:
     return 0
 
 
-def hook_context(root: Path) -> int:
+def hook_context(root: Path, token_budget: int | None = None) -> int:
     """Refresh the graph and emit sessionStart additionalContext as JSON."""
     try:
+        if token_budget is not None and (isinstance(token_budget, bool) or not isinstance(token_budget, int) or token_budget < 1):
+            raise ValueError("token budget must be a positive integer")
         graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
         if semantic_error:
             print(f"kgmaker omitted stale semantic entries: {semantic_error}", file=sys.stderr)
         save_graph(graph, root)
-        context = render_context(graph, root=root)
+        context_limit = max(80, token_budget * CHARS_PER_TOKEN_ESTIMATE) if token_budget else 8_000
+        context = render_context(graph, limit=context_limit, root=root)
         sys.stdout.write(json.dumps({"additionalContext": context}, ensure_ascii=False) + "\n")
         return 0
     except Exception as error:  # hooks must not break a Copilot session
@@ -560,6 +566,7 @@ def build_parser() -> argparse.ArgumentParser:
     semantic_update_parser.add_argument("--root", type=Path, default=Path.cwd())
     semantic_update_parser.add_argument("--base", default="HEAD~1", help="Git commit/ref to diff against (default: HEAD~1)")
     semantic_update_parser.add_argument("--note", help="optional Markdown note explaining the intent of the change")
+    semantic_update_parser.add_argument("--token-budget", type=int, help="approximate maximum token budget for changed-file context")
     semantic_apply_parser = semantic_sub.add_parser("apply", help="merge the agent's scoped semantic patch")
     semantic_apply_parser.add_argument("--root", type=Path, default=Path.cwd())
 
@@ -574,6 +581,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     hook_parser = sub.add_parser("hook-context", help=argparse.SUPPRESS)
     hook_parser.add_argument("--root", type=Path, default=Path.cwd())
+    hook_parser.add_argument("--token-budget", type=int, help="approximate token budget for Copilot session context")
     return parser
 
 
@@ -596,7 +604,7 @@ def main() -> None:
     elif args.command == "semantic" and args.semantic_command == "validate":
         code = semantic_validate(root)
     elif args.command == "semantic" and args.semantic_command == "update":
-        code = semantic_update(root, args.base, args.note)
+        code = semantic_update(root, args.base, args.note, args.token_budget)
     elif args.command == "semantic" and args.semantic_command == "apply":
         code = semantic_apply(root)
     elif args.command == "impact":
@@ -604,7 +612,7 @@ def main() -> None:
     elif args.command == "query":
         code = query(root, " ".join(args.terms), args.limit)
     elif args.command == "hook-context":
-        code = hook_context(root)
+        code = hook_context(root, args.token_budget)
     else:
         parser.error("unknown command")
         return

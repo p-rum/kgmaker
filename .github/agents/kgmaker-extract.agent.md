@@ -16,8 +16,8 @@ You produce the optional semantic relationship layer for kgmaker. The running Co
 
 ## Incremental update
 
-1. After a code or documentation change, run `kgmaker semantic update --base <base-ref>`. Use the merge base of the branch/PR (for example `origin/main`) or the commit before the change. Add `--note path/to/change-note.md` when the diff does not explain the intent.
-2. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`. The JSON contains bounded diffs, changed-file hashes, changed declarations, their immediate graph neighborhood, and only semantic entries that may need review. Sensitive file paths are listed without their content.
+1. After a code or documentation change, run `kgmaker semantic update --base <base-ref>`. Use the merge base of the branch/PR (for example `origin/main`) or the commit before the change. Add `--note path/to/change-note.md` when the diff does not explain the intent. Use `--token-budget N` to cap the approximate changed-file context sent to this agent (about four characters per token); the default is about 4,000 tokens.
+2. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`. The JSON contains bounded diffs, changed-file hashes, changed declarations, their immediate graph neighborhood, and only semantic entries that may need review. Sensitive file paths are listed without their content. Respect the requested token budget and keep the generated patch concise; the limit controls kgmaker's context packet, while the host Copilot model may apply its own output limits.
 3. Inspect the changed source files as needed. Create `.kgmaker/semantic-patch.json` with the packet's exact `update_id`, replacement concepts and relationships, and optional removals:
 
 ```json
