@@ -6,10 +6,10 @@ kgmaker has four small layers:
 2. `domain.py` extracts PostgreSQL schema objects, Kotlin/JVM persistence links, Kafka topics, service/API references, OpenAPI endpoints, and TypeScript app routes.
 3. `model.py` holds stable node and edge records.
 4. `semantic.py` prepares stable node inventories, tracks source hashes per file, prepares Git-diff update packets, validates scoped agent patches, and merges only affected changes while preserving unrelated semantics.
-5. `store.py` writes the machine-readable graph and a readable Markdown map, and prepares a compact session context.
+5. `store.py` writes the machine-readable graph, generated Markdown architecture documentation with an embedded Mermaid view, a standalone Mermaid diagram, and compact session context.
 6. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, and the Copilot hook command.
 
-The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md` and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker check` compares a fresh render against the committed Markdown snapshot and can run in CI without the local JSON index.
+The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md`, `.kgmaker/GRAPH.mmd`, and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker check` compares fresh Markdown and Mermaid renders against the committed snapshots and can run in CI without the local JSON index.
 
 ## Relationship confidence
 

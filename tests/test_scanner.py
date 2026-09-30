@@ -11,7 +11,7 @@ from kgmaker.semantic import (
     SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE,
     apply_semantic_layer, build_semantic_input, concept_id,
 )
-from kgmaker.store import load_graph, render_context, render_markdown, save_graph
+from kgmaker.store import load_graph, render_context, render_markdown, render_mermaid, save_graph
 
 
 class ScannerTests(unittest.TestCase):
@@ -59,6 +59,22 @@ class ScannerTests(unittest.TestCase):
             assert loaded is not None
             self.assertEqual(loaded.files, graph.files)
             self.assertTrue((root / ".kgmaker" / "GRAPH.md").exists())
+            self.assertTrue((root / ".kgmaker" / "GRAPH.mmd").exists())
+
+    def test_mermaid_visualization_groups_symbols_and_shows_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "app.py").write_text("from service import build\n", encoding="utf-8")
+            (root / "service.py").write_text("def build():\n    pass\n", encoding="utf-8")
+            graph = scan_repository(root)
+
+            diagram = render_mermaid(graph)
+
+            self.assertIn("flowchart LR", diagram)
+            self.assertIn("app.py", diagram)
+            self.assertIn("service.py", diagram)
+            self.assertIn("|imports|", diagram)
+            self.assertNotIn("build()", diagram)
 
     def test_resolves_python_package_relative_import(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -285,12 +301,18 @@ class ScannerTests(unittest.TestCase):
             save_graph(scan_repository(root), root)
             self.assertEqual(check(root), 0)
 
+            mermaid = root / ".kgmaker" / "GRAPH.mmd"
+            mermaid.write_text("stale", encoding="utf-8")
+            self.assertEqual(check(root), 2)
+
             source.write_text("def second():\n    pass\n", encoding="utf-8")
             self.assertEqual(check(root), 2)
             markdown = root / ".kgmaker" / "GRAPH.md"
+            mermaid = root / ".kgmaker" / "GRAPH.mmd"
             markdown.write_text("stale", encoding="utf-8")
             self.assertEqual(docs(root), 0)
             self.assertIn("first", markdown.read_text(encoding="utf-8"))
+            self.assertIn("flowchart LR", mermaid.read_text(encoding="utf-8"))
 
     def test_check_command_works_without_local_json_index(self) -> None:
         from unittest.mock import patch

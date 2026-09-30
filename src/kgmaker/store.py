@@ -10,6 +10,7 @@ from .model import KnowledgeGraph
 STATE_DIR = Path(".kgmaker")
 GRAPH_FILE = STATE_DIR / "graph.json"
 MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
+MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
 def save_graph(graph: KnowledgeGraph, root: Path) -> tuple[Path, Path]:
@@ -17,7 +18,9 @@ def save_graph(graph: KnowledgeGraph, root: Path) -> tuple[Path, Path]:
     state_dir.mkdir(parents=True, exist_ok=True)
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
+    mermaid_path = root / MERMAID_FILE
     graph_path.write_text(json.dumps(graph.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    mermaid_path.write_text(render_mermaid(graph), encoding="utf-8")
     markdown_path.write_text(render_markdown(graph), encoding="utf-8")
     return graph_path, markdown_path
 
@@ -62,6 +65,14 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         f"- Semantic concepts: {by_kind['concept']}",
         f"- Inferred/ambiguous relationships: {inferred_edges}/{ambiguous_edges}",
         "",
+        "## Architecture diagram",
+        "",
+        "The diagram groups declarations under their source files and shows detected imports and domain relationships. Heuristic call edges are omitted. An editable standalone Mermaid source is available at `.kgmaker/GRAPH.mmd`.",
+        "",
+        "```mermaid",
+        render_mermaid(graph).rstrip(),
+        "```",
+        "",
         "## Files and symbols",
         "",
     ]
@@ -97,6 +108,57 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         lines.append("- No internal relationships were detected.")
     lines.extend(["", "## Reading this graph", "", "File and symbol locations are repository-relative. `contains` edges bind declarations to their files. Domain edges such as `maps_to_table`, `consumes`, and `calls_endpoint` record annotations, SQL definitions, configuration, or literal paths found in source. `calls` edges are conservative name matches and must be verified before relying on them.", ""])
     return "\n".join(lines)
+
+
+def render_mermaid(graph: KnowledgeGraph) -> str:
+    """Render a compact architecture map, grouping code symbols by source file."""
+    file_nodes = {node.id: node for node in graph.nodes if node.kind == "file"}
+    file_by_path = {node.path: node.id for node in file_nodes.values()}
+    all_nodes = {node.id: node for node in graph.nodes}
+
+    # Preserve meaningful domain objects as distinct vertices. Source declarations
+    # are represented by their file to keep the diagram navigable on larger repos.
+    domain_kinds = {
+        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
+        "external_service", "technology", "concept",
+    }
+    selected: dict[str, tuple[str, str]] = {}
+    for node in graph.nodes:
+        if node.kind == "file":
+            selected[node.id] = (node.path, "file")
+        elif node.kind in domain_kinds:
+            selected[node.id] = (f"{node.kind}: {node.name}", node.kind)
+
+    relationships: set[tuple[str, str, str]] = set()
+    for edge in graph.edges:
+        if edge.kind in {"contains", "calls"}:
+            continue
+        source = all_nodes.get(edge.source)
+        target = all_nodes.get(edge.target)
+        if source is None or target is None:
+            continue
+        source_id = source.id if source.id in selected else file_by_path.get(source.path)
+        target_id = target.id if target.id in selected else file_by_path.get(target.path)
+        if source_id and target_id and source_id != target_id:
+            relationships.add((source_id, target_id, edge.kind))
+
+    used_ids = {endpoint for source, target, _ in relationships for endpoint in (source, target)}
+    used_ids.update(node_id for node_id, (_, kind) in selected.items() if kind != "file")
+    id_map = {node_id: f"n{index}" for index, node_id in enumerate(sorted(used_ids))}
+    lines = ["flowchart LR"]
+    for node_id in sorted(used_ids):
+        label, kind = selected[node_id]
+        safe_label = " ".join(label.replace('"', "'").replace("[", "(").replace("]", ")").split())
+        if kind == "file":
+            lines.append(f'  {id_map[node_id]}["{safe_label}"]')
+        else:
+            lines.append(f'  {id_map[node_id]}{{"{safe_label}"}}')
+    for source, target, kind in sorted(relationships):
+        label = kind.replace("|", "/").replace("[", "(").replace("]", ")")
+        lines.append(f"  {id_map[source]} -->|{label}| {id_map[target]}")
+    if not used_ids:
+        lines.append('  empty["No architecture relationships detected"]')
+    return "\n".join(lines) + "\n"
 
 
 def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None = None) -> str:

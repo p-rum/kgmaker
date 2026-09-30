@@ -1,0 +1,28 @@
+flowchart LR
+  n0["src/kgmaker/__main__.py"]
+  n1["src/kgmaker/cli.py"]
+  n2["src/kgmaker/domain.py"]
+  n3["src/kgmaker/model.py"]
+  n4["src/kgmaker/scanner.py"]
+  n5["src/kgmaker/semantic.py"]
+  n6["src/kgmaker/store.py"]
+  n7["tests/test_scanner.py"]
+  n8{"technology: Kafka"}
+  n9{"technology: PostgreSQL"}
+  n0 -->|imports| n1
+  n1 -->|imports| n4
+  n1 -->|imports| n5
+  n1 -->|imports| n6
+  n2 -->|imports| n3
+  n2 -->|uses_messaging| n8
+  n2 -->|connects_to| n9
+  n4 -->|imports| n2
+  n4 -->|imports| n3
+  n5 -->|imports| n3
+  n6 -->|imports| n3
+  n7 -->|imports| n1
+  n7 -->|imports| n4
+  n7 -->|imports| n5
+  n7 -->|imports| n6
+  n7 -->|uses_messaging| n8
+  n7 -->|connects_to| n9

@@ -41,10 +41,10 @@ kgmaker semantic validate [--root PATH]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 ```
 
-- `scan` writes `.kgmaker/graph.json` and a readable `.kgmaker/GRAPH.md`; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`.
+- `scan` writes `.kgmaker/graph.json`, generated architecture documentation in `.kgmaker/GRAPH.md`, and a standalone Mermaid diagram in `.kgmaker/GRAPH.mmd`. The Markdown embeds the diagram for GitHub rendering; verified human or Copilot notes are kept separately in `.kgmaker/NOTES.md`.
 - `build` and `update` currently perform a full scan, like `scan`.
-- `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown graph snapshot, so it works in CI without `.kgmaker/graph.json`.
-- `docs` regenerates `.kgmaker/GRAPH.md` from the local machine index.
+- `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown documentation and Mermaid diagram, so it works in CI without `.kgmaker/graph.json`.
+- `docs` regenerates `.kgmaker/GRAPH.md` and `.kgmaker/GRAPH.mmd` from the local machine index. The diagram groups code declarations by file and shows imports plus detected database, Kafka, API, frontend, and semantic relationships. Heuristic call edges are left out to keep the architecture view readable.
 - `impact FILE` lists transitive dependents through imports and name-based calls. Imports are exact path matches; `calls` are candidates and may be wrong when names collide.
 - `semantic prepare` writes a local inventory of stable graph IDs and per-file hashes, without copying source contents. The `kgmaker-extract` Copilot agent uses it for the first `.kgmaker/semantic.json` extraction.
 - `semantic update --base REF` creates a bounded change packet and a review note from Git diff, changed declarations, their immediate graph neighborhood, and only affected semantic entries. Use `--note path/to/change-note.md` to add intent that is not apparent from the diff. The custom agent writes `.kgmaker/semantic-patch.json`; `semantic apply` replaces only affected entries, and `semantic validate` verifies the result. Unrelated relationships survive unchanged. Generated update files stay local and are ignored by Git.
