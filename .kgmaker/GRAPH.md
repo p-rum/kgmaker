@@ -60,9 +60,9 @@ flowchart LR
 - **section** `Requirements` line 7
 - **section** `Install` line 12
 - **section** `Commands` line 26
-- **section** `What gets indexed` line 57
-- **section** `Copilot workflow` line 65
-- **section** `Development` line 71
+- **section** `What gets indexed` line 58
+- **section** `Copilot workflow` line 66
+- **section** `Development` line 72
 
 ### `docs/architecture.md`
 - **section** `Architecture` line 1
