@@ -53,6 +53,7 @@ kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 - Semantic artifacts track evidence per source-file hash, so a change in one file does not invalidate every relationship. If an evidence file changes, its relationships are skipped until the focused update is applied. Commit `.kgmaker/semantic.json` if the project wants to share agent-authored knowledge.
 - `query` ranks relevant files and declarations, then includes one-hop graph neighbors.
 - The Copilot hook calls `hook-context`, which refreshes the index and emits the session context in Copilot's hook format. You can run `kgmaker hook-context --token-budget N` to cap that injected context (approximately four characters per token). Hook errors fail open so they do not interrupt a Copilot session.
+- JetBrains integration includes `.junie/commands/kgmaker.md` for the `/kgmaker` slash command and `.agents/skills/kgmaker/SKILL.md` for the standard `$kgmaker` Agent Skill invocation. Both route implementation requests through graph reconnaissance, source verification, scoped semantic updates, validation, and tests.
 
 ## What gets indexed
 
