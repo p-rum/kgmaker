@@ -17,11 +17,11 @@ Use this skill as the repository-aware agent for implementation requests. Treat 
 6. If code or documentation changes affect semantic relationships, prepare a bounded update:
 
    ```bash
-   kgmaker semantic update --base <merge-base> --token-budget <N>
+   kgmaker semantic update --base <resolved-base> --token-budget <N>
    ```
 
-   Omit `--token-budget` when no explicit limit is requested. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`; inspect only the changed files and affected graph neighborhood first. Do not reuse an older `.kgmaker/semantic-patch.json`: `semantic update` discards a patch belonging to another packet, so create the patch again with the new `update_id`.
-7. Write a scoped `.kgmaker/semantic-patch.json`, run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Preserve unrelated semantic nodes and edges.
+   Resolve the base with `git merge-base HEAD origin/main` when available, otherwise use `HEAD~1`; never pass literal angle-bracket placeholders. Omit `--token-budget` when no explicit limit is requested. Read `.kgmaker/semantic-update.json` directly after the command and inspect only the changed files and affected graph neighborhood first. Do not reuse an older `.kgmaker/semantic-patch.json`: `semantic update` discards a patch belonging to another packet, so create the patch again with the new `update_id`.
+7. Write a scoped `.kgmaker/semantic-patch.json`. Before applying, compare `update_id` values from the two files on disk; apply only when they match. Then run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Preserve unrelated semantic nodes and edges.
 8. Run focused tests plus the full test suite. Summarize implementation, graph changes, validation, and pending semantic work.
 
 ## Truth and safety rules
