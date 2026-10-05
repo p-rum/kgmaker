@@ -5,17 +5,31 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_apply, semantic_update, semantic_validate
+from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_apply, semantic_extract, semantic_update, semantic_validate
 from kgmaker.confluence import documentation_check, ingest_export, merge_into_graph, render_report, validate_documents
 from kgmaker.scanner import scan_repository
 from kgmaker.semantic import (
-    SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE,
+    SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE, SEMANTIC_EXTRACT_MARKDOWN,
     apply_semantic_layer, build_semantic_input, concept_id,
 )
 from kgmaker.store import load_graph, render_context, render_markdown, render_mermaid, save_graph
 
 
 class ScannerTests(unittest.TestCase):
+    def test_semantic_extract_can_run_as_standalone_initial_workflow(self) -> None:
+        import io
+        from contextlib import redirect_stdout
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "service.py").write_text("def service():\n    return True\n", encoding="utf-8")
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(semantic_extract(root, "HEAD~1"), 0)
+            self.assertTrue((root / ".kgmaker" / "semantic-input.json").exists())
+            instructions = (root / SEMANTIC_EXTRACT_MARKDOWN).read_text(encoding="utf-8")
+            self.assertIn("Mode: `initial`", instructions)
+            self.assertIn("semantic.json", instructions)
+
     def test_confluence_html_parser_resolves_pages_mermaid_and_drawio(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

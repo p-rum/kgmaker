@@ -7,6 +7,8 @@ description: Repository-aware implementation and semantic knowledge-graph workfl
 
 Use this skill as the repository-aware agent for implementation requests. Treat deterministic source code as authoritative and the generated graph as a navigation index.
 
+For semantic extraction without an implementation request, run `kgmaker semantic extract` or use the JetBrains `/kgmaker-semantic` command. This prepares the agent input and keeps semantic work separate from feature implementation.
+
 ## Workflow
 
 1. Read `AGENTS.md`, `.github/copilot-instructions.md`, and the relevant custom-agent instructions.

@@ -24,4 +24,6 @@ Follow this order:
    Only after this check passes, run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`.
 8. Run the focused tests and the full test suite. Report changed files, semantic entries updated, validation results, and any pending or ambiguous semantic work.
 
+For a semantic-only request with no implementation work, use `kgmaker semantic extract` or invoke the separate `/kgmaker-semantic` command instead of running the implementation workflow.
+
 Do not invent relationships, credentials, external URLs, or undocumented behavior. Do not edit generated graph views by hand. If the request is only a question, perform the graph/source reconnaissance and answer without modifying files.

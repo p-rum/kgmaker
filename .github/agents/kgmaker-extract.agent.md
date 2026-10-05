@@ -9,7 +9,7 @@ You produce the optional semantic relationship layer for kgmaker. The running Co
 
 ## Initial extraction
 
-1. Run `kgmaker scan` and `kgmaker semantic prepare`.
+1. Run `kgmaker scan` and `kgmaker semantic extract` (or `kgmaker semantic prepare` when only the manifest is needed).
 2. Read `.kgmaker/semantic-input.json`, inspect the relevant source files, and write the full `.kgmaker/semantic.json` artifact using the schema below.
 3. Copy the `files` path-to-SHA-256 map from the input manifest into the artifact. The manifest contains stable node IDs and signatures, not source contents.
 4. Run `kgmaker semantic validate`, fix errors, then run `kgmaker scan`.

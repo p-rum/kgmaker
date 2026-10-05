@@ -26,6 +26,7 @@ from .semantic import (
     SEMANTIC_PATCH_FILE,
     SEMANTIC_UPDATE_FILE,
     SEMANTIC_UPDATE_MARKDOWN,
+    SEMANTIC_EXTRACT_MARKDOWN,
     SemanticValidationError,
     apply_semantic_patch,
     apply_semantic_layer,
@@ -343,6 +344,57 @@ def semantic_prepare(root: Path) -> int:
     return 0
 
 
+def semantic_extract(root: Path, base_ref: str, note_path: str | None = None, token_budget: int | None = None) -> int:
+    """Prepare a standalone semantic-agent run without implementing a code request."""
+    artifact = root / SEMANTIC_FILE
+    output = root / SEMANTIC_EXTRACT_MARKDOWN
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if artifact.exists():
+        code = semantic_update(root, base_ref, note_path, token_budget)
+        if code != 0:
+            return code
+        update_file = root / SEMANTIC_UPDATE_FILE
+        if not update_file.exists():
+            output.write_text(
+                "# kgmaker semantic extraction\n\n"
+                f"No code changes were found relative to `{base_ref}`. The existing semantic artifact is already current.\n",
+                encoding="utf-8",
+            )
+            return 0
+        mode = "incremental"
+        input_files = "`.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`"
+        output_file = "`.kgmaker/semantic-patch.json`"
+        next_steps = (
+            "Read both packet files directly from disk, inspect the affected source, write a scoped "
+            "`.kgmaker/semantic-patch.json` with the exact `update_id`, then run `kgmaker semantic apply`, "
+            "`kgmaker semantic validate`, and `kgmaker scan`."
+        )
+    else:
+        code = semantic_prepare(root)
+        if code != 0:
+            return code
+        mode = "initial"
+        input_files = "`.kgmaker/semantic-input.json`"
+        output_file = "`.kgmaker/semantic.json`"
+        next_steps = (
+            "Read the manifest, inspect the relevant source files, write the complete `.kgmaker/semantic.json`, "
+            "then run `kgmaker semantic validate` and `kgmaker scan`."
+        )
+    output.write_text(
+        "# kgmaker semantic extraction\n\n"
+        f"Mode: `{mode}`\n\n"
+        "This is a standalone semantic-agent workflow. It does not implement a feature and does not call a model API.\n\n"
+        f"Agent input: {input_files}\n\n"
+        f"Agent output: {output_file}\n\n"
+        f"Next steps: {next_steps}\n\n"
+        "Keep source code authoritative, preserve unrelated semantic entries, and do not invent relationships.\n",
+        encoding="utf-8",
+    )
+    print(f"Prepared standalone {mode} semantic extraction.")
+    print(f"Agent instructions: {output.relative_to(root)}")
+    return 0
+
+
 def semantic_update(root: Path, base_ref: str, note_path: str | None = None, token_budget: int | None = None) -> int:
     """Prepare a token-bounded semantic update package from Git changes."""
     previous_graph = load_graph(root)
@@ -617,6 +669,11 @@ def build_parser() -> argparse.ArgumentParser:
     semantic_sub = semantic_parser.add_subparsers(dest="semantic_command", required=True)
     semantic_prepare_parser = semantic_sub.add_parser("prepare", help="write a stable node inventory for the Copilot extraction agent")
     semantic_prepare_parser.add_argument("--root", type=Path, default=Path.cwd())
+    semantic_extract_parser = semantic_sub.add_parser("extract", help="prepare a standalone semantic-agent extraction run")
+    semantic_extract_parser.add_argument("--root", type=Path, default=Path.cwd())
+    semantic_extract_parser.add_argument("--base", default="HEAD~1", help="Git commit/ref for incremental extraction (default: HEAD~1)")
+    semantic_extract_parser.add_argument("--note", help="optional Markdown note explaining the intent of the change")
+    semantic_extract_parser.add_argument("--token-budget", type=int, help="approximate maximum token budget for changed-file context")
     semantic_validate_parser = semantic_sub.add_parser("validate", help="validate .kgmaker/semantic.json against current source")
     semantic_validate_parser.add_argument("--root", type=Path, default=Path.cwd())
     semantic_update_parser = semantic_sub.add_parser("update", help="prepare a focused change packet for semantic refresh")
@@ -658,6 +715,8 @@ def main() -> None:
         code = docs(root, args.action, args.confluence_dir, args.confluence_report)
     elif args.command == "semantic" and args.semantic_command == "prepare":
         code = semantic_prepare(root)
+    elif args.command == "semantic" and args.semantic_command == "extract":
+        code = semantic_extract(root, args.base, args.note, args.token_budget)
     elif args.command == "semantic" and args.semantic_command == "validate":
         code = semantic_validate(root)
     elif args.command == "semantic" and args.semantic_command == "update":

@@ -15,6 +15,7 @@ SEMANTIC_FILE = Path(".kgmaker/semantic.json")
 SEMANTIC_INPUT_FILE = Path(".kgmaker/semantic-input.json")
 SEMANTIC_UPDATE_FILE = Path(".kgmaker/semantic-update.json")
 SEMANTIC_UPDATE_MARKDOWN = Path(".kgmaker/semantic-update.md")
+SEMANTIC_EXTRACT_MARKDOWN = Path(".kgmaker/semantic-extract.md")
 SEMANTIC_PATCH_FILE = Path(".kgmaker/semantic-patch.json")
 SEMANTIC_SCHEMA_VERSION = 2
 SEMANTIC_UPDATE_SCHEMA_VERSION = 1
