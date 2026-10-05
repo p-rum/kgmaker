@@ -359,6 +359,18 @@ def semantic_update(root: Path, base_ref: str, note_path: str | None = None, tok
     output_md = root / SEMANTIC_UPDATE_MARKDOWN
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_json.write_text(json.dumps(update, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    patch_path = root / SEMANTIC_PATCH_FILE
+    if patch_path.exists():
+        try:
+            existing_patch = json.loads(patch_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            existing_patch = None
+        if not isinstance(existing_patch, dict) or existing_patch.get("update_id") != update["update_id"]:
+            # A patch is strictly scoped to one packet. Leaving an old patch in
+            # place makes repeated `semantic update`/`semantic apply` attempts
+            # fail forever, so discard only this generated, stale artifact.
+            patch_path.unlink(missing_ok=True)
+            print("Discarded a stale semantic patch; the agent must create a new patch for this packet.")
     changed = [item for item in update["changed_files"] if not item.get("sensitive")]
     paths = "\n".join(f"- `{item['status']} {item['path']}`" for item in update["changed_files"])
     changed_paths = {item["path"] for item in update["changed_files"]}

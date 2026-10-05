@@ -318,6 +318,19 @@ class ScannerTests(unittest.TestCase):
             self.assertIn("after", review_note)
             self.assertEqual([item["path"] for item in update["changed_files"]], ["service.py"])
             self.assertEqual(len(update["affected_semantic_edges"]), 1)
+            stale_patch = root / SEMANTIC_PATCH_FILE
+            stale_patch.write_text(json.dumps({"schema_version": 1, "update_id": "stale"}), encoding="utf-8")
+            (root / "service.py").write_text("def after_again():\n    return False\n", encoding="utf-8")
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(semantic_update(root, base, token_budget=10), 0)
+            refreshed_update = json.loads((root / SEMANTIC_UPDATE_FILE).read_text(encoding="utf-8"))
+            self.assertFalse(stale_patch.exists())
+            self.assertNotEqual(refreshed_update["update_id"], update["update_id"])
+            # Continue the normal flow with a patch scoped to the refreshed packet.
+            (root / "service.py").write_text("def after():\n    return True\n", encoding="utf-8")
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(semantic_update(root, base, token_budget=10), 0)
+            update = json.loads((root / SEMANTIC_UPDATE_FILE).read_text(encoding="utf-8"))
             new_service = next(node for node in current.nodes if node.name == "after")
             patch = {
                 "schema_version": 1,

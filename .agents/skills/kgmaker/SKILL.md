@@ -20,7 +20,7 @@ Use this skill as the repository-aware agent for implementation requests. Treat 
    kgmaker semantic update --base <merge-base> --token-budget <N>
    ```
 
-   Omit `--token-budget` when no explicit limit is requested. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`; inspect only the changed files and affected graph neighborhood first.
+   Omit `--token-budget` when no explicit limit is requested. Read `.kgmaker/semantic-update.md` and `.kgmaker/semantic-update.json`; inspect only the changed files and affected graph neighborhood first. Do not reuse an older `.kgmaker/semantic-patch.json`: `semantic update` discards a patch belonging to another packet, so create the patch again with the new `update_id`.
 7. Write a scoped `.kgmaker/semantic-patch.json`, run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Preserve unrelated semantic nodes and edges.
 8. Run focused tests plus the full test suite. Summarize implementation, graph changes, validation, and pending semantic work.
 
