@@ -419,7 +419,14 @@ def apply_semantic_patch(patch: Any, update: Any, graph: KnowledgeGraph, root: P
             or patch.get("schema_version") != 1):
         raise SemanticValidationError("semantic patch must use schema_version 1")
     if patch.get("update_id") != update.get("update_id"):
-        raise SemanticValidationError("semantic patch belongs to a different change packet; run `kgmaker semantic update` again")
+        patch_id = patch.get("update_id") if isinstance(patch.get("update_id"), str) else "<missing>"
+        update_id = update.get("update_id") if isinstance(update.get("update_id"), str) else "<missing>"
+        raise SemanticValidationError(
+            "semantic patch belongs to a different change packet "
+            f"(patch={patch_id[:12]}, packet={update_id[:12]}); "
+            "delete `.kgmaker/semantic-patch.json`, run `kgmaker semantic update` once, "
+            "then recreate the patch using the new packet's exact update_id"
+        )
     integrity_payload = {key: value for key, value in update.items() if key != "update_id"}
     integrity_id = hashlib.sha256(
         json.dumps(integrity_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")

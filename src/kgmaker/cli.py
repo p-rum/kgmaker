@@ -353,6 +353,10 @@ def semantic_update(root: Path, base_ref: str, note_path: str | None = None, tok
         print(f"Could not prepare semantic update: {error}", file=sys.stderr)
         return 2
     if not update["changed_files"]:
+        patch_path = root / SEMANTIC_PATCH_FILE
+        if patch_path.exists():
+            patch_path.unlink(missing_ok=True)
+            print("Discarded an orphaned semantic patch because this packet has no changes.")
         print(f"No changes found relative to {base_ref}; semantic update not needed.")
         return 0
     output_json = root / SEMANTIC_UPDATE_FILE
