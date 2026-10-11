@@ -34,3 +34,26 @@ The generated repository hook subscribes to Copilot CLI `sessionStart`. It refre
 ## Extension points
 
 Add language-specific declaration/import extraction in `scanner.py`. Keep new edge types explicit about their evidence and confidence. Add renderers or graph storage backends only when there is a concrete user need; the current data contract is deliberately plain JSON and requires no database.
+
+## Isolated feature-analysis foundation
+
+`analysis_model.py` defines the versioned JSON envelope, safe paths and atomic
+writes. `feature.py` builds an in-memory graph and source manifest, fingerprints
+working-tree content and manages stable packets, applied revisions and answers.
+`analysis_validation.py` validates references, exact citations, proposal isolation
+and conservative availability/completion constraints. `analysis_report.py` renders
+Czech/English reports; `feature_cli.py` adds lifecycle commands without changing
+legacy semantic/impact flows. `analysis_agent.py` owns installable host templates.
+
+The AS_IS graph and semantic artifacts are never written by feature commands.
+Analysis history lives under `.kgmaker/analyses/<id>/`; report output is restricted
+to `docs/generated/features/` and excluded from scanning. Source hashes use raw
+bytes; graph identity removes timestamps. This first version intentionally uses
+full scans and whole-packet invalidation. See [the current contract](feature-analysis.md)
+for outstanding proof checkers and the mandatory-manifest budget exception.
+
+`dataflow.py` contributes field nodes and conservative local Kotlin value edges to
+the existing graph. Typed impact follows dependency-specific direction and stops
+at external-system boundaries. Feature candidates may cite only exact computed
+paths with source evidence; arbitrary agent-authored paths are rejected. This is
+initial milestone B support, not complete cross-layer or availability resolution.

@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "volume": {"type": "number"},
+    "currency": {"type": "string"}
+  },
+  "required": ["volume", "currency"],
+  "additionalProperties": false
+}

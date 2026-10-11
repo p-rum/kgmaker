@@ -1,0 +1,11 @@
+{
+  "answers": [
+    {
+      "question_id": "analysis:additional-hedge:question:liquidity",
+      "decision_id": "liquidity-definition-v1",
+      "answer": "Disponibilní prostředky jsou zůstatek účtu snížený o rezervované prostředky ke stejnému okamžiku. Jedná se o syntetickou testovací definici, nikoli schválenou metodiku.",
+      "revision": 1,
+      "approval_status": "UNAPPROVED"
+    }
+  ]
+}

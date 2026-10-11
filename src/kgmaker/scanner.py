@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .domain import connect_persistence, extract_domain, extract_openapi, merge_domain_nodes
 from .model import Edge, KnowledgeGraph, Node
+from .dataflow import extract_dataflow
 
 SCHEMA_VERSION = 1
 EXTENSIONS = {
@@ -207,6 +208,8 @@ def _candidate_paths(root: Path, source: str, import_name: str, known_files: set
 
 
 def _should_skip(path: Path, relative: Path) -> bool:
+    if "/docs/generated/features/" in "/" + relative.as_posix() or path.is_symlink():
+        return True
     name = path.name.lower()
     if any(part.lower() in SKIP_DIRS for part in relative.parts):
         return True
@@ -222,7 +225,7 @@ def scan_repository(root: Path) -> KnowledgeGraph:
         current_path = Path(current)
         directories[:] = sorted(
             name for name in directories
-            if name.lower() not in SKIP_DIRS and not name.startswith(".")
+            if name.lower() not in SKIP_DIRS and not name.startswith(".") and not name.endswith(".egg-info")
         )
         for filename in filenames:
             path = current_path / filename
@@ -300,6 +303,9 @@ def scan_repository(root: Path) -> KnowledgeGraph:
         domain_nodes.extend(openapi_nodes)
         edges.update(openapi_edges)
 
+    dataflow = extract_dataflow(content_by_file)
+    domain_nodes.extend(dataflow.nodes)
+    edges.update(dataflow.edges)
     domain_nodes = merge_domain_nodes(domain_nodes)
     edges.update(connect_persistence(symbols_by_file, content_by_file, domain_nodes))
     nodes = [*file_nodes.values()]

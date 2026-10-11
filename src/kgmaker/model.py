@@ -50,8 +50,11 @@ class KnowledgeGraph:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "KnowledgeGraph":
+        version = data.get("schema_version", 1)
+        if type(version) is not int or version != 1:
+            raise ValueError(f"Unsupported graph schema_version {version!r}; expected 1")
         return cls(
-            schema_version=int(data.get("schema_version", 1)),
+            schema_version=version,
             root=str(data.get("root", ".")),
             generated_at=str(data.get("generated_at", "")),
             nodes=[Node(**item) for item in data.get("nodes", [])],

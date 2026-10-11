@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from . import feature_cli
+from .analysis_agent import ANALYST_FILE, ANALYST_CONTENT, JUNIE_FILE, JUNIE_CONTENT
 from .confluence import (
     DEFAULT_REPORT_FILE,
     documentation_check,
@@ -97,6 +99,10 @@ For every request to add a feature, change behavior, refactor, or modify a cross
 For initial agent-authored semantic relationships, use `kgmaker-extract` with `kgmaker semantic prepare`. For changes, run `kgmaker semantic update --base <merge-base>`, let the agent write a scoped `.kgmaker/semantic-patch.json`, then run `kgmaker semantic apply`, `kgmaker semantic validate`, and `kgmaker scan`. Do not replace unrelated semantic entries. The graph is generated locally and must not contain secrets, credentials, or external links.
 
 Local Confluence HTML is an optional, read-only knowledge source. Use `kgmaker docs check --confluence-dir <path>` for documentation validation. When documentation conflicts with deterministic code facts, code wins and the conflict is recorded in `docs/generated/confluence-inconsistencies.md`.
+
+For `/kgmaker analyze-feature` intent, use the `kgmaker-analyst` instructions and
+isolated `feature` packets. Supported static data-flow paths are not runtime
+availability proofs. Do not use semantic apply for feature candidates.
 """
 
 EXTRACT_AGENT_CONTENT = """---
@@ -193,6 +199,8 @@ def init(root: Path, force: bool = False) -> int:
     for path, text in (
         (root / HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
         (root / AGENT_FILE, AGENT_CONTENT),
+        (root / ANALYST_FILE, ANALYST_CONTENT),
+        (root / JUNIE_FILE, JUNIE_CONTENT),
         (root / ARCHITECT_AGENT_FILE, ARCHITECT_AGENT_CONTENT),
         (root / EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
         (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
@@ -202,7 +210,7 @@ def init(root: Path, force: bool = False) -> int:
             written.append(path.relative_to(root).as_posix())
 
     ignore_entries = [
-        ".kgmaker/graph.json", ".kgmaker/semantic-input.json",
+        ".kgmaker/analyses/", ".kgmaker/graph.json", ".kgmaker/semantic-input.json",
         ".kgmaker/semantic-update.json", ".kgmaker/semantic-update.md",
         ".kgmaker/semantic-patch.json", ".kgmaker/confluence-index.json",
     ]
@@ -636,6 +644,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"kgmaker {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    feature_cli.register(sub)
+
     init_parser = sub.add_parser("init", help="add Copilot hooks, instructions and the kgmaker agent")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
     init_parser.add_argument("--force", action="store_true", help="overwrite kgmaker-managed Copilot files")
@@ -685,13 +695,17 @@ def build_parser() -> argparse.ArgumentParser:
     semantic_apply_parser.add_argument("--root", type=Path, default=Path.cwd())
 
     impact_parser = sub.add_parser("impact", help="show dependents of changed files")
-    impact_parser.add_argument("files", nargs="+", help="changed repository-relative file paths")
+    impact_parser.add_argument("files", nargs="*", help="changed repository-relative file paths")
     impact_parser.add_argument("--root", type=Path, default=Path.cwd())
+    impact_parser.add_argument("--entity", help="existing graph ID for directional value impact")
+    impact_parser.add_argument("--include-data-flow", action="store_true")
+    impact_parser.add_argument("--format", choices=("text", "json"), default="text")
 
     query_parser = sub.add_parser("query", help="find likely files and declarations")
     query_parser.add_argument("terms", nargs="+", help="words to search in graph names, paths and summaries")
     query_parser.add_argument("--root", type=Path, default=Path.cwd())
     query_parser.add_argument("--limit", type=int, default=10)
+    query_parser.add_argument("--analysis", help="explicitly include one isolated proposal")
 
     hook_parser = sub.add_parser("hook-context", help=argparse.SUPPRESS)
     hook_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -703,7 +717,9 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.command == "init":
+    if args.command == "feature":
+        code = feature_cli.run(args)
+    elif args.command == "init":
         code = init(root, args.force)
     elif args.command in {"scan", "build", "update"}:
         code = scan(root, generate_docs=not args.no_docs, confluence_dir=args.confluence_dir, report=args.confluence_report)
@@ -724,9 +740,16 @@ def main() -> None:
     elif args.command == "semantic" and args.semantic_command == "apply":
         code = semantic_apply(root)
     elif args.command == "impact":
-        code = impact(root, args.files)
+        if args.entity:
+            if args.files or not args.include_data_flow:
+                parser.error("--entity requires --include-data-flow and cannot be combined with file arguments")
+            code = feature_cli.impact_entity(root, args.entity, args.format)
+        else:
+            if not args.files or args.include_data_flow or args.format != "text":
+                parser.error("legacy impact needs files; data-flow/JSON output requires --entity")
+            code = impact(root, args.files)
     elif args.command == "query":
-        code = query(root, " ".join(args.terms), args.limit)
+        code = feature_cli.query_analysis(root, args.analysis, " ".join(args.terms), args.limit) if args.analysis else query(root, " ".join(args.terms), args.limit)
     elif args.command == "hook-context":
         code = hook_context(root, args.token_budget)
     else:
