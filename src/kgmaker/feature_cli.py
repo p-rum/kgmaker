@@ -16,6 +16,7 @@ def register(subparsers):
     for command in ("prepare", "validate", "apply", "report", "status", "revise", "compare", "data-check"):
         child = commands.add_parser(command)
         child.add_argument("--root", type=Path, default=Path.cwd())
+        child.add_argument("--workspace", type=Path)
         child.add_argument("--require-complete", action="store_true")
         if command == "prepare":
             child.add_argument("--requirement", required=True)
@@ -31,7 +32,6 @@ def register(subparsers):
             child.add_argument("--variant", required=True)
         if command == "data-check":
             child.add_argument("--inputs", required=True)
-            child.add_argument("--workspace", help="reserved capability; not yet supported")
             child.add_argument("--format", choices=("markdown", "json"), default="json")
         if command == "report":
             child.add_argument("--output")
@@ -42,15 +42,17 @@ def run(args) -> int:
     root = args.root.resolve()
     try:
         command = args.feature_command
+        if command != 'prepare' and args.workspace:
+            packet = feature.load_packet(root, args.analysis)
+            if packet.get('workspace', {}).get('manifest_path') != str(args.workspace.resolve()):
+                raise AnalysisError('Command workspace differs from analysis workspace')
         if command == "prepare":
-            packet = feature.prepare(root, args.requirement, args.id, args.token_budget)
+            packet = feature.prepare(root, args.requirement, args.id, args.token_budget, workspace=args.workspace)
             result = {"analysis_id": args.id, "revision": packet["revision"], "packet_id": packet["packet_id"],
                       "completion": inventory_candidate(packet)["completion"], "budget": packet["budget"],
                       "template": f".kgmaker/analyses/{args.id}/candidate-template.json", "exit_code": 0}
         elif command == "data-check":
             from .data_check import data_check
-            if args.workspace:
-                raise AnalysisError("Workspace data-check requires milestone G; single-root fallback is forbidden")
             result = data_check(root, args.analysis, read_json(safe_path(root, args.inputs)))
         elif command in {"validate", "apply"}:
             candidate = read_json(safe_path(root, args.candidate))
@@ -81,6 +83,8 @@ def run(args) -> int:
                 if candidate.get("packet_id") != historical.get("packet_id") or historical.get("packet_id") != feature.packet_identity(historical):
                     raise AnalysisError("Historical packet integrity mismatch")
             stale = feature.freshness(root, historical)
+            from .availability import observation_staleness
+            stale += observation_staleness(candidate)
             if historical != packet:
                 stale.append("Newer analysis packet exists; report uses a historical revision")
             if path.exists():
@@ -123,7 +127,7 @@ def query_analysis(root: Path, analysis_id: str, terms: str, limit: int) -> int:
         candidate = read_json(safe_path(root, f".kgmaker/analyses/{analysis_id}/analysis.json"))
         result = feature.validate(root, analysis_id, candidate)
         if result['valid']:
-            _, _, _, nodes = feature.snapshot(root)
+            nodes = feature.graph_for_packet(root, feature.load_packet(root, analysis_id)).nodes
             candidates = [{'id': n.id, 'name': n.name, 'path': n.path, 'state': 'AS_IS'} for n in nodes]
             candidates += candidate['proposal']['nodes']
             words = terms.lower().split()
@@ -144,7 +148,7 @@ def impact_entity(root: Path, entity: str, output_format: str) -> int:
     from .scanner import scan_repository
     from .semantic import apply_semantic_layer
     try:
-        graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+        graph, _, semantic_error = feature.current_graph(root)
         result = impact_paths(graph, entity)
         if semantic_error:
             result['limitations'] = result['limitations'] + [semantic_error]

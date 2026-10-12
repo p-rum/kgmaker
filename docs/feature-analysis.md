@@ -1,5 +1,15 @@
 # Feature analysis: implemented foundation and remaining milestones
 
+## Current extension status
+
+Flyway schema replay, multi-repository workspace commands and scoped positive
+availability proofs now extend this foundation. Their current contracts and
+verified boundaries are documented in [flyway-workspace-proofs](flyway-workspace-proofs.md).
+The milestone-A description below records the original foundation; statements
+that all positive proofs or all workspaces are unsupported are superseded by
+that extension. General arbitrary SQL, full interprocedural analysis and live
+deployment verification are still not claimed.
+
 This page describes implemented behavior. The complete target remains
 [implementation-feature-analysis.md](implementation-feature-analysis.md).
 

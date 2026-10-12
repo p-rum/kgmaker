@@ -137,4 +137,5 @@ kgmaker feature data-check --root . --analysis <id> --inputs requirements/<id>-i
 The command returns a validated, unapplied candidate, static source candidates,
 business ambiguities and separate tool coverage gaps. Availability remains UNKNOWN
 until supported proofs exist. See [the input contract](docs/feature-analysis.md#deterministic-data-check-chapter-27-single-root-foundation).
-Flyway schema replay and multi-repository workspace remain planned extensions.
+Flyway schema replay, explicit multi-repository workspaces and scoped positive
+availability proofs are implemented. See [commands, contracts and boundaries](docs/flyway-workspace-proofs.md).

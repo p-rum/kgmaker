@@ -49,8 +49,26 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
               f"- Working tree: `{candidate['baseline']['working_tree_fingerprint']}`",
               f"- Graph: `{candidate['baseline']['graph_fingerprint']}`", ""]
     for key, value in sorted(candidate["coverage"].items()):
+        if key == 'schemas':
+            continue
         lines += [f"- {key}: {cell(value)}"]
     lines += [""]
+    repos = candidate['baseline'].get('repositories', {})
+    if repos:
+        lines += ['| Repository | Commit | Working tree | Coverage |', '|---|---|---|---|']
+        for repo, baseline in sorted(repos.items()):
+            lines += ['| ' + ' | '.join(cell(v) for v in (repo, baseline.get('git_commit'), baseline.get('working_tree_fingerprint'), baseline['status'])) + ' |']
+        lines += ['', 'Release/deployment compatibility is UNKNOWN unless explicitly evidenced.', '']
+    for repo, schemas in sorted(candidate['coverage'].get('schemas', {}).items()):
+        for schema in schemas:
+            cfg = schema['config']
+            lines += [f"### Schema: {cell(repo)} / {cell(cfg['stream_id'])} / target {cell(cfg['target'])}", '',
+                      f"{schema['status']} — MIGRATION_DERIVED — no populated-data or deployment guarantee.", '',
+                      '| Object | Type | Nullable | Origin | Last change |', '|---|---|---|---|---|']
+            for name, obj in sorted(schema['objects'].items()):
+                lines += ['| ' + ' | '.join(cell(v) for v in (name, obj.get('data_type'), obj.get('nullable'), obj['origin'], obj['last_change'])) + ' |']
+            lines += ['', 'Schema diagnostics: ' + cell(schema['diagnostics']), '',
+                      'Mapping diagnostics: ' + cell(schema.get('mapping_diagnostics', [])), '']
     for reason in stale:
         lines += [f"- STALE: {cell(reason)}"]
     section(2)
@@ -62,7 +80,7 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for item in candidate["input_requirements"]:
         values = [item["name"], item["definition"], [item["data_type"], item["unit"], item["currency"]],
                   [item["granularity"], item["as_of"], item["horizon"], item["freshness"]],
-                  "STALE (historical: " + item["availability"] + ")" if stale else item["availability"],
+                  "STALE (historical: " + item["availability"] + ")" if stale else [item['availability'], item['verification_scope']],
                   item["source_ids"], item["transformation"], item["evidence_ids"], item["next_step"]]
         lines += ["| " + " | ".join(cell(v) for v in values) + " |"]
     lines += [""]
@@ -90,6 +108,11 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
         lines += ["", ("Nejistota nástroje neprokazuje chybějící business data." if cs else
                        "Tool uncertainty does not prove missing business data."), ""]
     section(5)
+    if repos:
+        lines += ['| Repository | Layer | Proposed change | Test / rollout impact |', '|---|---|---|---|']
+        for item in candidate['changes']:
+            lines += ['| ' + ' | '.join(cell(v) for v in (item.get('repo_id'), item['layer'], item['reason'], item['test_impact'])) + ' |']
+        lines += ['', 'Rollout decisions: provider/consumer ordering, contract versions, transitional nullability and backfill must be resolved; no deployment is performed.', '']
     objects(candidate["changes"])
     objects(candidate["proposal"]["nodes"])
     objects(candidate["proposal"]["edges"])
@@ -108,6 +131,8 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for item in candidate["evidence"]:
         location = item.get("location", {})
         label = item.get("path", item.get("decision_id", "requirement"))
+        if item.get('repo_id'):
+            label = item['repo_id'] + '/' + label
         if location.get("type") == "lines":
             label += f":{location['start']}"
         elif location.get("type") == "json_pointer":

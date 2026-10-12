@@ -50,4 +50,7 @@ The executable single-root `feature data-check` foundation now supports structur
 data prerequisite audits. It makes no model/network calls or source/AS_IS writes;
 UNKNOWN remains explicit for unsupported positive proofs. Flyway schema replay
 (milestone F), workspace federation (G), approved-mapping selective reuse and
-complete field-path availability proof checking remain pending.
+general field-path availability proof checking remain conservative. The newer
+Flyway/workspace/scoped-proof implementation is described in
+[flyway-workspace-proofs](flyway-workspace-proofs.md); its current contracts
+supersede the earlier pending-status notes in this document.

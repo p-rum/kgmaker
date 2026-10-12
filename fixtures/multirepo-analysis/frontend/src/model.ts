@@ -1,0 +1,1 @@
+interface Client { balance: number; }

@@ -128,7 +128,7 @@ class DataCheckTests(unittest.TestCase):
     def test_workspace_never_falls_back_to_root(self):
         code, output = self.cli('--workspace', 'workspace.json', '--inputs', 'absent.json')
         self.assertEqual(2, code)
-        self.assertIn('milestone G', json.loads(output)['error'])
+        self.assertIn('workspace differs', json.loads(output)['error'])
 
     def test_fa74_validate_apply_report_preserve_sources_and_as_is(self):
         (self.root / '.kgmaker' / 'graph.json').write_text('{}')

@@ -1,0 +1,30 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Exposure", "version": "1"},
+  "paths": {
+    "/exposure": {
+      "get": {
+        "operationId": "getExposure",
+        "responses": {
+          "200": {
+            "description": "Exposure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "decline": {
+                      "type": "number",
+                      "x-kgmaker-source": "data_field:src/model.kt:ExposureOutput.decline"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

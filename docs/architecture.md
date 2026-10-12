@@ -63,3 +63,13 @@ AS_IS graph construction, query ranking (`store.query_nodes`), directed impacts,
 feature validation and report rendering. It accepts semantic specifications rather
 than caller-provided hashes or availability, then returns an unapplied candidate.
 Business ambiguity and parser/access/proof coverage gaps are separate outputs.
+
+`flyway.py` constructs explicit offline migration plans; `schema_replay.py`
+tokenizes SQL, reconstructs active objects/lifecycle and reuses valid prefix
+checkpoints. Unknown effects taint the declaration model. `workspace.py` wraps
+existing graph IDs with repo-qualified identities, performs coherent per-repo
+snapshots and uses versioned content-addressed coordinator caches. `test_analysis.py`
+links explicit service contracts, supported consumer/test patterns and checks
+test SQL against declared schema targets. `availability.py` verifies scoped
+observations/approved mappings or contract/decision absence, without executing
+tests, queries or migrations. All feed the same feature validator and renderer.
