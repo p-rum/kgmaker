@@ -1,8 +1,8 @@
 """Fail-closed validation of agent candidates against a deterministic packet.
 
 Citation integrity is checked; truth of arbitrary prose is not mechanically
-proved. This milestone rejects positive availability claims until a supported
-field-level proof validator is available.
+proved. Positive availability is delegated to the explicit scoped proof checker;
+unsupported claims cannot be upgraded by confidence or name similarity.
 """
 from __future__ import annotations
 
@@ -42,8 +42,25 @@ def _location(root: Path, item: dict, packet: dict) -> None:
             raise AnalysisError("Requirement evidence hash mismatch")
         return
     path = item.get("path")
-    target = safe_path(root, path)
-    manifest = packet["source_manifest"].get(path)
+    from .feature import source_path
+    key = path
+    if packet.get('workspace'):
+        from .workspace import source_key, split_id
+        repo = item.get('repo_id')
+        if not isinstance(repo, str) or repo not in packet['workspace']['roots']:
+            raise AnalysisError('Workspace evidence requires an approved repo_id')
+        safe_path(Path(packet['workspace']['roots'][repo]), path)
+        key = source_key(repo, path)
+        if item.get('source_id') in packet['allowed_graph_ids'] and item['source_id'].startswith('repo:'):
+            if split_id(item['source_id'])[0] != repo:
+                raise AnalysisError('Evidence source_id belongs to a different repository')
+        declared_source = packet['source_manifest'].get(item.get('source_id'))
+        if declared_source and declared_source.get('repo_id') != repo:
+            raise AnalysisError('Evidence source_id belongs to a different repository')
+    elif item.get('repo_id') is not None:
+        raise AnalysisError('Single-repo evidence must not invent repo_id')
+    target = source_path(root, key, packet)
+    manifest = packet["source_manifest"].get(key)
     if not manifest or not target.is_file():
         raise AnalysisError("Evidence source is not in the packet source manifest")
     if item.get("sha256") != manifest["sha256"] or file_hash(target) != item.get("sha256"):
@@ -120,15 +137,15 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
     by_collection = {}
     allowed_fields = {
         "requirements": {"id", "text", "kind", "source_quote", "status"},
-        "input_requirements": {"id", "name", "requirement_ids", "source_ids", "evidence_ids", "dependency_ids", "question_ids", "availability", "acquisition", "usability", "verification_scope", "next_step", "owner_role", "transformation", "search_fingerprint"} | set(INPUT_METADATA),
+        "input_requirements": {"id", "name", "requirement_ids", "source_ids", "evidence_ids", "dependency_ids", "question_ids", "availability", "acquisition", "usability", "verification_scope", "next_step", "owner_role", "transformation", "search_fingerprint", "availability_proof"} | set(INPUT_METADATA),
         "capability_matches": {"id", "entity_ids", "requirement_ids", "evidence_ids", "rationale", "limitations", "state", "method", "validity"},
-        "changes": {"id", "requirement_ids", "entity_ids", "dependency_ids", "layer", "reason", "inputs", "outputs", "test_impact", "state"},
+        "changes": {"id", "repo_id", "requirement_ids", "entity_ids", "dependency_ids", "layer", "reason", "inputs", "outputs", "test_impact", "state"},
         "questions": {"id", "text", "owner_role", "status", "requirement_ids", "blocking"},
         "assumptions": {"id", "text", "state", "requirement_ids"},
         "alternatives": {"id", "name", "constraints", "limitations", "proposal_ids", "question_ids", "requirement_ids"},
         "acceptance_criteria": {"id", "text", "requirement_ids"},
         "test_plan": {"id", "text", "requirement_ids", "state", "entity_ids", "evidence_ids"},
-        "evidence": {"id", "source_id", "kind", "path", "sha256", "location", "quote", "value", "supports", "method", "validity", "confidence", "decision_id", "answer", "revision", "approval_status", "question_id"},
+        "evidence": {"id", "source_id", "kind", "path", "repo_id", "sha256", "location", "quote", "value", "supports", "method", "validity", "confidence", "decision_id", "answer", "revision", "approval_status", "question_id"},
         "impact_paths": {"id", "entity_ids", "edges", "weakest_confidence", "unresolved_boundary", "evidence_ids"},
     }
     for collection in COLLECTIONS:
@@ -251,7 +268,17 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
         availability = item.get("availability")
         # Positive proof support is an explicit milestone B gate, never a confidence heuristic.
         if availability in {"AVAILABLE", "PARTIAL", "CONFIRMED_MISSING"}:
-            errors.append(f"{item.get('id')}: {availability} requires a field-path/contract proof validator (not supported in milestone A); use UNKNOWN")
+            from .availability import evaluate_proof
+            try:
+                checked = evaluate_proof(root, packet, candidate, item)
+                if checked['availability'] != availability or checked['usability'] != item.get('usability'):
+                    errors.append('Availability/usability differ from deterministic proof result')
+                if checked['scope'] != item.get('verification_scope'):
+                    errors.append('Positive proof verification_scope must preserve its exact limited scope')
+                if item.get('acquisition') == 'DERIVED' and any(by_collection['input_requirements'].get(dep, {}).get('availability') != 'AVAILABLE' for dep in item.get('dependency_ids', [])):
+                    errors.append('Positive derived availability requires all dependency inputs AVAILABLE')
+            except (AnalysisError, TypeError, KeyError, ValueError) as exc:
+                errors.append(f"{item.get('id')}: {exc}; use UNKNOWN without a valid proof")
         if availability == "NOT_FOUND_IN_SCOPE":
             if packet["coverage"]["omitted_sources"] or packet["coverage"]["unsupported_sources"]:
                 errors.append("Incomplete source inspection requires UNKNOWN, not NOT_FOUND_IN_SCOPE")
@@ -290,6 +317,8 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
         if item.get("method") == "EXTRACTED":
             errors.append("Capability reuse is a semantic inference; use INFERRED or AMBIGUOUS")
     for item in candidate["changes"]:
+        if 'repo_id' in item and item['repo_id'] not in packet.get('workspace', {}).get('roots', {}):
+            errors.append('Change repo_id must identify a declared workspace repository')
         refs(item, "requirement_ids", requirements, True)
         refs(item, "entity_ids", graph_ids | set(ids), True)
         refs(item, "dependency_ids", ids.keys() | graph_ids)
@@ -300,7 +329,8 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
         from .dataflow import impact_paths
         from .scanner import scan_repository
         from .semantic import apply_semantic_layer
-        graph, _, _ = apply_semantic_layer(scan_repository(root), root)
+        from .feature import graph_for_packet
+        graph = graph_for_packet(root, packet)
         computed = {}
         for item in candidate["impact_paths"]:
             entities = refs(item, "entity_ids", graph_ids, True)
@@ -315,7 +345,9 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
             if proof not in computed[seed]:
                 errors.append("Impact path does not match a supported directed path in the current graph")
                 continue
-            cited_paths = {evidence[e].get("path") for e in citations if e in evidence and evidence[e].get("validity") == "VALID"}
+            from .workspace import source_key
+            cited_paths = {(source_key(evidence[e]['repo_id'], evidence[e]['path']) if packet.get('workspace') else evidence[e].get('path'))
+                           for e in citations if e in evidence and evidence[e].get('validity') == 'VALID'}
             needed_paths = {edge["source_file"] for edge in proof["edges"] if edge["source_file"]}
             if not needed_paths <= cited_paths:
                 errors.append("Impact path needs valid evidence for every edge source file")

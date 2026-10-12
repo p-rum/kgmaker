@@ -45,3 +45,12 @@ A–D analytical completion is not claimed: complete cross-layer availability pr
 parsers and incremental dependency invalidation remain future work. Milestone E,
 including its fake adapter, also remains unimplemented; real integration additionally
 requires a documented Confluence host/version and verified API access.
+
+The executable single-root `feature data-check` foundation now supports structured
+data prerequisite audits. It makes no model/network calls or source/AS_IS writes;
+UNKNOWN remains explicit for unsupported positive proofs. Flyway schema replay
+(milestone F), workspace federation (G), approved-mapping selective reuse and
+general field-path availability proof checking remain conservative. The newer
+Flyway/workspace/scoped-proof implementation is described in
+[flyway-workspace-proofs](flyway-workspace-proofs.md); its current contracts
+supersede the earlier pending-status notes in this document.

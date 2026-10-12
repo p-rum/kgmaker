@@ -19,3 +19,11 @@ For every new feature, behavior change, refactor, or cross-cutting implementatio
 5. Return a concise implementation brief to the primary agent before it plans edits. Include the existing components and extension points, relevant files and symbols, affected contracts/data flows, tests to update, compatibility or migration concerns, and any uncertain or stale graph findings. Cite repository-relative paths and line numbers where possible.
 
 Keep the investigation scoped to the request; do not read the whole repository when graph queries identify a smaller set of relevant files. If the graph is unavailable, say so and inspect targeted source/search results directly. For typo-only or formatting-only requests, the primary agent may skip this specialist.
+
+
+Before analytical or implementation work, verify every supplied local workspace
+repo baseline and its configured Flyway stream/target. Use --workspace consistently;
+--root is only the coordinator. Schema replay is MIGRATION_DERIVED, not deployed
+or populated-data proof. Positive availability requires deterministic approved
+scoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md
+when available. Never mutate connected source repositories during analysis.

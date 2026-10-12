@@ -37,7 +37,7 @@ from .semantic import (
     build_semantic_input,
     validate_semantic_data,
 )
-from .store import MARKDOWN_FILE, MERMAID_FILE, load_graph, render_context, render_markdown, render_mermaid, save_graph
+from .store import query_nodes, MARKDOWN_FILE, MERMAID_FILE, load_graph, render_context, render_markdown, render_mermaid, save_graph
 
 HOOK_CONFIG = Path(".github/hooks/kgmaker.json")
 AGENT_FILE = Path(".github/agents/kgmaker.agent.md")
@@ -192,6 +192,10 @@ HOOK_CONTENT = {
 }
 
 
+INSTRUCTIONS_CONTENT += "\n\nBefore analytical or implementation work, verify every supplied local workspace\nrepo baseline and its configured Flyway stream/target. Use --workspace consistently;\n--root is only the coordinator. Schema replay is MIGRATION_DERIVED, not deployed\nor populated-data proof. Positive availability requires deterministic approved\nscoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md\nwhen available. Never mutate connected source repositories during analysis.\n"
+ARCHITECT_AGENT_CONTENT += "\n\nBefore analytical or implementation work, verify every supplied local workspace\nrepo baseline and its configured Flyway stream/target. Use --workspace consistently;\n--root is only the coordinator. Schema replay is MIGRATION_DERIVED, not deployed\nor populated-data proof. Positive availability requires deterministic approved\nscoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md\nwhen available. Never mutate connected source repositories during analysis.\n"
+
+
 def _write_if_missing(path: Path, text: str, force: bool = False) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not force:
@@ -240,7 +244,8 @@ def init(root: Path, force: bool = False) -> int:
 
 
 def scan(root: Path, generate_docs: bool = True, confluence_dir: str | None = None, report: str | None = None) -> int:
-    graph, semantic_counts, semantic_error = apply_semantic_layer(scan_repository(root), root)
+    from .feature import current_graph
+    graph, semantic_counts, semantic_error = current_graph(root)
     export_root = resolve_confluence_dir(root, confluence_dir)
     if export_root is not None:
         documents, attachments, _ = ingest_export(export_root, root)
@@ -275,7 +280,8 @@ def status(root: Path) -> int:
     if graph is None:
         print("No readable graph found. Run `kgmaker scan`.")
         return 1
-    live, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+    from .feature import current_graph
+    live, _, semantic_error = current_graph(root)
     indexed = graph.files
     changed = sorted(path for path, digest in live.files.items() if indexed.get(path) != digest)
     removed = sorted(set(indexed) - set(live.files))
@@ -295,7 +301,8 @@ def status(root: Path) -> int:
 
 def check(root: Path) -> int:
     """CI-friendly validation of the committed Markdown and Mermaid graph views."""
-    graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+    from .feature import current_graph
+    graph, _, semantic_error = current_graph(root)
     if semantic_error:
         print(f"Semantic artifact is stale or invalid: {semantic_error}")
         return 2
@@ -604,24 +611,12 @@ def query(root: Path, terms: str, limit: int = 10) -> int:
     if graph is None:
         print("No readable graph found. Run `kgmaker scan` first.", file=sys.stderr)
         return 1
-    query_terms = [part.lower() for part in terms.split() if part]
-    nodes = {node.id: node for node in graph.nodes}
-    scores: dict[str, int] = {}
-    for node in graph.nodes:
-        haystack = f"{node.name} {node.path} {node.signature or ''} {node.summary or ''}".lower()
-        score = sum(4 if term == node.name.lower() else 2 if term in node.name.lower() else 1 if term in haystack else 0 for term in query_terms)
-        if score:
-            scores[node.id] = score
-    if not scores:
+    matches = query_nodes(graph, terms, limit)
+    if not matches:
         print(f"No graph entries matched: {terms}")
         return 0
-    for edge in graph.edges:
-        if edge.source in scores:
-            scores[edge.target] = max(scores.get(edge.target, 0), scores[edge.source] - 1)
-    ranked = sorted(scores.items(), key=lambda item: (-item[1], nodes[item[0]].path, nodes[item[0]].line or 0))
     print(f"Matches for {terms!r}:")
-    for node_id, score in ranked[:limit]:
-        node = nodes[node_id]
+    for node, score in matches:
         location = f":{node.line}" if node.line else ""
         signature = f" — {node.signature}" if node.signature else ""
         print(f"- [{node.kind}] {node.path}{location}: {node.name}{signature} (score {score})")
@@ -718,6 +713,10 @@ def build_parser() -> argparse.ArgumentParser:
     hook_parser = sub.add_parser("hook-context", help=argparse.SUPPRESS)
     hook_parser.add_argument("--root", type=Path, default=Path.cwd())
     hook_parser.add_argument("--token-budget", type=int, help="approximate token budget for Copilot session context")
+    from .workspace_cli import register_schema
+    register_schema(sub)
+    for name in ('scan', 'build', 'update', 'status', 'query', 'impact', 'docs'):
+        sub.choices[name].add_argument('--workspace', type=Path)
     return parser
 
 
@@ -725,7 +724,13 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.command == "feature":
+    if args.command == 'schema':
+        from .workspace_cli import schema_command
+        code = schema_command(args)
+    elif getattr(args, 'workspace', None) and args.command != 'feature':
+        from .workspace_cli import workspace_command
+        code = workspace_command(args)
+    elif args.command == "feature":
         code = feature_cli.run(args)
     elif args.command == "init":
         code = init(root, args.force)
@@ -768,4 +773,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -23,14 +23,14 @@ def cell(value):
     return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("|", "&#124;").replace("\n", " / ").replace("\r", "")
 
 
-def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool = True) -> str:
+def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool = True, *, data_audit: dict | None = None) -> str:
     cs = candidate["language"] == "cs"
     headings = HEADINGS[candidate["language"]]
     lines = [REPORT_MARKER, f"# Feature: {cell(candidate['analysis_id'])}", ""]
     if stale:
         lines += ["> STALE — " + ("Závěry nejsou aktuálně ověřené. Historické stavy dostupnosti nejsou platným potvrzením." if cs else "Conclusions are not currently verified. Historical availability is not a current confirmation."), ""]
     if not applied:
-        lines += ["> " + ("Pouze inventář; sémantická analýza dosud nebyla aplikována." if cs else "Inventory only; no semantic analysis has been applied."), ""]
+        lines += ["> " + ("Návrh analýzy dosud nebyl aplikován." if cs else "Analysis candidate has not been applied."), ""]
     def section(index):
         lines.extend([f"## {index + 1}. {headings[index]}", ""])
     def objects(items):
@@ -49,8 +49,26 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
               f"- Working tree: `{candidate['baseline']['working_tree_fingerprint']}`",
               f"- Graph: `{candidate['baseline']['graph_fingerprint']}`", ""]
     for key, value in sorted(candidate["coverage"].items()):
+        if key == 'schemas':
+            continue
         lines += [f"- {key}: {cell(value)}"]
     lines += [""]
+    repos = candidate['baseline'].get('repositories', {})
+    if repos:
+        lines += ['| Repository | Commit | Working tree | Coverage |', '|---|---|---|---|']
+        for repo, baseline in sorted(repos.items()):
+            lines += ['| ' + ' | '.join(cell(v) for v in (repo, baseline.get('git_commit'), baseline.get('working_tree_fingerprint'), baseline['status'])) + ' |']
+        lines += ['', 'Release/deployment compatibility is UNKNOWN unless explicitly evidenced.', '']
+    for repo, schemas in sorted(candidate['coverage'].get('schemas', {}).items()):
+        for schema in schemas:
+            cfg = schema['config']
+            lines += [f"### Schema: {cell(repo)} / {cell(cfg['stream_id'])} / target {cell(cfg['target'])}", '',
+                      f"{schema['status']} — MIGRATION_DERIVED — no populated-data or deployment guarantee.", '',
+                      '| Object | Type | Nullable | Origin | Last change |', '|---|---|---|---|---|']
+            for name, obj in sorted(schema['objects'].items()):
+                lines += ['| ' + ' | '.join(cell(v) for v in (name, obj.get('data_type'), obj.get('nullable'), obj['origin'], obj['last_change'])) + ' |']
+            lines += ['', 'Schema diagnostics: ' + cell(schema['diagnostics']), '',
+                      'Mapping diagnostics: ' + cell(schema.get('mapping_diagnostics', [])), '']
     for reason in stale:
         lines += [f"- STALE: {cell(reason)}"]
     section(2)
@@ -62,7 +80,7 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for item in candidate["input_requirements"]:
         values = [item["name"], item["definition"], [item["data_type"], item["unit"], item["currency"]],
                   [item["granularity"], item["as_of"], item["horizon"], item["freshness"]],
-                  "STALE (historical: " + item["availability"] + ")" if stale else item["availability"],
+                  "STALE (historical: " + item["availability"] + ")" if stale else [item['availability'], item['verification_scope']],
                   item["source_ids"], item["transformation"], item["evidence_ids"], item["next_step"]]
         lines += ["| " + " | ".join(cell(v) for v in values) + " |"]
     lines += [""]
@@ -74,7 +92,27 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for q in candidate["questions"]:
         lines += [f"| {cell(q['id'])} | {cell(q['text'])} | {cell(q['owner_role'])} |"]
     lines += [""]
+    if data_audit is not None or candidate['input_requirements']:
+        lines += ["### " + ("Co zatím nelze ověřit nástrojem" if cs else "What the tool cannot verify yet"), "",
+                  ("| Vstup / rozsah | Omezení nástroje | Důvod |" if cs else "| Input / scope | Tool limitation | Reason |"),
+                  "|---|---|---|"]
+        gaps = data_audit['coverage_gaps'] if data_audit is not None else [
+            {'kind': 'PARSER_ACCESS', 'reason': reason} for reason in candidate['coverage']['limitations']]
+        if data_audit is None:
+            gaps += [{'input_id': item['id'], 'kind': 'UNVERIFIED_AVAILABILITY',
+                      'reason': 'UNKNOWN is not proof of a missing or populated business value.'}
+                     for item in candidate['input_requirements'] if item['availability'] == 'UNKNOWN']
+        for gap in gaps:
+            lines += ["| " + " | ".join(cell(v) for v in (
+                gap.get("input_id"), gap["kind"], gap.get("reason", gap.get("details")))) + " |"]
+        lines += ["", ("Nejistota nástroje neprokazuje chybějící business data." if cs else
+                       "Tool uncertainty does not prove missing business data."), ""]
     section(5)
+    if repos:
+        lines += ['| Repository | Layer | Proposed change | Test / rollout impact |', '|---|---|---|---|']
+        for item in candidate['changes']:
+            lines += ['| ' + ' | '.join(cell(v) for v in (item.get('repo_id'), item['layer'], item['reason'], item['test_impact'])) + ' |']
+        lines += ['', 'Rollout decisions: provider/consumer ordering, contract versions, transitional nullability and backfill must be resolved; no deployment is performed.', '']
     objects(candidate["changes"])
     objects(candidate["proposal"]["nodes"])
     objects(candidate["proposal"]["edges"])
@@ -93,6 +131,8 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for item in candidate["evidence"]:
         location = item.get("location", {})
         label = item.get("path", item.get("decision_id", "requirement"))
+        if item.get('repo_id'):
+            label = item['repo_id'] + '/' + label
         if location.get("type") == "lines":
             label += f":{location['start']}"
         elif location.get("type") == "json_pointer":

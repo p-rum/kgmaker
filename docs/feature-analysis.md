@@ -1,5 +1,15 @@
 # Feature analysis: implemented foundation and remaining milestones
 
+## Current extension status
+
+Flyway schema replay, multi-repository workspace commands and scoped positive
+availability proofs now extend this foundation. Their current contracts and
+verified boundaries are documented in [flyway-workspace-proofs](flyway-workspace-proofs.md).
+The milestone-A description below records the original foundation; statements
+that all positive proofs or all workspaces are unsupported are superseded by
+that extension. General arbitrary SQL, full interprocedural analysis and live
+deployment verification are still not claimed.
+
 This page describes implemented behavior. The complete target remains
 [implementation-feature-analysis.md](implementation-feature-analysis.md).
 
@@ -234,3 +244,56 @@ Successful apply writes a per-revision validation receipt containing the candida
 hash before atomically replacing analysis.json. Historical reports verify that
 receipt before rendering stale source paths. This detects modified stored output;
 it is a local integrity check, not a digital signature or authenticated approval.
+
+## Deterministic data-check (chapter 27, single-root foundation)
+
+`feature data-check` accepts structured semantic input without a model call. It
+uses the same in-memory AS_IS graph, query ranking, directed impact traversal,
+packet freshness, feature validator and report renderer as other commands. It
+returns a complete **validated but unapplied** candidate and report on stdout;
+it does not save files, mutate source/AS_IS, run a shell or execute tests/migrations.
+
+```bash
+kgmaker feature data-check --root . --analysis additional-hedge --inputs requirements/additional-hedge-inputs.json --format json
+kgmaker feature data-check --root . --analysis additional-hedge --inputs requirements/additional-hedge-inputs.json --format markdown
+```
+
+DataRequirementSet version 1 has exactly `schema_version`, `analysis_id`,
+`requirement_hash` (copy from current packet), `requirements`, and `inputs`.
+Requirements contain `id`, `text`, `kind`, `source_quote` present in the exact
+requirement; status is assigned by the checker. Optional `source_reference`
+contains `path`, `location` and `quote` or `value`, with the existing line/JSON
+pointer contract. The checker supplies source hashes and delegates reference
+validation to the normal feature validator.
+
+Each input contains `id`, `name`, non-empty `requirement_ids`, and every metadata
+field from InputRequirement: `definition`, `data_type`, `unit`, `currency`,
+`granularity`, `keys`, `as_of`, `validity_interval`, `horizon`, `freshness`,
+`nullable`, `quality`, `fallbacks`. Unknown values are null. Optional fields are
+`candidate_entity_ids` (real baseline graph IDs), `owner_role`, `dependency_ids`
+and `transformation`. Derivations require dependencies and a transformation;
+cycles are rejected by the existing validator. All IDs remain analysis-scoped.
+
+Write the specification before the final prepare, or refresh prepare after writing
+it into the source tree. Its requirement_hash is stable under specification-only
+changes; answer revisions change it and require semantic rechecking. Refreshing
+an unchanged specification does not require repeating LLM decomposition.
+
+The output includes `candidate_sources` with evidence and static impacts,
+`ambiguity_queue` for unknown business metadata/equivalence, `business_decisions`,
+`data_delivery_gaps`, `coverage_gaps`, `candidate`, `report` and normal validation
+status/exit codes. Candidate limits, context omissions, unsupported parsers and
+missing availability proofs are coverage gaps, **not confirmed missing data**.
+The two report tables distinguish required definitions/decisions from what the
+tool cannot verify. Candidate output can be saved under the isolated analysis
+folder using JSON processing, then passed to normal validate/apply/report.
+
+Current proof capabilities still reject AVAILABLE/PARTIAL/CONFIRMED_MISSING.
+All checked inputs therefore remain UNKNOWN/UNASSESSED, with PARTIAL processing
+and BLOCKED readiness. Name matches and parsed declarations do not prove populated
+or equivalent business values. No automatic negative availability proof is made.
+`--require-complete` exits 4 for a valid incomplete check. `--workspace` is accepted
+only to return an explicit milestone G capability error; it cannot use a single
+root as a substitute. Flyway replay, workspace federation, positive proofs,
+selective reuse of approved mappings and targeted revision invalidation remain
+outstanding. This is chapter 27's executable foundation, not completion of F/G.

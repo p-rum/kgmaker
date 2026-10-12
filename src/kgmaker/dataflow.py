@@ -27,7 +27,8 @@ CAPABILITIES = {
 # Direction of propagation of a changed value, not direction of its stored edge.
 FORWARD = {'maps_to', 'serialized_as', 'displayed_in', 'rendered_in', 'sent_to',
            'tested_by', 'documented_by', 'writes_value'}
-REVERSE = {'reads_value', 'derived_from'}
+REVERSE = {'reads_value', 'derived_from', 'persisted_in', 'asserts_field', 'targets_ui',
+           'tests_endpoint', 'uses_fixture', 'depends_on_contract'}
 
 
 def masked(text: str) -> str:

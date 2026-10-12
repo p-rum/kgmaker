@@ -19,9 +19,10 @@ JSON pointers and values with the packet SHA-256. Never invent locations.
 Separate business definitions from implementation, and propose concrete questions,
 data delivery requirements, changes, acceptance criteria and tests. Do independent
 work even when a business question is unresolved. UNKNOWN is appropriate for
-unverified availability. This first analytical milestone cannot prove field-level
-availability : do not claim AVAILABLE, PARTIAL or
-CONFIRMED_MISSING. Record those investigations as pending. For supported static
+unverified availability. Use supported deterministic availability proofs only:
+scoped supplied observations with approved exact mappings, closed-contract
+absence or explicit scoped missing-data decisions. Unsupported proofs remain
+UNKNOWN/pending; never invent observations or approval. For supported static
 paths run `kgmaker impact --entity <graph-id> --include-data-flow --format json`;
 copy exact directed proofs and cite every edge source file. These paths establish
 static dependency only, not runtime data availability. Do not equate similarly
@@ -40,3 +41,11 @@ Do not edit application code, migrations, graph.json, semantic.json or Confluenc
 This host workflow is independent of `semantic extract`; neither requires the other.
 `/kgmaker analyze-feature` is a routing intention, not a guaranteed native Copilot
 slash command. Select this custom agent using the host's supported agent selection.
+
+
+Before analytical or implementation work, verify every supplied local workspace
+repo baseline and its configured Flyway stream/target. Use --workspace consistently;
+--root is only the coordinator. Schema replay is MIGRATION_DERIVED, not deployed
+or populated-data proof. Positive availability requires deterministic approved
+scoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md
+when available. Never mutate connected source repositories during analysis.
