@@ -1,6 +1,7 @@
 # Implementační pokračování: analýza nových funkcí a datových požadavků
 
 Datum: 2026-10-09  
+Poslední doplnění: 2026-10-12 (Flyway a multirepo, kapitoly 22–26)  
 Stav: závazné zadání rozšíření, nikoliv popis již implementovaných schopností  
 Cílový projekt: `p-rum/kgmaker`  
 Navazuje na: [README](../README.md), [project-scope](project-scope.md), [architecture](architecture.md)
@@ -25,7 +26,8 @@ Nejdříve přečti současný kód a testy. Znovu používej stabilní identifi
 - Například mid-pesimistický může používat polovinu konstantního poklesu pesimistického scénáře; jde o příklad požadavku, nikoliv automaticky platný fakt o každém projektu.
 - Vstupy zahrnují klientská data a zajištění včetně pozic v jiných bankách.
 - Technologie a artefakty: PostgreSQL, Kafka, Bloomberg, TypeScript frontend, Excel, HTML šablony a externí HTML → PDF služba.
-- Frontend nebo kontrakty mohou být v jiném adresáři či repository. Nejsou-li dodány, označ tuto část jako nepokrytou.
+- Frontend a automatické testy mohou mít vlastní repozitáře. Jejich explicitně dodané checkouty propojuj s backendem podle kapitol 24–26; nedodané repozitáře označ jako nepokryté.
+- PostgreSQL schéma rekonstruuj z Flyway migrací podle kapitoly 23, včetně ALTER, rename, drop a vybraného targetu.
 - Confluence dodává obchodní a architektonický kontext.
 
 KGMAKER musí zůstat obecně použitelný. Finanční názvy patří do fixtures a agentových konceptů, nikoliv do natvrdo zabudované ontologie.
@@ -48,7 +50,7 @@ Současné `docs/project-scope.md` vylučuje online Confluence synchronizaci. To
 
 Nezaváděj povinnou grafovou databázi, MCP server, model API klienta ani model API klíč. Zachovej Python 3.11+, lokální JSON a standardní knihovnu v základní instalaci. Sémantické uvažování provádí hostitelský Copilot/IDE agent. Podpora složitějších parserů může být později volitelná, nesmí být předpokladem acceptance fixtures.
 
-Nevytvářej matematický důkazní engine, finanční validátor, runtime instrumentaci ani distribuovaný graf mnoha služeb. Sleduj původ a použití hodnot a přiznávej hranice statické analýzy.
+Nevytvářej matematický důkazní engine, finanční validátor, runtime instrumentaci ani povinnou distribuovanou grafovou službu. Lokální propojení explicitně dodaných backend/frontend/test repozitářů je povinné rozšíření podle kapitol 24–26. Sleduj původ a použití hodnot a přiznávej hranice statické analýzy.
 
 ## 3. Dva režimy a oddělení stavů
 
@@ -544,7 +546,7 @@ Inkrementální extrakce, reverse indexes včetně negativních lookupů, revise
 
 Adapter interface, fake adapter, publikační diff/approval/concurrency a testy FA-28–30. Reálné připojení je samostatně reportovaný integration deliverable s doloženým hostem a API; fake adapter není živá synchronizace.
 
-Analytické jádro je dokončeno až po milnících A–D. Kompletní rozsah tohoto zadání zahrnuje také E, s explicitně uvedeným stavem reálné Confluence integrace.
+Analytické jádro je dokončeno až po milnících A–D a nově F–G podle kapitoly 26. Kompletní rozsah tohoto zadání zahrnuje také E, s explicitně uvedeným stavem reálné Confluence integrace.
 
 Před předáním:
 
@@ -571,3 +573,308 @@ Po zadání nové funkce má vzniknout konkrétní, zdrojově doložený plán:
 - které závěry jsou potvrzené, které jsou návrhem a kde analýza končí.
 
 Základní invariant: **KGMAKER nesmí zaměnit navrženou budoucnost za současnou implementaci ani neúplné hledání za důkaz neexistence dat.**
+
+## 22. Doplnění scope: Flyway a workspace více repozitářů
+
+Doplněno: 2026-10-12. Kapitoly 22–26 jsou závazným rozšířením předchozích kapitol. V případě konfliktu mají přednost v otázkách Flyway a multirepo. Nemění zákaz automatických aplikačních změn analytickým agentem.
+
+Primární backend může zůstat v jednom repository, ale KGMAKER musí umět společný analytický workspace:
+
+- backend repository včetně Flyway migrací;
+- samostatný frontend repository;
+- samostatný repository automatických integračních, kontraktních a end-to-end testů.
+
+Nejde o povinnou vzdálenou službu nebo neomezený distribuovaný graf. Jde o lokální sjednocený pohled nad explicitně nakonfigurovanými checkouty. Jednorepozitářový režim musí fungovat beze změny a bez workspace konfigurace.
+
+## 23. Rekonstrukce databázového schématu z Flyway migrací
+
+### 23.1 Cíl a hranice tvrzení
+
+KGMAKER nesmí pouze vyhledat CREATE TABLE ve všech SQL souborech a sloučit nalezené sloupce. Musí rekonstruovat výsledné schéma pro konkrétní migration stream, profil a target version pomocí pořadí a účinků migrací.
+
+Rozlišuj:
+
+- MIGRATION_DERIVED: deklarované výsledné schéma odvozené z dodaných migračních souborů;
+- DEPLOYMENT_VERIFIED: stav doložený explicitně dodaným deployment/history snapshotem, pouze v rozsahu této evidence;
+- PARTIAL/UNKNOWN: neúplná historie, unresolved placeholders, nepodporované SQL či programové migrace.
+
+Soubor v repository není důkaz, že migrace běžela v produkci. Ani úplné rekonstruované schéma nedokazuje přítomnost konkrétních dat, oprávnění aplikace nebo naplňování sloupce. Dostupnost vstupů dál podléhá kapitole 5.
+
+Výchozí režim je offline a read-only. Nespouštěj Flyway, SQL, Java migrace, build skripty ani DB připojení. Volitelný import již existujícího schema/history snapshotu musí mít vlastní provenance; není součástí povinného živého napojení.
+
+### 23.2 Discovery a konfigurace
+
+Podporuj běžný kořen `src/main/resources/db/migration`, explicitní lokální locations a konzervativní čtení doložené konfigurace v Spring properties/YAML, Flyway properties/TOML a jednoduchých Gradle/Maven nastaveních. Nevyhodnocuj build skripty.
+
+CLI/workspace konfigurace má přednost před konkrétním vybraným profilem projektu a standardním defaultem. Rozporné nebo dynamické nastavení je otázka/diagnostic, nikoliv hádání.
+
+Eviduj:
+
+- repo ID, database logical ID a migration-stream ID;
+- dialect PostgreSQL, locations, vybraný profil a zdroj konfigurace;
+- prefixy, separator, suffixes, schemas/defaultSchema;
+- target version, deklarovaný počáteční schema snapshot/baseline;
+- explicitně poskytnuté placeholders a jejich provenance;
+- verzi parseru a podporovanou Flyway konvenci.
+
+Neskenuj tajné hodnoty a nezapisuj connection passwords do grafu/packetů. Nepoužívej automaticky environment proměnné k dohledávání credentials. Classpath locations mapuj jen na doložené lokální resources; nepřístupný JAR nebo remote location musí zůstat nepokrytý.
+
+Každý migration stream má vlastní konfiguraci a version ordering. Shodné verze v různých streamech nejsou kolize. Kombinování streamů do jedné databáze vyžaduje explicitní pořadí/kontrakt; jinak nevytvářej falešně jednoznačný výsledný stav.
+
+### 23.3 Plán migrací
+
+Zpracuj versioned SQL migrations podle Flyway version ordering, nikoliv lexikografického názvu souboru: fixture musí otestovat pořadí V2 před V10 a normalizované varianty verzí. Duplicate/equivalent version v jednom streamu je chyba plánu.
+
+Repeatable migrace eviduj odděleně. Pro model čisté instalace aplikuj podporovaný aktuální repeatable obsah po vybraných versioned migracích, v pořadí popisu. Takový model není rekonstrukcí historických opakovaných běhů. Pro historický target bez historických repeatable souborů označ tuto část UNKNOWN.
+
+Rozpoznej baseline migrations, undo migrations a callbacks jako odlišné typy. Undo neaplikuj do forward reconstruction. Baseline migration script není totéž jako baseline marker v historii. Podporuj jednoznačně nakonfigurovaný režim čistého bootstrapu z baseline scriptu nebo dodaného počátečního snapshotu; nejasná volba musí bránit tvrzení COMPLETE.
+
+Historie, ve které nejsou číselně sousední verze, není automaticky neúplná. Neúplnost stanov podle deklarované počáteční báze, inventory, chybějících referencí nebo dodané historie, nikoliv pouhé mezery v číslech.
+
+Out-of-order execution, cherry-pick, callbacks měnící schéma, Java/Kotlin migrations a podmíněné deployment kroky vyžadují doložený execution plan. Bez něj vytvoř inventory a partial model; nepředstírej simulaci skutečného nasazení. Načtený history snapshot uchovej s verzemi/checksums; SHA-256 zdrojů KGMAKERu nesmí být zaměněn za checksum algoritmus Flyway.
+
+Konkrétní pravidla pro podporovanou Flyway verzi musí implementující agent ověřit podle oficiální dokumentace a otestovat. Referenční zdroje:
+
+- [Versioned migrations](https://documentation.red-gate.com/flyway/flyway-concepts/migrations/versioned-migrations)
+- [Repeatable migrations](https://documentation.red-gate.com/flyway/flyway-concepts/migrations/repeatable-migrations)
+- [Migrations](https://documentation.red-gate.com/flyway/flyway-concepts/migrations)
+
+### 23.4 SQL parsing a výsledný schema model
+
+Implementuj lexer/statement splitter respektující comments, quoted identifiers, string literals a PostgreSQL dollar-quoted bodies. Nestav replay pouze na regexu rozdělujícím SQL podle středníku.
+
+Minimální podporované strukturální operace:
+
+- CREATE/ALTER/DROP SCHEMA a TABLE;
+- ADD/DROP/RENAME COLUMN a RENAME TABLE;
+- změna column type, nullability a default;
+- PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, jejich přidání/odstranění;
+- CREATE/DROP INDEX a jednoduchý ALTER/rename indexu;
+- CREATE/REPLACE/DROP VIEW pro podporované SELECT projekce;
+- sekvence a explicitní vazby/defaulty, pokud je parser umí doložit.
+
+DDL aplikuj v pořadí statements. Respektuj schemas a quoted identifiers; neztotožni různě kvalifikované názvy. Search path nebo default schema musí mít evidence, jinak je resolution ambiguous. IF EXISTS/IF NOT EXISTS nesmí inventovat neexistující objekty.
+
+Udržuj entity Database, Schema, Table, Column, Constraint, Index, View, Sequence, Migration a MigrationOperation. Ke každému objektu eviduj lifecycle, origin migration, poslední změnu, účinný typ/constraints a statement/line evidence. Odstraněné objekty patří do historického pohledu, ne do současné nabídky vstupů. Rename uchová prokazatelnou vazbu identity a historii starých názvů.
+
+Vazby například: `migration_changes` Migration → Operation, `operation_targets` Operation → DB object, `foreign_key_to` Constraint → referenced columns, `view_derived_from` View field → source column, `persisted_in` backend field → DB column. Rozlišuj aktuální schema view a historické migration operations, aby impact nezahrnul každý historický sloupec.
+
+DML eviduj jako data transformation/backfill, nikoliv jako potvrzení aktuálních klientských dat. Funkce, triggers, dynamický SQL a DO blocks jsou minimálně explicitní artefakty s unresolved účinky, pokud nejsou podporované. Nepodporovaný statement, který může měnit schéma, musí zneplatnit důvěru v dotčené objekty; nelze-li rozsah určit, označ celý stream PARTIAL. Další známé operace lze zpracovat, ale jejich předpoklady musí být viditelné.
+
+### 23.5 Feature analysis a inkrementální replay
+
+Analytický report musí ukázat:
+
+- zda potřebné pole existuje ve vybraném rekonstruovaném schématu;
+- odkud pochází, zda bylo přejmenováno/odstraněno a v jaké verzi;
+- zda backend mapping, nullability, precision/scale a typ souhlasí;
+- návrh nové migrace jako TO_BE včetně backfill a compatibility otázek;
+- dopady na views, constraints, backend DTO/API, frontend a externí testy.
+
+Změna staré migrace invaliduje její replay checkpoint a všechny následné relevantní operace. Nový target/config/baseline/placeholder rovněž mění fingerprint. Inkrementální replay z posledního platného checkpointu musí být ekvivalentní full replay. Změnu již sdílené/aplikované migrace označ k review; agent má navrhovat novou dopřednou migraci, ne automaticky přepisovat historii.
+
+## 24. Multirepo workspace: backend, frontend a automatické testy
+
+### 24.1 Explicitní lokální konfigurace
+
+Přidej versionovaný workspace manifest, např. `kgmaker.workspace.json`. JSON zachovává dependency-free runtime.
+
+```json
+{
+  "schema_version": 1,
+  "workspace_id": "client-financial-health",
+  "repositories": [
+    {
+      "id": "backend",
+      "role": "backend",
+      "path": "../client-backend",
+      "flyway": {
+        "database_id": "client-db",
+        "stream_id": "main",
+        "locations": ["src/main/resources/db/migration"],
+        "dialect": "postgresql",
+        "target": "latest"
+      }
+    },
+    {
+      "id": "frontend",
+      "role": "frontend",
+      "path": "../client-frontend"
+    },
+    {
+      "id": "acceptance-tests",
+      "role": "automated-tests",
+      "path": "../client-acceptance-tests"
+    }
+  ],
+  "services": [
+    {
+      "id": "financial-health-api",
+      "backend_repo": "backend",
+      "frontend_repos": ["frontend"],
+      "test_repos": ["acceptance-tests"],
+      "contract": {
+        "repo_id": "backend",
+        "path": "contracts/exposure-api.json"
+      },
+      "consumer_path_prefix": "/api",
+      "provider_path_prefix": ""
+    }
+  ]
+}
+```
+
+Cesty jsou relativní k manifestu, explicitně schválené source roots. Prefix mapping je deklarovaná transformace consumer path → provider path, ne obecné odstranění libovolného prefixu. Ověř jednoznačnost.
+
+Nesmí se automaticky prohledávat všechny sousední složky, klonovat nebo pullovat repozitáře, měnit branches ani spouštět jejich testy. Uživatel dodá checkouty/artefakty. Nedostupné repo se uvede v coverage; ostatní analýza pokračuje. Duplicitní repo ID, překrývající se kořeny nebo nesoulad deklarované identity vyžadují diagnostiku.
+
+Příkazy mají přijmout `--workspace PATH` pro scan/build/update/status/query/impact/docs a feature prepare/validate/apply/report/revise/compare. `--root` s workspace určuje výstupní/koordinační kořen, nikoliv implicitní další repository. Pravidla musí být stejné ve všech commands a zdokumentovaná.
+
+### 24.2 Globální identita a baseline
+
+Federuj lokální grafy do workspace graphu bez destruktivního přepisování source repo artefaktů.
+
+- Globální ID obsahuje repo ID a lokální graph ID; escaping musí být jednoznačný.
+- Stejné `src/model.ts`, symbol `Client` či endpoint path ve dvou repozitářích nesmí kolidovat.
+- Shared service/contract IDs jsou explicitní workspace entity, nikoliv automatické sloučení podle názvu.
+- Evidence obsahuje repo ID + relativní path + hash + location.
+- Baseline je mapa repo ID → commit/dirty fingerprint/inventory + manifest hash, nikoliv jeden commit.
+- Ověř před i po přípravě packetu, že se zdroje nezměnily během čtení. Smíšený snapshot odmítni nebo obnov.
+- Commit kombinace mohou být odlišné release verze; report nesmí tvrdit deployment compatibility bez doloženého release mappingu.
+- Pokud chybí repo, nikdy neoznač celou workspace coverage COMPLETE.
+- Zachovej staré single-repo IDs v původním režimu; federace použije wrapper/mapování a versionovaný kontrakt.
+
+Cache a reverse index jsou kvalifikované repo ID. Změna jednoho repa může invalidovat cross-repo vazby i závěry v jiném, ale nezměněné soubory se znovu neparsují. Přidání dříve chybějícího repa revaliduje negativní hledání.
+
+### 24.3 Backend ↔ frontend
+
+Podporuj dohledání backend endpoint → API response/request fields → frontend client/type → state/selector → component/display v rozsahu podporovaných vzorů.
+
+Matching vyžaduje service identity, HTTP method, normalizovanou path, případně operation ID a contract field pointer. Path parameter names lze normalizovat jen v dokumentovaném tvaru, nikoliv slučovat různé endpoints podle podobnosti. GraphQL/custom protocols zůstávají unresolved, pokud nejsou implementované.
+
+Generated API clients eviduj přes původní kontrakt a generation metadata. Nepovažuj generovaný TypeScript typ za nezávislou potvrzující evidence téhož kontraktu. Závislost kontrakt → generated artifact → consumer je platný impact vztah i při vyloučení velké generated directory.
+
+Ověř field-level rozdíly: missing/renamed field, type/nullability změna, consumer očekává jinou contract version. Runtime URL a proxy konfigurace musí mít evidence nebo explicitní manifest mapping.
+
+U UI selectorů a data-testid propojuj jen jednoznačné odkazy; dynamické CSS/text selectors jsou kandidáti. Výstup musí ukazovat, které frontendové soubory a obrazovky vyžadují změnu, nebo kde cesta končí.
+
+### 24.4 Repository automatických testů
+
+Zahrň samostatné test repository do inventáře a impactu. Minimální podporované fixtures:
+
+- TypeScript Playwright test: request/client call, locator/data-testid a explicitní assertions;
+- JVM JUnit + REST Assured nebo jednoznačný HTTP test client;
+- sdílené fixtures, test data builders, helpers a explicitní kontraktní soubory.
+
+Dále rozpoznej ostatní test/config soubory jako inventory; nepodporovaný framework nesmí vést k závěru „testy neexistují“.
+
+Modeluj TestCase, TestSuite, TestFixture, TestHelper a TestAssertion s lokalizací a hranami:
+
+| Vztah | Směr a použití |
+|---|---|
+| `tests_endpoint` | Test → backend endpoint, doložený request |
+| `asserts_field` | Assertion → contract/output field |
+| `targets_ui` | Test locator → jednoznačný UI element |
+| `uses_fixture` | Test/helper → fixture |
+| `depends_on_contract` | Test/client → konkrétní contract version |
+| `validates_requirement` | Test → requirement, pouze doložené mapování |
+
+Samotný HTTP call dokazuje volání endpointu, nikoliv ověření všech jeho polí. Neztotožňuj přítomnost testu s tím, že projde nebo dostatečně pokrývá pravidlo. Přítomnost assertions je statická evidence; skutečný PASS/FAIL vyžaduje explicitně dodaný aktuální test-run report s commit/config/environment provenance.
+
+Impact musí dohledat přes helpers/fixtures testy dotčené změnou DTO, kontraktu, scénáře, schématu nebo UI. Test data/setup SQL posuzuj proti rekonstruovanému Flyway schématu; chybějící sloupec ve fixture je rozdíl v dané baseline, nikoliv automatický důkaz produkční chyby.
+
+Report rozliší existující relevantní testy, kandidátní vazby, návrhy nových testů a nepokrytá pravidla. Uváděj přesný repo/path/test ID a navržený command odvozený z doloženého build/test configu; bez configu označ command jako návrh. Analytický workflow testy nespouští. Zejména E2E může zapisovat do externích systémů.
+
+### 24.5 Cross-repo návrh změn a report
+
+Pro novou feature uveď tabulku po repozitářích: změny backendu a migrací, API kontraktu, frontendu, automatických testů, shared fixtures a dokumentace.
+
+Příklad podporované cesty:
+
+`Flyway Column → backend field → calculation → API response → frontend display → E2E assertion`
+
+Každý krok musí mít vlastní evidence a repo ID. Report musí ukázat compatibility/deployment otázky: provider před consumerem, přechodná nullability, verze kontraktu, backfill a úpravy test dat. Tyto kroky jsou návrh rollout plánu, nikoliv automatické nasazení.
+
+Návrh TO_BE je jeden analysis scope s cross-repo change items; apply jej nesmí zapisovat jako implementovaný stav do žádného source repository. Jeden globální budget prioritizuje relevantní data napříč repy a vykazuje vynechané oblasti zvlášť za každé repo.
+
+## 25. Nové CLI, fixtures a akceptační testy
+
+Cílové příkazy navazující na kapitolu 10:
+
+```bash
+kgmaker scan --workspace kgmaker.workspace.json
+kgmaker update --workspace kgmaker.workspace.json
+kgmaker schema inspect --workspace kgmaker.workspace.json --repo backend --stream main --target latest --format json
+kgmaker schema diff --workspace kgmaker.workspace.json --repo backend --stream main --from 2 --to 10 --format json
+kgmaker feature prepare --workspace kgmaker.workspace.json --requirement requirements/new-hedge.md --id additional-hedge
+kgmaker impact --workspace kgmaker.workspace.json --entity '<workspace-graph-id>' --include-data-flow --format json
+kgmaker feature report --workspace kgmaker.workspace.json --analysis additional-hedge --output docs/generated/features/additional-hedge.md
+```
+
+`schema inspect` vypíše reconstruction mode, konfiguraci, účinné objekty, migration evidence a nevyřešené operace. `schema diff` porovná dva deklarované schema targets, ne živé databáze. Unknown repeatable/historical stav nesmí být prezentován jako přesný diff.
+
+Přidej syntetický `fixtures/multirepo-analysis/` se třemi samostatnými lokálními Git checkouty vytvořenými testem (bez síťových clone), workspace manifestem a backend migracemi V1/V2/V10 + repeatable view. Repo fixtures musí obsahovat shodné relative paths/symbol names pro test kolizí.
+
+Migrace vytvoří tabulku, přidají/změní/přejmenují/odstraní sloupce a view. Frontend používá explicitní API field a data-testid. Test repository obsahuje Playwright assertion, HTTP assertion a shared fixture/helper. Expected výsledné schéma a vazby stanov ručně, nikoliv týmž parserem.
+
+Rozšiř kapitolu 19 o následující závazné testy:
+
+| ID | Situace | Požadovaný výsledek |
+|---|---|---|
+| FA-36 | Flyway V1, V2, V10 s ALTER | Správné version ordering a výsledné schéma, ne union CREATE TABLE |
+| FA-37 | Rename/drop column/table | Nový aktuální název, historická evidence; dropped objekt nenabízen jako dostupný |
+| FA-38 | Repeatable view a historický target | Čistý bootstrap podle deklarovaného plánu; historické omezení explicitní |
+| FA-39 | Duplicate/equivalent version v jednom streamu | Chyba plánu; žádné COMPLETE schema |
+| FA-40 | Placeholders, search_path a profil | Správná explicitní konfigurace; unresolved hodnoty označí partial |
+| FA-41 | Java migration/DO block/unknown callback | Inventory a neznámé schema účinky, žádné spouštění |
+| FA-42 | Citované schema pole existuje jen v unapplied migration | MIGRATION_DERIVED, nikoliv DEPLOYMENT_VERIFIED nebo potvrzení naplnění dat |
+| FA-43 | Změna staré migrace nebo baseline | Invalidation následujících checkpoints, incremental = full replay |
+| FA-44 | Numerická mezera mezi validními verzemi | Žádná automatická diagnóza chybějící historie |
+| FA-45 | Sloupce/types/constraints/views proti backend mappingu | Konkrétní mismatch s oběma evidence a target version |
+| FA-46 | Backend/frontend/tests mají stejný path/symbol | Nekolidující ID a repo-qualified citace |
+| FA-47 | Backend field → FE display → E2E assertion | Vysvětlená cross-repo impact cesta |
+| FA-48 | HTTP path shodný u dvou služeb | Bez service identity žádná potvrzená vazba |
+| FA-49 | Manifest proxy prefix/generated client | Prokazatelné mapování a původ kontraktu, ne falešné nezávislé potvrzení |
+| FA-50 | Test volá endpoint, ale neassertuje změněné pole | Relevantní test candidate, nikoliv potvrzené pokrytí pole |
+| FA-51 | Shared helper/fixture ovlivní několik testů | Tranzitivní test dopad s evidence |
+| FA-52 | Chybí FE/test checkout či nesedí release baseline | Analýza pokračuje, explicitní coverage/compatibility unknown |
+| FA-53 | Změní se jen FE nebo test repo | Cílená invalidace cross-repo závěrů bez reparsu backendu |
+| FA-54 | Candidate cituje správný path/hash, ale špatné repo ID | Validace odmítne; žádná mutace |
+| FA-55 | TO_BE obsahuje migraci, FE i test změny | Žádný source repo/AS_IS artefakt se při feature apply nezmění |
+| FA-56 | Test-run report chybí nebo je stale | Žádné tvrzení PASS nebo ověřeného runtime pokrytí |
+| FA-57 | Workspace scan a report | Nulové síťové clone/pull, DB queries, execution migrací a E2E |
+| FA-58 | Sources se mění během packet preparation | Smíšená baseline odmítnuta nebo bezpečně obnovena |
+| FA-59 | Odstranění repo nebo nový dříve chybějící checkout | Žádné dangling potvrzené vazby; revalidace negativních lookupů |
+| FA-60 | Single-repo bez workspace manifestu | Zachování dosavadních commands a identity |
+| FA-61 | Quoting, comments, dollar-quoted středníky v SQL | Správné statements, žádné falešné DDL z literálů |
+| FA-62 | Baseline script, marker a undo | Rozlišené režimy; žádný undo v forward replay |
+| FA-63 | Target schema obsahuje column, ale test fixture má starý název | Konkrétní dopad na test data a žádný automatický rewrite |
+| FA-64 | Two independent migration streams share version V1 | Žádná kolize mezi streamy; merge pouze podle explicitního plánu |
+
+## 26. Doplnění modulů a definition of done
+
+Přidej nebo rozšiř:
+
+- `flyway.py`: discovery, konfigurace, migration inventory a plán;
+- `schema_replay.py`: SQL operations, versioned schema state, checkpoints a diff;
+- `workspace.py`: manifest, repo-qualified identita, multi-baseline a federace;
+- `test_analysis.py`: test cases/assertions/helpers/fixtures a linkage;
+- existující dataflow, coverage, validators, reporty, cache a agentové templates.
+
+### Milník F — Flyway schema intelligence
+
+Kapitola 23, schema CLI a FA-36–45/61–62/64. Zpracování musí poskytovat výsledné schéma s lifecycle a evidence. Pouhé indexování migračních souborů není dokončení.
+
+### Milník G — lokální multirepo analytický workspace
+
+Kapitola 24, workspace CLI a FA-46–60/63. Změna backend výstupu musí ve fixture dohledat konkrétní FE použití a relevantní test assertions/helpers v oddělených repozitářích.
+
+F je závislost spolehlivého schema matching v G; workspace identity lze zavést dříve. Oba milníky jsou součástí povinného analytického rozsahu, nikoliv vzdálená volitelná integrace. Nová definition of done analytického jádra je A–D + F–G; stav Confluence milníku E zůstává odděleně reportovaný.
+
+Aktualizuj README, project-scope, architecture a host instrukce tak, aby analytický i implementační agent před změnou ověřil baseline všech dodaných relevantních repozitářů a aktuální Flyway schema target. Ověř původní test suite, nové offline fixtures a kompatibilitu. Zadání samo nepovoluje automatické změny v připojených aplikačních repozitářích.
+
+Finální analytický report musí umět odpovědět například:
+
+> Přidání splatnosti externího zajištění vyžaduje novou databázovou migraci, úpravu backend mappingu a API, doplnění frontendového formuláře a změnu konkrétních E2E fixtures/assertions. Zde jsou přesné soubory ve třech repozitářích, jejich baseline, evidence, datové požadavky a otevřené rollout otázky.
+
+Takový závěr je přípustný jen tam, kde jej dodané zdroje prokazují; jinak musí uvést konkrétní chybějící vazbu.
