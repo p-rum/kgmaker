@@ -73,3 +73,12 @@ links explicit service contracts, supported consumer/test patterns and checks
 test SQL against declared schema targets. `availability.py` verifies scoped
 observations/approved mappings or contract/decision absence, without executing
 tests, queries or migrations. All feed the same feature validator and renderer.
+
+## Proposed build-aware JVM inspection
+
+See [the extension analysis](build-aware-code-inspection-analysis.md) for the proposed
+compiler/bytecode call graph, isolated Maven build workflow, Spring Boot resolution,
+and Hibernate/Spring Data inspection. This is a design proposal, not implemented
+functionality. Existing `build` remains a graph scan; analytical commands remain
+offline. Build success, static reachability, runtime observations and data availability
+retain separate evidence contracts.
