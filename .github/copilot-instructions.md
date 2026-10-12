@@ -15,3 +15,10 @@ contract in `docs/feature-analysis.md`. Use the isolated `feature` packet lifecy
 not semantic patches. Keep proposals TO_BE, verify citations and preserve explicit
 UNKNOWN/pending states for currently unsupported data-flow proofs. Do not edit
 application code during feasibility analysis.
+
+For data prerequisites or "/kgmaker check-data" intent, follow
+`kgmaker-data-auditor`. Reuse feature prepare/validate/apply/report, query and
+directed impact; restrict model work to requirement meaning and business
+ambiguity. Unsupported proofs remain UNKNOWN/pending. This is a data audit,
+not authorization to edit application code or run E2E tests.
+

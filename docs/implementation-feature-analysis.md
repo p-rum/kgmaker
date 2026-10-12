@@ -878,3 +878,109 @@ Finální analytický report musí umět odpovědět například:
 > Přidání splatnosti externího zajištění vyžaduje novou databázovou migraci, úpravu backend mappingu a API, doplnění frontendového formuláře a změnu konkrétních E2E fixtures/assertions. Zde jsou přesné soubory ve třech repozitářích, jejich baseline, evidence, datové požadavky a otevřené rollout otázky.
 
 Takový závěr je přípustný jen tam, kde jej dodané zdroje prokazují; jinak musí uvést konkrétní chybějící vazbu.
+
+## 27. Specializovaný agent pro datové předpoklady nové feature
+
+Doplněno: 2026-10-12. Agent `kgmaker-data-auditor` má zjistit, jaké vstupy jsou nutné pro implementační zadání, co je doložené, co chybí v prozkoumaném rozsahu a co musí být dodáno nebo definováno. Neřeší celý solution design.
+
+Host artefakty: `.github/agents/kgmaker-data-auditor.agent.md` a `.junie/commands/kgmaker-check-data.md`. `kgmaker init` je instaluje idempotentně a bez přepisování uživatelských změn, pokud nebylo zadáno `--force`. Záměr `/kgmaker check-data` není záruka nativního slash příkazu v každém hostu.
+
+### 27.1 Nejmenší možný podíl LLM
+
+Povinné dělení práce:
+
+| Krok | Vykonavatel |
+|---|---|
+| Discovery, inventář, source hashes a baseline | Existující scanner, source inventory a feature.prepare |
+| Flyway plán a schema replay | Funkce z milníku F, nikdy agentové ruční skládání SQL |
+| Workspace identity a cross-repo resolution | Funkce z milníku G |
+| Vyhledání field/contract kandidátů | Query/index; automatické matching funkce |
+| Graph traversal a impact | Existující dataflow/impact funkce |
+| Rozlišení datového typu, nullability a struktury | Podporované deterministické parsers |
+| Availability klasifikace z validovaných důkazů | Deterministický proof checker |
+| Citace, fingerprinty, freshness, apply a report | Existující feature validator/store/renderer |
+| Rozložení přirozeného jazyka a business definice | Agent |
+| Nejednoznačná business ekvivalence a otázky | Agent, případně analytik/business |
+
+Agent nesmí znovu implementovat tyto funkce v promptu, pomocných bash regexech nebo ručně sestavených hashech. Jednoduché orchestration wrappery mají volat existující Python funkce; žádný druhý scanner, validator ani nezávislý klasifikátor.
+
+Je-li strukturované zadání již dodáno, přeskoč opakovanou LLM dekompozici. Je-li mapping schválen a jeho evidence stále platná, nevolej model k potvrzení téže vazby znovu. LLM zpracovává jen nové/změněné požadavky a ambiguity queue. Pozitivní dostupnost je výsledek kontrol důkazů, nikoliv hlasování modelu.
+
+### 27.2 Aktuálně použitelný workflow a omezení
+
+Agent používá `feature prepare`, `query`, `impact --entity --include-data-flow --format json`, `feature validate/apply/report` a `feature revise`. Prepare již vytváří aktuální inventory v paměti; nevyžaduj zbytečný extra scan nebo semantic extraction.
+
+Candidate vzniká ze skutečného `candidate-template.json` se zachovanou obálkou. Soustřeď se na požadavky, input_requirements, evidence, questions a pending. Ostatní povinné kolekce mohou zůstat prázdné, pokud nejsou nutné k vysvětlení datového předpokladu.
+
+Současný foundation validator nepodporuje důkazy AVAILABLE/PARTIAL/CONFIRMED_MISSING. Instalovaný agent nesmí tyto stavy používat, dokud implementace důkazů není dostupná. UNKNOWN a validní neúplný report jsou správný výsledek. NOT_FOUND_IN_SCOPE vyžaduje úplný ověřovaný rozsah a akceptovaný negativní lookup; neověřené pozitivní tvrzení se nesmí maskovat negativním.
+
+Nedostupné Flyway/workspace commands označ jako capability gap, ne jako důkaz chybějících business dat. Zdrojový soubor či schema deklarace sama neprokazuje naplněnou a použitelnou hodnotu.
+
+### 27.3 Deterministická datová kontrola k implementaci
+
+Jako rozšíření existujícího feature workflow implementuj tenký command:
+
+```bash
+kgmaker feature data-check --root . --analysis <id> --inputs requirements/<id>-inputs.json --format json
+kgmaker feature data-check --workspace kgmaker.workspace.json --analysis <id> --inputs requirements/<id>-inputs.json --format json
+```
+
+To je cílový kontrakt, nikoliv tvrzení, že command již existuje. `--workspace` závisí na milníku G. Command se nesmí potichu pokusit nahradit chybějící multi-repo podporu.
+
+Vstup je versionovaný `DataRequirementSet`: schema_version, analysis_id, requirement_hash, requirements s ID a source quote/reference, inputs s input ID, requirement IDs, explicitními business metadata podle kapitoly 5 a volitelnými candidate entity IDs. Neznámé hodnoty jsou null. Reference musí projít stávající validací. Agent dodá pouze sémantickou specifikaci, ne výsledné hashes/availability.
+
+Command:
+1. Validuje DataRequirementSet proti aktuálnímu packetu a evidence rozsahu.
+2. Použije existující inventář, graph query, schéma, field mappingy a datové cesty.
+3. Vyhodnotí identity/typ/jednotku/čas/derivation dependencies, pokud mají důkazy.
+4. Vytvoří pro každý vstup kandidátní zdroje, důkazy, scoped availability a důvod.
+5. Vrátí ambiguity queue jen pro nevyřešený business význam, ne pro běžné hash/SQL kontroly.
+6. Vykáže zvlášť data delivery gaps, business decisions a parser/access coverage gaps.
+7. Připraví candidate fragments kompatibilní s aktuálním feature kontraktem; nesmí je automaticky prohlásit za schválené.
+8. Renderuje datový pohled pomocí existujícího rendereru a validuje výstup běžným feature validator, bez paralelního validation path.
+
+Pro aktuálně nepodporované proof kategorie vrátí UNKNOWN/pending. Po implementaci podporovaných důkazů se stav určí automaticky z důkazů podle kapitoly 5. Důvod rozhodnutí a pokrytí jsou součástí JSON; model nesmí změnit UNKNOWN na AVAILABLE bez nové evidence.
+
+Proces může provést nejvýše: sémantickou dekompozici → deterministický check → cílené upřesnění ambiguities → opakovaný check po nové evidence/odpovědích. Žádné bezdůvodné LLM přezkoumání každého field po úspěšném deterministickém ověření.
+
+### 27.4 Bash a PowerShell
+
+Preferuj existující CLI/Python API. Shell smí sloužit pro orchestration, čtení vybraného lokálního excerptu a zpracování JSON.
+
+- Bash fallback: `rg -n -- <literal> <approved-path>`, s korektním quotingem a omezeným rozsahem.
+- PowerShell fallback: `Select-String -LiteralPath <approved-file> -Pattern <literal> -SimpleMatch`.
+- JSON parsuj pomocí Python `json` nebo PowerShell `ConvertFrom-Json`, nikoliv grepem.
+- Requirement prose předávej jako data/soubor, nikdy jako executable shell.
+- Nepoužívej eval, Invoke-Expression, automatické build/test/DB příkazy či síťové operace.
+- Větvení podle exit code musí být deterministické: invalid oprav/oznam; stale refresh; incomplete ulož jako incomplete.
+- Nepřidávej povinnou závislost na Bash: core workflow běží přes Python CLI i na Windows bez admin práv.
+
+Fallback hledání lokalizuje kandidáta; regex výskyt není parser ani důkaz neexistence dat.
+
+### 27.5 Výstup a validace
+
+Výstup má dvě oddělené tabulky:
+
+1. **Co dodat/rozhodnout:** přesná pole a definice, typ/jednotka/čas, důvod potřeby, navržená odpovědná role a další krok.
+2. **Co zatím nelze ověřit nástrojem:** konkrétní nepokryté repo, nepodporovaný parser, chybějící runtime evidence či budget.
+
+Do první tabulky nezařazuj nástrojovou nejistotu jako potvrzenou absenci business dat. Doložené zdroje mají repo/entity IDs a source lokalizaci. Candidate a report jsou izolované od AS_IS a zdrojové aplikace.
+
+Nové acceptance testy:
+
+| ID | Situace | Výsledek |
+|---|---|---|
+| FA-65 | Init instaluje data auditor a JetBrains command | Templates shodné s instalací, idempotence a zachování uživatelských změn |
+| FA-66 | Strukturované inputs a podporované mappingy | data-check běží bez LLM a znovu používá stávající funkce |
+| FA-67 | Přirozený požadavek s nejasnou likviditou | LLM pouze dekompozice/otázka, automatická část dodá inventář a důkazy |
+| FA-68 | Neexistuje pozitivní availability proof checker | UNKNOWN/pending, žádné agentové potvrzení AVAILABLE |
+| FA-69 | Změní se relevantní source nebo odpověď | Check revaliduje podle existing freshness/revise, ne pouze promptovou instrukcí |
+| FA-70 | Hledání nezahrnuje část repa/rozpočet nestačí | Capability/coverage gap oddělen od data delivery gap |
+| FA-71 | Requirement obsahuje shell metacharacters | Předáno jako data, žádné spuštění nebo změna příkazů |
+| FA-72 | Bash není dostupný | Stejný core workflow přes Python CLI/PowerShell orchestration |
+| FA-73 | Validated mapping beze změny a nová nerelevantní otázka | Žádná opakovaná LLM extrakce všech vstupů |
+| FA-74 | Data audit dokončí validaci a report | Žádná změna aplikačního kódu, migrací, testů ani AS_IS artefaktů |
+
+Host agent a instalace jsou okamžitě použitelné s existující foundation. Deterministický data-check, proof checkers a ambiguity queue jsou další implementační deliverable; doplň je do milníků B/D/F/G podle závislostí. Prompt samotný není dokončením tohoto deliverable.
+
+

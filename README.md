@@ -111,3 +111,19 @@ kgmaker impact --root . --entity '<existing-field-id>' --include-data-flow --for
 This includes simple Kotlin expressions/constructor mappings and field inventory
 for Java, TypeScript and JSON contracts. Parser limitations are explicit in feature
 coverage; a static path does not prove runtime availability or financial validity.
+
+### Data prerequisite audit
+
+Run `kgmaker init` to install `kgmaker-data-auditor` and the JetBrains
+`kgmaker-check-data.md` command. Select the agent in the host, or ask it to follow
+`.github/agents/kgmaker-data-auditor.agent.md` with your feature requirement.
+The intent `/kgmaker check-data` is a routing convention.
+
+The auditor reuses feature prepare/validate/apply/report/revise, query and
+directed impact. Model work is limited to required input definitions and
+business ambiguity. Current unavailable proof capabilities remain UNKNOWN;
+the auditor cannot yet certify AVAILABLE or CONFIRMED_MISSING. It generates
+an isolated report without changing application code or running tests.
+The future deterministic data-check command is specified in
+[implementation chapter 27](docs/implementation-feature-analysis.md#27-specializovaný-agent-pro-datové-předpoklady-nové-feature).
+

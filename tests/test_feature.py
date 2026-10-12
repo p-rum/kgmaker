@@ -255,16 +255,28 @@ class FeatureTests(unittest.TestCase):
 
     def test_init_preserves_user_analyst_and_junie_files(self):
         from kgmaker.cli import init
+        from kgmaker.data_agent import (
+            DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT,
+            DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT,
+        )
         with redirect_stdout(io.StringIO()):
             init(self.root)
         analyst = self.root / '.github/agents/kgmaker-analyst.agent.md'
         junie = self.root / '.junie/commands/kgmaker-analyze-feature.md'
-        for path in [analyst, junie]:
+        auditor = self.root / DATA_AUDITOR_FILE
+        auditor_command = self.root / DATA_AUDITOR_JUNIE_FILE
+        self.assertEqual(DATA_AUDITOR_CONTENT, auditor.read_text(encoding='utf-8'))
+        self.assertEqual(DATA_AUDITOR_JUNIE_CONTENT, auditor_command.read_text(encoding='utf-8'))
+        for path in [analyst, junie, auditor, auditor_command]:
             path.write_text('user instructions', encoding='utf-8')
         with redirect_stdout(io.StringIO()):
             init(self.root)
-        for path in [analyst, junie]:
+        for path in [analyst, junie, auditor, auditor_command]:
             self.assertEqual('user instructions', path.read_text(encoding='utf-8'))
+        with redirect_stdout(io.StringIO()):
+            init(self.root, force=True)
+        self.assertEqual(DATA_AUDITOR_CONTENT, auditor.read_text(encoding='utf-8'))
+        self.assertEqual(DATA_AUDITOR_JUNIE_CONTENT, auditor_command.read_text(encoding='utf-8'))
 
     def test_scope_and_proposal_are_explicit_in_query(self):
         from kgmaker.feature_cli import query_analysis
@@ -350,3 +362,4 @@ class FeatureTests(unittest.TestCase):
         candidate['requirements'][0]['text'] = 'Tampered after apply'
         write_json(self.directory / 'analysis.json', candidate)
         self.assertEqual(2, self.cli('report', '--analysis', 'hedge')[0])
+

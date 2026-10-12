@@ -10,6 +10,7 @@ from pathlib import Path
 from . import __version__
 from . import feature_cli
 from .analysis_agent import ANALYST_FILE, ANALYST_CONTENT, JUNIE_FILE, JUNIE_CONTENT
+from .data_agent import DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT, DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT
 from .confluence import (
     DEFAULT_REPORT_FILE,
     documentation_check,
@@ -103,6 +104,11 @@ Local Confluence HTML is an optional, read-only knowledge source. Use `kgmaker d
 For `/kgmaker analyze-feature` intent, use the `kgmaker-analyst` instructions and
 isolated `feature` packets. Supported static data-flow paths are not runtime
 availability proofs. Do not use semantic apply for feature candidates.
+
+For data prerequisites or "/kgmaker check-data" intent, use kgmaker-data-auditor.
+Reuse feature prepare/validate/apply/report, query and directed impact commands.
+Limit model work to requirement meaning and business ambiguity; preserve
+UNKNOWN/pending for unsupported proofs. Do not edit application code in an audit.
 """
 
 EXTRACT_AGENT_CONTENT = """---
@@ -201,6 +207,8 @@ def init(root: Path, force: bool = False) -> int:
         (root / AGENT_FILE, AGENT_CONTENT),
         (root / ANALYST_FILE, ANALYST_CONTENT),
         (root / JUNIE_FILE, JUNIE_CONTENT),
+        (root / DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT),
+        (root / DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT),
         (root / ARCHITECT_AGENT_FILE, ARCHITECT_AGENT_CONTENT),
         (root / EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
         (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
@@ -760,3 +768,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
