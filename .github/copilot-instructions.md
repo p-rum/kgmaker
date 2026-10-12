@@ -26,4 +26,3 @@ repo baseline and its configured Flyway stream/target. Use --workspace consisten
 or populated-data proof. Positive availability requires deterministic approved
 scoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md
 when available. Never mutate connected source repositories during analysis.
-
