@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "analysis_id": "additional-hedge",
+  "revision": 1,
+  "packet_id": "__PACKET__",
+  "requirement_hash": "__PACKET__",
+  "baseline": {},
+  "coverage": {},
+  "language": "cs",
+  "requirements": [
+    {
+      "id": "analysis:additional-hedge:requirement:goal",
+      "text": "Doporuč klientovi dodatečné FX zajištění tak, aby očekávaná expozice v pesimistickém scénáři nepřesáhla 20 % disponibilních prostředků. Zohledni externí bankovní pozice a zobraz doporučení v UI i PDF.",
+      "source_quote": "Doporuč klientovi dodatečné FX zajištění tak, aby očekávaná expozice v pesimistickém scénáři nepřesáhla 20 % disponibilních prostředků. Zohledni externí bankovní pozice a zobraz doporučení v UI i PDF.\n",
+      "kind": "Goal",
+      "status": "OPEN_QUESTION"
+    }
+  ],
+  "input_requirements": [
+    {
+      "id": "analysis:additional-hedge:input:liquidity",
+      "name": "Disponibilní prostředky",
+      "definition": null,
+      "data_type": null,
+      "unit": null,
+      "currency": null,
+      "granularity": null,
+      "keys": null,
+      "as_of": null,
+      "validity_interval": null,
+      "horizon": null,
+      "freshness": null,
+      "nullable": null,
+      "quality": null,
+      "fallbacks": null,
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ],
+      "source_ids": [],
+      "evidence_ids": [
+        "analysis:additional-hedge:evidence:balance"
+      ],
+      "dependency_ids": [],
+      "question_ids": [
+        "analysis:additional-hedge:question:liquidity"
+      ],
+      "availability": "UNKNOWN",
+      "acquisition": "UNRESOLVED",
+      "usability": "UNASSESSED",
+      "verification_scope": "Dodaný backend a kontrakt externích pozic. Frontend, PDF a zdroj rezervací nebyly dodány.",
+      "next_step": "Definovat rezervované prostředky, klíč klienta, měnu a časový okamžik; dodat zdroj a cestu naplnění.",
+      "owner_role": "Business analytik",
+      "transformation": null
+    }
+  ],
+  "capability_matches": [],
+  "proposal": {
+    "nodes": [
+      {
+        "id": "proposal:additional-hedge:recommendation",
+        "name": "Doporučení zajištění",
+        "kind": "Calculation",
+        "description": "Navržená metrika; výpočet není implementovaný ani businessově schválený.",
+        "state": "TO_BE"
+      }
+    ],
+    "edges": [
+      {
+        "source": "proposal:additional-hedge:recommendation",
+        "target": "analysis:additional-hedge:input:liquidity",
+        "kind": "requires_input",
+        "state": "TO_BE"
+      }
+    ]
+  },
+  "changes": [
+    {
+      "id": "analysis:additional-hedge:change:recommendation",
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ],
+      "entity_ids": [
+        "proposal:additional-hedge:recommendation"
+      ],
+      "dependency_ids": [
+        "analysis:additional-hedge:question:liquidity"
+      ],
+      "layer": "backend",
+      "state": "TO_BE",
+      "reason": "Nový požadavek na doporučení dodatečného zajištění.",
+      "inputs": "Definovaná likvidita a externí pozice včetně potřebné splatnosti.",
+      "outputs": "Doporučené zajištění; navrhovaný kontrakt pro UI a PDF je nutné upřesnit.",
+      "test_impact": "Navrhnout akceptační scénáře po schválení definic."
+    }
+  ],
+  "impact_paths": [
+    {
+      "id": "analysis:additional-hedge:impact:scenario-report",
+      "entity_ids": [
+        "data_field:backend/ScenarioCalculator.kt:ScenarioInput.pessimisticDecline",
+        "local_value:backend/ScenarioCalculator.kt:ScenarioCalculator.calculate(input: ScenarioInput):midDecline",
+        "data_field:backend/ScenarioCalculator.kt:ScenarioReport.midDecline"
+      ],
+      "edges": [
+        {
+          "source": "local_value:backend/ScenarioCalculator.kt:ScenarioCalculator.calculate(input: ScenarioInput):midDecline",
+          "target": "data_field:backend/ScenarioCalculator.kt:ScenarioInput.pessimisticDecline",
+          "kind": "derived_from",
+          "evidence": "input.pessimisticDecline / 2",
+          "confidence": "EXTRACTED",
+          "confidence_score": 1.0,
+          "source_file": "backend/ScenarioCalculator.kt",
+          "source_line": 5
+        },
+        {
+          "source": "local_value:backend/ScenarioCalculator.kt:ScenarioCalculator.calculate(input: ScenarioInput):midDecline",
+          "target": "data_field:backend/ScenarioCalculator.kt:ScenarioReport.midDecline",
+          "kind": "maps_to",
+          "evidence": "ScenarioReport(midDecline)",
+          "confidence": "EXTRACTED",
+          "confidence_score": 1.0,
+          "source_file": "backend/ScenarioCalculator.kt",
+          "source_line": 6
+        }
+      ],
+      "weakest_confidence": "EXTRACTED",
+      "unresolved_boundary": null,
+      "evidence_ids": [
+        "analysis:additional-hedge:evidence:scenario"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "analysis:additional-hedge:question:liquidity",
+      "text": "Co zahrnují disponibilní prostředky a odkud přicházejí rezervace?",
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ],
+      "owner_role": "Business analytik",
+      "status": "OPEN",
+      "blocking": true
+    }
+  ],
+  "assumptions": [],
+  "alternatives": [
+    {
+      "id": "analysis:additional-hedge:alternative:no-new-api",
+      "name": "no-new-api",
+      "constraints": "Bez nového externího API; klientské zadání dat je pouze návrh.",
+      "limitations": "Existence současného zdroje rezervací ani splatností není ověřena.",
+      "proposal_ids": [
+        "proposal:additional-hedge:recommendation"
+      ],
+      "question_ids": [
+        "analysis:additional-hedge:question:liquidity"
+      ],
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ]
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "analysis:additional-hedge:acceptance:boundaries",
+      "text": "Chybějící definice a nepokryté systémy se zobrazí jako neověřené vstupy.",
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ]
+    }
+  ],
+  "test_plan": [
+    {
+      "id": "analysis:additional-hedge:test:unknown",
+      "text": "Nový test odmítne doporučení bez definované likvidity.",
+      "state": "TO_BE",
+      "requirement_ids": [
+        "analysis:additional-hedge:requirement:goal"
+      ],
+      "entity_ids": [],
+      "evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "id": "analysis:additional-hedge:evidence:balance",
+      "source_id": "backend/ExposureService.kt",
+      "kind": "CODE",
+      "path": "backend/ExposureService.kt",
+      "sha256": "__SOURCE_SHA256__",
+      "location": {
+        "type": "lines",
+        "start": 3,
+        "end": 3
+      },
+      "quote": "data class Account(val accountBalance: Double)",
+      "supports": "Deklarace zůstatku účtu; neprokazuje shodnou definici disponibilních prostředků.",
+      "method": "EXTRACTED",
+      "confidence": 1,
+      "validity": "VALID"
+    },
+    {
+      "id": "analysis:additional-hedge:evidence:scenario",
+      "source_id": "backend/ScenarioCalculator.kt",
+      "kind": "CODE",
+      "path": "backend/ScenarioCalculator.kt",
+      "sha256": "__SOURCE_SHA256__",
+      "location": {
+        "type": "lines",
+        "start": 5,
+        "end": 6
+      },
+      "quote": "input.pessimisticDecline / 2",
+      "supports": "Explicitní statická závislost a mapování do reportového pole, nikoli důkaz finanční správnosti.",
+      "method": "EXTRACTED",
+      "confidence": 1,
+      "validity": "VALID"
+    }
+  ],
+  "completion": {
+    "processing_status": "PARTIAL",
+    "decision_readiness": "BLOCKED",
+    "pending": [
+      "Ověřit datové cesty; doplnit frontend a PDF kontrakty."
+    ]
+  }
+}

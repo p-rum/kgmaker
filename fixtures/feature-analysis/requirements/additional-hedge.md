@@ -1,0 +1,1 @@
+Doporuč klientovi dodatečné FX zajištění tak, aby očekávaná expozice v pesimistickém scénáři nepřesáhla 20 % disponibilních prostředků. Zohledni externí bankovní pozice a zobraz doporučení v UI i PDF.

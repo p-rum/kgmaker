@@ -79,3 +79,35 @@ python -m unittest discover -s tests -v
 ```
 
 The application is intentionally dependency-free at runtime. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+
+## Feature feasibility analysis (foundation)
+
+A new isolated `kgmaker feature` workflow prepares evidence packets, validates
+agent-authored candidates, stores immutable revisions and renders Czech/English
+reports. It works without a diff, LLM API or semantic change packet.
+
+```bash
+kgmaker feature prepare --root . --requirement requirements/new-feature.md --id new-feature
+# Follow candidate-template.json and write candidate.json with the host agent.
+kgmaker feature validate --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
+kgmaker feature apply --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
+kgmaker feature report --root . --analysis new-feature
+```
+
+Run `kgmaker init` to install the `kgmaker-analyst` custom agent and JetBrains
+analysis command instructions. See [workflow, schema and exact limitations](docs/feature-analysis.md)
+and the [fixture report](docs/generated/features/additional-hedge-example.md).
+This is the foundation of milestone A, not completion of the A–E roadmap:
+full cross-layer availability proofs, XLSX, incremental invalidation and
+Confluence synchronization remain outstanding. Positive availability claims are
+rejected until their evidence validators exist.
+
+Initial field-level impact is also available for supported static dependencies:
+
+```bash
+kgmaker impact --root . --entity '<existing-field-id>' --include-data-flow --format json
+```
+
+This includes simple Kotlin expressions/constructor mappings and field inventory
+for Java, TypeScript and JSON contracts. Parser limitations are explicit in feature
+coverage; a static path does not prove runtime availability or financial validity.

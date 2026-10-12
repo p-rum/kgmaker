@@ -31,3 +31,17 @@ Local Confluence support is implemented by `kgmaker.confluence`: recursive HTML 
 ## Graph workflows
 
 `kgmaker impact FILE` walks reverse import relationships and name-based call candidates to show likely dependents of changed files. Import edges are path-resolved; call edges remain heuristic. `kgmaker scan` and `kgmaker docs` generate `.kgmaker/GRAPH.md` (readable repository map with a GitHub-renderable Mermaid architecture diagram) and `.kgmaker/GRAPH.mmd` (standalone Mermaid source). `kgmaker check` rebuilds the graph in memory and verifies both committed views, so GitHub Actions can reject stale documentation without access to the ignored local JSON index. `build` and `update` currently perform a full scan; incremental parsing and rename detection remain future work.
+
+## Feature-analysis extension
+
+[The feature-analysis specification](implementation-feature-analysis.md) extends
+scope to offline feature planning and, in a later independent milestone, an optional
+Confluence synchronization adapter with explicit payload approval and concurrency
+checks. The existing offline workflow remains usable without that adapter.
+
+Implemented now: the isolated analytical foundation, packet/provenance validation,
+CLI lifecycle and deterministic reports described in [feature-analysis.md](feature-analysis.md).
+A–D analytical completion is not claimed: complete cross-layer availability proofs, workbook/template
+parsers and incremental dependency invalidation remain future work. Milestone E,
+including its fake adapter, also remains unimplemented; real integration additionally
+requires a documented Confluence host/version and verified API access.

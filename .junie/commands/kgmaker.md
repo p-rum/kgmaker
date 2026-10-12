@@ -27,3 +27,6 @@ Follow this order:
 For a semantic-only request with no implementation work, use `kgmaker semantic extract` or invoke the separate `/kgmaker-semantic` command instead of running the implementation workflow.
 
 Do not invent relationships, credentials, external URLs, or undocumented behavior. Do not edit generated graph views by hand. If the request is only a question, perform the graph/source reconnaissance and answer without modifying files.
+
+For `analyze-feature` intent, route to `kgmaker-analyze-feature.md` and the
+`kgmaker-analyst` instructions. Feature packets are separate from semantic patches.

@@ -1,0 +1,7 @@
+{
+  "processing_status": "PARTIAL",
+  "decision_readiness": "BLOCKED",
+  "liquidity_availability": "UNKNOWN",
+  "proposal_state": "TO_BE",
+  "invalid_candidate_exit_code": 2
+}
