@@ -23,14 +23,14 @@ def cell(value):
     return str(value).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("|", "&#124;").replace("\n", " / ").replace("\r", "")
 
 
-def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool = True) -> str:
+def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool = True, *, data_audit: dict | None = None) -> str:
     cs = candidate["language"] == "cs"
     headings = HEADINGS[candidate["language"]]
     lines = [REPORT_MARKER, f"# Feature: {cell(candidate['analysis_id'])}", ""]
     if stale:
         lines += ["> STALE — " + ("Závěry nejsou aktuálně ověřené. Historické stavy dostupnosti nejsou platným potvrzením." if cs else "Conclusions are not currently verified. Historical availability is not a current confirmation."), ""]
     if not applied:
-        lines += ["> " + ("Pouze inventář; sémantická analýza dosud nebyla aplikována." if cs else "Inventory only; no semantic analysis has been applied."), ""]
+        lines += ["> " + ("Návrh analýzy dosud nebyl aplikován." if cs else "Analysis candidate has not been applied."), ""]
     def section(index):
         lines.extend([f"## {index + 1}. {headings[index]}", ""])
     def objects(items):
@@ -74,6 +74,21 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     for q in candidate["questions"]:
         lines += [f"| {cell(q['id'])} | {cell(q['text'])} | {cell(q['owner_role'])} |"]
     lines += [""]
+    if data_audit is not None or candidate['input_requirements']:
+        lines += ["### " + ("Co zatím nelze ověřit nástrojem" if cs else "What the tool cannot verify yet"), "",
+                  ("| Vstup / rozsah | Omezení nástroje | Důvod |" if cs else "| Input / scope | Tool limitation | Reason |"),
+                  "|---|---|---|"]
+        gaps = data_audit['coverage_gaps'] if data_audit is not None else [
+            {'kind': 'PARSER_ACCESS', 'reason': reason} for reason in candidate['coverage']['limitations']]
+        if data_audit is None:
+            gaps += [{'input_id': item['id'], 'kind': 'UNVERIFIED_AVAILABILITY',
+                      'reason': 'UNKNOWN is not proof of a missing or populated business value.'}
+                     for item in candidate['input_requirements'] if item['availability'] == 'UNKNOWN']
+        for gap in gaps:
+            lines += ["| " + " | ".join(cell(v) for v in (
+                gap.get("input_id"), gap["kind"], gap.get("reason", gap.get("details")))) + " |"]
+        lines += ["", ("Nejistota nástroje neprokazuje chybějící business data." if cs else
+                       "Tool uncertainty does not prove missing business data."), ""]
     section(5)
     objects(candidate["changes"])
     objects(candidate["proposal"]["nodes"])

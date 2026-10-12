@@ -57,3 +57,9 @@ the existing graph. Typed impact follows dependency-specific direction and stops
 at external-system boundaries. Feature candidates may cite only exact computed
 paths with source evidence; arbitrary agent-authored paths are rejected. This is
 initial milestone B support, not complete cross-layer or availability resolution.
+
+`data_check.py` is a read-only orchestration layer over feature packets. It shares
+AS_IS graph construction, query ranking (`store.query_nodes`), directed impacts,
+feature validation and report rendering. It accepts semantic specifications rather
+than caller-provided hashes or availability, then returns an unapplied candidate.
+Business ambiguity and parser/access/proof coverage gaps are separate outputs.

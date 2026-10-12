@@ -13,7 +13,7 @@ from .analysis_validation import validate_candidate
 def register(subparsers):
     parser = subparsers.add_parser("feature", help="offline, isolated feature feasibility analysis")
     commands = parser.add_subparsers(dest="feature_command", required=True)
-    for command in ("prepare", "validate", "apply", "report", "status", "revise", "compare"):
+    for command in ("prepare", "validate", "apply", "report", "status", "revise", "compare", "data-check"):
         child = commands.add_parser(command)
         child.add_argument("--root", type=Path, default=Path.cwd())
         child.add_argument("--require-complete", action="store_true")
@@ -29,6 +29,10 @@ def register(subparsers):
             child.add_argument("--answers", required=True)
         if command == "compare":
             child.add_argument("--variant", required=True)
+        if command == "data-check":
+            child.add_argument("--inputs", required=True)
+            child.add_argument("--workspace", help="reserved capability; not yet supported")
+            child.add_argument("--format", choices=("markdown", "json"), default="json")
         if command == "report":
             child.add_argument("--output")
             child.add_argument("--format", choices=("markdown", "json"), default="markdown")
@@ -43,6 +47,11 @@ def run(args) -> int:
             result = {"analysis_id": args.id, "revision": packet["revision"], "packet_id": packet["packet_id"],
                       "completion": inventory_candidate(packet)["completion"], "budget": packet["budget"],
                       "template": f".kgmaker/analyses/{args.id}/candidate-template.json", "exit_code": 0}
+        elif command == "data-check":
+            from .data_check import data_check
+            if args.workspace:
+                raise AnalysisError("Workspace data-check requires milestone G; single-root fallback is forbidden")
+            result = data_check(root, args.analysis, read_json(safe_path(root, args.inputs)))
         elif command in {"validate", "apply"}:
             candidate = read_json(safe_path(root, args.candidate))
             result = getattr(feature, command)(root, args.analysis, candidate)
@@ -96,7 +105,10 @@ def run(args) -> int:
             result = {"output": output, "completion": candidate["completion"], "stale": stale, "exit_code": result["exit_code"]}
         if not result["exit_code"] and args.require_complete and result["completion"].get("processing_status") != "COMPLETE":
             result["exit_code"] = 4
-        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        if command == "data-check" and args.format == "markdown" and result.get("valid"):
+            print(result["report"], end="")
+        else:
+            print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return result["exit_code"]
     except AnalysisError as exc:
         print(json.dumps({"error": str(exc), "exit_code": exc.code}, ensure_ascii=False))

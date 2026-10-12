@@ -13,6 +13,27 @@ MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
+def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10) -> list[tuple]:
+    """Shared navigation ranking; a match never establishes data availability."""
+    words = terms.lower().split()
+    nodes = {node.id: node for node in graph.nodes}
+    scores = {}
+    for node in graph.nodes:
+        haystack = f"{node.name} {node.path} {node.signature or ''} {node.summary or ''}".lower()
+        score = sum(4 if word == node.name.lower() else 2 if word in node.name.lower()
+                    else 1 if word in haystack else 0 for word in words)
+        if score:
+            scores[node.id] = score
+    if not scores:
+        return []
+    for edge in graph.edges:
+        if edge.source in scores and edge.target in nodes:
+            scores[edge.target] = max(scores.get(edge.target, 0), scores[edge.source] - 1)
+    ranked = sorted(scores, key=lambda identity: (
+        -scores[identity], nodes[identity].path, nodes[identity].line or 0))
+    return [(nodes[identity], scores[identity]) for identity in ranked[:max(0, limit)]]
+
+
 def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True) -> tuple[Path, Path]:
     state_dir = root / STATE_DIR
     state_dir.mkdir(parents=True, exist_ok=True)

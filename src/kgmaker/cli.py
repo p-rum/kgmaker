@@ -37,7 +37,7 @@ from .semantic import (
     build_semantic_input,
     validate_semantic_data,
 )
-from .store import MARKDOWN_FILE, MERMAID_FILE, load_graph, render_context, render_markdown, render_mermaid, save_graph
+from .store import query_nodes, MARKDOWN_FILE, MERMAID_FILE, load_graph, render_context, render_markdown, render_mermaid, save_graph
 
 HOOK_CONFIG = Path(".github/hooks/kgmaker.json")
 AGENT_FILE = Path(".github/agents/kgmaker.agent.md")
@@ -604,24 +604,12 @@ def query(root: Path, terms: str, limit: int = 10) -> int:
     if graph is None:
         print("No readable graph found. Run `kgmaker scan` first.", file=sys.stderr)
         return 1
-    query_terms = [part.lower() for part in terms.split() if part]
-    nodes = {node.id: node for node in graph.nodes}
-    scores: dict[str, int] = {}
-    for node in graph.nodes:
-        haystack = f"{node.name} {node.path} {node.signature or ''} {node.summary or ''}".lower()
-        score = sum(4 if term == node.name.lower() else 2 if term in node.name.lower() else 1 if term in haystack else 0 for term in query_terms)
-        if score:
-            scores[node.id] = score
-    if not scores:
+    matches = query_nodes(graph, terms, limit)
+    if not matches:
         print(f"No graph entries matched: {terms}")
         return 0
-    for edge in graph.edges:
-        if edge.source in scores:
-            scores[edge.target] = max(scores.get(edge.target, 0), scores[edge.source] - 1)
-    ranked = sorted(scores.items(), key=lambda item: (-item[1], nodes[item[0]].path, nodes[item[0]].line or 0))
     print(f"Matches for {terms!r}:")
-    for node_id, score in ranked[:limit]:
-        node = nodes[node_id]
+    for node, score in matches:
         location = f":{node.line}" if node.line else ""
         signature = f" — {node.signature}" if node.signature else ""
         print(f"- [{node.kind}] {node.path}{location}: {node.name}{signature} (score {score})")

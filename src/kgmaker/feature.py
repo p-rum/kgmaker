@@ -50,8 +50,13 @@ def source_inventory(root: Path) -> tuple[dict, list]:
     return sources, excluded
 
 
+def current_graph(root: Path):
+    """Current AS_IS graph in memory; shared by packets and deterministic audits."""
+    return apply_semantic_layer(scan_repository(root), root)
+
+
 def snapshot(root: Path) -> tuple[dict, dict, dict, list]:
-    graph, _, semantic_error = apply_semantic_layer(scan_repository(root), root)
+    graph, _, semantic_error = current_graph(root)
     graph_data = graph.to_dict()
     graph_data.pop("generated_at", None)
     sources, excluded = source_inventory(root)
