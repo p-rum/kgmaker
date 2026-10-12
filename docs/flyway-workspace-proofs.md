@@ -132,6 +132,7 @@ input. Evidence must be cited by that input. Its JSON-pointer value is an object
   "schema_version":1,"kind":"SUPPLIED_DATA_OBSERVATION",
   "entity_id":"data_field:Account.kt:Account.balance",
   "scope":"sandbox / explicitly supplied dataset only","value":100.0,
+  "key_values":{"accountId":1},
   "source_hashes":{"Account.kt":"actual-current-byte-sha256"},
   "collected_at":"2026-10-12T07:00:00Z","max_age_seconds":3600,
   "metadata":{"definition":"...","data_type":"Double","freshness":"PT1H"}
@@ -142,7 +143,10 @@ The metadata object uses InputRequirement's explicit metadata contract. AVAILABL
 requires every required metadata value to be known and matched, a compatible
 parsed/runtime type and supported ISO PT hours/minutes/seconds freshness. Omitted
 metadata yields PARTIAL; contradictions are rejected. max_age_seconds cannot weaken
-the requested freshness. All value-path source hashes must match current packet
+the requested freshness. Explicit required identifier keys must have populated
+key_values. Supported nonnegative/positive/nonempty quality rules are checked
+against the value; arbitrary free-text quality policies remain partial.
+All value-path source hashes must match current packet
 sources. Additional unobserved calculation dependencies prevent AVAILABLE.
 The observation is supplied evidence, **not independently authenticated production
 data or a deployment snapshot**. Its collection/source scope is part of the claim.

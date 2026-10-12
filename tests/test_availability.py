@@ -25,6 +25,7 @@ class AvailabilityTests(unittest.TestCase):
                               'freshness': 'PT1H', 'as_of': 'observation collection time'})
         self.observation = {'schema_version': 1, 'kind': 'SUPPLIED_DATA_OBSERVATION', 'entity_id': self.entity,
                             'scope': 'fixture sandbox account 1 only', 'value': 100.0,
+                            'key_values': {'accountId': 1},
                             'source_hashes': {'Account.kt': file_hash(self.root / 'Account.kt')},
                             'metadata': self.metadata, 'collected_at': datetime.now(timezone.utc).isoformat(),
                             'max_age_seconds': 3600}
@@ -148,4 +149,12 @@ class AvailabilityTests(unittest.TestCase):
         candidate['input_requirements'] = [item]
         self.assertTrue(feature.validate(self.root, 'audit', candidate)['valid'])
         item['availability_proof']['scope'] = 'All bank data'
+        self.assertEqual(2, feature.validate(self.root, 'audit', candidate)['exit_code'])
+
+    def test_quality_violation_cannot_be_overridden_by_metadata(self):
+        self.observation['value'] = -100.0
+        write_json(self.root / 'observation.json', {'observation': self.observation})
+        packet = feature.prepare(self.root, 'requirement.md', 'audit', 100000)
+        candidate = inventory_candidate(packet); candidate['evidence'] = [self.evidence()]
+        candidate['input_requirements'] = [self.input()]
         self.assertEqual(2, feature.validate(self.root, 'audit', candidate)['exit_code'])

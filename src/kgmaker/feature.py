@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import subprocess
@@ -46,7 +47,7 @@ def source_inventory(root: Path) -> tuple[dict, list]:
             kind = "CODE" if suffix in {".py", ".java", ".kt", ".kts", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs"} else (
                 "SCHEMA" if suffix == ".sql" else "CONTRACT" if suffix == ".json" else
                 "CONFIG" if suffix in {".yml", ".yaml", ".properties"} else "DOCUMENTATION")
-            sources[relative] = {"sha256": file_hash(path), "kind": kind, "bytes": len(raw),
+            sources[relative] = {"sha256": hashlib.sha256(raw).hexdigest(), "kind": kind, "bytes": len(raw),
                                  "supported": suffix in EXTENSIONS}
     return sources, excluded
 
@@ -193,8 +194,9 @@ def prepare(root: Path, requirement: str, analysis_id: str, token_budget: int = 
     source = safe_path(root, requirement)
     if source.is_relative_to(root / ".kgmaker") or requirement.startswith(GENERATED_PREFIX):
         raise AnalysisError("Requirement must be a source document outside generated analysis artifacts")
-    text = source.read_text(encoding="utf-8")
-    requirement_file_hash = file_hash(source)
+    requirement_bytes = source.read_bytes()
+    text = requirement_bytes.decode('utf-8')
+    requirement_file_hash = hashlib.sha256(requirement_bytes).hexdigest()
     if not text.strip():
         raise AnalysisError("Requirement must not be empty")
     old = load_packet(root, analysis_id) if (directory / "packet.json").exists() else None

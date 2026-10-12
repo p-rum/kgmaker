@@ -146,7 +146,7 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
             ambiguities.append({'input_id': item['id'], 'kind': 'BUSINESS_EQUIVALENCE',
                                 'candidate_entity_ids': [n.id for n in selected],
                                 'reason': 'Navigation matches do not establish equivalent business definitions.'})
-        reason = 'No supported positive availability proof checker; static declarations do not prove populated, usable values.'
+        reason = 'No supported positive availability proof supplied; static declarations do not prove populated, usable values.'
         if not selected:
             reason += ' No field navigation candidate found in this supplied scope; this is not a confirmed missing input.'
         deps = item.get('dependency_ids', [])

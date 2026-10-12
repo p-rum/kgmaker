@@ -152,6 +152,22 @@ def evaluate_proof(root, packet, candidate, item, graph=None) -> dict:
     else:
         complete = False  # unsupported temporal policy cannot be called FIT
     value = observation['value']
+    key_values = observation.get('key_values', {})
+    if not isinstance(key_values, dict) or not isinstance(requested.get('keys'), list):
+        complete = False
+    elif any(key not in key_values or key_values[key] is None for key in requested['keys']):
+        complete = False
+    quality = requested.get('quality')
+    if isinstance(quality, list):
+        for rule in quality:
+            if rule == 'nonnegative' and (type(value) not in {int, float} or value < 0):
+                raise AnalysisError('Observed value violates the nonnegative quality requirement')
+            if rule == 'positive' and (type(value) not in {int, float} or value <= 0):
+                raise AnalysisError('Observed value violates the positive quality requirement')
+            if rule == 'nonempty' and (not isinstance(value, str) or not value.strip()):
+                raise AnalysisError('Observed value violates the nonempty quality requirement')
+            if rule not in {'nonnegative', 'positive', 'nonempty'}:
+                complete = False  # no implied proof of arbitrary free-text quality rules
     expected_type = requested.get('data_type')
     compatible_types = {'number': (int, float), 'Double': (int, float), 'BigDecimal': (int, float),
                         'integer': (int,), 'Int': (int,), 'Long': (int,), 'string': (str,),
