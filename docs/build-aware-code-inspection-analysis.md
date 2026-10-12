@@ -1,23 +1,27 @@
-# Rozšíření kgmakeru: graf volání, inspekce kódu a build JVM projektů
+# Implementační zadání pro agenta: graf volání, inspekce kódu a build JVM projektů
 
-**Stav:** návrh k implementaci, nikoli popis hotové podpory.  
+**Stav:** závazné implementační zadání pro agenta; popsané nové schopnosti je nutné implementovat a ověřit.  
 **Datum:** 2026-10-12.  
 **Ověřený baseline:** `0eaf0c44149971f4174faeed5475b1f5ae2140d6` na `p-rum/kgmaker`.  
-**Rozsah:** Java/Kotlin JVM, Maven, Spring Boot, Hibernate/JPA; návaznost na multirepo, Flyway a feature/data analýzu. TypeScript zůstává ve stávajícím režimu; tento návrh mu nepřisuzuje compiler-resolved graf.
+**Rozsah:** Java/Kotlin JVM, Maven, Spring Boot, Hibernate/JPA; návaznost na multirepo, Flyway a feature/data analýzu. TypeScript zůstává ve stávajícím režimu; toto zadání nepožaduje jeho compiler-resolved graf.
 
-## 1. Cíl a doporučené rozhodnutí
+## 1. Úkol agenta a požadovaný výsledek
 
-Rozšířit kgmaker z navigace pomocí zdrojových vzorů na inspekci opřenou o skutečné symboly, typy, těla metod a artefakty konkrétního buildu. Agent má umět doložit cestu od vstupního endpointu přes aplikační služby a persistence vrstvu až k databázovému objektu, ukázat nejistá místa a po změně ověřit kompilaci i vybrané testy.
+Implementuj rozšíření kgmakeru z navigace pomocí zdrojových vzorů na inspekci opřenou o skutečné symboly, typy, těla metod a artefakty konkrétního buildu. Agent má umět doložit cestu od vstupního endpointu přes aplikační služby a persistence vrstvu až k databázovému objektu, ukázat nejistá místa a po změně ověřit kompilaci i vybrané testy.
 
-Doporučená architektura: zachovat Python CLI a stávající offline scanner; přidat volitelný JVM worker, verzovaný build manifest, typovaný graf volání a adaptéry Spring/Hibernate. Interpretace požadavku zůstává na agentovi. Rozlišení symbolů, build výsledky a platnost důkazů musí určovat nástroje.
+Zachovej Python CLI a stávající offline scanner. Implementuj volitelný JVM worker, verzovaný build manifest, typovaný graf volání a adaptéry Spring/Hibernate. Interpretace požadavku zůstává na agentovi. Rozlišení symbolů, build výsledky a platnost důkazů musí určovat nástroje.
 
 „Skutečný graf“ neznamená univerzálně přesný seznam všech volání za běhu. Přímé volání lze staticky rozlišit; u polymorfismu často vzniká množina možných cílů. Reflexe, runtime proxy a dynamická konfigurace mohou zůstat nerozlišené. Pozorovaný běh potvrzuje pouze konkrétní zachycená volání. Tyto kategorie nesmějí splynout.
 
-Výstupem této změny je analýza a implementační kontrakt. Tento dokument nepřidává běžící Maven/Spring/Hibernate engine ani netvrdí, že byl build analyzovaných aplikací spuštěn.
+Tvým výstupem musí být funkční implementace, automatizované testy, aktualizovaná uživatelská a architektonická dokumentace a dokument změn pro každý implementační PR podle kapitoly 14. Samotná analýza, návrh, prompt pro jiného agenta, prázdné adaptéry ani CLI vracející předpřipravená data nejsou splněním zadání.
+
+Implementuj M0–M5 jako povinný základ. M0 je krátké ověření technologie zakončené rozhodnutím a pokračováním implementace, nikoli konečný výstup. M6 je navazující rozšíření: neblokuje dokončení základu, ale vždy ho vykazuj odděleně jako hotové, částečné nebo neimplementované. Neoznačuj základ za úplný runtime graf.
+
+Kapitoly 3–10 jsou implementační požadavky. Konkrétní rozdělení souborů můžeš přizpůsobit aktuální architektuře; požadované chování, důkazní kontrakt a kompatibilitu zachovej. Technologickou odchylku dolož výsledkem spike a popiš v dokumentu změn.
 
 ## 2. Ověřený současný stav
 
-Odkazy níže míří na kontrolovaný commit, aby závěry nezávisely na dalších změnách main.
+Tabulka zachycuje stav ověřený na uvedeném baseline; relativní odkazy slouží k navigaci a odkazy na baseline pod tabulkou k historickému ověření. Před implementací ověř aktuální větev, kód a testy. Již dokončené části znovu neimplementuj.
 
 | Oblast | Doložené chování | Chybějící schopnost |
 |---|---|---|
@@ -67,7 +71,7 @@ BUILD_PASS neznamená TEST_PASS, dostupná data, funkční aplikaci ani shodu na
 7. Zvalidovat provenance, konzistenci a pokrytí; atomicky uložit výsledek.
 8. Zpřístupnit graf query/impact/feature analýze s vysvětlením důkazů a mezer.
 
-Navržené nové moduly, nikoli existující soubory:
+Požadované odpovědnosti komponent; názvy nových modulů přizpůsob stávající struktuře bez ztráty odpovědností:
 
 | Komponenta | Odpovědnost |
 |---|---|
@@ -202,7 +206,7 @@ Neprovádět DDL ani automatický Hibernate bootstrap v offline režimu. Přípa
 
 ### Schéma a kompatibilita
 
-Navrhnout graph schema v2 se strukturovanými evidence/build references, call sites, symbol IDs a coverage. Reader v1 může být migrován do v2; staré calls se převedou na SYNTAX_CANDIDATE bez zvýšení důkazní síly. Současný reader v1 jiné verze odmítá, takže zavedení vyžaduje souběžnou úpravu serializerů, cache, semantic packetů, query, renderů a validátorů.
+Implementuj graph schema v2 se strukturovanými evidence/build references, call sites, symbol IDs a coverage. Implementuj převod dat v1 do v2; staré calls se převedou na SYNTAX_CANDIDATE bez zvýšení důkazní síly. Současný reader v1 jiné verze odmítá, takže zavedení vyžaduje souběžnou úpravu serializerů, cache, semantic packetů, query, renderů a validátorů.
 
 Při migraci zachovat vazbu old ID → new ID pouze při jednoznačném matchi. Nejednoznačné semantic reference zneplatnit a připravit nový packet; neaplikovat starý patch na nové IDs.
 
@@ -220,9 +224,9 @@ Call reachability a data availability jsou dva různé důkazy. Do `availability
 
 Implementační agent: analyzuje baseline → ukáže relevantní call/data paths → upraví kód → připraví/spustí povolený build plán → importuje výsledky → přepočítá dotčený graf → oznámí výsledek i mezery. Běžný analytický agent pouze čte/importuje.
 
-## 10. Návrh CLI a výstupů
+## 10. Implementuj CLI a výstupy
 
-Následující příkazy jsou návrh; v baseline neexistují:
+Implementuj následující příkazy včetně nápovědy, validace vstupů, strojově čitelného výstupu a integračních testů. V uvedeném baseline neexistují. `runtime import` patří do M6:
 
 ```bash
 kgmaker project inspect --workspace kgmaker.workspace.json --repo backend
@@ -240,7 +244,7 @@ kgmaker runtime import --manifest runtime-manifest.json
 
 JSON je primární kontrakt; Markdown vysvětluje cestu s file/line, declared target, candidates, build/profile a nejslabší hranicí. Coverage uvádí počty analyzovaných/neanalyzovaných modulů, metod, call sites, nerozlišených symbolů, unsupported constructs a neúplných dependencies. Procento resolution musí mít jmenovatel a nepokrývá automaticky nenalezené konstrukce. Truncation/depth limit je vždy viditelný.
 
-## 11. Milníky a závislosti
+## 11. Implementační kroky a předávací podmínky
 
 | Milník | Dodávka | Podmínka dokončení |
 |---|---|---|
@@ -252,9 +256,9 @@ JSON je primární kontrakt; Markdown vysvětluje cestu s file/line, declared ta
 | M5 | Query/impact/feature integrace a inspection rules | Agent doloží cestu i mezery; build/test stav oddělen od availability |
 | M6 | Runtime import a rozšíření RTA/value flow | Ověřený scope pozorování, invalidace a explicitní async/reflective hranice |
 
-Závislosti: M0 → M1/M2 → M3/M4 → M5; M6 navazuje na stabilní evidence kontrakt. M1 a M2 lze vyvíjet souběžně až po dohodě manifestu. Priorita prvního releasu je M0–M5 pro doloženou omezenou matici; bez M6 se produkt nesmí označovat za úplný runtime graf.
+Závislosti: M0 → M1/M2 → M3/M4 → M5; M6 navazuje na stabilní evidence kontrakt. M1 a M2 lze vyvíjet souběžně až po dohodě manifestu. Povinný rozsah tohoto zadání je M0–M5 pro doloženou testovanou matici. M6 je oddělený navazující rozsah; bez něj se produkt nesmí označovat za úplný runtime graf.
 
-Největší nejistoty jsou Kotlin source/bytecode mapping, generovaný kód a Spring dynamika. Časový odhad uzavřít po M0 na reprezentativním projektu; samotné rozšíření regexů není alternativní splnění tohoto zadání.
+V M0 ověř zejména Kotlin source/bytecode mapping, generovaný kód a Spring dynamiku na reprezentativní fixture. Výsledek promítni do implementace a matice podpory. Samotné rozšíření regexů není alternativní splnění tohoto zadání.
 
 ## 12. Akceptační a regresní scénáře
 
@@ -287,7 +291,7 @@ Testovat na skutečných malých Maven projektech, nejen na textových úryvcíc
 
 ## 13. Primární technické podklady
 
-Zdroje ověřeny při přípravě analýzy. Vysvětlují schopnosti podkladových technologií, nikoli hotovou implementaci kgmakeru. Návrh architektury, CLI, stavů a milníků je vlastní návrh.
+Zdroje ověřeny při přípravě analýzy. Vysvětlují schopnosti podkladových technologií, nikoli hotovou implementaci kgmakeru. Architektura, CLI, stavy a milníky tvoří implementační kontrakt tohoto zadání.
 
 - [S1 — Maven effective POM](https://maven.apache.org/plugins/maven-help-plugin/effective-pom-mojo.html): effective model s aktivními profily a původem položek.
 - [S2 — Maven dependency classpath](https://maven.apache.org/plugins/maven-dependency-plugin/build-classpath-mojo.html): export classpath závislostí.
@@ -299,4 +303,116 @@ Zdroje ověřeny při přípravě analýzy. Vysvětlují schopnosti podkladovýc
 - [S8 — Hibernate ORM 6.6 user guide](https://docs.hibernate.org/orm/6.6/userguide/html_single/): mapování a naming; další framework verze ověřovat proti jejich dokumentaci.
 - [S9 — Spring Data JPA query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html): deklarované a odvozené repository queries.
 
-Kotlin source adaptér zůstává rozhodnutím pro M0: při tomto průzkumu nebyl dostupný dostatečný ověřený kontrakt konkrétní verze Analysis API pro slíbenou integraci. Proto návrh nepředstírá potvrzenou kompatibilitu.
+V M0 ověř aktuální primární dokumentaci a kompatibilitu konkrétního Kotlin source adaptéru. Původní průzkum ji nepotvrdil. Připni ověřenou verzi, vytvoř integrační fixture a dolož skutečné výsledky; kompatibilitu nepředpokládej.
+
+
+## 14. Povinný Markdown dokument změn pro každý PR
+
+Pro každý PR vytvoř a commitni jeden dokument v `docs/changes/`. Dokument je povinnou součástí implementace, nikoli jen textem popisu PR. Adresář vytvoř, pokud dosud neexistuje.
+
+### 14.1 Formát názvu
+
+Použij přesně:
+
+```text
+{inkrementalneNarustajiciCislo}_zkracenyNazevPullRequestu.md
+```
+
+Příklady:
+
+```text
+docs/changes/1_addBuildIntrospection.md
+docs/changes/2_addJvmCallGraph.md
+docs/changes/3_addSpringHibernateInspection.md
+```
+
+Pravidla:
+
+1. Číslování je společné pro celé repository v `docs/changes/`, nikoli zvlášť pro milník, agenta nebo větev. Není to číslo GitHub PR.
+2. Pokud žádný očíslovaný dokument dosud neexistuje, začni číslem `1`. Jinak použij nejvyšší existující číselný prefix + 1. Porovnávej čísla numericky, ne lexikograficky.
+3. Při výběru čísla zkontroluj aktuální cílovou větev i svou pracovní větev. Existující dokumenty nemaž, nepřepisuj ani nepřečíslovávej kvůli získání čísla. Mezery po historicky odstraněných dokumentech nevyplňuj.
+4. Zkrácený název odvoď z účelu PR: stručný anglický lowerCamelCase, bez mezer, diakritiky a interpunkce. Prefix nemá úvodní nuly. Celý název musí odpovídat `^[1-9][0-9]*_[a-z][a-zA-Z0-9]*\.md$`.
+5. Jeden PR má jeden dokument. Při dalších commitech do téhož PR aktualizuj tento dokument; nezvyšuj číslo pro každý commit. Nový PR dostane nové číslo.
+6. Před dokončením PR znovu ověř cílovou větev. Pokud souběžný PR obsadil stejné číslo, přejmenuj pouze svůj dosud nesloučený dokument na aktuální maximum + 1 a oprav odkazy. Před sloučením nesmí dva různé dokumenty sdílet číselný prefix.
+7. Pokud nelze aktuální cílovou větev ověřit, uveď to jako blokované ověření číslování; netvrď, že jedinečnost byla potvrzena.
+8. Po sloučení název zachovej. PR description i závěrečná odpověď agenta musí obsahovat odkaz na dokument.
+
+### 14.2 Povinný obsah
+
+Vyplň dokument česky a konkrétně podle skutečného diffu. Uveď:
+
+- název/účel PR, větev, baseline a URL/číslo PR, jakmile existuje;
+- problém a výsledné chování;
+- implementované změny a důležité dotčené soubory/moduly;
+- změny CLI, konfigurace, schémat a datových kontraktů;
+- kompatibilitu, migraci a případný postup návratu;
+- skutečně provedené buildy/testy: přesný příkaz, prostředí/verze, výsledek a rozsah;
+- nespuštěné nebo blokované kontroly s důvodem; oddělit je od PASS;
+- vazbu na milníky M0–M6 a akceptační ID z kapitoly 12;
+- omezení, nerozlišené případy a zbývající práci;
+- ověřitelný příklad použití nové schopnosti.
+
+Nepopisuj budoucí funkce jako implementované. Neuváděj obecné „testy prošly“, pokud neexistuje skutečný výsledek. Dokument nesmí obsahovat secrets, přístupové tokeny ani citlivé build logy. Seznam souborů není náhradou vysvětlení chování.
+
+Použij například tuto strukturu; všechny položky vyplň, nebo výslovně označ jako nerelevantní:
+
+```markdown
+# Add build introspection
+
+## Kontext PR
+- PR:
+- Větev:
+- Výchozí commit:
+- Milníky a akceptační ID:
+
+## Problém a výsledné chování
+
+## Implementované změny
+
+## CLI, konfigurace a datové kontrakty
+
+## Kompatibilita a migrace
+
+## Ověření
+| Příkaz / kontrola | Prostředí | Výsledek | Rozsah a omezení |
+|---|---|---|---|
+
+## Příklad použití
+
+## Omezení a zbývající práce
+```
+
+Dokument má pokrývat i samotné zavedení pravidla, pokud je tento krok součástí implementačního PR. Nevytvářej prázdné dokumenty předem pro budoucí milníky.
+
+## 15. Pracovní postup implementačního agenta
+
+1. Přečti repository instructions, aktuální architekturu, toto zadání a relevantní zdroje/testy. Ověř baseline, workspace a Flyway scope. Respektuj požadovanou architektonickou rekognoskaci repository.
+2. Rozděl M0–M5 na proveditelné kroky. Udržuj stav hotovo/rozpracováno/blokováno s vazbou na acceptance ID. M6 eviduj zvlášť.
+3. Začni M0, proveď ověření zvolených knihoven, commitni fixture a zdokumentuj rozhodnutí. Poté pokračuj implementací; nezastav se u dalšího návrhu.
+4. Implementuj vertikální řezy od reálných vstupů po CLI a validovaný výstup. Zachovej existující offline chování a důkazní kontrakty.
+5. Pro každý krok doplň smysluplné unit/integration testy. JVM podporu ověř na sestavitelných projektech a skutečném bytecode. Mocks použij pro cílené chyby, nikoli jako jediný důkaz funkčnosti workeru.
+6. Spusť relevantní regresní testy, build workeru a příslušnou integrační matici. Nedostupné prostředí popiš jako blokované ověření, ne jako úspěch.
+7. Aktualizuj README, architekturu, CLI příklady, podporovanou matici a původní zadání v místech, kde je nutné vysvětlit nový explicitní execution režim. Generované grafy a semantic metadata obnov podle repository workflow pouze tam, kde se jich změna týká.
+8. Vytvoř či aktualizuj dokument `docs/changes/<N>_<shortPrName>.md` podle kapitoly 14 a zkontroluj shodu s diffem.
+9. Před předáním proveď kontrolu diffu, čistoty artefaktů, číslování dokumentu a acceptance checklistu. Odstraň dočasné soubory; záměrné fixtures zachovej.
+10. Předlož PR s konkrétním shrnutím změn, skutečnými výsledky a odkazem na dokument změn. Neprováděj automatický merge. Pokud je dodávka rozdělena do více PR, každý obsahuje vlastní očíslovaný dokument a přehled zbývajících kroků.
+
+Technologickou překážku nejprve zkus vyřešit podporovanou alternativou, která zachová kontrakt. Pokud požadavek zůstává blokovaný, uveď přesnou příčinu a dopad; nepřeznačuj ho jako hotový ani ho neodstraňuj ze zadání.
+
+## 16. Definition of Done a závěrečné předání
+
+Povinný základ M0–M5 je dokončen pouze tehdy, když:
+
+- [ ] Maven kontext a build/import pipeline pracují s reálným projektem a čerstvými artefakty.
+- [ ] Java i Kotlin mají doloženou podporu v testované matici; unsupported konstrukce jsou viditelné.
+- [ ] Graf obsahuje caller metody, call sites, přesné symboly a oddělené dispatch kandidáty.
+- [ ] Spring a Hibernate adaptéry poskytují skutečné framework/ORM vazby podle kapitol 7–8.
+- [ ] Query, impact a feature workflow využívají nový graf a ověřují provenance.
+- [ ] Build/test výsledky nezvyšují automaticky data availability.
+- [ ] Migrace v1 a dosavadní offline příkazy jsou regresně ověřeny.
+- [ ] Povinné scénáře kapitoly 12 mají testy a doložené výsledky; runtime-only část EV-01 se vykáže u M6.
+- [ ] README, architektura, CLI help a příklady odpovídají implementaci.
+- [ ] Každý implementační PR obsahuje vyplněný správně očíslovaný Markdown dokument změn a odkaz na něj.
+- [ ] V PR nejsou vydávány stuby, simulované výstupy ani neprovedené kontroly za funkční implementaci.
+
+Závěrečná odpověď musí obsahovat odkazy na PR a dokument změn, seznam dokončených milníků, stručné skutečné výsledky testů/buildu a zbývající omezení. Pokud část povinného rozsahu není hotová, označ výstup jako částečný a přesně vyjmenuj, co chybí.
