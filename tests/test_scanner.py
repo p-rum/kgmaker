@@ -159,7 +159,7 @@ class ScannerTests(unittest.TestCase):
             (root / "service.py").write_text("def build():\n    pass\n", encoding="utf-8")
             graph = scan_repository(root)
 
-            diagram = render_mermaid(graph)
+            diagram = render_mermaid(graph, scope="all")
 
             self.assertIn("flowchart LR", diagram)
             self.assertIn("app.py", diagram)
@@ -258,8 +258,9 @@ class ScannerTests(unittest.TestCase):
             relation = next(edge for edge in merged.edges if edge.kind == "implements")
             self.assertEqual(relation.source_file, "docs/domain.md")
             self.assertEqual(relation.confidence, "INFERRED")
-            self.assertIn("INFERRED 0.85", render_markdown(merged))
-            self.assertIn("Order lifecycle rule", render_context(merged, root=root))
+            self.assertIn("INFERRED 0.85", render_markdown(merged, scope="all"))
+            self.assertNotIn("Order lifecycle rule", render_context(merged, root=root))
+            self.assertIn("unknown scope omitted", render_context(merged, root=root))
 
             artifact["edges"][0]["source_line"] = 999
             semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
@@ -379,7 +380,8 @@ class ScannerTests(unittest.TestCase):
 
             result = json.loads(output.getvalue())
             self.assertIn("additionalContext", result)
-            self.assertIn("app.py", result["additionalContext"])
+            self.assertNotIn("app.py", result["additionalContext"])
+            self.assertIn("1 files with unknown scope omitted", result["additionalContext"])
 
             limited = io.StringIO()
             with redirect_stdout(limited):
@@ -409,7 +411,8 @@ class ScannerTests(unittest.TestCase):
     def test_check_detects_stale_graph_and_docs_regenerate_markdown(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            source = root / "app.py"
+            (root / "src").mkdir()
+            source = root / "src/app.py"
             source.write_text("def first():\n    pass\n", encoding="utf-8")
             save_graph(scan_repository(root), root)
             self.assertEqual(check(root), 0)

@@ -117,7 +117,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         inventory, excluded = feature.source_inventory(root)
         before[identity] = inventory
         semantic = root / '.kgmaker/semantic.json'
-        key = digest({'root': str(root), 'sources': inventory, 'flyway': repo.get('flyway'),
+        from .classification import Classifier
+        classification = Classifier(root).fingerprint
+        key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, 'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -169,6 +171,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         exclusions += [{'repo_id': identity, **item} for item in excluded]
         nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path)) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
+                          context_ids=tuple(qualified(identity, c) for c in e.context_ids),
+                          evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
                           source_file=source_key(identity, e.source_file) if e.source_file else None) for e in local.edges]
     link_nodes, link_edges, link_diagnostics = federated_links(workspace, graphs, sources)
     nodes += link_nodes; edges += link_edges; diagnostics += link_diagnostics
@@ -191,9 +195,17 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             payload = {'graph': local.to_dict(), 'schemas': local_schema}
             write_json(safe_path(cache_root, f'.kgmaker/workspace-cache/{key}.json'),
                        {'schema_version': 1, 'cache_key': key, 'payload': payload, 'payload_hash': digest(payload)})
-    graph = KnowledgeGraph(1, '.', '', sorted(nodes, key=lambda n: n.id),
+    graph = KnowledgeGraph(2, '.', '', sorted(nodes, key=lambda n: n.id),
                            sorted(set(edges), key=lambda e: (e.source, e.kind, e.target)),
-                           {k: v['sha256'] for k, v in sources.items()})
+                           {k: v['sha256'] for k, v in sources.items()},
+                           [{**context, 'repo_id': repo, 'id': qualified(repo, context['id'])}
+                            for repo, local in graphs.items() for context in local.contexts if 'id' in context],
+                           [{'repo_id': repo, **d} for repo, local in graphs.items() for d in local.diagnostics],
+                           [{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
+                             'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
+                             'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
+                             'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
+                            for repo, local in graphs.items() for e in local.evidence])
     graph.files['@workspace/manifest.json'] = workspace['_manifest_hash']
     baseline = {'git_commit': None, 'graph_fingerprint': digest(graph.to_dict()),
                 'working_tree_fingerprint': digest(sources), 'parser_version': 'workspace-1',

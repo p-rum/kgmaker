@@ -43,6 +43,7 @@ def concept_id(source_file: str, name: str) -> str:
 def graph_fingerprint(graph: KnowledgeGraph) -> str:
     """Fingerprint a structural graph without its timestamp or semantic overlay."""
     payload = {
+        "contexts": graph.contexts,
         "files": sorted(graph.files.items()),
         "nodes": sorted((n.id, n.kind, n.name, n.path, n.line, n.signature) for n in graph.nodes),
         "edges": sorted((e.source, e.target, e.kind, e.evidence, e.confidence, e.confidence_score) for e in graph.edges),
@@ -55,6 +56,7 @@ def build_semantic_input(graph: KnowledgeGraph) -> dict[str, Any]:
     """Prepare stable IDs and file digests; source contents stay in the repository."""
     return {
         "schema_version": SEMANTIC_SCHEMA_VERSION,
+        "analysis_contexts": graph.contexts,
         "files": dict(sorted(graph.files.items())),
         "nodes": [
             {
@@ -389,6 +391,7 @@ def build_semantic_update(
                 evidence_paths.add(node.path)
     core = {
         "schema_version": SEMANTIC_UPDATE_SCHEMA_VERSION,
+        "analysis_contexts": graph.contexts,
         "base_ref": base_ref,
         "base_commit": resolved_base,
         "file_hashes": {path: graph.files.get(path) for path in sorted(evidence_paths)},
@@ -434,6 +437,8 @@ def apply_semantic_patch(patch: Any, update: Any, graph: KnowledgeGraph, root: P
     ).hexdigest()
     if integrity_id != update.get("update_id"):
         raise SemanticValidationError("semantic update packet was modified after preparation; regenerate it")
+    if graph.schema_version == 2 and update.get("analysis_contexts") != graph.contexts:
+        raise SemanticValidationError("analysis context changed or is missing; regenerate the semantic update packet")
     if (not isinstance(update.get("changed_files"), list) or not isinstance(update.get("context_nodes"), list)
             or not isinstance(update.get("affected_semantic_nodes"), list)
             or not isinstance(update.get("affected_semantic_edges"), list)):

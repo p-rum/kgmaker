@@ -606,12 +606,12 @@ def impact(root: Path, changed_files: list[str]) -> int:
     return 0
 
 
-def query(root: Path, terms: str, limit: int = 10) -> int:
+def query(root: Path, terms: str, limit: int = 10, scope: str = "production") -> int:
     graph = load_graph(root)
     if graph is None:
         print("No readable graph found. Run `kgmaker scan` first.", file=sys.stderr)
         return 1
-    matches = query_nodes(graph, terms, limit)
+    matches = query_nodes(graph, terms, limit, scope)
     if not matches:
         print(f"No graph entries matched: {terms}")
         return 0
@@ -648,6 +648,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     feature_cli.register(sub)
+    from .project_cli import register
+    register(sub)
 
     init_parser = sub.add_parser("init", help="add Copilot hooks, instructions and the kgmaker agent")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -708,6 +710,7 @@ def build_parser() -> argparse.ArgumentParser:
     query_parser.add_argument("terms", nargs="+", help="words to search in graph names, paths and summaries")
     query_parser.add_argument("--root", type=Path, default=Path.cwd())
     query_parser.add_argument("--limit", type=int, default=10)
+    query_parser.add_argument("--scope", choices=("production", "test", "test_fixture", "development", "unknown", "all"), default="production")
     query_parser.add_argument("--analysis", help="explicitly include one isolated proposal")
 
     hook_parser = sub.add_parser("hook-context", help=argparse.SUPPRESS)
@@ -724,7 +727,10 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.command == 'schema':
+    if args.command in {"project", "graph", "coverage"}:
+        from .project_cli import run
+        code = run(args)
+    elif args.command == 'schema':
         from .workspace_cli import schema_command
         code = schema_command(args)
     elif getattr(args, 'workspace', None) and args.command != 'feature':
@@ -762,7 +768,7 @@ def main() -> None:
                 parser.error("legacy impact needs files; data-flow/JSON output requires --entity")
             code = impact(root, args.files)
     elif args.command == "query":
-        code = feature_cli.query_analysis(root, args.analysis, " ".join(args.terms), args.limit) if args.analysis else query(root, " ".join(args.terms), args.limit)
+        code = feature_cli.query_analysis(root, args.analysis, " ".join(args.terms), args.limit) if args.analysis else query(root, " ".join(args.terms), args.limit, args.scope)
     elif args.command == "hook-context":
         code = hook_context(root, args.token_budget)
     else:

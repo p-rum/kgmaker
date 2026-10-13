@@ -1,159 +1,108 @@
 flowchart LR
-  n0{"api_endpoint: GET /api/exposure"}
-  n1{"api_endpoint: GET /exposure"}
-  n2{"db_column: id"}
-  n3{"db_column: obsolete"}
-  n4{"db_column: old_decline"}
-  n5{"db_table: exposure"}
-  n6["fixtures/multirepo-analysis/backend/contracts/exposure.json"]
-  n7["fixtures/multirepo-analysis/backend/src/main/resources/db/migration/V1__initial.sql"]
-  n8["fixtures/multirepo-analysis/backend/src/model.kt"]
-  n9["fixtures/multirepo-analysis/frontend/src/page.tsx"]
-  n10["fixtures/multirepo-analysis/tests/e2e/exposure.spec.ts"]
-  n11["fixtures/multirepo-analysis/tests/e2e/fixture.ts"]
-  n12["fixtures/multirepo-analysis/tests/src/ExposureTest.java"]
-  n13["src/kgmaker/__main__.py"]
-  n14["src/kgmaker/analysis_agent.py"]
-  n15["src/kgmaker/analysis_model.py"]
-  n16["src/kgmaker/analysis_report.py"]
-  n17["src/kgmaker/analysis_validation.py"]
-  n18["src/kgmaker/availability.py"]
-  n19["src/kgmaker/cli.py"]
-  n20["src/kgmaker/confluence.py"]
-  n21["src/kgmaker/data_agent.py"]
-  n22["src/kgmaker/data_check.py"]
-  n23["src/kgmaker/dataflow.py"]
-  n24["src/kgmaker/domain.py"]
-  n25["src/kgmaker/feature.py"]
-  n26["src/kgmaker/feature_cli.py"]
-  n27["src/kgmaker/flyway.py"]
-  n28["src/kgmaker/model.py"]
-  n29["src/kgmaker/scanner.py"]
-  n30["src/kgmaker/schema_replay.py"]
-  n31["src/kgmaker/semantic.py"]
-  n32["src/kgmaker/store.py"]
-  n33["src/kgmaker/test_analysis.py"]
-  n34["src/kgmaker/workspace.py"]
-  n35["src/kgmaker/workspace_cli.py"]
-  n36["tests/test_availability.py"]
-  n37["tests/test_data_check.py"]
-  n38["tests/test_dataflow.py"]
-  n39["tests/test_feature.py"]
-  n40["tests/test_feature_fixture.py"]
-  n41["tests/test_flyway.py"]
-  n42["tests/test_scanner.py"]
-  n43["tests/test_workspace.py"]
-  n44{"technology: Kafka"}
-  n45{"technology: PostgreSQL"}
-  n5 -->|contains_column| n2
-  n5 -->|contains_column| n3
-  n5 -->|contains_column| n4
-  n6 -->|declares_endpoint| n1
-  n7 -->|defines_table| n5
-  n8 -->|declares_endpoint| n1
-  n9 -->|calls_endpoint| n0
-  n10 -->|calls_endpoint| n0
+  n0["src/kgmaker/__main__.py"]
+  n1["src/kgmaker/analysis_agent.py"]
+  n2["src/kgmaker/analysis_model.py"]
+  n3["src/kgmaker/analysis_report.py"]
+  n4["src/kgmaker/analysis_validation.py"]
+  n5["src/kgmaker/availability.py"]
+  n6["src/kgmaker/classification.py"]
+  n7["src/kgmaker/cli.py"]
+  n8["src/kgmaker/confluence.py"]
+  n9["src/kgmaker/data_agent.py"]
+  n10["src/kgmaker/data_check.py"]
+  n11["src/kgmaker/dataflow.py"]
+  n12["src/kgmaker/domain.py"]
+  n13["src/kgmaker/feature.py"]
+  n14["src/kgmaker/feature_cli.py"]
+  n15["src/kgmaker/flyway.py"]
+  n16["src/kgmaker/model.py"]
+  n17["src/kgmaker/project_cli.py"]
+  n18["src/kgmaker/scanner.py"]
+  n19["src/kgmaker/schema_replay.py"]
+  n20["src/kgmaker/semantic.py"]
+  n21["src/kgmaker/store.py"]
+  n22["src/kgmaker/views.py"]
+  n23["src/kgmaker/workspace.py"]
+  n24["src/kgmaker/workspace_cli.py"]
+  n25{"technology: Kafka"}
+  n26{"technology: PostgreSQL"}
+  n0 -->|imports| n7
+  n3 -->|imports| n13
+  n4 -->|imports| n2
+  n4 -->|imports| n5
+  n4 -->|imports| n11
+  n4 -->|imports| n13
+  n4 -->|imports| n18
+  n4 -->|imports| n20
+  n4 -->|imports| n23
+  n5 -->|imports| n2
+  n5 -->|imports| n11
+  n5 -->|imports| n13
+  n6 -->|imports| n2
+  n7 -->|imports| n1
+  n7 -->|imports| n8
+  n7 -->|imports| n9
+  n7 -->|imports| n13
+  n7 -->|imports| n17
+  n7 -->|imports| n18
+  n7 -->|imports| n20
+  n7 -->|imports| n21
+  n7 -->|imports| n24
+  n8 -->|imports| n16
+  n10 -->|imports| n2
+  n10 -->|imports| n3
+  n10 -->|imports| n5
   n10 -->|imports| n11
-  n12 -->|declares_endpoint| n0
+  n10 -->|imports| n21
+  n10 -->|imports| n23
+  n11 -->|imports| n16
+  n12 -->|imports| n16
+  n12 -->|uses_messaging| n25
+  n12 -->|connects_to| n26
+  n13 -->|imports| n2
+  n13 -->|imports| n4
+  n13 -->|imports| n5
+  n13 -->|imports| n11
+  n13 -->|imports| n15
+  n13 -->|imports| n16
+  n13 -->|imports| n18
   n13 -->|imports| n19
-  n16 -->|imports| n25
-  n17 -->|imports| n15
+  n13 -->|imports| n20
+  n13 -->|imports| n23
+  n14 -->|imports| n2
+  n14 -->|imports| n3
+  n14 -->|imports| n4
+  n14 -->|imports| n5
+  n14 -->|imports| n10
+  n14 -->|imports| n11
+  n14 -->|imports| n18
+  n14 -->|imports| n20
+  n15 -->|imports| n2
+  n16 -->|imports| n6
+  n17 -->|imports| n2
+  n17 -->|imports| n6
   n17 -->|imports| n18
-  n17 -->|imports| n23
-  n17 -->|imports| n25
-  n17 -->|imports| n29
-  n17 -->|imports| n31
-  n17 -->|imports| n34
-  n18 -->|imports| n15
-  n18 -->|imports| n23
-  n18 -->|imports| n25
-  n19 -->|imports| n14
-  n19 -->|imports| n20
-  n19 -->|imports| n21
-  n19 -->|imports| n25
-  n19 -->|imports| n29
-  n19 -->|imports| n31
-  n19 -->|imports| n32
-  n19 -->|imports| n35
-  n20 -->|imports| n28
-  n22 -->|imports| n15
+  n17 -->|imports| n21
+  n17 -->|imports| n22
+  n18 -->|imports| n2
+  n18 -->|imports| n6
+  n18 -->|imports| n11
+  n18 -->|imports| n12
+  n18 -->|imports| n16
+  n19 -->|imports| n2
+  n19 -->|imports| n15
+  n19 -->|imports| n16
+  n20 -->|imports| n16
+  n21 -->|imports| n2
+  n21 -->|imports| n16
+  n21 -->|imports| n22
   n22 -->|imports| n16
-  n22 -->|imports| n18
-  n22 -->|imports| n23
-  n22 -->|imports| n32
-  n22 -->|imports| n34
-  n23 -->|imports| n28
-  n24 -->|imports| n28
-  n24 -->|uses_messaging| n44
-  n24 -->|connects_to| n45
-  n25 -->|imports| n15
-  n25 -->|imports| n17
-  n25 -->|imports| n18
-  n25 -->|imports| n23
-  n25 -->|imports| n27
-  n25 -->|imports| n28
-  n25 -->|imports| n29
-  n25 -->|imports| n30
-  n25 -->|imports| n31
-  n25 -->|imports| n34
-  n26 -->|imports| n15
-  n26 -->|imports| n16
-  n26 -->|imports| n17
-  n26 -->|imports| n18
-  n26 -->|imports| n22
-  n26 -->|imports| n23
-  n26 -->|imports| n29
-  n26 -->|imports| n31
-  n27 -->|imports| n15
-  n29 -->|imports| n23
-  n29 -->|imports| n24
-  n29 -->|imports| n28
-  n30 -->|imports| n15
-  n30 -->|imports| n27
-  n30 -->|imports| n28
-  n31 -->|imports| n28
-  n32 -->|imports| n28
-  n33 -->|imports| n15
-  n33 -->|imports| n23
-  n33 -->|imports| n28
-  n33 -->|imports| n30
-  n33 -->|imports| n34
-  n34 -->|imports| n15
-  n34 -->|imports| n28
-  n34 -->|imports| n30
-  n34 -->|imports| n33
-  n35 -->|imports| n15
-  n35 -->|imports| n23
-  n35 -->|imports| n30
-  n35 -->|imports| n32
-  n35 -->|imports| n34
-  n36 -->|imports| n15
-  n36 -->|imports| n22
-  n37 -->|imports| n15
-  n37 -->|imports| n16
-  n37 -->|imports| n19
-  n37 -->|imports| n22
-  n38 -->|imports| n23
-  n39 -->|imports| n15
-  n39 -->|imports| n19
-  n39 -->|imports| n21
-  n39 -->|imports| n23
-  n39 -->|imports| n26
-  n39 -->|imports| n29
-  n40 -->|imports| n15
-  n40 -->|imports| n19
-  n41 -->|imports| n25
-  n41 -->|imports| n27
-  n41 -->|imports| n30
-  n42 -->|imports| n19
-  n42 -->|imports| n20
-  n42 -->|imports| n29
-  n42 -->|imports| n31
-  n42 -->|imports| n32
-  n42 -->|uses_messaging| n44
-  n42 -->|connects_to| n45
-  n43 -->|imports| n15
-  n43 -->|imports| n19
-  n43 -->|imports| n22
-  n43 -->|imports| n23
-  n43 -->|imports| n34
+  n23 -->|imports| n2
+  n23 -->|imports| n6
+  n23 -->|imports| n16
+  n23 -->|imports| n19
+  n24 -->|imports| n2
+  n24 -->|imports| n11
+  n24 -->|imports| n19
+  n24 -->|imports| n21
+  n24 -->|imports| n23

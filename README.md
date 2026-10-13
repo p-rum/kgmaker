@@ -25,6 +25,14 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 ## Commands
 
+Offline production classification, graph schema v2 and scoped evidence views are
+documented in [production scope](docs/production-scope.md). Use `kgmaker project
+classify --root . --explain --format json`, `kgmaker graph rank --profile execution
+--explain` and `kgmaker coverage report --format json`. Default query, generated
+architecture views and hook context use production scope; `query --scope all`
+includes unknown/test inventory. These are partial source-only analyses, not
+compiler-resolved calls or CFG. See [implementation progress](docs/production-analysis-progress.md).
+
 ```text
 kgmaker init [--root PATH] [--force]
 kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]

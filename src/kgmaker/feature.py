@@ -16,7 +16,7 @@ from .scanner import EXTENSIONS, MAX_FILE_BYTES, SKIP_DIRS, SENSITIVE_NAMES, sca
 from .semantic import apply_semantic_layer
 from .dataflow import CAPABILITIES, extract_dataflow
 
-PARSER_VERSION = "feature-inventory-2"
+PARSER_VERSION = "feature-inventory-3"
 GENERATED_PREFIX = "docs/generated/features/"
 REPORT_MARKER = "<!-- kgmaker-feature-report:v1 -->"
 
@@ -97,7 +97,8 @@ def attach_schema(graph, schema, root: Path | None = None):
     mappings, _ = schema_mappings(root, schema, graph) if root is not None else ([], [])
     all_edges += mappings
     return KnowledgeGraph(graph.schema_version, graph.root, graph.generated_at,
-                          sorted(remaining.values(), key=lambda n: n.id), all_edges, graph.files)
+                          sorted(remaining.values(), key=lambda n: n.id), all_edges, graph.files,
+                          graph.contexts, graph.diagnostics, graph.evidence)
 
 
 def source_path(root: Path, key: str, packet: dict) -> Path:

@@ -13,8 +13,10 @@ MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
-def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10) -> list[tuple]:
+def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str = "all") -> list[tuple]:
     """Shared navigation ranking; a match never establishes data availability."""
+    from .views import project
+    graph = project(graph, scope)
     words = terms.lower().split()
     nodes = {node.id: node for node in graph.nodes}
     scores = {}
@@ -30,7 +32,7 @@ def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10) -> list[tupl
         if edge.source in scores and edge.target in nodes:
             scores[edge.target] = max(scores.get(edge.target, 0), scores[edge.source] - 1)
     ranked = sorted(scores, key=lambda identity: (
-        -scores[identity], nodes[identity].path, nodes[identity].line or 0))
+        -scores[identity], identity))
     return [(nodes[identity], scores[identity]) for identity in ranked[:max(0, limit)]]
 
 
@@ -40,10 +42,14 @@ def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True) ->
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
     mermaid_path = root / MERMAID_FILE
-    graph_path.write_text(json.dumps(graph.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    from .analysis_model import atomic_write
+    # Serialize and validate before replacing the last readable index.
+    payload = json.dumps(graph.to_dict(), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    KnowledgeGraph.from_dict(json.loads(payload))
+    atomic_write(graph_path, payload)
     if generate_docs:
-        mermaid_path.write_text(render_mermaid(graph), encoding="utf-8")
-        markdown_path.write_text(render_markdown(graph), encoding="utf-8")
+        atomic_write(mermaid_path, render_mermaid(graph))
+        atomic_write(markdown_path, render_markdown(graph))
     return graph_path, markdown_path
 
 
@@ -55,7 +61,10 @@ def load_graph(root: Path) -> KnowledgeGraph | None:
         return None
 
 
-def render_markdown(graph: KnowledgeGraph) -> str:
+def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
+    from .views import project
+    omitted = sum(n.kind == "file" and scope != "all" and n.scope != scope for n in graph.nodes)
+    graph = project(graph, scope)
     files = [node for node in graph.nodes if node.kind == "file"]
     symbols = [node for node in graph.nodes if node.kind != "file"]
     imports = [edge for edge in graph.edges if edge.kind == "imports"]
@@ -76,6 +85,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         "> Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.",
         "> Review semantic conclusions with the repository's Copilot knowledge-graph agent.",
         "",
+        f"- Scope: {scope}; omitted files: {omitted}",
+        "- Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.",
+        "- Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.",
+        *[f"- Context: `{c.get('id', 'unknown')}`; content: `{c.get('content_hash', 'unknown')}`; freshness: {c.get('freshness', 'UNKNOWN')}" for c in graph.contexts],
         f"- Files indexed: {len(files)}",
         f"- Symbols and sections: {len(symbols)}",
         f"- Internal imports: {len(imports)}",
@@ -92,7 +105,7 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         "The diagram groups declarations under their source files and shows detected imports and domain relationships. Heuristic call edges are omitted. An editable standalone Mermaid source is available at `.kgmaker/GRAPH.mmd`.",
         "",
         "```mermaid",
-        render_mermaid(graph).rstrip(),
+        render_mermaid(graph, scope=scope).rstrip(),
         "```",
         "",
         "## Files and symbols",
@@ -132,8 +145,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
     return "\n".join(lines)
 
 
-def render_mermaid(graph: KnowledgeGraph) -> str:
+def render_mermaid(graph: KnowledgeGraph, scope: str = "production") -> str:
     """Render a compact architecture map, grouping code symbols by source file."""
+    from .views import project
+    graph = project(graph, scope)
     file_nodes = {node.id: node for node in graph.nodes if node.kind == "file"}
     file_by_path = {node.path: node.id for node in file_nodes.values()}
     all_nodes = {node.id: node for node in graph.nodes}
@@ -185,6 +200,9 @@ def render_mermaid(graph: KnowledgeGraph) -> str:
 
 def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None = None) -> str:
     """Compact context intended for Copilot's sessionStart additionalContext."""
+    from .views import project
+    unknown = sum(n.scope == "unknown" and n.kind == "file" for n in graph.nodes)
+    graph = project(graph, "production")
     files = [node for node in graph.nodes if node.kind == "file"]
     symbols = [node for node in graph.nodes if node.kind != "file"]
     outgoing: dict[str, list[str]] = {}
@@ -200,6 +218,7 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
         "## kgmaker repository context",
         f"Indexed {len(files)} files and {len(symbols)} declarations/sections.",
         "Use these entries as navigation hints; inspect source files before drawing conclusions.",
+        f"Production scope; {unknown} files with unknown scope omitted. SOURCE_ONLY, partial coverage.",
     ]
     for file_node in files:
         declarations = [node for node in symbols if node.path == file_node.path]

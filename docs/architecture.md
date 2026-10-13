@@ -1,5 +1,15 @@
 # Architecture
 
+Graph schema v2 adds independent classification, scope-specific content contexts
+and a referenced evidence inventory. `classification.py` owns explicit overrides
+and conservative source-set/path rules; `views.py` projects scope before ranking
+and exposes versioned execution/impact profiles. `project_cli.py` provides offline
+inventory, classification, projections, ranking, migration and coverage. Scanner
+partitions symbol, persistence and dataflow indexes before candidate selection.
+Store validates and publishes JSON atomically. [Production scope](production-scope.md)
+defines the new contracts and limits; [progress](production-analysis-progress.md)
+records unfinished compiler/build/CFG milestones. Source patterns remain candidates.
+
 kgmaker has four small layers:
 
 1. `scanner.py` walks the repository, skips generated and sensitive paths, and extracts files, declarations, local imports, and conservative call candidates.
