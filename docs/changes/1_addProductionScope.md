@@ -4,6 +4,7 @@
 
 - Branch: `feat/evidence-production-scope`; cílová větev `main`.
 - Baseline: `8ac80ca30f6f680539deb7fb3590519d3a5c1460`.
+- Ověřený implementační commit: `366d4a29fff6427a3d4cf9a2503bebc006652d47`.
 - Datum: 13. 10. 2026. PR je první částečný inkrement rozsáhlého zadání.
 - Číslo dokumentu 1 bylo vybráno po kontrole lokální větve, `origin/main`
   a aktuálního GitHub tree `main`: žádné číslované change documents.

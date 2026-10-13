@@ -5,6 +5,10 @@ Historická reference je stejný commit. Baseline regrese: Python 3.12.14,
 `PYTHONPATH=src python -m unittest discover -s tests -q`: 98 testů PASS.
 Tabulka popisuje skutečný stav, ne deklaraci dokončení celého zadání.
 
+Ověřený implementační commit prvního inkrementu:
+`366d4a29fff6427a3d4cf9a2503bebc006652d47` (110 Python testů PASS).
+Navazující dokumentační commit tento záznam doplňuje; nemění analyzátor.
+
 | Požadavek / milník | Existující implementace | Chybějící část | Důkaz baseline | Plánovaný PR |
 |---|---|---|---|---|
 | P0, původní M0: compiler pilot | Žádný worker | Mixed JVM, TS compiler, CFG, měření a matice | scanner.py používá CALL_TOKEN; žádné worker adresáře | compiler spike |
