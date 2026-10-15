@@ -1,8 +1,16 @@
 # kgmaker
 
-**A local knowledge graph for GitHub Copilot CLI.** kgmaker maps files, declarations, imports, database tables, Kafka topics, API endpoints, frontend routes, and likely cross-file calls, then gives Copilot a compact repository map at the start of each session. The index runs locally and uses only Python's standard library.
+**A local knowledge graph for GitHub Copilot CLI.** kgmaker maps files, declarations, imports, database tables, Kafka topics, API endpoints, frontend routes, and likely cross-file calls, then gives Copilot a compact repository map at the start of each session. The source-only Python core runs locally using the standard library. Optional compiler inspection requires separately installed JDK/Node workers.
 
 kgmaker is designed for one host: GitHub Copilot CLI. Repository hooks handle automatic refresh and context. A repository custom agent can enrich architectural explanations using Copilot itself. There is no model API key, provider configuration, MCP server, or external graph service.
+
+## Documentation and implementation tasks
+
+Start with the [current status](docs/production-analysis-progress.md),
+[task registry](docs/tasks/README.md) and [completion specification T003](docs/tasks/3_finishProductionAnalysis.md).
+Agents must follow [AGENTS.md](AGENTS.md), including stable task IDs and mandatory
+`docs/tasks/<N>_<lowerCamelCase>.md` / `docs/changes/<N>_<lowerCamelCase>.md` names.
+These two number sequences are independent of each other and GitHub PR numbers.
 
 ## Requirements
 
@@ -30,8 +38,7 @@ documented in [production scope](docs/production-scope.md). Use `kgmaker project
 classify --root . --explain --format json`, `kgmaker graph rank --profile execution
 --explain` and `kgmaker coverage report --format json`. Default query, generated
 architecture views and hook context use production scope; `query --scope all`
-includes unknown/test inventory. These are partial source-only analyses, not
-compiler-resolved calls or CFG. See [implementation progress](docs/production-analysis-progress.md).
+includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
 ```text
 kgmaker init [--root PATH] [--force]
@@ -71,22 +78,22 @@ Python, Java, Kotlin, JavaScript, TypeScript, Go, Rust, Markdown, reStructuredTe
 
 The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-based app routes, SQL tables and columns, Spring Data entity/repository mappings, Kafka listener/producer/config topic references, Spring/Ktor HTTP routes, common HTTP client calls, and OpenAPI paths from YAML or JSON. It links matching HTTP method/path pairs across backend declarations, OpenAPI contracts, and frontend calls. It also recognizes PostgreSQL connection markers and common Kafka imports/configuration.
 
-`imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. SQL, YAML, Kotlin, and TypeScript support is pattern-based rather than a full language compiler or database parser. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
+`imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. The default scanner uses pattern-based SQL, YAML, Kotlin and TypeScript extraction. Separate opt-in JVM/TypeScript workers use compiler APIs; they are not invoked by scan/hook/feature. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
 
 ## Copilot workflow
 
-The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
+The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files and an Agent Skill are also supplied in this repository; `init` installs the analyst/data-auditor command templates listed in its output. kgmaker makes no model API calls itself.
 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 
 ## Development
 
 ```bash
-python -m pip install -e .
-python -m unittest discover -s tests -v
+python -m pip install -e . pytest==8.3.4
+python -m pytest -q
 ```
 
-The application is intentionally dependency-free at runtime. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+The Python core is intentionally dependency-free at runtime. The development suite requires pytest; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
 
 ## Feature feasibility analysis (foundation)
 
@@ -105,10 +112,10 @@ kgmaker feature report --root . --analysis new-feature
 Run `kgmaker init` to install the `kgmaker-analyst` custom agent and JetBrains
 analysis command instructions. See [workflow, schema and exact limitations](docs/feature-analysis.md)
 and the [fixture report](docs/generated/features/additional-hedge-example.md).
-This is the foundation of milestone A, not completion of the A–E roadmap:
-full cross-layer availability proofs, XLSX, incremental invalidation and
-Confluence synchronization remain outstanding. Positive availability claims are
-rejected until their evidence validators exist.
+This implements a subset of T001, including scoped positive availability proofs,
+Flyway and explicit workspaces. Full cross-layer paths, XLSX, selective invalidation
+and Confluence synchronization remain outstanding. Positive verdicts require the
+supported proof validators; existence of a field or call path alone is insufficient.
 
 Initial field-level impact is also available for supported static dependencies:
 
@@ -129,11 +136,11 @@ The intent `/kgmaker check-data` is a routing convention.
 
 The auditor reuses feature prepare/validate/apply/report/revise, query and
 directed impact. Model work is limited to required input definitions and
-business ambiguity. Current unavailable proof capabilities remain UNKNOWN;
-the auditor cannot yet certify AVAILABLE or CONFIRMED_MISSING. It generates
-an isolated report without changing application code or running tests.
-The future deterministic data-check command is specified in
-[implementation chapter 27](docs/implementation-feature-analysis.md#27-specializovaný-agent-pro-datové-předpoklady-nové-feature).
+business ambiguity. Unsupported claims remain UNKNOWN. Supported observed-value,
+approved-mapping and scoped absence proofs are checked deterministically; the auditor
+must not invent evidence or approvals. It generates an isolated report without changing
+application code or running tests. The implemented command and its contract are in
+[feature analysis](docs/feature-analysis.md#deterministic-data-check).
 
 
 Structured data prerequisites can now be audited without a model call:
@@ -143,11 +150,21 @@ kgmaker feature data-check --root . --analysis <id> --inputs requirements/<id>-i
 ```
 
 The command returns a validated, unapplied candidate, static source candidates,
-business ambiguities and separate tool coverage gaps. Availability remains UNKNOWN
-until supported proofs exist. See [the input contract](docs/feature-analysis.md#deterministic-data-check-chapter-27-single-root-foundation).
+business ambiguities and separate tool coverage gaps. Without valid supported proof,
+availability remains UNKNOWN. See [the input contract](docs/feature-analysis.md#deterministic-data-check).
 Flyway schema replay, explicit multi-repository workspaces and scoped positive
 availability proofs are implemented. See [commands, contracts and boundaries](docs/flyway-workspace-proofs.md).
 
 Volitelné compiler workery a samostatný explicitní build workflow popisuje
 [compiler inspection](docs/compiler-inspection.md). Implementace je částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
+
+
+## Current compiler lifecycle limitation
+
+At the PR #5 baseline, `inspect` writes compiler contexts into the local graph,
+but ordinary `scan` and `hook-context` replace that index with a fresh syntactic
+graph. `feature prepare` independently rebuilds a syntactic/semantic/Flyway graph.
+Do not assume a previous inspection is retained or consumed by these commands.
+[T003-S02](docs/tasks/3_finishProductionAnalysis.md#t003-s02--jednotný-provider-a-lifecycle-grafu)
+is the required integration work; no automatic compiler/build execution is proposed.

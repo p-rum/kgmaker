@@ -57,3 +57,9 @@ application code. Host command discovery depends on the installed JetBrains agen
 when unavailable, explicitly open and follow the analyst instructions.
 '''
 ANALYST_CONTENT += "\n\nBefore analytical or implementation work, verify every supplied local workspace\nrepo baseline and its configured Flyway stream/target. Use --workspace consistently;\n--root is only the coordinator. Schema replay is MIGRATION_DERIVED, not deployed\nor populated-data proof. Positive availability requires deterministic approved\nscoped evidence; static tests are not runtime PASS. See docs/flyway-workspace-proofs.md\nwhen available. Never mutate connected source repositories during analysis.\n"
+
+
+from .agent_rules import PROJECT_RULES
+
+ANALYST_CONTENT += PROJECT_RULES
+JUNIE_CONTENT += PROJECT_RULES

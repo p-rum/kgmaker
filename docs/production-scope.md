@@ -1,8 +1,9 @@
 # Production scope a evidence v2
 
-Tato dodávka implementuje offline základ klasifikace a pohledů. Není dokončením
-P0–P9. Compiler resolution, effective Maven/Gradle model, JVM/TS workery a CFG
-nejsou v této verzi implementované. Přehled požadavků a stav milníků je v
+Tato stránka popisuje offline klasifikaci a pohledy dostupné od PR #4.
+Na navazující větvi PR #5 existují také explicitní compiler workery, build exportéry
+a CFG v omezené matici; viz [compiler inspection](compiler-inspection.md).
+Úplné dokončení řeší [T003](tasks/3_finishProductionAnalysis.md). Přehled požadavků a stav milníků je v
 [progress dokumentu](production-analysis-progress.md).
 
 ## Použití
@@ -18,15 +19,16 @@ kgmaker coverage report --root . --format json
 kgmaker graph migrate --root .
 ```
 
-`project`, `graph view`, `graph rank` a `coverage report` čtou současné zdroje
-do paměti. Nenahrazují index a nespouštějí compiler ani build. Freshness reportu
+Offline `project inspect/classify` pracují se zdroji/modely bez spuštění buildu.
+`graph view/rank` a `coverage report` mohou využít validní compiler index;
+bez něj poskytují syntaktický pohled. Samy compiler/build nespouštějí. Freshness reportu
 rozlišuje `MISSING_INDEX`, `STALE` a `FRESH`; `analysis_source` výslovně označuje
 aktuální in-memory výsledek. `graph migrate` jako jediný nový příkaz zapisuje
 uložený index; migrace nečte nový compiler model a scope zůstává unknown.
 
 Výsledek SOURCE_ONLY má `status: PARTIAL`. Úspěšné vytvoření částečného reportu
 vrací exit 0, neplatný vstup 2, nesplněná strict coverage 4. Detekce mixed snapshotu
-vrací 3. Tyto příkazy zatím nemají execution failure, protože nic nevykonávají.
+vrací 3. Offline klasifikační příkazy nic nevykonávají; explicitní build/inspect workflow má samostatnou execution a stale diagnostiku.
 Stará `build`/`scan`/`feature`/hook workflow nespouštějí Maven, Gradle, npm,
 aplikaci, migrace ani DB spojení.
 
@@ -110,3 +112,4 @@ invaliduje context, feature fingerprint a workspace cache. Semantic update
 packet nese contexts a po jejich změně se starý patch odmítne. Agent annotations
 stále nedodávají resolved calls nebo availability. Feature v1 path proof formát
 a jeho availability kontrakt se zachovávají.
+
