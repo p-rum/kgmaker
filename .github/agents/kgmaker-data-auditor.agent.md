@@ -50,7 +50,8 @@ Flyway reconstruction is MIGRATION_DERIVED, not proof of applied production
 migrations or populated values. Unknown SQL effects make schema partial.
 Multi-repo inference requires explicit service/contract/prefix identity.
 Generated clients are derivatives, not independent confirmations. Static
-assertions are not runtime PASS/FAIL evidence.
+assertions are not runtime PASS/FAIL evidence. XLSX formulas are dependency
+evidence only; cached values have UNKNOWN freshness and are never evaluated.
 
 Prefer CLI/Python and structured JSON processing. Bash rg -n -- <literal>
 <approved-path> and PowerShell Select-String -LiteralPath <approved-file>

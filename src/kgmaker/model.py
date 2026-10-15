@@ -20,6 +20,7 @@ class Node:
     origin: str = "unknown"
     build_membership: tuple[str, ...] = ()
     classification_evidence: tuple[str, ...] = ()
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

@@ -73,7 +73,9 @@ def workspace_command(args):
         elif command == 'impact':
             if not args.entity or not args.include_data_flow or args.files:
                 raise AnalysisError('Workspace impact requires --entity --include-data-flow')
-            result = impact_paths(graph, args.entity)
+            from .views import project, select_context
+            context_id = select_context(graph, args.scope, args.context)
+            result = impact_paths(project(graph, args.scope, context_id=context_id), args.entity)
         elif command == 'query':
             if args.analysis:
                 from . import feature
@@ -84,8 +86,11 @@ def workspace_command(args):
                     raise AnalysisError('Query workspace differs from analysis workspace')
                 if not result['valid']:
                     print(json.dumps(result)); return result['exit_code']
+            from .views import select_context
+            context_id = select_context(graph, args.scope, args.context)
             result = {'matches': [{'id': n.id, 'name': n.name, 'path': n.path, 'score': score, 'state': 'AS_IS'}
-                                  for n, score in query_nodes(graph, ' '.join(args.terms), args.limit)]}
+                                  for n, score in query_nodes(graph, ' '.join(args.terms), args.limit,
+                                                              args.scope, context_id)]}
             if args.analysis:
                 words = ' '.join(args.terms).lower().split()
                 result['matches'] += [n for n in candidate['proposal']['nodes'] if any(w in json.dumps(n).lower() for w in words)]

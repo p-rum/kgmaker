@@ -1,9 +1,76 @@
 """Independent safety/freshness and actual XML test-state invariants."""
 from pathlib import Path
+import json
+import shutil
+import subprocess
 import pytest
 from kgmaker.analysis_model import AnalysisError, digest, file_hash
 from kgmaker.build_runner import create_plan, run_plan, snapshot, tests_report as report_tests
 from kgmaker.build_model import validate_manifest
+
+
+ROOT = Path(__file__).parents[1]
+
+
+def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path):
+    required = [shutil.which(name) for name in ('mvn', 'javac', 'jar')]
+    exporter = ROOT / 'workers/build/maven/target/kgmaker-build-export.jar'
+    if not all(required) or not exporter.is_file():
+        pytest.skip('blocked: Maven/JDK or trusted build exporter is unavailable')
+    root = tmp_path / 'reactor'
+    root.mkdir()
+    (root / 'pom.xml').write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion>
+      <groupId>example</groupId><artifactId>parent</artifactId><version>1</version><packaging>pom</packaging>
+      <modules><module>lib</module><module>app</module></modules>
+      <properties><maven.compiler.release>21</maven.compiler.release></properties>
+      <build><pluginManagement><plugins><plugin><groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId><version>3.10.1</version>
+      </plugin></plugins></pluginManagement></build>
+      <repositories><repository><id>stale-file-repo</id>
+        <url>file://${maven.multiModuleProjectDirectory}/repo</url>
+      </repository></repositories>
+    </project>''')
+    parent = '''<parent><groupId>example</groupId><artifactId>parent</artifactId><version>1</version></parent>'''
+    for module in ('lib', 'app'):
+        (root / module / 'src/main/java/example').mkdir(parents=True)
+    (root / 'lib/pom.xml').write_text(f'''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion>{parent}<artifactId>lib</artifactId></project>''')
+    (root / 'app/pom.xml').write_text(f'''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion>{parent}<artifactId>app</artifactId>
+      <dependencies><dependency><groupId>example</groupId><artifactId>lib</artifactId><version>1</version></dependency></dependencies>
+    </project>''')
+    (root / 'lib/src/main/java/example/Lib.java').write_text(
+        'package example; public class Lib { public static String freshOnly() { return "fresh"; } }')
+    (root / 'app/src/main/java/example/App.java').write_text(
+        'package example; public class App { String value() { return Lib.freshOnly(); } }')
+
+    old_source = root / 'old-src/example/Lib.java'
+    old_source.parent.mkdir(parents=True)
+    old_source.write_text(
+        'package example; public class Lib { public static String oldOnly() { return "old"; } }')
+    old_classes = root / 'old-classes'
+    old_classes.mkdir()
+    subprocess.run([required[1], '-d', str(old_classes), str(old_source)], check=True)
+    stale = root / 'repo/example/lib/1/lib-1.jar'
+    stale.parent.mkdir(parents=True)
+    subprocess.run([required[2], '--create', '--file', str(stale), '-C', str(old_classes), '.'], check=True)
+    (stale.parent / 'lib-1.pom').write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion><groupId>example</groupId><artifactId>lib</artifactId><version>1</version>
+    </project>''')
+
+    result = run_plan(create_plan(root, phase='compile', build_system='maven',
+                                  executable=required[0], home=ROOT / 'workers'))
+    assert result['result']['status'] == 'SUCCESS', Path(result['result']['log_path']).read_text()
+    manifest = json.loads(Path(result['manifest_path']).read_text())
+    app = next(item for item in manifest['contexts']
+               if item['module'] == 'app' and item['source_set'] == 'main')
+    sibling = [item for item in app['classpath']
+               if item.get('realm', {}).get('module') == 'lib']
+    assert len(sibling) == 1
+    assert sibling[0]['path'].endswith('/lib/target/classes')
+    assert sibling[0]['sha256'] != file_hash(stale)
+    assert all(item['path'] != str(stale) for item in app['classpath'])
 
 
 def test_inventory_includes_untracked_extensionless_and_rejects_links(tmp_path):

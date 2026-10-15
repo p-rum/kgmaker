@@ -13,12 +13,27 @@ from .analysis_model import (
     file_hash, inventory_candidate, read_json, safe_path, write_json,
 )
 from .scanner import EXTENSIONS, MAX_FILE_BYTES, SKIP_DIRS, SENSITIVE_NAMES, scan_repository
+from .workbooks import MAX_ARCHIVE_BYTES
 from .semantic import apply_semantic_layer
 from .dataflow import CAPABILITIES, extract_dataflow
 
-PARSER_VERSION = "feature-inventory-3"
+PARSER_VERSION = "feature-inventory-4"
 GENERATED_PREFIX = "docs/generated/features/"
 REPORT_MARKER = "<!-- kgmaker-feature-report:v1 -->"
+
+
+def _analysis_details(graph) -> dict:
+    keys = ("id", "selection_key", "mode", "repo_id", "module", "source_set",
+            "scope", "language", "freshness", "status", "analyzer_version",
+            "stale_reason", "next_command", "database_id", "schema_stream_id",
+            "persistence_unit", "naming_strategy")
+    contexts = [{key: context[key] for key in keys if key in context}
+                for context in graph.contexts if isinstance(context.get("id"), str)]
+    return {
+        "analysis_context_fingerprint": digest(graph.contexts),
+        "analysis_contexts": contexts,
+        "graph_evidence_ids": sorted(item["id"] for item in graph.evidence),
+    }
 
 
 def source_inventory(root: Path) -> tuple[dict, list]:
@@ -37,18 +52,20 @@ def source_inventory(root: Path) -> tuple[dict, list]:
             if path.is_symlink():
                 excluded.append({"path": relative, "reason": "symlink is not a supported source"})
                 continue
-            if path.stat().st_size > MAX_FILE_BYTES:
+            suffix = path.suffix.lower()
+            size_limit = MAX_ARCHIVE_BYTES if suffix == ".xlsx" else MAX_FILE_BYTES
+            if path.stat().st_size > size_limit:
                 excluded.append({"path": relative, "reason": "file exceeds source size limit"})
                 continue
             raw = path.read_bytes()
             if raw.startswith(REPORT_MARKER.encode()):
                 continue
-            suffix = path.suffix.lower()
             kind = "CODE" if suffix in {".py", ".java", ".kt", ".kts", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs"} else (
                 "SCHEMA" if suffix == ".sql" else "CONTRACT" if suffix == ".json" else
-                "CONFIG" if suffix in {".yml", ".yaml", ".properties"} else "DOCUMENTATION")
+                "CONFIG" if suffix in {".yml", ".yaml", ".properties"} else
+                "WORKBOOK" if suffix == ".xlsx" else "DOCUMENTATION")
             sources[relative] = {"sha256": hashlib.sha256(raw).hexdigest(), "kind": kind, "bytes": len(raw),
-                                 "supported": suffix in EXTENSIONS}
+                                 "supported": suffix in EXTENSIONS or suffix == ".xlsx"}
     return sources, excluded
 
 
@@ -57,7 +74,11 @@ def current_graph(root: Path, workspace: Path | None = None):
     if workspace is not None:
         from .workspace import snapshot_workspace
         return snapshot_workspace(workspace, cache_root=root)[3], (0, 0), None
-    graph, counts, error = apply_semantic_layer(scan_repository(root), root)
+    from .graph_provider import retain_compiler_layer
+    from .templates import attach_templates
+    from .workbooks import attach_workbooks
+    syntax = attach_workbooks(root, attach_templates(root, scan_repository(root)))
+    graph, counts, error = apply_semantic_layer(retain_compiler_layer(root, syntax), root)
     from .schema_replay import reconstruct, graph_entities
     from .flyway import DEFAULT_LOCATION
     from .flyway import configuration
@@ -116,8 +137,11 @@ def snapshot(root: Path, *, workspace: Path | None = None, _details: dict | None
     if workspace is not None:
         from .workspace import snapshot_workspace
         baseline, coverage, sources, graph, metadata = snapshot_workspace(workspace, cache_root=root, persist_cache=_persist_cache)
+        details = _analysis_details(graph)
+        baseline["analysis_context_fingerprint"] = details["analysis_context_fingerprint"]
         if _details is not None:
             _details['workspace'] = metadata
+            _details.update(details)
         return baseline, coverage, sources, graph.nodes
     graph, _, semantic_error = current_graph(root)
     graph_data = graph.to_dict()
@@ -130,19 +154,38 @@ def snapshot(root: Path, *, workspace: Path | None = None, _details: dict | None
     semantic_path = safe_path(root, ".kgmaker/semantic.json")
     baseline = {"git_commit": commit, "graph_fingerprint": digest(graph_data),
                 "working_tree_fingerprint": digest(sources), "parser_version": PARSER_VERSION,
-                "semantic_hash": file_hash(semantic_path) if semantic_path.exists() else None}
+                "semantic_hash": file_hash(semantic_path) if semantic_path.exists() else None,
+                "analysis_context_fingerprint": digest(graph.contexts)}
+    if _details is not None:
+        _details.update(_analysis_details(graph))
     limitations = ["Static paths do not prove runtime availability; scoped supplied observations require approved mappings.",
-                   "No XLSX, template data-flow, or complete interprocedural parser in this milestone.",
+                   "XLSX formulas are dependency evidence only; cached values have unknown freshness and are not evaluated.",
+                   "Thymeleaf support is limited to literal model keys/template returns; no arbitrary expression evaluation.",
+                   "No complete interprocedural parser in this milestone.",
                    "Only the supplied repository root is covered; external systems are not inspected."]
     if semantic_error:
         limitations.append("Semantic layer omitted invalid entries: " + semantic_error)
     flow = extract_dataflow({p: safe_path(root, p).read_text(encoding="utf-8", errors="replace") for p, item in sources.items() if item["supported"]})
     coverage = {"roots": ["."], "artifacts": sorted(sources), "exclusions": excluded,
                 "excluded_directories": sorted(SKIP_DIRS) + ["hidden directories", GENERATED_PREFIX],
-                "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES, "workbooks": False},
+                "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES,
+                                        "workbooks": "xlsx-offline-1", "templates": "thymeleaf-bindings-1"},
                 "dataflow_diagnostics": flow.diagnostics,
                 "limitations": limitations,
                 "unsupported_sources": sorted(p for p, x in sources.items() if not x["supported"])}
+    confluence_index = root / ".kgmaker/confluence-index.json"
+    if confluence_index.is_file():
+        try:
+            assertions = read_json(confluence_index).get("assertions", [])
+            coverage["documentation_conflicts"] = [
+                {key: item.get(key) for key in (
+                    "id", "status", "category", "document_file", "section", "authority",
+                    "approval_id", "decision_id", "decision_revision", "approved_document_sha256",
+                ) if item.get(key) is not None}
+                for item in assertions if item.get("status") != "VERIFIED_BY_CODE"
+            ]
+        except (AnalysisError, AttributeError):
+            coverage["limitations"].append("Confluence validation index is invalid; rerun `kgmaker docs check`.")
     from .flyway import configuration, DEFAULT_LOCATION
     config = configuration(root)
     if (root / DEFAULT_LOCATION).is_dir() or any('path' in p for p in config['provenance']):
@@ -172,7 +215,8 @@ def freshness(root: Path, packet: dict) -> list[str]:
     workspace = Path(packet['workspace']['manifest_path']) if packet.get('workspace') else None
     baseline, _, sources, _ = snapshot(root, workspace=workspace)
     changes = []
-    for key in ("graph_fingerprint", "working_tree_fingerprint", "parser_version", "semantic_hash"):
+    for key in ("graph_fingerprint", "working_tree_fingerprint", "parser_version", "semantic_hash",
+                "analysis_context_fingerprint"):
         if baseline[key] != packet["baseline"][key]:
             changes.append(f"baseline.{key} changed")
     if workspace is not None and baseline.get('manifest_hash') != packet['baseline'].get('manifest_hash'):

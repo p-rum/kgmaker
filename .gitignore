@@ -10,8 +10,10 @@ __pycache__/
 .kgmaker/semantic-update.json
 .kgmaker/semantic-update.md
 .kgmaker/semantic-patch.json
+.kgmaker/semantic-extract.md
 .kgmaker/confluence-index.json
 .kgmaker/analyses/
+.kgmaker/workflow/
 
 # Optional compiler workers and reproducible fixture output
 workers/**/target/

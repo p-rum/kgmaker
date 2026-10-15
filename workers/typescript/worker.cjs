@@ -19,7 +19,7 @@ function analyze(request) {
   const root = fs.realpathSync(request.root);
   const context = request.context;
   if (!context || typeof context.id !== 'string') throw Error('context.id is required');
-  const prefix = `ts:${context.repo_id}:${context.module}:${context.source_set}`;
+  const prefix = `ts:${context.repo_id}:${context.module}:${context.source_set}:${context.id}`;
   const limits = {symbols:20000,calls:50000,...request.limits};
   const symbols = new Map(), sites = [], bodies = [], facts = [], diagnostics = [], inputs = new Map();
   const identityCache = new WeakMap();

@@ -45,6 +45,29 @@ class CompilerWorkerTests(unittest.TestCase):
         self.assertEqual(5,self.result['coverage']['calls_resolved'])
         self.assertEqual(0,self.result['coverage']['calls_unresolved'])
 
+    def test_offline_refresh_preserves_real_call_sites_and_cfg(self):
+        import tempfile
+        from contextlib import redirect_stdout
+        from io import StringIO
+        from unittest.mock import patch
+        from kgmaker.cli import scan, hook_context
+        from kgmaker.feature import current_graph
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "fixture"
+            shutil.copytree(FIXTURE / "maven", root, ignore=shutil.ignore_patterns(".kgmaker"))
+            result = inspect_jvm(root, classpath=[str(ROOT / "workers/jvm/target/lib/kotlin-stdlib.jar"),
+                                                str(root / "target/classes")])
+            original = KnowledgeGraph.from_dict(result["graph"])
+            self.assertTrue(original.call_sites)
+            self.assertTrue(original.cfgs)
+            with patch("subprocess.Popen", side_effect=AssertionError("offline process")):
+                with redirect_stdout(StringIO()):
+                    self.assertEqual(0, scan(root, generate_docs=False))
+                    self.assertEqual(0, hook_context(root))
+                graph, _, _ = current_graph(root)
+            self.assertEqual(original.call_sites, graph.call_sites)
+            self.assertEqual(original.cfgs, graph.cfgs)
+
     def test_flow01_flow02_compiler_if_branch_preserves_opposite_overloads(self):
         cfg=next(c for c in self.graph.cfgs if 'Worker.choose(Z)' in c['method'])
         sites={s['id']:s for s in self.graph.call_sites}
@@ -68,6 +91,34 @@ class CompilerWorkerTests(unittest.TestCase):
         sites={s['id'] for s in graph.call_sites if s['caller']==app['method']}
         represented={identity for b in app['blocks'] if b['kind']=='call' for identity in b.get('call_site_ids', [])}
         self.assertEqual(sites, represented)
+
+    def test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale(self):
+        import tempfile
+        from kgmaker.feature import current_graph
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'src').mkdir()
+            (root / 'tsconfig.json').write_text(json.dumps({
+                'compilerOptions': {'target': 'ES2022', 'module': 'commonjs', 'strict': True},
+                'include': ['src/**/*.ts'],
+            }))
+            (root / 'package-lock.json').write_text('{"lockfileVersion":3}')
+            (root / 'src/lib.ts').write_text('export function choose(value: number): number { return value + 1; }')
+            (root / 'src/index.ts').write_text("export { choose } from './lib';")
+            (root / 'src/app.ts').write_text("import { choose } from './index'; export const result = choose(1);")
+            result = inspect_frontend(root, repo_id='fixture', module='web', publish=True)
+            graph = KnowledgeGraph.from_dict(result['graph'])
+            target = next(site['declared_target'] for site in graph.call_sites
+                          if site.get('path') == 'src/app.ts' and site.get('declared_target'))
+            symbol = next(item for item in graph.symbols if item['id'] == target)
+            self.assertEqual('src/lib.ts', symbol['path'])
+            self.assertTrue(any(edge.kind == 'alias_of' for edge in graph.edges))
+
+            (root / 'package-lock.json').write_text('{"lockfileVersion":3,"changed":true}')
+            refreshed = current_graph(root)[0]
+            compiler = next(item for item in refreshed.contexts if item.get('analyzer_version'))
+            self.assertEqual('STALE', compiler['freshness'])
+            self.assertFalse(refreshed.call_sites)
 
     def test_unsupported_property_bodies_have_boundaries_instead_of_guessed_callers(self):
         import tempfile

@@ -223,6 +223,12 @@
         },
         "classification_evidence": {
           "$ref": "#/$defs/strings"
+        },
+        "metadata": {
+          "type": [
+            "object",
+            "null"
+          ]
         }
       }
     },

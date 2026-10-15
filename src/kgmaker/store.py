@@ -13,10 +13,11 @@ MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
-def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str = "all") -> list[tuple]:
+def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str = "all",
+                context_id: str | None = None) -> list[tuple]:
     """Shared navigation ranking; a match never establishes data availability."""
     from .views import project
-    graph = project(graph, scope)
+    graph = project(graph, scope, context_id=context_id)
     words = terms.lower().split()
     nodes = {node.id: node for node in graph.nodes}
     scores = {}
@@ -66,12 +67,18 @@ def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
     omitted = sum(n.kind == "file" and scope != "all" and n.scope != scope for n in graph.nodes)
     graph = project(graph, scope)
     files = [node for node in graph.nodes if node.kind == "file"]
-    symbols = [node for node in graph.nodes if node.kind != "file"]
+    episodes = [node for node in graph.nodes if node.kind == "implementation_episode"]
+    symbols = [node for node in graph.nodes if node.kind not in {"file", "implementation_episode"}]
     imports = [edge for edge in graph.edges if edge.kind == "imports"]
     calls = [edge for edge in graph.edges if edge.kind == "calls"]
-    domain_edges = [edge for edge in graph.edges if edge.kind not in {"contains", "imports", "calls"}]
+    domain_edges = [
+        edge for edge in graph.edges
+        if edge.kind not in {"contains", "imports", "calls", "affected"}
+    ]
     by_kind = {kind: sum(node.kind == kind for node in graph.nodes) for kind in (
-        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route", "external_service", "technology", "concept"
+        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
+        "external_service", "technology", "concept", "workbook", "workbook_cell",
+        "template", "template_variable"
     )}
     inferred_edges = sum(edge.confidence == "INFERRED" for edge in graph.edges)
     ambiguous_edges = sum(edge.confidence == "AMBIGUOUS" for edge in graph.edges)
@@ -97,7 +104,10 @@ def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
         f"- Kafka topics: {by_kind['kafka_topic']}",
         f"- API endpoints: {by_kind['api_endpoint']}",
         f"- TypeScript frontend routes: {by_kind['frontend_route']}",
+        f"- Workbooks/cells: {by_kind['workbook']}/{by_kind['workbook_cell']}",
+        f"- Templates/variables: {by_kind['template']}/{by_kind['template_variable']}",
         f"- Semantic concepts: {by_kind['concept']}",
+        f"- Implementation episodes: {len(episodes)}",
         f"- Inferred/ambiguous relationships: {inferred_edges}/{ambiguous_edges}",
         "",
         "## Architecture diagram",
@@ -122,6 +132,26 @@ def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
             summary = f" — {symbol.summary}" if symbol.summary else ""
             lines.append(f"- **{symbol.kind}** `{symbol.name}` {location}{signature}{summary}".strip())
         lines.append("")
+
+    lines.extend(["## Implementation history", ""])
+    if episodes:
+        for episode in sorted(episodes, key=lambda item: item.id):
+            metadata = episode.metadata or {}
+            freshness = metadata.get("freshness", "unknown")
+            changed = metadata.get("changed_files", [])
+            paths = ", ".join(
+                item.get("path", "") for item in changed[:5] if isinstance(item, dict)
+            ) or "no paths"
+            validations = ", ".join(
+                f"{item.get('label')}={item.get('status')}"
+                for item in metadata.get("validations", [])[:5] if isinstance(item, dict)
+            ) or "none"
+            lines.append(
+                f"- **{episode.name}** — {freshness}; files: {paths}; validation: {validations}"
+            )
+    else:
+        lines.append("- No implementation episodes recorded.")
+    lines.append("")
 
     paths = {node.id: node.path for node in graph.nodes}
     node_index = {node.id: node for node in graph.nodes}
@@ -157,7 +187,8 @@ def render_mermaid(graph: KnowledgeGraph, scope: str = "production") -> str:
     # are represented by their file to keep the diagram navigable on larger repos.
     domain_kinds = {
         "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
-        "external_service", "technology", "concept",
+        "external_service", "technology", "concept", "workbook", "workbook_sheet",
+        "workbook_cell", "workbook_named_range", "template", "template_variable",
     }
     selected: dict[str, tuple[str, str]] = {}
     for node in graph.nodes:
@@ -168,7 +199,7 @@ def render_mermaid(graph: KnowledgeGraph, scope: str = "production") -> str:
 
     relationships: set[tuple[str, str, str]] = set()
     for edge in graph.edges:
-        if edge.kind in {"contains", "calls"}:
+        if edge.kind in {"contains", "calls", "affected"}:
             continue
         source = all_nodes.get(edge.source)
         target = all_nodes.get(edge.target)
@@ -204,11 +235,11 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
     unknown = sum(n.scope == "unknown" and n.kind == "file" for n in graph.nodes)
     graph = project(graph, "production")
     files = [node for node in graph.nodes if node.kind == "file"]
-    symbols = [node for node in graph.nodes if node.kind != "file"]
+    symbols = [node for node in graph.nodes if node.kind not in {"file", "implementation_episode"}]
     outgoing: dict[str, list[str]] = {}
     nodes = {node.id: node for node in graph.nodes}
     for edge in graph.edges:
-        if edge.kind != "contains":
+        if edge.kind not in {"contains", "affected"}:
             target = nodes.get(edge.target)
             if target:
                 confidence = "" if edge.confidence == "EXTRACTED" else f" [{edge.confidence} {edge.confidence_score:.2f}]"
@@ -242,6 +273,35 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
     if len(result) > limit:
         result = result[: limit - 80].rsplit("\n", 1)[0] + "\n… graph context truncated; run `kgmaker query`."
     return result
+
+
+def render_bootstrap(graph: KnowledgeGraph, limit: int = 8_000) -> str:
+    """Render lean session guidance; request-specific details come from memory recall."""
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 80:
+        raise ValueError("bootstrap limit must be an integer of at least 80 characters")
+    files = sorted(node.path for node in graph.nodes if node.kind == "file")
+    unknown = sum(node.scope == "unknown" and node.kind == "file" for node in graph.nodes)
+    declarations = sum(node.kind not in {"file", "implementation_episode"} for node in graph.nodes)
+    episodes = sum(node.kind == "implementation_episode" for node in graph.nodes)
+    lines = [
+        "## kgmaker bootstrap",
+        f"Indexed {len(files)} files, {declarations} declarations/sections, and {episodes} implementation episodes.",
+        f"Production scope; {unknown} files with unknown scope omitted.",
+        "Before implementation run `kgmaker memory recall \"<request>\"`, then inspect the cited source and tests.",
+        "Graph hints may be stale or heuristic; verify them in source.",
+    ]
+    stale = [context for context in graph.contexts
+             if context.get("analyzer_version") and context.get("freshness") == "STALE"]
+    for context in stale:
+        lines.append("Compiler context is stale ("
+                     + "/".join(str(context.get(key, "?")) for key in ("module", "source_set", "scope"))
+                     + "): " + str(context.get("stale_reason", "inputs changed"))
+                     + ". Run `" + str(context.get("next_command", "kgmaker inspect")) + "`.")
+    result = "\n".join(lines)
+    if len(result) > limit:
+        suffix = "\n… bootstrap truncated; use `kgmaker memory recall`."
+        result = result[: max(0, limit - len(suffix))].rsplit("\n", 1)[0] + suffix
+    return result[:limit]
 
 
 def _edge_details(edge) -> str:

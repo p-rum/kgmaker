@@ -1,0 +1,1 @@
+ok, vytvoř pomocí analytické feature kgmakeru analýzu přidání možnosti použít lokální llm (napš llamaserver.cpp )¨

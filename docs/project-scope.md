@@ -20,9 +20,13 @@ require separately installed JDK/Node toolchains. No model API key is required.
 
 Compiler distributions do not imply full language support: Kotlin currently uses
 K1 language/API 1.9 compatibility. Symbolic Spring wiring, full ORM/query/integration
-adapters, workbook parsing and selective feature invalidation remain incomplete.
-Scan/hook currently replace compiler indices; feature packets do not yet consume
-them. See [current status](production-analysis-progress.md) and
+adapters, approved-methodology comparison and selective feature invalidation remain
+incomplete. Bounded XLSX parsing covers cells, named ranges and static dependencies
+without formula evaluation. Single-root scan/hook/feature retain fresh compiler
+layers, selectively mark invalid layers stale, and workspace snapshots propagate
+compiler collections under repo-qualified identities. Unified context choice across
+all higher-level commands remains incomplete. See
+[current status](production-analysis-progress.md) and
 [compiler inspection](compiler-inspection.md) for precise support.
 
 ## Normative target

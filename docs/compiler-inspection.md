@@ -64,6 +64,9 @@ kgmaker coverage report --root fixtures/build-inspection/frontend --format json
 kgmaker callgraph callees --root fixtures/build-inspection/frontend --symbol SYMBOL_ID
 kgmaker flow render --root fixtures/build-inspection/frontend \
   --entry SYMBOL_ID --view control-flow --format mermaid
+kgmaker project inspect --root fixtures/build-inspection/maven --format json
+kgmaker entrypoints --root fixtures/build-inspection/maven --format json
+kgmaker runtime import --root fixtures/build-inspection/maven --manifest runtime-manifest.json
 ```
 
 BuildPlan obsahuje přesné argv, executable/exporter checksum, úplný inventář
@@ -106,6 +109,18 @@ BUILD_EXECUTE ani tvrzení BUILD_PASS/TEST_PASS; SOURCE_ONLY fallback zůstává
 syntaktický scan. Při skutečném manifest importu je původ dodaného exportu zvlášť
 UNVERIFIED.
 
+`project inspect` čte Maven reactor deklarace bez spuštění Maven a vrací
+`SOURCE_ONLY_DECLARED_MODEL`; profily, BOM mediation a effective classpath
+zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se nad
+compiler symboly provádí deterministická frameworková projekce. Spring
+stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
+boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
+boundary jsou `FRAMEWORK_DERIVED`. JPA `@Entity`/`@Table`/`@Column`, Spring Data
+repository/query a přesné názvy tabulek/sloupců se vážou na source-only schema
+nodes, pokud jsou ve stejném snapshotu. Chybějící aktivní profil, naming
+strategy, dynamic query, custom registrar, proxy execution nebo deployment/data
+availability zůstávají diagnostikou či UNKNOWN.
+
 Source CFG vzniká deterministicky z compiler AST IR. Zachovává podmínky,
 protilehlé větve, return/throw, loops, finally abrupt continuations a await/resume.
 Exceptional edges jsou konzervativní, nikoli řešení exception/path feasibility.
@@ -120,17 +135,28 @@ není bytecode offset. Kotlin inline/coroutines/default argument bodies, implici
 operators/accessors, framework proxy a plný def-use ještě nejsou pokryty.
 Source mapping bez debug metadata nevymýšlí řádky.
 
-Spring wiring/conditions/proxy, rozšířený Hibernate model a query grammar,
+Spring conditions/custom registrars, rozšířený Hibernate model a query grammar,
 Kafka cluster/retry/DLT, Feign/WebClient/RestClient, service mapping a BE/FE
 value-flow nejsou tímto inkrementem dokončeny. Stávající Flyway/workspace/
 availability implementace zůstává zachovaná. Data/integration view zatím poskytuje
-JSON, nikoli dokončený framework Markdown/Mermaid renderer.
+JSON, nikoli dokončený framework Markdown/Mermaid renderer. Runtime import je
+samostatný důkaz konkrétního běhu; nepřítomnost pozorování nic nevyvrací.
 
 
-## Integrace s běžným workflow: současný limit
+## Integrace s běžným workflow
 
-`scan` a `hook-context` přepíšou index z inspection syntaktickým grafem.
-`feature.current_graph` compiler index nepřebírá. Nová inspection také nevytváří
-hotový správce více kontextů: začíná ze scan baseline. Zachování/invalidace vrstev,
-více module/variant kontextů a sdílení s feature/workspace jsou [T003-S02](tasks/3_finishProductionAnalysis.md).
-Tento limit není napraven dokumentací ani zelenými isolated worker testy.
+`scan`, `hook-context` a single-root `feature.current_graph` nyní používají
+`graph_provider.retain_compiler_layer`. Ověří zdroje (včetně nových souborů),
+konfiguraci, classpath a worker distribuci a zachovají compiler symboly, call sites,
+CFG a evidence. Žádný worker/build se při tom nespustí. Stale vstup odstraní pouze
+fakta dotčeného compiler kontextu; kontext zůstane s `freshness=STALE`, důvodem a
+přesným příkazem `inspect code` / `inspect frontend`. Ostatní čerstvé kontexty
+zůstávají použitelné a hook předá stale diagnostiku v bootstrapu.
+
+Nová inspection začne ze scan baseline a před atomickým zápisem sloučí nový
+module/profile selection s ostatními validními kontexty. Worker symbol IDs obsahují
+context ID, takže varianty nesplynou; stejný selection se při opakování nahradí.
+Workspace snapshot zachová compiler collections v graph schema v3 a kvalifikuje
+jejich symbol, context, evidence, call-site i CFG identity repository namespace.
+Jednotný výběr contextu ve všech query/impact/feature/report cestách a celý
+end-to-end T003-AC02 scénář zůstávají rozpracované.

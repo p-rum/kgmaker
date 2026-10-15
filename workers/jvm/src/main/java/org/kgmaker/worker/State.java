@@ -76,7 +76,7 @@ public final class State {
         realms.put(owner,jdk); return jdk;
     }
     public String prefix(Map<String,Object> realm) {
-        return "jvm:"+realm.get("repo_id")+":"+realm.get("module")+":"+realm.get("source_set");
+        return "jvm:"+realm.get("repo_id")+":"+realm.get("module")+":"+realm.get("source_set")+":"+context.get("id");
     }
     public String method(String owner,String name,String descriptor,Map<String,Object> loc,Map<String,Object> metadata) {
         var realm=realm(owner,loc);

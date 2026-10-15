@@ -24,6 +24,17 @@ def adjacency(graph: KnowledgeGraph, include_candidates=True):
                     result[site["caller"]].append({"target": candidate, "call_site": site["id"],
                         "kind": "DISPATCH_CANDIDATE", "evidence_ids": site.get("evidence_ids", []),
                         "dispatch_complete": site.get("dispatch_complete", False)})
+    # Runtime imports deliberately remain separate evidence.  They participate
+    # in navigation only when explicitly requested through the imported graph;
+    # callers/callees still expose their origin as RUNTIME_OBSERVED.
+    for edge in graph.edges:
+        if edge.kind != "observed_dispatch_to":
+            continue
+        result[edge.source].append({"target": edge.target,
+                                    "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
+                                    "kind": "RUNTIME_OBSERVED",
+                                    "evidence_ids": list(edge.evidence_ids),
+                                    "dispatch_complete": True})
     for key in result:
         result[key].sort(key=lambda e: (e["target"], e["call_site"], e["kind"]))
     return result

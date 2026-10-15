@@ -16,9 +16,10 @@ The source-only core and its extensions are organized as follows:
 2. `domain.py` extracts PostgreSQL schema objects, Kotlin/JVM persistence links, Kafka topics, service/API references, OpenAPI endpoints, and TypeScript app routes.
 3. `model.py` holds stable node and edge records.
 4. `semantic.py` prepares stable node inventories, tracks source hashes per file, prepares Git-diff update packets with a configurable approximate token budget, validates scoped agent patches, and merges only affected changes while preserving unrelated semantics.
-5. `store.py` writes the machine-readable graph, generated Markdown architecture documentation with an embedded Mermaid view, a standalone Mermaid diagram, and compact session context.
-6. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, and the Copilot hook command. Semantic update packets and hook context accept an approximate token budget.
-7. `confluence.py` ingests an optional local multi-file Confluence HTML export using structural parsing, resolves internal links and attachments, parses Mermaid and Draw.io/XML diagrams deterministically, caches artifact hashes, merges documentation evidence into the unified graph, and validates claims against the code graph. The source code is authoritative; contradictions are retained as evidence and rendered to a Markdown report.
+5. `store.py` writes the machine-readable graph, generated Markdown architecture documentation with an embedded Mermaid view, a standalone Mermaid diagram, broad comparison context, and a lean session bootstrap.
+6. `memory.py` validates deterministic Git-provenanced implementation episodes, projects them into the graph, and provides bounded request-time recall. `workflow.py` stores durable task state and role artifacts separately from source-derived facts; `context.py` builds role-specific RAG packets from graph, memory, impact, tests, and prior artifacts.
+7. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, implementation `memory`, durable `task`, and the Copilot hook command. Semantic updates, task packets, recall, and hook context accept approximate token budgets.
+8. `confluence.py` ingests an optional local multi-file Confluence HTML export using structural parsing, resolves internal links and attachments, parses Mermaid and Draw.io/XML diagrams deterministically, caches artifact hashes, merges documentation evidence into the unified graph, and validates claims against the code graph. The source code is authoritative; contradictions are retained as evidence and rendered to a Markdown report.
 
 The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md`, `.kgmaker/GRAPH.mmd`, and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker scan --no-docs` updates only the machine index; `kgmaker docs` can regenerate both views later. `kgmaker semantic update --token-budget N` limits the changed-file context packet using a conservative character-to-token estimate; it cannot control the separate token accounting of the host Copilot model. `kgmaker check` compares fresh Markdown and Mermaid renders against the committed snapshots and can run in CI without the local JSON index.
 
@@ -39,7 +40,7 @@ The baseline scanner/domain modules are source-pattern parsers, not SQL engines 
 
 ## Hook lifecycle
 
-The generated repository hook subscribes to Copilot CLI `sessionStart`. It refreshes the graph and returns `additionalContext`. A failed scan returns empty context and a diagnostic on standard error, allowing the Copilot session to continue.
+The generated repository hook subscribes to Copilot CLI `sessionStart`. It refreshes the graph and returns a lean `additionalContext` bootstrap. Request-specific repository locations and implementation history are retrieved with `kgmaker memory recall`; multi-role agents use bounded `kgmaker task context` packets. A failed scan returns empty context and a diagnostic on standard error, allowing the Copilot session to continue.
 
 ## Extension points
 
@@ -74,6 +75,25 @@ feature validation and report rendering. It accepts semantic specifications rath
 than caller-provided hashes or availability, then returns an unapplied candidate.
 Business ambiguity and parser/access/proof coverage gaps are separate outputs.
 
+`workbooks.py` reads `.xlsx` through bounded ZIP/XML parsing, creates workbook,
+sheet, cell and named-range nodes, and records static formula dependencies. It
+never evaluates formulas or loads external links. Cached values are separate and
+always carry unknown freshness; `.xls`, shared formulas, INDIRECT and external
+references produce explicit diagnostics. Workbook citations are re-read and
+hash-checked by the normal feature validator.
+
+`templates.py` supports a bounded Thymeleaf dialect: `${variable.path}` usage,
+literal MVC model keys, literal returned template names and explicit PDF renderer
+calls. It links the backend method, template variable and external PDF boundary
+without evaluating expressions or treating the renderer as local code.
+
+`confluence_sync.py` is separate from read-only HTML ingestion. It defines an
+adapter protocol and an explicitly non-live fake adapter. A publish package owns
+one managed section, preserves the rest of the page and carries an exact diff,
+payload hash, base version and TO_BE state. Approval binds those values; publish
+checks package integrity and optimistic concurrency and emits a content-free audit.
+No live URL/auth/API convention is present without a documented connector.
+
 `flyway.py` constructs explicit offline migration plans; `schema_replay.py`
 tokenizes SQL, reconstructs active objects/lifecycle and reuses valid prefix
 checkpoints. Unknown effects taint the declaration model. `workspace.py` wraps
@@ -97,24 +117,33 @@ retain separate evidence contracts.
 
 Optional compiler inspection uses the existing Python graph/store through `inspection.py`
 and bounded `worker_protocol.py`. JVM and TypeScript workers own symbol/call-site/AST
-facts; `control_flow.py` constructs CFG and `flow.py` renders it without LLM ordering.
-Schema v3 extends v2 while old source-only indices stay readable. `build_runner.py`
+facts; `framework.py` adds only annotation-backed Spring/JPA projections with separate
+`FRAMEWORK_DERIVED` evidence; `runtime_evidence.py` imports separately scoped
+`RUNTIME_OBSERVED` edges. `control_flow.py` constructs CFG and `flow.py` renders it
+without LLM ordering. Schema v3 extends v2 while old source-only indices stay readable. `build_runner.py`
 executes only an explicit content-bound plan; `build_model.py` validates/imports the
 same manifest path. Maven EventSpy and Gradle source-set exports belong to that
-execution workflow. This is a partial supported matrix, documented in
-[compiler inspection](compiler-inspection.md); complete Spring, persistence and
-integration adapters remain open.
+execution workflow, while `build_maven.py` provides a read-only declared Maven model
+for project inspection. This is a partial supported matrix, documented in
+[compiler inspection](compiler-inspection.md); complete Spring conditions, Hibernate
+semantics and integration adapters remain open.
 
 
-## Current lifecycle gap and planned integration
+## Compiler lifecycle provider
 
-At `6b5aea1`, both inspection and ordinary scan/hook write the existing store,
-but scan/hook reconstruct a syntactic graph and do not preserve compiler layers.
-Feature analysis independently rebuilds the syntactic/semantic/Flyway graph.
-Inspection itself starts from scan rather than an accumulated multi-context index.
-A shared context-aware provider and atomic generations are **planned** in T003-S02;
-they are not current architecture. Build/classpath/variant invalidation and
-compiler-aware packets must be implemented together without implicit execution.
+`graph_provider.py` shares offline snapshot validation with compiler navigation.
+Single-root feature, scan and hook refresh syntax and semantic/Flyway projections
+while retaining fresh compiler nodes, edges, evidence, symbols, call sites and CFG
+in the existing store. A stale compiler layer is projected out without publishing
+its facts; its context records the reason and explicit inspection command. Other
+valid module/profile contexts remain available. No process execution is needed.
+
+Inspection starts from a fresh syntactic baseline, then atomically merges the new
+module/profile selection with other validated compiler contexts. Workers include
+the context ID in symbol identity, preventing cross-variant collapse. Workspace
+schema v3 qualifies and preserves compiler symbols, call sites, CFG internals,
+evidence and annotations per repository. Unified higher-level context selection and
+the complete T003-AC02 sequence remain required.
 
 Task identities and historical milestone aliases are defined only by
 [the registry](tasks/README.md). [Current status](production-analysis-progress.md)

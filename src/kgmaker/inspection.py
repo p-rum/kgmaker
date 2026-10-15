@@ -43,13 +43,36 @@ def worker_home(path: Path | None = None) -> Path:
     return Path(__file__).resolve().parents[2] / "workers"
 
 
+def _jvm_worker_jar(home: Path) -> Path:
+    """Resolve the packaged JVM worker without assuming a Maven finalName.
+
+    Maven's default artifact name contains the project version.  Development
+    checkouts may also provide the versionless name used by older packaging
+    scripts, but accepting an arbitrary first jar would make a stale or
+    unrelated worker look valid.  Therefore a versioned fallback is accepted
+    only when it is unambiguous.
+    """
+    target = home / "jvm/target"
+    plain = target / "kgmaker-jvm-worker.jar"
+    if plain.is_file():
+        return plain
+    candidates = sorted(target.glob("kgmaker-jvm-worker-*.jar"))
+    if len(candidates) == 1 and candidates[0].is_file():
+        return candidates[0]
+    raise WorkerError(
+        "Optional JVM worker/JDK unavailable; scan remains usable. "
+        "Build exactly one trusted JVM worker artifact explicitly.",
+        "TOOLCHAIN_UNAVAILABLE",
+    )
+
+
 def command(language: str, home: Path | None = None) -> list[str]:
     home = worker_home(home)
     if language == "jvm":
         java = shutil.which("java")
-        jar = home / "jvm/target/kgmaker-jvm-worker.jar"
-        if not java or not jar.is_file():
+        if not java:
             raise WorkerError("Optional JVM worker/JDK unavailable; scan remains usable. Build the trusted worker explicitly.", "TOOLCHAIN_UNAVAILABLE")
+        jar = _jvm_worker_jar(home)
         return [java, "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
     script = home / "typescript/worker.cjs"
@@ -60,7 +83,7 @@ def command(language: str, home: Path | None = None) -> list[str]:
 
 def distribution(language: str, home=None) -> list[dict]:
     root = worker_home(home)
-    paths = ([root / "jvm/target/kgmaker-jvm-worker.jar"] + sorted((root / "jvm/target/lib").glob("*.jar"))) if language == "jvm" else [root / "typescript/worker.cjs", root / "typescript/node_modules/typescript/lib/typescript.js"]
+    paths = ([_jvm_worker_jar(root)] + sorted((root / "jvm/target/lib").glob("*.jar"))) if language == "jvm" else [root / "typescript/worker.cjs", root / "typescript/node_modules/typescript/lib/typescript.js"]
     return [{"path": str(path.resolve()), "sha256": file_hash(path)} for path in paths]
 
 
@@ -91,6 +114,12 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
              "classifier_contexts": [c for c in base.contexts if c.get("scope") == scope], "worker": metadata, "analyzer_version": VERSION}
     if build_context:
         value.update(build_context)
+    value["selection_key"] = digest({key: value.get(key) for key in (
+        "repo_id", "module", "source_set", "scope", "language", "build_context_id",
+        "build_profiles", "spring_profiles", "config_fingerprint", "compiler_options",
+        "ui_framework", "tsconfig", "database_id", "schema_stream_id",
+        "persistence_unit", "naming_strategy",
+    )})
     value["id"] = digest(value)
     return value
 
@@ -172,7 +201,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
             line=location.get("start_line"), signature=symbol.get("descriptor") or symbol.get("type"),
             scope=scope, role=role, origin=c.origin if c is not None and c.origin != "unknown" else origin,
             build_membership=c.build_membership if c else (),
-            classification_evidence=c.classification_evidence if c else ("compiler-context:" + context_id,))
+            classification_evidence=c.classification_evidence if c else ("compiler-context:" + context_id,),
+            metadata=sanitize(symbol))
         if path in file_nodes:
             relation(file_nodes[path], symbol["id"], "contains", symbol)
     for site in call_sites:
@@ -265,8 +295,10 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
     if publish:
+        from .graph_provider import merge_compiler_context
+        graph = merge_compiler_context(root, graph, selected)
         save_graph(graph, root)
-    return {**result, "exit_code": 0}
+    return {**result, "graph": graph.to_dict(), "exit_code": 0}
 
 
 def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: list | None = None,
@@ -313,6 +345,11 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if base.files != after.files or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
         raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
     graph = graph_from_response(root, base, response, selected, project_model=project_model)
+    # Framework rules consume the compiler-resolved graph; they never replace
+    # or upgrade a worker fact.  Keep this phase in the explicit inspection
+    # workflow so scan/build/feature commands remain offline and source-only.
+    from .framework import augment_framework_graph
+    graph = augment_framework_graph(root, graph, selected)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
@@ -324,5 +361,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
     if publish:
+        from .graph_provider import merge_compiler_context
+        graph = merge_compiler_context(root, graph, selected)
         save_graph(graph, root)
-    return {**result, "exit_code": 0}
+    return {**result, "graph": graph.to_dict(), "exit_code": 0}

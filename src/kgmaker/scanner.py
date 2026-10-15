@@ -43,11 +43,12 @@ EXTENSIONS = {
     ".yml": "config",
     ".properties": "config",
     ".json": "json",
+    ".html": "html",
 }
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".idea", ".vscode", ".venv", "venv", "env",
     "node_modules", "vendor", "build", "dist", "target", "out", "coverage",
-    "__pycache__", ".gradle", ".next", ".nuxt", ".kgmaker",
+    "__pycache__", ".gradle", ".next", ".nuxt", ".kgmaker", "graphify-out",
 }
 SENSITIVE_NAMES = {
     ".env", ".npmrc", ".pypirc", "id_rsa", "id_ed25519", "credentials",
@@ -67,7 +68,12 @@ PY_DEF = re.compile(r"^\s*(?:async\s+)?def\s+(\w+)\s*\(([^\n]*)\)", re.M)
 PY_CLASS = re.compile(r"^\s*class\s+(\w+)(?:\(([^\n]*)\))?\s*:", re.M)
 JVM_TYPE = re.compile(r"^\s*(?:public\s+|internal\s+|private\s+|protected\s+)*(?:open\s+|abstract\s+|data\s+|sealed\s+|enum\s+)*(class|interface|object|enum\s+class|record)\s+(\w+)([^\n{]*)", re.M)
 JVM_FUN = re.compile(r"^\s*(?:(?:public|private|protected|internal|override|suspend|open|static|final|abstract)\s+)*fun\s+(\w+)\s*\(([^\n]*)\)", re.M)
-JAVA_METHOD = re.compile(r"^\s*(?:public|private|protected|static|final|synchronized|abstract|\w+[<>?,.\[\]]*\s+)+\s+(\w+)\s*\(([^;{}]*)\)\s*(?:throws\s+[^{}]+)?\{", re.M)
+JAVA_METHOD = re.compile(
+    r"^\s*(?:(?:public|private|protected|static|final|synchronized|abstract|native|default)\s+)*"
+    r"(?!(?:class|interface|enum|record)\s)(?:[\w$<>?,.\[\]]+\s+)+(\w+)\s*\(([^;{}]*)\)\s*"
+    r"(?:throws\s+[^{}]+)?\{",
+    re.M,
+)
 JS_DECL = re.compile(r"^\s*(?:export\s+)?(?:(?:async\s+)?function|class)\s+(\w+)\s*(?:\(([^\n]*)\))?", re.M)
 JS_ARROW = re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(([^\n]*)\)\s*=>", re.M)
 TS_TYPE = re.compile(r"^\s*(?:export\s+)?(?:interface|type|enum)\s+(\w+)", re.M)

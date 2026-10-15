@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,8 @@ SEMANTIC_UPDATE_FILE = Path(".kgmaker/semantic-update.json")
 SEMANTIC_UPDATE_MARKDOWN = Path(".kgmaker/semantic-update.md")
 SEMANTIC_EXTRACT_MARKDOWN = Path(".kgmaker/semantic-extract.md")
 SEMANTIC_PATCH_FILE = Path(".kgmaker/semantic-patch.json")
-SEMANTIC_SCHEMA_VERSION = 2
+LEGACY_SEMANTIC_SCHEMA_VERSION = 2
+SEMANTIC_SCHEMA_VERSION = 3
 SEMANTIC_UPDATE_SCHEMA_VERSION = 1
 DEFAULT_SEMANTIC_TOKEN_BUDGET = 4_000
 CHARS_PER_TOKEN_ESTIMATE = 4
@@ -100,13 +102,16 @@ def _check_line(root: Path, source_file: str, line: int | None, field: str, line
 def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tuple[list[Node], list[Edge]]:
     """Validate IDs, provenance, confidence, and graph freshness before merging."""
     if (not isinstance(data, dict) or isinstance(data.get("schema_version"), bool)
-            or data.get("schema_version") not in {1, SEMANTIC_SCHEMA_VERSION}):
-        raise SemanticValidationError(f"semantic artifact must use schema_version 1 or {SEMANTIC_SCHEMA_VERSION}")
+            or data.get("schema_version") not in {1, LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION}):
+        raise SemanticValidationError(
+            f"semantic artifact must use schema_version 1, {LEGACY_SEMANTIC_SCHEMA_VERSION}, "
+            f"or {SEMANTIC_SCHEMA_VERSION}"
+        )
     version = data["schema_version"]
     if version == 1 and data.get("graph_fingerprint") != graph_fingerprint(graph):
         raise SemanticValidationError("legacy semantic artifact is stale; run `kgmaker semantic prepare` to upgrade it")
     snapshots = data.get("files")
-    if version == SEMANTIC_SCHEMA_VERSION:
+    if version in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION}:
         if not isinstance(snapshots, dict) or any(
             not isinstance(path, str) or not isinstance(digest, str)
             for path, digest in snapshots.items()
@@ -114,6 +119,8 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
             raise SemanticValidationError("semantic artifact must contain a `files` map of path to SHA-256")
     if not isinstance(data.get("nodes"), list) or not isinstance(data.get("edges"), list):
         raise SemanticValidationError("semantic artifact must contain `nodes` and `edges` arrays")
+    if version == SEMANTIC_SCHEMA_VERSION and not isinstance(data.get("episodes"), list):
+        raise SemanticValidationError("semantic schema_version 3 artifact must contain an `episodes` array")
 
     base_nodes = {node.id: node for node in graph.nodes}
     semantic_nodes: list[Node] = []
@@ -128,7 +135,8 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
             raise SemanticValidationError(f"nodes[{index}].name must be a non-empty string")
         if not isinstance(source_file, str) or source_file not in graph.files:
             raise SemanticValidationError(f"nodes[{index}].source_file must name an indexed repository file")
-        if version == SEMANTIC_SCHEMA_VERSION and snapshots.get(source_file) != graph.files[source_file]:
+        if version in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION} \
+                and snapshots.get(source_file) != graph.files[source_file]:
             raise SemanticValidationError(f"nodes[{index}] is stale because {source_file} changed; run `kgmaker semantic update`")
         node_id = item.get("id")
         expected_id = concept_id(source_file, name)
@@ -173,7 +181,8 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
         source_file = item.get("source_file")
         if not isinstance(source_file, str) or source_file not in graph.files:
             raise SemanticValidationError(f"edges[{index}].source_file must name an indexed repository file")
-        if version == SEMANTIC_SCHEMA_VERSION and snapshots.get(source_file) != graph.files[source_file]:
+        if version in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION} \
+                and snapshots.get(source_file) != graph.files[source_file]:
             raise SemanticValidationError(f"edges[{index}] is stale because {source_file} changed; run `kgmaker semantic update`")
         source_line = _positive_line(item.get("source_line"), f"edges[{index}].source_line")
         if source_line is None:
@@ -198,6 +207,22 @@ def validate_semantic_data(data: Any, graph: KnowledgeGraph, root: Path) -> tupl
     if duplicates:
         first = duplicates[0]
         raise SemanticValidationError(f"semantic edge duplicates structural relationship {first.kind}: {first.source} -> {first.target}")
+    if version == SEMANTIC_SCHEMA_VERSION:
+        from .memory import EpisodeValidationError, project_episode, validate_episode
+
+        current_ids = valid_ids.copy()
+        episode_ids: set[str] = set()
+        for index, item in enumerate(data["episodes"]):
+            try:
+                episode = validate_episode(item, index)
+            except EpisodeValidationError as error:
+                raise SemanticValidationError(str(error)) from None
+            if episode["id"] in current_ids or episode["id"] in episode_ids:
+                raise SemanticValidationError(f"episodes[{index}].id duplicates an existing node")
+            episode_ids.add(episode["id"])
+            node, edges = project_episode(episode, current_ids, graph.files)
+            semantic_nodes.append(node)
+            semantic_edges.extend(edges)
     return semantic_nodes, semantic_edges
 
 
@@ -530,6 +555,7 @@ def apply_semantic_patch(patch: Any, update: Any, graph: KnowledgeGraph, root: P
         "files": dict(graph.files),
         "nodes": [*nodes, *new_nodes],
         "edges": [*edges, *new_edges],
+        "episodes": list(old.get("episodes", [])),
     }
     validate_semantic_data(candidate, graph, root)
     return candidate
@@ -543,7 +569,7 @@ def apply_semantic_layer(graph: KnowledgeGraph, root: Path) -> tuple[KnowledgeGr
     error: str | None = None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        if isinstance(data, dict) and data.get("schema_version") == SEMANTIC_SCHEMA_VERSION \
+        if isinstance(data, dict) and data.get("schema_version") in {LEGACY_SEMANTIC_SCHEMA_VERSION, SEMANTIC_SCHEMA_VERSION} \
                 and isinstance(data.get("files"), dict) and isinstance(data.get("nodes"), list) \
                 and isinstance(data.get("edges"), list):
             if any(not isinstance(item, dict) for item in [*data["nodes"], *data["edges"]]):
@@ -584,8 +610,9 @@ def apply_semantic_layer(graph: KnowledgeGraph, root: Path) -> tuple[KnowledgeGr
             nodes, edges = validate_semantic_data(data, graph, root)
     except (OSError, UnicodeError, json.JSONDecodeError, SemanticValidationError) as error:
         return graph, (0, 0), str(error)
-    graph.nodes.extend(nodes)
-    graph.edges.extend(edges)
-    graph.nodes.sort(key=lambda n: (n.path, n.line or 0, n.kind, n.name))
-    graph.edges.sort(key=lambda e: (e.source, e.kind, e.target, e.evidence or ""))
-    return graph, (len(nodes), len(edges)), error
+    merged = replace(
+        graph,
+        nodes=sorted([*graph.nodes, *nodes], key=lambda n: (n.path, n.line or 0, n.kind, n.name)),
+        edges=sorted([*graph.edges, *edges], key=lambda e: (e.source, e.kind, e.target, e.evidence or "")),
+    )
+    return merged, (len(nodes), len(edges)), error

@@ -12,15 +12,15 @@ are implemented in the supported subset described in
 | Area | Implemented | Remaining |
 |---|---|---|
 | Lifecycle | prepare, validate, apply, report, status, revise, compare, data-check | Selective revision packets and dependency invalidation |
-| Provenance | Byte hashes, exact line quotes, JSON pointer/value, requirement/decision evidence, repo-qualified references | HTML-section and workbook-cell localization |
-| Graph | Reader accepts graph v1/v2/v3; feature envelope is separately version 1 | Feature graph provider does not consume compiler contexts/call sites yet |
+| Provenance | Byte hashes, exact line quotes, JSON pointer/value, workbook sheet/cell/value, requirement/decision evidence, repo-qualified references | HTML-section localization |
+| Graph | Reader accepts graph v1/v2/v3; feature envelope is separately version 1; fresh compiler contexts/call sites/CFG are retained | Unified explicit context selection in every feature/report view |
 | Availability | OBSERVED_VALUE_PATH with approved mappings, CLOSED_CONTRACT_ABSENCE and APPROVED_MISSING; scoped negative search | Wider automatic value-path construction and selective proof reuse |
 | Isolation | TO_BE namespace, dangling-reference checks, read-only validate, atomic apply | No automatic promotion of proposals, by design |
 | Workspace/schema | Explicit supplied repos, content caches, selected Flyway stream/target | Full compiler cross-repo and ORM coverage |
 | Budget | Full metadata manifest, selected source context and explicit omissions | Dependency-aware relevance and resumable packets |
 | Freshness | Content baseline, no timestamp identity | Whole-packet invalidation remains for unrelated source changes |
-| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions | Full cross-layer paths and richer artifact coverage |
-| Confluence/XLSX | Offline Confluence export validation | Workbook extraction, approved-methodology rules and synchronization boundary |
+| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings | Full cross-layer paths and richer artifact coverage |
+| Confluence/XLSX | Offline Confluence export validation; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval | Approved-methodology rules and a documented live connector |
 
 No model client, MCP server or implicit build/network call is introduced by feature
 commands. Positive verdicts require the supported deterministic proof contracts;
@@ -45,8 +45,9 @@ kgmaker query --root . --analysis additional-hedge liquidity
 ```
 
 `prepare` builds an up-to-date graph **in memory**, preserving existing graph and
-semantic files. It reconstructs the syntactic/semantic/Flyway graph; it does not
-reuse the compiler graph published by `inspect`. Integration is T003-S02.
+semantic files. It reconstructs the syntactic/semantic/Flyway graph and retains
+content-validated compiler layers published by explicit `inspect`. Stale layers lose
+their compiler facts and remain as diagnostic contexts with an explicit refresh command.
 It works without Git, a diff, or a semantic change packet.
 Git HEAD is supplemental provenance; working-tree content determines freshness.
 A commit-only change with identical sources preserves the packet identity.
@@ -145,16 +146,22 @@ or:
 {"location":{"type":"json_pointer","pointer":"/properties/currency/type"},"value":"string"}
 ```
 
+Workbook evidence uses a hash-bound cell locator and keeps formula text separate
+from its cached value:
+
+```json
+{"location":{"type":"workbook_cell","sheet":"Scenario","cell":"A1"},"value":{"formula":null,"cached_value":"10","cached_value_freshness":"UNKNOWN"}}
+```
+
 Evidence kind must match the packet source manifest. Source and cited location must
 exist and the quote/value must match; hash or location errors reject apply.
 File SHA-256 uses raw bytes, including CRLF; graph fingerprints separately retain
-the legacy scanner's normalized-text hashes. HTML section and workbook locators
-are unsupported and rejected, rather than treated as verified.
+the legacy scanner's normalized-text hashes. HTML section locators remain unsupported.
 
 REQUIREMENT evidence needs exact `quote` and `sha256` from the original requirement.
 HUMAN_DECISION evidence needs `decision_id`, `answer`, `revision`, `approval_status`
 matching a supplied packet answer. File kinds are CODE/CONTRACT/SCHEMA/CONFIG/
-DOCUMENTATION; WORKBOOK is reserved for the later parser.
+DOCUMENTATION/WORKBOOK.
 
 Answer file:
 
@@ -178,9 +185,11 @@ revision without overwriting the previous candidate. Selective resume is future 
 Single-root and explicit multi-repository workspace modes are supported. Hidden/
 sensitive paths, symlinks, generated outputs and over-limit files are excluded by
 the source inventory; unsupported artifacts remain visible in coverage. General
-SQL/interprocedural completeness, XLSX extraction/evaluation, selective feature
+SQL/interprocedural completeness, non-literal template binding, formula evaluation, selective feature
 invalidation and Confluence synchronization are not implemented. `scan`/`update`
 remain full syntactic scans; workspace and Flyway caches do not change that fact.
+Workspace graph schema v3 preserves compiler symbols, call sites, CFG, evidence and
+annotations with repo-qualified identities.
 
 ## Host invocation and tests
 
@@ -203,8 +212,9 @@ apply, proposal isolation, malformed input, fake quotes/hashes/JSON fields/appro
 small-budget behavior, business readiness vs processing, revision history, agent
 file preservation and the prepared fixture CLI lifecycle. T001-FA-14/15/24 selective
 incremental equivalence, full T001-FA-16 selective conclusions, full cross-layer field proofs T001-FA-01/03/08/09,
-XLSX/Confluence T001-FA-20–23/28–30 remain outstanding. No live Confluence host/version or
-API credentials were provided, so a real adapter cannot be claimed.
+approved-methodology T001-FA-20/21 remains outstanding. T001-FA-28–30 are covered
+by the explicitly offline fake adapter; no live Confluence host/version or API
+credentials were provided, so a real adapter cannot be claimed.
 
 ## Implemented field and impact patterns (T001-S02 subset)
 

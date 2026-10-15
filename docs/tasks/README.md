@@ -3,6 +3,8 @@
 Tento registr je autoritou pro identitu zadání. Implementační stav patří do
 [stavové matice](../production-analysis-progress.md), technické požadavky do
 níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.md).
+Řádkové mapování požadavek → verze → test → skutečný běh udržuje
+[acceptance inventář](../acceptance-inventory.md).
 
 | ID | Soubor | Úloha | Stav dokumentu |
 |---|---|---|---|

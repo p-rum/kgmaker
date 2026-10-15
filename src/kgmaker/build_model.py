@@ -120,4 +120,7 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
                 "build_profiles": selected.get("build_profiles", []), "spring_profiles": selected.get("spring_profiles"),
                 "diagnostics": manifest.get("diagnostics", []) + selected.get("diagnostics", []),
                 "compiler_options": selected.get("compiler_options"), "generated_source_roots": selected.get("generated_source_roots", []),
-                "toolchain": selected.get("toolchain"), "build_system": selected.get("build_system"), "manifest_hash": digest(manifest)}}
+                "toolchain": selected.get("toolchain"), "build_system": selected.get("build_system"),
+                "database_id": selected.get("database_id"), "schema_stream_id": selected.get("schema_stream_id"),
+                "persistence_unit": selected.get("persistence_unit"), "naming_strategy": selected.get("naming_strategy"),
+                "manifest_hash": digest(manifest)}}

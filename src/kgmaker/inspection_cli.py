@@ -60,6 +60,12 @@ def register(sub):
     p.add_argument("--format", choices=("json", "mermaid", "markdown"), default="mermaid")
     p.add_argument("--max-depth", type=int, default=3)
     p.add_argument("--max-nodes", type=int, default=500)
+    runtime = sub.add_parser("runtime", help="import scoped runtime observations; never starts the application")
+    actions = runtime.add_subparsers(dest="runtime_command", required=True)
+    p = actions.add_parser("import", help="validate and import a sanitized runtime manifest")
+    p.add_argument("--root", type=Path, default=Path.cwd())
+    p.add_argument("--manifest", type=Path, required=True)
+    p.add_argument("--format", choices=("json",), default="json")
 
 
 def indexed(args):
@@ -69,35 +75,16 @@ def indexed(args):
         raise AnalysisError("INVALID_INDEX" if (root / GRAPH_FILE).exists() else "MISSING_INDEX: run an explicit compiler inspection")
     if graph.schema_version != 3:
         raise AnalysisError("UNSUPPORTED_INDEX: source-only/legacy index has no compiler call sites or CFG")
-    # Compare every captured source and classpath; timestamps never establish freshness.
-    from .analysis_model import file_hash, safe_path
-    from .inspection import artifact_hash
-    for context in graph.contexts:
-        for item in (context.get("project") or {}).get("input_files", []) + context.get("worker", {}).get("distribution", []):
-            if not Path(item["path"]).is_file() or file_hash(Path(item["path"])) != item["sha256"]:
-                raise WorkerError("STALE_INDEX: worker distribution changed", "STALE")
-        if context.get("classification_override_hash"):
-            from .classification import Classifier
-            from .analysis_model import digest
-            if digest(Classifier(root).config) != context["classification_override_hash"]:
-                raise WorkerError("STALE_INDEX: classifier override changed", "STALE")
-        if context.get("analyzer_version"):
-            from .inspection import context as source_context
-            from .scanner import scan_repository
-            now = source_context(root, scan_repository(root, project_model=context.get("project_model")), context["language"], context["worker"],
-                                 repo_id=context["repo_id"], module=context["module"],
-                                 source_set=context["source_set"], scope=context["scope"])
-            if set(now["source_files"]) - set(context.get("source_files", {})):
-                raise WorkerError("STALE_INDEX: new source/config inputs require inspection", "STALE")
-        for path, expected in context.get("source_files", {}).items():
-            target = safe_path(root, path)
-            if not target.is_file() or file_hash(target) != expected:
-                raise WorkerError("STALE_INDEX: source/config changed; inspect again", "STALE")
-        for entry in context.get("classpath", []) + context.get("bytecode_artifacts", []):
-            if artifact_hash(Path(entry["path"])) != entry["sha256"]:
-                raise WorkerError("STALE_INDEX: classpath changed; import/inspect again", "STALE")
-    contexts = [c for c in graph.contexts if c.get("analyzer_version")]
+    from .graph_provider import validate_compiler_snapshot
+    validate_compiler_snapshot(root, graph)
+    all_contexts = [c for c in graph.contexts if c.get("analyzer_version")]
+    stale = [c for c in all_contexts if c.get("freshness") == "STALE"]
+    contexts = [c for c in all_contexts if c.get("freshness") != "STALE"]
     if args.context:
+        invalid = [c for c in stale if c["id"] == args.context]
+        if invalid:
+            raise AnalysisError("STALE_INDEX: " + invalid[0].get("stale_reason", "context is stale")
+                                + "; run `" + invalid[0]["next_command"] + "`")
         selected = [c for c in contexts if c["id"] == args.context]
         if not selected:
             raise AnalysisError("Unknown analysis context; available: " + ", ".join(c["id"] for c in contexts))
@@ -113,6 +100,11 @@ def indexed(args):
 
 def run(args):
     try:
+        if args.command == "runtime":
+            from .runtime_evidence import import_manifest
+            result = import_manifest(args.root.resolve(), read_json(args.manifest))
+            print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
+            return 0
         if args.command == "inspect":
             options = dict(scope=args.scope, repo_id=args.repo_id, module=args.module, source_set=args.source_set,
                            home=args.worker_home, timeout=args.timeout, cancel_file=args.cancel_file, strict=args.strict)
@@ -154,14 +146,24 @@ def run(args):
             from .views import project
             selected = project(graph, args.scope)
             results = []
+            generated = {node.id: node for node in selected.nodes
+                          if node.kind in {"spring_entrypoint", "spring_endpoint"}}
+            for node in generated.values():
+                results.append({"id": node.id, "kind": node.kind, "name": node.name,
+                                "path": node.path, "line": node.line,
+                                "metadata": node.metadata or {},
+                                "evidence_kind": "FRAMEWORK_DERIVED"})
             for s in selected.symbols:
                 annotations = {a.get("name") for a in s.get("annotations", [])}
                 supported = annotations & {"org.springframework.web.bind.annotation.GetMapping", "org.springframework.web.bind.annotation.PostMapping",
                     "org.springframework.web.bind.annotation.RequestMapping", "org.springframework.kafka.annotation.KafkaListener",
                     "org.springframework.scheduling.annotation.Scheduled", "org.springframework.context.event.EventListener"}
                 if supported or (s.get("name") == "main" and s.get("descriptor") == "([Ljava/lang/String;)V"):
-                    results.append({"id": s["id"], "annotations": sorted(supported), "path": s.get("path"), "range": s.get("range"), "evidence_kind": "SYMBOL_RESOLVED"})
-            result = {"status": "PARTIAL", "scope": args.scope, "contexts": selected.contexts, "results": sorted(results, key=lambda r: r["id"])}
+                    results.append({"id": s["id"], "kind": "compiler_entrypoint", "annotations": sorted(supported),
+                                    "path": s.get("path"), "range": s.get("range"), "evidence_kind": "SYMBOL_RESOLVED"})
+            result = {"status": "PARTIAL" if selected.diagnostics else "COMPLETE_WITHIN_INDEXED_SCOPE", "scope": args.scope,
+                      "contexts": selected.contexts, "results": sorted(results, key=lambda r: r["id"]),
+                      "limitations": ["Generated framework entrypoints are annotation-derived; runtime registration is not observed."]}
         else:
             from . import flow
             if args.view == "control-flow":

@@ -13,6 +13,9 @@ from kgmaker import feature
 from kgmaker.analysis_model import AnalysisError, inventory_candidate, write_json
 from kgmaker.cli import main
 from kgmaker.dataflow import impact_paths
+from kgmaker.inspection import context, graph_from_response
+from kgmaker.scanner import scan_repository
+from kgmaker.store import save_graph
 from kgmaker.workspace import qualified, snapshot_workspace, load_workspace, _REPO_CACHE
 
 
@@ -156,6 +159,52 @@ class WorkspaceTests(unittest.TestCase):
         self.assertIn('MIGRATION_DERIVED', result['report'])
         self.assertIn('Schema: backend', result['report'])
         self.assertTrue(feature.apply(self.coordinator, 'decline', result['candidate'])['valid'])
+
+    def test_workspace_preserves_repo_qualified_compiler_collections(self):
+        root = self.root / 'backend'
+        source = root / 'src/CompilerFixture.java'
+        source.write_text('class CompilerFixture { void caller() { target(); } void target() {} }')
+        base = scan_repository(root)
+        selected = context(root, base, 'jvm', {}, repo_id='backend', module='backend',
+                           source_set='main', scope='production')
+        path = source.relative_to(root).as_posix()
+        caller, target, site = 'compiler:caller', 'compiler:target', 'compiler:site'
+        symbols = [
+            {'id': caller, 'name': 'caller', 'kind': 'method',
+             'context_id': selected['id'], 'path': path, 'range': {'start_line': 1}},
+            {'id': target, 'name': 'target', 'kind': 'method',
+             'context_id': selected['id'], 'path': path, 'range': {'start_line': 1}},
+        ]
+        call_sites = [{'id': site, 'caller': caller, 'declared_target': target,
+                       'dispatch_candidates': [target], 'dispatch_complete': True,
+                       'invocation_kind': 'VIRTUAL', 'resolution_reason': 'COMPILER_RESOLVED',
+                       'evidence_kind': 'SYMBOL_RESOLVED', 'context_id': selected['id'],
+                       'path': path, 'range': {'start_line': 1}}]
+        body = {'kind': 'call', 'call_site': site, 'path': path,
+                'range': {'start_line': 1}, 'sha256': base.files[path]}
+        response = {'context_id': selected['id'], 'symbols': symbols, 'worker': {},
+                    'call_sites': call_sites,
+                    'bodies': [{'method': caller, 'context_id': selected['id'], 'body': body}],
+                    'facts': [], 'diagnostics': [], 'coverage': {}, 'status': 'COMPLETE'}
+        save_graph(graph_from_response(root, base, response, selected), root)
+
+        graph = snapshot_workspace(self.manifest)[3]
+        self.assertEqual(3, graph.schema_version)
+        self.assertEqual({qualified('backend', caller), qualified('backend', target)},
+                         {item['id'] for item in graph.symbols})
+        federated_site = graph.call_sites[0]
+        self.assertEqual(qualified('backend', caller), federated_site['caller'])
+        self.assertEqual(qualified('backend', target), federated_site['declared_target'])
+        self.assertEqual([qualified('backend', target)], federated_site['dispatch_candidates'])
+        cfg = graph.cfgs[0]
+        self.assertEqual(qualified('backend', caller), cfg['method'])
+        self.assertIn(qualified('backend', site),
+                      {identity for block in cfg['blocks'] for identity in block['call_site_ids']})
+        self.assertTrue(all(block['id'].startswith('repo:backend:') for block in cfg['blocks']))
+        self.assertTrue(all(item.startswith('repo:backend:') for item in cfg['evidence_ids']))
+        self.assertEqual(qualified('backend', selected['id']), graph.symbols[0]['context_id'])
+        self.assertEqual('@backend/' + path, graph.symbols[0]['path'])
+        self.assertEqual(graph.to_dict(), type(graph).from_dict(graph.to_dict()).to_dict())
 
     def test_fa49_generation_origin_and_stale_contract(self):
         from kgmaker.analysis_model import file_hash

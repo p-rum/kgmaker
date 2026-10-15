@@ -14,6 +14,8 @@ from .views import project, rank
 
 def common(parser):
     parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--workspace", type=Path, help="workspace manifest selecting an explicit checkout")
+    parser.add_argument("--repo", help="repository ID in --workspace")
     parser.add_argument("--format", choices=("json",), default="json")
     parser.add_argument("--strict", action="store_true", help="fail with exit 4 if coverage is partial")
 
@@ -69,6 +71,13 @@ def register(sub):
 def run(args):
     try:
         root = args.root.resolve()
+        if getattr(args, "workspace", None):
+            from .workspace import load_workspace
+            manifest = load_workspace(args.workspace)
+            matches = [repo for repo in manifest["repositories"] if repo["id"] == args.repo]
+            if len(matches) != 1:
+                raise AnalysisError("--workspace requires an existing --repo")
+            root = Path(matches[0]["_root"])
         if not root.is_dir():
             raise AnalysisError("root directory does not exist")
         if args.command == "project" and args.project_command == "build-import":
@@ -107,12 +116,17 @@ def run(args):
         files = [n for n in graph.nodes if n.kind == "file"]
         status = "PARTIAL"
         if args.command == "project":
+            build_model = None
+            if args.project_command == "inspect" and (root / "pom.xml").is_file():
+                from .build_maven import discover
+                build_model = discover(root)
             result = {"schema_version": 1, "status": status, "mode": "SOURCE_ONLY",
                       "contexts": graph.contexts, "diagnostics": graph.diagnostics,
                       "files": [asdict(n) for n in files],
                       "symbols": [asdict(n) for n in graph.nodes if n.kind != "file"],
                       "build_systems": [name for name, path in (("maven", "pom.xml"), ("gradle", "build.gradle"),
                             ("gradle-kotlin", "build.gradle.kts"), ("typescript", "tsconfig.json")) if (root / path).is_file()],
+                      "build_model": build_model,
                       "limitations": ["Inventory and supplied source sets are not an effective Maven/Gradle build model.",
                                        "No build script, compiler, application or database has been executed."]}
         else:

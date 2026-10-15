@@ -122,12 +122,16 @@ def run(args) -> int:
         return 1
 
 
-def query_analysis(root: Path, analysis_id: str, terms: str, limit: int) -> int:
+def query_analysis(root: Path, analysis_id: str, terms: str, limit: int,
+                   scope: str = "production", context_id: str | None = None) -> int:
     try:
         candidate = read_json(safe_path(root, f".kgmaker/analyses/{analysis_id}/analysis.json"))
         result = feature.validate(root, analysis_id, candidate)
         if result['valid']:
-            nodes = feature.graph_for_packet(root, feature.load_packet(root, analysis_id)).nodes
+            graph = feature.graph_for_packet(root, feature.load_packet(root, analysis_id))
+            from .views import project, select_context
+            context_id = select_context(graph, scope, context_id)
+            nodes = project(graph, scope, context_id=context_id).nodes
             candidates = [{'id': n.id, 'name': n.name, 'path': n.path, 'state': 'AS_IS'} for n in nodes]
             candidates += candidate['proposal']['nodes']
             words = terms.lower().split()
@@ -135,20 +139,25 @@ def query_analysis(root: Path, analysis_id: str, terms: str, limit: int) -> int:
             result['matches'] = sorted(matches, key=lambda n: n['id'])[:max(0, limit)]
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return result['exit_code']
-    except AnalysisError as exc:
-        print(json.dumps({'error': str(exc), 'exit_code': exc.code}))
-        return exc.code
+    except (AnalysisError, ValueError) as exc:
+        code = getattr(exc, 'code', 2)
+        print(json.dumps({'error': str(exc), 'exit_code': code}))
+        return code
     except OSError as exc:
         print(json.dumps({'error': str(exc), 'exit_code': 1}))
         return 1
 
 
-def impact_entity(root: Path, entity: str, output_format: str) -> int:
+def impact_entity(root: Path, entity: str, output_format: str,
+                  scope: str = "all", context_id: str | None = None) -> int:
     from .dataflow import impact_paths
     from .scanner import scan_repository
     from .semantic import apply_semantic_layer
     try:
         graph, _, semantic_error = feature.current_graph(root)
+        from .views import project, select_context
+        context_id = select_context(graph, scope, context_id)
+        graph = project(graph, scope, context_id=context_id)
         result = impact_paths(graph, entity)
         if semantic_error:
             result['limitations'] = result['limitations'] + [semantic_error]
