@@ -96,9 +96,8 @@ def attach_schema(graph, schema, root: Path | None = None):
     from .schema_replay import schema_mappings
     mappings, _ = schema_mappings(root, schema, graph) if root is not None else ([], [])
     all_edges += mappings
-    return KnowledgeGraph(graph.schema_version, graph.root, graph.generated_at,
-                          sorted(remaining.values(), key=lambda n: n.id), all_edges, graph.files,
-                          graph.contexts, graph.diagnostics, graph.evidence)
+    from dataclasses import replace
+    return replace(graph, nodes=sorted(remaining.values(), key=lambda n: n.id), edges=all_edges)
 
 
 def source_path(root: Path, key: str, packet: dict) -> Path:

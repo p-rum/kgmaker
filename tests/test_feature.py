@@ -207,7 +207,8 @@ class FeatureTests(unittest.TestCase):
         old = {'nodes': [], 'edges': [], 'files': {}}
         self.assertEqual(1, KnowledgeGraph.from_dict(old).schema_version)
         self.assertEqual(2, KnowledgeGraph.from_dict({**old, 'schema_version': 2}).schema_version)
-        for version in [True, 3, '1']:
+        self.assertEqual(3, KnowledgeGraph.from_dict({**old, 'schema_version': 3}).schema_version)
+        for version in [True, 4, '1']:
             with self.assertRaisesRegex(ValueError, 'Unsupported graph schema_version'):
                 KnowledgeGraph.from_dict({**old, 'schema_version': version})
 

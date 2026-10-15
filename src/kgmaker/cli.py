@@ -650,6 +650,8 @@ def build_parser() -> argparse.ArgumentParser:
     feature_cli.register(sub)
     from .project_cli import register
     register(sub)
+    from .inspection_cli import register as register_inspection
+    register_inspection(sub)
 
     init_parser = sub.add_parser("init", help="add Copilot hooks, instructions and the kgmaker agent")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -727,7 +729,10 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.command in {"project", "graph", "coverage"}:
+    if args.command in {"inspect", "callgraph", "entrypoints", "flow"}:
+        from .inspection_cli import run
+        code = run(args)
+    elif args.command in {"project", "graph", "coverage"}:
         from .project_cli import run
         code = run(args)
     elif args.command == 'schema':

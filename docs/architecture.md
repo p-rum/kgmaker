@@ -94,3 +94,13 @@ and a mandatory numbered Markdown change document for every implementation PR in
 implement these capabilities. Existing `build` remains a graph scan; analytical commands remain
 offline. Build success, static reachability, runtime observations and data availability
 retain separate evidence contracts.
+
+Optional compiler inspection uses the existing Python graph/store through `inspection.py`
+and bounded `worker_protocol.py`. JVM and TypeScript workers own symbol/call-site/AST
+facts; `control_flow.py` constructs CFG and `flow.py` renders it without LLM ordering.
+Schema v3 extends v2 while old source-only indices stay readable. `build_runner.py`
+executes only an explicit content-bound plan; `build_model.py` validates/imports the
+same manifest path. Maven EventSpy and Gradle source-set exports belong to that
+execution workflow. This is a partial supported matrix, documented in
+[compiler inspection](compiler-inspection.md); complete Spring, persistence and
+integration adapters remain open.

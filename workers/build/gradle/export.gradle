@@ -1,0 +1,33 @@
+// Trusted kgmaker exporter; executed only by an explicit content-bound build plan.
+import groovy.json.JsonOutput
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.compile.JavaCompile
+
+gradle.projectsEvaluated {
+    gradle.rootProject.tasks.register('kgmakerExport') {
+        doLast {
+            def root = new File(System.getProperty('kgmaker.snapshot.root')).canonicalFile
+            def relative = { File f -> root.toPath().relativize(f.canonicalFile.toPath()).toString().replace('\\','/') }
+            def contexts = []; def diagnostics = []; def modules = [:]
+            gradle.rootProject.allprojects.sort { it.path }.each { p ->
+                def sets = p.extensions.findByType(SourceSetContainer)
+                if (sets == null) { diagnostics << [code:'UNSUPPORTED_GRADLE_VARIANT',module:p.path]; return }
+                sets.each { s ->
+                    def scope = s.name == 'main' ? 'production' : (s.name == 'testFixtures' ? 'test_fixture' : (s.name.toLowerCase().contains('test') ? 'test' : 'unknown'))
+                    def roots = s.allSource.srcDirs.findAll { it.canonicalFile.toPath().startsWith(root.toPath()) }.collect(relative).sort()
+                    def files = s.allSource.files.findAll { it.name.endsWith('.java') || it.name.endsWith('.kt') }.collect(relative).sort()
+                    def compile = p.tasks.findByName(s.compileJavaTaskName)
+                    contexts << [id:p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,
+                        source_roots:roots,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
+                        output_paths:s.output.classesDirs.files.collect { it.canonicalPath }, build_system:'gradle',build_profiles:[],
+                        compiler_options:compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:],
+                        toolchain:[java_version:System.getProperty('java.version'),gradle_version:gradle.gradleVersion],
+                        task_inputs:compile == null ? [] : compile.inputs.files.files.findAll { it.isFile() }.collect { it.canonicalPath }.sort()]
+                }
+                modules[p.path] = 'EXPORT_COMPLETED'
+            }
+            if (!gradle.includedBuilds.empty) diagnostics << [code:'INCLUDED_BUILDS_NOT_EXPORTED', builds:gradle.includedBuilds.collect { it.name }]
+            new File(System.getProperty('kgmaker.export.path')).text = JsonOutput.toJson([schema_version:1,exporter:'gradle-source-sets-1',contexts:contexts,modules:modules,diagnostics:diagnostics])
+        }
+    }
+}

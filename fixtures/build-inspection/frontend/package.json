@@ -1,0 +1,8 @@
+{
+  "name":"kgmaker-react-fixture",
+  "private":true,
+  "version":"1.0.0",
+  "dependencies":{"react":"18.3.1","axios":"1.7.9"},
+  "devDependencies":{"typescript":"5.7.3","@types/react":"18.3.18"},
+  "scripts":{"typecheck":"tsc --project tsconfig.json"}
+}

@@ -12,3 +12,17 @@ __pycache__/
 .kgmaker/semantic-patch.json
 .kgmaker/confluence-index.json
 .kgmaker/analyses/
+
+# Optional compiler workers and reproducible fixture output
+workers/**/target/
+workers/**/node_modules/
+fixtures/build-inspection/**/target/
+fixtures/build-inspection/**/build/
+fixtures/build-inspection/**/.gradle/
+fixtures/build-inspection/**/node_modules/
+fixtures/build-inspection/**/dist/
+
+workers/build/maven/target/
+
+**/node_modules
+fixtures/build-inspection/**/.kgmaker/

@@ -147,3 +147,7 @@ business ambiguities and separate tool coverage gaps. Availability remains UNKNO
 until supported proofs exist. See [the input contract](docs/feature-analysis.md#deterministic-data-check-chapter-27-single-root-foundation).
 Flyway schema replay, explicit multi-repository workspaces and scoped positive
 availability proofs are implemented. See [commands, contracts and boundaries](docs/flyway-workspace-proofs.md).
+
+Volitelné compiler workery a samostatný explicitní build workflow popisuje
+[compiler inspection](docs/compiler-inspection.md). Implementace je částečná;
+přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).

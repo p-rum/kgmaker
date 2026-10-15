@@ -28,14 +28,24 @@ Existující Flyway, workspace a availability se rozšiřují; nevzniká druhá 
 
 | Milník | Stav | Evidence |
 |---|---|---|
-| P0 | PARTIAL | Baseline a gap matrix ověřeny; compiler pilot dosud nedokončen |
+| P0 | PARTIAL | Baseline a gap matrix ověřeny; reálný mixed JVM + TS overload/CFG pilot proběhl; širší matice, rozhodnutí K2 a zamčené regression budgets chybí |
 | P1 | PARTIAL | Schema v2, scope partition, classifier; 110 Python testů PASS, CL-01/02 metamorfní test PASS; ostatní CL pouze source-only podmnožina |
-| P2 | NOT_STARTED | Effective build model a execution dosud nejsou implementovány |
-| P3 | NOT_STARTED | Žádné compiler-resolved JVM facts |
+| P2 | PARTIAL | Explicitní runner, complete inventory, Maven EventSpy effective export a skutečný JUnit PASS; Gradle exporter zatím neověřen kvůli socket/IPC omezení sandboxu |
+| P3 | PARTIAL | JavacTask + Kotlin K1 compatibility, pět ručně označených mixed calls přesně; oddělený ASM bytecode/CFG a neúplná CHA |
 | P4 | NOT_STARTED | Žádný symbolový Spring adaptér |
 | P5 | PARTIAL | Zachovaný baseline Flyway; rozšíření ORM dosud chybí |
 | P6 | NOT_STARTED | Nové integrační adaptéry chybí |
-| P7 | NOT_STARTED | TS compiler worker dosud chybí |
-| P8 | PARTIAL | Explicitní ranking profil a ranking invariants PASS; CFG renderer dosud chybí |
+| P7 | PARTIAL | TypeScript 5.7.3 Program/TypeChecker, overloads, basic def-use a React intrinsic onClick; plná TS-01–04 suite chybí |
+| P8 | PARTIAL | Explicitní ranking profil a ranking invariants PASS; source CFG/process renderer implementován, další acceptance a framework agregace chybí |
 | P9 | PARTIAL | Evidence refs, mixed snapshot rejection a atomický zápis test PASS; úplná acceptance suite dosud chybí |
 | P10 | NOT_STARTED | Volitelný milník |
+
+Navazující větev `feat/compiler-workers`, baseline `a81def9dbc74fff3a5619cd02244be7f215f91cc`
+(z draft PR #4). [Change note 2](changes/2_addCompilerWorkers.md) a
+[ověřená matice](compiler-inspection.md) popisují skutečný rozsah. Celý P0–P9
+zůstává PARTIAL; P10 se nepočítá do povinného statického dokončení.
+
+Závěrečná lokální regrese druhého inkrementu: `KGMAKER_REQUIRE_WORKERS=1 pytest -q`
+140 PASS (57.39 s), oba offline worker/exporter builders SUCCESS, Maven JUnit 1 PASS,
+actual compiler Mermaid parser TS 6/5 a JVM 10/12 vertices/edges PASS, `kgmaker check` PASS.
+Gradle nový export zůstává BLOCKED pro integrační ověření kvůli hostitelskému socket/IPC režimu.

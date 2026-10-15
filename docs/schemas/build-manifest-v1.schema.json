@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kgmaker:build-manifest-v1",
+  "title": "kgmaker build-manifest-v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "build_id",
+    "snapshot",
+    "build_result",
+    "contexts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "build_id": {
+      "type": "string"
+    },
+    "snapshot": {
+      "type": "object",
+      "required": [
+        "sources",
+        "content_hash"
+      ]
+    },
+    "build_result": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "SUCCESS",
+            "FAILED",
+            "PARTIAL",
+            "TIMED_OUT",
+            "CANCELLED",
+            "TOOLCHAIN_UNAVAILABLE",
+            "DEPENDENCY_UNAVAILABLE"
+          ]
+        }
+      }
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "repo_id",
+          "module",
+          "source_set",
+          "scope",
+          "source_roots",
+          "source_files",
+          "classpath"
+        ]
+      }
+    }
+  }
+}

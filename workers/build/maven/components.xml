@@ -1,0 +1,1 @@
+<component-set><components><component><role>org.apache.maven.eventspy.EventSpy</role><role-hint>kgmaker-build-export</role-hint><implementation>org.kgmaker.build.BuildExport</implementation></component></components></component-set>

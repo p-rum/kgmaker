@@ -1,0 +1,13 @@
+{
+  "schema_version":1,
+  "basis":"Hand-labelled direct source call expressions in the small supported fixture; not runtime dispatch or bank-project precision",
+  "jvm_calls":[
+    {"caller":"fixture.JavaBridge.call(Z)Ljava/lang/String;","target":"fixture.Worker.<init>()V"},
+    {"caller":"fixture.JavaBridge.call(Z)Ljava/lang/String;","target":"fixture.Worker.choose(Z)Ljava/lang/String;"},
+    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.Worker.process(I)Ljava/lang/String;"},
+    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.Worker.process(Ljava/lang/String;)Ljava/lang/String;"},
+    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.JavaBridge.text()Ljava/lang/String;"}
+  ],
+  "typescript_overloads":["(value: number): string","(value: string): string"],
+  "cfg_invariant":"process(Int) and process(String) are opposite branches; neither is sequenced after the other"
+}

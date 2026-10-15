@@ -5,104 +5,146 @@ flowchart LR
   n3["src/kgmaker/analysis_report.py"]
   n4["src/kgmaker/analysis_validation.py"]
   n5["src/kgmaker/availability.py"]
-  n6["src/kgmaker/classification.py"]
-  n7["src/kgmaker/cli.py"]
-  n8["src/kgmaker/confluence.py"]
-  n9["src/kgmaker/data_agent.py"]
-  n10["src/kgmaker/data_check.py"]
-  n11["src/kgmaker/dataflow.py"]
-  n12["src/kgmaker/domain.py"]
-  n13["src/kgmaker/feature.py"]
-  n14["src/kgmaker/feature_cli.py"]
-  n15["src/kgmaker/flyway.py"]
-  n16["src/kgmaker/model.py"]
-  n17["src/kgmaker/project_cli.py"]
-  n18["src/kgmaker/scanner.py"]
-  n19["src/kgmaker/schema_replay.py"]
-  n20["src/kgmaker/semantic.py"]
-  n21["src/kgmaker/store.py"]
-  n22["src/kgmaker/views.py"]
-  n23["src/kgmaker/workspace.py"]
-  n24["src/kgmaker/workspace_cli.py"]
-  n25{"technology: Kafka"}
-  n26{"technology: PostgreSQL"}
-  n0 -->|imports| n7
-  n3 -->|imports| n13
+  n6["src/kgmaker/build_model.py"]
+  n7["src/kgmaker/build_runner.py"]
+  n8["src/kgmaker/callgraph.py"]
+  n9["src/kgmaker/classification.py"]
+  n10["src/kgmaker/cli.py"]
+  n11["src/kgmaker/confluence.py"]
+  n12["src/kgmaker/control_flow.py"]
+  n13["src/kgmaker/data_agent.py"]
+  n14["src/kgmaker/data_check.py"]
+  n15["src/kgmaker/dataflow.py"]
+  n16["src/kgmaker/domain.py"]
+  n17["src/kgmaker/feature.py"]
+  n18["src/kgmaker/feature_cli.py"]
+  n19["src/kgmaker/flow.py"]
+  n20["src/kgmaker/flyway.py"]
+  n21["src/kgmaker/inspection.py"]
+  n22["src/kgmaker/inspection_cli.py"]
+  n23["src/kgmaker/model.py"]
+  n24["src/kgmaker/project_cli.py"]
+  n25["src/kgmaker/scanner.py"]
+  n26["src/kgmaker/schema_replay.py"]
+  n27["src/kgmaker/semantic.py"]
+  n28["src/kgmaker/store.py"]
+  n29["src/kgmaker/views.py"]
+  n30["src/kgmaker/worker_protocol.py"]
+  n31["src/kgmaker/workspace.py"]
+  n32["src/kgmaker/workspace_cli.py"]
+  n33{"technology: Kafka"}
+  n34{"technology: PostgreSQL"}
+  n0 -->|imports| n10
+  n3 -->|imports| n17
   n4 -->|imports| n2
   n4 -->|imports| n5
-  n4 -->|imports| n11
-  n4 -->|imports| n13
-  n4 -->|imports| n18
-  n4 -->|imports| n20
-  n4 -->|imports| n23
+  n4 -->|imports| n15
+  n4 -->|imports| n17
+  n4 -->|imports| n25
+  n4 -->|imports| n27
+  n4 -->|imports| n31
   n5 -->|imports| n2
-  n5 -->|imports| n11
-  n5 -->|imports| n13
+  n5 -->|imports| n15
+  n5 -->|imports| n17
   n6 -->|imports| n2
-  n7 -->|imports| n1
-  n7 -->|imports| n8
-  n7 -->|imports| n9
-  n7 -->|imports| n13
-  n7 -->|imports| n17
-  n7 -->|imports| n18
-  n7 -->|imports| n20
+  n6 -->|imports| n7
+  n6 -->|imports| n9
+  n6 -->|imports| n21
+  n7 -->|imports| n2
   n7 -->|imports| n21
-  n7 -->|imports| n24
-  n8 -->|imports| n16
-  n10 -->|imports| n2
-  n10 -->|imports| n3
-  n10 -->|imports| n5
+  n8 -->|imports| n2
+  n8 -->|imports| n23
+  n8 -->|imports| n29
+  n9 -->|imports| n2
+  n10 -->|imports| n1
   n10 -->|imports| n11
-  n10 -->|imports| n21
-  n10 -->|imports| n23
-  n11 -->|imports| n16
-  n12 -->|imports| n16
-  n12 -->|uses_messaging| n25
-  n12 -->|connects_to| n26
-  n13 -->|imports| n2
-  n13 -->|imports| n4
-  n13 -->|imports| n5
-  n13 -->|imports| n11
-  n13 -->|imports| n15
-  n13 -->|imports| n16
-  n13 -->|imports| n18
-  n13 -->|imports| n19
-  n13 -->|imports| n20
-  n13 -->|imports| n23
+  n10 -->|imports| n13
+  n10 -->|imports| n17
+  n10 -->|imports| n22
+  n10 -->|imports| n24
+  n10 -->|imports| n25
+  n10 -->|imports| n27
+  n10 -->|imports| n28
+  n10 -->|imports| n32
+  n11 -->|imports| n23
+  n12 -->|imports| n2
   n14 -->|imports| n2
   n14 -->|imports| n3
-  n14 -->|imports| n4
   n14 -->|imports| n5
-  n14 -->|imports| n10
-  n14 -->|imports| n11
-  n14 -->|imports| n18
-  n14 -->|imports| n20
-  n15 -->|imports| n2
-  n16 -->|imports| n6
+  n14 -->|imports| n15
+  n14 -->|imports| n28
+  n14 -->|imports| n31
+  n15 -->|imports| n23
+  n16 -->|imports| n23
+  n16 -->|uses_messaging| n33
+  n16 -->|connects_to| n34
   n17 -->|imports| n2
-  n17 -->|imports| n6
-  n17 -->|imports| n18
-  n17 -->|imports| n21
-  n17 -->|imports| n22
+  n17 -->|imports| n4
+  n17 -->|imports| n5
+  n17 -->|imports| n15
+  n17 -->|imports| n20
+  n17 -->|imports| n23
+  n17 -->|imports| n25
+  n17 -->|imports| n26
+  n17 -->|imports| n27
+  n17 -->|imports| n31
   n18 -->|imports| n2
-  n18 -->|imports| n6
-  n18 -->|imports| n11
-  n18 -->|imports| n12
-  n18 -->|imports| n16
+  n18 -->|imports| n3
+  n18 -->|imports| n4
+  n18 -->|imports| n5
+  n18 -->|imports| n14
+  n18 -->|imports| n15
+  n18 -->|imports| n25
+  n18 -->|imports| n27
   n19 -->|imports| n2
-  n19 -->|imports| n15
-  n19 -->|imports| n16
-  n20 -->|imports| n16
+  n19 -->|imports| n8
+  n19 -->|imports| n29
+  n20 -->|imports| n2
   n21 -->|imports| n2
-  n21 -->|imports| n16
-  n21 -->|imports| n22
-  n22 -->|imports| n16
-  n23 -->|imports| n2
-  n23 -->|imports| n6
-  n23 -->|imports| n16
-  n23 -->|imports| n19
+  n21 -->|imports| n9
+  n21 -->|imports| n12
+  n21 -->|imports| n23
+  n21 -->|imports| n25
+  n21 -->|imports| n28
+  n21 -->|imports| n30
+  n22 -->|imports| n2
+  n22 -->|imports| n6
+  n22 -->|imports| n9
+  n22 -->|imports| n21
+  n22 -->|imports| n25
+  n22 -->|imports| n28
+  n22 -->|imports| n29
+  n22 -->|imports| n30
+  n22 -->|uses_messaging| n33
+  n23 -->|imports| n9
   n24 -->|imports| n2
-  n24 -->|imports| n11
-  n24 -->|imports| n19
-  n24 -->|imports| n21
-  n24 -->|imports| n23
+  n24 -->|imports| n6
+  n24 -->|imports| n7
+  n24 -->|imports| n9
+  n24 -->|imports| n22
+  n24 -->|imports| n25
+  n24 -->|imports| n28
+  n24 -->|imports| n29
+  n25 -->|imports| n2
+  n25 -->|imports| n9
+  n25 -->|imports| n15
+  n25 -->|imports| n16
+  n25 -->|imports| n23
+  n26 -->|imports| n2
+  n26 -->|imports| n20
+  n26 -->|imports| n23
+  n27 -->|imports| n23
+  n28 -->|imports| n2
+  n28 -->|imports| n23
+  n28 -->|imports| n29
+  n29 -->|imports| n23
+  n30 -->|imports| n2
+  n31 -->|imports| n2
+  n31 -->|imports| n9
+  n31 -->|imports| n23
+  n31 -->|imports| n26
+  n32 -->|imports| n2
+  n32 -->|imports| n15
+  n32 -->|imports| n26
+  n32 -->|imports| n28
+  n32 -->|imports| n31

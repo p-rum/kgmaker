@@ -15,6 +15,93 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e .
-      - run: python -m unittest discover -s tests -v
+      - run: python -m pip install -e . pytest==8.3.4
+      - run: python -m pytest -q
       - run: kgmaker check
+
+  compiler-workers:
+    runs-on: ubuntu-latest
+    env:
+      KGMAKER_REQUIRE_WORKERS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21.0.6"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.19.0"
+      - run: python -m pip install -e . pytest==8.3.4 jsonschema==4.23.0
+      - name: Install pinned worker/build distributions explicitly
+        run: |
+          mkdir -p "$RUNNER_TEMP/kgmaker-tools"
+          curl --fail --location --output "$RUNNER_TEMP/kgmaker-tools/maven.tar.gz" https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz
+          echo "a555254d6b53d267965a3404ecb14e53c3827c09c3b94b5678835887ab404556bfaf78dcfe03ba76fa2508649dca8531c74bca4d5846513522404d48e8c4ac8b  $RUNNER_TEMP/kgmaker-tools/maven.tar.gz" | sha512sum --check
+          tar -xzf "$RUNNER_TEMP/kgmaker-tools/maven.tar.gz" -C "$RUNNER_TEMP/kgmaker-tools"
+          curl --fail --location --output "$RUNNER_TEMP/kgmaker-tools/kotlin.zip" https://github.com/JetBrains/kotlin/releases/download/v2.1.10/kotlin-compiler-2.1.10.zip
+          echo "c6e9e2636889828e19c8811d5ab890862538c89dc2a3101956dfee3c2a8ba6b1  $RUNNER_TEMP/kgmaker-tools/kotlin.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/kgmaker-tools/kotlin.zip" -d "$RUNNER_TEMP/kgmaker-tools"
+          echo "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+      - run: npm ci --ignore-scripts --prefix workers/typescript
+      - run: npm ci --ignore-scripts --prefix fixtures/build-inspection/frontend
+      - name: Build actual mixed fixture and trusted workers
+        run: |
+          mvn -B -ntp -f fixtures/build-inspection/maven/pom.xml test
+          python workers/jvm/build.py --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
+          python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
+      - run: python -m pytest -q tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py
+      - name: Explicit Maven plan/runner/export
+        run: |
+          kgmaker project build-plan --root fixtures/build-inspection/maven --phase test --output "$RUNNER_TEMP/kgmaker-plan.json"
+          kgmaker project build-run --plan "$RUNNER_TEMP/kgmaker-plan.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-maven-build-results
+          path: fixtures/build-inspection/maven/.kgmaker/build-runs/
+
+  rendering:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.19.0"
+      - run: python -m pip install -e . jsonschema==4.23.0
+      - run: npm ci --ignore-scripts --prefix workers/typescript
+      - run: npm ci --ignore-scripts --prefix fixtures/build-inspection/frontend
+      - run: npm ci --ignore-scripts --prefix tests/rendering
+      - run: python tests/rendering/generate.py --output /tmp/kgmaker-render
+      - run: node tests/rendering/validate.mjs /tmp/kgmaker-render/flow.mmd /tmp/kgmaker-render/flow.json
+
+  gradle-build-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21.0.6"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.12.1"
+      - run: python -m pip install -e .
+      - name: Explicit actual Gradle source-set export and test build
+        run: |
+          kgmaker project build-plan --root fixtures/build-inspection/gradle --phase test --output "$RUNNER_TEMP/kgmaker-gradle-plan.json"
+          kgmaker project build-run --plan "$RUNNER_TEMP/kgmaker-gradle-plan.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-gradle-build-results
+          path: fixtures/build-inspection/gradle/.kgmaker/build-runs/
