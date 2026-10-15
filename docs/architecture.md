@@ -1,6 +1,6 @@
 # Architecture
 
-Graph schema v2 adds independent classification, scope-specific content contexts
+Graph schema v3 extends v2 with compiler symbols, call sites and CFG. Schema v2 introduced independent classification, scope-specific content contexts
 and a referenced evidence inventory. `classification.py` owns explicit overrides
 and conservative source-set/path rules; `views.py` projects scope before ranking
 and exposes versioned execution/impact profiles. `project_cli.py` provides offline
@@ -10,7 +10,7 @@ Store validates and publishes JSON atomically. [Production scope](production-sco
 defines the new contracts and limits; [progress](production-analysis-progress.md)
 records unfinished compiler/build/CFG milestones. Source patterns remain candidates.
 
-kgmaker has four small layers:
+The source-only core and its extensions are organized as follows:
 
 1. `scanner.py` walks the repository, skips generated and sensitive paths, and extracts files, declarations, local imports, and conservative call candidates.
 2. `domain.py` extracts PostgreSQL schema objects, Kotlin/JVM persistence links, Kafka topics, service/API references, OpenAPI endpoints, and TypeScript app routes.
@@ -35,7 +35,7 @@ Confluence exports are optional and read-only. `kgmaker docs check --confluence-
 - `defines_route` comes from TypeScript/JavaScript `app/` or `pages/` file conventions.
 - Agent-authored edges carry `EXTRACTED`, `INFERRED`, or `AMBIGUOUS` confidence, a score, a source file/line, an evidence note, and the hash of the cited file in the artifact's file map. Changing an unrelated file leaves the edge valid. Changing its cited file marks that evidence stale; `semantic update` asks Copilot to review only changed files, their nearby graph context, and affected semantic entries. The patch is scoped by an update ID and cannot remove unrelated entries.
 
-These are source-pattern parsers, not Kotlin/TypeScript compilers, SQL engines, or complete YAML parsers. Dynamic URLs, indirect topic names, custom annotations, complex OpenAPI documents, and generated schemas may be missed. The `kgmaker` Copilot custom agent can explain behavior from source and keep semantic notes in `.kgmaker/NOTES.md`.
+The baseline scanner/domain modules are source-pattern parsers, not SQL engines or complete YAML parsers. Separate optional JVM/TypeScript workers use real compiler APIs; they do not replace the default scanner workflow. Dynamic URLs, indirect topic names, custom annotations, complex OpenAPI documents, and generated schemas may be missed. The `kgmaker` Copilot custom agent can explain behavior from source and keep semantic notes in `.kgmaker/NOTES.md`.
 
 ## Hook lifecycle
 
@@ -60,7 +60,7 @@ Analysis history lives under `.kgmaker/analyses/<id>/`; report output is restric
 to `docs/generated/features/` and excluded from scanning. Source hashes use raw
 bytes; graph identity removes timestamps. This first version intentionally uses
 full scans and whole-packet invalidation. See [the current contract](feature-analysis.md)
-for outstanding proof checkers and the mandatory-manifest budget exception.
+for supported scoped proof contracts, remaining parser gaps and the mandatory-manifest budget exception.
 
 `dataflow.py` contributes field nodes and conservative local Kotlin value edges to
 the existing graph. Typed impact follows dependency-specific direction and stops
@@ -86,7 +86,7 @@ tests, queries or migrations. All feed the same feature validator and renderer.
 
 ## Build-aware JVM inspection implementation task
 
-See [the agent implementation task](build-aware-code-inspection-analysis.md) for the required
+See [T002](tasks/2_buildAwareInspection.md) for the required
 compiler/bytecode call graph, isolated Maven build workflow, Spring Boot resolution,
 and Hibernate/Spring Data inspection. The task defines milestones, acceptance tests,
 and a mandatory numbered Markdown change document for every implementation PR in
@@ -94,3 +94,28 @@ and a mandatory numbered Markdown change document for every implementation PR in
 implement these capabilities. Existing `build` remains a graph scan; analytical commands remain
 offline. Build success, static reachability, runtime observations and data availability
 retain separate evidence contracts.
+
+Optional compiler inspection uses the existing Python graph/store through `inspection.py`
+and bounded `worker_protocol.py`. JVM and TypeScript workers own symbol/call-site/AST
+facts; `control_flow.py` constructs CFG and `flow.py` renders it without LLM ordering.
+Schema v3 extends v2 while old source-only indices stay readable. `build_runner.py`
+executes only an explicit content-bound plan; `build_model.py` validates/imports the
+same manifest path. Maven EventSpy and Gradle source-set exports belong to that
+execution workflow. This is a partial supported matrix, documented in
+[compiler inspection](compiler-inspection.md); complete Spring, persistence and
+integration adapters remain open.
+
+
+## Current lifecycle gap and planned integration
+
+At `6b5aea1`, both inspection and ordinary scan/hook write the existing store,
+but scan/hook reconstruct a syntactic graph and do not preserve compiler layers.
+Feature analysis independently rebuilds the syntactic/semantic/Flyway graph.
+Inspection itself starts from scan rather than an accumulated multi-context index.
+A shared context-aware provider and atomic generations are **planned** in T003-S02;
+they are not current architecture. Build/classpath/variant invalidation and
+compiler-aware packets must be implemented together without implicit execution.
+
+Task identities and historical milestone aliases are defined only by
+[the registry](tasks/README.md). [Current status](production-analysis-progress.md)
+distinguishes existing capabilities from the normative [completion plan](tasks/3_finishProductionAnalysis.md).

@@ -16,23 +16,40 @@ TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-1", "impact": "impact-1"}
 
 
-def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "architecture") -> KnowledgeGraph:
+def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "architecture", context_id: str | None = None) -> KnowledgeGraph:
     if scope not in {"production", "test", "test_fixture", "development", "unknown", "all"}:
         raise ValueError("invalid scope: " + scope)
     nodes = [n for n in graph.nodes if scope == "all" or n.scope == scope]
     ids = {n.id for n in nodes}
-    edges = [e for e in graph.edges if e.source in ids and e.target in ids]
+    edges = [e for e in graph.edges if e.source in ids and e.target in ids and (context_id is None or context_id in e.context_ids)]
     if view == "calls":
         edges = [e for e in edges if e.kind in EXECUTION_EDGES or e.kind == "calls"]
     elif view == "configuration":
         edges = [e for e in edges if e.kind in {"configured_by", "resolves_property", "conditional_on", "defines_bean"}]
+    elif view == "data-flow":
+        edges = [e for e in edges if e.kind in {"reads_field", "writes_field", "argument_to_parameter", "returns_to", "maps_field", "maps_to_table", "maps_to_column", "query_reads", "query_writes", "persistence_intent"}]
     elif view == "integrations":
         edges = [e for e in edges if e.kind in SIDE_EFFECTS | {"implements_contract"}]
+    sites = []
+    for original in graph.call_sites:
+        if original.get("id") not in ids or original.get("caller") not in ids:
+            continue
+        if context_id is not None and original.get("context_id") != context_id:
+            continue
+        site = dict(original)
+        target = site.get("declared_target")
+        if target is not None and target not in ids:
+            site.update(declared_target=None, omitted_declared_target=target,
+                        resolution_reason="RESOLVED_TARGET_EXCLUDED_BY_SCOPE")
+        site["dispatch_candidates"] = [c for c in site.get("dispatch_candidates", []) if c in ids]
+        sites.append(site)
     return replace(graph, nodes=nodes, edges=edges,
                    files={p: h for p, h in graph.files.items() if any(n.path == p for n in nodes)},
-                   contexts=[c for c in graph.contexts if scope == "all" or c.get("scope") == scope],
-                   diagnostics=[d for d in graph.diagnostics if d.get("path") in {n.path for n in nodes}],
-                   evidence=[e for e in graph.evidence if e.get("id") in {i for edge in edges for i in edge.evidence_ids}])
+                   contexts=[c for c in graph.contexts if (scope == "all" or c.get("scope") == scope) and (context_id is None or c.get("id") == context_id)],
+                   diagnostics=[d for d in graph.diagnostics if not (d.get("path") or d.get("source_file")) or (d.get("path") or d.get("source_file")) in {n.path for n in nodes}],
+                   evidence=[e for e in graph.evidence if e.get("id") in {i for edge in edges for i in edge.evidence_ids}],
+                   symbols=[s for s in graph.symbols if s.get("id") in ids], call_sites=sites,
+                   cfgs=[c for c in graph.cfgs if c.get("method") in ids and (context_id is None or c.get("context_id") == context_id)])
 
 
 def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execution", scope: str = "production") -> dict:
@@ -67,7 +84,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
         queue.extend(sorted(adjacency[node] - visited))
     rows = []
     for n in graph.nodes:
-        if n.kind == "file" or n.role != "executable_code":
+        if n.kind not in {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "class", "enum", "interface", "type"} or n.role not in {"executable_code", "contract"}:
             continue
         breakdown = {"entry_relevance": 10 if n.id == entry else 0,
                      "execution_path": 5 if n.id in visited else 0,

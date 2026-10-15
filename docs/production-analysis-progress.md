@@ -1,41 +1,62 @@
-# Produkční analýza: inventura a průběh
+# Aktuální stav a zbývající práce
 
-Ověřená cílová větev `origin/main`: `8ac80ca30f6f680539deb7fb3590519d3a5c1460`.
-Historická reference je stejný commit. Baseline regrese: Python 3.12.14,
-`PYTHONPATH=src python -m unittest discover -s tests -q`: 98 testů PASS.
-Tabulka popisuje skutečný stav, ne deklaraci dokončení celého zadání.
+Audit baseline: 2026-10-15, PR #5 `6b5aea13c150a75858973dd2e08debf802ff29ed`,
+stacked nad PR #4 `a81def9dbc74fff3a5619cd02244be7f215f91cc`; main je
+`8ac80ca30f6f680539deb7fb3590519d3a5c1460`. Tato stránka popisuje kód této baseline,
+neprohlašuje změny draftů za sloučené do main.
 
-Ověřený implementační commit prvního inkrementu:
-`366d4a29fff6427a3d4cf9a2503bebc006652d47` (110 Python testů PASS).
-Navazující dokumentační commit tento záznam doplňuje; nemění analyzátor.
+Normativní požadavky: [registr T001–T003](tasks/README.md).
+Aktivní pořadí dokončení: [T003](tasks/3_finishProductionAnalysis.md).
+PARTIAL znamená existující omezený rozsah; neznamená splněný celý milník.
 
-| Požadavek / milník | Existující implementace | Chybějící část | Důkaz baseline | Plánovaný PR |
-|---|---|---|---|---|
-| P0, původní M0: compiler pilot | Žádný worker | Mixed JVM, TS compiler, CFG, měření a matice | scanner.py používá CALL_TOKEN; žádné worker adresáře | compiler spike |
-| P1 / CL-01–05, EV-01, BC-01 | Schema v1, společný index | Nezávislé osy, scope před resolution, migrace | model.py, scanner.py, test_scanner.py | evidence production scope |
-| P2 / M1 / BL-01–05 | Offline čtení Flyway konfigurace | Effective Maven/Gradle model, runner, build/result/manifest | flyway.py není build adaptér | build context |
-| P3 / M2 / JV-01–05 | Heuristická volání ze souboru | Compiler symboly, bytecode, CHA, CFG, def-use | scanner.py, dataflow.py | JVM resolution |
-| P4 / M3 / SP-01–04 | Anotační vzory | Symbolové Spring wiring, podmínky, proxy | domain.py | Spring evidence |
-| P5 / M4 / DB-01–04 | Flyway replay, schema scope, omezené ORM porovnání | Java/Kotlin entity model, query resolution | schema_replay.py, test_flyway.py | persistence evidence |
-| P6 / IN-01–04 | Kafka/REST literály, explicitní workspace service mapping | Framework verze, execution/subscription, cluster scope | domain.py, test_analysis.py | integrations |
-| P7 / TS-01–04 | TS syntaktické vzory a explicitní kontrakty | Program/TypeChecker, callback resolution, UI adaptér | scanner.py, test_analysis.py | TypeScript worker |
-| P8 / RK-01–04, FLOW-01–04 | Navigační skóre, architecture Mermaid | Execution ranking, CFG/process views a parser ověření | store.py | evidence views |
-| P9 / M5 / EV-01–04, BC-01–03 | Obsahové feature/workspace cache, strict availability | Worker atomická publikace, build/context invalidace, CI/benchmark | feature.py, workspace.py, availability.py | release integration |
-| P10 / M6 / RT-01–03 | Omezené supplied observations | Oddělený runtime import | availability.py | volitelný runtime import |
+| Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
+|---|---|---|---|
+| T003-S01 acceptance inventář | PARTIAL | T001/T002 a mapování historických ID; tests/fixtures | Úplný řádkový požadavek→test→verze→běh inventář |
+| T003-S02 lifecycle/provider | PARTIAL | v1/v2/v3 store, provenance, atomický zápis; test_inspection_contract | Scan/hook přepisují compiler index; feature/workspace nepřebírají všechny compiler kontexty |
+| T003-S03 build a scope | PARTIAL | Classifier/scope před resolution, Maven EventSpy, Gradle SourceSet export, runner; test_production_scope/test_build_runner | Reactor/BOM/toolchains/generated/variant matice a cross-repo artefakty |
+| T003-S04 JVM/Kotlin | PARTIAL | JavacTask, K1 compatibility, ASM, 5 ručně anotovaných direct calls; test_compiler_workers | K2, širší Kotlin/CFG a dependency dispatch |
+| T003-S05 Spring | NOT_STARTED (symbolový adaptér) | Legacy annotation patterns v domain.py | Beans/injection/conditions/proxy/entrypoint model |
+| T003-S06 persistence | PARTIAL | Flyway replay, explicitní omezené Kotlin ORM porovnání; test_flyway | Java/Kotlin entity access/naming/association/query model |
+| T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
+| T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
+| T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; test_feature/test_data_check | XLSX, template mapping, schválená metodika a plný scénář |
+| T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
+| T003-S11 release/acceptance | PARTIAL | Šest CI jobů, skutečné buildy, rendering; core package | Clean-install worker distribuce, celá acceptance a benchmark budgets |
+| T003-S12 Confluence boundary | NOT_STARTED | Existující read-only HTML import není sync adapter | Adapter/fake/approval/concurrency; živé připojení zvlášť |
+| T003-S13 runtime | NOT_STARTED / OPTIONAL | Supplied value observations nejsou plný runtime call import | Trace/export import s build/config scope |
 
-Povinnosti původního M0–M5 zůstávají otevřené, pokud nejsou doložené konkrétním testem.
-Existující Flyway, workspace a availability se rozšiřují; nevzniká druhá implementace.
+## Co lze nyní použít
 
-| Milník | Stav | Evidence |
-|---|---|---|
-| P0 | PARTIAL | Baseline a gap matrix ověřeny; compiler pilot dosud nedokončen |
-| P1 | PARTIAL | Schema v2, scope partition, classifier; 110 Python testů PASS, CL-01/02 metamorfní test PASS; ostatní CL pouze source-only podmnožina |
-| P2 | NOT_STARTED | Effective build model a execution dosud nejsou implementovány |
-| P3 | NOT_STARTED | Žádné compiler-resolved JVM facts |
-| P4 | NOT_STARTED | Žádný symbolový Spring adaptér |
-| P5 | PARTIAL | Zachovaný baseline Flyway; rozšíření ORM dosud chybí |
-| P6 | NOT_STARTED | Nové integrační adaptéry chybí |
-| P7 | NOT_STARTED | TS compiler worker dosud chybí |
-| P8 | PARTIAL | Explicitní ranking profil a ranking invariants PASS; CFG renderer dosud chybí |
-| P9 | PARTIAL | Evidence refs, mixed snapshot rejection a atomický zápis test PASS; úplná acceptance suite dosud chybí |
-| P10 | NOT_STARTED | Volitelný milník |
+Source-only navigaci, konzervativní impact, semantic/feature/data-audit workflow,
+Flyway a explicitní workspaces v dokumentovaných mezích. Availability podporuje
+OBSERVED_VALUE_PATH, CLOSED_CONTRACT_ABSENCE a APPROVED_MISSING; libovolné pole,
+statická cesta ani build PASS pozitivní verdict nezískají. Compiler commands jsou
+použitelné samostatně v [ověřené matici](compiler-inspection.md), nikoli jako hotová
+integrovaná Spring/Kotlin analytická platforma.
+
+## Kritická návaznost
+
+`feature.current_graph()` sestavuje syntaktický/semantic/Flyway graf.
+`cli.scan()` a `cli.hook_context()` tento typ grafu uloží přes compiler index.
+`inspection.py` začíná ze scan baseline a není hotový multi-context provider.
+Proto se před dalšími frameworky prioritně implementuje T003-S02. Dokumentační
+sjednocení tyto runtime mezery neopravuje.
+
+## Ověřená upstream CI evidence
+
+[Run 38705043005](https://github.com/p-rum/kgmaker/actions/runs/38705043005) na
+`6b5aea1`: SUCCESS všech šesti jobů — Python 3.11/3.12/3.13, compiler-workers,
+gradle-build-export, rendering. Compiler job log: 29 passed; Maven JUnit fixture:
+1 test, 0 failures/errors/skipped. Nejde o celou mandatory acceptance matrix ani
+měření přesnosti na bankovním projektu.
+
+Historické inkrementální výsledky a přesné verze jsou beze změn v
+[1_addProductionScope.md](changes/1_addProductionScope.md) a
+[2_addCompilerWorkers.md](changes/2_addCompilerWorkers.md). Jejich P/CL/JV apod.
+označení jsou historická; aktivní číslování a převod je pouze v registru.
+
+## Aktualizace stavu
+
+Při implementaci u každé změněné položky uveď Task/Step/Acceptance ID, konkrétní
+fixture/test/verze a odkaz na skutečný běh. PARTIAL není PASS. Neprovedená kontrola
+je NOT_RUN/blocked, ne úspěch. Historické výsledky nepřepisuj na výsledky nového commitu.

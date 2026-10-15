@@ -11,7 +11,7 @@ import html
 import json
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
@@ -452,7 +452,7 @@ def merge_into_graph(graph: KnowledgeGraph, documents: list[ConfluenceDocument],
             kind = f"documented_{assertion.relation.casefold()}"
             if (source[0].id, target_id, kind) not in existing_edges:
                 edges.append(Edge(source[0].id, target_id, kind, evidence=assertion.statement, confidence="EXTRACTED", source_file=assertion.document_file)); existing_edges.add((source[0].id, target_id, kind))
-    return KnowledgeGraph(graph.schema_version, graph.root, graph.generated_at, nodes, edges, graph.files)
+    return replace(graph, nodes=nodes, edges=edges)
 
 
 def render_report(assertions: list[DocumentationAssertion], report_path: Path, export_root: Path, revision: str = "working tree") -> str:

@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kgmaker:graph:3",
+  "title": "kgmaker compiler graph v3",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "root",
+    "generated_at",
+    "nodes",
+    "edges",
+    "files",
+    "contexts",
+    "diagnostics",
+    "evidence",
+    "symbols",
+    "call_sites",
+    "cfgs",
+    "analysis_annotations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "root": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/$defs/evidenceKind"
+          }
+        }
+      }
+    },
+    "symbols": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "context_id"
+        ]
+      }
+    },
+    "call_sites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "caller",
+          "context_id",
+          "evidence_kind"
+        ]
+      }
+    },
+    "cfgs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "method",
+          "context_id",
+          "entry",
+          "exit",
+          "blocks",
+          "edges"
+        ]
+      }
+    },
+    "analysis_annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "origin",
+          "evidence_ids"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nullableLine": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "evidenceKind": {
+      "enum": [
+        "SYNTAX_CANDIDATE",
+        "SYMBOL_RESOLVED",
+        "DISPATCH_CANDIDATE",
+        "FRAMEWORK_DERIVED",
+        "RUNTIME_OBSERVED",
+        "UNRESOLVED"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "path",
+        "scope",
+        "role",
+        "origin",
+        "build_membership",
+        "classification_evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "line": {
+          "$ref": "#/$defs/nullableLine"
+        },
+        "signature": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "scope": {
+          "enum": [
+            "production",
+            "test",
+            "test_fixture",
+            "development",
+            "unknown"
+          ]
+        },
+        "role": {
+          "enum": [
+            "executable_code",
+            "configuration",
+            "migration",
+            "contract",
+            "documentation",
+            "resource",
+            "unknown"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "handwritten",
+            "generated",
+            "dependency",
+            "unknown"
+          ]
+        },
+        "build_membership": {
+          "$ref": "#/$defs/strings"
+        },
+        "classification_evidence": {
+          "$ref": "#/$defs/strings"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "target",
+        "kind",
+        "evidence_kind",
+        "context_ids",
+        "evidence_ids"
+      ],
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "confidence": {
+          "type": "string"
+        },
+        "confidence_score": {
+          "type": "number"
+        },
+        "source_file": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "source_line": {
+          "$ref": "#/$defs/nullableLine"
+        },
+        "evidence_kind": {
+          "$ref": "#/$defs/evidenceKind"
+        },
+        "context_ids": {
+          "$ref": "#/$defs/strings"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/strings"
+        }
+      }
+    }
+  }
+}

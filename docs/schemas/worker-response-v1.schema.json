@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kgmaker:worker-response-v1",
+  "title": "kgmaker worker-response-v1",
+  "type": "object",
+  "required": [
+    "protocol_version",
+    "worker"
+  ],
+  "properties": {
+    "protocol_version": {
+      "const": 1
+    },
+    "worker": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "compiler_version": {
+      "type": "string"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

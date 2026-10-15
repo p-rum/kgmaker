@@ -48,10 +48,14 @@ class KnowledgeGraph:
     contexts: list[dict[str, Any]] = field(default_factory=list)
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     evidence: list[dict[str, Any]] = field(default_factory=list)
+    symbols: list[dict[str, Any]] = field(default_factory=list)
+    call_sites: list[dict[str, Any]] = field(default_factory=list)
+    cfgs: list[dict[str, Any]] = field(default_factory=list)
+    analysis_annotations: list[dict[str, Any]] = field(default_factory=list)
 
     def migrate_legacy(self) -> "KnowledgeGraph":
         """Keep original IDs as legacy identities; do not claim JVM/TS resolution."""
-        if self.schema_version == 2:
+        if self.schema_version in {2, 3}:
             return self
         mapping = {n.id: n.id for n in self.nodes}
         if len(mapping) != len(self.nodes):
@@ -65,7 +69,7 @@ class KnowledgeGraph:
                        diagnostics=[{"code": "LEGACY_RESOLUTION_UNKNOWN", "reason": "v1 confidence does not prove symbol resolution"}])
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "schema_version": self.schema_version,
             "root": self.root,
             "generated_at": self.generated_at,
@@ -76,12 +80,16 @@ class KnowledgeGraph:
             "diagnostics": self.diagnostics,
             "evidence": self.evidence,
         }
+        if self.schema_version == 3:
+            result.update(symbols=self.symbols, call_sites=self.call_sites, cfgs=self.cfgs,
+                          analysis_annotations=self.analysis_annotations)
+        return result
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "KnowledgeGraph":
         version = data.get("schema_version", 1)
-        if type(version) is not int or version not in {1, 2}:
-            raise ValueError(f"Unsupported graph schema_version {version!r}; expected 1 or 2")
+        if type(version) is not int or version not in {1, 2, 3}:
+            raise ValueError(f"Unsupported graph schema_version {version!r}; expected 1, 2 or 3")
         nodes = []
         for item in data.get("nodes", []):
             item = dict(item)
@@ -107,7 +115,7 @@ class KnowledgeGraph:
             if version == 1:
                 item["evidence_kind"] = "SYNTAX_CANDIDATE"
             edges.append(Edge(**item))
-        if version == 2:
+        if version in {2, 3}:
             from .classification import SCOPES, ROLES, ORIGINS
             ids = {n.id for n in nodes}
             if len(ids) != len(nodes):
@@ -138,6 +146,45 @@ class KnowledgeGraph:
                     raise ValueError("Evidence kind does not support the claimed relationship")
                 if e.evidence_kind not in {"SYNTAX_CANDIDATE", "UNRESOLVED"} and (not e.context_ids or not e.evidence_ids):
                     raise ValueError("Resolved/derived evidence requires context and evidence IDs")
+            if version == 3:
+                for key in ("symbols", "call_sites", "cfgs", "analysis_annotations"):
+                    if not isinstance(data.get(key, []), list) or not all(isinstance(v, dict) for v in data.get(key, [])):
+                        raise ValueError("Invalid inspection collection: " + key)
+                symbol_ids = set()
+                for symbol in data.get("symbols", []):
+                    if symbol.get("id") not in ids or symbol.get("id") in symbol_ids or symbol.get("context_id") not in context_ids:
+                        raise ValueError("Dangling/duplicate compiler symbol or context")
+                    symbol_ids.add(symbol["id"])
+                site_ids = set()
+                for site in data.get("call_sites", []):
+                    if site.get("id") not in ids or site["id"] in site_ids or site.get("caller") not in ids:
+                        raise ValueError("Dangling/duplicate call site")
+                    if site.get("context_id") not in context_ids or site.get("evidence_kind") not in kinds or set(site.get("evidence_ids", [])) - evidence_ids:
+                        raise ValueError("Dangling call-site context/evidence")
+                    if site.get("evidence_kind") == "SYMBOL_RESOLVED" and site.get("declared_target") is None and not site.get("omitted_declared_target"):
+                        raise ValueError("Resolved call site has no declared target")
+                    site_ids.add(site["id"])
+                    if site.get("declared_target") is not None and site["declared_target"] not in ids:
+                        raise ValueError("Dangling declared target")
+                    if not isinstance(site.get("dispatch_candidates", []), list) or any(c not in ids for c in site.get("dispatch_candidates", [])):
+                        raise ValueError("Dangling dispatch candidate")
+                    if not site.get("resolution_reason"):
+                        raise ValueError("Call site requires resolution reason")
+                for cfg in data.get("cfgs", []):
+                    if cfg.get("context_id") not in context_ids or cfg.get("method") not in ids or not isinstance(cfg.get("blocks"), list) or not isinstance(cfg.get("edges"), list):
+                        raise ValueError("Invalid CFG")
+                    blocks = {b.get("id") for b in cfg["blocks"] if isinstance(b, dict)}
+                    if len(blocks) != len(cfg["blocks"]) or cfg.get("entry") not in blocks or cfg.get("exit") not in blocks:
+                        raise ValueError("Invalid CFG blocks/entry/exit")
+                    if any(not isinstance(e, dict) or e.get("source") not in blocks or e.get("target") not in blocks for e in cfg["edges"]):
+                        raise ValueError("Dangling CFG edge")
+                for annotation in data.get("analysis_annotations", []):
+                    if set(annotation) - {"id", "origin", "target_ids", "evidence_ids", "label", "explanation", "language", "model_id"}:
+                        raise ValueError("Annotation cannot add technical fields")
+                    if set(annotation.get("target_ids", [])) - ids:
+                        raise ValueError("Annotation cannot invent target IDs")
+                    if annotation.get("origin") != "LLM_ANNOTATION" or set(annotation.get("evidence_ids", [])) - evidence_ids:
+                        raise ValueError("Annotation cannot create technical evidence")
         return cls(
             schema_version=version,
             root=str(data.get("root", ".")),
@@ -148,4 +195,8 @@ class KnowledgeGraph:
             contexts=list(data.get("contexts", [])),
             diagnostics=list(data.get("diagnostics", [])),
             evidence=list(data.get("evidence", [])),
+            symbols=list(data.get("symbols", [])),
+            call_sites=list(data.get("call_sites", [])),
+            cfgs=list(data.get("cfgs", [])),
+            analysis_annotations=list(data.get("analysis_annotations", [])),
         )
