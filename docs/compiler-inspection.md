@@ -1,7 +1,7 @@
 # Compiler inspection a explicitní build workflow
 
-Tento inkrement je částečná implementace P0/P2/P3/P7/P8/P9. Není dokončením
-P0–P9 ani úplným modelem Spring aplikace. Python scan/build/hook/feature prepare
+Tato stránka popisuje implementaci PR #5, nikoli dokončení T002/T003 ani úplný
+model Spring aplikace. Historické P aliasy jsou mapované v [registru](tasks/README.md). Python scan/build/hook/feature prepare
 nadále nevyžadují JDK/Node a nespouštějí projekt, npm, databázi ani migrace.
 
 ## Ověřená matice a technologická volba
@@ -125,3 +125,12 @@ Kafka cluster/retry/DLT, Feign/WebClient/RestClient, service mapping a BE/FE
 value-flow nejsou tímto inkrementem dokončeny. Stávající Flyway/workspace/
 availability implementace zůstává zachovaná. Data/integration view zatím poskytuje
 JSON, nikoli dokončený framework Markdown/Mermaid renderer.
+
+
+## Integrace s běžným workflow: současný limit
+
+`scan` a `hook-context` přepíšou index z inspection syntaktickým grafem.
+`feature.current_graph` compiler index nepřebírá. Nová inspection také nevytváří
+hotový správce více kontextů: začíná ze scan baseline. Zachování/invalidace vrstev,
+více module/variant kontextů a sdílení s feature/workspace jsou [T003-S02](tasks/3_finishProductionAnalysis.md).
+Tento limit není napraven dokumentací ani zelenými isolated worker testy.

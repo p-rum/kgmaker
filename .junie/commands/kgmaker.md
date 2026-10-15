@@ -10,7 +10,7 @@ $prompt
 Follow this order:
 
 1. Read `AGENTS.md` and the relevant kgmaker instructions in `.github/copilot-instructions.md`.
-2. Run `kgmaker status`. If the graph is missing or stale, run `kgmaker scan`.
+2. Inspect saved compiler context/source freshness first. Source-only status differences do not prove compiler staleness. Only deliberately refresh the syntactic graph with scan: it currently replaces compiler layers.
 3. Read `.kgmaker/GRAPH.md` and query the graph with `kgmaker query` for the request. Verify every important finding in source code.
 4. Before implementation, inspect `.github/agents/kgmaker-architect.agent.md` and produce a concise implementation brief covering affected modules, data flows, tests, and uncertain graph findings.
 5. Implement the requested change with the repository's existing conventions. Keep source code authoritative over generated graph or documentation claims.
@@ -30,3 +30,7 @@ Do not invent relationships, credentials, external URLs, or undocumented behavio
 
 For `analyze-feature` intent, route to `kgmaker-analyze-feature.md` and the
 `kgmaker-analyst` instructions. Feature packets are separate from semantic patches.
+
+
+Before creating implementation tasks or new features, follow `AGENTS.md` and
+`docs/tasks/README.md`; preserve their task and change-note filename formats.

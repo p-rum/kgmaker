@@ -1,56 +1,59 @@
 # Project scope
 
-kgmaker is a custom, repository-local knowledge graph tool designed specifically for GitHub Copilot CLI.
+KGMAKER is a local knowledge graph and evidence tool for repository-aware agents.
+Python 3.11+ source-only operation uses the standard library and local JSON. Copilot
+hooks/custom agents are the primary integration; repository JetBrains commands and
+an Agent Skill provide additional invocation instructions. Optional compiler workers
+require separately installed JDK/Node toolchains. No model API key is required.
 
-## Goals
+## Implemented capabilities and boundaries
 
-- Build and refresh a navigable graph of files, symbols, and relationships.
-- Put useful repository context into Copilot CLI sessions through native repository hooks.
-- Keep documentation, prompts, hook configuration, and the implementation in the same repository.
-- Offer an optional GitHub Copilot custom agent that users can adapt or pair with their own agents.
-- Offer an optional agent-authored semantic layer, separate from deterministic source extraction and validated against stable graph IDs and file hashes.
-- Keep graph generation local, inspectable, and independent of model API keys.
-- Ingest local Confluence HTML exports as an optional knowledge source without Confluence credentials or online synchronization; keep source code authoritative and produce actionable inconsistency reports.
+- Syntactic file/symbol/import/domain extraction, scope isolation, semantic packets,
+  query/impact, deterministic Markdown/Mermaid architecture maps and session hook.
+- Feature/data-check lifecycle with isolated proposals, citations, revisions,
+  exact supported availability-proof contracts and deterministic reports.
+- Offline Flyway reconstruction for documented SQL subsets; explicit multi-repo
+  workspace snapshots, IDs, service mapping and content caches.
+- Local read-only Confluence HTML/diagram ingestion and code/documentation checks.
+- Explicit JVM/TypeScript compiler inspection with source call sites and CFG,
+  plus explicit Maven/Gradle plan/run/import in a limited tested matrix.
+
+Compiler distributions do not imply full language support: Kotlin currently uses
+K1 language/API 1.9 compatibility. Symbolic Spring wiring, full ORM/query/integration
+adapters, workbook parsing and selective feature invalidation remain incomplete.
+Scan/hook currently replace compiler indices; feature packets do not yet consume
+them. See [current status](production-analysis-progress.md) and
+[compiler inspection](compiler-inspection.md) for precise support.
+
+## Normative target
+
+[T001](tasks/1_featureAnalysis.md) defines analytics, artifacts, incremental,
+Flyway/workspace and an independent optional-to-use Confluence synchronization
+boundary. Analytical core completion requires T001-S01–04/S06–07. The full T001
+scope additionally includes S05's adapter/fake/approval/concurrency work; live
+integration must be reported separately and requires a concrete host/API.
+
+[T002](tasks/2_buildAwareInspection.md) defines build-aware JVM/Spring/Hibernate
+inspection. T002-S01–06 are mandatory for its supported static matrix; S07 runtime
+import is an independent optional extension. [T003](tasks/3_finishProductionAnalysis.md)
+integrates the remaining work, including TypeScript and production ranking, without
+removing T001/T002 requirements. The [registry](tasks/README.md) is the only numbering authority.
+
+## Execution and evidence constraints
+
+Scan, hook, feature and data-check never run the project, migrations or database
+queries. Explicit build execution is content-bound and governed by the host's
+policy; a copied project directory is not a sandbox. Optional dependencies are
+installed explicitly, never implicitly during source-only operations.
+
+Code evidence describes implementation, not business approval. Migration-derived
+schema is not deployed/populated database proof. A call path or build/test PASS is
+not availability. Supported supplied observations/mappings/decisions remain scoped;
+no authenticated production access or universal completeness is claimed.
 
 ## Out of scope
 
-- MCP server or MCP-based runtime.
-- Model-provider abstraction, API-key management, or remote inference backends.
-- Installation into multiple unrelated agent products.
-- External graph database or hosted service.
-- External URLs in generated graph content.
-
-## Initial implementation
-
-The CLI scans Python, Java, Kotlin, JavaScript, TypeScript, Go, Rust, Markdown, reStructuredText, SQL, YAML, properties, and OpenAPI JSON. It creates file/declaration nodes plus database tables/columns, JPA mappings, Kafka topics, API endpoints, and TypeScript file-based routes. Copilot CLI receives a compact context at session start. The optional `kgmaker-extract` agent can create concepts and semantic links to stable structural nodes; per-file hashes preserve valid semantics when unrelated files change. `kgmaker semantic update` prepares a focused Git-diff packet for changed files, nearby graph nodes, and affected semantic entries; `--token-budget N` bounds the changed-file context using an approximate four-characters-per-token estimate. The agent returns a scoped patch that kgmaker validates and merges. This agent workflow uses the host Copilot session and does not add a model API client to kgmaker.
-
-The index is a navigation aid rather than a substitute for source inspection. Ambiguous references are omitted and heuristic relationships are labeled as such. Kotlin, SQL, OpenAPI YAML, and framework integration are supported with conservative pattern-based parsing, not full language grammars.
-
-Local Confluence support is implemented by `kgmaker.confluence`: recursive HTML discovery, page reconstruction, internal-link resolution, attachment/image discovery, Mermaid and Draw.io/XML parsing, artifact hashing, unified graph evidence, and code-vs-documentation validation. The export is never modified. `docs check` can run independently of a full rebuild and writes `docs/generated/confluence-inconsistencies.md`; missing code entities are placed in review categories unless deterministic code evidence proves a contradiction.
-
-## Graph workflows
-
-`kgmaker impact FILE` walks reverse import relationships and name-based call candidates to show likely dependents of changed files. Import edges are path-resolved; call edges remain heuristic. `kgmaker scan` and `kgmaker docs` generate `.kgmaker/GRAPH.md` (readable repository map with a GitHub-renderable Mermaid architecture diagram) and `.kgmaker/GRAPH.mmd` (standalone Mermaid source). `kgmaker check` rebuilds the graph in memory and verifies both committed views, so GitHub Actions can reject stale documentation without access to the ignored local JSON index. `build` and `update` currently perform a full scan; incremental parsing and rename detection remain future work.
-
-## Feature-analysis extension
-
-[The feature-analysis specification](implementation-feature-analysis.md) extends
-scope to offline feature planning and, in a later independent milestone, an optional
-Confluence synchronization adapter with explicit payload approval and concurrency
-checks. The existing offline workflow remains usable without that adapter.
-
-Implemented now: the isolated analytical foundation, packet/provenance validation,
-CLI lifecycle and deterministic reports described in [feature-analysis.md](feature-analysis.md).
-A–D analytical completion is not claimed: complete cross-layer availability proofs, workbook/template
-parsers and incremental dependency invalidation remain future work. Milestone E,
-including its fake adapter, also remains unimplemented; real integration additionally
-requires a documented Confluence host/version and verified API access.
-
-The executable single-root `feature data-check` foundation now supports structured
-data prerequisite audits. It makes no model/network calls or source/AS_IS writes;
-UNKNOWN remains explicit for unsupported positive proofs. Flyway schema replay
-(milestone F), workspace federation (G), approved-mapping selective reuse and
-general field-path availability proof checking remain conservative. The newer
-Flyway/workspace/scoped-proof implementation is described in
-[flyway-workspace-proofs](flyway-workspace-proofs.md); its current contracts
-supersede the earlier pending-status notes in this document.
+MCP server, model-provider/API-key layer, mandatory hosted graph database,
+financial/mathematical proof engine, implicit runtime capture and automatic
+Confluence publishing. External URLs are excluded from generated graph content;
+normal documentation may link to sources. Agents must follow [AGENTS.md](../AGENTS.md).
