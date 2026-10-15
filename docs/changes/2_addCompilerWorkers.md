@@ -3,6 +3,8 @@
 ## Kontext
 
 Datum předání inkrementu: 15. 10. 2026.
+Implementační commit: `14f1d68ca256fb2c8bf9b0c7cc5ffa9d44a25507`.
+Draft PR: https://github.com/p-rum/kgmaker/pull/5 (bez merge).
 
 Branch `feat/compiler-workers`, stacked PR nad `feat/evidence-production-scope`
 (draft PR #4), baseline `a81def9dbc74fff3a5619cd02244be7f215f91cc`. Historická
@@ -36,8 +38,8 @@ prostředím a policy LOCAL_TRUSTED. Kopie projektu není bezpečnostní sandbox
 Build-run používá nové output roots, zachová log a oddělí BUILD status od XML test
 statusu. Effective Maven export vzniká z skutečného MavenProject/session; import
 ověřuje artefakty, ale supplied export neoznačuje za autentický host observation.
-Gradle exporter používá source sets, nikoli regex Kotlin DSL; ještě nebyl integračně
-ověřen v této session. Python baseline funguje bez JDK/Node, implicitní execution
+Gradle exporter používá source sets, nikoli regex Kotlin DSL. Lokální sandbox
+jej nespustil; skutečný export/test build následně prošel v GitHub Actions. Python baseline funguje bez JDK/Node, implicitní execution
 se do původních příkazů nepřidává.
 
 ## Milníky a acceptance
@@ -135,9 +137,12 @@ Nový Gradle workflow byl spuštěn v default sandboxu a vrací FAILED, tests NO
 žádné outputs. Gradle selhal před projektem: `FileLockContentionHandler` / `Could
 not determine a usable wildcard IP for this machine`. Žádost o command network
 režim byla přerušena před spuštěním; žádné automatické schválení ani rejection
-se netvrdí. Exportér tak není doložen build testem. Nové CI jobs Python, compiler/
-actual Maven build, Gradle a rendering jsou připraveny, jejich remote výsledek
-v této změně ještě není znám.
+se netvrdí. Exportér tak není doložen build testem. Následné [CI na implementačním commitu](https://github.com/p-rum/kgmaker/actions/runs/38703831737)
+je SUCCESS: všech šest jobů, včetně Python 3.11/3.12/3.13, compiler workers + actual
+Maven plan/runner/export, rendering a actual Gradle source-set export/test build.
+Gradle job `116318202358` dokončil krok Explicit actual Gradle source-set export
+and test build úspěšně. Artefakty byly publikovány (Gradle ID 11957870980, Maven
+11957706197); počty testů uvnitř vzdáleného ZIPu zde nejsou tvrzeny, nebyly načteny.
 
 Nové negativní testy dále ověřují relativní classpath vůči root, pravdivé XML test
 počty i ve fázi test-compile, validní PARTIAL import neúspěšného buildu bez modelu,

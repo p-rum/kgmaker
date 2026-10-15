@@ -13,7 +13,7 @@ nadále nevyžadují JDK/Node a nespouštějí projekt, npm, databázi ani migra
 | Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility | BindingContext, KotlinTypeMapper, overload a volání do Java |
 | Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
 | Maven | 3.9.9 | EventSpy effective session export, source roots, ordered classpath, explicitní test build |
-| Gradle | 8.12.1 | Nový source-set exporter není v tomto inkrementu integračně ověřen |
+| Gradle | 8.12.1 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokálně blokované socket/IPC |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
 | React typings | React 18.3.1, @types/react 18.3.18 | Intrinsic JSX onClick v malé fixture |
 

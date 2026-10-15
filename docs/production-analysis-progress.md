@@ -30,7 +30,7 @@ Existující Flyway, workspace a availability se rozšiřují; nevzniká druhá 
 |---|---|---|
 | P0 | PARTIAL | Baseline a gap matrix ověřeny; reálný mixed JVM + TS overload/CFG pilot proběhl; širší matice, rozhodnutí K2 a zamčené regression budgets chybí |
 | P1 | PARTIAL | Schema v2, scope partition, classifier; 110 Python testů PASS, CL-01/02 metamorfní test PASS; ostatní CL pouze source-only podmnožina |
-| P2 | PARTIAL | Explicitní runner, complete inventory, Maven EventSpy effective export a skutečný JUnit PASS; Gradle exporter zatím neověřen kvůli socket/IPC omezení sandboxu |
+| P2 | PARTIAL | Explicitní runner, complete inventory, Maven EventSpy effective export a skutečný JUnit PASS; Gradle source-set export/test build PASS v CI 38703831737, lokálně socket/IPC omezení |
 | P3 | PARTIAL | JavacTask + Kotlin K1 compatibility, pět ručně označených mixed calls přesně; oddělený ASM bytecode/CFG a neúplná CHA |
 | P4 | NOT_STARTED | Žádný symbolový Spring adaptér |
 | P5 | PARTIAL | Zachovaný baseline Flyway; rozšíření ORM dosud chybí |
@@ -48,4 +48,10 @@ zůstává PARTIAL; P10 se nepočítá do povinného statického dokončení.
 Závěrečná lokální regrese druhého inkrementu: `KGMAKER_REQUIRE_WORKERS=1 pytest -q`
 140 PASS (57.39 s), oba offline worker/exporter builders SUCCESS, Maven JUnit 1 PASS,
 actual compiler Mermaid parser TS 6/5 a JVM 10/12 vertices/edges PASS, `kgmaker check` PASS.
-Gradle nový export zůstává BLOCKED pro integrační ověření kvůli hostitelskému socket/IPC režimu.
+Gradle export/test build byl následně ověřen v GitHub Actions 38703831737; lokální socket/IPC omezení přetrvává.
+
+Implementační commit druhého inkrementu: `14f1d68ca256fb2c8bf9b0c7cc5ffa9d44a25507`,
+[draft PR #5](https://github.com/p-rum/kgmaker/pull/5).
+[CI 38703831737](https://github.com/p-rum/kgmaker/actions/runs/38703831737) SUCCESS:
+šest jobů včetně skutečného Maven a Gradle buildu/exportu a rendering parseru.
+Dokumentační commit tento záznam doplňuje, kód analyzátoru nemění.
