@@ -17,6 +17,8 @@ def register(subparsers):
         child = commands.add_parser(command)
         child.add_argument("--root", type=Path, default=Path.cwd())
         child.add_argument("--workspace", type=Path)
+        child.add_argument("--scope", choices=("production", "test", "test_fixture", "development", "unknown", "all"))
+        child.add_argument("--context")
         child.add_argument("--require-complete", action="store_true")
         if command == "prepare":
             child.add_argument("--requirement", required=True)
@@ -46,8 +48,16 @@ def run(args) -> int:
             packet = feature.load_packet(root, args.analysis)
             if packet.get('workspace', {}).get('manifest_path') != str(args.workspace.resolve()):
                 raise AnalysisError('Command workspace differs from analysis workspace')
+        if command != 'prepare' and (args.scope is not None or args.context is not None):
+            packet = feature.load_packet(root, args.analysis)
+            requested = {"scope": args.scope or packet.get("graph_selection", {}).get("scope", "all"),
+                         "context_id": args.context if args.context is not None else packet.get("graph_selection", {}).get("context_id")}
+            if requested != packet.get("graph_selection", {"scope": "all", "context_id": None}):
+                raise AnalysisError("Command graph selection differs from analysis packet; prepare a new revision")
         if command == "prepare":
-            packet = feature.prepare(root, args.requirement, args.id, args.token_budget, workspace=args.workspace)
+            packet = feature.prepare(root, args.requirement, args.id, args.token_budget,
+                                     workspace=args.workspace, scope=args.scope or "all",
+                                     context_id=args.context)
             result = {"analysis_id": args.id, "revision": packet["revision"], "packet_id": packet["packet_id"],
                       "completion": inventory_candidate(packet)["completion"], "budget": packet["budget"],
                       "template": f".kgmaker/analyses/{args.id}/candidate-template.json", "exit_code": 0}

@@ -32,8 +32,27 @@ checks citations and supported contracts, not arbitrary prose entailment or fina
 
 ## CLI workflow
 
+Packets record `analysis_context_fingerprint`, context provenance and graph evidence
+IDs. `query` and directed `impact` accept `--context`; multiple active compiler
+contexts require explicit selection. For example:
+
 ```bash
-kgmaker feature prepare --root . --requirement requirements/new-hedge.md --id additional-hedge --token-budget 8000
+kgmaker query --root . --context CONTEXT_ID payment
+kgmaker impact --root . --entity ENTITY_ID --include-data-flow --context CONTEXT_ID --format json
+```
+
+Offline Confluence exports may include `kgmaker-approved-requirements.json` with
+schema version 1 and a `requirements` array. Each entry supplies `id`,
+`document_file`, `document_sha256`, `section`, `subject`, `relation`, `target`,
+`statement`, `decision_id`, positive `decision_revision`, and `approval_status`
+(`APPROVED` or `UNAPPROVED`). The exact statement must match an extracted assertion
+and the page hash. This preserves supplied decision provenance; it does not
+authenticate the approver. A conflicting approved assertion is reported as
+`IMPLEMENTATION_VS_APPROVED_REQUIREMENT`. Feature coverage references the saved
+documentation conflict index; rerun `kgmaker docs check` to refresh that index.
+
+```bash
+kgmaker feature prepare --root . --requirement requirements/new-hedge.md --id additional-hedge --token-budget 8000 --scope production --context <context-id>
 # Agent reads packet.json and candidate-template.json, writes candidate.json.
 kgmaker feature validate --root . --analysis additional-hedge --candidate .kgmaker/analyses/additional-hedge/candidate.json
 kgmaker feature apply --root . --analysis additional-hedge --candidate .kgmaker/analyses/additional-hedge/candidate.json
@@ -43,6 +62,14 @@ kgmaker feature revise --root . --analysis additional-hedge --answers requiremen
 kgmaker feature compare --root . --analysis additional-hedge --variant no-new-api
 kgmaker query --root . --analysis additional-hedge liquidity
 ```
+
+`--context` may be omitted only when the selected scope has zero or one fresh
+compiler context. Multiple module/profile variants fail preparation with the list
+of available IDs. The packet records `graph_selection`, and later commands reuse
+it. Supplying a different `--scope` or `--context` to validate/apply/report/status
+is rejected; prepare a new revision to change the selection. A selected context
+that later becomes stale remains visible in packet diagnostics while its compiler
+facts are excluded.
 
 `prepare` builds an up-to-date graph **in memory**, preserving existing graph and
 semantic files. It reconstructs the syntactic/semantic/Flyway graph and retains

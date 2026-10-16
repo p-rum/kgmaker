@@ -114,9 +114,14 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
              "classifier_contexts": [c for c in base.contexts if c.get("scope") == scope], "worker": metadata, "analyzer_version": VERSION}
     if build_context:
         value.update(build_context)
+    value["framework_rule_versions"] = {"spring": "annotation-source-v3", "jpa": "annotation-source-v4"}
     value["selection_key"] = digest({key: value.get(key) for key in (
         "repo_id", "module", "source_set", "scope", "language", "build_context_id",
         "build_profiles", "spring_profiles", "config_fingerprint", "compiler_options",
+        "manifest_hash", "toolchain", "dependency_model_hash", "generated_source_roots",
+        "spring_properties", "spring_available_classes",
+        "spring_component_packages",
+        "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
     )})
@@ -265,7 +270,7 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     preflight = request_worker(argv, {"operation": "project", "root": str(root), "tsconfig": tsconfig,
         "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
-                       build_context={"project": preflight["project"], "ui_framework": ui_framework,
+                       build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
                                       "framework_rule_versions": {"react": "react18-intrinsic-events-1"} if ui_framework == "react" else {}})
     response = request_worker(argv, {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
         "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)

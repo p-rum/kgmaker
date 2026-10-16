@@ -156,6 +156,28 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
                 if str(path.resolve()) in output_realms:artifact['realm']=output_realms[str(path.resolve())]
                 c['classpath'].append(artifact)
             else:c.setdefault('diagnostics',[]).append({'code':'CLASSPATH_ARTIFACT_UNAVAILABLE','path':raw})
+        generated_roots = set(c.get('generated_source_roots', []))
+        generated_files = [path for path in c.get('source_files', [])
+                           if any(path == root_path or path.startswith(root_path.rstrip('/') + '/')
+                                  for root_path in generated_roots)]
+        generated_prefix = f'.kgmaker/build-runs/{plan["build_id"]}/snapshot/'
+        generated_available = state == 'SUCCESS' and copied_unchanged
+        remap = ({path: generated_prefix + path for path in generated_files}
+                 if generated_available else {})
+        c['source_files'] = ([remap.get(path, path) for path in c.get('source_files', [])]
+                             if generated_available else
+                             [path for path in c.get('source_files', []) if path not in generated_files])
+        c['source_roots'] = [generated_prefix + path if path in generated_roots else path
+                             for path in c.get('source_roots', [])]
+        c['generated_source_roots'] = [generated_prefix + path for path in c.get('generated_source_roots', [])]
+        c['generated_sources'] = []
+        if generated_available:
+            for original, durable in remap.items():
+                path = safe_path(root, durable)
+                if path.is_file():
+                    c['generated_sources'].append({'path': durable, 'sha256': file_hash(path),
+                        'execution_id': plan['build_id'], 'snapshot_hash': plan['snapshot']['content_hash'],
+                        'freshness': 'EXECUTION_BOUND'})
         c['outputs']=[]
         for raw in c.pop('output_paths',[]):
             path=Path(raw)

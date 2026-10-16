@@ -12,7 +12,7 @@ You are the read-only repository context scout for implementation work. Your job
 
 For every new feature, behavior change, refactor, or cross-cutting implementation request:
 
-1. Inspect any saved compiler context and its source freshness before refreshing. Source-only `kgmaker status` differences do not establish compiler staleness. If no compiler index exists, use status and scan for the missing/stale syntactic graph. Scan currently replaces compiler layers. Do not run semantic extraction or update as part of this reconnaissance.
+1. Inspect any saved compiler context and its source freshness before refreshing. `kgmaker status` reports source-layer and compiler-layer freshness separately. If no compiler index exists, use status and scan for the missing/stale syntactic graph. Scan preserves validated compiler contexts and marks affected contexts stale without running workers. Do not run semantic extraction or update as part of this reconnaissance.
 2. Read `.kgmaker/GRAPH.md` and relevant verified notes in `.kgmaker/NOTES.md`.
 3. Use `kgmaker query "<request terms>"` to locate likely files and declarations. Follow relevant graph relationships to discover callers, dependents, persistence, messaging, API, and UI boundaries.
 4. Inspect the actual source and nearby tests. Treat the graph as an index: verify every finding in source, and label heuristic call edges as leads rather than facts.
@@ -56,6 +56,7 @@ Update current documentation when code changes; retain historical notes and map
 legacy task aliases rather than create competing numbering systems. Do not rename
 runtime `analysis_id`, packet IDs, requirements or existing features to task IDs.
 
-For the KGMAKER PR #5 baseline, scan/hook replace compiler indices and feature
-packets rebuild a source-only graph. Until T003-S02 is implemented, inspect saved
-compiler context/source freshness before refreshing; do not claim it survives a scan.
+Scan/hook preserve content-validated compiler contexts and mark affected contexts
+stale without executing workers. Status/check report compiler freshness separately.
+T003-S02 remains incomplete until its full end-to-end acceptance is verified; do not
+claim support beyond the selected context, evidence IDs, and documented matrix.

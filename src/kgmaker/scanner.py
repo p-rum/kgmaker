@@ -232,12 +232,11 @@ def _candidate_files(root: Path, project_model: dict | None = None) -> list[Path
     explicit_roots = [r for s in (project_model or {}).get("source_sets", []) for r in s.get("roots", [])]
     for current, directories, filenames in os.walk(root):
         current_path = Path(current)
-        directories[:] = sorted(
-            name for name in directories
-            if (name.lower() not in SKIP_DIRS or any(
-                r == (current_path / name).relative_to(root).as_posix() or r.startswith((current_path / name).relative_to(root).as_posix() + "/")
-                for r in explicit_roots)) and not name.startswith(".") and not name.endswith(".egg-info")
-        )
+        def selected_directory(name):
+            relative = (current_path / name).relative_to(root).as_posix()
+            explicit = any(r == relative or r.startswith(relative + "/") for r in explicit_roots)
+            return ((name.lower() not in SKIP_DIRS and not name.startswith(".")) or explicit) and not name.endswith(".egg-info")
+        directories[:] = sorted(name for name in directories if selected_directory(name))
         for filename in filenames:
             path = current_path / filename
             relative = path.relative_to(root)

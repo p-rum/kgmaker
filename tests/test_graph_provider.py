@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from kgmaker.cli import scan, hook_context
+from kgmaker.cli import scan, hook_context, status, check
 from kgmaker.feature import current_graph
 from kgmaker.inspection import context, graph_from_response
 from kgmaker.graph_provider import merge_compiler_context
@@ -84,6 +84,27 @@ def test_stale_refresh_marks_context_and_does_not_publish_until_scan(tmp_path, c
     assert (tmp_path / '.kgmaker/graph.json').read_bytes() != before
 
 
+def test_status_separates_current_source_graph_from_stale_compiler_context(tmp_path):
+    _, source = indexed(tmp_path)
+    source.write_text('class Example { void changed() {} }')
+    with patch('subprocess.Popen', side_effect=AssertionError('offline status spawned process')):
+        output = StringIO()
+        with redirect_stdout(output):
+            assert status(tmp_path) == 2
+        assert 'Source graph is stale' in output.getvalue()
+        assert 'compiler context stale: core/main/production' in output.getvalue()
+        assert 'kgmaker inspect code' in output.getvalue()
+        with redirect_stdout(StringIO()):
+            assert scan(tmp_path, generate_docs=True) == 0
+        output = StringIO()
+        with redirect_stdout(output):
+            assert status(tmp_path) == 2
+        assert 'Source graph is current' in output.getvalue()
+        assert 'compiler context stale: core/main/production' in output.getvalue()
+        with redirect_stdout(StringIO()):
+            assert check(tmp_path) == 2
+
+
 def test_second_module_and_profile_context_preserve_previous_contexts(tmp_path):
     for module in ('a', 'b'):
         source = tmp_path / module / f'{module.upper()}.java'
@@ -108,6 +129,10 @@ def test_second_module_and_profile_context_preserve_previous_contexts(tmp_path):
     selected = project(merged, 'all', context_id=context_b['id'])
     assert {item['id'] for item in selected.symbols} == {'compiler:b:default'}
     assert {item['context_id'] for item in selected.symbols} == {context_b['id']}
+    compiler_ids = {context_a['id'], context_b['id'], context_profile['id']}
+    shared_source_edges = {edge for edge in merged.edges
+                           if not (set(edge.context_ids) & compiler_ids)}
+    assert shared_source_edges <= set(selected.edges)
 
 
 def test_stale_module_is_projected_out_while_other_context_remains_usable(tmp_path):
@@ -151,6 +176,26 @@ def test_feature_packet_binds_compiler_context_and_graph_evidence(tmp_path):
     assert revised['analysis_context_fingerprint'] != packet['analysis_context_fingerprint']
     assert revised['revision'] == packet['revision'] + 1
 
+
+def test_feature_requires_and_persists_explicit_context_for_variants(tmp_path):
+    for module in ('a', 'b'):
+        source = tmp_path / module / f'{module.upper()}.java'
+        source.parent.mkdir(parents=True)
+        source.write_text(f'class {module.upper()} {{ void run() {{}} }}')
+    graph_a, context_a = module_graph(tmp_path, 'a', 'a/A.java', 'compiler:a')
+    save_graph(merge_compiler_context(tmp_path, graph_a, context_a), tmp_path)
+    graph_b, context_b = module_graph(tmp_path, 'b', 'b/B.java', 'compiler:b')
+    save_graph(merge_compiler_context(tmp_path, graph_b, context_b), tmp_path)
+    (tmp_path / 'requirement.md').write_text('Inspect module A.')
+
+    from kgmaker.analysis_model import AnalysisError
+    from kgmaker.feature import graph_for_packet, prepare
+    with pytest.raises(AnalysisError, match='Explicit --context required'):
+        prepare(tmp_path, 'requirement.md', 'ambiguous')
+    packet = prepare(tmp_path, 'requirement.md', 'selected', context_id=context_a['id'])
+    assert packet['graph_selection'] == {'scope': 'all', 'context_id': context_a['id']}
+    assert [item['id'] for item in packet['analysis_contexts']] == [context_a['id']]
+    assert {item['id'] for item in graph_for_packet(tmp_path, packet).symbols} == {'compiler:a'}
 
 def test_invalid_second_module_does_not_publish_over_first(tmp_path):
     for module in ('a', 'b'):

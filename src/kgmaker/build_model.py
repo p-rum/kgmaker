@@ -44,6 +44,53 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
             raise AnalysisError("Build source roots/files must be arrays")
         for path in context["source_roots"] + context["source_files"]:
             safe_path(root, path)
+        generated = context.get("generated_source_roots", [])
+        if (not isinstance(generated, list) or any(not isinstance(path, str) for path in generated)
+                or not set(generated) <= set(context["source_roots"])):
+            raise AnalysisError("Generated source roots must be a subset of source_roots")
+        generated_sources = context.get("generated_sources", [])
+        if not isinstance(generated_sources, list) or any(not isinstance(item, dict) for item in generated_sources):
+            raise AnalysisError("Generated sources must be content-bound objects")
+        generated_by_path = {}
+        for item in generated_sources:
+            path = item.get("path")
+            if (not isinstance(path, str) or path in generated_by_path
+                    or not any(path == root_path or path.startswith(root_path.rstrip("/") + "/") for root_path in generated)
+                    or not HASH.fullmatch(str(item.get("sha256", "")))
+                    or item.get("execution_id") != result.get("execution_id")
+                    or item.get("snapshot_hash") != snapshot["content_hash"]
+                    or item.get("freshness") != "EXECUTION_BOUND"):
+                raise AnalysisError("Generated source is not bound to this successful execution")
+            source = safe_path(root, path)
+            if result["status"] != "SUCCESS" or not source.is_file() or file_hash(source) != item["sha256"]:
+                raise AnalysisError("STALE_GENERATED_SOURCE: " + path, 3)
+            generated_by_path[path] = item
+        profiles = context.get("build_profiles", [])
+        if not isinstance(profiles, list) or any(not isinstance(profile, str) or not profile for profile in profiles):
+            raise AnalysisError("Build profiles must be nonempty strings")
+        if not isinstance(context.get("compiler_options", {}), dict):
+            raise AnalysisError("Compiler options must be an object")
+        toolchain = context.get("toolchain")
+        if toolchain is not None and (not isinstance(toolchain, dict)
+                or not isinstance(toolchain.get("java_version"), str) or not toolchain["java_version"]
+                or ("java_home" in toolchain and
+                    (not isinstance(toolchain["java_home"], str) or not toolchain["java_home"]))):
+            raise AnalysisError("Toolchain requires a captured Java version and valid optional home")
+        coordinates = ("group_id", "artifact_id", "version")
+        for field in ("effective_dependencies", "dependency_management", "imported_boms"):
+            values = context.get(field, [])
+            if (not isinstance(values, list) or any(
+                    not isinstance(item, dict)
+                    or any(not isinstance(item.get(key), str) or not item[key] for key in coordinates)
+                    for item in values)):
+                raise AnalysisError(field + " must contain effective dependency coordinates")
+        if any(item.get("scope") != "import" or item.get("type") != "pom"
+               for item in context.get("imported_boms", [])):
+            raise AnalysisError("Imported BOM provenance requires pom/import coordinates")
+        parent = context.get("parent")
+        if parent is not None and (not isinstance(parent, dict)
+                or any(not isinstance(parent.get(key), str) or not parent[key] for key in coordinates)):
+            raise AnalysisError("Effective parent coordinates are invalid")
         if not isinstance(context.get("classpath"), list):
             raise AnalysisError("Build classpath must be an ordered array")
         for artifact in context["classpath"]:
@@ -59,7 +106,7 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
         if context.get("outputs") and (not isinstance(result.get("execution_id"), str) or not result["execution_id"]):
             raise AnalysisError("Outputs require a nonempty build execution ID")
         for source in context["source_files"]:
-            if source not in snapshot["sources"]:
+            if source not in snapshot["sources"] and source not in generated_by_path:
                 raise AnalysisError("Compiler input absent from captured snapshot: " + source)
         for artifact in context.get("outputs", []):
             if (result["status"] != "SUCCESS" or result.get("freshness") in {"MIXED_BUILD_INPUTS", "STALE_SOURCE"}) and artifact.get("freshness") == "EXECUTION_BOUND":
@@ -109,8 +156,19 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
         path = Path(raw)
         return str(path.resolve() if path.is_absolute() else safe_path(root, raw))
     classpath = [{**artifact, "path": absolute(artifact["path"])} for artifact in selected["classpath"]]
-    model = {"source_sets": [{"module": selected["module"], "id": selected["source_set"], "scope": selected["scope"],
-                               "roots": selected["source_roots"], "files": selected["source_files"]}]}
+    dependency_model = {key: selected.get(key, [] if key != "parent" else None) for key in (
+        "parent", "effective_dependencies", "dependency_management", "imported_boms")}
+    generated_roots = selected.get("generated_source_roots", [])
+    generated_files = {item["path"] for item in selected.get("generated_sources", [])}
+    handwritten_roots = [path for path in selected["source_roots"] if path not in generated_roots]
+    handwritten_files = [path for path in selected["source_files"] if path not in generated_files]
+    source_sets = [{"module": selected["module"], "id": selected["source_set"], "scope": selected["scope"],
+                    "roots": handwritten_roots, "files": handwritten_files}]
+    if generated_roots or generated_files:
+        source_sets.append({"module": selected["module"], "id": selected["source_set"] + ":generated",
+                            "scope": selected["scope"], "roots": generated_roots,
+                            "files": sorted(generated_files), "generated": True})
+    model = {"source_sets": source_sets}
     return {"sources": selected["source_files"], "java_release": int((selected.get("compiler_options") or {}).get("release", 21)),
             "repo_id": selected["repo_id"], "module": selected["module"], "source_set": selected["source_set"],
             "classpath": classpath, "bytecode_roots": [absolute(o["path"]) for o in selected.get("outputs", []) if o.get("freshness") == "EXECUTION_BOUND"],
@@ -119,8 +177,10 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
                 "freshness": "EXECUTION_BOUND", "origin_trust": manifest.get("origin_trust", "SUPPLIED_EXPORT_UNVERIFIED"),
                 "build_profiles": selected.get("build_profiles", []), "spring_profiles": selected.get("spring_profiles"),
                 "diagnostics": manifest.get("diagnostics", []) + selected.get("diagnostics", []),
-                "compiler_options": selected.get("compiler_options"), "generated_source_roots": selected.get("generated_source_roots", []),
+                "compiler_options": selected.get("compiler_options"), "generated_source_roots": generated_roots,
+                "generated_sources": selected.get("generated_sources", []),
                 "toolchain": selected.get("toolchain"), "build_system": selected.get("build_system"),
+                "dependency_model": dependency_model, "dependency_model_hash": digest(dependency_model),
                 "database_id": selected.get("database_id"), "schema_stream_id": selected.get("schema_stream_id"),
                 "persistence_unit": selected.get("persistence_unit"), "naming_strategy": selected.get("naming_strategy"),
                 "manifest_hash": digest(manifest)}}

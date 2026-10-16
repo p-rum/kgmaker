@@ -6,39 +6,71 @@ import subprocess
 import pytest
 from kgmaker.analysis_model import AnalysisError, digest, file_hash
 from kgmaker.build_runner import create_plan, run_plan, snapshot, tests_report as report_tests
-from kgmaker.build_model import validate_manifest
+from kgmaker.build_model import inspection_inputs, validate_manifest
+from kgmaker.inspection import inspect_jvm
 
 
 ROOT = Path(__file__).parents[1]
 
 
-def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path):
+def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path, monkeypatch):
     required = [shutil.which(name) for name in ('mvn', 'javac', 'jar')]
     exporter = ROOT / 'workers/build/maven/target/kgmaker-build-export.jar'
     if not all(required) or not exporter.is_file():
         pytest.skip('blocked: Maven/JDK or trusted build exporter is unavailable')
     root = tmp_path / 'reactor'
     root.mkdir()
+    cache_uri = (Path.home() / '.m2/repository').as_uri()
     (root / 'pom.xml').write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
       <modelVersion>4.0.0</modelVersion>
       <groupId>example</groupId><artifactId>parent</artifactId><version>1</version><packaging>pom</packaging>
-      <modules><module>lib</module><module>app</module></modules>
-      <properties><maven.compiler.release>21</maven.compiler.release></properties>
+      <modules><module>processor</module><module>lib</module><module>app</module></modules>
+      <properties><maven.compiler.release>21</maven.compiler.release><fixture.generated>base</fixture.generated>
+        <fixture.bom.version>1</fixture.bom.version></properties>
+      <dependencyManagement><dependencies><dependency>
+        <groupId>example</groupId><artifactId>platform-bom</artifactId><version>${fixture.bom.version}</version>
+        <type>pom</type><scope>import</scope>
+      </dependency></dependencies></dependencyManagement>
+      <profiles><profile><id>extra</id><properties><fixture.profile>active</fixture.profile>
+        <fixture.generated>extra</fixture.generated></properties></profile></profiles>
       <build><pluginManagement><plugins><plugin><groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId><version>3.10.1</version>
+        <configuration><generatedSourcesDirectory>${project.build.directory}/generated-sources/${fixture.generated}</generatedSourcesDirectory></configuration>
       </plugin></plugins></pluginManagement></build>
       <repositories><repository><id>stale-file-repo</id>
         <url>file://${maven.multiModuleProjectDirectory}/repo</url>
-      </repository></repositories>
-    </project>''')
+      </repository><repository><id>host-cache</id><url>__CACHE__</url></repository></repositories>
+      <pluginRepositories><pluginRepository><id>host-plugin-cache</id>
+        <url>__CACHE__</url></pluginRepository></pluginRepositories>
+    </project>'''.replace('__CACHE__', cache_uri))
     parent = '''<parent><groupId>example</groupId><artifactId>parent</artifactId><version>1</version></parent>'''
-    for module in ('lib', 'app'):
+    for module in ('processor', 'lib', 'app'):
         (root / module / 'src/main/java/example').mkdir(parents=True)
+    (root / 'processor/pom.xml').write_text(f'''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion>{parent}<artifactId>processor</artifactId></project>''')
+    (root / 'processor/src/main/java/example/GenerateProcessor.java').write_text('''package example;
+      import java.io.Writer; import java.util.Set;
+      import javax.annotation.processing.*; import javax.lang.model.SourceVersion;
+      import javax.lang.model.element.TypeElement;
+      @SupportedAnnotationTypes("*") @SupportedSourceVersion(SourceVersion.RELEASE_21)
+      public final class GenerateProcessor extends AbstractProcessor {
+        private boolean done;
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment round) {
+          if (!done) { done=true; try (Writer w=processingEnv.getFiler().createSourceFile("example.GeneratedMarker").openWriter()) {
+            w.write("package example; public final class GeneratedMarker { public static String value() { return \\\"generated\\\"; } }");
+          } catch (Exception e) { throw new IllegalStateException(e); } }
+          return false;
+        }
+      }''')
     (root / 'lib/pom.xml').write_text(f'''<project xmlns="http://maven.apache.org/POM/4.0.0">
       <modelVersion>4.0.0</modelVersion>{parent}<artifactId>lib</artifactId></project>''')
     (root / 'app/pom.xml').write_text(f'''<project xmlns="http://maven.apache.org/POM/4.0.0">
       <modelVersion>4.0.0</modelVersion>{parent}<artifactId>app</artifactId>
-      <dependencies><dependency><groupId>example</groupId><artifactId>lib</artifactId><version>1</version></dependency></dependencies>
+      <dependencies><dependency><groupId>example</groupId><artifactId>lib</artifactId></dependency></dependencies>
+      <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+        <configuration><annotationProcessorPaths><path><groupId>example</groupId><artifactId>processor</artifactId>
+          <version>1</version></path></annotationProcessorPaths><compilerArgs><arg>-processor</arg>
+          <arg>example.GenerateProcessor</arg></compilerArgs></configuration></plugin></plugins></build>
     </project>''')
     (root / 'lib/src/main/java/example/Lib.java').write_text(
         'package example; public class Lib { public static String freshOnly() { return "fresh"; } }')
@@ -58,11 +90,23 @@ def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path):
     (stale.parent / 'lib-1.pom').write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
       <modelVersion>4.0.0</modelVersion><groupId>example</groupId><artifactId>lib</artifactId><version>1</version>
     </project>''')
+    bom = root / 'repo/example/platform-bom/1/platform-bom-1.pom'
+    bom.parent.mkdir(parents=True)
+    bom.write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion><groupId>example</groupId>
+      <artifactId>platform-bom</artifactId><version>1</version><packaging>pom</packaging>
+      <dependencyManagement><dependencies><dependency><groupId>example</groupId>
+        <artifactId>lib</artifactId><version>1</version>
+      </dependency></dependencies></dependencyManagement>
+    </project>''')
 
+    monkeypatch.setenv('MAVEN_OPTS', '-Dmaven.repo.local=.m2')
     result = run_plan(create_plan(root, phase='compile', build_system='maven',
-                                  executable=required[0], home=ROOT / 'workers'))
+                                  executable=required[0], home=ROOT / 'workers', profiles=['extra']))
     assert result['result']['status'] == 'SUCCESS', Path(result['result']['log_path']).read_text()
     manifest = json.loads(Path(result['manifest_path']).read_text())
+    validated = validate_manifest(root, manifest)
+    assert validated['exporter'] == 'maven-session-2'
     app = next(item for item in manifest['contexts']
                if item['module'] == 'app' and item['source_set'] == 'main')
     sibling = [item for item in app['classpath']
@@ -71,6 +115,58 @@ def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path):
     assert sibling[0]['path'].endswith('/lib/target/classes')
     assert sibling[0]['sha256'] != file_hash(stale)
     assert all(item['path'] != str(stale) for item in app['classpath'])
+    assert app['build_profiles'] == ['extra']
+    assert app['parent'] == {'group_id': 'example', 'artifact_id': 'parent', 'version': '1'}
+    assert any(item['artifact_id'] == 'lib' and item['version'] == '1'
+               for item in app['effective_dependencies'])
+    assert any(item['artifact_id'] == 'lib' and item['version'] == '1'
+               for item in app['dependency_management'])
+    assert any(item['artifact_id'] == 'platform-bom' and item['version'] == '1'
+               for item in app['imported_boms'])
+    root_context = next(item for item in manifest['contexts']
+                        if item['module'] == 'root' and item['source_set'] == 'main')
+    assert root_context['imported_boms'] == [{
+        'group_id': 'example', 'artifact_id': 'platform-bom', 'version': '1',
+        'scope': 'import', 'type': 'pom', 'classifier': None, 'optional': False,
+    }]
+    assert app['compiler_options']['release'] == '21'
+    assert all(app['toolchain'][key] for key in
+               ('java_version', 'java_home', 'java_vendor', 'maven_version'))
+    assert any(path.endswith('target/generated-sources/extra')
+               for path in app['generated_source_roots'])
+    assert len(app['generated_sources']) == 1
+    generated = app['generated_sources'][0]
+    assert generated['path'].endswith('app/target/generated-sources/extra/example/GeneratedMarker.java')
+    assert generated['execution_id'] == manifest['build_result']['execution_id']
+    assert file_hash(root / generated['path']) == generated['sha256']
+    inputs = inspection_inputs(root, manifest, context_id=app['id'], scope='production')
+    assert inputs['build_context']['generated_source_roots'] == app['generated_source_roots']
+    assert inputs['build_context']['toolchain'] == app['toolchain']
+    assert inputs['build_context']['dependency_model']['effective_dependencies'] == app['effective_dependencies']
+    assert inputs['build_context']['dependency_model_hash']
+    generated_set = next(item for item in inputs['project_model']['source_sets'] if item.get('generated'))
+    assert generated_set['files'] == [generated['path']]
+    inspected = inspect_jvm(root, **inputs, home=ROOT / 'workers', publish=False)
+    marker = next(node for node in inspected['graph']['nodes']
+                  if node['name'] == 'GeneratedMarker' and node['kind'] == 'class')
+    assert marker['origin'] == 'generated'
+    generated_path = root / generated['path']
+    generated_content = generated_path.read_text()
+    generated_path.write_text(generated_content + '// tampered after build\n')
+    with pytest.raises(AnalysisError, match='STALE_GENERATED_SOURCE'):
+        validate_manifest(root, manifest)
+    generated_path.write_text(generated_content)
+
+    baseline_result = run_plan(create_plan(root, phase='compile', build_system='maven',
+                                           executable=required[0], home=ROOT / 'workers'))
+    assert baseline_result['result']['status'] == 'SUCCESS', Path(baseline_result['result']['log_path']).read_text()
+    baseline_manifest = json.loads(Path(baseline_result['manifest_path']).read_text())
+    baseline_app = next(item for item in baseline_manifest['contexts']
+                        if item['module'] == 'app' and item['source_set'] == 'main')
+    assert baseline_app['build_profiles'] == []
+    assert any(path.endswith('target/generated-sources/base')
+               for path in baseline_app['generated_source_roots'])
+    assert baseline_app['generated_source_roots'] != app['generated_source_roots']
 
 
 def test_inventory_includes_untracked_extensionless_and_rejects_links(tmp_path):

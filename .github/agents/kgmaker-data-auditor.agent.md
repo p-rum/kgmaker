@@ -91,6 +91,7 @@ Update current documentation when code changes; retain historical notes and map
 legacy task aliases rather than create competing numbering systems. Do not rename
 runtime `analysis_id`, packet IDs, requirements or existing features to task IDs.
 
-For the KGMAKER PR #5 baseline, scan/hook replace compiler indices and feature
-packets rebuild a source-only graph. Until T003-S02 is implemented, inspect saved
-compiler context/source freshness before refreshing; do not claim it survives a scan.
+Scan/hook preserve content-validated compiler contexts and mark affected contexts
+stale without executing workers. Status/check report compiler freshness separately.
+T003-S02 remains incomplete until its full end-to-end acceptance is verified; do not
+claim support beyond the selected context, evidence IDs, and documented matrix.

@@ -4,15 +4,22 @@ Tato stránka popisuje implementaci PR #5, nikoli dokončení T002/T003 ani úpl
 model Spring aplikace. Historické P aliasy jsou mapované v [registru](tasks/README.md). Python scan/build/hook/feature prepare
 nadále nevyžadují JDK/Node a nespouštějí projekt, npm, databázi ani migrace.
 
+`kgmaker status` vykazuje freshness source grafu a uložených compiler kontextů
+odděleně. I když scan již publikoval aktuální source graf se stale compiler markerem,
+status vrátí 2 a vytiskne přesný `inspect code`/`inspect frontend` příkaz. `check`
+používá stejný stale gate. Tyto offline kontroly nespouštějí worker ani projektový
+proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
+`compiler_contexts_current` a repo-qualified `stale_compiler_contexts`.
+
 ## Ověřená matice a technologická volba
 
 | Komponenta | Verze | Skutečně ověřený rozsah |
 |---|---|---|
 | Python | 3.12.14, pytest 8.3.4 | Regrese a bounded worker transport |
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
-| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility | BindingContext, KotlinTypeMapper, overload a volání do Java |
+| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java |
 | Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
-| Maven | 3.9.9 | EventSpy effective session export, source roots, ordered classpath, explicitní test build |
+| Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
 | Gradle | 8.12.1 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokálně blokované socket/IPC |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
 | React typings | React 18.3.1, @types/react 18.3.18 | Intrinsic JSX onClick v malé fixture |
@@ -79,10 +86,21 @@ Gradle vyžaduje hostitelský režim s možností JVM socket/IPC; bez něj build
 vrací FAILED a zachová log, bez čerstvých outputs.
 
 Maven adaptér čte reálný `MavenProject` v execution session, nikoli pouze pom.xml.
-Gradle exporter čte skutečné `SourceSetContainer`; Kotlin DSL se neparsuje regexem.
-Custom variant bez source sets a included builds mají diagnostiku. Task input
-model, toolchains, Kotlin options, parent/BOM, generated roots a varianty ještě
-vyžadují širší acceptance fixtures. Všechny tyto mezery drží P2 v PARTIAL.
+Export `maven-session-2` přenáší effective parent, resolved dependencies,
+dependency management, importované BOM z parent chain, aktivní i injected profily,
+compiler release, generated source roots a Java/Maven toolchain. Tyto položky se
+validují a jejich hash je součástí výběru compiler kontextu. Reálná Maven fixture
+ověřuje, že profil a BOM změní manifest a že aktuální reactor output má přednost
+před starým JAR v repository.
+
+Gradle exporter čte skutečné `SourceSetContainer`; Kotlin DSL se neparsuje regexem
+a export označuje roots pod `build/generated`. Obsah vytvořený annotation processorem
+se přijímá jen z explicitního úspěšného buildu: zůstává pod konkrétním build runem,
+manifest ukládá SHA-256, execution ID a snapshot hash a jakákoli následná změna
+import zneplatní. Reálná fixture provede následnou JVM inspection a ověřuje
+`origin=generated`; scan ani běžná inspection processor nespouštějí. Externí Maven
+toolchain selection, Gradle custom varianty/included builds, Kotlin options a
+cross-repo artefakty vyžadují další fixture. Tyto mezery drží T003-S03 v PARTIAL.
 
 Test result rozlišuje NOT_RUN, ZERO_TESTS, SKIPPED, PASSED, FAILED a počty z
 čerstvých Surefire/Gradle XML reportů. Chybějící report neznamená TEST_PASS.
@@ -115,14 +133,54 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. JPA `@Entity`/`@Table`/`@Column`, Spring Data
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v3 vyhodnocují dodané profiles,
+properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
+bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
+diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
+přes compiler annotation-type symboly s bounded hloubkou; cizí shodné krátké jméno
+není Spring anotace. `spring_component_packages` dává package/subpackage scan scope
+a je součástí context fingerprintu. List/Set/Collection/Iterable a Map<String,T>
+injection přenáší všechny ACTIVE členy; Optional používá unikátní výběr a
+ObjectProvider/Provider je konzervativní lazy kandidát. Statický `@Import`
+rozšiřuje dosažitelný konfigurační graf i mimo component scan; stav podmínek
+konfigurace se skládá se stavem její `@Bean` metody. Obyčejná importovaná třída
+je bean, ale ImportSelector/registrar se neprovádí a hlásí explicitní boundary.
+`@Bean` mimo compiler-resolved `@Configuration` je odmítnut. JPA
+`@Entity`/`@Table`/`@Column`, Spring Data
 repository/query a přesné názvy tabulek/sloupců se vážou na source-only schema
 nodes, pokud jsou ve stejném snapshotu. Chybějící aktivní profil, naming
 strategy, dynamic query, custom registrar, proxy execution nebo deployment/data
 availability zůstávají diagnostikou či UNKNOWN.
 
+JPA pravidla `annotation-source-v4` používají compiler identity pro oddělené
+entity, embeddable a mapped-superclass deklarace. Umístění `@Id`/`@EmbeddedId`
+volí FIELD nebo PROPERTY access; embedded atributy a explicitní override mají
+vlastní uzly. Asociace nesou cílovou entitu a roli OWNING/INVERSE, přičemž
+`mappedBy` se váže na konkrétní protistranu. JoinColumn/JoinTable se nemíchá se
+scalar `@Column` a neověřený target či `mappedBy` zůstává diagnostikou.
+Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
+exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
+OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
+atributu; teprve pak vznikne `filters_by`/`orders_by`. Query nese `query_reads`
+nebo statický `query_deletes` intent, nikdy tvrzení o provedeném SQL či commitu.
+Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPQL řeší
+entitu, alias paths, parametry a return entity/projection; native SQL váže pouze
+explicitní názvy tabulek v aktuální ORM projekci a při kolizi zůstává ambiguous.
+Statické JPA named queries mají oddělenou definici a repository reference; SpEL,
+`${...}` a jiné dynamické části se nerozvíjejí.
+
 Source CFG vzniká deterministicky z compiler AST IR. Zachovává podmínky,
 protilehlé větve, return/throw, loops, finally abrupt continuations a await/resume.
+Kotlin frontend navíc zachovává when bez fallthrough, Elvis, safe-call,
+short-circuit, konstruktory, lambda caller identity a compiler-resolved uživatelské
+operátory; operator call site je součástí odpovídajícího CFG bloku. Callable
+reference zůstává referencí a není vydávána za provedené volání. Custom property
+getter/setter mají přesný method symbol, vlastní CFG a čtení/zápis odkazuje na
+`ACCESSOR` call site; backing-field `field` nevytváří rekurzivní accessor hranu.
+Property initializers a `init` bloky běžné třídy se řadí podle zdroje do přesného
+primary-constructor method/CFG a jejich calls používají constructor caller. Top-level
+properties mají samostatný file-facade `<clinit>()V`; object/companion property a
+`init` bloky používají constructor daného objektu, takže se realms neslučují.
 Exceptional edges jsou konzervativní, nikoli řešení exception/path feasibility.
 Try-with-resources close, neznámé konstrukce a scheduling mají explicitní boundary.
 Interprocedural process view používá tyto CFG; recursion, neúplný dispatch,
@@ -131,8 +189,10 @@ limity hloubky/počtu uzlů a nerozlišené cíle zůstávají hranicí, nikoli 
 Běžné source-only name-match hrany zůstávají v legacy části grafu jako kandidáti.
 Compiler call sites jsou samostatné, cíle používají vlastníka a descriptor/signaturu.
 Application-only CHA není úplný dependency dispatch; bytecode instruction_index
-není bytecode offset. Kotlin inline/coroutines/default argument bodies, implicitní
-operators/accessors, framework proxy a plný def-use ještě nejsou pokryty.
+není bytecode offset. Kotlin inline/suspend/default argument metadata jsou zachována,
+jejich compiler-generated bodies a coroutine state machine se však nevydávají za
+source CFG. Framework proxy, generated default/coroutine bodies a plný def-use ještě
+nejsou pokryty.
 Source mapping bez debug metadata nevymýšlí řádky.
 
 Spring conditions/custom registrars, rozšířený Hibernate model a query grammar,
@@ -144,6 +204,13 @@ samostatný důkaz konkrétního běhu; nepřítomnost pozorování nic nevyvrac
 
 
 ## Integrace s běžným workflow
+
+Build context může explicitně nést `database_id`, `schema_stream_id`,
+`persistence_unit` a `naming_strategy`. ORM binding filtruje podle databázového a
+stream realm; shodné tabulky v několika realms zůstávají ambiguous. Bez explicitního
+`@Table` se fyzická tabulka neodvozuje univerzálním camelCase→snake_case pravidlem.
+Skutečný reactor test `test_mv02_real_reactor_output_precedes_stale_repository_jar`
+ověřuje čerstvý sibling output proti starému JAR ve file repository.
 
 `scan`, `hook-context` a single-root `feature.current_graph` nyní používají
 `graph_provider.retain_compiler_layer`. Ověří zdroje (včetně nových souborů),
@@ -158,5 +225,9 @@ module/profile selection s ostatními validními kontexty. Worker symbol IDs obs
 context ID, takže varianty nesplynou; stejný selection se při opakování nahradí.
 Workspace snapshot zachová compiler collections v graph schema v3 a kvalifikuje
 jejich symbol, context, evidence, call-site i CFG identity repository namespace.
-Jednotný výběr contextu ve všech query/impact/feature/report cestách a celý
-end-to-end T003-AC02 scénář zůstávají rozpracované.
+Jednotný výběr contextu používají query, impact, feature i report. Reálný
+`test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` ověřuje celý
+veřejný sled, dvě profilové varianty, packet revision a classpath invalidaci.
+Contextová projekce zachovává společné source/dataflow hrany a filtruje pouze
+konkurenční compiler vrstvy. T003-S02/AC02 je VERIFIED_IN_SCOPE pro výše uvedenou
+matici; rozšíření build/framework/jazykových variant patří do S03–S10.

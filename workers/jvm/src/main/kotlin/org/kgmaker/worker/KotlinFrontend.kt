@@ -31,6 +31,7 @@ class KotlinFrontend(private val state: State) {
     private lateinit var binding: BindingContext
     private lateinit var mapper: KotlinTypeMapper
     private val calls = java.util.IdentityHashMap<PsiElement,String>()
+    private val constructorInitializers = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<KtExpression,Boolean>())
     private val sources = HashMap<Path,String>()
     private fun loc(element: PsiElement): MutableMap<String,Any?> {
         val file = element.containingFile as KtFile
@@ -95,19 +96,66 @@ class KotlinFrontend(private val state: State) {
                 val moduleId="source-module:"+state.prefix(state.context)+":"+state.root.relativize(Path.of(file.virtualFilePath).toRealPath()).toString().replace('\\','/')
                 val value=State.map("id",moduleId,"name","<module>","kind","module","scope",state.context["scope"],"context_id",state.context["id"])
                 value.putAll(loc(file));state.symbols[moduleId]=value
-                file.accept(Visitor(moduleId))
+                val visitor=Visitor(moduleId)
+                visitor.processFileInitializers(file)
+                file.accept(visitor)
             }
         }finally { Disposer.dispose(disposable) }
     }
     private inner class Visitor(private var caller: String): KtTreeVisitorVoid() {
+        fun processFileInitializers(file: KtFile) {
+            val properties=file.declarations.filterIsInstance<KtProperty>().filter {it.initializer!=null}
+            if(properties.isEmpty())return
+            val descriptor=properties.firstNotNullOfOrNull {binding[BindingContext.VARIABLE,it] as? PropertyDescriptor}
+            if(descriptor==null) {
+                state.diagnostic("KOTLIN_FILE_INITIALIZER_CFG_UNSUPPORTED","Top-level property owner is unresolved",loc(file));return
+            }
+            val old=caller
+            try {
+                caller=state.method(owner(descriptor),"<clinit>","()V",loc(file),State.map("synthetic_source_mapping","FILE_FACADE_INITIALIZER"))
+                val statements=ArrayList<Map<String,Any?>>()
+                for(property in properties)property.initializer?.let {initializer->
+                    constructorInitializers.add(initializer);initializer.accept(this)
+                    val location=loc(initializer)
+                    statements.add(State.map("kind","assign","label","top-level property initializer: "+property.name,
+                        "path",location["path"],"range",location["range"],"sha256",location["sha256"],"value",ir(initializer)))
+                }
+                state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],
+                    "body",State.map("kind","block","statements",statements)))
+            }catch(error:Exception){state.diagnostic("KOTLIN_FILE_INITIALIZER_CFG_UNSUPPORTED",error.message?:"mapping",loc(file))}
+            finally{caller=old}
+        }
         override fun visitClassOrObject(declaration: KtClassOrObject) {
             val descriptor=binding[BindingContext.CLASS,declaration]
             if(descriptor!=null) {
                 val name=mapper.mapClass(descriptor).internalName.replace('/','.')
                 state.type(name,loc(declaration),State.map("annotations",annotations(descriptor),"kind",descriptor.kind.toString().lowercase(),
                     "supertypes",descriptor.typeConstructor.supertypes.map { it.toString() }))
+                descriptor.unsubstitutedPrimaryConstructor?.let {constructor->
+                    val old=caller
+                    try {
+                        val constructorElement=if(declaration is KtClass)declaration.primaryConstructor?:declaration else declaration
+                        caller=method(constructor,constructorElement)
+                        val statements=ArrayList<Map<String,Any?>>()
+                        for(member in declaration.declarations)when(member) {
+                            is KtProperty -> member.initializer?.let {initializer->
+                                constructorInitializers.add(initializer);initializer.accept(this)
+                                val location=loc(initializer)
+                                statements.add(State.map("kind","assign","label","property initializer: "+member.name,
+                                    "path",location["path"],"range",location["range"],"sha256",location["sha256"],"value",ir(initializer)))
+                            }
+                            is KtClassInitializer -> member.body?.let {body->body.accept(this);statements.add(ir(body))}
+                        }
+                        if(statements.isNotEmpty())state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],
+                            "body",State.map("kind","block","statements",statements)))
+                    }catch(error:Exception){state.diagnostic("KOTLIN_PRIMARY_CONSTRUCTOR_CFG_UNSUPPORTED",error.message?:"mapping",loc(declaration))}
+                    finally{caller=old}
+                }
             }
             super.visitClassOrObject(declaration)
+        }
+        override fun visitAnonymousInitializer(initializer: KtAnonymousInitializer) {
+            // Already visited once above under the primary constructor caller.
         }
         override fun visitNamedFunction(function: KtNamedFunction) {
             val descriptor=binding[BindingContext.FUNCTION,function]
@@ -144,8 +192,22 @@ class KotlinFrontend(private val state: State) {
         override fun visitProperty(declaration: KtProperty) {
             val descriptor=binding[BindingContext.VARIABLE,declaration]
             if(descriptor is PropertyDescriptor)try {property(descriptor,declaration)} catch(error: Exception){state.diagnostic("KOTLIN_UNSUPPORTED_PROPERTY",error.message?:"mapping",loc(declaration))}
-            if(!declaration.isLocal && (declaration.initializer!=null || declaration.accessors.any {it.bodyExpression!=null})) {
-                state.diagnostic("KOTLIN_PROPERTY_BODY_CFG_UNSUPPORTED","Initializer/accessor body is not assigned a guessed caller",loc(declaration))
+            if(!declaration.isLocal) {
+                if(declaration.initializer!=null && declaration.initializer !in constructorInitializers)
+                    state.diagnostic("KOTLIN_PROPERTY_INITIALIZER_CFG_UNSUPPORTED","Property initializer is not assigned a guessed constructor caller",loc(declaration.initializer!!))
+                if(descriptor is PropertyDescriptor)for(accessor in declaration.accessors) {
+                    val accessorDescriptor=if(accessor.isGetter)descriptor.getter else descriptor.setter
+                    val body=accessor.bodyExpression
+                    if(accessorDescriptor!=null && body!=null) {
+                        val old=caller
+                        try {
+                            caller=method(accessorDescriptor,accessor);body.accept(this)
+                            state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],
+                                "body",if(accessor.hasBlockBody())ir(body) else State.map("kind","return","value",ir(body))))
+                        }catch(error:Exception){state.diagnostic("KOTLIN_UNSUPPORTED_ACCESSOR",error.message?:"mapping",loc(accessor))}
+                        finally{caller=old}
+                    }
+                }
                 return
             }
             super.visitProperty(declaration)
@@ -178,6 +240,21 @@ class KotlinFrontend(private val state: State) {
             if(target==null)state.diagnostic("KOTLIN_UNRESOLVED_CALL",reason,loc(expression))
             super.visitCallExpression(expression)
         }
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            val resolved=expression.getResolvedCall(binding)
+            val descriptor=resolved?.resultingDescriptor as? FunctionDescriptor
+            if(descriptor?.isOperator==true && resolved.status.isSuccess) {
+                val psi=DescriptorToSourceUtils.descriptorToDeclaration(descriptor)
+                val local=psi?.containingFile?.virtualFile?.path?.let {Path.of(it).startsWith(state.root)}==true
+                if(local)try {
+                    val target=method(descriptor,psi)
+                    calls[expression]=state.site(caller,loc(expression),target,"OPERATOR",
+                        resolved.dispatchReceiver?.type?.toString()?:resolved.extensionReceiver?.type?.toString(),
+                        "KOTLIN_COMPILER_RESOLVED_OPERATOR")
+                }catch(error:Exception){state.diagnostic("KOTLIN_UNRESOLVED_OPERATOR",error.message?:"mapping",loc(expression))}
+            }
+            super.visitBinaryExpression(expression)
+        }
         override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
             val descriptor=binding[BindingContext.REFERENCE_TARGET,expression.callableReference] as? FunctionDescriptor
             val target=try {descriptor?.let {method(it)}}catch(error: Exception){null}
@@ -194,6 +271,14 @@ class KotlinFrontend(private val state: State) {
                 val write=parent is KtBinaryExpression && parent.left==expression && parent.operationToken==org.jetbrains.kotlin.lexer.KtTokens.EQ
                 val fact=State.map("kind",if(write)"writes_field" else if(descriptor.isConst)"reads_constant" else "reads_field","source",caller,"target",target,"evidence_kind","SYMBOL_RESOLVED")
                 fact.putAll(loc(expression));state.facts.add(fact)
+                val accessor=if(write)descriptor.setter else descriptor.getter
+                if(expression.getReferencedName()!="field" && accessor!=null) {
+                    val accessorPsi=DescriptorToSourceUtils.descriptorToDeclaration(accessor)
+                    val local=accessorPsi?.containingFile?.virtualFile?.path?.let {Path.of(it).startsWith(state.root)}==true
+                    val accessorTarget=method(accessor,if(local)accessorPsi else null)
+                    calls[expression]=state.site(caller,loc(expression),accessorTarget,"ACCESSOR",
+                        accessor.dispatchReceiverParameter?.type?.toString(),"KOTLIN_COMPILER_RESOLVED_ACCESSOR")
+                }
             }catch(error:Exception){state.diagnostic("KOTLIN_UNRESOLVED_PROPERTY_ACCESS",error.message?:"mapping",loc(expression))}
             super.visitSimpleNameExpression(expression)
         }
@@ -214,7 +299,9 @@ class KotlinFrontend(private val state: State) {
         when(expression) {
             is KtNameReferenceExpression -> {
                 val target=binding[BindingContext.REFERENCE_TARGET,expression]
-                if(target is ClassDescriptor || target is PackageViewDescriptor || target is PackageFragmentDescriptor)
+                if(calls.containsKey(expression))base.putAll(mapOf("kind" to "call","call_site" to calls[expression],
+                    "arguments" to emptyList<Map<String,Any?>>(),"receiver" to mapOf("kind" to "empty")))
+                else if(target is ClassDescriptor || target is PackageViewDescriptor || target is PackageFragmentDescriptor)
                     base.putAll(mapOf("kind" to "reference","calls" to emptyList<String>()))
             }
             is KtCallExpression -> base.putAll(mapOf("kind" to "call","call_site" to calls[expression],
@@ -238,11 +325,13 @@ class KotlinFrontend(private val state: State) {
             is KtTryExpression -> base.putAll(mapOf("kind" to "try","body" to ir(expression.tryBlock),"catches" to expression.catchClauses.map {mapOf("type" to it.catchParameter?.typeReference?.text,"body" to ir(it.catchBody))},"finally" to expression.finallyBlock?.finalExpression?.let(::ir)))
             is KtWhenExpression -> base.putAll(mapOf("kind" to "switch","condition" to ir(expression.subjectExpression),"cases" to expression.entries.map {entry->mapOf("label" to if(entry.isElse)"default" else entry.conditions.joinToString(",") {label(it)},"body" to ir(entry.expression))},"fallthrough" to false))
             is KtParenthesizedExpression -> return ir(expression.expression)
-            is KtBinaryExpression -> when(expression.operationToken) {
+            is KtBinaryExpression -> if(calls.containsKey(expression)) base.putAll(mapOf("kind" to "call",
+                "call_site" to calls[expression],"arguments" to listOf(ir(expression.right)),"receiver" to ir(expression.left))) else when(expression.operationToken) {
                 org.jetbrains.kotlin.lexer.KtTokens.ANDAND -> base.putAll(mapOf("kind" to "and","left" to ir(expression.left),"right" to ir(expression.right)))
                 org.jetbrains.kotlin.lexer.KtTokens.OROR -> base.putAll(mapOf("kind" to "or","left" to ir(expression.left),"right" to ir(expression.right)))
                 org.jetbrains.kotlin.lexer.KtTokens.ELVIS -> base.putAll(mapOf("kind" to "elvis","left" to ir(expression.left),"right" to ir(expression.right)))
-                org.jetbrains.kotlin.lexer.KtTokens.EQ -> base.putAll(mapOf("kind" to "assign","value" to ir(expression.right)))
+                org.jetbrains.kotlin.lexer.KtTokens.EQ -> base.putAll(mapOf("kind" to "assign","value" to ir(expression.right),
+                    "call_site" to ((expression.left as? KtNameReferenceExpression)?.let {calls[it]})))
                 else -> base.putAll(mapOf("kind" to "sequence","expressions" to listOf(ir(expression.left),ir(expression.right))))
             }
             is KtSafeQualifiedExpression -> base.putAll(mapOf("kind" to "safe_call","receiver" to ir(expression.receiverExpression),"then" to ir(expression.selectorExpression)))

@@ -1,5 +1,6 @@
 """Offline graph refresh preserving validated compiler evidence in the shared store."""
 from pathlib import Path
+import shlex
 
 from .model import KnowledgeGraph
 from .store import load_graph
@@ -15,10 +16,22 @@ def _compiler_contexts(graph: KnowledgeGraph, *, include_stale: bool = True) -> 
 def _inspection_command(context: dict) -> str:
     kind = "frontend" if context.get("language") == "typescript" else "code"
     values = ["kgmaker", "inspect", kind,
+              "--repo-id", str(context.get("repo_id", "local")),
               "--module", str(context.get("module", "root")),
               "--source-set", str(context.get("source_set", "main")),
               "--scope", str(context.get("scope", "production"))]
-    return " ".join(values)
+    if kind == "frontend":
+        values += ["--tsconfig", str(context.get("tsconfig", "tsconfig.json"))]
+        if context.get("ui_framework"):
+            values += ["--ui-framework", str(context["ui_framework"])]
+    elif context.get("build_id"):
+        values += ["--build-id", str(context["build_id"])]
+        if context.get("build_context_id"):
+            values += ["--context", str(context["build_context_id"])]
+    else:
+        for item in context.get("classpath", []):
+            values += ["--classpath", item["path"]]
+    return shlex.join(values)
 
 
 def _stale_context(context: dict, reason: str) -> dict:
@@ -43,6 +56,10 @@ def _selection_key(context: dict) -> str:
     return digest({key: context.get(key) for key in (
         "repo_id", "module", "source_set", "scope", "language", "build_context_id",
         "build_profiles", "spring_profiles", "config_fingerprint", "compiler_options",
+        "manifest_hash", "toolchain", "dependency_model_hash", "generated_source_roots",
+        "spring_properties", "spring_available_classes",
+        "spring_component_packages",
+        "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
     )})
@@ -130,8 +147,6 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     evidence_ids = {identity for edge in edges for identity in edge.evidence_ids}
     for item in [*fresh.call_sites, *old_sites, *fresh.cfgs, *old_cfgs]:
         evidence_ids.update(item.get("evidence_ids", []))
-    evidence = {item["id"]: item for item in [*fresh.evidence, *stored.evidence]
-                if item["id"] in evidence_ids}
     contexts = []
     seen_contexts = set()
     for context in [*fresh.contexts, *preserved_contexts]:

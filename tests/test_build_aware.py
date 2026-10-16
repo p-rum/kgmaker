@@ -51,7 +51,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 @Service class Payment {
   @GetMapping(\"/payments\") String list() { return \"ok\"; }
 }
-@Entity @Table(name=\"payments\") class PaymentEntity { }
+@Entity @Table(name=\"payments\") class PaymentEntity { @jakarta.persistence.Id Long id; }
 interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
   PaymentEntity findById(Long id);
 }
@@ -95,6 +95,10 @@ interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
             self.assertTrue(any(n.kind == "orm_table" and n.name == "payments" for n in result.nodes))
             self.assertTrue(any(n.kind == "orm_query" and n.name == "findById:DERIVED" for n in result.nodes))
             self.assertTrue(any(e.kind == "repository_for" for e in result.edges))
+            query = next(n for n in result.nodes if n.kind == "orm_query" and n.name == "findById:DERIVED")
+            self.assertTrue(query.metadata["validated"])
+            self.assertTrue(any(e.kind == "query_reads" and e.source == query.id for e in result.edges))
+            self.assertTrue(any(e.kind == "filters_by" and e.source == query.id for e in result.edges))
             self.assertTrue(any(e.kind == "resolves_to_schema_table" and e.evidence_kind == "FRAMEWORK_DERIVED" for e in result.edges))
 
     def test_runtime_import_is_bound_to_context_and_rejects_stale_source(self):
@@ -163,6 +167,100 @@ import jakarta.persistence.Table;
             self.assertFalse(any(edge.target.endswith("audit_log") for edge in resolved))
             self.assertTrue(any(item.get("code") == "ORM_NAMING_STRATEGY_UNVERIFIED"
                                 for item in result.diagnostics))
+
+    def test_hb01_embedded_id_and_bidirectional_association_preserve_roles(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "src/Model.java"
+            source.parent.mkdir(parents=True)
+            source.write_text('''package example;
+import jakarta.persistence.*;
+import java.util.List;
+@Embeddable class OrderId { @Column(name="tenant_id") String tenant; @Column(name="order_no") String number; }
+@Entity @Table(name="orders") class Order {
+  @EmbeddedId @AttributeOverride(name="tenant", column=@Column(name="order_tenant")) OrderId id;
+  @ManyToOne @JoinColumn(name="customer_id") Customer customer;
+}
+@Entity @Table(name="customers") class Customer {
+  @Id @Column(name="id") Long id;
+  @OneToMany(mappedBy="customer") List<Order> orders;
+}
+@Entity @Table(name="profiles") class Profile {
+  private Long id;
+  @Id @Column(name="profile_id") public Long getId() { return id; }
+}
+''')
+            context = {"id": "ctx", "scope": "production", "framework_rule_versions": {},
+                       "database_id": "primary", "schema_stream_id": "main", "persistence_unit": "orders"}
+            declarations = [
+                ("order-id", "OrderId", "class", 4,
+                 [{"name": "jakarta.persistence.Embeddable", "values": {}}]),
+                ("order", "Order", "class", 5,
+                 [{"name": "jakarta.persistence.Entity", "values": {}},
+                  {"name": "jakarta.persistence.Table", "values": {"name": "orders"}}]),
+                ("customer", "Customer", "class", 9,
+                 [{"name": "jakarta.persistence.Entity", "values": {}},
+                  {"name": "jakarta.persistence.Table", "values": {"name": "customers"}}]),
+                ("profile", "Profile", "class", 13,
+                 [{"name": "jakarta.persistence.Entity", "values": {}},
+                  {"name": "jakarta.persistence.Table", "values": {"name": "profiles"}}]),
+            ]
+            graph_nodes = [Node(identity, kind, name, "src/Model.java", line=line,
+                                scope="production", role="executable_code", origin="handwritten")
+                           for identity, name, kind, line, _ in declarations]
+            graph_nodes.extend([
+                Node("order-id-tenant", "field", "tenant", "src/Model.java", line=4,
+                     scope="production", role="executable_code", origin="handwritten"),
+                Node("order-id-number", "field", "number", "src/Model.java", line=4,
+                     scope="production", role="executable_code", origin="handwritten"),
+            ])
+            symbols = [{"id": identity, "owner": f"example.{name}", "name": name, "kind": kind,
+                        "path": "src/Model.java", "range": {"start_line": line},
+                        "context_id": "ctx", "annotations": annotations}
+                       for identity, name, kind, line, annotations in declarations]
+            symbols.extend([
+                {"id": "order-id-tenant", "owner": "example.OrderId", "name": "tenant", "kind": "field",
+                 "path": "src/Model.java", "range": {"start_line": 4}, "type": "java.lang.String",
+                 "context_id": "ctx", "annotations": [{"name": "jakarta.persistence.Column", "values": {"name": "tenant_id"}}]},
+                {"id": "order-id-number", "owner": "example.OrderId", "name": "number", "kind": "field",
+                 "path": "src/Model.java", "range": {"start_line": 4}, "type": "java.lang.String",
+                 "context_id": "ctx", "annotations": [{"name": "jakarta.persistence.Column", "values": {"name": "order_no"}}]},
+            ])
+            schema = [
+                Node("schema:primary:main:table:public.orders", "db_table", "public.orders", "db/V1.sql", 1),
+                Node("schema:primary:main:table:public.customers", "db_table", "public.customers", "db/V1.sql", 2),
+                Node("schema:primary:main:table:public.profiles", "db_table", "public.profiles", "db/V1.sql", 3),
+            ]
+            graph = KnowledgeGraph(3, ".", "now", [*graph_nodes, *schema], [],
+                                   {"src/Model.java": file_hash(source)}, [context], [], [], symbols, [], [])
+            result = augment_framework_graph(root, graph, context)
+            by_name = {node.name: node for node in result.nodes}
+            self.assertIn("OrderId", {node.name for node in result.nodes if node.kind == "orm_embeddable"})
+            self.assertNotIn("OrderId", {node.name for node in result.nodes if node.kind == "orm_table"})
+            order_id = by_name["Order.id"]
+            self.assertTrue(order_id.metadata["identifier"])
+            self.assertTrue(order_id.metadata["embedded"])
+            self.assertTrue(any(edge.kind == "has_embedded_id" and edge.target == order_id.id for edge in result.edges))
+            self.assertTrue(any(edge.kind == "embeds_type" and edge.source == order_id.id for edge in result.edges))
+            self.assertTrue(any(node.kind == "orm_column" and node.name == "order_tenant" for node in result.nodes))
+            embedded_attribute = by_name["OrderId.tenant"]
+            self.assertEqual("tenant_id", embedded_attribute.metadata["default_column"])
+            self.assertTrue(any(edge.kind == "overrides_attribute" and edge.target == embedded_attribute.id
+                                for edge in result.edges))
+            associations = {node.name: node for node in result.nodes if node.kind == "orm_association"}
+            self.assertEqual("OWNING", associations["Order.customer"].metadata["association_role"])
+            self.assertEqual("INVERSE", associations["Customer.orders"].metadata["association_role"])
+            self.assertTrue(any(edge.kind == "inverse_of" and edge.source == associations["Customer.orders"].id
+                                and edge.target == associations["Order.customer"].id for edge in result.edges))
+            self.assertTrue(any(edge.kind == "targets_entity" for edge in result.edges
+                                if edge.source in {item.id for item in associations.values()}))
+            scalar_columns = {node.name for node in result.nodes if node.kind == "orm_column"}
+            self.assertNotIn("customer", scalar_columns)
+            self.assertNotIn("orders", scalar_columns)
+            profile_id = by_name["Profile.id"]
+            self.assertEqual("PROPERTY", profile_id.metadata["access"])
+            self.assertEqual("PROPERTY", by_name["profiles"].metadata["access_strategy"])
+            self.assertIn("profile_id", scalar_columns)
 
 
 if __name__ == "__main__":

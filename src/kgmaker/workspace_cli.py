@@ -68,7 +68,19 @@ def workspace_command(args):
             result = {'baseline': baseline, 'coverage': coverage, 'output_root': str(args.root.resolve())}
         elif command == 'status':
             old = load_graph(args.root.resolve())
-            result = {'current': old is not None and old.nodes == graph.nodes and old.edges == graph.edges and old.files == graph.files,
+            source_current = (old is not None and old.nodes == graph.nodes
+                              and old.edges == graph.edges and old.files == graph.files
+                              and old.contexts == graph.contexts)
+            stale_contexts = [
+                {key: context.get(key) for key in (
+                    'id', 'repo_id', 'module', 'source_set', 'scope', 'stale_reason', 'next_command')}
+                for context in graph.contexts
+                if context.get('analyzer_version') and context.get('freshness') == 'STALE'
+            ]
+            result = {'current': source_current and not stale_contexts,
+                      'source_graph_current': source_current,
+                      'compiler_contexts_current': not stale_contexts,
+                      'stale_compiler_contexts': stale_contexts,
                       'baseline': baseline, 'coverage': coverage}
         elif command == 'impact':
             if not args.entity or not args.include_data_flow or args.files:

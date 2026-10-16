@@ -12,6 +12,78 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T002 | [2_buildAwareInspection.md](2_buildAwareInspection.md) | JVM build, call graph, Spring a Hibernate | Normativní; částečně implementováno |
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
 
+## Atomické work packages pro dokončení T003
+
+Následující soubory rozdělují dosud nedodaný rozsah T003 na samostatně
+implementovatelné work packages. Nejsou novou řadou hlavních Task ID a nemění
+publikované identity T001–T003. Jejich název používá uživatelem požadovaný formát
+`{milnik}-{cisloTasku}-{vystiznyNazevUkolu}`; stabilní identita uvnitř souboru je
+`T003-Sxx-Wyy`. Každý work package se implementuje ve vlastní větvi a končí
+samostatným pull requestem.
+
+| Work package | Soubor | Úloha | Stav |
+|---|---|---|---|
+| T003-S03-W01 | [T003-S03-01-externalToolchainSelection.md](T003-S03-01-externalToolchainSelection.md) | external toolchain selection | SPECIFICATION |
+| T003-S03-W02 | [T003-S03-02-gradleCustomVariants.md](T003-S03-02-gradleCustomVariants.md) | gradle custom variants | SPECIFICATION |
+| T003-S03-W03 | [T003-S03-03-gradleIncludedBuilds.md](T003-S03-03-gradleIncludedBuilds.md) | gradle included builds | SPECIFICATION |
+| T003-S03-W04 | [T003-S03-04-kotlinCompilerOptions.md](T003-S03-04-kotlinCompilerOptions.md) | kotlin compiler options | SPECIFICATION |
+| T003-S03-W05 | [T003-S03-05-crossRepoArtifactMapping.md](T003-S03-05-crossRepoArtifactMapping.md) | cross repo artifact mapping | SPECIFICATION |
+| T003-S04-W01 | [T003-S04-01-k2AnalysisApiBackend.md](T003-S04-01-k2AnalysisApiBackend.md) | k2 analysis api backend | SPECIFICATION |
+| T003-S04-W02 | [T003-S04-02-defaultBodySourceMapping.md](T003-S04-02-defaultBodySourceMapping.md) | default body source mapping | SPECIFICATION |
+| T003-S04-W03 | [T003-S04-03-coroutineSourceMapping.md](T003-S04-03-coroutineSourceMapping.md) | coroutine source mapping | SPECIFICATION |
+| T003-S04-W04 | [T003-S04-04-dependencyDispatchHierarchy.md](T003-S04-04-dependencyDispatchHierarchy.md) | dependency dispatch hierarchy | SPECIFICATION |
+| T003-S04-W05 | [T003-S04-05-jvmGoldenAcceptanceCorpus.md](T003-S04-05-jvmGoldenAcceptanceCorpus.md) | jvm golden acceptance corpus | SPECIFICATION |
+| T003-S05-W01 | [T003-S05-01-dynamicSpringImports.md](T003-S05-01-dynamicSpringImports.md) | dynamic spring imports | SPECIFICATION |
+| T003-S05-W02 | [T003-S05-02-springRegistrarsFactories.md](T003-S05-02-springRegistrarsFactories.md) | spring registrars factories | SPECIFICATION |
+| T003-S05-W03 | [T003-S05-03-springConditionMatrix.md](T003-S05-03-springConditionMatrix.md) | spring condition matrix | SPECIFICATION |
+| T003-S05-W04 | [T003-S05-04-springProxyAsyncSemantics.md](T003-S05-04-springProxyAsyncSemantics.md) | spring proxy async semantics | SPECIFICATION |
+| T003-S06-W01 | [T003-S06-01-kotlinJpaAccess.md](T003-S06-01-kotlinJpaAccess.md) | kotlin jpa access | SPECIFICATION |
+| T003-S06-W02 | [T003-S06-02-jpaInheritedAttributes.md](T003-S06-02-jpaInheritedAttributes.md) | jpa inherited attributes | SPECIFICATION |
+| T003-S06-W03 | [T003-S06-03-ormXmlOverrides.md](T003-S06-03-ormXmlOverrides.md) | orm xml overrides | SPECIFICATION |
+| T003-S06-W04 | [T003-S06-04-multiDatasourceRealms.md](T003-S06-04-multiDatasourceRealms.md) | multi datasource realms | SPECIFICATION |
+| T003-S06-W05 | [T003-S06-05-jpqlHqlGrammar.md](T003-S06-05-jpqlHqlGrammar.md) | jpql hql grammar | SPECIFICATION |
+| T003-S06-W06 | [T003-S06-06-namedQueryContainers.md](T003-S06-06-namedQueryContainers.md) | named query containers | SPECIFICATION |
+| T003-S06-W07 | [T003-S06-07-criteriaSpecificationQuerydsl.md](T003-S06-07-criteriaSpecificationQuerydsl.md) | criteria specification querydsl | SPECIFICATION |
+| T003-S06-W08 | [T003-S06-08-schemaCompatibility.md](T003-S06-08-schemaCompatibility.md) | schema compatibility | SPECIFICATION |
+| T003-S07-W01 | [T003-S07-01-argumentParameterFlow.md](T003-S07-01-argumentParameterFlow.md) | argument parameter flow | SPECIFICATION |
+| T003-S07-W02 | [T003-S07-02-returnConsumerFlow.md](T003-S07-02-returnConsumerFlow.md) | return consumer flow | SPECIFICATION |
+| T003-S07-W03 | [T003-S07-03-fieldAndMappingFlow.md](T003-S07-03-fieldAndMappingFlow.md) | field and mapping flow | SPECIFICATION |
+| T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity | SPECIFICATION |
+| T003-S07-W05 | [T003-S07-05-kafkaRetryDlt.md](T003-S07-05-kafkaRetryDlt.md) | kafka retry dlt | SPECIFICATION |
+| T003-S07-W06 | [T003-S07-06-httpClientExecution.md](T003-S07-06-httpClientExecution.md) | http client execution | SPECIFICATION |
+| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | cross service contract mapping | SPECIFICATION |
+| T003-S07-W08 | [T003-S07-08-evidenceRanking.md](T003-S07-08-evidenceRanking.md) | evidence ranking | SPECIFICATION |
+| T003-S07-W09 | [T003-S07-09-unifiedFlowViews.md](T003-S07-09-unifiedFlowViews.md) | unified flow views | SPECIFICATION |
+| T003-S08-W01 | [T003-S08-01-typescriptProjectReferences.md](T003-S08-01-typescriptProjectReferences.md) | typescript project references | SPECIFICATION |
+| T003-S08-W02 | [T003-S08-02-tsconfigPathsExclude.md](T003-S08-02-tsconfigPathsExclude.md) | tsconfig paths exclude | SPECIFICATION |
+| T003-S08-W03 | [T003-S08-03-typescriptCallbacksGenerics.md](T003-S08-03-typescriptCallbacksGenerics.md) | typescript callbacks generics | SPECIFICATION |
+| T003-S08-W04 | [T003-S08-04-versionedUiEvents.md](T003-S08-04-versionedUiEvents.md) | versioned ui events | SPECIFICATION |
+| T003-S08-W05 | [T003-S08-05-backendFrontendValueFlow.md](T003-S08-05-backendFrontendValueFlow.md) | backend frontend value flow | SPECIFICATION |
+| T003-S09-W01 | [T003-S09-01-xlsxAdvancedReferences.md](T003-S09-01-xlsxAdvancedReferences.md) | xlsx advanced references | SPECIFICATION |
+| T003-S09-W02 | [T003-S09-02-binaryXlsDiagnostics.md](T003-S09-02-binaryXlsDiagnostics.md) | binary xls diagnostics | SPECIFICATION |
+| T003-S09-W03 | [T003-S09-03-templateDialectExpansion.md](T003-S09-03-templateDialectExpansion.md) | template dialect expansion | SPECIFICATION |
+| T003-S09-W04 | [T003-S09-04-approvedMethodologyConflicts.md](T003-S09-04-approvedMethodologyConflicts.md) | approved methodology conflicts | SPECIFICATION |
+| T003-S09-W05 | [T003-S09-05-completeAnalysisReport.md](T003-S09-05-completeAnalysisReport.md) | complete analysis report | SPECIFICATION |
+| T003-S10-W01 | [T003-S10-01-stageContentCache.md](T003-S10-01-stageContentCache.md) | stage content cache | SPECIFICATION |
+| T003-S10-W02 | [T003-S10-02-reverseDependencyIndexes.md](T003-S10-02-reverseDependencyIndexes.md) | reverse dependency indexes | SPECIFICATION |
+| T003-S10-W03 | [T003-S10-03-negativeLookupInvalidation.md](T003-S10-03-negativeLookupInvalidation.md) | negative lookup invalidation | SPECIFICATION |
+| T003-S10-W04 | [T003-S10-04-filesystemMutationEquivalence.md](T003-S10-04-filesystemMutationEquivalence.md) | filesystem mutation equivalence | SPECIFICATION |
+| T003-S10-W05 | [T003-S10-05-selectiveFeatureRevise.md](T003-S10-05-selectiveFeatureRevise.md) | selective feature revise | SPECIFICATION |
+| T003-S10-W06 | [T003-S10-06-cacheCorruptionConcurrency.md](T003-S10-06-cacheCorruptionConcurrency.md) | cache corruption concurrency | SPECIFICATION |
+| T003-S11-W01 | [T003-S11-01-workerCleanInstall.md](T003-S11-01-workerCleanInstall.md) | worker clean install | SPECIFICATION |
+| T003-S11-W02 | [T003-S11-02-buildExporterPackaging.md](T003-S11-02-buildExporterPackaging.md) | build exporter packaging | SPECIFICATION |
+| T003-S11-W03 | [T003-S11-03-windowsNoAdminInstall.md](T003-S11-03-windowsNoAdminInstall.md) | windows no admin install | SPECIFICATION |
+| T003-S11-W04 | [T003-S11-04-mandatoryWorkerCi.md](T003-S11-04-mandatoryWorkerCi.md) | mandatory worker ci | SPECIFICATION |
+| T003-S11-W05 | [T003-S11-05-benchmarkCorpus.md](T003-S11-05-benchmarkCorpus.md) | benchmark corpus | SPECIFICATION |
+| T003-S11-W06 | [T003-S11-06-regressionBudgets.md](T003-S11-06-regressionBudgets.md) | regression budgets | SPECIFICATION |
+| T003-S11-W07 | [T003-S11-07-fullEndToEndAcceptance.md](T003-S11-07-fullEndToEndAcceptance.md) | full end to end acceptance | SPECIFICATION |
+| T003-S11-W08 | [T003-S11-08-releaseDocumentation.md](T003-S11-08-releaseDocumentation.md) | release documentation | SPECIFICATION |
+| T003-S12-W01 | [T003-S12-01-liveConfluenceConnector.md](T003-S12-01-liveConfluenceConnector.md) | live confluence connector | SPECIFICATION |
+| T003-S13-W01 | [T003-S13-01-runtimeTraceProducer.md](T003-S13-01-runtimeTraceProducer.md) | runtime trace producer | SPECIFICATION |
+| T003-S13-W02 | [T003-S13-02-runtimeRtaImport.md](T003-S13-02-runtimeRtaImport.md) | runtime rta import | SPECIFICATION |
+| T003-S13-W03 | [T003-S13-03-runtimeValueFlow.md](T003-S13-03-runtimeValueFlow.md) | runtime value flow | SPECIFICATION |
+| T003-S13-W04 | [T003-S13-04-runtimeAsyncReflection.md](T003-S13-04-runtimeAsyncReflection.md) | runtime async reflection | SPECIFICATION |
+
 ## Jednotný formát
 
 - Soubor zadání: `docs/tasks/<N>_<shortName>.md`, N je kladné celé číslo bez nul na začátku; shortName je ASCII lowerCamelCase.

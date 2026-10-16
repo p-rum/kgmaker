@@ -50,7 +50,8 @@ class Classifier:
         for source in self.model["source_sets"]:
             if not isinstance(source, dict) or not all(isinstance(source.get(k), str) and source[k] for k in ("id", "module", "scope")) or source["scope"] not in SCOPES:
                 raise AnalysisError("source set requires id, module and valid scope")
-            if not isinstance(source.get("roots", []), list) or not isinstance(source.get("files", []), list):
+            if (not isinstance(source.get("roots", []), list) or not isinstance(source.get("files", []), list)
+                    or ("generated" in source and type(source["generated"]) is not bool)):
                 raise AnalysisError("source set roots/files must be lists")
             for value in source.get("roots", []) + source.get("files", []):
                 safe_path(root, value)

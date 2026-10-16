@@ -11,12 +11,13 @@ from dataclasses import asdict, replace
 from .model import KnowledgeGraph
 
 EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_dispatch_to"}
-SIDE_EFFECTS = {"persistence_intent", "query_writes", "publishes", "consumes", "calls_endpoint"}
+SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-1", "impact": "impact-1"}
 
 
-def select_context(graph: KnowledgeGraph, scope: str, context_id: str | None = None) -> str | None:
+def select_context(graph: KnowledgeGraph, scope: str, context_id: str | None = None, *,
+                   allow_stale: bool = False) -> str | None:
     """Choose one usable compiler context or fail on an ambiguous variant set."""
     all_contexts = [item for item in graph.contexts if item.get("analyzer_version")]
     if context_id is not None:
@@ -24,7 +25,7 @@ def select_context(graph: KnowledgeGraph, scope: str, context_id: str | None = N
         if len(selected) != 1:
             raise ValueError("Unknown compiler context; available: "
                              + ", ".join(sorted(item["id"] for item in all_contexts)))
-        if selected[0].get("freshness") == "STALE":
+        if selected[0].get("freshness") == "STALE" and not allow_stale:
             raise ValueError("STALE_INDEX: " + str(selected[0].get("stale_reason", "context is stale"))
                              + "; run `" + str(selected[0].get("next_command", "kgmaker inspect")) + "`")
         if scope != "all" and selected[0].get("scope") != scope:
@@ -56,7 +57,13 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                             for identity in (edge.source, edge.target))
         nodes = [node for node in nodes if node.id not in compiler_ids or node.id in selected_ids]
     ids = {n.id for n in nodes}
-    edges = [e for e in graph.edges if e.source in ids and e.target in ids and (context_id is None or context_id in e.context_ids)]
+    compiler_context_ids = {item.get("id") for item in graph.contexts
+                            if item.get("analyzer_version") and isinstance(item.get("id"), str)}
+    edges = [e for e in graph.edges if e.source in ids and e.target in ids and (
+        context_id is None
+        or context_id in e.context_ids
+        or not (set(e.context_ids) & compiler_context_ids)
+    )]
     if view == "calls":
         edges = [e for e in edges if e.kind in EXECUTION_EDGES or e.kind == "calls"]
     elif view == "configuration":
@@ -67,7 +74,9 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         edges = [e for e in edges if e.kind in {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
                                                 "maps_field", "maps_to_table", "maps_to_column", "declared_on_table",
                                                 "resolves_to_schema_table", "resolves_to_schema_column", "repository_for",
-                                                "declares_query", "query_reads", "query_writes", "persistence_intent"}]
+                                                "declares_query", "defines_named_query", "uses_named_query",
+                                                "query_reads", "query_writes", "query_deletes", "filters_by",
+                                                "orders_by", "returns_entity", "returns_projection", "persistence_intent"}]
     elif view == "integrations":
         edges = [e for e in edges if e.kind in SIDE_EFFECTS | {"implements_contract", "exposes_endpoint",
                                                                "declares_entrypoint", "uses_external_service"}]

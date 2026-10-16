@@ -206,6 +206,47 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual('@backend/' + path, graph.symbols[0]['path'])
         self.assertEqual(graph.to_dict(), type(graph).from_dict(graph.to_dict()).to_dict())
 
+        # A second inspection can change the index without changing source bytes.
+        # Workspace caches must observe that publication as a different input.
+        local = graph_from_response(root, base, response, selected)
+        local.analysis_annotations = [{
+            'id': 'annotation:review', 'origin': 'LLM_ANNOTATION',
+            'target_ids': [caller], 'evidence_ids': [], 'label': 'Reviewed caller',
+        }]
+        save_graph(local, root)
+        updated = snapshot_workspace(self.manifest)[3]
+        self.assertEqual([qualified('backend', 'annotation:review')],
+                         [item['id'] for item in updated.analysis_annotations])
+
+        # Workspace status must not hide a stale repo-qualified compiler realm
+        # behind a current federated source snapshot.
+        save_graph(updated, self.coordinator)
+        source.write_text('class CompilerFixture { void changed() {} }')
+        real_popen = subprocess.Popen
+        def git_only(argv, *args, **kwargs):
+            self.assertIsInstance(argv, list)
+            self.assertEqual('git', argv[0], 'workspace status spawned a project/worker process')
+            return real_popen(argv, *args, **kwargs)
+        with patch('subprocess.Popen', side_effect=git_only):
+            output = io.StringIO()
+            with patch('sys.argv', ['kgmaker', 'scan', '--workspace', str(self.manifest),
+                                    '--root', str(self.coordinator)]), redirect_stdout(output):
+                with self.assertRaises(SystemExit) as code:
+                    main()
+            self.assertEqual(0, code.exception.code, output.getvalue())
+            output = io.StringIO()
+            with patch('sys.argv', ['kgmaker', 'status', '--workspace', str(self.manifest),
+                                    '--root', str(self.coordinator)]), redirect_stdout(output):
+                with self.assertRaises(SystemExit) as code:
+                    main()
+            result = json.loads(output.getvalue())
+        self.assertEqual(2, code.exception.code)
+        self.assertTrue(result['source_graph_current'])
+        self.assertFalse(result['compiler_contexts_current'])
+        self.assertEqual(qualified('backend', selected['id']),
+                         result['stale_compiler_contexts'][0]['id'])
+        self.assertIn('kgmaker inspect code', result['stale_compiler_contexts'][0]['next_command'])
+
     def test_fa49_generation_origin_and_stale_contract(self):
         from kgmaker.analysis_model import file_hash
         metadata = {'source_contract': {'repo_id': 'backend', 'path': 'contracts/exposure.json',

@@ -9,14 +9,32 @@ Normativní požadavky: [registr T001–T003](tasks/README.md).
 Aktivní pořadí dokončení: [T003](tasks/3_finishProductionAnalysis.md).
 PARTIAL znamená existující omezený rozsah; neznamená splněný celý milník.
 
+## Stav pracovního rozšíření 2026-10-16
+
+Rozdělaný podúkol persistence/query modelu je dokončen v podporovaném rozsahu
+**JPA rules v4**. Implementace rozlišuje Entity/Embeddable/MappedSuperclass,
+FIELD/PROPERTY access, EmbeddedId a AttributeOverride, owning/inverse asociace,
+bounded derived query parsing, compiler-owned JPQL/native `@Query`, parametry,
+projekce a reference na named query. Doložené kontroly jsou
+`test_ac06_real_javac_embedded_id_and_association_roles`,
+`test_hb01_embedded_id_and_bidirectional_association_preserve_roles` a celý
+lokální běh `python3 -m pytest -q` — **197 passed in 45.14 s**.
+
+Tento výsledek uzavírá pouze uvedený podúkol, nikoli T003-S06 ani celý T003.
+Zbývající rozsah je nyní rozdělen na atomické specifikace
+[T003-S03-W01 až T003-S13-W04](tasks/README.md#atomické-work-packages-pro-dokončení-t003).
+Další implementace se provádí po jednom work package ve vlastní větvi a samostatném
+pull requestu. Stav každého zůstává SPECIFICATION, dokud jeho PR nedoloží požadované
+testy a akceptační kritéria.
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
-| T003-S02 lifecycle/provider | PARTIAL | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; module/profile contexts se akumulují; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; `test_graph_provider`, `test_workspace`, `test_compiler_workers` | Jednotný explicitní context selection pro query/impact/feature/report a celý AC02 end-to-end scénář včetně profilu/classpath/packet invalidace |
-| T003-S03 build a scope | PARTIAL | Classifier/scope před resolution, read-only Maven reactor discovery, Maven EventSpy, Gradle SourceSet export, runner/import; `test_production_scope`, `test_build_runner`, `test_build_aware` | Reactor/BOM/toolchains/generated/variant matice a cross-repo artefakty |
-| T003-S04 JVM/Kotlin | PARTIAL | JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; `test_compiler_workers` and JVM rendering | K2, širší Kotlin/CFG, dependency dispatch a complete acceptance bank |
-| T003-S05 Spring | PARTIAL | Explicit JVM inspection adds `FRAMEWORK_DERIVED` bean, injection, qualifier/primary/profile boundary, entrypoint, advice and self-invocation proxy facts; `test_build_aware` | Conditions/custom registrars, full profile/property variants, runtime proxy execution and async semantics |
-| T003-S06 persistence | PARTIAL | Flyway replay plus explicit Java annotation entity/table/column binding, schema resolution and Spring Data/query projection; `test_flyway`, `test_build_aware` | Kotlin entity access, naming/association/query grammar and multi-datasource variants |
+| T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
+| T003-S03 build a scope | PARTIAL | Classifier/scope před resolution, read-only Maven reactor discovery, Maven EventSpy `maven-session-2` s parent/BOM/effective dependencies/dependency management/profily/compiler release/toolchain/generated roots, Gradle SourceSet/generated-root export, runner/import; reálný `test_mv02_real_reactor_output_precedes_stale_repository_jar` ověřuje profilovou změnu manifestu, inherited BOM, přednost reactor outputu a content-bound annotation-processor source až po JVM symbol s `origin=generated`; `test_production_scope`, `test_build_runner`, `test_build_aware` | Externí toolchain selection, Gradle custom varianty/included builds, Kotlin options a cross-repo artefakty |
+| T003-S04 JVM/Kotlin | PARTIAL | JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2/Analysis API, default-body/coroutine source mapping, širší corpus, dependency dispatch a úplná acceptance banka |
+| T003-S05 Spring | PARTIAL | Spring rules v3 přidávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Dynamic ImportSelector/registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
+| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
 | T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
 | T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
@@ -45,10 +63,29 @@ nulové procesy, selektivní projekci a nulovou mutaci před explicitním scan/h
 `test_offline_refresh_preserves_real_call_sites_and_cfg` ověřuje skutečný JVM
 výstup. Multi-context module/profile akumulaci a nulovou mutaci při selhání pokrývají
 další provider testy. `test_workspace_preserves_repo_qualified_compiler_collections`
-ověřuje workspace schema v3. Jednotný context selection a celý T003-AC02 sled proto
-ještě nejsou VERIFIED.
+ověřuje workspace schema v3. `test_feature_requires_and_persists_explicit_context_for_variants`
+ověřuje odmítnutí nejednoznačné varianty a stabilní packet projekci. Regrese
+`test_status_separates_current_source_graph_from_stale_compiler_context` dokládá,
+že source-current stav nezakrývá stale compiler context a offline status/check
+nespouštějí proces. Rozšířený workspace test dokládá stejný kontrakt pro
+repo-qualified context a připouští pouze read-only Git baseline proces.
+`test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` používá skutečný
+JVM worker a ověřuje `inspect → scan → hook-context → query/impact → feature
+prepare/validate/apply/report`, dvě profilové varianty, packet revision a classpath
+invalidaci. T003-AC02 je tím VERIFIED_IN_SCOPE pro publikovanou matici; širší build,
+framework a incremental varianty zůstávají v S03–S10.
 
 ## Ověřená upstream CI evidence
+
+Lokální navazující běh 2026-10-16: `python3 -m pytest -q` — **197 passed in
+45.14 s**. Přibylo skutečné Maven reactor/stale-JAR ověření včetně inherited
+profilu, BOM/effective modelu, content-bound generated source s JVM origin důkazem
+a toolchain metadata, TypeScript re-export
+a lockfile invalidace, explicitní ORM realm/naming boundary a schválená Confluence
+metodika s decision provenance. Query/impact mají explicitní context selection;
+feature packets nesou uložený scope/context, context fingerprint a graph evidence
+IDs. S02/AC02 jsou ověřené v podporované matici; tyto kontroly neuzavírají celé
+S03/S06/S08/S09 ani další povinné etapy.
 
 [Run 38705043005](https://github.com/p-rum/kgmaker/actions/runs/38705043005) na
 `6b5aea1`: SUCCESS všech šesti jobů — Python 3.11/3.12/3.13, compiler-workers,

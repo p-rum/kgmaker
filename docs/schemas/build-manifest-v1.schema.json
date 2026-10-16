@@ -56,7 +56,18 @@
           "source_roots",
           "source_files",
           "classpath"
-        ]
+        ],
+        "properties": {
+          "generated_source_roots": {"type": "array", "items": {"type": "string"}},
+          "generated_sources": {"type": "array", "items": {"type": "object"}},
+          "build_profiles": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "compiler_options": {"type": "object"},
+          "toolchain": {"type": "object"},
+          "parent": {"type": ["object", "null"]},
+          "effective_dependencies": {"type": "array", "items": {"type": "object"}},
+          "dependency_management": {"type": "array", "items": {"type": "object"}},
+          "imported_boms": {"type": "array", "items": {"type": "object"}}
+        }
       }
     }
   }

@@ -106,7 +106,7 @@ worktree: `python3 -m pytest -q` — **184 passed in 15.93 s**, Python 3.12.
 | T002-HB-02 | NOT_IMPLEMENTED | custom naming + multi-datasource realm matrix | žádný přímý acceptance test | NOT_RUN |
 | T002-HB-03 | PARTIAL | Spring Data/query projection subset | `test_build_aware.py::test_framework_projection_keeps_framework_evidence_separate` | 184 PASS |
 | T002-HB-04 | PARTIAL | Flyway stream/type/nullability subset | `test_flyway.py::test_fa45_schema_mapping_precision_nullability_and_absent_column` | 184 PASS |
-| T002-WS-01 | PARTIAL | selective source/module invalidation; classpath snapshot validation | `test_graph_provider.py::test_stale_module_is_projected_out_while_other_context_remains_usable`; `test_build_aware.py::test_runtime_import_is_bound_to_context_and_rejects_stale_source` | 184 PASS |
+| T002-WS-01 | VERIFIED_IN_SCOPE | selective source/module/classpath/profile packet invalidation | `test_graph_provider.py::test_stale_module_is_projected_out_while_other_context_remains_usable`; `test_compiler_workers.py::CompilerWorkerTests::test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle`; workspace freshness tests | 197 PASS |
 | T002-EV-01 | PARTIAL | hash-bound runtime import v1 | `test_build_aware.py::test_runtime_import_is_bound_to_context_and_rejects_stale_source`; `test_production_scope.py::test_ev02_forged_evidence_reference_and_promoted_candidate_are_rejected` | 184 PASS |
 | T002-EV-02 | VERIFIED_IN_SCOPE | availability proof v1 | `test_availability.py::test_dto_or_migration_declaration_alone_not_available` | 184 PASS |
 | T002-BC-01 | VERIFIED_IN_SCOPE | graph v1/v2/v3 migration; offline refresh | `test_production_scope.py::test_bc01_existing_build_scan_and_hook_never_launch_project_tools`; `test_graph_provider.py` | 184 PASS |
@@ -114,6 +114,43 @@ worktree: `python3 -m pytest -q` — **184 passed in 15.93 s**, Python 3.12.
 
 ## Neuzavřené blokátory
 
-Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/21/24/73,
-T002-MV-02 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
+Aktualizace 2026-10-16: následující evidence nahrazuje odpovídající starší řádky
+tabulky. Celý navazující běh měl **197 passed in 45.14 s**; zaměřený
+worker/build/provider/feature běh měl **53 passed in 28.60 s**.
+
+| ID | Aktuální stav | Nová přímá evidence | Zbývající rozsah |
+|---|---|---|---|
+| T001-FA-21 | VERIFIED_IN_SCOPE | `test_scanner.py::test_fa21_approved_requirement_conflict_preserves_authority` | Libovolná business/číselná ekvivalence není tímto tvrzena; explicitní hash-bound sidecar je dodaná provenance |
+| T002-MV-02 | VERIFIED_IN_SCOPE | `test_build_runner.py::test_mv02_real_reactor_output_precedes_stale_repository_jar` — skutečný Maven/JDK/exporter | Širší packaging/variant/toolchain matrix patří do S03/S11 |
+| T002-MV-01 | PARTIAL | stejná reálná fixture ověřuje `maven-session-2`, inherited profil, parent/BOM, effective dependencies/dependency management, compiler release, Java/Maven toolchain a content-bound annotation-processor source až po JVM symbol `origin=generated`; tamper je odmítnut | Externí toolchain selection a širší Gradle/variant matice |
+| T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
+| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
+| T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
+| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access, EmbeddedId, AttributeOverride, owning/inverse association, derived paths, compiler-owned JPQL/native query, parameter/projection a named-query reference; JPA rules `annotation-source-v4` | Kotlin use-site/access, XML override priorita, inheritance attributes, dvě datasource se stejnou tabulkou, širší query grammar/dynamic builders a úplná schema matice |
+| T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
+
+Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc
+ověřuje rozšířený `test_workspace_preserves_repo_qualified_compiler_collections`.
+Focused běh workspace/provider: **24 passed in 3.74 s**.
+
+T003-AC02 je VERIFIED_IN_SCOPE v publikované JVM/Python matici. Nový
+`test_graph_provider.py::test_feature_requires_and_persists_explicit_context_for_variants`
+ověřuje, že feature prepare odmítne nejednoznačné module/profile varianty, uloží
+explicitní scope/context a graph provider následně vrátí jen zvolenou compiler
+vrstvu. Focused feature/provider/workspace běh: **49 passed in 6.13 s**.
+`test_graph_provider.py::test_status_separates_current_source_graph_from_stale_compiler_context`
+a rozšířený `test_workspace_preserves_repo_qualified_compiler_collections` navíc
+ověřují fail-closed status/check pro single-root i repo-qualified workspace bez
+spuštění workeru, buildu nebo projektu. Focused workspace/provider běh: **26 passed
+in 1.81 s**.
+
+Skutečný
+`test_compiler_workers.py::CompilerWorkerTests::test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle`
+navíc provádí celý inspect/refresh/query/impact/feature/report sled, dvě profilové
+varianty a content změnu classpath. Focused worker/provider/workspace/feature/dataflow
+běh: **68 passed in 20.07 s**. Rozšíření jazykových, buildových a framework variant
+patří do S03–S10 a není součástí tohoto VERIFIED tvrzení.
+
+Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
+a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
 v T003; zelený souhrnný běh jejich chybějící varianty nedokládá.

@@ -73,7 +73,13 @@ kgmaker runtime import --root PATH --manifest runtime-manifest.json
   It is labelled `FAKE_TEST_ONLY`; no live host/API/authentication contract is
   claimed. Publishing is possible only through an explicitly supplied adapter and
   an exact approved package, never from scan, hook, feature or data-check.
-- `status` compares local indexed source hashes with the current repository. `check` rescans and verifies the committed Markdown documentation and Mermaid diagram, so it works in CI without `.kgmaker/graph.json`.
+- `status` compares the indexed source graph with the repository and validates saved
+  compiler contexts separately. A current source graph with a stale compiler context
+  exits 2 and prints the exact explicit inspection command. `check` applies the same
+  compiler gate while verifying committed Markdown and Mermaid output. Neither command
+  runs a compiler, build, test, package manager, or application. Workspace status
+  exposes `source_graph_current`, `compiler_contexts_current`, and bounded
+  `stale_compiler_contexts` independently for repo-qualified realms.
 - `docs` regenerates `.kgmaker/GRAPH.md` and `.kgmaker/GRAPH.mmd` from the local machine index. The diagram groups code declarations by file and shows imports plus detected database, Kafka, API, frontend, and semantic relationships. Heuristic call edges are left out to keep the architecture view readable.
 - `impact FILE` lists transitive dependents through imports and name-based calls. Imports are exact path matches; `calls` are candidates and may be wrong when names collide.
 - `semantic prepare` writes a local inventory of stable graph IDs and per-file hashes, without copying source contents. The `kgmaker-extract` Copilot agent uses it for the first `.kgmaker/semantic.json` extraction.
@@ -123,12 +129,17 @@ agent-authored candidates, stores immutable revisions and renders Czech/English
 reports. It works without a diff, LLM API or semantic change packet.
 
 ```bash
-kgmaker feature prepare --root . --requirement requirements/new-feature.md --id new-feature
+kgmaker feature prepare --root . --requirement requirements/new-feature.md --id new-feature --scope production --context <context-id>
 # Follow candidate-template.json and write candidate.json with the host agent.
 kgmaker feature validate --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
 kgmaker feature apply --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
 kgmaker feature report --root . --analysis new-feature
 ```
+
+`--context` is optional when the selected scope has at most one fresh compiler
+context. With multiple module/profile variants, `prepare` requires the explicit
+context ID and stores it with `--scope` in the packet. Validate, apply, status and
+report reuse that selection; passing a different selection is rejected.
 
 Run `kgmaker init` to install the `kgmaker-analyst` custom agent and JetBrains
 analysis command instructions. See [workflow, schema and exact limitations](docs/feature-analysis.md)
@@ -188,9 +199,52 @@ availability proofs are implemented. See [commands, contracts and boundaries](do
 Volitelné compiler workery a samostatný explicitní build workflow popisuje
 [compiler inspection](docs/compiler-inspection.md). Maven POM discovery is
 source-only; effective classpaths and fresh outputs require an explicit build
-plan/import. Runtime import accepts only a supplied, hash-bound observation
+plan/import. Explicitní Maven session export v2 navíc přenáší parent/BOM,
+effective dependencies a dependency management, aktivní i inherited profily,
+generated source roots, compiler release a konkrétní Java/Maven toolchain.
+Manifest, dependency model, toolchain a generated roots vstupují do identity
+compiler kontextu. Zdroje vytvořené annotation processorem se přijímají pouze z
+explicitního úspěšného buildu, zůstávají v jeho izolovaném run adresáři a každý je
+svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovají
+`origin=generated`. Runtime import accepts only a supplied, hash-bound observation
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
+
+JVM inspection v ověřeném Kotlin 1.9 compatibility subsetu zachovává přesné
+constructor, lambda a callable-reference identity a compiler-resolved uživatelské
+operátory. Operator call site vstupuje do source CFG; inline/default/suspend jsou
+metadata, nikoli tvrzení o provedení compiler-generated body nebo coroutine state machine.
+Custom Kotlin getter/setter mají vlastní method/CFG a property access používá přesný
+`ACCESSOR` call site. Class property initializers a `init` bloky patří ve zdrojovém
+pořadí do primary-constructor CFG. Top-level properties používají file-facade
+`<clinit>()V`; object/companion initializers zůstávají v constructor realm svého objektu.
+
+Spring projection v podporovaném annotation subsetu rozlišuje aktivní, neaktivní
+a neznámé `@Profile`, `@ConditionalOnProperty`, `@ConditionalOnClass` a custom
+`@Conditional`. Pouze jediný aktivní kandidát dostane `injects_bean`; neznámé nebo
+víceznačné varianty zůstávají `may_inject_bean`. Qualifier/Primary, short-name guard
+a self-invocation proxy boundary jsou součástí stejného context-bound výsledku.
+Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
+`spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
+Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
+unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
+Pravidla v3 navíc počítají dosažitelnost `@Configuration` přes component scan a
+statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
+class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
+bean. ImportSelector a registrar se nespouštějí a zůstávají diagnostickou hranicí.
+
+JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
+FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
+`@AttributeOverride` a rozlišují owning/inverse asociace přes `mappedBy`.
+Vztahový atribut nevytváří smyšlený scalar column; explicitní JoinColumn/JoinTable
+zůstává samostatným mapovacím objektem.
+Bounded Spring Data parser ověřuje derived query properties proti entity,
+association a embedded atributům, zachovává operátory a `OrderBy` a rozlišuje
+čtení od delete intentu. Neznámá property nevytvoří resolved hranu.
+Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry,
+návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
+ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
+repository metoda se na ni váže přes `uses_named_query`.
 
 
 ## Compiler lifecycle
@@ -211,6 +265,14 @@ kgmaker hook-context --root project
 Module/profile contexts accumulate under distinct selection keys and compiler
 symbol IDs include their context identity; refreshing one selection replaces only
 that selection. Workspace snapshots preserve compiler symbols, call sites, CFG,
-evidence and annotations under repo-qualified identities. The full end-to-end
-context-selection acceptance remains open in
+evidence and annotations under repo-qualified identities. Feature packets preserve
+the same explicit scope/context used by query and impact. The real JVM fixture
+verifies the full lifecycle, profile selection and classpath invalidation within
+the published matrix in
 [T003-S02](docs/tasks/3_finishProductionAnalysis.md#t003-s02--jednotný-provider-a-lifecycle-grafu).
+
+Use `query --context CONTEXT_ID` or `impact --entity ENTITY_ID --include-data-flow
+--context CONTEXT_ID` when several compiler contexts are available. Feature packets
+retain context fingerprints and evidence IDs. Offline approved methodology
+provenance is supplied through the hash-bound sidecar described in
+[feature analysis](docs/feature-analysis.md); conflicts remain review items.

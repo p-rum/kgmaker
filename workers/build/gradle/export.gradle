@@ -15,13 +15,14 @@ gradle.projectsEvaluated {
                 sets.each { s ->
                     def scope = s.name == 'main' ? 'production' : (s.name == 'testFixtures' ? 'test_fixture' : (s.name.toLowerCase().contains('test') ? 'test' : 'unknown'))
                     def roots = s.allSource.srcDirs.findAll { it.canonicalFile.toPath().startsWith(root.toPath()) }.collect(relative).sort()
+                    def generated = roots.findAll { it.contains('/build/generated/') || it.startsWith('build/generated/') }
                     def files = s.allSource.files.findAll { it.name.endsWith('.java') || it.name.endsWith('.kt') }.collect(relative).sort()
                     def compile = p.tasks.findByName(s.compileJavaTaskName)
                     contexts << [id:p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,
-                        source_roots:roots,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
+                        source_roots:roots,generated_source_roots:generated,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
                         output_paths:s.output.classesDirs.files.collect { it.canonicalPath }, build_system:'gradle',build_profiles:[],
                         compiler_options:compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:],
-                        toolchain:[java_version:System.getProperty('java.version'),gradle_version:gradle.gradleVersion],
+                        toolchain:[java_version:System.getProperty('java.version'),java_home:System.getProperty('java.home'),gradle_version:gradle.gradleVersion],
                         task_inputs:compile == null ? [] : compile.inputs.files.files.findAll { it.isFile() }.collect { it.canonicalPath }.sort()]
                 }
                 modules[p.path] = 'EXPORT_COMPLETED'

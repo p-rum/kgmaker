@@ -26,7 +26,10 @@ def _analysis_details(graph) -> dict:
     keys = ("id", "selection_key", "mode", "repo_id", "module", "source_set",
             "scope", "language", "freshness", "status", "analyzer_version",
             "stale_reason", "next_command", "database_id", "schema_stream_id",
-            "persistence_unit", "naming_strategy")
+            "persistence_unit", "naming_strategy", "build_profiles", "toolchain",
+            "dependency_model_hash", "generated_source_roots", "manifest_hash",
+            "spring_properties", "spring_available_classes", "spring_component_packages",
+            "framework_rule_versions")
     contexts = [{key: context[key] for key in keys if key in context}
                 for context in graph.contexts if isinstance(context.get("id"), str)]
     return {
@@ -130,20 +133,40 @@ def source_path(root: Path, key: str, packet: dict) -> Path:
 
 def graph_for_packet(root: Path, packet: dict):
     workspace = Path(packet['workspace']['manifest_path']) if packet.get('workspace') else None
-    return current_graph(root, workspace)[0]
+    graph = current_graph(root, workspace)[0]
+    if "graph_selection" not in packet:
+        return graph
+    selection = packet.get("graph_selection", {"scope": "all", "context_id": None})
+    from .views import project, select_context
+    context_id = select_context(graph, selection["scope"], selection.get("context_id"), allow_stale=True)
+    return project(graph, selection["scope"], context_id=context_id)
 
 
-def snapshot(root: Path, *, workspace: Path | None = None, _details: dict | None = None, _persist_cache: bool = False) -> tuple[dict, dict, dict, list]:
+def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
+             context_id: str | None = None, _details: dict | None = None,
+             _persist_cache: bool = False, _select_context: bool = True) -> tuple[dict, dict, dict, list]:
     if workspace is not None:
         from .workspace import snapshot_workspace
         baseline, coverage, sources, graph, metadata = snapshot_workspace(workspace, cache_root=root, persist_cache=_persist_cache)
+        if _select_context:
+            from .views import project, select_context
+            context_id = select_context(graph, scope, context_id, allow_stale=True)
+            graph = project(graph, scope, context_id=context_id)
         details = _analysis_details(graph)
+        if _select_context:
+            details["graph_selection"] = {"scope": scope, "context_id": context_id}
+        baseline["graph_fingerprint"] = digest({key: value for key, value in graph.to_dict().items()
+                                                  if key != "generated_at"})
         baseline["analysis_context_fingerprint"] = details["analysis_context_fingerprint"]
         if _details is not None:
             _details['workspace'] = metadata
             _details.update(details)
         return baseline, coverage, sources, graph.nodes
     graph, _, semantic_error = current_graph(root)
+    if _select_context:
+        from .views import project, select_context
+        context_id = select_context(graph, scope, context_id, allow_stale=True)
+        graph = project(graph, scope, context_id=context_id)
     graph_data = graph.to_dict()
     graph_data.pop("generated_at", None)
     sources, excluded = source_inventory(root)
@@ -158,6 +181,8 @@ def snapshot(root: Path, *, workspace: Path | None = None, _details: dict | None
                 "analysis_context_fingerprint": digest(graph.contexts)}
     if _details is not None:
         _details.update(_analysis_details(graph))
+        if _select_context:
+            _details["graph_selection"] = {"scope": scope, "context_id": context_id}
     limitations = ["Static paths do not prove runtime availability; scoped supplied observations require approved mappings.",
                    "XLSX formulas are dependency evidence only; cached values have unknown freshness and are not evaluated.",
                    "Thymeleaf support is limited to literal model keys/template returns; no arbitrary expression evaluation.",
@@ -213,7 +238,17 @@ def load_packet(root: Path, analysis_id: str) -> dict:
 
 def freshness(root: Path, packet: dict) -> list[str]:
     workspace = Path(packet['workspace']['manifest_path']) if packet.get('workspace') else None
-    baseline, _, sources, _ = snapshot(root, workspace=workspace)
+    selection = packet.get("graph_selection")
+    try:
+        if selection is None:
+            # Schema-v1 packets predate explicit graph selection and covered the
+            # complete graph. Keep validating those without inventing a variant.
+            baseline, _, sources, _ = snapshot(root, workspace=workspace, _select_context=False)
+        else:
+            baseline, _, sources, _ = snapshot(root, workspace=workspace, scope=selection["scope"],
+                                               context_id=selection.get("context_id"))
+    except ValueError as exc:
+        return ["selected graph context is unavailable: " + str(exc)]
     changes = []
     for key in ("graph_fingerprint", "working_tree_fingerprint", "parser_version", "semantic_hash",
                 "analysis_context_fingerprint"):
@@ -231,7 +266,9 @@ def freshness(root: Path, packet: dict) -> list[str]:
     return changes
 
 
-def prepare(root: Path, requirement: str, analysis_id: str, token_budget: int = 8000, *, _answers: list | None = None, workspace: Path | None = None) -> dict:
+def prepare(root: Path, requirement: str, analysis_id: str, token_budget: int = 8000, *,
+            _answers: list | None = None, workspace: Path | None = None,
+            scope: str = "all", context_id: str | None = None) -> dict:
     if type(token_budget) is not int or token_budget < 1:
         raise AnalysisError("token-budget must be a positive integer")
     directory = analysis_dir(root, analysis_id)
@@ -246,8 +283,16 @@ def prepare(root: Path, requirement: str, analysis_id: str, token_budget: int = 
     old = load_packet(root, analysis_id) if (directory / "packet.json").exists() else None
     if workspace is None and old and old.get('workspace'):
         workspace = Path(old['workspace']['manifest_path'])
+    if old and context_id is None and "graph_selection" in old:
+        context_id = old["graph_selection"].get("context_id")
+        scope = old["graph_selection"]["scope"]
     details = {}
-    baseline, coverage, manifest, nodes = snapshot(root, workspace=workspace, _details=details, _persist_cache=True)
+    try:
+        baseline, coverage, manifest, nodes = snapshot(
+            root, workspace=workspace, scope=scope, context_id=context_id,
+            _details=details, _persist_cache=True)
+    except ValueError as exc:
+        raise AnalysisError(str(exc), 2) from exc
     if file_hash(source) != requirement_file_hash:
         raise AnalysisError('Requirement changed during packet preparation', 3)
     answers = _answers if _answers is not None else old.get("answers", []) if old else []

@@ -54,7 +54,12 @@ public final class State {
     public Map<String,Object> location(Path file,long start,long end,int startLine,int startColumn,int endLine,int endColumn) {
         String relative=root.relativize(file.toAbsolutePath().normalize()).toString().replace('\\','/');
         if(relative.startsWith("../")) throw new IllegalArgumentException("Source outside root");
-        return map("path",relative,"sha256",inputs.get(file.toAbsolutePath().normalize()),"origin","handwritten",
+        String origin="handwritten";
+        for(Object raw:(List<?>)context.getOrDefault("generated_source_roots",List.of())) {
+            String generated=(String)raw;
+            if(relative.equals(generated)||relative.startsWith(generated.replaceAll("/+$","")+"/")){origin="generated";break;}
+        }
+        return map("path",relative,"sha256",inputs.get(file.toAbsolutePath().normalize()),"origin",origin,
             "range",start<0||end<0?null:map("start",start,"end",end,"start_line",startLine,"start_column",startColumn,"end_line",endLine,"end_column",endColumn));
     }
     @SuppressWarnings("unchecked")
