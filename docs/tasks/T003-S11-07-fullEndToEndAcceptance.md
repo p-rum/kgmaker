@@ -6,7 +6,7 @@
 - Datum: 2026-10-16
 - Stav: SPECIFICATION; tento soubor popisuje cílové chování, nikoli hotovou implementaci.
 - Baseline: pracovní větev nad `8ac80ca30f6f680539deb7fb3590519d3a5c1460`; před zahájením ověř aktuální cílovou větev a otevřené PR.
-- Závislosti: T003-S11, průřezové požadavky `T003-R01–R10` a relevantní dřívější work packages uvedené v PR.
+- Závislosti: T003-S03-W01 až T003-S10-W06, T003-S11-W04 a T003-S11-W06; průřezové požadavky `T003-R01–R10`.
 - Nadřazená acceptance: `T003-AC11`.
 
 ## Cíl
@@ -48,4 +48,3 @@ Automatizovat build/import→inspection→refresh→feature/data audit→report�
 - Implementuj výhradně v samostatné větvi, doporučeně `feat/t003-s11-07-full-end-to-end-acceptance`; do stejné větve nepřidávej jiný work package.
 - Na konci vytvoř samostatný pull request do aktuálně určené cílové větve. PR musí odkázat na tento soubor, `T003-S11`, nadřazenou acceptance a nový change note; bez explicitního pokynu jej nemerguj.
 - Hotovo znamená implementovaný omezený kontrakt, zelené požadované kontroly, aktualizované docs, validní sémantický patch/scan podle projektových instrukcí a zdokumentované zbývající hranice.
-

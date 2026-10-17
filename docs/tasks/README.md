@@ -84,6 +84,35 @@ samostatným pull requestem.
 | T003-S13-W03 | [T003-S13-03-runtimeValueFlow.md](T003-S13-03-runtimeValueFlow.md) | runtime value flow | SPECIFICATION |
 | T003-S13-W04 | [T003-S13-04-runtimeAsyncReflection.md](T003-S13-04-runtimeAsyncReflection.md) | runtime async reflection | SPECIFICATION |
 
+## Matice pokrytí zbývající implementace
+
+Matice je kontrolní seznam úplnosti rozpadu vůči
+[T003](3_finishProductionAnalysis.md) a aktuálním mezerám ve
+[stavové matici](../production-analysis-progress.md). S01 a S02 nemají nový
+implementační work package, protože jsou ve zdokumentovaném scope
+`VERIFIED_IN_SCOPE`; jejich budoucí údržba je součástí každého dotčeného PR.
+
+| Milník | Zbývající samostatné oblasti | Work packages |
+|---|---|---|
+| T003-S01 | Pouze průběžná údržba acceptance inventáře | žádný nový; povinná aktualizace v každém relevantním tasku |
+| T003-S02 | Pouze rozšíření matice navazujícími adaptéry | žádný nový; společný provider je závazná závislost |
+| T003-S03 | externí toolchain; Gradle varianty; included builds; Kotlin options; cross-repo artefakty | W01–W05 |
+| T003-S04 | K2 backend; default-body mapping; coroutine mapping; dependency dispatch; golden corpus | W01–W05 |
+| T003-S05 | dynamic imports; registrars/factories; condition matrix; proxy/async semantika | W01–W04 |
+| T003-S06 | Kotlin access; inheritance; XML overrides; datasource realms; JPQL/HQL; named queries; dynamic query APIs; schema compatibility | W01–W08 |
+| T003-S07 | argumenty; návraty; fields/mapping; Kafka identity; retry/DLT; HTTP execution; cross-service contracts; ranking; jednotné pohledy | W01–W09 |
+| T003-S08 | project references; tsconfig; re-export/generics/callbacks; UI events; BE–FE value flow | W01–W05 |
+| T003-S09 | XLSX advanced references; XLS diagnostics; templates; approved methodology; úplný report | W01–W05 |
+| T003-S10 | stage cache; reverse indexy; negative lookup; filesystem equivalence; selective revise; corruption/concurrency | W01–W06 |
+| T003-S11 | worker a exporter packaging; Windows; mandatory CI; benchmark; budgets; end-to-end acceptance; release docs | W01–W08 |
+| T003-S12 | živý konektor po dodání host/API/auth kontraktu | W01 |
+| T003-S13 | trace producer; RTA; value flow; async/reflection | W01–W04 |
+
+Rozsahy spojené lomítkem patří do jednoho work package jen tehdy, když sdílejí
+tentýž vstupní kontrakt a nelze je otestovat nebo publikovat bez druhé části
+(např. retry/DLT, corruption/concurrency a async/reflection). Každý řádek
+registru má přesto samostatnou větev, PR a vlastní acceptance.
+
 ## Jednotný formát
 
 - Soubor zadání: `docs/tasks/<N>_<shortName>.md`, N je kladné celé číslo bez nul na začátku; shortName je ASCII lowerCamelCase.

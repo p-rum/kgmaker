@@ -6,7 +6,7 @@
 - Datum: 2026-10-16
 - Stav: SPECIFICATION; tento soubor popisuje cílové chování, nikoli hotovou implementaci.
 - Baseline: pracovní větev nad `8ac80ca30f6f680539deb7fb3590519d3a5c1460`; před zahájením ověř aktuální cílovou větev a otevřené PR.
-- Závislosti: T003-S08, průřezové požadavky `T003-R01–R10` a relevantní dřívější work packages uvedené v PR.
+- Závislosti: T003-S07-W06, T003-S07-W07 a T003-S08-W01 až T003-S08-W04; průřezové požadavky `T003-R01–R10`.
 - Nadřazená acceptance: `T003-AC08`.
 
 ## Cíl
@@ -48,4 +48,3 @@ Propojit response fields přes kontrakt, mapping/destructuring/state do UI použ
 - Implementuj výhradně v samostatné větvi, doporučeně `feat/t003-s08-05-backend-frontend-value-flow`; do stejné větve nepřidávej jiný work package.
 - Na konci vytvoř samostatný pull request do aktuálně určené cílové větve. PR musí odkázat na tento soubor, `T003-S08`, nadřazenou acceptance a nový change note; bez explicitního pokynu jej nemerguj.
 - Hotovo znamená implementovaný omezený kontrakt, zelené požadované kontroly, aktualizované docs, validní sémantický patch/scan podle projektových instrukcí a zdokumentované zbývající hranice.
-

@@ -1,7 +1,7 @@
 # Rozpad zbývající implementace T003
 
 - Change note: 6
-- Datum: 2026-10-16
+- Datum: 2026-10-16; audit úplnosti 2026-10-17
 - Související zadání: T003-S03–S13, T003-AC03–AC13
 - Stav: dokumentační předání; nedeklaruje implementaci nových work packages.
 
@@ -18,6 +18,10 @@ samostatných větví a reviewovat jako malé pull requesty.
 - Každý soubor obsahuje cíl, kontrakty, kroky, testovací požadavky, negativní případ,
   akceptační kritéria, kompatibilitu, Definition of Done a povinnou vlastní větev/PR.
 - Registr vysvětluje identitu `T003-Sxx-Wyy` a odlišuje ji od hlavních T001–T003.
+- Registr obsahuje matici pokrytí všech mezer T003-S03–S13; S01/S02 jsou
+  výslovně uvedené jako již ověřený společný základ bez nového implementačního tasku.
+- Každý work package uvádí konkrétní předchozí Work Package ID nebo výslovně
+  říká, že po T003-S02 nemá další taskovou závislost.
 - Volitelný runtime S13 a live Confluence S12 zůstávají výslovně oddělené od
   dokončení statického jádra.
 
@@ -31,9 +35,13 @@ beze změny.
 
 - Kontrola kolizí názvů v `docs/tasks` a `docs/changes`.
 - Kontrola úplnosti registru proti vytvořeným souborům.
-- `python3 -m pytest -q` před dokumentačním rozpadem: **197 passed in 45.14 s**.
-- Po dokončení dokumentace budou provedeny link/strukturní kontroly, sémantická
-  aktualizace dle workflow a `git diff --check`.
+- Audit konkrétních závislostí a matice pokrytí: **60/60 work packages**.
+- Strukturní audit názvů, ID, sekcí, test requirements, acceptance, větví,
+  PR požadavků, registru a dependencies: **60 souborů, 60 ID, 60 větví, 0 chyb**.
+- Kontrola lokálních Markdown odkazů: **63 souborů, 0 rozbitých odkazů**.
+- `python3 -m pytest -q` po dokončení dokumentace: **197 passed in 35.24 s**.
+- Sémantická aktualizace dle workflow, finální scan a `git diff --check` jsou
+  součástí závěrečného předání.
 
 ## Neprovedené kontroly
 
@@ -52,4 +60,3 @@ i negativní fixture a vytvoří samostatný PR s vlastním novým change note.
 Implementovat work packages jednotlivě v jejich explicitním pořadí závislostí.
 Milník ani acceptance se nesmí označit COMPLETE jen proto, že existuje jeho
 specifikace.
-
