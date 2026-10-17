@@ -159,6 +159,11 @@ class FeatureTests(unittest.TestCase):
     def test_fa25_cli_workflow_without_semantic_packet_or_git(self):
         write_json(self.directory / 'candidate.json', self.candidate)
         before = self.tree()
+        code, result = self.cli('validate', '--analysis', 'hedge', '--candidate',
+                                '.kgmaker/analyses/hedge/candidate.json', '--scope', 'production')
+        self.assertEqual(2, code)
+        self.assertIn('selection differs', result['error'])
+        self.assertEqual(before, self.tree())
         code, result = self.cli('validate', '--analysis', 'hedge', '--candidate', '.kgmaker/analyses/hedge/candidate.json')
         self.assertEqual(0, code)
         self.assertTrue(result['valid'])
@@ -168,6 +173,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual(0, self.cli('report', '--analysis', 'hedge')[0])
         report = (self.root / 'docs/generated/features/hedge.md').read_text(encoding='utf-8')
         self.assertIn('Business cíl', report)
+        self.assertIn('Graph scope: `all`', report)
         self.assertEqual(11, report.count('\n## '))
 
     def test_fa33_report_not_used_as_source_evidence(self):
@@ -206,7 +212,9 @@ class FeatureTests(unittest.TestCase):
     def test_fa31_graph_version_compatibility(self):
         old = {'nodes': [], 'edges': [], 'files': {}}
         self.assertEqual(1, KnowledgeGraph.from_dict(old).schema_version)
-        for version in [True, 2, '1']:
+        self.assertEqual(2, KnowledgeGraph.from_dict({**old, 'schema_version': 2}).schema_version)
+        self.assertEqual(3, KnowledgeGraph.from_dict({**old, 'schema_version': 3}).schema_version)
+        for version in [True, 4, '1']:
             with self.assertRaisesRegex(ValueError, 'Unsupported graph schema_version'):
                 KnowledgeGraph.from_dict({**old, 'schema_version': version})
 
@@ -362,4 +370,3 @@ class FeatureTests(unittest.TestCase):
         candidate['requirements'][0]['text'] = 'Tampered after apply'
         write_json(self.directory / 'analysis.json', candidate)
         self.assertEqual(2, self.cli('report', '--analysis', 'hedge')[0])
-

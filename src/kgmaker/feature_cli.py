@@ -17,6 +17,8 @@ def register(subparsers):
         child = commands.add_parser(command)
         child.add_argument("--root", type=Path, default=Path.cwd())
         child.add_argument("--workspace", type=Path)
+        child.add_argument("--scope", choices=("production", "test", "test_fixture", "development", "unknown", "all"))
+        child.add_argument("--context")
         child.add_argument("--require-complete", action="store_true")
         if command == "prepare":
             child.add_argument("--requirement", required=True)
@@ -46,8 +48,16 @@ def run(args) -> int:
             packet = feature.load_packet(root, args.analysis)
             if packet.get('workspace', {}).get('manifest_path') != str(args.workspace.resolve()):
                 raise AnalysisError('Command workspace differs from analysis workspace')
+        if command != 'prepare' and (args.scope is not None or args.context is not None):
+            packet = feature.load_packet(root, args.analysis)
+            requested = {"scope": args.scope or packet.get("graph_selection", {}).get("scope", "all"),
+                         "context_id": args.context if args.context is not None else packet.get("graph_selection", {}).get("context_id")}
+            if requested != packet.get("graph_selection", {"scope": "all", "context_id": None}):
+                raise AnalysisError("Command graph selection differs from analysis packet; prepare a new revision")
         if command == "prepare":
-            packet = feature.prepare(root, args.requirement, args.id, args.token_budget, workspace=args.workspace)
+            packet = feature.prepare(root, args.requirement, args.id, args.token_budget,
+                                     workspace=args.workspace, scope=args.scope or "all",
+                                     context_id=args.context)
             result = {"analysis_id": args.id, "revision": packet["revision"], "packet_id": packet["packet_id"],
                       "completion": inventory_candidate(packet)["completion"], "budget": packet["budget"],
                       "template": f".kgmaker/analyses/{args.id}/candidate-template.json", "exit_code": 0}
@@ -122,12 +132,16 @@ def run(args) -> int:
         return 1
 
 
-def query_analysis(root: Path, analysis_id: str, terms: str, limit: int) -> int:
+def query_analysis(root: Path, analysis_id: str, terms: str, limit: int,
+                   scope: str = "production", context_id: str | None = None) -> int:
     try:
         candidate = read_json(safe_path(root, f".kgmaker/analyses/{analysis_id}/analysis.json"))
         result = feature.validate(root, analysis_id, candidate)
         if result['valid']:
-            nodes = feature.graph_for_packet(root, feature.load_packet(root, analysis_id)).nodes
+            graph = feature.graph_for_packet(root, feature.load_packet(root, analysis_id))
+            from .views import project, select_context
+            context_id = select_context(graph, scope, context_id)
+            nodes = project(graph, scope, context_id=context_id).nodes
             candidates = [{'id': n.id, 'name': n.name, 'path': n.path, 'state': 'AS_IS'} for n in nodes]
             candidates += candidate['proposal']['nodes']
             words = terms.lower().split()
@@ -135,20 +149,25 @@ def query_analysis(root: Path, analysis_id: str, terms: str, limit: int) -> int:
             result['matches'] = sorted(matches, key=lambda n: n['id'])[:max(0, limit)]
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return result['exit_code']
-    except AnalysisError as exc:
-        print(json.dumps({'error': str(exc), 'exit_code': exc.code}))
-        return exc.code
+    except (AnalysisError, ValueError) as exc:
+        code = getattr(exc, 'code', 2)
+        print(json.dumps({'error': str(exc), 'exit_code': code}))
+        return code
     except OSError as exc:
         print(json.dumps({'error': str(exc), 'exit_code': 1}))
         return 1
 
 
-def impact_entity(root: Path, entity: str, output_format: str) -> int:
+def impact_entity(root: Path, entity: str, output_format: str,
+                  scope: str = "all", context_id: str | None = None) -> int:
     from .dataflow import impact_paths
     from .scanner import scan_repository
     from .semantic import apply_semantic_layer
     try:
         graph, _, semantic_error = feature.current_graph(root)
+        from .views import project, select_context
+        context_id = select_context(graph, scope, context_id)
+        graph = project(graph, scope, context_id=context_id)
         result = impact_paths(graph, entity)
         if semantic_error:
             result['limitations'] = result['limitations'] + [semantic_error]

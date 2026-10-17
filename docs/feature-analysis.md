@@ -1,49 +1,58 @@
 # Feature analysis: implemented foundation and remaining milestones
 
-## Current extension status
+## Current implementation
 
-Flyway schema replay, multi-repository workspace commands and scoped positive
-availability proofs now extend this foundation. Their current contracts and
-verified boundaries are documented in [flyway-workspace-proofs](flyway-workspace-proofs.md).
-The milestone-A description below records the original foundation; statements
-that all positive proofs or all workspaces are unsupported are superseded by
-that extension. General arbitrary SQL, full interprocedural analysis and live
-deployment verification are still not claimed.
-
-This page describes implemented behavior. The complete target remains
-[implementation-feature-analysis.md](implementation-feature-analysis.md).
-
-## Delivery status
-
-This change delivers the **milestone A foundation and initial milestone B field/impact support**, plus basic host installation,
-answer revisions, explicit mixed query and alternative inspection. It does **not**
-claim that the full milestone A–E acceptance suite or analytical core A–D is done.
+This page describes the source-only feature pipeline at the PR #5 baseline
+`6b5aea1`. The normative target is [T001](tasks/1_featureAnalysis.md); the integrated
+completion plan is [T003](tasks/3_finishProductionAnalysis.md).
+Flyway replay, explicit multi-repository workspaces and scoped availability proofs
+are implemented in the supported subset described in
+[flyway-workspace-proofs](flyway-workspace-proofs.md).
 
 | Area | Implemented | Remaining |
 |---|---|---|
-| Lifecycle | prepare, validate, apply, report, status, revise, compare | Selective revision packets and dependency invalidation |
-| Provenance | Byte SHA-256, exact quoted line ranges, JSON pointer/value, explicit requirement/decision evidence | HTML-section and workbook-cell localization |
-| Graph compatibility | Existing version 1 defaults remain; model rejects newer versions | Broader graph/evidence migration with new data-flow model |
-| Availability | UNKNOWN and scoped NOT_FOUND_IN_SCOPE; negative searches require complete supplied context and inventory fingerprint | Positive source-path and complete-contract proofs in milestone B |
-| Isolation | Proposal namespace, dangling-reference checks, read-only validation, atomic analysis.json replacement | No automatic implementation promotion, by design |
-| Budget | Source context selection, full manifest, estimator and omitted-source pending | Relevance by fields/dependencies rather than path keyword ranking |
-| Freshness | Full working-tree inventory and deterministic graph fingerprints, no timestamp identity | Selective invalidation; unrelated source changes currently stale the packet |
-| Agents | Analyst instructions and JetBrains command template, idempotent init | Richer data-flow routing as milestone B/D matures |
-| Reports | Czech/English deterministic sections, delivery table, validated static impact paths, evidence index, stale labels | Richer business prose and full cross-layer coverage |
-| Confluence | Existing offline export workflow unchanged | Approved-methodology authority rules, adapter/fake/publish workflow and real integration |
+| Lifecycle | prepare, validate, apply, report, status, revise, compare, data-check | Selective revision packets and dependency invalidation |
+| Provenance | Byte hashes, exact line quotes, JSON pointer/value, workbook sheet/cell/value, requirement/decision evidence, repo-qualified references | HTML-section localization |
+| Graph | Reader accepts graph v1/v2/v3; feature envelope is separately version 1; fresh compiler contexts/call sites/CFG are retained | Unified explicit context selection in every feature/report view |
+| Availability | OBSERVED_VALUE_PATH with approved mappings, CLOSED_CONTRACT_ABSENCE and APPROVED_MISSING; scoped negative search | Wider automatic value-path construction and selective proof reuse |
+| Isolation | TO_BE namespace, dangling-reference checks, read-only validate, atomic apply | No automatic promotion of proposals, by design |
+| Workspace/schema | Explicit supplied repos, content caches, selected Flyway stream/target | Full compiler cross-repo and ORM coverage |
+| Budget | Full metadata manifest, selected source context and explicit omissions | Dependency-aware relevance and resumable packets |
+| Freshness | Content baseline, no timestamp identity | Whole-packet invalidation remains for unrelated source changes |
+| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings | Full cross-layer paths and richer artifact coverage |
+| Confluence/XLSX | Offline Confluence export validation; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval | Approved-methodology rules and a documented live connector |
 
-No new dependency, model client, MCP server or network operation is introduced.
-The first validator intentionally rejects `AVAILABLE`, `PARTIAL` and
-`CONFIRMED_MISSING`, because the required runtime-path/contract proof checker
-is not implemented yet. Static impact paths are validated against current directed graph edges. Use `UNKNOWN` and concrete pending work; do not claim a
-positive result just to satisfy a schema. AS_IS reuse candidates must be INFERRED
-or AMBIGUOUS with source evidence; the tool verifies citations, not arbitrary
-natural-language entailment or financial correctness.
+No model client, MCP server or implicit build/network call is introduced by feature
+commands. Positive verdicts require the supported deterministic proof contracts;
+source declarations, name similarity, a successful build or static reachability
+alone do not prove availability. Supplied observations and declared approvals are
+not authenticated access to production. Unsupported claims remain UNKNOWN/pending.
+AS_IS reuse candidates remain evidence-backed INFERRED/AMBIGUOUS claims; validation
+checks citations and supported contracts, not arbitrary prose entailment or finance.
 
 ## CLI workflow
 
+Packets record `analysis_context_fingerprint`, context provenance and graph evidence
+IDs. `query` and directed `impact` accept `--context`; multiple active compiler
+contexts require explicit selection. For example:
+
 ```bash
-kgmaker feature prepare --root . --requirement requirements/new-hedge.md --id additional-hedge --token-budget 8000
+kgmaker query --root . --context CONTEXT_ID payment
+kgmaker impact --root . --entity ENTITY_ID --include-data-flow --context CONTEXT_ID --format json
+```
+
+Offline Confluence exports may include `kgmaker-approved-requirements.json` with
+schema version 1 and a `requirements` array. Each entry supplies `id`,
+`document_file`, `document_sha256`, `section`, `subject`, `relation`, `target`,
+`statement`, `decision_id`, positive `decision_revision`, and `approval_status`
+(`APPROVED` or `UNAPPROVED`). The exact statement must match an extracted assertion
+and the page hash. This preserves supplied decision provenance; it does not
+authenticate the approver. A conflicting approved assertion is reported as
+`IMPLEMENTATION_VS_APPROVED_REQUIREMENT`. Feature coverage references the saved
+documentation conflict index; rerun `kgmaker docs check` to refresh that index.
+
+```bash
+kgmaker feature prepare --root . --requirement requirements/new-hedge.md --id additional-hedge --token-budget 8000 --scope production --context <context-id>
 # Agent reads packet.json and candidate-template.json, writes candidate.json.
 kgmaker feature validate --root . --analysis additional-hedge --candidate .kgmaker/analyses/additional-hedge/candidate.json
 kgmaker feature apply --root . --analysis additional-hedge --candidate .kgmaker/analyses/additional-hedge/candidate.json
@@ -54,8 +63,19 @@ kgmaker feature compare --root . --analysis additional-hedge --variant no-new-ap
 kgmaker query --root . --analysis additional-hedge liquidity
 ```
 
+`--context` may be omitted only when the selected scope has zero or one fresh
+compiler context. Multiple module/profile variants fail preparation with the list
+of available IDs. The packet records `graph_selection`, and later commands reuse
+it. Supplying a different `--scope` or `--context` to validate/apply/report/status
+is rejected; prepare a new revision to change the selection. A selected context
+that later becomes stale remains visible in packet diagnostics while its compiler
+facts are excluded.
+
 `prepare` builds an up-to-date graph **in memory**, preserving existing graph and
-semantic files. It works without Git, a diff, or a semantic change packet.
+semantic files. It reconstructs the syntactic/semantic/Flyway graph and retains
+content-validated compiler layers published by explicit `inspect`. Stale layers lose
+their compiler facts and remain as diagnostic contexts with an explicit refresh command.
+It works without Git, a diff, or a semantic change packet.
 Git HEAD is supplemental provenance; working-tree content determines freshness.
 A commit-only change with identical sources preserves the packet identity.
 
@@ -153,16 +173,22 @@ or:
 {"location":{"type":"json_pointer","pointer":"/properties/currency/type"},"value":"string"}
 ```
 
+Workbook evidence uses a hash-bound cell locator and keeps formula text separate
+from its cached value:
+
+```json
+{"location":{"type":"workbook_cell","sheet":"Scenario","cell":"A1"},"value":{"formula":null,"cached_value":"10","cached_value_freshness":"UNKNOWN"}}
+```
+
 Evidence kind must match the packet source manifest. Source and cited location must
 exist and the quote/value must match; hash or location errors reject apply.
 File SHA-256 uses raw bytes, including CRLF; graph fingerprints separately retain
-the legacy scanner's normalized-text hashes. HTML section and workbook locators
-are unsupported and rejected, rather than treated as verified.
+the legacy scanner's normalized-text hashes. HTML section locators remain unsupported.
 
 REQUIREMENT evidence needs exact `quote` and `sha256` from the original requirement.
 HUMAN_DECISION evidence needs `decision_id`, `answer`, `revision`, `approval_status`
 matching a supplied packet answer. File kinds are CODE/CONTRACT/SCHEMA/CONFIG/
-DOCUMENTATION; WORKBOOK is reserved for the later parser.
+DOCUMENTATION/WORKBOOK.
 
 Answer file:
 
@@ -183,11 +209,14 @@ and pending, and therefore cannot become a negative availability proof. This is
 not a strict cap on total serialized packet bytes. Larger budgets prepare a new
 revision without overwriting the previous candidate. Selective resume is future work.
 
-Only one repository root is supported. Hidden/sensitive paths, symlinks, generated
-outputs and over-limit files are excluded; unsupported artifacts are inventoried.
-The dependency-free scanner remains conservative and full-scan. No field-level
-availability claim, mathematical equivalence, complete interprocedural analysis,
-Excel evaluation or Confluence synchronization is implemented by this change.
+Single-root and explicit multi-repository workspace modes are supported. Hidden/
+sensitive paths, symlinks, generated outputs and over-limit files are excluded by
+the source inventory; unsupported artifacts remain visible in coverage. General
+SQL/interprocedural completeness, non-literal template binding, formula evaluation, selective feature
+invalidation and Confluence synchronization are not implemented. `scan`/`update`
+remain full syntactic scans; workspace and Flyway caches do not change that fact.
+Workspace graph schema v3 preserves compiler symbols, call sites, CFG, evidence and
+annotations with repo-qualified identities.
 
 ## Host invocation and tests
 
@@ -199,8 +228,8 @@ is an intent routing convention, not a guaranteed Copilot-native slash command.
 Existing `/kgmaker`, semantic extract and semantic patch flows remain independent.
 
 ```bash
-python -m pip install -e .
-python -m unittest discover -s tests -v
+python -m pip install -e . pytest==8.3.4
+python -m pytest -q
 kgmaker scan
 kgmaker check
 ```
@@ -208,12 +237,13 @@ kgmaker check
 Tests cover packet idempotence, source/requirement drift, zero mutation on rejected
 apply, proposal isolation, malformed input, fake quotes/hashes/JSON fields/approval,
 small-budget behavior, business readiness vs processing, revision history, agent
-file preservation and the prepared fixture CLI lifecycle. FA-14/15/24 selective
-incremental equivalence, full FA-16 selective conclusions, full cross-layer field proofs FA-01/03/08/09,
-XLSX/Confluence FA-20–23/28–30 remain outstanding. No live Confluence host/version or
-API credentials were provided, so a real adapter cannot be claimed.
+file preservation and the prepared fixture CLI lifecycle. T001-FA-14/15/24 selective
+incremental equivalence, full T001-FA-16 selective conclusions, full cross-layer field proofs T001-FA-01/03/08/09,
+approved-methodology T001-FA-20/21 remains outstanding. T001-FA-28–30 are covered
+by the explicitly offline fake adapter; no live Confluence host/version or API
+credentials were provided, so a real adapter cannot be claimed.
 
-## Implemented field and impact patterns (initial milestone B)
+## Implemented field and impact patterns (T001-S02 subset)
 
 `dataflow.py` adds stable path/qualified-owner IDs for Kotlin primary-constructor
 fields, simple Java fields/records, TypeScript interfaces/object types and JSON
@@ -245,7 +275,7 @@ hash before atomically replacing analysis.json. Historical reports verify that
 receipt before rendering stale source paths. This detects modified stored output;
 it is a local integrity check, not a digital signature or authenticated approval.
 
-## Deterministic data-check (chapter 27, single-root foundation)
+## Deterministic data-check
 
 `feature data-check` accepts structured semantic input without a model call. It
 uses the same in-memory AS_IS graph, query ranking, directed impact traversal,
@@ -258,8 +288,10 @@ kgmaker feature data-check --root . --analysis additional-hedge --inputs require
 kgmaker feature data-check --root . --analysis additional-hedge --inputs requirements/additional-hedge-inputs.json --format markdown
 ```
 
-DataRequirementSet version 1 has exactly `schema_version`, `analysis_id`,
+DataRequirementSet version 1 requires `schema_version`, `analysis_id`,
 `requirement_hash` (copy from current packet), `requirements`, and `inputs`.
+Optional `evidence_references` supplies cited proof sources; in a workspace,
+references include `repo_id`. Unsupported fields are rejected.
 Requirements contain `id`, `text`, `kind`, `source_quote` present in the exact
 requirement; status is assigned by the checker. Optional `source_reference`
 contains `path`, `location` and `quote` or `value`, with the existing line/JSON
@@ -270,8 +302,9 @@ Each input contains `id`, `name`, non-empty `requirement_ids`, and every metadat
 field from InputRequirement: `definition`, `data_type`, `unit`, `currency`,
 `granularity`, `keys`, `as_of`, `validity_interval`, `horizon`, `freshness`,
 `nullable`, `quality`, `fallbacks`. Unknown values are null. Optional fields are
-`candidate_entity_ids` (real baseline graph IDs), `owner_role`, `dependency_ids`
-and `transformation`. Derivations require dependencies and a transformation;
+`candidate_entity_ids` (real baseline graph IDs), `owner_role`, `dependency_ids`,
+`transformation` and `availability_proof`. Supported proof payloads are documented
+in [flyway-workspace-proofs](flyway-workspace-proofs.md). Derivations require dependencies and a transformation;
 cycles are rejected by the existing validator. All IDs remain analysis-scoped.
 
 Write the specification before the final prepare, or refresh prepare after writing
@@ -288,12 +321,11 @@ The two report tables distinguish required definitions/decisions from what the
 tool cannot verify. Candidate output can be saved under the isolated analysis
 folder using JSON processing, then passed to normal validate/apply/report.
 
-Current proof capabilities still reject AVAILABLE/PARTIAL/CONFIRMED_MISSING.
-All checked inputs therefore remain UNKNOWN/UNASSESSED, with PARTIAL processing
-and BLOCKED readiness. Name matches and parsed declarations do not prove populated
-or equivalent business values. No automatic negative availability proof is made.
-`--require-complete` exits 4 for a valid incomplete check. `--workspace` is accepted
-only to return an explicit milestone G capability error; it cannot use a single
-root as a substitute. Flyway replay, workspace federation, positive proofs,
-selective reuse of approved mappings and targeted revision invalidation remain
-outstanding. This is chapter 27's executable foundation, not completion of F/G.
+Without valid supplied proof, inputs start UNKNOWN/UNASSESSED. Supported proofs
+are evaluated by `availability.py` and the shared validator; they can justify
+AVAILABLE/PARTIAL or scoped CONFIRMED_MISSING within their exact contract. Name
+matches never prove populated or equivalent values. `--require-complete` exits 4
+for valid incomplete output. Workspace mode uses the same explicit manifest as
+prepare/validate/report; no undeclared checkout is substituted. Flyway/workspace/
+scoped proofs are implemented; selective reuse and targeted feature invalidation
+remain unfinished. See T003-S02/S07/S10 for the remaining integration.

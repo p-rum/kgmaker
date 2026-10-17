@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from kgmaker.cli import check, docs, hook_context, impact, init, main, semantic_apply, semantic_extract, semantic_update, semantic_validate
-from kgmaker.confluence import documentation_check, ingest_export, merge_into_graph, render_report, validate_documents
+from kgmaker.confluence import documentation_check, ingest_export, merge_into_graph, persist_validation_index, render_report, validate_documents
 from kgmaker.scanner import scan_repository
 from kgmaker.semantic import (
     SEMANTIC_FILE, SEMANTIC_PATCH_FILE, SEMANTIC_UPDATE_FILE, SEMANTIC_EXTRACT_MARKDOWN,
@@ -88,6 +88,46 @@ class ScannerTests(unittest.TestCase):
             self.assertEqual((result, contradictions), (1, 0))
             self.assertGreaterEqual(review, 1)
             self.assertTrue(report.exists())
+
+    def test_fa21_approved_requirement_conflict_preserves_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            export = root / "export"
+            export.mkdir()
+            page = export / "Methodology.html"
+            page.write_text("<html><title>Methodology</title><body><h1>Approved</h1><p>PaymentService calls LegacyGateway.</p></body></html>")
+            import hashlib
+            statement = "PaymentService calls LegacyGateway"
+            approval = {"schema_version": 1, "requirements": [{
+                "id": "approved-payment-route", "document_file": "Methodology.html",
+                "document_sha256": hashlib.sha256(page.read_bytes()).hexdigest(), "section": "Approved",
+                "subject": "PaymentService", "relation": "CALLS", "target": "LegacyGateway",
+                "statement": statement, "decision_id": "ARCH-42", "decision_revision": 3,
+                "approval_status": "APPROVED",
+            }]}
+            (export / "kgmaker-approved-requirements.json").write_text(json.dumps(approval))
+            (root / "payment.py").write_text(
+                "from fraud import FraudService\nclass PaymentService:\n def run(self): return FraudService()\n")
+            (root / "fraud.py").write_text("class FraudService: pass\n")
+            documents, _, _ = ingest_export(export, root)
+            assertions = validate_documents(documents, scan_repository(root))
+            conflict = next(item for item in assertions if item.subject == "PaymentService")
+            self.assertEqual("IMPLEMENTATION_VS_APPROVED_REQUIREMENT", conflict.status)
+            self.assertEqual(("APPROVED_REQUIREMENT", "ARCH-42", 3),
+                             (conflict.authority, conflict.decision_id, conflict.decision_revision))
+            report_path = root / "report.md"
+            render_report(assertions, report_path, export)
+            report = report_path.read_text()
+            self.assertIn("do not rewrite either source automatically", report)
+            self.assertIn("ARCH-42", report)
+            persist_validation_index(root, assertions)
+            (root / "requirement.md").write_text("Change payment routing.")
+            from kgmaker.feature import prepare
+            packet = prepare(root, "requirement.md", "approved-methodology")
+            reference = packet["coverage"]["documentation_conflicts"][0]
+            self.assertEqual("IMPLEMENTATION_VS_APPROVED_REQUIREMENT", reference["status"])
+            self.assertEqual("ARCH-42", reference["decision_id"])
+
     def test_extracts_python_symbols_and_internal_imports(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -113,6 +153,10 @@ class ScannerTests(unittest.TestCase):
             (root / ".env").write_text("TOKEN=never-index-this", encoding="utf-8")
             (root / "node_modules").mkdir()
             (root / "node_modules" / "lib.js").write_text("function privateThing() {}", encoding="utf-8")
+            (root / "graphify-out").mkdir()
+            (root / "graphify-out" / "graph.json").write_text('{"generated": true}', encoding="utf-8")
+            (root / "docs" / "graphify-out").mkdir(parents=True)
+            (root / "docs" / "graphify-out" / "GRAPH_REPORT.md").write_text("# Generated", encoding="utf-8")
 
             graph = scan_repository(root)
 
@@ -159,7 +203,7 @@ class ScannerTests(unittest.TestCase):
             (root / "service.py").write_text("def build():\n    pass\n", encoding="utf-8")
             graph = scan_repository(root)
 
-            diagram = render_mermaid(graph)
+            diagram = render_mermaid(graph, scope="all")
 
             self.assertIn("flowchart LR", diagram)
             self.assertIn("app.py", diagram)
@@ -258,8 +302,9 @@ class ScannerTests(unittest.TestCase):
             relation = next(edge for edge in merged.edges if edge.kind == "implements")
             self.assertEqual(relation.source_file, "docs/domain.md")
             self.assertEqual(relation.confidence, "INFERRED")
-            self.assertIn("INFERRED 0.85", render_markdown(merged))
-            self.assertIn("Order lifecycle rule", render_context(merged, root=root))
+            self.assertIn("INFERRED 0.85", render_markdown(merged, scope="all"))
+            self.assertNotIn("Order lifecycle rule", render_context(merged, root=root))
+            self.assertIn("unknown scope omitted", render_context(merged, root=root))
 
             artifact["edges"][0]["source_line"] = 999
             semantic_path.write_text(json.dumps(artifact), encoding="utf-8")
@@ -379,7 +424,8 @@ class ScannerTests(unittest.TestCase):
 
             result = json.loads(output.getvalue())
             self.assertIn("additionalContext", result)
-            self.assertIn("app.py", result["additionalContext"])
+            self.assertNotIn("app.py", result["additionalContext"])
+            self.assertIn("1 files with unknown scope omitted", result["additionalContext"])
 
             limited = io.StringIO()
             with redirect_stdout(limited):
@@ -409,7 +455,8 @@ class ScannerTests(unittest.TestCase):
     def test_check_detects_stale_graph_and_docs_regenerate_markdown(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            source = root / "app.py"
+            (root / "src").mkdir()
+            source = root / "src/app.py"
             source.write_text("def first():\n    pass\n", encoding="utf-8")
             save_graph(scan_repository(root), root)
             self.assertEqual(check(root), 0)

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:kgmaker:build-plan-v1",
+  "title": "kgmaker build-plan-v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "version",
+    "plan_hash",
+    "root",
+    "build_id",
+    "argv",
+    "cwd",
+    "snapshot",
+    "execution_policy",
+    "environment",
+    "timeout"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "version": {
+      "const": "build-plan-1"
+    },
+    "plan_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "root": {
+      "type": "string"
+    },
+    "build_id": {
+      "type": "string"
+    },
+    "argv": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "cwd": {
+      "type": "string"
+    },
+    "snapshot": {
+      "type": "object",
+      "required": [
+        "sources",
+        "content_hash",
+        "inventory"
+      ]
+    },
+    "execution_policy": {
+      "type": "object",
+      "required": [
+        "mode",
+        "host_enforced",
+        "isolation"
+      ]
+    },
+    "environment": {
+      "type": "object"
+    },
+    "timeout": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    }
+  }
+}

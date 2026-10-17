@@ -71,8 +71,8 @@ def _location(root: Path, item: dict, packet: dict) -> None:
     if not isinstance(location, dict):
         raise AnalysisError("Evidence location must be an object")
     form = location.get("type")
-    text = target.read_text(encoding="utf-8")
     if form == "lines":
+        text = target.read_text(encoding="utf-8")
         start, end = location.get("start"), location.get("end")
         if type(start) is not int or type(end) is not int or not 1 <= start <= end <= len(text.splitlines()):
             raise AnalysisError("Evidence line range does not exist")
@@ -98,7 +98,15 @@ def _location(root: Path, item: dict, packet: dict) -> None:
                 raise AnalysisError("JSON pointer traverses a scalar")
         if "value" not in item or item["value"] != value:
             raise AnalysisError("Evidence value does not match cited JSON pointer")
+    elif form == "workbook_cell":
+        if kind != "WORKBOOK":
+            raise AnalysisError("Workbook cell evidence requires a WORKBOOK source")
+        from .workbooks import locate_cell
+        value = locate_cell(target, location.get("sheet"), location.get("cell"))
+        if item.get("value") != value:
+            raise AnalysisError("Evidence value does not match cited workbook cell")
     elif form == "html_anchor":
+        text = target.read_text(encoding="utf-8")
         parser = _Anchors()
         parser.feed(text)
         if location.get("anchor") not in parser.anchors:
@@ -106,7 +114,7 @@ def _location(root: Path, item: dict, packet: dict) -> None:
         # Checking an anchor alone cannot locate a prose claim within its section.
         raise AnalysisError("HTML section evidence is not supported yet; use exact line evidence")
     else:
-        raise AnalysisError(f"Unsupported evidence location: {form!r}; use lines or json_pointer")
+        raise AnalysisError(f"Unsupported evidence location: {form!r}; use lines, json_pointer or workbook_cell")
 
 
 def validate_candidate(root: Path, packet: dict, data: object) -> list[str]:

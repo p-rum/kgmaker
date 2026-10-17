@@ -48,6 +48,10 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
               f"- Git: `{candidate['baseline']['git_commit'] or 'UNAVAILABLE'}`",
               f"- Working tree: `{candidate['baseline']['working_tree_fingerprint']}`",
               f"- Graph: `{candidate['baseline']['graph_fingerprint']}`", ""]
+    selection = packet.get("graph_selection")
+    if selection:
+        lines += [f"- Graph scope: `{cell(selection['scope'])}`",
+                  f"- Compiler context: `{cell(selection.get('context_id'))}`", ""]
     for key, value in sorted(candidate["coverage"].items()):
         if key == 'schemas':
             continue

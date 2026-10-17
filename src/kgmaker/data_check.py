@@ -104,7 +104,8 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
         selected = [nodes[identity] for identity in explicit]
         if not explicit:
             matches = [n for n, _ in query_nodes(graph, item['name'], len(graph.nodes))
-                       if n.kind in {'data_field', 'contract_field', 'db_column'}]
+                       if n.kind in {'data_field', 'contract_field', 'db_column', 'workbook_cell',
+                                     'template_variable'}]
             selected = matches[:10]
             if len(matches) > 10:
                 tool_gaps.append({'input_id': item['id'], 'kind': 'CANDIDATE_LIMIT',
@@ -112,21 +113,41 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
         citations = []
         for number, node in enumerate(selected):
             source = packet['source_manifest'].get(node.path)
-            if source is None or node.line is None:
+            if source is None:
                 tool_gaps.append({'input_id': item['id'], 'kind': 'SOURCE_LOCATION',
                                   'reason': 'Candidate has no supported source locator: ' + node.id})
                 continue
-            lines = feature.source_path(root, node.path, packet).read_text(encoding='utf-8').splitlines()
-            if not 1 <= node.line <= len(lines) or not lines[node.line - 1].strip():
-                raise AnalysisError('Candidate source location changed during data check', 3)
             evidence_id = prefix + f'evidence:input-{index}-source-{number}'
             citations.append(evidence_id)
-            candidate['evidence'].append({
-                'id': evidence_id, 'source_id': node.id, 'kind': source['kind'], 'path': source.get('path', node.path),
-                'sha256': source['sha256'], 'location': {'type': 'lines', 'start': node.line, 'end': node.line},
-                'quote': lines[node.line - 1], 'supports': 'Static declaration/navigation candidate only; no populated-data or business-equivalence proof.',
-                'method': 'EXTRACTED', 'validity': 'VALID', 'confidence': 1,
-            })
+            if node.kind == 'workbook_cell' and node.metadata:
+                value = {key: node.metadata.get(key) for key in
+                         ('formula', 'cached_value', 'cached_value_freshness')}
+                evidence_item = {
+                    'id': evidence_id, 'source_id': node.id, 'kind': source['kind'],
+                    'path': source.get('path', node.path), 'sha256': source['sha256'],
+                    'location': {'type': 'workbook_cell', 'sheet': node.metadata['sheet'],
+                                 'cell': node.metadata['cell']}, 'value': value,
+                    'supports': 'Workbook formula/cached-value locator; cached value freshness is unknown and no formula was evaluated.',
+                    'method': 'EXTRACTED', 'validity': 'VALID', 'confidence': 1,
+                }
+            else:
+                if node.line is None:
+                    tool_gaps.append({'input_id': item['id'], 'kind': 'SOURCE_LOCATION',
+                                      'reason': 'Candidate has no supported source locator: ' + node.id})
+                    citations.pop()
+                    continue
+                lines = feature.source_path(root, node.path, packet).read_text(encoding='utf-8').splitlines()
+                if not 1 <= node.line <= len(lines) or not lines[node.line - 1].strip():
+                    raise AnalysisError('Candidate source location changed during data check', 3)
+                evidence_item = {
+                    'id': evidence_id, 'source_id': node.id, 'kind': source['kind'],
+                    'path': source.get('path', node.path), 'sha256': source['sha256'],
+                    'location': {'type': 'lines', 'start': node.line, 'end': node.line},
+                    'quote': lines[node.line - 1],
+                    'supports': 'Static declaration/navigation candidate only; no populated-data or business-equivalence proof.',
+                    'method': 'EXTRACTED', 'validity': 'VALID', 'confidence': 1,
+                }
+            candidate['evidence'].append(evidence_item)
             if packet.get('workspace'):
                 candidate['evidence'][-1]['repo_id'] = source['repo_id']
             candidate_sources.append({'input_id': item['id'], 'entity': asdict(node),

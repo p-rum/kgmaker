@@ -13,8 +13,11 @@ MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
 
 
-def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10) -> list[tuple]:
+def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str = "all",
+                context_id: str | None = None) -> list[tuple]:
     """Shared navigation ranking; a match never establishes data availability."""
+    from .views import project
+    graph = project(graph, scope, context_id=context_id)
     words = terms.lower().split()
     nodes = {node.id: node for node in graph.nodes}
     scores = {}
@@ -30,7 +33,7 @@ def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10) -> list[tupl
         if edge.source in scores and edge.target in nodes:
             scores[edge.target] = max(scores.get(edge.target, 0), scores[edge.source] - 1)
     ranked = sorted(scores, key=lambda identity: (
-        -scores[identity], nodes[identity].path, nodes[identity].line or 0))
+        -scores[identity], identity))
     return [(nodes[identity], scores[identity]) for identity in ranked[:max(0, limit)]]
 
 
@@ -40,10 +43,14 @@ def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True) ->
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
     mermaid_path = root / MERMAID_FILE
-    graph_path.write_text(json.dumps(graph.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    from .analysis_model import atomic_write
+    # Serialize and validate before replacing the last readable index.
+    payload = json.dumps(graph.to_dict(), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    KnowledgeGraph.from_dict(json.loads(payload))
+    atomic_write(graph_path, payload)
     if generate_docs:
-        mermaid_path.write_text(render_mermaid(graph), encoding="utf-8")
-        markdown_path.write_text(render_markdown(graph), encoding="utf-8")
+        atomic_write(mermaid_path, render_mermaid(graph))
+        atomic_write(markdown_path, render_markdown(graph))
     return graph_path, markdown_path
 
 
@@ -55,14 +62,23 @@ def load_graph(root: Path) -> KnowledgeGraph | None:
         return None
 
 
-def render_markdown(graph: KnowledgeGraph) -> str:
+def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
+    from .views import project
+    omitted = sum(n.kind == "file" and scope != "all" and n.scope != scope for n in graph.nodes)
+    graph = project(graph, scope)
     files = [node for node in graph.nodes if node.kind == "file"]
-    symbols = [node for node in graph.nodes if node.kind != "file"]
+    episodes = [node for node in graph.nodes if node.kind == "implementation_episode"]
+    symbols = [node for node in graph.nodes if node.kind not in {"file", "implementation_episode"}]
     imports = [edge for edge in graph.edges if edge.kind == "imports"]
     calls = [edge for edge in graph.edges if edge.kind == "calls"]
-    domain_edges = [edge for edge in graph.edges if edge.kind not in {"contains", "imports", "calls"}]
+    domain_edges = [
+        edge for edge in graph.edges
+        if edge.kind not in {"contains", "imports", "calls", "affected"}
+    ]
     by_kind = {kind: sum(node.kind == kind for node in graph.nodes) for kind in (
-        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route", "external_service", "technology", "concept"
+        "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
+        "external_service", "technology", "concept", "workbook", "workbook_cell",
+        "template", "template_variable"
     )}
     inferred_edges = sum(edge.confidence == "INFERRED" for edge in graph.edges)
     ambiguous_edges = sum(edge.confidence == "AMBIGUOUS" for edge in graph.edges)
@@ -76,6 +92,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         "> Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.",
         "> Review semantic conclusions with the repository's Copilot knowledge-graph agent.",
         "",
+        f"- Scope: {scope}; omitted files: {omitted}",
+        "- Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.",
+        "- Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.",
+        *[f"- Context: `{c.get('id', 'unknown')}`; content: `{c.get('content_hash', 'unknown')}`; freshness: {c.get('freshness', 'UNKNOWN')}" for c in graph.contexts],
         f"- Files indexed: {len(files)}",
         f"- Symbols and sections: {len(symbols)}",
         f"- Internal imports: {len(imports)}",
@@ -84,7 +104,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         f"- Kafka topics: {by_kind['kafka_topic']}",
         f"- API endpoints: {by_kind['api_endpoint']}",
         f"- TypeScript frontend routes: {by_kind['frontend_route']}",
+        f"- Workbooks/cells: {by_kind['workbook']}/{by_kind['workbook_cell']}",
+        f"- Templates/variables: {by_kind['template']}/{by_kind['template_variable']}",
         f"- Semantic concepts: {by_kind['concept']}",
+        f"- Implementation episodes: {len(episodes)}",
         f"- Inferred/ambiguous relationships: {inferred_edges}/{ambiguous_edges}",
         "",
         "## Architecture diagram",
@@ -92,7 +115,7 @@ def render_markdown(graph: KnowledgeGraph) -> str:
         "The diagram groups declarations under their source files and shows detected imports and domain relationships. Heuristic call edges are omitted. An editable standalone Mermaid source is available at `.kgmaker/GRAPH.mmd`.",
         "",
         "```mermaid",
-        render_mermaid(graph).rstrip(),
+        render_mermaid(graph, scope=scope).rstrip(),
         "```",
         "",
         "## Files and symbols",
@@ -109,6 +132,26 @@ def render_markdown(graph: KnowledgeGraph) -> str:
             summary = f" — {symbol.summary}" if symbol.summary else ""
             lines.append(f"- **{symbol.kind}** `{symbol.name}` {location}{signature}{summary}".strip())
         lines.append("")
+
+    lines.extend(["## Implementation history", ""])
+    if episodes:
+        for episode in sorted(episodes, key=lambda item: item.id):
+            metadata = episode.metadata or {}
+            freshness = metadata.get("freshness", "unknown")
+            changed = metadata.get("changed_files", [])
+            paths = ", ".join(
+                item.get("path", "") for item in changed[:5] if isinstance(item, dict)
+            ) or "no paths"
+            validations = ", ".join(
+                f"{item.get('label')}={item.get('status')}"
+                for item in metadata.get("validations", [])[:5] if isinstance(item, dict)
+            ) or "none"
+            lines.append(
+                f"- **{episode.name}** — {freshness}; files: {paths}; validation: {validations}"
+            )
+    else:
+        lines.append("- No implementation episodes recorded.")
+    lines.append("")
 
     paths = {node.id: node.path for node in graph.nodes}
     node_index = {node.id: node for node in graph.nodes}
@@ -132,8 +175,10 @@ def render_markdown(graph: KnowledgeGraph) -> str:
     return "\n".join(lines)
 
 
-def render_mermaid(graph: KnowledgeGraph) -> str:
+def render_mermaid(graph: KnowledgeGraph, scope: str = "production") -> str:
     """Render a compact architecture map, grouping code symbols by source file."""
+    from .views import project
+    graph = project(graph, scope)
     file_nodes = {node.id: node for node in graph.nodes if node.kind == "file"}
     file_by_path = {node.path: node.id for node in file_nodes.values()}
     all_nodes = {node.id: node for node in graph.nodes}
@@ -142,7 +187,8 @@ def render_mermaid(graph: KnowledgeGraph) -> str:
     # are represented by their file to keep the diagram navigable on larger repos.
     domain_kinds = {
         "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
-        "external_service", "technology", "concept",
+        "external_service", "technology", "concept", "workbook", "workbook_sheet",
+        "workbook_cell", "workbook_named_range", "template", "template_variable",
     }
     selected: dict[str, tuple[str, str]] = {}
     for node in graph.nodes:
@@ -153,7 +199,7 @@ def render_mermaid(graph: KnowledgeGraph) -> str:
 
     relationships: set[tuple[str, str, str]] = set()
     for edge in graph.edges:
-        if edge.kind in {"contains", "calls"}:
+        if edge.kind in {"contains", "calls", "affected"}:
             continue
         source = all_nodes.get(edge.source)
         target = all_nodes.get(edge.target)
@@ -185,12 +231,15 @@ def render_mermaid(graph: KnowledgeGraph) -> str:
 
 def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None = None) -> str:
     """Compact context intended for Copilot's sessionStart additionalContext."""
+    from .views import project
+    unknown = sum(n.scope == "unknown" and n.kind == "file" for n in graph.nodes)
+    graph = project(graph, "production")
     files = [node for node in graph.nodes if node.kind == "file"]
-    symbols = [node for node in graph.nodes if node.kind != "file"]
+    symbols = [node for node in graph.nodes if node.kind not in {"file", "implementation_episode"}]
     outgoing: dict[str, list[str]] = {}
     nodes = {node.id: node for node in graph.nodes}
     for edge in graph.edges:
-        if edge.kind != "contains":
+        if edge.kind not in {"contains", "affected"}:
             target = nodes.get(edge.target)
             if target:
                 confidence = "" if edge.confidence == "EXTRACTED" else f" [{edge.confidence} {edge.confidence_score:.2f}]"
@@ -200,6 +249,7 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
         "## kgmaker repository context",
         f"Indexed {len(files)} files and {len(symbols)} declarations/sections.",
         "Use these entries as navigation hints; inspect source files before drawing conclusions.",
+        f"Production scope; {unknown} files with unknown scope omitted. SOURCE_ONLY, partial coverage.",
     ]
     for file_node in files:
         declarations = [node for node in symbols if node.path == file_node.path]
@@ -223,6 +273,35 @@ def render_context(graph: KnowledgeGraph, limit: int = 8_000, root: Path | None 
     if len(result) > limit:
         result = result[: limit - 80].rsplit("\n", 1)[0] + "\n… graph context truncated; run `kgmaker query`."
     return result
+
+
+def render_bootstrap(graph: KnowledgeGraph, limit: int = 8_000) -> str:
+    """Render lean session guidance; request-specific details come from memory recall."""
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 80:
+        raise ValueError("bootstrap limit must be an integer of at least 80 characters")
+    files = sorted(node.path for node in graph.nodes if node.kind == "file")
+    unknown = sum(node.scope == "unknown" and node.kind == "file" for node in graph.nodes)
+    declarations = sum(node.kind not in {"file", "implementation_episode"} for node in graph.nodes)
+    episodes = sum(node.kind == "implementation_episode" for node in graph.nodes)
+    lines = [
+        "## kgmaker bootstrap",
+        f"Indexed {len(files)} files, {declarations} declarations/sections, and {episodes} implementation episodes.",
+        f"Production scope; {unknown} files with unknown scope omitted.",
+        "Before implementation run `kgmaker memory recall \"<request>\"`, then inspect the cited source and tests.",
+        "Graph hints may be stale or heuristic; verify them in source.",
+    ]
+    stale = [context for context in graph.contexts
+             if context.get("analyzer_version") and context.get("freshness") == "STALE"]
+    for context in stale:
+        lines.append("Compiler context is stale ("
+                     + "/".join(str(context.get(key, "?")) for key in ("module", "source_set", "scope"))
+                     + "): " + str(context.get("stale_reason", "inputs changed"))
+                     + ". Run `" + str(context.get("next_command", "kgmaker inspect")) + "`.")
+    result = "\n".join(lines)
+    if len(result) > limit:
+        suffix = "\n… bootstrap truncated; use `kgmaker memory recall`."
+        result = result[: max(0, limit - len(suffix))].rsplit("\n", 1)[0] + suffix
+    return result[:limit]
 
 
 def _edge_details(edge) -> str:

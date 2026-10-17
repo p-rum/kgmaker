@@ -11,11 +11,12 @@ import html
 import json
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
+from .analysis_model import AnalysisError, read_json
 from .model import Edge, KnowledgeGraph, Node
 
 CONFLUENCE_CACHE_FILE = Path(".kgmaker/confluence-index.json")
@@ -27,6 +28,7 @@ CALL_KINDS = {"calls", "calls_endpoint", "depends_on", "uses_external_service"}
 MERMAID_START = re.compile(r"^\s*(?:flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram)\b", re.I)
 ARROW = re.compile(r"(?:^|\s)([\w][\w .:/-]*?)\s*(?:--+>|-+>|==+>|-+>>|-->>|->>)\s*(?:\|[^|]*\|\s*)?([\w][\w .:/-]*?)(?:\s*[:;]|\s*$)")
 PROSE_CALL = re.compile(r"\b([A-Z][\w.-]*(?:\s+[A-Z][\w.-]*)?)\s+(calls?|invokes?|connects to|depends on)\s+([A-Z][\w.-]*(?:\s+[A-Z][\w.-]*)?)\b", re.I)
+APPROVALS_FILE = "kgmaker-approved-requirements.json"
 
 
 def _norm(value: str) -> str:
@@ -57,6 +59,7 @@ class ConfluenceDocument:
     diagrams: list[dict[str, Any]] = field(default_factory=list)
     text: str = ""
     sha256: str = ""
+    approvals: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -77,6 +80,12 @@ class DocumentationAssertion:
     code_fact: str | None = None
     code_location: str | None = None
     matched_code_entities: list[str] = field(default_factory=list)
+    authority: str = "UNAPPROVED_OR_UNKNOWN"
+    approval_id: str | None = None
+    decision_id: str | None = None
+    decision_revision: int | None = None
+    approval_status: str | None = None
+    approved_document_sha256: str | None = None
 
 
 class _ExportHTMLParser(HTMLParser):
@@ -295,10 +304,41 @@ def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[Conflu
         if isinstance(cached, dict) and cached.get("sha256") == digest:
             documents.append(ConfluenceDocument(**{key: cached.get(key, default) for key, default in {
                 "id": f"confluence:{relative}", "title": path.stem, "file": relative, "sections": [],
-                "internal_links": [], "attachments": [], "images": [], "diagrams": [], "text": "", "sha256": digest
+                "internal_links": [], "attachments": [], "images": [], "diagrams": [], "text": "", "sha256": digest,
+                "approvals": [],
             }.items()}))
         else:
             documents.append(_document_from_html(path, export_root, digest))
+    for document in documents:
+        document.approvals = []
+    by_file = {document.file: document for document in documents}
+    approvals_path = export_root / APPROVALS_FILE
+    if approvals_path.is_file():
+        approvals = read_json(approvals_path)
+        if not isinstance(approvals, dict) or approvals.get("schema_version") != 1 \
+                or not isinstance(approvals.get("requirements"), list):
+            raise AnalysisError("Invalid approved-requirements sidecar")
+        seen = set()
+        allowed = {"id", "document_file", "document_sha256", "section", "subject", "relation", "target",
+                   "statement", "decision_id", "decision_revision", "approval_status"}
+        for item in approvals["requirements"]:
+            if not isinstance(item, dict) or set(item) != allowed or not isinstance(item.get("id"), str) \
+                    or not item["id"] or item["id"] in seen:
+                raise AnalysisError("Invalid/duplicate approved requirement")
+            seen.add(item["id"])
+            document = by_file.get(item.get("document_file"))
+            if document is None or item.get("document_sha256") != document.sha256 \
+                    or item.get("statement") not in document.text:
+                raise AnalysisError("Approved requirement is not bound to the exact exported document")
+            if item.get("approval_status") not in {"APPROVED", "UNAPPROVED"} \
+                    or type(item.get("decision_revision")) is not int or item["decision_revision"] < 1 \
+                    or not isinstance(item.get("decision_id"), str) or not item["decision_id"]:
+                raise AnalysisError("Approved requirement requires explicit decision provenance")
+            if item.get("relation") not in {"CALLS", "CONNECTS_TO", "DEPENDS_ON", "BUSINESS_RULE"} \
+                    or any(not isinstance(item.get(key), str) or not item[key]
+                           for key in ("section", "subject", "target", "statement")):
+                raise AnalysisError("Approved requirement has an unsupported assertion contract")
+            document.approvals.append(item)
     referenced = {item for doc in documents for item in [*doc.attachments, *doc.images]}
     for relative in sorted(referenced):
         attachment_path = export_root / relative
@@ -344,6 +384,26 @@ def _assertions_from_document(doc: ConfluenceDocument) -> list[DocumentationAsse
                 section=next((item["heading"] for item in doc.sections if item.get("heading")), ""),
                 subject=doc.title, relation="BUSINESS_RULE", target=sentence.strip(), statement=sentence.strip(),
             ))
+    used = set()
+    for assertion in assertions:
+        approval = next((item for item in doc.approvals
+                         if item["subject"] == assertion.subject
+                         and item["relation"] == assertion.relation
+                         and item["target"] == assertion.target
+                         and item["statement"] == assertion.statement), None)
+        if approval is None:
+            continue
+        used.add(approval["id"])
+        assertion.authority = ("APPROVED_REQUIREMENT" if approval["approval_status"] == "APPROVED"
+                               else "UNAPPROVED")
+        assertion.approval_id = approval["id"]
+        assertion.decision_id = approval["decision_id"]
+        assertion.decision_revision = approval["decision_revision"]
+        assertion.approval_status = approval["approval_status"]
+        assertion.approved_document_sha256 = approval["document_sha256"]
+    missing = [item["id"] for item in doc.approvals if item["id"] not in used]
+    if missing:
+        raise AnalysisError("Approved requirement does not match an extracted assertion: " + ", ".join(missing))
     return assertions
 
 
@@ -376,6 +436,8 @@ def validate_documents(documents: list[ConfluenceDocument], graph: KnowledgeGrap
     assertions = [assertion for doc in documents for assertion in _assertions_from_document(doc)]
     for assertion in assertions:
         if assertion.relation == "BUSINESS_RULE":
+            if assertion.authority != "APPROVED_REQUIREMENT":
+                assertion.category = "UNAPPROVED_OR_UNKNOWN"
             continue
         source_matches = nodes.get(_norm(assertion.subject), [])
         target_matches = nodes.get(_norm(assertion.target), [])
@@ -401,7 +463,12 @@ def validate_documents(documents: list[ConfluenceDocument], graph: KnowledgeGrap
         elif outgoing and assertion.relation in {"CALLS", "CONNECTS_TO", "DEPENDS_ON"}:
             edge = outgoing[0]
             target = all_nodes.get(edge.target)
-            assertion.category = assertion.status = "DIAGRAM_CONTRADICTS_CODE" if assertion.source_kind in {"MERMAID", "DIAGRAM"} else "CONTRADICTED_BY_CODE"
+            assertion.category = assertion.status = (
+                "IMPLEMENTATION_VS_APPROVED_REQUIREMENT"
+                if assertion.authority == "APPROVED_REQUIREMENT"
+                else "DIAGRAM_CONTRADICTS_CODE" if assertion.source_kind in {"MERMAID", "DIAGRAM"}
+                else "CONTRADICTED_BY_CODE"
+            )
             assertion.confidence = "HIGH"
             assertion.code_fact = f"{source.name} calls {target.name if target else edge.target}"
             assertion.code_location = f"{source.path}:{source.line or ''}".rstrip(":")
@@ -452,7 +519,7 @@ def merge_into_graph(graph: KnowledgeGraph, documents: list[ConfluenceDocument],
             kind = f"documented_{assertion.relation.casefold()}"
             if (source[0].id, target_id, kind) not in existing_edges:
                 edges.append(Edge(source[0].id, target_id, kind, evidence=assertion.statement, confidence="EXTRACTED", source_file=assertion.document_file)); existing_edges.add((source[0].id, target_id, kind))
-    return KnowledgeGraph(graph.schema_version, graph.root, graph.generated_at, nodes, edges, graph.files)
+    return replace(graph, nodes=nodes, edges=edges)
 
 
 def render_report(assertions: list[DocumentationAssertion], report_path: Path, export_root: Path, revision: str = "working tree") -> str:
@@ -477,7 +544,13 @@ def render_report(assertions: list[DocumentationAssertion], report_path: Path, e
                 lines.append(f"Evidence: `{item.code_location}`")
             if item.source_file and item.source_file != item.document_file:
                 lines.append(f"Diagram/attachment: `{item.source_file}`")
-            lines.extend(["Suggested action: Review the documented section and update it if the current code is intentional.", ""])
+            if item.authority == "APPROVED_REQUIREMENT":
+                lines.append(f"Authority: APPROVED_REQUIREMENT — decision `{item.decision_id}` revision {item.decision_revision}; document hash `{item.approved_document_sha256}`")
+                action = "Review the implementation against the approved requirement; do not rewrite either source automatically."
+            else:
+                lines.append("Authority: UNAPPROVED_OR_UNKNOWN")
+                action = "Review the documented section and update it if the current code is intentional."
+            lines.extend(["Suggested action: " + action, ""])
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
     return report_path.as_posix()

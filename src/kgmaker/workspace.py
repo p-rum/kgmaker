@@ -31,6 +31,78 @@ def source_key(repo: str, path: str) -> str:
     return '@' + repo + '/' + path
 
 
+def _qualified_context(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result['id'] = qualified(repo, value['id'])
+    if isinstance(result.get('source_files'), dict):
+        result['source_files'] = {source_key(repo, path): checksum
+                                  for path, checksum in result['source_files'].items()}
+    return result
+
+
+def _qualified_symbol(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result['id'] = qualified(repo, value['id'])
+    result['context_id'] = qualified(repo, value['context_id'])
+    if isinstance(value.get('path'), str):
+        result['path'] = source_key(repo, value['path'])
+    return result
+
+
+def _qualified_call_site(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    for key in ('id', 'caller', 'declared_target', 'omitted_declared_target'):
+        if isinstance(value.get(key), str):
+            result[key] = qualified(repo, value[key])
+    result['context_id'] = qualified(repo, value['context_id'])
+    result['dispatch_candidates'] = [qualified(repo, item)
+                                     for item in value.get('dispatch_candidates', [])]
+    result['evidence_ids'] = [qualified(repo, item) for item in value.get('evidence_ids', [])]
+    if isinstance(value.get('path'), str):
+        result['path'] = source_key(repo, value['path'])
+    return result
+
+
+def _qualified_cfg(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result['method'] = qualified(repo, value['method'])
+    result['context_id'] = qualified(repo, value['context_id'])
+    result['evidence_ids'] = [qualified(repo, item) for item in value.get('evidence_ids', [])]
+    block_ids = {block['id']: qualified(repo, block['id']) for block in value.get('blocks', [])}
+    for key in ('entry', 'exit', 'exceptional_exit'):
+        if isinstance(value.get(key), str):
+            result[key] = block_ids[value[key]]
+    result['blocks'] = []
+    for block in value.get('blocks', []):
+        item = copy.deepcopy(block)
+        item['id'] = block_ids[block['id']]
+        item['call_site_ids'] = [qualified(repo, identity)
+                                 for identity in block.get('call_site_ids', [])]
+        item['original_ids'] = [qualified(repo, identity)
+                                for identity in block.get('original_ids', [])]
+        if isinstance(block.get('source_file'), str):
+            item['source_file'] = source_key(repo, block['source_file'])
+        result['blocks'].append(item)
+    result['edges'] = [{**copy.deepcopy(edge),
+                        'source': block_ids[edge['source']],
+                        'target': block_ids[edge['target']]}
+                       for edge in value.get('edges', [])]
+    result['diagnostics'] = [
+        {**copy.deepcopy(item),
+         **({'source_file': source_key(repo, item['source_file'])}
+            if isinstance(item.get('source_file'), str) else {})}
+        for item in value.get('diagnostics', [])]
+    return result
+
+
+def _qualified_annotation(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result['id'] = qualified(repo, value['id'])
+    result['target_ids'] = [qualified(repo, item) for item in value.get('target_ids', [])]
+    result['evidence_ids'] = [qualified(repo, item) for item in value.get('evidence_ids', [])]
+    return result
+
+
 def load_workspace(path: Path) -> dict:
     path = path.resolve()
     data = read_json(path)
@@ -106,6 +178,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     from .test_analysis import federated_links
     workspace = load_workspace(manifest)
     baseline_repos, sources, exclusions, nodes, edges, graphs, schemas = {}, {}, [], [], [], {}, {}
+    symbols, call_sites, cfgs, annotations = [], [], [], []
     diagnostics, pending, before = [], [], {}
     parsed = []
     pending_cache = {}
@@ -117,8 +190,11 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         inventory, excluded = feature.source_inventory(root)
         before[identity] = inventory
         semantic = root / '.kgmaker/semantic.json'
-        key = digest({'root': str(root), 'sources': inventory, 'flyway': repo.get('flyway'),
+        from .classification import Classifier
+        classification = Classifier(root).fingerprint
+        key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, 'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
+                      'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
             commit = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
@@ -169,7 +245,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         exclusions += [{'repo_id': identity, **item} for item in excluded]
         nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path)) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
+                          context_ids=tuple(qualified(identity, c) for c in e.context_ids),
+                          evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
                           source_file=source_key(identity, e.source_file) if e.source_file else None) for e in local.edges]
+        symbols += [_qualified_symbol(identity, item) for item in local.symbols]
+        call_sites += [_qualified_call_site(identity, item) for item in local.call_sites]
+        cfgs += [_qualified_cfg(identity, item) for item in local.cfgs]
+        annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]
     link_nodes, link_edges, link_diagnostics = federated_links(workspace, graphs, sources)
     nodes += link_nodes; edges += link_edges; diagnostics += link_diagnostics
     from .test_analysis import test_data_diagnostics
@@ -191,10 +273,23 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             payload = {'graph': local.to_dict(), 'schemas': local_schema}
             write_json(safe_path(cache_root, f'.kgmaker/workspace-cache/{key}.json'),
                        {'schema_version': 1, 'cache_key': key, 'payload': payload, 'payload_hash': digest(payload)})
-    graph = KnowledgeGraph(1, '.', '', sorted(nodes, key=lambda n: n.id),
+    graph = KnowledgeGraph(3, '.', '', sorted(nodes, key=lambda n: n.id),
                            sorted(set(edges), key=lambda e: (e.source, e.kind, e.target)),
-                           {k: v['sha256'] for k, v in sources.items()})
+                           {k: v['sha256'] for k, v in sources.items()},
+                           [{**_qualified_context(repo, context), 'repo_id': repo}
+                            for repo, local in graphs.items() for context in local.contexts if 'id' in context],
+                           [{'repo_id': repo, **d} for repo, local in graphs.items() for d in local.diagnostics],
+                           [{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
+                             'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
+                             'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
+                             'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
+                            for repo, local in graphs.items() for e in local.evidence],
+                           symbols=sorted(symbols, key=lambda item: item['id']),
+                           call_sites=sorted(call_sites, key=lambda item: item['id']),
+                           cfgs=sorted(cfgs, key=lambda item: (item['method'], item.get('representation', ''))),
+                           analysis_annotations=sorted(annotations, key=lambda item: item['id']))
     graph.files['@workspace/manifest.json'] = workspace['_manifest_hash']
+    KnowledgeGraph.from_dict(graph.to_dict())
     baseline = {'git_commit': None, 'graph_fingerprint': digest(graph.to_dict()),
                 'working_tree_fingerprint': digest(sources), 'parser_version': 'workspace-1',
                 'semantic_hash': None, 'manifest_hash': workspace['_manifest_hash'], 'repositories': baseline_repos}

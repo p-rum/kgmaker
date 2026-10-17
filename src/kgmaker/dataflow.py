@@ -306,7 +306,10 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
             if target in seen or target not in nodes:
                 continue
             seen.add(target)
-            next_steps = steps + [asdict(edge)]
+            # Keep the feature v1 path proof contract stable. Typed inspection
+            # evidence is a separate contract, never inferred from this path.
+            next_steps = steps + [{key: value for key, value in asdict(edge).items()
+                                   if key not in {"evidence_kind", "context_ids", "evidence_ids"}}]
             weakest = max((step['confidence'] for step in next_steps), key=lambda x: rank.get(x, 3))
             boundary = 'external system; internals not inspected' if nodes[target].kind in {'external_service', 'external_system'} else (
                 'no further supported dependency' if not adjacency[target] else None)
