@@ -1,6 +1,7 @@
 """Independent safety/freshness and actual XML test-state invariants."""
 from pathlib import Path
 import json
+import os
 import shutil
 import subprocess
 import pytest
@@ -101,8 +102,10 @@ def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path, monkey
     </project>''')
 
     monkeypatch.setenv('MAVEN_OPTS', '-Dmaven.repo.local=.m2')
+    real_java_home = Path(required[1]).resolve().parents[1]
     result = run_plan(create_plan(root, phase='compile', build_system='maven',
-                                  executable=required[0], home=ROOT / 'workers', profiles=['extra']))
+                                  executable=required[0], home=ROOT / 'workers', profiles=['extra'],
+                                  java_home=real_java_home))
     assert result['result']['status'] == 'SUCCESS', Path(result['result']['log_path']).read_text()
     manifest = json.loads(Path(result['manifest_path']).read_text())
     validated = validate_manifest(root, manifest)
@@ -132,6 +135,8 @@ def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path, monkey
     assert app['compiler_options']['release'] == '21'
     assert all(app['toolchain'][key] for key in
                ('java_version', 'java_home', 'java_vendor', 'maven_version'))
+    assert Path(app['toolchain']['java_home']).resolve() == real_java_home
+    assert manifest['toolchain_selection']['java_home'] == str(real_java_home)
     assert any(path.endswith('target/generated-sources/extra')
                for path in app['generated_source_roots'])
     assert len(app['generated_sources']) == 1
@@ -158,7 +163,8 @@ def test_mv02_real_reactor_output_precedes_stale_repository_jar(tmp_path, monkey
     generated_path.write_text(generated_content)
 
     baseline_result = run_plan(create_plan(root, phase='compile', build_system='maven',
-                                           executable=required[0], home=ROOT / 'workers'))
+                                           executable=required[0], home=ROOT / 'workers',
+                                           java_home=real_java_home))
     assert baseline_result['result']['status'] == 'SUCCESS', Path(baseline_result['result']['log_path']).read_text()
     baseline_manifest = json.loads(Path(baseline_result['manifest_path']).read_text())
     baseline_app = next(item for item in baseline_manifest['contexts']
@@ -264,3 +270,132 @@ def test_project_mutating_copied_inputs_cannot_produce_fresh_analysis(tmp_path):
     assert result['result']['freshness']=='MIXED_BUILD_INPUTS'
     assert (root/'input').read_text()=='original'
     assert any(d['code']=='BUILD_INPUTS_CHANGED_DURING_EXECUTION' for d in result['diagnostics'])
+
+
+def _fake_jdk(path: Path, marker: str = 'one') -> Path:
+    home = path / marker
+    binary = home / 'bin'
+    binary.mkdir(parents=True)
+    for name in ('java', 'javac'):
+        tool = binary / name
+        tool.write_text('#!/bin/sh\nexit 0\n')
+        tool.chmod(0o755)
+    return home
+
+
+def _fake_maven(path: Path, *, reported_java_home: str = '$JAVA_HOME') -> Path:
+    tool = path / 'mvn-fixture'
+    tool.write_text(f'''#!/bin/sh
+for argument in "$@"; do
+  case "$argument" in
+    -Dkgmaker.export.path=*) export_path="${{argument#*=}}" ;;
+  esac
+done
+cat > "$export_path" <<EOF
+{{"schema_version":1,"exporter":"fixture","contexts":[{{"id":"root:main","module":"root","source_set":"main","scope":"production","source_roots":[],"source_files":[],"classpath_paths":[],"output_paths":[],"build_system":"maven","build_profiles":[],"compiler_options":{{}},"toolchain":{{"java_version":"21-fixture","java_home":"{reported_java_home}","java_vendor":"fixture","maven_version":"fixture"}}}}],"modules":{{"root":"SUCCESS"}},"diagnostics":[]}}
+EOF
+''')
+    tool.chmod(0o755)
+    return tool
+
+
+def test_explicit_java_home_is_content_bound_and_used_by_build(tmp_path):
+    root = tmp_path / 'project'
+    root.mkdir()
+    (root / 'pom.xml').write_text('<project/>')
+    exporter = tmp_path / 'tools/build/maven/target/kgmaker-build-export.jar'
+    exporter.parent.mkdir(parents=True)
+    exporter.write_text('trusted fixture exporter')
+    jdk = _fake_jdk(tmp_path / 'jdks')
+    tool = _fake_maven(tmp_path)
+
+    plan = create_plan(root, phase='compile', build_system='maven', executable=str(tool),
+                       home=tmp_path / 'tools', java_home=jdk, environment=['PATH'])
+    assert plan['toolchain_selection']['selection'] == 'EXPLICIT_JAVA_HOME'
+    assert plan['toolchain_selection']['java_home'] == str(jdk.resolve())
+    assert plan['toolchain_selection']['executables']['java']['sha256'] == file_hash(jdk / 'bin/java')
+    result = run_plan(plan)
+    assert result['status'] == 'SUCCESS'
+    manifest = json.loads(Path(result['manifest_path']).read_text())
+    assert manifest['toolchain_selection'] == plan['toolchain_selection']
+    assert manifest['contexts'][0]['toolchain']['java_home'] == str(jdk.resolve())
+    assert validate_manifest(root, manifest)['toolchain_selection']['fingerprint'] == plan['toolchain_selection']['fingerprint']
+    tampered = json.loads(json.dumps(manifest))
+    tampered['toolchain_selection']['java_home'] = str((tmp_path / 'other').resolve())
+    with pytest.raises(AnalysisError, match='fingerprint mismatch'):
+        validate_manifest(root, tampered)
+
+    second = _fake_jdk(tmp_path / 'jdks', 'two')
+    other = create_plan(root, phase='compile', build_system='maven', executable=str(tool),
+                        home=tmp_path / 'tools', java_home=second)
+    assert other['toolchain_selection']['fingerprint'] != plan['toolchain_selection']['fingerprint']
+    (jdk / 'bin/javac').write_text('changed compiler')
+    with pytest.raises(AnalysisError, match='STALE_TOOLCHAIN'):
+        validate_manifest(root, manifest)
+
+
+def test_missing_changed_or_ignored_explicit_java_home_never_publishes_fresh_outputs(tmp_path):
+    root = tmp_path / 'project'
+    root.mkdir()
+    (root / 'pom.xml').write_text('<project/>')
+    exporter = tmp_path / 'tools/build/maven/target/kgmaker-build-export.jar'
+    exporter.parent.mkdir(parents=True)
+    exporter.write_text('trusted fixture exporter')
+    tool = _fake_maven(tmp_path)
+
+    with pytest.raises(AnalysisError, match='TOOLCHAIN_UNAVAILABLE'):
+        create_plan(root, executable=str(tool), home=tmp_path / 'tools',
+                    java_home=tmp_path / 'missing-jdk')
+
+    jdk = _fake_jdk(tmp_path / 'jdks')
+    plan = create_plan(root, executable=str(tool), home=tmp_path / 'tools', java_home=jdk)
+    (jdk / 'bin/java').write_text('#!/bin/sh\nexit 2\n')
+    with pytest.raises(AnalysisError, match='STALE_PLAN'):
+        run_plan(plan)
+    assert not Path(plan['run_root']).exists()
+
+    mismatch_jdk = _fake_jdk(tmp_path / 'jdks', 'mismatch')
+    mismatch_tool = _fake_maven(tmp_path, reported_java_home=str(mismatch_jdk.resolve()))
+    mismatch_plan = create_plan(root, executable=str(mismatch_tool), home=tmp_path / 'tools', java_home=jdk)
+    mismatch = run_plan(mismatch_plan)
+    assert mismatch['result']['status'] == 'TOOLCHAIN_UNAVAILABLE'
+    manifest = json.loads(Path(mismatch['manifest_path']).read_text())
+    assert all(not context['outputs'] for context in manifest['contexts'])
+    assert any(item['code'] == 'EXPLICIT_TOOLCHAIN_MISMATCH' for item in mismatch['diagnostics'])
+
+
+def test_external_toolchain_two_real_jdks(tmp_path):
+    """T003-S03-W01-AC01: explicit selection reaches the real Maven exporter."""
+    homes = [Path(os.environ.get('KGMAKER_TEST_OTHER_JAVA_HOME', '/usr/lib/jvm/java-22-openjdk-amd64')),
+             Path('/usr/lib/jvm/java-21-openjdk-amd64')]
+    if not shutil.which('mvn') or not all((home / 'bin/javac').is_file() for home in homes):
+        pytest.skip('blocked: two real JDKs (21+) and Maven are required')
+    if not (ROOT / 'workers/build/maven/target/kgmaker-build-export.jar').is_file():
+        pytest.skip('blocked: trusted Maven build exporter is unavailable')
+    root = tmp_path / 'project'
+    root.mkdir()
+    (root / 'pom.xml').write_text('''<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <modelVersion>4.0.0</modelVersion><groupId>example</groupId><artifactId>toolchains</artifactId>
+      <version>1</version><properties><maven.compiler.release>17</maven.compiler.release></properties>
+      <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId><version>3.10.1</version></plugin></plugins></build>
+      </project>''')
+    source = root / 'src/main/java/Example.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('public class Example {}')
+    test_source = root / 'src/test/java/ExampleTest.java'
+    test_source.parent.mkdir(parents=True)
+    test_source.write_text('public class ExampleTest {}')
+    manifests = []
+    for home in homes:
+        plan = create_plan(root, phase='test-compile', build_system='maven', java_home=home, offline=True)
+        result = run_plan(plan)
+        assert result['status'] == 'SUCCESS', result
+        manifest = json.loads(Path(result['manifest_path']).read_text())
+        validate_manifest(root, manifest)
+        assert manifest['contexts']
+        assert all(Path(c['toolchain']['java_home']).resolve() == home.resolve()
+                   for c in manifest['contexts'])
+        manifests.append(manifest)
+    assert manifests[0]['toolchain_selection']['fingerprint'] != manifests[1]['toolchain_selection']['fingerprint']
+    assert manifests[0]['contexts'][0]['toolchain']['java_version'] != manifests[1]['contexts'][0]['toolchain']['java_version']

@@ -36,8 +36,34 @@ def snapshot(root: Path) -> dict:
     return result
 
 
+def _jdk_executable(java_home: Path, name: str) -> Path:
+    """Resolve a required JDK executable without using the host PATH."""
+    candidates = [java_home / 'bin' / name, java_home / 'bin' / (name + '.exe')]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    raise AnalysisError(f'TOOLCHAIN_UNAVAILABLE: {name} absent from explicit Java home', 3)
+
+
+def _select_java_home(java_home: Path | None) -> dict | None:
+    if java_home is None:
+        return None
+    home = java_home.expanduser().resolve()
+    if not home.is_dir():
+        raise AnalysisError('TOOLCHAIN_UNAVAILABLE: explicit Java home is not a directory', 3)
+    executables = {}
+    for name in ('java', 'javac'):
+        path = _jdk_executable(home, name)
+        executables[name] = {'path': str(path), 'sha256': file_hash(path)}
+    selected = {'selection': 'EXPLICIT_JAVA_HOME', 'java_home': str(home),
+                'executables': executables}
+    selected['fingerprint'] = digest(selected)
+    return selected
+
+
 def create_plan(root: Path, *, phase='test-compile', build_system=None, executable=None,
-                profiles=None, timeout=300, policy='LOCAL_TRUSTED', home=None, environment=None, offline=False) -> dict:
+                profiles=None, timeout=300, policy='LOCAL_TRUSTED', home=None, environment=None,
+                offline=False, java_home: Path | None = None) -> dict:
     root=root.resolve()
     if policy != 'LOCAL_TRUSTED': raise AnalysisError('Host execution policy unavailable; use BUILD_IMPORT')
     if phase not in {'compile','test-compile','test'}: raise AnalysisError('Unsupported build phase')
@@ -56,6 +82,7 @@ def create_plan(root: Path, *, phase='test-compile', build_system=None, executab
     # Bind environment values by hash; never persist credentials or tokens.
     names=environment or ['PATH','JAVA_HOME','MAVEN_OPTS','GRADLE_USER_HOME','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy']
     if any(not isinstance(n,str) or not n.replace('_','').isalnum() for n in names):raise AnalysisError('Invalid environment allowlist')
+    selected_toolchain = _select_java_home(java_home)
     inputs=snapshot(root);token=uuid.uuid4().hex
     run_root=root/'.kgmaker/build-runs'/token;work=run_root/'snapshot';export=run_root/'export.json';copied_adapter=run_root/adapter.name
     argv=[command]
@@ -69,11 +96,13 @@ def create_plan(root: Path, *, phase='test-compile', build_system=None, executab
     else:
         if profiles:raise AnalysisError('Gradle profiles unsupported; use explicit variant export')
         argv+=['--no-daemon','--init-script',str(copied_adapter),f'-Dkgmaker.snapshot.root={work}',f'-Dkgmaker.export.path={export}',{'compile':'classes','test-compile':'testClasses','test':'test'}[phase],'kgmakerExport']
+    overrides = ({'JAVA_HOME': selected_toolchain['java_home']} if selected_toolchain else {})
     value={'schema_version':1,'version':VERSION,'root':str(root),'build_id':token,'build_system':build_system,'phase':phase,
         'snapshot':{'sources':inputs,'content_hash':digest(inputs),'inventory':'ALL_BUILD_INPUTS_V1'},
         'argv':argv,'cwd':str(work),'run_root':str(run_root),'export_path':str(export),
         'executable':{'path':command,'sha256':file_hash(Path(command))},'adapter':{'path':str(adapter),'sha256':file_hash(adapter)},
-        'environment':{n:digest(os.environ.get(n)) for n in names},'timeout':timeout,
+        'environment':{n:digest(overrides.get(n, os.environ.get(n))) for n in names},
+        'environment_overrides':overrides,'toolchain_selection':selected_toolchain,'timeout':timeout,
         'execution_policy':{'mode':policy,'host_enforced':True,'isolation':'SEPARATE_SNAPSHOT_NOT_SECURITY_SANDBOX'}}
     value['plan_hash']=digest(value)
     return value
@@ -106,10 +135,33 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
     if snapshot(root)!=plan['snapshot']['sources']:raise AnalysisError('STALE_PLAN: build inputs changed',3)
     for record in (plan['executable'],plan['adapter']):
         if not Path(record['path']).is_file() or file_hash(Path(record['path']))!=record['sha256']:raise AnalysisError('STALE_PLAN: executable/exporter changed',3)
+    overrides=plan.get('environment_overrides',{})
+    if not isinstance(overrides,dict) or set(overrides)-{'JAVA_HOME'} or any(not isinstance(v,str) or not v for v in overrides.values()):
+        raise AnalysisError('Invalid BuildPlan environment overrides')
+    selected=plan.get('toolchain_selection')
+    if selected is not None:
+        if (not isinstance(selected,dict) or selected.get('selection')!='EXPLICIT_JAVA_HOME'
+                or selected.get('java_home')!=overrides.get('JAVA_HOME')
+                or selected.get('fingerprint')!=digest({k:v for k,v in selected.items() if k!='fingerprint'})
+                or not isinstance(selected.get('executables'),dict)):
+            raise AnalysisError('Invalid explicit toolchain selection')
+        for name in ('java','javac'):
+            record=selected['executables'].get(name)
+            if (not isinstance(record,dict) or not isinstance(record.get('path'),str)
+                    or not isinstance(record.get('sha256'),str)):
+                raise AnalysisError('Invalid explicit toolchain executable')
+            path=Path(record['path'])
+            if not path.is_file() or file_hash(path)!=record['sha256']:
+                raise AnalysisError('STALE_PLAN: selected Java toolchain changed',3)
     env={}
     for name,expected_hash in plan['environment'].items():
-        if digest(os.environ.get(name))!=expected_hash:raise AnalysisError('STALE_PLAN: allowed environment changed: '+name,3)
-        if name in os.environ:env[name]=os.environ[name]
+        value=overrides.get(name,os.environ.get(name))
+        if digest(value)!=expected_hash:raise AnalysisError('STALE_PLAN: allowed environment changed: '+name,3)
+        if value is not None:env[name]=value
+    env.update(overrides)
+    if selected:
+        current_path=env.get('PATH','')
+        env['PATH']=str(Path(selected['java_home'])/'bin')+(os.pathsep+current_path if current_path else '')
     if run.exists():raise AnalysisError('BuildPlan already executed; create a new plan')
     work.mkdir(parents=True)
     for relative,expected_hash in plan['snapshot']['sources'].items():
@@ -136,6 +188,19 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
         except FileNotFoundError:state='TOOLCHAIN_UNAVAILABLE'
     export=read_json(Path(plan['export_path'])) if Path(plan['export_path']).is_file() else None
     if state=='SUCCESS' and export is None:state='PARTIAL'
+    diagnostics=list(export.get('diagnostics',[]) if export else [{'code':'BUILD_MODEL_EXPORT_UNAVAILABLE'}])
+    if state=='SUCCESS' and selected and export:
+        expected_home=Path(selected['java_home']).resolve()
+        mismatches=[]
+        for context in export.get('contexts',[]):
+            actual=(context.get('toolchain') or {}).get('java_home') if isinstance(context,dict) else None
+            if not isinstance(actual,str) or Path(actual).resolve()!=expected_home:
+                mismatches.append({'context':context.get('id') if isinstance(context,dict) else None,
+                                   'reported_java_home':actual})
+        if mismatches:
+            state='TOOLCHAIN_UNAVAILABLE'
+            diagnostics.append({'code':'EXPLICIT_TOOLCHAIN_MISMATCH','expected_java_home':str(expected_home),
+                                'contexts':mismatches})
     result={'status':state,'execution_id':plan['build_id'],'return_code':return_code,'duration_seconds':round(time.monotonic()-start,3),
         'tests':tests_report(work,plan['phase']),'modules':export.get('modules',{}) if export else {},'log_path':str(log),
         'log_sha256':file_hash(log) if log.exists() else None,'snapshot_hash':plan['snapshot']['content_hash']}
@@ -184,7 +249,8 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
             if state=='SUCCESS' and copied_unchanged and path.exists():c['outputs'].append({'path':str(path),'sha256':artifact_hash(path),'execution_id':plan['build_id'],'snapshot_hash':plan['snapshot']['content_hash'],'freshness':'EXECUTION_BOUND'})
         contexts.append(c)
     manifest={'schema_version':1,'build_id':plan['build_id'],'mode':'BUILD_EXECUTE','origin_trust':'HOST_EXECUTION',
-        'snapshot':plan['snapshot'],'build_result':result,'contexts':contexts,'diagnostics':export.get('diagnostics',[]) if export else [{'code':'BUILD_MODEL_EXPORT_UNAVAILABLE'}],
+        'snapshot':plan['snapshot'],'build_result':result,'contexts':contexts,'diagnostics':diagnostics,
+        'toolchain_selection':selected,
         'plan_hash':plan['plan_hash'],'exporter':export.get('exporter') if export else None}
     if not copied_unchanged:manifest['diagnostics'].append({'code':'BUILD_INPUTS_CHANGED_DURING_EXECUTION'})
     write_json(run/'result.json',result);write_json(run/'manifest.json',manifest)
