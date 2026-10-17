@@ -27,6 +27,12 @@ Další implementace se provádí po jednom work package ve vlastní větvi a sa
 pull requestu. Stav každého zůstává SPECIFICATION, dokud jeho PR nedoloží požadované
 testy a akceptační kritéria.
 
+Každý z 60 work packages má projektový implementační profil v `.codex/agents`.
+Profily používají `gpt-5.6-luna` s effort `medium`, odkazují na přesné zadání a
+doporučenou větev a vyžadují testy, sémantickou aktualizaci, change note, commit,
+push a samostatný PR. Jde pouze o připravené vykonavatele; žádný profil sám nemění
+stav work package ani nedokládá splnění jeho acceptance.
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |

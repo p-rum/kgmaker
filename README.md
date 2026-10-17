@@ -100,6 +100,13 @@ The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-
 
 ## Copilot workflow
 
+Vývoj tohoto repozitáře má navíc projektové Codex implementační agenty v
+`.codex/agents`. Každý agent je vyhrazen jednomu atomickému work package T003,
+má explicitně nastavený model `gpt-5.6-luna` a reasoning effort `medium` a vede
+implementaci přes vlastní větev, testy a samostatný pull request. Tyto profily
+jsou konfigurací přispěvatelů tohoto repozitáře; příkaz `kgmaker init` je
+neinstaluje do uživatelských projektů.
+
 The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
 
 ## Implementation memory and workflow

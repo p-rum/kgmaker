@@ -1,0 +1,25 @@
+name = "t003_s07_w07_cross_service_contract_mapping"
+description = "Implementuje výhradně T003-S07-W07 (Cross-service contract/release mapping) podle docs/tasks/T003-S07-07-crossServiceContractMapping.md, v samostatné větvi a PR."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "medium"
+developer_instructions = """
+Implementuj výhradně work package T003-S07-W07 podle `docs/tasks/T003-S07-07-crossServiceContractMapping.md`. Nepřebírej žádný sousední work package ani nedeklaruj dokončení nadřazeného milníku.
+
+Před změnami:
+1. Přečti `AGENTS.md`, `.github/copilot-instructions.md`, `docs/tasks/README.md`, celé zadání T003-S07-W07, `docs/production-analysis-progress.md` a relevantní zdrojové/testovací soubory.
+2. Použij projektový skill `kgmaker`. Ověř `kgmaker status`, proveď architektonickou rekognoskaci přes graf/query a potvrď závěry ve zdroji a testech.
+3. Ověř cílovou větev, otevřené PR a všechny závislosti uvedené v zadání. Nesplněnou závislost oznam jako BLOCKED; nenahrazuj ji domněnkou.
+4. Pracuj v izolovaném git worktree na samostatné větvi `feat/t003-s07-07-cross-service-contract-mapping`. Nepřepínej větev sdíleného parent worktree, nepřepisuj existující cizí větev a neslučuj do této větve jiný work package.
+
+Implementace a evidence:
+1. Nejprve zapiš nebo identifikuj failing acceptance test pro konkrétní kritéria T003-S07-W07-ACxx.
+2. Implementuj celý rozsah tohoto zadání v existujících modelech, store, workspace, availability a evidence vrstvách. Zachovej uvedené non-goals, kompatibilitu a nulovou mutaci při chybě.
+3. Přidej smysluplné pozitivní, negativní a nejednoznačné testy vyžadované zadáním. Chybějící povinný toolchain vykazuj jako SKIP/BLOCKED, nikdy jako PASS.
+4. Aktualizuj všechny dokumenty vyžadované zadáním, zejména acceptance inventář, stavovou matici a nový český `docs/changes/<N>_<shortName>.md` s přesnými příkazy, výsledky, neprovedenými kontrolami a zbývajícími omezeními.
+5. Proveď scoped semantic update/apply/validate/scan a capture implementační paměti podle projektových instrukcí. Nevymýšlej sémantické vazby bez doložené evidence.
+
+Dokončení:
+1. Spusť cílené testy, požadovaný skutečný toolchain test, celý `python3 -m pytest -q` a `git diff --check`. Zkontroluj čistotu diffu a nulové implicitní procesy v offline cestách.
+2. Commitni pouze změny T003-S07-W07, pushni samostatnou větev a vytvoř samostatný pull request do ověřené cílové větve. PR musí odkázat na `docs/tasks/T003-S07-07-crossServiceContractMapping.md`, příslušná acceptance ID a change note. PR bez explicitního pokynu nemerguj.
+3. V závěru uveď větev, commit, URL PR, změněné kontrakty, přesné výsledky testů, neprovedené kontroly a zbývající omezení. Pokud PR nelze vytvořit kvůli autentizaci nebo síti, ponech reviewovatelný commit a přesně popiš blocker.
+"""

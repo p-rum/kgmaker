@@ -21,6 +21,13 @@ publikované identity T001–T003. Jejich název používá uživatelem požadov
 `T003-Sxx-Wyy`. Každý work package se implementuje ve vlastní větvi a končí
 samostatným pull requestem.
 
+Pro všech 60 work packages je připraven právě jeden projektový Codex agent v
+adresáři [`.codex/agents`](../../.codex/agents/README.md). Agent je svázaný s
+jediným zadáním, používá `gpt-5.6-luna` s reasoning effort `medium` a vynucuje
+izolovaný worktree, samostatnou větev, požadované testy, change note a samostatný
+pull request bez automatického merge. Stav zadání tím zůstává `SPECIFICATION`;
+existence agenta není důkazem implementace ani splnění acceptance.
+
 | Work package | Soubor | Úloha | Stav |
 |---|---|---|---|
 | T003-S03-W01 | [T003-S03-01-externalToolchainSelection.md](T003-S03-01-externalToolchainSelection.md) | external toolchain selection | SPECIFICATION |

@@ -2,7 +2,7 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "1e99c7f59f2c53a03f76ee66e148b0987e40a0276cbd7fdc1ad29f6d4fd7f721",
-    "README.md": "cbdb1c8f5b2c640e8ff15028d8c7459fb508d097b4f5f8300f0a5ff577aeac57",
+    "README.md": "09b58d52fc3e9d392fcd0249a45ce42e346d45b462e53de7510cf9454a691720",
     "docs/acceptance-inventory.md": "092e185ec0edbaaaf94789a30ce49fec37d933fb2bd5970108d33aacd6db0b7a",
     "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -12,11 +12,12 @@
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
+    "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/compiler-inspection.md": "7a576148f724ff918229128531bca00dee28729648331bdd025381cabde5e918",
     "docs/feature-analysis.md": "3fea715c39b1d24ac0fed9f5dc11e2f1bec2d9149cff94a686060b1ca0f53b19",
     "docs/flyway-workspace-proofs.md": "0971492bde72b7fbd843ebd8f2ad2aef4c31503a1aa68bb03780559529a11447",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "d1fbb7adff9b2e9b42d09fa4c2f9549e56e3f2a4d20af2f508213f804b86bb73",
+    "docs/production-analysis-progress.md": "a8b867dcfb3f71474d0a2d914ac7e119961a2472a40cd412a947a6b1599bf446",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "ff96fc8caafe68bf613d74915b45bed1ef0800ff4b65e7e96fc5a1a3182566e7",
@@ -28,7 +29,7 @@
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
-    "docs/tasks/README.md": "4f9f9fc4b82d45428138ba4bfb60b2a230321f51d9699beaf2b399c5010521b5",
+    "docs/tasks/README.md": "5561d0cf3233f1ed394d6065d8a423ebfee4c2acc0fa968f0efd8db0ecd72c7e",
     "docs/tasks/T003-S03-01-externalToolchainSelection.md": "1f8add4d01d03cb8b3958a2ef86c1d13c780ace538a9b2caf2522895a0dee180",
     "docs/tasks/T003-S03-02-gradleCustomVariants.md": "9dbc5f20fdbbbb99561665ecf02c8ecdf562bab858e0dd0b23d6f28dc4abf1f0",
     "docs/tasks/T003-S03-03-gradleIncludedBuilds.md": "e2d586bf268c2882c6bd86854a579c954e5ca598846ba864434b897cd320b094",
@@ -223,18 +224,18 @@
       "summary": "kgmaker is a custom, repository-local knowledge graph tool designed specifically for GitHub Copilot CLI."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 87,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/architecture.md:source_code_is_authoritative",
       "name": "Source code is authoritative",
       "source_file": "docs/architecture.md",
       "source_line": 22,
       "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 87,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
   "edges": [
@@ -257,6 +258,16 @@
       "source_file": "docs/architecture.md",
       "source_line": 22,
       "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
     },
     {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
@@ -297,16 +308,6 @@
       "source_file": "README.md",
       "source_line": 87,
       "evidence": "The documented semantic update workflow prepares a bounded change packet for a scoped agent patch."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
     }
   ],
   "episodes": [
@@ -20798,6 +20799,1243 @@
         }
       ],
       "id": "episode:2f00d1557a6f77499fa621d55744b892e7a433b277f341d6ff09d741b5d2fe71"
+    },
+    {
+      "base_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "head_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "worktree_fingerprint": "f02d98d29e7fd5f276e89bb8f90ea38a73257bbc23e5d07f338405aa3aa479ad",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "A",
+          "sha256": "df75e0d7010d9c6cd3e0e30a950ca2fa33ebcf539f2217e48ebf4e5ebb77af32"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w01-external-toolchain-selection.toml",
+          "status": "A",
+          "sha256": "0a8b2be3022a9285879f057faf6d1a9a722ee322d7e5b2e4ca88e2d3f6a6e655"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w02-gradle-custom-variants.toml",
+          "status": "A",
+          "sha256": "3da6b25b53a44acd89a2e8eedf17371967e0c10d6991e8770420291e3003d49e"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w03-gradle-included-builds.toml",
+          "status": "A",
+          "sha256": "0b5c551db27979ebe111b5b87632f4686dfe666cb2934f74b8840faeb04eb36a"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w04-kotlin-compiler-options.toml",
+          "status": "A",
+          "sha256": "0aa2db26e0c7fb69ac8aa3558e74854334dc8906831e9ef1dd0624050a099b6c"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w05-cross-repo-artifact-mapping.toml",
+          "status": "A",
+          "sha256": "d8156d478304d3397d0543058a9095f7e9627a4bc30f7c1e75f441a728873b8c"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w01-k2-analysis-api-backend.toml",
+          "status": "A",
+          "sha256": "71d32393d87decbf355d23505d8e7424f9e48284c72ea6add6961f59a6bbc80f"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w02-default-body-source-mapping.toml",
+          "status": "A",
+          "sha256": "bc497085a97d2e35f42fd3817368e4901707687ef8ffe8723dde410404ba4d76"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w03-coroutine-source-mapping.toml",
+          "status": "A",
+          "sha256": "4a2b8f01821fd89cf8b346bfe2ab5e7ba6f1b4b307b7806a2000de927c07dea7"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w04-dependency-dispatch-hierarchy.toml",
+          "status": "A",
+          "sha256": "61acd3facd8b679dcb7bdf13a14189519612be7add3e540875dc77b4a949021a"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w05-jvm-golden-acceptance-corpus.toml",
+          "status": "A",
+          "sha256": "9299f14cb6c2a18b1015f343672254050c85ff77a0d3d79c69aa71e10d806cf0"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w01-dynamic-spring-imports.toml",
+          "status": "A",
+          "sha256": "d570a5630e3bc62688b75101517401b58d2b63c0b61f01be280310fe5810dcc2"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w02-spring-registrars-factories.toml",
+          "status": "A",
+          "sha256": "5428c411a2c87203772b46f4576f6425d19cf77fdd03540815e16bb2f2bd6bac"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w03-spring-condition-matrix.toml",
+          "status": "A",
+          "sha256": "9d71b265bf977a50c16a3d6c61110080b958d284aed7ba2581404e9833e3fc63"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w04-spring-proxy-async-semantics.toml",
+          "status": "A",
+          "sha256": "477fcf74aa5546f8bc4bf9b66f38158e33f4a0e642fc371ea01cc870c6485e90"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w01-kotlin-jpa-access.toml",
+          "status": "A",
+          "sha256": "26c8076ccc3edbfa7469c1218fb6296af15bb3ad3268424ea9e97bcdd6583679"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w02-jpa-inherited-attributes.toml",
+          "status": "A",
+          "sha256": "f2723fb088bd5ab916c46799ae0b87bb5de1e273658cfcae770d207b59a3e3a9"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w03-orm-xml-overrides.toml",
+          "status": "A",
+          "sha256": "a1b063e03a918f64bf3d3bd9ad8d838c0d1cb05734ba1d74d0c2f1c1caccbf28"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w04-multi-datasource-realms.toml",
+          "status": "A",
+          "sha256": "4c107cfdbe237966a4635ef13e6be87a5cd44146cff0bb28a0eaf1a4f2c11be3"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w05-jpql-hql-grammar.toml",
+          "status": "A",
+          "sha256": "2a8a0f19e164b2e54726daf425b5f640c7f87015355b703a15fecedfd3833dc3"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w06-named-query-containers.toml",
+          "status": "A",
+          "sha256": "0fe614a1cc94582b388033e9878f6d1fc9281a3f69672d34e322af3dbc324a10"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w07-criteria-specification-querydsl.toml",
+          "status": "A",
+          "sha256": "050301c1b88778c1d0b0f01a85ab30960223043e4d43b398269e1ed1e10f8baa"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w08-schema-compatibility.toml",
+          "status": "A",
+          "sha256": "b0cb1533a13d1ee5d8993460a312cfd32e7a81d2c373a1d1d0f726fab133ead5"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w01-argument-parameter-flow.toml",
+          "status": "A",
+          "sha256": "6e90d09a25df84bba5d0c33897f6adab3a90b59e5ffc5b506c09b3457e382ba2"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w02-return-consumer-flow.toml",
+          "status": "A",
+          "sha256": "a89620cf5b72e2648bf5de7a2f5b7096a970947bb0af88e9b3940d0b42162ea1"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w03-field-and-mapping-flow.toml",
+          "status": "A",
+          "sha256": "688910c447372562041d427bfdfd89a3015214a02049db890e799c8b02b653ba"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w04-kafka-binding-identity.toml",
+          "status": "A",
+          "sha256": "bdba6364456481e458431188f0fc1857be651aee82d40b581116ba8ca3732f12"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w05-kafka-retry-dlt.toml",
+          "status": "A",
+          "sha256": "c6c0d4b5ed44f4e11734546c4f0dfd2f795d541b1b595c7daa514db82e4575e9"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w06-http-client-execution.toml",
+          "status": "A",
+          "sha256": "8e2f3ee9ae4226bef6e7a512a63b0f46bd83f0a5ffee5f1cbcc769569e5417f3"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w07-cross-service-contract-mapping.toml",
+          "status": "A",
+          "sha256": "8801005d1c7263d6b94aac42fdefe7b374e79d7053783a969e380f8bbd0b62a4"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w08-evidence-ranking.toml",
+          "status": "A",
+          "sha256": "99335c6cf6994d907248d382d30d7dba2c5210f813ccca6c1f8c9f0cce6d6605"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w09-unified-flow-views.toml",
+          "status": "A",
+          "sha256": "a00a8b7bbb22d5718d7b1b57d69be610dc5e4f4769e69af614fc6c1476e5817e"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w01-typescript-project-references.toml",
+          "status": "A",
+          "sha256": "1a66c96b411a995c8f664785ab3a35ccc4e69c68373997c5b4a68dd091ed8728"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w02-tsconfig-paths-exclude.toml",
+          "status": "A",
+          "sha256": "9c2de1fd16441df78c7081ea3e8e1617c883e54b430aba28d154cec1e4e2e7f9"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w03-typescript-callbacks-generics.toml",
+          "status": "A",
+          "sha256": "fb1a598d400cefb1ef2753131900551a6b305394ee89f41543e69b409707b284"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w04-versioned-ui-events.toml",
+          "status": "A",
+          "sha256": "aaf08994bc6e7bd78a76c65fb4fe83a18321e3d1918c4c887ddef88cea8171f2"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w05-backend-frontend-value-flow.toml",
+          "status": "A",
+          "sha256": "030b9f7b955f696300ff4f78a3c5d7f0d96380ebc71b2cc762547185b9882533"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w01-xlsx-advanced-references.toml",
+          "status": "A",
+          "sha256": "7b7eed98e6d50b8830040f157dba98d9459c3127f743b9ff1564053a0ac62c90"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w02-binary-xls-diagnostics.toml",
+          "status": "A",
+          "sha256": "2408885c5eab1bd3df5299dd757875363c2d9643dcd32a8f4b036090c1b6e448"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w03-template-dialect-expansion.toml",
+          "status": "A",
+          "sha256": "d72a0c805db1c9351b1f58d0c546f8ed737ded1127a3356c345a0ae2f0fb43ff"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w04-approved-methodology-conflicts.toml",
+          "status": "A",
+          "sha256": "41bd30b2ef118f637fa356dbf89ad8d1c3e70ebedfad24e2d3a1201e8b238389"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w05-complete-analysis-report.toml",
+          "status": "A",
+          "sha256": "e991cbe946075bb7ac8556d9ea0d86fb64cb2e0733b5ce29d7e48aba979a6019"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w01-stage-content-cache.toml",
+          "status": "A",
+          "sha256": "7d963d81ce150f4e35c3720e870222c908ea55d17f5abd4461557de523bf5436"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w02-reverse-dependency-indexes.toml",
+          "status": "A",
+          "sha256": "d70f7edd1d95a8b92153e9fca7a8ef568d8608db557b8f3c5132abc36c4dbcfe"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w03-negative-lookup-invalidation.toml",
+          "status": "A",
+          "sha256": "f571d7b98056a08ed1613085301f3e0941c31c92215ba3da7cd9cf0d8f8478e4"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w04-filesystem-mutation-equivalence.toml",
+          "status": "A",
+          "sha256": "7220189b2a7db00a20d8bc69f698fc94ce8b558d92923ed4b2e7f6638f136df8"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w05-selective-feature-revise.toml",
+          "status": "A",
+          "sha256": "8cb421753da282078ed97c297a0e2a33624381a8b0b6a5040c0dd3fe559d82a5"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w06-cache-corruption-concurrency.toml",
+          "status": "A",
+          "sha256": "2f19a97ebd174f025bd78bb415b27bc68e608d823da3ed1998858ff134924c2e"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w01-worker-clean-install.toml",
+          "status": "A",
+          "sha256": "6ac27fb5e5a9d67506c1b0e13dc762b114587f72153254aa07342db336b0e4e1"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w02-build-exporter-packaging.toml",
+          "status": "A",
+          "sha256": "76bf1e2138c9a5c8cea3053766fd7eee553ea691307ab3e3a57875af51e6d34f"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w03-windows-no-admin-install.toml",
+          "status": "A",
+          "sha256": "59758174534e757b6587ccb4149e3afb5fa6c6699f6fa5d1d8e329ce2cb2630b"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w04-mandatory-worker-ci.toml",
+          "status": "A",
+          "sha256": "81e878ead06a6a93fbf9b91e6513276199599f614499c8bd04ecc28491ab921b"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w05-benchmark-corpus.toml",
+          "status": "A",
+          "sha256": "488b9ff3af48d495711eb6a0a8473d0244e4a2a9bb7de9d9e035b66ce0f4d933"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w06-regression-budgets.toml",
+          "status": "A",
+          "sha256": "bac14f492183b4de2a80b855a6e48ec34f2ec7581e021bf7cfcacd3e01d94eca"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w07-full-end-to-end-acceptance.toml",
+          "status": "A",
+          "sha256": "e286f61db400e112adc6c206f20594036b2b36ac64fe3563d1c223c0e707e2b6"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w08-release-documentation.toml",
+          "status": "A",
+          "sha256": "76662a1127092324c3f77155e87f932a07743e4a297eed925084e90ec2ad9582"
+        },
+        {
+          "path": ".codex/agents/t003-s12-w01-live-confluence-connector.toml",
+          "status": "A",
+          "sha256": "6eb024507d86cbdded4c906cfec3c0e85500112a2a334c46ffbe15eb0b770655"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w01-runtime-trace-producer.toml",
+          "status": "A",
+          "sha256": "5efeb2de713ba24964600ce8df133193643bee97e61e34649c1b1c40a4439326"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w02-runtime-rta-import.toml",
+          "status": "A",
+          "sha256": "bac727ea6643ff806a23bdef92f4d82b09e0cd39a011da038220f076e0ee9540"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w03-runtime-value-flow.toml",
+          "status": "A",
+          "sha256": "27744db0712c8a7c01e731d7f924065f71798f825e8840b4a34066de7f951d84"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w04-runtime-async-reflection.toml",
+          "status": "A",
+          "sha256": "6bdf374d2a2bd3973e5fe9c801849794106a8f3d8d22f1198a60c05d4c2f10c5"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "09b58d52fc3e9d392fcd0249a45ce42e346d45b462e53de7510cf9454a691720"
+        },
+        {
+          "path": "docs/changes/7_addTaskImplementationAgents.md",
+          "status": "A",
+          "sha256": "9d9f7f91c547651d0e05d089ced89927f9b29290c30a615d171b1bb845a18a44"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a8b867dcfb3f71474d0a2d914ac7e119961a2472a40cd412a947a6b1599bf446"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "5561d0cf3233f1ed394d6065d8a423ebfee4c2acc0fa968f0efd8db0ecd72c7e"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/changes/7_addTaskImplementationAgents.md:7_addTaskImplementationAgents.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::257",
+        "section:README.md:Copilot workflow::101",
+        "section:README.md:Data prerequisite audit::178",
+        "section:README.md:Development::123",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::132",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::140",
+        "section:README.md:Implementation memory and workflow::112",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::93",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Kompatibilita a migrační dopad::31",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Neprovedené kontroly::56",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Problém::10",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Projektoví implementační agenti pro atomické work packages T003::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Provedené kontroly::38",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Příklad použití::69",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Skutečné změny::16",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Zbývající práce::81",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::107",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::15",
+        "section:docs/tasks/README.md:Jednotný formát::123",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::94",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::158",
+        "section:docs/tasks/README.md:Převod starších milníků::134",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [
+          "file:docs/changes/7_addTaskImplementationAgents.md:7_addTaskImplementationAgents.md",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Kompatibilita a migrační dopad::31",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Neprovedené kontroly::56",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Problém::10",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Projektoví implementační agenti pro atomické work packages T003::1",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Provedené kontroly::38",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Příklad použití::69",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Skutečné změny::16",
+          "section:docs/changes/7_addTaskImplementationAgents.md:Zbývající práce::81"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "agent-profiles",
+          "status": "passed"
+        },
+        {
+          "label": "toml",
+          "status": "passed"
+        },
+        {
+          "label": "codex-loader",
+          "status": "passed"
+        },
+        {
+          "label": "links",
+          "status": "passed"
+        },
+        {
+          "label": "pytest197",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:40d2627f298f6cc3f01807806341fbf26176ec8656be3620bdb9b70cbd309f19"
+    },
+    {
+      "base_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "head_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "worktree_fingerprint": "fc02c41b9a1c72a40db86bdf394e86bd01f72878978a677296a82a435292bdf5",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "A",
+          "sha256": "b3bacce030a250d940501fcea14741284fb14def4ec9461629dd6970e5293b7b"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w01-external-toolchain-selection.toml",
+          "status": "A",
+          "sha256": "10ace7be88bbc5a30e383a0b945a698276468fc3fef4978ab9e4ecfbced47f6d"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w02-gradle-custom-variants.toml",
+          "status": "A",
+          "sha256": "7d9e664e4414a2257d2d378c357e13998f39eb17669c3b17df9c110b0da234bd"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w03-gradle-included-builds.toml",
+          "status": "A",
+          "sha256": "cbd799b9723058d5800eccb816dac0d1f018b718569dfc5ae035a8b5ec1e7960"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w04-kotlin-compiler-options.toml",
+          "status": "A",
+          "sha256": "2bd67fbf2a284a09a2736f0ecfc75eb70675586a426e902cb5482ab165b877c8"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w05-cross-repo-artifact-mapping.toml",
+          "status": "A",
+          "sha256": "0600c8706215b0e3a0ed3f7ea523d729e7722407498c3c76159552722fa4f24c"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w01-k2-analysis-api-backend.toml",
+          "status": "A",
+          "sha256": "4bce875ff60f15519a6a89290bbe82c6f30f1a1a7d6e03009021f0507dd32932"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w02-default-body-source-mapping.toml",
+          "status": "A",
+          "sha256": "a7c5ac3d3031cbc3a1befe6a4e441041cc336f759b16bbb8007396c137980f6b"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w03-coroutine-source-mapping.toml",
+          "status": "A",
+          "sha256": "1e024706f7b8e2950c2c3df5d089b7398575d2398c4d9be66ed1aab65d2234af"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w04-dependency-dispatch-hierarchy.toml",
+          "status": "A",
+          "sha256": "b671434856503be4756d9041d6ed2e9632cd3aece5a2a685390cc35f784d1306"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w05-jvm-golden-acceptance-corpus.toml",
+          "status": "A",
+          "sha256": "be4b7b733bb734482ff754664a602392310c4dd3de4ad64521b2777475ae7f60"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w01-dynamic-spring-imports.toml",
+          "status": "A",
+          "sha256": "7889ad0089654b2f69d4b13eeb882dc328520fe7280902ac6aae6627df3ffbed"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w02-spring-registrars-factories.toml",
+          "status": "A",
+          "sha256": "3067670b1812bf9349d6b670d169cd12ed73879d1ff36abe90dce413bdd03518"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w03-spring-condition-matrix.toml",
+          "status": "A",
+          "sha256": "6c2439a90ba37f66d911f8cef850d808215cb7be63c92c3d9d1d7375f96c52c0"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w04-spring-proxy-async-semantics.toml",
+          "status": "A",
+          "sha256": "1e5db093bd15e73d9bdd0120bbaa92b7847cd8ea033d76220a65e3d369f110e7"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w01-kotlin-jpa-access.toml",
+          "status": "A",
+          "sha256": "c1ea2194e4d030a4a11696b35b0322382d1e7edc518b7a494ec0c33b1a93fa81"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w02-jpa-inherited-attributes.toml",
+          "status": "A",
+          "sha256": "135b17a41bee247b44a235a1d4c2807c24c52b9a8aee5c24f1822e64aa0e32bf"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w03-orm-xml-overrides.toml",
+          "status": "A",
+          "sha256": "2acd086c0db17338ca730d49b3b5b2e957e6a49313b611a6be206912e3eab905"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w04-multi-datasource-realms.toml",
+          "status": "A",
+          "sha256": "854ececd32002c32918784e5530ec4babcac4d37b46a2e62c02c28b40370abac"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w05-jpql-hql-grammar.toml",
+          "status": "A",
+          "sha256": "5a60cdd997e6c75e4a28afcbc73af2fddac270f4f79ddc66959e3318a9a949fc"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w06-named-query-containers.toml",
+          "status": "A",
+          "sha256": "38a617ee09780273817011516b86353646d987620efaef1794dc0d7af58385c1"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w07-criteria-specification-querydsl.toml",
+          "status": "A",
+          "sha256": "deb2dc6189b6967f870f11a40656bad48da7e616434aa01de5f935103f4a1ba1"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w08-schema-compatibility.toml",
+          "status": "A",
+          "sha256": "393aa176c532cd46f6f8c61fbd9ca0d8f6fbf01df71c0fbfdd6cef666cf99e3f"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w01-argument-parameter-flow.toml",
+          "status": "A",
+          "sha256": "d1f62cde82328c7b2119d85100cd24e7a82420f41b0400953d805b977054adb8"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w02-return-consumer-flow.toml",
+          "status": "A",
+          "sha256": "cc2f93ceef07ad34f452c925d0205cffe4df3f0d3da6d14649419c336522ab1c"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w03-field-and-mapping-flow.toml",
+          "status": "A",
+          "sha256": "8a80b8ddb16e669a3b5ee41c97f3675f9524947682b4b203aa09bf4b55dc2b5a"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w04-kafka-binding-identity.toml",
+          "status": "A",
+          "sha256": "e7979f3464f72aff9bdd4595dca801054f88421cf935697507039ee058d8d109"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w05-kafka-retry-dlt.toml",
+          "status": "A",
+          "sha256": "85a565174f380cce10ba584287e6e210ce452734d2f4d5bee35e1c70aeaf9a3e"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w06-http-client-execution.toml",
+          "status": "A",
+          "sha256": "c8ca5994718620f02b0601a83dbfbd83549ef12c0f65838a37e1f42a69f4249f"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w07-cross-service-contract-mapping.toml",
+          "status": "A",
+          "sha256": "8cd458509708368c50e4fbc07a00816e085384db07978223b81da32c79513b54"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w08-evidence-ranking.toml",
+          "status": "A",
+          "sha256": "4c7a8b3393dbdcffdb0ddbacc4c3f7eb9a5e0af9d67dda6413367a59f6786f17"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w09-unified-flow-views.toml",
+          "status": "A",
+          "sha256": "9df48fccbf6997c601cd3c3a1746860e41a21648eedf10a93efaef36f733718f"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w01-typescript-project-references.toml",
+          "status": "A",
+          "sha256": "5b4a4f12402895e09e8659b998c3f8e21019acee309d845658af3d96e7a951de"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w02-tsconfig-paths-exclude.toml",
+          "status": "A",
+          "sha256": "6cdca8778568dc36e7d0f53a675f294947b450d57025fc94dba6c301b04408e5"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w03-typescript-callbacks-generics.toml",
+          "status": "A",
+          "sha256": "b96cdd486ee80e566313a44de36b3b65cbd29b21e91c49c2aad830740841a63b"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w04-versioned-ui-events.toml",
+          "status": "A",
+          "sha256": "65fa0de8fb950f16f15e38ad140145f03951af5754ea6988b2202a6c6dbb110c"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w05-backend-frontend-value-flow.toml",
+          "status": "A",
+          "sha256": "6f29bc059863e9a89e3032d0257640176a06f0e05c2d1772379f307671248f0e"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w01-xlsx-advanced-references.toml",
+          "status": "A",
+          "sha256": "5b6858f808f257389df1e2fdcd9f1c4a59e5e2b2749b3f1980aaa66120dffb6c"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w02-binary-xls-diagnostics.toml",
+          "status": "A",
+          "sha256": "19e7659dde172208794b87aa6f11daf3a27c1b279a3252b9728b984943383108"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w03-template-dialect-expansion.toml",
+          "status": "A",
+          "sha256": "a6b5394b4cb47fa893e71767585d57346adbbf72d0881c06d1321799e9af4903"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w04-approved-methodology-conflicts.toml",
+          "status": "A",
+          "sha256": "04b171a09a4cf6cdb9602f15cdb11740b4e2a0685c7efdf850c943289ea4956c"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w05-complete-analysis-report.toml",
+          "status": "A",
+          "sha256": "d71c80baaea793b2bf725193908d51bc22bc1af39d50b7d5e322de5c571d9032"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w01-stage-content-cache.toml",
+          "status": "A",
+          "sha256": "5c462cece82b75d7b2b25a2327731b1867afb39d50f658a31dfe4c9598ede429"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w02-reverse-dependency-indexes.toml",
+          "status": "A",
+          "sha256": "6532bff05cc1af9283479a4b5f3e418cf044b8c01ab69da8914ff22caf8ddaf1"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w03-negative-lookup-invalidation.toml",
+          "status": "A",
+          "sha256": "84ba2e136ac1d1237720063236bb1cc2937856534188f66eda8a3f65aac0f7cf"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w04-filesystem-mutation-equivalence.toml",
+          "status": "A",
+          "sha256": "b521f22ad659946be899ff4c169d1dbc1d7d4e167e85d185ff039e67dcef636f"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w05-selective-feature-revise.toml",
+          "status": "A",
+          "sha256": "e9d2e4dee63a9131cfcdbe9af36a39937bf62cfabd04a1a65911ae7563262c4e"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w06-cache-corruption-concurrency.toml",
+          "status": "A",
+          "sha256": "7d3c8fe4921bb6ccb3d1f2c0ae9034f88b26b94055832ec383d06da55dd4d907"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w01-worker-clean-install.toml",
+          "status": "A",
+          "sha256": "22fdec35982c47311ffdbd7246db1c76e0c49fb88c1c9fad89fdbda4d3144652"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w02-build-exporter-packaging.toml",
+          "status": "A",
+          "sha256": "ec1feade7fb56ea39a9da16fd641b1eac7be47cb6d92880cd5cc2aa4e5049691"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w03-windows-no-admin-install.toml",
+          "status": "A",
+          "sha256": "6a75046f371c586f356bf8ccef151572c800a9340b25a748cc50c1a85a3e36e7"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w04-mandatory-worker-ci.toml",
+          "status": "A",
+          "sha256": "1f7e70acd94b78406b2e2e90d33ecb0491bb59e4f937dab14d60632cc937487f"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w05-benchmark-corpus.toml",
+          "status": "A",
+          "sha256": "a57f1586bc83841d1fa9637ed434b5c4cbd7b7f815375eee25cc5e12df014b1d"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w06-regression-budgets.toml",
+          "status": "A",
+          "sha256": "89c534e46e1ea60faa1e4aa4e33166fccd8ef8a787ca6526574fc31d92daac81"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w07-full-end-to-end-acceptance.toml",
+          "status": "A",
+          "sha256": "e672503be8e47672deb7bb3a20c883b0975959a1c31188fd57efd987c6e8fdb1"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w08-release-documentation.toml",
+          "status": "A",
+          "sha256": "02e543b47d9e96002027325a5a5c58a4c686133855d14cf1e6a88e8119c5c6d5"
+        },
+        {
+          "path": ".codex/agents/t003-s12-w01-live-confluence-connector.toml",
+          "status": "A",
+          "sha256": "893414ba4c2fa58a64b1a42f8e925a74cf954a79e92cd6c23189fd4f794c1b56"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w01-runtime-trace-producer.toml",
+          "status": "A",
+          "sha256": "c995bd13bf795ce3aa718d5fa9cb653ed015541c8ab52c165cc132fa9fcccbab"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w02-runtime-rta-import.toml",
+          "status": "A",
+          "sha256": "e3c24d64b5e284af380782da00091b32af31459b1c456a4bdffc2cd708bf7153"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w03-runtime-value-flow.toml",
+          "status": "A",
+          "sha256": "42c38c256a094a6898e066b16dc84180be77eaf038a9779b9a4a9cfa63c2e915"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w04-runtime-async-reflection.toml",
+          "status": "A",
+          "sha256": "02b54be84498d02f2f3f937e1dfd676a22fb77d50f620bfcc8bac230087883a1"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "09b58d52fc3e9d392fcd0249a45ce42e346d45b462e53de7510cf9454a691720"
+        },
+        {
+          "path": "docs/changes/7_addTaskImplementationAgents.md",
+          "status": "A",
+          "sha256": "8690837229e6760b63dba92b1386d1f47326723703ca0a39b9856ae13e172734"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a8b867dcfb3f71474d0a2d914ac7e119961a2472a40cd412a947a6b1599bf446"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "5561d0cf3233f1ed394d6065d8a423ebfee4c2acc0fa968f0efd8db0ecd72c7e"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/changes/7_addTaskImplementationAgents.md:7_addTaskImplementationAgents.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::257",
+        "section:README.md:Copilot workflow::101",
+        "section:README.md:Data prerequisite audit::178",
+        "section:README.md:Development::123",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::132",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::140",
+        "section:README.md:Implementation memory and workflow::112",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::93",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Kompatibilita a migrační dopad::31",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Neprovedené kontroly::60",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Problém::10",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Projektoví implementační agenti pro atomické work packages T003::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Provedené kontroly::38",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Příklad použití::73",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Skutečné změny::16",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Zbývající práce::85",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::107",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::15",
+        "section:docs/tasks/README.md:Jednotný formát::123",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::94",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::158",
+        "section:docs/tasks/README.md:Převod starších milníků::134",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "agent-profiles",
+          "status": "passed"
+        },
+        {
+          "label": "toml",
+          "status": "passed"
+        },
+        {
+          "label": "codex-loader",
+          "status": "passed"
+        },
+        {
+          "label": "links",
+          "status": "passed"
+        },
+        {
+          "label": "pytest197",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:6f61a32587c47770d852d2ee42372ba20522064f33db9066779aa59fe4507d70"
+    },
+    {
+      "base_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "head_commit": "61ac5627ea82ca2cb66ca3e4d021670e3d0b036d",
+      "worktree_fingerprint": "7e16f9dc568f7be0045ab3f94be4b8aec7c0e377d474394971a951da2c56e2ef",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "A",
+          "sha256": "b3bacce030a250d940501fcea14741284fb14def4ec9461629dd6970e5293b7b"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w01-external-toolchain-selection.toml",
+          "status": "A",
+          "sha256": "10ace7be88bbc5a30e383a0b945a698276468fc3fef4978ab9e4ecfbced47f6d"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w02-gradle-custom-variants.toml",
+          "status": "A",
+          "sha256": "7d9e664e4414a2257d2d378c357e13998f39eb17669c3b17df9c110b0da234bd"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w03-gradle-included-builds.toml",
+          "status": "A",
+          "sha256": "cbd799b9723058d5800eccb816dac0d1f018b718569dfc5ae035a8b5ec1e7960"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w04-kotlin-compiler-options.toml",
+          "status": "A",
+          "sha256": "2bd67fbf2a284a09a2736f0ecfc75eb70675586a426e902cb5482ab165b877c8"
+        },
+        {
+          "path": ".codex/agents/t003-s03-w05-cross-repo-artifact-mapping.toml",
+          "status": "A",
+          "sha256": "0600c8706215b0e3a0ed3f7ea523d729e7722407498c3c76159552722fa4f24c"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w01-k2-analysis-api-backend.toml",
+          "status": "A",
+          "sha256": "4bce875ff60f15519a6a89290bbe82c6f30f1a1a7d6e03009021f0507dd32932"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w02-default-body-source-mapping.toml",
+          "status": "A",
+          "sha256": "a7c5ac3d3031cbc3a1befe6a4e441041cc336f759b16bbb8007396c137980f6b"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w03-coroutine-source-mapping.toml",
+          "status": "A",
+          "sha256": "1e024706f7b8e2950c2c3df5d089b7398575d2398c4d9be66ed1aab65d2234af"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w04-dependency-dispatch-hierarchy.toml",
+          "status": "A",
+          "sha256": "b671434856503be4756d9041d6ed2e9632cd3aece5a2a685390cc35f784d1306"
+        },
+        {
+          "path": ".codex/agents/t003-s04-w05-jvm-golden-acceptance-corpus.toml",
+          "status": "A",
+          "sha256": "be4b7b733bb734482ff754664a602392310c4dd3de4ad64521b2777475ae7f60"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w01-dynamic-spring-imports.toml",
+          "status": "A",
+          "sha256": "7889ad0089654b2f69d4b13eeb882dc328520fe7280902ac6aae6627df3ffbed"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w02-spring-registrars-factories.toml",
+          "status": "A",
+          "sha256": "3067670b1812bf9349d6b670d169cd12ed73879d1ff36abe90dce413bdd03518"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w03-spring-condition-matrix.toml",
+          "status": "A",
+          "sha256": "6c2439a90ba37f66d911f8cef850d808215cb7be63c92c3d9d1d7375f96c52c0"
+        },
+        {
+          "path": ".codex/agents/t003-s05-w04-spring-proxy-async-semantics.toml",
+          "status": "A",
+          "sha256": "1e5db093bd15e73d9bdd0120bbaa92b7847cd8ea033d76220a65e3d369f110e7"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w01-kotlin-jpa-access.toml",
+          "status": "A",
+          "sha256": "c1ea2194e4d030a4a11696b35b0322382d1e7edc518b7a494ec0c33b1a93fa81"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w02-jpa-inherited-attributes.toml",
+          "status": "A",
+          "sha256": "135b17a41bee247b44a235a1d4c2807c24c52b9a8aee5c24f1822e64aa0e32bf"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w03-orm-xml-overrides.toml",
+          "status": "A",
+          "sha256": "2acd086c0db17338ca730d49b3b5b2e957e6a49313b611a6be206912e3eab905"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w04-multi-datasource-realms.toml",
+          "status": "A",
+          "sha256": "854ececd32002c32918784e5530ec4babcac4d37b46a2e62c02c28b40370abac"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w05-jpql-hql-grammar.toml",
+          "status": "A",
+          "sha256": "5a60cdd997e6c75e4a28afcbc73af2fddac270f4f79ddc66959e3318a9a949fc"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w06-named-query-containers.toml",
+          "status": "A",
+          "sha256": "38a617ee09780273817011516b86353646d987620efaef1794dc0d7af58385c1"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w07-criteria-specification-querydsl.toml",
+          "status": "A",
+          "sha256": "deb2dc6189b6967f870f11a40656bad48da7e616434aa01de5f935103f4a1ba1"
+        },
+        {
+          "path": ".codex/agents/t003-s06-w08-schema-compatibility.toml",
+          "status": "A",
+          "sha256": "393aa176c532cd46f6f8c61fbd9ca0d8f6fbf01df71c0fbfdd6cef666cf99e3f"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w01-argument-parameter-flow.toml",
+          "status": "A",
+          "sha256": "d1f62cde82328c7b2119d85100cd24e7a82420f41b0400953d805b977054adb8"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w02-return-consumer-flow.toml",
+          "status": "A",
+          "sha256": "cc2f93ceef07ad34f452c925d0205cffe4df3f0d3da6d14649419c336522ab1c"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w03-field-and-mapping-flow.toml",
+          "status": "A",
+          "sha256": "8a80b8ddb16e669a3b5ee41c97f3675f9524947682b4b203aa09bf4b55dc2b5a"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w04-kafka-binding-identity.toml",
+          "status": "A",
+          "sha256": "e7979f3464f72aff9bdd4595dca801054f88421cf935697507039ee058d8d109"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w05-kafka-retry-dlt.toml",
+          "status": "A",
+          "sha256": "85a565174f380cce10ba584287e6e210ce452734d2f4d5bee35e1c70aeaf9a3e"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w06-http-client-execution.toml",
+          "status": "A",
+          "sha256": "c8ca5994718620f02b0601a83dbfbd83549ef12c0f65838a37e1f42a69f4249f"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w07-cross-service-contract-mapping.toml",
+          "status": "A",
+          "sha256": "8cd458509708368c50e4fbc07a00816e085384db07978223b81da32c79513b54"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w08-evidence-ranking.toml",
+          "status": "A",
+          "sha256": "4c7a8b3393dbdcffdb0ddbacc4c3f7eb9a5e0af9d67dda6413367a59f6786f17"
+        },
+        {
+          "path": ".codex/agents/t003-s07-w09-unified-flow-views.toml",
+          "status": "A",
+          "sha256": "9df48fccbf6997c601cd3c3a1746860e41a21648eedf10a93efaef36f733718f"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w01-typescript-project-references.toml",
+          "status": "A",
+          "sha256": "5b4a4f12402895e09e8659b998c3f8e21019acee309d845658af3d96e7a951de"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w02-tsconfig-paths-exclude.toml",
+          "status": "A",
+          "sha256": "6cdca8778568dc36e7d0f53a675f294947b450d57025fc94dba6c301b04408e5"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w03-typescript-callbacks-generics.toml",
+          "status": "A",
+          "sha256": "b96cdd486ee80e566313a44de36b3b65cbd29b21e91c49c2aad830740841a63b"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w04-versioned-ui-events.toml",
+          "status": "A",
+          "sha256": "65fa0de8fb950f16f15e38ad140145f03951af5754ea6988b2202a6c6dbb110c"
+        },
+        {
+          "path": ".codex/agents/t003-s08-w05-backend-frontend-value-flow.toml",
+          "status": "A",
+          "sha256": "6f29bc059863e9a89e3032d0257640176a06f0e05c2d1772379f307671248f0e"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w01-xlsx-advanced-references.toml",
+          "status": "A",
+          "sha256": "5b6858f808f257389df1e2fdcd9f1c4a59e5e2b2749b3f1980aaa66120dffb6c"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w02-binary-xls-diagnostics.toml",
+          "status": "A",
+          "sha256": "19e7659dde172208794b87aa6f11daf3a27c1b279a3252b9728b984943383108"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w03-template-dialect-expansion.toml",
+          "status": "A",
+          "sha256": "a6b5394b4cb47fa893e71767585d57346adbbf72d0881c06d1321799e9af4903"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w04-approved-methodology-conflicts.toml",
+          "status": "A",
+          "sha256": "04b171a09a4cf6cdb9602f15cdb11740b4e2a0685c7efdf850c943289ea4956c"
+        },
+        {
+          "path": ".codex/agents/t003-s09-w05-complete-analysis-report.toml",
+          "status": "A",
+          "sha256": "d71c80baaea793b2bf725193908d51bc22bc1af39d50b7d5e322de5c571d9032"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w01-stage-content-cache.toml",
+          "status": "A",
+          "sha256": "5c462cece82b75d7b2b25a2327731b1867afb39d50f658a31dfe4c9598ede429"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w02-reverse-dependency-indexes.toml",
+          "status": "A",
+          "sha256": "6532bff05cc1af9283479a4b5f3e418cf044b8c01ab69da8914ff22caf8ddaf1"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w03-negative-lookup-invalidation.toml",
+          "status": "A",
+          "sha256": "84ba2e136ac1d1237720063236bb1cc2937856534188f66eda8a3f65aac0f7cf"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w04-filesystem-mutation-equivalence.toml",
+          "status": "A",
+          "sha256": "b521f22ad659946be899ff4c169d1dbc1d7d4e167e85d185ff039e67dcef636f"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w05-selective-feature-revise.toml",
+          "status": "A",
+          "sha256": "e9d2e4dee63a9131cfcdbe9af36a39937bf62cfabd04a1a65911ae7563262c4e"
+        },
+        {
+          "path": ".codex/agents/t003-s10-w06-cache-corruption-concurrency.toml",
+          "status": "A",
+          "sha256": "7d3c8fe4921bb6ccb3d1f2c0ae9034f88b26b94055832ec383d06da55dd4d907"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w01-worker-clean-install.toml",
+          "status": "A",
+          "sha256": "22fdec35982c47311ffdbd7246db1c76e0c49fb88c1c9fad89fdbda4d3144652"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w02-build-exporter-packaging.toml",
+          "status": "A",
+          "sha256": "ec1feade7fb56ea39a9da16fd641b1eac7be47cb6d92880cd5cc2aa4e5049691"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w03-windows-no-admin-install.toml",
+          "status": "A",
+          "sha256": "6a75046f371c586f356bf8ccef151572c800a9340b25a748cc50c1a85a3e36e7"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w04-mandatory-worker-ci.toml",
+          "status": "A",
+          "sha256": "1f7e70acd94b78406b2e2e90d33ecb0491bb59e4f937dab14d60632cc937487f"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w05-benchmark-corpus.toml",
+          "status": "A",
+          "sha256": "a57f1586bc83841d1fa9637ed434b5c4cbd7b7f815375eee25cc5e12df014b1d"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w06-regression-budgets.toml",
+          "status": "A",
+          "sha256": "89c534e46e1ea60faa1e4aa4e33166fccd8ef8a787ca6526574fc31d92daac81"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w07-full-end-to-end-acceptance.toml",
+          "status": "A",
+          "sha256": "e672503be8e47672deb7bb3a20c883b0975959a1c31188fd57efd987c6e8fdb1"
+        },
+        {
+          "path": ".codex/agents/t003-s11-w08-release-documentation.toml",
+          "status": "A",
+          "sha256": "02e543b47d9e96002027325a5a5c58a4c686133855d14cf1e6a88e8119c5c6d5"
+        },
+        {
+          "path": ".codex/agents/t003-s12-w01-live-confluence-connector.toml",
+          "status": "A",
+          "sha256": "893414ba4c2fa58a64b1a42f8e925a74cf954a79e92cd6c23189fd4f794c1b56"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w01-runtime-trace-producer.toml",
+          "status": "A",
+          "sha256": "c995bd13bf795ce3aa718d5fa9cb653ed015541c8ab52c165cc132fa9fcccbab"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w02-runtime-rta-import.toml",
+          "status": "A",
+          "sha256": "e3c24d64b5e284af380782da00091b32af31459b1c456a4bdffc2cd708bf7153"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w03-runtime-value-flow.toml",
+          "status": "A",
+          "sha256": "42c38c256a094a6898e066b16dc84180be77eaf038a9779b9a4a9cfa63c2e915"
+        },
+        {
+          "path": ".codex/agents/t003-s13-w04-runtime-async-reflection.toml",
+          "status": "A",
+          "sha256": "02b54be84498d02f2f3f937e1dfd676a22fb77d50f620bfcc8bac230087883a1"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "09b58d52fc3e9d392fcd0249a45ce42e346d45b462e53de7510cf9454a691720"
+        },
+        {
+          "path": "docs/changes/7_addTaskImplementationAgents.md",
+          "status": "A",
+          "sha256": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a8b867dcfb3f71474d0a2d914ac7e119961a2472a40cd412a947a6b1599bf446"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "5561d0cf3233f1ed394d6065d8a423ebfee4c2acc0fa968f0efd8db0ecd72c7e"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/changes/7_addTaskImplementationAgents.md:7_addTaskImplementationAgents.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::257",
+        "section:README.md:Copilot workflow::101",
+        "section:README.md:Data prerequisite audit::178",
+        "section:README.md:Development::123",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::132",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::140",
+        "section:README.md:Implementation memory and workflow::112",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::93",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Kompatibilita a migrační dopad::31",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Neprovedené kontroly::60",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Problém::10",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Projektoví implementační agenti pro atomické work packages T003::1",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Provedené kontroly::38",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Příklad použití::73",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Skutečné změny::16",
+        "section:docs/changes/7_addTaskImplementationAgents.md:Zbývající práce::85",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::107",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::15",
+        "section:docs/tasks/README.md:Jednotný formát::123",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::94",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::158",
+        "section:docs/tasks/README.md:Převod starších milníků::134",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "agent-profiles",
+          "status": "passed"
+        },
+        {
+          "label": "toml",
+          "status": "passed"
+        },
+        {
+          "label": "codex-loader",
+          "status": "passed"
+        },
+        {
+          "label": "links",
+          "status": "passed"
+        },
+        {
+          "label": "pytest197",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:708352a601e74ada07c7ea3b2ab5e787aa1ad3fe676eda10bbdf3bf9d488ea69"
     }
   ]
 }
