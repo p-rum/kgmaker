@@ -14,6 +14,31 @@ STATUSES = {"SUCCESS", "FAILED", "PARTIAL", "TIMED_OUT", "CANCELLED", "TOOLCHAIN
 HASH = re.compile(r"[0-9a-f]{64}\Z")
 
 
+def _validate_toolchain_selection(value: object) -> dict | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or value.get("selection") != "EXPLICIT_JAVA_HOME":
+        raise AnalysisError("Invalid explicit toolchain selection")
+    home = value.get("java_home")
+    executables = value.get("executables")
+    if not isinstance(home, str) or not home or not Path(home).is_absolute() or not isinstance(executables, dict):
+        raise AnalysisError("Explicit toolchain requires an absolute Java home and executable records")
+    for name in ("java", "javac"):
+        record = executables.get(name)
+        if (not isinstance(record, dict) or not isinstance(record.get("path"), str)
+                or not Path(record["path"]).is_absolute() or not HASH.fullmatch(str(record.get("sha256", "")))):
+            raise AnalysisError("Explicit toolchain executable record is invalid")
+    expected = digest({key: item for key, item in value.items() if key != "fingerprint"})
+    if value.get("fingerprint") != expected:
+        raise AnalysisError("Explicit toolchain fingerprint mismatch")
+    for name in ("java", "javac"):
+        record = executables[name]
+        path = Path(record["path"])
+        if not path.is_file() or file_hash(path) != record["sha256"]:
+            raise AnalysisError("STALE_TOOLCHAIN: selected Java toolchain changed", 3)
+    return value
+
+
 def validate_manifest(root: Path, manifest: dict) -> dict:
     if not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int or manifest["schema_version"] != 1:
         raise AnalysisError("BuildManifest schema_version must be 1")
@@ -33,6 +58,7 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
             raise AnalysisError("STALE_SOURCE: " + path, 3)
     if not isinstance(manifest.get("contexts"), list):
         raise AnalysisError("BuildManifest contexts are missing")
+    selected_toolchain = _validate_toolchain_selection(manifest.get("toolchain_selection"))
     ids = set()
     for context in manifest["contexts"]:
         if not isinstance(context, dict) or not isinstance(context.get("id"), str) or context["id"] in ids:
@@ -76,6 +102,9 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
                 or ("java_home" in toolchain and
                     (not isinstance(toolchain["java_home"], str) or not toolchain["java_home"]))):
             raise AnalysisError("Toolchain requires a captured Java version and valid optional home")
+        if selected_toolchain is not None and result["status"] == "SUCCESS":
+            if toolchain is None or Path(toolchain.get("java_home", "")).resolve() != Path(selected_toolchain["java_home"]).resolve():
+                raise AnalysisError("Explicit toolchain does not match the toolchain reported by the build")
         coordinates = ("group_id", "artifact_id", "version")
         for field in ("effective_dependencies", "dependency_management", "imported_boms"):
             values = context.get(field, [])

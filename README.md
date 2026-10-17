@@ -56,7 +56,8 @@ kgmaker semantic apply [--root PATH]
 kgmaker semantic validate [--root PATH]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 kgmaker project inspect [--root PATH] [--format json]
-kgmaker project build-plan|build-run|build-import ...
+kgmaker project build-plan [--java-home /absolute/path/to/jdk] ...
+kgmaker project build-run|build-import ...
 kgmaker inspect code|frontend ...
 kgmaker callgraph callers|callees|path ...
 kgmaker entrypoints [--root PATH] [--format json]
@@ -216,6 +217,13 @@ svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovaj�
 `origin=generated`. Runtime import accepts only a supplied, hash-bound observation
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
+
+Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
+SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
+a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě
+před vytvořením run adresáře. Pokud Maven/Gradle exporter ohlásí jiný Java home,
+výsledek je `TOOLCHAIN_UNAVAILABLE`, má diagnostiku
+`EXPLICIT_TOOLCHAIN_MISMATCH` a nepublikuje čerstvé outputs.
 
 JVM inspection v ověřeném Kotlin 1.9 compatibility subsetu zachovává přesné
 constructor, lambda a callable-reference identity a compiler-resolved uživatelské

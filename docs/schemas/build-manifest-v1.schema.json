@@ -43,6 +43,15 @@
         }
       }
     },
+    "toolchain_selection": {
+      "type": ["object", "null"],
+      "properties": {
+        "selection": {"const": "EXPLICIT_JAVA_HOME"},
+        "java_home": {"type": "string", "minLength": 1},
+        "executables": {"type": "object"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "contexts": {
       "type": "array",
       "items": {

@@ -60,7 +60,8 @@ immutable versioned directories. Změna distribuce během analysis je odmítnuta
 
 ```bash
 kgmaker project build-plan --root fixtures/build-inspection/maven \
-  --phase test --offline --output /tmp/kgmaker-plan.json
+  --phase test --offline --java-home /path/to/jdk21 \
+  --output /tmp/kgmaker-plan.json
 kgmaker project build-run --plan /tmp/kgmaker-plan.json
 kgmaker project build-import --root fixtures/build-inspection/maven \
   --manifest /absolute/path/from/build-run/manifest.json
@@ -82,6 +83,12 @@ včetně dirty/untracked souborů, hash povoleného prostředí, timeout a polic
 hostitelské policy; kopie do `.kgmaker/build-runs/ID/snapshot` není sandbox.
 Žádný shell řetězec se nesestavuje. Dřívější target/build nejsou kopírovány.
 Plán je jednorázový, změna obsahu nebo povoleného prostředí jej zneplatní.
+Volitelné `--java-home` vybírá externí JDK explicitně. BuildPlan obsahově váže
+kanonický home, `java` a `javac`; build dostane přesné `JAVA_HOME` a jeho `bin`
+má přednost v `PATH`. Exporter musí ohlásit tentýž Java home. Chybějící nebo
+změněný JDK je `TOOLCHAIN_UNAVAILABLE`/`STALE_PLAN` před buildem, odlišný runtime
+JDK je `EXPLICIT_TOOLCHAIN_MISMATCH` bez čerstvých outputs. Bez přepínače zůstává
+kompatibilní host-default chování starších plánů.
 Gradle vyžaduje hostitelský režim s možností JVM socket/IPC; bez něj build
 vrací FAILED a zachová log, bez čerstvých outputs.
 
@@ -98,8 +105,8 @@ a export označuje roots pod `build/generated`. Obsah vytvořený annotation pro
 se přijímá jen z explicitního úspěšného buildu: zůstává pod konkrétním build runem,
 manifest ukládá SHA-256, execution ID a snapshot hash a jakákoli následná změna
 import zneplatní. Reálná fixture provede následnou JVM inspection a ověřuje
-`origin=generated`; scan ani běžná inspection processor nespouštějí. Externí Maven
-toolchain selection, Gradle custom varianty/included builds, Kotlin options a
+`origin=generated`; scan ani běžná inspection processor nespouštějí. Gradle
+custom varianty/included builds, Kotlin options a
 cross-repo artefakty vyžadují další fixture. Tyto mezery drží T003-S03 v PARTIAL.
 
 Test result rozlišuje NOT_RUN, ZERO_TESTS, SKIPPED, PASSED, FAILED a počty z
@@ -231,3 +238,5 @@ veřejný sled, dvě profilové varianty, packet revision a classpath invalidaci
 Contextová projekce zachovává společné source/dataflow hrany a filtruje pouze
 konkurenční compiler vrstvy. T003-S02/AC02 je VERIFIED_IN_SCOPE pro výše uvedenou
 matici; rozšíření build/framework/jazykových variant patří do S03–S10.
+
+Explicitní `--java-home` vybírá launcher JDK (reálná Maven matice JDK21+22). Samostatný fork/toolchain compiler pluginu tento kontrakt nedokazuje; odlišný exportovaný Java home runner odmítne. Fixture dvou skutečných JDK přijímá `KGMAKER_TEST_OTHER_JAVA_HOME`; bez druhého JDK hlásí SKIP.
