@@ -49,7 +49,7 @@ schema version 1 and a `requirements` array. Each entry supplies `id`,
 and the page hash. This preserves supplied decision provenance; it does not
 authenticate the approver. A conflicting approved assertion is reported as
 `IMPLEMENTATION_VS_APPROVED_REQUIREMENT`. Feature coverage references the saved
-documentation conflict index; rerun `kgmaker docs check` to refresh that index.
+documentation conflict index only while page, attachment and approval-sidecar hashes remain current. Legacy indexes without the sidecar hash remain readable but require `kgmaker docs check` before their conflicts can be reused. Stale indexes produce an explicit limitation and do not transfer approval. Duplicate decisions for the same assertion are rejected before cache publication. No graph/store schema or worker protocol change is required.
 
 ```bash
 kgmaker feature prepare --root . --requirement requirements/new-hedge.md --id additional-hedge --token-budget 8000 --scope production --context <context-id>

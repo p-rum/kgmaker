@@ -109,3 +109,7 @@ označení jsou historická; aktivní číslování a převod je pouze v registr
 Při implementaci u každé změněné položky uveď Task/Step/Acceptance ID, konkrétní
 fixture/test/verze a odkaz na skutečný běh. PARTIAL není PASS. Neprovedená kontrola
 je NOT_RUN/blocked, ne úspěch. Historické výsledky nepřepisuj na výsledky nového commitu.
+
+## T003-S09-W04 — hash-bound approved methodology
+
+VERIFIED_IN_SCOPE: existing implementation-vs-approved-requirement conflict behavior is preserved. Feature packets now verify exported pages, attachments and approval-sidecar content before reusing conflicts. Stale/legacy indexes are omitted with a limitation; duplicate assertion decisions and unextractable approvals leave the previous cache unchanged. `tests/test_methodology_conflicts.py` covers two page versions, stale sidecar, legacy index and ambiguity; `tests/test_scanner.py::test_fa21_approved_requirement_conflict_preserves_authority` covers conflict provenance. Local `PYTHONPATH=src python3 -m pytest -q`: 203 passed in 39.44 s with `KGMAKER_REQUIRE_WORKERS=1` and reused existing baseline build outputs. This does not complete T003-S09.

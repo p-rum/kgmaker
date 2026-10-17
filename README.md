@@ -283,3 +283,5 @@ Use `query --context CONTEXT_ID` or `impact --entity ENTITY_ID --include-data-fl
 retain context fingerprints and evidence IDs. Offline approved methodology
 provenance is supplied through the hash-bound sidecar described in
 [feature analysis](docs/feature-analysis.md); conflicts remain review items.
+
+Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Duplicate decisions for one assertion are rejected without replacing the validation cache.
