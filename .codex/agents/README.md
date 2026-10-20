@@ -89,3 +89,14 @@ stejnými soubory nebo navazujícími kontrakty se nespouštějí souběžně.
 | T003-S13-W02 | `t003_s13_w02_runtime_rta_import` | [RTA a runtime dispatch import](../../docs/tasks/T003-S13-02-runtimeRtaImport.md) | `feat/t003-s13-02-runtime-rta-import` |
 | T003-S13-W03 | `t003_s13_w03_runtime_value_flow` | [Runtime value-flow evidence](../../docs/tasks/T003-S13-03-runtimeValueFlow.md) | `feat/t003-s13-03-runtime-value-flow` |
 | T003-S13-W04 | `t003_s13_w04_runtime_async_reflection` | [Async a reflective runtime capture](../../docs/tasks/T003-S13-04-runtimeAsyncReflection.md) | `feat/t003-s13-04-runtime-async-reflection` |
+
+## T004: konfigurace profilů pro T005–T044
+
+T004 přidává 40 profilů, jeden pro každý task T005–T044. Tyto profily používají
+`gpt-6-luna` a `model_reasoning_effort = "medium"`. Přehled tasků, závislostních
+gates a dispatch pravidel je v [dispatch reportu](dispatch-report.md); podrobnosti
+o změně jsou v [change note](../../docs/changes/14_configureLunaAgents.md).
+
+Tato konfigurace pouze zpřístupňuje profily v nové Codex session. Sama agenty
+nespouští a přítomnost profilu neznamená běžící implementační job ani dokončený
+task. Stav `SPECIFICATION` se nemění.
