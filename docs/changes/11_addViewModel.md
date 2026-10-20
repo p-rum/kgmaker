@@ -33,6 +33,8 @@ nepřidává technické hrany ani runtime důkazy. Persistent migrace není pot�
 - `python3 -m json.tool docs/schemas/view-v1.schema.json` — valid JSON.
 - `python3 -m compileall -q src/kgmaker/architecture_model.py tests/test_t005_add_view_model.py` — success.
 - Whitespace check against the verified PR10 base for all changed lines/new files — PASS.
+- `python3 bin/kgmaker semantic update --root . --base 5af76cfffaeff3aefc71ae3ea1ed06dbbbba679b`, scoped empty patch, `semantic apply`, `semantic validate`, and `scan` — PASS. No unsupported semantic relationships were added.
+- `python3 bin/kgmaker check --root .` — PASS (259 files, 2279 nodes, 14517 relationships).
 - Worker/compiler and Mermaid gates — NOT_APPLICABLE; T005 adds neither.
 
 Přímé testy: `test_round_trip_valid_model_preserves_public_contract`,
@@ -49,5 +51,5 @@ enum, nested field, NaN and non-JSON inputs return structured validation errors.
 `ViewDocument.from_dict(payload).to_json()` ověří a kanonicky serializuje view;
 `content_fingerprint` nezahrnuje samostatná `generation_metadata`. Model ještě
 nevybírá kontexty ani nesestavuje katalog/topologii/proces, nemá CLI ani renderer.
-T006 a další tasky zůstávají samostatné SPECIFICATION. PR se po zveřejnění uvede
-v tomto dokumentu; tato změna sama neprohlašuje T004 za dokončené.
+T006 a další tasky zůstávají samostatné SPECIFICATION. Tato změna sama
+neprohlašuje T004 za dokončené. Pull request: #11.
