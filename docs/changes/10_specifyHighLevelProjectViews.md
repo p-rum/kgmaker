@@ -62,3 +62,18 @@ samostatný PR. Nemá realizovat celý T004 v jedné větvi.
 Veškerá implementace T005–T044 zbývá. T004-AC01–AC10 i všechna podřízená AC
 jsou cílová kritéria, ne PASS. Případné potřebné upstream work packages T003
 musí dodat vlastní PR. Tento dokumentační PR se bez pokynu nemerguje.
+
+## Následná oprava CI před merge (2026-10-20)
+
+CI původního HEAD provedlo 182 testů úspěšně (15 skipped), ale `kgmaker check`
+selhal kvůli starému hashi README. Ověřeny byly původní 1 koncept a 4 dotčené
+vazby proti README a implementaci; byly zachovány a README locators posunuty na
+řádek 95. Žádné nesouvisející semantic entries ani memory episodes nebyly odstraněny.
+Lokální snapshot zdrojů byl rekonstruován z GitHub blobů; lokální Git baseline
+sloužila pouze pro bounded packet a není vydávána za upstream commit.
+
+Skutečně provedeno v opravě: `PYTHONPATH=src python -m kgmaker semantic update
+--base HEAD`, `semantic apply`, `semantic validate`, `scan`, `check`: PASS.
+Validátor hlásí 26 konceptů a 10113 vztahů včetně memory vrstvy; scan 255 souborů.
+Generované GRAPH.md/GRAPH.mmd byly obnoveny nástrojem. Toto doplňuje výše uvedený
+původní stav NOT_RUN; worker/pytest lokálně tato oprava neopakovala.
