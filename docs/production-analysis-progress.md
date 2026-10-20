@@ -115,5 +115,7 @@ je NOT_RUN/blocked, ne úspěch. Historické výsledky nepřepisuj na výsledky 
 [High-level zobrazení projektu](tasks/4_addHighLevelProjectViews.md) je ve stavu
 **SPECIFICATION**. Čtyřicet samostatných úkolů T005–T044 pokrývá katalog rozhraní,
 topologii služeb, business průběhy, agentové anotace, exporty, invalidaci a acceptance.
-Žádné implementační AC těchto úkolů zatím není touto dokumentační změnou ověřeno.
-Závislosti na T003 jsou explicitní; existující stavovou matici tento plán nemění.
+T005 dodává model a čistý validator schema v1; lokální test run eviduje 20
+specifických testů a celý suite 202 passed, 15 skipped. Tento výsledek se týká
+jen T005 AC01–AC05 a jeho izolovaného scope; CLI, discovery, renderery a další
+T004 capabilities zůstávají SPECIFICATION. Závislosti na T003 jsou explicitní.

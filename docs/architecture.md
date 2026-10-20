@@ -128,6 +128,15 @@ for project inspection. This is a partial supported matrix, documented in
 [compiler inspection](compiler-inspection.md); complete Spring conditions, Hibernate
 semantics and integration adapters remain open.
 
+## High-level view model foundation
+
+`architecture_model.py` defines deterministic schema-v1 JSON documents for
+interface, topology and process projections. It validates node/edge identity,
+endpoints, provenance references and coverage status without writing to or
+changing the graph. This model is an API foundation; view discovery, CLI
+commands, renderers and cross-service aggregation remain specified work in
+[T004](tasks/4_addHighLevelProjectViews.md).
+
 
 ## Compiler lifecycle provider
 

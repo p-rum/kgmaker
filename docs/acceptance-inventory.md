@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+## T005 — model high-level pohledu
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T005-AC01 deterministická serializace | PASS | `tests/test_t005_add_view_model.py::test_permuted_inputs_have_byte_identical_canonical_json` | cílený běh |
+| T005-AC02 endpoint/evidence validace | PASS | `test_unknown_version_and_dangling_endpoint_or_evidence_are_rejected` | cílený běh |
+| T005-AC03 graph v1/v2/v3 kompatibilita | PASS | `test_existing_graph_loader_still_accepts_legacy_schema_versions` | cílený běh |
+| T005-AC04 invalidní vstup bez mutace | PASS | `test_duplicate_node_id_has_structured_validation_error` | cílený běh |
+| T005-AC05 zachování scope, kontextu, evidence a unresolved coverage | PASS | `test_scope_context_and_evidence_kind_are_preserved_without_upgrade`; `test_complete_coverage_cannot_hide_unresolved_edges` | cílený běh |
+| T005-AC06 dokumentace a change note | IN_PROGRESS | `docs/changes/11_addViewModel.md` | dokončit po konečném ověřovacím běhu a PR |
+
 Datum auditu: 2026-10-15. Autoritativní scénáře jsou v
 [T001](tasks/1_featureAnalysis.md) a [T002](tasks/2_buildAwareInspection.md).
 `VERIFIED_IN_SCOPE` platí jen pro verzi adaptéru a fixture uvedené v řádku;
