@@ -30,3 +30,16 @@ Před významnou implementací proveď architektonickou rekognoskaci dle instruk
 - Ověř relevantní existující testy, nulovou mutaci při chybě a čistotu diffu. Worker testy hlásí chybějící toolchain jako SKIP/blocked, ne PASS. Dokumentační změna nepotřebuje nové testy kopírující text pravidel.
 - Generované grafy obnov příkazem, neupravuj je ručně. Sémantický patch vytvářej pouze s doloženými vazbami pro aktuální packet; pokud takové změny nejsou, nic nevymýšlej.
 - Předej reviewovatelný PR s odkazem na zadání a dokument změn. Bez explicitního pokynu nemerguj PR.
+
+## Výslovná konvence T004 a jeho atomických úkolů (2026-10-20)
+
+Na požadavek uživatele mají atomické implementační úkoly T005–T044 soubor
+`docs/tasks/T-<NNN>_<kebab-case-slug>.md`, např. `T-005_add-view-model.md`.
+Je to stejná globální číselná řada (T-005 = T005), nikoli nový namespace.
+Nadřazený plán zůstává `docs/tasks/4_addHighLevelProjectViews.md`.
+Každý podúkol obsahuje podrobný rozsah, vlastní acceptance/testy, dependencies,
+přesnou větev `feat/t<NNN>-<slug>` a povinnost samostatného push/PR.
+Tato konvence má pro tento balík přednost před staršími naming odstavci
+i jejich kopiemi v agent templates. Historické T001–T003 soubory se nemění.
+Další ID alokuj nad maximem všech formátů v registru/main/open PRs; mezery nerecykluj.
+Change notes nadále používají nezávislou řadu `<N>_<lowerCamelCase>.md`.
