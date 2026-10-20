@@ -11,6 +11,64 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T001 | [1_featureAnalysis.md](1_featureAnalysis.md) | Feature/data analýza, artefakty, incremental, Flyway, multirepo | Normativní; částečně implementováno |
 | T002 | [2_buildAwareInspection.md](2_buildAwareInspection.md) | JVM build, call graph, Spring a Hibernate | Normativní; částečně implementováno |
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
+| T004 | [4_addHighLevelProjectViews.md](4_addHighLevelProjectViews.md) | Integrační katalog, topologie služeb a business procesy; T005–T044 níže | SPECIFICATION |
+
+## High-level zobrazení projektu — T004
+
+[T004 — hlavní zadání](4_addHighLevelProjectViews.md) obsahuje společné kontrakty,
+migrační pravidla, dependency DAG a nadřazená acceptance. Implementace je rozdělena
+do **40 samostatných úkolů T005–T044**, každý ve vlastním souboru, větvi a PR.
+Všechny jsou SPECIFICATION; tato registrace neprohlašuje funkce za implementované.
+
+Na explicitní požadavek zadavatele z 2026-10-20 mají nové atomické úkoly formát
+`T-<NNN>_<kebab-case-slug>.md`, např. `T-005_add-view-model.md`.
+Jde o tutéž globální číselnou řadu: T-005 = T005. T004 je nadřazené zadání;
+T005–T044 nejsou další série work-package čísel. Staré soubory se nepřejmenovávají.
+Pro tento balík má tato výslovná konvence přednost před starým obecným pravidlem
+lowerCamelCase, včetně historických kopií v agent templates.
+
+| Task | Soubor a cíl | Závislosti | Stav |
+|---|---|---|---|
+| T005 | [Verzovaný společný model pohledu](T-005_add-view-model.md) | T004 kontrakt | SPECIFICATION |
+| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION |
+| T007 | [Explicitní vlastnictví služeb](T-007_define-service-ownership.md) | T005 | SPECIFICATION |
+| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION |
+| T009 | [Evidence a pokrytí agregovaných objektů](T-009_propagate-view-evidence.md) | T005, T006; T003-S07-W08 | SPECIFICATION |
+| T010 | [Katalog poskytovaných HTTP rozhraní](T-010_catalog-http-providers.md) | T008, T009 | SPECIFICATION |
+| T011 | [Katalog používaných HTTP rozhraní](T-011_catalog-http-consumers.md) | T008, T009; T003-S07-W06 | SPECIFICATION |
+| T012 | [Katalog Kafka producerů a consumerů](T-012_catalog-kafka-interfaces.md) | T008, T009; T003-S07-W04 | SPECIFICATION |
+| T013 | [Připojení verzovaných integračních kontraktů](T-013_attach-interface-contracts.md) | T010, T011, T012 | SPECIFICATION |
+| T014 | [Projekce ověřených vzdálených bindingů](T-014_bind-remote-interfaces.md) | T013; T003-S07-W07 | SPECIFICATION |
+| T015 | [Databáze a jiné datové závislosti](T-015_project-data-resources.md) | T008, T009; T003-S06 | SPECIFICATION |
+| T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | SPECIFICATION |
+| T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | SPECIFICATION |
+| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016 | SPECIFICATION |
+| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | SPECIFICATION |
+| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION |
+| T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |
+| T022 | [Markdown report topologie a detailů](T-022_render-topology-markdown.md) | T018, T021 | SPECIFICATION |
+| T023 | [Model business procesu a jeho revizí](T-023_define-business-process-model.md) | T005, T009 | SPECIFICATION |
+| T024 | [Inventář doložených spouštěčů](T-024_discover-process-triggers.md) | T008, T023 | SPECIFICATION |
+| T025 | [Lokální technický průběh od vstupu](T-025_build-local-process-path.md) | T023, T024; T003-S04 | SPECIFICATION |
+| T026 | [Seskupení technických uzlů do business kroků](T-026_collapse-business-steps.md) | T025 | SPECIFICATION |
+| T027 | [Průchod procesu přes HTTP rozhraní](T-027_cross-http-process-boundary.md) | T014, T025 | SPECIFICATION |
+| T028 | [Asynchronní návaznosti procesu](T-028_cross-async-process-boundary.md) | T012, T014, T025 | SPECIFICATION |
+| T029 | [Chybové větve, retry a kompenzace](T-029_project-process-failures.md) | T025, T028; T003-S07-W05 | SPECIFICATION |
+| T030 | [Packet pro business pojmenování agentem](T-030_prepare-process-label-packet.md) | T024, T026 | SPECIFICATION |
+| T031 | [Validace agentových návrhů](T-031_validate-process-annotations.md) | T023, T030 | SPECIFICATION |
+| T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION |
+| T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | SPECIFICATION |
+| T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033 | SPECIFICATION |
+| T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
+| T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
+| T037 | [Invalidace odvozených pohledů](T-037_invalidate-derived-views.md) | T018, T032, T033 | SPECIFICATION |
+| T038 | [Atomická publikace exportů](T-038_publish-view-artifacts-atomically.md) | T022, T036, T037 | SPECIFICATION |
+| T039 | [Sémantický diff dvou snapshotů](T-039_diff-architecture-and-processes.md) | T037, T038 | SPECIFICATION |
+| T040 | [Instrukce host agenta pro pohledy](T-040_add-agent-process-instructions.md) | T034, T036 | SPECIFICATION |
+| T041 | [End-to-end acceptance architektury](T-041_verify-architecture-acceptance.md) | T020, T021, T022, T038 | SPECIFICATION |
+| T042 | [End-to-end acceptance business procesů](T-042_verify-process-acceptance.md) | T035, T036, T038, T040 | SPECIFICATION |
+| T043 | [Limity výkonu a velikosti](T-043_bound-view-performance.md) | T017, T025, T037 | SPECIFICATION |
+| T044 | [Dokumentace a release gate](T-044_document-high-level-capabilities.md) | T039, T040, T041, T042, T043 | SPECIFICATION |
 
 ## Atomické work packages pro dokončení T003
 

@@ -109,3 +109,11 @@ označení jsou historická; aktivní číslování a převod je pouze v registr
 Při implementaci u každé změněné položky uveď Task/Step/Acceptance ID, konkrétní
 fixture/test/verze a odkaz na skutečný běh. PARTIAL není PASS. Neprovedená kontrola
 je NOT_RUN/blocked, ne úspěch. Historické výsledky nepřepisuj na výsledky nového commitu.
+
+## Nové zadání T004 — 2026-10-20
+
+[High-level zobrazení projektu](tasks/4_addHighLevelProjectViews.md) je ve stavu
+**SPECIFICATION**. Čtyřicet samostatných úkolů T005–T044 pokrývá katalog rozhraní,
+topologii služeb, business průběhy, agentové anotace, exporty, invalidaci a acceptance.
+Žádné implementační AC těchto úkolů zatím není touto dokumentační změnou ověřeno.
+Závislosti na T003 jsou explicitní; existující stavovou matici tento plán nemění.

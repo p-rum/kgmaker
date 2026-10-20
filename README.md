@@ -12,6 +12,14 @@ Agents must follow [AGENTS.md](AGENTS.md), including stable task IDs and mandato
 `docs/tasks/<N>_<lowerCamelCase>.md` / `docs/changes/<N>_<lowerCamelCase>.md` names.
 These two number sequences are independent of each other and GitHub PR numbers.
 
+## Planned high-level project views
+
+[Specification T004](docs/tasks/4_addHighLevelProjectViews.md) defines an interface
+catalogue, service topology and evidence-backed business-process views.
+[Tasks T005–T044](docs/tasks/README.md#high-level-zobrazení-projektu--t004) each have
+their own implementation specification, acceptance criteria, tests, branch and PR.
+These are **SPECIFICATION**, not implemented commands or completed capabilities.
+
 ## Requirements
 
 - Python 3.11 or newer
