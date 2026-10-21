@@ -230,6 +230,39 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
     return copy.deepcopy(manifest)
 
 
+def resolve_content_bound_output(root: Path, manifest: dict, *, context_id: str,
+                                 sha256: str) -> dict:
+    """Resolve one successful build output by context and content.
+
+    Coordinates and filenames are deliberately absent from the identity.  A
+    workspace mapping may only consume an execution-bound output from a
+    currently valid BuildManifest.
+    """
+    if not isinstance(context_id, str) or not context_id or not HASH.fullmatch(sha256):
+        raise AnalysisError("Invalid release output selector")
+    validated = validate_manifest(root, manifest)
+    contexts = [item for item in validated["contexts"] if item["id"] == context_id]
+    if not contexts:
+        raise AnalysisError("RELEASE_OUTPUT_CONTEXT_UNAVAILABLE: " + context_id, 3)
+    if len(contexts) != 1:
+        raise AnalysisError("RELEASE_OUTPUT_CONTEXT_AMBIGUOUS: " + context_id, 3)
+    matches = [
+        item for item in contexts[0].get("outputs", [])
+        if item.get("sha256") == sha256 and item.get("freshness") == "EXECUTION_BOUND"
+    ]
+    if not matches:
+        raise AnalysisError("RELEASE_OUTPUT_HASH_MISMATCH: " + sha256, 3)
+    if len(matches) != 1:
+        raise AnalysisError("RELEASE_OUTPUT_AMBIGUOUS: " + sha256, 3)
+    selected = matches[0]
+    path = Path(selected["path"])
+    if not path.is_absolute():
+        path = safe_path(root, selected["path"])
+    if path.is_symlink() or not path.is_file():
+        raise AnalysisError("RELEASE_OUTPUT_KIND_UNSUPPORTED: regular file required", 3)
+    return copy.deepcopy(selected)
+
+
 def import_manifest(root: Path, manifest: dict) -> dict:
     validated = validate_manifest(root, manifest)
     # Never transform a supplied result into a host observation. Hash checks only
