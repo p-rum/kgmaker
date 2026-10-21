@@ -156,3 +156,14 @@ a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
 v T003; zelený souhrnný běh jejich chybějící varianty nedokládá.
 
 T003-S03-W01 AC01/AC03: `test_external_toolchain_two_real_jdks` ověřuje skutečný Maven/JDK21+22 export; `test_explicit_java_home_is_content_bound_and_used_by_build` ověřuje i omezený environment allowlist. Dvě JDK jsou povinná pro tuto fixture, nepřítomnost je SKIP, nikoli PASS. Detail běhu: [change note 10](changes/10_selectExternalToolchain.md).
+| Work package | Acceptance | Version/scope | Test evidence |
+|---|---|---|---|
+| T003-S03-W02 | AC01–AC04 | gradle-source-sets-2, Gradle 8.13 Java SourceSetContainer, custom explicit scope | `tests/test_gradle_variants.py`: real Gradle main/test/generated/custom/unknown; invalid provenance rejects publication; ambiguous membership stays unknown; mandatory full suite 206 passed in 55.56 s, no skips |
+
+T003-S03-W02 review P1 evidence: `test_selected_variant_snapshot_ignores_sibling_sources_and_configs_offline`
+proves selected variant freshness across sibling edits/additions and resource changes,
+while selected/shared config changes stale it without processes.
+`test_forged_gradle_convention_preserves_existing_store` rejects custom or mismatched
+conventional pairs before mutation; `test_conventional_pairs_and_legacy_manifest_remain_readable`
+preserves the three exact conventions and absent-provenance legacy input.
+Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.

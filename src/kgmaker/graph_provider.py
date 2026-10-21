@@ -87,11 +87,8 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     if context.get("analyzer_version"):
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
-        current_files = dict(sorted((path, checksum) for path, checksum in current.files.items()
-                                    if any(node.kind == "file" and node.path == path
-                                           and (node.scope == context["scope"]
-                                                or (node.scope == "unknown" and node.role == "configuration"))
-                                           for node in current.nodes)))
+        from .inspection import source_snapshot
+        current_files = source_snapshot(root, current, context)
         if current_files != context.get("source_files", {}):
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
     for path, expected in context.get("source_files", {}).items():

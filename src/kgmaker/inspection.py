@@ -105,15 +105,49 @@ def sanitize(value, *, key=""):
     return value
 
 
+def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
+    """One capture/replay policy; legacy contexts retain their original scope gate."""
+    files = [node for node in graph.nodes if node.kind == "file"]
+    if selected.get("source_snapshot_version") != "selected-source-set-1":
+        return dict(sorted((node.path, graph.files[node.path]) for node in files
+                           if node.scope == selected["scope"] or (node.scope == "unknown" and node.role == "configuration")))
+    source_sets = [item for item in (selected.get("project_model") or {}).get("source_sets", [])
+                   if item["module"] == selected["module"] and
+                   item["id"] in {selected["source_set"], selected["source_set"] + ":generated"}]
+    memberships = {item["module"] + ":" + item["id"] for item in source_sets}
+    # Root/module build configuration is shared; sibling source-set resources are not.
+    parents = {Path(".")}
+    for item in source_sets:
+        for raw in item.get("roots", []) + item.get("files", []):
+            parents.update(Path(raw).parents)
+    paths = {node.path for node in files if memberships.intersection(node.build_membership)
+             or (not node.build_membership and node.role == "configuration" and Path(node.path).parent in parents
+                 and node.scope == "unknown")
+             or (not node.build_membership and node.role == "configuration"
+                 and any(node.path.startswith((parent / "gradle").as_posix() + "/") for parent in parents))}
+    result = {path: graph.files[path] for path in paths}
+    # Groovy build scripts are not scanner source languages, but remain shared inputs.
+    for parent in parents:
+        for name in ("build.gradle", "settings.gradle", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "pom.xml"):
+            relative = (parent / name).as_posix()
+            target = safe_path(root, relative)
+            if target.is_file():
+                result[relative] = file_hash(target)
+    return dict(sorted(result.items()))
+
+
 def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, repo_id: str,
             module: str, source_set: str, scope: str, build_context: dict | None = None) -> dict:
     value = {"mode": "BUILD_IMPORT", "repo_id": repo_id, "module": module, "source_set": source_set,
              "scope": scope, "language": language, "origin_trust": "LOCAL_COMPILER_INPUTS", "coverage": "PARTIAL",
-             "freshness": "CONTENT_VERIFIED", "source_files": dict(sorted((p, h) for p, h in base.files.items() if any(n.kind == "file" and n.path == p and (n.scope == scope or (n.scope == "unknown" and n.role == "configuration")) for n in base.nodes))),
+             "freshness": "CONTENT_VERIFIED",
              "classification_override_hash": digest(Classifier(root).config),
              "classifier_contexts": [c for c in base.contexts if c.get("scope") == scope], "worker": metadata, "analyzer_version": VERSION}
     if build_context:
         value.update(build_context)
+    if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
+        value["source_snapshot_version"] = "selected-source-set-1"
+    value["source_files"] = source_snapshot(root, base, value)
     value["framework_rule_versions"] = {"spring": "annotation-source-v3", "jpa": "annotation-source-v4"}
     value["selection_key"] = digest({key: value.get(key) for key in (
         "repo_id", "module", "source_set", "scope", "language", "build_context_id",
@@ -347,7 +381,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         "sources": sources, "classpath": entries, "bytecode_roots": bytecode_roots or [], "java_release": java_release},
         cwd=root, timeout=timeout, cancel_file=cancel_file)
     after = scan_repository(root, project_model=project_model)
-    if base.files != after.files or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
+    if source_snapshot(root, after, selected) != selected["source_files"] or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
         raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
     graph = graph_from_response(root, base, response, selected, project_model=project_model)
     # Framework rules consume the compiler-resolved graph; they never replace
@@ -361,7 +395,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if strict and result["status"] == "PARTIAL":
         return {**result, "exit_code": 4}
     final = scan_repository(root, project_model=project_model)
-    if final.files != base.files or final.contexts != base.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
+    if source_snapshot(root, final, selected) != selected["source_files"] or final.contexts != base.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
         raise WorkerError("Source/config/classpath snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")

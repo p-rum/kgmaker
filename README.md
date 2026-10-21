@@ -291,3 +291,16 @@ Use `query --context CONTEXT_ID` or `impact --entity ENTITY_ID --include-data-fl
 retain context fingerprints and evidence IDs. Offline approved methodology
 provenance is supplied through the hash-bound sidecar described in
 [feature analysis](docs/feature-analysis.md); conflicts remain review items.
+
+Gradle source-set exporter v2 uses model identities, with exact built-in scopes for
+`main`, `test`, and `testFixtures`. For a custom set, declare its analysis scope in
+the build model: `ext.kgmakerSourceSetScopes = [integration: 'test']`. Unmapped
+sets (including names containing `test`) remain `unknown` with a diagnostic;
+SOURCE_ONLY never executes Gradle. See [compiler inspection](docs/compiler-inspection.md).
+
+Compiler freshness for an imported source set uses its module/source-set membership
+and shared root/module configuration, including Gradle scripts and catalogs.
+An edit to a sibling source set with the same scope does not invalidate the selected
+variant. Changing selected resources or shared configuration still requires inspection.
+`scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
+testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.

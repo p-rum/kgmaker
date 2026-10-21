@@ -240,3 +240,51 @@ konkurenční compiler vrstvy. T003-S02/AC02 je VERIFIED_IN_SCOPE pro výše uve
 matici; rozšíření build/framework/jazykových variant patří do S03–S10.
 
 Explicitní `--java-home` vybírá launcher JDK (reálná Maven matice JDK21+22). Samostatný fork/toolchain compiler pluginu tento kontrakt nedokazuje; odlišný exportovaný Java home runner odmítne. Fixture dvou skutečných JDK přijímá `KGMAKER_TEST_OTHER_JAVA_HOME`; bez druhého JDK hlásí SKIP.
+## T003-S03-W02: explicit custom source sets
+
+Gradle exporter `gradle-source-sets-2` reads `SourceSetContainer` rather than
+inferring variants from build-script text. Exact built-ins `main`, `test`,
+`testFixtures` map to production/test/test_fixture. Projects may explicitly supply
+`ext.kgmakerSourceSetScopes = [integration: 'test', tooling: 'development']`
+in Groovy (`extra["kgmakerSourceSetScopes"] = mapOf("integration" to "test")`
+in Kotlin DSL). Allowed values are production/test/test_fixture/development/unknown.
+Custom names without a declaration remain unknown with UNMAPPED_GRADLE_SOURCE_SET;
+invalid declarations yield unknown with INVALID_GRADLE_SOURCE_SET_SCOPE. No
+substring heuristic grants test or production scope. Per-context `scope_origin`
+records GRADLE_CONVENTION / EXPLICIT_MAPPING / UNKNOWN; source-set IDs retain
+project identity. Existing manifests without this additive field remain accepted;
+graph/store v1/v2/v3 and worker transport do not change. Generated sources retain
+existing execution/hash binding. This does not add Android/KMP variant APIs.
+
+Explicit workflow (after reviewing the content-bound build plan):
+
+```bash
+kgmaker project build-plan --root . --build-system gradle --executable /path/to/gradle --offline --output /tmp/gradle-plan.json
+kgmaker project build-run --plan /tmp/gradle-plan.json
+kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json
+kgmaker inspect code --root . --build-id BUILD_ID --context :integration --scope test
+```
+
+Real Gradle 8.13 fixture in `tests/test_gradle_variants.py` covers main/test,
+generated Java, custom mapped integration and unknown contest under src/main;
+negative tests cover conflicting memberships and invalid provenance without mutation.
+
+### Review fixes: source-set freshness and convention provenance
+
+New JVM contexts with a supplied source-set model use
+`source_snapshot_version=selected-source-set-1`. Capture, pre-publication checks
+and offline replay share the same helper: selected module/set membership (including
+`:generated`), configuration directly in root/module ancestor directories, Gradle
+configuration under those directories, and explicit build/settings scripts. Selected
+resources remain inputs; sibling source sets/resources are excluded even with an
+identical scope. Configuration additions/removals and selected source additions are
+compared by content inventory. Legacy contexts without the marker retain their
+original scope-wide freshness gate until reinspection; no silent narrowing occurs.
+
+A supplied GRADLE_CONVENTION now requires exactly main→production, test→test or
+testFixtures→test_fixture. Custom sets must use EXPLICIT_MAPPING or UNKNOWN.
+Manifests lacking scope_origin remain accepted as legacy, without inventing a
+conventional origin. Negative imports validate before changing the store.
+`tests/test_gradle_variants.py` covers offline scan/hook/current_graph without
+subprocesses, shared/selected config invalidation, forged convention rejection,
+byte-for-byte preservation and valid/legacy provenance.

@@ -66,6 +66,12 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
         ids.add(context["id"])
         if context.get("scope") not in SCOPES or not all(isinstance(context.get(k), str) and context[k] for k in ("module", "source_set", "repo_id")):
             raise AnalysisError("Build context requires repo/module/source-set/scope")
+        scope_origin = context.get("scope_origin")
+        if scope_origin is not None and (not isinstance(scope_origin, str) or scope_origin not in {"GRADLE_CONVENTION", "EXPLICIT_MAPPING", "UNKNOWN"}
+                or (scope_origin == "UNKNOWN" and context["scope"] != "unknown")
+                or (scope_origin == "GRADLE_CONVENTION" and
+                    {"main": "production", "test": "test", "testFixtures": "test_fixture"}.get(context["source_set"]) != context["scope"])):
+            raise AnalysisError("Invalid source-set scope provenance")
         if not isinstance(context.get("source_roots"), list) or not isinstance(context.get("source_files"), list):
             raise AnalysisError("Build source roots/files must be arrays")
         for path in context["source_roots"] + context["source_files"]:
@@ -192,7 +198,7 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
     handwritten_roots = [path for path in selected["source_roots"] if path not in generated_roots]
     handwritten_files = [path for path in selected["source_files"] if path not in generated_files]
     source_sets = [{"module": selected["module"], "id": selected["source_set"], "scope": selected["scope"],
-                    "roots": handwritten_roots, "files": handwritten_files}]
+                    "scope_origin": selected.get("scope_origin"), "roots": handwritten_roots, "files": handwritten_files}]
     if generated_roots or generated_files:
         source_sets.append({"module": selected["module"], "id": selected["source_set"] + ":generated",
                             "scope": selected["scope"], "roots": generated_roots,
