@@ -29,4 +29,4 @@ Před významnou implementací proveď architektonickou rekognoskaci dle instruk
 - Instrukce dodávané `kgmaker init` musí zůstat konzistentní s jejich Python templates. Zachovej ochranu upravených uživatelských souborů; nepoužívej automaticky `--force`.
 - Ověř relevantní existující testy, nulovou mutaci při chybě a čistotu diffu. Worker testy hlásí chybějící toolchain jako SKIP/blocked, ne PASS. Dokumentační změna nepotřebuje nové testy kopírující text pravidel.
 - Generované grafy obnov příkazem, neupravuj je ručně. Sémantický patch vytvářej pouze s doloženými vazbami pro aktuální packet; pokud takové změny nejsou, nic nevymýšlej.
-- Předej reviewovatelný PR s odkazem na zadání a dokument změn. Bez explicitního pokynu nemerguj PR.
+- Předej reviewovatelný PR s odkazem na zadání a dokument změn. Implementační agent PR nemerguje. Uživatelský pokyn pro [T045](docs/tasks/45_addCodeReviewAgent.md) výslovně pověřuje projektového `code_review` agenta mergováním po jeho review APPROVE nad aktuálním HEAD a splnění kontrol; pro ostatní PR platí zákaz merge bez explicitního pokynu.

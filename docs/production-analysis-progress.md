@@ -33,6 +33,12 @@ doporučenou větev a vyžadují testy, sémantickou aktualizaci, change note, c
 push a samostatný PR. Jde pouze o připravené vykonavatele; žádný profil sám nemění
 stav work package ani nedokládá splnění jeho acceptance.
 
+T045 přidává projektový profil `code_review` pro review vytvořených PR a merge po
+`APPROVE` nad aktuálním HEAD, zelených required checks a ověření cílové větve.
+Jde o nakonfigurovaný proces; skutečné review a merge jednotlivých PR se
+dokládají jejich GitHub stavem a nejsou tímto odstavcem prohlášeny za hotové.
+Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kandidáty.
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
