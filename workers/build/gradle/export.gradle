@@ -12,13 +12,26 @@ gradle.projectsEvaluated {
             gradle.rootProject.allprojects.sort { it.path }.each { p ->
                 def sets = p.extensions.findByType(SourceSetContainer)
                 if (sets == null) { diagnostics << [code:'UNSUPPORTED_GRADLE_VARIANT',module:p.path]; return }
+                // Custom source-set names carry no execution semantics. Accept only
+                // explicit project model declarations, never substring/path guesses.
+                def suppliedScopes = p.extensions.extraProperties.has('kgmakerSourceSetScopes') ? p.extensions.extraProperties.get('kgmakerSourceSetScopes') : [:]
+                def validMapping = suppliedScopes instanceof Map
+                def builtins = [main:'production', test:'test', testFixtures:'test_fixture']
+                def allowedScopes = ['production','test','test_fixture','development','unknown']
                 sets.each { s ->
-                    def scope = s.name == 'main' ? 'production' : (s.name == 'testFixtures' ? 'test_fixture' : (s.name.toLowerCase().contains('test') ? 'test' : 'unknown'))
+                    def contextDiagnostics = []
+                    def explicit = validMapping && suppliedScopes.containsKey(s.name)
+                    def mapped = !validMapping ? null : (explicit ? suppliedScopes[s.name] : builtins[s.name])
+                    def supported = mapped instanceof String && allowedScopes.contains(mapped)
+                    def scope = supported ? mapped : 'unknown'
+                    def scopeOrigin = supported ? (explicit ? 'EXPLICIT_MAPPING' : 'GRADLE_CONVENTION') : 'UNKNOWN'
+                    if (!validMapping || (explicit && !supported)) contextDiagnostics << [code:'INVALID_GRADLE_SOURCE_SET_SCOPE',source_set:s.name]
+                    else if (!supported) contextDiagnostics << [code:'UNMAPPED_GRADLE_SOURCE_SET',source_set:s.name]
                     def roots = s.allSource.srcDirs.findAll { it.canonicalFile.toPath().startsWith(root.toPath()) }.collect(relative).sort()
                     def generated = roots.findAll { it.contains('/build/generated/') || it.startsWith('build/generated/') }
                     def files = s.allSource.files.findAll { it.name.endsWith('.java') || it.name.endsWith('.kt') }.collect(relative).sort()
                     def compile = p.tasks.findByName(s.compileJavaTaskName)
-                    contexts << [id:p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,
+                    contexts << [id:p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,scope_origin:scopeOrigin,diagnostics:contextDiagnostics,
                         source_roots:roots,generated_source_roots:generated,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
                         output_paths:s.output.classesDirs.files.collect { it.canonicalPath }, build_system:'gradle',build_profiles:[],
                         compiler_options:compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:],
@@ -28,7 +41,7 @@ gradle.projectsEvaluated {
                 modules[p.path] = 'EXPORT_COMPLETED'
             }
             if (!gradle.includedBuilds.empty) diagnostics << [code:'INCLUDED_BUILDS_NOT_EXPORTED', builds:gradle.includedBuilds.collect { it.name }]
-            new File(System.getProperty('kgmaker.export.path')).text = JsonOutput.toJson([schema_version:1,exporter:'gradle-source-sets-1',contexts:contexts,modules:modules,diagnostics:diagnostics])
+            new File(System.getProperty('kgmaker.export.path')).text = JsonOutput.toJson([schema_version:1,exporter:'gradle-source-sets-2',contexts:contexts,modules:modules,diagnostics:diagnostics])
         }
     }
 }
