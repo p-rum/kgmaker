@@ -11,6 +11,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T001 | [1_featureAnalysis.md](1_featureAnalysis.md) | Feature/data analýza, artefakty, incremental, Flyway, multirepo | Normativní; částečně implementováno |
 | T002 | [2_buildAwareInspection.md](2_buildAwareInspection.md) | JVM build, call graph, Spring a Hibernate | Normativní; částečně implementováno |
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
+| T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION; profil není důkazem provedeného merge |
 
 ## Atomické work packages pro dokončení T003
 
@@ -27,6 +28,8 @@ jediným zadáním, používá `gpt-5.6-luna` s reasoning effort `medium` a vynu
 izolovaný worktree, samostatnou větev, požadované testy, change note a samostatný
 pull request bez automatického merge. Stav zadání tím zůstává `SPECIFICATION`;
 existence agenta není důkazem implementace ani splnění acceptance.
+Samostatný [code-review agent](../../.codex/agents/README.md) podle T045 přebírá
+vytvořené PR k review a po schválení současného HEAD je může mergeovat.
 
 | Work package | Soubor | Úloha | Stav |
 |---|---|---|---|

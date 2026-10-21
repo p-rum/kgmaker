@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
   "files": {
-    "AGENTS.md": "1e99c7f59f2c53a03f76ee66e148b0987e40a0276cbd7fdc1ad29f6d4fd7f721",
-    "README.md": "32a4706253018a9767332789cf0591214955f7c952cb15de25f8f388a55729db",
+    "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
+    "README.md": "8a37023633b6b68a85ffb940a90288d2a8e4c8e33e0509e9ce03a7aba2dbf790",
     "docs/acceptance-inventory.md": "ef4033fe6a2d7713a123774c3c63a6ba7761f73fd93a63a21fbb58e860258272",
     "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -10,6 +10,7 @@
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
+    "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
@@ -20,7 +21,7 @@
     "docs/feature-analysis.md": "3fea715c39b1d24ac0fed9f5dc11e2f1bec2d9149cff94a686060b1ca0f53b19",
     "docs/flyway-workspace-proofs.md": "0971492bde72b7fbd843ebd8f2ad2aef4c31503a1aa68bb03780559529a11447",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "a93b1ba0ab9a3247274bbf8667701cbf779265ea861aeabd0b10a63a5a10f08f",
+    "docs/production-analysis-progress.md": "a4dbb35f8cd6b6df2145772ab2c87a74a5c36e8dd14d9ddcdecdd0f72e1f59c8",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "151a16ad75e547a5e9fd85ba697d56652cb7e3299c97daff0c8c67035a73c16c",
@@ -32,7 +33,8 @@
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
-    "docs/tasks/README.md": "5561d0cf3233f1ed394d6065d8a423ebfee4c2acc0fa968f0efd8db0ecd72c7e",
+    "docs/tasks/45_addCodeReviewAgent.md": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20",
+    "docs/tasks/README.md": "b6c42c813cd607183ae0bcc78f6fbef24df9afb007e837543903fb1859117eec",
     "docs/tasks/T003-S03-01-externalToolchainSelection.md": "85cf96bf1d3158dd89caa251b811ee55456fe6e6c011c3b6bb83ad90109dbfbe",
     "docs/tasks/T003-S03-02-gradleCustomVariants.md": "9dbc5f20fdbbbb99561665ecf02c8ecdf562bab858e0dd0b23d6f28dc4abf1f0",
     "docs/tasks/T003-S03-03-gradleIncludedBuilds.md": "e2d586bf268c2882c6bd86854a579c954e5ca598846ba864434b897cd320b094",
@@ -23133,6 +23135,251 @@
         }
       ],
       "id": "episode:5e9c0bc0f080b2e14ad3a54e291083ec13318c4b4704a9db484dc104fb4fe77e"
+    },
+    {
+      "base_commit": "785be61afdbe9e1f5230c7ba0cf296242487656b",
+      "head_commit": "785be61afdbe9e1f5230c7ba0cf296242487656b",
+      "worktree_fingerprint": "e3deac48866eaf5cc17a2331757090baab9a8b9a84de5bcd725b66773f624798",
+      "title": "Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "M",
+          "sha256": "86846a1159d6ed891579e2d9073de9c54d8ea50d3878c5780bea54b9ffb9e1d4"
+        },
+        {
+          "path": ".codex/agents/code-review.toml",
+          "status": "A",
+          "sha256": "f477c7307878d6cc1fe8b2f068028399cb7e3b69b281c3f43b897fb510e72171"
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "M",
+          "sha256": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "f310737144f068b5942cb0ddd11a5134a8d026637cd894ffc77b00c9a06ae402"
+        },
+        {
+          "path": "docs/changes/26_addCodeReviewAgent.md",
+          "status": "A",
+          "sha256": "5be07c6462da3d80597051b7dbdcb258f234e09628a394a7c50dbc38b1523cc0"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "24544f3d1a14ca0cfc173810a636b75cfa98b755612eb09e528baac78e640e71"
+        },
+        {
+          "path": "docs/tasks/45_addCodeReviewAgent.md",
+          "status": "A",
+          "sha256": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "b6c42c813cd607183ae0bcc78f6fbef24df9afb007e837543903fb1859117eec"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:AGENTS.md:AGENTS.md",
+        "file:README.md:README.md",
+        "file:docs/changes/26_addCodeReviewAgent.md:26_addCodeReviewAgent.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/45_addCodeReviewAgent.md:45_addCodeReviewAgent.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:AGENTS.md:Autorita a rozsah::3",
+        "section:AGENTS.md:Implementace, evidence a předání::22",
+        "section:AGENTS.md:Povinné názvy a číslování::12",
+        "section:AGENTS.md:Pravidla projektu KGMAKER pro agenty::1",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::271",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::185",
+        "section:README.md:Development::130",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::139",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::147",
+        "section:README.md:Implementation memory and workflow::119",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/26_addCodeReviewAgent.md:Kompatibilita a migrace::29",
+        "section:docs/changes/26_addCodeReviewAgent.md:Neprovedené kontroly::77",
+        "section:docs/changes/26_addCodeReviewAgent.md:Problém::8",
+        "section:docs/changes/26_addCodeReviewAgent.md:Projektový agent pro review a merge pull requestů::1",
+        "section:docs/changes/26_addCodeReviewAgent.md:Provedené kontroly::46",
+        "section:docs/changes/26_addCodeReviewAgent.md:Příklad::36",
+        "section:docs/changes/26_addCodeReviewAgent.md:Skutečné změny::14",
+        "section:docs/changes/26_addCodeReviewAgent.md:Zbývající práce::82",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::118",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::58",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::68",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::90",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Akceptace a ověření::45",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kompatibilita, DoD a zbývající práce::61",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kontrakt a kroky::22",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Problém, rozsah a hranice::10",
+        "section:docs/tasks/45_addCodeReviewAgent.md:T045 — Projektový code-review agent pro PR::1",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::16",
+        "section:docs/tasks/README.md:Jednotný formát::126",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::97",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::161",
+        "section:docs/tasks/README.md:Převod starších milníků::137",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "profile197",
+          "status": "passed"
+        },
+        {
+          "label": "conflict",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:43a371ecd7d285ffdf0afc72c8f7fdbeb130810853acb4d80c7c159d949fd277"
+    },
+    {
+      "base_commit": "20ee0a7d0982fbe2bb364364d4a7a9a2572b307b",
+      "head_commit": "8b90463e8a0cd320795750dbfc90470192ddba08",
+      "worktree_fingerprint": "08b7932535986e5b3e4175bffc55ad6324b1bbf957f045b03c421fef9dac0aa3",
+      "title": "Integrate T045 code-review agent with feat/impl",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "M",
+          "sha256": "86846a1159d6ed891579e2d9073de9c54d8ea50d3878c5780bea54b9ffb9e1d4"
+        },
+        {
+          "path": ".codex/agents/code-review.toml",
+          "status": "A",
+          "sha256": "f477c7307878d6cc1fe8b2f068028399cb7e3b69b281c3f43b897fb510e72171"
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "M",
+          "sha256": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "8a37023633b6b68a85ffb940a90288d2a8e4c8e33e0509e9ce03a7aba2dbf790"
+        },
+        {
+          "path": "docs/changes/26_addCodeReviewAgent.md",
+          "status": "A",
+          "sha256": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a4dbb35f8cd6b6df2145772ab2c87a74a5c36e8dd14d9ddcdecdd0f72e1f59c8"
+        },
+        {
+          "path": "docs/tasks/45_addCodeReviewAgent.md",
+          "status": "A",
+          "sha256": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "b6c42c813cd607183ae0bcc78f6fbef24df9afb007e837543903fb1859117eec"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:AGENTS.md:AGENTS.md",
+        "file:README.md:README.md",
+        "file:docs/changes/26_addCodeReviewAgent.md:26_addCodeReviewAgent.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/45_addCodeReviewAgent.md:45_addCodeReviewAgent.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:AGENTS.md:Autorita a rozsah::3",
+        "section:AGENTS.md:Implementace, evidence a předání::22",
+        "section:AGENTS.md:Povinné názvy a číslování::12",
+        "section:AGENTS.md:Pravidla projektu KGMAKER pro agenty::1",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::271",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::185",
+        "section:README.md:Development::130",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::139",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::147",
+        "section:README.md:Implementation memory and workflow::119",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/26_addCodeReviewAgent.md:Kompatibilita a migrace::29",
+        "section:docs/changes/26_addCodeReviewAgent.md:Neprovedené kontroly::87",
+        "section:docs/changes/26_addCodeReviewAgent.md:Neprovedené kontroly::94",
+        "section:docs/changes/26_addCodeReviewAgent.md:Problém::8",
+        "section:docs/changes/26_addCodeReviewAgent.md:Projektový agent pro review a merge pull requestů::1",
+        "section:docs/changes/26_addCodeReviewAgent.md:Provedené kontroly::46",
+        "section:docs/changes/26_addCodeReviewAgent.md:Příklad::36",
+        "section:docs/changes/26_addCodeReviewAgent.md:Skutečné změny::14",
+        "section:docs/changes/26_addCodeReviewAgent.md:Zbývající práce::100",
+        "section:docs/changes/26_addCodeReviewAgent.md:Zbývající práce::92",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::118",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::58",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::68",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::90",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::134",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::125",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::143",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Akceptace a ověření::45",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kompatibilita, DoD a zbývající práce::61",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kontrakt a kroky::22",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Problém, rozsah a hranice::10",
+        "section:docs/tasks/45_addCodeReviewAgent.md:T045 — Projektový code-review agent pro PR::1",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::16",
+        "section:docs/tasks/README.md:Jednotný formát::126",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::97",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::161",
+        "section:docs/tasks/README.md:Převod starších milníků::137",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/26_addCodeReviewAgent.md:Neprovedené kontroly::94",
+          "section:docs/changes/26_addCodeReviewAgent.md:Zbývající práce::100"
+        ],
+        "removed": [
+          "section:docs/changes/26_addCodeReviewAgent.md:Neprovedené kontroly::87",
+          "section:docs/changes/26_addCodeReviewAgent.md:Zbývající práce::92"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "full221",
+          "status": "passed"
+        },
+        {
+          "label": "graph",
+          "status": "passed"
+        },
+        {
+          "label": "toml",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:45d43bb2cc0b7dde7a9d488cac5043df81b57d0ac683c2b79ccdad753d42dade"
     }
   ]
 }
