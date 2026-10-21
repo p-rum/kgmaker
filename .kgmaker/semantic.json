@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "8a37023633b6b68a85ffb940a90288d2a8e4c8e33e0509e9ce03a7aba2dbf790",
-    "docs/acceptance-inventory.md": "ef4033fe6a2d7713a123774c3c63a6ba7761f73fd93a63a21fbb58e860258272",
+    "README.md": "28eda2628033f8c5f135516f08df9989c9d0767048481e6ee179f0fbe752d916",
+    "docs/acceptance-inventory.md": "5474948e81aabbfe78a66000bf3025935958e5fc97d16ce0b19ecdb136e05974",
     "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -11,20 +11,21 @@
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
+    "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
-    "docs/compiler-inspection.md": "89489024f9594956f3ab9295b9d54c027f446ac3ce12aaa44ee3c04dfbe74ffc",
+    "docs/compiler-inspection.md": "d6dc2f0ef811a008fc494acb2aef8a99e99f17348471959e82ebdb6b737088fc",
     "docs/feature-analysis.md": "3fea715c39b1d24ac0fed9f5dc11e2f1bec2d9149cff94a686060b1ca0f53b19",
     "docs/flyway-workspace-proofs.md": "0971492bde72b7fbd843ebd8f2ad2aef4c31503a1aa68bb03780559529a11447",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "a4dbb35f8cd6b6df2145772ab2c87a74a5c36e8dd14d9ddcdecdd0f72e1f59c8",
+    "docs/production-analysis-progress.md": "240bd663da5215a518ed6ff18a9c7e3acf485c21d7069318c2f7c0f4a1601f05",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
-    "docs/schemas/build-manifest-v1.schema.json": "151a16ad75e547a5e9fd85ba697d56652cb7e3299c97daff0c8c67035a73c16c",
+    "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
     "docs/schemas/build-plan-v1.schema.json": "c32f11ab790c90f5cc6bd2c0e66e8e8384485730e94e68881cfc7784a47e4603",
     "docs/schemas/graph-v2.schema.json": "d730b416d773e78a623b1908c0b2096ff7949eab217d40a4d82e7e99ab267acc",
     "docs/schemas/graph-v3.schema.json": "827c35b3be20163c33e56af8ebbd997bfb0d8cc44aec918844ab30e8ad7889de",
@@ -146,7 +147,7 @@
     "src/kgmaker/analysis_validation.py": "43a907afb6bab919b639b55045e642266e55ad19820c97209afe1b7337c497a0",
     "src/kgmaker/availability.py": "14b7988dba45770eab3c1a282f45a6b1f9bb0c442e80dba050a3b418b08f8eb5",
     "src/kgmaker/build_maven.py": "19e96f77b35473a1fc50d7167b6ac455d2b022389f66498a09deec42059d5223",
-    "src/kgmaker/build_model.py": "8c15654e822ff88b9d47ee01ca040e8730ad09688349fe522ec951f6d1147b04",
+    "src/kgmaker/build_model.py": "4dfbda3dc76caf041b0bc5a4f8c95ce52181ce4983720a5c168164859628703b",
     "src/kgmaker/build_runner.py": "2c747e27283b06193d7a689abff55e92a79d2604ab00ab8c7843d6d7442bf9e2",
     "src/kgmaker/callgraph.py": "8fff5e53a9386997abfaa8c85791c221265857679329b28224ec64e820788f9a",
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
@@ -164,7 +165,7 @@
     "src/kgmaker/flow.py": "5cb47938d3c4fce1e8d82cfb3dc7da85569d3d4142f5b982877e4a9125e5ec1d",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
     "src/kgmaker/framework.py": "ceab56a47e6d0f87f3c3ab647983e219a0b1566d99716eab88e949353da324ec",
-    "src/kgmaker/graph_provider.py": "29553d15d522cde416544e70ca77c94990e8098bd91c5153827482d37420bcda",
+    "src/kgmaker/graph_provider.py": "868fb61ebb15d292e4f94f5f6b276c9867470df52ed819661fade40f2ceec467",
     "src/kgmaker/inspection.py": "ff4ebe29c191ae812a6fc39c8066b103f5a50626b120f20655df5c216c1961ef",
     "src/kgmaker/inspection_cli.py": "5e965e7aecc6d560f1d9e212076ac42fba4e74847bcf5bd1e50bc3480bc707bd",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
@@ -203,6 +204,7 @@
     "tests/test_graph_provider.py": "646b365e507b1eeb89cc2aa1c737feadaeb18810488df093b76472e18bffe98a",
     "tests/test_init.py": "f25404edf1cbde6f2d7f7f312a7b1e9e1d00b54b50d5a6f4f58d5dd310bdeaaf",
     "tests/test_inspection_contract.py": "ec9568dfeb8c6b468819789e6f54bf893cf43f219fca2a374a4588df94571e0f",
+    "tests/test_kotlin_build_options.py": "5cc92558d4af44b33e9b1e0c89cb31f3c4171f8723d15500a326ceaf47806507",
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_production_scope.py": "f8379f420ba9591bf385cd26723184c1671528e589867712107006e011cade1f",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
@@ -23380,6 +23382,523 @@
         }
       ],
       "id": "episode:45d43bb2cc0b7dde7a9d488cac5043df81b57d0ac683c2b79ccdad753d42dade"
+    },
+    {
+      "base_commit": "3155b49c8897bec5bd6ee9d87e20d7e5982e040d",
+      "head_commit": "93555622efce89ffe5315a7f4e32a465fa8433d4",
+      "worktree_fingerprint": "f6bf40692882e8834abcf4ae9e26793a42d217f714edf05060d980fcb1c5e6c9",
+      "title": "Capture Kotlin compiler options in build manifests",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "e1594e131fda8a9f908dd80bc3f17d1370a66dd9c2ce3abcae45f98582c46693"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "b81a392b82bf0780c3d4a98770df5a6a4791cd709e8261d85f260160d55ce98c"
+        },
+        {
+          "path": "docs/changes/11_captureKotlinCompilerOptions.md",
+          "status": "A",
+          "sha256": "40fa7cdd3b8e73d7ab9f5356cf365e9ef1f0f2b21c7f80804ba69011c4c42b7b"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "7862bccc833f1f56cf0f190606c1a4f18125d56f83db4b4d48654c8104516e94"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "5e8cd87e3e3230811373b14e8057d686460dcee3780bc7c09e359fc6e88f6878"
+        },
+        {
+          "path": "docs/schemas/build-manifest-v1.schema.json",
+          "status": "M",
+          "sha256": "6ea0c8b42eb9c6abb48705ed8b4ae16d83f73970303bcaac1b0527cd07e7a3e8"
+        },
+        {
+          "path": "src/kgmaker/build_model.py",
+          "status": "M",
+          "sha256": "6e23d0f1fde393b38a352c0f9bb1d7f450d5798b3d87d1bd8ef89194f0610b31"
+        },
+        {
+          "path": "src/kgmaker/graph_provider.py",
+          "status": "M",
+          "sha256": "b64ce30d3ae4fd983b7c6462d45c705bf66c663e9faff160c2725cfb5dffc0e1"
+        },
+        {
+          "path": "tests/test_kotlin_build_options.py",
+          "status": "A",
+          "sha256": "64d9e837c53f42540061bd8f2b923dc0d7074170160a9084e808aeca76ef7da0"
+        },
+        {
+          "path": "workers/build/gradle/export.gradle",
+          "status": "M",
+          "sha256": "ba69d4b49bc1207ceaa987293ddd4aee7a915f59b8ad061daa908c48ec1c6c34"
+        },
+        {
+          "path": "workers/build/maven/BuildExport.java",
+          "status": "M",
+          "sha256": "1882bfa213cfdc722059ffbaee4c8307af7485c19160aa0d7a0be5b46e6dfc00"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/11_captureKotlinCompilerOptions.md:11_captureKotlinCompilerOptions.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/schemas/build-manifest-v1.schema.json:build-manifest-v1.schema.json",
+        "file:src/kgmaker/build_model.py:build_model.py",
+        "file:src/kgmaker/graph_provider.py:graph_provider.py",
+        "file:tests/test_kotlin_build_options.py:test_kotlin_build_options.py",
+        "function:src/kgmaker/build_model.py:_validate_toolchain_selection::15",
+        "function:src/kgmaker/build_model.py:absolute::205",
+        "function:src/kgmaker/build_model.py:import_manifest::178",
+        "function:src/kgmaker/build_model.py:inspection_inputs::193",
+        "function:src/kgmaker/build_model.py:validate_kotlin_options::40",
+        "function:src/kgmaker/build_model.py:validate_manifest::59",
+        "function:src/kgmaker/graph_provider.py:_compiler_contexts::8",
+        "function:src/kgmaker/graph_provider.py:_inspection_command::14",
+        "function:src/kgmaker/graph_provider.py:_selection_key::50",
+        "function:src/kgmaker/graph_provider.py:_stale_context::35",
+        "function:src/kgmaker/graph_provider.py:merge_compiler_context::189",
+        "function:src/kgmaker/graph_provider.py:retain_compiler_layer::206",
+        "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::118",
+        "function:src/kgmaker/graph_provider.py:validate_context_snapshot::66",
+        "function:tests/test_kotlin_build_options.py:manifest::8",
+        "function:tests/test_kotlin_build_options.py:selected::137",
+        "function:tests/test_kotlin_build_options.py:test_invalid_kotlin_options_rejected_without_mutation::23",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::148",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::128",
+        "function:tests/test_kotlin_build_options.py:test_old_manifest_and_typed_options_are_compatible::31",
+        "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::81",
+        "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::42",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::268",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::179",
+        "section:README.md:Development::124",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::133",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::141",
+        "section:README.md:Implementation memory and workflow::113",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::115",
+        "section:docs/acceptance-inventory.md:T001::9",
+        "section:docs/acceptance-inventory.md:T002::88",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Kompatibilita a příklad::29",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Problém::3",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Provedené kontroly::36",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Skutečné změny::9",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Vazba na zadání a acceptance::22",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Zachycení Kotlin compiler options v build manifestu::1",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Zbývající práce::53",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::222",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::126",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::46",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::112",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full-workers",
+          "status": "passed"
+        },
+        {
+          "label": "real-gradle",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:d80b8f5b3a52160f458cb70bdca505fff5117af8029cacef2bc52bb8ee245c16"
+    },
+    {
+      "base_commit": "29bcfe09df1d60d2967f10dcdf32c93d6a2ed17e",
+      "head_commit": "29bcfe09df1d60d2967f10dcdf32c93d6a2ed17e",
+      "worktree_fingerprint": "cb4ba3792feca5acdb35ef0b0592a8d5cb70c730bc243691a8264975307bc64d",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "21c28070138328d7c9f4d2be540aa54866f48ebadacf5e0bae1d957d84e3d5f8"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "e98e054380485cfd6f2e6ae77f7a7bd6fbb9e7bc6aa56cdfcab165eacb4891a4"
+        },
+        {
+          "path": "docs/changes/11_captureKotlinCompilerOptions.md",
+          "status": "M",
+          "sha256": "c553eb983e47a243931ce0244a3c36c5a20ddbcba0424a29694f7638a4c27122"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "38d1098eba52b04db804299c8c4b7f66487d581b571355522c66a5881d82929d"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "f41b77cdb12cba46023ddbe9898ff0a318fc8898da9328f4343125f8f528aa9d"
+        },
+        {
+          "path": "docs/schemas/build-manifest-v1.schema.json",
+          "status": "M",
+          "sha256": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe"
+        },
+        {
+          "path": "src/kgmaker/build_model.py",
+          "status": "M",
+          "sha256": "06bc2d0ed2c78a7e7430b0257816a0066ae0928a3af6a4c147db0734e4534ead"
+        },
+        {
+          "path": "tests/test_kotlin_build_options.py",
+          "status": "M",
+          "sha256": "5cc92558d4af44b33e9b1e0c89cb31f3c4171f8723d15500a326ceaf47806507"
+        },
+        {
+          "path": "workers/build/maven/BuildExport.java",
+          "status": "M",
+          "sha256": "aa70034b2e3ea35e896fb6dbb72749d095ec8eb983f7c664b710ce5ad70b76c1"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/11_captureKotlinCompilerOptions.md:11_captureKotlinCompilerOptions.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/schemas/build-manifest-v1.schema.json:build-manifest-v1.schema.json",
+        "file:src/kgmaker/build_model.py:build_model.py",
+        "file:tests/test_kotlin_build_options.py:test_kotlin_build_options.py",
+        "function:src/kgmaker/build_model.py:_validate_toolchain_selection::15",
+        "function:src/kgmaker/build_model.py:absolute::205",
+        "function:src/kgmaker/build_model.py:absolute::223",
+        "function:src/kgmaker/build_model.py:import_manifest::178",
+        "function:src/kgmaker/build_model.py:import_manifest::196",
+        "function:src/kgmaker/build_model.py:inspection_inputs::193",
+        "function:src/kgmaker/build_model.py:inspection_inputs::211",
+        "function:src/kgmaker/build_model.py:validate_kotlin_options::40",
+        "function:src/kgmaker/build_model.py:validate_manifest::59",
+        "function:src/kgmaker/build_model.py:validate_manifest::77",
+        "function:tests/test_kotlin_build_options.py:manifest::8",
+        "function:tests/test_kotlin_build_options.py:selected::137",
+        "function:tests/test_kotlin_build_options.py:selected::184",
+        "function:tests/test_kotlin_build_options.py:test_invalid_kotlin_options_rejected_without_mutation::23",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::148",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::195",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::128",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::175",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_plugin_artifact_change_rejects_manifest_without_store_mutation::42",
+        "function:tests/test_kotlin_build_options.py:test_old_manifest_and_typed_options_are_compatible::31",
+        "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::128",
+        "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::81",
+        "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::42",
+        "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::58",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::268",
+        "section:README.md:Compiler lifecycle::271",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::179",
+        "section:README.md:Development::124",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::133",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::141",
+        "section:README.md:Implementation memory and workflow::113",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::115",
+        "section:docs/acceptance-inventory.md:T001::9",
+        "section:docs/acceptance-inventory.md:T002::88",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Kompatibilita a příklad::29",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Problém::3",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Provedené kontroly::36",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Revize po nezávislém CR::61",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Skutečné změny::9",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Vazba na zadání a acceptance::22",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Zachycení Kotlin compiler options v build manifestu::1",
+        "section:docs/changes/11_captureKotlinCompilerOptions.md:Zbývající práce::55",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::222",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::229",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::126",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::133",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::46",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::53",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::112",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::118",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::58",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::68",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::90",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:src/kgmaker/build_model.py:absolute::223",
+          "function:src/kgmaker/build_model.py:import_manifest::196",
+          "function:src/kgmaker/build_model.py:inspection_inputs::211",
+          "function:src/kgmaker/build_model.py:validate_manifest::77",
+          "function:tests/test_kotlin_build_options.py:selected::184",
+          "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::195",
+          "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::175",
+          "function:tests/test_kotlin_build_options.py:test_kotlin_plugin_artifact_change_rejects_manifest_without_store_mutation::42",
+          "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::128",
+          "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::58",
+          "section:README.md:Compiler lifecycle::271",
+          "section:docs/changes/11_captureKotlinCompilerOptions.md:Revize po nezávislém CR::61",
+          "section:docs/compiler-inspection.md:Integrace s běžným workflow::229",
+          "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::133",
+          "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::53",
+          "section:docs/production-analysis-progress.md:Aktualizace stavu::118",
+          "section:docs/production-analysis-progress.md:Co lze nyní použít::58",
+          "section:docs/production-analysis-progress.md:Kritická návaznost::68",
+          "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::90"
+        ],
+        "removed": [
+          "function:src/kgmaker/build_model.py:absolute::205",
+          "function:src/kgmaker/build_model.py:import_manifest::178",
+          "function:src/kgmaker/build_model.py:inspection_inputs::193",
+          "function:src/kgmaker/build_model.py:validate_manifest::59",
+          "function:tests/test_kotlin_build_options.py:selected::137",
+          "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::148",
+          "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::128",
+          "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::81",
+          "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::42",
+          "section:README.md:Compiler lifecycle::268",
+          "section:docs/compiler-inspection.md:Integrace s běžným workflow::222",
+          "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::126",
+          "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::46",
+          "section:docs/production-analysis-progress.md:Aktualizace stavu::112",
+          "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+          "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+          "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full",
+          "status": "passed"
+        },
+        {
+          "label": "real_maven",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:c4fbe102f949ff4ac0081bbfa8694d54fe74f154a96d9761f313212d8e4485ae"
+    },
+    {
+      "base_commit": "42f310fef0318379a7aa1eb78a9caed81b3ab824",
+      "head_commit": "278558d3063521659b46cec9155edd95f437dd70",
+      "worktree_fingerprint": "eb6bdac47a12ba035499e15ae2de22830dfc44736c820855ad1f0ae3bc320d3f",
+      "title": "Synthetic PR16 diff against feat/impl for local integration",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "28eda2628033f8c5f135516f08df9989c9d0767048481e6ee179f0fbe752d916"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "5474948e81aabbfe78a66000bf3025935958e5fc97d16ce0b19ecdb136e05974"
+        },
+        {
+          "path": "docs/changes/28_captureKotlinCompilerOptions.md",
+          "status": "A",
+          "sha256": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "d6dc2f0ef811a008fc494acb2aef8a99e99f17348471959e82ebdb6b737088fc"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "240bd663da5215a518ed6ff18a9c7e3acf485c21d7069318c2f7c0f4a1601f05"
+        },
+        {
+          "path": "docs/schemas/build-manifest-v1.schema.json",
+          "status": "M",
+          "sha256": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe"
+        },
+        {
+          "path": "src/kgmaker/build_model.py",
+          "status": "M",
+          "sha256": "4dfbda3dc76caf041b0bc5a4f8c95ce52181ce4983720a5c168164859628703b"
+        },
+        {
+          "path": "src/kgmaker/graph_provider.py",
+          "status": "M",
+          "sha256": "868fb61ebb15d292e4f94f5f6b276c9867470df52ed819661fade40f2ceec467"
+        },
+        {
+          "path": "tests/test_kotlin_build_options.py",
+          "status": "A",
+          "sha256": "5cc92558d4af44b33e9b1e0c89cb31f3c4171f8723d15500a326ceaf47806507"
+        },
+        {
+          "path": "workers/build/gradle/export.gradle",
+          "status": "M",
+          "sha256": "b575a059b5a363a80f9d18d4cc87e3f621c974fd4e331762c4bec80f1f92a48d"
+        },
+        {
+          "path": "workers/build/maven/BuildExport.java",
+          "status": "M",
+          "sha256": "ce78c241c704ebbf128d5eb2b566b3f607d696fa0ad208c80babbeb3d4208583"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/28_captureKotlinCompilerOptions.md:28_captureKotlinCompilerOptions.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/schemas/build-manifest-v1.schema.json:build-manifest-v1.schema.json",
+        "file:src/kgmaker/build_model.py:build_model.py",
+        "file:src/kgmaker/graph_provider.py:graph_provider.py",
+        "file:tests/test_kotlin_build_options.py:test_kotlin_build_options.py",
+        "function:src/kgmaker/build_model.py:_validate_toolchain_selection::15",
+        "function:src/kgmaker/build_model.py:absolute::258",
+        "function:src/kgmaker/build_model.py:import_manifest::231",
+        "function:src/kgmaker/build_model.py:inspection_inputs::246",
+        "function:src/kgmaker/build_model.py:validate_kotlin_options::40",
+        "function:src/kgmaker/build_model.py:validate_manifest::77",
+        "function:src/kgmaker/graph_provider.py:_compiler_contexts::8",
+        "function:src/kgmaker/graph_provider.py:_inspection_command::14",
+        "function:src/kgmaker/graph_provider.py:_selection_key::50",
+        "function:src/kgmaker/graph_provider.py:_stale_context::35",
+        "function:src/kgmaker/graph_provider.py:merge_compiler_context::186",
+        "function:src/kgmaker/graph_provider.py:retain_compiler_layer::203",
+        "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::115",
+        "function:src/kgmaker/graph_provider.py:validate_context_snapshot::66",
+        "function:tests/test_kotlin_build_options.py:manifest::8",
+        "function:tests/test_kotlin_build_options.py:selected::184",
+        "function:tests/test_kotlin_build_options.py:test_invalid_kotlin_options_rejected_without_mutation::23",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_configuration_tamper_is_stale_offline::195",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_options_change_context_identity_without_other_context_mutation::175",
+        "function:tests/test_kotlin_build_options.py:test_kotlin_plugin_artifact_change_rejects_manifest_without_store_mutation::42",
+        "function:tests/test_kotlin_build_options.py:test_old_manifest_and_typed_options_are_compatible::31",
+        "function:tests/test_kotlin_build_options.py:test_real_gradle_kotlin_task_options::128",
+        "function:tests/test_kotlin_build_options.py:test_real_maven_kotlin_execution_options::58",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::277",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::185",
+        "section:README.md:Development::130",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::139",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::147",
+        "section:README.md:Implementation memory and workflow::119",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::115",
+        "section:docs/acceptance-inventory.md:T001::9",
+        "section:docs/acceptance-inventory.md:T002::88",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Integrace po sloučení W02/W03 a T045::92",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Kompatibilita a příklad::31",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Problém::5",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Provedené kontroly::38",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Revize po nezávislém CR::63",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Revize po nezávislém CR::64",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Skutečné změny::11",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Vazba na zadání a acceptance::24",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Zachycení Kotlin compiler options v build manifestu::1",
+        "section:docs/changes/28_captureKotlinCompilerOptions.md:Zbývající práce::57",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::229",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::133",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::53",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::288",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::259",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::308",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::124",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::64",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::74",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::96",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::140",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::131",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::149"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/28_captureKotlinCompilerOptions.md:Integrace po sloučení W02/W03 a T045::92",
+          "section:docs/changes/28_captureKotlinCompilerOptions.md:Revize po nezávislém CR::64"
+        ],
+        "removed": [
+          "section:docs/changes/28_captureKotlinCompilerOptions.md:Revize po nezávislém CR::63"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused34",
+          "status": "passed"
+        },
+        {
+          "label": "full234",
+          "status": "passed"
+        },
+        {
+          "label": "gradle",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:822281c92fc6b590cb83d41eb37c5ae0491d6560e17a05df247f539383cf4af0"
     }
   ]
 }

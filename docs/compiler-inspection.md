@@ -17,16 +17,27 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 |---|---|---|
 | Python | 3.12.14, pytest 8.3.4 | Regrese a bounded worker transport |
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
-| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java |
+| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
 | Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
-| Gradle | 8.12.1 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokálně blokované socket/IPC |
+| Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
 | React typings | React 18.3.1, @types/react 18.3.18 | Intrinsic JSX onClick v malé fixture |
 
 Kotlin Analysis API/K2 zatím není implementována; podpora compiler distribuce 2.1.10
 není tvrzením úplné podpory Kotlin language 2.1. Java release request je explicitní,
 Maven import přenáší získaný release. V integrační fixture byl ověřen pouze release 21.
+Kotlin options v manifestu nesou vlastní schema/status a vstupují do content-bound
+identity compiler kontextu. Změna flagu proto zneplatní dotčený kontext, ale
+nezmění ostatní module/source-set kontexty. Zachycený language/API target ani plugin
+není tvrzením, že jej současný K1 frontend umí analyzovat.
+Maven export zapisuje resolved plugin classpath jako soubory s SHA-256; import
+nebo offline kontrola odmítne změněný JAR před publikací. Maven default
+`${kotlin.compiler.*}` bez určené hodnoty se nezapisuje jako compiler option:
+context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření použij
+`kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
+pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
+`kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
 TypeScript projektové reference předává worker kompilátoru; úplná acceptance fixture
 s více projekty a re-exporty ještě chybí.
 
@@ -101,12 +112,17 @@ ověřuje, že profil a BOM změní manifest a že aktuální reactor output má
 před starým JAR v repository.
 
 Gradle exporter čte skutečné `SourceSetContainer`; Kotlin DSL se neparsuje regexem
-a export označuje roots pod `build/generated`. Obsah vytvořený annotation processorem
+a export označuje roots pod `build/generated`. Pokud source set obsahuje Kotlin compile
+task, exporter čte jeho finalizované `compilerOptions`: compiler/language/API/JVM
+verzi, relevantní booleany, opt-ins a free args. Pluginy jsou content-bound SHA-256
+identity a `-P` volby z compiler argumentů; nedostupné hodnoty zůstávají `PARTIAL`
+s diagnostikou. Maven EventSpy stejným způsobem zachytí effective konfiguraci
+úspěšného `compile`/`test-compile` mojo. Obsah vytvořený annotation processorem
 se přijímá jen z explicitního úspěšného buildu: zůstává pod konkrétním build runem,
 manifest ukládá SHA-256, execution ID a snapshot hash a jakákoli následná změna
 import zneplatní. Reálná fixture provede následnou JVM inspection a ověřuje
 `origin=generated`; scan ani běžná inspection processor nespouštějí. Gradle
-custom varianty/included builds, Kotlin options a
+custom varianty/included builds a
 cross-repo artefakty vyžadují další fixture. Tyto mezery drží T003-S03 v PARTIAL.
 
 Test result rozlišuje NOT_RUN, ZERO_TESTS, SKIPPED, PASSED, FAILED a počty z

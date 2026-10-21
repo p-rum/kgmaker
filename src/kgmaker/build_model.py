@@ -39,6 +39,43 @@ def _validate_toolchain_selection(value: object) -> dict | None:
     return value
 
 
+def validate_kotlin_options(options: dict) -> None:
+    """Captured configuration is not evidence that our frontend implements it."""
+    if not isinstance(options, dict) or type(options.get("schema_version")) is not int or options["schema_version"] != 1:
+        raise AnalysisError("Kotlin options require schema_version 1")
+    if options.get("status") not in {"CAPTURED_CONFIGURATION", "PARTIAL", "NOT_OBSERVED"}:
+        raise AnalysisError("Kotlin options require an explicit capture status")
+    for key in ("language_version", "api_version", "jvm_target", "compiler_version"):
+        value = options.get(key)
+        if value is not None and (not isinstance(value, str) or not value or "${" in value):
+            raise AnalysisError("Kotlin option is not resolved: " + key)
+    for key in ("free_args", "plugins", "plugin_options", "opt_in"):
+        value = options.get(key, [])
+        if not isinstance(value, list) or any(not isinstance(item, str) or "${" in item for item in value):
+            raise AnalysisError("Kotlin option requires resolved strings: " + key)
+    artifacts = options.get("plugin_artifacts")
+    if artifacts is not None:
+        if (not isinstance(artifacts, list)
+                or (options.get("status") == "CAPTURED_CONFIGURATION" and options.get("plugins") and not artifacts)):
+            raise AnalysisError("Kotlin plugin artifacts require resolved files")
+        seen = set()
+        for artifact in artifacts:
+            if (not isinstance(artifact, dict)
+                    or set(artifact) != {"coordinates", "path", "sha256"}
+                    or not isinstance(artifact.get("coordinates"), str) or not artifact["coordinates"]
+                    or not isinstance(artifact.get("path"), str) or not Path(artifact["path"]).is_absolute()
+                    or not HASH.fullmatch(str(artifact.get("sha256", "")))
+                    or artifact["path"] in seen):
+                raise AnalysisError("Kotlin plugin artifact record is invalid")
+            seen.add(artifact["path"])
+            path = Path(artifact["path"])
+            if path.is_symlink() or not path.is_file() or file_hash(path) != artifact["sha256"]:
+                raise AnalysisError("STALE_KOTLIN_PLUGIN: Kotlin plugin artifact changed", 3)
+    for key in ("java_parameters", "all_warnings_as_errors", "suppress_warnings", "progressive"):
+        if key in options and type(options[key]) is not bool:
+            raise AnalysisError("Kotlin option requires boolean: " + key)
+
+
 def validate_manifest(root: Path, manifest: dict) -> dict:
     if not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int or manifest["schema_version"] != 1:
         raise AnalysisError("BuildManifest schema_version must be 1")
@@ -113,6 +150,8 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
             raise AnalysisError("Build profiles must be nonempty strings")
         if not isinstance(context.get("compiler_options", {}), dict):
             raise AnalysisError("Compiler options must be an object")
+        if "kotlin" in context.get("compiler_options", {}):
+            validate_kotlin_options(context["compiler_options"]["kotlin"])
         toolchain = context.get("toolchain")
         if toolchain is not None and (not isinstance(toolchain, dict)
                 or not isinstance(toolchain.get("java_version"), str) or not toolchain["java_version"]

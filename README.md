@@ -216,7 +216,13 @@ source-only; effective classpaths and fresh outputs require an explicit build
 plan/import. Explicitní Maven session export v2 navíc přenáší parent/BOM,
 effective dependencies a dependency management, aktivní i inherited profily,
 generated source roots, compiler release a konkrétní Java/Maven toolchain.
-Manifest, dependency model, toolchain a generated roots vstupují do identity
+Maven a Gradle export navíc zachovávají task/execution-level Kotlin language/API/JVM
+target, relevantní flags, opt-ins a compiler plugin provenance. Tyto hodnoty jsou
+zachycená konfigurace; samy o sobě nerozšiřují ověřený K1 compatibility subset.
+Maven exporter zachovává skutečné soubory a SHA-256 compiler plugin classpath;
+změněný plugin JAR zneplatní manifest. Neurčené Kotlin language/API defaults
+zůstanou výslovně `PARTIAL`, bez uložení nepřeloženého `${...}` placeholderu.
+Manifest, compiler options, dependency model, toolchain a generated roots vstupují do identity
 compiler kontextu. Zdroje vytvořené annotation processorem se přijímají pouze z
 explicitního úspěšného buildu, zůstávají v jeho izolovaném run adresáři a každý je
 svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovají
