@@ -76,6 +76,17 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    options = (context.get("compiler_options") or {}).get("kotlin")
+    if options is not None:
+        from .analysis_model import AnalysisError
+        from .build_model import validate_kotlin_options
+        try:
+            validate_kotlin_options(options)
+        except AnalysisError as error:
+            raise WorkerError("STALE_INDEX: invalid Kotlin configuration: " + str(error), "STALE") from error
+        if context.get("selection_key") and context["selection_key"] != _selection_key(
+                {key: value for key, value in context.items() if key != "selection_key"}):
+            raise WorkerError("STALE_INDEX: Kotlin compiler context configuration changed", "STALE")
     for item in (context.get("project") or {}).get("input_files", []) + context.get("worker", {}).get("distribution", []):
         if not Path(item["path"]).is_file() or file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("STALE_INDEX: project input or worker distribution changed", "STALE")

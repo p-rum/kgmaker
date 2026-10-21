@@ -46,6 +46,47 @@ gradle.projectsEvaluated {
                     def generated = roots.findAll { it.contains('/build/generated/') || it.startsWith('build/generated/') }
                     def files = s.allSource.files.findAll { it.name.endsWith('.java') || it.name.endsWith('.kt') }.collect(relative).sort()
                     def compile = p.tasks.findByName(s.compileJavaTaskName)
+                    def compilerOptions = compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:]
+                    def kotlinTask = p.tasks.findByName(s.getCompileTaskName('kotlin'))
+                    if (kotlinTask != null) {
+                        def captured = [schema_version:1, status:'CAPTURED_CONFIGURATION', free_args:[], plugins:[], plugin_options:[]]
+                        try {
+                            // Task-level values include extension/target/task overrides. No source DSL parsing.
+                            def options = kotlinTask.compilerOptions
+                            ['languageVersion':'language_version', 'apiVersion':'api_version', 'jvmTarget':'jvm_target'].each { source, target ->
+                                def value = options."${source}".orNull
+                                if (value != null) captured[target] = source == 'jvmTarget' ? value.target : value.version
+                            }
+                            captured.free_args = options.freeCompilerArgs.get()
+                            ['javaParameters':'java_parameters', 'allWarningsAsErrors':'all_warnings_as_errors',
+                             'suppressWarnings':'suppress_warnings', 'progressiveMode':'progressive'].each { source, target ->
+                                def value = options."${source}".orNull
+                                if (value != null) captured[target] = value
+                            }
+                            captured.opt_in = options.optIn.get()
+                            def versionGetter = kotlinTask.class.methods.find { it.name.startsWith('getKotlinCompilerVersion') && it.parameterCount == 0 }
+                            if (versionGetter != null) captured.compiler_version = versionGetter.invoke(kotlinTask).get().toString()
+                            else { captured.status = 'PARTIAL'; captured.diagnostics = [[code:'KOTLIN_COMPILER_VERSION_UNAVAILABLE']] }
+                            def serialized = kotlinTask.serializedCompilerArguments
+                            captured.plugin_options = []
+                            for (int i = 0; i < serialized.size(); i++) {
+                                if (serialized[i] == '-P' && i + 1 < serialized.size()) captured.plugin_options << serialized[++i]
+                                else if (serialized[i].startsWith('-Pplugin:')) captured.plugin_options << serialized[i].substring(2)
+                            }
+                            def pluginPaths = serialized.findAll { it.startsWith('-Xplugin=') }.collectMany { it.substring(9).split(',') as List }
+                            captured.plugins = pluginPaths.collect { path ->
+                                def md = java.security.MessageDigest.getInstance('SHA-256')
+                                new File(path).withInputStream { stream -> byte[] buffer = new byte[65536]; int n
+                                    while ((n = stream.read(buffer)) != -1) md.update(buffer, 0, n)
+                                }
+                                'sha256:' + md.digest().encodeHex().toString()
+                            }.sort()
+                        } catch (Exception failure) {
+                            captured.status = 'PARTIAL'
+                            captured.diagnostics = [[code:'KOTLIN_OPTIONS_UNAVAILABLE', reason:failure.class.simpleName]]
+                        }
+                        compilerOptions.kotlin = captured
+                    }
                     def jar = p.tasks.findByName(s.jarTaskName)
                     def realm = [repo_id:buildRepo,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope]
                     def artifacts = jar instanceof Jar && jar.archiveFile.present ? [[path:jar.archiveFile.get().asFile.canonicalPath,realm:realm]] : []
@@ -54,7 +95,7 @@ gradle.projectsEvaluated {
                     contexts << [project_artifacts:artifacts,repo_id:buildRepo,build_root:buildRelative ?: '.',id:(included ? buildRepo+':' : '')+p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,scope_origin:scopeOrigin,diagnostics:contextDiagnostics,
                         source_roots:roots,generated_source_roots:generated,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
                         output_paths:outputs, build_system:'gradle',build_profiles:[],
-                        compiler_options:compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:],
+                        compiler_options:compilerOptions,
                         toolchain:[java_version:System.getProperty('java.version'),java_home:System.getProperty('java.home'),gradle_version:gradle.gradleVersion],
                         task_inputs:compile == null ? [] : compile.inputs.files.files.findAll { it.isFile() }.collect { it.canonicalPath }.sort()]
                 }

@@ -7,11 +7,14 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import java.nio.file.*;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.*;
 /** Maven 3.9.9 effective session export. No model inferred from XML strings. */
 public final class BuildExport implements EventSpy {
   private final Map<String,Object> contexts=new LinkedHashMap<>();
   private final Map<String,Object> modules=new LinkedHashMap<>();
+  private final Map<String,Map<String,Object>> kotlinOptions=new LinkedHashMap<>();
   public void init(Context context) {}
   public void close() {}
   static String quote(String s) {StringBuilder b=new StringBuilder("\""); for(char c:s.toCharArray()) {switch(c){case '"': b.append("\\\"");break;case '\\':b.append("\\\\");break;case '\n':b.append("\\n");break;case '\r':b.append("\\r");break;case '\t':b.append("\\t");break;default: if(c<32)b.append(String.format("\\u%04x",(int)c));else b.append(c);}}return b.append('"').toString();}
@@ -21,6 +24,69 @@ public final class BuildExport implements EventSpy {
   static Map<String,Object> artifact(Artifact a) {Map<String,Object> v=new LinkedHashMap<>();v.put("group_id",a.getGroupId());v.put("artifact_id",a.getArtifactId());v.put("version",a.getVersion());v.put("scope",a.getScope());v.put("type",a.getType());v.put("classifier",a.getClassifier());v.put("file",a.getFile()==null?null:a.getFile().getAbsolutePath());return v;}
   static List<String> profiles(MavenProject p) {Set<String> ids=new TreeSet<>();p.getActiveProfiles().forEach(x->ids.add(x.getId()));p.getInjectedProfileIds().values().forEach(ids::addAll);return new ArrayList<>(ids);}
   static List<Map<String,Object>> importedBoms(MavenProject p) {List<Map<String,Object>> values=new ArrayList<>();for(MavenProject current=p;current!=null;current=current.getParent())if(current.getOriginalModel().getDependencyManagement()!=null)for(Dependency d:current.getOriginalModel().getDependencyManagement().getDependencies())if("import".equals(d.getScope())&&"pom".equals(d.getType()))values.add(dependency(current,d));values.sort(Comparator.comparing(Object::toString));return values;}
+  static String option(MavenProject p,Xpp3Dom config,String name,String property) {
+    Xpp3Dom node=config==null?null:config.getChild(name);
+    String raw=node==null?p.getProperties().getProperty(property):node.getValue();
+    return effective(p,raw);
+  }
+  static List<String> optionList(MavenProject p,Xpp3Dom config,String name) {
+    List<String> values=new ArrayList<>();Xpp3Dom node=config==null?null:config.getChild(name);
+    if(node!=null)for(Xpp3Dom child:node.getChildren())if(child.getValue()!=null)values.add(effective(p,child.getValue()));
+    return values;
+  }
+  static String sha256(Path path) throws Exception {
+    MessageDigest digest=MessageDigest.getInstance("SHA-256");byte[] buffer=new byte[65536];
+    try(InputStream stream=Files.newInputStream(path)){int count;while((count=stream.read(buffer))!=-1)digest.update(buffer,0,count);}
+    return HexFormat.of().formatHex(digest.digest());
+  }
+  void captureKotlin(ExecutionEvent event) throws Exception {
+    var execution=event.getMojoExecution();
+    if(execution==null||!"org.jetbrains.kotlin".equals(execution.getGroupId())||!"kotlin-maven-plugin".equals(execution.getArtifactId()))return;
+    String goal=execution.getGoal();if(!List.of("compile","test-compile").contains(goal))return;
+    MavenProject p=event.getProject();Xpp3Dom config=execution.getConfiguration();
+    Map<String,Object> values=new LinkedHashMap<>();values.put("schema_version",1);values.put("status","CAPTURED_CONFIGURATION");
+    List<Map<String,Object>> diagnostics=new ArrayList<>();
+    if(execution.getVersion()!=null&&!execution.getVersion().contains("${"))values.put("compiler_version",execution.getVersion());
+    else diagnostics.add(Map.of("code","KOTLIN_OPTION_UNRESOLVED_DEFAULT","option","compiler_version"));
+    for(String[] pair:new String[][]{{"languageVersion","language_version"},{"apiVersion","api_version"},{"jvmTarget","jvm_target"}}) {
+      String value=option(p,config,pair[0],"kotlin.compiler."+pair[0]);
+      if(value==null||value.contains("${"))diagnostics.add(Map.of("code","KOTLIN_OPTION_UNRESOLVED_DEFAULT","option",pair[1]));
+      else if(value!=null)values.put(pair[1],value);
+    }
+    for(String[] pair:new String[][]{{"args","free_args"},{"compilerPlugins","plugins"},{"pluginOptions","plugin_options"}}) {
+      List<String> entries=optionList(p,config,pair[0]);
+      if(entries.stream().anyMatch(item->item.contains("${")))diagnostics.add(Map.of("code","KOTLIN_OPTION_UNRESOLVED_DEFAULT","option",pair[1]));
+      values.put(pair[1],entries.stream().filter(item->!item.contains("${")).toList());
+    }
+    for(String[] pair:new String[][]{{"javaParameters","java_parameters"},{"nowarn","suppress_warnings"},{"allWarningsAsErrors","all_warnings_as_errors"}}) {
+      String value=option(p,config,pair[0],"kotlin.compiler."+pair[0]);
+      if(value!=null&&!value.contains("${")&&List.of("true","false").contains(value))values.put(pair[1],Boolean.valueOf(value));
+    }
+    List<Map<String,Object>> artifacts=new ArrayList<>();
+    var mojo=execution.getMojoDescriptor();var descriptor=mojo==null?null:mojo.getPluginDescriptor();
+    if(descriptor==null)diagnostics.add(Map.of("code","KOTLIN_PLUGIN_ARTIFACTS_UNAVAILABLE"));
+    else {
+      List<Artifact> resolved=new ArrayList<>();
+      if(descriptor.getArtifacts()!=null)resolved.addAll(descriptor.getArtifacts());
+      if(descriptor.getPluginArtifact()!=null)resolved.add(descriptor.getPluginArtifact());
+      Set<String> paths=new HashSet<>();
+      for(Artifact artifact:resolved){
+        if(artifact.getFile()==null||!artifact.getFile().isFile()){
+          diagnostics.add(Map.of("code","KOTLIN_PLUGIN_ARTIFACT_UNRESOLVED","coordinates",artifact.getId()));continue;
+        }
+        Path path=artifact.getFile().toPath().toAbsolutePath().normalize();
+        if(paths.add(path.toString()))artifacts.add(Map.of("coordinates",artifact.getId(),"path",path.toString(),"sha256",sha256(path)));
+      }
+    }
+    artifacts.sort(Comparator.comparing(item->(String)item.get("coordinates")));
+    if(artifacts.isEmpty())diagnostics.add(Map.of("code","KOTLIN_PLUGIN_ARTIFACTS_UNAVAILABLE"));
+    values.put("plugin_artifacts",artifacts);
+    if(!diagnostics.isEmpty()){values.put("status","PARTIAL");values.put("diagnostics",diagnostics);}
+    String key=p.getId()+":"+goal;
+    Map<String,Object> previous=kotlinOptions.get(key);
+    if(previous!=null&&!previous.equals(values)) {values.put("status","PARTIAL");values.put("diagnostics",List.of(Map.of("code","MULTIPLE_KOTLIN_EXECUTION_CONFIGURATIONS")));}
+    kotlinOptions.put(key,values);
+  }
   void capture(MavenProject p, boolean test) throws Exception {
     Path root=Path.of(System.getProperty("kgmaker.snapshot.root")).toAbsolutePath().normalize();
     String module=root.relativize(p.getBasedir().toPath().toAbsolutePath().normalize()).toString().replace('\\','/');if(module.isEmpty())module="root";
@@ -39,10 +105,11 @@ public final class BuildExport implements EventSpy {
     List<Map<String,Object>> boms=importedBoms(p);
     Map<String,Object> c=new LinkedHashMap<>();c.put("id",id);c.put("module",module);c.put("source_set",sourceSet);c.put("scope",test?"test":"production");c.put("source_roots",relative);c.put("generated_source_roots",generated);c.put("source_files",files);c.put("classpath_paths",test?p.getTestClasspathElements():p.getCompileClasspathElements());c.put("output_paths",List.of(test?p.getBuild().getTestOutputDirectory():p.getBuild().getOutputDirectory()));c.put("build_system","maven");c.put("build_profiles",profiles(p));c.put("effective_dependencies",effective);c.put("dependency_management",managed);c.put("imported_boms",boms);
     if(p.getParent()!=null)c.put("parent",Map.of("group_id",p.getParent().getGroupId(),"artifact_id",p.getParent().getArtifactId(),"version",p.getParent().getVersion()));
-    String release=p.getProperties().getProperty("maven.compiler.release",p.getProperties().getProperty("java.version"));c.put("compiler_options",release==null?Map.of():Map.of("release",release));Map<String,Object> toolchain=new LinkedHashMap<>();toolchain.put("java_version",System.getProperty("java.version"));toolchain.put("java_home",System.getProperty("java.home"));toolchain.put("java_vendor",System.getProperty("java.vendor"));toolchain.put("maven_version",System.getProperty("maven.version","3.9.x"));c.put("toolchain",toolchain);contexts.put(id,c);
+    String release=p.getProperties().getProperty("maven.compiler.release",p.getProperties().getProperty("java.version"));Map<String,Object> compiler=new LinkedHashMap<>();if(release!=null)compiler.put("release",release);Map<String,Object> kotlin=kotlinOptions.get(p.getId()+":"+(test?"test-compile":"compile"));if(kotlin!=null){compiler.put("kotlin",kotlin);if("PARTIAL".equals(kotlin.get("status")))c.put("diagnostics",kotlin.getOrDefault("diagnostics",List.of()));}c.put("compiler_options",compiler);Map<String,Object> toolchain=new LinkedHashMap<>();toolchain.put("java_version",System.getProperty("java.version"));toolchain.put("java_home",System.getProperty("java.home"));toolchain.put("java_vendor",System.getProperty("java.vendor"));toolchain.put("maven_version",System.getProperty("maven.version","3.9.x"));c.put("toolchain",toolchain);contexts.put(id,c);
   }
   public void onEvent(Object event) throws Exception {
     if(!(event instanceof ExecutionEvent))return;ExecutionEvent e=(ExecutionEvent)event;
+    if(e.getType()==ExecutionEvent.Type.MojoSucceeded)captureKotlin(e);
     if(e.getType()==ExecutionEvent.Type.ProjectSucceeded){modules.put(e.getProject().getId(),"SUCCESS");capture(e.getProject(),false);capture(e.getProject(),true);}
     if(e.getType()==ExecutionEvent.Type.ProjectFailed)modules.put(e.getProject().getId(),"FAILED");
     if(e.getType()==ExecutionEvent.Type.ProjectSkipped)modules.put(e.getProject().getId(),"SKIPPED");
