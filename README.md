@@ -304,3 +304,11 @@ An edit to a sibling source set with the same scope does not invalidate the sele
 variant. Changing selected resources or shared configuration still requires inspection.
 `scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
 testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.
+
+Explicit Gradle composite builds inside the captured project tree now export each
+included build with a build-root-qualified repository identity. Duplicate module
+names remain separate; resolved dependency artifacts retain their owning realm
+only when a unique execution-bound producer output matches the artifact, and retain
+exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
+--offline --output /tmp/composite-plan.json` and explicit `project build-run`
+perform the export; scan/feature/hook never launch Gradle.

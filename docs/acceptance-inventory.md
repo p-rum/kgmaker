@@ -167,3 +167,7 @@ while selected/shared config changes stale it without processes.
 conventional pairs before mutation; `test_conventional_pairs_and_legacy_manifest_remain_readable`
 preserves the three exact conventions and absent-provenance legacy input.
 Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
+
+| Work package | Acceptance | Supported version and evidence | Actual run |
+|---|---|---|---|
+| T003-S03-W03 | AC01–AC04 | gradle-composite-1 / Gradle8.13; `tests/test_gradle_included.py` duplicate lib repos, stale jar substitution, exact resolved order, unique execution-bound producer realm, ambiguous ownership/no-mutation import; legacy manifests covered by existing build suite | rebased review-fix full suite 221 PASS, 0 SKIP; external roots UNBOUND/PARTIAL |

@@ -61,6 +61,31 @@ def _select_java_home(java_home: Path | None) -> dict | None:
     return selected
 
 
+def build_output_realms(contexts: list[dict]) -> tuple[dict, list[dict]]:
+    """Register actual exporter outputs; ambiguous ownership is never selected."""
+    realms = {}; ambiguous = set()
+    def register(path, realm):
+        key = str(Path(path).resolve())
+        if key in ambiguous:
+            return
+        if key in realms and realms[key] != realm:
+            realms.pop(key); ambiguous.add(key)
+        else:
+            realms[key] = realm
+    for context in contexts:
+        realm = {key: context.get(key, 'local' if key == 'repo_id' else None)
+                 for key in ('repo_id', 'module', 'source_set', 'scope')}
+        for path in context.get('output_paths', []):
+            register(path, realm)
+        output_paths = {str(Path(path).resolve()) for path in context.get('output_paths', [])}
+        for artifact in context.get('project_artifacts', []):
+            # A declared archive path alone is not proof it was produced now.
+            path = str(Path(artifact['path']).resolve())
+            if path in output_paths and Path(path).is_file():
+                register(path, realm)
+    return realms, [{'code':'AMBIGUOUS_BUILD_OUTPUT_REALM','path':path} for path in sorted(ambiguous)]
+
+
 def create_plan(root: Path, *, phase='test-compile', build_system=None, executable=None,
                 profiles=None, timeout=300, policy='LOCAL_TRUSTED', home=None, environment=None,
                 offline=False, java_home: Path | None = None) -> dict:
@@ -210,10 +235,10 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
     copied_unchanged=all(safe_path(work, p).is_file() and file_hash(safe_path(work, p))==expected for p,expected in plan['snapshot']['sources'].items())
     result['freshness']='MIXED_BUILD_INPUTS' if not copied_unchanged else 'EXECUTION_BOUND' if current==plan['snapshot']['sources'] else 'STALE_SOURCE'
     contexts=[]
-    output_realms={str(Path(path).resolve()):{'repo_id':'local','module':c['module'],'source_set':c['source_set'],'scope':c['scope']}
-                   for c in (export.get('contexts',[]) if export else []) for path in c.get('output_paths',[])}
+    output_realms, realm_diagnostics = build_output_realms(export.get('contexts', [])) if state == 'SUCCESS' and copied_unchanged and export else ({}, [])
+    diagnostics.extend(realm_diagnostics)
     for c in export.get('contexts',[]) if export else []:
-        c=dict(c);c['repo_id']='local';c['classpath']=[]
+        c=dict(c);c.pop('project_artifacts',None);c['repo_id']=c.get('repo_id','local');c['classpath']=[]
         for raw in c.pop('classpath_paths',[]):
             path=Path(raw)
             if path.exists():
