@@ -2,12 +2,13 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "1e99c7f59f2c53a03f76ee66e148b0987e40a0276cbd7fdc1ad29f6d4fd7f721",
-    "README.md": "ba58dd2655bd2d685bedb7f33abc5c108ccf26c5e024026fd71e7f4fb39d0501",
-    "docs/acceptance-inventory.md": "98991583f2483e69d707431cd9fc0d8409d062540d58bfc7bc9fd7166d4b41a9",
+    "README.md": "32a4706253018a9767332789cf0591214955f7c952cb15de25f8f388a55729db",
+    "docs/acceptance-inventory.md": "ef4033fe6a2d7713a123774c3c63a6ba7761f73fd93a63a21fbb58e860258272",
     "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
+    "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
@@ -15,11 +16,11 @@
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
-    "docs/compiler-inspection.md": "8ce562a4ba316aa03e47052eb8e5ecf5e3c1f9189ba96bde29eb235ef02e280f",
+    "docs/compiler-inspection.md": "89489024f9594956f3ab9295b9d54c027f446ac3ce12aaa44ee3c04dfbe74ffc",
     "docs/feature-analysis.md": "3fea715c39b1d24ac0fed9f5dc11e2f1bec2d9149cff94a686060b1ca0f53b19",
     "docs/flyway-workspace-proofs.md": "0971492bde72b7fbd843ebd8f2ad2aef4c31503a1aa68bb03780559529a11447",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "e0937f1987d0a4e263354fe42c73818c961f5dd5e117707d9780bf4003eddb98",
+    "docs/production-analysis-progress.md": "a93b1ba0ab9a3247274bbf8667701cbf779265ea861aeabd0b10a63a5a10f08f",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "151a16ad75e547a5e9fd85ba697d56652cb7e3299c97daff0c8c67035a73c16c",
@@ -143,8 +144,8 @@
     "src/kgmaker/analysis_validation.py": "43a907afb6bab919b639b55045e642266e55ad19820c97209afe1b7337c497a0",
     "src/kgmaker/availability.py": "14b7988dba45770eab3c1a282f45a6b1f9bb0c442e80dba050a3b418b08f8eb5",
     "src/kgmaker/build_maven.py": "19e96f77b35473a1fc50d7167b6ac455d2b022389f66498a09deec42059d5223",
-    "src/kgmaker/build_model.py": "206e75c2cf5ec68e538139c7e5c7b9b0bb546325c05d50f910985e13a82b093c",
-    "src/kgmaker/build_runner.py": "c84dfb7d8109a772a6fde0e6e57ef3c76c4a7e966f7b14a4e33f49f8fe0e78cb",
+    "src/kgmaker/build_model.py": "8c15654e822ff88b9d47ee01ca040e8730ad09688349fe522ec951f6d1147b04",
+    "src/kgmaker/build_runner.py": "2c747e27283b06193d7a689abff55e92a79d2604ab00ab8c7843d6d7442bf9e2",
     "src/kgmaker/callgraph.py": "8fff5e53a9386997abfaa8c85791c221265857679329b28224ec64e820788f9a",
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
     "src/kgmaker/cli.py": "0cf6e3ba09636adb2b4ee8a754bf9da21b4b20cfff4a6216fd05677e2d3a63ff",
@@ -195,6 +196,7 @@
     "tests/test_feature.py": "83bf7ea486acda9eb46e3f6b1b2f8eba4c98d6007bbd93915d3cd1847053b261",
     "tests/test_feature_fixture.py": "24b824d658e9f4d75c20f9cfd643819c7648671637fab222ee0b9ec5236b8945",
     "tests/test_flyway.py": "e3916b26c665cdc56e9bfa9303b41cfaba980cdd59c8978049fbc07370646a7c",
+    "tests/test_gradle_included.py": "36480fd0c5d4964836daf8f730d3e6b167c48d89a6c2269fce04b42b1f99b5d0",
     "tests/test_gradle_variants.py": "2607c4bbf9a980013dd5dc571c31a4f120c7fef2c572a33c4cc44d18943bee1a",
     "tests/test_graph_provider.py": "646b365e507b1eeb89cc2aa1c737feadaeb18810488df093b76472e18bffe98a",
     "tests/test_init.py": "f25404edf1cbde6f2d7f7f312a7b1e9e1d00b54b50d5a6f4f58d5dd310bdeaaf",
@@ -22778,6 +22780,359 @@
         }
       ],
       "id": "episode:d69e0e1b0367d1330c31cf1960ca49d8565639382b4386450c2ecfcd09f278fb"
+    },
+    {
+      "base_commit": "8b094d0907b99e13ca82349a735593795fe459b7",
+      "head_commit": "2a449911c650d44eae54147b6e183cdf495b20e5",
+      "worktree_fingerprint": "8bb49e3f54eb0fc23a8d4785d35c4be7155e3783ef09bc7ed31ca6c60ea17353",
+      "title": "Export snapshot-bound Gradle included build identities and realms",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "32a4706253018a9767332789cf0591214955f7c952cb15de25f8f388a55729db"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "ef4033fe6a2d7713a123774c3c63a6ba7761f73fd93a63a21fbb58e860258272"
+        },
+        {
+          "path": "docs/changes/17_exportGradleIncludedBuilds.md",
+          "status": "A",
+          "sha256": "62172efcf89a7812f8109cde6844d8aded87a9ffaf5d1fffb000f73522683902"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "89489024f9594956f3ab9295b9d54c027f446ac3ce12aaa44ee3c04dfbe74ffc"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a93b1ba0ab9a3247274bbf8667701cbf779265ea861aeabd0b10a63a5a10f08f"
+        },
+        {
+          "path": "src/kgmaker/build_model.py",
+          "status": "M",
+          "sha256": "8c15654e822ff88b9d47ee01ca040e8730ad09688349fe522ec951f6d1147b04"
+        },
+        {
+          "path": "src/kgmaker/build_runner.py",
+          "status": "M",
+          "sha256": "2c747e27283b06193d7a689abff55e92a79d2604ab00ab8c7843d6d7442bf9e2"
+        },
+        {
+          "path": "tests/test_gradle_included.py",
+          "status": "A",
+          "sha256": "36480fd0c5d4964836daf8f730d3e6b167c48d89a6c2269fce04b42b1f99b5d0"
+        },
+        {
+          "path": "workers/build/gradle/export.gradle",
+          "status": "M",
+          "sha256": "a51c3597a96e0233e28b9de1523fdd1f6f5281a859ac898546e45653ff0af1b7"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/17_exportGradleIncludedBuilds.md:17_exportGradleIncludedBuilds.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/build_model.py:build_model.py",
+        "file:src/kgmaker/build_runner.py:build_runner.py",
+        "file:tests/test_gradle_included.py:test_gradle_included.py",
+        "function:src/kgmaker/build_model.py:_validate_toolchain_selection::15",
+        "function:src/kgmaker/build_model.py:absolute::198",
+        "function:src/kgmaker/build_model.py:absolute::219",
+        "function:src/kgmaker/build_model.py:import_manifest::171",
+        "function:src/kgmaker/build_model.py:import_manifest::192",
+        "function:src/kgmaker/build_model.py:inspection_inputs::186",
+        "function:src/kgmaker/build_model.py:inspection_inputs::207",
+        "function:src/kgmaker/build_model.py:validate_manifest::40",
+        "function:src/kgmaker/build_runner.py:_jdk_executable::37",
+        "function:src/kgmaker/build_runner.py:_select_java_home::46",
+        "function:src/kgmaker/build_runner.py:build_output_realms::62",
+        "function:src/kgmaker/build_runner.py:register::67",
+        "function:src/kgmaker/build_runner.py:run_plan::147",
+        "function:src/kgmaker/build_runner.py:run_plan::150",
+        "function:src/kgmaker/build_runner.py:snapshot::21",
+        "function:src/kgmaker/build_runner.py:tests_report::131",
+        "function:src/kgmaker/build_runner.py:tests_report::134",
+        "function:src/kgmaker/graph_provider.py:merge_compiler_context::175",
+        "function:src/kgmaker/graph_provider.py:merge_compiler_context::178",
+        "function:src/kgmaker/graph_provider.py:retain_compiler_layer::192",
+        "function:src/kgmaker/graph_provider.py:retain_compiler_layer::195",
+        "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::104",
+        "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::107",
+        "function:src/kgmaker/inspection.py:proof::170",
+        "function:src/kgmaker/inspection.py:proof::204",
+        "function:src/kgmaker/inspection.py:relation::183",
+        "function:src/kgmaker/inspection.py:relation::217",
+        "function:src/kgmaker/inspection.py:source_snapshot::106",
+        "function:src/kgmaker/inspection.py:validate_response::130",
+        "function:src/kgmaker/inspection.py:validate_response::164",
+        "function:tests/test_gradle_included.py:forbidden::56",
+        "function:tests/test_gradle_included.py:test_classpath_realm_requires_unique_matching_producer_output::76",
+        "function:tests/test_gradle_included.py:test_colliding_output_owners_are_unknown_without_process::52",
+        "function:tests/test_gradle_included.py:test_included_identity_collision_does_not_replace_manifest::62",
+        "function:tests/test_gradle_included.py:test_real_gradle_included_duplicate_modules_and_stale_artifact::11",
+        "function:tests/test_gradle_variants.py:test_conventional_pairs_and_legacy_manifest_remain_readable::175",
+        "function:tests/test_gradle_variants.py:test_forged_gradle_convention_preserves_existing_store::155",
+        "function:tests/test_gradle_variants.py:test_selected_variant_snapshot_ignores_sibling_sources_and_configs_offline::111",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::265",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::179",
+        "section:README.md:Development::124",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::133",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::141",
+        "section:README.md:Implementation memory and workflow::113",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::115",
+        "section:docs/acceptance-inventory.md:T001::9",
+        "section:docs/acceptance-inventory.md:T002::88",
+        "section:docs/changes/13_importGradleSourceSetScopes.md:Opravy P1 z code review (2026-10-19)::49",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Kompatibilita a příklad::15",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Neprovedené kontroly a zbývající hranice::39",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Problém a skutečné změny::3",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Provedené kontroly::24",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Repo identita a závislosti Gradle included builds::1",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::59",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Závěrečná evidence::51",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::213",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::117",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::42",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::272",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::243",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::272",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::292",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::112",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::128",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::119",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::128",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::137"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:src/kgmaker/build_model.py:absolute::219",
+          "function:src/kgmaker/build_model.py:import_manifest::192",
+          "function:src/kgmaker/build_model.py:inspection_inputs::207",
+          "function:src/kgmaker/build_runner.py:run_plan::150",
+          "function:src/kgmaker/build_runner.py:tests_report::134",
+          "function:src/kgmaker/graph_provider.py:merge_compiler_context::175",
+          "function:src/kgmaker/graph_provider.py:retain_compiler_layer::192",
+          "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::104",
+          "function:src/kgmaker/inspection.py:proof::204",
+          "function:src/kgmaker/inspection.py:relation::217",
+          "function:src/kgmaker/inspection.py:source_snapshot::106",
+          "function:src/kgmaker/inspection.py:validate_response::164",
+          "function:tests/test_gradle_included.py:test_classpath_realm_requires_unique_matching_producer_output::76",
+          "function:tests/test_gradle_variants.py:test_conventional_pairs_and_legacy_manifest_remain_readable::175",
+          "function:tests/test_gradle_variants.py:test_forged_gradle_convention_preserves_existing_store::155",
+          "function:tests/test_gradle_variants.py:test_selected_variant_snapshot_ignores_sibling_sources_and_configs_offline::111",
+          "section:docs/changes/13_importGradleSourceSetScopes.md:Opravy P1 z code review (2026-10-19)::49",
+          "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::59",
+          "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::272",
+          "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::292",
+          "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::128",
+          "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::137"
+        ],
+        "removed": [
+          "function:src/kgmaker/build_model.py:absolute::198",
+          "function:src/kgmaker/build_model.py:import_manifest::171",
+          "function:src/kgmaker/build_model.py:inspection_inputs::186",
+          "function:src/kgmaker/build_runner.py:run_plan::147",
+          "function:src/kgmaker/build_runner.py:tests_report::131",
+          "function:src/kgmaker/graph_provider.py:merge_compiler_context::178",
+          "function:src/kgmaker/graph_provider.py:retain_compiler_layer::195",
+          "function:src/kgmaker/graph_provider.py:validate_compiler_snapshot::107",
+          "function:src/kgmaker/inspection.py:proof::170",
+          "function:src/kgmaker/inspection.py:relation::183",
+          "function:src/kgmaker/inspection.py:validate_response::130",
+          "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::272",
+          "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::128"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full",
+          "status": "passed"
+        },
+        {
+          "label": "gradle",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:d8025786e2ac121c8cd25c006643ce7c9d151718247b81ba5b913472021b3891"
+    },
+    {
+      "base_commit": "8ef537efce67b96050338e5a59bf76ba52893afd",
+      "head_commit": "6900cf9531ba87aaac084644d95836f5f19446f9",
+      "worktree_fingerprint": "9e0a6f27520053b77beba3db064a46ba096f89b3f09271b718c1889f35ca4c52",
+      "title": "Document stacked Gradle PR validation",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "32a4706253018a9767332789cf0591214955f7c952cb15de25f8f388a55729db"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "ef4033fe6a2d7713a123774c3c63a6ba7761f73fd93a63a21fbb58e860258272"
+        },
+        {
+          "path": "docs/changes/17_exportGradleIncludedBuilds.md",
+          "status": "A",
+          "sha256": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "89489024f9594956f3ab9295b9d54c027f446ac3ce12aaa44ee3c04dfbe74ffc"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a93b1ba0ab9a3247274bbf8667701cbf779265ea861aeabd0b10a63a5a10f08f"
+        },
+        {
+          "path": "src/kgmaker/build_model.py",
+          "status": "M",
+          "sha256": "8c15654e822ff88b9d47ee01ca040e8730ad09688349fe522ec951f6d1147b04"
+        },
+        {
+          "path": "src/kgmaker/build_runner.py",
+          "status": "M",
+          "sha256": "2c747e27283b06193d7a689abff55e92a79d2604ab00ab8c7843d6d7442bf9e2"
+        },
+        {
+          "path": "tests/test_gradle_included.py",
+          "status": "A",
+          "sha256": "36480fd0c5d4964836daf8f730d3e6b167c48d89a6c2269fce04b42b1f99b5d0"
+        },
+        {
+          "path": "workers/build/gradle/export.gradle",
+          "status": "M",
+          "sha256": "a51c3597a96e0233e28b9de1523fdd1f6f5281a859ac898546e45653ff0af1b7"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/17_exportGradleIncludedBuilds.md:17_exportGradleIncludedBuilds.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/build_model.py:build_model.py",
+        "file:src/kgmaker/build_runner.py:build_runner.py",
+        "file:tests/test_gradle_included.py:test_gradle_included.py",
+        "function:src/kgmaker/build_model.py:_validate_toolchain_selection::15",
+        "function:src/kgmaker/build_model.py:absolute::219",
+        "function:src/kgmaker/build_model.py:import_manifest::192",
+        "function:src/kgmaker/build_model.py:inspection_inputs::207",
+        "function:src/kgmaker/build_model.py:validate_manifest::40",
+        "function:src/kgmaker/build_runner.py:_jdk_executable::37",
+        "function:src/kgmaker/build_runner.py:_select_java_home::46",
+        "function:src/kgmaker/build_runner.py:build_output_realms::62",
+        "function:src/kgmaker/build_runner.py:register::67",
+        "function:src/kgmaker/build_runner.py:run_plan::150",
+        "function:src/kgmaker/build_runner.py:snapshot::21",
+        "function:src/kgmaker/build_runner.py:tests_report::134",
+        "function:tests/test_gradle_included.py:forbidden::56",
+        "function:tests/test_gradle_included.py:test_classpath_realm_requires_unique_matching_producer_output::76",
+        "function:tests/test_gradle_included.py:test_colliding_output_owners_are_unknown_without_process::52",
+        "function:tests/test_gradle_included.py:test_included_identity_collision_does_not_replace_manifest::62",
+        "function:tests/test_gradle_included.py:test_real_gradle_included_duplicate_modules_and_stale_artifact::11",
+        "section:README.md:Commands::34",
+        "section:README.md:Compiler lifecycle::265",
+        "section:README.md:Copilot workflow::102",
+        "section:README.md:Data prerequisite audit::179",
+        "section:README.md:Development::124",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::133",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::141",
+        "section:README.md:Implementation memory and workflow::113",
+        "section:README.md:Install::20",
+        "section:README.md:Requirements::15",
+        "section:README.md:What gets indexed::94",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::115",
+        "section:docs/acceptance-inventory.md:T001::9",
+        "section:docs/acceptance-inventory.md:T002::88",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Kompatibilita a příklad::15",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Neprovedené kontroly a zbývající hranice::39",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Problém a skutečné změny::3",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Provedené kontroly::24",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Repo identita a závislosti Gradle included builds::1",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::59",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::60",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Závěrečná evidence::51",
+        "section:docs/changes/17_exportGradleIncludedBuilds.md:Závěrečná evidence::52",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::213",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::117",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::42",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::272",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::243",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::292",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::112",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::52",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::62",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::84",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::128",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::119",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::137"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::59",
+          "section:docs/changes/17_exportGradleIncludedBuilds.md:Závěrečná evidence::51"
+        ],
+        "removed": [
+          "section:docs/changes/17_exportGradleIncludedBuilds.md:Revize po nezávislém CR::60",
+          "section:docs/changes/17_exportGradleIncludedBuilds.md:Závěrečná evidence::52"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "full221",
+          "status": "passed"
+        },
+        {
+          "label": "gradle",
+          "status": "passed"
+        },
+        {
+          "label": "integration",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:5e9c0bc0f080b2e14ad3a54e291083ec13318c4b4704a9db484dc104fb4fe77e"
     }
   ]
 }

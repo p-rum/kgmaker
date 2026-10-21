@@ -1,17 +1,32 @@
 // Trusted kgmaker exporter; executed only by an explicit content-bound build plan.
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.compile.JavaCompile
 
 gradle.projectsEvaluated {
+    def snapshotRoot = new File(System.getProperty('kgmaker.snapshot.root')).canonicalFile
+    def buildRoot = gradle.rootProject.projectDir.canonicalFile
+    def buildRelative = snapshotRoot.toPath().relativize(buildRoot.toPath()).toString().replace('\\','/')
+    def included = buildRoot != snapshotRoot
+    def buildRepo = included ? 'gradle-' + MessageDigest.getInstance('SHA-256').digest(buildRelative.getBytes('UTF-8')).encodeHex().toString().substring(0,16) : 'local'
+    def fragment = { File dir ->
+        def rel = snapshotRoot.toPath().relativize(dir.canonicalFile.toPath()).toString().replace('\\','/')
+        def repo = 'gradle-' + MessageDigest.getInstance('SHA-256').digest(rel.getBytes('UTF-8')).encodeHex().toString().substring(0,16)
+        new File(System.getProperty('kgmaker.export.path') + '.' + repo + '.json')
+    }
+    def boundedBuilds = gradle.includedBuilds.findAll { it.projectDir.canonicalFile.toPath().startsWith(snapshotRoot.toPath()) }
     gradle.rootProject.tasks.register('kgmakerExport') {
+        dependsOn(boundedBuilds.collect { it.task(':kgmakerExport') })
         doLast {
             def root = new File(System.getProperty('kgmaker.snapshot.root')).canonicalFile
             def relative = { File f -> root.toPath().relativize(f.canonicalFile.toPath()).toString().replace('\\','/') }
             def contexts = []; def diagnostics = []; def modules = [:]
             gradle.rootProject.allprojects.sort { it.path }.each { p ->
                 def sets = p.extensions.findByType(SourceSetContainer)
-                if (sets == null) { diagnostics << [code:'UNSUPPORTED_GRADLE_VARIANT',module:p.path]; return }
+                if (sets == null) { diagnostics << [code:'UNSUPPORTED_GRADLE_VARIANT',module:relative(p.projectDir) ?: 'root',repo_id:buildRepo]; return }
                 // Custom source-set names carry no execution semantics. Accept only
                 // explicit project model declarations, never substring/path guesses.
                 def suppliedScopes = p.extensions.extraProperties.has('kgmakerSourceSetScopes') ? p.extensions.extraProperties.get('kgmakerSourceSetScopes') : [:]
@@ -31,17 +46,33 @@ gradle.projectsEvaluated {
                     def generated = roots.findAll { it.contains('/build/generated/') || it.startsWith('build/generated/') }
                     def files = s.allSource.files.findAll { it.name.endsWith('.java') || it.name.endsWith('.kt') }.collect(relative).sort()
                     def compile = p.tasks.findByName(s.compileJavaTaskName)
-                    contexts << [id:p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,scope_origin:scopeOrigin,diagnostics:contextDiagnostics,
+                    def jar = p.tasks.findByName(s.jarTaskName)
+                    def realm = [repo_id:buildRepo,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope]
+                    def artifacts = jar instanceof Jar && jar.archiveFile.present ? [[path:jar.archiveFile.get().asFile.canonicalPath,realm:realm]] : []
+                    def outputs = s.output.classesDirs.files.collect { it.canonicalPath }
+                    if (jar instanceof Jar && jar.archiveFile.present && jar.archiveFile.get().asFile.isFile()) outputs << jar.archiveFile.get().asFile.canonicalPath
+                    contexts << [project_artifacts:artifacts,repo_id:buildRepo,build_root:buildRelative ?: '.',id:(included ? buildRepo+':' : '')+p.path+':'+s.name,module:relative(p.projectDir) ?: 'root',source_set:s.name,scope:scope,scope_origin:scopeOrigin,diagnostics:contextDiagnostics,
                         source_roots:roots,generated_source_roots:generated,source_files:files,classpath_paths:s.compileClasspath.files.collect { it.canonicalPath },
-                        output_paths:s.output.classesDirs.files.collect { it.canonicalPath }, build_system:'gradle',build_profiles:[],
+                        output_paths:outputs, build_system:'gradle',build_profiles:[],
                         compiler_options:compile instanceof JavaCompile && compile.options.release.present ? [release:compile.options.release.get()] : [:],
                         toolchain:[java_version:System.getProperty('java.version'),java_home:System.getProperty('java.home'),gradle_version:gradle.gradleVersion],
                         task_inputs:compile == null ? [] : compile.inputs.files.files.findAll { it.isFile() }.collect { it.canonicalPath }.sort()]
                 }
-                modules[p.path] = 'EXPORT_COMPLETED'
+                modules[(included ? buildRepo+':' : '')+p.path] = 'EXPORT_COMPLETED'
             }
-            if (!gradle.includedBuilds.empty) diagnostics << [code:'INCLUDED_BUILDS_NOT_EXPORTED', builds:gradle.includedBuilds.collect { it.name }]
-            new File(System.getProperty('kgmaker.export.path')).text = JsonOutput.toJson([schema_version:1,exporter:'gradle-source-sets-2',contexts:contexts,modules:modules,diagnostics:diagnostics])
+            gradle.includedBuilds.findAll { !boundedBuilds.contains(it) }.each {
+                diagnostics << [code:'UNBOUND_INCLUDED_BUILD',build:it.name,reason:'Included build is outside the captured snapshot']
+            }
+            boundedBuilds.each { child ->
+                def file = fragment(child.projectDir)
+                if (!file.isFile()) diagnostics << [code:'INCLUDED_BUILD_EXPORT_UNAVAILABLE',build:child.name]
+                else {
+                    def model = new JsonSlurper().parse(file)
+                    contexts.addAll(model.contexts); modules.putAll(model.modules); diagnostics.addAll(model.diagnostics)
+                }
+            }
+            def output = included ? fragment(buildRoot) : new File(System.getProperty('kgmaker.export.path'))
+            output.text = JsonOutput.toJson([schema_version:1,exporter:'gradle-composite-1',contexts:contexts,modules:modules,diagnostics:diagnostics])
         }
     }
 }

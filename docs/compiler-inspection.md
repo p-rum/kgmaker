@@ -288,3 +288,41 @@ conventional origin. Negative imports validate before changing the store.
 `tests/test_gradle_variants.py` covers offline scan/hook/current_graph without
 subprocesses, shared/selected config invalidation, forged convention rejection,
 byte-for-byte preservation and valid/legacy provenance.
+
+## T003-S03-W03: Gradle composite identity
+
+`gradle-composite-1` coordinates explicit `kgmakerExport` tasks in included builds
+inside the captured snapshot. Each build writes a separate fragment; the root
+merges completed fragments. Included repository IDs derive deterministically from
+the build-root-relative path, not project names. Context IDs include that identity;
+modules with the same name in separate builds remain distinct. `build_root` is an
+optional manifest field; imports reject ambiguous repo/build-root ownership.
+Existing manifests without it and graph/store v1/v2/v3 remain readable.
+
+The existing ordered `classpath` and `realm` carry dependency evidence. Gradle's
+resolved project substitution selects current included outputs over stale external
+artifacts with the same coordinates. The runner preserves Gradle order, records
+content hashes and retains the included repo identity. Jar ownership comes from
+actual Gradle archive tasks; conflicting output ownership yields
+AMBIGUOUS_BUILD_OUTPUT_REALM without choosing either repo.
+Při importu je `classpath.realm` uznáno jen při jediném stejně hashovaném,
+execution-bound outputu odpovídajícího producenta. Samotný Jar task model
+neprokazuje existenci výstupu; chybějící nebo kolidující producer realm je
+odmítnut před publikací manifestu.
+
+```bash
+kgmaker project build-plan --root . --build-system gradle --offline --output /tmp/composite-plan.json
+kgmaker project build-run --plan /tmp/composite-plan.json
+kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json
+kgmaker inspect code --root . --build-id BUILD_ID --context INCLUDED_CONTEXT_ID --scope production
+```
+
+`tests/test_gradle_included.py` uses actual Gradle8.13 with duplicate lib modules,
+a stale local Maven jar and an independent external file dependency. It verifies
+substitution, exact classpath order, separate repo IDs and included inspection
+inputs; negative tests verify ambiguous realm ownership and no-mutation import
+failure. Included roots outside the captured tree emit UNBOUND_INCLUDED_BUILD;
+missing fragments emit INCLUDED_BUILD_EXPORT_UNAVAILABLE. Such scope is PARTIAL,
+never evidence of complete source coverage. Non-Java model aggregators retain
+UNSUPPORTED_GRADLE_VARIANT diagnostics. No implicit process is added to offline
+analysis commands.

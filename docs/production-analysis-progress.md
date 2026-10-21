@@ -133,3 +133,16 @@ scope. Vybrané resources a sdílené build/config inputs nadále invalidují ko
 GRADLE_CONVENTION přijímá pouze main/production, test/test a testFixtures/test_fixture;
 legacy manifest bez provenance zůstává čitelný. Testy a aktuální celý běh jsou v
 [change note13](changes/13_importGradleSourceSetScopes.md). S03 zůstává PARTIAL.
+
+## T003-S03-W03 — captured composite builds
+
+VERIFIED_IN_SCOPE for `gradle-composite-1` / Gradle8.13: snapshot-contained included
+builds preserve repo-qualified source/context identity, existing classpath realm
+dependencies and deterministic Gradle order. Duplicate lib modules are separate;
+current included output replaces a stale external artifact through actual Gradle
+substitution. Ambiguous artifact ownership is diagnosed without a chosen realm.
+Imported classpath realm requires a unique execution-bound producer output with
+matching path/hash/identity; forged and ambiguous claims fail before store mutation.
+`tests/test_gradle_included.py` provides actual toolchain and negative evidence;
+rebased review-fix full suite 221 PASS, 0 SKIP (including strengthened classpath order fixture). Outside-snapshot roots remain UNBOUND/PARTIAL; T003-S03 remains PARTIAL.
+See [change note17](changes/17_exportGradleIncludedBuilds.md).

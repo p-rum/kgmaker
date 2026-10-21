@@ -60,12 +60,23 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
         raise AnalysisError("BuildManifest contexts are missing")
     selected_toolchain = _validate_toolchain_selection(manifest.get("toolchain_selection"))
     ids = set()
+    output_producers: dict[str, list[tuple[str, dict[str, str]]]] = {}
+    build_repos = {}; repo_builds = {}
     for context in manifest["contexts"]:
         if not isinstance(context, dict) or not isinstance(context.get("id"), str) or context["id"] in ids:
             raise AnalysisError("Duplicate/invalid build context")
         ids.add(context["id"])
         if context.get("scope") not in SCOPES or not all(isinstance(context.get(k), str) and context[k] for k in ("module", "source_set", "repo_id")):
             raise AnalysisError("Build context requires repo/module/source-set/scope")
+        build_root = context.get("build_root")
+        if build_root is not None:
+            if not isinstance(build_root, str) or not build_root:
+                raise AnalysisError("Build root must be a snapshot-relative identity")
+            safe_path(root, build_root)
+            repo = context["repo_id"]
+            if (build_root != "." and repo == "local") or (build_root in build_repos and build_repos[build_root] != repo) or (repo in repo_builds and repo_builds[repo] != build_root):
+                raise AnalysisError("Ambiguous included build repository identity")
+            build_repos[build_root] = repo; repo_builds[repo] = build_root
         scope_origin = context.get("scope_origin")
         if scope_origin is not None and (not isinstance(scope_origin, str) or scope_origin not in {"GRADLE_CONVENTION", "EXPLICIT_MAPPING", "UNKNOWN"}
                 or (scope_origin == "UNKNOWN" and context["scope"] != "unknown")
@@ -153,6 +164,24 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
                 path = safe_path(root, artifact["path"])
             if artifact_hash(path) != artifact.get("sha256"):
                 raise AnalysisError("STALE_OUTPUT: " + str(path), 3)
+            if artifact.get("freshness") == "EXECUTION_BOUND":
+                realm = {key: context[key] for key in ("repo_id", "module", "source_set", "scope")}
+                output_producers.setdefault(str(path.resolve()), []).append((artifact["sha256"], realm))
+    for context in manifest["contexts"]:
+        for artifact in context["classpath"]:
+            claimed_realm = artifact.get("realm")
+            if claimed_realm is None:
+                continue
+            if (not isinstance(claimed_realm, dict)
+                    or set(claimed_realm) != {"repo_id", "module", "source_set", "scope"}
+                    or any(not isinstance(value, str) or not value for value in claimed_realm.values())):
+                raise AnalysisError("Invalid classpath artifact realm")
+            path = Path(artifact["path"])
+            if not path.is_absolute():
+                path = safe_path(root, artifact["path"])
+            producers = output_producers.get(str(path.resolve()), [])
+            if len(producers) != 1 or producers[0] != (artifact["sha256"], claimed_realm):
+                raise AnalysisError("Classpath realm requires one matching execution-bound producer output")
     if snapshot.get("inventory") == "ALL_BUILD_INPUTS_V1":
         from .build_runner import snapshot as inventory
         if inventory(root) != snapshot["sources"]:
