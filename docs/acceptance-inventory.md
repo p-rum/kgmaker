@@ -112,6 +112,19 @@ worktree: `python3 -m pytest -q` — **184 passed in 15.93 s**, Python 3.12.
 | T002-BC-01 | VERIFIED_IN_SCOPE | graph v1/v2/v3 migration; offline refresh | `test_production_scope.py::test_bc01_existing_build_scan_and_hook_never_launch_project_tools`; `test_graph_provider.py` | 184 PASS |
 | T002-EX-01 | PARTIAL | worker timeout/cancel + copied-input mutation | `test_worker_protocol.py`; `test_build_runner.py::test_project_mutating_copied_inputs_cannot_produce_fresh_analysis` | 184 PASS |
 
+T003-S03-W05 doplňuje bounded workspace release mapping v1. Přímá evidence
+`test_content_bound_release_output_links_exact_consumer_classpath`,
+`test_same_gav_and_class_name_with_different_bytes_stays_partial`,
+`test_duplicate_content_match_is_ambiguous_and_creates_no_edge` a
+`test_invalid_release_mapping_preserves_existing_store_and_legacy_absence`;
+`test_directory_outputs_are_not_misreported_as_content_identical` drží
+class-directory/resource mismatch explicitně `PARTIAL`;
+`test_artifact_mutation_during_snapshot_is_stale_and_preserves_store` navíc
+ověřuje nulovou publikaci/cache mutaci při závodu. Sada pokrývá
+T003-S03-W05-AC01 až AC04. Stav je VERIFIED_IN_SCOPE pouze pro přesně
+deklarovaný BuildManifest output a fresh compiler context; celý T003-S03 zůstává
+PARTIAL a runtime deployment zůstává UNKNOWN.
+
 ## Neuzavřené blokátory
 
 Aktualizace 2026-10-16: následující evidence nahrazuje odpovídající starší řádky

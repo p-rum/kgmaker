@@ -89,6 +89,41 @@ a mixed snapshot. Adding/removing a checkout or editing the manifest invalidates
 the workspace baseline. Release/deployment compatibility remains unknown without
 explicit release mapping; no deployment is inferred from matching names or paths.
 
+An optional `release_mapping` is a schema-v1, content-bound contract:
+
+```json
+{
+  "release_mapping": {
+    "schema_version": 1,
+    "mappings": [{
+      "id": "shared-to-backend",
+      "producer": {
+        "repo_id": "shared",
+        "manifest_path": ".kgmaker/builds/shared-release/manifest.json",
+        "context_id": "shared:main"
+      },
+      "consumer": {
+        "repo_id": "backend",
+        "context_id": "compiler-context-id"
+      },
+      "output_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }]
+  }
+}
+```
+
+The manifest path is relative to the producer checkout. `kgmaker scan
+--workspace kgmaker.workspace.json --root coordinator` validates the complete
+BuildManifest, its execution-bound output and the consumer compiler snapshot
+without starting a build or worker. Exactly one regular-file output and one
+regular-file ordered classpath entry must have the declared hash. Directory
+artifacts are rejected because the existing JVM directory hash covers compiled
+classes rather than every resource byte. Missing, stale, conflicting, duplicate
+or unsupported-kind matches stay `PARTIAL` with a `RELEASE_*` diagnostic and
+create no `supplies_classpath` edge. GAV, artifact filename and class name are ignored.
+This proves byte identity for the analyzed producer/consumer contexts; it does
+not prove that either release is deployed.
+
 scan/build/update/status/query/impact/docs and all feature subcommands accept
 `--workspace`. Workspace graph writes go only to the coordinator. Workspace docs
 renders the federated graph; Confluence checks remain per-repository. Feature

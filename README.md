@@ -209,6 +209,11 @@ business ambiguities and separate tool coverage gaps. Without valid supported pr
 availability remains UNKNOWN. See [the input contract](docs/feature-analysis.md#deterministic-data-check).
 Flyway schema replay, explicit multi-repository workspaces and scoped positive
 availability proofs are implemented. See [commands, contracts and boundaries](docs/flyway-workspace-proofs.md).
+Workspace schema v1 also accepts a versioned `release_mapping`: it emits a
+cross-repository classpath edge only when one currently valid regular-file
+BuildManifest output and one regular-file entry in a fresh compiler context
+contain the declared SHA-256. Directory outputs/classpaths remain `PARTIAL`;
+matching GAVs, filenames or class names never establish that edge.
 
 Volitelné compiler workery a samostatný explicitní build workflow popisuje
 [compiler inspection](docs/compiler-inspection.md). Maven POM discovery is

@@ -120,6 +120,31 @@ def validate_compiler_snapshot(root: Path, graph: KnowledgeGraph) -> None:
         validate_context_snapshot(root, context)
 
 
+def resolve_context_classpath_artifact(root: Path, context: dict, sha256: str) -> dict:
+    """Resolve one fresh compiler classpath entry by content, never by GAV/name."""
+    from .analysis_model import AnalysisError
+    from .build_model import HASH
+    if not isinstance(context, dict) or not context.get("analyzer_version"):
+        raise AnalysisError("RELEASE_CONSUMER_CONTEXT_UNAVAILABLE", 3)
+    if not isinstance(sha256, str) or not HASH.fullmatch(sha256):
+        raise AnalysisError("Invalid release classpath selector")
+    validate_context_snapshot(root, context)
+    matches = [item for item in context.get("classpath", [])
+               if isinstance(item, dict) and item.get("sha256") == sha256]
+    if not matches:
+        raise AnalysisError("RELEASE_CLASSPATH_HASH_MISMATCH: " + sha256, 3)
+    if len(matches) != 1:
+        raise AnalysisError("RELEASE_CLASSPATH_AMBIGUOUS: " + sha256, 3)
+    selected = matches[0]
+    path = Path(selected["path"])
+    if not path.is_absolute():
+        from .analysis_model import safe_path
+        path = safe_path(root, selected["path"])
+    if path.is_symlink() or not path.is_file():
+        raise AnalysisError("RELEASE_CLASSPATH_KIND_UNSUPPORTED: regular file required", 3)
+    return dict(selected)
+
+
 def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
                     preserved_contexts: list[dict], *,
                     layer_context_ids: set[str] | None = None) -> KnowledgeGraph:
