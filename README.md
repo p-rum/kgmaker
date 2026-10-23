@@ -64,7 +64,8 @@ kgmaker semantic apply [--root PATH]
 kgmaker semantic validate [--root PATH]
 kgmaker query [--root PATH] [--limit N] WORD [WORD ...]
 kgmaker project inspect [--root PATH] [--format json]
-kgmaker project build-plan|build-run|build-import ...
+kgmaker project build-plan [--java-home /absolute/path/to/jdk] ...
+kgmaker project build-run|build-import ...
 kgmaker inspect code|frontend ...
 kgmaker callgraph callers|callees|path ...
 kgmaker entrypoints [--root PATH] [--format json]
@@ -114,6 +115,12 @@ má explicitně nastavený model `gpt-5.6-luna` a reasoning effort `medium` a ve
 implementaci přes vlastní větev, testy a samostatný pull request. Tyto profily
 jsou konfigurací přispěvatelů tohoto repozitáře; příkaz `kgmaker init` je
 neinstaluje do uživatelských projektů.
+Projektový [`code_review`](.codex/agents/code-review.toml) přebírá vytvořené PR,
+ověřuje diff a test evidence proti zadání a vrací `APPROVE`, `REQUEST_CHANGES`
+nebo `BLOCKED` pro konkrétní head SHA. Po `APPROVE` znovu ověří aktuální HEAD,
+required checks, závislosti a mergeability a teprve potom sloučí ready PR.
+Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
+Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
 The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
 
@@ -210,6 +217,11 @@ business ambiguities and separate tool coverage gaps. Without valid supported pr
 availability remains UNKNOWN. See [the input contract](docs/feature-analysis.md#deterministic-data-check).
 Flyway schema replay, explicit multi-repository workspaces and scoped positive
 availability proofs are implemented. See [commands, contracts and boundaries](docs/flyway-workspace-proofs.md).
+Workspace schema v1 also accepts a versioned `release_mapping`: it emits a
+cross-repository classpath edge only when one currently valid regular-file
+BuildManifest output and one regular-file entry in a fresh compiler context
+contain the declared SHA-256. Directory outputs/classpaths remain `PARTIAL`;
+matching GAVs, filenames or class names never establish that edge.
 
 Volitelné compiler workery a samostatný explicitní build workflow popisuje
 [compiler inspection](docs/compiler-inspection.md). Maven POM discovery is
@@ -217,13 +229,26 @@ source-only; effective classpaths and fresh outputs require an explicit build
 plan/import. Explicitní Maven session export v2 navíc přenáší parent/BOM,
 effective dependencies a dependency management, aktivní i inherited profily,
 generated source roots, compiler release a konkrétní Java/Maven toolchain.
-Manifest, dependency model, toolchain a generated roots vstupují do identity
+Maven a Gradle export navíc zachovávají task/execution-level Kotlin language/API/JVM
+target, relevantní flags, opt-ins a compiler plugin provenance. Tyto hodnoty jsou
+zachycená konfigurace; samy o sobě nerozšiřují ověřený K1 compatibility subset.
+Maven exporter zachovává skutečné soubory a SHA-256 compiler plugin classpath;
+změněný plugin JAR zneplatní manifest. Neurčené Kotlin language/API defaults
+zůstanou výslovně `PARTIAL`, bez uložení nepřeloženého `${...}` placeholderu.
+Manifest, compiler options, dependency model, toolchain a generated roots vstupují do identity
 compiler kontextu. Zdroje vytvořené annotation processorem se přijímají pouze z
 explicitního úspěšného buildu, zůstávají v jeho izolovaném run adresáři a každý je
 svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovají
 `origin=generated`. Runtime import accepts only a supplied, hash-bound observation
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
+
+Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
+SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
+a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě
+před vytvořením run adresáře. Pokud Maven/Gradle exporter ohlásí jiný Java home,
+výsledek je `TOOLCHAIN_UNAVAILABLE`, má diagnostiku
+`EXPLICIT_TOOLCHAIN_MISMATCH` a nepublikuje čerstvé outputs.
 
 JVM inspection v ověřeném Kotlin 1.9 compatibility subsetu zachovává přesné
 constructor, lambda a callable-reference identity a compiler-resolved uživatelské
@@ -291,3 +316,24 @@ Use `query --context CONTEXT_ID` or `impact --entity ENTITY_ID --include-data-fl
 retain context fingerprints and evidence IDs. Offline approved methodology
 provenance is supplied through the hash-bound sidecar described in
 [feature analysis](docs/feature-analysis.md); conflicts remain review items.
+
+Gradle source-set exporter v2 uses model identities, with exact built-in scopes for
+`main`, `test`, and `testFixtures`. For a custom set, declare its analysis scope in
+the build model: `ext.kgmakerSourceSetScopes = [integration: 'test']`. Unmapped
+sets (including names containing `test`) remain `unknown` with a diagnostic;
+SOURCE_ONLY never executes Gradle. See [compiler inspection](docs/compiler-inspection.md).
+
+Compiler freshness for an imported source set uses its module/source-set membership
+and shared root/module configuration, including Gradle scripts and catalogs.
+An edit to a sibling source set with the same scope does not invalidate the selected
+variant. Changing selected resources or shared configuration still requires inspection.
+`scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
+testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.
+
+Explicit Gradle composite builds inside the captured project tree now export each
+included build with a build-root-qualified repository identity. Duplicate module
+names remain separate; resolved dependency artifacts retain their owning realm
+only when a unique execution-bound producer output matches the artifact, and retain
+exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
+--offline --output /tmp/composite-plan.json` and explicit `project build-run`
+perform the export; scan/feature/hook never launch Gradle.

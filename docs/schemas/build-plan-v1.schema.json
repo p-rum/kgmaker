@@ -62,6 +62,22 @@
     "environment": {
       "type": "object"
     },
+    "environment_overrides": {
+      "type": "object",
+      "properties": {
+        "JAVA_HOME": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "toolchain_selection": {
+      "type": ["object", "null"],
+      "properties": {
+        "selection": {"const": "EXPLICIT_JAVA_HOME"},
+        "java_home": {"type": "string", "minLength": 1},
+        "executables": {"type": "object"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "timeout": {
       "type": "number",
       "exclusiveMinimum": 0
