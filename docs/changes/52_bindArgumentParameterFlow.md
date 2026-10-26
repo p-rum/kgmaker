@@ -115,12 +115,16 @@ nevydává za PASS při chybějícím toolchainu.
   Source/runtime JVM se nezměnily. Finální feature suite má30 případů (13 actual,17 pure).
 - Teprve po opraveném fixture byl frontován finální corrected full pod
   `flock /workspace/kgmaker-heavy-tests.lock`, výstup `/tmp/s07-final-retry-full.log`,
-  JUnit `/tmp/s07-final-retry-full.xml`; výsledek bude doplněn po doběhu.
+  JUnit `/tmp/s07-final-retry-full.xml`: **605 PASS, 10 SKIP, 608.68 s**.
+  Všech30 feature cases běželo; devět SKIP jsou optional Maven/Gradle/exporter/two-JDK
+  prerequisites, desátý skutečný non-admin Windows CI-only gate. Source/test
+  manifest12 files i oba runtime SHA zůstaly byte-identické po celý corrected full.
 - Scoped semantic update/apply/validate PASS, zachováno6 manual concepts/15 edges
   a všech109 inherited episodes. Refaktor workspace posunul scanner ID stávající
   resolve_service_ownership259→273; změněn jen cíl této doložené relation, nikoli
   její význam ani architecture citation143. CLI scan/check a git diff --check PASS.
-  Nová immutable implementační memory bude zachycena až s finálním full výsledkem.
+  Finální immutable implementační memory zachovává109 inherited episodes a přidává
+  episode110 s actual focused/full validations; následný CLI scan/check PASS.
 
 Finální runtime SHA-256 K1 `dd0f91d1d71c374ca251f486e254a0c25fba609a5eb0f66cde496c0e583f04bb`,
 K2 `56b00cf030c6eb05de8cce4f843b37548048fee9a13548970a12045e4bbf7d82`.
@@ -137,3 +141,7 @@ implicitní receiver binding, K2 Kotlin argument API a úplná produkční matic
 tvrzené. Skutečné runtime values, dostupnost dat, globální pořadí ani async/HTTP/Kafka
 tok nejsou tímto work package dodané. CI billing blocker se nesmí obejít lokálním
 PASS ani mergem Draft PR.
+
+Finální source je připravený pro nezávislé review a stacked Draft do explicitní
+PR35 větve. GitHub billing stále blokuje remote povinné gates; lokální full tento
+blocker ani zákaz merge bez zeleného CI nenahrazuje.
