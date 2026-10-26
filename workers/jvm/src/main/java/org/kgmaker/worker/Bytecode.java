@@ -108,7 +108,7 @@ public final class Bytecode implements AutoCloseable {
         var value=((List<?>)mapping.get("source_mapping_ids")).isEmpty()?new LinkedHashMap<String,Object>():new LinkedHashMap<>(state.symbols.get(canonical));
         value.putAll(map("id",identity,"kind","bytecode_method","owner",owner.name.replace('/','.'),"name",method.name,"descriptor",method.desc,
             "scope",state.realm(owner.name.replace('/','.'),null).get("scope"),"context_id",state.context.get("id"),
-            "path",null,"range",null,"sha256",null,"modifiers",flags(method.access),
+            "path",null,"range",null,"sha256",null,"jvm_static",(method.access&Opcodes.ACC_STATIC)!=0,"modifiers",flags(method.access),
             "annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations),
             "synthetic",(method.access&Opcodes.ACC_SYNTHETIC)!=0,"bridge",(method.access&Opcodes.ACC_BRIDGE)!=0,"origin","generated"));
         value.putAll(mapping);

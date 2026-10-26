@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.*
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
+import org.jetbrains.kotlin.codegen.OwnerKind
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 
@@ -64,10 +66,26 @@ class KotlinFrontend(private val state: State) {
     private fun annotation(value: org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor): Map<String,Any?> =
         mapOf("name" to value.fqName?.asString(),"values" to value.allValueArguments.mapKeys { it.key.asString() }.mapValues { constant(it.value) })
     private fun annotations(descriptor: DeclarationDescriptor)=descriptor.annotations.map(::annotation)
+    private fun staticAbi(descriptor: FunctionDescriptor): Boolean? {
+        if (descriptor is ConstructorDescriptor) return false
+        if (descriptor.kind != CallableMemberDescriptor.Kind.DECLARATION) return null
+        if (descriptor is org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor)
+            return descriptor.dispatchReceiverParameter == null
+        val kind = when (descriptor.containingDeclaration) {
+            is PackageFragmentDescriptor -> OwnerKind.PACKAGE
+            is ClassDescriptor -> {
+                val container = descriptor.containingDeclaration as ClassDescriptor
+                if (container.isInline || container.isValue) return null
+                OwnerKind.IMPLEMENTATION
+            }
+            else -> return null
+        }
+        return runCatching { DescriptorAsmUtil.isStaticMethod(kind, descriptor) }.getOrNull()
+    }
     private fun method(descriptor: FunctionDescriptor, element: PsiElement? = null): String {
         val signature=mapper.mapAsmMethod(descriptor)
         val name=if(descriptor is ConstructorDescriptor) "<init>" else signature.name
-        val meta=State.map("annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
+        val meta=State.map("jvm_static",staticAbi(descriptor),"annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
             "parameter_names",descriptor.valueParameters.map { it.name.asString() },"return_type",descriptor.returnType?.toString(),
             "extension_receiver_type",descriptor.extensionReceiverParameter?.type?.toString(),"suspend",descriptor.isSuspend,"inline",descriptor.isInline,
             "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString())

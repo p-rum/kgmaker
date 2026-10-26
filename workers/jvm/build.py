@@ -6,6 +6,7 @@ It does not build the inspected application or retrieve any dependencies.
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -47,15 +48,22 @@ if args.backend == 'k2' and not lock_path.is_file():
     raise SystemExit('Pinned K2 dependency lock is required before building')
 if lock_path.exists() and json.loads(lock_path.read_text()) != lock:
     raise SystemExit('Worker dependency checksum/version mismatch')
-classpath = ':'.join(str(d) for d in dependencies)
+def executable(name):
+    for path in (args.java_home / 'bin' / name, args.java_home / 'bin' / (name + '.exe')):
+        if path.is_file():
+            return str(path)
+    raise SystemExit('JDK executable unavailable: ' + name)
+
+classpath = os.pathsep.join(str(d) for d in dependencies)
 kotlin = sorted((root / 'src/main/kotlin').rglob('*.kt'))
 if args.backend == 'k2':
     kotlin = [f for f in kotlin if f.name != 'KotlinFrontend.kt'] + [root / 'k2/KotlinFrontend.kt']
 java = sorted((root / 'src/main/java').rglob('*.java'))
-subprocess.run([str(args.kotlin_home / 'bin/kotlinc'), '-jvm-target', '21', '-classpath', classpath,
+subprocess.run([executable('java'), '-Dkotlin.home=' + str(args.kotlin_home), '-cp', classpath,
+                'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler', '-jvm-target', '21', '-classpath', classpath,
                 '-d', str(classes), *(str(f) for f in kotlin + java)], check=True,
-               env={**__import__('os').environ, 'JAVA_HOME': str(args.java_home)})
-subprocess.run([str(args.java_home / 'bin/javac'), '--release', '21', '-classpath', str(classes) + ':' + classpath,
+               env={**os.environ, 'JAVA_HOME': str(args.java_home)})
+subprocess.run([executable('javac'), '--release', '21', '-classpath', str(classes) + os.pathsep + classpath,
                 '-d', str(classes), *(str(f) for f in java)], check=True)
 for dependency in dependencies:
     shutil.copy2(dependency, libs / dependency.name)
@@ -71,7 +79,7 @@ while remaining:
 manifest.write_text('Manifest-Version: 1.0\nMain-Class: org.kgmaker.worker.JvmWorkerKt\n'
                     + '\n'.join(folded) + '\n\n')
 jar = target / 'kgmaker-jvm-worker.jar'
-subprocess.run([str(args.java_home / 'bin/jar'), '--create', '--date', '2025-01-01T00:00:00Z', '--file', str(jar), '--manifest', str(manifest),
+subprocess.run([executable('jar'), '--create', '--date', '2025-01-01T00:00:00Z', '--file', str(jar), '--manifest', str(manifest),
                 '-C', str(classes), '.'], check=True)
 lock_path.write_text(json.dumps(lock, indent=2) + '\n')
 license_source = args.kotlin_home / 'license'

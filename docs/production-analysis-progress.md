@@ -1,5 +1,18 @@
 # Aktuální stav a zbývající práce
 
+## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
+
+Skutečný Windows Server2025 restricted-user CI
+[run40351407076/job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333)
+na `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`: **43 PASS / 2 SKIP**, 50.23s.
+Core + Java/K1 Kotlin/TypeScript installed wheel smoke v cestách s mezerami,
+non-admin token, protocol cleanup a store/legacy regresní testy prošly.
+SKIP: POSIX-only setup test a K2 worker, jehož Windows podpora není tvrzena.
+Všech sedm CI jobů tohoto runu je SUCCESS; metadata commit ještě vyžaduje vlastní
+zelené checks a review/merge. Windows BUILD_EXECUTE zůstává unsupported před
+procesem nebo mutací store/run; celý T003-S11/T003-AC11 zůstává PARTIAL.
+[Change note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md).
+
 ## T003-S11-W02 — distribuce build exporterů (2026-10-26)
 
 VERIFIED_IN_SCOPE pro Linux, Maven3.9.9 / Gradle8.13 / Temurin21.0.6:
@@ -9,7 +22,7 @@ publikací; původní graph store se nemění. Skutečné Maven i Gradle exporty
 čistého instalovaného wheelu mimo checkout prošly v
 `tests/test_exporter_distribution.py`; přesné běhy viz
 [change note37](changes/37_packageBuildExporters.md).
-Legacy explicitní home/plány zachovávají dosavadní content binding. Windows,
+Legacy explicitní home/plány zachovávají dosavadní content binding. Windows BUILD_EXECUTE,
 immutable publikace, úplná acceptance a benchmark matrix zůstávají otevřené;
 T003-S11 a T003-AC11 zůstávají PARTIAL.
 
@@ -22,7 +35,7 @@ precedence a chybová diagnostika bez fallbacku explicitní volby.
 checkout a core instalací bez JDK/Node nebo child procesů. Schema/protocol se
 nemění. [Change note 30](changes/30_packageWorkerResources.md) zaznamenává buildy
 a kontroly; compiler CI nyní vyžaduje také instalační acceptance.
-Celý T003-S11 zůstává PARTIAL; Windows, immutable publication, zbývající
+Celý T003-S11 zůstává PARTIAL; K2 Windows, Windows BUILD_EXECUTE, immutable publication, zbývající
 acceptance/benchmark matice a navazující T003/T004 nejsou tímto dokončeny.
 
 Audit baseline: 2026-10-15, PR #5 `6b5aea13c150a75858973dd2e08debf802ff29ed`,
@@ -76,7 +89,7 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
 | T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
 | T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
-| T003-S11 release/acceptance | PARTIAL | Šest CI jobů, skutečné buildy, rendering; core package | Clean-install worker distribuce, celá acceptance a benchmark budgets |
+| T003-S11 release/acceptance | PARTIAL | Sedm CI jobů; worker/exporter clean install na Linuxu a skutečný Windows non-admin core/Java/K1/TS smoke (43 PASS / 2 scoped SKIP) | K2 Windows, Windows BUILD_EXECUTE, immutable publikace, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
 | T003-S13 runtime | PARTIAL / OPTIONAL | Hash-bound `runtime import` validates context/build/config/source/worker scope and adds `RUNTIME_OBSERVED`; stale source is rejected; `test_build_aware` | Trace/export producer, RTA/value flow, async/reflective capture and deployment/data availability |
 
@@ -296,3 +309,12 @@ this declared matrix; coroutine/default-argument/state-machine mapping is pendin
 Final S04-W02 verification: **410 PASS / 9 optional toolchain SKIP**, including
 all 32 actual mapping cases; focused scope/duplicate guards **16 PASS**.
 Runtime/statement-level mapping remains outside this bounded declaration contract.
+
+W02 static/instance ABI guard uses compiler flags from Javac/K1/K2, with an explicit
+DefaultImpls transform and no guessed method flags. Same-realm stale ABI regression
+is included in the expanded36-case matrix; final validation supersedes historical410/9.
+
+W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**,
+all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
+compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
+remains a separate mandatory gate, not a local PASS.

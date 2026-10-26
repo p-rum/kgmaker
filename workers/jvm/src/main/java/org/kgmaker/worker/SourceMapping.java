@@ -10,6 +10,7 @@ final class SourceMapping {
     private final State state;
     private final Map<String,ClassNode> application;
     private final Set<String> ambiguousOwners;
+    private String abiFailure;
     SourceMapping(State state,Map<String,ClassNode> application,Set<String> ambiguousOwners) {
         this.state=state;this.application=application;this.ambiguousOwners=ambiguousOwners;
     }
@@ -21,12 +22,17 @@ final class SourceMapping {
         }
         return true;
     }
-    private Map<String,Object> source(String owner,String name,String descriptor) {
+    private Map<String,Object> source(String owner,String name,String descriptor,boolean expectedStatic) {
         // Source declarations belong to the selected request context. Scope is
         // not encoded in State.methodIdentity, so identity equality alone fails open.
         if(ambiguousOwners.contains(owner.replace('.','/')) || !sameRealm(state.realm(owner.replace('/','.'),null),state.context))return null;
         var value=state.symbols.get(state.methodIdentity(owner.replace('/','.'),name,descriptor,null));
-        return value!=null && value.get("path")!=null && value.get("range")!=null?value:null;
+        if(value==null || value.get("path")==null || value.get("range")==null)return null;
+        if(!(value.get("jvm_static") instanceof Boolean actualStatic)) {
+            abiFailure="SOURCE_METHOD_ABI_UNAVAILABLE";return null;
+        }
+        if(actualStatic!=expectedStatic){abiFailure="SOURCE_METHOD_ABI_MISMATCH";return null;}
+        return value;
     }
     private boolean metadata(ClassNode owner,int kind) {
         for(var annotations:List.of(owner.visibleAnnotations==null?List.<AnnotationNode>of():owner.visibleAnnotations,
@@ -53,7 +59,7 @@ final class SourceMapping {
         String descriptor=Type.getMethodDescriptor(Type.getReturnType(method.desc),Arrays.copyOfRange(args,1,args.length));
         if(contract.methods.stream().noneMatch(m->m.name.equals(method.name)&&m.desc.equals(descriptor)
                 && (m.access&(Opcodes.ACC_STATIC|Opcodes.ACC_PRIVATE))==0))return null;
-        var result=source(outer,method.name,descriptor);
+        var result=source(outer,method.name,descriptor,false);
         return result!=null && result.get("path").toString().endsWith(".kt")?result:null;
     }
     private Map<String,Object> bridge(ClassNode owner,MethodNode method) {
@@ -75,14 +81,14 @@ final class SourceMapping {
         if(delegate==null || !returned)return null;
         final MethodInsnNode selected=delegate;
         if(owner.methods.stream().noneMatch(m->m.name.equals(selected.name)&&m.desc.equals(selected.desc)
-                && (m.access&(Opcodes.ACC_BRIDGE|Opcodes.ACC_SYNTHETIC|Opcodes.ACC_ABSTRACT))==0))return null;
-        return source(delegate.owner,delegate.name,delegate.desc);
+                && (m.access&(Opcodes.ACC_BRIDGE|Opcodes.ACC_SYNTHETIC|Opcodes.ACC_ABSTRACT|Opcodes.ACC_STATIC))==0))return null;
+        return source(delegate.owner,delegate.name,delegate.desc,false);
     }
     Map<String,Object> mapMethod(ClassNode owner,MethodNode method,String bytecodeId) {
         boolean ambiguous=ambiguousOwners.contains(owner.name);
         Map<String,Object> target=null;String reason=ambiguous?"AMBIGUOUS_BYTECODE_CLASS":"NO_SOURCE_MAPPING";
         if(!ambiguous && (method.access&(Opcodes.ACC_BRIDGE|Opcodes.ACC_SYNTHETIC))==0) {
-            target=source(owner.name,method.name,method.desc);
+            target=source(owner.name,method.name,method.desc,(method.access&Opcodes.ACC_STATIC)!=0);
             if(target!=null)reason="OWNER_NAME_DESCRIPTOR_MATCH";
         }
         if(!ambiguous && target==null && (method.access&Opcodes.ACC_BRIDGE)!=0) {
@@ -90,6 +96,7 @@ final class SourceMapping {
         }
         if(!ambiguous && target==null) { target=defaultImpl(owner,method);if(target!=null)reason="KOTLIN_DEFAULT_IMPLS_SIGNATURE"; }
         if(target==null) {
+            if(!ambiguous && abiFailure!=null)reason=abiFailure;
             state.diagnostics.add(map("code","BYTECODE_ONLY_SOURCE_MAPPING","message","No compiler-proven source declaration mapping for "+owner.name+"."+method.name+method.desc,
                 "bytecode_method_id",bytecodeId,"reason",reason,"context_id",state.context.get("id")));
             return map("source_mapping_ids",List.of(),"source_mapping_reason",reason,"source_mapping_path",null,"source_mapping_range",null);

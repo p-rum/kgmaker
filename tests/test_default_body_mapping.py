@@ -56,7 +56,10 @@ def compiled(tmp_path_factory, request):
                       ' fun value(): String = helper()\n'
                       ' fun helper(): String = "kotlin"\n}\n')
     modern = tmp_path / 'Modern.kt'
-    modern.write_text('package fixture\ninterface Modern { fun greeting(): String = "all" }\n')
+    modern.write_text('package fixture\ninterface Modern { fun greeting(): String = "all" }\n'
+                      'fun staticTop(): String = "top"\n'
+                      'object StaticHolder { @JvmStatic fun objectStatic(): String = "static" }\n'
+                      'val initialized: String = staticTop()\n')
     classes = tmp_path / 'classes'
     classes.mkdir()
     subprocess.run([javac, '--release', '21', '-proc:none', '-g' if request.param else '-g:none',
@@ -110,20 +113,31 @@ def test_real_default_and_bridge_mapping(worker, compiled):
                    and s.get('owner') == 'fixture.Defaults$DefaultImpls' and s.get('name') == 'value')
     modern = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
                   and s.get('owner') == 'fixture.Modern' and s.get('name') == 'greeting')
+    static_top = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
+                      and s.get('owner') == 'fixture.ModernKt' and s.get('name') == 'staticTop')
+    object_static = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
+                         and s.get('owner') == 'fixture.StaticHolder' and s.get('name') == 'objectStatic')
     java = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
                 and s.get('owner') == 'fixture.JavaDefault' and s.get('name') == 'value')
-    for generated, reason, source_name in [(bridge, 'VERIFIED_BRIDGE_DELEGATE', 'get'),
-                                            (void_bridge, 'VERIFIED_BRIDGE_DELEGATE', 'put'),
-                                            (default, 'KOTLIN_DEFAULT_IMPLS_SIGNATURE', 'value'),
-                                            (java, 'OWNER_NAME_DESCRIPTOR_MATCH', 'value'),
-                                            (modern, 'OWNER_NAME_DESCRIPTOR_MATCH', 'greeting')]:
+    for generated, reason, source_name, expected_static in [(bridge, 'VERIFIED_BRIDGE_DELEGATE', 'get', False),
+                                            (void_bridge, 'VERIFIED_BRIDGE_DELEGATE', 'put', False),
+                                            (default, 'KOTLIN_DEFAULT_IMPLS_SIGNATURE', 'value', False),
+                                            (java, 'OWNER_NAME_DESCRIPTOR_MATCH', 'value', False),
+                                            (modern, 'OWNER_NAME_DESCRIPTOR_MATCH', 'greeting', False),
+                                            (static_top, 'OWNER_NAME_DESCRIPTOR_MATCH', 'staticTop', True),
+                                            (object_static, 'OWNER_NAME_DESCRIPTOR_MATCH', 'objectStatic', True)]:
         assert generated['source_mapping_reason'] == reason
         assert len(generated['source_mapping_ids']) == 1
         source = symbols[generated['source_mapping_ids'][0]]
         assert source['name'] == source_name and source['path'] and source['range']
+        assert source['jvm_static'] is expected_static
+        assert generated['jvm_static'] is (True if reason == 'KOTLIN_DEFAULT_IMPLS_SIGNATURE' else expected_static)
         assert generated['id'].startswith('bytecode:') and generated['id'] != source['id']
         assert any(f['kind'] == 'maps_to_source' and f['source'] == generated['id']
                    and f['target'] == source['id'] for f in result['facts'])
+    initializer = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
+                       and s.get('owner') == 'fixture.ModernKt' and s.get('name') == '<clinit>')
+    assert initializer['source_mapping_ids'] == []
     pretend = next(s for s in symbols.values() if s.get('kind') == 'bytecode_method'
                    and s.get('owner') == 'fixture.Pretend$DefaultImpls' and s.get('name') == 'value')
     assert pretend['source_mapping_reason'] == 'OWNER_NAME_DESCRIPTOR_MATCH'  # its own declaration only
@@ -286,3 +300,41 @@ def test_duplicate_class_bodies_do_not_prove_source_mapping(worker, compiled, tm
     ids = {s['id'] for s in generated}
     assert not any(f['kind'] == 'maps_to_source' and f['source'] in ids for f in result['facts'])
     assert any(d['code'] == 'DUPLICATE_BYTECODE_CLASS' for d in result['diagnostics'])
+
+
+def test_same_realm_static_instance_abi_changes_never_map(worker, compiled):
+    root, _, _ = compiled
+    originals = {name: (root / name).read_bytes() for name in ['Bridge.java', 'Modern.kt']}
+    changed_java = originals['Bridge.java'].decode().replace('class Bridge implements Generic<String>', 'class Bridge')
+    changed_java = changed_java.replace('public String get() { return helper(); }', 'public static String get() { return "changed"; }')
+    changed_java = changed_java.replace('static String value(JavaDefault x)', 'String value(JavaDefault x)')
+    (root / 'Bridge.java').write_text(changed_java)
+    (root / 'Modern.kt').write_text('package fixture\n'
+        'object Modern { @JvmStatic fun greeting(): String = "changed" }\n'
+        'class ModernKt { fun staticTop(): String = "changed" }\n')
+    try:
+        result = analyze(worker, compiled)
+    finally:
+        for name, data in originals.items():
+            (root / name).write_bytes(data)
+    symbols = result['symbols']
+    expected_source_flags = {('fixture.Bridge', 'get', '()Ljava/lang/String;'): True,
+                             ('fixture.Pretend$DefaultImpls', 'value', '(Lfixture/JavaDefault;)Ljava/lang/String;'): False,
+                             ('fixture.Modern', 'greeting', '()Ljava/lang/String;'): True,
+                             ('fixture.ModernKt', 'staticTop', '()Ljava/lang/String;'): False}
+    for (owner, name, descriptor), source_static in expected_source_flags.items():
+        generated = next(s for s in symbols if s.get('kind') == 'bytecode_method' and s.get('owner') == owner
+                         and s.get('name') == name and s.get('descriptor') == descriptor)
+        assert generated['source_mapping_ids'] == []
+        assert generated['source_mapping_reason'] == 'SOURCE_METHOD_ABI_MISMATCH'
+        source = next(s for s in symbols if s.get('path') and s.get('owner') == owner
+                      and s.get('name') == name and s.get('descriptor') == descriptor)
+        assert source['jvm_static'] is source_static
+        assert generated['jvm_static'] is not source_static
+    bridge = next(s for s in symbols if s.get('kind') == 'bytecode_method' and s.get('owner') == 'fixture.Bridge'
+                  and s.get('name') == 'get' and s.get('bridge'))
+    assert bridge['source_mapping_ids'] == []  # instance delegate cannot map a current static declaration
+    default = next(s for s in symbols if s.get('kind') == 'bytecode_method'
+                   and s.get('owner') == 'fixture.Defaults$DefaultImpls' and s.get('name') == 'value')
+    assert default['source_mapping_ids']  # explicit static-helper -> instance-interface transform survives
+    assert default['source_mapping_reason'] == 'KOTLIN_DEFAULT_IMPLS_SIGNATURE'

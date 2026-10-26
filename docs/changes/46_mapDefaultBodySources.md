@@ -67,8 +67,8 @@ source deklaraci, ne na konkrétní vygenerovanou instrukci.
   test-scope případ ještě selhal (**39.02 s**), protože source identity neobsahuje
   scope. Finální mapper porovnává čtyřici identity i u přímých/bridge candidates;
   generated symbol nezdědí source path/range/scope z jiné evidence.
-- Finální runtime: focused scope/duplicate guards **16 PASS / 66.33 s**.
-- Finální plná sada se všemi **32** mapping případy: **410 PASS, 9 SKIP / 258.72 s**.
+- Před ABI guardem: focused scope/duplicate guards **16 PASS / 66.33 s**.
+- Před ABI guardem plná sada se všemi **32** mapping případy: **410 PASS, 9 SKIP / 258.72 s**.
   Přesný běh z tohoto checkoutu:
 
   ```bash
@@ -120,3 +120,47 @@ Golden no-debug varianta používá javac -g:none a odstranění debug atributů
 reálného Kotlin compiler output přes pinned ASM; kód a metadata zůstávají zachovány.
 Není to důkaz runtime execution, dependency dispatch completeness ani podpory
 libovolného produkčního projektu. Live projekt/runtime se nespouštěl.
+
+
+## Static/instance ABI a integrace aktuálního main
+
+Main `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` přináší schválený Windows
+portable transport, přímé Java compiler builders a všech sedm CI gates. Tyto
+změny se zachovávají; compiler gate nadále obsahuje skutečné W02 testy.
+
+Dodatečný skutečný same-realm probe doložil, že shodné owner/name/descriptor
+nestačí: compiled INSTANCE `A.run()I` se mapoval na aktuální STATIC source metodu.
+Taková vazba nesmí být doloženým source mappingem. Nyní source metadata obsahuje
+`jvm_static`: Javac čte skutečný Modifier.STATIC, K1 používá compiler
+DescriptorAsmUtil.isStaticMethod s OwnerKind z descriptor containeru (Java
+method descriptor má vlastní dispatch receiver proof), K2 čte vybraný light
+method STATIC flag. Neznámý/synthesized/inline-value-class ABI není odhadnut z
+názvu a zůstává neprokázaný.
+
+Direct mapping vyžaduje shodu static/instance. Bridge musí doložit non-static
+physical delegate i non-static source target. DefaultImpls je zvláštní doložená
+transformace static helperu s interface receiverem na instance source deklaraci;
+nejde o obecné obejití ABI guardu. Chybějící nebo neshodný ABI flag má konkrétní
+SOURCE_METHOD_ABI_UNAVAILABLE / SOURCE_METHOD_ABI_MISMATCH bytecode-only důvod.
+Generated method také nese vlastní ASM jvm_static flag; source canonical
+metadata a původní IDs se nepřepisují.
+
+`test_same_realm_static_instance_abi_changes_never_map` ověřuje oba směry změny
+na Java/Kotlin source pod K1/K2 s debug/no-debug class files. Positive matice
+obsahuje top-level static a @JvmStatic object a zachovaný DefaultImpls transform;
+file initializer bez source method ABI proof nepřevezme odhadovaný flag.
+Focused static/instance + positives: **8 PASS / 45.94 s**. Finální plná sada
+na integrovaném main se všemi **36** skutečnými W02 případy: **425 PASS,
+10 SKIP / 299.89 s**. Běžela pod společným flock se stejným explicitním
+worker home/JDK/Kotlin a REQUIRE_WORKERS=1/REQUIRE_K2=1 jako příkaz výše.
+SKIP jsou 9 dříve uvedených optional exporter konfigurací a skutečný Windows
+non-admin smoke, který je samostatným povinným vzdáleným gate.
+Starší výše uvedené 410/9 výsledky nejsou finálním ověřením tohoto ABI guardu.
+
+
+Integrační semantic update používá base `a83dbab`; hlavní 4 koncepty/8 vztahů
+zůstávají zachované s aktuálními README citacemi 140/142. Vlastní koncept a
+mapovací vztahy se doplňují o tři doložené compiler ABI provider vazby.
+80 epizod aktuálního main tvoří přesný prefix; stará W02 epizoda zůstává beze
+změny a nový capture zaznamenává ABI/full425 ověření. Vzdálené CI pro nový HEAD
+nebylo lokálně spouštěno; publikaci a nezávislé review provádí parent.
