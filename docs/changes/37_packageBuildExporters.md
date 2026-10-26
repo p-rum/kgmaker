@@ -88,3 +88,23 @@ samostatné work packages. SOURCE_ONLY nadále nevyžaduje žádný JDK/Node/bui
 - `JAVA_HOME=/workspace/tools/jdk-21.0.6+7 KGMAKER_REQUIRE_WORKERS=1 GRADLE_USER_HOME=/workspace/tools/gradle-cache MAVEN_OPTS=-Dmaven.repo.local=/workspace/tools/m2 PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`: **280 PASS / 9 SKIP** v121.34s nad main po PR8. Skutečné compiler workery mají připravené artefakty a prošly; sedm ostatních SKIP odpovídá Maven/Gradle/second-JDK prostředí a dva installed-exporter testy nemají v tomto plném běhu Maven/Gradle na PATH. Tyto dva testy byly povinně provedeny v cíleném běhu výše.
 - JSON Schema Draft2020 self-check, scoped semantic update/apply/validate, implementační memory capture, scan/check a `git diff --check`: PASS.
 - Vzdálené CI a Windows: NOT_RUN. Durable task předán do fáze review; toto vlastní implementační ověření nenahrazuje nezávislé PR review.
+
+## Integrace aktuálního main po XLS PR21
+
+Integrovaná base je `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`.
+Runtime exporter soubory, descriptor, packaging, CI a jejich testy se proti
+původnímu reviewovanému `b294d3216589fe5b4217ec2c93605985480c80fc` nemění.
+Automatické spojení zachovalo oba acceptance/progress bloky a README evidence.
+Sémantická historie je sjednocena podle identity: všechny unikátní nodes, edges
+ a episodes z obou větví zůstaly zachovány; společné identity neměly obsahový
+konflikt. Generované grafy vznikly opět příkazem, ne ručním přepisem.
+
+Integrační příkaz:
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_exporter_distribution.py -k 'not installed_exporters_run_real_builds_outside_checkout' tests/test_binary_xls.py tests/test_methodology_conflicts.py tests/test_workbooks.py tests/test_feature.py tests/test_data_check.py tests/test_workspace.py tests/test_t005_add_view_model.py`
+— **106 PASS, 2 DESELECTED** v7.88s. Dvě skutečné installed-exporter varianty se
+neopakovaly pouze kvůli nesouvisejícímu XLS rozšíření; jejich předchozí povinný
+běh 8 PASS i strict 280 PASS/9 SKIP zůstávají historickou evidencí výše.
+Scoped semantic update/apply/validate, memory capture, command-generated
+scan/check, schema check a `git diff --check`: PASS nad integrovanými vstupy.
+Nový exact-head vzdálený CI musí provést publikační workflow; zde se nic
+nepushuje ani nemerguje do main.
