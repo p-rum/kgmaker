@@ -2,12 +2,13 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "0dce22d93e9d9830d3f0c00f85c80d63cf0e93007c022d74453a2c791c107400",
-    "docs/acceptance-inventory.md": "1873c8106f7fa8697fd2f5af8331109f6ac24762f7f2fa3a14723237439c5877",
-    "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
+    "README.md": "78758a0bf490bf0fe6eacf2bd6f2964cb995c776062fd031b4f7e587d96f275d",
+    "docs/acceptance-inventory.md": "93bb598157687999a538276353b836062d7c770b33a155869296c0cae92a9a10",
+    "docs/architecture.md": "1b78ffc8b0e33877cf52d5c7e49b184f426f27a30d363057ed76278782247c85",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/10_specifyHighLevelProjectViews.md": "b3fec8d3326b61942a4db84c74b9d97db63de3f1a0c5520df360c50605534253",
+    "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
@@ -26,13 +27,14 @@
     "docs/feature-analysis.md": "3fea715c39b1d24ac0fed9f5dc11e2f1bec2d9149cff94a686060b1ca0f53b19",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "5374b891660f62f3b8b1be080d5ef4819f37b0c2ff825022a4d4286e6bf94a1e",
+    "docs/production-analysis-progress.md": "ba33aad13436aff38427105146e60af5480e829fb464934ca7be1089e77a67e0",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
     "docs/schemas/build-plan-v1.schema.json": "c32f11ab790c90f5cc6bd2c0e66e8e8384485730e94e68881cfc7784a47e4603",
     "docs/schemas/graph-v2.schema.json": "d730b416d773e78a623b1908c0b2096ff7949eab217d40a4d82e7e99ab267acc",
     "docs/schemas/graph-v3.schema.json": "827c35b3be20163c33e56af8ebbd997bfb0d8cc44aec918844ab30e8ad7889de",
+    "docs/schemas/view-v1.schema.json": "c0ea17df227be7ad67ee2a4a660d53bbb1b99aba7fe2020941580a48296fb1bd",
     "docs/schemas/worker-request-v1.schema.json": "aa2ce9c329ad76620df733fe20b4dbd213fadb1d9ddf078e050216869662bffe",
     "docs/schemas/worker-response-v1.schema.json": "95fa788d66e311cee8293b19797704fb18de53ad12ee7189ebb43a86672c9985",
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
@@ -190,6 +192,7 @@
     "src/kgmaker/analysis_model.py": "b235b5c5adf6b0a848d5bed686bf75ab928a1b0dc231bae9cc82ce7820229b75",
     "src/kgmaker/analysis_report.py": "230905b0bfcd2e51d1635ec82859f74f2412318f73eb58f1c55d7a1e2a202960",
     "src/kgmaker/analysis_validation.py": "43a907afb6bab919b639b55045e642266e55ad19820c97209afe1b7337c497a0",
+    "src/kgmaker/architecture_model.py": "c4d4351dac1299c0f55201205c598997528b365c4751434055e7dd6035b5d232",
     "src/kgmaker/availability.py": "14b7988dba45770eab3c1a282f45a6b1f9bb0c442e80dba050a3b418b08f8eb5",
     "src/kgmaker/build_maven.py": "19e96f77b35473a1fc50d7167b6ac455d2b022389f66498a09deec42059d5223",
     "src/kgmaker/build_model.py": "63e11bc3c2d18e4e1f91eb9eb1033225051a7b7fdfb1ce8b2b4947c8ced74d8c",
@@ -254,6 +257,7 @@
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_production_scope.py": "f8379f420ba9591bf385cd26723184c1671528e589867712107006e011cade1f",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
+    "tests/test_t005_add_view_model.py": "d84a921f1165b33622409d00178f9c7216431c54a552f4b809636c3958120a8e",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_workbooks.py": "aefe00b3e9e1983ab98d6ff58c6352b37308194717901d87afb00b52f1225cc8",
     "tests/test_worker_install.py": "312478d258e49747c88ab58f1c7c2c59cbdad845673992bbf80391a1fdba662c",
@@ -291,7 +295,7 @@
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 94,
+      "source_line": 99,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
@@ -333,7 +337,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 94,
+      "source_line": 101,
       "evidence": "The documented extraction workflow describes the optional agent-authored semantic layer used with the repository-local graph."
     },
     {
@@ -363,7 +367,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 94,
+      "source_line": 101,
       "evidence": "The documented semantic update workflow prepares a bounded change packet for a scoped agent patch."
     }
   ],
@@ -24981,6 +24985,178 @@
         }
       ],
       "id": "episode:d05cadc3ecc6ace30805522c65b531c78141babe1be7b41b06e20a656aea43d6"
+    },
+    {
+      "base_commit": "0c0902896c4803be7e7c1246aa0ba5da45f8ebe2",
+      "head_commit": "015dda5253998e8f81d0415ea3eb14b4a73fbabf",
+      "worktree_fingerprint": "e3ccbf7a240b9a95a2ee82cbd04e21e61fbf4f950c544bbf19208ab677063ac5",
+      "title": "chore(T005): include refreshed semantic index",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "3aa04a45c12cb17bb90b908683c26ae865144c39c6e208c2c764a8b728e5d542"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "4fd30421a9f799fcd11273e4ac2835c40ba9b1400a07651be8037a759af5ed0d"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "1b78ffc8b0e33877cf52d5c7e49b184f426f27a30d363057ed76278782247c85"
+        },
+        {
+          "path": "docs/changes/11_addViewModel.md",
+          "status": "A",
+          "sha256": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "ac3b07af0d3f630f72d424568820cb63e7734ae418a18ee46fe87836cc5e3af7"
+        },
+        {
+          "path": "docs/schemas/view-v1.schema.json",
+          "status": "A",
+          "sha256": "c0ea17df227be7ad67ee2a4a660d53bbb1b99aba7fe2020941580a48296fb1bd"
+        },
+        {
+          "path": "src/kgmaker/architecture_model.py",
+          "status": "A",
+          "sha256": "46eb3b96b0e1e0279045adc9397f2acdb220d65963757a15e153d962ee221413"
+        },
+        {
+          "path": "tests/test_t005_add_view_model.py",
+          "status": "A",
+          "sha256": "d84a921f1165b33622409d00178f9c7216431c54a552f4b809636c3958120a8e"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/architecture_model.py:ViewDocument::70",
+        "class:src/kgmaker/architecture_model.py:ViewEdge::51",
+        "class:src/kgmaker/architecture_model.py:ViewNode::34",
+        "class:src/kgmaker/architecture_model.py:ViewValidationError::19",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/11_addViewModel.md:11_addViewModel.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/schemas/view-v1.schema.json:view-v1.schema.json",
+        "file:src/kgmaker/architecture_model.py:architecture_model.py",
+        "file:tests/test_t005_add_view_model.py:test_t005_add_view_model.py",
+        "function:src/kgmaker/architecture_model.py:__init__::23",
+        "function:src/kgmaker/architecture_model.py:_canonical::27",
+        "function:src/kgmaker/architecture_model.py:content_fingerprint::110",
+        "function:src/kgmaker/architecture_model.py:err::141",
+        "function:src/kgmaker/architecture_model.py:from_dict::114",
+        "function:src/kgmaker/architecture_model.py:to_dict::42",
+        "function:src/kgmaker/architecture_model.py:to_dict::60",
+        "function:src/kgmaker/architecture_model.py:to_dict::85",
+        "function:src/kgmaker/architecture_model.py:to_json::105",
+        "function:src/kgmaker/architecture_model.py:validate_view_document::136",
+        "function:tests/test_t005_add_view_model.py:sample_view::10",
+        "function:tests/test_t005_add_view_model.py:test_complete_coverage_cannot_hide_unresolved_edges::103",
+        "function:tests/test_t005_add_view_model.py:test_complete_coverage_cannot_hide_unresolved_edges::113",
+        "function:tests/test_t005_add_view_model.py:test_duplicate_node_id_has_structured_validation_error::48",
+        "function:tests/test_t005_add_view_model.py:test_existing_graph_loader_still_accepts_legacy_schema_versions::153",
+        "function:tests/test_t005_add_view_model.py:test_existing_graph_loader_still_accepts_legacy_schema_versions::163",
+        "function:tests/test_t005_add_view_model.py:test_from_dict_rejects_malformed_nested_fields_as_validation_errors::134",
+        "function:tests/test_t005_add_view_model.py:test_from_dict_rejects_malformed_nested_fields_as_validation_errors::144",
+        "function:tests/test_t005_add_view_model.py:test_generation_metadata_is_outside_content_fingerprint::82",
+        "function:tests/test_t005_add_view_model.py:test_malformed_unhashable_or_non_json_values_return_structured_errors::125",
+        "function:tests/test_t005_add_view_model.py:test_malformed_unhashable_or_non_json_values_return_structured_errors::135",
+        "function:tests/test_t005_add_view_model.py:test_permuted_inputs_have_byte_identical_canonical_json::71",
+        "function:tests/test_t005_add_view_model.py:test_round_trip_valid_model_preserves_public_contract::37",
+        "function:tests/test_t005_add_view_model.py:test_scope_context_and_evidence_kind_are_preserved_without_upgrade::100",
+        "function:tests/test_t005_add_view_model.py:test_scope_context_and_evidence_kind_are_preserved_without_upgrade::90",
+        "function:tests/test_t005_add_view_model.py:test_unknown_generation_metadata_is_rejected_without_silent_data_loss::90",
+        "function:tests/test_t005_add_view_model.py:test_unknown_version_and_dangling_endpoint_or_evidence_are_rejected::58",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::295",
+        "section:README.md:Copilot workflow::115",
+        "section:README.md:Data prerequisite audit::198",
+        "section:README.md:Development::143",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::152",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::160",
+        "section:README.md:Implementation memory and workflow::132",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::107",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::139",
+        "section:docs/acceptance-inventory.md:T001::20",
+        "section:docs/acceptance-inventory.md:T002::99",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::3",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::141",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/11_addViewModel.md:Integrace s main — 2026-10-26::57",
+        "section:docs/changes/11_addViewModel.md:Kompatibilita::22",
+        "section:docs/changes/11_addViewModel.md:Ověření::29",
+        "section:docs/changes/11_addViewModel.md:Problém::3",
+        "section:docs/changes/11_addViewModel.md:Příklad a zbývající práce::49",
+        "section:docs/changes/11_addViewModel.md:T005: verzovaný model pohledu::1",
+        "section:docs/changes/11_addViewModel.md:Změny::9",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::124",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::64",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::74",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::96",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::12",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::140",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::131",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::149",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::170"
+      ],
+      "graph_delta": {
+        "added": [
+          "concept:README.md:optional_agent_authored_semantic_layer",
+          "concept:docs/architecture.md:source_code_is_authoritative",
+          "function:tests/test_t005_add_view_model.py:test_complete_coverage_cannot_hide_unresolved_edges::113",
+          "function:tests/test_t005_add_view_model.py:test_existing_graph_loader_still_accepts_legacy_schema_versions::163",
+          "function:tests/test_t005_add_view_model.py:test_from_dict_rejects_malformed_nested_fields_as_validation_errors::144",
+          "function:tests/test_t005_add_view_model.py:test_malformed_unhashable_or_non_json_values_return_structured_errors::135",
+          "function:tests/test_t005_add_view_model.py:test_scope_context_and_evidence_kind_are_preserved_without_upgrade::100",
+          "function:tests/test_t005_add_view_model.py:test_unknown_generation_metadata_is_rejected_without_silent_data_loss::90",
+          "section:docs/changes/11_addViewModel.md:Integrace s main — 2026-10-26::57",
+          "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::170"
+        ],
+        "removed": [
+          "function:tests/test_t005_add_view_model.py:test_complete_coverage_cannot_hide_unresolved_edges::103",
+          "function:tests/test_t005_add_view_model.py:test_existing_graph_loader_still_accepts_legacy_schema_versions::153",
+          "function:tests/test_t005_add_view_model.py:test_from_dict_rejects_malformed_nested_fields_as_validation_errors::134",
+          "function:tests/test_t005_add_view_model.py:test_malformed_unhashable_or_non_json_values_return_structured_errors::125",
+          "function:tests/test_t005_add_view_model.py:test_scope_context_and_evidence_kind_are_preserved_without_upgrade::90"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "t005",
+          "status": "passed"
+        },
+        {
+          "label": "pytest242",
+          "status": "passed"
+        },
+        {
+          "label": "toolchain21",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:3415fb7920dc869334d5a0c9d3c9e09f919a2c90ecf2061f96d8c7a797938262"
     }
   ]
 }
