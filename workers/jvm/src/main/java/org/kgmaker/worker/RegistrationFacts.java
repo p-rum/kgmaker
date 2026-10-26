@@ -47,7 +47,7 @@ final class RegistrationFacts {
         String product=null;
         if(match instanceof DeclaredType declared && declared.getTypeArguments().size()==1){
             var argument=declared.getTypeArguments().getFirst();
-            if(argument.getKind()==TypeKind.DECLARED)product=name(argument);
+            if(argument instanceof DeclaredType argumentType && argumentType.getTypeArguments().isEmpty())product=name(argument);
         }
         var element=types.asElement(types.erasure(type));
         var object=element instanceof TypeElement t?owner(methods(t,"getObject",0)):null;
@@ -79,8 +79,21 @@ final class RegistrationFacts {
         var result=new LinkedHashMap<String,Object>();
         if(!(method.getEnclosingElement() instanceof TypeElement type))return result;
         var factory=factory(method.getReturnType());
-        if(factory!=null)result.put("factory_bean_return",factory);
         var body=tree.getBody();
+        if(factory!=null){
+            String producer=null;
+            if(!erroneous&&body!=null&&body.getStatements().size()==1
+                    &&body.getStatements().getFirst() instanceof ReturnTree returned
+                    &&returned.getExpression() instanceof NewClassTree created
+                    &&created.getClassBody()==null&&created.getArguments().isEmpty()){
+                var actualType=trees.getTypeMirror(TreePath.getPath(path.getCompilationUnit(),created));
+                var actual=factory(actualType);
+                if(actual!=null){factory=actual;producer=name(actualType);}
+            }
+            result.put("factory_bean_return",factory);
+            result.put("factory_producer",map("schema_version",1,"status",producer==null?"UNSUPPORTED":"LITERAL",
+                "type",producer,"reason",producer==null?"FACTORY_PRODUCER_IMPLEMENTATION_UNPROVEN":"SINGLE_LITERAL_FACTORY_PRODUCER"));
+        }
         if(registrarMethod(method)&&ancestor(type.asType(),REGISTRAR)!=null){
             var values=new ArrayList<Map<String,Object>>();String reason="COMPLEX_REGISTRAR_BODY";
             boolean valid=!erroneous&&body!=null&&body.getStatements().size()<=128;

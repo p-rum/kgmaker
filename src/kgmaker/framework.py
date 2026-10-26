@@ -16,7 +16,7 @@ from typing import Any
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
-from .spring_beans import FACTORY, factory_info
+from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v5"
 
@@ -216,19 +216,23 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         if item.get("kind") == "annotation_type" and isinstance(item.get("owner"), str)}
 
     def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str,
-                     compiler_fact: dict | None = None) -> str:
+                     compiler_fact: dict | None = None, supporting_facts: list | None = None) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
         if compiler_fact is not None:
             record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
+        if supporting_facts:
+            record["compiler_sources"] = [{"symbol_id": fact["id"], "sha256": fact.get("sha256"),
+                "path": fact.get("path"), "context_id": fact.get("context_id")} for fact in supporting_facts]
         identity = "evidence:" + digest(record)
         evidence.setdefault(identity, {"id": identity, **record})
         return identity
 
     def add_edge(source: str, target: str, kind: str, path: str, line: int | None, detail: str,
-                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None) -> None:
+                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None,
+                 supporting_facts: list | None = None) -> None:
         if source not in nodes or target not in nodes:
             return
         key = (source, target, kind)
@@ -238,7 +242,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             old = edges[key]
             if old.evidence_kind == evidence_kind or evidence_kind != "FRAMEWORK_DERIVED":
                 return
-        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact)
+        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact, supporting_facts)
         edges[key] = Edge(source, target, kind, detail, evidence_kind=evidence_kind,
                           context_ids=(context_id,), evidence_ids=(proof,), source_file=path, source_line=line)
 
@@ -640,6 +644,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     # Registrar declarations inherit the importing configuration's condition;
     # RootBeanDefinition does not evaluate the target class's @Profile itself.
+    def registration_types(declared_type):
+        if not declared_type:
+            return []
+        hierarchy = (type_records.get(declared_type, {}).get("symbol", {}).get("type_hierarchy") or {})
+        names = hierarchy.get("types", []) if hierarchy.get("complete") is True else []
+        return list(dict.fromkeys([declared_type.rsplit(".", 1)[-1], *[name.rsplit(".", 1)[-1] for name in names]]))
+
     declarations = {}
     for (owner, exact), (info, registrar) in registrar_candidates.items():
         method = info["method"]
@@ -663,15 +674,16 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 "reasons": [*(old.metadata or {}).get("reasons", []), "TARGET_UNSUPPORTED:" + registration["type"]]})
             continue
         name, product = registration["name"], registration["type"].rsplit(".", 1)[-1]
+        product_types = registration_types(registration["type"])
         line = (method.get("range") or {}).get("start_line")
         bean = add_node("spring_bean", name, method["path"], line, symbol_node(method),
             declaration_identity=exact,
             registration_origin="REGISTRAR_LITERAL", registering_type=exact, declared_type=registration["type"],
-            types=[product], qualifier=name, qualifiers=[], primary=False, profiles=[],
+            types=product_types, qualifier=name, qualifiers=[], primary=False, profiles=[],
             condition_status=state, condition_reasons=[f"importing configuration {owner} is {configuration_states[owner]}", *info["reasons"]])
         add_edge(registrar, bean, "registers_bean", method["path"], line,
                  "Compiler-attributed literal registry declaration; registrar never executed", compiler_fact=method)
-        spring_beans.append({"node": symbol_node(method), "bean": bean, "type": product, "types": [product],
+        spring_beans.append({"node": symbol_node(method), "bean": bean, "type": product, "types": product_types,
             "name": name, "qualifiers": [], "primary": False, "profiles": [], "condition_status": state,
             "condition_reasons": info["reasons"], "path": method["path"], "line": line})
 
@@ -704,7 +716,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             info["reasons"].append("FACTORY_PRODUCT_NOT_INDEXED")
             info["status"] = "UNKNOWN"
         state = _combined_state(bean["condition_status"], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
-        product_types = [product.rsplit(".", 1)[-1]] if product else []
+        product_types = registration_types(product)
         product_node = add_node("spring_bean", original_name, original.path, original.line, bean["node"],
             **{**(original.metadata or {}), "registration_origin": "FACTORY_PRODUCT", "factory_name": original_name,
                "declared_type": product, "types": product_types, "condition_status": state,
@@ -712,7 +724,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         proof = info["method"] or source
         add_edge(obj, product_node, "produces_bean", proof.get("path") or original.path,
                  (proof.get("range") or {}).get("start_line") or original.line,
-                 "Compiler factory product declaration; custom code never executed", compiler_fact=proof)
+                 "Compiler factory product declaration; custom code never executed", compiler_fact=proof,
+                 supporting_facts=info["sources"])
         spring_beans.append({**bean, "bean": product_node, "name": original_name, "types": product_types,
                              "type": product_types[0] if product_types else "", "condition_status": state,
                              "qualifiers": (original.metadata or {}).get("qualifiers", [])})
@@ -798,6 +811,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                           and item.get("owner") == owner_symbol.get("owner")
                           and item.get("name") == match.group("name")
                           and item.get("context_id") == context_id), {})
+            qualified_candidates = []
+            for candidate in candidates:
+                metadata = nodes[candidate["bean"]].metadata or {}
+                if metadata.get("registration_origin") in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"}:
+                    assignability = registration_assignability(metadata.get("declared_type"), field.get("type"), injection_kind, type_records)
+                    if assignability == "INCOMPATIBLE":
+                        continue
+                    if assignability == "UNKNOWN":
+                        candidate = {**candidate, "condition_status": _combined_state(candidate["condition_status"], "UNKNOWN")}
+                        diagnostics.append({"code": "SPRING_REGISTRATION_ASSIGNABILITY_BOUNDARY", "path": path,
+                            "source_line": line, "reason": "Qualified registration/product assignability is unproven."})
+                qualified_candidates.append(candidate)
+            candidates = qualified_candidates
             if str(field.get("type", "")).split("<", 1)[0] == FACTORY:
                 candidates = [bean for bean in candidates
                               if (nodes[bean["bean"]].metadata or {}).get("registration_origin") == "FACTORY_OBJECT"]

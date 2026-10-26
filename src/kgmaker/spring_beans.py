@@ -93,7 +93,7 @@ def factory_info(symbol, symbols, context_id):
                 pending.extend(parents)
     if fact is None and FACTORY not in ancestry:
         return None
-    result = {"status": "UNKNOWN", "product_type": None, "method": None, "reasons": []}
+    result = {"status": "UNKNOWN", "product_type": None, "method": None, "reasons": [], "sources": []}
     if field == "factory_bean" and hierarchy.get("complete") is not True:
         result["reasons"].append("INCOMPLETE_FACTORY_HIERARCHY")
     if field == "factory_bean" and (symbol.get("kind") != "class" or "abstract" in symbol.get("modifiers", [])):
@@ -110,6 +110,26 @@ def factory_info(symbol, symbols, context_id):
     result["product_type"] = fact["product_type"]
     if fact["product_type"] is None:
         result["reasons"].append("FACTORY_PRODUCT_TYPE_UNKNOWN")
+    if field == "factory_bean_return":
+        result["method"] = symbol
+        result["sources"].append(symbol)
+        producer = symbol.get("factory_producer")
+        if producer is None:
+            result["reasons"].append("FACTORY_PRODUCER_IMPLEMENTATION_UNPROVEN")
+            return result
+        _schema(producer, {"status", "type", "reason"}, "factory producer")
+        if (not isinstance(producer["status"], str) or producer["status"] not in {"LITERAL", "UNSUPPORTED"}
+                or not _name(producer["reason"]) or producer["status"] == "LITERAL" and not _name(producer["type"])
+                or producer["status"] == "UNSUPPORTED" and producer["type"] is not None):
+            raise AnalysisError("Invalid compiler factory producer values")
+        if producer["status"] != "LITERAL":
+            result["reasons"].append(producer["reason"])
+            return result
+        declaration = next((s for s in symbols.values() if s.get("owner") == producer["type"]
+                            and s.get("kind") == "class" and s.get("context_id") == context_id), None)
+        if declaration is None or declaration.get("factory_bean") != fact:
+            result["reasons"].append("FACTORY_PRODUCER_NOT_INDEXED_OR_GENERIC")
+            return result
     returns = []
     for kind, owner, method_name in (("OBJECT", fact["get_object_owner"], "getObject"),
                                       ("TYPE", fact["get_type_owner"], "getObjectType")):
@@ -117,7 +137,8 @@ def factory_info(symbol, symbols, context_id):
         if method is None or "factory_return" not in method:
             result["reasons"].append("NO_INDEXED_FACTORY_" + kind)
             continue
-        if kind == "OBJECT":
+        result["sources"].append(method)
+        if kind == "OBJECT" and field != "factory_bean_return":
             result["method"] = method
         body = method["factory_return"]
         _schema(body, {"kind", "status", "type", "reason"}, "factory return")
@@ -134,3 +155,21 @@ def factory_info(symbol, symbols, context_id):
     if len(returns) == 2 and not result["reasons"]:
         result["status"] = "RESOLVED_LITERAL"
     return result
+
+
+def registration_assignability(declared_type, field_type, injection_kind, types):
+    """Compare qualified compiler types; absence of a proof is not assignability."""
+    requested = str(field_type or "").replace(" ", "")
+    if injection_kind in {"collection", "provider", "optional", "map"}:
+        if "<" not in requested or not requested.endswith(">"):
+            return "UNKNOWN"
+        inner = requested.split("<", 1)[1][:-1]
+        requested = inner.split(",", 1)[-1] if injection_kind == "map" else inner
+    if not requested or any(char in requested for char in "<>?,[]"):
+        return "UNKNOWN"
+    if requested == declared_type:
+        return "ASSIGNABLE"
+    hierarchy = (types.get(declared_type, {}).get("symbol", {}).get("type_hierarchy") or {})
+    if hierarchy.get("complete") is not True:
+        return "UNKNOWN"
+    return "ASSIGNABLE" if requested in hierarchy.get("types", []) else "INCOMPATIBLE"

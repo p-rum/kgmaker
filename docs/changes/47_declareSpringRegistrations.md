@@ -41,7 +41,7 @@ rozlišený Spring FactoryBean injection nesmí vybrat stejnojmenný fake interf
 ## Kontrakty, bezpečné hranice a kompatibilita
 
 Worker protocol zůstává1; aditivní fields `bean_registrar`, `bean_registrations`,
-`factory_bean`, `factory_bean_return`, `factory_return` mají vlastní schema1.
+`factory_bean`, `factory_bean_return`, `factory_producer`, `factory_return` mají vlastní schema1.
 Legacy fakta a graph/store v1/v2/v3 zůstávají čitelné; bez nového důkazu se literal
 registrace/produkt nepromuje. Invalidní facts, strict error a timeout ponechávají
 poslední validní generaci. Cross-context symbol odmítne už společný model validator.
@@ -76,6 +76,22 @@ source-set-bound freshness. Nejde o aktuální podporu těchto formátů.
 - K1/K2 byly explicitně rebuildnuté s vlastními source facts, JDK21.0.6+7,
   Kotlin2.1.10/AnalysisAPI2.1.10 a Jackson2.18.2, pinned/offline vstupy.
   Po integraci main33dc se znovu sestavují i s jeho mapping additions.
+- Další focused actual suite: **53 PASS v169.03 s**; následující nezávislé review
+  kandidáta363e75 našlo dva skutečné P1 gaps. Anonymous factory producer mohl
+  převzít base getter proof a `other.Product` mohl vybrat stejnojmenný app.Product.
+  Review repros používaly skutečné Javac/Spring APIs bez execution.
+- Oprava přidává `factory_producer` source fact: jen jediný literal no-argument
+  constructor bez anonymous těla určí skutečnou implementaci a její effective
+  getter metody. Custom/anonymous producent zachová UNKNOWN a evidence cituje
+  producer i všechny použité getter symbols/hash/context. Qualified compiler
+  field type kontroluje assignability registrace/produktu; známý foreign typ se
+  odmítne, neúplná/generic proof zůstává UNKNOWN. Neshoda FactoryBean generic
+  contractu ani fake interface nevyrobí resolved injection. Opakovaný import stejné
+  deklarace agreguje conditions; name collision s Primary zůstává UNKNOWN.
+- První starý full byl ještě pouze ve frontě locku, byl bezpečně zrušen před
+  spuštěním pytest child, nikoli vydáván za provedený test. Po rebuild obou workerů
+  review-fix actual suite: **57 PASS v109.01 s**, povinné K1/K2/Spring APIs,
+  včetně nové producer/qualified namespace regresní fixture a TS contextů.
 
 Finální relevantní/full výsledky, semantic update/apply/validate, memory capture,
 scan/check a diff check jsou součástí předání. Žádný skutečný runtime PASS se

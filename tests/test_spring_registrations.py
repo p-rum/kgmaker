@@ -40,8 +40,13 @@ def registration_project(request, tmp_path_factory):
     sources = {
         "Main": '''package app; import org.springframework.context.annotation.*;
 @Configuration @Profile("blue") @Import({LiteralRegistrar.class,InheritedRegistrar.class,ConditionalRegistrar.class,CustomRegistrar.class,LimitRegistrar.class,DecoyRegistrar.class})
-public class Main { @Bean public org.springframework.beans.factory.FactoryBean<Product> methodFactory(){throw new AssertionError("never execute");} }''',
-        "Product": "package app; public class Product {}",
+public class Main {
+@Bean public org.springframework.beans.factory.FactoryBean<Product> methodFactory(){throw new AssertionError("never execute");}
+@Bean public LiteralFactory anonymousFactory(){return new LiteralFactory(){public Product getObject(){return null;} public Class<?> getObjectType(){return Other.class;}};}
+@Bean public org.springframework.beans.factory.FactoryBean<Product> literalProducer(){return new LiteralFactory();}
+}''',
+        "Product": "package app; public class Product implements Api {}",
+        "Api": "package app; public interface Api {}",
         "Other": "package app; public class Other {}",
         "LiteralRegistrar": '''package app; public class LiteralRegistrar implements org.springframework.context.annotation.ImportBeanDefinitionRegistrar {
 public void registerBeanDefinitions(org.springframework.core.type.AnnotationMetadata m,org.springframework.beans.factory.support.BeanDefinitionRegistry r){r.registerBeanDefinition("registered",new org.springframework.beans.factory.support.RootBeanDefinition(Product.class));} }''',
@@ -75,6 +80,7 @@ public Product getObject(){return new Product();} public Class<?> getObjectType(
         "Consumer": '''package app; import org.springframework.beans.factory.annotation.*; import org.springframework.stereotype.Service; import org.springframework.beans.factory.FactoryBean;
 @Service public class Consumer {
 @Autowired @Qualifier("registered") Product registered;
+@Autowired @Qualifier("registered") Api registeredApi;
 @Autowired @Qualifier("literalFactory") Product literal;
 @Autowired @Qualifier("unknownFactory") Product unknown;
 @Autowired @Qualifier("&literalFactory") LiteralFactory factory;
@@ -93,9 +99,18 @@ public Product getObject(){return new Product();} public Class<?> getObjectType(
     fake.parent.mkdir()
     fake.write_text("package fake; public interface FactoryBean {}")
     (fake.parent / "Registry.java").write_text("package fake; public class Registry {public void registerBeanDefinition(String name,Object definition){throw new AssertionError(\"never execute decoy\");}}")
+    foreign = root / "src/main/java/other"
+    foreign.mkdir()
+    (foreign / "Product.java").write_text("package other; public class Product {}")
+    (foreign / "ForeignConsumer.java").write_text('''package other;
+import org.springframework.stereotype.Service; import org.springframework.beans.factory.annotation.*;
+@Service public class ForeignConsumer {
+@Autowired @Qualifier("literalFactory") Product factoryProduct;
+@Autowired @Qualifier("registered") Product registeredProduct;
+}''')
     options = {"home": ROOT / "workers", "kotlin_backend": request.param, "publish": False,
                "classpath": [str(jar) for jar in jars], "build_context": {"spring_profiles": ["blue"],
-               "spring_properties": {}, "spring_available_classes": [], "spring_component_packages": ["app"]}}
+               "spring_properties": {}, "spring_available_classes": [], "spring_component_packages": ["app", "other"]}}
     result = inspection.inspect_jvm(root, **options)
     assert not [d for d in result["diagnostics"] if d["code"].startswith("JAVAC_")]
     return root, options, result
@@ -125,13 +140,13 @@ def test_factory_object_and_literal_product_are_distinct(registration_project):
     beans = {n["name"]: n for n in result["graph"]["nodes"] if n["kind"] == "spring_bean"}
     assert beans["&literalFactory"]["metadata"]["registration_origin"] == "FACTORY_OBJECT"
     assert beans["literalFactory"]["metadata"]["registration_origin"] == "FACTORY_PRODUCT"
-    assert beans["literalFactory"]["metadata"]["types"] == ["Product"]
+    assert {"Product", "Api"} <= set(beans["literalFactory"]["metadata"]["types"])
     assert beans["literalFactory"]["metadata"]["condition_status"] == "ACTIVE"
     assert beans["FakeFactory"]["metadata"].get("registration_origin") != "FACTORY_OBJECT"
     for name in ("unknownFactory", "mismatchFactory", "methodFactory", "inheritedFactory", "abstractFactory", "&abstractFactory"):
         assert beans[name]["metadata"]["condition_status"] == "UNKNOWN"
     assert beans["inheritedFactory"]["metadata"]["declared_type"] == "app.Product"
-    for field, kind in (("registered", "injects_bean"), ("literal", "injects_bean"),
+    for field, kind in (("registered", "injects_bean"), ("registeredApi", "injects_bean"), ("literal", "injects_bean"),
                         ("factory", "injects_bean"), ("apiFactory", "injects_bean"), ("unknown", "may_inject_bean")):
         injection = next(n for n in result["graph"]["nodes"] if n["kind"] == "spring_injection" and n["name"] == "Consumer." + field)
         assert any(e["source"] == injection["id"] and e["kind"] == kind for e in result["graph"]["edges"])
@@ -146,6 +161,17 @@ def test_registration_profiles_do_not_cross_context(registration_project):
     assert red["context"]["id"] != blue["context"]["id"]
     assert not any(n["name"] in {"registered", "inherited", "literalFactory"} and n["metadata"]["condition_status"] == "ACTIVE"
                    for n in red["graph"]["nodes"] if n["kind"] == "spring_bean")
+
+
+def test_factory_producer_and_qualified_product_selection(registration_project):
+    _, _, result = registration_project
+    graph = result["graph"]
+    beans = {n["name"]: n for n in graph["nodes"] if n["kind"] == "spring_bean"}
+    assert beans["anonymousFactory"]["metadata"]["condition_status"] == "UNKNOWN"
+    assert beans["literalProducer"]["metadata"]["condition_status"] == "ACTIVE"
+    for field in ("factoryProduct", "registeredProduct"):
+        injection = next(n for n in graph["nodes"] if n["kind"] == "spring_injection" and n["name"] == "ForeignConsumer." + field)
+        assert not any(e["source"] == injection["id"] and e["kind"] in {"injects_bean", "may_inject_bean"} for e in graph["edges"])
 
 
 def test_registration_invalid_facts_and_strict_failures_preserve_store(registration_project):
@@ -170,7 +196,7 @@ def test_registration_invalid_facts_and_strict_failures_preserve_store(registrat
     assert any(n.kind == "spring_bean" and n.name == "registered" for n in graph.nodes)
 
 
-@pytest.mark.parametrize("case", ["owner", "context", "return_shape"])
+@pytest.mark.parametrize("case", ["owner", "context", "return_shape", "producer_shape"])
 def test_factory_invalid_context_and_timeout_preserve_store(registration_project, case):
     root, options, _ = registration_project
     inspection.inspect_jvm(root, **{**options, "publish": True})
@@ -184,9 +210,12 @@ def test_factory_invalid_context_and_timeout_preserve_store(registration_project
             symbol["factory_bean"]["get_object_owner"] = []
         elif case == "context":
             symbol["context_id"] = "another-context"
-        else:
+        elif case == "return_shape":
             method = next(s for s in response["symbols"] if s.get("owner") == "app.LiteralFactory" and s.get("name") == "getObject")
             method["factory_return"]["status"] = []
+        else:
+            method = next(s for s in response["symbols"] if s.get("owner") == "app.Main" and s.get("name") == "literalProducer")
+            method["factory_producer"]["status"] = []
         return response
     with patch("kgmaker.inspection.request_worker", side_effect=malformed):
         with pytest.raises(ValueError if case == "context" else AnalysisError,
@@ -229,7 +258,7 @@ def test_legacy_registration_facts_remain_readable_without_promotion(registratio
     def legacy(*args, **kwargs):
         response = original(*args, **kwargs)
         for symbol in response["symbols"]:
-            for field in ("bean_registrar", "bean_registrations", "factory_bean", "factory_bean_return", "factory_return"):
+            for field in ("bean_registrar", "bean_registrations", "factory_bean", "factory_bean_return", "factory_producer", "factory_return"):
                 symbol.pop(field, None)
             if "Factory" in symbol.get("owner", ""):
                 symbol.pop("type_hierarchy", None)

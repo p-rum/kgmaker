@@ -639,7 +639,12 @@ FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Lite
 bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol fields
 `bean_registrar`, `bean_registrations`, `factory_bean`, `factory_bean_return` a
 `factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
-čitelné, chybějící legacy evidence nepromuje registrace. Invalid facts/context
+čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
+vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
+Producer i getter method hashes jsou součástí evidence. Nové product/registrar
+selection používá compiler-qualified field assignability a známé supertypes;
+foreign short-name shoda není resolved injection. Chybějící legacy evidence
+nepromuje registrace. Invalid facts/context
 se odmítnou před store publikací. Rule v5 je JVM-only a vstupuje do context
 fingerprintu, TypeScript/React selection key se nemění. Evidence zůstává
 FRAMEWORK_DERIVED, nezvyšuje compiler-call confidence ani availability.
