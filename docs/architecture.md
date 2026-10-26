@@ -147,6 +147,17 @@ multiple matches are `AMBIGUOUS`, and no match is `UNASSIGNED`. Existing
 module, or Spring `@Service` annotation alone does not establish ownership.
 Repo-qualified compiler context IDs and workspace `@repo/path` symbols are checked
 against the same repository ID before matching roots or module IDs.
+`views.select_service_contexts(graph, requests, scope=...)` projects explicit
+service/repo/module selections onto compiler contexts already present in a graph.
+Requests may pin `context_id`; a module with multiple profiles requires that
+choice. The result includes content fingerprints and context freshness. Pass
+`source_coverage` to request `mode: SOURCE_ONLY`; its selected artifacts remain
+PARTIAL. A workspace release declaration and its snapshot report can identify
+CONTENT_VERIFIED producer/consumer artifact pairs. That proves the declared
+output bytes match the consumer classpath; deployment and environment
+compatibility remain UNKNOWN. This is a Python library API; no CLI command has
+been added. Workspace source inventory is repository-wide, so SOURCE_ONLY also
+leaves module-level coverage UNKNOWN.
 
 
 ## Compiler lifecycle provider
