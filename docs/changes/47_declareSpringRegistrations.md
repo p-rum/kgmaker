@@ -93,7 +93,7 @@ source-set-bound freshness. Nejde o aktuální podporu těchto formátů.
   review-fix actual suite: **57 PASS v109.01 s**, povinné K1/K2/Spring APIs,
   včetně nové producer/qualified namespace regresní fixture a TS contextů.
 
-- Finální strict full po opravách: **558 PASS, 10 SKIP v662.92 s**. Povinné
+- Strict full po prvních dvou review opravách, source `fe125e0`: **558 PASS, 10 SKIP v662.92 s**. Povinné
   K1/K2 a pinned Spring APIs skutečně běžely. Deset skips je volitelný Maven/
   Gradle/included-build/variant/plugin/installed exporter a skutečný Windows gate;
   nevydávají se za PASS. Proces skončil0, JUnit a log lokálně zachovány.
@@ -135,3 +135,16 @@ Nutný je explicitní Spring/API classpath a profile/scan scope; bez důkazu jso
 conditions UNKNOWN. Scan/hook/query/feature/data-check nic implicitně nesestaví,
 neinstaluje ani nespustí. Bean ACTIVE zde označuje statickou condition deklarace,
 nikoli instanci, úspěšný custom constructor nebo dostupná produkční data.
+
+
+## Následný narrow namespace review
+
+Nezávislé actual review našlo ještě factory-object sibling: field
+`fake.FactoryBean` s qualifierem `&literalFactory` mohl převzít skutečný Spring
+factory object podle simple name. Source `f6719909` přidává qualified object
+assignability; exact official Spring FactoryBean generic path zůstává zachovaný.
+Actual fixture má odmítnutý fake field i pozitivní factory implementující obě
+rozhraní. Reviewer ověřil původní repro bez injects/may edges a předchozí producer
+opravy zůstaly správné. Nový focused a následný full mají samostatnou frontu na
+shared JVM lock; dřívější558PASS výsledek se nevydává za výsledek této nové verze.
+Dokud nejsou finální výsledky doplněny, kandidát zůstává Draft/review, nikoli done.
