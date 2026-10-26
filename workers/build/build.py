@@ -1,5 +1,7 @@
 """Build trusted Maven exporter against the supplied Maven/JDK distribution offline."""
 import argparse
+import hashlib
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -9,4 +11,11 @@ cp=str(a.maven_home/'lib/*')
 subprocess.run([str(a.java_home/'bin/javac'),'--release','21','-proc:none','-cp',cp,'-d',str(classes),str(root/'maven/BuildExport.java')],check=True)
 meta=classes/'META-INF/plexus';meta.mkdir(parents=True,exist_ok=True);shutil.copyfile(root/'maven/components.xml',meta/'components.xml')
 subprocess.run([str(a.java_home/'bin/jar'),'--create','--file',str(target/'kgmaker-build-export.jar'),'--date','2025-01-01T00:00:00Z','-C',str(classes),'.'],check=True)
+descriptor=root/'exporters.json'
+distribution=json.loads(descriptor.read_text())
+distribution['exporters']['gradle']['sha256']=hashlib.sha256((root/'gradle/export.gradle').read_bytes()).hexdigest()
+distribution['exporters']['maven']={'path':'maven/target/kgmaker-build-export.jar',
+    'sha256':hashlib.sha256((target/'kgmaker-build-export.jar').read_bytes()).hexdigest(),
+    'exporter':'maven-session-2','license':'LICENSE'}
+descriptor.write_text(json.dumps(distribution,indent=2,sort_keys=True)+'\n')
 print('SUCCESS: trusted Maven exporter built offline')

@@ -38,6 +38,7 @@ kgmaker_workers = [
   "build/build.py", "build/gradle/export.gradle",
   "build/maven/BuildExport.java", "build/maven/components.xml",
   "build/maven/target/kgmaker-build-export.jar",
+  "build/exporters.json", "build/LICENSE",
 ]
 
 [tool.pytest.ini_options]
