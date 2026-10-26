@@ -166,3 +166,12 @@ mismatch/duplicate zůstává PARTIAL a invalidní kontrakt zachová poslední s
 Adresář se shodnými `.class`, ale rozdílným resource souborem je explicitně
 odmítnut jako unsupported kind a nevytvoří hranu.
 Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](changes/29_mapCrossRepoArtifacts.md). Integrovaný strict běh nad W01–W05: 242 PASS, 0 SKIP.
+
+## T005 — společný model pohledu (integrace 2026-10-26)
+
+T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
+Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
+T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
+Ověření modelu a integrace s aktuálním main je uvedeno v
+[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+work packages výše zůstávají beze změny.
