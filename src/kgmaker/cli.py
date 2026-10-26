@@ -888,6 +888,8 @@ def build_parser() -> argparse.ArgumentParser:
     register(sub)
     from .inspection_cli import register as register_inspection
     register_inspection(sub)
+    from .confluence_sync_config import register as register_confluence
+    register_confluence(sub)
 
     init_parser = sub.add_parser("init", help="add Copilot hooks, instructions and the kgmaker agent")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -1029,6 +1031,9 @@ def main() -> None:
         code = workspace_command(args)
     elif args.command == "feature":
         code = feature_cli.run(args)
+    elif args.command == "confluence":
+        from .confluence_sync_config import run
+        code = run(args)
     elif args.command == "init":
         code = init(root, args.force)
     elif args.command == "memory" and args.memory_command == "capture":

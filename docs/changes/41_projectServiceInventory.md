@@ -68,3 +68,19 @@ T008 dodává pouze deklarovaný service inventory. Neobjevuje služby ani rozhr
 neřeší deployment compatibility a nezjišťuje externí checkouty/endpoints. T004,
 interface catalogs, další topology aggregation a runtime availability zůstávají
 mimo tento rozsah.
+
+## Integrace s aktuálním main
+
+Po T008 implementaci byl `origin/main` `7b9a9ea` (PR #25) sloučen do této
+větve. T008 `views.py` a `test_t008_project_service_inventory.py` zůstaly
+byte-identické s předchozím schváleným HEAD; ověřeno přes
+`git diff --exit-code HEAD -- src/kgmaker/views.py tests/test_t008_project_service_inventory.py`.
+Semantic artifact zachovává koncepty a vztahy z obou historií i union 72
+implementation episodes; aktuální validace uvádí 77 concepts a 11,955 relationships.
+Po regeneraci grafu: 291 files, 2,387 declarations/sections, 17,265 relationships;
+`kgmaker check`, semantic validation a `git diff --check` prošly.
+Integrační běh `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q
+tests/test_t008_project_service_inventory.py tests/test_t007_define_service_ownership.py
+tests/test_t006_select_service_contexts.py tests/test_workspace.py
+tests/test_t005_add_view_model.py tests/test_cross_repo_artifacts.py
+tests/test_confluence_configuration.py tests/test_workbooks.py` — **110 passed**.
