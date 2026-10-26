@@ -32134,6 +32134,60 @@
         }
       ],
       "id": "episode:d017be5ceeb373e80d06594156e8670cb4fca7967e01cf7eeefcff6009b99e38"
+    },
+    {
+      "base_commit": "c96fd3d4bb8d455934df216ae936008768d94230",
+      "head_commit": "6c70ef0b8d8eeec7c408aeaa956c79b827c4a130",
+      "worktree_fingerprint": "6f9be2bdf74eebb526457a6babca12b96c86e002406120ac4c61a3998e248c61",
+      "title": "Record Spring selector validation and semantic evidence",
+      "changed_files": [
+        {
+          "path": "docs/changes/42_resolveBoundedSpringImports.md",
+          "status": "M",
+          "sha256": "afe9cfbe62c449966db3c22efc717906f12705fbf97066cd49eb53fffacb689b"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/changes/42_resolveBoundedSpringImports.md:42_resolveBoundedSpringImports.md",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Bounded deklarace dynamických Spring importů::1",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Problém a skutečné změny::9",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Provedené kontroly::62",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Příklad a zbývající scope::123",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Příklad a zbývající scope::126",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Reprodukovatelné vstupy a kompatibilita::37"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/42_resolveBoundedSpringImports.md:Příklad a zbývající scope::126"
+        ],
+        "removed": [
+          "section:docs/changes/42_resolveBoundedSpringImports.md:Příklad a zbývající scope::123"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "graphCheck",
+          "status": "passed"
+        },
+        {
+          "label": "diffCheck",
+          "status": "passed"
+        },
+        {
+          "label": "full402",
+          "status": "passed"
+        },
+        {
+          "label": "optionalBuilds9",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:7d0d7e294427b11d3269aa278cb095fcefb47e10a9ab9346ed11356e633a9c1d"
     }
   ]
 }
