@@ -18,6 +18,15 @@
 | T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture rejects a foreign same-simple-name base, marks direct-field collision UNKNOWN without a column edge, and unresolved override UNKNOWN without fallback; W01 `test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` proves strict failure preserves last valid graph |
 | T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
 
+## T003-S06-W03 — ORM XML overrides
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, and annotation fallback for untouched partial mappings |
+| T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves `metadata-complete` suppression of annotation-only table/column bindings, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes` behavior |
+| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, unknown namespace, unsupported mapping constructs and DTD/external-entity rejection; unsupported targets remain UNKNOWN without annotation physical fallback |
+| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note59](changes/59_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |

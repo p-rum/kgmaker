@@ -435,6 +435,13 @@ promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
 inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
 patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
 pojmenovaný subpackage není JPA evidence.
+Vybraný persistence unit může doplnit standardní `META-INF/orm.xml` nebo
+pořadově deklarované mapping files. XML class/table/column mapping má přednost
+před annotations a evidence uchovává cestu, hash souboru, persistence unit i
+pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML je
+omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
+namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
+soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
 Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
 entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
 zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID

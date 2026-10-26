@@ -173,11 +173,11 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
         value["source_snapshot_version"] = "selected-source-set-1"
     value["source_files"] = source_snapshot(root, base, value)
-    from .framework import SPRING_RULE_VERSION
+    from .framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
     # and selection identity, including its pre-existing React overwrite behavior.
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
-                                        "jpa": "annotation-source-v4"}
+                                        "jpa": JPA_RULE_VERSION if language == "jvm" else "annotation-source-v4"}
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
