@@ -93,8 +93,32 @@ source-set-bound freshness. Nejde o aktuální podporu těchto formátů.
   review-fix actual suite: **57 PASS v109.01 s**, povinné K1/K2/Spring APIs,
   včetně nové producer/qualified namespace regresní fixture a TS contextů.
 
-Finální relevantní/full výsledky, semantic update/apply/validate, memory capture,
-scan/check a diff check jsou součástí předání. Žádný skutečný runtime PASS se
+- Finální strict full po opravách: **558 PASS, 10 SKIP v662.92 s**. Povinné
+  K1/K2 a pinned Spring APIs skutečně běžely. Deset skips je volitelný Maven/
+  Gradle/included-build/variant/plugin/installed exporter a skutečný Windows gate;
+  nevydávají se za PASS. Proces skončil0, JUnit a log lokálně zachovány.
+- Explicitně rebuilt K1 worker SHA256
+  `8158a0bb49ec531001950334d5d8fd4be6a16a7e236edd652a44a70588033cbb`,
+  K2 `426a73aa04b8ad8748b22cf7bed847e385b0c1f5293669a1316369d93241660e`.
+  JARy jsou lokální ignorované artefakty, žádná nová redistribuce.
+
+Přesný final full příkaz (PATH dědí managed Node, Maven/Gradle nejsou exponované):
+
+```bash
+export JAVA_HOME=/workspace/tools/jdk-21.0.6+7
+export PATH="$JAVA_HOME/bin:/workspace/tools/kotlinc/bin:$PATH"
+/workspace/kgmaker-venv/bin/python /workspace/kgmaker-test-prerequisites.py /workspace/spring-factories
+flock /workspace/kgmaker-heavy-tests.lock env KGMAKER_REQUIRE_WORKERS=1 \
+  KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/spring-factories/workers \
+  PYTHONPATH=/workspace/spring-factories/src /workspace/kgmaker-venv/bin/python \
+  -m pytest -q -rs --tb=short --basetemp=/tmp/kgmaker-registrars-review-full \
+  --junitxml=/tmp/kgmaker-registrars-review-full.xml
+```
+
+Scoped semantic update/apply/validate, memory capture, scan/check a diff check
+jsou součástí předání; sémantická fakta mimo scope a historie main zůstávají zachované. Žádný skutečný runtime PASS se
 neodvozuje z fixture nebo přítomnosti compileru. GitHub Actions billing/quota
 je externí překážka nového CI; lokální validace ji nenahrazuje. Publikace má být
 Draft a merge/CI retry zůstává pozastaven dle výslovného uživatelského pokynu.

@@ -414,6 +414,8 @@ registraci přes `registerBeanDefinition("name", new RootBeanDefinition(Type.cla
 Podmínka pochází z importující konfigurace. `FactoryBean<T>` rozlišuje objekt
 `&name` a produkt `name`; ACTIVE statická deklarace produktu vyžaduje shodný
 konkrétní generic typ, jediné `return new Type()` a jediné `return Type.class`.
+`@Bean` producer musí navíc přímo vracet jediný konkrétní no-argument constructor
+bez anonymous overrides; proof pochází ze skutečné implementace a produceru.
 Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
 Žádný registrar, factory, konstruktor nebo Spring context se nespouští; statická
 deklarace není runtime availability. Přesný bounded scope a testy:

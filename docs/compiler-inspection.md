@@ -632,7 +632,7 @@ backends. Není to Kotlin metadata rozšíření, execution ani Spring bootstrap
 | Exact/transitive registrar a2-parameter API method, přímé `registry.registerBeanDefinition("name", new RootBeanDefinition(Type.class))` statements | `spring_registrar`/`registers_bean`, source symbol/hash/context evidence; bean condition z importující konfigurace |
 | Custom3-parameter overload, branches/alias/helper/fake receiver, více než128 statements, chybějící/nepodporovaný target | Explicitní UNKNOWN boundary; žádný odhadnutý ACTIVE bean |
 | Concrete indexed FactoryBean<T>, sole zero-argument `return new T()` a `return T.class`, typy souhlasí | Samostatný `&name` factory object a `name` product, `produces_bean`, static condition z bean declaration |
-| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean vracející jen factory interface | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
+| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean bez prokázané konkrétní literal implementation | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
 
 Product type je kompilátorový typ včetně inherited generic substitution; fake
 FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Literal
