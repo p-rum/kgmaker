@@ -136,3 +136,46 @@ těla, field/concatenation/evaluation, binární metoda bez source literal factu
 vnořené selectors, custom filtering/group execution, ordering/runtime registrace,
 registrars/factories a produkční availability. S05/AC05 ani celý T003 nejsou hotové.
 Implementace zůstává lokální; parent zajistí nezávislé review a publikaci.
+
+## Integrace Windows main před nezávislým PR30 review
+
+Integrační base `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` obsahuje skutečně
+merged Windows PR24. Všech14 Spring source/test/fixture souborů kromě společného
+`inspection.py` zůstává byte-identických s `1a52c694cf386ea8726c9c3ab7620ac4e7cc305a`.
+V `inspection.py` je celé `context` byte-identické s tímto Spring kandidátem a
+celé `command` s Windows main; zbytek souboru přesně odpovídá main. Automatický
+merge zachoval oba nepřekrývající se bloky, bez nové runtime opravy. Portable
+builders i ostatní Windows runtime/test soubory jsou převzaty beze změny z main.
+CI je přesně původní Spring workflow s příchozím Windows jobem; všech sedm
+rozbalených jobs, mandatory Spring bootstrap, API guards a oba Spring test moduly
+zůstávají zachované. Žádné nové instalace či buildy se implicitně nespouštějí.
+
+Přesný cílený integrační příkaz:
+
+```bash
+flock /workspace/kgmaker-heavy-tests.lock env \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_WORKERS_HOME=/workspace/dynamic-spring/workers \
+  PYTHONPATH=/workspace/dynamic-spring/src \
+  /workspace/kgmaker-venv/bin/python -m pytest -q -rs \
+  --basetemp=/tmp/kgmaker-spring-windows-integration \
+  tests/test_spring_imports.py tests/test_spring_imports_context.py \
+  tests/test_worker_protocol.py tests/test_windows_install.py
+```
+
+Výsledek: **38 PASS, 1 SKIP v 25.90 s**. Všech24 Spring/compiler/API/context
+případů prošlo s povinnými skutečnými K1/K2 a Spring6.2.2 API. Jediný SKIP je
+explicitní native non-admin Windows CI smoke na tomto Linux hostu, nikoli Spring
+test. Předchozí celý běh 402 PASS / 9 SKIP se nepřejmenovává na nový full výsledek;
+kvůli čisté integraci se stabilní celý matrix neopakuje.
+
+Konflikty byly pouze v generovaných grafech a semantic historii. Zachovány jsou
+přesné čtyři main concepts/osm edges a80 main episodes jako immutable prefix,
+plus obě vlastní Spring episodes. README prepare/update citace jsou nyní140/142.
+Scoped semantic update/apply/validate a příkazem obnovený scan/check s diff check
+jsou ověřeny před předáním; durable implementation/test artifacts a implementační
+memory zachovávají průběh integrace. Jde pouze o lokální commit, parent publikuje
+a provede nezávislé review; implementační agent svůj PR nemerguje.
