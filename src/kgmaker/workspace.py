@@ -611,6 +611,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                 'semantic_hash': None, 'manifest_hash': workspace['_manifest_hash'], 'repositories': baseline_repos}
     coverage = {'roots': [r['id'] for r in workspace['repositories']], 'artifacts': sorted(sources),
                 'exclusions': exclusions, 'excluded_directories': [], 'dataflow_diagnostics': [],
+                'artifact_diagnostics': [dict(item) for item in graph.diagnostics
+                                         if item.get('code') in {'BINARY_XLS_UNSUPPORTED', 'XLSX_PARSE_FAILED'}],
                 'unsupported_sources': sorted(k for k, v in sources.items() if not v['supported']),
                 'parser_capabilities': {'workspace': 1, 'schema_replay': 1,
                                         'release_artifact_mapping': 1,

@@ -217,3 +217,20 @@ workery. Po review opravách nebyl full suite opakován. `kgmaker check`, semant
 validation a `git diff --check` prošly.
 T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
 Discovery, view aggregation ani T004 nejsou implementovány.
+
+## T003-S09-W02 — bezpečná diagnostika legacy XLS
+
+VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
+`.xls` a OLE/BIFF hlavičky přejmenované na `.xlsx` se neparsují jako XLSX.
+UNSUPPORTED diagnostika nese byte SHA-256, file locator a scope; feature/data-check
+ji zachovají jako coverage gap, workspace přidá repo identity. Minimální BIFF2
+fixture, malformed vstupy, nejednoznačný compound container, nulové procesy při
+extrakci, nulová mutace uloženého grafu a UNKNOWN availability jsou ověřeny
+`tests/test_binary_xls.py`; focused 65 PASS. Skutečné XLS buňky/hodnoty se nečtou,
+libovolné přípony se nesniffují a signatura není důkaz platného Excel workbooku.
+Review oprava přidává streaming checksum oversized souborů a hash-only manifest
+metadata; změna stejné délky invaliduje packet i workspace cache bez zápisu do
+store. Přímý extractor kontroluje archive limit před hashováním. Finální focused
+100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
+Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
+Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).

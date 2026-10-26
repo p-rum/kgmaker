@@ -47,10 +47,12 @@ service mapping se nepřeklápí na ownership automaticky.
 - `git diff --check` — **PASS**.
 - `kgmaker semantic update --base origin/main`, scoped semantic patch,
   `semantic apply`, `semantic validate` a následný scan — **PASS** nad aktuálním
-  main `aa9e64b`; finalní `kgmaker check` zůstal PASS.
+  main `aa9e64b`; následně byl integrován aktuální main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`; finální semantic update/apply/validate a scan po této integraci prošly; scan indexoval 282 souborů, 2,546 nodes a 15,916 relationships; `kgmaker check` zůstal PASS.
 - `kgmaker memory recall` — **PASS**, vrátil historická omezení a aktuální
   resolver location. `kgmaker memory capture --base origin/main` — **PASS**;
   zaznamenal ověřené příkazy a nedostupné toolchain gates jako skipped.
+- Po integraci main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`:
+  `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_t005_add_view_model.py tests/test_binary_xls.py` — **61 passed**. Pokrývá T007/workspace/T005 a integrovanou XLS diagnostiku; úplná sada nebyla opakována, protože změna T007 se nepřekrývala s XLS parserem.
 - Skutečné build/compiler/render gate nejsou pro tuto změnu relevantní; změna
   nepřidává compiler/framework/parser ani renderer.
 
