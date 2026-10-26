@@ -1,5 +1,14 @@
 # Inventář acceptance T001 a T002
 
+## T003-S06-W01 — Kotlin JPA use-site a access
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W01-AC01 | VERIFIED_IN_SCOPE | `tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed`: actual K2 `@field:EmbeddedId`, `@get:Id`, explicit PROPERTY, ambiguous unqualified target, mismatched explicit FIELD, and embeddable column |
+| T003-S06-W01-AC02 | VERIFIED_IN_SCOPE | Additive annotation metadata reuses graph schema v3, existing `orm_attribute`/`orm_embeddable` IDs and JPA rules `annotation-source-v4`; existing Java JPA fixture remains unchanged |
+| T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
+| T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
+
 ## T003-S11-W02 — distribuce build exporterů
 
 | ID | Stav | Přímá evidence |
@@ -189,7 +198,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access, EmbeddedId, AttributeOverride, owning/inverse association, derived paths, compiler-owned JPQL/native query, parameter/projection a named-query reference; JPA rules `annotation-source-v4` | Kotlin use-site/access, XML override priorita, inheritance attributes, dvě datasource se stejnou tabulkou, širší query grammar/dynamic builders a úplná schema matice |
+| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access and JPA bindings; `test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed` — actual K2 `@field:`/`@get:`, explicit/mismatched `@Access`, Kotlin `EmbeddedId`, unqualified ambiguity and embeddable column; rules `annotation-source-v4` | XML override priority, inheritance attributes, two data sources with same table, broader query grammar/dynamic builders, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc

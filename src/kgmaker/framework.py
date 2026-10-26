@@ -9,6 +9,7 @@ turns a name match into a resolved call.
 from __future__ import annotations
 
 import re
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -110,13 +111,15 @@ def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]
     for item in symbol.get("annotations", []) if isinstance(symbol.get("annotations"), list) else []:
         if isinstance(item, dict) and isinstance(item.get("name"), str):
             raw_values = item.get("values", {})
+            if item.get("values_resolved") is False:
+                raw_values = {}
             if isinstance(raw_values, dict):
                 parts = []
                 for key, value in raw_values.items():
                     if isinstance(value, list):
-                        parts.extend(f'{key}="{entry}"' for entry in value if entry not in (None, ""))
+                        parts.extend(f"{key}={json.dumps(entry, ensure_ascii=False)}" for entry in value if entry not in (None, ""))
                     elif value not in (None, ""):
-                        parts.append(f'{key}="{value}"')
+                        parts.append(f"{key}={json.dumps(value, ensure_ascii=False)}")
                 args = ",".join(parts)
             else:
                 args = str(raw_values)
@@ -430,6 +433,15 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         source = source_text[path]
         imports = _imports(source)
         values = _annotation_map(item, source)
+        unresolved_jpa_values = [annotation for annotation in item.get("annotations", [])
+                                 if isinstance(annotation, dict) and annotation.get("values_resolved") is False
+                                 and _allowed_annotation(str(annotation.get("name", "")), imports,
+                                     ("jakarta.persistence.", "javax.persistence."))]
+        for annotation in unresolved_jpa_values:
+            diagnostics.append({"code": "ORM_ANNOTATION_VALUE_UNRESOLVED", "path": path,
+                                "source_line": (item.get("range") or {}).get("start_line"),
+                                "annotation": annotation.get("name"),
+                                "reason": "K2 could not resolve all annotation argument values; source spelling is not treated as a constant."})
         effective_values = expanded_annotations(values, imports)
         simple_kind = _simple(str(item.get("kind", "")))
         is_type = simple_kind in {"class", "interface", "enum", "type", "annotation_type"}
@@ -772,25 +784,76 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                        for candidate in re.finditer(
                            r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+"
                            r"(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M))
-        entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
+        kotlin = entity["path"].endswith(".kt")
+        kotlin_properties = [candidate for candidate in symbols.values()
+                             if kotlin and candidate.get("owner") == entity["symbol"].get("owner")
+                             and candidate.get("kind") == "field" and candidate.get("path") == entity["path"]]
+        def property_site_annotations(candidate: dict[str, Any]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+            field_values, getter_values = [], []
+            for annotation in candidate.get("annotations", []):
+                if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                    continue
+                if not _allowed_annotation(annotation["name"], entity["imports"],
+                                           ("jakarta.persistence.", "javax.persistence.")):
+                    continue
+                site = str(annotation.get("use_site_target", "")).upper()
+                raw = annotation.get("values", {})
+                args = ",".join(f"{key}={json.dumps(value, ensure_ascii=False)}" for key, value in raw.items()) if isinstance(raw, dict) else ""
+                pair = (annotation["name"], args)
+                if site in {"FIELD", "BACKING_FIELD"}:
+                    field_values.append(pair)
+                elif site in {"PROPERTY_GETTER", "GETTER", "GET"}:
+                    getter_values.append(pair)
+            return field_values, getter_values
+        if kotlin:
+            placed = [(candidate, *property_site_annotations(candidate)) for candidate in kotlin_properties]
+            has_field_id = any(_simple(name) in {"Id", "EmbeddedId"} for _, annotations, _ in placed for name, _ in annotations)
+            has_getter_id = any(_simple(name) in {"Id", "EmbeddedId"} for _, _, annotations in placed for name, _ in annotations)
+            if (explicit_access == "FIELD" and has_getter_id and not has_field_id) or (
+                    explicit_access == "PROPERTY" and has_field_id and not has_getter_id):
+                diagnostics.append({"code": "ORM_KOTLIN_ACCESS_TARGET_MISMATCH", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "reason": f"Explicit {explicit_access} access conflicts with the compiler-reported Kotlin JPA identifier use-site target."})
+            entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else (
+                "FIELD" if has_field_id and not has_getter_id else "PROPERTY" if has_getter_id and not has_field_id else "UNKNOWN")
+            if entity_access == "UNKNOWN":
+                diagnostics.append({"code": "ORM_KOTLIN_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "reason": "Kotlin JPA identifier has no unique @field:/@get: target or explicit @Access; persistence access is not inferred."})
+        else:
+            entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
         table_node = nodes.get(table_id)
         if table_node is not None:
             nodes[table_id] = replace(table_node, metadata={**(table_node.metadata or {}), "access_strategy": entity_access})
-        for field_match in re.finditer(r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M):
+        if kotlin:
+            field_records = []
+            for candidate, field_annotations, getter_annotations in placed:
+                selected_annotations = field_annotations if entity_access == "FIELD" else getter_annotations
+                if entity_access == "UNKNOWN" or not any(_simple(name) in JPA_FIELDS for name, _ in selected_annotations):
+                    continue
+                field_records.append({"name": candidate.get("name"), "type": candidate.get("type", ""),
+                                      "annotations": selected_annotations,
+                                      "line": (candidate.get("range") or {}).get("start_line") or entity["line"]})
+        else:
+            field_records = [{"name": match.group("name"), "type": match.group("type").strip(),
+                              "annotations": [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", match.group("annotations"))],
+                              "line": start + body[:match.start()].count("\n")}
+                             for match in re.finditer(r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M)]
+        for field_match in field_records:
             if entity_access != "FIELD":
                 continue
-            field_annotations = [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", field_match.group("annotations"))]
+            field_annotations = field_match["annotations"]
             if not field_annotations or not any(_simple(name) in JPA_FIELDS for name, _ in field_annotations):
                 continue
             if any(_simple(name) == "Transient" for name, _ in field_annotations):
                 continue
-            field_line = start + body[:field_match.start()].count("\n")
-            field_name = field_match.group("name")
-            field_type = field_match.group("type").strip()
+            field_line = field_match["line"]
+            field_name = field_match["name"]
+            field_type = field_match["type"].strip()
             embedded_id_annotation = next((args for name, args in field_annotations if _simple(name) == "EmbeddedId"), None)
             embedded = embedded_id_annotation is not None or any(_simple(name) == "Embedded" for name, _ in field_annotations)
             identifier = embedded_id_annotation is not None or any(_simple(name) == "Id" for name, _ in field_annotations)
-            attribute = add_node("orm_attribute", f"{node.name}.{field_match.group('name')}", entity["path"], field_line, node,
+            attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
                                  identifier=identifier, embedded=embedded)
             entity_attributes[node.name][field_name.casefold()] = attribute
@@ -838,7 +901,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
                 entity_association_types[(node.name, field_name.casefold())] = target_type
-                association = add_node("orm_association", f"{node.name}.{field_match.group('name')}", entity["path"], field_line, node,
+                association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
                 add_edge(attribute, association, "declares_association", entity["path"], field_line,
@@ -875,23 +938,35 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "column": column_name, "candidates": [item.id for item in column_matches]})
 
         if entity_access == "PROPERTY":
-            getter_pattern = re.compile(
-                r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)+)"
-                r"(?:(?:public|protected|private|final|open|abstract)\s+)*"
-                r"(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<getter>get[A-Z]\w*|is[A-Z]\w*)\s*\(\s*\)", re.M)
-            for getter in getter_pattern.finditer(body):
-                property_annotations = [(name, args) for name, args in
-                                        re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", getter.group("annotations"))]
+            if kotlin:
+                getter_records = [{"name": candidate.get("name"), "type": candidate.get("type", ""),
+                                   "annotations": getter_annotations,
+                                   "line": (candidate.get("range") or {}).get("start_line") or entity["line"]}
+                                  for candidate, _, getter_annotations in placed]
+            else:
+                getter_pattern = re.compile(
+                    r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)+)"
+                    r"(?:(?:public|protected|private|final|open|abstract)\s+)*"
+                    r"(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<getter>get[A-Z]\w*|is[A-Z]\w*)\s*\(\s*\)", re.M)
+                getter_records = []
+                for getter in getter_pattern.finditer(body):
+                    getter_name = getter.group("getter")
+                    prefix = "is" if getter_name.startswith("is") else "get"
+                    property_name = getter_name[len(prefix):]
+                    property_name = property_name[:1].lower() + property_name[1:]
+                    getter_records.append({"name": property_name, "type": getter.group("type"),
+                                           "annotations": [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", getter.group("annotations"))],
+                                           "line": start + body[:getter.start()].count("\n"), "getter": getter_name})
+            for getter in getter_records:
+                property_annotations = getter["annotations"]
                 if any(_simple(name) == "Transient" for name, _ in property_annotations):
                     continue
                 if not any(_simple(name) in JPA_FIELDS for name, _ in property_annotations):
                     continue
-                getter_name = getter.group("getter")
-                prefix = "is" if getter_name.startswith("is") else "get"
-                property_name = getter_name[len(prefix):]
-                property_name = property_name[:1].lower() + property_name[1:]
-                property_type = getter.group("type").strip()
-                property_line = start + body[:getter.start()].count("\n")
+                getter_name = getter.get("getter") or "get" + str(getter["name"][:1]).upper() + str(getter["name"])[1:]
+                property_name = getter["name"]
+                property_type = getter["type"].strip()
+                property_line = getter["line"]
                 embedded_id = any(_simple(name) == "EmbeddedId" for name, _ in property_annotations)
                 embedded = embedded_id or any(_simple(name) == "Embedded" for name, _ in property_annotations)
                 identifier = embedded_id or any(_simple(name) == "Id" for name, _ in property_annotations)

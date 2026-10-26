@@ -360,6 +360,14 @@ Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry
 návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
 ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
 repository metoda se na ni váže přes `uses_named_query`.
+K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
+explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
+properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
+`@Id` bez jednoznačného targetu zůstává UNKNOWN s diagnostikou. Embedded Kotlin
+ID tak zachovává stejné `orm_attribute`/`orm_embeddable` uzly jako Java cesta.
+K2 worker zvolíte výslovně při inspekci, například
+`kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
+nepřejde na K1.
 
 
 ## Compiler lifecycle

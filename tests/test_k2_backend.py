@@ -140,6 +140,83 @@ def test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence(actual
             assert proof["compiler_version"] == "2.1.10"
 
 
+def test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed(tmp_path):
+    package = tmp_path / "src/main/java/jakarta/persistence"
+    package.mkdir(parents=True)
+    declarations = {
+        "Entity": "@Target(ElementType.TYPE) public @interface Entity {}",
+        "Embeddable": "@Target(ElementType.TYPE) public @interface Embeddable {}",
+        "EmbeddedId": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface EmbeddedId {}",
+        "Id": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface Id {}",
+        "Column": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface Column { String name() default \"\"; }",
+        "Table": "@Target(ElementType.TYPE) public @interface Table { String name() default \"\"; }",
+        "AccessType": "public enum AccessType { FIELD, PROPERTY }",
+        "Access": "@Target({ElementType.TYPE,ElementType.FIELD,ElementType.METHOD}) public @interface Access { AccessType value(); }",
+    }
+    for name, declaration in declarations.items():
+        prefix = "" if name == "AccessType" else "import java.lang.annotation.*; @Retention(RetentionPolicy.RUNTIME) "
+        (package / f"{name}.java").write_text(f"package jakarta.persistence; {prefix}{declaration}")
+    source = tmp_path / "src/main/kotlin/demo/Models.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text('''package demo
+import jakarta.persistence.Entity as Persisted
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EmbeddedId as PrimaryKey
+import jakarta.persistence.Column as DbColumn
+import jakarta.persistence.Table
+import jakarta.persistence.Access
+import jakarta.persistence.AccessType
+import fake.Id as FakeId
+const val STATUS_COLUMN = "created_at"
+@Embeddable data class OrderId(@field:DbColumn(name="tenant_id") val tenant: String)
+@Persisted @Table(name="orders") data class Order(@field:PrimaryKey val id: OrderId,
+    @field:DbColumn(name=STATUS_COLUMN) val createdAt: java.time.Instant)
+@Persisted @Access(AccessType.PROPERTY) @Table(name="profiles")
+class Profile(private val rawId: Long) { @get:jakarta.persistence.Id @get:DbColumn(name="profile_id") val id get() = rawId }
+@Persisted @Table(name="ambiguous") class Ambiguous(@jakarta.persistence.Id val id: Long)
+@Persisted @Access(AccessType.FIELD) @Table(name="mismatch") class Mismatch(@get:jakarta.persistence.Id val id: Long)
+@Persisted @Table(name="foreign") class ForeignId(@field:FakeId val id: Long)
+''')
+    fake_annotation = tmp_path / "src/main/kotlin/fake/Id.kt"
+    fake_annotation.parent.mkdir(parents=True)
+    fake_annotation.write_text("package fake\n@Target(AnnotationTarget.FIELD) annotation class Id\n")
+    stdlib = HOME / "jvm/target-k2/lib/kotlin-stdlib.jar"
+    result = inspect_jvm(tmp_path, kotlin_backend="k2", home=HOME, classpath=[str(stdlib)], publish=False,
+                         repo_id="jpa-k2", module="core",
+                         build_context={"compiler_options": {"kotlin": {"schema_version": 1,
+                             "status": "CAPTURED_CONFIGURATION", "compiler_version": "2.1.10",
+                             "language_version": "2.1", "api_version": "2.1", "jvm_target": "21"}}})
+    graph = KnowledgeGraph.from_dict(result["graph"])
+    attributes = {node.name: node for node in graph.nodes if node.kind == "orm_attribute"}
+    assert "Order.id" in attributes
+    embedded_id = attributes["Order.id"]
+    assert embedded_id.metadata["embedded"] and embedded_id.metadata["identifier"]
+    assert embedded_id.metadata["access"] == "FIELD"
+    assert attributes["Profile.id"].metadata["access"] == "PROPERTY"
+    assert not any(node.name == "Ambiguous.id" for node in graph.nodes if node.kind == "orm_attribute")
+    assert not any(node.name == "Mismatch.id" for node in graph.nodes if node.kind == "orm_attribute")
+    assert not any(node.name == "ForeignId.id" for node in graph.nodes if node.kind == "orm_attribute")
+    assert any(d.get("code") == "ORM_KOTLIN_ACCESS_AMBIGUOUS" and d.get("entity")
+               for d in graph.diagnostics)
+    assert any(d.get("code") == "ORM_KOTLIN_ACCESS_TARGET_MISMATCH" for d in graph.diagnostics)
+    assert (any(node.name == "OrderId.tenant" and node.kind == "orm_embeddable_attribute"
+                and node.metadata["default_column"] == "tenant_id" for node in graph.nodes)), \
+        [(node.kind, node.name, node.metadata) for node in graph.nodes if node.kind.startswith("orm_")]
+    created_at = attributes["Order.createdAt"]
+    assert created_at.metadata["type"] == "java.time.Instant"
+    assert any(node.kind == "orm_column" and node.name == "created_at" for node in graph.nodes)
+    k2_symbols = [item for item in graph.symbols if item.get("path") == "src/main/kotlin/demo/Models.kt"
+                  and item.get("kind") == "field"]
+    order_targets = {annotation["use_site_target"] for item in k2_symbols
+                     if item.get("owner") == "demo.Order" and item.get("name") == "id"
+                     for annotation in item.get("annotations", [])}
+    assert "FIELD" in order_targets
+    profile_targets = {annotation["use_site_target"] for item in k2_symbols
+                       if item.get("owner") == "demo.Profile" and item.get("name") == "id"
+                       for annotation in item.get("annotations", [])}
+    assert "GET" in profile_targets
+
+
 def test_unresolved_and_ambiguous_k2_calls_remain_partial(actual_k2):
     _, _, result, _ = actual_k2
     unresolved = [site for site in result["graph"]["call_sites"]
