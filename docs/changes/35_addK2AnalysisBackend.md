@@ -209,3 +209,37 @@ Scoped semantic evidence je znovu ověřena proti aktuálním README bullets
 Semantic validate, generovaný scan/check, compileall a integrační diff check PASS.
 Všechny upstream epizody i původní validovaná K2 epizoda jsou zachovány.
 Nejde o GitHub review/merge ani nový live runtime proof.
+
+## Integrace T006/T007 před compiler CI
+
+Aktuální base je `3a393e451b0d7b8f83de93f05f07d2307ba66ec3` (main po
+service-context a ownership PR); lokální merge `7f9865d`. K2 runtime/source/test
+bytes i kombinované package resources/CI zůstaly identické vůči `6c8cc60`.
+K2 JAR má stále SHA-256 `6d02d7e09272bf3d6d76f3e35c5e071ff352d01def29982c26e69b54daff6c6d`.
+
+S own worker home a stejnou Temurin21 PATH proběhla relevantní integrační sada:
+
+```bash
+PYTHONPATH=src KGMAKER_WORKERS_HOME=/workspace/k2/workers KGMAKER_REQUIRE_K2=1 \
+/workspace/kgmaker-venv/bin/python -m pytest -q \
+  tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py \
+  tests/test_cross_repo_artifacts.py tests/test_worker_protocol.py \
+  tests/test_k2_backend.py::test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence \
+  tests/test_k2_backend.py::test_k1_and_k2_contexts_accumulate_without_replacement
+```
+
+**40 PASS/19.68s**: service/context/ownership a content-bound cross-repo
+regrese, protocol transport a skutečný mixed K2 + společně zachované K1/K2
+kontexty. Celá starší actual sada321 ani všech30 K2 testů nebyly opakovány
+pouze kvůli nezávislým source view/workspace změnám; jejich výsledky zůstávají
+přiřazené k dříve uvedeným source/base SHA.
+
+Sémantika zachovává aktuální4 concepts/6 relations z main včetně explicitní
+ownership vazby; starší dvě upstream odstraněné semantic-function vazby se
+neobnovují z historické větve. Immutable episode historie je sjednocena:
+66 main epizod + původní K2 epizoda =67, bez ztráty či přepisu záznamů.
+Citace byly znovu ověřeny proti skutečnému textu: README prepare/update bullets
+130/132; architecture scanner/store/source-authority15/19/22 a ownership140/143.
+Scoped apply/validate, generovaný scan/check, compileall a diff check PASS.
+GitHub povinný compiler CI a exact-pair review provede nad publikovaným HEAD
+navazující integrační workflow; tento agent neprovádí externí zápis.
