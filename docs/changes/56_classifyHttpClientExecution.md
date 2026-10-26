@@ -6,7 +6,7 @@ PARTIAL. Samostatná větev `feat/t003-s07-06-http-client-execution` je nad
 `stack/t003-s07-w06-prerequisites`: explicitní merge PR35
 `89e50cf4cf8edbebc4f9d08879656698c75ebd50` a PR34
 `78d7968ea7408adea3ec9ce783769bb799522470`. Žádná skrytá závislost na W01.
-Reviewovatelný source checkpoint je `0258bba647c66b218b465edb8399b3986f7a3bfd`;
+Reviewovatelný source checkpoint je `e55c99d5970d560c44d1b44c5f8b524d98beaef8`;
 finální commit mění jen validation/memory/generated documentation.
 
 ## Problém a skutečná změna
@@ -43,7 +43,8 @@ selected application.properties/profile file a SHA provenance. Plain string
 placeholder, nested/default/SpEL/YAML a ambiguous/missing source jsou UNKNOWN.
 Fresh scans/captures redaktují URI userinfo/query/fragment před persistencí,
 včetně explicit context, SOURCE_ONLY signatures/doc summaries/heading IDs a
-legacy HTTP references. Opaque input hashes drží freshness bez plaintext secrets.
+legacy HTTP references. Privacy pokrývá i unsupported URI schemes (FTP/PostgreSQL/
+JDBC nested) a scheme-relative authority; HTTP recognition se tím nerozšiřuje. Opaque input hashes drží freshness bez plaintext secrets.
 Workspace kvalifikuje identities a source locators, nikoli URI paths; service
 binding ani cross-service path match se nevymýšlí. Runtime execution vždy
 NOT_OBSERVED a availability UNKNOWN. Žádné HTTP, klient či application neběžely.
@@ -73,10 +74,10 @@ Python `/workspace/kgmaker-venv/bin/python`. Heavy runs pod týmovým flock.
 
 - Sequential actual `python workers/jvm/build.py --kotlin-home /workspace/tools/kotlinc --maven-repository /workspace/tools/m2 --java-home /workspace/tools/jdk-21.0.6+7`: **PASS14.07s**; také `--backend k2 --analysis-api-home /workspace/tools/k2-verified`: **PASS12.36s**. Pozdější opravy jsou pure Python; JVM source/bytes se nezměnily.
 - K1 SHA256 `14eddbf8f31011c22a144e67552706268daa3138ca71993fd638d70a556f026b`; K2 `3c84080730333731611f42dbacd91a1bf3f75b863f045de715be73fc3828a0b3`.
-- Read-only prerequisite preflight **PASS0.05s**. Final focused scanner/inspection-contract/HTTP/protocol/control-flow/dataflow/workspace/mandatory-CI **108 PASS41.80s**, všech27 HTTP případů včetně skutečných Java K1/K2 a Kotlin UNKNOWN.
-- `python -m pytest -q --basetemp=/workspace/http-final-proof/pytest-tmp --junitxml=/workspace/http-final-proof/full.xml`: **641 passed, 10 skipped in 624.24s (0:10:24)**. Runner 624.89s. XML: 641 PASS/10 SKIP,0 errors/0 failures. Optional tool/platform skips nejsou vydávány za mandatory worker PASS.
-- `TMPDIR=/workspace/http-final-proof/tmp`, persistent runner/log/XML/results/source-manifest v `/workspace/http-final-proof/`. Frozen109-file source manifest souhlasí před/po full; obě runtime SHA stejné.
-- `compileall`, `git diff --check`, bounded semantic update/apply/validate/CLI scan/check **PASS**. Zachováno původních7 concepts/25 relations, přidán1 HTTP concept/4 doložené relations. Scanner target258, HTTP prepare78/augment548, ownership275 a Javac citation112 jsou revalidované. Všech119 inherited episodes je immutable; finální workflow zachycuje jeden feature episode (`memory capture --base c7beaec95951267796c0c21baa6079fafe5fe124`) a obnovuje graf CLI.
+- Read-only prerequisite preflight **PASS0.06s**. Final focused scanner/inspection-contract/HTTP/protocol/control-flow/dataflow/workspace/mandatory-CI **113 PASS53.12s**, všech32 HTTP případů včetně skutečných Java K1/K2 a Kotlin UNKNOWN.
+- `python -m pytest -q --basetemp=/workspace/http-uri-final/pytest-tmp --junitxml=/workspace/http-uri-final/full.xml`: **646 passed, 10 skipped in 611.39s (0:10:11)**. Runner 611.65s. XML: 646 PASS/10 SKIP,0 errors/0 failures. Optional tool/platform skips nejsou vydávány za mandatory worker PASS.
+- `TMPDIR=/workspace/http-uri-final/tmp`, persistent runner/log/XML/results/source-manifest v `/workspace/http-uri-final/`. Frozen109-file source manifest souhlasí před/po full; obě runtime SHA stejné.
+- `compileall`, `git diff --check`, bounded semantic update/apply/validate/CLI scan/check **PASS**. Zachováno původních7 concepts/25 relations, přidán1 HTTP concept/4 doložené relations. Scanner target258, HTTP prepare87/augment557, ownership275 a Javac citation112 jsou revalidované. Všech119 inherited episodes i historický feature episode85d60f (source0258bba) jsou immutable. Finální workflow zachycuje ještě jeden feature episode (`memory capture --base c7beaec95951267796c0c21baa6079fafe5fe124`) a obnovuje graf CLI.
 
 ## Uchovaná historie neúspěšných a přerušených kontrol
 
@@ -100,6 +101,14 @@ před touto změnou full ukončen **184 PASS2 SKIP311.54s**. Tyto runy nejsou ko
 PASS; konečný neporušený výsledek je výše. Artifacty zůstávají v
 `/workspace/http-validation-final` a `/workspace/http-privacy-final`.
 
+Source0258bba měl také kompletní **641 PASS10 SKIP624.24s** a capture
+`episode:85d60f164567d3a0d585b89166c6cd16fe712c84aeb59ba5ea7d81313c86784b`.
+Následná iteration1 pure negative však reprodukovala plaintext unsupported FTP
+credential v contextu. Generic URI privacy parsing to opravilo bez rozšíření HTTP
+mapping; pět nových unsupported-scheme cases plus SOURCE_ONLY/contract
+**7 PASS0.09s**, zakázaný Popen. Starý641/10 je historický proof, nikoli náhrada
+nového aktuálního whole výsledku výše. Historical episode se nepřepisoval.
+
 ## Neprovedené kontroly a hranice
 
 Remote mandatory Actions gates jsou BLOCKED potvrzeným billing/spending limit;
@@ -108,17 +117,3 @@ provádí parent nad finálním exact HEAD. Nepodporovány jsou obecné custom c
 operator/interprocedural/generic publisher flow, dynamic URLs, libovolná proxy
 registration a skutečná HTTP/data availability. Specifikace S07/S13 runtime a
 celý T003 zůstávají samostatné, nedokončené kontrakty.
-
-## Iteration1 — unsupported URI privacy boundary, final proof pending
-
-Po úspěšném source0258bba full641/10 a capture episode85d60f byla pure negative
-kontrola explicitního contextu s `ftp://user:password@host` skutečně reprodukována
-jako plaintext leak. HTTP mapping správně zůstal UNKNOWN, ale privacy je širší
-kontrakt než podporované HTTP schemata; proto nelze tuto chybu skrýt za unsupported.
-Redaktor nyní používá URI authority/query/fragment proof i pro FTP/PostgreSQL/JDBC
-nested URI a scheme-relative authority, aniž by rozšířil HTTP recognition. Pět
-nových pure cases + SOURCE_ONLY/contract **7 PASS0.09s**, se zákazem Popen.
-JVM zdroje a binaries se nezměnily. Nový source/manifest a final focused/full běží
-v `/workspace/http-uri-final`; preflight **PASS0.06s**. Výše uvedený641/10 je
-historický verified checkpoint, nikoli automatický PASS nové iteration1. Původních
-119 episodes i vlastní právě zachycený120. episode jsou immutable a zůstanou zachované.
