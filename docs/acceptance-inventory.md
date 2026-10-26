@@ -29,6 +29,17 @@
 | T005-AC05 zachování scope, kontextu, evidence a unresolved coverage | PASS | `test_scope_context_and_evidence_kind_are_preserved_without_upgrade`; `test_complete_coverage_cannot_hide_unresolved_edges` | cílený běh |
 | T005-AC06 dokumentace a change note | PASS | `docs/changes/11_addViewModel.md` | PR #11 sloučen do main; finální integrované ověření je v change note |
 
+## T006 — výběr kontextů pro více služeb
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T006-AC01 dvě služby a různé čerstvé varianty | PASS | `test_two_services_select_distinct_contexts_and_profiles_without_mixing`; `test_t006_selects_nonempty_workspace_contexts_and_real_release_mapping` | cílený běh nad skutečným workspace/compiler snapshotem |
+| T006-AC02 nejednoznačný/stale výběr s volbami nebo příkazem | PASS | `test_missing_variant_selection_returns_choices_and_does_not_mutate_graph`; `test_stale_classpath_returns_diagnostic_and_next_command_without_worker`; `test_t006_release_mapping_becomes_stale_when_reported_output_changes` | cílený běh |
+| T006-AC03 bez procesu a mutace grafu/store | PASS | `test_selection_reads_current_context_without_process_or_store_mutation` | cílený běh; subprocess zakázán |
+| T006-AC04 chybný výběr beze změny vstupu | PASS | `test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation`; `test_missing_variant_selection_returns_choices_and_does_not_mutate_graph` | cílený běh |
+| T006-AC05 evidence, scope a SOURCE_ONLY hranice | PASS | `test_source_only_requires_declared_repo_coverage_and_stays_partial`; `test_t006_release_report_must_match_declaration_and_graph_evidence`; `test_t006_duplicate_release_report_rows_are_ambiguous`; `test_t006_release_report_without_graph_proof_stays_unresolved`; `test_t006_shared_context_does_not_choose_an_arbitrary_service_owner` | cílený běh |
+| T006-AC06 dokumentace a výsledky | PARTIAL | `docs/changes/32_selectServiceContexts.md` | implementace, testy a lokální evidence jsou připraveny; samostatný PR a required CI zůstávají NOT_RUN v této větvi |
+
 Datum auditu: 2026-10-15. Autoritativní scénáře jsou v
 [T001](tasks/1_featureAnalysis.md) a [T002](tasks/2_buildAwareInspection.md).
 `VERIFIED_IN_SCOPE` platí jen pro verzi adaptéru a fixture uvedené v řádku;
