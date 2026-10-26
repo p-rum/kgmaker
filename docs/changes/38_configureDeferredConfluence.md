@@ -53,6 +53,11 @@ zachovává oba bloky dokumentace i sémantickou historii. Konfigurační runtim
 testy jsou beze změny vůči nezávisle schválenému `525779a`. Úplná integrovaná
 sada: **297 PASS / 23 SKIP** (12.32 s); příslušné live ověření zůstává odložené.
 
+Po integraci exporter main `e656b8ef4c174d3d60600037d7c0d78fc514e39d` zůstávají
+konfigurační zdroje/testy beze změny; focused config/boundary/exporter contracts
+mají **36 PASS / 2 DESELECTED** (0.27 s). Dva skutečné exporter buildy nejsou
+součástí této konfigurační kontroly; jejich důkaz patří do change note 37.
+
 ## Příklad a zbývající práce
 
 Úplný příklad je v [capability dokumentaci](../feature-analysis.md#deferred-confluence-connection-configuration).
