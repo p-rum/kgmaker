@@ -138,3 +138,22 @@ installed-exporter Maven/Gradle varianty bez připraveného toolchainu; žádný
 není vydáván za PASS. Po změně zdroje je znovu provedeno scoped semantic
 update/apply/validate, zachycení review-fix implementační epizody, scan/check a
 diff check. Nezávislé schválení ani remote operace se tím nenahrazují.
+
+## Integrace po ověřeném merge Confluence PR25
+
+Integrační base: `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9`, skutečný merge PR25.
+Schválený XLSX kandidát `7123f6e96695cea4015df5a998da60b38094c974` zůstává pro
+šest runtime/test souborů byte-identický; změněny jsou pouze integrační docs,
+semantic records a příkazem obnovený graf. Offline Confluence configuration
+dokumentace i oba acceptance rozsahy jsou zachovány. Příchozí čtyři semantic
+concepts a osm vztahů včetně obnovených core facts zůstávají zachovány; union má
+všech 71 immutable episode records obou rodičů. Aktuální README prepare/update
+citace jsou na bullets 134/136.
+
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_xlsx_references.py tests/test_workbooks.py tests/test_binary_xls.py tests/test_data_check.py tests/test_availability.py tests/test_feature.py tests/test_workspace.py tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py tests/test_cross_repo_artifacts.py tests/test_exporter_distribution.py tests/test_confluence_configuration.py -k 'not installed_exporters_run_real_builds'`:
+**184 PASS, 2 DESELECTED v 4.36 s**. Vynechány výběrem pouze skutečné installed
+Maven/Gradle exporter varianty; negativní exporter i offline Confluence případy
+proběhly. Schválená full-suite evidence 350 PASS / 25 SKIP náleží kandidátu 7123f6e
+a kvůli této integraci beze změny XLSX runtime se neopakuje ani nepřejmenovává.
+Scoped semantic update/apply/validate, scan/check a diff check jsou zopakovány
+před lokálním merge commitem. Žádný push ani remote write se neprovádí.

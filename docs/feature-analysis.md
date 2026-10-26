@@ -20,7 +20,7 @@ are implemented in the supported subset described in
 | Budget | Full metadata manifest, selected source context and explicit omissions | Dependency-aware relevance and resumable packets |
 | Freshness | Content baseline, no timestamp identity | Whole-packet invalidation remains for unrelated source changes |
 | Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings | Full cross-layer paths and richer artifact coverage |
-| Confluence/XLSX | Offline Confluence export validation; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval | Approved-methodology rules and a documented live connector |
+| Confluence/XLSX | Content-bound offline Confluence approvals; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval; offline connection configuration | Live adapter and integration execution are deferred |
 
 No model client, MCP server or implicit build/network call is introduced by feature
 commands. Positive verdicts require the supported deterministic proof contracts;
@@ -380,3 +380,47 @@ for valid incomplete output. Workspace mode uses the same explicit manifest as
 prepare/validate/report; no undeclared checkout is substituted. Flyway/workspace/
 scoped proofs are implemented; selective reuse and targeted feature invalidation
 remain unfinished. See T003-S02/S07/S10 for the remaining integration.
+
+## Deferred Confluence connection configuration
+
+Live execution is deferred by the user. Configure the connection separately from
+an existing offline export in `kgmaker.json` or `.kgmaker/config.json`:
+
+```json
+{
+  "documentation": {
+    "confluence": {
+      "directory": "offline-export",
+      "connection": {
+        "enabled": false,
+        "host": "https://confluence.invalid/wiki",
+        "api": "cloud-v1",
+        "sandbox_space": "KGTEST",
+        "auth": {"kind": "bearer", "token_env": "CONFLUENCE_TOKEN"}
+      }
+    }
+  }
+}
+```
+
+`api` explicitly selects `cloud-v1`, `cloud-v2` or `server-v1`; this is a setting,
+not an assertion that the server supports it. Basic auth uses `kind: "basic"`
+and adds `username_env`. Configuration stores environment variable names only.
+The default is disabled. Even `enabled: true` does not connect: the current
+configuration command never executes an adapter.
+
+```bash
+kgmaker confluence config --root .
+kgmaker confluence config --root . --config-file settings.json
+```
+
+The command validates bounded JSON and reports `configured`, `enabled`,
+`auth_ready` and `live_status: "NOT_RUN"` without network, child processes or
+store writes. `auth_ready` means only that the named environment entries are
+non-empty; it does not establish valid credentials or remote authorization.
+An explicit missing/invalid file fails without fallback. The first connection
+subsection wins (`.kgmaker/config.json`, then `kgmaker.json`); unrelated settings
+are skipped and an explicit disabled connection remains authoritative. YAML
+export configuration continues to work for the existing offline export path;
+this new connection configuration supports JSON only. A live adapter and sandbox
+contract run remain deferred work, separate from existing fake boundary tests.
