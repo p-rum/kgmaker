@@ -23,8 +23,8 @@
       "spring": "annotation-source-v3",
       "jpa": "annotation-source-v4"
     },
-    "selection_key": "f3c25d355579f42c66eddddcdd198c6b28c5a6a08548760bc8825eecfb432e03",
-    "id": "7ad7d29c3f8bf1e315c37bb33ccd12f633cd1bc82eca73a08382435414a67010"
+    "selection_key": "c34cdedd8013aee6d49088e88e09deca9a77feaddc999839a363940144db09f6",
+    "id": "e0bf9327dedc06cae89af6d3b5a7328bc9396c4546c6a8b78aaffcedd34943d4"
   },
   "react": {
     "mode": "BUILD_IMPORT",
@@ -51,7 +51,7 @@
       "jpa": "annotation-source-v4"
     },
     "source_files": {},
-    "selection_key": "45a553ca0ac1f6e0a3682acdad87ceee304f9f1a6aea817f6444d527b7c3dcd9",
-    "id": "b789ac3eea9506ee8893b4e84186d65ef05dd76f63b886f87de207d354876df8"
+    "selection_key": "62655e21ed8d3eec92f4de39fd4da589991ba7b34cd8f441f9c525d57191e94c",
+    "id": "9b47541312a0f5d5b88c4a1c9e195b1bc6bec6c746c1c876444545541cc4db72"
   }
 }

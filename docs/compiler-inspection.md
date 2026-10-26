@@ -40,8 +40,37 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript projektové reference předává worker kompilátoru; úplná acceptance fixture
-s více projekty a re-exporty ještě chybí.
+TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
+rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
+projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
+`context.project.project_graph` v1 uchovává repo/config identity, reference,
+root files, effective options a source/reference content fingerprints, které se
+propagují po reference hranách. Symboly nesou `project_id`; stejnojmenné funkce
+v různých projektech se nesloučí. Starý single-project vstup zachovává tvar IDs;
+graph/store v1/v2/v3 a worker protocol v1 se nemění.
+Identita a deklarovaný typ source targetu pocházejí vždy z AST/TypeCheckeru jeho
+vlastnícího projektu, i když má consumer jiné compiler options. Call-site
+signature zůstává pohledem consumeru. Reference s nastavením
+`disableSourceOfProjectReferenceRedirect: true` jsou v tomto source-only
+inspection kontraktu odmítnuty diagnostikou `TS_PROJECT_REFERENCE_REDIRECT_DISABLED`
+před publikací; emitted declaration se nevydává za aktuální source target.
+Python porovnává úplné preflight/analyze mapy compiler input path → SHA-256,
+nejen obsah souborů známých před spuštěním. Nový či odebraný dependency vstup
+vrací STALE před publikací grafu. Konstrukce a provider replay sdílejí jeden
+selection-key helper: Kotlin backend/version patří pouze do JVM klíčů.
+Původní frontend klíče, staré záznamy bez klíče i dočasné TS klíče s dvěma
+irelevantními Kotlin None poli se při reinspection sloučí do jednoho slotu;
+neznámé opaque klíče a odlišné K1/K2 varianty se nepřejmenovávají.
+
+`tests/test_typescript_project_references.py` ověřuje dva konkrétní přeshraniční
+targety i při neexistujících/stale `.d.ts` výstupech, transitive input freshness
+bez worker procesu a chybějící/cyklickou/outside-root reference či nejednoznačné
+vlastnictví zdroje. Invalidní reference graph selže s cestou configu před zápisem
+store; nezvyšuje neúplný výsledek na COMPLETE. Celý T003-S08 zůstává PARTIAL:
+rozšířená paths/exclude acceptance, generics/callbacks a BE–FE value flow jsou
+samostatná zadání. Více repo rootů a diskový incremental compilation cache
+nejsou tímto kontraktem implementovány.
 
 Zvolený bytecode engine je přibalené ASM, nikoli SootUp. Pilot nepotřebuje jeho
 whole-program režim: deskriptory a instrukce zůstávají oddělené od source grafu,

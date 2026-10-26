@@ -179,3 +179,51 @@ Scoped semantic update/apply/validate a příkazem obnovený scan/check s diff c
 jsou ověřeny před předáním; durable implementation/test artifacts a implementační
 memory zachovávají průběh integrace. Jde pouze o lokální commit, parent publikuje
 a provede nezávislé review; implementační agent svůj PR nemerguje.
+
+## Integrace skutečného main po merge XLSX27 a TypeScript28
+
+Nová base `1091330b67a7ff67db329ffbbb2eaba162313b3f` obsahuje ověřené merge PR27
+a PR28. Spring compiler facts, namespace guards, runtime pravidla, actual testy
+a API locks zůstávají byte-identické s `8d506458377c9fe6382bae48be4d595c62f62758`.
+`inspection.py` nyní přesně odpovídá current main s jediným původním Spring
+blokem JVM-only v4; sdílený `_selection_key` a TS input closure z PR28 se nepřepisují
+starým lokálním digestem. Main TypeScript worker, provider, XLSX runtime/testy,
+Windows portable builders i všech sedm CI jobs jsou zachovány. Compiler job navíc
+stále explicitně připravuje Spring API a povinně spouští Spring i TS reference
+testy. Příchozí i Spring acceptance/capability sekce zůstávají v dokumentaci.
+
+Pure TS snapshot v `fixtures/spring-imports/typescript-contexts-v1.json` byl
+regenerován spuštěním **current main**, nikoli feature `context`: `git archive
+1091330b67a7ff67db329ffbbb2eaba162313b3f src` byl rozbalen do dočasného adresáře
+a samostatný Python proces s izolovaným `PYTHONPATH=<archive>/src` ověřil import
+`kgmaker.inspection` právě z této archivované baseline. Stejné empty graph a
+ordinary/React metadata jako v testu vytvořily nové baseline JSON. Změnily se pouze
+čtyři hodnoty key/ID; metadata jsou stejná. Celý výsledný context se pak porovnává
+s feature contextem: **2 PASS v 0.09 s**. Zachovává se tak PR28 oprava nepotřebných
+Kotlin None selector fields a zároveň pre-existing React metadata chování bez
+nesouvisející React opravy nebo nové TS migrace.
+
+Aktuální sémantické facts jsou převzaty z main: přesné čtyři concepts/osm edges,
+immutable prefix všech93 main episodes a všechny tři vlastní Spring episodes.
+README prepare/update citace zůstávají140/142. Nový lokální durable integration
+workflow eviduje skládání již reviewovaných změn; původní task není vydáván za
+nově schválený pouze kvůli posunu base. Scoped semantic update/apply/validate,
+memory capture, scan/check a diff check se provádí nad touto skutečnou base.
+
+Relevantní integrační testy používají stejný explicitní JDK21, Node/Kotlin PATH,
+M2 repo, mandatory API/K1/K2 flags a vlastní worker home jako předchozí příkaz,
+nový `--basetemp=/tmp/kgmaker-spring-ts-main-integration` a moduly
+`tests/test_spring_imports.py tests/test_spring_imports_context.py
+tests/test_worker_protocol.py tests/test_windows_install.py
+tests/test_typescript_project_references.py`. Stabilní full matrix se neopakuje,
+protože se skládají již schválené features a nemění se Spring source facts ani
+TS closure implementace. Lokální commit publikuje a nezávisle reviewuje parent.
+
+Výsledek tohoto kombinovaného příkazu: **54 PASS, 1 SKIP v 86.90 s**, exit0.
+Zahrnuje všech24 Spring/API/context případů, šestnáct TS project-reference a
+compatibility případů a protocol/prerequisite kontroly. Žádný Spring/API nebo
+TS worker případ není vydáván za SKIP/PASS bez toolchainu; jediný SKIP je native
+non-admin Windows smoke, který zde běží jen jako explicitní Windows CI gate.
+Byte assertions potvrzují výše popsané zachování obou reviewovaných implementací.
+Scoped semantic apply/validate, scan/check a diff check: **PASS**; aktuální main
+core facts a immutable historie jsou zachovány, doplněna je integrační paměť.
