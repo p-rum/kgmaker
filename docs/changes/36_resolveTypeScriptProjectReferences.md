@@ -98,6 +98,28 @@ signature assertion: **2 PASS / 29.39 s**. Finální scoped semantic update/appl
 validate, memory capture, scan/check a diff check prošly; žádná historie main
 nebyla přepsána starým branch snapshotem.
 
+### Integrace distribuovaných exporterů z main
+
+Po sloučení PR #22 je větev integrována s main
+`e656b8ef4c174d3d60600037d7c0d78fc514e39d`. TS worker, `inspection.py`, worker
+protocol i opravené TS acceptance testy jsou byte-identické s nezávisle
+schváleným `74baab337d1cbb3e1afcdaff8bb40d3b40a0f230`; `build_runner.py`
+odpovídá přesně novému main. Obě prepended stavové/acceptance sekce i celá
+sémantická historie exporterů jsou zachovány.
+
+`KGMAKER_REQUIRE_WORKERS=1 KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_typescript_project_references.py::test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg tests/test_typescript_project_references.py::test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation tests/test_exporter_distribution.py -k 'not installed_exporters'`:
+**10 PASS / 2 DESELECTED / 12.14 s** — dva skutečné TS repros a osm exporter
+negative/legacy kontraktů. Dvě installed real-build varianty jsou zde výslovně
+vynechány; nejsou nově tvrzeny jako PASS. Celá 302-testová strict sada výše
+zůstává důkazem předchozího main `3503309`, neopakovala se pouze kvůli nezávislé
+exporter integraci bez změny TS runtime.
+
+READMЕ sémantická provenance je znovu ověřena proti skutečným command bullets:
+`semantic prepare` na řádku 99 pro concept evidence, `semantic update --base REF`
+na řádku 101 pro README relationship evidence. Nejde pouze o kontrolu rozsahu
+řádků; cílové texty odpovídají evidenci. Scoped update/apply/validate,
+memory capture, command-generated scan/check, syntax a diff check: PASS.
+
 ## Hranice a zbývající práce
 
 W02 (paths/exclude), W03 (callback/generics), UI events a BE–FE value flow jsou

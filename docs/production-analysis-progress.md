@@ -15,6 +15,19 @@ main `3503309` (Maven/Gradle/druhé JDK mimo připravenou matici).
 T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
+## T003-S11-W02 — distribuce build exporterů (2026-10-26)
+
+VERIFIED_IN_SCOPE pro Linux, Maven3.9.9 / Gradle8.13 / Temurin21.0.6:
+wheel resources obsahují vlastní licenci a versioned hash descriptor.
+Explicitní build-plan/run ověřuje contents a export schema/identity před manifest
+publikací; původní graph store se nemění. Skutečné Maven i Gradle exporty z
+čistého instalovaného wheelu mimo checkout prošly v
+`tests/test_exporter_distribution.py`; přesné běhy viz
+[change note37](changes/37_packageBuildExporters.md).
+Legacy explicitní home/plány zachovávají dosavadní content binding. Windows,
+immutable publikace, úplná acceptance a benchmark matrix zůstávají otevřené;
+T003-S11 a T003-AC11 zůstávají PARTIAL.
+
 ## T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)
 
 VERIFIED_IN_SCOPE pro Linux / Python 3.12: resource package `kgmaker_workers`,

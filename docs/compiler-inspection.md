@@ -74,6 +74,37 @@ obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
 
+### Distribuce build exporteru
+
+T003-S11-W02 přidává `build/exporters.json` (schema/protocol 1) a `build/LICENSE`
+do resource package. Záznam obsahuje relativní cestu, SHA-256, očekávané exporter
+ID (`maven-session-2` / `gradle-composite-1`) a cestu licence. JAR obsahuje pouze
+projektový EventSpy; Maven/Gradle/JDK ani jejich závislosti se nedistribuují.
+Checksum zajišťuje vazbu obsahu, nikoli autenticitu vydavatele.
+
+`project build-plan` ověří dostupný descriptor a adapter bez spuštění procesu.
+Nový plán aditivně nese `exporter_contract`, který váže také descriptor a licenci;
+`build-run` odmítne změnu před vytvořením execution directory. Očekávané schema a
+exporter ID kontroluje před publikací BuildManifestu. Chyba nepublikuje silnější
+evidence a nemění graph store. Starý plán nebo explicitní legacy workers home bez
+descriptoru zachovává původní content-bound režim; nejde o nově ověřenou distribuci.
+
+```bash
+# Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:
+python workers/build/build.py --maven-home /path/to/apache-maven-3.9.9 --java-home /path/to/jdk21
+python -m pip wheel --no-deps --no-build-isolation --wheel-dir /tmp/kgmaker-dist .
+# V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:
+python -m pip install --no-index --no-deps /tmp/kgmaker-dist/kgmaker-0.1.0-py3-none-any.whl
+kgmaker project build-plan --root /path/to/maven-or-gradle-project --phase compile --output /tmp/plan.json
+kgmaker project build-run --plan /tmp/plan.json
+```
+
+`tests/test_exporter_distribution.py` skutečně sestaví sdist/wheel, instaluje jej
+offline mimo checkout a provede Maven i Gradle export; negativní varianty ověří
+hash/protocol mismatch bez mutace posledního grafu. Build aplikace se spouští
+výhradně explicitním `build-run`, ne během instalace, scan, hook nebo feature.
+Windows, immutable publikace a úplná release/benchmark matice zůstávají otevřené.
+
 ### Instalace mimo checkout
 
 Od T003-S11-W01 obsahuje wheel balíček `kgmaker_workers`. Jeho adresář má stejný
