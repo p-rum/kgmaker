@@ -2,16 +2,27 @@
 
 - Work package ID: `T003-S11-W01`
 - Milník: `T003-S11`
-- Revision: 1
+- Revision: 2
 - Datum: 2026-10-16
 - Stav: SPECIFICATION; tento soubor popisuje cílové chování, nikoli hotovou implementaci.
 - Baseline: pracovní větev nad `8ac80ca30f6f680539deb7fb3590519d3a5c1460`; před zahájením ověř aktuální cílovou větev a otevřené PR.
-- Závislosti: T003-S04-W05 a T003-S08-W03; průřezové požadavky `T003-R01–R10`.
+- Závislosti: existující verzovaný JVM/TypeScript worker protocol a již podporované worker artefakty v baseline; průřezové požadavky `T003-R01–R10`. Úplná release acceptance T003-S11 nadále vyžaduje T003-S04-W05 a T003-S08-W03.
 - Nadřazená acceptance: `T003-AC11`.
 
 ## Cíl
 
 Zabalit JVM/TypeScript workers pro čistou instalaci a explicitní workers home.
+
+### Odůvodnění revize 2 (2026-10-26)
+
+Původní pořadí vázalo samotnou distribuci také na budoucí golden corpus
+T003-S04-W05 a callback/generic resolution T003-S08-W03. Resolver a balení
+používají současný worker protocol a nepřidávají sémantické schopnosti těchto
+úkolů. Tento work package proto může samostatně distribuovat již podporovaný
+rozsah. AC01–AC04 se nemění a musí být ověřena skutečnou instalací obou workerů.
+Nejde o splnění ani zrušení uvedených budoucích úkolů: jejich specifikace,
+podporovaná matice a celkové acceptance/release gates T003 zůstávají v platnosti.
+T003-S11 i T003-AC11 zůstávají PARTIAL až do úplného ověření plánu.
 
 ## Rozsah a konkrétní kontrakty
 

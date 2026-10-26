@@ -1,5 +1,17 @@
 # Aktuální stav a zbývající práce
 
+## T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)
+
+VERIFIED_IN_SCOPE pro Linux / Python 3.12: resource package `kgmaker_workers`,
+sdist/wheel s předem připravenými volitelnými JVM/TS artefakty, deterministická
+precedence a chybová diagnostika bez fallbacku explicitní volby.
+`tests/test_worker_install.py`: 7 PASS s reálnou Java/TypeScript analýzou mimo
+checkout a core instalací bez JDK/Node nebo child procesů. Schema/protocol se
+nemění. [Change note 30](changes/30_packageWorkerResources.md) zaznamenává buildy
+a kontroly; compiler CI nyní vyžaduje také instalační acceptance.
+Celý T003-S11 zůstává PARTIAL; Windows, immutable publication, zbývající
+acceptance/benchmark matice a navazující T003/T004 nejsou tímto dokončeny.
+
 Audit baseline: 2026-10-15, PR #5 `6b5aea13c150a75858973dd2e08debf802ff29ed`,
 stacked nad PR #4 `a81def9dbc74fff3a5619cd02244be7f215f91cc`; main je
 `8ac80ca30f6f680539deb7fb3590519d3a5c1460`. Tato stránka popisuje kód této baseline,
@@ -166,3 +178,12 @@ mismatch/duplicate zůstává PARTIAL a invalidní kontrakt zachová poslední s
 Adresář se shodnými `.class`, ale rozdílným resource souborem je explicitně
 odmítnut jako unsupported kind a nevytvoří hranu.
 Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](changes/29_mapCrossRepoArtifacts.md). Integrovaný strict běh nad W01–W05: 242 PASS, 0 SKIP.
+
+## T005 — společný model pohledu (integrace 2026-10-26)
+
+T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
+Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
+T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
+Ověření modelu a integrace s aktuálním main je uvedeno v
+[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+work packages výše zůstávají beze změny.

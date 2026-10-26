@@ -14,7 +14,8 @@ jejich stav SPECIFICATION, runtime, schémata ani instrukce profilů.
 
 ## Ověření
 
-Na izolované větvi `fix/restore-planned-task-registry` nad `0c09028`:
+Na izolované větvi `fix/restore-planned-task-registry`, původně nad `0c09028`,
+integrované s `main` `3b7329284b376c83e20fe1a4ae3ea57a57131a90` (PR #11 a #18):
 
 - Jednorázová kontrola Pythonem (`pathlib`, `re`, `tomllib`, `subprocess`):
   **PASS** — 45 jedinečných hlavních Task ID T001–T045, 113 platných
@@ -23,19 +24,19 @@ Na izolované větvi `fix/restore-planned-task-registry` nad `0c09028`:
   jejich dependency graf. Obnovená sekce je přesně shodná s `e625014`;
   existující řádky T003/T045 jsou zachovány.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker scan`:
-  **PASS** po sémantické obnově — 268 souborů, 2124 deklarací/sekcí.
+  **PASS** po sémantické obnově — finální integrovaný snapshot (počty níže).
   Generovaný GRAPH.md je obnoven příkazem, bez ručních úprav.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker memory recall registry task T004 --limit 2`:
   **PASS** po scanu; nalezen registr a nadřazené zadání. Před scanem nebyl
   v čistém checkoutu čitelný machine index.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker semantic update --base HEAD~1`,
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker semantic update --base 3b7329284b376c83e20fe1a4ae3ea57a57131a90`,
   prázdný patch pro přesný update packet, `semantic apply` a `semantic validate`:
-  **PASS** — 40 concepts, 10199 relationships. Obnoveny jsou obsahové
-  fingerprinty souborů včetně stale README z baseline; původní pole nodes,
-  edges a episodes zůstávají přesně zachována. Žádné vazby nejsou přidány.
+  **PASS** — obsahové fingerprinty jsou obnoveny vůči aktuálnímu main; jeho
+  pole nodes, edges a episodes zůstávají přesně zachována. Žádné vazby
+  nejsou přidány; nové historie PR #11/#18 nejsou přepsány starým snapshotem.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker check`:
-  **PASS** — 268 souborů, 2392 uzlů, 14916 vztahů. První scan a validace
-  před obnovou korektně hlásily stale README evidence; finální kontroly prošly.
+  **PASS** — finální kontroly integrovaného snapshotu prošly. První scan
+  původní baseline před obnovou korektně hlásil stale README evidence.
 - `git diff --check`: **PASS**.
 
 Pytest, worker buildy a rendering: **NOT_RUN**, protože jde výhradně o
@@ -49,3 +50,10 @@ vymyšleny; soubory generovaného grafu nejsou ručně upraveny.
 `T-005_add-view-model.md` a T044 s jeho release gate závislostmi. Skutečnou
 implementaci, testy a sloučení jednotlivých úkolů nadále dokládají jejich
 samostatná PR. Tato dokumentační oprava je nepovažuje za implementované.
+
+## Oprava souvisejícího integračního stavu
+
+Řádek T005-AC06 v acceptance inventáři již po sloučení PR #11 nesprávně
+uváděl IN_PROGRESS. Je opraven na PASS s odkazem na existující finální
+ověření v change note 11; tato oprava registračního stavu nepřidává runtime
+capability ani netvrdí dokončení ostatních úkolů T004.

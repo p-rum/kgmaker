@@ -48,6 +48,11 @@ classify --root . --explain --format json`, `kgmaker graph rank --profile execut
 architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
+The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
+deterministic JSON envelope for future high-level interface, topology and process
+projections. It does not discover or render those views; the existing CLI is
+unchanged. See [architecture](docs/architecture.md) and the [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+
 ```text
 kgmaker init [--root PATH] [--force]
 kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
@@ -138,11 +143,27 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 ## Development
 
 ```bash
-python -m pip install -e . pytest==8.3.4
+python -m pip install -e . pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
 python -m pytest -q
 ```
 
-The Python core is intentionally dependency-free at runtime. The development suite requires pytest; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+
+Wheels include trusted worker scripts and pinned build inputs in the
+`kgmaker_workers` resource package. A source-only installation works without
+JDK/Node. Optional JVM JARs/libraries and the pinned TypeScript installation are
+included only when explicitly prepared before building the wheel; installation
+never downloads or builds them. See [worker distribution](docs/compiler-inspection.md#instalace-mimo-checkout)
+for the supported layout and build steps. Inspection resolves `--worker-home`
+first, then `KGMAKER_WORKERS_HOME`, then installed resources (or the source
+checkout when running directly with `PYTHONPATH=src`). An unavailable explicit
+selection fails with `TOOLCHAIN_UNAVAILABLE` and leaves the last graph intact.
+
+```bash
+python -m pip install --no-deps /path/to/kgmaker-0.1.0-py3-none-any.whl
+kgmaker scan --root /path/to/project
+kgmaker inspect frontend --root /path/to/project --worker-home /path/to/trusted/workers
+```
 
 ## Feature feasibility analysis (foundation)
 
