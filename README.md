@@ -82,6 +82,28 @@ selection = select_service_contexts(
 The function is imported from `kgmaker.views`; the snippet shows the library
 contract and does not add a `kgmaker` CLI command.
 
+`views.project_service_inventory` builds a service-only `topology` document from
+explicit workspace ownership and the matching provider snapshot. Stable node IDs
+come from declared service IDs; `service_labels` changes display text only.
+Only services with provider contexts in the selected scope enter the inventory.
+Declared external systems remain visible without a local checkout, while their
+implementation and endpoints remain `UNKNOWN`. Source-only evidence stays
+`PARTIAL` and does not prove module completeness or deployment.
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.views import project_service_inventory
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, provider_graph, _ = snapshot_workspace(manifest)
+inventory = project_service_inventory(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+    service_labels={"orders": "Orders API"},
+)
+```
+
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;

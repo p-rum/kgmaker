@@ -147,6 +147,21 @@ multiple matches are `AMBIGUOUS`, and no match is `UNASSIGNED`. Existing
 module, or Spring `@Service` annotation alone does not establish ownership.
 Repo-qualified compiler context IDs and workspace `@repo/path` symbols are checked
 against the same repository ID before matching roots or module IDs.
+
+`views.project_service_inventory` composes that ownership declaration with the
+selected provider contexts as a service-only `ViewDocument` of kind `topology`.
+Service IDs come from the manifest; display labels are not identity. Production
+excludes contexts classified as test/development, and unclassified scope is not
+promoted into production. Source-only matches remain `PARTIAL` with module coverage
+`UNKNOWN`. SOURCE_ONLY repository contexts resolve roots only from qualified source
+artifacts and file nodes in the same repository and exact scope in the supplied
+provider snapshot; production and test roots in one checkout remain separate. They
+retain no module
+identity and remain `PARTIAL`. Only explicitly declared external-system IDs are
+projected; their checkout, internal implementation and endpoints remain `UNKNOWN`. The projection
+uses T007 ownership and T006 context selection, does not infer service boundaries
+from repository names, configuration or framework beans, and does not persist a
+parallel catalog. No CLI subcommand is added.
 `views.select_service_contexts(graph, requests, scope=...)` projects explicit
 service/repo/module selections onto compiler contexts already present in a graph.
 Requests may pin `context_id`; a module with multiple profiles requires that
