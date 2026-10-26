@@ -124,3 +124,14 @@ zůstává 5 konceptů/9 vztahů a README citace jsou na řádcích 162/164.
 `semantic validate`, generovaný scan/check a `git diff --check`: PASS; graph má
 305 souborů, 2,909 uzlů a 19,188 vztahů. Celá sada se kvůli této čisté integraci
 neopakovala.
+
+### Integrace bounded Spring imports
+
+Po integraci main `4113a7975451a8313321fd521252485c959908e3` zůstává funkce
+`project_service_inventory` a její T008 fixture zachovaná; `views.project` navíc
+obsahuje mainline konfiguraci pro nové Spring import edges. Merged K1/K2 workery
+byly explicitně postaveny z připnutých lokálních compiler/API vstupů
+(K1 SHA-256 `1c9dd4585c05de861d127dd9a87b667ea7dcacc737683c8447e1ff4b9392fa6a`,
+K2 SHA-256 `257b3121e1ce607af294de56e0ca52e82d1ae37c9eec7c861cdc3f8a7566f52f`).
+Sada T005–T008/workspace a actual Spring selector/import fixtures s připnutými
+Spring 6.2.2 JARy: **89 passed**, bez skipů. Full suite nebyla opakována.
