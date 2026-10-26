@@ -50,6 +50,7 @@ def test_property_alias_prefix_all_names_and_case_insensitive_value():
     assert evaluate(PROPERTY, {**args, "value": ["other"]}, {"spring_properties": {}}) == "UNKNOWN"
     assert evaluate(PROPERTY, {"name": ["absent"], "matchIfMissing": True}, {"spring_properties": {}}) == "ACTIVE"
     assert evaluate(PROPERTY, {"name": ["absent"], "matchIfMissing": "true"}, {"spring_properties": {}}) == "UNKNOWN"
+    assert evaluate(PROPERTY, {"name": ["x"], "havingValue": "ss"}, {"spring_properties": {"x": "ß"}}) == "UNKNOWN"
 
 
 def test_all_class_names_required_and_missing_inventory_unknown():
@@ -57,6 +58,19 @@ def test_all_class_names_required_and_missing_inventory_unknown():
     assert evaluate(CLASS, args, {"spring_available_classes": ["java.lang.String", "fixture.Optional"]}) == "ACTIVE"
     assert evaluate(CLASS, args, {"spring_available_classes": ["java.lang.String"]}) == "INACTIVE"
     assert evaluate(CLASS, args, {}) == "UNKNOWN"
+
+
+@pytest.mark.parametrize("condition", [CLASS, "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass"])
+def test_unresolved_compiler_class_literal_never_proves_presence_or_absence(condition):
+    assert evaluate(condition, {"value": ["UNRESOLVED_CLASS_LITERAL"]}, {"spring_available_classes": []}) == "UNKNOWN"
+
+
+def test_missing_class_condition_requires_explicit_inventory_and_all_absent():
+    missing = "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass"
+    args = {"value": ["fixture.One", "fixture.Two"]}
+    assert evaluate(missing, args, {"spring_available_classes": []}) == "ACTIVE"
+    assert evaluate(missing, args, {"spring_available_classes": ["fixture.One"]}) == "INACTIVE"
+    assert evaluate(missing, args, {}) == "UNKNOWN"
 
 
 def test_unresolved_and_foreign_conditions_never_gain_activation():
@@ -173,3 +187,64 @@ def test_actual_pinned_conditions_and_negated_profile_injection(actual_condition
                for e in graph["edges"])
     assert all(n["metadata"]["condition_reasons"] for name, n in beans.items() if name in expected)
     assert not (root / ".kgmaker/graph.json").exists()
+
+
+def test_actual_variant_input_and_classpath_freshness_are_isolated(actual_conditions, tmp_path_factory):
+    import copy
+    root, options = actual_conditions
+    external = tmp_path_factory.mktemp("explicit-condition-inputs")
+    configs = [external / "qa.json", external / "prod.json"]
+    for path in configs:
+        path.write_text('{"enabled":"true"}')
+    extra = external / "qa-only.jar"
+    with zipfile.ZipFile(extra, "w") as jar:
+        jar.writestr("input.txt", "version one")
+    contexts = []
+    for index, profile in enumerate(["qa", "prod"]):
+        args = {**options, "publish": True}
+        args["classpath"] = options["classpath"] + ([str(extra)] if index == 0 else [])
+        result = inspect_jvm(root, **args, build_context={"spring_profiles": [profile],
+            "spring_properties": {"enabled": "true"}, "spring_available_classes": [],
+            "spring_component_packages": ["fixture"],
+            "project": {"input_files": [{"path": str(configs[index]),
+                        "sha256": hashlib.sha256(configs[index].read_bytes()).hexdigest()}]}})
+        contexts.append(result["context"])
+    assert contexts[0]["id"] != contexts[1]["id"]
+    frozen_other = copy.deepcopy(contexts[1])
+    store = root / ".kgmaker/graph.json"
+    before = store.read_bytes()
+    with patch("subprocess.Popen", side_effect=AssertionError("offline freshness started a process")):
+        for context in contexts:
+            validate_context_snapshot(root, context)
+        configs[0].write_text('{"enabled":"false"}')
+        with pytest.raises(WorkerError, match="project input"):
+            validate_context_snapshot(root, contexts[0])
+        validate_context_snapshot(root, contexts[1])
+        # Restore only the explicit config input, then independently change A's
+        # classpath bytes. B never captured either A-only input.
+        configs[0].write_text('{"enabled":"true"}')
+        with zipfile.ZipFile(extra, "w") as jar:
+            jar.writestr("input.txt", "version two")
+        with pytest.raises(WorkerError, match="STALE_INDEX: classpath") as caught:
+            validate_context_snapshot(root, contexts[0])
+        assert caught.value.status == "STALE"
+        validate_context_snapshot(root, contexts[1])
+    assert contexts[1] == frozen_other
+    assert store.read_bytes() == before
+
+
+@pytest.mark.parametrize("wrong_bytes", [False, True])
+def test_required_pinned_apis_missing_or_changed_fail_before_process(tmp_path, monkeypatch, wrong_bytes):
+    from types import SimpleNamespace
+    monkeypatch.setenv("KGMAKER_REQUIRE_SPRING_CONDITIONS", "1")
+    monkeypatch.setenv("KGMAKER_TEST_MAVEN_REPOSITORY", str(tmp_path))
+    if wrong_bytes:
+        lock = json.loads((Path(__file__).resolve().parents[1] / "fixtures/spring-conditions/dependencies.lock.json").read_text())
+        target = tmp_path / lock["artifacts"][0]["path"]
+        target.parent.mkdir(parents=True)
+        target.write_bytes(b"wrong dependency")
+    monkeypatch.setattr(__import__(__name__), "command", lambda *args, **kwargs: ["not executed"])
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        with pytest.raises(pytest.fail.Exception, match="pinned Spring6.2.2/Boot3.4.2"):
+            actual_conditions.__wrapped__(SimpleNamespace(param="k1"), tmp_path / "untouched")
+    assert not (tmp_path / "untouched").exists()

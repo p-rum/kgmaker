@@ -406,3 +406,16 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+## T003-S05-W03 — typed profile/property/class conditions
+
+Implemented bounded JVM Spring v6 typed conditions: profile arrays/expressions,
+property alias/prefix/multiple-name semantics and genuine boolean missing policy,
+exact declared class inventories and conservative unsupported/custom boundaries.
+Injection uses the computed condition state. Explicit variant inputs/classpath
+are checked per context and the snapshot is tamper-bound; prior-rule contexts
+require reinspection without changing graph schema. Actual pinned API results
+and final full-suite evidence are recorded in
+[change note50](changes/50_expandSpringConditions.md). Runtime condition execution,
+custom defaults, Unicode case equivalence and unsupported dynamic expressions
+remain outside this bounded proof; T003-S05 stays PARTIAL.

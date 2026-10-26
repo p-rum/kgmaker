@@ -24,9 +24,22 @@ class AnnotationArguments(str):
         value.resolved = resolved
         return value
 
+    def __getnewargs__(self):
+        return str(self), self.members, self.resolved
+
 
 def condition_inputs(context):
     return {key: context.get(key) for key in KEYS}
+
+
+def _ignore_case(actual, expected):
+    if actual == expected:
+        return True
+    # Python casefold expands characters (ß -> ss); Spring's Java comparison
+    # does not. Keep unsupported Unicode case equivalence explicitly unknown.
+    if not actual.isascii() or not expected.isascii():
+        raise ValueError("non-ASCII case-insensitive property comparison unsupported")
+    return actual.lower() == expected.lower()
 
 
 def _strings(value):
@@ -128,11 +141,12 @@ def _evaluate(name, members, context):
             actual = properties[key]
             if not isinstance(actual, str) or "${" in actual or "${" in expected:
                 raise ValueError("property value unresolved or not a literal string")
-            results.append(actual.casefold() != "false" if expected == "" else actual.casefold() == expected.casefold())
+            results.append(not _ignore_case(actual, "false") if expected == "" else _ignore_case(actual, expected))
         return all(results), "all explicit property keys must match: " + ", ".join(prefix + x for x in names)
 
     required = _strings(members.get("value", [])) + _strings(members.get("name", []))
-    if not required or any(not re.fullmatch(r"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*", x) for x in required):
+    if not required or any(x == "UNRESOLVED_CLASS_LITERAL" or
+            not re.fullmatch(r"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*", x) for x in required):
         raise ValueError("required class identities unavailable or unsupported")
     inventory = context.get("spring_available_classes")
     if not isinstance(inventory, list) or any(not isinstance(x, str) or not x for x in inventory):

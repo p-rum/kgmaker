@@ -268,7 +268,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v6 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -619,3 +619,63 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## T003-S05-W03 — typed condition matrix
+
+The JVM v6 evaluator preserves compiler member types alongside legacy annotation
+display strings. `@Profile` accepts a nonempty string array (OR); expressions
+support `!`, `&`, `|`, parentheses, at most256 tokens/64 nesting levels. Mixed
+`&`/`|` require parentheses, as in Spring. Explicit empty active profiles use
+Spring's ordinary `default` profile; custom default-profile configuration is
+outside this subset. Missing or malformed active-profile snapshots are UNKNOWN.
+
+`ConditionalOnProperty` accepts agreeing `value`/`name` aliases, an optional
+trimmed dot-delimited prefix, all property names (AND), a string `havingValue`
+and a genuine boolean `matchIfMissing`. Context property values must be literal
+strings: default matching accepts any string except case-insensitive false,
+including empty/other text. Case comparison supports ASCII and exact literal
+equality; unsupported non-ASCII case equivalence remains UNKNOWN rather than
+using Python's expanding casefold. Unresolved placeholders, collections and
+malformed members remain UNKNOWN.
+
+`ConditionalOnClass` requires all explicit `value` class literals and `name`
+strings to occur in `spring_available_classes`; `ConditionalOnMissingClass`
+requires all to be absent. An explicit empty inventory means absent; omitted
+inventory means UNKNOWN. Matching uses complete identities without simple-name
+inference. Unresolved compiler class literals stay UNKNOWN in both directions.
+This inventory is a declared selected-context snapshot, not a runtime probe.
+Custom/unsupported Boot conditions stay UNKNOWN and are never executed.
+
+Class, method, imported-configuration and component-scan reachability remain in
+the existing framework projection. INACTIVE dominates UNKNOWN across conditions;
+UNKNOWN dominates ACTIVE. A second raw-profile injection filter is removed, so
+proven negated/OR profiles retain their computed state. Evidence stays
+FRAMEWORK_DERIVED and retains source/compiler/context provenance; no bean runs.
+
+An explicit Python API example (the existing inspection CLI is unchanged):
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+result = inspect_jvm(Path("app"), classpath=["/prepared/api.jar"], publish=False,
+    build_context={"spring_profiles": ["qa"],
+        "spring_properties": {"feature.enabled": "true"},
+        "spring_available_classes": ["java.lang.String"],
+        "spring_component_packages": ["example"]})
+```
+
+Context IDs bind the input snapshot; offline validation detects tampering and
+requires reinspection for older Spring rule versions. Graph v1/v2/v3 remains
+readable; old framework facts are not silently promoted to current rules.
+Explicit variant-specific `project.input_files` and captured classpath hashes
+are checked per context, without narrowing shared build/source inputs. A change
+to one variant's external config/JAR leaves another untouched context fresh and
+the stored graph unchanged. No configuration loader, installation or build is
+implicit in the evaluator or offline freshness path.
+
+Actual API inputs: `fixtures/spring-conditions`, Spring6.2.2/Boot3.4.2, pinned
+hashes/licenses; preparation is an explicit Maven command. Required CI uses
+`KGMAKER_REQUIRE_SPRING_CONDITIONS=1` and runs the real K1/K2 fixture. Local
+missing tools/APIs are SKIP unless required. See
+[change note50](changes/50_expandSpringConditions.md) for final test results and
+remaining unsupported cases; this does not complete all of T003-S05.

@@ -391,3 +391,12 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+## T003-S05-W03 — condition matrix
+
+| AC | Test and supported proof |
+|---|---|
+| AC01 | `test_actual_pinned_conditions_and_negated_profile_injection`; `test_actual_variant_input_and_classpath_freshness_are_isolated`: labelled real annotations, explicit variant inputs, independently stale config/JAR with unchanged second context/store |
+| AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
+| AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
+| AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
