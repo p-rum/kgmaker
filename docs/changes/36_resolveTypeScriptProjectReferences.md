@@ -268,3 +268,16 @@ změny; scoped memory se pouze připojí. Zachovány jsou čtyři koncepty/osm f
 README semantic prepare/update citace odpovídají skutečným řádkům **140/142**.
 Scoped semantic update/apply/validate, memory capture a generovaný scan/check:
 PASS. Žádné nové runtime/data availability tvrzení z tohoto merge nevzniká.
+
+### Stabilizace procfs kontroly ukončeného potomka
+
+Aktuální CI40364766613 prošlo všemi Python/render/Gradle/Windows gates, ale
+compiler job selhal v inherited-pipe testu při čtení již odstraněného
+`/proc/<pid>/stat`: Linux v tomto závodě může vrátit `ProcessLookupError`
+(ESRCH), vedle dosud ošetřeného `FileNotFoundError`. Oba výsledky potvrzují,
+že sledovaný potomek už neexistuje. Test nově uznává i ESRCH; skutečné timeout,
+cancel, reaping, uzavření streams, počet FD/vláken, časový limit i nezměněný
+store se kontrolují stejně. Runtime transport ani TS implementace se nemění.
+`python -m pytest -q tests/test_worker_protocol.py`: **11 PASS / 1.75 s**;
+scoped semantic apply/validate a generovaný scan/check: PASS. Nový HEAD musí
+znovu projít všemi sedmi CI jobs; předchozí červený běh není release důkaz.
