@@ -157,3 +157,13 @@ proběhly. Schválená full-suite evidence 350 PASS / 25 SKIP náleží kandidá
 a kvůli této integraci beze změny XLSX runtime se neopakuje ani nepřejmenovává.
 Scoped semantic update/apply/validate, scan/check a diff check jsou zopakovány
 před lokálním merge commitem. Žádný push ani remote write se neprovádí.
+
+### Integrace K2 základu
+
+Base `eff0d3d5d7620b017fe42a65a54f672af8068667` zahrnuje schválený K2 backend,
+deterministické JAR fixture a vyloučení jeho build výstupu ze source scanu.
+XLSX runtime a testy zůstávají byte-identické s `fc3fd67`. Relevantní sada
+workbooks/XLSX/scanner/Confluence/context-selection/ownership: **106 PASS / 0.66 s**.
+Scoped semantic apply/validate: PASS, zachovány 4 koncepty/8 vztahů, původní
+main historie jako prefix a vlastní epizody. README citace prepare/update
+zůstávají 134/136. Generovaný scan/check a diff: PASS.

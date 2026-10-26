@@ -28,6 +28,12 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
  * coroutine state-machine ordering as a replacement for source control flow.
  */
 class KotlinFrontend(private val state: State) {
+    companion object {
+        const val backend = "k1-compat-1"
+        const val compiler = "kotlin-2.1.10-k1"
+        val capabilities = listOf("kotlin-1.9-compatible-attribution")
+        val limitations = listOf("Kotlin frontend is the verified K1 language-1.9 compatibility subset, not full K2 Analysis API.")
+    }
     private lateinit var binding: BindingContext
     private lateinit var mapper: KotlinTypeMapper
     private val calls = java.util.IdentityHashMap<PsiElement,String>()
