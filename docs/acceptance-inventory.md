@@ -1,13 +1,13 @@
 # Inventář acceptance T001 a T002
 
-## T003-S08-W02 — selected config freshness (finální validace pending)
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
 
 | ID | Stav | Evidence |
 |---|---|---|
-| T003-S08-W02-AC01 | CANDIDATE / FINAL_VALIDATION_PENDING | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
-| T003-S08-W02-AC02 | CANDIDATE / FINAL_VALIDATION_PENDING | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
-| T003-S08-W02-AC03 | CANDIDATE / FINAL_VALIDATION_PENDING | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
-| T003-S08-W02-AC04 | IN_PROGRESS | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) oddělují completed focused checks od dosud pending final focus/full |
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
 
 
 ## T003-S08-W01 — project references
