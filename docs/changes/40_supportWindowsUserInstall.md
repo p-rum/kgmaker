@@ -30,7 +30,7 @@ cesta se netváří jako podporovaná: build-plan/run na Windows nyní vrací
 UNSUPPORTED_PLATFORM s BUILD_IMPORT next step před procesem nebo mutací run/store.
 Nejde o přidání Windows Maven/Gradle execution podpory ani o nový graph store.
 
-## Skutečný Windows CI gate (dosud nespouštěn)
+## Skutečný Windows CI gate (původní kandidát před opravou harnessu)
 
 Nový `windows-user-install` job používá windows-latest/Python3.12/Temurin21.0.6/
 Node24.19.0. `runas /trustlevel:0x20000` spustí skutečný Windows SAFER normal-user
@@ -132,3 +132,28 @@ Po integraci main a cleanup opravě strict own-worker celá Linux sada:
 **356 PASS / 10 SKIP**, 101.74s. Příkaz je shodný s výše uvedeným strict
 příkazem; Windows gate zůstává mezi SKIP. Poslední zpřesnění FD/descendant
 assertions prošlo samostatně v devíti transport testech (1.84s).
+
+## Skutečný Windows CI: selhání launcheru a oprava
+
+Run `40343225493`, job `121643195548` na Windows Server2025 skončil FAILED
+před smoke: `runas /trustlevel` vrátil nonzero, nevznikl transcript ani result.
+Původní harness nevypsal číselný exit code ani runas diagnostiku; přesná příčina
+proto z tohoto logu není doložitelná. Tento výsledek není Windows acceptance.
+
+Harness nyní používá dokumentované `CreateRestrictedToken` a
+`CreateProcessAsUserW` místo konzolového runas. Vlastní primary token má
+DISABLE_MAX_PRIVILEGE a Administrators SID deny-only; žádný elevated fallback.
+Child se spustí suspended, připojí k Job Object, pak pokračuje. Launcher
+čeká na skutečný exit (nejvýše15min), vlastní celý strom a zavírá token/process/
+thread handles i při setup chybě. Win32 API errors, PID a číselný exit code
+jdou do `restricted-launcher.log`; transcript a result pocházejí ze smoke.
+PowerShell i skutečný Python smoke stále nezávisle vyžadují false admin
+membership a paths with spaces. Chybějící result nebo failed launcher je FAIL.
+Windows zůstává PENDING do nového skutečného CI běhu.
+
+Lokálně po opravě harnessu: Python compile a workflow YAML parse PASS; oba
+PowerShell skripty projdou parserem PowerShell7.4.6 na Linuxu (syntax only).
+Transport/prerequisite regrese **12 PASS / 1 Windows SKIP**. Přímý pokus
+spustit restricted launcher na Linuxu správně vrací exit1 s explicitním
+`requires actual Windows`; nejde o emulovaný Windows PASS. Produkční transport
+se od strict356PASS baseline nemění, proto se drahý celý suite neopakuje.

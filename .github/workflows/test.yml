@@ -30,19 +30,18 @@ jobs:
           $python = (Get-Command python.exe).Source
           $powershell = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
           $script = Join-Path $source 'tests/windows/no_admin_smoke.ps1'
-          $command = '"{0}" -NoProfile -ExecutionPolicy Bypass -File "{1}" -Python "{2}" -WorkRoot "{3}"' -f $powershell, $script, $python, $space
-          # SAFER normal-user token disables administrator membership. The child
-          # and Python smoke both verify this; an elevated run cannot report PASS.
-          & runas.exe /trustlevel:0x20000 $command
-          if ($LASTEXITCODE -ne 0) { throw 'Unable to launch restricted Windows smoke' }
+          $launcher = Join-Path $source 'tests/windows/restricted_launcher.py'
+          $launcherLog = Join-Path $space 'restricted-launcher.log'
+          # Documented restricted-token APIs need no interactive runas console.
+          # The child independently rejects enabled administrator membership.
+          & $python $launcher --root $space -- $powershell -NoProfile -ExecutionPolicy Bypass -File $script -Python $python -WorkRoot $space 2>&1 | Tee-Object -FilePath $launcherLog
+          $launcherExit = $LASTEXITCODE
+          Write-Output "Restricted launcher exit code: $launcherExit"
           $resultPath = Join-Path $space 'result.json'
-          $deadline = [DateTime]::UtcNow.AddMinutes(15)
-          while (-not (Test-Path -LiteralPath $resultPath)) {
-              if ([DateTime]::UtcNow -gt $deadline) { throw 'Restricted Windows smoke timed out' }
-              Start-Sleep -Seconds 2
-          }
           $logPath = Join-Path $space 'restricted-smoke.log'
           if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath }
+          if ($launcherExit -ne 0) { throw "Restricted launcher failed (exit $launcherExit); see launcher/transcript logs" }
+          if (-not (Test-Path -LiteralPath $resultPath)) { throw 'Restricted child produced no result marker' }
           $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
           if ($result.exit_code -ne 0 -or $result.is_admin) { throw $result.message }
       - uses: actions/upload-artifact@v4

@@ -53,8 +53,9 @@ nespouštějí project build, package installation, migrace nebo aplikaci.
 ## Skutečný Windows gate
 
 Job `windows-user-install` na `windows-latest` spouští
-`tests/windows/no_admin_smoke.ps1` pomocí Windows SAFER normal-user tokenu
-(`runas /trustlevel:0x20000`). PowerShell i Python smoke samostatně ověřují, že
+`tests/windows/no_admin_smoke.ps1` pomocí vlastního restricted primary tokenu
+(`CreateRestrictedToken` s vypnutými privilegii a Administrators deny-only,
+`CreateProcessAsUserW`; launcher nepotřebuje interaktivní runas konzoli). PowerShell i Python smoke samostatně ověřují, že
 proces nemá administrator membership; elevated proces nemůže projít jako PASS.
 CI bootstrap poskytne pinned runtimy z tool cache, ale explicitní příprava
 workerů, venv/wheel instalace a smoke proběhnou až pod omezeným tokenem.
