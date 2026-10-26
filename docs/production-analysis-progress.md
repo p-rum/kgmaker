@@ -1,5 +1,17 @@
 # Aktuální stav a zbývající práce
 
+## T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)
+
+VERIFIED_IN_SCOPE pro Linux / Python 3.12: resource package `kgmaker_workers`,
+sdist/wheel s předem připravenými volitelnými JVM/TS artefakty, deterministická
+precedence a chybová diagnostika bez fallbacku explicitní volby.
+`tests/test_worker_install.py`: 7 PASS s reálnou Java/TypeScript analýzou mimo
+checkout a core instalací bez JDK/Node nebo child procesů. Schema/protocol se
+nemění. [Change note 30](changes/30_packageWorkerResources.md) zaznamenává buildy
+a kontroly; compiler CI nyní vyžaduje také instalační acceptance.
+Celý T003-S11 zůstává PARTIAL; Windows, immutable publication, zbývající
+acceptance/benchmark matice a navazující T003/T004 nejsou tímto dokončeny.
+
 Audit baseline: 2026-10-15, PR #5 `6b5aea13c150a75858973dd2e08debf802ff29ed`,
 stacked nad PR #4 `a81def9dbc74fff3a5619cd02244be7f215f91cc`; main je
 `8ac80ca30f6f680539deb7fb3590519d3a5c1460`. Tato stránka popisuje kód této baseline,

@@ -1,5 +1,14 @@
 # Inventář acceptance T001 a T002
 
+## Doplnění T003-S11-W01 (2026-10-26)
+
+| ID | Stav | Podporovaný rozsah a přímá evidence | Běh |
+|---|---|---|---|
+| T003-S11-W01-AC01 | VERIFIED_IN_SCOPE | `test_worker_install.py`: skutečné sdist/wheel → offline venv mimo checkout, JVM/TS compiler analýza; SOURCE_ONLY bez JDK/Node a child procesů; explicitní/env/resource precedence | 7 PASS, Python 3.12/Linux |
+| T003-S11-W01-AC02 | VERIFIED_IN_SCOPE | Stejný graph/store/protocol; instalovaný scan/save/load, existující store a compiler regression tests | Bez schema migrace |
+| T003-S11-W01-AC03 | VERIFIED_IN_SCOPE | Missing distribution a ambiguous JVM JAR nevyvolají proces ani nepřepíší poslední graf; žádný automatický fallback explicitní volby | 7 PASS |
+| T003-S11-W01-AC04 | VERIFIED_IN_SCOPE | [Stavová matice](production-analysis-progress.md) a [change note 30](changes/30_packageWorkerResources.md) uvádějí konkrétní běhy a omezení | T003-AC11 nadále PARTIAL |
+
 ## T005 — model high-level pohledu
 
 | Acceptance | Stav | Přímý test | Výsledek |
