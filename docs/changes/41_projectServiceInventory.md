@@ -19,8 +19,7 @@ hodnoty nebo Spring bean anotace.
   Dependency/bytecode symbol bez lokální cesty v source snapshotu ownership
   nezíská. T006 vybírá compiler kontext, vrací nejednoznačnost a validuje freshness.
 - Production pohled vynechá test/development/unknown scope. SOURCE_ONLY zůstává
-  PARTIAL a module coverage UNKNOWN. Neznámé/stale/ambiguous hranice a provider
-  truncation zůstanou diagnostikou nebo coverage.
+  PARTIAL a module coverage UNKNOWN. U skutečného `snapshot_workspace` SOURCE_ONLY výstupu se repo-qualified artifacty a odpovídající provider source nodes porovnají s explicitními T007 roots; service zůstává PARTIAL bez odvozeného module ID. Test ověřuje vyloučení test fixture, zachování external ledger jako UNKNOWN bez endpointů a nulovou mutaci. Neznámé/stale/ambiguous hranice a provider truncation zůstanou diagnostikou nebo coverage.
 - Externí systém se zobrazí jen podle explicitního T007 ID, i když nemá checkout.
   Jeho interní implementace, endpointy a runtime zůstávají UNKNOWN; vzniká jen
   deklarativní vztah service → external system.
@@ -38,14 +37,14 @@ CLI command ani persistent katalog.
 
 ## Ověření
 
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t008_project_service_inventory.py` — **10 passed**.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t008_project_service_inventory.py tests/test_t007_define_service_ownership.py tests/test_t006_select_service_contexts.py tests/test_workspace.py tests/test_t005_add_view_model.py tests/test_cross_repo_artifacts.py` — **81 passed**.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q -rs` — **318 passed, 25 skipped**. Skips: Maven/JDK exporter, two JDK 21+ with Maven, 14 prepared Maven fixtures, real Maven/Gradle exporters, Gradle 8.13, Kotlin Gradle cache, JVM worker and TypeScript worker. They remain SKIP/BLOCKED, not PASS.
-- Alias fixture starts with a default `repo_id="local"` compiler context and symbol, wraps it with `snapshot_workspace` under `backend`, then verifies exact qualified context selection and symbol enrichment. Dependency symbol without a matching source snapshot path is not emitted in the service inventory.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t008_project_service_inventory.py` — **11 passed**.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t008_project_service_inventory.py tests/test_t007_define_service_ownership.py tests/test_t006_select_service_contexts.py tests/test_workspace.py tests/test_t005_add_view_model.py tests/test_cross_repo_artifacts.py` — **82 passed**.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q -rs` — **319 passed, 25 skipped**. Skips: Maven/JDK exporter, two JDK 21+ with Maven, 14 prepared Maven fixtures, real Maven/Gradle exporters, Gradle 8.13, Kotlin Gradle cache, JVM worker and TypeScript worker. They remain SKIP/BLOCKED, not PASS.
+- Alias fixture starts with a default `repo_id="local"` compiler context and symbol, wraps it with `snapshot_workspace` under `backend`, then verifies exact qualified context selection and symbol enrichment. Dependency symbol without a matching source snapshot path is not emitted in the service inventory. An additional real `snapshot_workspace` with no compiler index verifies root-only SOURCE_ONLY inventory, production scope filtering, PARTIAL status, UNKNOWN module coverage and external declaration preservation.
 - Invalid snapshot regression compares the manifest, source file, workspace object and provider graph before/after failure. Offline projection test rejects any subprocess call.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/kgmaker semantic update --root . --base origin/main --note docs/changes/41_projectServiceInventory.md`, scoped `semantic apply` and `semantic validate` — PASS; 71 concepts and 11,443 relationships.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/kgmaker scan --root .` — PASS; 288 files, 2,349 declarations/sections and 16,677 relationships. `kgmaker check --root .` — PASS; generated docs current at 288 files, 2,637 nodes and 16,677 relationships. `git diff --check` — PASS.
-- `kgmaker memory recall --root . T008 explicit service inventory selected workspace contexts ownership limitations verification --token-budget 500` — PASS. `kgmaker memory capture --root . --base origin/main` with focused/full/toolchain/semantic/scan/check/diff validation labels — PASS; episode `episode:eafb3d3fc2a0410ed21c8994a94a6747fbd1d5f6ea679a2da9a8985590d43252`.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/kgmaker semantic update --root . --base origin/main --note docs/changes/41_projectServiceInventory.md`, scoped `semantic apply` and `semantic validate` — PASS; 72 concepts and 11,521 relationships.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/kgmaker scan --root .` — PASS; 288 files, 2,351 declarations/sections and 16,761 relationships. `kgmaker check --root .` — PASS; generated docs current at 288 files, 2,639 nodes and 16,761 relationships. `git diff --check` — PASS.
+- `kgmaker memory recall --root . T008 explicit service inventory selected workspace contexts ownership limitations verification --token-budget 500` — PASS. `kgmaker memory capture --root . --base origin/main` with focused/full/toolchain/semantic/scan/check/diff validation labels — PASS; episode `episode:d31fbd6844ef8701e95c9c839955c6a9d2ed13814ae531fe348e7856f29ad53f`.
 - Compiler build, actual framework worker, Mermaid renderer and runtime observation were not run: T008 adds no compiler/parser/renderer or runtime path. Existing suite toolchain skips remain visible above.
 
 ## Příklad

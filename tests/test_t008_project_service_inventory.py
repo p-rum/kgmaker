@@ -269,3 +269,30 @@ def test_t008_view_round_trips_through_t005_validator(tmp_path):
     result = project_service_inventory(workspace, graph, scope="production")
     decoded = ViewDocument.from_dict(json.loads(result.to_json()))
     assert decoded.content_fingerprint == result.content_fingerprint
+
+
+def test_actual_workspace_source_only_snapshot_projects_declared_root_without_module(tmp_path):
+    manifest, workspace, _ = inventory_inputs(tmp_path)
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    before_graph = graph.to_dict()
+    manifest_bytes = manifest.read_bytes()
+    source_bytes = (tmp_path / "backend/src/main/kotlin/OrderService.kt").read_bytes()
+
+    result = project_service_inventory(workspace, graph, scope="production", source_coverage=coverage)
+    nodes = node_map(result)
+    service = nodes["service:orders"]
+
+    assert service.attributes["context_status"] == "PARTIAL"
+    assert service.attributes["modules"] == []
+    assert service.attributes["repo_ids"] == ["backend"]
+    assert service.attributes["evidence_kinds"] == ["SOURCE_ONLY"]
+    assert "service:fixture" not in nodes
+    assert "service:shared-lib" not in nodes
+    assert nodes["external-system:ledger"].attributes["implementation_status"] == "UNKNOWN"
+    assert nodes["external-system:ledger"].attributes["endpoint_ids"] == []
+    assert result.coverage["status"] == "PARTIAL"
+    assert result.context_selection["services"]["orders"]["contexts"][0]["module_coverage"] == "UNKNOWN"
+    assert any(item["id"].startswith("ev:source-context:") for item in result.provenance)
+    assert graph.to_dict() == before_graph
+    assert manifest.read_bytes() == manifest_bytes
+    assert (tmp_path / "backend/src/main/kotlin/OrderService.kt").read_bytes() == source_bytes

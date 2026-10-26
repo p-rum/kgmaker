@@ -108,8 +108,21 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     }
 
     # Use the upstream T007 resolver on snapshot-owned source paths and module
-    # identities. Unrelated annotations, config values and repository names
-    # never participate in service discovery.
+    # identities. SOURCE_ONLY workspace contexts have no compiler source_files;
+    # their roots come only from the exact repository-qualified artifact list
+    # and matching provider source nodes in the supplied workspace snapshot.
+    coverage_artifacts: set[str] = set()
+    if source_coverage is not None:
+        artifacts = source_coverage.get("artifacts") if isinstance(source_coverage, Mapping) else None
+        if not isinstance(artifacts, list) or any(not isinstance(path, str) for path in artifacts):
+            fail("INVALID_SOURCE_COVERAGE", "Source coverage must contain a list of qualified artifact paths")
+        coverage_artifacts = set(artifacts)
+    source_nodes_by_path: dict[str, list] = defaultdict(list)
+    if coverage_artifacts:
+        for node in graph.nodes:
+            path = getattr(node, "path", None)
+            if isinstance(path, str) and path in coverage_artifacts and path in graph.files:
+                source_nodes_by_path[path].append(node)
     contexts_by_service: dict[str, dict[tuple[str, str], list[dict]]] = defaultdict(lambda: defaultdict(list))
     all_owner_scopes: dict[str, set[str]] = defaultdict(set)
     ambiguous_by_service: dict[str, list[dict]] = defaultdict(list)
@@ -120,7 +133,13 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
         module = context.get("module")
         module = module if isinstance(module, str) and module else ""
         source_files = context.get("source_files", {})
-        paths = list(source_files) if isinstance(source_files, Mapping) and source_files else [None]
+        paths = list(source_files) if isinstance(source_files, Mapping) and source_files else []
+        if not paths and context.get("mode") == "SOURCE_ONLY":
+            # Workspace snapshot paths carry an authoritative repo qualifier;
+            # the context itself supplies the exact repository realm and scope.
+            prefix = "@" + repo_id + "/"
+            paths = sorted(path for path, nodes_at_path in source_nodes_by_path.items()
+                           if path.startswith(prefix) and nodes_at_path)
         owner_ids: set[str] = set()
         # Workspace projection qualifies a symbol's ID/path/context but does not
         # add repo/module fields to that public symbol. Join only by the exact
@@ -197,13 +216,25 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                 used_pins.add(key)
             candidate_ids = sorted({item["id"] for item in candidates})
             if not module:
+                source_only = all(item.get("mode") == "SOURCE_ONLY" for item in candidates)
+                status = "PARTIAL" if source_only else "UNKNOWN"
                 diagnostics.append({"code": "MODULE_ID_UNAVAILABLE", "service_id": service_id,
                                     "repo_id": repo_id, "candidate_context_ids": candidate_ids,
-                                    "message": "T006 selection requires an explicit module identity"})
-                context_statuses[service_id].append("UNKNOWN")
+                                    "message": "Source ownership is known but no compiler module identity is available"})
+                context_statuses[service_id].append(status)
                 selected_rows[service_id].append({"repo_id": repo_id, "module": None,
-                                                  "scope": scope, "status": "UNKNOWN",
+                                                  "scope": scope, "status": status,
+                                                  "evidence_kind": "SOURCE_ONLY" if source_only else "UNKNOWN",
+                                                  "module_coverage": "UNKNOWN",
                                                   "context_id": None, "candidate_context_ids": candidate_ids})
+                if source_only:
+                    for context in candidates:
+                        evidence_id = "ev:source-context:" + context["id"]
+                        provenance[evidence_id] = {
+                            "id": evidence_id, "evidence_kind": "SOURCE_ONLY",
+                            "source_id": context["id"],
+                            "content_hash": context.get("content_hash") or digest(context),
+                        }
                 continue
             source_only = all(item.get("mode") == "SOURCE_ONLY" or not item.get("analyzer_version")
                               for item in candidates)
