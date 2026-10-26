@@ -291,3 +291,15 @@ skutečného obsahu ani negativní případ různých bytes se nemění.
 `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_cross_repo_artifacts.py`:
 **18 PASS / 0.58 s**. Předchozí červený běh není release důkaz; nový HEAD musí
 znovu projít celým vzdáleným CI.
+
+### Shodný zdrojový graf před a po K2 buildu
+
+Další CI krok odhalil rozdíl `omitted files` mezi připraveným checkoutem a
+čistým checkoutem. Jediným dodatečným souborem byl ignorovaný build artefakt
+`workers/jvm/target-k2/licenses/kotlin/README.md`. Nový K2 výstupní adresář se
+proto v existující scanner exclusion množině vylučuje stejně jako `target`.
+Tím build licence nevstupuje do zdrojového grafu; pozitivní source evidence se
+nemění. Ověření používá skutečný připravený K2 strom a čistý detached checkout,
+nikoli ruční editaci generovaného grafu.
+Scanner a cross-repo regrese: **39 PASS / 2.15 s**. Scoped semantic
+apply/validate a generovaný scan/check: PASS; 4 koncepty/8 vztahů zachovány.
