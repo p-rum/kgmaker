@@ -2,9 +2,9 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "8e4f639983667fbeba61bd93feff5572c54a8fa2abfff83b570e747cd110a1c5",
-    "docs/acceptance-inventory.md": "8b7448b949264b5f5bbe44910570c70a998917b881d11c47397f6566b3234e5d",
-    "docs/architecture.md": "1b78ffc8b0e33877cf52d5c7e49b184f426f27a30d363057ed76278782247c85",
+    "README.md": "3ec75dc59f21fc0e350efb55d68891be2a2a3c282976f50f433b56871f077fe7",
+    "docs/acceptance-inventory.md": "7a189d3cbc9a760717e6f79351ac58c96449b53b523a9a3e74f996d9ac57b94f",
+    "docs/architecture.md": "bed34c35d6b0a9f1f385bf45d0c38a821847e465e7801c413d32513937f44494",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/10_specifyHighLevelProjectViews.md": "b3fec8d3326b61942a4db84c74b9d97db63de3f1a0c5520df360c50605534253",
@@ -19,6 +19,7 @@
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
     "docs/changes/30_packageWorkerResources.md": "44e225fab350e4a94eb73ce3251a87f07575e44bc0d21c3dda5a017683a3ac81",
     "docs/changes/31_restorePlannedTaskRegistry.md": "ddbc9dcbc9ed6543c1e54d6551ef4977f6954642cc7b2c8cd9c7c934ebf1d409",
+    "docs/changes/32_selectServiceContexts.md": "65c1a7b3db616d5e9494be503e96d44a084139fa63ca92c0906d596283268d72",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
@@ -29,7 +30,7 @@
     "docs/feature-analysis.md": "a94755c6c243c0a36942c8318009ee7a5c89d7517bc4bd8107cc1928c90dc2a8",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "1a34b8c86b3f059886e76f11fac704f4420218cb9342343c5e534875303300d7",
+    "docs/production-analysis-progress.md": "ab6ee83b3afa42f0a90a3b6120c189cb736e31367fc8c79235ad18a16a07b798",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -228,7 +229,7 @@
     "src/kgmaker/store.py": "8decb965e0ab27516f18121ebc10ebc7adea588d0f0cc3afc668dd4044f2d2d6",
     "src/kgmaker/templates.py": "17027828fb32ae5931b53e839dd12de81fe7798c78b2abf97029c61079d9c884",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
-    "src/kgmaker/views.py": "a5d3ffee13f453261223a3c076ad1d051b9d2fe7c5aef7ebe7ceacfab5553fe1",
+    "src/kgmaker/views.py": "1b4fd3e9d9b35028aa6ea09b8027eab99669eba30d629f443dd73fa089fb3e83",
     "src/kgmaker/workbooks.py": "6e6f4b4fd354fe2b78ae54adf2f9037b2dd9acc8422ae6794481288a72cde578",
     "src/kgmaker/worker_protocol.py": "2a5081a701673d2d1a783d23d55ef2ddc9b468e85ab9aff62b56143e5d2a0d22",
     "src/kgmaker/workflow.py": "407dcaa5874aedd26866d612e17912c3890cf399c1150428c543afe138aed3c7",
@@ -261,6 +262,7 @@
     "tests/test_production_scope.py": "f8379f420ba9591bf385cd26723184c1671528e589867712107006e011cade1f",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_t005_add_view_model.py": "d84a921f1165b33622409d00178f9c7216431c54a552f4b809636c3958120a8e",
+    "tests/test_t006_select_service_contexts.py": "a88f59b738a5a5d995153361e1504b95685ae691cf71bdbf57cd3e9e8cd6eb2e",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_workbooks.py": "aefe00b3e9e1983ab98d6ff58c6352b37308194717901d87afb00b52f1225cc8",
     "tests/test_worker_install.py": "312478d258e49747c88ab58f1c7c2c59cbdad845673992bbf80391a1fdba662c",
@@ -298,7 +300,7 @@
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 99,
+      "source_line": 122,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
@@ -340,7 +342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 101,
+      "source_line": 122,
       "evidence": "The documented extraction workflow describes the optional agent-authored semantic layer used with the repository-local graph."
     },
     {
@@ -370,7 +372,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 101,
+      "source_line": 122,
       "evidence": "The documented semantic update workflow prepares a bounded change packet for a scoped agent patch."
     }
   ],
@@ -26243,6 +26245,574 @@
         }
       ],
       "id": "episode:af07d38db789b9251577d95348f60c888ce63cd4b2576a624aa1c3fe88383c1b"
+    },
+    {
+      "base_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "head_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "worktree_fingerprint": "1806871dea253c3242e6f69e8a0a2baa45e11f93da0221e5723c3bd72b921e51",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "3ec75dc59f21fc0e350efb55d68891be2a2a3c282976f50f433b56871f077fe7"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "7a189d3cbc9a760717e6f79351ac58c96449b53b523a9a3e74f996d9ac57b94f"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "bed34c35d6b0a9f1f385bf45d0c38a821847e465e7801c413d32513937f44494"
+        },
+        {
+          "path": "docs/changes/32_selectServiceContexts.md",
+          "status": "A",
+          "sha256": "d2e91bd503dbb25ac88514059940f8b9bba6d480829007280140d1e0c6831634"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "ab6ee83b3afa42f0a90a3b6120c189cb736e31367fc8c79235ad18a16a07b798"
+        },
+        {
+          "path": "src/kgmaker/views.py",
+          "status": "M",
+          "sha256": "7a398cbc8b79687546f33b6040fc5c088ca052379a96d8235ea8978086364bcf"
+        },
+        {
+          "path": "tests/test_t006_select_service_contexts.py",
+          "status": "A",
+          "sha256": "9b0226fd027dd3a3f7d8f51a4d64404484f2414fb694857901502d5388d91fdb"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/views.py:ContextSelectionError::19",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/32_selectServiceContexts.md:32_selectServiceContexts.md",
+        "file:docs/changes/9_bindMethodologyApproval.md:9_bindMethodologyApproval.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/views.py:views.py",
+        "file:tests/test_methodology_conflicts.py:test_methodology_conflicts.py",
+        "file:tests/test_t006_select_service_contexts.py:test_t006_select_service_contexts.py",
+        "function:src/kgmaker/confluence.py:_assertions_from_document::359",
+        "function:src/kgmaker/confluence.py:_assertions_from_document::388",
+        "function:src/kgmaker/confluence.py:_code_nodes::408",
+        "function:src/kgmaker/confluence.py:_code_nodes::437",
+        "function:src/kgmaker/confluence.py:_missing_category::415",
+        "function:src/kgmaker/confluence.py:_missing_category::444",
+        "function:src/kgmaker/confluence.py:current_documentation_assertions::368",
+        "function:src/kgmaker/confluence.py:documentation_check::602",
+        "function:src/kgmaker/confluence.py:documentation_check::631",
+        "function:src/kgmaker/confluence.py:merge_into_graph::482",
+        "function:src/kgmaker/confluence.py:merge_into_graph::511",
+        "function:src/kgmaker/confluence.py:persist_validation_index::557",
+        "function:src/kgmaker/confluence.py:persist_validation_index::586",
+        "function:src/kgmaker/confluence.py:render_report::523",
+        "function:src/kgmaker/confluence.py:render_report::552",
+        "function:src/kgmaker/confluence.py:resolve_confluence_dir::568",
+        "function:src/kgmaker/confluence.py:resolve_confluence_dir::597",
+        "function:src/kgmaker/confluence.py:validate_documents::427",
+        "function:src/kgmaker/confluence.py:validate_documents::456",
+        "function:src/kgmaker/feature.py:apply::380",
+        "function:src/kgmaker/feature.py:apply::385",
+        "function:src/kgmaker/feature.py:freshness::237",
+        "function:src/kgmaker/feature.py:freshness::238",
+        "function:src/kgmaker/feature.py:load_packet::228",
+        "function:src/kgmaker/feature.py:load_packet::229",
+        "function:src/kgmaker/feature.py:packet_identity::224",
+        "function:src/kgmaker/feature.py:packet_identity::225",
+        "function:src/kgmaker/feature.py:revise::407",
+        "function:src/kgmaker/feature.py:revise::412",
+        "function:src/kgmaker/feature.py:status::398",
+        "function:src/kgmaker/feature.py:status::403",
+        "function:src/kgmaker/feature.py:validate::360",
+        "function:src/kgmaker/feature.py:validate::365",
+        "function:src/kgmaker/views.py:__init__::23",
+        "function:src/kgmaker/views.py:project::189",
+        "function:src/kgmaker/views.py:rank::255",
+        "function:tests/test_methodology_conflicts.py:export_fixture::12",
+        "function:tests/test_methodology_conflicts.py:test_attachment_freshness_is_checked_offline_without_mutating_index::95",
+        "function:tests/test_methodology_conflicts.py:test_duplicate_assertion_approvals_rejected_without_cache_mutation::48",
+        "function:tests/test_methodology_conflicts.py:test_legacy_index_is_readable_without_granting_approval::77",
+        "function:tests/test_methodology_conflicts.py:test_new_document_version_requires_new_explicit_approval::59",
+        "function:tests/test_methodology_conflicts.py:test_prepared_packet_rejects_stale_external_documentation::128",
+        "function:tests/test_methodology_conflicts.py:test_stale_cached_approval_is_not_carried_into_feature::33",
+        "function:tests/test_methodology_conflicts.py:test_unextractable_approval_does_not_publish_cache::83",
+        "function:tests/test_t006_select_service_contexts.py:forbidden_process::81",
+        "function:tests/test_t006_select_service_contexts.py:graph_with_contexts::9",
+        "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::109",
+        "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::127",
+        "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::42",
+        "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::70",
+        "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::93",
+        "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::53",
+        "function:tests/test_t006_select_service_contexts.py:test_two_services_select_distinct_contexts_and_profiles_without_mixing::24",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::334",
+        "section:README.md:Copilot workflow::138",
+        "section:README.md:Data prerequisite audit::237",
+        "section:README.md:Development::166",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::191",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::199",
+        "section:README.md:Implementation memory and workflow::155",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::130",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::3",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::159",
+        "section:docs/acceptance-inventory.md:T001::40",
+        "section:docs/acceptance-inventory.md:T002::119",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::12",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::23",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::153",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/32_selectServiceContexts.md:Kontroly::22",
+        "section:docs/changes/32_selectServiceContexts.md:T006: výběr kontextů pro více služeb::1",
+        "section:docs/changes/9_bindMethodologyApproval.md:Integrace proti main (2026-10-26)::42",
+        "section:docs/changes/9_bindMethodologyApproval.md:Kompatibilita a příklad::13",
+        "section:docs/changes/9_bindMethodologyApproval.md:Kontroly::21",
+        "section:docs/changes/9_bindMethodologyApproval.md:Neprovedené kontroly a meze::35",
+        "section:docs/changes/9_bindMethodologyApproval.md:Problém a skutečná změna::3",
+        "section:docs/changes/9_bindMethodologyApproval.md:Vazba schválené metodiky na aktuální export::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::136",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::76",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::86",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::108",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::24",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::152",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::143",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::161",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::196",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::182"
+      ],
+      "graph_delta": {
+        "added": [
+          "file:docs/changes/9_bindMethodologyApproval.md:9_bindMethodologyApproval.md",
+          "file:tests/test_methodology_conflicts.py:test_methodology_conflicts.py",
+          "function:src/kgmaker/confluence.py:_assertions_from_document::388",
+          "function:src/kgmaker/confluence.py:_code_nodes::437",
+          "function:src/kgmaker/confluence.py:_missing_category::444",
+          "function:src/kgmaker/confluence.py:current_documentation_assertions::368",
+          "function:src/kgmaker/confluence.py:documentation_check::631",
+          "function:src/kgmaker/confluence.py:merge_into_graph::511",
+          "function:src/kgmaker/confluence.py:persist_validation_index::586",
+          "function:src/kgmaker/confluence.py:render_report::552",
+          "function:src/kgmaker/confluence.py:resolve_confluence_dir::597",
+          "function:src/kgmaker/confluence.py:validate_documents::456",
+          "function:src/kgmaker/feature.py:apply::385",
+          "function:src/kgmaker/feature.py:freshness::238",
+          "function:src/kgmaker/feature.py:load_packet::229",
+          "function:src/kgmaker/feature.py:packet_identity::225",
+          "function:src/kgmaker/feature.py:revise::412",
+          "function:src/kgmaker/feature.py:status::403",
+          "function:src/kgmaker/feature.py:validate::365",
+          "function:tests/test_methodology_conflicts.py:export_fixture::12",
+          "function:tests/test_methodology_conflicts.py:test_attachment_freshness_is_checked_offline_without_mutating_index::95",
+          "function:tests/test_methodology_conflicts.py:test_duplicate_assertion_approvals_rejected_without_cache_mutation::48",
+          "function:tests/test_methodology_conflicts.py:test_legacy_index_is_readable_without_granting_approval::77",
+          "function:tests/test_methodology_conflicts.py:test_new_document_version_requires_new_explicit_approval::59",
+          "function:tests/test_methodology_conflicts.py:test_prepared_packet_rejects_stale_external_documentation::128",
+          "function:tests/test_methodology_conflicts.py:test_stale_cached_approval_is_not_carried_into_feature::33",
+          "function:tests/test_methodology_conflicts.py:test_unextractable_approval_does_not_publish_cache::83",
+          "section:docs/changes/9_bindMethodologyApproval.md:Integrace proti main (2026-10-26)::42",
+          "section:docs/changes/9_bindMethodologyApproval.md:Kompatibilita a příklad::13",
+          "section:docs/changes/9_bindMethodologyApproval.md:Kontroly::21",
+          "section:docs/changes/9_bindMethodologyApproval.md:Neprovedené kontroly a meze::35",
+          "section:docs/changes/9_bindMethodologyApproval.md:Problém a skutečná změna::3",
+          "section:docs/changes/9_bindMethodologyApproval.md:Vazba schválené metodiky na aktuální export::1",
+          "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::196"
+        ],
+        "removed": [
+          "function:src/kgmaker/confluence.py:_assertions_from_document::359",
+          "function:src/kgmaker/confluence.py:_code_nodes::408",
+          "function:src/kgmaker/confluence.py:_missing_category::415",
+          "function:src/kgmaker/confluence.py:documentation_check::602",
+          "function:src/kgmaker/confluence.py:merge_into_graph::482",
+          "function:src/kgmaker/confluence.py:persist_validation_index::557",
+          "function:src/kgmaker/confluence.py:render_report::523",
+          "function:src/kgmaker/confluence.py:resolve_confluence_dir::568",
+          "function:src/kgmaker/confluence.py:validate_documents::427",
+          "function:src/kgmaker/feature.py:apply::380",
+          "function:src/kgmaker/feature.py:freshness::237",
+          "function:src/kgmaker/feature.py:load_packet::228",
+          "function:src/kgmaker/feature.py:packet_identity::224",
+          "function:src/kgmaker/feature.py:revise::407",
+          "function:src/kgmaker/feature.py:status::398",
+          "function:src/kgmaker/feature.py:validate::360"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "t006-focused",
+          "status": "passed"
+        },
+        {
+          "label": "t005-workspace-regressions",
+          "status": "passed"
+        },
+        {
+          "label": "full-pytest-on-07ad865",
+          "status": "passed"
+        },
+        {
+          "label": "full-suite-toolchain-gates",
+          "status": "skipped"
+        },
+        {
+          "label": "rebase-focused",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        },
+        {
+          "label": "semantic-validate",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:c7bdcd75643c5f18876e8e44f2d8b0c38baae8a88f658de83bb11b4f3e2bf890"
+    },
+    {
+      "base_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "head_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "worktree_fingerprint": "c9b547d99f070a57aefe052cdd617b036bc10f3abe9484748f8fce66b078b945",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "3ec75dc59f21fc0e350efb55d68891be2a2a3c282976f50f433b56871f077fe7"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "7a189d3cbc9a760717e6f79351ac58c96449b53b523a9a3e74f996d9ac57b94f"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "bed34c35d6b0a9f1f385bf45d0c38a821847e465e7801c413d32513937f44494"
+        },
+        {
+          "path": "docs/changes/32_selectServiceContexts.md",
+          "status": "A",
+          "sha256": "b0f06b569e066d07adcc0f82429cd01631cc97420daceef3713740ea3424eba9"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "ab6ee83b3afa42f0a90a3b6120c189cb736e31367fc8c79235ad18a16a07b798"
+        },
+        {
+          "path": "src/kgmaker/views.py",
+          "status": "M",
+          "sha256": "1b6b8ad554ae0f8805322094f44d60cf0cc0e6b1c8ac572f7c470acd6004cfa8"
+        },
+        {
+          "path": "tests/test_t006_select_service_contexts.py",
+          "status": "A",
+          "sha256": "9b0226fd027dd3a3f7d8f51a4d64404484f2414fb694857901502d5388d91fdb"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/views.py:ContextSelectionError::19",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/32_selectServiceContexts.md:32_selectServiceContexts.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/views.py:views.py",
+        "file:tests/test_t006_select_service_contexts.py:test_t006_select_service_contexts.py",
+        "function:src/kgmaker/views.py:__init__::23",
+        "function:src/kgmaker/views.py:project::189",
+        "function:src/kgmaker/views.py:project::208",
+        "function:src/kgmaker/views.py:rank::255",
+        "function:src/kgmaker/views.py:rank::274",
+        "function:tests/test_t006_select_service_contexts.py:forbidden_process::81",
+        "function:tests/test_t006_select_service_contexts.py:graph_with_contexts::9",
+        "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::109",
+        "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::127",
+        "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::42",
+        "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::70",
+        "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::93",
+        "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::53",
+        "function:tests/test_t006_select_service_contexts.py:test_two_services_select_distinct_contexts_and_profiles_without_mixing::24",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::334",
+        "section:README.md:Copilot workflow::138",
+        "section:README.md:Data prerequisite audit::237",
+        "section:README.md:Development::166",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::191",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::199",
+        "section:README.md:Implementation memory and workflow::155",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::130",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::3",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::159",
+        "section:docs/acceptance-inventory.md:T001::40",
+        "section:docs/acceptance-inventory.md:T002::119",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::12",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::23",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::153",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/32_selectServiceContexts.md:Kontroly::22",
+        "section:docs/changes/32_selectServiceContexts.md:T006: výběr kontextů pro více služeb::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::136",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::76",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::86",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::108",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::24",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::152",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::143",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::161",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::196",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::182"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:src/kgmaker/views.py:project::208",
+          "function:src/kgmaker/views.py:rank::274"
+        ],
+        "removed": [
+          "function:src/kgmaker/views.py:project::189",
+          "function:src/kgmaker/views.py:rank::255"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "t006-focused",
+          "status": "passed"
+        },
+        {
+          "label": "t005-workspace-regressions",
+          "status": "passed"
+        },
+        {
+          "label": "full-pytest",
+          "status": "passed"
+        },
+        {
+          "label": "full-suite-toolchain-gates",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic-validate",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:c9bdcefb4b835e4d9e53f44103d818ee76ab6f2ea6df9cbf8cfffa438748aaf2"
+    },
+    {
+      "base_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "head_commit": "aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533",
+      "worktree_fingerprint": "67eba17b15a5ae1c3815779480714f3bab98a0e4a7eddf17ee0153571916e160",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "3ec75dc59f21fc0e350efb55d68891be2a2a3c282976f50f433b56871f077fe7"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "7a189d3cbc9a760717e6f79351ac58c96449b53b523a9a3e74f996d9ac57b94f"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "bed34c35d6b0a9f1f385bf45d0c38a821847e465e7801c413d32513937f44494"
+        },
+        {
+          "path": "docs/changes/32_selectServiceContexts.md",
+          "status": "A",
+          "sha256": "65c1a7b3db616d5e9494be503e96d44a084139fa63ca92c0906d596283268d72"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "ab6ee83b3afa42f0a90a3b6120c189cb736e31367fc8c79235ad18a16a07b798"
+        },
+        {
+          "path": "src/kgmaker/views.py",
+          "status": "M",
+          "sha256": "1b4fd3e9d9b35028aa6ea09b8027eab99669eba30d629f443dd73fa089fb3e83"
+        },
+        {
+          "path": "tests/test_t006_select_service_contexts.py",
+          "status": "A",
+          "sha256": "a88f59b738a5a5d995153361e1504b95685ae691cf71bdbf57cd3e9e8cd6eb2e"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/views.py:ContextSelectionError::19",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/32_selectServiceContexts.md:32_selectServiceContexts.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/views.py:views.py",
+        "file:tests/test_t006_select_service_contexts.py:test_t006_select_service_contexts.py",
+        "function:src/kgmaker/views.py:__init__::23",
+        "function:src/kgmaker/views.py:project::208",
+        "function:src/kgmaker/views.py:project::216",
+        "function:src/kgmaker/views.py:rank::274",
+        "function:src/kgmaker/views.py:rank::282",
+        "function:tests/test_t006_select_service_contexts.py:forbidden_process::81",
+        "function:tests/test_t006_select_service_contexts.py:forbidden_process::83",
+        "function:tests/test_t006_select_service_contexts.py:graph_with_contexts::9",
+        "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::109",
+        "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::111",
+        "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::127",
+        "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::129",
+        "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::42",
+        "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::44",
+        "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::70",
+        "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::72",
+        "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::93",
+        "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::95",
+        "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::53",
+        "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::55",
+        "function:tests/test_t006_select_service_contexts.py:test_two_services_select_distinct_contexts_and_profiles_without_mixing::24",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::334",
+        "section:README.md:Copilot workflow::138",
+        "section:README.md:Data prerequisite audit::237",
+        "section:README.md:Development::166",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::191",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::199",
+        "section:README.md:Implementation memory and workflow::155",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::130",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::3",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::159",
+        "section:docs/acceptance-inventory.md:T001::40",
+        "section:docs/acceptance-inventory.md:T002::119",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::12",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::23",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::153",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/32_selectServiceContexts.md:Kontroly::22",
+        "section:docs/changes/32_selectServiceContexts.md:T006: výběr kontextů pro více služeb::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::136",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::76",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::86",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::108",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::24",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::152",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::143",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::161",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::196",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::182"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:src/kgmaker/views.py:project::216",
+          "function:src/kgmaker/views.py:rank::282",
+          "function:tests/test_t006_select_service_contexts.py:forbidden_process::83",
+          "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::111",
+          "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::129",
+          "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::44",
+          "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::72",
+          "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::95",
+          "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::55"
+        ],
+        "removed": [
+          "function:src/kgmaker/views.py:project::208",
+          "function:src/kgmaker/views.py:rank::274",
+          "function:tests/test_t006_select_service_contexts.py:forbidden_process::81",
+          "function:tests/test_t006_select_service_contexts.py:test_content_verified_release_mapping_does_not_claim_deployment_compatibility::109",
+          "function:tests/test_t006_select_service_contexts.py:test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation::127",
+          "function:tests/test_t006_select_service_contexts.py:test_missing_variant_selection_returns_choices_and_does_not_mutate_graph::42",
+          "function:tests/test_t006_select_service_contexts.py:test_selection_reads_current_context_without_process_or_store_mutation::70",
+          "function:tests/test_t006_select_service_contexts.py:test_source_only_requires_declared_repo_coverage_and_stays_partial::93",
+          "function:tests/test_t006_select_service_contexts.py:test_stale_classpath_returns_diagnostic_and_next_command_without_worker::53"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "t006-focused",
+          "status": "passed"
+        },
+        {
+          "label": "t005-workspace-regressions",
+          "status": "passed"
+        },
+        {
+          "label": "full-pytest",
+          "status": "passed"
+        },
+        {
+          "label": "full-suite-toolchain-gates",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic-validate",
+          "status": "passed"
+        },
+        {
+          "label": "diff-check",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:94081eec50f28dc712903aa797700ffe1e6b471466f9c5bb92f0c22c10aa3b92"
     }
   ]
 }

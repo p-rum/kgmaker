@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import asdict, replace
+from pathlib import Path
+from typing import Mapping
 
 from .model import KnowledgeGraph
 
@@ -14,6 +16,179 @@ EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-1", "impact": "impact-1"}
+
+
+class ContextSelectionError(ValueError):
+    """A fail-closed service context selection diagnostic."""
+
+    def __init__(self, diagnostic: dict):
+        self.diagnostic = diagnostic
+        super().__init__(diagnostic["message"])
+
+
+def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
+                            scope: str, repo_roots: Mapping[str, Path] | None = None,
+                            source_coverage: Mapping | None = None,
+                            release_mapping: Mapping | None = None) -> dict:
+    """Build an explicit, read-only service→repo/module→context projection.
+
+    Each request identifies one service, repository, module and scope. If that
+    tuple has multiple compiler variants, ``context_id`` is mandatory. A
+    SOURCE_ONLY request must explicitly name the source coverage it represents.
+    ``release_mapping`` is the workspace declaration plus its snapshot report;
+    only CONTENT_VERIFIED artifact mappings can establish a mapped build pair.
+    """
+    from .analysis_model import digest
+
+    if scope not in {"production", "test", "test_fixture", "development", "unknown"}:
+        raise ContextSelectionError({"code": "INVALID_SCOPE", "message": "Select one concrete supported scope"})
+    if not isinstance(requests, list) or not requests:
+        raise ContextSelectionError({"code": "INVALID_SELECTION", "message": "At least one service selection is required"})
+    if source_coverage is not None and not isinstance(source_coverage, Mapping):
+        raise ContextSelectionError({"code": "INVALID_SOURCE_COVERAGE", "message": "Source coverage must be a workspace coverage object"})
+    if release_mapping is not None and (
+            not isinstance(release_mapping, Mapping)
+            or not isinstance(release_mapping.get("declaration"), Mapping)
+            or not isinstance(release_mapping.get("report"), Mapping)
+            or not isinstance(release_mapping["declaration"].get("mappings"), list)
+            or not isinstance(release_mapping["report"].get("mappings"), list)):
+        raise ContextSelectionError({"code": "INVALID_RELEASE_MAPPING", "message": "Release selection requires a validated declaration and snapshot report"})
+    before = graph.to_dict()
+    seen_services: set[str] = set()
+    selected: list[dict] = []
+    diagnostics: list[dict] = []
+    for index, request in enumerate(requests):
+        if not isinstance(request, Mapping):
+            raise ContextSelectionError({"code": "INVALID_SELECTION", "path": f"requests[{index}]",
+                                         "message": "Selection must be an object"})
+        service, repo, module = (request.get("service_id"), request.get("repo_id"), request.get("module"))
+        wanted_scope = request.get("scope", scope)
+        mode = request.get("mode", "COMPILER")
+        if (not all(isinstance(value, str) and value for value in (service, repo, module, wanted_scope))
+                or service in seen_services or wanted_scope != scope):
+            raise ContextSelectionError({"code": "INVALID_SELECTION", "path": f"requests[{index}]",
+                                         "message": "Unique service_id, repo_id, module and matching scope are required"})
+        seen_services.add(service)
+        if mode == "SOURCE_ONLY":
+            roots = set((source_coverage or {}).get("roots", []))
+            artifacts = (source_coverage or {}).get("artifacts", [])
+            covered = sorted(path for path in artifacts if isinstance(path, str)
+                             and path.startswith("@" + repo + "/"))
+            if repo not in roots or not covered:
+                raise ContextSelectionError({"code": "SOURCE_COVERAGE_UNAVAILABLE", "service_id": service,
+                                             "repo_id": repo, "message": "SOURCE_ONLY requires explicit source coverage for this repo"})
+            selected.append({"service_id": service, "repo_id": repo, "module": module,
+                             "scope": scope, "mode": "SOURCE_ONLY", "context_id": None,
+                             "context_fingerprint": None, "source_coverage": covered,
+                             "status": "PARTIAL", "module_coverage": "UNKNOWN",
+                             "evidence_kind": "SOURCE_ONLY"})
+            diagnostics.append({"code": "SOURCE_ONLY", "service_id": service,
+                                "message": "Compiler context is unavailable; source coverage only"})
+            diagnostics.append({"code": "SOURCE_MODULE_SCOPE_UNKNOWN", "service_id": service,
+                                "message": "Repository source coverage does not prove module-level compiler coverage"})
+            continue
+        if mode != "COMPILER":
+            raise ContextSelectionError({"code": "INVALID_SELECTION_MODE", "service_id": service,
+                                         "message": "mode must be COMPILER or SOURCE_ONLY"})
+        candidates = [context for context in graph.contexts
+                      if context.get("analyzer_version") and context.get("repo_id", repo) == repo
+                      and context.get("module") == module and context.get("scope") == scope]
+        chosen_id = request.get("context_id")
+        if "context_id" in request and (not isinstance(chosen_id, str) or not chosen_id):
+            raise ContextSelectionError({"code": "INVALID_CONTEXT_ID", "service_id": service,
+                                         "message": "context_id must be a non-empty string when supplied"})
+        choices = sorted(item["id"] for item in candidates if isinstance(item.get("id"), str))
+        if chosen_id is None and len(candidates) > 1:
+            raise ContextSelectionError({"code": "AMBIGUOUS_CONTEXT", "service_id": service,
+                                         "choices": choices, "message": "Select one compiler context explicitly"})
+        matches = [item for item in candidates if item.get("id") == chosen_id] if chosen_id else candidates
+        if len(matches) != 1:
+            raise ContextSelectionError({"code": "CONTEXT_UNAVAILABLE", "service_id": service,
+                                         "choices": choices, "message": "No unique compiler context matches the requested repo/module/scope"})
+        context = matches[0]
+        if context.get("freshness") == "STALE":
+            raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
+                                         "context_id": context["id"], "next_command": context.get("next_command", "kgmaker inspect"),
+                                         "message": context.get("stale_reason", "Compiler context is stale")})
+        if repo_roots and repo in repo_roots:
+            try:
+                # Check content-bound artifacts first so a hash mismatch gets
+                # the precise diagnostic even on providers that wrap stale
+                # WorkerError subclasses as an unavailable-file error.
+                from .inspection import artifact_hash
+                for artifact in context.get("classpath", []) + context.get("bytecode_artifacts", []):
+                    if artifact_hash(Path(artifact["path"])) != artifact["sha256"]:
+                        raise ValueError("STALE_INDEX: classpath changed; import/inspect again")
+                from .graph_provider import validate_context_snapshot
+                validate_context_snapshot(Path(repo_roots[repo]), context)
+            except (ValueError, OSError) as error:
+                raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
+                                             "context_id": context["id"], "next_command": context.get("next_command", "kgmaker inspect"),
+                                             "message": str(error)}) from error
+        fingerprint_data = {key: context.get(key) for key in (
+            "id", "repo_id", "module", "source_set", "scope", "language", "build_context_id",
+            "build_profiles", "spring_profiles", "manifest_hash", "dependency_model_hash",
+            "config_fingerprint", "selection_key")}
+        fingerprint_data["source_files"] = dict(sorted((context.get("source_files") or {}).items()))
+        fingerprint_data["classpath"] = [
+            {key: item.get(key) for key in ("sha256", "coordinates", "kind") if key in item}
+            for item in context.get("classpath", [])]
+        fingerprint_data["bytecode_artifacts"] = [
+            {key: item.get(key) for key in ("sha256", "coordinates", "kind") if key in item}
+            for item in context.get("bytecode_artifacts", [])]
+        selected.append({"service_id": service, "repo_id": repo, "module": module,
+                         "scope": scope, "mode": "COMPILER", "context_id": context["id"],
+                         "context_fingerprint": digest(fingerprint_data),
+                         "context_selection_key": context.get("selection_key"),
+                         "profile": context.get("spring_profiles") or context.get("build_profiles"),
+                         "status": ("CURRENT" if context.get("freshness") in
+                                    {"CURRENT", "CONTENT_VERIFIED", "EXECUTION_BOUND"} else "UNKNOWN"),
+                         "freshness": context.get("freshness", "UNKNOWN"),
+                         "coverage": context.get("coverage", "UNKNOWN"),
+                         "evidence_kind": context.get("mode", "UNKNOWN"),
+                         "diagnostics": list(context.get("diagnostics", []))})
+
+    # A content-verified release mapping proves only the declared artifact to
+    # classpath relationship. It does not establish deployment/environment.
+    compatible_pairs: list[dict] = []
+    if release_mapping is not None:
+        declaration = release_mapping.get("declaration", {})
+        report = release_mapping.get("report", {})
+        results = {item.get("id"): item for item in report.get("mappings", []) if isinstance(item, Mapping)}
+        by_context = {item["context_id"]: item for item in selected if item.get("context_id")}
+        for mapping in declaration.get("mappings", []):
+            if not isinstance(mapping, Mapping):
+                continue
+            producer, consumer = mapping.get("producer", {}), mapping.get("consumer", {})
+            result = results.get(mapping.get("id"), {})
+            from .workspace import qualified
+            producer_id = qualified(producer.get("repo_id", ""), producer.get("context_id", ""))
+            consumer_id = qualified(consumer.get("repo_id", ""), consumer.get("context_id", ""))
+            if (result.get("status") == "CONTENT_VERIFIED" and producer_id in by_context
+                    and consumer_id in by_context):
+                compatible_pairs.append({"mapping_id": mapping["id"],
+                                         "producer_service": by_context[producer_id]["service_id"],
+                                         "consumer_service": by_context[consumer_id]["service_id"],
+                                         "status": "CONTENT_VERIFIED"})
+    deployment_status = "UNKNOWN"
+    diagnostics.append({"code": "DEPLOYMENT_UNKNOWN",
+                        "message": "Context/profile selection does not establish deployment or environment compatibility"})
+    context_selection = {
+        item["service_id"]: {"repo_id": item["repo_id"], "module": item["module"],
+                             "scope": item["scope"], "context_id": item["context_id"],
+                             "context_fingerprint": item["context_fingerprint"]}
+        for item in selected
+    }
+    result = {"scope": scope, "services": sorted(selected, key=lambda item: item["service_id"]),
+              "context_selection": context_selection,
+              "release_compatibility": compatible_pairs, "deployment_compatibility": deployment_status,
+              "diagnostics": diagnostics,
+              "fingerprint": digest({"scope": scope, "context_selection": context_selection,
+                                     "services": sorted(selected, key=lambda item: item["service_id"]),
+                                     "release_compatibility": compatible_pairs})}
+    if graph.to_dict() != before:
+        raise RuntimeError("Context selection mutated its graph input")
+    return result
 
 
 def select_context(graph: KnowledgeGraph, scope: str, context_id: str | None = None, *,

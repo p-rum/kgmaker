@@ -50,8 +50,31 @@ includes unknown/test inventory. Without a valid compiler index these are partia
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
 deterministic JSON envelope for future high-level interface, topology and process
-projections. It does not discover or render those views; the existing CLI is
-unchanged. See [architecture](docs/architecture.md) and the [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+projections. `kgmaker.views.select_service_contexts` builds an explicit,
+read-only service/repository/module context selection from an existing graph;
+it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
+deployment limits. It does not discover or render interface/topology/process views;
+the CLI is unchanged. See [architecture](docs/architecture.md), the
+[T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
+[T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+
+```python
+from kgmaker.views import select_service_contexts
+
+selection = select_service_contexts(
+    graph,
+    [
+        {"service_id": "billing-api", "repo_id": "billing", "module": "app",
+         "context_id": "repo:billing:billing-production"},
+        {"service_id": "ledger-api", "repo_id": "ledger", "module": "service",
+         "context_id": "repo:ledger:ledger-production"},
+    ],
+    scope="production",
+)
+```
+
+The function is imported from `kgmaker.views`; the snippet shows the library
+contract and does not add a `kgmaker` CLI command.
 
 ```text
 kgmaker init [--root PATH] [--force]

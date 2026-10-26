@@ -182,10 +182,15 @@ Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](ch
 ## T005 — společný model pohledu (integrace 2026-10-26)
 
 T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
-Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
-T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
-Ověření modelu a integrace s aktuálním main je uvedeno v
-[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+T006 rozšiřuje `views.py` o explicitní výběr service/repo/module kontextu,
+fingerprinty, odmítnutí nejednoznačných/stale variant a označený SOURCE_ONLY
+fallback (module coverage zůstává UNKNOWN). CONTENT_VERIFIED release artifact pair
+nepovyšuje na deployment proof.
+T006 přidává jen knihovní projekci; CLI, discovery a renderery zůstávají mimo
+scope. Jeho konkrétní evidence je v [acceptance inventáři](acceptance-inventory.md)
+a [change note 32](changes/32_selectServiceContexts.md). T004 a T007–T044
+zůstávají SPECIFICATION; graph v1/v2/v3 se nemění. Ověření T005 je v
+[change note 11](changes/11_addViewModel.md); historické výsledky ostatních
 work packages výše zůstávají beze změny.
 
 ## T003-S09-W04 — hash-bound approved methodology
