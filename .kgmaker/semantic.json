@@ -18,7 +18,7 @@
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
     "docs/changes/30_packageWorkerResources.md": "44e225fab350e4a94eb73ce3251a87f07575e44bc0d21c3dda5a017683a3ac81",
-    "docs/changes/31_restorePlannedTaskRegistry.md": "7e247f93cac4cf4f75af378a4394a77891f13ccf6f82306334db47b1d7de61d5",
+    "docs/changes/31_restorePlannedTaskRegistry.md": "ddbc9dcbc9ed6543c1e54d6551ef4977f6954642cc7b2c8cd9c7c934ebf1d409",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",

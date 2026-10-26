@@ -24,7 +24,7 @@ integrované s `main` `3b7329284b376c83e20fe1a4ae3ea57a57131a90` (PR #11 a #18):
   jejich dependency graf. Obnovená sekce je přesně shodná s `e625014`;
   existující řádky T003/T045 jsou zachovány.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker scan`:
-  **PASS** po sémantické obnově — finální integrovaný snapshot (počty níže).
+  **PASS** po sémantické obnově — 275 souborů, 2188 deklarací/sekcí.
   Generovaný GRAPH.md je obnoven příkazem, bez ručních úprav.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker memory recall registry task T004 --limit 2`:
   **PASS** po scanu; nalezen registr a nadřazené zadání. Před scanem nebyl
@@ -35,7 +35,7 @@ integrované s `main` `3b7329284b376c83e20fe1a4ae3ea57a57131a90` (PR #11 a #18):
   pole nodes, edges a episodes zůstávají přesně zachována. Žádné vazby
   nejsou přidány; nové historie PR #11/#18 nejsou přepsány starým snapshotem.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker check`:
-  **PASS** — finální kontroly integrovaného snapshotu prošly. První scan
+  **PASS** — 275 souborů, 2463 uzlů, 15029 vztahů. První scan
   původní baseline před obnovou korektně hlásil stale README evidence.
 - `git diff --check`: **PASS**.
 
