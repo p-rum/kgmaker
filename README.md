@@ -182,6 +182,12 @@ first, then `KGMAKER_WORKERS_HOME`, then installed resources (or the source
 checkout when running directly with `PYTHONPATH=src`). An unavailable explicit
 selection fails with `TOOLCHAIN_UNAVAILABLE` and leaves the last graph intact.
 
+Build exporter resources additionally carry a versioned `build/exporters.json`
+descriptor and Apache license. Explicit `project build-plan` / `build-run`
+verify the adapter bytes, descriptor and output protocol before publishing a
+manifest. Release builders must run `workers/build/build.py` explicitly before
+packaging the optional Maven exporter. See [exporter distribution](docs/compiler-inspection.md#distribuce-build-exporteru).
+
 ```bash
 python -m pip install --no-deps /path/to/kgmaker-0.1.0-py3-none-any.whl
 kgmaker scan --root /path/to/project

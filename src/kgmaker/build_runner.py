@@ -20,6 +20,40 @@ VERSION = 'build-plan-1'
 EXCLUDED = {'.git', '.kgmaker', '.gradle', 'target', 'build', 'node_modules', '__pycache__', '.pytest_cache', '.venv'}
 
 
+def exporter_contract(home: Path, build_system: str, adapter: Path, *, required=False) -> dict | None:
+    """Check an optional distribution descriptor without launching any process.
+
+    Legacy explicit worker homes remain content-bound by the existing plan.
+    A present descriptor is authoritative: invalid/missing entries never fall
+    back to an unverified adapter. Checksums bind contents, not publisher identity.
+    """
+    descriptor = home / 'build/exporters.json'
+    if not descriptor.is_file():
+        if required:
+            raise AnalysisError('Packaged exporter distribution descriptor unavailable', 3)
+        return None
+    value = read_json(descriptor)
+    if (not isinstance(value, dict) or type(value.get('schema_version')) is not int
+            or value['schema_version'] != 1 or type(value.get('protocol_version')) is not int
+            or value['protocol_version'] != 1):
+        raise AnalysisError('Exporter distribution protocol unsupported', 3)
+    records = value.get('exporters')
+    record = records.get(build_system) if isinstance(records, dict) else None
+    if not isinstance(record, dict) or set(record) != {'path', 'sha256', 'exporter', 'license'}:
+        raise AnalysisError('Exporter distribution entry unavailable: ' + build_system, 3)
+    if any(not isinstance(record[key], str) or not record[key] for key in record):
+        raise AnalysisError('Exporter distribution entry invalid', 3)
+    expected = safe_path(home / 'build', record['path'])
+    license_path = safe_path(home / 'build', record['license'])
+    if expected.resolve() != adapter.resolve() or not adapter.is_file() or file_hash(adapter) != record['sha256']:
+        raise AnalysisError('Exporter distribution hash mismatch', 3)
+    if not license_path.is_file():
+        raise AnalysisError('Exporter distribution license unavailable', 3)
+    return {'schema_version': 1, 'exporter': record['exporter'],
+            'descriptor': {'path': str(descriptor), 'sha256': file_hash(descriptor)},
+            'license': {'path': str(license_path), 'sha256': file_hash(license_path)}}
+
+
 def snapshot(root: Path) -> dict:
     """Inventory every build input, including dirty/untracked and extensionless files."""
     result = {}
@@ -101,9 +135,12 @@ def create_plan(root: Path, *, phase='test-compile', build_system=None, executab
     if build_system not in systems: raise AnalysisError('Build-system input unavailable')
     command=shutil.which(executable or ('mvn' if build_system=='maven' else 'gradle'))
     if not command: raise AnalysisError('TOOLCHAIN_UNAVAILABLE: '+build_system,3)
-    command=str(Path(command).resolve());home=worker_home(home)
+    command=str(Path(command).resolve())
+    explicit_home = home is not None or bool(os.environ.get('KGMAKER_WORKERS_HOME'))
+    home=worker_home(home)
     adapter=home/('build/maven/target/kgmaker-build-export.jar' if build_system=='maven' else 'build/gradle/export.gradle')
     if not adapter.is_file():raise AnalysisError('Build exporter unavailable; build/install trusted exporter explicitly',3)
+    contract = exporter_contract(home, build_system, adapter, required=not explicit_home)
     # Bind environment values by hash; never persist credentials or tokens.
     names=environment or ['PATH','JAVA_HOME','MAVEN_OPTS','GRADLE_USER_HOME','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy']
     if any(not isinstance(n,str) or not n.replace('_','').isalnum() for n in names):raise AnalysisError('Invalid environment allowlist')
@@ -129,6 +166,8 @@ def create_plan(root: Path, *, phase='test-compile', build_system=None, executab
         'environment':{n:digest(overrides.get(n, os.environ.get(n))) for n in names},
         'environment_overrides':overrides,'toolchain_selection':selected_toolchain,'timeout':timeout,
         'execution_policy':{'mode':policy,'host_enforced':True,'isolation':'SEPARATE_SNAPSHOT_NOT_SECURITY_SANDBOX'}}
+    if contract is not None:
+        value['exporter_contract'] = contract
     value['plan_hash']=digest(value)
     return value
 
@@ -160,6 +199,17 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
     if snapshot(root)!=plan['snapshot']['sources']:raise AnalysisError('STALE_PLAN: build inputs changed',3)
     for record in (plan['executable'],plan['adapter']):
         if not Path(record['path']).is_file() or file_hash(Path(record['path']))!=record['sha256']:raise AnalysisError('STALE_PLAN: executable/exporter changed',3)
+    contract = plan.get('exporter_contract')
+    if contract is not None:
+        if not isinstance(contract, dict) or contract.get('schema_version') != 1 or not isinstance(contract.get('exporter'), str):
+            raise AnalysisError('Invalid exporter protocol contract', 3)
+        for key in ('descriptor', 'license'):
+            record = contract.get(key)
+            if not isinstance(record, dict) or not isinstance(record.get('path'), str):
+                raise AnalysisError('Invalid exporter distribution binding', 3)
+            path = Path(record['path'])
+            if not path.is_file() or file_hash(path) != record.get('sha256'):
+                raise AnalysisError('STALE_PLAN: exporter distribution changed', 3)
     overrides=plan.get('environment_overrides',{})
     if not isinstance(overrides,dict) or set(overrides)-{'JAVA_HOME'} or any(not isinstance(v,str) or not v for v in overrides.values()):
         raise AnalysisError('Invalid BuildPlan environment overrides')
@@ -212,6 +262,11 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
                 if state=='SUCCESS' and return_code!=0:state='FAILED'
         except FileNotFoundError:state='TOOLCHAIN_UNAVAILABLE'
     export=read_json(Path(plan['export_path'])) if Path(plan['export_path']).is_file() else None
+    if contract is not None and export is not None:
+        if (not isinstance(export, dict) or type(export.get('schema_version')) is not int
+                or export['schema_version'] != contract['schema_version']
+                or export.get('exporter') != contract['exporter']):
+            raise AnalysisError('Exporter output protocol mismatch', 3)
     if state=='SUCCESS' and export is None:state='PARTIAL'
     diagnostics=list(export.get('diagnostics',[]) if export else [{'code':'BUILD_MODEL_EXPORT_UNAVAILABLE'}])
     if state=='SUCCESS' and selected and export:
