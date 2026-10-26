@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from dataclasses import asdict, replace
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping
 
 from .model import KnowledgeGraph
 
@@ -24,6 +24,344 @@ class ContextSelectionError(ValueError):
     def __init__(self, diagnostic: dict):
         self.diagnostic = diagnostic
         super().__init__(diagnostic["message"])
+
+
+class ServiceInventoryError(ValueError):
+    """Invalid ownership/provider input for the T008 service inventory."""
+
+    def __init__(self, diagnostic: dict):
+        self.diagnostic = diagnostic
+        super().__init__(diagnostic["message"])
+
+
+def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGraph, *,
+                              scope: str = "production",
+                              service_labels: Mapping[str, str] | None = None,
+                              selected_contexts: Mapping[tuple[str, str, str], str] | None = None,
+                              source_coverage: Mapping | None = None):
+    """Project explicitly owned services and declared external systems.
+
+    ``workspace`` must be the loaded workspace returned by ``load_workspace``;
+    ``graph`` must be its content-bound workspace/provider snapshot. Compiler
+    contexts are selected through T006, ownership is resolved through T007, and
+    no framework annotation or configuration value creates an inventory node.
+    ``service_labels`` affects presentation only. ``selected_contexts`` keys are
+    ``(service_id, repo_id, module)`` and pin a compiler variant through T006.
+    """
+    import copy
+
+    from .analysis_model import digest
+    from .architecture_model import ViewDocument, ViewEdge, ViewNode
+    from .model import KnowledgeGraph as Graph
+    from .workspace import load_workspace, resolve_service_ownership
+
+    def fail(code: str, message: str) -> None:
+        raise ServiceInventoryError({"code": code, "message": message})
+
+    supported_scopes = {"production", "test", "test_fixture", "development", "unknown"}
+    if not isinstance(scope, str) or scope not in supported_scopes:
+        fail("INVALID_SCOPE", "Select one concrete supported inventory scope")
+    if not isinstance(workspace, Mapping) or not isinstance(graph, Graph):
+        fail("INVALID_SNAPSHOT", "Inventory requires a loaded workspace and KnowledgeGraph snapshot")
+    manifest_path = workspace.get("_manifest_path")
+    manifest_hash = workspace.get("_manifest_hash")
+    if not isinstance(manifest_path, str) or not isinstance(manifest_hash, str):
+        fail("UNVERIFIED_WORKSPACE", "Workspace must come from load_workspace")
+    try:
+        verified_workspace = load_workspace(Path(manifest_path))
+        Graph.from_dict(graph.to_dict())
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        fail("INVALID_SNAPSHOT", "Cannot validate workspace/provider snapshot: " + str(error))
+    if (verified_workspace.get("_manifest_hash") != manifest_hash
+            or graph.files.get("@workspace/manifest.json") != manifest_hash):
+        fail("WORKSPACE_SNAPSHOT_MISMATCH", "Workspace manifest hash does not match the provider snapshot")
+    declaration = verified_workspace.get("service_ownership")
+    workspace_id = verified_workspace.get("workspace_id")
+    if not isinstance(workspace_id, str) or not workspace_id:
+        fail("INVALID_WORKSPACE_ID", "Workspace snapshot has no stable workspace_id")
+    ownership_services = (declaration or {}).get("services", []) if isinstance(declaration, Mapping) else []
+    owner_by_id = {item["id"]: item for item in ownership_services}
+    if len(owner_by_id) != len(ownership_services):
+        fail("INVALID_OWNERSHIP", "Ownership service IDs must be unique")
+
+    labels = {} if service_labels is None else service_labels
+    if (not isinstance(labels, Mapping)
+            or any(key not in owner_by_id or not isinstance(value, str) or not value.strip()
+                   for key, value in labels.items())):
+        fail("INVALID_SERVICE_LABEL", "Display labels must map declared service IDs to non-empty strings")
+    pinned = {} if selected_contexts is None else selected_contexts
+    if (not isinstance(pinned, Mapping)
+            or any(not isinstance(key, tuple) or len(key) != 3
+                   or any(not isinstance(part, str) or not part for part in key)
+                   or key[0] not in owner_by_id or not isinstance(value, str) or not value
+                   for key, value in pinned.items())):
+        fail("INVALID_CONTEXT_SELECTION", "Context selectors must map (service_id, repo_id, module) to context IDs")
+
+    before_workspace = copy.deepcopy(dict(workspace))
+    before_graph = graph.to_dict()
+    diagnostics: list[dict] = []
+    provenance: dict[str, dict] = {}
+    manifest_evidence_id = "ev:workspace-manifest:" + workspace_id
+    provenance[manifest_evidence_id] = {
+        "id": manifest_evidence_id, "evidence_kind": "SOURCE_ONLY",
+        "source_id": "@workspace/manifest.json", "content_hash": manifest_hash,
+    }
+
+    # Use the upstream T007 resolver on snapshot-owned source paths and module
+    # identities. Unrelated annotations, config values and repository names
+    # never participate in service discovery.
+    contexts_by_service: dict[str, dict[tuple[str, str], list[dict]]] = defaultdict(lambda: defaultdict(list))
+    all_owner_scopes: dict[str, set[str]] = defaultdict(set)
+    ambiguous_by_service: dict[str, list[dict]] = defaultdict(list)
+    for context in graph.contexts:
+        repo_id, context_id = context.get("repo_id"), context.get("id")
+        if not isinstance(repo_id, str) or not repo_id or not isinstance(context_id, str) or not context_id:
+            continue
+        module = context.get("module")
+        module = module if isinstance(module, str) and module else ""
+        source_files = context.get("source_files", {})
+        paths = list(source_files) if isinstance(source_files, Mapping) and source_files else [None]
+        owner_ids: set[str] = set()
+        # Workspace projection qualifies a symbol's ID/path/context but does not
+        # add repo/module fields to that public symbol. Join only by the exact
+        # context_id, then enrich those fields from the selected context. A
+        # dependency or bytecode symbol without a local source snapshot path is
+        # intentionally not treated as owned service code.
+        for symbol in graph.symbols:
+            if symbol.get("context_id") != context_id:
+                continue
+            source_path = symbol.get("path")
+            if (not isinstance(source_files, Mapping) or not isinstance(source_path, str)
+                    or source_path not in source_files):
+                continue
+            if ((symbol.get("repo_id") is not None and symbol.get("repo_id") != repo_id)
+                    or (symbol.get("module") is not None and symbol.get("module") != module)):
+                diagnostics.append({"code": "SYMBOL_CONTEXT_IDENTITY_MISMATCH",
+                                    "context_id": context_id, "repo_id": repo_id,
+                                    "module": module,
+                                    "message": "Compiler symbol identity disagrees with its exact provider context"})
+                continue
+            enriched_symbol = {**symbol, "repo_id": repo_id, "module": module}
+            result = resolve_service_ownership(enriched_symbol, declaration, context_id=context_id)
+            owner_ids.update(result["candidate_owner_ids"])
+        for source_path in paths:
+            result = resolve_service_ownership(
+                {"repo_id": repo_id, "path": source_path, "module": module or None,
+                 "context_id": context_id}, declaration, context_id=context_id)
+            owner_ids.update(result["candidate_owner_ids"])
+        for service_id in owner_ids:
+            context_scope = context.get("scope")
+            if isinstance(context_scope, str):
+                all_owner_scopes[service_id].add(context_scope)
+            if len(owner_ids) > 1:
+                ambiguous_by_service[service_id].append({
+                    "repo_id": repo_id, "module": module, "scope": context_scope,
+                    "context_id": context_id, "candidate_owner_ids": sorted(owner_ids),
+                })
+            elif context_scope == scope:
+                contexts_by_service[service_id][(repo_id, module)].append(context)
+
+    for item in graph.diagnostics:
+        code = item.get("code", "") if isinstance(item, Mapping) else str(item)
+        if any(term in str(code).upper() for term in ("TRUNCAT", "UNRESOLVED", "AMBIGUOUS", "OMITTED", "LIMIT")):
+            diagnostics.append(dict(item) if isinstance(item, Mapping) else {
+                "code": "PROVIDER_BOUNDARY_UNKNOWN", "message": str(item)})
+
+    selected_rows: dict[str, list[dict]] = defaultdict(list)
+    context_statuses: dict[str, list[str]] = defaultdict(list)
+    used_pins: set[tuple[str, str, str]] = set()
+    repo_roots = {repo["id"]: Path(repo["_root"])
+                  for repo in verified_workspace["repositories"] if "_root" in repo}
+    for service_id, ambiguous_contexts in ambiguous_by_service.items():
+        for context in ambiguous_contexts:
+            if context.get("scope") != scope:
+                continue
+            selected_rows[service_id].append({
+                "repo_id": context["repo_id"], "module": context["module"], "scope": scope,
+                "status": "AMBIGUOUS", "context_id": None,
+                "candidate_context_ids": [context["context_id"]],
+                "candidate_owner_ids": context["candidate_owner_ids"],
+            })
+            context_statuses[service_id].append("AMBIGUOUS")
+            diagnostics.append({"code": "AMBIGUOUS_SERVICE_OWNERSHIP", "service_id": service_id,
+                                "repo_id": context["repo_id"], "module": context["module"],
+                                "context_id": context["context_id"],
+                                "candidate_owner_ids": context["candidate_owner_ids"],
+                                "message": "Provider context matches multiple explicit ownership declarations"})
+
+    for service_id, groups in contexts_by_service.items():
+        for (repo_id, module), candidates in groups.items():
+            key = (service_id, repo_id, module)
+            requested_context = pinned.get(key)
+            if key in pinned:
+                used_pins.add(key)
+            candidate_ids = sorted({item["id"] for item in candidates})
+            if not module:
+                diagnostics.append({"code": "MODULE_ID_UNAVAILABLE", "service_id": service_id,
+                                    "repo_id": repo_id, "candidate_context_ids": candidate_ids,
+                                    "message": "T006 selection requires an explicit module identity"})
+                context_statuses[service_id].append("UNKNOWN")
+                selected_rows[service_id].append({"repo_id": repo_id, "module": None,
+                                                  "scope": scope, "status": "UNKNOWN",
+                                                  "context_id": None, "candidate_context_ids": candidate_ids})
+                continue
+            source_only = all(item.get("mode") == "SOURCE_ONLY" or not item.get("analyzer_version")
+                              for item in candidates)
+            if source_only and requested_context is not None:
+                fail("INVALID_CONTEXT_SELECTION", "A compiler context cannot be pinned for SOURCE_ONLY coverage")
+            request = {"service_id": service_id, "repo_id": repo_id, "module": module,
+                       "scope": scope, "mode": "SOURCE_ONLY" if source_only else "COMPILER"}
+            if requested_context is not None:
+                request["context_id"] = requested_context
+            try:
+                selection = select_service_contexts(
+                    graph, [request], scope=scope, repo_roots=repo_roots or None,
+                    source_coverage=source_coverage)
+            except ContextSelectionError as error:
+                diagnostic = dict(error.diagnostic)
+                diagnostic.update({"service_id": service_id, "repo_id": repo_id, "module": module,
+                                   "candidate_context_ids": candidate_ids})
+                diagnostics.append(diagnostic)
+                code = diagnostic.get("code", "CONTEXT_UNAVAILABLE")
+                status = "AMBIGUOUS" if code == "AMBIGUOUS_CONTEXT" else "STALE" if code == "STALE_CONTEXT" else "UNKNOWN"
+                context_statuses[service_id].append(status)
+                selected_rows[service_id].append({"repo_id": repo_id, "module": module,
+                                                  "scope": scope, "status": status,
+                                                  "context_id": None, "candidate_context_ids": candidate_ids})
+                continue
+            row = dict(selection["services"][0])
+            row["candidate_context_ids"] = candidate_ids
+            selected_rows[service_id].append(row)
+            context_statuses[service_id].append(row.get("status", "UNKNOWN"))
+            for context_diagnostic in row.get("diagnostics", []):
+                if isinstance(context_diagnostic, Mapping):
+                    diagnostics.append({**dict(context_diagnostic), "service_id": service_id,
+                                        "context_id": row.get("context_id")})
+            if row.get("context_id") and row.get("context_fingerprint"):
+                evidence_id = "ev:compiler-context:" + row["context_id"]
+                provenance[evidence_id] = {
+                    "id": evidence_id, "evidence_kind": row.get("evidence_kind", "UNKNOWN"),
+                    "source_id": row["context_id"], "content_hash": row["context_fingerprint"],
+                }
+            elif source_only:
+                for context in candidates:
+                    evidence_id = "ev:source-context:" + context["id"]
+                    provenance[evidence_id] = {
+                        "id": evidence_id, "evidence_kind": "SOURCE_ONLY",
+                        "source_id": context["id"],
+                        "content_hash": digest(context.get("source_files", {})),
+                    }
+
+    unused_pins = set(pinned) - used_pins
+    if unused_pins:
+        fail("UNKNOWN_CONTEXT_SELECTION", "A pinned context does not match any declared service/repo/module")
+
+    nodes: list[ViewNode] = []
+    edges: list[ViewEdge] = []
+    context_selection: dict[str, dict] = {}
+    external_ids: set[str] = set()
+    for service_id, rows in sorted(selected_rows.items()):
+        if not rows:
+            continue
+        service = owner_by_id[service_id]
+        statuses = context_statuses[service_id]
+        service_status = ("AMBIGUOUS" if "AMBIGUOUS" in statuses else
+                          "STALE" if "STALE" in statuses else
+                          "UNKNOWN" if "UNKNOWN" in statuses else
+                          "PARTIAL" if "PARTIAL" in statuses else "CURRENT")
+        refs = [manifest_evidence_id]
+        for row in rows:
+            context_id = row.get("context_id")
+            if context_id:
+                evidence_id = "ev:compiler-context:" + context_id
+                if evidence_id in provenance:
+                    refs.append(evidence_id)
+            elif row.get("status") == "PARTIAL":
+                for candidate_id in row.get("candidate_context_ids", []):
+                    evidence_id = "ev:source-context:" + candidate_id
+                    if evidence_id in provenance:
+                        refs.append(evidence_id)
+        service_node_id = f"service:{service_id}"
+        external_system_ids = sorted(system["id"] for system in service["external_systems"])
+        module_ids = sorted({row["module"] for row in rows if isinstance(row.get("module"), str)})
+        repo_ids = sorted({row["repo_id"] for row in rows})
+        selected_ids = sorted({row["context_id"] for row in rows if row.get("context_id")})
+        nodes.append(ViewNode(
+            id=service_node_id, kind="service", label=labels.get(service_id, service_id),
+            original_ids=(service_id,), evidence_refs=tuple(sorted(set(refs))),
+            attributes={"scope": scope, "context_status": service_status,
+                        "repo_ids": repo_ids, "modules": module_ids, "context_ids": selected_ids,
+                        "external_system_ids": external_system_ids,
+                        "evidence_kinds": sorted({row.get("evidence_kind", "UNKNOWN") for row in rows})},
+        ))
+        context_selection[service_id] = {"scope": scope, "status": service_status,
+                                         "contexts": sorted(rows, key=lambda item: (
+                                             item.get("repo_id", ""), item.get("module") or "",
+                                             item.get("context_id") or ""))}
+        for system_id in external_system_ids:
+            external_node_id = f"external-system:{system_id}"
+            external_ids.add(system_id)
+            if not any(node.id == external_node_id for node in nodes):
+                nodes.append(ViewNode(
+                    id=external_node_id, kind="external_system", label=system_id,
+                    original_ids=(system_id,), evidence_refs=(manifest_evidence_id,),
+                    attributes={"implementation_status": "UNKNOWN", "checkout_status": "UNKNOWN",
+                                "endpoint_ids": [], "scope": scope},
+                ))
+            edge_id = f"edge:declares-external-system:{service_id}:{system_id}"
+            edges.append(ViewEdge(
+                id=edge_id, source=service_node_id, target=external_node_id,
+                relation="declares_external_system", original_ids=(service_id, system_id),
+                evidence_refs=(manifest_evidence_id,), resolution_status="RESOLVED",
+                attributes={"implementation_status": "UNKNOWN"},
+            ))
+
+    if declaration is None:
+        diagnostics.append({"code": "OWNERSHIP_DECLARATION_MISSING",
+                            "message": "No explicit service_ownership declaration is available"})
+    else:
+        for service_id in sorted(owner_by_id):
+            if service_id in selected_rows:
+                continue
+            scopes = sorted(all_owner_scopes.get(service_id, set()))
+            if scopes and scope not in scopes:
+                # Known out-of-scope contexts are intentionally filtered.
+                continue
+            diagnostics.append({"code": "SERVICE_CONTEXT_UNAVAILABLE", "service_id": service_id,
+                                "available_scopes": scopes,
+                                "message": "Explicit service ownership has no provider context in the selected scope"})
+    diagnostics.append({"code": "DEPLOYMENT_UNKNOWN",
+                        "message": "A source/compiler context does not prove deployment or runtime availability"})
+
+    if not selected_rows:
+        coverage_status = "UNKNOWN"
+    elif diagnostics or external_ids or any(status != "CURRENT" for values in context_statuses.values() for status in values):
+        coverage_status = "PARTIAL"
+    else:
+        coverage_status = "COMPLETE_WITHIN_SELECTED_SCOPE"
+    context_rows = {"services": context_selection}
+    baseline_fingerprint = digest({"manifest_hash": manifest_hash, "source_hashes": graph.files,
+                                   "scope": scope, "context_selection": context_rows})
+    result = ViewDocument(
+        view_id=f"service-inventory:{workspace_id}:{scope}", kind="topology",
+        baseline_fingerprint=baseline_fingerprint, rules_version="t008-service-inventory-1",
+        scope=scope, context_selection=context_rows, nodes=tuple(nodes), edges=tuple(edges),
+        diagnostics=tuple(diagnostics),
+        coverage={"status": coverage_status,
+                  "reasons": ["Inventory contains only explicit ownership declarations and selected provider contexts.",
+                              "External-system implementation and deployment remain UNKNOWN."],
+                  "selected_service_ids": sorted(context_selection),
+                  "external_system_ids": sorted(external_ids)},
+        limits=("Undeclared repositories, modules and framework beans are not services.",
+                "External-system checkout, endpoints, deployment and runtime availability are UNKNOWN."),
+        provenance=tuple(provenance[key] for key in sorted(provenance)),
+    )
+    # Validate through the T005 public model before returning the projection.
+    from .architecture_model import validate_view_document
+    validate_view_document(result.to_dict())
+    if graph.to_dict() != before_graph or dict(workspace) != before_workspace:
+        raise RuntimeError("Service inventory mutated its workspace or provider graph input")
+    return result
 
 
 def _release_mapping_pair(graph: KnowledgeGraph, mapping: Mapping, report: Mapping,
