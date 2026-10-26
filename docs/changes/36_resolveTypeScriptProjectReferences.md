@@ -208,3 +208,38 @@ Scoped semantic apply/validate, scan/check, `node --check` a diff check: PASS.
 README evidence byla ověřena proti skutečným semantic prepare/update odrážkám
 na řádcích 134/136; architecture authority i ownership evidence odpovídají textu.
 Zachovány jsou 4 koncepty, 8 vztahů a všechny předchozí epizody obou větví.
+
+### Integrace skutečně sloučeného Windows main (PR24)
+
+Main `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` je integrován do PR28 bez
+nové TS runtime změny. `worker.cjs`, celá TS reference test sada, kompletní
+`context`/`inspect_frontend` (včetně input closure) a provider `_selection_key`
+jsou byte-identické s reviewovaným `51fc196737504a750b0d7826bc16ff502a3dc73e`.
+Windows/JDK21 guards a explicitní K1/K2 backend JAR selection zůstávají přesně
+z main; Windows job je strukturálně totožný a mandatory K2 i TS test příkazy
+zůstaly ve workflow. Oba acceptance/progress bloky a Windows evidence se zachovaly.
+
+Skutečné čtyři kritické feature regrese (šest parametrizovaných případů):
+
+```sh
+KGMAKER_REQUIRE_WORKERS=1 JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_typescript_project_references.py -k 'consumer_options or disabled_source_redirect or new_alias_dependency or legacy_typescript_selection'
+```
+
+**6 PASS / 10 DESELECTED**, 20.71s: skutečné TypeCheckery ověřily jedinou owner
+identitu při rozdílném strictNullChecks, fail-closed disabled redirects/stale d.ts,
+změnu alias input closure mezi requesty a tři legacy selector varianty. Node24.19.0
+je připravený host runtime; TypeScript5.7.3 a workers jsou z vlastního checkoutu,
+žádný worker není mock.
+
+Relevantní context/ownership/provider/cross-repo/Windows prerequisite integrace:
+stejné env a `python -m pytest -q tests/test_graph_provider.py tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py tests/test_cross_repo_artifacts.py tests/test_windows_install.py`:
+**47 PASS / 1 SKIP**, 0.87s. SKIP je explicitní skutečný Windows gate na Linuxu;
+main PR24 má vlastní genuine Windows43PASS2SKIP důkaz, který se tím nemění.
+`node --check`, YAML parse, source-byte assertions a diff check PASS.
+
+Celá již doložená strict394PASS sada se kvůli čisté integraci neopakuje.
+Current-main semantic epizody jsou přesným byte-identickým prefixem, za nímž se
+zachovává vlastní TS historie. Čtyři koncepty a osm vztahů zůstávají; README
+citace jsou reanchored proti skutečným semantic prepare/update řádkům. Nové
+source/runtime vztahy se nevymýšlejí; scoped semantic update/apply, memory,
+semantic validate, command-generated scan/check a diff check: PASS.

@@ -83,6 +83,22 @@ obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
 
+### Windows user-space ověření (T003-S11-W03)
+
+Transport používá omezené souběžné čtení pipe bez POSIX selectorů. Explicitní
+buildery používají nativní JDK `.exe`, platformní classpath separator a přímý Java
+compiler entrypoint místo `.bat` launcheru. JVM inspection vyžaduje plný JDK21+;
+JRE-only a známý starší JDK končí `TOOLCHAIN_UNAVAILABLE` před procesem.
+SOURCE_ONLY tyto runtimy nepotřebuje a nic neinstaluje/buildí.
+
+Skutečný Windows restricted-user smoke ověřil core, Java, existující K1 Kotlin
+subset a TypeScript v cestách s mezerami: run40351407076/job121672139333,
+43 PASS / 2 scoped SKIP, 50.23s (Windows Server2025/Python3.12.10/JDK21.0.6).
+K2 Windows se netvrdí; SKIP zahrnuje jeho nepřipravený artefakt a POSIX-only test. [Windows guide](windows-install.md) uvádí prerequisite kontrakt a
+[change note40](changes/40_supportWindowsUserInstall.md) přesné provedené kontroly.
+Windows `project build-plan/build-run` vrací explicitní `UNSUPPORTED_PLATFORM`
+před procesem či zápisem run/store; pro ověřené lokální artefakty zůstává BUILD_IMPORT.
+
 ### Distribuce build exporteru
 
 T003-S11-W02 přidává `build/exporters.json` (schema/protocol 1) a `build/LICENSE`

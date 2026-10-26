@@ -85,6 +85,15 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         java = shutil.which("java")
         if not java:
             raise WorkerError("Optional JVM worker/JDK unavailable; scan remains usable. Build the trusted worker explicitly.", "TOOLCHAIN_UNAVAILABLE")
+        java_root = Path(java).resolve().parent.parent
+        if not any((java_root / 'bin' / name).is_file() for name in ('javac', 'javac.exe')):
+            raise WorkerError('JVM inspection requires a full JDK 21+ (javac beside java); a runtime-only JRE is unsupported. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
+        release = java_root / 'release'
+        if release.is_file():
+            import re
+            version = re.search(r'^JAVA_VERSION="(\d+)', release.read_text(encoding='utf-8'), re.M)
+            if version and int(version.group(1)) < 21:
+                raise WorkerError('JVM inspection requires JDK 21+; selected Java runtime is older. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
         jar = _jvm_worker_jar(home, kotlin_backend=kotlin_backend)
         return [java, "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
