@@ -58,6 +58,15 @@ konfigurační zdroje/testy beze změny; focused config/boundary/exporter contra
 mají **36 PASS / 2 DESELECTED** (0.27 s). Dva skutečné exporter buildy nejsou
 součástí této konfigurační kontroly; jejich důkaz patří do change note 37.
 
+Finální integrace s T006/T007 proti main `3a393e451b0d7b8f83de93f05f07d2307ba66ec3`:
+**331 PASS / 25 toolchain SKIP** (17.15 s). Konfigurační runtime/testy se nemění.
+Při slučování sémantické vrstvy byly zachovány také dva dříve ověřené vztahy
+`implements`/`validates`, které předchozí integrace omylem vynechala. Skutečný
+scanner stále vrací cíle `apply_semantic_patch::440` a `validate_semantic_data::100`;
+zdrojové definice/evidence zůstávají na řádcích 442/102 v `semantic.py`.
+Nejde o nové inference, ale o obnovu původních doložených vazeb při zachování
+všech současných konceptů a historie.
+
 ## Příklad a zbývající práce
 
 Úplný příklad je v [capability dokumentaci](../feature-analysis.md#deferred-confluence-connection-configuration).
