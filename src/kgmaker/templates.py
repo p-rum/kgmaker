@@ -21,6 +21,7 @@ _PDF_CALL = re.compile(r"\b(?:pdfService|pdfRenderer)\s*\.\s*\w+\s*\(\s*['\"]([A
 _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
 _REFERENCE_ATTRIBUTES = {"th:replace", "th:insert", "data-th-replace", "data-th-insert"}
 _CONDITION_ATTRIBUTES = {"th:if", "th:unless", "data-th-if", "data-th-unless"}
+_VARIABLE_SCOPE_ATTRIBUTES = {"th:each", "th:with", "data-th-each", "data-th-with"}
 
 
 def _line(text: str, offset: int) -> int:
@@ -136,9 +137,10 @@ class _TemplateParser(HTMLParser):
         self.source = source
         self.file_node = file_node
         self.facts = facts
-        self.stack: list[tuple[str, str | None]] = []
+        self.stack: list[tuple[str, str | None, bool]] = []
         self.fragments_by_id: dict[str, _Fragment] = {}
         self.attribute_owner: tuple[str, Node] | None = None
+        self.attribute_variable_scope_blocked = False
 
     def _owner(self) -> tuple[str, Node]:
         if self.attribute_owner is not None:
@@ -149,6 +151,9 @@ class _TemplateParser(HTMLParser):
             return fragment_id, fragment.node
         return self.facts.template.id, self.facts.template
 
+    def _variable_scope_blocked(self) -> bool:
+        return self.attribute_variable_scope_blocked or any(blocked for _, _, blocked in self.stack)
+
     def _diagnostic(self, code: str, reason: str, line: int, *, expression: str | None = None) -> None:
         item = {"code": code, "path": self.path, "source_line": line, "reason": reason,
                 "status": "UNKNOWN"}
@@ -157,6 +162,11 @@ class _TemplateParser(HTMLParser):
         self.facts.diagnostics.append(item)
 
     def _variable(self, expression: str, line: int, usage: str) -> Node | None:
+        if self._variable_scope_blocked():
+            self._diagnostic("TEMPLATE_VARIABLE_SCOPE_UNSUPPORTED",
+                             "Expressions inside th:each/th:with scopes are not bound because their local names are not modeled.",
+                             line, expression=expression)
+            return None
         if not _PATH_EXPR.fullmatch(expression):
             self._diagnostic("TEMPLATE_EXPRESSION_UNSUPPORTED",
                              "Only a literal Thymeleaf property path is retained; expression was not evaluated.",
@@ -185,7 +195,14 @@ class _TemplateParser(HTMLParser):
     def _condition(self, attribute: str, value: str, line: int) -> None:
         owner_id, owner = self._owner()
         values = _expressions(value)
-        if len(values) != 1 or not values[0][1] or not _PATH_EXPR.fullmatch(values[0][0]):
+        if self._variable_scope_blocked():
+            status = "UNKNOWN"
+            expression = value.strip()
+            self._diagnostic("TEMPLATE_VARIABLE_SCOPE_UNSUPPORTED",
+                             "Conditional expressions inside th:each/th:with scopes use local names that are not modeled.",
+                             line, expression=expression)
+            root = None
+        elif len(values) != 1 or not values[0][1] or not _PATH_EXPR.fullmatch(values[0][0]):
             status = "UNKNOWN"
             expression = value.strip()
             self._diagnostic("TEMPLATE_EXPRESSION_UNSUPPORTED",
@@ -235,6 +252,13 @@ class _TemplateParser(HTMLParser):
                 values[name] = value or ""
         parent_fragment, _ = self._owner()
         current_fragment = parent_fragment if self.fragments_by_id.get(parent_fragment) else None
+        introduces_variables = any(name in _VARIABLE_SCOPE_ATTRIBUTES for name, _ in attrs)
+        inherited_variable_scope = self._variable_scope_blocked()
+        variable_scope_blocked = inherited_variable_scope or introduces_variables
+        if introduces_variables:
+            self._diagnostic("TEMPLATE_VARIABLE_SCOPE_UNSUPPORTED",
+                             "th:each/th:with and their data aliases introduce local names that are not modeled.",
+                             line)
 
         declarations = [(name, value) for name, value in attrs if name in {"th:fragment", "data-th-fragment"}]
         if len(declarations) > 1 or any(attr_counts.get(name, 0) != 1 for name, _ in declarations):
@@ -286,6 +310,7 @@ class _TemplateParser(HTMLParser):
                              "Multiple fragment reference attributes or aliases on one element are not resolved.",
                              line)
         self.attribute_owner = (owner_id, owner_node)
+        self.attribute_variable_scope_blocked = variable_scope_blocked
         try:
             for name, value in attrs:
                 if not name:
@@ -294,6 +319,11 @@ class _TemplateParser(HTMLParser):
                     continue
                 if name in _REFERENCE_ATTRIBUTES:
                     if ambiguous_reference:
+                        continue
+                    if variable_scope_blocked:
+                        self._diagnostic("TEMPLATE_FRAGMENT_ARGUMENT_UNSUPPORTED",
+                                         "Fragment references inside unsupported local-variable scopes are not resolved.",
+                                         line, expression=value or "")
                         continue
                     parsed = _parse_fragment_reference(value or "")
                     if parsed is None:
@@ -323,9 +353,10 @@ class _TemplateParser(HTMLParser):
                     self._attribute_expressions(name, value or "", line)
         finally:
             self.attribute_owner = None
+            self.attribute_variable_scope_blocked = False
 
         if tag not in _VOID_TAGS:
-            self.stack.append((tag, current_fragment))
+            self.stack.append((tag, current_fragment, variable_scope_blocked))
 
     def handle_startendtag(self, tag, attrs):
         self.handle_starttag(tag, attrs)

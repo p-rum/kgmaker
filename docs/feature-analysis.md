@@ -19,7 +19,7 @@ are implemented in the supported subset described in
 | Workspace/schema | Explicit supplied repos, content caches, selected Flyway stream/target | Full compiler cross-repo and ORM coverage |
 | Budget | Full metadata manifest, selected source context and explicit omissions | Dependency-aware relevance and resumable packets |
 | Freshness | Content baseline, no timestamp identity | Whole-packet invalidation remains for unrelated source changes |
-| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings and static exact-arity fragments | Full cross-layer paths, other template dialects and richer artifact coverage |
+| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings and static exact-arity fragments; unsupported `th:each`/`th:with` local scopes stay UNKNOWN | Full cross-layer paths, loop/alias scope modeling, other template dialects and richer artifact coverage |
 | Confluence/XLSX | Content-bound offline Confluence approvals; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval; offline connection configuration | Live adapter and integration execution are deferred |
 
 No model client, MCP server or implicit build/network call is introduced by feature

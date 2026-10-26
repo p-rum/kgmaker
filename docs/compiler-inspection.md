@@ -710,7 +710,10 @@ parametry deklarace. Literal `${model.path}` se vede přes scoped parametr fragm
 stejně pojmenované proměnné mimo fragment se proto nesloučí. Nejednoznačné,
 dynamické a špatně aritní odkazy mají lokalizovanou diagnostiku bez resolved
 include edge. Podmínky jsou PARTIAL a nepodporované výrazy UNKNOWN; nic se
-nevyhodnocuje ani nevykonává. Hrany zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`.
+nevyhodnocuje ani nevykonává. `th:each`, `th:with` a jejich `data-th-*` aliasy
+zavádějí lokální jména, která tato verze nemodeluje; obsah těchto scope ani
+vnořené fragmentové argumenty se nevážou na globální model a dostávají UNKNOWN
+diagnostiku. Hrany zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`.
 
 To nedokazuje Spring MVC handler resolution, renderovaný výstup ani runtime
 availability. Jiné template dialecty, podmínková logika a PDF rendering nejsou

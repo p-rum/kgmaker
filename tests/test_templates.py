@@ -187,6 +187,46 @@ def test_nested_fragment_arguments_follow_exact_scoped_variables(tmp_path):
                    and not (n.metadata or {}).get("fragment") for n in graph.nodes)
 
 
+def test_loop_and_local_alias_scopes_do_not_bind_model_variables(tmp_path):
+    source = tmp_path / "src/main/java/example/PageController.java"
+    source.parent.mkdir(parents=True)
+    source.write_text('''class PageController {
+  String page(Model model) {
+    model.addAttribute("item", item);
+    return "page";
+  }
+}
+''')
+    templates = tmp_path / "src/main/resources/templates"
+    templates.mkdir(parents=True)
+    (templates / "page.html").write_text('''<span th:text="${item.outside}"></span>
+<div th:each="item : ${orders}" th:if="${item.visible}">
+  <span th:text="${item.total}"></span>
+  <section th:replace="~{:: row(item=${item})}"></section>
+</div>
+<div data-th-with="item=${other}"><span th:text="${item.local}"></span></div>
+<div data-th-each="item : ${rows}"><span th:text="${item.rowValue}"></span></div>
+<i th:fragment="row(item)" th:text="${item.name}"></i>
+''')
+
+    graph = feature.current_graph(tmp_path)[0]
+    page = next(n for n in graph.nodes if n.kind == "template" and n.name == "page")
+    outside = next(n for n in graph.nodes if n.kind == "template_variable" and n.name == "item.outside")
+    controller = next(n for n in graph.nodes if n.kind == "function" and n.name == "page")
+    assert any(e.source == controller.id and e.target == outside.id and e.kind == "binds_template_variable"
+               for e in graph.edges)
+    assert not any(n.kind == "template_variable" and n.name in {
+        "item.total", "item.local", "item.rowValue"} for n in graph.nodes)
+    assert not any(e.kind in {"includes_template_fragment", "passes_template_fragment_argument"}
+                   and e.source == page.id for e in graph.edges)
+    diagnostics = [d for d in graph.diagnostics if d["code"] == "TEMPLATE_VARIABLE_SCOPE_UNSUPPORTED"]
+    assert len(diagnostics) >= 4
+    assert all(d["status"] == "UNKNOWN" for d in diagnostics)
+    loop_condition = next(n for n in graph.nodes if n.kind == "template_condition" and
+                          n.metadata and n.metadata.get("expression") == "${item.visible}")
+    assert loop_condition.metadata["status"] == "UNKNOWN"
+
+
 def test_conditional_and_unsupported_expressions_remain_partial_unknown(tmp_path):
     templates = tmp_path / "src/main/resources/templates"
     templates.mkdir(parents=True)

@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "6438a16eabac3fc3a66950aaa9ac9b30d6056eb878f9e4be097a7ab0500e77cf",
-    "docs/acceptance-inventory.md": "3fe8b98de0fd5f93e0f5725c1f2fea9e41d4069cceeb107d46620d425cc03c20",
+    "README.md": "da88c14019278cf16e5e345271633c9c7071b9ceeb8776e470856a296e0dec11",
+    "docs/acceptance-inventory.md": "e471e0264240afcab8c18e24483ac70ae998a7c9be5b0e4203e5c40b9a20bb51",
     "docs/architecture.md": "117d4e3a8c215e937fe954634ce08fe0877443a05cf4f799f9da304d233212cc",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -36,16 +36,16 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/50_expandSpringConditions.md": "e6094ec70a0e507c23aa442515a1b6324571aaa829bd48b823ad1799113e1c77",
-    "docs/changes/55_expandThymeleafFragments.md": "25145834dab3a617e77e6f700b1bed1484d31c3cc67ab3baec25752cfc2cad9a",
+    "docs/changes/55_expandThymeleafFragments.md": "5ba9e31692e7c765ed6063b877a9361aad1d9ad4c072ad0cbab020eb3373a8c1",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "2b5b376f04595a8a254e15dd150e0e8dd2437be61717bed09a345f824c136ed0",
-    "docs/feature-analysis.md": "00eb29032fbf74e774036a148fd8de11adaa6eb4c94636c575455b0f389c8ae6",
+    "docs/compiler-inspection.md": "af3951261e27168c0d5661fd03a8d72df305feb14e9b5e4fbb3491e7cb64d92b",
+    "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "b3b390037d74cfc7447d38c0f9bb19403326e407e2e6ef45135cfe781b593bbb",
+    "docs/production-analysis-progress.md": "a19626342f66ce2c3da4ff8d71051db48e1ee8e8ed866acc0b33fe5319faf718",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -254,7 +254,7 @@
     "src/kgmaker/spring_conditions.py": "70788d9310a8b41d954d91fc0ef52a13608fa1da23ae52cd791c6021e5c76ac8",
     "src/kgmaker/spring_imports.py": "ddc3ad6cd526797327c3a00c93f6d2c546f79fed0ea455f3db9909d19026f359",
     "src/kgmaker/store.py": "25536d3b1d9af1a1d07b07c50dd00dc3a00863926cd2127669a1f269a918a620",
-    "src/kgmaker/templates.py": "0d07b9c1b0c2614098515ad0f8ca266dee35bf30be3d0f48e70faa8275754a96",
+    "src/kgmaker/templates.py": "609db10e9bdd41eebeeea97036105b6c5d088ab492e1ab6d7b0e68464633d327",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
     "src/kgmaker/views.py": "efdb1f99853595b85c621f467340c4e8334a538b7670d6d6837b27247b4eff3d",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
@@ -301,7 +301,7 @@
     "tests/test_t006_select_service_contexts.py": "464f78e848104daec15c304f8e21122fe3b9e5d47efdaf3720fd6f95404bee4b",
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
     "tests/test_t008_project_service_inventory.py": "c89b9c283cca4d47b4a3557a885eb9ea1b8854adcb29436ba600c0e5a655d4f5",
-    "tests/test_templates.py": "15694169df1d4af4fda45272bcdbea85f8011d245a67d4b53dccc2aea95ff8a2",
+    "tests/test_templates.py": "222296f34f4f5104c3f9a45fcf261e6ea56de3b9538c8513f9f84df21621ac16",
     "tests/test_typescript_project_references.py": "c3622cff3d5045504b5dcbf263e56d7f84f5e4f9bf3425ce9d57f59cf054fe81",
     "tests/test_windows_install.py": "8e6dafad019022a7b390d2b7c65381b6c36822b0064d5974bcdb602f694cdfa5",
     "tests/test_workbooks.py": "cf74c8dc08f8f6f46cb5d74f5ad95193f2ca6d5be089d7861ef78c2b99201c7c",
@@ -383,7 +383,7 @@
       "name": "Bounded Thymeleaf static fragment provenance",
       "source_file": "docs/compiler-inspection.md",
       "source_line": 704,
-      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; conditions and unsupported expressions remain non-evaluated boundaries."
+      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     }
   ],
   "edges": [
@@ -639,7 +639,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "target": "function:src/kgmaker/templates.py:attach_templates::353",
+      "target": "function:src/kgmaker/templates.py:attach_templates::384",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -654,27 +654,27 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 74,
+      "source_line": 72,
       "evidence": "The fixture verifies same-element fragment ownership, a literal caller model path, scoped parameter use and same-named variables remaining distinct across fragments."
     },
     {
-      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::188",
+      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::228",
       "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 188,
+      "source_line": 228,
       "evidence": "The fixture verifies PARTIAL/UNKNOWN conditions and unsupported selector diagnostics without evaluation."
     },
     {
-      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::230",
+      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::270",
       "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 232,
+      "source_line": 270,
       "evidence": "The negative fixture verifies dynamic, ambiguous and wrong-arity calls have diagnostics, no resolved include edge, and no input graph mutation."
     },
     {
@@ -684,7 +684,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 35,
+      "source_line": 33,
       "evidence": "The existing regression verifies literal template variable IDs, backend binding and the explicit external PDF boundary remain present."
     },
     {
@@ -698,13 +698,13 @@
       "evidence": "The public fixture verifies nested fragment arguments originate at the exact caller-scoped variable and traverse to the nested parameter without global aliases."
     },
     {
-      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::213",
+      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::253",
       "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 213,
+      "source_line": 253,
       "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
     }
   ],
@@ -48646,6 +48646,229 @@
         }
       ],
       "id": "episode:431c56b9c42117da95f70798d6e085847f2e5f596eb3f2ec943656eb21a0abe6"
+    },
+    {
+      "base_commit": "c02aa6d4b8e32cad3212dfb1939ba2105263565b",
+      "head_commit": "c02aa6d4b8e32cad3212dfb1939ba2105263565b",
+      "worktree_fingerprint": "b5f75bdfdb4eb8d8738e8bd7aa1c9491142bb8b20bd9f234b840fc953061a042",
+      "title": "Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "da88c14019278cf16e5e345271633c9c7071b9ceeb8776e470856a296e0dec11"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "e471e0264240afcab8c18e24483ac70ae998a7c9be5b0e4203e5c40b9a20bb51"
+        },
+        {
+          "path": "docs/changes/55_expandThymeleafFragments.md",
+          "status": "M",
+          "sha256": "1bf6c845865114de4d2ef4f7003fc6102564031627888f04841b43e0b0945440"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "af3951261e27168c0d5661fd03a8d72df305feb14e9b5e4fbb3491e7cb64d92b"
+        },
+        {
+          "path": "docs/feature-analysis.md",
+          "status": "M",
+          "sha256": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a19626342f66ce2c3da4ff8d71051db48e1ee8e8ed866acc0b33fe5319faf718"
+        },
+        {
+          "path": "src/kgmaker/templates.py",
+          "status": "M",
+          "sha256": "d48083e7c67b5cf6791976483d50c7b3b04e2c226e7d4aec4fc50d29d6094a38"
+        },
+        {
+          "path": "tests/test_templates.py",
+          "status": "M",
+          "sha256": "3a4015b4cedcd2d2229fb76ef8d907bffbe74bde2eca0d2a110a3059f8cfe76b"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/templates.py:_Fragment::116",
+        "class:src/kgmaker/templates.py:_TemplateFacts::124",
+        "class:src/kgmaker/templates.py:_TemplateParser::131",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+        "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+        "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/55_expandThymeleafFragments.md:55_expandThymeleafFragments.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/feature-analysis.md:feature-analysis.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/templates.py:templates.py",
+        "file:tests/test_templates.py:test_templates.py",
+        "function:src/kgmaker/templates.py:__init__::134",
+        "function:src/kgmaker/templates.py:_attribute_expressions::224",
+        "function:src/kgmaker/templates.py:_condition::194",
+        "function:src/kgmaker/templates.py:_diagnostic::156",
+        "function:src/kgmaker/templates.py:_expressions::41",
+        "function:src/kgmaker/templates.py:_line::25",
+        "function:src/kgmaker/templates.py:_node_id::29",
+        "function:src/kgmaker/templates.py:_owner::144",
+        "function:src/kgmaker/templates.py:_parse_fragment_declaration::70",
+        "function:src/kgmaker/templates.py:_parse_fragment_reference::95",
+        "function:src/kgmaker/templates.py:_split_arguments::85",
+        "function:src/kgmaker/templates.py:_template_root::33",
+        "function:src/kgmaker/templates.py:_variable::163",
+        "function:src/kgmaker/templates.py:_variable_scope_blocked::153",
+        "function:src/kgmaker/templates.py:attach_templates::377",
+        "function:src/kgmaker/templates.py:handle_data::363",
+        "function:src/kgmaker/templates.py:handle_endtag::357",
+        "function:src/kgmaker/templates.py:handle_startendtag::353",
+        "function:src/kgmaker/templates.py:handle_starttag::238",
+        "function:tests/test_templates.py:fixture::7",
+        "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::225",
+        "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::250",
+        "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::267",
+        "function:tests/test_templates.py:test_loop_and_local_alias_scopes_do_not_bind_model_variables::188",
+        "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
+        "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
+        "function:tests/test_templates.py:test_template_variable_is_exact_line_evidence_for_data_check::49",
+        "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::449",
+        "section:README.md:Copilot workflow::192",
+        "section:README.md:Data prerequisite audit::320",
+        "section:README.md:Development::220",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::258",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::266",
+        "section:README.md:Implementation memory and workflow::209",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::170",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::56",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::234",
+        "section:docs/acceptance-inventory.md:T001::115",
+        "section:docs/acceptance-inventory.md:T002::194",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::297",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::393",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::368",
+        "section:docs/acceptance-inventory.md:T003-S05-W03 — condition matrix::415",
+        "section:docs/acceptance-inventory.md:T003-S06-W01 — Kotlin JPA use-site a access::3",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::12",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::353",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::341",
+        "section:docs/acceptance-inventory.md:T003-S09-W03 — Thymeleaf fragment provenance::330",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::47",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::34",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::380",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::321",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::65",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::98",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::76",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::87",
+        "section:docs/changes/55_expandThymeleafFragments.md:Omezené statické Thymeleaf fragmenty::1",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::156",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::152",
+        "section:docs/compiler-inspection.md:Default body source mapping::596",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::102",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::118",
+        "section:docs/compiler-inspection.md:Import a validated execution-bound build manifest before selecting bytecode roots.::602",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::133",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::358",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::245",
+        "section:docs/compiler-inspection.md:No compilation is triggered by scan, graph queries or source-only inspection.::603",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::84",
+        "section:docs/compiler-inspection.md:Required CI prerequisites (T003-S11-W04)::574",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::417",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::388",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::437",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::475",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::526",
+        "section:docs/compiler-inspection.md:T003-S05-W03 — typed condition matrix::644",
+        "section:docs/compiler-inspection.md:T003-S09-W03 — statické Thymeleaf fragmenty::704",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::150",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::121",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::86",
+        "section:docs/feature-analysis.md:Agent reads packet.json and candidate-template.json, writes candidate.json.::56",
+        "section:docs/feature-analysis.md:CLI workflow::33",
+        "section:docs/feature-analysis.md:Candidate contract, schema version 1::114",
+        "section:docs/feature-analysis.md:Context budget and known limits::253",
+        "section:docs/feature-analysis.md:Current implementation::3",
+        "section:docs/feature-analysis.md:Deferred Confluence connection configuration::384",
+        "section:docs/feature-analysis.md:Deterministic data-check::329",
+        "section:docs/feature-analysis.md:Evidence::162",
+        "section:docs/feature-analysis.md:Feature analysis: implemented foundation and remaining milestones::1",
+        "section:docs/feature-analysis.md:Host invocation and tests::272",
+        "section:docs/feature-analysis.md:Implemented field and impact patterns (T001-S02 subset)::297",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::181",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::121",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::131",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::153",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::69",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::197",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::188",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::206",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::241",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::392",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::364",
+        "section:docs/production-analysis-progress.md:T003-S05-W03 — typed profile/property/class conditions::415",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::345",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::328",
+        "section:docs/production-analysis-progress.md:T003-S09-W03 — statické Thymeleaf fragmenty::360",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::262",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::48",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::35",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::22",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::381",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::274",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::227",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::286",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::304"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "templates",
+          "status": "passed"
+        },
+        {
+          "label": "focused-core",
+          "status": "passed"
+        },
+        {
+          "label": "full-core",
+          "status": "passed"
+        },
+        {
+          "label": "optional-prerequisites",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "graph-scan",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:992716d13bdbda85fdc9a8a74d18031b3accc9e323d94a44e32055be4660efb5"
     }
   ]
 }
