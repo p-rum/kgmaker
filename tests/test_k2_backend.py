@@ -144,7 +144,7 @@ def test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence(actual
             assert proof["compiler_version"] == "2.1.10"
 
 
-def test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed(tmp_path):
+def test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed(actual_k2, tmp_path):
     package = tmp_path / "src/main/java/jakarta/persistence"
     package.mkdir(parents=True)
     declarations = {

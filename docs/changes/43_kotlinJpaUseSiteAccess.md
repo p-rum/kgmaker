@@ -128,3 +128,38 @@ SHA-256 `138ffc7c732799a4c5d07e939acad8b9cc05048e03f683120e00f152e16c77e7`).
 Actual K2 JPA, Javac AC06, Spring 6.2.2 selector/import fixtures a worker
 protocol: **37 passed**, s požadovanými worker gates zapnutými. Full suite se
 kvůli této integraci neopakovala.
+
+### Oprava povinného K2 fixture guardu a integrace T008
+
+GitHub unittest spouští také source-only prostředí bez JDK/K2. JPA acceptance proto
+používá společný `actual_k2` fixture: bez volitelného toolchainu vykáže SKIP a při
+`KGMAKER_REQUIRE_K2=1` skončí jako FAIL, nikoli jako falešný compiler test. Změna
+upravuje pouze parametr testu; `framework.py` i K2 worker zůstávají byte-identické
+s reviewed S06 core.
+
+Po merge T008 na `ff26a6d74679fc38820c1f2fe711b1db20af2ca1` prošla JPA/Javac,
+Spring 6.2.2 K1/K2 selector, TypeScript context a T008 inventory/workspace kontrola:
+**38 passed**. Maven fixtures byly načteny z `/workspace/tools/m2` s ověřenými
+SHA-256. První lokální pokus bez `KGMAKER_TEST_MAVEN_REPOSITORY` skončil 18 setup
+errors, protože výchozí `~/.m2/repository` neměl připnutý Spring fixture; assertions
+se nespustily. Opakovaný běh s explicitním repozitářem prošel.
+
+Toolchain boundary pro opravený acceptance test byla ověřena zvlášť:
+
+```text
+env -u JAVA_HOME PATH=/nonexistent PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed
+# 1 skipped: blocked: explicit K2 worker build and JDK required
+
+env -u JAVA_HOME PATH=/nonexistent PYTHONPATH=src KGMAKER_REQUIRE_K2=1 /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed
+# 1 expected setup error: mandatory K2/JDK is unavailable
+```
+
+Příkazy a výsledek skutečného integračního běhu:
+
+```text
+JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH PYTHONPATH=src KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed tests/test_build_aware.py::BuildAwareContractsTest::test_hb01_embedded_id_and_bidirectional_association_preserve_roles tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_t008_project_service_inventory.py
+# 38 passed in 79.90s
+```
+
+Celá sada nebyla po této čistě testovací a mainline integrační změně opakována;
+poslední kompletní S06 výsledek zůstává 379 passed, 9 skipped před integrací T008.

@@ -297,6 +297,30 @@ validation a `git diff --check` prošly.
 T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
 Discovery, view aggregation ani T004 nejsou implementovány.
 
+## T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)
+
+`views.project_service_inventory` vytváří T005 topology document z validovaného
+workspace ownership a T006 kontextů. ID service pochází z deklarovaného service ID;
+display label nemění identitu. Context se filtruje přes explicitní scope a vybírá
+T006 včetně freshness/variant diagnostik. SOURCE_ONLY zůstává PARTIAL a module
+coverage UNKNOWN. U skutečného SOURCE_ONLY snapshotu se repo-qualified artifacty a
+file nodes stejného repository i přesného scope matchují na explicitní T007 roots;
+production a test kořeny v jednom checkoutu se nekříží. Module identity zůstává UNKNOWN a
+produkční služba má PARTIAL status. Skutečný test zároveň vylučuje test fixture a
+zachovává external ledger UNKNOWN bez endpointů. Externí systémy pocházejí pouze z T007 deklarace; chybějící checkout nevytváří interní endpointy a implementation/runtime zůstává UNKNOWN.
+Workspace alias fixture ověřuje context zachycený pod `local` a kvalifikovaný při
+`snapshot_workspace` na deklarované repo ID; dependency symbol bez lokálního source
+path se nepřiřazuje.
+
+`tests/test_t008_project_service_inventory.py` pokrývá explicitní service versus
+test fixture/shared library/framework bean, missing external checkout, stable ID po
+změně labelu, nulovou mutaci při chybě, scope/context/provenance, SOURCE_ONLY,
+ambiguous variants, workspace alias a T005 round-trip. Cílená integrovaná sada
+pro T008/T005–T007/workspace/cross-repo: **83 PASS**; celá sada **320 PASS, 25 SKIP**.
+Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS worker a
+Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
+store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
+
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
 VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
