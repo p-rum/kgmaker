@@ -138,11 +138,11 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 ## Development
 
 ```bash
-python -m pip install -e . pytest==8.3.4
+python -m pip install -e . pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
 python -m pytest -q
 ```
 
-The Python core is intentionally dependency-free at runtime. The development suite requires pytest; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
 
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without

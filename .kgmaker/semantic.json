@@ -2,7 +2,7 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "13a0d800c11b603e998bb9747f59dc1f04587e504cf47d3187dc69e965cf7269",
+    "README.md": "0dce22d93e9d9830d3f0c00f85c80d63cf0e93007c022d74453a2c791c107400",
     "docs/acceptance-inventory.md": "1873c8106f7fa8697fd2f5af8331109f6ac24762f7f2fa3a14723237439c5877",
     "docs/architecture.md": "ce2659e3511479a0c0540cef76267d84d1bf8d4f88852bcec45fa967088850b1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -16,7 +16,7 @@
     "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
-    "docs/changes/30_packageWorkerResources.md": "283b028832a9821bcab77e7d0e81112500e681c4cd17154c2fc2fd94dc16231e",
+    "docs/changes/30_packageWorkerResources.md": "8a375df4a8eda4f1f0334f33e314dca765519c4273cf5c5e11b7cd526f953b47",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",

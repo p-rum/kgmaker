@@ -30,6 +30,9 @@ packaging konfigurace a existujících testů. Nepřidává paralelní store ani
   core bez runtimů/procesů, JVM/TS analýza z instalace, precedence, ambiguity a
   zachování posledního grafu při chybě. Python 3.12, setuptools 84.2.1,
   TypeScript 5.7.3, Node 24, Temurin 21.0.6, Kotlin 2.1.10.
+- CI a vývojový příkaz explicitně instalují setuptools 84.2.1 a wheel 0.48.0.
+  První CI na Pythonu 3.13 odhalilo chybějící globální setuptools po isolated
+  editable buildu; nový běh má Python 3.11/3.12/3.13 a rendering PASS.
 - Instalační + worker transport sada před posledním rozšířením sdist kontroly:
   11 PASS, 0 SKIP.
 - Skutečná Maven 3.9.9 fixture: BUILD SUCCESS, JUnit 1 PASS, 0 SKIP.
