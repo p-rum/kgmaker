@@ -378,3 +378,278 @@ def test_real_kotlin_static_facade_lookup_survives_unknown_source_type_hierarchy
     assert site["invocation_kind"] == "STATIC"
     assert site["declared_target"].endswith(":method:FacadeKt.target()I")
     assert site["dispatch_candidates"] == []
+
+
+def intersection_source(project):
+    source = project / "src/main/java/consumer/Intersections.java"
+    source.write_text("""package consumer;
+interface Marker {}
+interface OtherApi { int run(); }
+class OnlyMarker implements Marker { public int run(){return 3;} }
+class BothMarker extends impl.A implements Marker {}
+class OtherBody { public int run(){return 4;} }
+class OtherMarker extends OtherBody implements Marker, OtherApi {}
+public class Intersections {
+ public <T extends Marker & api.Api> int apiFirst(T value){return value.run();}
+ public <T extends Marker & OtherApi> int otherSecond(T value){return value.run();}
+ public int plainOther(OtherApi value){return value.run();}
+}
+""")
+
+
+def test_unsupported_intersection_keeps_declared_contract_and_inherited_body_positive(real_dispatch):
+    project, entries, _ = real_dispatch
+    intersection_source(project)
+    result = inspect_jvm(project, classpath=entries, home=HOME, publish=False)
+    sites = result["graph"]["call_sites"]
+    site = next(site for site in sites if ".Intersections.apiFirst(" in site["caller"])
+    assert site["declared_target"].endswith(":method:api.Api.run()I")
+    assert site["dispatch_candidates"] == []
+    assert site["dispatch_completeness_reason"] == "JAVA_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+    assert "dispatch_kind" not in site
+    # Ordinary interface receiver remains supported. Its concrete class owns
+    # the contract even when its inherited body owner does not implement it.
+    plain = next(site for site in sites if ".Intersections.plainOther(" in site["caller"])
+    assert [c.split(":method:")[-1] for c in plain["dispatch_candidates"]] == ["consumer.OtherBody.run()I"]
+
+
+def test_unsupported_intersections_keep_distinct_contracts_without_cached_candidates(real_dispatch):
+    project, entries, _ = real_dispatch
+    intersection_source(project)
+    result = inspect_jvm(project, classpath=entries, home=HOME, publish=False)
+    sites = result["graph"]["call_sites"]
+    api = next(site for site in sites if ".Intersections.apiFirst(" in site["caller"])
+    other = next(site for site in sites if ".Intersections.otherSecond(" in site["caller"])
+    assert api["declared_target"].endswith(":method:api.Api.run()I")
+    assert other["declared_target"].endswith(":method:consumer.OtherApi.run()I")
+    assert api["dispatch_candidates"] == other["dispatch_candidates"] == []
+    assert all(site["dispatch_completeness_reason"] == "JAVA_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED" for site in [api, other])
+
+
+def test_missing_declared_api_bytecode_target_remains_partial_without_candidates(real_dispatch, tmp_path):
+    project, entries, jars = real_dispatch
+    caller, _ = compile_jar(tmp_path, "unresolved-caller", {"consumer/Calls.java":
+        "package consumer; public class Calls { public int call(api.Api value){return value.run();} }"}, [jars[0]])
+    # The call instruction is real, but neither the API nor Base class is on
+    # the selected classpath. Missing declaration must not crash contract lookup.
+    response = raw(project, entries[1:], [caller])
+    site = next(site for site in response["call_sites"] if site["invocation_kind"] == "INTERFACE")
+    assert site["declared_target"] is None
+    assert site["dispatch_candidates"] == []
+    assert site["dispatch_complete"] is False
+    assert site["resolution_reason"] == "MISSING_CLASS_OR_METHOD"
+    assert response["status"] == "PARTIAL"
+    assert any(d["code"] == "BYTECODE_UNRESOLVED_TARGET" for d in response["diagnostics"])
+    assert not (project / ".kgmaker").exists()
+
+
+@pytest.mark.parametrize("bounds", ["Marker & api.Api & Extra", "api.Api & Extra", "Marker & ChildApi"])
+def test_java_generic_receiver_bounds_are_explicitly_unsupported(real_dispatch, bounds):
+    project, entries, _ = real_dispatch
+    source = project / "src/main/java/consumer/ManyBounds.java"
+    source.write_text("""package consumer;
+interface Marker {}
+interface Extra {}
+interface ChildApi extends api.Api {}
+final class Bare extends impl.A implements Marker { public int run(){return 3;} }
+class Legal extends impl.B implements Marker,Extra,ChildApi {}
+public class ManyBounds {
+ public <T extends """ + bounds + """> int generic(T value){return value.run();}
+ public int plain(ChildApi value){return value.run();}
+ public int explicit(Object value){return ((Marker & api.Api & Extra)value).run();}
+}
+""")
+    result = inspect_jvm(project, classpath=entries, home=HOME, publish=False)
+    site = next(site for site in result["graph"]["call_sites"] if ".ManyBounds.generic(" in site["caller"])
+    assert site["declared_target"].endswith(":method:api.Api.run()I")
+    assert site["dispatch_candidates"] == []
+    assert site["dispatch_completeness_reason"] == "JAVA_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+    assert result["status"] == "PARTIAL"
+    explicit = next(site for site in result["graph"]["call_sites"] if ".ManyBounds.explicit(" in site["caller"])
+    assert explicit["declared_target"].endswith(":method:api.Api.run()I")
+    assert explicit["dispatch_candidates"] == []
+    assert explicit["dispatch_completeness_reason"] == "JAVA_INTERSECTION_RECEIVER_DISPATCH_UNSUPPORTED"
+    plain = next(site for site in result["graph"]["call_sites"] if ".ManyBounds.plain(" in site["caller"])
+    assert [c.split(":method:")[-1] for c in plain["dispatch_candidates"]] == ["impl.B.run()I"]
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_kotlin_generic_receiver_bounds_are_explicitly_unsupported(real_dispatch, tmp_path, backend):
+    project, entries, jars = real_dispatch
+    bounds, _ = compile_jar(tmp_path, "kotlin-bounds", {
+        "extra/Marker.java": "package extra; public interface Marker {}",
+        "extra/Extra.java": "package extra; public interface Extra {}",
+        "extra/ChildApi.java": "package extra; public interface ChildApi extends api.Api {}",
+        "extra/Bare.java": "package extra; public final class Bare extends impl.A implements Marker { public int run(){return 3;} }",
+        "extra/Legal.java": "package extra; public class Legal extends impl.B implements Marker,Extra,ChildApi {}",
+    }, jars)
+    source = project / "src/main/kotlin/Bounds.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text("""fun <T> triple(value: T): Int where T: extra.Marker, T: api.Api, T: extra.Extra = value.run()
+fun <T> inherited(value: T): Int where T: extra.Marker, T: extra.ChildApi = value.run()
+fun plain(value: extra.ChildApi): Int = value.run()
+""")
+    result = inspect_jvm(project, classpath=[*entries, str(bounds)], home=HOME, publish=False, kotlin_backend=backend)
+    sites = [site for site in result["graph"]["call_sites"] if str(site.get("path", "")).endswith("Bounds.kt")]
+    generic = [site for site in sites if ".plain(" not in site["caller"]]
+    assert len(generic) == 2
+    for site in generic:
+        expected_owner="extra.ChildApi" if backend=="k1" and ".inherited(" in site["caller"] else "api.Api"
+        assert site["declared_target"].endswith(":method:" + expected_owner + ".run()I")
+        assert site["dispatch_candidates"] == []
+        assert site["dispatch_completeness_reason"] == backend.upper() + "_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+    plain = next(site for site in sites if ".plain(" in site["caller"])
+    assert [c.split(":method:")[-1] for c in plain["dispatch_candidates"]] == ["impl.B.run()I"]
+
+
+def test_foreign_bytecode_targets_and_candidates_do_not_alias_local_source_view(real_dispatch, tmp_path):
+    project, entries, jars = real_dispatch
+    foreign, _ = compile_jar(tmp_path, "foreign-caller", {"foreign/Caller.java": """package foreign;
+public class Caller {
+ public int invoke(impl.A value){return value.run();}
+ public int invokeApi(api.Api value){return value.run();}
+}
+"""}, jars)
+    source = project / "src/main/java/impl/A.java"
+    source.parent.mkdir(parents=True)
+    source.write_text("package impl; public class A { public static int run(){return 99;} }")
+    context = {"id": "realm-isolation", "repo_id": "local", "module": "consumer", "source_set": "main", "scope": "production"}
+    foreign_realm = {"repo_id": "foreign-caller", "module": "binary", "source_set": "main", "scope": "production"}
+    response = request_worker(command("jvm", HOME), {
+        "operation": "analyze", "root": str(project), "context": context,
+        "sources": ["src/main/java/impl/A.java", "src/main/java/consumer/Caller.java"],
+        "classpath": entries, "bytecode_roots": [{"path": str(foreign), "realm": foreign_realm}],
+    }, cwd=project)
+    sites = response["call_sites"]
+    physical = next(site for site in sites if "foreign.Caller.invoke(" in site["caller"])
+    assert physical["invocation_kind"] == "VIRTUAL"
+    assert ":impl-a-repo:lib:main:" in physical["declared_target"]
+    assert physical["declared_target"].endswith(":method:impl.A.run()I")
+    target = next(symbol for symbol in response["symbols"] if symbol["id"] == physical["declared_target"])
+    assert target["path"] is None and "static" not in target.get("modifiers", [])
+    local = next(symbol for symbol in response["symbols"] if symbol.get("owner") == "impl.A" and symbol.get("name") == "run" and symbol.get("path"))
+    assert "static" in local["modifiers"]
+    assert local["id"] != physical["declared_target"]
+    # Same receiver/contract/signature, different representation: physical CP
+    # contains instance A; compiler source A no longer implements Api.
+    physical_api = next(site for site in sites if "foreign.Caller.invokeApi(" in site["caller"])
+    source_api = next(site for site in sites if "consumer.Caller.callApi(" in site["caller"])
+    assert {c.split(":method:")[-1] for c in physical_api["dispatch_candidates"]} == {"impl.A.run()I", "impl.B.run()I"}
+    assert all(":impl-a-repo:" in c or ":impl-b-repo:" in c for c in physical_api["dispatch_candidates"])
+    assert [c.split(":method:")[-1] for c in source_api["dispatch_candidates"]] == ["impl.B.run()I"]
+    assert not (project / ".kgmaker").exists()
+
+
+def test_selected_jar_cannot_shadow_actual_toolchain_object_or_its_realm(real_dispatch, tmp_path):
+    from struct import pack
+    import zipfile
+    project, entries, _ = real_dispatch
+    def utf(value):
+        data = value.encode()
+        return b"\x01" + pack(">H", len(data)) + data
+    # Well-formed metadata class which lies that bootstrap Object implements Api.
+    # Actual Javac correctly uses its JDK; the metadata index must do the same.
+    fake = (pack(">IHHH", 0xCAFEBABE, 0, 65, 5) + utf("java/lang/Object") + b"\x07\x00\x01"
+            + utf("api/Api") + b"\x07\x00\x03" + pack(">HHHHHHHH", 0x21, 2, 0, 1, 4, 0, 0, 0))
+    shadow = tmp_path / "bootstrap-shadow.jar"
+    with zipfile.ZipFile(shadow, "w") as archive:
+        archive.writestr("java/lang/Object.class", fake)
+    (project / "src/main/java/consumer/Unrelated.java").write_text(
+        "package consumer; public final class Unrelated { public int run(){return 4;} }")
+    (project / "src/main/java/consumer/ObjectName.java").write_text(
+        "package consumer; public class ObjectName { public String name(Object value){return value.toString();} }")
+    selected = [*entries, {"path": str(shadow), "realm": {
+        "repo_id": "fake-platform", "module": "shadow", "source_set": "main", "scope": "production"}}]
+    result = inspect_jvm(project, classpath=selected, home=HOME, publish=False)
+    api = next(site for site in result["graph"]["call_sites"] if ".callApi(" in site["caller"])
+    assert {c.split(":method:")[-1] for c in api["dispatch_candidates"]} == {"impl.A.run()I", "impl.B.run()I"}
+    name = next(site for site in result["graph"]["call_sites"] if "consumer.ObjectName.name(" in site["caller"])
+    assert name["declared_target"].startswith("jvm:toolchain:jdk-")
+    assert name["declared_target"].endswith(":method:java.lang.Object.toString()Ljava/lang/String;")
+    assert any(d["code"] == "DEPENDENCY_HIERARCHY_PLATFORM_SHADOWED" for d in result["diagnostics"])
+    assert result["status"] == "PARTIAL"
+    assert not (project / ".kgmaker").exists()
+
+
+@pytest.mark.parametrize("source_static,physical_static", [(True, False), (False, True), (False, False), (True, True)])
+def test_same_realm_source_binary_staticness_conflict_is_partial_without_false_mapping(real_dispatch, tmp_path, source_static, physical_static):
+    project, entries, _ = real_dispatch
+    def declaration(static):
+        return "package impl; public class A { public " + ("static " if static else "") + "int run(){return 1;} }"
+    physical, _ = compile_jar(tmp_path, "same-realm", {
+        "impl/A.java": declaration(physical_static),
+        "foreign/AbiCaller.java": "package foreign; public class AbiCaller { public int call(impl.A value){return value.run();} }",
+    })
+    source = project / "src/main/java/impl/A.java"
+    source.parent.mkdir(parents=True)
+    source.write_text(declaration(source_static))
+    context = {"id": "same-realm-abi", "repo_id": "local", "module": "consumer", "source_set": "main", "scope": "production"}
+    response = request_worker(command("jvm", HOME), {
+        "operation": "analyze", "root": str(project), "context": context,
+        "sources": ["src/main/java/impl/A.java"],
+        "classpath": [{"path": str(physical), "realm": context}, *entries],
+        "bytecode_roots": [{"path": str(physical), "realm": context}],
+    }, cwd=project)
+    call = next(site for site in response["call_sites"] if "foreign.AbiCaller.call(" in site["caller"])
+    source_method = next(symbol for symbol in response["symbols"] if symbol.get("owner") == "impl.A" and symbol.get("name") == "run" and symbol.get("path"))
+    body = next(symbol for symbol in response["symbols"] if symbol.get("kind") == "bytecode_method" and symbol.get("owner") == "impl.A" and symbol.get("name") == "run")
+    assert call["invocation_kind"] == ("STATIC" if physical_static else "VIRTUAL")
+    if source_static != physical_static:
+        assert call["declared_target"] is None and call["dispatch_candidates"] == []
+    assert source_method["jvm_static"] is source_static
+    assert body["jvm_static"] is physical_static
+    assert body["path"] is None and body["range"] is None and body.get("sha256") is None
+    if source_static != physical_static:
+        assert call["declared_target"] is None and call["dispatch_candidates"] == []
+        assert call["resolution_reason"] == "SOURCE_BINARY_ABI_CONFLICT"
+        assert call["evidence_kind"] == "UNRESOLVED"
+        assert body["source_mapping_ids"] == []
+        assert body["source_mapping_reason"] == "SOURCE_BINARY_ABI_CONFLICT"
+        assert any(d["code"] == "SOURCE_BINARY_ABI_CONFLICT" for d in response["diagnostics"])
+        assert response["status"] == "PARTIAL"
+    else:
+        assert call["declared_target"] == source_method["id"]
+        assert call["evidence_kind"] == "SYMBOL_RESOLVED"
+        assert body["source_mapping_ids"] == [source_method["id"]]
+        assert not any(d["code"] == "SOURCE_BINARY_ABI_CONFLICT" for d in response["diagnostics"])
+    assert not (project / ".kgmaker").exists()
+
+
+def test_actual_pinned_stdlib_multi_release_static_target_lookup_is_preserved(real_dispatch, tmp_path):
+    project, _, _ = real_dispatch
+    stdlib = HOME / "jvm/target/lib/kotlin-stdlib.jar"
+    caller, _ = compile_jar(tmp_path, "stdlib-caller", {"foreign/StdlibCaller.java":
+        'package foreign; public class StdlibCaller { public static void call(Object value){kotlin.jvm.internal.Intrinsics.checkNotNullParameter(value,"value");} }'}, [stdlib])
+    response = raw(project, [{"path": str(stdlib)}], [caller])
+    site = next(site for site in response["call_sites"] if "foreign.StdlibCaller.call(" in site["caller"])
+    assert site["invocation_kind"] == "STATIC" and site["evidence_kind"] == "SYMBOL_RESOLVED"
+    assert site["declared_target"].startswith("jvm:dependency:")
+    assert site["declared_target"].endswith(":method:kotlin.jvm.internal.Intrinsics.checkNotNullParameter(Ljava/lang/Object;Ljava/lang/String;)V")
+    assert any(d["code"] == "DEPENDENCY_HIERARCHY_MULTI_RELEASE_UNSUPPORTED" for d in response["diagnostics"])
+    assert not any(d["code"] == "DEPENDENCY_HIERARCHY_PLATFORM_SHADOWED" for d in response["diagnostics"])
+
+
+@pytest.mark.parametrize("include_base", [False, True])
+def test_multi_release_effective_class_lookup_preserves_first_selected_realm(real_dispatch, tmp_path, include_base):
+    import zipfile
+    project, _, _ = real_dispatch
+    base, _ = compile_jar(tmp_path, "mr-base", {"mr/Version.java":
+        "package mr; public class Version { public static int onlyBase(){return 1;} }"})
+    effective, _ = compile_jar(tmp_path, "mr-effective", {"mr/Version.java":
+        "package mr; public class Version { public static int selected(){return 2;} }"})
+    caller, _ = compile_jar(tmp_path, "mr-caller", {"foreign/MrCaller.java":
+        "package foreign; public class MrCaller { public static int call(){return mr.Version.selected();} }"}, [effective])
+    multi = tmp_path / "effective.jar"
+    with zipfile.ZipFile(base) as b, zipfile.ZipFile(effective) as e, zipfile.ZipFile(multi, "w") as archive:
+        archive.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\nMulti-Release: true\r\n\r\n")
+        if include_base:
+            archive.writestr("mr/Version.class", b.read("mr/Version.class"))
+        archive.writestr("META-INF/versions/21/mr/Version.class", e.read("mr/Version.class"))
+    realm = {"repo_id": "mr-first", "module": "library", "source_set": "main", "scope": "production"}
+    response = raw(project, [{"path": str(multi), "realm": realm}, {"path": str(base)}], [caller])
+    site = next(site for site in response["call_sites"] if "foreign.MrCaller.call(" in site["caller"])
+    assert site["declared_target"] is not None
+    assert site["declared_target"].startswith("jvm:mr-first:library:main:")
+    assert site["declared_target"].endswith(":method:mr.Version.selected()I")
+    assert site["evidence_kind"] == "SYMBOL_RESOLVED"
+    assert response["status"] == "PARTIAL"  # MR candidates remain explicitly unsupported.

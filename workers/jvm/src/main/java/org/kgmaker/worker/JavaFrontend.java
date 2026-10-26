@@ -106,6 +106,7 @@ public final class JavaFrontend {
     }
     private String method(ExecutableElement element,Map<String,Object> location) {
         var metadata=annotations(element);
+        metadata.put("jvm_static",element.getModifiers().contains(Modifier.STATIC));
         metadata.put("return_type",element.getReturnType().toString());
         metadata.put("parameter_types",element.getParameters().stream().map(p->p.asType().toString()).toList());
         metadata.put("parameter_names",element.getParameters().stream().map(p->p.getSimpleName().toString()).toList());
@@ -152,15 +153,19 @@ public final class JavaFrontend {
         }
         private void invocation(Tree tree,String kind) {
             if(caller==null)return;
-            var location=loc(tree);String dispatchReceiver=null;boolean dispatchEligible=false;String target=null,receiver=null,reason="UNRESOLVED_COMPILER_SYMBOL";
+            var location=loc(tree);String dispatchReceiver=null,dispatchBoundary=null;boolean dispatchEligible=false;String target=null,receiver=null,reason="UNRESOLVED_COMPILER_SYMBOL";
             var element=trees.getElement(getCurrentPath());
             if(element instanceof ExecutableElement executable && !errorAt(tree)) try {
                 Map<String,Object> targetLoc=declarationLocation(executable);
-                dispatchEligible=!executable.getModifiers().contains(Modifier.FINAL) && !executable.getEnclosingElement().getModifiers().contains(Modifier.FINAL);
+                dispatchEligible=!executable.getModifiers().contains(Modifier.STATIC) && !executable.getModifiers().contains(Modifier.PRIVATE) && !executable.getModifiers().contains(Modifier.FINAL) && !executable.getEnclosingElement().getModifiers().contains(Modifier.FINAL);
                 target=method(executable,targetLoc);receiver=owner(executable);dispatchReceiver=receiver;reason="JAVAC_ATTRIBUTED_SYMBOL";
                 if(tree instanceof MethodInvocationTree invocation && invocation.getMethodSelect() instanceof MemberSelectTree select) {
                     var receiverPath=new TreePath(new TreePath(getCurrentPath(),select),select.getExpression());
                     var receiverType=trees.getTypeMirror(receiverPath);if(receiverType!=null){receiver=receiverType.toString();var erased=types.erasure(receiverType);if(erased instanceof DeclaredType declared && declared.asElement() instanceof TypeElement type)dispatchReceiver=elements.getBinaryName(type).toString();else dispatchReceiver=null;}
+                    if(dispatchEligible && receiverType!=null && (receiverType.getKind()==TypeKind.TYPEVAR || receiverType.getKind()==TypeKind.INTERSECTION)) {
+                        dispatchEligible=false;
+                        dispatchBoundary=receiverType.getKind()==TypeKind.TYPEVAR?"JAVA_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED":"JAVA_INTERSECTION_RECEIVER_DISPATCH_UNSUPPORTED";
+                    }
                     if((select.getExpression() instanceof IdentifierTree identifier && identifier.getName().contentEquals("super")) ||
                         (select.getExpression() instanceof MemberSelectTree qualifier && qualifier.getIdentifier().contentEquals("super"))) {
                         kind="SPECIAL";dispatchEligible=false;
@@ -173,6 +178,10 @@ public final class JavaFrontend {
             if(tree instanceof MemberReferenceTree)kind="METHOD_REFERENCE";
             String identity=state.site(caller,location,target,kind,receiver,reason);calls.put(tree,identity);
             if(dispatchEligible && target!=null && dispatchReceiver!=null && Set.of("VIRTUAL","INTERFACE").contains(kind))state.sites.getLast().putAll(map("dispatch_kind",kind,"dispatch_receiver",dispatchReceiver.replace('.','/')));
+            if(target!=null && dispatchBoundary!=null && Set.of("VIRTUAL","INTERFACE").contains(kind)) {
+                state.sites.getLast().put("dispatch_completeness_reason",dispatchBoundary);
+                state.diagnostic(dispatchBoundary,"Full source receiver constraints are not represented; declared target is retained without dispatch candidates",location);
+            }
             if(target==null)state.diagnostic("JAVA_UNRESOLVED_CALL",reason,location);
             if(target!=null && (target.contains("java.lang.Class.forName") || target.contains("java.lang.reflect.Method.invoke")))
                 state.diagnostic("DYNAMIC_REFLECTION_BOUNDARY","Declared reflection API is resolved; runtime target is unknown",location);

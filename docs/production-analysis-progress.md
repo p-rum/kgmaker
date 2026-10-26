@@ -288,7 +288,9 @@ Ordered selected JAR/directory hierarchy rozšiřuje compiler-proven Javac/K1/K2
 call expressions a ASM virtual/interface sites o oddělené DISPATCH_CANDIDATE
 targety. Real JDK21 fixture `tests/test_dependency_dispatch.py` pokrývá API/base
 JAR, dva implementation realms, first-match shadow, derived artifact realms,
-missing/corrupt/truncated/MR negatives, source canonical identity a reference/nonvirtual
-boundaries. Všechny dispatch výsledky zůstávají open-world incomplete; S04/T003
+missing/corrupt/truncated negatives, generic/intersection fail-closed boundary,
+oddělený physical/source hierarchy, static ABI conflicts, JDK parent-first shadow
+a runtime-effective MR physical lookup. Source canonical identity a reference/nonvirtual
+boundaries zůstávají zachované. Všechny dispatch výsledky zůstávají open-world incomplete; S04/T003
 zůstávají PARTIAL. Přesné kontroly a zbývající hranice uvádí
 [change44](changes/44_addDependencyDispatchHierarchy.md).

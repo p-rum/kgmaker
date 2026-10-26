@@ -423,3 +423,9 @@ calls nejsou virtuálně rozšiřovány. Missing/corrupt/shadow/truncated hierar
 unsupported multi-release JAR mají konkrétní důvod, `dispatch_complete=false`.
 Příklad: `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
 po explicitním build-importu; [matice a limity](docs/compiler-inspection.md#t003-s04-w04--ordered-dependency-dispatch).
+
+Source type-variable/intersection receivers zůstávají explicitně unsupported bez
+kandidátů; jejich declared target se zachová. Podporovaná candidate class musí
+splnit receiver i declared contract. Physical lookup odděluje source overlay,
+respektuje skutečné JDK parent-first a runtime-effective MR metadata; známý
+source/binary static ABI konflikt vrací PARTIAL bez vymyšleného targetu.

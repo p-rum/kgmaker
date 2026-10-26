@@ -468,6 +468,12 @@ zůstává zachovaný, bez mapování se používá stávající SHA-256 depende
 `declared_target` je compiler/JVM declaration; `dispatch_candidates` jsou oddělené
 `DISPATCH_CANDIDATE` důkazy. `dispatch_algorithm=CHA_ORDERED_SELECTED_CLASSPATH`,
 `dispatch_classpath` a `dispatch_completeness_reason` jsou součástí provenance.
+Candidate class musí být subtype compiler-erased receiveru **i** owneru skutečného
+`declared_target`. Source type-variable/intersection receiver je konzervativně
+unsupported: úplné upper bounds se zde nereprezentují, proto se kandidáti nevydají
+a declared target i konkrétní compiler diagnostic zůstanou zachované.
+Defining owner zděděného implementation body sám tyto dva vztahy splňovat nemusí.
+Cache klíč obsahuje receiver, declared contract, method name a descriptor.
 `dispatch_complete` zůstává false kvůli otevřenému runtime světu. Výsledek není
 runtime observation, call-path feasibility ani dostupnost dat. Reference a
 invokedynamic creation nejsou provedení; static/private/final/super targety
@@ -476,11 +482,17 @@ nedostávají virtuální enrichment.
 Index má limity 10000 classes, 100000 archive/filesystem entries, 16 MiB/class a
 128 MiB souhrnně čtených class bytes; hierarchy lookup nejvýše 256 visited types. Chybějící parent, corrupt archive/class,
 shadow, duplicate entry či truncation mají lokalizovanou diagnostiku. Multi-release
-JAR hierarchy je explicitně unsupported; i version-only owners rezervují pořadí,
+JAR candidate enumeration je explicitně unsupported; physical declared lookup
+používá bounded runtime-effective JarFile metadata včetně version-only classes,
 aby je nenahradila pozdější plain kopie. Chybějící hierarchy nepřidává domnělou
 implementaci. Package-private override access zůstává konzervativní hranicí.
 K2 property/operator/local/lambda semantics zůstávají v dosavadním PARTIAL subsetu.
 K2 source owner bez type-hierarchy proof nepřebírá subtype vazby ze staré compiled kopie.
+Source overlay a physical hierarchy mají oddělené lookup/cache. Skutečné JDK
+platform resources mají parent-first přednost a toolchain realm; metadata
+`module-info.class` nejsou candidate classes. Compiler-proven `jvm_static`
+kontradikce source/physical canonical vrací `SOURCE_BINARY_ABI_CONFLICT`, unresolved
+site/PARTIAL a generated body bez nekompatibilního source locator/mapping.
 
 Příklad: po explicitním získání a importu content-bound ordered classpath spusť
 `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`;

@@ -16,6 +16,7 @@ public final class State {
     public final List<Map<String,Object>> classpath = new ArrayList<>();
     public final Map<Path,String> inputs = new LinkedHashMap<>();
     private final Map<String,Map<String,Object>> realms = new HashMap<>();
+    private final Map<String,java.net.URL> platformResources = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     public State(Map<String,Object> request) throws IOException {
@@ -62,9 +63,21 @@ public final class State {
         return map("path",relative,"sha256",inputs.get(file.toAbsolutePath().normalize()),"origin",origin,
             "range",start<0||end<0?null:map("start",start,"end",end,"start_line",startLine,"start_column",startColumn,"end_line",endLine,"end_column",endColumn));
     }
+    /** Actual worker-toolchain resources have parent-first ownership. No class is loaded. */
+    public java.net.URL platformResource(String owner) {
+        String name=owner.replace('.','/');
+        if(name.equals("module-info"))return null;
+        if(!platformResources.containsKey(name))platformResources.put(name,ClassLoader.getPlatformClassLoader().getResource(name+".class"));
+        return platformResources.get(name);
+    }
+    private Map<String,Object> toolchainRealm(String owner) {
+        var jdk=map("repo_id","toolchain","module","jdk-"+System.getProperty("java.version"),"source_set","platform","scope",context.get("scope"));
+        realms.put(owner,jdk);return jdk;
+    }
     @SuppressWarnings("unchecked")
     public Map<String,Object> realm(String owner,Map<String,Object> loc) {
         if(loc!=null && loc.get("path")!=null) return context;
+        if(platformResource(owner)!=null)return toolchainRealm(owner);
         if(realms.containsKey(owner)) return realms.get(owner);
         String resource=owner.replace('.','/')+".class";
         for(Map<String,Object> entry:classpath) {
@@ -77,8 +90,7 @@ public final class State {
                 realms.put(owner,value); return value;
             }
         }
-        var jdk=map("repo_id","toolchain","module","jdk-"+System.getProperty("java.version"),"source_set","platform","scope",context.get("scope"));
-        realms.put(owner,jdk); return jdk;
+        return toolchainRealm(owner);
     }
     public String prefix(Map<String,Object> realm) {
         return "jvm:"+realm.get("repo_id")+":"+realm.get("module")+":"+realm.get("source_set")+":"+context.get("id");

@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
+import org.jetbrains.kotlin.codegen.OwnerKind
 
 /** Verified compiler-2.1.10 K1 compatibility frontend; language 1.9 subset.
  * Unsupported diagnostics stay visible. Source bodies never use bytecode
@@ -64,10 +66,26 @@ class KotlinFrontend(private val state: State) {
     private fun annotation(value: org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor): Map<String,Any?> =
         mapOf("name" to value.fqName?.asString(),"values" to value.allValueArguments.mapKeys { it.key.asString() }.mapValues { constant(it.value) })
     private fun annotations(descriptor: DeclarationDescriptor)=descriptor.annotations.map(::annotation)
+    private fun staticAbi(descriptor: FunctionDescriptor): Boolean? {
+        if (descriptor is ConstructorDescriptor) return false
+        if (descriptor.kind != CallableMemberDescriptor.Kind.DECLARATION) return null
+        if (descriptor is org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor)
+            return descriptor.dispatchReceiverParameter == null
+        val kind = when (descriptor.containingDeclaration) {
+            is PackageFragmentDescriptor -> OwnerKind.PACKAGE
+            is ClassDescriptor -> {
+                val container = descriptor.containingDeclaration as ClassDescriptor
+                if (container.isInline || container.isValue) return null
+                OwnerKind.IMPLEMENTATION
+            }
+            else -> return null
+        }
+        return runCatching { DescriptorAsmUtil.isStaticMethod(kind, descriptor) }.getOrNull()
+    }
     private fun method(descriptor: FunctionDescriptor, element: PsiElement? = null): String {
         val signature=mapper.mapAsmMethod(descriptor)
         val name=if(descriptor is ConstructorDescriptor) "<init>" else signature.name
-        val meta=State.map("annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
+        val meta=State.map("jvm_static",staticAbi(descriptor),"annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
             "parameter_names",descriptor.valueParameters.map { it.name.asString() },"return_type",descriptor.returnType?.toString(),
             "extension_receiver_type",descriptor.extensionReceiverParameter?.type?.toString(),"suspend",descriptor.isSuspend,"inline",descriptor.isInline,
             "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString(),
@@ -253,9 +271,17 @@ class KotlinFrontend(private val state: State) {
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
             if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
                 resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
-                val type=mapper.mapType(resolved.dispatchReceiver!!.type)
-                if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
-                    "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
+                val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
+                val actualType=expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
+                    val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+                    state.sites.last()["dispatch_completeness_reason"]=boundary
+                    state.diagnostic(boundary,"Full generic/intersection receiver constraints are not represented; declared target retained without candidates",loc(expression))
+                } else {
+                    val type=mapper.mapType(actualType)
+                    if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
+                        "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
+                }
             }
             if(target==null)state.diagnostic("KOTLIN_UNRESOLVED_CALL",reason,loc(expression))
             super.visitCallExpression(expression)
