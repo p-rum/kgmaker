@@ -112,6 +112,14 @@ The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-
 
 `imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. The default scanner uses pattern-based SQL, YAML, Kotlin and TypeScript extraction. Separate opt-in JVM/TypeScript workers use compiler APIs; they are not invoked by scan/hook/feature. Explicit JVM inspection can project imported Spring/JPA annotations into `FRAMEWORK_DERIVED` nodes and edges, including bean candidates, HTTP/listener entrypoints, proxy boundaries, entity/table/column bindings, and simple Spring Data repository/query declarations. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
 
+Explicit `kgmaker inspect frontend --root /path/to/repo --tsconfig tsconfig.json`
+also analyzes solution-style TypeScript project references within that root.
+The captured project graph identifies each repo/config, follows the compiler's
+source redirects without emitting outputs, and invalidates stored compiler facts
+when a transitive project input changes. Missing, cyclic, outside-root or
+overlapping reference graphs fail before publication. This does not add callback
+resolution or cross-repository TypeScript source analysis.
+
 ## Copilot workflow
 
 Vývoj tohoto repozitáře má navíc projektové Codex implementační agenty v

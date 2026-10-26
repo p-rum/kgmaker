@@ -326,6 +326,8 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
             raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE")
     if response["project"]["compiler_options"] != preflight["project"]["compiler_options"]:
         raise WorkerError("Frontend compiler options changed", "STALE")
+    if response["project"].get("project_graph") != preflight["project"].get("project_graph"):
+        raise WorkerError("Frontend project reference graph changed", "STALE")
     model = {"source_sets": [{"module": module, "id": source_set, "scope": scope,
                               "files": [f["path"] for f in response["project"]["program_files"]]}]}
     after = scan_repository(root)

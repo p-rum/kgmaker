@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const PROTOCOL = 1;
-const VERSION = 'typescript-worker-1';
+const VERSION = 'typescript-worker-2';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 
@@ -25,6 +25,13 @@ function analyze(request) {
   const identityCache = new WeakMap();
   const functionNodes = [];
   const rootFileSet = new Set();
+  const sourceOwners = new Map();
+
+  function projectFor(file) { return sourceOwners.get(path.resolve(file)); }
+  function symbolPrefix(file) {
+    const project = projectFor(file);
+    return project && projects.size > 1 ? `${prefix}:project:${project.config}` : prefix;
+  }
 
   function inside(file) {
     const relative = path.relative(root, file);
@@ -79,7 +86,7 @@ function analyze(request) {
       const s = checker.getSignatureFromDeclaration(node);
       if (s) signature = checker.signatureToString(s,node,ts.TypeFormatFlags.NoTruncation);
     }
-    let value = `${prefix}:${loc.path}:${owner(node)}:${name(node)}:${signature || ts.SyntaxKind[node.kind]}`;
+    let value = `${symbolPrefix(node.getSourceFile().fileName)}:${loc.path}:${owner(node)}:${name(node)}:${signature || ts.SyntaxKind[node.kind]}`;
     if (ts.isParameter(node) && node.parent.parameters) {
       value=id(node.parent)+':parameter:'+node.parent.parameters.indexOf(node);
     }
@@ -97,6 +104,7 @@ function analyze(request) {
       symbols.set(identity,{id:identity,name:name(node),owner:owner(node),kind:kind || (callable(node)?'function':ts.SyntaxKind[node.kind]),
         type:checker.typeToString(type,node,ts.TypeFormatFlags.NoTruncation),...loc,
         identity_stability:identity.includes(':snapshot:')?'SNAPSHOT':'DECLARATION',
+        project_id:projectFor(node.getSourceFile().fileName)?.id || null,
         scope:context.scope,context_id:context.id});
     }
     return identity;
@@ -140,31 +148,90 @@ function analyze(request) {
       .replace(/([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&]*/gi,'$1[redacted]');
   }
 
-  const tsconfig = path.resolve(root, request.tsconfig || 'tsconfig.json');
+  let tsconfig = path.resolve(root, request.tsconfig || 'tsconfig.json');
   if (!inside(tsconfig)) throw Error('tsconfig escapes root');
   const transportInputs = new Map();
   const readFile = file => {
+    const before = ts.sys.fileExists(file) ? hash(fs.readFileSync(file)) : null;
     const text = ts.sys.readFile(file);
-    if (text !== undefined) transportInputs.set(path.resolve(file), {path:path.resolve(file),sha256:hash(fs.readFileSync(file))});
+    if (text !== undefined) {
+      const resolved=path.resolve(file), sha256=hash(fs.readFileSync(file));
+      if (sha256!==before || (transportInputs.has(resolved) && transportInputs.get(resolved).sha256!==sha256))
+        throw Error('MIXED_CONFIG_SNAPSHOT:'+resolved);
+      transportInputs.set(resolved,{path:resolved,sha256});
+    } else if (before!==null) throw Error('MIXED_CONFIG_SNAPSHOT:'+path.resolve(file));
     return text;
   };
-  const parsed = ts.getParsedCommandLineOfConfigFile(tsconfig,{}, {...ts.sys,readFile,onUnRecoverableConfigFileDiagnostic:d=>{throw Error(ts.flattenDiagnosticMessageText(d.messageText,'\n'));}});
-  if (!parsed) throw Error('Unable to parse tsconfig');
-  if (parsed.errors.length) throw Error(ts.formatDiagnostics(parsed.errors,{getCanonicalFileName:p=>p,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
-  const host=ts.createCompilerHost(parsed.options); host.readFile=readFile;
-  const program = ts.createProgram({rootNames:parsed.fileNames,options:parsed.options,projectReferences:parsed.projectReferences,host});
-  const checker = program.getTypeChecker();
+  const projects = new Map(), orderedProjects = [], activeProjects = new Set();
+  const relative = file => path.relative(root,file).split(path.sep).join('/');
+  function loadProject(config, parent=null) {
+    config = path.resolve(config);
+    const located = parent ? relative(parent) : relative(config);
+    if (!inside(config)) throw Error(`TS_PROJECT_REFERENCE_OUTSIDE_ROOT:${located}: ${relative(config)}`);
+    if (!fs.existsSync(config)) throw Error(`TS_PROJECT_REFERENCE_MISSING:${located}: ${relative(config)}`);
+    config = fs.realpathSync(config);
+    if (!inside(config)) throw Error(`TS_PROJECT_REFERENCE_OUTSIDE_ROOT:${located}: ${relative(config)}`);
+    if (activeProjects.has(config)) throw Error(`TS_PROJECT_REFERENCE_CYCLE:${located}: ${relative(config)}`);
+    if (projects.has(config)) return projects.get(config);
+    if (projects.size >= 128) throw Error(`TS_PROJECT_REFERENCE_LIMIT:${located}: maximum 128 projects`);
+    activeProjects.add(config);
+    const parsed = ts.getParsedCommandLineOfConfigFile(config,{}, {...ts.sys,readFile,
+      onUnRecoverableConfigFileDiagnostic:d=>{throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.flattenDiagnosticMessageText(d.messageText,'\n'));}});
+    if (!parsed) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: unable to parse tsconfig`);
+    if (parsed.errors.length) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.formatDiagnostics(parsed.errors,{getCanonicalFileName:p=>p,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
+    const project = {id:`ts-project:${context.repo_id}:${relative(config)}`,config:relative(config),parsed,references:[]};
+    projects.set(config,project);
+    for (const reference of parsed.projectReferences || []) {
+      const child = loadProject(ts.resolveProjectReferencePath(reference), config);
+      project.references.push(child.id);
+    }
+    for (const file of parsed.fileNames) {
+      const owner=sourceOwners.get(path.resolve(file));
+      if (owner && owner.id!==project.id) throw Error(`TS_PROJECT_SOURCE_AMBIGUOUS:${relative(config)}: ${relative(file)} also belongs to ${owner.config}`);
+      sourceOwners.set(path.resolve(file),project);
+      rootFileSet.add(file);
+    }
+    activeProjects.delete(config);
+    orderedProjects.push(project);
+    return project;
+  }
+  const rootProject=loadProject(tsconfig);
+  tsconfig=fs.realpathSync(tsconfig);
+  const parsed=rootProject.parsed;
+  const programs=orderedProjects.map(project=>{
+    const host=ts.createCompilerHost(project.parsed.options); host.readFile=readFile;
+    // Analysis follows the compiler's source redirects, never stale emitted .d.ts
+    // and never invokes a solution builder or emit.
+    host.useSourceOfProjectReferenceRedirect=()=>true;
+    host.getParsedCommandLine=config=>projects.get(fs.existsSync(config)?fs.realpathSync(config):path.resolve(config))?.parsed;
+    return {project,program:ts.createProgram({rootNames:project.parsed.fileNames,options:project.parsed.options,
+      projectReferences:project.parsed.projectReferences,host})};
+  });
+  let checker;
+  const fingerprints=new Map();
+  const projectGraph={version:1,root_project:rootProject.id,projects:orderedProjects.map(project=>{
+    const sourceFiles=project.parsed.fileNames.map(file=>({path:relative(file),sha256:hash(fs.readFileSync(file))}))
+      .sort((a,b)=>a.path.localeCompare(b.path));
+    const references=[...project.references].sort();
+    const fingerprint=hash(canonical({config:hash(fs.readFileSync(path.resolve(root,project.config))),
+      compiler_options:project.parsed.options,source_files:sourceFiles,
+      references:references.map(id=>({id,fingerprint:fingerprints.get(id)}))}));
+    fingerprints.set(project.id,fingerprint);
+    return {id:project.id,repo_id:context.repo_id,config:project.config,references,fingerprint,
+      root_files:sourceFiles.map(file=>file.path),source_files:sourceFiles,compiler_options:project.parsed.options};
+  })};
   if (request.operation === 'project') {
     return {...handshake(),status:'COMPLETE',context_id:context.id,project:{
       input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),
-      compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path)}};
+      compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph}};
   }
-  for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
-    diagnostics.push({code:'TS'+diagnostic.code,reason:ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'),
-      path:diagnostic.file?fileInfo(diagnostic.file).path:null,start:diagnostic.start??null});
+  for (const {project,program} of programs) {
+    for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
+      diagnostics.push({code:'TS'+diagnostic.code,reason:ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'),
+        project_id:project.id,path:diagnostic.file?fileInfo(diagnostic.file).path:project.config,start:diagnostic.start??null});
+    }
   }
-  const projectFiles = program.getSourceFiles().filter(s=>inside(s.fileName) && !s.isDeclarationFile && !s.fileName.includes(path.sep+'node_modules'+path.sep));
-  parsed.fileNames.forEach(f=>rootFileSet.add(f));
+  const projectFiles = [], visitedSources = new Set();
   const siteByNode = new WeakMap();
   function visit(node,caller) {
     if (callable(node)) {
@@ -253,11 +320,18 @@ function analyze(request) {
     }
     ts.forEachChild(node,child=>visit(child,caller));
   }
-  for (const source of projectFiles) {
-    const loc=fileInfo(source);
-    const moduleId=`${prefix}:${loc.path}:<module>`;
-    symbols.set(moduleId,{id:moduleId,name:'<module>',kind:'module',owner:'',...loc,range:{start:0,end:source.end,start_line:1,start_column:1},scope:context.scope,context_id:context.id});
-    visit(source,moduleId);
+  for (const {program} of programs) {
+    checker=program.getTypeChecker();
+    for (const source of program.getSourceFiles()) {
+      if (!inside(source.fileName) || source.isDeclarationFile || source.fileName.includes(path.sep+'node_modules'+path.sep) || visitedSources.has(source.fileName)) continue;
+      visitedSources.add(source.fileName);projectFiles.push(source);
+      const loc=fileInfo(source);
+      const moduleId=`${symbolPrefix(source.fileName)}:${loc.path}:<module>`;
+      symbols.set(moduleId,{id:moduleId,name:'<module>',kind:'module',owner:'',...loc,
+        project_id:projectFor(source.fileName)?.id || null,
+        range:{start:0,end:source.end,start_line:1,start_column:1},scope:context.scope,context_id:context.id});
+      visit(source,moduleId);
+    }
   }
 
   function calls(node) {
@@ -312,13 +386,13 @@ function analyze(request) {
     return {...base,kind:'statement'};
   }
   for (const node of functionNodes) bodies.push({method:id(node),body:ir(node.body),language:'typescript',context_id:context.id});
-  for (const source of program.getSourceFiles()) fileInfo(source);
+  for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');
   for (const [file,before] of inputs) if(hash(fs.readFileSync(file))!==before.sha256) throw Error('MIXED_SNAPSHOT:'+before.path);
   if (request.ui_framework && request.ui_framework!=='react') diagnostics.push({code:'UNSUPPORTED_UI_FRAMEWORK',framework:request.ui_framework});
   return {...handshake(),status:diagnostics.length?'PARTIAL':'COMPLETE',context_id:context.id,
     symbols:[...symbols.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),call_sites:sites,bodies,facts,diagnostics,
-    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),
+    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
       root_files:parsed.fileNames.map(f=>path.relative(root,f)),program_files:projectFiles.map(s=>({...fileInfo(s),root_input:rootFileSet.has(s.fileName)})),
       dependencies:[...inputs.values()].filter(i=>i.origin==='dependency')},
     coverage:{files_found:projectFiles.length,files_analyzed:projectFiles.length,methods_analyzed:bodies.length,

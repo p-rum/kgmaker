@@ -1,5 +1,17 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W01 — TypeScript project references (2026-10-26)
+
+VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
+s transitive composite projekty, repo/config-qualified identities a skutečné
+Program/TypeChecker source redirects bez emitted outputs. Captured project graph
+v1 ukládá config/reference/options/file kontrakt; transitive změna vyřadí starou
+compiler vrstvu při offline refresh bez procesu. Missing/cycle/outside-root a
+overlapping source ownership mají lokalizovanou chybu a nulovou mutaci store.
+`tests/test_typescript_project_references.py` a [change note 36](changes/36_resolveTypeScriptProjectReferences.md)
+uvádějí přesnou matici. T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
+
 ## T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)
 
 VERIFIED_IN_SCOPE pro Linux / Python 3.12: resource package `kgmaker_workers`,
