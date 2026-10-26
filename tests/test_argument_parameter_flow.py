@@ -1,5 +1,6 @@
 """Actual compiler binding proofs, independent from runtime execution."""
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -27,7 +28,11 @@ def analyze(root, sources, *, language='jvm', backend='k1'):
     try:
         result = request_worker(command(language, HOME, kotlin_backend=backend), payload, cwd=root)
     except WorkerError as error:
-        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
+        if error.status != 'TOOLCHAIN_UNAVAILABLE':
+            raise
+        required = os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1' or (
+            language == 'jvm' and backend == 'k2' and os.environ.get('KGMAKER_REQUIRE_K2') == '1')
+        if required:
             pytest.fail(str(error))
         pytest.skip(str(error))
     assert not (root / '.kgmaker').exists()
@@ -300,3 +305,38 @@ def test_generic_constructor_vararg_packing_without_instantiated_formal_is_unkno
     assert site['argument_mapping_status'] == 'UNKNOWN'
     assert any(d['code'] == 'JAVA_VARARG_TRANSFORMATION_UNAVAILABLE' for d in response['diagnostics'])
     assert not any(f['kind'] == 'argument_to_parameter' and f.get('call_site') == site['id'] for f in response['facts'])
+
+
+@pytest.mark.parametrize('workers_required,k2_required,backend', [('1', '0', 'k1'), ('0', '1', 'k2'), ('0', '0', 'k2')])
+def test_missing_required_binding_worker_cannot_be_a_green_skip(tmp_path, monkeypatch, workers_required, k2_required, backend):
+    monkeypatch.setattr(sys.modules[__name__], 'HOME', tmp_path / 'missing-distribution')
+    monkeypatch.setenv('KGMAKER_REQUIRE_WORKERS', workers_required)
+    monkeypatch.setenv('KGMAKER_REQUIRE_K2', k2_required)
+    monkeypatch.setattr('subprocess.Popen', lambda *a, **k: pytest.fail('tool discovery executed a process'))
+    expected = pytest.fail.Exception if workers_required == '1' or k2_required == '1' else pytest.skip.Exception
+    with pytest.raises(expected):
+        analyze(tmp_path, {'src/main/kotlin/Calls.kt': 'fun entry(){}'}, backend=backend)
+
+
+def test_mixed_java_kotlin_formal_binding_uses_identity_not_display_name(tmp_path):
+    from kgmaker.inspection import validate_response
+    response = analyze(tmp_path, {
+        'src/main/java/JavaCalls.java': 'class JavaCalls {static int parse(String x){return Integer.parseInt(x);}}',
+        'src/main/kotlin/KotlinCalls.kt': 'fun parseOther(x:String):Int = java.lang.Integer.parseInt(x)',
+    })
+    validate_response(response, {'id': response['context_id']})
+    bindings = proofs(response, 'java.lang.Integer.parseInt(')
+    assert len(bindings) == 2 and len({f['target'] for f in bindings}) == 1
+
+
+def test_actual_inspection_pipeline_accepts_formals_without_fabricated_ranges(tmp_path):
+    from kgmaker.inspection import inspect_jvm
+    sources = {'src/main/java/Calls.java': '''class Calls {
+ static int take(int n){return n;} static int entry(int n){return take(n);}}
+'''}
+    analyze(tmp_path, sources)
+    result = inspect_jvm(tmp_path, home=HOME, publish=False)
+    assert any(e['kind'] == 'argument_to_parameter' for e in result['graph']['edges'])
+    formals = [s for s in result['graph']['symbols'] if s.get('kind') == 'parameter']
+    assert formals and all(s['range'] is None for s in formals)
+    assert not (tmp_path / '.kgmaker').exists()

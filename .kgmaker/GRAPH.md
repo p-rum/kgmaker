@@ -6,11 +6,11 @@
 - Scope: production; omitted files: 266
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `f30b2330b857afa5ef58e67f9a5b4a0db3bfcb64e1e6afc1768aba4b65767b70`; content: `2d690fe08db6673a51290909fa9522166c4e0c1922a297b10823e0aed30f316a`; freshness: CONTENT_VERIFIED
+- Context: `e51fe06314e3b18e7b7ae668300b9051b3ec701191a3f198f2af051a57d961f3`; content: `4cd9d1973214cc9a7f91faf364e559faf0503274d84f5233b0722601c7d9b5c6`; freshness: CONTENT_VERIFIED
 - Files indexed: 58
 - Symbols and sections: 631
 - Internal imports: 178
-- Heuristic cross-file calls: 3141
+- Heuristic cross-file calls: 3140
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -19,7 +19,7 @@
 - Templates/variables: 0/0
 - Semantic concepts: 0
 - Implementation episodes: 109
-- Inferred/ambiguous relationships: 3141/0
+- Inferred/ambiguous relationships: 3140/0
 
 ## Architecture diagram
 
@@ -535,7 +535,7 @@ flowchart LR
 - **function** `expression` line 218 — `expression(value, destination, statement_offset)`
 - **function** `impact_paths` line 283 — `impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20)`
 - **function** `validate_argument_bindings` line 333 — `validate_argument_bindings(response: dict)`
-- **function** `argument_parameter_bindings` line 391 — `argument_parameter_bindings(graph: KnowledgeGraph, call_site: str)`
+- **function** `argument_parameter_bindings` line 390 — `argument_parameter_bindings(graph: KnowledgeGraph, call_site: str)`
 
 ### `src/kgmaker/domain.py`
 - **technology** `Kafka`
@@ -2340,9 +2340,8 @@ flowchart LR
 - `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 382; src/kgmaker/dataflow.py:382; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 383; src/kgmaker/dataflow.py:383; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 384; src/kgmaker/dataflow.py:384; INFERRED 0.85)
-- `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 385; src/kgmaker/dataflow.py:385; INFERRED 0.85)
+- `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 400; src/kgmaker/dataflow.py:400; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 401; src/kgmaker/dataflow.py:401; INFERRED 0.85)
-- `src/kgmaker/dataflow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 402; src/kgmaker/dataflow.py:402; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `346 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 357; src/kgmaker/dataflow.py:357; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `346 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 371; src/kgmaker/dataflow.py:371; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 345; src/kgmaker/dataflow.py:345; INFERRED 0.85)
@@ -2574,7 +2573,7 @@ flowchart LR
 - `src/kgmaker/flow.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 81; src/kgmaker/flow.py:81; INFERRED 0.85)
 - `src/kgmaker/flow.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 85; src/kgmaker/flow.py:85; INFERRED 0.85)
 - `src/kgmaker/flow.py` may call `89 in `src/kgmaker/callgraph.py`` (name match at line 126; src/kgmaker/flow.py:126; INFERRED 0.85)
-- `src/kgmaker/flow.py` may call `391 in `src/kgmaker/dataflow.py`` (name match at line 99; src/kgmaker/flow.py:99; INFERRED 0.85)
+- `src/kgmaker/flow.py` may call `390 in `src/kgmaker/dataflow.py`` (name match at line 99; src/kgmaker/flow.py:99; INFERRED 0.85)
 - `src/kgmaker/flow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 101; src/kgmaker/flow.py:101; INFERRED 0.85)
 - `src/kgmaker/flow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 102; src/kgmaker/flow.py:102; INFERRED 0.85)
 - `src/kgmaker/flow.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 103; src/kgmaker/flow.py:103; INFERRED 0.85)

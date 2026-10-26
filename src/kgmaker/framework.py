@@ -126,7 +126,7 @@ def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]
             else:
                 args = str(raw_values)
             values.append((item["name"], args))
-    if "annotations" not in symbol and symbol.get("path") and symbol.get("range", {}).get("start_line"):
+    if "annotations" not in symbol and symbol.get("path") and (symbol.get("range") or {}).get("start_line"):
         values = _annotation_values(source, int(symbol["range"]["start_line"]))
     return values
 

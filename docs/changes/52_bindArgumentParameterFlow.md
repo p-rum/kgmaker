@@ -92,9 +92,30 @@ nevydává za PASS při chybějícím toolchainu.
   **2 PASS, 21 deselected, 7.67 s**; finální source je znovu pokryt focused25.
 - Stávající pure dataflow/workspace/control-flow **33 PASS, 3.52 s**; finální
   dataflow/workspace/control-flow/protocol/mandatoryCI **59 PASS, 6.59 s**.
-- Jediný finální whole-suite běh je frontovaný pod
-  `flock /workspace/kgmaker-heavy-tests.lock`, výstup `/tmp/s07-final-full.log`,
-  JUnit `/tmp/s07-final-full.xml`; výsledek bude doplněn po doběhu.
+- Dodatečné pure negative gates ověřují samostatně REQUIRE_WORKERS i REQUIRE_K2:
+  **3 PASS, 25 deselected, 0.09 s**. Pouze skutečně chybějící optional toolchain může
+  být SKIP; runtime/protocol chyba se neskrývá. Compiler source a runtime zůstaly
+  beze změny, tehdejší suite obsahovala28 feature cases.
+- Před spuštěním queued full odhalil actual mixed Java/Kotlin Integer.parseInt
+  regression příliš přísnou rovnost display parameter names (**1 FAIL, 10.48 s**).
+  Javac/K1 mají stejný canonical formal/index, ale různé zobrazované názvy.
+  Odstraněna pouze rovnost názvů; method/index/call-site/context a ostatní proof
+  checks zůstaly. Ověření mixed case + malformed/duplicate/candidate negatives:
+  **12 PASS, 17 deselected, 5.39 s**. Suite má29 feature cases (12 actual,17 pure).
+  Finální Python correction mtime20:05:51.291 UTC předchází actual full pytest
+  process start20:05:57 UTC; tento jediný whole-suite běh tedy načetl opravený zdroj.
+- První current-source full odhalil14 setup errors existující compiler integration:
+  framework annotation fallback volal None.get pro nový formal s path a range=None.
+  Známý failed běh byl bezpečně přerušen: **165 PASS, 2 SKIP, 14 ERROR, 150.89 s**,
+  KeyboardInterrupt; původní `/tmp/s07-final-full.log` a XML zůstaly zachované.
+  Není to PASS ani problém prostředí.
+- Minimální Python null-safe guard neodvozuje vymyšlený parameter locator. Actual
+  inspect_jvm regression **1 PASS, 43 deselected, 9.21 s**; potom celý existující
+  CompilerWorkerTests s --maxfail=1 **14 PASS, 103.07 s** pod vlastními pinned workers.
+  Source/runtime JVM se nezměnily. Finální feature suite má30 případů (13 actual,17 pure).
+- Teprve po opraveném fixture byl frontován finální corrected full pod
+  `flock /workspace/kgmaker-heavy-tests.lock`, výstup `/tmp/s07-final-retry-full.log`,
+  JUnit `/tmp/s07-final-retry-full.xml`; výsledek bude doplněn po doběhu.
 - Scoped semantic update/apply/validate PASS, zachováno6 manual concepts/15 edges
   a všech109 inherited episodes. Refaktor workspace posunul scanner ID stávající
   resolve_service_ownership259→273; změněn jen cíl této doložené relation, nikoli
@@ -103,7 +124,10 @@ nevydává za PASS při chybějícím toolchainu.
 
 Finální runtime SHA-256 K1 `dd0f91d1d71c374ca251f486e254a0c25fba609a5eb0f66cde496c0e583f04bb`,
 K2 `56b00cf030c6eb05de8cce4f843b37548048fee9a13548970a12045e4bbf7d82`.
-Kód a runtime jsou od finálního preflight frozen; další práce je dokumentace/evidence.
+JVM source/runtime jsou od finálního preflight frozen; jediná následná produkční
+Python změna odstraňuje chybnou rovnost display názvů před actual full startem.
+První failed full byl zastaven před null-safe framework opravou; všechen
+produkční kód a feature testy jsou od spuštění corrected retry frozen.
 Povinné compiler CI explicitně zahrnuje nový tests/test_argument_parameter_flow.py.
 
 ## Zbývající hranice

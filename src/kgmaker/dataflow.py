@@ -380,7 +380,6 @@ def validate_argument_bindings(response: dict) -> None:
                 or fact.get('evidence_kind') != 'SYMBOL_RESOLVED'
                 or parameter.get('kind') != 'parameter' or parameter.get('method') != site['declared_target']
                 or type(parameter.get('parameter_index')) is not int or parameter['parameter_index'] != indices[1]
-                or parameter.get('name') != fact['parameter_name']
                 or argument.get('kind') != 'value' or argument.get('call_site') != site['id']
                 or fact.get('transformation') not in {'DIRECT', 'VARARG_ELEMENT', 'VARARG_ARRAY', 'VARARG_SPREAD'}):
             raise ValueError('Invalid compiler argument binding proof')
