@@ -36,8 +36,11 @@ API končí FAIL, volitelný lokální běh SKIP. Nejde o Spring aplikaci ani co
 
 [T003-S05-W03](../tasks/T003-S05-03-springConditionMatrix.md), T003-S05/T003-AC05.
 Normativní dependencies S03-W04 a S04-W01 jsou sloučené. Rekognoskace ověřila,
-že W01 K2 nemodeluje Kotlin třídy; Kotlin-class varianty fixture proto čekají
-na znovupoužití sloučených S06-W01 compiler facts, nikoli kopii jeho implementace.
+že W01 K2 nemodeluje Kotlin třídy; Kotlin-class varianty fixture proto používají
+S06-W01 compiler facts jako explicitní závislost PR32, nikoli kopii jeho implementace.
+Kvůli uživatelem pozastavenému CI/fakturaci je PR navazující Draft s base větví
+`feat/t003-s06-01-kotlin-jpa-access`, konkrétně heade71c622. Po sloučení PR32
+se retargetuje na main a znovu ověří aktuální integrace.
 Výchozí main ff26; průběžná integrace obsahuje main33dc a SourceMapping/CI změny.
 
 | AC | Konkrétní test |
@@ -57,18 +60,21 @@ Výchozí main ff26; průběžná integrace obsahuje main33dc a SourceMapping/CI
 - Čisté a skutečné variant config/classpath testy: **36 PASS,2 deselected
   v34.50s**. Běh používá skutečné připravené K1/K2 workery a API; mění pouze
   explicitní A input/JAR, B context a graph store bytes zůstávají stejné.
-- Skutečná kompletní bean/injection matice: K1 PASS; K2 Kotlin-class případ
-  pending sloučení compiler facts S06-W01. Počáteční společný běh24 PASS/1 FAIL
-  tuto známou chybějící capability neprohlašuje za PASS.
+- Finální cílená skutečná K1/K2 condition + TS-context sada po explicitní
+  integraci PR32: **40 PASS v46.43s**. Včetně Kotlin-class anotací, negated
+  profile injection a config/classpath isolation. Počáteční24 PASS/1 FAIL
+  vzniklo kvůli chybějícím K2 class facts v baselineW01 a nepovažuje se za PASS.
 - Nezávislá revize odhalila UNRESOLVED_CLASS_LITERAL jako falešnou známou
   absenci; opraveno a oba class-condition směry mají regresi. Python Unicode
   casefold se nepoužívá pro Java ignore-case důkaz; rozšíření ß/ss je UNKNOWN.
 - První isolation test zachytil správné STALE, ale očekával přesnější text
   než existing provider wrapper; assertion nyní ověřuje classpath diagnostiku
   a status STALE, bez změny stávajícího provider error kontraktu.
-- Finální full suite, final semantic/memory/scan/check a nové CI: **NOT_RUN /
-  pending**, dokud se nedokončí dependency integration. Tento note není ready
-  ani prohlášení celé T003-S05 za hotovou.
+- Finální full suite a semantic/memory/scan/check: **pending** před dokončením
+  lokálního review. GitHub Actions: **NOT_RUN/BLOCKED**, všechny joby odmítá
+  account billing/spendinglimit před spuštěním runneru; uživatel výslovně
+  pozastavil tuto část a požaduje pokračovat další lokální implementací.
+  Tento Draft není prohlášení celé T003-S05 za hotovou.
 
 ## Kompatibilita, příklad a omezení
 
