@@ -36,12 +36,14 @@ class Job:
         self.handle = api.CreateJobObjectW(None, None)
         if not self.handle:
             raise ctypes.WinError(ctypes.get_last_error())
-        info = Extended()
-        info.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-        if not api.SetInformationJobObject(self.handle, 9, ctypes.byref(info), ctypes.sizeof(info)):
-            error = ctypes.WinError(ctypes.get_last_error())
+        try:
+            info = Extended()
+            info.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            if not api.SetInformationJobObject(self.handle, 9, ctypes.byref(info), ctypes.sizeof(info)):
+                raise ctypes.WinError(ctypes.get_last_error())
+        except BaseException:
             self.close()
-            raise error
+            raise
 
     def attach_and_resume(self, process):
         """Assign a CREATE_SUSPENDED child before it can create descendants."""

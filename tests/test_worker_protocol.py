@@ -1,3 +1,5 @@
+import io
+from types import SimpleNamespace
 import os
 import subprocess
 import json
@@ -61,6 +63,59 @@ class WorkerProtocolTests(unittest.TestCase):
                 timer.join()
         self.assertFalse([t.name for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
 
+    @unittest.skipUnless(os.name == 'posix', 'POSIX initialization failure regression')
+    def test_nonblocking_setup_failure_reaps_child_and_closes_pipes(self):
+        processes = []
+        original = subprocess.Popen
+        def capture(*args, **kwargs):
+            process = original(*args, **kwargs)
+            processes.append(process)
+            return process
+        with patch('kgmaker.worker_protocol.subprocess.Popen', side_effect=capture), \
+                patch('kgmaker.worker_protocol.os.set_blocking', side_effect=OSError('injected setup failure')):
+            with self.assertRaisesRegex(OSError, 'injected setup failure'):
+                self.call('import time; time.sleep(10)', timeout=.5)
+        self.assertIsNotNone(processes[0].returncode)
+        self.assertTrue(all(s.closed for s in (processes[0].stdin, processes[0].stdout, processes[0].stderr)))
+        self.assertFalse([t for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
+
+    def test_interrupted_windows_attach_cleans_suspended_child_and_job(self):
+        # Fault injection verifies cleanup ownership; it is not a Windows PASS.
+        for error in (KeyboardInterrupt('injected attach interruption'), OSError('injected assign failure')):
+            with self.subTest(error=type(error).__name__):
+                events = []
+                class FakeProcess:
+                    pid = 123
+                    def __init__(self):
+                        self.stdin, self.stdout, self.stderr = io.BytesIO(), io.BytesIO(), io.BytesIO()
+                        self.alive = True
+                    def poll(self):
+                        return None if self.alive else -1
+                    def kill(self):
+                        self.alive = False
+                        events.append('kill-direct-child')
+                    def wait(self):
+                        assert not self.alive, 'Waiting on an unassigned suspended child would hang'
+                        events.append('wait')
+                process = FakeProcess()
+                class FakeJob:
+                    def attach_and_resume(self, child):
+                        raise error  # Failure BEFORE assignment: this job owns no process.
+                    def terminate(self):
+                        events.append('terminate-empty-job')
+                    def close(self):
+                        events.append('close-job')
+                cwd = Path.cwd()
+                with patch.dict(sys.modules, {'kgmaker._windows_job': SimpleNamespace(Job=FakeJob)}), \
+                        patch('kgmaker.worker_protocol.os.name', 'nt'), \
+                        patch('kgmaker.worker_protocol.subprocess.Popen', return_value=process):
+                    with self.assertRaises(WorkerError if isinstance(error, OSError) else KeyboardInterrupt) as caught:
+                        request_worker(['unused-worker'], {}, cwd=cwd)
+                if isinstance(error, OSError):
+                    self.assertEqual('TOOLCHAIN_UNAVAILABLE', caught.exception.status)
+                self.assertEqual(['terminate-empty-job', 'kill-direct-child', 'wait', 'close-job'], events)
+                self.assertTrue(all(s.closed for s in (process.stdin, process.stdout, process.stderr)))
+
     def test_exited_parent_inherited_pipes_timeout_and_cancel_are_bounded(self):
         for cancelled in (False, True):
             with self.subTest(cancelled=cancelled), tempfile.TemporaryDirectory() as folder:
@@ -104,9 +159,17 @@ class WorkerProtocolTests(unittest.TestCase):
                     if before_fds is not None:
                         self.assertEqual(before_fds, len(list(descriptors.iterdir())))
                         state = Path('/proc') / marker.read_text() / 'stat'
-                        if state.exists():
-                            self.assertEqual('Z', state.read_text().split(') ', 1)[1].split()[0],
-                                'Inherited-pipe descendant must no longer execute')
+                        deadline = time.monotonic() + 1
+                        while state.exists():
+                            try:
+                                status = state.read_text().split(') ', 1)[1].split()[0]
+                            except FileNotFoundError:
+                                break
+                            if status == 'Z':
+                                break
+                            self.assertLess(time.monotonic(), deadline,
+                                'Inherited-pipe descendant must stop within the cleanup bound')
+                            time.sleep(.01)
                 finally:
                     stop.set()
                     if cancelled:

@@ -28,18 +28,25 @@ class WorkerError(AnalysisError):
 def _terminate(process, job=None):
     # The session leader may already have exited while descendants retain pipes.
     try:
-        if job is not None:
-            job.terminate()
-        elif os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
-        elif process.poll() is None:
-            process.kill()
-    except ProcessLookupError:
-        pass
-    process.wait()
+        try:
+            if job is not None:
+                job.terminate()
+            elif os.name == "posix":
+                os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    finally:
+        # Assignment can fail before the suspended child belongs to the job.
+        # Always terminate the direct child as well, even if tree cleanup failed.
+        try:
+            if process.poll() is None:
+                process.kill()
+        except ProcessLookupError:
+            pass
+        process.wait()
 
 
-def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None):
+def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None, abort):
     """Drain bounded byte streams using pipe operations available on Windows.
 
     Anonymous Windows pipes cannot be registered with a socket selector. Three
@@ -109,11 +116,11 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None
                threading.Thread(target=read, args=(process.stderr, 'stderr'), name='kgmaker-worker-stderr', daemon=True),
                threading.Thread(target=write, name='kgmaker-worker-stdin', daemon=True)]
     output, errors = bytearray(), bytearray()
-    if os.name == 'posix':
-        for stream in (process.stdin, process.stdout, process.stderr):
-            os.set_blocking(stream.fileno(), False)
     started = []
     try:
+        if os.name == 'posix':
+            for stream in (process.stdin, process.stdout, process.stderr):
+                os.set_blocking(stream.fileno(), False)
         for thread in threads:
             thread.start()
             started.append(thread)
@@ -144,7 +151,7 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None
             raise WorkerError('Worker timed out after closing streams', 'TIMED_OUT') from error
         return output, errors, code
     except BaseException:
-        _terminate(process, job)
+        abort()
         raise
     finally:
         if job is not None:
@@ -168,35 +175,41 @@ def request_worker(argv: list[str], request: dict, *, cwd: Path, timeout: float 
         raise WorkerError("Worker cancelled before launch", "CANCELLED")
     job = None
     process = None
+    aborted = False
+
+    def abort():
+        nonlocal aborted
+        if not aborted:
+            aborted = True
+            if process is not None:
+                _terminate(process, job)
+
     try:
-        if os.name == 'nt':
-            from ._windows_job import Job
-            job = Job()
-        process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, start_new_session=os.name == "posix",
-                                   creationflags=0x00000004 if os.name == 'nt' else 0)
-        if job is not None:
-            job.attach_and_resume(process)
-    except OSError as error:
-        if process is not None:
-            process.kill()
-            process.wait()
-            for stream in (process.stdin, process.stdout, process.stderr):
-                stream.close()
-        if job is not None:
-            job.close()
-        raise WorkerError(str(error), "TOOLCHAIN_UNAVAILABLE") from error
-    assert process.stdin is not None and process.stdout is not None and process.stderr is not None
-    deadline = time.monotonic() + timeout
-    try:
+        try:
+            if os.name == 'nt':
+                from ._windows_job import Job
+                job = Job()
+            process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE, start_new_session=os.name == "posix",
+                                       creationflags=0x00000004 if os.name == 'nt' else 0)
+            if job is not None:
+                job.attach_and_resume(process)
+        except OSError as error:
+            raise WorkerError(str(error), "TOOLCHAIN_UNAVAILABLE") from error
+        assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+        deadline = time.monotonic() + timeout
         output, errors, code = _exchange(process, payload, deadline=deadline,
-            cancel_file=cancel_file, max_response=max_response, job=job)
+            cancel_file=cancel_file, max_response=max_response, job=job, abort=abort)
+    except BaseException:
+        abort()
+        raise
     finally:
         if job is not None:
             job.close()
-        for stream in (process.stdin, process.stdout, process.stderr):
-            if not stream.closed:
-                stream.close()
+        if process is not None:
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
     stderr = errors.decode("utf-8", errors="replace")
     try:
         def unique(pairs):

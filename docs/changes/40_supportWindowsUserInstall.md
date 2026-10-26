@@ -157,3 +157,30 @@ Transport/prerequisite regrese **12 PASS / 1 Windows SKIP**. Přímý pokus
 spustit restricted launcher na Linuxu správně vrací exit1 s explicitním
 `requires actual Windows`; nejde o emulovaný Windows PASS. Produkční transport
 se od strict356PASS baseline nemění, proto se drahý celý suite neopakuje.
+
+## Doplňující review: vlastnictví inicializace a asynchronní kill
+
+Nezávislý reviewer potvrdil další dvě cleanup mezery: chyba při POSIX
+`os.set_blocking` před exchange guardem zanechala sleeping child; KeyboardInterrupt
+při Windows attach/resume obcházel OSError-only guard. Request nyní vlastní celý
+launch, attach, deadline i exchange pod BaseException guardem s idempotentním
+abort. Nonblocking setup probíhá uvnitř exchange try před startem threadů;
+job konstruktor zavírá již vytvořený handle i při BaseException. Zachovává se
+původní KeyboardInterrupt a původní TOOLCHAIN_UNAVAILABLE mapování OSError
+z launch/attach. Nové regrese kontrolují skutečný POSIX sleeping child po
+injected setup error a cleanup simulovaného Windows attach interruptu. Simulace
+je pouze fault-injection test vlastnictví, nikoli Windows acceptance.
+
+Kontrola potomka v `/proc` nyní čeká nejvýše1s na jeho ukončení: SIGKILL je
+asynchronní, takže okamžitý stav R nebyl důkaz úniku. Původní elapsed bound,
+FD/thread/stream a graph invariants zůstávají. Cílená sada po opravě:
+**14 PASS / 1 Windows SKIP**, 1.77s.
+
+Reviewer dále zachytil selhání attach ještě před přiřazením do jobu: prázdný
+job nezabije suspended child. `_terminate` proto ve finally vždy samostatně
+kill/wait přímého child, je-li živý, i po chybě tree termination. Testovací
+nepřiřazený process nyní odmítne wait, pokud před ním nepřišel direct kill;
+ověřují se OSError i KeyboardInterrupt před přiřazením. Po této úpravě
+cílená sada znovu **14 PASS / 1 SKIP**, 1.77s. Předchozí celá sada s init
+guardy měla **358 PASS / 10 SKIP**, 106.03s; finální strict own-worker celá sada po direct-kill
+pojistce má **358 PASS / 10 SKIP**, 81.61s. Windows acceptance zůstává PENDING.
