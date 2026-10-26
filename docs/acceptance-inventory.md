@@ -204,3 +204,16 @@ Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
 | Work package | Acceptance | Supported version and evidence | Actual run |
 |---|---|---|---|
 | T003-S03-W03 | AC01–AC04 | gradle-composite-1 / Gradle8.13; `tests/test_gradle_included.py` duplicate lib repos, stale jar substitution, exact resolved order, unique execution-bound producer realm, ambiguous ownership/no-mutation import; legacy manifests covered by existing build suite | rebased review-fix full suite 221 PASS, 0 SKIP; external roots UNBOUND/PARTIAL |
+
+
+## T003-S09-W02 — diagnostika binárních XLS
+
+Rozsah `xls-unsupported-1`, `feature-inventory-5`, Python 3.12, bez externího
+parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
+
+| ID | Stav | Přímá evidence | Běh |
+|---|---|---|---|
+| T003-S09-W02-AC01 | VERIFIED_IN_SCOPE | `test_binary_xls.py::test_real_biff2_fixture_is_unsupported_before_zip_parse_or_process` — BIFF2 fixture, .xls a přejmenované .xlsx; status/hash/file locator | focused 65 PASS |
+| T003-S09-W02-AC02 | VERIFIED_IN_SCOPE | `test_packet_and_audit_preserve_hash_bound_gap_without_confirming_missing_data` — save/load a graph v1/v2/v3; stávající `test_workbooks.py` zachovává XLSX cell evidence | focused 65 PASS |
+| T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps | focused 65 PASS |
+| T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |

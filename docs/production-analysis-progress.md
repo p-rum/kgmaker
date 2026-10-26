@@ -187,3 +187,17 @@ T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se ne
 Ověření modelu a integrace s aktuálním main je uvedeno v
 [change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
 work packages výše zůstávají beze změny.
+
+
+## T003-S09-W02 — bezpečná diagnostika legacy XLS
+
+VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
+`.xls` a OLE/BIFF hlavičky přejmenované na `.xlsx` se neparsují jako XLSX.
+UNSUPPORTED diagnostika nese byte SHA-256, file locator a scope; feature/data-check
+ji zachovají jako coverage gap, workspace přidá repo identity. Minimální BIFF2
+fixture, malformed vstupy, nejednoznačný compound container, nulové procesy při
+extrakci, nulová mutace uloženého grafu a UNKNOWN availability jsou ověřeny
+`tests/test_binary_xls.py`; focused 65 PASS. Skutečné XLS buňky/hodnoty se nečtou,
+libovolné přípony se nesniffují a signatura není důkaz platného Excel workbooku.
+Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
+Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).

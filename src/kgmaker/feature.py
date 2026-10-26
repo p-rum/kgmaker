@@ -13,11 +13,11 @@ from .analysis_model import (
     file_hash, inventory_candidate, read_json, safe_path, write_json,
 )
 from .scanner import EXTENSIONS, MAX_FILE_BYTES, SKIP_DIRS, SENSITIVE_NAMES, scan_repository
-from .workbooks import MAX_ARCHIVE_BYTES
+from .workbooks import MAX_ARCHIVE_BYTES, binary_format, BINARY_DIAGNOSTICS_VERSION
 from .semantic import apply_semantic_layer
 from .dataflow import CAPABILITIES, extract_dataflow
 
-PARSER_VERSION = "feature-inventory-4"
+PARSER_VERSION = "feature-inventory-5"
 GENERATED_PREFIX = "docs/generated/features/"
 REPORT_MARKER = "<!-- kgmaker-feature-report:v1 -->"
 
@@ -66,9 +66,10 @@ def source_inventory(root: Path) -> tuple[dict, list]:
             kind = "CODE" if suffix in {".py", ".java", ".kt", ".kts", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs"} else (
                 "SCHEMA" if suffix == ".sql" else "CONTRACT" if suffix == ".json" else
                 "CONFIG" if suffix in {".yml", ".yaml", ".properties"} else
-                "WORKBOOK" if suffix == ".xlsx" else "DOCUMENTATION")
+                "WORKBOOK" if suffix in {".xlsx", ".xls"} else "DOCUMENTATION")
             sources[relative] = {"sha256": hashlib.sha256(raw).hexdigest(), "kind": kind, "bytes": len(raw),
-                                 "supported": suffix in EXTENSIONS or suffix == ".xlsx"}
+                                 "supported": (suffix in EXTENSIONS or suffix == ".xlsx")
+                                 and not (suffix in {".xls", ".xlsx"} and binary_format(raw[:8]))}
     return sources, excluded
 
 
@@ -152,6 +153,9 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
             from .views import project, select_context
             context_id = select_context(graph, scope, context_id, allow_stale=True)
             graph = project(graph, scope, context_id=context_id)
+        if scope != "all":
+            coverage = {**coverage, "artifact_diagnostics": [item for item in coverage.get("artifact_diagnostics", [])
+                                                            if item.get("scope") == scope]}
         details = _analysis_details(graph)
         if _select_context:
             details["graph_selection"] = {"scope": scope, "context_id": context_id}
@@ -163,6 +167,11 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
             _details.update(details)
         return baseline, coverage, sources, graph.nodes
     graph, _, semantic_error = current_graph(root)
+    # Failed artifacts have no parsed nodes, so node-based graph projections
+    # correctly omit them. Preserve their scoped coverage gaps separately.
+    artifact_diagnostics = [dict(item) for item in graph.diagnostics
+                            if item.get("code") in {"BINARY_XLS_UNSUPPORTED", "XLSX_PARSE_FAILED"}
+                            and (scope == "all" or item.get("scope") == scope)]
     if _select_context:
         from .views import project, select_context
         context_id = select_context(graph, scope, context_id, allow_stale=True)
@@ -194,7 +203,9 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
     coverage = {"roots": ["."], "artifacts": sorted(sources), "exclusions": excluded,
                 "excluded_directories": sorted(SKIP_DIRS) + ["hidden directories", GENERATED_PREFIX],
                 "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES,
-                                        "workbooks": "xlsx-offline-1", "templates": "thymeleaf-bindings-1"},
+                                        "workbooks": "xlsx-offline-1", "binary_xls": BINARY_DIAGNOSTICS_VERSION,
+                                        "templates": "thymeleaf-bindings-1"},
+                "artifact_diagnostics": artifact_diagnostics,
                 "dataflow_diagnostics": flow.diagnostics,
                 "limitations": limitations,
                 "unsupported_sources": sorted(p for p, x in sources.items() if not x["supported"])}

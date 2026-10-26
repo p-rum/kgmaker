@@ -180,6 +180,28 @@ from its cached value:
 {"location":{"type":"workbook_cell","sheet":"Scenario","cell":"A1"},"value":{"formula":null,"cached_value":"10","cached_value_freshness":"UNKNOWN"}}
 ```
 
+Unsupported workbook files use **coverage diagnostics**, not cell evidence. Declared
+`.xls` files and OLE compound/BIFF signatures in `.xlsx` candidates are rejected
+before the ZIP/XML parser. The bounded header check does not validate Excel data;
+malformed `.xls` stays unsupported with `detected_format: UNKNOWN`. Arbitrary file
+extensions are not searched for binary spreadsheet signatures.
+
+For example, after `kgmaker feature prepare --root . --requirement requirement.md
+--id legacy`, the packet's `coverage.artifact_diagnostics` contains:
+
+```json
+{"path":"legacy.xls","code":"BINARY_XLS_UNSUPPORTED","status":"UNSUPPORTED","detected_format":"BIFF","sha256":"<file byte SHA-256>","locator":{"type":"file","path":"legacy.xls"},"extractor":"xls-unsupported-1","scope":"unknown"}
+```
+
+The file locator identifies an unparsed artifact; it is not a supported evidence
+citation location and cannot prove a cell value, formula or availability. Audit
+`coverage_gaps` retain the same records under `ARTIFACT_DIAGNOSTICS`. Workspace
+records also carry `repo_id`; production packets filter diagnostics by scope.
+Renamed binary `.xlsx` stays in `unsupported_sources`; malformed XLSX parsing also
+returns an UNSUPPORTED hash/file-locator diagnostic. `feature-inventory-5`
+invalidates older inventory/cache fingerprints; regenerate old packets explicitly.
+Graph/store schemas and the `xlsx-offline-1` cell-evidence contract are unchanged.
+
 Evidence kind must match the packet source manifest. Source and cited location must
 exist and the quote/value must match; hash or location errors reject apply.
 File SHA-256 uses raw bytes, including CRLF; graph fingerprints separately retain
