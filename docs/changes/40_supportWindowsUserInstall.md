@@ -207,3 +207,36 @@ Native startup musí znovu ověřit skutečný Windows CI. Lokálně pouze Pytho
 compile a transport/prerequisite **14 PASS / 1 Windows SKIP**; žádný Linux
 výsledek se neoznačuje jako Windows PASS. Produkční transport zůstává beze změny.
 K2 main integrace ještě následuje odděleně; K2 Windows podpora není tímto tvrzena.
+
+## Integrace K2 main před dalším Windows během
+
+Main `eff0d3d5d7620b017fe42a65a54f672af8068667` je integrován bez změny
+cleanup vlastnictví nebo private desktop launcheru. Inspection zachovává full
+JDK21 prerequisite a zároveň explicitní K1/K2 JAR selection; oba installed
+Kotlin testy (K1 v cestě s mezerami i K2 mimo checkout) zůstávají. Builder
+kombinuje backend/source/lock/manifest folding z K2 s native exe, os.pathsep a
+přímým Java compiler entrypointem z W03. Povinný K2 Linux CI i Windows gate
+zůstávají zachovány.
+
+Jedna K2 no-fallback negativní fixture původně mockovala java bez skutečného
+JDK layoutu; nová prerequisite ji správně zastavila dříve. Fixture nyní připraví
+explicitní fake java/javac soubory a nadále zakazuje každý subprocess, takže
+znovu ověřuje skutečnou missing-K2-distribution větev (ne implicitní fallback).
+Immutable historie obou větví i čtyři semantic concepts/osm vztahů se zachovají;
+README evidence se znovu ověří proti výsledným řádkům.
+
+Integrační kontroly: transport/prerequisite/K2 sada **33 PASS / 12 SKIP**, 1.91s
+(11 SKIP jsou nepřipravený vlastní K2 artefakt, jeden skutečný Windows gate;
+mandatory K2 CI není změněn). Skutečný offline build integrovaného K1 workeru
+pomocí přímého Java launcheru SUCCESS; SHA256 JAR
+`44c872c438297ca748d6ef88072ff88cacf36edb80a54ae05b64abc87dc3f203`.
+Ověření byte obsahu potvrzuje, že transport, Job Object i PrivateDesktop
+launcher jsou shodné s již reviewovaným startup kandidátem `6101113`.
+Celý suite358 se kvůli této integraci neopakuje; povinný native gate se spustí
+na novém candidate. K2 Linux implementace má vlastní main acceptance důkazy.
+
+Po genuine buildu integrovaného workeru proběhly actual installed-wheel/core/
+Java/K1 Kotlin/TypeScript smoke testy v cestách s mezerami:
+`KGMAKER_REQUIRE_WORKERS=1 JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH KGMAKER_WORKERS_HOME=/workspace/windows-install/workers PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_worker_install.py -k 'not packaged_k2'`:
+**8 PASS / 1 DESELECTED**, 45.10s. K2 installed test je zde explicitně oddělen;
+nejde o důkaz K2 Windows. Semantic validate, scan/check a diff check PASS.

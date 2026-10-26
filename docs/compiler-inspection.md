@@ -18,14 +18,16 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 | Python | 3.12.14, pytest 8.3.4 | Regrese a bounded worker transport |
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
 | Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
+| Kotlin K2 (opt-in) | Standalone Analysis API / FIR 2.1.10, backend `k2-analysis-api-2.1.10-v1` | Mixed Java/Kotlin named-function calls, compiler PSI light-method JVM descriptors, explicit unresolved/ambiguous boundaries; source CFG/property/lambda semantics remain PARTIAL |
 | Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
 | Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
 | React typings | React 18.3.1, @types/react 18.3.18 | Intrinsic JSX onClick v malé fixture |
 
-Kotlin Analysis API/K2 zatím není implementována; podpora compiler distribuce 2.1.10
-není tvrzením úplné podpory Kotlin language 2.1. Java release request je explicitní,
+Výchozí backend zůstává explicitně omezený `k1-compat-1`. Opt-in K2 používá skutečnou
+Standalone Analysis API/FIR 2.1.10; nejde o přejmenování BindingContext backendu.
+Podporovaná K2 matice není tvrzením úplné podpory Kotlin language 2.1. Java release request je explicitní,
 Maven import přenáší získaný release. V integrační fixture byl ověřen pouze release 21.
 Kotlin options v manifestu nesou vlastní schema/status a vstupují do content-bound
 identity compiler kontextu. Změna flagu proto zneplatní dotčený kontext, ale
@@ -423,3 +425,49 @@ missing fragments emit INCLUDED_BUILD_EXPORT_UNAVAILABLE. Such scope is PARTIAL,
 never evidence of complete source coverage. Non-Java model aggregators retain
 UNSUPPORTED_GRADLE_VARIANT diagnostics. No implicit process is added to offline
 analysis commands.
+
+## T003-S04-W01 — explicitní K2 Analysis API
+
+Samostatný backend `k2-analysis-api-2.1.10-v1` používá FIR `analyze` a
+`resolveToCall` ze skutečné Standalone Analysis API. JVM identity vycházejí
+z jednoznačné compiler light-method signatury, nikoli z textového odhadu typu.
+Java zůstává JavacTask/Trees. Worker protocol v1 a graph v1/v2/v3 se nemění;
+backend/verze a SHA-256 distribuce vstupují do context identity a evidence.
+K1 a K2 mají oddělené selection keys a target adresáře. Offline refresh zachová
+čerstvý K2 kontext a jeho stale diagnostika nabízí opět `--kotlin-backend k2`.
+
+Explicitní příprava pro release builder/developera (nic z toho nevolá instalace
+ani `scan`/`inspect`):
+
+```bash
+python workers/jvm/fetch_k2.py --output /tmp/kgmaker-k2-api
+python workers/jvm/build.py --backend k2 --analysis-api-home /tmp/kgmaker-k2-api \
+  --kotlin-home /opt/kotlinc-2.1.10 --maven-repository /opt/trusted-m2 \
+  --java-home /opt/jdk-21
+kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10 \
+  --worker-home /opt/kgmaker/workers \
+  --classpath /opt/kgmaker/workers/jvm/target-k2/lib/kotlin-stdlib.jar
+```
+
+`fetch_k2.py` je oddělený explicitní síťový příkaz. Stahuje sedm JetBrains
+Analysis API JARů 2.1.10 a Caffeine 2.9.3 z pevných repository URL a ověřuje
+SHA-256 z `dependencies-k2.lock.json` před publikací; builder pracuje offline
+a ověřuje všechny připnuté compiler/API/Jackson vstupy. Neplatné bytes
+nepřepíší platný soubor. JDK ani compiler se automaticky nestahují. Volitelný
+`target-k2` se balí pouze po explicitní přípravě; core wheel zůstává bez runtime.
+
+Podporovaná konfigurace je compiler 2.1.10, language/API 2.1 a JVM target 21.
+Importovaná jiná compiler/language/API/JVM verze nebo flags/plugins/opt-ins
+se odmítnou před spuštěním workeru. Tím se neignoruje zachycená konfigurace
+T003-S03-W04. Chybějící K2 distribuce nevyvolá fallback na K1.
+
+Mixed fixture, dvě obsahově shodná spuštění, přesné caller/target JVM identity,
+missing/ambiguous call, oddělení test scope, backend/version evidence,
+strict no-publication, offline refresh a instalace mimo checkout jsou v
+`tests/test_k2_backend.py` a `tests/test_worker_install.py`.
+
+K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
+call sites, local/lambda execution ani default-body/coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
+compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
+konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).

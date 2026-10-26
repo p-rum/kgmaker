@@ -37,6 +37,8 @@ def register(sub):
         else:
             p.add_argument("--build-id")
             p.add_argument("--classpath", action="append", default=[])
+            p.add_argument("--kotlin-backend", choices=("k1", "k2"), default="k1")
+            p.add_argument("--kotlin-version", default="2.1.10", help="pinned compiler version; unsupported versions fail before publication")
     graph = sub.add_parser("callgraph", help="compiler callers/callees and bounded static paths")
     actions = graph.add_subparsers(dest="callgraph_command", required=True)
     for name in ("callers", "callees", "path"):
@@ -119,6 +121,7 @@ def run(args):
                 else:
                     result = inspect_frontend(args.root, tsconfig=args.tsconfig, ui_framework=args.ui_framework, **options)
             else:
+                options.update(kotlin_backend=args.kotlin_backend, kotlin_version=args.kotlin_version)
                 manifest = args.manifest
                 if args.build_id:
                     from .analysis_model import safe_path

@@ -47,7 +47,7 @@ EXTENSIONS = {
 }
 SKIP_DIRS = {
     ".git", ".hg", ".svn", ".idea", ".vscode", ".venv", "venv", "env",
-    "node_modules", "vendor", "build", "dist", "target", "out", "coverage",
+    "node_modules", "vendor", "build", "dist", "target", "target-k2", "out", "coverage",
     "__pycache__", ".gradle", ".next", ".nuxt", ".kgmaker", "graphify-out",
 }
 SENSITIVE_NAMES = {
