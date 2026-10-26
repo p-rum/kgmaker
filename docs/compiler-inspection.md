@@ -223,7 +223,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v3 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -234,7 +234,8 @@ injection přenáší všechny ACTIVE členy; Optional používá unikátní vý
 ObjectProvider/Provider je konzervativní lazy kandidát. Statický `@Import`
 rozšiřuje dosažitelný konfigurační graf i mimo component scan; stav podmínek
 konfigurace se skládá se stavem její `@Bean` metody. Obyčejná importovaná třída
-je bean, ale ImportSelector/registrar se neprovádí a hlásí explicitní boundary.
+je bean. ImportSelector/DeferredImportSelector používají níže popsaný bounded
+compiler subset; registrar se neprovádí a hlásí explicitní boundary.
 `@Bean` mimo compiler-resolved `@Configuration` je odmítnut. JPA
 `@Entity`/`@Table`/`@Column`, Spring Data
 repository/query a přesné názvy tabulek/sloupců se vážou na source-only schema
@@ -455,3 +456,51 @@ call sites, local/lambda execution ani default-body/coroutine mapping. Tyto hran
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
+
+## T003-S05-W01 — bounded Spring import selectors
+
+`annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
+typ od přesných `org.springframework.context.annotation.ImportSelector` a
+`DeferredImportSelector` v compiler-resolved transitivní hierarchii. Stejné krátké
+jméno v cizím package není selector. Zdrojové Java compiler facts používají obě
+JVM distribuce K1/K2; nejde o rozšíření nepodporovaných Kotlin annotation metadata.
+
+| Vstup | Výsledek v tomto scope |
+|---|---|
+| Přesná selector identita a jediný `return new String[]{"app.Configuration"};` | `spring_import_selector`, `uses_import_selector`, `selects_import`; deklarovaná konfigurace pokračuje existujícím condition/reachability modelem |
+| Zdrojový zděděný selector / default DeferredImportSelector | Stejná bounded literal cesta, konkrétní owner metody; deferred phase je metadata, nikoli provedený ordering |
+| Custom exclusion filter nebo deferred Group | UNKNOWN; známé literal targets mají pouze `may_select_import` a UNKNOWN condition |
+| Neznámé/komplexní tělo, chybějící metoda/target, vnořený selector target, neúplná hierarchie nebo legacy fakta | Explicitní `SPRING_DYNAMIC_IMPORT_BOUNDARY`; žádný odhadnutý ACTIVE selector bean |
+| Registrar/factory, Spring context nebo runtime registrace | Nespouští se; další samostatné work packages |
+
+Hierarchy i literal target array mají limit 128 položek; literal FQN nejvýše
+512 znaků. Nekonstantní výrazy, field reads, concatenation, `Class.getName()` ani
+jiné volání se nevyhodnocují. Libovolné return strings se nepublikují jako data.
+Selector třída se nepovažuje za běžný bean jen proto, že je v `@Import`.
+Evidence je `FRAMEWORK_DERIVED` se source method ID/hash, selected context a rule
+version; nejde o `SYMBOL_RESOLVED` invocation ani runtime/data availability proof.
+Statická selection proto nikdy sama nezpůsobí AVAILABLE nebo CONFIRMED_MISSING.
+
+Graph/store v1/v2/v3 a worker protocol v1 zůstávají čitelné. Aditivní symbol fields
+`type_hierarchy`, `import_selector` a `static_import_return` mají vlastní schema1;
+legacy worker bez nich zůstává pro selector selection UNKNOWN. Chybná nová facts
+se odmítnou před publikací. Rule v4 i obsah distribuce jsou ve fingerprintu nového
+inspection contextu; scan/feature/audit žádný worker ani selector nespustí.
+Nové Spring v4 metadata platí pouze pro JVM; TypeScript/React metadata a selection
+key se touto změnou nemigrují. Dva čisté regresní testy v
+`tests/test_spring_imports_context.py` porovnávají celé context hodnoty s baseline.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID app.DirectSelector
+```
+
+Classpath musí obsahovat skutečná schválená Spring API; profiles/properties a
+component packages musí mít dodaný scope, jinak jejich stav zůstává UNKNOWN.
+Pro reprodukovatelné testování se explicitně spouští
+`mvn -B -ntp -f fixtures/spring-imports/pom.xml compile`. Fixture pinne Spring6.2.2,
+Maven resources3.3.1/compiler3.13.0 a SHA-256/license entries šesti API JARů.
+Core ani test fixture nic implicitně nestahují. Mandatory CI vyžaduje skutečné API
+a oba skutečné JVM workery; chybějící vstup je FAIL, ne PASS. Viz
+[change note42](changes/42_resolveBoundedSpringImports.md).

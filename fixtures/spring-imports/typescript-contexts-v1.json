@@ -1,0 +1,57 @@
+{
+  "ordinary": {
+    "mode": "BUILD_IMPORT",
+    "repo_id": "local",
+    "module": "root",
+    "source_set": "main",
+    "scope": "production",
+    "language": "typescript",
+    "origin_trust": "LOCAL_COMPILER_INPUTS",
+    "coverage": "PARTIAL",
+    "freshness": "CONTENT_VERIFIED",
+    "classification_override_hash": "0348436b6fbfe40ba53002e22bcd6f7f7b56dc3456bd3f58bdf265eea298572f",
+    "classifier_contexts": [],
+    "worker": {
+      "protocol_version": 1,
+      "worker": "typescript-worker-1",
+      "compiler_version": "typescript-5.7.3",
+      "distribution": []
+    },
+    "analyzer_version": "inspection-1",
+    "source_files": {},
+    "framework_rule_versions": {
+      "spring": "annotation-source-v3",
+      "jpa": "annotation-source-v4"
+    },
+    "selection_key": "f3c25d355579f42c66eddddcdd198c6b28c5a6a08548760bc8825eecfb432e03",
+    "id": "7ad7d29c3f8bf1e315c37bb33ccd12f633cd1bc82eca73a08382435414a67010"
+  },
+  "react": {
+    "mode": "BUILD_IMPORT",
+    "repo_id": "local",
+    "module": "root",
+    "source_set": "main",
+    "scope": "production",
+    "language": "typescript",
+    "origin_trust": "LOCAL_COMPILER_INPUTS",
+    "coverage": "PARTIAL",
+    "freshness": "CONTENT_VERIFIED",
+    "classification_override_hash": "0348436b6fbfe40ba53002e22bcd6f7f7b56dc3456bd3f58bdf265eea298572f",
+    "classifier_contexts": [],
+    "worker": {
+      "protocol_version": 1,
+      "worker": "typescript-worker-1",
+      "compiler_version": "typescript-5.7.3",
+      "distribution": []
+    },
+    "analyzer_version": "inspection-1",
+    "ui_framework": "react",
+    "framework_rule_versions": {
+      "spring": "annotation-source-v3",
+      "jpa": "annotation-source-v4"
+    },
+    "source_files": {},
+    "selection_key": "45a553ca0ac1f6e0a3682acdad87ceee304f9f1a6aea817f6444d527b7c3dcd9",
+    "id": "b789ac3eea9506ee8893b4e84186d65ef05dd76f63b886f87de207d354876df8"
+  }
+}
