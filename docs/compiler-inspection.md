@@ -619,3 +619,25 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## Coroutine source boundaries (T003-S04-W03)
+
+The explicit JVM inspection preserves compiler-proven suspend call sites and
+recognized `kotlinx.coroutines.launch`/`async` boundaries. K1 source CFG retains
+calls with resume/failure boundaries; scheduling remains UNKNOWN. K2 preserves
+source boundaries even when dependency JVM signatures remain unresolved, and
+continues to report unavailable source CFG explicitly.
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Source/compiler inspection does not execute coroutine code or a scheduler.
+```
+
+Named ContinuationImpl `invokeSuspend` declarations can map through bounded
+Kotlin/DebugMetadata, enclosing-method signature, delegate and exact realm proof.
+Metadata suspension lines never become source call-expression locations.
+Generated state-machine instructions retain BYTECODE_ONLY locators and generated
+identities; missing/malformed metadata, foreign realm or absent source remains
+unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
+remain outside this mapping contract. Store/protocol formats remain readable;
+metadata is additive and worker content identities invalidate older cached facts.
