@@ -84,3 +84,16 @@ tests/test_t008_project_service_inventory.py tests/test_t007_define_service_owne
 tests/test_t006_select_service_contexts.py tests/test_workspace.py
 tests/test_t005_add_view_model.py tests/test_cross_repo_artifacts.py
 tests/test_confluence_configuration.py tests/test_workbooks.py` — **110 passed**.
+
+### Integrace K2 základu
+
+Integrace s main `eff0d3d5d7620b017fe42a65a54f672af8068667` zachovává
+schválený inventář i jeho testy byte-identické s `0c5c9ac`.
+Sada inventory/context/ownership/workspace/cross-repo/config/scanner:
+**106 PASS / 2.14 s**. Zachováno 5 konceptů/9 vztahů; původní main epizody
+jsou přesným prefixem, vlastní epizody následují beze změny obsahu.
+Duplicitní semantic.py vztahy používají původní ověřené formulace z main.
+README prepare/update evidence odpovídá řádkům 156/158; architecture inventory
+odstavec zůstává na řádku 151. Scoped semantic apply/validate,
+generovaný scan/check a diff check: PASS. Plná sada se pouze kvůli této
+integraci neopakuje; nové vzdálené CI ověřuje aktuální HEAD.

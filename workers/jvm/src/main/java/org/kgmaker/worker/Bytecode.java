@@ -31,6 +31,11 @@ public final class Bytecode implements AutoCloseable {
             classes.put(owner,node);return node;
         }catch(IOException|IllegalArgumentException error){state.diagnostic("BYTECODE_CLASS_UNAVAILABLE",owner+": "+error.getMessage(),null);classes.put(owner,null);return null;}
     }
+    /** Class-file membership check only; never loads/initializes project code. */
+    public boolean hasDeclaredMethod(String owner,String name,String descriptor) {
+        var node=read(owner.replace('.','/'));
+        return node!=null && node.methods.stream().anyMatch(method->method.name.equals(name)&&method.desc.equals(descriptor));
+    }
     private String classMethod(String owner,String name,String descriptor,Set<String> visited) {
         if(!visited.add(owner))return null;
         var c=read(owner);if(c==null)return null;

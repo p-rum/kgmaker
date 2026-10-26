@@ -31,6 +31,8 @@ def _inspection_command(context: dict) -> str:
     else:
         for item in context.get("classpath", []):
             values += ["--classpath", item["path"]]
+    if kind == "code" and context.get("kotlin_backend") == "k2":
+        values += ["--kotlin-backend", "k2", "--kotlin-version", str(context.get("kotlin_version", "2.1.10"))]
     return shlex.join(values)
 
 
@@ -62,6 +64,7 @@ def _selection_key(context: dict) -> str:
         "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
+        "kotlin_backend", "kotlin_version",
     )})
 
 

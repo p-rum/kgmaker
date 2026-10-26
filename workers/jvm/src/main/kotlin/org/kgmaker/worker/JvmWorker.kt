@@ -6,10 +6,11 @@ import java.nio.file.Path
 private const val PROTOCOL=1
 private const val VERSION="jvm-worker-1"
 private fun handshake()=linkedMapOf<String,Any?>("protocol_version" to PROTOCOL,"worker" to VERSION,
-    "compiler_version" to "javac-${System.getProperty("java.version")}/kotlin-2.1.10-k1",
+    "compiler_version" to "javac-${System.getProperty("java.version")}/${KotlinFrontend.compiler}",
+    "kotlin_backend" to KotlinFrontend.backend,
     "worker_jdk" to System.getProperty("java.version"),
-    "capabilities" to listOf("java-attribution","kotlin-1.9-compatible-attribution","bytecode-asm-bundled-kotlin-2.1.10","source-ir","cha-application-classes"),
-    "limitations" to listOf("Kotlin frontend is the verified K1 language-1.9 compatibility subset, not full K2 Analysis API.",
+    "capabilities" to listOf("java-attribution","bytecode-asm-bundled-kotlin-2.1.10","source-ir","cha-application-classes") + KotlinFrontend.capabilities,
+    "limitations" to KotlinFrontend.limitations + listOf(
         "CHA is conservative within application classes; runtime/classpath completeness is not assumed.","Bytecode offsets are unavailable; instruction indexes are explicitly labelled."))
 
 fun main() {
@@ -23,6 +24,9 @@ fun main() {
         val response=when(request["operation"]) {
             "handshake" -> handshake()
             "analyze" -> {
+                require(request["kotlin_version"] == null || request["kotlin_version"] == "2.1.10") {"Unsupported Kotlin compiler version"}
+                val selectedBackend = if (KotlinFrontend.backend.startsWith("k2-")) "k2" else "k1"
+                require(request["kotlin_backend"] == null || request["kotlin_backend"] == selectedBackend) {"Kotlin backend/distribution mismatch"}
                 val state=State(request)
                 @Suppress("UNCHECKED_CAST")
                 val files=(request["sources"] as? List<String> ?: emptyList()).map { value ->
@@ -55,6 +59,10 @@ fun main() {
         val output=mapper.writeValueAsBytes(response)
         require(output.size<=64*1024*1024){"response limit exceeded"}
         System.out.write(output);System.out.write('\n'.code)
+        // Standalone Analysis API owns non-daemon IntelliJ pooled threads.
+        // This protocol serves exactly one bounded request per process.
+        System.out.flush()
+        kotlin.system.exitProcess(0)
     }catch(error: Throwable) {
         error.printStackTrace(System.err)
         println(mapper.writeValueAsString(handshake().apply {put("status","FAILED");put("diagnostics",listOf(mapOf("code" to "WORKER_FAILED","reason" to (error.message?:error.javaClass.name))))}))

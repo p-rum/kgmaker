@@ -247,6 +247,18 @@ Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
 |---|---|---|---|
 | T003-S03-W03 | AC01–AC04 | gradle-composite-1 / Gradle8.13; `tests/test_gradle_included.py` duplicate lib repos, stale jar substitution, exact resolved order, unique execution-bound producer realm, ambiguous ownership/no-mutation import; legacy manifests covered by existing build suite | rebased review-fix full suite 221 PASS, 0 SKIP; external roots UNBOUND/PARTIAL |
 
+## T003-S04-W01 — K2 Analysis API 2.1.10
+
+| Acceptance | Podporovaný rozsah | Konkrétní evidence |
+|---|---|---|
+| AC01 | `k2-analysis-api-2.1.10-v1`, mixed Java/Kotlin, compiler PSI JVM signatures, backend/version provenance | `test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence`, `test_packaged_k2_analyzes_outside_checkout` |
+| AC02 | Protocol v1; graph loader v1/v2/v3; explicit K1 compatibility | `test_existing_graph_loader_is_unchanged`, `test_k1_distribution_stays_explicitly_limited` |
+| AC03 | Unsupported version/config rejected before processes; missing/ambiguous unresolved; no implicit K1 fallback, strict no-mutation | `test_unsupported_backend_or_version_never_runs_or_mutates`, `test_unsupported_captured_k2_options_are_not_silently_ignored`, `test_unresolved_and_ambiguous_k2_calls_remain_partial`, `test_direct_worker_rejects_unsupported_version_and_backend`, `test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph`, `test_explicit_k2_fetch_rejects_wrong_bytes_without_publishing` |
+| AC04 | Actual pinned K2/JDK fixture, honest PARTIAL boundaries | [change note35](changes/35_addK2AnalysisBackend.md), `tests/test_k2_backend.py`, required compiler CI K2 gate |
+
+T003-AC04/S04 není tím uzavřen. K2 CFG, property/lambda execution, default-body
+a coroutine source mapping, další compiler verze a širší corpus zůstávají samostatné.
+
 | Work package acceptance | Scope/version | Evidence | Actual run |
 |---|---|---|---|
 | T003-S09-W04-AC01–AC04 | Offline approval sidecar v1; optional additive index hash, graph/store v1/v2/v3 unchanged | `tests/test_methodology_conflicts.py` (11 cases, včetně změny/smazání SVG a nulových procesů při freshness kontrole), existing `test_fa21_approved_requirement_conflict_preserves_authority` | 203 passed in 39.44 s; `KGMAKER_REQUIRE_WORKERS=1`, existing baseline build outputs reused; no whole-S09 claim |

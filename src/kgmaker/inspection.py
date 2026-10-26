@@ -52,7 +52,7 @@ def worker_home(path: Path | None = None) -> Path:
     return Path(__file__).resolve().parents[2] / "workers"
 
 
-def _jvm_worker_jar(home: Path) -> Path:
+def _jvm_worker_jar(home: Path, *, kotlin_backend="k1") -> Path:
     """Resolve the packaged JVM worker without assuming a Maven finalName.
 
     Maven's default artifact name contains the project version.  Development
@@ -61,7 +61,7 @@ def _jvm_worker_jar(home: Path) -> Path:
     unrelated worker look valid.  Therefore a versioned fallback is accepted
     only when it is unambiguous.
     """
-    target = home / "jvm/target"
+    target = home / "jvm" / ("target-k2" if kotlin_backend == "k2" else "target")
     plain = target / "kgmaker-jvm-worker.jar"
     if plain.is_file():
         return plain
@@ -69,21 +69,23 @@ def _jvm_worker_jar(home: Path) -> Path:
     if len(candidates) == 1 and candidates[0].is_file():
         return candidates[0]
     raise WorkerError(
-        "Optional JVM worker unavailable or ambiguous at " + str(home) + "; scan remains usable. "
+        "Optional JVM worker unavailable or ambiguous for Kotlin backend " + kotlin_backend + " at " + str(target) + "; scan remains usable. "
         "Build exactly one trusted JVM worker artifact explicitly, or select --worker-home / KGMAKER_WORKERS_HOME.",
         "TOOLCHAIN_UNAVAILABLE",
     )
 
 
-def command(language: str, home: Path | None = None) -> list[str]:
+def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> list[str]:
     if language not in {"jvm", "typescript"}:
         raise WorkerError("Unsupported worker language: " + language, "TOOLCHAIN_UNAVAILABLE")
     home = worker_home(home)
     if language == "jvm":
+        if not isinstance(kotlin_backend, str) or kotlin_backend not in {"k1", "k2"}:
+            raise AnalysisError("Unsupported Kotlin backend; select k1 or k2")
         java = shutil.which("java")
         if not java:
             raise WorkerError("Optional JVM worker/JDK unavailable; scan remains usable. Build the trusted worker explicitly.", "TOOLCHAIN_UNAVAILABLE")
-        jar = _jvm_worker_jar(home)
+        jar = _jvm_worker_jar(home, kotlin_backend=kotlin_backend)
         return [java, "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
     script = home / "typescript/worker.cjs"
@@ -94,9 +96,10 @@ def command(language: str, home: Path | None = None) -> list[str]:
     return [node, str(script)]
 
 
-def distribution(language: str, home=None) -> list[dict]:
+def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]:
     root = worker_home(home)
-    paths = ([_jvm_worker_jar(root)] + sorted((root / "jvm/target/lib").glob("*.jar"))) if language == "jvm" else [root / "typescript/worker.cjs", root / "typescript/node_modules/typescript/lib/typescript.js"]
+    target = root / "jvm" / ("target-k2" if kotlin_backend == "k2" else "target")
+    paths = ([_jvm_worker_jar(root, kotlin_backend=kotlin_backend)] + sorted((target / "lib").glob("*.jar"))) if language == "jvm" else [root / "typescript/worker.cjs", root / "typescript/node_modules/typescript/lib/typescript.js"]
     return [{"path": str(path.resolve()), "sha256": file_hash(path)} for path in paths]
 
 
@@ -171,6 +174,7 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
         "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
+        "kotlin_backend", "kotlin_version",
     )})
     value["id"] = digest(value)
     return value
@@ -222,6 +226,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                   "sha256": fact.get("sha256"), "bytecode_offset": fact.get("bytecode_offset"),
                   "instruction_index": fact.get("instruction_index"), "artifact_hashes": fact.get("artifact_hashes"),
                   "representation": fact.get("representation"),
+                  "compiler_backend": fact.get("compiler_backend", "javac" if str(fact.get("path", "")).endswith(".java") else None),
+                  "compiler_version": fact.get("compiler_version", selected_context.get("worker", {}).get("compiler_version")),
+                  "worker_backend": selected_context.get("kotlin_backend"),
                   "resolution_reason": fact.get("resolution_reason"),
                   "origin_trust": selected_context["origin_trust"], "freshness": selected_context["freshness"]}
         identity = "evidence:" + digest(record)
@@ -356,11 +363,33 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
 def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: list | None = None,
                 scope="production", repo_id="local", module="root", source_set="main", home=None,
                 timeout=120, cancel_file=None, project_model=None, build_context=None,
-                publish=True, strict=False, sources=None, java_release=21) -> dict:
+                publish=True, strict=False, sources=None, java_release=21,
+                kotlin_backend="k1", kotlin_version="2.1.10") -> dict:
     root = root.resolve()
-    argv = command("jvm", home)
+    if not isinstance(kotlin_backend, str) or kotlin_backend not in {"k1", "k2"} or kotlin_version != "2.1.10":
+        raise AnalysisError("Unsupported Kotlin backend/version; supported: k1 compatibility or K2 Analysis API, compiler 2.1.10")
+    if build_context is not None and not isinstance(build_context, dict):
+        raise AnalysisError("Kotlin build context must be an object")
+    compiler_options = (build_context or {}).get("compiler_options", {})
+    if not isinstance(compiler_options, dict) or not isinstance(compiler_options.get("kotlin", {}), dict):
+        raise AnalysisError("Kotlin compiler options must be an object")
+    kotlin_options = compiler_options.get("kotlin", {})
+    if kotlin_backend == "k2" and kotlin_options.get("compiler_version") is not None and kotlin_options.get("compiler_version") != "2.1.10":
+        raise AnalysisError("K2 Analysis API supports compiler 2.1.10 only; imported compiler version differs")
+    if kotlin_backend == "k2":
+        for name, supported in (("language_version", "2.1"), ("api_version", "2.1"), ("jvm_target", "21")):
+            if kotlin_options.get(name) is not None and kotlin_options.get(name) != supported:
+                raise AnalysisError("Unsupported K2 captured option: " + name + "; supported value: " + supported)
+        if any(kotlin_options.get(name) for name in ("free_args", "plugins", "plugin_options", "plugin_artifacts", "opt_in", "progressive")):
+            raise AnalysisError("Unsupported K2 compiler flags/plugins; this backend does not silently ignore captured options")
+    argv = command("jvm", home, kotlin_backend=kotlin_backend)
     meta = handshake(argv, cwd=root)
-    meta["distribution"] = distribution("jvm", home)
+    expected_backend = "k2-analysis-api-2.1.10-v1" if kotlin_backend == "k2" else "k1-compat-1"
+    # Legacy protocol-v1 K1 distributions remain readable; K2 requires an exact
+    # handshake and must never silently execute a K1 distribution.
+    if (kotlin_backend == "k2" or meta.get("kotlin_backend")) and meta.get("kotlin_backend") != expected_backend:
+        raise WorkerError("Worker Kotlin backend differs from explicit selection", "INVALID_PROTOCOL")
+    meta["distribution"] = distribution("jvm", home, kotlin_backend=kotlin_backend)
     base = scan_repository(root, project_model=project_model, strict=strict)
     available = {n.path for n in base.nodes if n.kind == "file" and n.scope == scope and Path(n.path).suffix in {".java", ".kt"}}
     if sources is not None and (not isinstance(sources, list) or any(p not in available for p in sources)):
@@ -389,10 +418,14 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     selected = context(root, base, "jvm", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={**(build_context or {}), "classpath": entries, "project_model": project_model,
                                       "compiler_inputs": sources, "java_release": java_release,
+                                      "kotlin_backend": kotlin_backend, "kotlin_version": kotlin_version,
                                       "bytecode_artifacts": [{"path": str(Path(p if isinstance(p, str) else p["path"]).resolve()), "sha256": artifact_hash(Path(p if isinstance(p, str) else p["path"]))} for p in bytecode_roots or []]})
     response = request_worker(argv, {"operation": "analyze", "root": str(root), "context": selected,
-        "sources": sources, "classpath": entries, "bytecode_roots": bytecode_roots or [], "java_release": java_release},
+        "sources": sources, "classpath": entries, "bytecode_roots": bytecode_roots or [], "java_release": java_release,
+        "kotlin_backend": kotlin_backend, "kotlin_version": kotlin_version},
         cwd=root, timeout=timeout, cancel_file=cancel_file)
+    if (kotlin_backend == "k2" or response.get("kotlin_backend")) and response.get("kotlin_backend") != expected_backend:
+        raise WorkerError("Worker analysis backend differs from selected context", "INVALID_PROTOCOL")
     after = scan_repository(root, project_model=project_model)
     if source_snapshot(root, after, selected) != selected["source_files"] or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
         raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")

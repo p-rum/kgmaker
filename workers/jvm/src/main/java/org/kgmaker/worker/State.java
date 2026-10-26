@@ -83,9 +83,12 @@ public final class State {
     public String prefix(Map<String,Object> realm) {
         return "jvm:"+realm.get("repo_id")+":"+realm.get("module")+":"+realm.get("source_set")+":"+context.get("id");
     }
+    public String methodIdentity(String owner,String name,String descriptor,Map<String,Object> loc) {
+        return prefix(realm(owner,loc))+":method:"+owner+"."+name+descriptor;
+    }
     public String method(String owner,String name,String descriptor,Map<String,Object> loc,Map<String,Object> metadata) {
         var realm=realm(owner,loc);
-        String identity=prefix(realm)+":method:"+owner+"."+name+descriptor;
+        String identity=methodIdentity(owner,name,descriptor,loc);
         var value=map("id",identity,"owner",owner,"name",name,"descriptor",descriptor,"kind",name.equals("<init>")?"constructor":"method",
             "scope",realm.get("scope"),"context_id",context.get("id"),"origin",loc==null?"dependency":"handwritten","path",null,"range",null);
         if(loc!=null)value.putAll(loc); if(metadata!=null)value.putAll(metadata);
