@@ -416,3 +416,12 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+## T003-S04-W03 — coroutine boundaries
+
+Bounded compiler source suspend/API markers and named ContinuationImpl declaration
+mapping are implemented for the actual Kotlin2.1.10 fixture. K1 CFG carries source
+resume/failure boundaries; K2 source CFG and unresolved dependency ABI remain
+explicit UNKNOWN/PARTIAL. Generated state instructions do not become user source
+calls. Validation status and exact supported matrix are recorded in change51;
+runtime scheduler order and general coroutine state-machine CFG remain unsupported.
