@@ -96,9 +96,16 @@ def _file_digest(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _public_source_text(value: str) -> str:
+    # Source signatures and documentation are persisted too. This privacy
+    # transform never supplies semantic values to compiler/framework analysis.
+    from .http_execution import redact_uri_text
+    return redact_uri_text(value, relative=False)
+
+
 def _stable_id(kind: str, path: str, name: str, line: int | None = None) -> str:
     suffix = f"::{line}" if line is not None else ""
-    return f"{kind}:{path}:{name}{suffix}"
+    return f"{kind}:{path}:{_public_source_text(name)}{suffix}"
 
 
 def _line_for(text: str, offset: int) -> int:
@@ -109,7 +116,7 @@ def _doc_for_line(lines: list[str], index: int) -> str | None:
     if index + 1 < len(lines):
         candidate = lines[index + 1].strip()
         if candidate.startswith(('"""', "'''", "//", "*", "#")):
-            return candidate.strip('"\'/*# ').strip()[:240] or None
+            return _public_source_text(candidate.strip('"\'/*# ').strip())[:240] or None
     return None
 
 
@@ -130,7 +137,7 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
             Node(
                 id=_stable_id("section", path, match.group(2), _line_for(text, match.start())),
                 kind="section",
-                name=match.group(2).strip(),
+                name=_public_source_text(match.group(2).strip()),
                 path=path,
                 line=_line_for(text, match.start()),
             )
@@ -162,7 +169,7 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
                     name=name,
                     path=path,
                     line=line,
-                    signature=signature[:300],
+                    signature=_public_source_text(signature)[:300],
                     summary=_doc_for_line(lines, line - 1),
                 )
             )

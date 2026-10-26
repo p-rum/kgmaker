@@ -526,3 +526,11 @@ are never executed. Profile results also govern injection, so `!dev` is not
 incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
+
+HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
+integrations --format json` includes `http.requests`; process JSON/Markdown shows
+request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
+3.7.2 Java calls are compiler-attributed in both workers. An unused WebClient
+publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
+static trigger, never observed network execution or available response data.
+See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).

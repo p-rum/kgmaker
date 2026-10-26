@@ -328,6 +328,8 @@ def _api_references(text: str, path: str, language: str, file_id: str) -> tuple[
     edges: list[Edge] = []
 
     def add(method: str, endpoint_path: str, offset: int, relation: str, evidence: str) -> None:
+        from .http_execution import redact_uri_text
+        endpoint_path = redact_uri_text(endpoint_path)
         if not endpoint_path.startswith("/"):
             return
         node = _api_node(method, endpoint_path, path, _line(text, offset))
@@ -374,7 +376,9 @@ def _api_references(text: str, path: str, language: str, file_id: str) -> tuple[
             name_match = FEIGN_NAME.search(match.group(1))
             url_match = FEIGN_URL.search(match.group(1))
             service = (name_match.group(1) if name_match else (url_match.group(1) if url_match else "")).strip()
-            if service:
+            from .http_execution import redact_uri_text
+            service = redact_uri_text(service)
+            if service and "<redacted-uri>" not in service:
                 service_node = _shared_node("external_service", service, service, path, _line(text, match.start()))
                 nodes.setdefault(service_node.id, service_node)
                 edges.append(Edge(file_id, service_node.id, "uses_external_service", "@FeignClient; endpoint URL omitted"))

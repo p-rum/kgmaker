@@ -112,12 +112,12 @@ def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]
     return [{"path": str(path.resolve()), "sha256": file_hash(path)} for path in paths]
 
 
-def sanitize(value, *, key=""):
+def sanitize(value, *, key="", semantic=False):
     """Persistent graph metadata contains declarations, never secret payloads."""
     if isinstance(value, dict):
-        return {k: sanitize(v, key=k) for k, v in value.items()}
+        return {k: sanitize(v, key=k, semantic=semantic or k in {"annotations", "literal", "spring_properties"}) for k, v in value.items()}
     if isinstance(value, list):
-        return [sanitize(v, key=key) for v in value]
+        return [sanitize(v, key=key, semantic=semantic) for v in value]
     if isinstance(value, str):
         import re
         if any(word in key.lower() for word in ("password", "secret", "authorization", "access_token", "api_key")):
@@ -126,7 +126,9 @@ def sanitize(value, *, key=""):
         value = re.sub(r"(\b(?:X-Api-Key|Api-Key)\s*[:=]\s*)[^,;\r\n]+", r"\1[redacted]", value, flags=re.I)
         value = re.sub(r"(\$\{[^}:]*(?:password|secret|token|api[_-]?key)[^}:]*:)[^}]*\}", r"\1[redacted]}", value, flags=re.I)
         value = re.sub(r"(https?://)[^/@\s]+:[^/@\s]+@", r"\1[redacted]@", value)
-        return re.sub(r"([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&\s]*", r"\1[redacted]", value, flags=re.I)
+        value = re.sub(r"([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&\s]*", r"\1[redacted]", value, flags=re.I)
+        from .http_execution import redact_uri_text
+        return redact_uri_text(value, relative=semantic)
     return value
 
 
@@ -179,6 +181,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
                                         "jpa": "annotation-source-v4"}
     if language == "jvm":
+        from .http_execution import prepare_context
+        value = prepare_context(root, value)
         from .spring_conditions import condition_inputs
         value["spring_condition_inputs_hash"] = digest(condition_inputs(value))
     from .graph_provider import _selection_key
@@ -211,6 +215,38 @@ def validate_response(response: dict, selected_context: dict):
     for body in response["bodies"]:
         if body.get("method") not in ids or body.get("context_id") != selected_context["id"]:
             raise WorkerError("Unknown method body/context", "INVALID_PROTOCOL")
+    # Additive typed binding/literal fields are optional for legacy workers.
+    pending = [(body.get("body", {}), 0) for body in response["bodies"]]
+    visited = 0
+    while pending:
+        value, depth = pending.pop()
+        visited += 1
+        if visited > 200000 or depth > 512:
+            raise WorkerError("Typed IR size/depth exceeded", "INVALID_PROTOCOL")
+        if isinstance(value, list):
+            pending.extend((item, depth + 1) for item in value)
+        elif isinstance(value, dict):
+            for key in ("binding", "binding_ref"):
+                if key in value and value[key] is not None:
+                    record = value[key]
+                    if (not isinstance(record, dict) or (record.get("id") is not None and (not isinstance(record["id"], str) or not record["id"]))
+                            or not isinstance(record.get("kind"), str)
+                            or (record.get("symbol") is not None and record["symbol"] not in ids)):
+                        raise WorkerError("Malformed typed binding", "INVALID_PROTOCOL")
+            for key in ("captured_bindings", "referenced_bindings"):
+                if key in value and (not isinstance(value[key], list) or len(value[key]) > 128
+                        or any(not isinstance(r, dict) or not isinstance(r.get("id"), str)
+                               or not isinstance(r.get("kind"), str) for r in value[key])):
+                    raise WorkerError("Malformed typed binding references", "INVALID_PROTOCOL")
+            if "binding_references_complete" in value and type(value["binding_references_complete"]) is not bool:
+                raise WorkerError("Malformed typed binding completeness", "INVALID_PROTOCOL")
+            if "literal" in value:
+                literal = value["literal"]
+                if (not isinstance(literal, dict) or not isinstance(literal.get("type"), str)
+                        or literal.get("source") not in {"COMPILER_LITERAL", "COMPILER_CONSTANT"}
+                        or isinstance(literal.get("value"), (dict, list))):
+                    raise WorkerError("Malformed typed literal", "INVALID_PROTOCOL")
+            pending.extend((item, depth + 1) for item in value.values() if isinstance(item, (dict, list)))
     for fact in response["facts"]:
         if fact.get("source") not in ids or fact.get("target") not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
@@ -218,6 +254,7 @@ def validate_response(response: dict, selected_context: dict):
 
 def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, selected_context: dict,
                         *, project_model: dict | None = None) -> KnowledgeGraph:
+    response = sanitize(response)
     validate_response(response, selected_context)
     classifier = Classifier(root, project_model)
     nodes = {n.id: n for n in base.nodes}
@@ -471,6 +508,8 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     # workflow so scan/build/feature commands remain offline and source-only.
     from .framework import augment_framework_graph
     graph = augment_framework_graph(root, graph, selected)
+    from .http_execution import augment_http_graph
+    graph = augment_http_graph(graph, sanitize(response["bodies"]), selected)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}

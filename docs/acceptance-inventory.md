@@ -417,3 +417,15 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
 | AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
 | AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
+
+## T003-S07-W06 — HTTP client intent, omezený compiler subset
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| AC01 | VERIFIED_IN_SCOPE | `test_http_client_execution.py`: actual Spring6.2.2/Reactor3.7.2 Java v K1/K2; cold publisher vs same-origin terminal, RestClient retrieve/body/exchange; explicit property source/profile/SHA provenance |
+| AC02 | VERIFIED_IN_SCOPE | `test_old_graph_store_versions_remain_readable` schema1/2/3; legacy coverage UNKNOWN; additive IR optional, fresh HTTP version/input fingerprint validated |
+| AC03 | VERIFIED_IN_SCOPE | Escaped/captured/stored/returned/unknown operators, unrelated terminals, reference and local fake negatives; URI credentials removed; malformed IR/config snapshot reject before store write |
+| AC04 | PARTIAL_MILESTONE | [Supported matrix](compiler-inspection.md#http-client-intent), [note56](changes/56_classifyHttpClientExecution.md); Kotlin missing bindings UNKNOWN, no runtime HTTP/availability or complete S07/T003 claim |
+
+Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note56.
+Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.

@@ -194,3 +194,9 @@ the complete T003-AC02 sequence remain required.
 Task identities and historical milestone aliases are defined only by
 [the registry](tasks/README.md). [Current status](production-analysis-progress.md)
 distinguishes existing capabilities from the normative [completion plan](tasks/3_finishProductionAnalysis.md).
+
+Fresh SOURCE_ONLY scans redact URI credentials/query/fragment values in persisted
+signatures, documentation summaries and heading identities. This privacy transform
+supplies no semantic HTTP values: compiler-bound request origins and terminal
+intent are projected separately by `http_execution`, with runtime availability
+UNKNOWN. See the scoped [HTTP matrix](compiler-inspection.md#http-client-intent).
