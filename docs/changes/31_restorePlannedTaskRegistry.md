@@ -22,16 +22,20 @@ Na izolované větvi `fix/restore-planned-task-registry` nad `0c09028`:
   názvy, právě jeden profil pro každé ze 40 zadání T005–T044 a acyklický
   jejich dependency graf. Obnovená sekce je přesně shodná s `e625014`;
   existující řádky T003/T045 jsou zachovány.
-- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker scan --no-docs`:
-  **PASS s diagnostikou** — 267 souborů, 2119 deklarací/sekcí. Pouze lokální
-  ignorovaný machine index; generované Markdown/Mermaid soubory se nemění.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker scan`:
+  **PASS** po sémantické obnově — 268 souborů, 2124 deklarací/sekcí.
+  Generovaný GRAPH.md je obnoven příkazem, bez ručních úprav.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker memory recall registry task T004 --limit 2`:
   **PASS** po scanu; nalezen registr a nadřazené zadání. Před scanem nebyl
   v čistém checkoutu čitelný machine index.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker semantic update --base HEAD~1`,
+  prázdný patch pro přesný update packet, `semantic apply` a `semantic validate`:
+  **PASS** — 40 concepts, 10199 relationships. Obnoveny jsou obsahové
+  fingerprinty souborů včetně stale README z baseline; původní pole nodes,
+  edges a episodes zůstávají přesně zachována. Žádné vazby nejsou přidány.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m kgmaker check`:
-  **BLOCKED** — existující sémantická vrstva hlásí stale evidence v `README.md`
-  a čtyři vazby na odstraněné nebo stale uzly. Tato oprava nemění README,
-  sémantický soubor ani zdrojové uzly; nesouvisející vazby nebyly přepisovány.
+  **PASS** — 268 souborů, 2392 uzlů, 14916 vztahů. První scan a validace
+  před obnovou korektně hlásily stale README evidence; finální kontroly prošly.
 - `git diff --check`: **PASS**.
 
 Pytest, worker buildy a rendering: **NOT_RUN**, protože jde výhradně o
@@ -44,4 +48,4 @@ vymyšleny; soubory generovaného grafu nejsou ručně upraveny.
 Čtenář registru znovu najde například T005 s odkazem na
 `T-005_add-view-model.md` a T044 s jeho release gate závislostmi. Skutečnou
 implementaci, testy a sloučení jednotlivých úkolů nadále dokládají jejich
-samostatná PR. Stale sémantická baseline vyžaduje samostatnou doloženou opravu.
+samostatná PR. Tato dokumentační oprava je nepovažuje za implementované.
