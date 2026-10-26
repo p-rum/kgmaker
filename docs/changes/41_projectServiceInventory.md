@@ -110,3 +110,17 @@ změně neopakovala. Semantic artifact má současný main episode prefix 80 zá
 plus 3 T008 epizody; README semantic prepare/update evidence nyní cituje řádky
 162 a 164. `semantic validate`, regenerace `kgmaker scan`, `kgmaker check` a
 `git diff --check`: PASS; vygenerovaný graf obsahuje 301 souborů, 2,829 uzlů a 18,020 vztahů.
+
+### Integrace TypeScript a XLSX mainline
+
+Proti aktuálnímu `origin/main` `1091330b67a7ff67db329ffbbb2eaba162313b3f`
+zůstávají T008 `views.py` i T008 testy byte-identické se schváleným T008
+HEAD. Zachovány jsou mainline TypeScript project-reference/context a XLSX
+formula/cache změny včetně změn workspace fingerprintu. Relevantní inventář,
+workspace, context/provider, workbook/cache a protocol sada: **174 passed,
+16 skipped**; všech 16 skipů jsou blokované skutečným TypeScript 5.7.3 workerem.
+Sémantický prefix je přesných 93 main epizod a 3 T008 epizody; T008 evidence
+zůstává 5 konceptů/9 vztahů a README citace jsou na řádcích 162/164.
+`semantic validate`, generovaný scan/check a `git diff --check`: PASS; graph má
+305 souborů, 2,909 uzlů a 19,188 vztahů. Celá sada se kvůli této čisté integraci
+neopakovala.

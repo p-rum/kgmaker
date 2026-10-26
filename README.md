@@ -175,6 +175,20 @@ The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-
 
 `imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. The default scanner uses pattern-based SQL, YAML, Kotlin and TypeScript extraction. Separate opt-in JVM/TypeScript workers use compiler APIs; they are not invoked by scan/hook/feature. Explicit JVM inspection can project imported Spring/JPA annotations into `FRAMEWORK_DERIVED` nodes and edges, including bean candidates, HTTP/listener entrypoints, proxy boundaries, entity/table/column bindings, and simple Spring Data repository/query declarations. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
 
+Explicit `kgmaker inspect frontend --root /path/to/repo --tsconfig tsconfig.json`
+also analyzes solution-style TypeScript project references within that root.
+The captured project graph identifies each repo/config, follows the compiler's
+source redirects without emitting outputs, and invalidates stored compiler facts
+when a transitive project input changes. Missing, cyclic, outside-root or
+overlapping reference graphs fail before publication. This does not add callback
+resolution or cross-repository TypeScript source analysis.
+Declaration identities use the owning project's checker even when consumer
+options differ. Referencing configs that disable source redirects are rejected
+before publication rather than trusting emitted declarations.
+Preflight and analysis must read the same compiler input closure; membership
+changes fail before publication. Reinspection replaces the same TypeScript
+selection slot across legacy and K2-era snapshot metadata.
+
 ## Copilot workflow
 
 Vývoj tohoto repozitáře má navíc projektové Codex implementační agenty v
@@ -279,6 +293,12 @@ produce `BINARY_XLS_UNSUPPORTED` with `status: UNSUPPORTED`, byte SHA-256 and
 a file locator; no workbook values are extracted. Feature packets and data audits
 retain these gaps in `coverage.artifact_diagnostics` (repo-qualified in workspaces).
 A binary signature identifies a container/header, not a validated Excel workbook.
+`xlsx-offline-3` extracts bounded A1/range tokens without treating exponents or
+function names such as `LOG10` as cells. OFFSET, shared formulas, INDIRECT,
+external references and unsupported 3D/whole-row/whole-column forms remain explicit
+graph diagnostics; formulas are never evaluated and audits keep UNKNOWN availability.
+Literal Unicode/quoted sheet qualifiers bind to their sheet; unrecognized qualifiers
+stay unresolved and cannot fall back to local cells. Spaced A1 ranges retain all cells.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
 evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an
