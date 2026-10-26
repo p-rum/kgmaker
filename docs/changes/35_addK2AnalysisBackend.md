@@ -279,3 +279,15 @@ zkontrolovány proti skutečnému obsahu a scoped patch je znovu váže na curre
 Immutable historie obsahuje všech69 main epizod a původní K2 epizodu (union70).
 Semantic apply/validate, generovaný scan/check, compileall a diff check PASS.
 Externí update PR26/CI/merge přebírá parent integrační workflow; agent nic nepushuje.
+
+### Stabilizace content-bound JAR fixture v CI
+
+CI na Pythonu 3.13 odhalilo časovou závislost existující cross-repo fixture:
+stejné marker bytes vytvořené přes hranici dvousekundového ZIP timestampu měly
+různý SHA, a runtime je správně odmítl jako PARTIAL. Nezávislá reprodukce se
+zpožděním consumer ZIP zápisu 2,1 s potvrdila RELEASE_CLASSPATH_HASH_MISMATCH.
+Pouze test helper nyní nastavuje oběma ZIP entries pevný timestamp; ověřování
+skutečného obsahu ani negativní případ různých bytes se nemění.
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_cross_repo_artifacts.py`:
+**18 PASS / 0.58 s**. Předchozí červený běh není release důkaz; nový HEAD musí
+znovu projít celým vzdáleným CI.
