@@ -216,3 +216,21 @@ Prepared packets revalidate documentation conflict coverage outside checkout too
 Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP** (5.00 s); focused **56 PASS**. Strict attempt blocked by missing actual Maven fixture (14 setup errors), documented in change note9; no worker PASS is claimed for this environment.
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
+
+
+## T003-S09-W02 — bezpečná diagnostika legacy XLS
+
+VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
+`.xls` a OLE/BIFF hlavičky přejmenované na `.xlsx` se neparsují jako XLSX.
+UNSUPPORTED diagnostika nese byte SHA-256, file locator a scope; feature/data-check
+ji zachovají jako coverage gap, workspace přidá repo identity. Minimální BIFF2
+fixture, malformed vstupy, nejednoznačný compound container, nulové procesy při
+extrakci, nulová mutace uloženého grafu a UNKNOWN availability jsou ověřeny
+`tests/test_binary_xls.py`; focused 65 PASS. Skutečné XLS buňky/hodnoty se nečtou,
+libovolné přípony se nesniffují a signatura není důkaz platného Excel workbooku.
+Review oprava přidává streaming checksum oversized souborů a hash-only manifest
+metadata; změna stejné délky invaliduje packet i workspace cache bez zápisu do
+store. Přímý extractor kontroluje archive limit před hashováním. Finální focused
+100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
+Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
+Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).
