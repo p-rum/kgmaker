@@ -176,3 +176,36 @@ Sedm uvedených runner/Gradle/druhé-JDK skipů zůstává SKIP, ne PASS.
   nevykonal externí push/PR/merge.
 
 Backend dodává pouze výslovně ověřený rozsah, nikoli dokončení T003-S04/T003.
+
+## Integrace exporter distribuce před publikací
+
+Nová base: `e656b8ef4c174d3d60600037d7c0d78fc514e39d` (main po PR22),
+lokální merge `2508ad9`. K2 runtime/source/test bytes vůči `93d841a` zůstaly
+byte-identické; testovaný K2 JAR má nadále SHA-256
+`6d02d7e09272bf3d6d76f3e35c5e071ff352d01def29982c26e69b54daff6c6d`.
+`pyproject.toml` zachovává současně K2 resources i exporter descriptor/licenci;
+CI obsahuje required K2 worker gate i samostatné skutečné installed-exporter
+Maven/Gradle kontroly. Konflikty byly pouze v generovaném grafu a semantic
+artefaktu, historie se sloučila podle immutable episode ID.
+
+Relevantní integrovaný běh se stejnou Temurin21 PATH a explicitním own workers home:
+
+```bash
+PYTHONPATH=src KGMAKER_WORKERS_HOME=/workspace/k2/workers \
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+/workspace/kgmaker-venv/bin/python -m pytest -q \
+  tests/test_exporter_distribution.py tests/test_k2_backend.py tests/test_worker_install.py \
+  -k 'not installed_exporters_run_real_builds_outside_checkout'
+```
+
+**46 PASS,2 DESELECTED/73.98s**: exporter negative/no-process/no-mutation cases,
+celá K2 acceptance a skutečná K2 instalace mimo checkout. Dvě nesouvisející
+exporter execution varianty Maven/Gradle nebyly opakovány; nejsou vykázány PASS.
+Celý dřívější actual suite321 PASS/7 SKIP výše nebyl opakován pouze kvůli této
+upstream exporter změně; vztahuje se k uvedené dřívější base.
+
+Scoped semantic evidence je znovu ověřena proti aktuálním README bullets
+`semantic prepare` (řádek99) a `semantic update --base REF` (řádek101).
+Semantic validate, generovaný scan/check, compileall a integrační diff check PASS.
+Všechny upstream epizody i původní validovaná K2 epizoda jsou zachovány.
+Nejde o GitHub review/merge ani nový live runtime proof.
