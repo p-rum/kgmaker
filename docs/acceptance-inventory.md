@@ -216,3 +216,16 @@ Prepared packets revalidate documentation conflict coverage outside checkout too
 Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP** (5.00 s); focused **56 PASS**. Strict attempt blocked by missing actual Maven fixture (14 setup errors), documented in change note9; no worker PASS is claimed for this environment.
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
+
+
+## T003-S09-W02 — diagnostika binárních XLS
+
+Rozsah `xls-unsupported-1`, `feature-inventory-5`, Python 3.12, bez externího
+parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
+
+| ID | Stav | Přímá evidence | Běh |
+|---|---|---|---|
+| T003-S09-W02-AC01 | VERIFIED_IN_SCOPE | `test_binary_xls.py::test_real_biff2_fixture_is_unsupported_before_zip_parse_or_process` — BIFF2 fixture, .xls a přejmenované .xlsx; status/hash/file locator | focused 65 PASS |
+| T003-S09-W02-AC02 | VERIFIED_IN_SCOPE | `test_packet_and_audit_preserve_hash_bound_gap_without_confirming_missing_data` — save/load a graph v1/v2/v3; stávající `test_workbooks.py` zachovává XLSX cell evidence | focused 65 PASS |
+| T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
+| T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |

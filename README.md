@@ -205,7 +205,11 @@ coverage; a static path does not prove runtime availability or financial validit
 `.xlsx` workbooks contribute sheets, cells, named ranges, formula dependencies and
 hash-bound cell evidence. Formulas are not evaluated and cached values retain
 `UNKNOWN` freshness. Shared/dynamic/external constructs and binary `.xls` are
-explicit diagnostics.
+explicit diagnostics. Legacy `.xls` and OLE/BIFF content renamed to `.xlsx`
+produce `BINARY_XLS_UNSUPPORTED` with `status: UNSUPPORTED`, byte SHA-256 and
+a file locator; no workbook values are extracted. Feature packets and data audits
+retain these gaps in `coverage.artifact_diagnostics` (repo-qualified in workspaces).
+A binary signature identifies a container/header, not a validated Excel workbook.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
 evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an
