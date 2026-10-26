@@ -92,49 +92,69 @@ class KotlinFrontend(private val state: State) {
         return state.method(owner, name, signature, location, metadata)
     }
 
-    private fun annotationValue(value: KaAnnotationValue): Any? = when (value) {
-        is KaAnnotationValue.ConstantValue -> value.value.value
-        is KaAnnotationValue.EnumEntryValue -> value.callableId.toString()
-        is KaAnnotationValue.ArrayValue -> value.values.map(::annotationValue)
-        is KaAnnotationValue.NestedAnnotationValue -> annotationFacts(listOf(value.annotation)).firstOrNull()
-        else -> null
+    private data class ResolvedAnnotationValue(val value: Any?, val complete: Boolean)
+
+    private fun annotationValue(value: KaAnnotationValue): ResolvedAnnotationValue = when (value) {
+        is KaAnnotationValue.ConstantValue -> ResolvedAnnotationValue(value.value.value, value.value.value != null)
+        is KaAnnotationValue.EnumEntryValue -> ResolvedAnnotationValue(value.callableId.toString(), true)
+        is KaAnnotationValue.ClassLiteralValue -> value.classId?.asSingleFqName()?.asString()
+            ?.let { ResolvedAnnotationValue(it, true) } ?: ResolvedAnnotationValue(null, false)
+        is KaAnnotationValue.ArrayValue -> {
+            val items = value.values.map(::annotationValue)
+            ResolvedAnnotationValue(items.map { it.value }, items.all { it.complete })
+        }
+        is KaAnnotationValue.NestedAnnotationValue -> {
+            val nested = annotationFacts(listOf(value.annotation)).firstOrNull()
+            ResolvedAnnotationValue(nested, nested?.get("values_resolved") == true)
+        }
+        else -> ResolvedAnnotationValue(null, false)
     }
 
     private fun annotationFacts(annotations: Iterable<org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation>): List<Map<String, Any?>> =
         annotations.mapNotNull { annotation ->
             val name = annotation.classId?.asSingleFqName()?.asString() ?: return@mapNotNull null
             var complete = true
-            val values = annotation.arguments.mapNotNull { argument ->
+            val pairs = annotation.arguments.map { argument ->
                 val resolved = annotationValue(argument.expression)
-                if (resolved == null) complete = false
-                resolved?.let { argument.name.asString() to it }
-            }.toMap()
+                if (!resolved.complete) complete = false
+                argument.name.asString() to resolved
+            }
+            val values = pairs.filter { it.second.value != null }.associate { it.first to it.second.value }
             State.map("name", name, "values", values, "values_resolved", complete,
                 "use_site_target", annotation.useSiteTarget?.name ?: "NONE")
         }
 
-    private fun psiConstant(value: PsiAnnotationMemberValue): Any? = when (value) {
-        is PsiLiteralExpression -> value.value
+    private fun psiConstant(value: PsiAnnotationMemberValue): ResolvedAnnotationValue = when (value) {
+        is PsiLiteralExpression -> ResolvedAnnotationValue(value.value, value.value != null)
         is PsiReferenceExpression -> when (val resolved = value.resolve()) {
-            is PsiEnumConstant -> resolved.name
-            is PsiVariable -> resolved.computeConstantValue()
-            else -> null
+            is PsiEnumConstant -> ResolvedAnnotationValue(resolved.name, true)
+            is PsiVariable -> resolved.computeConstantValue().let { ResolvedAnnotationValue(it, it != null) }
+            else -> ResolvedAnnotationValue(null, false)
         }
-        is PsiArrayInitializerMemberValue -> value.initializers.mapNotNull(::psiConstant)
+        is PsiArrayInitializerMemberValue -> {
+            val items = value.initializers.map(::psiConstant)
+            ResolvedAnnotationValue(items.map { it.value }, items.all { it.complete })
+        }
         is PsiClassObjectAccessExpression -> value.operand.type?.canonicalText
-        else -> null
+            ?.let { ResolvedAnnotationValue(it, true) } ?: ResolvedAnnotationValue(null, false)
+        is PsiAnnotation -> {
+            val nested = psiAnnotationFacts(arrayOf(value), "NESTED").firstOrNull()
+            ResolvedAnnotationValue(nested, nested?.get("values_resolved") == true)
+        }
+        else -> ResolvedAnnotationValue(null, false)
     }
 
     private fun psiAnnotationFacts(annotations: Array<PsiAnnotation>, target: String): List<Map<String, Any?>> =
         annotations.mapNotNull { annotation ->
             val name = annotation.qualifiedName ?: return@mapNotNull null
             var complete = true
-            val values = annotation.parameterList.attributes.mapNotNull { attribute ->
+            val pairs = annotation.parameterList.attributes.map { attribute ->
                 val key = attribute.name ?: "value"
                 val resolved = attribute.value?.let(::psiConstant)
-                if (resolved == null) complete = false
-                resolved?.let { key to it }
-            }.toMap()
+                if (resolved == null || !resolved.complete) complete = false
+                key to resolved
+            }
+            val values = pairs.filter { it.second?.value != null }.associate { it.first to it.second!!.value }
             State.map("name", name, "values", values, "values_resolved", complete, "use_site_target", target)
         }
 

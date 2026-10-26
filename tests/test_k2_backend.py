@@ -146,9 +146,10 @@ def test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed(tmp_path):
     declarations = {
         "Entity": "@Target(ElementType.TYPE) public @interface Entity {}",
         "Embeddable": "@Target(ElementType.TYPE) public @interface Embeddable {}",
-        "EmbeddedId": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface EmbeddedId {}",
-        "Id": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface Id {}",
-        "Column": "@Target({ElementType.FIELD,ElementType.METHOD,ElementType.PARAMETER}) public @interface Column { String name() default \"\"; }",
+        "EmbeddedId": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface EmbeddedId {}",
+        "Id": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}",
+        "Column": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default \"\"; }",
+        "AttributeOverride": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface AttributeOverride { String name(); Column column(); }",
         "Table": "@Target(ElementType.TYPE) public @interface Table { String name() default \"\"; }",
         "AccessType": "public enum AccessType { FIELD, PROPERTY }",
         "Access": "@Target({ElementType.TYPE,ElementType.FIELD,ElementType.METHOD}) public @interface Access { AccessType value(); }",
@@ -166,20 +167,57 @@ import jakarta.persistence.Column as DbColumn
 import jakarta.persistence.Table
 import jakarta.persistence.Access
 import jakarta.persistence.AccessType
+import jakarta.persistence.AttributeOverride
 import fake.Id as FakeId
+import jakarta.persistence.fake.Id as NestedFakeId
+import jakarta.persistence.fake.Column as NestedFakeColumn
+import jakarta.persistence.fake.Entity as NestedFakeEntityAnnotation
 const val STATUS_COLUMN = "created_at"
 @Embeddable data class OrderId(@field:DbColumn(name="tenant_id") val tenant: String)
-@Persisted @Table(name="orders") data class Order(@field:PrimaryKey val id: OrderId,
+@Embeddable data class FakeColumn(@field:fake.Column(name="wrong_column") val value: String)
+@Embeddable data class GetterColumn(@get:DbColumn(name="getter_only") val value: String)
+@Embeddable @Access(AccessType.PROPERTY) data class PropertyColumn(@get:DbColumn(name="property_column") val value: String)
+@Embeddable data class PropertyKey(@field:DbColumn(name="field_only") val key: String)
+const val OVERRIDE_COLUMN = "order_tenant"
+@Persisted @Table(name="orders") data class Order(@field:AttributeOverride(name="tenant", column=DbColumn(name=OVERRIDE_COLUMN)) @field:PrimaryKey val id: OrderId,
     @field:DbColumn(name=STATUS_COLUMN) val createdAt: java.time.Instant)
 @Persisted @Access(AccessType.PROPERTY) @Table(name="profiles")
 class Profile(private val rawId: Long) { @get:jakarta.persistence.Id @get:DbColumn(name="profile_id") val id get() = rawId }
-@Persisted @Table(name="ambiguous") class Ambiguous(@jakarta.persistence.Id val id: Long)
+@Persisted @Access(AccessType.PROPERTY) @Table(name="property_embedded")
+class PropertyEmbedded(private val rawKey: PropertyKey) { @get:PrimaryKey val key get() = rawKey }
+@Persisted @Access(AccessType.FIELD) @Table(name="field_embedded")
+class FieldEmbedded(@field:PrimaryKey val key: PropertyKey)
+@Persisted @Table(name="implicit") class Implicit(@jakarta.persistence.Id val id: Long)
+@Persisted @Table(name="ambiguous") class Ambiguous(@field:jakarta.persistence.Id @get:jakarta.persistence.Id val id: Long)
 @Persisted @Access(AccessType.FIELD) @Table(name="mismatch") class Mismatch(@get:jakarta.persistence.Id val id: Long)
 @Persisted @Table(name="foreign") class ForeignId(@field:FakeId val id: Long)
+@Persisted @Table(name="nested_fake") class NestedFakeIdCase(@field:jakarta.persistence.Id val actualId: Long,
+    @field:NestedFakeId val fakeId: Long, @field:NestedFakeColumn(name="wrong_subpackage") val label: String)
+@NestedFakeEntityAnnotation @Table(name="fake_entity") class NestedFakeEntityCase(
+    @field:DbColumn(name="fake_id") val id: String)
+@Persisted @Table(name=MISSING_TABLE) class UnknownMappings(@field:jakarta.persistence.Id val id: Long,
+    @field:DbColumn(name=MISSING_COLUMN) val label: String)
+@Persisted @Access(MISSING_ACCESS) @Table(name="unknown_access") class UnknownAccess(
+    @field:jakarta.persistence.Id val id: Long, @field:DbColumn(name="secret") val label: String)
 ''')
     fake_annotation = tmp_path / "src/main/kotlin/fake/Id.kt"
     fake_annotation.parent.mkdir(parents=True)
     fake_annotation.write_text("package fake\n@Target(AnnotationTarget.FIELD) annotation class Id\n")
+    class_literal_annotation = tmp_path / "src/main/kotlin/fake/UsesClass.kt"
+    class_literal_annotation.write_text("package fake\nimport kotlin.reflect.KClass\n@Target(AnnotationTarget.FIELD) annotation class UsesClass(val value: KClass<*>)\n@Target(AnnotationTarget.FIELD) annotation class Column(val name: String)\n")
+    nested_jpa_annotations = tmp_path / "src/main/kotlin/jakarta/persistence/fake/JpaLookalikes.kt"
+    nested_jpa_annotations.parent.mkdir(parents=True)
+    nested_jpa_annotations.write_text('''package jakarta.persistence.fake
+@Target(AnnotationTarget.CLASS) annotation class Entity
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY_GETTER) annotation class Id
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY_GETTER) annotation class Column(val name: String = "")
+''')
+    migration = tmp_path / "src/main/resources/db/migration/V1__unknown_mappings.sql"
+    migration.parent.mkdir(parents=True)
+    migration.write_text("CREATE TABLE UnknownMappings (label varchar(80));\n")
+    source.write_text(source.read_text().replace(
+        "@field:DbColumn(name=STATUS_COLUMN) val createdAt",
+        "@field:fake.UsesClass(String::class) @field:DbColumn(name=STATUS_COLUMN) val createdAt"))
     stdlib = HOME / "jvm/target-k2/lib/kotlin-stdlib.jar"
     result = inspect_jvm(tmp_path, kotlin_backend="k2", home=HOME, classpath=[str(stdlib)], publish=False,
                          repo_id="jpa-k2", module="core",
@@ -193,18 +231,52 @@ class Profile(private val rawId: Long) { @get:jakarta.persistence.Id @get:DbColu
     assert embedded_id.metadata["embedded"] and embedded_id.metadata["identifier"]
     assert embedded_id.metadata["access"] == "FIELD"
     assert attributes["Profile.id"].metadata["access"] == "PROPERTY"
+    assert attributes["Implicit.id"].metadata["access"] == "FIELD"
     assert not any(node.name == "Ambiguous.id" for node in graph.nodes if node.kind == "orm_attribute")
     assert not any(node.name == "Mismatch.id" for node in graph.nodes if node.kind == "orm_attribute")
     assert not any(node.name == "ForeignId.id" for node in graph.nodes if node.kind == "orm_attribute")
+    assert "NestedFakeIdCase.actualId" in attributes
+    assert not any(node.name in {"NestedFakeIdCase.fakeId", "NestedFakeEntityCase.id"}
+                   for node in graph.nodes if node.kind == "orm_attribute")
+    assert not any(node.kind == "orm_column" and node.name == "wrong_subpackage" for node in graph.nodes)
+    assert not any(node.kind == "orm_entity" and node.name == "NestedFakeEntityCase" for node in graph.nodes)
     assert any(d.get("code") == "ORM_KOTLIN_ACCESS_AMBIGUOUS" and d.get("entity")
                for d in graph.diagnostics)
     assert any(d.get("code") == "ORM_KOTLIN_ACCESS_TARGET_MISMATCH" for d in graph.diagnostics)
     assert (any(node.name == "OrderId.tenant" and node.kind == "orm_embeddable_attribute"
                 and node.metadata["default_column"] == "tenant_id" for node in graph.nodes)), \
         [(node.kind, node.name, node.metadata) for node in graph.nodes if node.kind.startswith("orm_")]
+    assert any(node.name == "FakeColumn.value" and node.kind == "orm_embeddable_attribute"
+               and node.metadata.get("default_column") is None
+               and node.metadata.get("mapping_status") == "UNKNOWN" for node in graph.nodes)
+    assert any(node.name == "GetterColumn.value" and node.kind == "orm_embeddable_attribute"
+               and node.metadata.get("default_column") is None
+               and node.metadata.get("mapping_status") == "UNKNOWN" for node in graph.nodes)
+    assert any(node.name == "PropertyColumn.value" and node.kind == "orm_embeddable_attribute"
+               and node.metadata["default_column"] == "property_column" for node in graph.nodes)
+    assert any(node.name == "PropertyKey.key" and node.kind == "orm_embeddable_attribute"
+               and node.metadata.get("default_column") is None
+               and node.metadata.get("mapping_status") == "UNKNOWN" for node in graph.nodes)
     created_at = attributes["Order.createdAt"]
     assert created_at.metadata["type"] == "java.time.Instant"
     assert any(node.kind == "orm_column" and node.name == "created_at" for node in graph.nodes)
+    assert any(node.kind == "orm_attribute_override" and node.name == "Order.id.tenant"
+               and node.metadata.get("column") == "order_tenant" for node in graph.nodes), \
+        [item.get("annotations") for item in graph.symbols if item.get("owner") == "demo.Order" and item.get("name") == "id"]
+    assert any(node.kind == "orm_column" and node.name == "order_tenant" for node in graph.nodes)
+    class_literal = next(annotation for item in graph.symbols if item.get("owner") == "demo.Order"
+                         and item.get("name") == "createdAt" for annotation in item.get("annotations", [])
+                         if annotation.get("name") == "fake.UsesClass")
+    assert class_literal["values_resolved"] is True
+    assert class_literal["values"]["value"] == "java.lang.String"
+    assert not any(node.kind == "orm_table" and node.name == "UnknownMappings" for node in graph.nodes)
+    assert not any(node.kind == "orm_column" and node.name == "label" for node in graph.nodes)
+    assert any(d.get("code") == "ORM_TABLE_MAPPING_UNKNOWN" and d.get("entity")
+               for d in graph.diagnostics)
+    assert any(d.get("code") == "ORM_COLUMN_MAPPING_UNKNOWN" for d in graph.diagnostics)
+    assert not any(node.name in {"UnknownAccess.id", "UnknownAccess.label"}
+                   for node in graph.nodes if node.kind == "orm_attribute")
+    assert any(d.get("code") == "ORM_ACCESS_STRATEGY_UNKNOWN" for d in graph.diagnostics)
     k2_symbols = [item for item in graph.symbols if item.get("path") == "src/main/kotlin/demo/Models.kt"
                   and item.get("kind") == "field"]
     order_targets = {annotation["use_site_target"] for item in k2_symbols

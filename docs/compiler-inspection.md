@@ -254,6 +254,16 @@ vybere FIELD a `@get:Id` vybere PROPERTY; `@Access` má přednost, ale jeho
 nesoulad s identity targetem je diagnostikován a nevytvoří silnější atribut.
 Kotlin `@Id` bez explicitního FIELD/GET targetu zůstává nejednoznačný. Embedded
 Kotlin ID reuseuje stávající entity/embeddable uzly a nevyžaduje nový graph typ.
+Compiler values zachovají nested `@AttributeOverride` column a class literals;
+nevyřešená explicitní table/column/override hodnota zůstává UNKNOWN a nevytváří
+náhradní fyzické jméno. Testovací JPA API deklaruje skutečné FIELD/METHOD cíle,
+takže implicitní FIELD default i dual-use-site nejednoznačnost odpovídají API.
+Kotlin embeddable member annotations se filtrují podle Jakarta/Javax identity.
+Bez vlastního embeddable `@Access` se column metadata zachová jen pro
+jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
+zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
+známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
+subpackage se nepovažuje za compiler-resolved JPA API.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association

@@ -4,9 +4,9 @@
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
-| T003-S06-W01-AC01 | VERIFIED_IN_SCOPE | `tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed`: actual K2 `@field:EmbeddedId`, `@get:Id`, explicit PROPERTY, ambiguous unqualified target, mismatched explicit FIELD, and embeddable column |
+| T003-S06-W01-AC01 | VERIFIED_IN_SCOPE | `tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed`: actual K2 `@field:EmbeddedId`, `@get:Id`, explicit PROPERTY and implicit FIELD, actual dual-site ambiguity, mismatched explicit FIELD, aliased canonical-package/subpackage namespace negatives, nested `@AttributeOverride`, class literal, and embeddable access across unique FIELD, explicit PROPERTY and mixed containers |
 | T003-S06-W01-AC02 | VERIFIED_IN_SCOPE | Additive annotation metadata reuses graph schema v3, existing `orm_attribute`/`orm_embeddable` IDs and JPA rules `annotation-source-v4`; existing Java JPA fixture remains unchanged |
-| T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
+| T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; unresolved explicit `@Table`/`@Column` does not emit physical defaults even with matching schema; unresolved `@Access` and unproven/mixed embeddable inheritance remain UNKNOWN; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
 | T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
 
 ## T003-S11-W02 — distribuce build exporterů
