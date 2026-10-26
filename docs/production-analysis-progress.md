@@ -235,6 +235,18 @@ Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP**
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
 
+## T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry
+
+Na explicitní pokyn uživatele z 2026-10-26 je live adapter/integrace odložena.
+Revize 2 zadání přidává offline JSON nastavení host/API/sandbox/auth references
+pod `documentation.confluence.connection` a read-only `confluence config`.
+`test_confluence_configuration.py` a existující boundary testy: 28 PASS;
+celá sada 281 PASS / 23 toolchain SKIP, Python 3.12.14. `auth_ready` je pouze
+přítomnost reference, live stav zůstává NOT_RUN. AC05 je ověřené v tomto scope,
+AC01 zachovává NOT_RUN a T003-AC12 není novým důkazem live integrace.
+Podrobnosti a limity: [change note 38](changes/38_configureDeferredConfluence.md).
+
+
 ## T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)
 
 Workspace v1 nyní může nést samostatnou deklaraci `service_ownership` v1 s

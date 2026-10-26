@@ -118,6 +118,10 @@ kgmaker runtime import --root PATH --manifest runtime-manifest.json
   It is labelled `FAKE_TEST_ONLY`; no live host/API/authentication contract is
   claimed. Publishing is possible only through an explicitly supplied adapter and
   an exact approved package, never from scan, hook, feature or data-check.
+- `confluence config --root .` validates optional JSON connection settings under
+  `documentation.confluence.connection` and reports environment-reference readiness
+  without connecting. Host, API variant and sandbox are configurable; live adapter
+  execution is deferred and always reported `NOT_RUN` by this command.
 - `status` compares the indexed source graph with the repository and validates saved
   compiler contexts separately. A current source graph with a stale compiler context
   exits 2 and prints the exact explicit inspection command. `check` applies the same

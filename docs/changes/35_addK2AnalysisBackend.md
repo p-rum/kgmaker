@@ -234,12 +234,48 @@ kontexty. Celá starší actual sada321 ani všech30 K2 testů nebyly opakovány
 pouze kvůli nezávislým source view/workspace změnám; jejich výsledky zůstávají
 přiřazené k dříve uvedeným source/base SHA.
 
-Sémantika zachovává aktuální4 concepts/6 relations z main včetně explicitní
-ownership vazby; starší dvě upstream odstraněné semantic-function vazby se
-neobnovují z historické větve. Immutable episode historie je sjednocena:
+Na tehdejší base byly zachovány4 concepts/6 relations včetně explicitní
+ownership vazby. Následný centrální audit potvrdil, že dvě chybějící
+semantic-function vazby byly neúmyslný upstream drop, nikoli neplatná fakta;
+centrální obnova a jejich zachování jsou doloženy v další integraci níže.
+Samotná absence v nové base není důvod odstranit jinak ověřené související fakta. Immutable episode historie je sjednocena:
 66 main epizod + původní K2 epizoda =67, bez ztráty či přepisu záznamů.
 Citace byly znovu ověřeny proti skutečnému textu: README prepare/update bullets
 130/132; architecture scanner/store/source-authority15/19/22 a ownership140/143.
 Scoped apply/validate, generovaný scan/check, compileall a diff check PASS.
 GitHub povinný compiler CI a exact-pair review provede nad publikovaným HEAD
 navazující integrační workflow; tento agent neprovádí externí zápis.
+
+## Integrace Confluence25 a centrálně obnovených semantic facts
+
+Aktuální base: `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9`; lokální merge
+`2112b77`. K2 runtime/source/tests, package resources a CI zůstaly byte-identické
+vůči publikovanému `0337366`. JAR SHA-256 se nemění:
+`6d02d7e09272bf3d6d76f3e35c5e071ff352d01def29982c26e69b54daff6c6d`.
+
+Relevantní integrační běh s explicitním own worker home a Temurin21:
+
+```bash
+PYTHONPATH=src KGMAKER_WORKERS_HOME=/workspace/k2/workers KGMAKER_REQUIRE_K2=1 \
+/workspace/kgmaker-venv/bin/python -m pytest -q \
+  tests/test_confluence_configuration.py tests/test_confluence_sync.py tests/test_worker_protocol.py \
+  tests/test_k2_backend.py::test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence \
+  tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph
+```
+
+**34 PASS/26.33s**: offline config/fake synchronization/protocol a skutečný
+mixed K2 + strict/no-publication/offline-refresh smoke. Nová registrace
+Confluence CLI nekoliduje s `inspect code --kotlin-backend k2`; parser ověřen
+s explicitním workers home. Live Confluence zůstává NOT_RUN podle schválené
+konfigurace/specifikace; nejde o live connectivity důkaz. Starší full321 se
+kvůli tomuto nezávislému rozšíření neopakuje ani nepřeznačuje na current-base run.
+
+Zachovány jsou všechny4 concepts/8 relations z main, zejména dříve
+neúmyslně vypuštěné `implements` → `apply_semantic_patch::440` a `validates` →
+`validate_semantic_data::100`. Skutečný `scan_repository` znovu potvrdil oba
+targety; evidence def lines jsou442/102 (scanner ID offset není source line).
+READMElines prepare/update134/136 a architecture15/19/22/140/143 byly
+zkontrolovány proti skutečnému obsahu a scoped patch je znovu váže na current hashes.
+Immutable historie obsahuje všech69 main epizod a původní K2 epizodu (union70).
+Semantic apply/validate, generovaný scan/check, compileall a diff check PASS.
+Externí update PR26/CI/merge přebírá parent integrační workflow; agent nic nepushuje.
