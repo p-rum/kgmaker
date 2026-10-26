@@ -6,6 +6,7 @@ values remain separate evidence with explicitly unknown freshness.
 from __future__ import annotations
 
 import re
+import hashlib
 import zipfile
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
@@ -16,6 +17,7 @@ from .classification import Classifier
 from .model import Edge, KnowledgeGraph, Node
 
 VERSION = "xlsx-offline-1"
+BINARY_DIAGNOSTICS_VERSION = "xls-unsupported-1"
 MAX_ARCHIVE_BYTES = 20 * 1024 * 1024
 MAX_ENTRIES = 2_000
 MAX_EXPANDED_BYTES = 64 * 1024 * 1024
@@ -30,6 +32,41 @@ _REFERENCE = re.compile(
     r"(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6})(?::(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6}))?",
     re.I,
 )
+
+
+def binary_format(header: bytes) -> str | None:
+    """Recognize container/BOF signatures, not workbook validity or cell values.
+
+    CFB is shared by other Office formats; it cannot prove a valid Excel file.
+    BIFF BOF markers cover the legacy standalone and compound workbook streams.
+    """
+    if header.startswith(bytes.fromhex("d0cf11e0a1b11ae1")):
+        return "OLE_COMPOUND"
+    if len(header) >= 8 and header[:2] in {b"\x09\x00", b"\x09\x02", b"\x09\x04", b"\x09\x08"}:
+        length = int.from_bytes(header[2:4], "little")
+        if length in {4, 6, 8, 16}:
+            return "BIFF"
+    return None
+
+
+def workbook_hash(path: Path) -> str:
+    """Hash unsupported/oversized artifacts with a bounded streaming buffer."""
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def unsupported_binary(path: Path, relative: str) -> dict | None:
+    """Bounded preflight for declared .xls or binary content renamed to .xlsx."""
+    with path.open("rb") as stream:
+        detected = binary_format(stream.read(8))
+    if path.suffix.lower() != ".xls" and detected is None:
+        return None
+    return {"path": relative, "code": "BINARY_XLS_UNSUPPORTED", "status": "UNSUPPORTED",
+            "detected_format": detected or "UNKNOWN", "sha256": workbook_hash(path),
+            "locator": {"type": "file", "path": relative}, "extractor": BINARY_DIAGNOSTICS_VERSION,
+            "reason": "Legacy .xls or binary spreadsheet container is unsupported; no cells or values were read. "
+                      "A signature or extension does not establish a valid workbook. "
+                      "Provide bounded .xlsx without macros/external links."}
 
 
 def _identity(kind: str, path: str, name: str) -> str:
@@ -125,6 +162,9 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
     """Extract workbook nodes, dependency edges, diagnostics, context and evidence."""
     if path.stat().st_size > MAX_ARCHIVE_BYTES:
         raise AnalysisError(f"XLSX archive exceeds {MAX_ARCHIVE_BYTES} bytes")
+    unsupported = unsupported_binary(path, relative)
+    if unsupported is not None:
+        raise AnalysisError(unsupported["reason"])
     try:
         archive = zipfile.ZipFile(path)
     except (OSError, zipfile.BadZipFile) as exc:
@@ -297,16 +337,20 @@ def attach_workbooks(root: Path, graph: KnowledgeGraph) -> KnowledgeGraph:
                         and p.suffix.lower() in {".xlsx", ".xls"})
     for path in candidates:
         relative = path.relative_to(root).as_posix()
-        if path.suffix.lower() == ".xls":
-            diagnostics.append({"path": relative, "code": "BINARY_XLS_UNSUPPORTED",
-                                "reason": "Binary .xls is unsupported; provide bounded .xlsx without macros/external links"})
-            files[relative] = file_hash(path)
+        unsupported = unsupported_binary(path, relative)
+        if unsupported is not None:
+            diagnostics.append({**unsupported, "scope": classifier.classify(relative).scope})
+            files[relative] = unsupported["sha256"]
             continue
         try:
             local_nodes, local_edges, local_diagnostics, context, local_evidence = extract(path, relative, classifier)
         except AnalysisError as exc:
-            diagnostics.append({"path": relative, "code": "XLSX_PARSE_FAILED", "reason": str(exc)})
-            files[relative] = file_hash(path)
+            checksum = workbook_hash(path)
+            diagnostics.append({"path": relative, "code": "XLSX_PARSE_FAILED", "status": "UNSUPPORTED",
+                                "scope": classifier.classify(relative).scope,
+                                "sha256": checksum, "locator": {"type": "file", "path": relative},
+                                "reason": str(exc)})
+            files[relative] = checksum
             continue
         nodes.update({node.id: node for node in local_nodes})
         edges.update(local_edges)

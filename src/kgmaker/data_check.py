@@ -211,7 +211,7 @@ def data_check(root: Path, analysis_id: str, specification: dict) -> dict:
     # Let the normal validator check references, citations, metadata, and cycles.
     for reason in packet['coverage']['limitations']:
         tool_gaps.append({'input_id': None, 'kind': 'PARSER_ACCESS', 'reason': reason})
-    for key in ('omitted_sources', 'unsupported_sources', 'exclusions', 'dataflow_diagnostics'):
+    for key in ('omitted_sources', 'unsupported_sources', 'exclusions', 'dataflow_diagnostics', 'artifact_diagnostics'):
         if packet['coverage'].get(key):
             tool_gaps.append({'input_id': None, 'kind': key.upper(), 'details': packet['coverage'][key]})
     pending = packet['coverage']['pending'] + [gap.get('reason', gap['kind']) for gap in tool_gaps]

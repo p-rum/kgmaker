@@ -224,3 +224,16 @@ After actual Maven fixture preparation, final strict integrated run **246 PASS, 
 | AC01 | LIVE NOT_RUN, odloženo uživatelem | configuration status zůstává NOT_RUN i s přítomnými auth references |
 | AC02–AC03 | VERIFIED_IN_SCOPE | 5 stávajících sync testů a konfigurační negativní/no-mutation testy; žádná změna graph/store |
 | AC04–AC05 | VERIFIED_IN_SCOPE | `test_confluence_configuration.py`, capability dokumentace a change note 38; focused 28 PASS, full 281 PASS / 23 toolchain SKIP |
+
+
+## T003-S09-W02 — diagnostika binárních XLS
+
+Rozsah `xls-unsupported-1`, `feature-inventory-5`, Python 3.12, bez externího
+parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
+
+| ID | Stav | Přímá evidence | Běh |
+|---|---|---|---|
+| T003-S09-W02-AC01 | VERIFIED_IN_SCOPE | `test_binary_xls.py::test_real_biff2_fixture_is_unsupported_before_zip_parse_or_process` — BIFF2 fixture, .xls a přejmenované .xlsx; status/hash/file locator | focused 65 PASS |
+| T003-S09-W02-AC02 | VERIFIED_IN_SCOPE | `test_packet_and_audit_preserve_hash_bound_gap_without_confirming_missing_data` — save/load a graph v1/v2/v3; stávající `test_workbooks.py` zachovává XLSX cell evidence | focused 65 PASS |
+| T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
+| T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |

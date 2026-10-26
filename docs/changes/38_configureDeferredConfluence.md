@@ -48,6 +48,11 @@ koncepty a vztahy zůstávají zachovány a README evidence je ověřena na nov�
 řádcích. `memory capture` se skutečnými výsledky, příkazem generovaný scan,
 `kgmaker check` a `git diff --check`: PASS. Nevzniká domyšlená sémantická vazba.
 
+Integrace po XLS PR #21 proti main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`
+zachovává oba bloky dokumentace i sémantickou historii. Konfigurační runtime a
+testy jsou beze změny vůči nezávisle schválenému `525779a`. Úplná integrovaná
+sada: **297 PASS / 23 SKIP** (12.32 s); příslušné live ověření zůstává odložené.
+
 ## Příklad a zbývající práce
 
 Úplný příklad je v [capability dokumentaci](../feature-analysis.md#deferred-confluence-connection-configuration).
