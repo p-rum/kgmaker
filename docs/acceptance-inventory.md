@@ -1,5 +1,27 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W01 — project references
+
+| ID | Stav | Přímý test / podporovaná matice |
+|---|---|---|
+| T003-S08-W01-AC01 | VERIFIED_IN_SCOPE | `test_solution_programs_resolve_exact_source_project_identities_without_outputs`, `test_source_redirect_does_not_resolve_against_stale_emitted_declaration`: skutečný TS 5.7.3 / Node 24.19.0; missing/cycle/outside reference je lokalizovaná chyba |
+| T003-S08-W01-AC02 | VERIFIED_IN_SCOPE | `test_graph_loader_legacy_versions_remain_accepted`; původní single-project worker regression tests; additive project_graph v1, graph/store/protocol beze změny |
+| T003-S08-W01-AC03 | VERIFIED_IN_SCOPE | `test_invalid_reference_graph_is_localized_and_does_not_replace_store`, `test_overlapping_projects_do_not_arbitrarily_choose_symbol_owner`, `test_transitive_project_edit_invalidates_stored_compiler_layer_offline`: žádné falešné rozlišení, žádný zápis na chybě |
+| T003-S08-W01-AC04 | VERIFIED_IN_SCOPE | [change note 36](changes/36_resolveTypeScriptProjectReferences.md), [stavová matice](production-analysis-progress.md); celý S08/AC08 nadále PARTIAL |
+
+Review opravy W01: `test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg`
+ověřuje owner TypeChecker identity, owner CFG a argument parameter při rozdílném
+`strictNullChecks`; `test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation`
+odmítá stale `.d.ts` přes vypnuté source redirects. Finální integrovaná strict sada
+nad main `3503309`: **302 PASS / 7 SKIP**, vlastní worker v2; celý T003-AC08 zůstává PARTIAL.
+
+Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cannot_replace_last_graph`
+odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
+`test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
+ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
+K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
+zůstávají samostatné, nedokončené úkoly.
+
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
 | Kritérium | Stav | Evidence |
@@ -293,6 +315,20 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
+
+`xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
+nikoli nová implementace celé extrakce. [Change note39](changes/39_boundXlsxFormulaReferences.md).
+
+| ID | Stav | Konkrétní evidence |
+|---|---|---|
+| T003-S09-W01-AC01 | VERIFIED_IN_SCOPE | `test_xlsx_references.py::test_formula_tokens_do_not_invent_cell_dependencies` — skutečné ZIP/XML, exponents, LOG10, strings, explicitní sheet/$/range včetně spaced range; `test_literal_sheet_qualifiers_never_fall_back_to_local_cells` — Unicode/numeric/quoted názvy; `test_unsupported_formula_forms_are_boundaries` — shared/follower, INDIRECT, OFFSET, external, 3D a celé řádky/sloupce včetně whitespace bez domyšlených hran |
+| T003-S09-W01-AC02 | VERIFIED_IN_SCOPE | Stávající `test_workbooks.py` — hash-bound locators, jednoduché dependency a ZIP ochrany; `test_binary_xls.py` — graph v1/v2/v3 čitelnost; `test_workspace_does_not_reuse_dependencies_from_old_workbook_parser` — reparse v1 i dřívější candidate-v2 cache |
+| T003-S09-W01-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store` — UNKNOWN, žádný business missing verdict, falešný sheet/cell odmítnut a nulová mutace; qualifier tests zakazují falešný local fallback i process/network |
+| T003-S09-W01-AC04 | VERIFIED_IN_SCOPE | Tato tabulka, README, capability dokumentace a stavová matice uvádějí omezený `xlsx-offline-3` scope; S09/AC09 zůstávají PARTIAL |
+
+Přesné finální běhy a SKIP důvody jsou v change note39; plná Excel grammar,
+vyhodnocování vzorců a runtime availability nejsou tímto scope dodány.
 
 ## T003-S04-W02 — bounded default/bridge declaration mapping
 
@@ -306,7 +342,7 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 S04 remains PARTIAL: other generated shapes, default-argument masks, coroutines,
 statement-level source mapping and unrestricted dependency dispatch are not covered.
 
-Final W02 evidence: **410 PASS, 9 optional exporter/toolchain SKIP**; all 32
+Historical pre-ABI W02 evidence: **410 PASS, 9 optional exporter/toolchain SKIP**; all 32
 K1/K2/debug mapping cases ran. Commands and limits: [change46](changes/46_mapDefaultBodySources.md).
 
 W02 ABI regression: `test_same_realm_static_instance_abi_changes_never_map` rejects

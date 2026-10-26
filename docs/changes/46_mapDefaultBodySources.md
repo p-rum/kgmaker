@@ -164,3 +164,16 @@ mapovací vztahy se doplňují o tři doložené compiler ABI provider vazby.
 80 epizod aktuálního main tvoří přesný prefix; stará W02 epizoda zůstává beze
 změny a nový capture zaznamenává ABI/full425 ověření. Vzdálené CI pro nový HEAD
 nebylo lokálně spouštěno; publikaci a nezávislé review provádí parent.
+
+
+## Integrace TS/XLSX main 1091330
+
+Po lokálním ABI commitu `ac3248b` byl integrován
+`1091330b67a7ff67db329ffbbb2eaba162313b3f`. Všech šest testovaných mapper/
+frontend/test souborů z 425-PASS běhu zůstalo byte-identických. Aktuální main
+Windows transport/builders, TS shared selector/input closure, ESRCH regression
+oprava a všech sedm gates jsou zachovány; compiler job obsahuje TS i W02 testy.
+Relevantní actual mapping positive, same-realm ABI a scope + provider/protocol/
+JDK prerequisites: **28 PASS, 1 explicit Windows smoke SKIP /54.83 s**.
+Plná425 sada se pouze kvůli této kompozici neopakovala. Semantic union zachovává
+93 main epizod jako přesný prefix a oba původní W02 záznamy beze změny.
