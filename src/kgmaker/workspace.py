@@ -498,7 +498,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         from .classification import Classifier
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
-                      'parser_versions': ['workspace-1', feature.PARSER_VERSION, 'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
+                      'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
+                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:

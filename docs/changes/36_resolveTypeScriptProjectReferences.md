@@ -243,3 +243,28 @@ zachovává vlastní TS historie. Čtyři koncepty a osm vztahů zůstávají; R
 citace jsou reanchored proti skutečným semantic prepare/update řádkům. Nové
 source/runtime vztahy se nevymýšlejí; scoped semantic update/apply, memory,
 semantic validate, command-generated scan/check a diff check: PASS.
+
+### Refresh proti main s bounded XLSX references (PR27)
+
+Další rutinní integrace používá actual main
+`013bfe4d51d56e99d74a5c88f23b34c471096516` po merge PR27. Změny jsou převzatý
+XLSX parser a workspace cache z main; TS CJS, celá TS test sada i kompletní
+context/frontend closure a shared selector helper zůstávají byte-identické
+s reviewovaným `51fc196`. XLSX feature/workbooks/workspace zdroje jsou shodné
+s current main. Windows/JDK guards a všechny Windows/K2/TS CI gates jsou zachovány.
+
+Se stejnými own-worker/JDK21 env z předchozí integrační kontroly:
+
+- `python -m pytest -q tests/test_typescript_project_references.py -k 'consumer_options or disabled_source_redirect or new_alias_dependency or legacy_typescript_selection'`:
+  **6 PASS / 10 DESELECTED**, 25.98s, skutečný Node24.19.0/TypeScript5.7.3.
+- `python -m pytest -q tests/test_workspace.py tests/test_workbooks.py tests/test_xlsx_references.py`:
+  **62 PASS**, 3.38s; zahrnuje formula boundaries a invalidaci starého parser cache.
+- `node --check`, source byte identity a diff check: PASS. Celá strict sada se
+  kvůli této čisté integraci bez TS behavior změny neopakuje.
+
+Current main obsahuje **83** immutable epizod (dosavadních80 a tři XLSX).
+Výsledná historie zachovává tento přesný prefix a všechny vlastní epizody beze
+změny; scoped memory se pouze připojí. Zachovány jsou čtyři koncepty/osm faktů,
+README semantic prepare/update citace odpovídají skutečným řádkům **140/142**.
+Scoped semantic update/apply/validate, memory capture a generovaný scan/check:
+PASS. Žádné nové runtime/data availability tvrzení z tohoto merge nevzniká.
