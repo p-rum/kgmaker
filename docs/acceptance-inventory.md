@@ -18,7 +18,7 @@
 | T005-AC03 graph v1/v2/v3 kompatibilita | PASS | `test_existing_graph_loader_still_accepts_legacy_schema_versions` | cílený běh |
 | T005-AC04 invalidní vstup bez mutace | PASS | `test_duplicate_node_id_has_structured_validation_error` | cílený běh |
 | T005-AC05 zachování scope, kontextu, evidence a unresolved coverage | PASS | `test_scope_context_and_evidence_kind_are_preserved_without_upgrade`; `test_complete_coverage_cannot_hide_unresolved_edges` | cílený běh |
-| T005-AC06 dokumentace a change note | IN_PROGRESS | `docs/changes/11_addViewModel.md` | dokončit po konečném ověřovacím běhu a PR |
+| T005-AC06 dokumentace a change note | PASS | `docs/changes/11_addViewModel.md` | PR #11 sloučen do main; finální integrované ověření je v change note |
 
 Datum auditu: 2026-10-15. Autoritativní scénáře jsou v
 [T001](tasks/1_featureAnalysis.md) a [T002](tasks/2_buildAwareInspection.md).
