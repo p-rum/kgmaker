@@ -271,3 +271,24 @@ varianta se do něj automaticky nepromítá. Není elevated fallback.
 Lokálně: Python compile, YAML a PowerShell syntax parse PASS; transport/
 prerequisite **14 PASS / 1 Windows SKIP**. Produkční source se nemění; další
 skutečný native běh teprve dodá příčinnou evidenci.
+
+## Native důkaz příčiny a přijetí minimální ACL opravy
+
+Run `40350225577`, job `121667944961`, dodal skutečný kontrolovaný důkaz:
+všechny původní-token i explicit-process/thread-ACL probes (cmd, Python,
+PowerShell, oba desktopy i Job/no-Job) skončily 0xC0000142. Varianty s explicitním
+**TokenDefaultDacl pro tentýž user SID a SYSTEM** všechny skončily EXIT0;
+Python i PowerShell nezávisle zapsaly `is_admin=false`, včetně vlastního Job
+Object a private desktopu. Varianta obou ACL změn také uspěla. Původní source/
+restricted DACL obsahovala BA, SYSTEM a logon SID; explicitní own-user default
+ACL jako jediná změna umožnila inicializaci. Původní acceptance smoke použil
+nezměněný token a selhal očekávaně; tento run není full Windows acceptance.
+
+Acceptance nyní používá přesně tuto native ověřenou restricted-token variantu
+s own-user+SYSTEM default DACL. DISABLE_MAX_PRIVILEGE, Administrators deny-only,
+Job vlastnictví i nezávislé non-admin kontroly zůstávají stejné. Není elevated
+fallback; selhání přípravy default ACL je explicitní FAIL. Private desktop se
+zatím ponechává pro izolaci, ale není příčinou opravy (native matice to vyvrátila).
+Diagnostická matice a její přesné výsledky zůstávají dostupné jako regrese.
+Plná skutečná Windows instalace/build/installed smoke se teprve musí provést
+na novém kandidátu; dílčí native EXIT0 není za tuto acceptance vydáván.

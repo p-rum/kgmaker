@@ -56,6 +56,9 @@ Job `windows-user-install` na `windows-latest` spouští
 `tests/windows/no_admin_smoke.ps1` pomocí vlastního restricted primary tokenu
 (`CreateRestrictedToken` s vypnutými privilegii a Administrators deny-only,
 `CreateProcessAsUserW`; launcher nepotřebuje interaktivní runas konzoli).
+Restricted token má výslovný TokenDefaultDacl pro vlastní user SID a SYSTEM;
+native matice prokázala, že bez něj původní admin-derived default bránil DLL
+inicializaci. Privilegia zůstávají vypnutá, Administrators deny-only.
 Child dostane explicitní private noninteractive window station/desktop s DACL
 pro vlastní user SID a SYSTEM; ACL sdíleného runner desktopu se nemění. PowerShell i Python smoke samostatně ověřují, že
 proces nemá administrator membership; elevated proces nemůže projít jako PASS.

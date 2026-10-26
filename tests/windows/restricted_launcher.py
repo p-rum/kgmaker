@@ -175,7 +175,7 @@ def launch(command, root, timeout=900):
     process = Process()
     job = None
     desktop = None
-    diagnostic_token = w.HANDLE()
+    user_default_dacl_token = w.HANDLE()
     try:
         checked(security.OpenProcessToken(kernel.GetCurrentProcess(), 0x008b, ctypes.byref(source)), 'OpenProcessToken')
         sid = ctypes.create_string_buffer(68)  # SECURITY_MAX_SID_SIZE
@@ -200,24 +200,24 @@ def launch(command, root, timeout=900):
             print(f'Parent job UI restriction flags: {ui_limits.value:#x}', flush=True)
         else:
             print(f'Parent in job: {bool(in_job.value)}; UI query last-error: {ctypes.get_last_error()}', flush=True)
-        # A separate experimental token changes object ACL defaults only. It is
-        # never used for the acceptance smoke in this diagnostic candidate.
-        diagnostic_ready = False
+        # Native matrix run40350225577 proved this object-default ACL correction
+        # starts cmd/Python/PowerShell with is_admin=false; privileges stay disabled.
+        user_dacl_ready = False
         try:
             checked(security.CreateRestrictedToken(source, 1, 1, ctypes.byref(deny), 0, None, 0, None,
-                ctypes.byref(diagnostic_token)), 'CreateRestrictedToken(diagnostic)')
+                ctypes.byref(user_default_dacl_token)), 'CreateRestrictedToken(user default DACL)')
             security.GetSecurityDescriptorDacl.argtypes = [w.LPVOID, ctypes.POINTER(w.BOOL),
                 ctypes.POINTER(w.LPVOID), ctypes.POINTER(w.BOOL)]
             security.SetTokenInformation.argtypes = [w.HANDLE, ctypes.c_int, w.LPVOID, w.DWORD]
             present, defaulted, acl = w.BOOL(), w.BOOL(), w.LPVOID()
             checked(security.GetSecurityDescriptorDacl(desktop.descriptor, ctypes.byref(present),
                 ctypes.byref(acl), ctypes.byref(defaulted)), 'GetSecurityDescriptorDacl(private)')
-            checked(security.SetTokenInformation(diagnostic_token, 6, ctypes.byref(acl), ctypes.sizeof(acl)),
-                'SetTokenInformation(diagnostic default DACL)')
-            print('Experimental token default DACL: ' + default_dacl(diagnostic_token), flush=True)
-            diagnostic_ready = True
+            checked(security.SetTokenInformation(user_default_dacl_token, 6, ctypes.byref(acl), ctypes.sizeof(acl)),
+                'SetTokenInformation(user default DACL)')
+            print('Verified restricted token default DACL: ' + default_dacl(user_default_dacl_token), flush=True)
+            user_dacl_ready = True
         except Exception as error:
-            print(f'Experimental default-DACL setup failed: {type(error).__name__}: {error}', flush=True)
+            print(f'Restricted user default-DACL setup failed: {type(error).__name__}: {error}', flush=True)
 
         class Attributes(ctypes.Structure):
             _fields_ = [('length', w.DWORD), ('descriptor', w.LPVOID), ('inherit', w.BOOL)]
@@ -275,9 +275,9 @@ def launch(command, root, timeout=900):
         contrasting_cases = ((False, False), (True, True))
         variants = [('original', restricted, False, full_matrix),
                     ('explicit-process-thread-acl', restricted, True, contrasting_cases)]
-        if diagnostic_ready:
-            variants += [('explicit-default-dacl', diagnostic_token, False, contrasting_cases),
-                         ('both-explicit-acls', diagnostic_token, True, contrasting_cases)]
+        if user_dacl_ready:
+            variants += [('explicit-default-dacl', user_default_dacl_token, False, contrasting_cases),
+                         ('both-explicit-acls', user_default_dacl_token, True, contrasting_cases)]
         for token_name, token, explicit_process_acl, cases in variants:
             for private, job_owned in cases:
                 for executable in ('cmd', 'python', 'powershell'):
@@ -298,13 +298,16 @@ def launch(command, root, timeout=900):
                         argv = [command[0], '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', code]
                     reports.append(probe(label, argv, token, private, job_owned, marker, explicit_process_acl))
         (root / 'native-startup-diagnostics.json').write_text(json.dumps(reports, indent=2), encoding='utf-8')
-        # Acceptance still exercises the original restricted token; the probe
-        # variant must first supply native evidence before any repair is adopted.
+        # The native comparison established token default DACL as causal:
+        # desktop/job/process-ACL changes alone failed; this restricted token
+        # initialized all three executables and independently reported non-admin.
+        if not user_dacl_ready:
+            raise OSError('Required restricted user default DACL could not be prepared')
         startup = Startup()
         startup.cb = ctypes.sizeof(startup)
         startup.desktop = desktop.path
         argv = ctypes.create_unicode_buffer(subprocess.list2cmdline(command))
-        checked(security.CreateProcessAsUserW(restricted, command[0], argv, None, None, False,
+        checked(security.CreateProcessAsUserW(user_default_dacl_token, command[0], argv, None, None, False,
             0x08000004, None, str(root), ctypes.byref(startup), ctypes.byref(process)), 'CreateProcessAsUserW')
         # Keep the complete smoke tree owned, including timeout cleanup.
         sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
@@ -329,7 +332,7 @@ def launch(command, root, timeout=900):
             kernel.WaitForSingleObject(process.process, 5000)
         if desktop is not None:
             desktop.close()
-        for handle in (process.thread, process.process, diagnostic_token, restricted, source):
+        for handle in (process.thread, process.process, user_default_dacl_token, restricted, source):
             if handle:
                 kernel.CloseHandle(handle)
 
