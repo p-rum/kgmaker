@@ -65,7 +65,7 @@ def test_fa23_reports_shared_indirect_external_and_binary_xls(tmp_path):
             "BINARY_XLS_UNSUPPORTED"} <= codes
     (tmp_path / "requirement.md").write_text("Use the scenario input.")
     packet = feature.prepare(tmp_path, "requirement.md", "workbook", 100_000)
-    assert packet["coverage"]["parser_capabilities"]["workbooks"] == "xlsx-offline-2"
+    assert packet["coverage"]["parser_capabilities"]["workbooks"] == "xlsx-offline-3"
     assert "legacy.xls" in packet["coverage"]["unsupported_sources"]
     assert "scenarios.xlsx" not in packet["coverage"]["unsupported_sources"]
 

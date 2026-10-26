@@ -151,7 +151,8 @@ def load_workspace(path: Path) -> dict:
             or data['schema_version'] != 1 or not ID_PATTERN.fullmatch(str(data.get('workspace_id', '')))
             or not isinstance(data.get('repositories'), list)):
         raise AnalysisError('Invalid workspace manifest version/identity/repositories')
-    if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping'}:
+    if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping',
+                    'service_ownership'}:
         raise AnalysisError('Unknown workspace fields')
     roots, ids = [], set()
     for repo in data['repositories']:
@@ -198,10 +199,120 @@ def load_workspace(path: Path) -> dict:
             prefix = service.get(key, '')
             if not isinstance(prefix, str) or prefix and not prefix.startswith('/'):
                 raise AnalysisError('HTTP prefix must be empty or start with /')
+    _validate_service_ownership(data.get('service_ownership'), data['repositories'], service_ids)
     _validate_release_mapping(data, ids)
     data['_manifest_path'] = str(path)
     data['_manifest_hash'] = file_hash(path)
     return data
+
+
+def _validate_service_ownership(declaration: dict | None, repositories: list[dict],
+                                legacy_service_ids: set[str]) -> None:
+    """Validate explicit ownership without changing the legacy service mapping contract."""
+    if declaration is None:
+        return
+    from .analysis_model import ID_PATTERN
+    if (not isinstance(declaration, dict) or set(declaration) != {'schema_version', 'services'}
+            or type(declaration.get('schema_version')) is not int
+            or declaration['schema_version'] != 1 or not isinstance(declaration.get('services'), list)):
+        raise AnalysisError('Invalid service_ownership; expected schema_version 1 and services')
+    repo_roots = {repo['id']: Path(repo['_root']) for repo in repositories}
+    ids = set()
+    for service in declaration['services']:
+        if (not isinstance(service, dict)
+                or set(service) != {'id', 'roots', 'modules', 'external_systems'}
+                or not isinstance(service.get('id'), str)
+                or not ID_PATTERN.fullmatch(service['id'])
+                or service['id'] in ids or service['id'] not in legacy_service_ids):
+            raise AnalysisError('Invalid, duplicate, or undeclared service ownership ID')
+        ids.add(service['id'])
+        roots, modules, systems = service['roots'], service['modules'], service['external_systems']
+        if not isinstance(roots, list) or not isinstance(modules, list) or not isinstance(systems, list):
+            raise AnalysisError('Service ownership roots/modules/external_systems must be arrays')
+        if not roots and not modules:
+            raise AnalysisError('Service ownership requires at least one explicit root or module')
+        seen_roots, seen_modules, seen_systems = set(), set(), set()
+        for root in roots:
+            if (not isinstance(root, dict) or set(root) != {'repo_id', 'path'}
+                    or root.get('repo_id') not in repo_roots):
+                raise AnalysisError('Invalid service ownership root')
+            safe_path(repo_roots[root['repo_id']], root.get('path'))
+            key = (root['repo_id'], Path(root['path']).as_posix().rstrip('/'))
+            if key in seen_roots:
+                raise AnalysisError('Duplicate service ownership root')
+            seen_roots.add(key)
+        for module in modules:
+            if (not isinstance(module, dict) or set(module) != {'repo_id', 'id'}
+                    or module.get('repo_id') not in repo_roots
+                    or not isinstance(module.get('id'), str) or not module['id'].strip()):
+                raise AnalysisError('Invalid service ownership module; expected repo_id and id')
+            key = (module['repo_id'], module['id'])
+            if key in seen_modules:
+                raise AnalysisError('Duplicate service ownership module')
+            seen_modules.add(key)
+        for system in systems:
+            if (not isinstance(system, dict) or set(system) != {'id'}
+                    or not isinstance(system.get('id'), str) or not ID_PATTERN.fullmatch(system['id'])
+                    or system['id'] in seen_systems):
+                raise AnalysisError('Invalid or duplicate external system identity')
+            seen_systems.add(system['id'])
+
+
+def resolve_service_ownership(symbol: dict, declaration: dict | None, *, context_id: str) -> dict:
+    """Resolve only explicit root/module declarations for one supplied symbol context.
+
+    A declaration can match by repo-qualified path root or exact module name. Multiple
+    declarations remain AMBIGUOUS and no match remains UNASSIGNED.
+    """
+    if not isinstance(context_id, str) or not context_id:
+        raise AnalysisError('Ownership resolution requires an explicit context_id')
+    if (not isinstance(symbol, dict) or not isinstance(symbol.get('repo_id'), str)
+            or symbol.get('context_id') != context_id):
+        raise AnalysisError('Ownership symbol requires matching repo_id and context_id')
+    context_repo = split_id(context_id)[0] if context_id.startswith('repo:') else None
+    if context_repo is not None and context_repo != symbol['repo_id']:
+        raise AnalysisError('Ownership context belongs to a different repository')
+    if declaration is not None and (
+            not isinstance(declaration, dict)
+            or type(declaration.get('schema_version')) is not int
+            or declaration.get('schema_version') != 1
+            or set(declaration) != {'schema_version', 'services'}
+            or not isinstance(declaration.get('services'), list)):
+        raise AnalysisError('Unsupported or invalid service ownership declaration')
+    path, module = symbol.get('path'), symbol.get('module')
+    if isinstance(path, str) and path.startswith('@'):
+        prefix, separator, path = path[1:].partition('/')
+        if not separator or prefix != symbol['repo_id'] or not path:
+            raise AnalysisError('Qualified ownership path must match symbol repo_id')
+        if source_key(prefix, path) != symbol['path']:
+            raise AnalysisError('Qualified ownership path is not canonical')
+    if path is not None and (not isinstance(path, str) or not path or Path(path).is_absolute()
+                             or '\\' in path or ':' in path or '..' in Path(path).parts):
+        raise AnalysisError('Ownership symbol path must be repository-relative')
+    owners = []
+    for service in (declaration or {}).get('services', []):
+        path_match = False
+        if isinstance(path, str):
+            for root in service['roots']:
+                if root['repo_id'] == symbol['repo_id']:
+                    base = Path(root['path']).as_posix().rstrip('/')
+                    if base == '.':
+                        base = ''
+                    candidate = Path(path).as_posix()
+                    if not base or candidate == base or candidate.startswith(base + '/'):
+                        path_match = True
+                        break
+        module_match = (isinstance(module, str) and any(
+            item['repo_id'] == symbol['repo_id'] and item['id'] == module
+            for item in service['modules']))
+        if path_match or module_match:
+            owners.append(service)
+    owners.sort(key=lambda item: item['id'])
+    status = 'UNASSIGNED' if not owners else 'RESOLVED' if len(owners) == 1 else 'AMBIGUOUS'
+    return {'status': status, 'owner_id': owners[0]['id'] if len(owners) == 1 else None,
+            'candidate_owner_ids': [item['id'] for item in owners], 'context_id': context_id,
+            'external_system_ids': ([system['id'] for system in owners[0]['external_systems']]
+                                    if len(owners) == 1 else [])}
 
 
 def _release_artifact_links(workspace: dict, graphs: dict[str, KnowledgeGraph]):

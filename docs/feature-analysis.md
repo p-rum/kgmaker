@@ -205,24 +205,30 @@ remaining excluded from parsing. Their checksums use bounded streaming buffers;
 retained diagnostic hashes are rechecked during packet freshness, including in
 workspaces. The direct XLSX extractor checks its archive size limit before any
 content hashing. Graph/store schemas and the sheet/cell/value citation shape
-remain unchanged across workbook adapters v1 and v2.
+remain unchanged across these workbook adapter revisions.
 
-`xlsx-offline-2` corrects the bounded formula-reference classifier: `1E10` is a
+`xlsx-offline-3` corrects the bounded formula-reference classifier: `1E10` is a
 numeric literal and `LOG10(A1)` references A1 without inventing a LOG10 cell edge.
 Double-quoted strings, including escaped quotes, contribute neither cell tokens
 nor dynamic/external diagnostics. Literal A1 references, `$` anchors, explicit
-sheet qualifiers and bounded A1 ranges are supported; this is not a full Excel
+sheet qualifiers and bounded A1 ranges (including whitespace around the colon)
+are supported; this is not a full Excel
 grammar. Shared formulas (including followers), INDIRECT, OFFSET and external
 references remain unresolved. 3D sheet, whole-row and whole-column references
 produce `XLSX_REFERENCE_FORM_UNSUPPORTED` with the affected sheet/cell in the
 graph diagnostic. Unsupported formulas contribute no guessed dependency edges.
 Named-range expressions use the same token/boundary rules.
+Unicode word and numeric sheet identifiers, and single-quoted sheet names, are
+literal qualifiers. A name such as `'INDIRECT(A1)'!B1` is not a dynamic call.
+Unrecognized qualifiers produce a boundary for the expression, including an
+unmatched sheet separator followed by whitespace; their trailing cell can never
+be reinterpreted as local. Whole-row/column forms with spaced colons stay unsupported.
 
 For example, `kgmaker feature prepare --root . --requirement requirement.md
---id scenario` records `coverage.parser_capabilities.workbooks: xlsx-offline-2`.
+--id scenario` records `coverage.parser_capabilities.workbooks: xlsx-offline-3`.
 Formula text and cached values remain separate citation fields with UNKNOWN
 freshness; a cached value is not proof of a formula result or runtime availability.
-The adapter version participates in workspace cache identity, so earlier v1
+The adapter version participates in workspace cache identity, so earlier v1/v2
 dependency results are reparsed; regenerate existing packets explicitly.
 
 Evidence kind must match the packet source manifest. Source and cited location must

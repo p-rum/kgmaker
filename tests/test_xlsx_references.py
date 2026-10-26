@@ -176,21 +176,26 @@ def test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store(tmp_path
     assert {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()} == before
 
 
-def test_workspace_does_not_reuse_dependencies_from_old_workbook_parser(tmp_path):
+@pytest.mark.parametrize("old_version,formula,stale_cell,expected", [
+    ("xlsx-offline-1", "1E10", "E10", set()),
+    ("xlsx-offline-2", "Übersicht!A1", "A1", {"Übersicht!A1"}),
+])
+def test_workspace_does_not_reuse_dependencies_from_old_workbook_parser(tmp_path, old_version, formula, stale_cell, expected):
     from kgmaker import workbooks
     from kgmaker.workspace import snapshot_workspace
     repository = tmp_path / "repo"
     repository.mkdir()
-    write_formula_book(repository / "scenario.xlsx", {"A2": "1E10"})
+    write_formula_book(repository / "scenario.xlsx", {"A2": formula}, extra_sheets=("Übersicht",))
     manifest = tmp_path / "workspace.json"
     manifest.write_text(json.dumps({"schema_version": 1, "workspace_id": "formula",
                                     "repositories": [{"id": "repo", "path": "repo", "role": "shared"}]}))
-    # Reproduce a real v1 parser result in its versioned cache generation.
-    with patch.object(workbooks, "VERSION", "xlsx-offline-1"), \
-            patch.object(feature, "WORKBOOK_VERSION", "xlsx-offline-1"), \
-            patch.object(workbooks, "_references", return_value=[(None, "E10", None, "E10")]):
+    # A persisted pre-fix parser generation must not retain wrong dependencies.
+    with patch.object(workbooks, "VERSION", old_version), \
+            patch.object(feature, "WORKBOOK_VERSION", old_version), \
+            patch.object(workbooks, "_references", return_value=[(None, stale_cell, None, stale_cell)]):
         old = snapshot_workspace(manifest, cache_root=tmp_path, persist_cache=True)
     assert any(edge.kind == "formula_references" for edge in old[3].edges)
     current = snapshot_workspace(manifest, cache_root=tmp_path)
-    assert not [edge for edge in current[3].edges if edge.kind == "formula_references"]
+    names = {node.id: node.name for node in current[3].nodes}
+    assert {names[edge.target] for edge in current[3].edges if edge.kind == "formula_references"} == expected
     assert old[0]["repositories"]["repo"]["cache_key"] != current[0]["repositories"]["repo"]["cache_key"]

@@ -22,7 +22,8 @@ pravidly používá pro dependency i dynamic/external klasifikaci. OFFSET má
 formula ani named-range expression nevytvoří domyšlené dependency. Původní
 shared/follower, INDIRECT a external boundaries jsou zachovány.
 
-Verze je `xlsx-offline-2`, feature coverage ji zveřejňuje přímo z adaptéru.
+První kandidát měl `xlsx-offline-2`; finální review oprava má `xlsx-offline-3`
+(podrobnosti níže). Feature coverage verzi zveřejňuje přímo z adaptéru.
 Workspace cache key nově obsahuje workbook parser version: cache předchozí v1
 se znovu parsuje, i když zdrojové bytes zůstaly stejné. Nejde o nový katalog,
 evidence kind nebo availability proof; `analysis_validation.py` i store zůstávají
@@ -36,7 +37,7 @@ feature packetu. Cached value má stále freshness UNKNOWN, žádný vzorec se
 nevyhodnocuje; scan/feature/audit nic nestahuje, nebuildí a nespouští aplikaci.
 
 `kgmaker feature prepare --root . --requirement requirement.md --id scenario`
-uvádí workbook capability `xlsx-offline-2`. Pro `LOG10(A1)` zůstává jediný
+uvádí workbook capability `xlsx-offline-3`. Pro `LOG10(A1)` zůstává jediný
 dependency token A1; pro `OFFSET(A1,0,1)` je workbook kontext PARTIAL a graf má
 konkrétní unresolved diagnostiku, nikoli odhadnutou výslednou buňku B1.
 
@@ -95,3 +96,45 @@ Plná sada 298 PASS výše náleží původnímu kandidátu; kvůli této nesouv
 exporter integraci se neopakuje a nepovyšuje se na nový full-suite výsledek.
 Scoped semantic update/apply/validate, scan/check a diff check jsou zopakovány
 před lokálním merge commitem. Žádný push/PR/remote merge se neprovádí.
+
+## Opravy z nezávislého review a integrace T006/T007
+
+Review kandidáta `b52597c65d95355823658bbaf7d1985480ac01c3` našlo skutečné mezery:
+Unicode qualifier `Übersicht!A1` se chybně změnil na local Scenario!A1;
+quoted sheet name `'INDIRECT(A1)'!B1` vyvolalo false dynamic boundary a spaced
+`A : A` / `1 : 10` obešly unsupported detekci. Bounded `A1 : C1` navíc ztratil
+prostřední buňku B1. První review regresní run: **11 FAIL, 25 PASS**.
+
+Reference nyní začíná pouze na expression separatoru a kvalifikovaný token
+zahrnuje Unicode word/numeric nebo quoted sheet name. Každý sheet separator musí
+patřit celému rozpoznanému qualifieru; jinak má výraz explicitní boundary bez
+lokálního fallbacku, i s whitespace nebo nepodporovaným prefixem. Quoted sheet
+identifiers jsou chráněné před string maskováním a z function-call syntaxe se
+vyjmou, takže názvy s INDIRECT/OFFSET, escaped quotes, double quotes či `!` nejsou
+volání. Whitespace kolem range colon je podporováno pro bounded A1 expansion a
+explicitně odmítnuto pro whole-row/column reference. Nejde o novou Excel grammar.
+Finální adapter je `xlsx-offline-3`, aby nemohl převzít uložené chybné qualifier
+dependency z dřívějšího v2 kandidáta. Cache regression ověřuje jak skutečný v1
+scientific-token výsledek, tak v2 false-local qualifier výsledek. Citation shape
+se tím nemění; původní výsledky výše zachycují historické v2 běhy.
+
+Před finálními kontrolami integrován main
+`3a393e451b0d7b8f83de93f05f07d2307ba66ec3` s T006/T007. Jeho aktuální semantic
+nodes/edges včetně záměrných odstranění zůstávají zachované; union zachovává všech
+67 existujících episode records obou rodičů. README prepare/update citace ukazují
+na aktuální bullets 130/132. Workbook parser version v workspace cache key se
+zachovala při automatickém merge `workspace.py`.
+
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_xlsx_references.py tests/test_workbooks.py tests/test_binary_xls.py tests/test_data_check.py tests/test_availability.py tests/test_feature.py tests/test_workspace.py tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py tests/test_cross_repo_artifacts.py tests/test_exporter_distribution.py -k 'not installed_exporters_run_real_builds'`:
+**161 PASS, 2 DESELECTED v 4.80 s**, včetně 42 actual multi-sheet ZIP/cache případů.
+Před posledním v3 cache bumpem samostatná sada měla **41 PASS v 0.31 s**.
+Deseléctované jsou pouze dvě skutečné installed-exporter
+toolchain varianty; exporter negativní/compatibility případy byly provedeny.
+
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs`:
+**350 PASS, 25 SKIP v 18.06 s**. Jde o finální celý běh na v3 po opravě runtime
+a integraci T006/T007. Důvody SKIP jsou stejné jako u původních 23 výše plus dvě
+installed-exporter Maven/Gradle varianty bez připraveného toolchainu; žádný SKIP
+není vydáván za PASS. Po změně zdroje je znovu provedeno scoped semantic
+update/apply/validate, zachycení review-fix implementační epizody, scan/check a
+diff check. Nezávislé schválení ani remote operace se tím nenahrazují.

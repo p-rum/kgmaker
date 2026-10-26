@@ -50,8 +50,39 @@ includes unknown/test inventory. Without a valid compiler index these are partia
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
 deterministic JSON envelope for future high-level interface, topology and process
-projections. It does not discover or render those views; the existing CLI is
-unchanged. See [architecture](docs/architecture.md) and the [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+projections. `kgmaker.views.select_service_contexts` builds an explicit,
+read-only service/repository/module context selection from an existing graph;
+it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
+deployment limits. It does not discover or render interface/topology/process views;
+the CLI is unchanged. See [architecture](docs/architecture.md), the
+[T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
+[T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+
+```python
+from kgmaker.views import select_service_contexts
+
+selection = select_service_contexts(
+    graph,
+    [
+        {"service_id": "billing-api", "repo_id": "billing", "module": "app",
+         "context_id": "repo:billing:billing-production"},
+        {"service_id": "ledger-api", "repo_id": "ledger", "module": "service",
+         "context_id": "repo:ledger:ledger-production"},
+    ],
+    scope="production",
+)
+```
+
+The function is imported from `kgmaker.views`; the snippet shows the library
+contract and does not add a `kgmaker` CLI command.
+
+Workspace v1 can optionally carry `service_ownership` v1 with explicit service
+roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
+returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
+legacy `services` entries remain readable and do not claim ownership by themselves.
+Repo-qualified compiler contexts and `@repo/path` symbol paths must match the
+symbol repository. This contract does not discover deployment boundaries or infer
+runtime identity.
 
 ```text
 kgmaker init [--root PATH] [--force]
@@ -216,10 +247,12 @@ produce `BINARY_XLS_UNSUPPORTED` with `status: UNSUPPORTED`, byte SHA-256 and
 a file locator; no workbook values are extracted. Feature packets and data audits
 retain these gaps in `coverage.artifact_diagnostics` (repo-qualified in workspaces).
 A binary signature identifies a container/header, not a validated Excel workbook.
-`xlsx-offline-2` extracts bounded A1/range tokens without treating exponents or
+`xlsx-offline-3` extracts bounded A1/range tokens without treating exponents or
 function names such as `LOG10` as cells. OFFSET, shared formulas, INDIRECT,
 external references and unsupported 3D/whole-row/whole-column forms remain explicit
 graph diagnostics; formulas are never evaluated and audits keep UNKNOWN availability.
+Literal Unicode/quoted sheet qualifiers bind to their sheet; unrecognized qualifiers
+stay unresolved and cannot fall back to local cells. Spaced A1 ranges retain all cells.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
 evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an

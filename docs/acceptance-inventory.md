@@ -29,6 +29,27 @@
 | T005-AC05 zachování scope, kontextu, evidence a unresolved coverage | PASS | `test_scope_context_and_evidence_kind_are_preserved_without_upgrade`; `test_complete_coverage_cannot_hide_unresolved_edges` | cílený běh |
 | T005-AC06 dokumentace a change note | PASS | `docs/changes/11_addViewModel.md` | PR #11 sloučen do main; finální integrované ověření je v change note |
 
+## T007 — explicitní vlastnictví služeb
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T007-AC01 dvě explicitní služby, shared library bez vlastníka | PASS | `tests/test_t007_define_service_ownership.py::test_ac01_two_declared_services_and_shared_library_is_unassigned` | finální cílená a regresní sada 45 PASS |
+| T007-AC02 překryv roots/module mapping | PASS | `tests/test_t007_define_service_ownership.py::test_ac02_overlapping_roots_and_module_mapping_remain_ambiguous` | finální cílená a regresní sada 45 PASS |
+| T007-AC03 legacy workspace a service IDs | PASS | `tests/test_t007_define_service_ownership.py::test_ac03_legacy_manifest_without_ownership_preserves_service_identity` | finální cílená a regresní sada 45 PASS |
+| T007-AC04 invalidní manifest bez mutace | PASS | `tests/test_t007_define_service_ownership.py::test_ac04_invalid_ownership_is_rejected_without_manifest_mutation`; duplicate identity regression | finální cílená a regresní sada 45 PASS |
+| T007-AC05 kontext a nepovýšení evidence | PASS | `tests/test_t007_define_service_ownership.py::test_ac05_resolution_preserves_selected_context_and_never_guesses`; foreign repo context and qualified path regressions | finální cílená a regresní sada 45 PASS |
+| T007-AC06 dokumentace a change note | PASS | README, architecture, status a tento inventář; `docs/changes/33_defineServiceOwnership.md` | `kgmaker check` PASS; `git diff --check` PASS |
+## T006 — výběr kontextů pro více služeb
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T006-AC01 dvě služby a různé čerstvé varianty | PASS | `test_two_services_select_distinct_contexts_and_profiles_without_mixing`; `test_t006_selects_nonempty_workspace_contexts_and_real_release_mapping` | cílený běh nad skutečným workspace/compiler snapshotem |
+| T006-AC02 nejednoznačný/stale výběr s volbami nebo příkazem | PASS | `test_missing_variant_selection_returns_choices_and_does_not_mutate_graph`; `test_stale_classpath_returns_diagnostic_and_next_command_without_worker`; `test_t006_release_mapping_becomes_stale_when_reported_output_changes` | cílený běh |
+| T006-AC03 bez procesu a mutace grafu/store | PASS | `test_selection_reads_current_context_without_process_or_store_mutation` | cílený běh; subprocess zakázán |
+| T006-AC04 chybný výběr beze změny vstupu | PASS | `test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation`; `test_missing_variant_selection_returns_choices_and_does_not_mutate_graph` | cílený běh |
+| T006-AC05 evidence, scope a SOURCE_ONLY hranice | PASS | `test_source_only_requires_declared_repo_coverage_and_stays_partial`; `test_t006_release_report_must_match_declaration_and_graph_evidence`; `test_t006_duplicate_release_report_rows_are_ambiguous`; `test_t006_release_report_without_graph_proof_stays_unresolved`; `test_t006_shared_context_does_not_choose_an_arbitrary_service_owner` | cílený běh |
+| T006-AC06 dokumentace a výsledky | PARTIAL | `docs/changes/32_selectServiceContexts.md` | implementace, testy a lokální evidence jsou připraveny; samostatný PR a required CI zůstávají NOT_RUN v této větvi |
+
 Datum auditu: 2026-10-15. Autoritativní scénáře jsou v
 [T001](tasks/1_featureAnalysis.md) a [T002](tasks/2_buildAwareInspection.md).
 `VERIFIED_IN_SCOPE` platí jen pro verzi adaptéru a fixture uvedené v řádku;
@@ -241,15 +262,15 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
-`xlsx-offline-2`; oprava již existujícího offline adaptéru z change note5,
+`xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
 nikoli nová implementace celé extrakce. [Change note39](changes/39_boundXlsxFormulaReferences.md).
 
 | ID | Stav | Konkrétní evidence |
 |---|---|---|
-| T003-S09-W01-AC01 | VERIFIED_IN_SCOPE | `test_xlsx_references.py::test_formula_tokens_do_not_invent_cell_dependencies` — skutečné ZIP/XML, exponents, LOG10, strings, explicitní sheet/$/range; `test_unsupported_formula_forms_are_boundaries` — shared/follower, INDIRECT, OFFSET, external, 3D a celé řádky/sloupce bez domyšlených hran |
-| T003-S09-W01-AC02 | VERIFIED_IN_SCOPE | Stávající `test_workbooks.py` — hash-bound locators, jednoduché dependency a ZIP ochrany; `test_binary_xls.py` — graph v1/v2/v3 čitelnost; `test_workspace_does_not_reuse_dependencies_from_old_workbook_parser` — reparse v1 cache |
-| T003-S09-W01-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store` — UNKNOWN, žádný business missing verdict, falešný sheet/cell odmítnut a nulová mutace; token test zakazuje process/network |
-| T003-S09-W01-AC04 | VERIFIED_IN_SCOPE | Tato tabulka, README, capability dokumentace a stavová matice uvádějí omezený `xlsx-offline-2` scope; S09/AC09 zůstávají PARTIAL |
+| T003-S09-W01-AC01 | VERIFIED_IN_SCOPE | `test_xlsx_references.py::test_formula_tokens_do_not_invent_cell_dependencies` — skutečné ZIP/XML, exponents, LOG10, strings, explicitní sheet/$/range včetně spaced range; `test_literal_sheet_qualifiers_never_fall_back_to_local_cells` — Unicode/numeric/quoted názvy; `test_unsupported_formula_forms_are_boundaries` — shared/follower, INDIRECT, OFFSET, external, 3D a celé řádky/sloupce včetně whitespace bez domyšlených hran |
+| T003-S09-W01-AC02 | VERIFIED_IN_SCOPE | Stávající `test_workbooks.py` — hash-bound locators, jednoduché dependency a ZIP ochrany; `test_binary_xls.py` — graph v1/v2/v3 čitelnost; `test_workspace_does_not_reuse_dependencies_from_old_workbook_parser` — reparse v1 i dřívější candidate-v2 cache |
+| T003-S09-W01-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store` — UNKNOWN, žádný business missing verdict, falešný sheet/cell odmítnut a nulová mutace; qualifier tests zakazují falešný local fallback i process/network |
+| T003-S09-W01-AC04 | VERIFIED_IN_SCOPE | Tato tabulka, README, capability dokumentace a stavová matice uvádějí omezený `xlsx-offline-3` scope; S09/AC09 zůstávají PARTIAL |
 
 Přesné finální běhy a SKIP důvody jsou v change note39; plná Excel grammar,
 vyhodnocování vzorců a runtime availability nejsou tímto scope dodány.

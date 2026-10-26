@@ -16,7 +16,7 @@ from .analysis_model import AnalysisError, digest, file_hash
 from .classification import Classifier
 from .model import Edge, KnowledgeGraph, Node
 
-VERSION = "xlsx-offline-2"
+VERSION = "xlsx-offline-3"
 BINARY_DIAGNOSTICS_VERSION = "xls-unsupported-1"
 MAX_ARCHIVE_BYTES = 20 * 1024 * 1024
 MAX_ENTRIES = 2_000
