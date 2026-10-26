@@ -1,5 +1,14 @@
 # Inventář acceptance T001 a T002
 
+## T003-S11-W03 — Windows user-space kandidát
+
+| ID | Stav | Přímá evidence a zbývající gate |
+|---|---|---|
+| T003-S11-W03-AC01 | PARTIAL / WINDOWS_NOT_RUN | Linux skutečný installed core/Java/K1 Kotlin/TS smoke s mezerami; Windows restricted-user job čeká na publikaci kandidáta |
+| T003-S11-W03-AC02 | VERIFIED_IN_SCOPE_LINUX | Protocol1 a graph/store v1/v2/v3 beze změny; stávající loader/install/regrese, Windows loader smoke musí projít skutečným CI |
+| T003-S11-W03-AC03 | PARTIAL / WINDOWS_NOT_RUN | `test_worker_protocol.py`, `test_windows_install.py`, source-only/missing-artifact install varianty bez procesu nebo mutace posledního grafu; Windows ověření čeká |
+| T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Change note40](changes/40_supportWindowsUserInstall.md) a [Windows guide](windows-install.md) oddělují provedený Linux běh od pending Windows gate; T003-S11 zůstává PARTIAL |
+
 ## T003-S11-W02 — distribuce build exporterů
 
 | ID | Stav | Přímá evidence |

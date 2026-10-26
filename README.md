@@ -27,6 +27,12 @@ These are **SPECIFICATION**, not implemented commands or completed capabilities.
 
 ## Install
 
+Windows user-space installation is being verified through a dedicated restricted-user
+CI smoke with paths containing spaces. It covers the core, Java/K1 Kotlin and
+TypeScript workers; Windows `BUILD_EXECUTE` reports an explicit unsupported-platform
+error. See [Windows prerequisites and verification status](docs/windows-install.md).
+The Windows result remains pending until that actual CI gate passes.
+
 From the repository root:
 
 ```bash

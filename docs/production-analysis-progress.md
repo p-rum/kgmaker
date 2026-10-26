@@ -1,5 +1,15 @@
 # Aktuální stav a zbývající práce
 
+## T003-S11-W03 — Windows user-space kandidát (2026-10-26)
+
+PARTIAL / WINDOWS_CI_NOT_RUN. Portable pipe transport, JDK exe/pathsep buildery,
+explicitní full-JDK21 prerequisite a samostatný Windows restricted-user CI gate
+jsou připravené. Linux ověřil skutečný offline wheel/core/Java/K1 Kotlin/TS smoke
+v cestách s mezerami; nenahrazuje to skutečný Windows výsledek. Windows
+BUILD_EXECUTE zůstává explicitně unsupported bez mutace store/run. K2 Windows,
+plná release matice a immutable publikace nejsou tvrzeny. Přesné kontroly:
+[change note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md).
+
 ## T003-S11-W02 — distribuce build exporterů (2026-10-26)
 
 VERIFIED_IN_SCOPE pro Linux, Maven3.9.9 / Gradle8.13 / Temurin21.0.6:

@@ -1,8 +1,11 @@
 import json
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from kgmaker.worker_protocol import WorkerError, request_worker
 
@@ -26,6 +29,35 @@ class WorkerProtocolTests(unittest.TestCase):
             path=Path(folder)/'cancel';path.write_text('cancel')
             with self.assertRaises(WorkerError) as r:self.call('raise Exception("must not launch")',cancel_file=path)
             self.assertEqual('CANCELLED',r.exception.status)
+    def test_pipe_transport_does_not_require_selectable_pipe_handles(self):
+        # Windows selectors accept sockets, not anonymous subprocess pipes.
+        with patch('selectors.DefaultSelector', side_effect=OSError('pipes are not sockets')):
+            response = self.call('import json,sys; json.load(sys.stdin); print(json.dumps({"protocol_version":1,"worker":"portable","capabilities":[]}))')
+        self.assertEqual('portable', response['worker'])
+    def test_large_request_and_stderr_are_drained_without_deadlock(self):
+        script = 'import json,sys; sys.stderr.write("x"*400000); sys.stderr.flush(); value=json.load(sys.stdin); print(json.dumps({"protocol_version":1,"worker":"portable","capabilities":[],"size":len(value["payload"])}))'
+        response = request_worker([sys.executable,'-c',script],{'payload':'x'*300000},cwd=Path.cwd(),timeout=10)
+        self.assertEqual(300000, response['size'])
+    def test_early_stdin_close_still_validates_stdout_protocol(self):
+        with self.assertRaises(WorkerError) as caught:
+            request_worker([sys.executable, '-c', 'import sys; sys.stdin.close(); print("not JSON")'],
+                {'payload': 'x' * 1000000}, cwd=Path.cwd(), timeout=5)
+        self.assertEqual('INVALID_PROTOCOL', caught.exception.status)
+    def test_cancellation_unblocks_a_writer_and_closes_transport_threads(self):
+        with tempfile.TemporaryDirectory() as folder:
+            cancel = Path(folder) / 'cancel'
+            timer = threading.Timer(.15, lambda: cancel.write_text('cancel'))
+            timer.start()
+            try:
+                started = time.monotonic()
+                with self.assertRaises(WorkerError) as caught:
+                    request_worker([sys.executable, '-c', 'import time; time.sleep(10)'],
+                        {'payload': 'x' * 1000000}, cwd=Path.cwd(), cancel_file=cancel, timeout=5)
+                self.assertEqual('CANCELLED', caught.exception.status)
+                self.assertLess(time.monotonic() - started, 2)
+            finally:
+                timer.join()
+        self.assertFalse([t.name for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
 
 
 if __name__=='__main__':unittest.main()

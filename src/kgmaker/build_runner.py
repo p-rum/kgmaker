@@ -17,6 +17,7 @@ from .analysis_model import AnalysisError, digest, file_hash, read_json, safe_pa
 from .inspection import artifact_hash, worker_home
 
 VERSION = 'build-plan-1'
+_BUILD_EXECUTE_SUPPORTED = os.name == 'posix'
 EXCLUDED = {'.git', '.kgmaker', '.gradle', 'target', 'build', 'node_modules', '__pycache__', '.pytest_cache', '.venv'}
 
 
@@ -123,6 +124,8 @@ def build_output_realms(contexts: list[dict]) -> tuple[dict, list[dict]]:
 def create_plan(root: Path, *, phase='test-compile', build_system=None, executable=None,
                 profiles=None, timeout=300, policy='LOCAL_TRUSTED', home=None, environment=None,
                 offline=False, java_home: Path | None = None) -> dict:
+    if not _BUILD_EXECUTE_SUPPORTED:
+        raise AnalysisError('UNSUPPORTED_PLATFORM: Windows BUILD_EXECUTE is not supported; use BUILD_IMPORT with verified local artifacts', 3)
     root=root.resolve()
     if policy != 'LOCAL_TRUSTED': raise AnalysisError('Host execution policy unavailable; use BUILD_IMPORT')
     if phase not in {'compile','test-compile','test'}: raise AnalysisError('Unsupported build phase')
@@ -189,6 +192,8 @@ def tests_report(work: Path, phase: str) -> dict:
 
 
 def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
+    if not _BUILD_EXECUTE_SUPPORTED:
+        raise AnalysisError('UNSUPPORTED_PLATFORM: Windows BUILD_EXECUTE is not supported; use BUILD_IMPORT with verified local artifacts', 3)
     original={k:v for k,v in plan.items() if k!='plan_hash'}
     if plan.get('schema_version')!=1 or plan.get('plan_hash')!=digest(original):raise AnalysisError('BuildPlan content binding mismatch')
     if plan.get('execution_policy',{}).get('mode')!='LOCAL_TRUSTED':raise AnalysisError('Host execution policy unavailable; use BUILD_IMPORT')
