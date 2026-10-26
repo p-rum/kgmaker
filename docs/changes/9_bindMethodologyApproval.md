@@ -96,3 +96,11 @@ Integrace po merge T005 / PR11 proti main
 nemění compiler/provenance cestu; předchozí skutečný strict běh zůstává výše.
 Konflikty semantic historie opět zachovaly všechny unikátní identity obou větví
 a novější upstream provenance stejné identity.
+
+Finální integrace proti main `07ad86592d0b57d071fbc120de462f3400b51213`
+(sloučené PR #11, #18 a #19) zachovává registry i všechny acceptance sekce.
+Stejný explicitní strict příkaz uvedený výše: **274 PASS, 7 SKIP** za 74.53 s,
+včetně skutečných workerů a sdist/wheel instalací mimo checkout. Sedm SKIP
+nadále označuje nepřipravené Maven PATH/Gradle/druhé JDK varianty, nikoli PASS.
+Scoped semantic apply/validate, scan/check a diff PASS; aktuální CI a review
+jsou podmínkou následného merge tohoto samostatného work package.
