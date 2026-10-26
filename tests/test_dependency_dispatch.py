@@ -571,8 +571,8 @@ def test_selected_jar_cannot_shadow_actual_toolchain_object_or_its_realm(real_di
     assert not (project / ".kgmaker").exists()
 
 
-@pytest.mark.parametrize("source_static,physical_static", [(True, False), (False, True), (False, False), (True, True)])
-def test_same_realm_source_binary_staticness_conflict_is_partial_without_false_mapping(real_dispatch, tmp_path, source_static, physical_static):
+@pytest.mark.parametrize("source_static,physical_static,physical_scope", [(True, False, "production"), (False, True, "production"), (False, False, "production"), (True, True, "production"), (False, False, "test")])
+def test_same_realm_source_binary_staticness_conflict_is_partial_without_false_mapping(real_dispatch, tmp_path, source_static, physical_static, physical_scope):
     project, entries, _ = real_dispatch
     def declaration(static):
         return "package impl; public class A { public " + ("static " if static else "") + "int run(){return 1;} }"
@@ -584,28 +584,31 @@ def test_same_realm_source_binary_staticness_conflict_is_partial_without_false_m
     source.parent.mkdir(parents=True)
     source.write_text(declaration(source_static))
     context = {"id": "same-realm-abi", "repo_id": "local", "module": "consumer", "source_set": "main", "scope": "production"}
+    physical_realm = {**context, "scope": physical_scope}
     response = request_worker(command("jvm", HOME), {
         "operation": "analyze", "root": str(project), "context": context,
         "sources": ["src/main/java/impl/A.java"],
-        "classpath": [{"path": str(physical), "realm": context}, *entries],
-        "bytecode_roots": [{"path": str(physical), "realm": context}],
+        "classpath": [{"path": str(physical), "realm": physical_realm}, *entries],
+        "bytecode_roots": [{"path": str(physical), "realm": physical_realm}],
     }, cwd=project)
     call = next(site for site in response["call_sites"] if "foreign.AbiCaller.call(" in site["caller"])
     source_method = next(symbol for symbol in response["symbols"] if symbol.get("owner") == "impl.A" and symbol.get("name") == "run" and symbol.get("path"))
     body = next(symbol for symbol in response["symbols"] if symbol.get("kind") == "bytecode_method" and symbol.get("owner") == "impl.A" and symbol.get("name") == "run")
     assert call["invocation_kind"] == ("STATIC" if physical_static else "VIRTUAL")
-    if source_static != physical_static:
+    if source_static != physical_static or physical_scope != "production":
         assert call["declared_target"] is None and call["dispatch_candidates"] == []
+    assert source_method["scope"] == "production"
+    assert body["scope"] == physical_scope
     assert source_method["jvm_static"] is source_static
     assert body["jvm_static"] is physical_static
     assert body["path"] is None and body["range"] is None and body.get("sha256") is None
-    if source_static != physical_static:
+    if source_static != physical_static or physical_scope != "production":
         assert call["declared_target"] is None and call["dispatch_candidates"] == []
-        assert call["resolution_reason"] == "SOURCE_BINARY_ABI_CONFLICT"
+        assert call["resolution_reason"] == ("SOURCE_BINARY_REALM_CONFLICT" if physical_scope != "production" else "SOURCE_BINARY_ABI_CONFLICT")
         assert call["evidence_kind"] == "UNRESOLVED"
         assert body["source_mapping_ids"] == []
-        assert body["source_mapping_reason"] == "SOURCE_BINARY_ABI_CONFLICT"
-        assert any(d["code"] == "SOURCE_BINARY_ABI_CONFLICT" for d in response["diagnostics"])
+        assert body["source_mapping_reason"] == ("NO_SOURCE_MAPPING" if physical_scope != "production" else "SOURCE_METHOD_ABI_MISMATCH")
+        assert any(d["code"] == call["resolution_reason"] for d in response["diagnostics"])
         assert response["status"] == "PARTIAL"
     else:
         assert call["declared_target"] == source_method["id"]

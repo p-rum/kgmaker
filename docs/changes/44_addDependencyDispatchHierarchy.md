@@ -109,3 +109,67 @@ Open-world runtime instantiations/reflection zůstávají neznámé,
 hierarchy jsou explicitní konzervativní hranice. K2 širší source/type/CFG,
 property/operator/local/lambda semantics a generated-body source mapping nejsou
 tímto work package dokončeny. Neproběhl externí push ani PR; publikaci řídí parent.
+
+## Integrace aktuální main33dc
+
+Lokální merge zachovává historii main `33dc239a6d2eca2f42364a7b314aeb377e4b441a`
+a core guard commit `cb86e66b3024d59f440fe017f332af2e02c10998`.
+Portable Windows builders/transport, TypeScript, XLSX, T008 a povinné CI gates
+včetně `test_mandatory_worker_ci.py` zůstávají zachované. JavaFrontend skládá
+Spring selector hooks s dispatch hierarchy metadata; stejné compiler `jvm_static`
+flags z W02 jsou sjednocené bez duplicitních imports.
+
+Bytecode skládá W04 physical/source lookup s W02 `SourceMapping`, ambiguous-owner
+hook a bytecode-only call-site locator evidence. Raw incompatible target má
+`SOURCE_BINARY_ABI_CONFLICT`; samostatná declaration mapping boundary zachovává
+W02 `SOURCE_METHOD_ABI_MISMATCH`. Jedna W04 assertion byla upravena na tento
+přesnější mapping kontrakt; nevzniká falešný target ani locator. DependencyHierarchy,
+State a K2 source zůstávají byte-identické s core guard commitem.
+
+Oba merged-source rebuildy K1/K2 PASS (19.19 s / 17.57 s). První composition běh
+byl po 26 PASS bezpečně přerušen pro doplnění explicitního
+`KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2`; nebyl vydáván za kompletní PASS.
+Finální composition `python -m pytest -q tests/test_worker_protocol.py tests/test_mandatory_worker_ci.py tests/test_default_body_mapping.py tests/test_spring_imports.py tests/test_spring_imports_context.py`: **86 PASS, 297.50 s**, žádné SKIP.
+Selected W04 `python -m pytest -q tests/test_dependency_dispatch.py -k 'source_interface_call or intersection or missing_declared_api or generic_receiver or foreign_bytecode or shadow_actual_toolchain or staticness_conflict or pinned_stdlib or effective_class_lookup'`: **18 PASS, 22 deselected, 102.48 s**.
+Přesný pinned env a příkazy jsou v `/tmp/dispatch-integrated-check-validate.py`; vlastní worker home a `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1` zůstávají explicitní.
+Scoped semantic update/apply/validate, CLI scan/check a diff check PASS. Nová integrační paměť zachovává immutable union107 episodes a přidává episode108.
+Full418/9 se neopakuje pouze kvůli integraci; vztahuje se výslovně na core zdroj.
+Main semantic facts6/15 a všech105 immutable episodes jsou zachované; sjednocená
+historie obsahuje107 episodes před novou integrační epizodou.
+
+Merged runtime SHA-256: K1 `59b63284454ad062679e3564a5d7378fc0ca238957ff8803eff8f218512622af`,
+K2 `7da400af535820a5d4271a3509deb7f1e171ea556910d3aa500901d0ace69ca8`.
+
+### Finální scope-only canonical collision guard
+
+Nezávislé actual review merged runtime nalezlo ještě scope-only collision:
+physical dependency realm test a lokální source production mají shodný
+repo/module/source_set prefix i ABI; scope není součástí canonical ID. Nový actual
+regression na předchozím runtime selhal (1 FAIL / 4 valid-realm PASS / 36 deselected,
+46.98 s). Raw physical target nyní před canonical bindingem ověřuje všechna čtyři
+realm pole repo_id/module/source_set/scope proti source contextu. Mismatch vrací
+`SOURCE_BINARY_REALM_CONFLICT`, declared_target=None, UNRESOLVED/PARTIAL; source
+declaration ani identity se nepřepisují. W02 mapping nadále používá vlastní exact
+realm proof. Platný shodný realm a ABI zůstává pozitivní.
+
+Protože tento guard mění runtime, předchozí core418/9 a integrační86+18 jsou
+historická evidence před guardem. Finální oba rebuildy, scope/ABI focus,
+protocol/CI a **nový celý pytest** běží pouze jednou pod stejným heavy-test lockem
+přes `/tmp/dispatch-realm-final-validate.py`. Oba rebuildy PASS (K1 30.10 s / K2 12.95 s);
+actual scope/ABI/foreign focus **6 PASS, 35 deselected, 39.63 s**, protocol/mandatoryCI
+**26 PASS, 2.62 s**. Finální current-source full **575 PASS, 10 SKIP, 664.80 s**. Devět
+SKIP je volitelné Maven/Gradle/exporter nastavení uvedené výše; desátý je skutečný
+non-admin Windows CI-only gate. Žádný actual W04/K1/K2/mapping/Spring case se
+nepřeskočil. Zdroj a oba runtimes se během finálního cyklu neměnily.
+Nezávislý architect zopakoval původní scope-only probe na stejném finálním K1
+runtime: VIRTUAL target=None, UNRESOLVED; source canonical se nepřepsal.
+
+Finální realm-guard runtime SHA-256: K1 `e44e3dac04ba28cd8899fed0ae183f5739c4311911b1ae656e6d1db26b64e15e`,
+K2 `5dc33b9d5a635b04bccebb024f8473571fc59cbc3383af8dbb9034e2a9440c66`.
+
+Závěrečné semantic update/apply/validate zachovává všech6 manual concepts/15 edges
+a ověřené citations. Immutable historie main105 + core72 =107 episodes, předchozí
+integrační episode108 zůstává historická; finální guard capture přidává episode109.
+CLI scan/check a git diff --check PASS. Externí mandatory CI je blokováno GitHub
+Actions billing/spending limitem; tento lokální výsledek nenahrazuje sedm povinných
+remote gates ani skutečný Windows běh. Publikace může být Draft, bez merge.

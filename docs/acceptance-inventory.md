@@ -1,5 +1,40 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W01 — project references
+
+| ID | Stav | Přímý test / podporovaná matice |
+|---|---|---|
+| T003-S08-W01-AC01 | VERIFIED_IN_SCOPE | `test_solution_programs_resolve_exact_source_project_identities_without_outputs`, `test_source_redirect_does_not_resolve_against_stale_emitted_declaration`: skutečný TS 5.7.3 / Node 24.19.0; missing/cycle/outside reference je lokalizovaná chyba |
+| T003-S08-W01-AC02 | VERIFIED_IN_SCOPE | `test_graph_loader_legacy_versions_remain_accepted`; původní single-project worker regression tests; additive project_graph v1, graph/store/protocol beze změny |
+| T003-S08-W01-AC03 | VERIFIED_IN_SCOPE | `test_invalid_reference_graph_is_localized_and_does_not_replace_store`, `test_overlapping_projects_do_not_arbitrarily_choose_symbol_owner`, `test_transitive_project_edit_invalidates_stored_compiler_layer_offline`: žádné falešné rozlišení, žádný zápis na chybě |
+| T003-S08-W01-AC04 | VERIFIED_IN_SCOPE | [change note 36](changes/36_resolveTypeScriptProjectReferences.md), [stavová matice](production-analysis-progress.md); celý S08/AC08 nadále PARTIAL |
+
+Review opravy W01: `test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg`
+ověřuje owner TypeChecker identity, owner CFG a argument parameter při rozdílném
+`strictNullChecks`; `test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation`
+odmítá stale `.d.ts` přes vypnuté source redirects. Finální integrovaná strict sada
+nad main `3503309`: **302 PASS / 7 SKIP**, vlastní worker v2; celý T003-AC08 zůstává PARTIAL.
+
+Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cannot_replace_last_graph`
+odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
+`test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
+ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
+K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
+zůstávají samostatné, nedokončené úkoly.
+
+## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
+
+| Kritérium | Stav | Evidence |
+|---|---|---|
+| T003-S11-W03-AC01 | VERIFIED_IN_SCOPE_WINDOWS | Skutečný restricted-user core/Java/K1 Kotlin/TS installed wheel smoke; Windows Server2025/Python3.12.10/JDK21.0.6/Kotlin2.1.10/Node24.19.0/TS5.7.3; paths s mezerami |
+| T003-S11-W03-AC02 | VERIFIED_IN_SCOPE_WINDOWS | Protocol1 a graph/store v1/v2/v3 beze změny; installed scan/save/load a T005 legacy loader/model sada prošly také na Windows |
+| T003-S11-W03-AC03 | VERIFIED_IN_SCOPE_WINDOWS | Source-only/no-process, missing/ambiguous distribution a JRE/JDK17 negatives; timeout/cancel inherited pipes, thread/stream cleanup a zachování posledního grafu; Windows BUILD_EXECUTE je explicitní unsupported před procesem/zápisem |
+| T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md), skutečný [run40351407076/job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333): 43 PASS / 2 SKIP, 50.23s; K2 Windows a celý T003-S11 nejsou dokončené |
+
+Evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`; následný metadata
+commit vyžaduje vlastní checks/review před merge. Dva SKIP: POSIX-only setup fault
+test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly skipped.
+
 ## T003-S11-W02 — distribuce build exporterů
 
 | ID | Stav | Přímá evidence |
@@ -39,6 +74,18 @@
 | T007-AC04 invalidní manifest bez mutace | PASS | `tests/test_t007_define_service_ownership.py::test_ac04_invalid_ownership_is_rejected_without_manifest_mutation`; duplicate identity regression | finální cílená a regresní sada 45 PASS |
 | T007-AC05 kontext a nepovýšení evidence | PASS | `tests/test_t007_define_service_ownership.py::test_ac05_resolution_preserves_selected_context_and_never_guesses`; foreign repo context and qualified path regressions | finální cílená a regresní sada 45 PASS |
 | T007-AC06 dokumentace a change note | PASS | README, architecture, status a tento inventář; `docs/changes/33_defineServiceOwnership.md` | `kgmaker check` PASS; `git diff --check` PASS |
+
+## T008 — inventář služeb a externích systémů
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T008-AC01 production inventory uses explicit owners, excludes fixture/shared library and accidental beans | PASS | `test_ac01_inventory_includes_declared_production_service_not_fixture_or_random_beans`; `test_unknown_scope_does_not_enter_production_inventory` | T008 focused suite |
+| T008-AC02 missing external checkout preserves declaration without internal endpoints | PASS | `test_ac02_missing_external_checkout_keeps_declared_system_unknown_without_endpoints` | external implementation and endpoints remain UNKNOWN |
+| T008-AC03 display-label changes preserve stable service ID | PASS | `test_ac03_stable_service_identity_is_independent_of_display_label` | T008 focused suite |
+| T008-AC04 invalid snapshot leaves inputs and checkout unchanged | PASS | `test_ac04_invalid_snapshot_fails_without_mutating_workspace_or_graph` | compares manifest, source file, workspace and graph bytes/state |
+| T008-AC05 scope, selected context, evidence and unresolved boundaries are preserved | PASS | `test_ac05_context_and_provenance_are_preserved_and_not_upgraded`; `test_source_only_context_remains_partial_and_reports_unknown_module_coverage`; `test_actual_workspace_source_only_snapshot_projects_declared_root_without_module`; `test_actual_source_only_snapshot_separates_production_and_test_within_repo`; `test_ambiguous_compiler_variants_remain_unknown_until_explicitly_selected`; `test_workspace_alias_requalifies_default_local_compiler_context` | actual snapshot root ownership and same-repository scope separation, T006 selection, SOURCE_ONLY partial status and repo alias behavior retained |
+| T008-AC06 implementation, tests, documentation and Czech change note | PASS | README, architecture, this inventory and `docs/changes/41_projectServiceInventory.md` | focused and integrated results are recorded in the change note |
+
 ## T006 — výběr kontextů pro více služeb
 
 | Acceptance | Stav | Přímý test | Výsledek |
@@ -187,6 +234,9 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-MV-02 | VERIFIED_IN_SCOPE | `test_build_runner.py::test_mv02_real_reactor_output_precedes_stale_repository_jar` — skutečný Maven/JDK/exporter | Širší packaging/variant/toolchain matrix patří do S03/S11 |
 | T002-MV-01 / T003-S03-W01 / T003-S03-W04 | VERIFIED_IN_SCOPE | Testy explicitního Java home ověřují content-bound JDK selection/fingerprint, skutečné `JAVA_HOME`, změnu/chybění a mismatch bez fresh outputs. `test_kotlin_build_options.py` ověřuje reálný Maven 2.1.10 a Gradle 8.13 export task/execution-level Kotlin language/API/JVM targetu a flags; implicitní nevyřešené defaults dávají PARTIAL, skutečný Maven `all-open` plugin je SHA-256-bound a jeho výměna se odmítá před store zápisem. Změna flagu mění pouze dotčenou context identity; malformed options jsou odmítnuty bez implicitního procesu. Reactor fixture dále ověřuje `maven-session-2`, inherited profil, parent/BOM, dependency model a generated source až po JVM symbol `origin=generated` | Gradle custom varianty/included builds a cross-repo artefakty zůstávají v T003-S03; zachycené options nerozšiřují K1 podporu |
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
+| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v4`; bounded selector testy níže | Selectors mimo bounded literal subset, registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
+
+| T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
 | T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access, EmbeddedId, AttributeOverride, owning/inverse association, derived paths, compiler-owned JPQL/native query, parameter/projection a named-query reference; JPA rules `annotation-source-v4` | Kotlin use-site/access, XML override priorita, inheritance attributes, dvě datasource se stejnou tabulkou, širší query grammar/dynamic builders a úplná schema matice |
@@ -288,3 +338,64 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
 | AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
 | AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
+## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
+
+`xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
+nikoli nová implementace celé extrakce. [Change note39](changes/39_boundXlsxFormulaReferences.md).
+
+| ID | Stav | Konkrétní evidence |
+|---|---|---|
+| T003-S09-W01-AC01 | VERIFIED_IN_SCOPE | `test_xlsx_references.py::test_formula_tokens_do_not_invent_cell_dependencies` — skutečné ZIP/XML, exponents, LOG10, strings, explicitní sheet/$/range včetně spaced range; `test_literal_sheet_qualifiers_never_fall_back_to_local_cells` — Unicode/numeric/quoted názvy; `test_unsupported_formula_forms_are_boundaries` — shared/follower, INDIRECT, OFFSET, external, 3D a celé řádky/sloupce včetně whitespace bez domyšlených hran |
+| T003-S09-W01-AC02 | VERIFIED_IN_SCOPE | Stávající `test_workbooks.py` — hash-bound locators, jednoduché dependency a ZIP ochrany; `test_binary_xls.py` — graph v1/v2/v3 čitelnost; `test_workspace_does_not_reuse_dependencies_from_old_workbook_parser` — reparse v1 i dřívější candidate-v2 cache |
+| T003-S09-W01-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store` — UNKNOWN, žádný business missing verdict, falešný sheet/cell odmítnut a nulová mutace; qualifier tests zakazují falešný local fallback i process/network |
+| T003-S09-W01-AC04 | VERIFIED_IN_SCOPE | Tato tabulka, README, capability dokumentace a stavová matice uvádějí omezený `xlsx-offline-3` scope; S09/AC09 zůstávají PARTIAL |
+
+Přesné finální běhy a SKIP důvody jsou v change note39; plná Excel grammar,
+vyhodnocování vzorců a runtime availability nejsou tímto scope dodány.
+
+## T003-S05-W01 — bounded dynamické Spring importy
+
+`annotation-source-v4`, Java/Javac21, skutečné Spring6.2.2 API, obě JVM distribuce
+K1/K2. [Change note42](changes/42_resolveBoundedSpringImports.md); celý S05/AC05 zůstává PARTIAL.
+
+| ID | Stav | Konkrétní test/evidence |
+|---|---|---|
+| T003-S05-W01-AC01 | VERIFIED_IN_SCOPE | `test_spring_imports.py::test_actual_compiler_qualified_transitive_selector_facts`, `test_literal_and_static_imports_link_without_processor_beans` — exact/inherited/deferred literal selection, static import a fake-name guard |
+| T003-S05-W01-AC02 | VERIFIED_IN_SCOPE | `test_legacy_facts_stay_readable_without_literal_promotion` — protocol-v1 legacy UNKNOWN a graph v1/v2/v3; existující actual AC05/compiler/K2 regrese |
+| T003-S05-W01-AC03 | VERIFIED_IN_SCOPE | `test_unknown_filters_and_deferred_groups_remain_unknown`, `test_bounded_missing_and_non_type_results_remain_boundaries`, `test_invalid_selector_fact_rejects_before_store_mutation`, strict/offline refresh, profile isolation a UNKNOWN data audit |
+| T003-S05-W01-AC04 | VERIFIED_IN_SCOPE | Reprodukovatelná pinned fixture POM + SHA/license lock, mandatory CI bootstrap a `test_required_api_inputs_fail_before_any_process`; README/capability/matice vymezují přesný scope |
+
+## T003-S11-W04 — required worker CI gates
+
+| AC | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `tests/test_mandatory_worker_ci.py::test_missing_prerequisite_fails_required_but_skips_optional` (5 absent prerequisites × unset/0/1); existing Spring and exporter prerequisite negatives | Required gates FAIL; optional gates SKIP; real command discovery, no processes |
+| AC02 | Existing graph v1/v2/v3 loader regressions and full suite; no product/schema changes | Existing persisted formats unchanged |
+| AC03 | Negative matrix checks unchanged last-valid graph bytes and absent worker home; prohibits subprocess | Missing prerequisites never manufacture compiler evidence |
+| AC04 | `compiler-workers` actual K1/K2/TS/mixed fixture/Spring6.2.2, separate installed Maven/Gradle exporter job | Pinned declared matrix; second JDK remains optional |
+
+Actual positive CI and final local outcomes are recorded in
+[change note 48](changes/48_enforceMandatoryWorkerCi.md); broader production
+coverage and later end-to-end/benchmark packages are separate gates.
+
+## T003-S04-W02 — bounded default/bridge declaration mapping
+
+| AC | Evidence | Scope |
+|---|---|---|
+| AC01 | `test_default_body_mapping.py::test_real_default_and_bridge_mapping` | actual Java default, generic value/void bridges, Kotlin DefaultImpls and JVM-default=all; K1/K2, debug/no-debug; mapping facts and graph roundtrip |
+| AC02 | same graph roundtrip + existing graph v1/v2/v3 loader tests | additive metadata, unchanged bytecode/source IDs and store schema |
+| AC03 | `test_absent_sources_remain_bytecode_only`, `test_wrong_source_signature_never_maps_generated_body`, `test_nontrivial_bridge_body_stays_bytecode_only`, `test_foreign_default_impls_realm_cannot_claim_local_source`, `test_test_scope_bytecode_never_claims_production_source`, `test_duplicate_class_bodies_do_not_prove_source_mapping` | explicit bytecode-only diagnostics, no guessed mapping; full source/class/store byte comparison |
+| AC04 | change46 and compiler-inspection matrix | bounded compiler evidence, no runtime or full S04 completion |
+
+S04 remains PARTIAL: other generated shapes, default-argument masks, coroutines,
+statement-level source mapping and unrestricted dependency dispatch are not covered.
+
+Historical pre-ABI W02 evidence: **410 PASS, 9 optional exporter/toolchain SKIP**; all 32
+K1/K2/debug mapping cases ran. Commands and limits: [change46](changes/46_mapDefaultBodySources.md).
+
+W02 ABI regression: `test_same_realm_static_instance_abi_changes_never_map` rejects
+same-realm static/instance mismatches with compiler-proven flags. The expanded
+matrix has 36 actual cases; historical410/9 is superseded for final ABI validation.
+
+Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
+36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.

@@ -40,8 +40,37 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript projektové reference předává worker kompilátoru; úplná acceptance fixture
-s více projekty a re-exporty ještě chybí.
+TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
+rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
+projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
+`context.project.project_graph` v1 uchovává repo/config identity, reference,
+root files, effective options a source/reference content fingerprints, které se
+propagují po reference hranách. Symboly nesou `project_id`; stejnojmenné funkce
+v různých projektech se nesloučí. Starý single-project vstup zachovává tvar IDs;
+graph/store v1/v2/v3 a worker protocol v1 se nemění.
+Identita a deklarovaný typ source targetu pocházejí vždy z AST/TypeCheckeru jeho
+vlastnícího projektu, i když má consumer jiné compiler options. Call-site
+signature zůstává pohledem consumeru. Reference s nastavením
+`disableSourceOfProjectReferenceRedirect: true` jsou v tomto source-only
+inspection kontraktu odmítnuty diagnostikou `TS_PROJECT_REFERENCE_REDIRECT_DISABLED`
+před publikací; emitted declaration se nevydává za aktuální source target.
+Python porovnává úplné preflight/analyze mapy compiler input path → SHA-256,
+nejen obsah souborů známých před spuštěním. Nový či odebraný dependency vstup
+vrací STALE před publikací grafu. Konstrukce a provider replay sdílejí jeden
+selection-key helper: Kotlin backend/version patří pouze do JVM klíčů.
+Původní frontend klíče, staré záznamy bez klíče i dočasné TS klíče s dvěma
+irelevantními Kotlin None poli se při reinspection sloučí do jednoho slotu;
+neznámé opaque klíče a odlišné K1/K2 varianty se nepřejmenovávají.
+
+`tests/test_typescript_project_references.py` ověřuje dva konkrétní přeshraniční
+targety i při neexistujících/stale `.d.ts` výstupech, transitive input freshness
+bez worker procesu a chybějící/cyklickou/outside-root reference či nejednoznačné
+vlastnictví zdroje. Invalidní reference graph selže s cestou configu před zápisem
+store; nezvyšuje neúplný výsledek na COMPLETE. Celý T003-S08 zůstává PARTIAL:
+rozšířená paths/exclude acceptance, generics/callbacks a BE–FE value flow jsou
+samostatná zadání. Více repo rootů a diskový incremental compilation cache
+nejsou tímto kontraktem implementovány.
 
 Zvolený bytecode engine je přibalené ASM, nikoli SootUp. Pilot nepotřebuje jeho
 whole-program režim: deskriptory a instrukce zůstávají oddělené od source grafu,
@@ -53,6 +82,22 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Windows user-space ověření (T003-S11-W03)
+
+Transport používá omezené souběžné čtení pipe bez POSIX selectorů. Explicitní
+buildery používají nativní JDK `.exe`, platformní classpath separator a přímý Java
+compiler entrypoint místo `.bat` launcheru. JVM inspection vyžaduje plný JDK21+;
+JRE-only a známý starší JDK končí `TOOLCHAIN_UNAVAILABLE` před procesem.
+SOURCE_ONLY tyto runtimy nepotřebuje a nic neinstaluje/buildí.
+
+Skutečný Windows restricted-user smoke ověřil core, Java, existující K1 Kotlin
+subset a TypeScript v cestách s mezerami: run40351407076/job121672139333,
+43 PASS / 2 scoped SKIP, 50.23s (Windows Server2025/Python3.12.10/JDK21.0.6).
+K2 Windows se netvrdí; SKIP zahrnuje jeho nepřipravený artefakt a POSIX-only test. [Windows guide](windows-install.md) uvádí prerequisite kontrakt a
+[change note40](changes/40_supportWindowsUserInstall.md) přesné provedené kontroly.
+Windows `project build-plan/build-run` vrací explicitní `UNSUPPORTED_PLATFORM`
+před procesem či zápisem run/store; pro ověřené lokální artefakty zůstává BUILD_IMPORT.
 
 ### Distribuce build exporteru
 
@@ -223,7 +268,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v3 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -234,7 +279,8 @@ injection přenáší všechny ACTIVE členy; Optional používá unikátní vý
 ObjectProvider/Provider je konzervativní lazy kandidát. Statický `@Import`
 rozšiřuje dosažitelný konfigurační graf i mimo component scan; stav podmínek
 konfigurace se skládá se stavem její `@Bean` metody. Obyčejná importovaná třída
-je bean, ale ImportSelector/registrar se neprovádí a hlásí explicitní boundary.
+je bean. ImportSelector/DeferredImportSelector používají níže popsaný bounded
+compiler subset; registrar se neprovádí a hlásí explicitní boundary.
 `@Bean` mimo compiler-resolved `@Configuration` je odmítnut. JPA
 `@Entity`/`@Table`/`@Column`, Spring Data
 repository/query a přesné názvy tabulek/sloupců se vážou na source-only schema
@@ -451,7 +497,7 @@ strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
 K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
-call sites, local/lambda execution ani default-body/coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+call sites, local/lambda execution ani default-body mapping mimo W02 a coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
@@ -493,6 +539,9 @@ platform resources mají parent-first přednost a toolchain realm; metadata
 `module-info.class` nejsou candidate classes. Compiler-proven `jvm_static`
 kontradikce source/physical canonical vrací `SOURCE_BINARY_ABI_CONFLICT`, unresolved
 site/PARTIAL a generated body bez nekompatibilního source locator/mapping.
+Před physical canonical bindingem se ověřuje také úplný realm tuple
+repo_id/module/source_set/scope: mismatch dává `SOURCE_BINARY_REALM_CONFLICT`,
+source declaration zůstává zachovaná.
 
 Příklad: po explicitním získání a importu content-bound ordered classpath spusť
 `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`;
@@ -500,3 +549,120 @@ Příklad: po explicitním získání a importu content-bound ordered classpath 
 Fixture `tests/test_dependency_dispatch.py` skutečně sestaví JDK21 API/base JAR a
 dva implementation JARy v odlišných realms. Protocol v1 ani graph/store v1/v2/v3
 se nemění; nová provenance pole jsou aditivní a staré vstupy zůstávají čitelné.
+## T003-S05-W01 — bounded Spring import selectors
+
+`annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
+typ od přesných `org.springframework.context.annotation.ImportSelector` a
+`DeferredImportSelector` v compiler-resolved transitivní hierarchii. Stejné krátké
+jméno v cizím package není selector. Zdrojové Java compiler facts používají obě
+JVM distribuce K1/K2; nejde o rozšíření nepodporovaných Kotlin annotation metadata.
+
+| Vstup | Výsledek v tomto scope |
+|---|---|
+| Přesná selector identita a jediný `return new String[]{"app.Configuration"};` | `spring_import_selector`, `uses_import_selector`, `selects_import`; deklarovaná konfigurace pokračuje existujícím condition/reachability modelem |
+| Zdrojový zděděný selector / default DeferredImportSelector | Stejná bounded literal cesta, konkrétní owner metody; deferred phase je metadata, nikoli provedený ordering |
+| Custom exclusion filter nebo deferred Group | UNKNOWN; známé literal targets mají pouze `may_select_import` a UNKNOWN condition |
+| Neznámé/komplexní tělo, chybějící metoda/target, vnořený selector target, neúplná hierarchie nebo legacy fakta | Explicitní `SPRING_DYNAMIC_IMPORT_BOUNDARY`; žádný odhadnutý ACTIVE selector bean |
+| Registrar/factory, Spring context nebo runtime registrace | Nespouští se; další samostatné work packages |
+
+Hierarchy i literal target array mají limit 128 položek; literal FQN nejvýše
+512 znaků. Nekonstantní výrazy, field reads, concatenation, `Class.getName()` ani
+jiné volání se nevyhodnocují. Libovolné return strings se nepublikují jako data.
+Selector třída se nepovažuje za běžný bean jen proto, že je v `@Import`.
+Evidence je `FRAMEWORK_DERIVED` se source method ID/hash, selected context a rule
+version; nejde o `SYMBOL_RESOLVED` invocation ani runtime/data availability proof.
+Statická selection proto nikdy sama nezpůsobí AVAILABLE nebo CONFIRMED_MISSING.
+
+Graph/store v1/v2/v3 a worker protocol v1 zůstávají čitelné. Aditivní symbol fields
+`type_hierarchy`, `import_selector` a `static_import_return` mají vlastní schema1;
+legacy worker bez nich zůstává pro selector selection UNKNOWN. Chybná nová facts
+se odmítnou před publikací. Rule v4 i obsah distribuce jsou ve fingerprintu nového
+inspection contextu; scan/feature/audit žádný worker ani selector nespustí.
+Nové Spring v4 metadata platí pouze pro JVM; TypeScript/React metadata a selection
+key se touto změnou nemigrují. Dva čisté regresní testy v
+`tests/test_spring_imports_context.py` porovnávají celé context hodnoty s baseline.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID app.DirectSelector
+```
+
+Classpath musí obsahovat skutečná schválená Spring API; profiles/properties a
+component packages musí mít dodaný scope, jinak jejich stav zůstává UNKNOWN.
+Pro reprodukovatelné testování se explicitně spouští
+`mvn -B -ntp -f fixtures/spring-imports/pom.xml compile`. Fixture pinne Spring6.2.2,
+Maven resources3.3.1/compiler3.13.0 a SHA-256/license entries šesti API JARů.
+Core ani test fixture nic implicitně nestahují. Mandatory CI vyžaduje skutečné API
+a oba skutečné JVM workery; chybějící vstup je FAIL, ne PASS. Viz
+[change note42](changes/42_resolveBoundedSpringImports.md).
+
+## Required CI prerequisites (T003-S11-W04)
+
+`compiler-workers` explicitly prepares pinned JDK21, Kotlin2.1.10, K1/K2
+workers, TypeScript5.7.3, the mixed Maven fixture and Spring6.2.2 API inputs.
+`KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1` and
+`KGMAKER_REQUIRE_SPRING_IMPORTS=1` turn missing prerequisites into failures.
+The exporter job separately sets `KGMAKER_REQUIRE_EXPORTERS=1` and runs actual
+Maven/Gradle exports from an installed wheel. These flags belong to the test
+matrix; they do not authorize implicit builds in product commands.
+
+Run `python -m pytest -q tests/test_mandatory_worker_ci.py` to exercise the
+existing setup gates against absent K1, TS, K2, JDK and mixed-build inputs,
+with each flag unset, zero and one. The 15 negative cases assert the actual
+FAIL/SKIP exception contract, no subprocess, no worker-home creation and
+preservation of the last valid graph bytes. They acknowledge earlier
+prerequisites only to reach the selected missing input; positive execution
+remains the separate actual compiler/installed-exporter fixture suite.
+Spring API absence/corruption and exporter absence retain their existing
+negative tests. Local source-only suites may SKIP actual integrations; a
+second-JDK exploration is explicitly outside the required one-JDK matrix.
+Graph/store/protocol formats and runtime worker discovery are unchanged.
+
+## Default body source mapping
+
+T003-S04-W02 adds declaration mappings on the existing explicit bytecode path:
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Import a validated execution-bound build manifest before selecting bytecode roots.
+# No compilation is triggered by scan, graph queries or source-only inspection.
+```
+
+Bytecode method IDs and generated call-site identities remain separate from source
+methods. Generated methods use their actual artifact realm scope and keep direct
+`path`/`range` empty; even an otherwise identical test-scope artifact cannot claim
+a production source declaration. `source_mapping_ids`, `source_mapping_reason`, `source_mapping_path` and
+`source_mapping_range` describe the enclosing **declaration**, never an exact source
+call expression. `maps_to_source` facts retain source hash/range, selected context and
+bytecode artifact hashes. Every generated call site has a localized `BYTECODE_ONLY_CALL_SITE` diagnostic:
+its declaration mapping does not prove a call-expression position.
+Generated instruction `path`/`range` remain absent;
+`source_line`/`SourceFile` are raw debug attributes, not inferred locators.
+
+The verified matrix uses JDK 21.0.6, Kotlin 2.1.10 and both explicit K1/K2 workers:
+Java interface default bodies and Kotlin `-Xjvm-default=all` use an exact declared
+owner/name/descriptor. Kotlin `-Xjvm-default=disable` DefaultImpls requires Kotlin
+Metadata (synthetic class + interface), a unique InnerClasses outer interface, an
+exact static receiver type, the same repository/module/source-set/scope realm and an actually declared interface signature matching
+the source symbol. The suffix alone proves nothing. Generic Java bridges require
+both ACC_BRIDGE/ACC_SYNTHETIC, a straight-line load/cast/single same-owner delegate/
+return body, no handlers and an actual nonsynthetic target declaration. Value and
+void returns are covered. Duplicate class owners never yield source mappings.
+Other generated shapes, absent or mismatched source
+signatures stay bytecode-only with localized `BYTECODE_ONLY_SOURCE_MAPPING`.
+No-debug fixtures remove only debug attributes from actual compiler output;
+source declaration locations remain available through compiler attribution.
+
+This is an additive worker-v1 payload extension; graph v1/v2/v3 readers and existing
+IDs/store format remain unchanged. It does not map statement-level lines, default
+argument masks, coroutine state machines, arbitrary bridges/dependency bodies or
+prove runtime dispatch/availability. Source-only mode has no new process path.
+
+
+Direct source mappings additionally require a compiler-proven `jvm_static` flag
+matching the physical method. Javac, K1 descriptor/codegen API and K2 light methods
+provide this flag; absence means UNKNOWN, not an inferred method-name convention.
+Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
+static-helper/interface-instance signature transform. Stale source static/instance
+changes never yield a source mapping even inside an identical repository realm.

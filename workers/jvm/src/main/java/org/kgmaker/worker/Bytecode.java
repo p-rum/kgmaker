@@ -17,9 +17,11 @@ public final class Bytecode implements AutoCloseable {
     private final Map<String,ClassNode> classes=new HashMap<>();
     private final Map<String,ClassNode> platformClasses=new HashMap<>();
     private final Map<String,ClassNode> application=new TreeMap<>();
+    private final Set<String> ambiguousOwners=new HashSet<>();
     private final Map<String,ClassNode> sourceClasses=new TreeMap<>();
     private boolean sourceHierarchyView;
     private String targetFailureReason;
+    private String sourceConflictReason;
     private final Set<String> reportedAbiConflicts=new HashSet<>();
     private final Set<String> missingTypes=new HashSet<>();
     private final Set<String> sourceHierarchyUnavailable=new HashSet<>();
@@ -145,34 +147,36 @@ public final class Bytecode implements AutoCloseable {
         var c=new ClassNode();new ClassReader(data).accept(c,ClassReader.SKIP_FRAMES);
         if(c.name.equals("module-info"))return;
         if(state.platformResource(c.name)!=null){state.diagnostic("BYTECODE_PLATFORM_CLASS_SHADOWED",c.name,null);return;}
-        if(application.putIfAbsent(c.name,c)!=null){state.diagnostic("DUPLICATE_BYTECODE_CLASS",c.name,null);return;}
+        if(application.putIfAbsent(c.name,c)!=null){ambiguousOwners.add(c.name);state.diagnostic("DUPLICATE_BYTECODE_CLASS",c.name,null);return;}
         if(!hierarchy.selected(c.name)){classes.put(c.name,c);state.bindRealm(c.name.replace('/','.'),realm);}
     }
     private boolean sourceAbiConflict(String owner,String name,String descriptor,boolean physicalStatic) {
         String identity=state.methodIdentity(owner.replace('/','.'),name,descriptor,null);
         var source=state.symbols.get(identity);
-        boolean conflict=source!=null && source.get("path")!=null && source.get("jvm_static") instanceof Boolean sourceStatic && sourceStatic!=physicalStatic;
-        if(conflict && reportedAbiConflicts.add(identity))state.diagnostic("SOURCE_BINARY_ABI_CONFLICT",
-            owner+"."+name+descriptor+": physical staticness conflicts with source canonical",map("path",source.get("path"),"range",source.get("range")));
-        return conflict;
+        boolean isSource=source!=null && source.get("path")!=null;
+        var physicalRealm=state.realm(owner.replace('/','.'),null);
+        boolean realmConflict=isSource && List.of("repo_id","module","source_set","scope").stream()
+            .anyMatch(key->!Objects.equals(physicalRealm.get(key),state.context.get(key)));
+        boolean abiConflict=isSource && source.get("jvm_static") instanceof Boolean sourceStatic && sourceStatic!=physicalStatic;
+        sourceConflictReason=realmConflict?"SOURCE_BINARY_REALM_CONFLICT":abiConflict?"SOURCE_BINARY_ABI_CONFLICT":null;
+        if(sourceConflictReason!=null && reportedAbiConflicts.add(identity+sourceConflictReason))state.diagnostic(sourceConflictReason,
+            owner+"."+name+descriptor+": physical realm/ABI conflicts with source canonical",map("path",source.get("path"),"range",source.get("range")));
+        return sourceConflictReason!=null;
     }
     private String method(ClassNode owner,MethodNode method) {
         boolean physicalStatic=(method.access&Opcodes.ACC_STATIC)!=0;
-        boolean conflict=sourceAbiConflict(owner.name,method.name,method.desc,physicalStatic);
+        sourceAbiConflict(owner.name,method.name,method.desc,physicalStatic);
         String canonical=state.method(owner.name.replace('/','.'),method.name,method.desc,null,
             map("jvm_static",physicalStatic,"modifiers",flags(method.access),"annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations)));
         String identity="bytecode:"+canonical;
-        var declaration=state.symbols.get(canonical);
-        var realm=state.realm(owner.name.replace('/','.'),null);
-        boolean mapped=!conflict && declaration.get("path")!=null && declaration.get("jvm_static") instanceof Boolean sourceStatic &&
-            sourceStatic==physicalStatic && Objects.equals(declaration.get("scope"),realm.get("scope"));
-        var value=mapped?new LinkedHashMap<String,Object>(declaration):new LinkedHashMap<String,Object>();
+        var mapping=new SourceMapping(state,application,ambiguousOwners).mapMethod(owner,method,identity);
+        var value=((List<?>)mapping.get("source_mapping_ids")).isEmpty()?new LinkedHashMap<String,Object>():new LinkedHashMap<>(state.symbols.get(canonical));
         value.putAll(map("id",identity,"kind","bytecode_method","owner",owner.name.replace('/','.'),"name",method.name,"descriptor",method.desc,
-            "scope",realm.get("scope"),"context_id",state.context.get("id"),"path",null,"range",null,"sha256",null,
-            "jvm_static",physicalStatic,"modifiers",flags(method.access),"annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations),
-            "source_mapping_ids",mapped?List.of(canonical):List.of(),
-            "source_mapping_reason",conflict?"SOURCE_BINARY_ABI_CONFLICT":mapped?"OWNER_NAME_DESCRIPTOR_MATCH":"NO_SOURCE_MAPPING",
+            "scope",state.realm(owner.name.replace('/','.'),null).get("scope"),"context_id",state.context.get("id"),
+            "path",null,"range",null,"sha256",null,"jvm_static",(method.access&Opcodes.ACC_STATIC)!=0,"modifiers",flags(method.access),
+            "annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations),
             "synthetic",(method.access&Opcodes.ACC_SYNTHETIC)!=0,"bridge",(method.access&Opcodes.ACC_BRIDGE)!=0,"origin","generated"));
+        value.putAll(mapping);
         state.symbols.put(identity,value);return identity;
     }
     private String target(String owner,String name,String descriptor) {
@@ -180,12 +184,13 @@ public final class Bytecode implements AutoCloseable {
         String definition=definingOwner(owner,name,descriptor,new HashSet<>());
         if(definition==null)return null;
         String result=authoritativeMethod(definition,name,descriptor);
-        if(result==null)targetFailureReason="SOURCE_BINARY_ABI_CONFLICT";
+        if(result==null)targetFailureReason=sourceConflictReason;
         return result;
     }
     @SuppressWarnings("unchecked")
     private void inspect(ClassNode owner,MethodNode method) {
         String caller=method(owner,method);
+        int firstSite=state.sites.size();
         var instructions=method.instructions.toArray();
         Map<AbstractInsnNode,Integer> positions=new IdentityHashMap<>();
         for(int i=0;i<instructions.length;i++)positions.put(instructions[i],i);
@@ -223,6 +228,7 @@ public final class Bytecode implements AutoCloseable {
                     "source",caller,"target",id,"evidence_kind",definition==null?"SYNTAX_CANDIDATE":"SYMBOL_RESOLVED","context_id",state.context.get("id"),"path",null,"range",null,"instruction_index",i));
             }
         }
+        for(int index=firstSite;index<state.sites.size();index++)copySourceMapping(caller,state.sites.get(index));
         if(instructions.length>0)cfgs.add(cfg(caller,method,positions));
     }
     private int sourceFlags(Map<String,Object> symbol) {
@@ -285,7 +291,7 @@ public final class Bytecode implements AutoCloseable {
             sourceHierarchyUnavailable.forEach(available::remove);
             available.putAll(sourceClasses);
         }
-        boolean abiConflict=false;
+        var symbolConflicts=new TreeSet<String>();
         boolean missing=!completeHierarchy(receiver,new HashSet<>());
         missing=!completeHierarchy(contract,new HashSet<>())||missing;
         for(var candidate:available.values())if(!completeHierarchy(candidate.name,new HashSet<>()))missing=true;
@@ -302,16 +308,28 @@ public final class Bytecode implements AutoCloseable {
                 state.diagnostic("DEPENDENCY_DISPATCH_ACCESS_UNSUPPORTED",definition+"."+name+descriptor,null);continue;
             }
             String symbol=authoritativeMethod(definition,name,descriptor);
-            if(symbol==null){abiConflict=true;continue;}
+            if(symbol==null){symbolConflicts.add(sourceConflictReason);continue;}
             candidates.add(symbol);
         }
         var result=new LinkedHashMap<String,Object>();
         result.put("dispatch_candidates",new ArrayList<>(candidates));
         result.put("dispatch_algorithm","CHA_ORDERED_SELECTED_CLASSPATH");result.put("dispatch_complete",false);
-        var reasons=new ArrayList<>(hierarchy.problems);if(abiConflict)reasons.add("SOURCE_BINARY_ABI_CONFLICT");if(sourceConflict)reasons.add("SOURCE_HIERARCHY_UNAVAILABLE");if(missing)reasons.add("MISSING_HIERARCHY_TYPE");reasons.add("OPEN_WORLD_RUNTIME_TYPES");
+        var reasons=new ArrayList<>(hierarchy.problems);reasons.addAll(symbolConflicts);if(sourceConflict)reasons.add("SOURCE_HIERARCHY_UNAVAILABLE");if(missing)reasons.add("MISSING_HIERARCHY_TYPE");reasons.add("OPEN_WORLD_RUNTIME_TYPES");
         result.put("dispatch_completeness_reason",String.join(";",reasons));
         result.put("dispatch_classpath",state.classpath);
         cache.put(key,result);site.putAll(result);
+    }
+    private void copySourceMapping(String caller,Map<String,Object> site) {
+        var declaration=state.symbols.get(caller);
+        for(String field:List.of("source_mapping_ids","source_mapping_reason","source_mapping_path","source_mapping_range"))
+            site.put(field,declaration.get(field));
+        site.put("source_locator_kind","BYTECODE_ONLY");
+        site.put("representation","BYTECODE");
+        site.put("artifact_hashes",state.context.get("bytecode_artifacts"));
+        state.diagnostics.add(map("code","BYTECODE_ONLY_CALL_SITE","message",
+            "Generated instruction has no proven source call-expression locator; declaration mapping is separate",
+            "call_site_id",site.get("id"),"bytecode_method_id",caller,"context_id",state.context.get("id"),
+            "reason",((List<?>)declaration.get("source_mapping_ids")).isEmpty()?"NO_SOURCE_MAPPING":"SOURCE_DECLARATION_ONLY"));
     }
     private Map<String,Object> cfg(String caller,MethodNode method,Map<AbstractInsnNode,Integer> positions) {
         var blocks=new ArrayList<Map<String,Object>>();var edges=new ArrayList<Map<String,Object>>();

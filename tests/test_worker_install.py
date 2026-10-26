@@ -37,16 +37,21 @@ class WorkerSelectionTests(unittest.TestCase):
             target.mkdir(parents=True)
             for version in ("1", "2"):
                 (target / f"kgmaker-jvm-worker-{version}.jar").write_bytes(b"not executed")
-            with patch("kgmaker.inspection.shutil.which", return_value="java"):
+            jdk = home / 'jdk/bin'
+            jdk.mkdir(parents=True)
+            for name in ('java', 'javac'):
+                (jdk / name).write_bytes(b'not executed')
+            with patch("kgmaker.inspection.shutil.which", return_value=str(jdk / 'java')):
                 with self.assertRaises(WorkerError) as error:
                     command("jvm", home)
             self.assertEqual("TOOLCHAIN_UNAVAILABLE", error.exception.status)
+            self.assertIn('ambiguous', str(error.exception))
 
 
 class InstalledWorkerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temporary = tempfile.TemporaryDirectory()
+        cls.temporary = tempfile.TemporaryDirectory(prefix='kgmaker user space ')
         cls.addClassCleanup(cls.temporary.cleanup)
         cls.directory = Path(cls.temporary.name)
         cls.environment = {k: v for k, v in os.environ.items()
@@ -185,6 +190,25 @@ assert any(c.get("declared_target") for c in result["graph"]["call_sites"]), res
 assert (root / ".kgmaker/graph.json").is_file()
 from kgmaker.inspection import worker_home
 assert (worker_home() / "jvm/target/licenses/kotlin/LICENSE.txt").is_file()
+''')
+
+    def test_packaged_kotlin_analyzes_in_user_space_with_spaces(self):
+        if not shutil.which('java') or not (ROOT / 'workers/jvm/target/kgmaker-jvm-worker.jar').is_file():
+            if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
+                self.fail('blocked: actual JVM worker and JDK required')
+            self.skipTest('blocked: actual JVM worker and JDK required')
+        self.run_installed('''
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm, worker_home
+home = worker_home()
+assert ' ' in str(home), home
+root = Path('kotlin user project'); (root / 'src/main/kotlin').mkdir(parents=True)
+(root / 'src/main/kotlin/App.kt').write_text('class App { fun target(): Int = 1; fun caller(): Int = target() }')
+result = inspect_jvm(root.resolve(), classpath=[str(home / 'jvm/target/lib/kotlin-stdlib.jar')])
+targets = {s['id']: s for s in result['graph']['symbols']}
+assert any(c.get('declared_target') and targets[c['declared_target']]['path'] == 'src/main/kotlin/App.kt'
+           for c in result['graph']['call_sites']), result
+assert (root / '.kgmaker/graph.json').is_file()
 ''')
 
     def test_packaged_k2_analyzes_outside_checkout(self):

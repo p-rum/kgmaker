@@ -85,6 +85,15 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         java = shutil.which("java")
         if not java:
             raise WorkerError("Optional JVM worker/JDK unavailable; scan remains usable. Build the trusted worker explicitly.", "TOOLCHAIN_UNAVAILABLE")
+        java_root = Path(java).resolve().parent.parent
+        if not any((java_root / 'bin' / name).is_file() for name in ('javac', 'javac.exe')):
+            raise WorkerError('JVM inspection requires a full JDK 21+ (javac beside java); a runtime-only JRE is unsupported. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
+        release = java_root / 'release'
+        if release.is_file():
+            import re
+            version = re.search(r'^JAVA_VERSION="(\d+)', release.read_text(encoding='utf-8'), re.M)
+            if version and int(version.group(1)) < 21:
+                raise WorkerError('JVM inspection requires JDK 21+; selected Java runtime is older. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
         jar = _jvm_worker_jar(home, kotlin_backend=kotlin_backend)
         return [java, "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
@@ -164,18 +173,14 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
         value["source_snapshot_version"] = "selected-source-set-1"
     value["source_files"] = source_snapshot(root, base, value)
-    value["framework_rule_versions"] = {"spring": "annotation-source-v3", "jpa": "annotation-source-v4"}
-    value["selection_key"] = digest({key: value.get(key) for key in (
-        "repo_id", "module", "source_set", "scope", "language", "build_context_id",
-        "build_profiles", "spring_profiles", "config_fingerprint", "compiler_options",
-        "manifest_hash", "toolchain", "dependency_model_hash", "generated_source_roots",
-        "spring_properties", "spring_available_classes",
-        "spring_component_packages",
-        "framework_rule_versions",
-        "ui_framework", "tsconfig", "database_id", "schema_stream_id",
-        "persistence_unit", "naming_strategy",
-        "kotlin_backend", "kotlin_version",
-    )})
+    from .framework import SPRING_RULE_VERSION
+    # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
+    # and selection identity, including its pre-existing React overwrite behavior.
+    value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
+                                        "jpa": "annotation-source-v4"}
+    from .graph_provider import _selection_key
+    value["selection_key"] = _selection_key({key: item for key, item in value.items()
+                                              if key != "selection_key"})
     value["id"] = digest(value)
     return value
 
@@ -326,16 +331,41 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope)
     preflight = request_worker(argv, {"operation": "project", "root": str(root), "tsconfig": tsconfig,
         "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
+
+    def input_closure(project: dict) -> dict[str, str]:
+        records = project.get("input_files") if isinstance(project, dict) else None
+        if not isinstance(records, list):
+            raise WorkerError("Malformed frontend compiler input closure", "INVALID_PROTOCOL")
+        inputs = {}
+        for record in records:
+            path = record.get("path") if isinstance(record, dict) else None
+            checksum = record.get("sha256") if isinstance(record, dict) else None
+            if (not isinstance(path, str) or not Path(path).is_absolute() or path in inputs
+                    or not isinstance(checksum, str) or len(checksum) != 64
+                    or any(character not in "0123456789abcdef" for character in checksum)):
+                raise WorkerError("Malformed frontend compiler input closure", "INVALID_PROTOCOL")
+            inputs[path] = checksum
+        return inputs
+
+    preflight_inputs = input_closure(preflight.get("project"))
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
                                       "framework_rule_versions": {"react": "react18-intrinsic-events-1"} if ui_framework == "react" else {}})
     response = request_worker(argv, {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
         "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
-    for item in preflight["project"]["input_files"]:
-        if file_hash(Path(item["path"])) != item["sha256"]:
+    if input_closure(response.get("project")) != preflight_inputs:
+        raise WorkerError("Frontend compiler input closure changed between preflight and analysis", "STALE")
+    for path, expected in preflight_inputs.items():
+        try:
+            actual = file_hash(Path(path))
+        except OSError as error:
+            raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE") from error
+        if actual != expected:
             raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE")
     if response["project"]["compiler_options"] != preflight["project"]["compiler_options"]:
         raise WorkerError("Frontend compiler options changed", "STALE")
+    if response["project"].get("project_graph") != preflight["project"].get("project_graph"):
+        raise WorkerError("Frontend project reference graph changed", "STALE")
     model = {"source_sets": [{"module": module, "id": source_set, "scope": scope,
                               "files": [f["path"] for f in response["project"]["program_files"]]}]}
     after = scan_repository(root)

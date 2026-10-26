@@ -27,6 +27,12 @@ These are **SPECIFICATION**, not implemented commands or completed capabilities.
 
 ## Install
 
+Windows user-space installation passed an actual restricted-user CI smoke with
+paths containing spaces (43 passed, 2 scoped skips). It covers the core, Java/K1
+Kotlin and TypeScript workers. K2 on Windows remains unverified; Windows
+`BUILD_EXECUTE` reports an explicit unsupported-platform error. See
+[Windows prerequisites and verification evidence](docs/windows-install.md).
+
 From the repository root:
 
 ```bash
@@ -75,6 +81,28 @@ selection = select_service_contexts(
 
 The function is imported from `kgmaker.views`; the snippet shows the library
 contract and does not add a `kgmaker` CLI command.
+
+`views.project_service_inventory` builds a service-only `topology` document from
+explicit workspace ownership and the matching provider snapshot. Stable node IDs
+come from declared service IDs; `service_labels` changes display text only.
+Only services with provider contexts in the selected scope enter the inventory.
+Declared external systems remain visible without a local checkout, while their
+implementation and endpoints remain `UNKNOWN`. Source-only evidence stays
+`PARTIAL` and does not prove module completeness or deployment.
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.views import project_service_inventory
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, provider_graph, _ = snapshot_workspace(manifest)
+inventory = project_service_inventory(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+    service_labels={"orders": "Orders API"},
+)
+```
 
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
@@ -147,6 +175,20 @@ The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-
 
 `imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. The default scanner uses pattern-based SQL, YAML, Kotlin and TypeScript extraction. Separate opt-in JVM/TypeScript workers use compiler APIs; they are not invoked by scan/hook/feature. Explicit JVM inspection can project imported Spring/JPA annotations into `FRAMEWORK_DERIVED` nodes and edges, including bean candidates, HTTP/listener entrypoints, proxy boundaries, entity/table/column bindings, and simple Spring Data repository/query declarations. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
 
+Explicit `kgmaker inspect frontend --root /path/to/repo --tsconfig tsconfig.json`
+also analyzes solution-style TypeScript project references within that root.
+The captured project graph identifies each repo/config, follows the compiler's
+source redirects without emitting outputs, and invalidates stored compiler facts
+when a transitive project input changes. Missing, cyclic, outside-root or
+overlapping reference graphs fail before publication. This does not add callback
+resolution or cross-repository TypeScript source analysis.
+Declaration identities use the owning project's checker even when consumer
+options differ. Referencing configs that disable source redirects are rejected
+before publication rather than trusting emitted declarations.
+Preflight and analysis must read the same compiler input closure; membership
+changes fail before publication. Reinspection replaces the same TypeScript
+selection slot across legacy and K2-era snapshot metadata.
+
 ## Copilot workflow
 
 Vývoj tohoto repozitáře má navíc projektové Codex implementační agenty v
@@ -183,6 +225,13 @@ python -m pytest -q
 ```
 
 The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+
+The required `compiler-workers` job prepares and exercises JVM/Kotlin K1, K2,
+TypeScript and the mixed Maven fixture. Its negative prerequisite matrix runs
+with `python -m pytest -q tests/test_mandatory_worker_ci.py`: an absent worker,
+JDK or mixed fixture fails a required gate and skips an optional local gate,
+without starting a process. The separate exporter job requires actual Maven and
+Gradle exports. Exploratory tests needing a second JDK remain optional.
 
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without
@@ -251,6 +300,12 @@ produce `BINARY_XLS_UNSUPPORTED` with `status: UNSUPPORTED`, byte SHA-256 and
 a file locator; no workbook values are extracted. Feature packets and data audits
 retain these gaps in `coverage.artifact_diagnostics` (repo-qualified in workspaces).
 A binary signature identifies a container/header, not a validated Excel workbook.
+`xlsx-offline-3` extracts bounded A1/range tokens without treating exponents or
+function names such as `LOG10` as cells. OFFSET, shared formulas, INDIRECT,
+external references and unsupported 3D/whole-row/whole-column forms remain explicit
+graph diagnostics; formulas are never evaluated and audits keep UNKNOWN availability.
+Literal Unicode/quoted sheet qualifiers bind to their sheet; unrecognized qualifiers
+stay unresolved and cannot fall back to local cells. Spaced A1 ranges retain all cells.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
 evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an
@@ -343,10 +398,16 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v3 navíc počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
-bean. ImportSelector a registrar se nespouštějí a zůstávají diagnostickou hranicí.
+bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
+transitivní identitu. Java metoda s jediným literal `String[]` return propojí
+deklarované konfigurace přes `selects_import`; neznámé tělo, custom filter/group,
+chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_import`.
+Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
+Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
+source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
@@ -420,7 +481,7 @@ JARy/adresáře. Javac, K1/K2 call expressions a ASM virtual/interface sites zac
 oddělený declared target a konzervativní kandidáty v artifact realms; nikdy tím
 nedokazují runtime execution ani data availability. Reference/static/private/final
 calls nejsou virtuálně rozšiřovány. Missing/corrupt/shadow/truncated hierarchy a
-unsupported multi-release JAR mají konkrétní důvod, `dispatch_complete=false`.
+unsupported multi-release candidate enumeration mají konkrétní důvod, `dispatch_complete=false`.
 Příklad: `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
 po explicitním build-importu; [matice a limity](docs/compiler-inspection.md#t003-s04-w04--ordered-dependency-dispatch).
 
@@ -428,4 +489,13 @@ Source type-variable/intersection receivers zůstávají explicitně unsupported
 kandidátů; jejich declared target se zachová. Podporovaná candidate class musí
 splnit receiver i declared contract. Physical lookup odděluje source overlay,
 respektuje skutečné JDK parent-first a runtime-effective MR metadata; známý
-source/binary static ABI konflikt vrací PARTIAL bez vymyšleného targetu.
+source/binary static ABI nebo repo/module/source_set/scope realm konflikt vrací
+PARTIAL bez vymyšleného targetu a zachovává source canonical.
+
+`inspect code` with an explicit execution-bound bytecode build now emits
+`maps_to_source` declaration evidence for exact Java/Kotlin declarations with
+compatible compiler-proven static/instance ABI,
+Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
+simple same-owner compiler bridges. Generated method IDs remain distinct.
+Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
+prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
