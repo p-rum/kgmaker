@@ -89,6 +89,21 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    rules = context.get("framework_rule_versions")
+    if context.get("language") == "jvm" and rules is not None and not isinstance(rules, dict):
+        raise WorkerError("STALE_INDEX: malformed Spring rule snapshot", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "spring" in rules:
+        from .framework import SPRING_RULE_VERSION
+        from .spring_conditions import condition_inputs
+        from .analysis_model import digest
+        if context["framework_rule_versions"]["spring"] != SPRING_RULE_VERSION:
+            raise WorkerError("STALE_INDEX: Spring condition rules changed; inspect again", "STALE")
+        try:
+            valid_conditions = context.get("spring_condition_inputs_hash") == digest(condition_inputs(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_conditions = False
+        if not valid_conditions:
+            raise WorkerError("STALE_INDEX: Spring condition configuration changed; inspect again", "STALE")
     options = (context.get("compiler_options") or {}).get("kotlin")
     if options is not None:
         from .analysis_model import AnalysisError
