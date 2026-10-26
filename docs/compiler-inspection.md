@@ -294,6 +294,22 @@ volí FIELD nebo PROPERTY access; embedded atributy a explicitní override mají
 vlastní uzly. Asociace nesou cílovou entitu a roli OWNING/INVERSE, přičemž
 `mappedBy` se váže na konkrétní protistranu. JoinColumn/JoinTable se nemíchá se
 scalar `@Column` a neověřený target či `mappedBy` zůstává diagnostikou.
+Při explicitním `--kotlin-backend k2` se pro constructor properties zachová
+K2 annotation identity a use-site target. `@field:Id`/`@field:EmbeddedId`
+vybere FIELD a `@get:Id` vybere PROPERTY; `@Access` má přednost, ale jeho
+nesoulad s identity targetem je diagnostikován a nevytvoří silnější atribut.
+Kotlin `@Id` bez explicitního FIELD/GET targetu zůstává nejednoznačný. Embedded
+Kotlin ID reuseuje stávající entity/embeddable uzly a nevyžaduje nový graph typ.
+Compiler values zachovají nested `@AttributeOverride` column a class literals;
+nevyřešená explicitní table/column/override hodnota zůstává UNKNOWN a nevytváří
+náhradní fyzické jméno. Testovací JPA API deklaruje skutečné FIELD/METHOD cíle,
+takže implicitní FIELD default i dual-use-site nejednoznačnost odpovídají API.
+Kotlin embeddable member annotations se filtrují podle Jakarta/Javax identity.
+Bez vlastního embeddable `@Access` se column metadata zachová jen pro
+jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
+zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
+známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
+subpackage se nepovažuje za compiler-resolved JPA API.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
@@ -496,8 +512,13 @@ missing/ambiguous call, oddělení test scope, backend/version evidence,
 strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
-K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
-call sites, local/lambda execution ani default-body mapping mimo W02 a coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
+projection, ale nedodává obecný source CFG, constructor ABI, Spring/framework
+metadata, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping je popsáno v
+[T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
+coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
+diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
