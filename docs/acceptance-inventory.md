@@ -216,3 +216,11 @@ Prepared packets revalidate documentation conflict coverage outside checkout too
 Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP** (5.00 s); focused **56 PASS**. Strict attempt blocked by missing actual Maven fixture (14 setup errors), documented in change note9; no worker PASS is claimed for this environment.
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
+
+## T003-S12-W01 revize 2 — offline konfigurace
+
+| Acceptance | Stav | Přímá evidence |
+|---|---|---|
+| AC01 | LIVE NOT_RUN, odloženo uživatelem | configuration status zůstává NOT_RUN i s přítomnými auth references |
+| AC02–AC03 | VERIFIED_IN_SCOPE | 5 stávajících sync testů a konfigurační negativní/no-mutation testy; žádná změna graph/store |
+| AC04–AC05 | VERIFIED_IN_SCOPE | `test_confluence_configuration.py`, capability dokumentace a change note 38; focused 28 PASS, full 281 PASS / 23 toolchain SKIP |

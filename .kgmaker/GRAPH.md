@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 225
+- Scope: production; omitted files: 227
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `e841ecf51c969a1f478984e4108c840a865b182b137ab55a9cb6260cf5e3998f`; content: `7f78b0ae1c15ca9ae59adc03d5aa2dbfd90b0726d50c507bce28f645d096b390`; freshness: CONTENT_VERIFIED
-- Files indexed: 52
-- Symbols and sections: 541
-- Internal imports: 165
-- Heuristic cross-file calls: 2492
+- Context: `679f71d19ab965fa94f6d22552566fed20f118be03dfcbf884d6622ec055776c`; content: `c84fc7f4dea7f458466be24d9b27e4b0634e8ab1ed984e25bd2815c7f95e11c8`; freshness: CONTENT_VERIFIED
+- Files indexed: 53
+- Symbols and sections: 549
+- Internal imports: 167
+- Heuristic cross-file calls: 2527
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/variables: 0/0
 - Semantic concepts: 0
-- Implementation episodes: 46
-- Inferred/ambiguous relationships: 2492/0
+- Implementation episodes: 47
+- Inferred/ambiguous relationships: 2527/0
 
 ## Architecture diagram
 
@@ -43,206 +43,209 @@ flowchart LR
   n13["src/kgmaker/cli.py"]
   n14["src/kgmaker/confluence.py"]
   n15["src/kgmaker/confluence_sync.py"]
-  n16["src/kgmaker/context.py"]
-  n17["src/kgmaker/control_flow.py"]
-  n18["src/kgmaker/data_agent.py"]
-  n19["src/kgmaker/data_check.py"]
-  n20["src/kgmaker/dataflow.py"]
-  n21["src/kgmaker/domain.py"]
-  n22["src/kgmaker/feature.py"]
-  n23["src/kgmaker/feature_cli.py"]
-  n24["src/kgmaker/flow.py"]
-  n25["src/kgmaker/flyway.py"]
-  n26["src/kgmaker/framework.py"]
-  n27["src/kgmaker/graph_provider.py"]
-  n28["src/kgmaker/inspection.py"]
-  n29["src/kgmaker/inspection_cli.py"]
-  n30["src/kgmaker/memory.py"]
-  n31["src/kgmaker/model.py"]
-  n32["src/kgmaker/project_cli.py"]
-  n33["src/kgmaker/runtime_evidence.py"]
-  n34["src/kgmaker/scanner.py"]
-  n35["src/kgmaker/schema_replay.py"]
-  n36["src/kgmaker/semantic.py"]
-  n37["src/kgmaker/store.py"]
-  n38["src/kgmaker/templates.py"]
-  n39["src/kgmaker/views.py"]
-  n40["src/kgmaker/workbooks.py"]
-  n41["src/kgmaker/worker_protocol.py"]
-  n42["src/kgmaker/workflow.py"]
-  n43["src/kgmaker/workspace.py"]
-  n44["src/kgmaker/workspace_cli.py"]
-  n45{"technology: Kafka"}
-  n46{"technology: PostgreSQL"}
+  n16["src/kgmaker/confluence_sync_config.py"]
+  n17["src/kgmaker/context.py"]
+  n18["src/kgmaker/control_flow.py"]
+  n19["src/kgmaker/data_agent.py"]
+  n20["src/kgmaker/data_check.py"]
+  n21["src/kgmaker/dataflow.py"]
+  n22["src/kgmaker/domain.py"]
+  n23["src/kgmaker/feature.py"]
+  n24["src/kgmaker/feature_cli.py"]
+  n25["src/kgmaker/flow.py"]
+  n26["src/kgmaker/flyway.py"]
+  n27["src/kgmaker/framework.py"]
+  n28["src/kgmaker/graph_provider.py"]
+  n29["src/kgmaker/inspection.py"]
+  n30["src/kgmaker/inspection_cli.py"]
+  n31["src/kgmaker/memory.py"]
+  n32["src/kgmaker/model.py"]
+  n33["src/kgmaker/project_cli.py"]
+  n34["src/kgmaker/runtime_evidence.py"]
+  n35["src/kgmaker/scanner.py"]
+  n36["src/kgmaker/schema_replay.py"]
+  n37["src/kgmaker/semantic.py"]
+  n38["src/kgmaker/store.py"]
+  n39["src/kgmaker/templates.py"]
+  n40["src/kgmaker/views.py"]
+  n41["src/kgmaker/workbooks.py"]
+  n42["src/kgmaker/worker_protocol.py"]
+  n43["src/kgmaker/workflow.py"]
+  n44["src/kgmaker/workspace.py"]
+  n45["src/kgmaker/workspace_cli.py"]
+  n46{"technology: Kafka"}
+  n47{"technology: PostgreSQL"}
   n0 -->|imports| n13
   n3 -->|imports| n1
-  n5 -->|imports| n22
+  n5 -->|imports| n23
   n6 -->|imports| n4
   n6 -->|imports| n7
-  n6 -->|imports| n20
-  n6 -->|imports| n22
-  n6 -->|imports| n34
-  n6 -->|imports| n36
-  n6 -->|imports| n40
-  n6 -->|imports| n43
+  n6 -->|imports| n21
+  n6 -->|imports| n23
+  n6 -->|imports| n35
+  n6 -->|imports| n37
+  n6 -->|imports| n41
+  n6 -->|imports| n44
   n7 -->|imports| n4
-  n7 -->|imports| n20
-  n7 -->|imports| n22
+  n7 -->|imports| n21
+  n7 -->|imports| n23
   n8 -->|imports| n4
   n9 -->|imports| n4
   n9 -->|imports| n10
   n9 -->|imports| n12
-  n9 -->|imports| n28
+  n9 -->|imports| n29
   n10 -->|imports| n4
-  n10 -->|imports| n28
+  n10 -->|imports| n29
   n11 -->|imports| n4
-  n11 -->|imports| n31
-  n11 -->|imports| n39
+  n11 -->|imports| n32
+  n11 -->|imports| n40
   n12 -->|imports| n4
   n13 -->|imports| n1
   n13 -->|imports| n2
   n13 -->|imports| n3
   n13 -->|imports| n14
   n13 -->|imports| n16
-  n13 -->|imports| n18
-  n13 -->|imports| n22
-  n13 -->|imports| n29
+  n13 -->|imports| n17
+  n13 -->|imports| n19
+  n13 -->|imports| n23
   n13 -->|imports| n30
   n13 -->|imports| n31
   n13 -->|imports| n32
-  n13 -->|imports| n34
-  n13 -->|imports| n36
+  n13 -->|imports| n33
+  n13 -->|imports| n35
   n13 -->|imports| n37
-  n13 -->|imports| n39
-  n13 -->|imports| n42
-  n13 -->|imports| n44
+  n13 -->|imports| n38
+  n13 -->|imports| n40
+  n13 -->|imports| n43
+  n13 -->|imports| n45
   n14 -->|imports| n4
-  n14 -->|imports| n31
+  n14 -->|imports| n32
   n15 -->|imports| n4
-  n16 -->|imports| n30
-  n16 -->|imports| n31
-  n16 -->|imports| n34
-  n16 -->|imports| n36
-  n16 -->|imports| n37
-  n16 -->|imports| n42
-  n17 -->|imports| n4
-  n18 -->|imports| n1
-  n19 -->|imports| n4
-  n19 -->|imports| n5
-  n19 -->|imports| n7
-  n19 -->|imports| n20
-  n19 -->|imports| n37
-  n19 -->|imports| n43
-  n20 -->|imports| n31
-  n21 -->|imports| n31
-  n21 -->|uses_messaging| n45
-  n21 -->|connects_to| n46
-  n22 -->|imports| n4
-  n22 -->|imports| n6
-  n22 -->|imports| n7
-  n22 -->|imports| n14
-  n22 -->|imports| n20
-  n22 -->|imports| n25
-  n22 -->|imports| n27
-  n22 -->|imports| n31
-  n22 -->|imports| n34
-  n22 -->|imports| n35
-  n22 -->|imports| n36
-  n22 -->|imports| n38
-  n22 -->|imports| n39
-  n22 -->|imports| n40
-  n22 -->|imports| n43
+  n16 -->|imports| n4
+  n17 -->|imports| n31
+  n17 -->|imports| n32
+  n17 -->|imports| n35
+  n17 -->|imports| n37
+  n17 -->|imports| n38
+  n17 -->|imports| n43
+  n18 -->|imports| n4
+  n19 -->|imports| n1
+  n20 -->|imports| n4
+  n20 -->|imports| n5
+  n20 -->|imports| n7
+  n20 -->|imports| n21
+  n20 -->|imports| n38
+  n20 -->|imports| n44
+  n21 -->|imports| n32
+  n22 -->|imports| n32
+  n22 -->|uses_messaging| n46
+  n22 -->|connects_to| n47
   n23 -->|imports| n4
-  n23 -->|imports| n5
   n23 -->|imports| n6
   n23 -->|imports| n7
-  n23 -->|imports| n19
-  n23 -->|imports| n20
-  n23 -->|imports| n34
+  n23 -->|imports| n14
+  n23 -->|imports| n21
+  n23 -->|imports| n26
+  n23 -->|imports| n28
+  n23 -->|imports| n32
+  n23 -->|imports| n35
   n23 -->|imports| n36
+  n23 -->|imports| n37
   n23 -->|imports| n39
+  n23 -->|imports| n40
+  n23 -->|imports| n41
+  n23 -->|imports| n44
   n24 -->|imports| n4
-  n24 -->|imports| n11
-  n24 -->|imports| n39
+  n24 -->|imports| n5
+  n24 -->|imports| n6
+  n24 -->|imports| n7
+  n24 -->|imports| n20
+  n24 -->|imports| n21
+  n24 -->|imports| n35
+  n24 -->|imports| n37
+  n24 -->|imports| n40
   n25 -->|imports| n4
+  n25 -->|imports| n11
+  n25 -->|imports| n40
   n26 -->|imports| n4
-  n26 -->|imports| n31
-  n26 -->|uses_messaging| n45
   n27 -->|imports| n4
-  n27 -->|imports| n9
-  n27 -->|imports| n12
-  n27 -->|imports| n28
-  n27 -->|imports| n31
-  n27 -->|imports| n34
-  n27 -->|imports| n37
-  n27 -->|imports| n41
+  n27 -->|imports| n32
+  n27 -->|uses_messaging| n46
   n28 -->|imports| n4
+  n28 -->|imports| n9
   n28 -->|imports| n12
-  n28 -->|imports| n17
-  n28 -->|imports| n26
-  n28 -->|imports| n27
-  n28 -->|imports| n31
-  n28 -->|imports| n34
-  n28 -->|imports| n37
-  n28 -->|imports| n41
+  n28 -->|imports| n29
+  n28 -->|imports| n32
+  n28 -->|imports| n35
+  n28 -->|imports| n38
+  n28 -->|imports| n42
   n29 -->|imports| n4
-  n29 -->|imports| n9
+  n29 -->|imports| n12
+  n29 -->|imports| n18
   n29 -->|imports| n27
   n29 -->|imports| n28
-  n29 -->|imports| n33
-  n29 -->|imports| n37
-  n29 -->|imports| n39
-  n29 -->|imports| n41
-  n29 -->|uses_messaging| n45
-  n30 -->|imports| n31
-  n31 -->|imports| n12
-  n32 -->|imports| n4
-  n32 -->|imports| n8
-  n32 -->|imports| n9
-  n32 -->|imports| n10
+  n29 -->|imports| n32
+  n29 -->|imports| n35
+  n29 -->|imports| n38
+  n29 -->|imports| n42
+  n30 -->|imports| n4
+  n30 -->|imports| n9
+  n30 -->|imports| n28
+  n30 -->|imports| n29
+  n30 -->|imports| n34
+  n30 -->|imports| n38
+  n30 -->|imports| n40
+  n30 -->|imports| n42
+  n30 -->|uses_messaging| n46
+  n31 -->|imports| n32
   n32 -->|imports| n12
-  n32 -->|imports| n29
-  n32 -->|imports| n34
-  n32 -->|imports| n37
-  n32 -->|imports| n39
-  n32 -->|imports| n43
   n33 -->|imports| n4
-  n33 -->|imports| n31
-  n33 -->|imports| n37
+  n33 -->|imports| n8
+  n33 -->|imports| n9
+  n33 -->|imports| n10
+  n33 -->|imports| n12
+  n33 -->|imports| n30
+  n33 -->|imports| n35
+  n33 -->|imports| n38
+  n33 -->|imports| n40
+  n33 -->|imports| n44
   n34 -->|imports| n4
-  n34 -->|imports| n12
-  n34 -->|imports| n20
-  n34 -->|imports| n21
-  n34 -->|imports| n31
+  n34 -->|imports| n32
+  n34 -->|imports| n38
   n35 -->|imports| n4
-  n35 -->|imports| n25
-  n35 -->|imports| n31
-  n36 -->|imports| n30
-  n36 -->|imports| n31
-  n37 -->|imports| n4
+  n35 -->|imports| n12
+  n35 -->|imports| n21
+  n35 -->|imports| n22
+  n35 -->|imports| n32
+  n36 -->|imports| n4
+  n36 -->|imports| n26
+  n36 -->|imports| n32
   n37 -->|imports| n31
-  n37 -->|imports| n39
+  n37 -->|imports| n32
   n38 -->|imports| n4
-  n38 -->|imports| n31
-  n39 -->|imports| n31
-  n40 -->|imports| n4
-  n40 -->|imports| n12
-  n40 -->|imports| n31
+  n38 -->|imports| n32
+  n38 -->|imports| n40
+  n39 -->|imports| n4
+  n39 -->|imports| n32
+  n40 -->|imports| n32
   n41 -->|imports| n4
-  n42 -->|imports| n30
-  n43 -->|imports| n4
-  n43 -->|imports| n9
-  n43 -->|imports| n12
-  n43 -->|imports| n27
+  n41 -->|imports| n12
+  n41 -->|imports| n32
+  n42 -->|imports| n4
   n43 -->|imports| n31
-  n43 -->|imports| n35
-  n43 -->|imports| n41
   n44 -->|imports| n4
-  n44 -->|imports| n20
-  n44 -->|imports| n35
-  n44 -->|imports| n37
-  n44 -->|imports| n39
-  n44 -->|imports| n43
+  n44 -->|imports| n9
+  n44 -->|imports| n12
+  n44 -->|imports| n28
+  n44 -->|imports| n32
+  n44 -->|imports| n36
+  n44 -->|imports| n42
+  n45 -->|imports| n4
+  n45 -->|imports| n21
+  n45 -->|imports| n36
+  n45 -->|imports| n38
+  n45 -->|imports| n40
+  n45 -->|imports| n44
 ```
 
 ## Files and symbols
@@ -380,7 +383,7 @@ flowchart LR
 - **function** `task_context` line 849 — `task_context(root: Path, task_id_value: str, role: str, token_budget: int)`
 - **function** `hook_context` line 859 — `hook_context(root: Path, token_budget: int | None = None)`
 - **function** `build_parser` line 879 — `build_parser`
-- **function** `main` line 1012 — `main`
+- **function** `main` line 1014 — `main`
 
 ### `src/kgmaker/confluence.py`
 - **function** `_norm` line 32 — `_norm(value: str)`
@@ -438,6 +441,16 @@ flowchart LR
 - **function** `_approval_id` line 210 — `_approval_id(approval: Approval)`
 - **function** `approve` line 215 — `approve(package: PublishPackage, decision_id: str)`
 - **function** `audit_json` line 250 — `audit_json(audit: PublishAudit)`
+
+### `src/kgmaker/confluence_sync_config.py`
+- **class** `ConfluenceConnectionConfiguration` line 20 — `ConfluenceConnectionConfiguration`
+- **function** `_unique_object` line 28 — `_unique_object(pairs)`
+- **function** `_reject_constant` line 37 — `_reject_constant(_value)`
+- **function** `_environment_name` line 41 — `_environment_name(value, field)`
+- **function** `_connection` line 47 — `_connection(value)`
+- **function** `load_connection_configuration` line 94 — `load_connection_configuration(root: Path, config_file: Path | None = None)`
+- **function** `register` line 146 — `register(sub)`
+- **function** `run` line 154 — `run(args)`
 
 ### `src/kgmaker/context.py`
 - **class** `ContextError` line 28 — `ContextError(ValueError)`
@@ -935,8 +948,9 @@ flowchart LR
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest195=passed, ac05-spring-matrix=passed, spring-short-name-guard=passed
 - **Bind methodology approval to current offline export content** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: focused_tests=passed, full_suite=passed, missing_toolchains=skipped, strict_workers=failed, semantic=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/changes/5_preserveCompilerRefresh.md, docs/compiler-inspection.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: pytest189=passed
-- **Merge current main worker distribution into methodology integration** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: strict274=passed, packet_freshness=passed
+- **Merge current main worker distribution into methodology integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: strict274=passed, packet_freshness=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, maven-effective-model=passed, bom-property-interpolation=passed
+- **Change Acceptance a ověření, Agent reads packet.json and candidate-template.json, writes candidate.json., Akceptační kritéria** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/38_configureDeferredConfluence.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: configuration28=passed, full281=passed, live=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/11_captureKotlinCompilerOptions.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, real_maven=passed
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest195=passed, focused51=passed, spring-configuration-import=passed, framework-rule-invalidation=passed
 - **docs: document clean-install test prerequisites and CI evidence** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/30_packageWorkerResources.md, docs/compiler-inspection.md; validation: strict242=passed, actual_maven_fixture=passed
@@ -978,6 +992,7 @@ flowchart LR
 - `src/kgmaker/cli.py` imports `src/kgmaker/agents.py` (.agents)
 - `src/kgmaker/cli.py` imports `src/kgmaker/analysis_agent.py` (.analysis_agent)
 - `src/kgmaker/cli.py` imports `src/kgmaker/confluence.py` (.confluence)
+- `src/kgmaker/cli.py` imports `src/kgmaker/confluence_sync_config.py` (.confluence_sync_config)
 - `src/kgmaker/cli.py` imports `src/kgmaker/context.py` (.context)
 - `src/kgmaker/cli.py` imports `src/kgmaker/data_agent.py` (.data_agent)
 - `src/kgmaker/cli.py` imports `src/kgmaker/feature.py` (.feature)
@@ -994,6 +1009,7 @@ flowchart LR
 - `src/kgmaker/confluence.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/confluence.py` imports `src/kgmaker/model.py` (.model)
 - `src/kgmaker/confluence_sync.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
+- `src/kgmaker/confluence_sync_config.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/context.py` imports `src/kgmaker/memory.py` (.memory)
 - `src/kgmaker/context.py` imports `src/kgmaker/model.py` (.model)
 - `src/kgmaker/context.py` imports `src/kgmaker/scanner.py` (.scanner)
@@ -1718,7 +1734,7 @@ flowchart LR
 - `src/kgmaker/cli.py` may call `586 in `src/kgmaker/confluence.py`` (name match at line 304; src/kgmaker/cli.py:304; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `597 in `src/kgmaker/confluence.py`` (name match at line 300; src/kgmaker/cli.py:300; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `456 in `src/kgmaker/confluence.py`` (name match at line 303; src/kgmaker/cli.py:303; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 1017; src/kgmaker/cli.py:1017; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 1019; src/kgmaker/cli.py:1019; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 616; src/kgmaker/cli.py:616; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 624; src/kgmaker/cli.py:624; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 838; src/kgmaker/cli.py:838; INFERRED 0.85)
@@ -1791,9 +1807,9 @@ flowchart LR
 - `src/kgmaker/cli.py` may call `431 in `src/kgmaker/workflow.py`` (name match at line 808; src/kgmaker/cli.py:808; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `521 in `src/kgmaker/workflow.py`` (name match at line 843; src/kgmaker/cli.py:843; INFERRED 0.85)
 - `src/kgmaker/cli.py` may call `494 in `src/kgmaker/workflow.py`` (name match at line 828; src/kgmaker/cli.py:828; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `6 in `src/kgmaker/workspace_cli.py`` (name match at line 1008; src/kgmaker/cli.py:1008; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `23 in `src/kgmaker/workspace_cli.py`` (name match at line 1026; src/kgmaker/cli.py:1026; INFERRED 0.85)
-- `src/kgmaker/cli.py` may call `54 in `src/kgmaker/workspace_cli.py`` (name match at line 1029; src/kgmaker/cli.py:1029; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `6 in `src/kgmaker/workspace_cli.py`` (name match at line 1010; src/kgmaker/cli.py:1010; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `23 in `src/kgmaker/workspace_cli.py`` (name match at line 1028; src/kgmaker/cli.py:1028; INFERRED 0.85)
+- `src/kgmaker/cli.py` may call `54 in `src/kgmaker/workspace_cli.py`` (name match at line 1031; src/kgmaker/cli.py:1031; INFERRED 0.85)
 - `src/kgmaker/confluence.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 320; src/kgmaker/confluence.py:320; INFERRED 0.85)
 - `src/kgmaker/confluence.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 328; src/kgmaker/confluence.py:328; INFERRED 0.85)
 - `src/kgmaker/confluence.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 333; src/kgmaker/confluence.py:333; INFERRED 0.85)
@@ -1903,6 +1919,41 @@ flowchart LR
 - `src/kgmaker/confluence_sync.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 142; src/kgmaker/confluence_sync.py:142; INFERRED 0.85)
 - `src/kgmaker/confluence_sync.py` may call `171 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 162; src/kgmaker/confluence_sync.py:162; INFERRED 0.85)
 - `src/kgmaker/confluence_sync.py` may call `96 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 82; src/kgmaker/confluence_sync.py:82; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 111; src/kgmaker/confluence_sync_config.py:111; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 113; src/kgmaker/confluence_sync_config.py:113; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 120; src/kgmaker/confluence_sync_config.py:120; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 122; src/kgmaker/confluence_sync_config.py:122; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 127; src/kgmaker/confluence_sync_config.py:127; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 34; src/kgmaker/confluence_sync_config.py:34; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 40; src/kgmaker/confluence_sync_config.py:40; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 45; src/kgmaker/confluence_sync_config.py:45; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 51; src/kgmaker/confluence_sync_config.py:51; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 53; src/kgmaker/confluence_sync_config.py:53; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 56; src/kgmaker/confluence_sync_config.py:56; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 61; src/kgmaker/confluence_sync_config.py:61; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 70; src/kgmaker/confluence_sync_config.py:70; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 73; src/kgmaker/confluence_sync_config.py:73; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 77; src/kgmaker/confluence_sync_config.py:77; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 82; src/kgmaker/confluence_sync_config.py:82; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 85; src/kgmaker/confluence_sync_config.py:85; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 90; src/kgmaker/confluence_sync_config.py:90; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 92; src/kgmaker/confluence_sync_config.py:92; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `37 in `src/kgmaker/analysis_model.py`` (name match at line 160; src/kgmaker/confluence_sync_config.py:160; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 159; src/kgmaker/confluence_sync_config.py:159; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 125; src/kgmaker/confluence_sync_config.py:125; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 138; src/kgmaker/confluence_sync_config.py:138; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 140; src/kgmaker/confluence_sync_config.py:140; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 54; src/kgmaker/confluence_sync_config.py:54; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 57; src/kgmaker/confluence_sync_config.py:57; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 71; src/kgmaker/confluence_sync_config.py:71; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 74; src/kgmaker/confluence_sync_config.py:74; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 78; src/kgmaker/confluence_sync_config.py:78; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 83; src/kgmaker/confluence_sync_config.py:83; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 86; src/kgmaker/confluence_sync_config.py:86; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 88; src/kgmaker/confluence_sync_config.py:88; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `171 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 59; src/kgmaker/confluence_sync_config.py:59; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `26 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 109; src/kgmaker/confluence_sync_config.py:109; INFERRED 0.85)
+- `src/kgmaker/confluence_sync_config.py` may call `96 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 55; src/kgmaker/confluence_sync_config.py:55; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 128; src/kgmaker/context.py:128; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 140; src/kgmaker/context.py:140; INFERRED 0.85)
 - `src/kgmaker/context.py` may call `285 in `src/kgmaker/memory.py`` (name match at line 206; src/kgmaker/context.py:206; INFERRED 0.85)

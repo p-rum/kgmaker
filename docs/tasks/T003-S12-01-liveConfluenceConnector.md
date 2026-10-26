@@ -2,7 +2,7 @@
 
 - Work package ID: `T003-S12-W01`
 - Milník: `T003-S12`
-- Revision: 1
+- Revision: 2
 - Datum: 2026-10-16
 - Stav: SPECIFICATION; tento soubor popisuje cílové chování, nikoli hotovou implementaci.
 - Baseline: pracovní větev nad `8ac80ca30f6f680539deb7fb3590519d3a5c1460`; před zahájením ověř aktuální cílovou větev a otevřené PR.
@@ -12,6 +12,16 @@
 ## Cíl
 
 Po dodání host/API/auth kontraktu implementovat konkrétní live adapter nad hotovým bezpečným boundary.
+
+### Revize 2 podle pokynu uživatele z 2026-10-26
+
+Uživatel výslovně odložil živé ověření: „V tuto chvili to preskoc, tyto parametry
+udelej konfigurovatelne“. Aktuální dodávka proto připravuje konfigurovatelný host,
+variantu API, sandbox prostor a reference autentizace v prostředí. Konfigurace
+a její kontrola jsou offline; neinstancují live adapter a nic nepublikují.
+Živý adapter a integrační běh zůstávají odložené, vykázané NOT_RUN. Tato revize
+nepovyšuje konfiguraci ani přítomnost proměnné prostředí na ověřenou integraci.
+Původní bezpečný pull/approval/publish boundary zůstává beze změny.
 
 ## Rozsah a konkrétní kontrakty
 
@@ -42,6 +52,7 @@ Po dodání host/API/auth kontraktu implementovat konkrétní live adapter nad h
 - **T003-S12-W01-AC02:** Staré podporované vstupy a graph/store schema zůstávají čitelné nebo mají výslovně otestovanou migraci.
 - **T003-S12-W01-AC03:** Negativní a nejednoznačný případ nevytvoří silnější evidence ani dostupnost, než dovolují vstupy.
 - **T003-S12-W01-AC04:** Stavová matice odkazuje na konkrétní test/fixture/verzi a nepovýší celý milník nad skutečně ověřený scope.
+- **T003-S12-W01-AC05 (revize 2):** JSON konfigurace pod `documentation.confluence.connection` umožní explicitní host, API, sandbox a pouze reference autentizace. `kgmaker confluence config` deterministicky ověří nastavení bez sítě, procesů a mutace store; chybějící nastavení zůstává disabled/NOT_RUN. Nejednoznačný či neplatný vstup selže bez úniku hodnot autentizace.
 
 ## Větev, PR a Definition of Done
 
