@@ -108,6 +108,7 @@ public final class JavaFrontend {
     }
     private String method(ExecutableElement element,Map<String,Object> location) {
         var metadata=annotations(element);
+        metadata.put("jvm_static",element.getModifiers().contains(Modifier.STATIC));
         metadata.put("return_type",element.getReturnType().toString());
         metadata.put("parameter_types",element.getParameters().stream().map(p->p.asType().toString()).toList());
         metadata.put("parameter_names",element.getParameters().stream().map(p->p.getSimpleName().toString()).toList());
