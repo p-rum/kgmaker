@@ -59,8 +59,7 @@ nevyžaduje přepis starého store. Workspace parser cache má nový version inp
   context případy mají oddělené mandatory toolchain ověření.
 - Relevantní finální sada s mandatory K1/K2: **51 PASS v5.29s**. Actual compiler
   contexts skutečně vznikly a následná offline stale-source cesta byla odmítnuta.
-  Full s mandatoryWorkers/K2/SpringImports/SpringConditions je po preflightPASS
-  queued pod shared lock; queued/running test není PASS.
+  Následný full běžel až po opravě default profile popsané níže.
 
 Fixture `fixtures/kafka-bindings` má tři skutečné lokální roots, properties base/
 blue profile a JSON contract. Negatives mění consumer cluster při stejném topicu,
@@ -106,4 +105,15 @@ default profile gap: při `profiles: []` chyběl aktivní Spring profile `defaul
 Actual properties regression **2 FAIL, 3 PASS v0.55s** pro default a grouped
 default/prod; reuse nyní předává stejný default set jako S05-W03. Vlastní full
 byl tehdy stále pouze queued a byl bezpečně zrušen před pytest child, nikoli
-přerušen validní running test. Nový full se spouští až nad touto opravou.
+přerušen validní running test. Nový full běžel až nad touto opravou.
+Po opravě **54 PASS, 2 DESELECTED v3.49s** (čistě offline+workspace sada).
+
+Finální strict full s mandatoryWorkers/K2/SpringImports/SpringConditions:
+**613 PASS, 10 SKIP v406.80s**; exit0, JUnit/log zachovány. Povinné K1/K2 a
+pinned Spring6.2.2/Boot3.4.2 APIs skutečně běžely. Skips jsou pouze optional
+Maven/Gradle/installed exporters/variants/plugins a skutečný Windows gate;
+nevydávají se za PASS. Actual fixture CLI query `orders-blue` také prošel.
+Scoped semantic update/apply/validate/scan/check a `git diff --check` PASS;
+původních115 epizod z explicitního stacked baseline zůstává immutable prefix.
+Capture implementační paměti zachovává tuto historii; žádné nové core semantic
+vazby se nevymýšlejí, pouze se aktualizuje skutečně posunutý ownership target.

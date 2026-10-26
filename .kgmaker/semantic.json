@@ -36,7 +36,7 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/50_expandSpringConditions.md": "e6094ec70a0e507c23aa442515a1b6324571aaa829bd48b823ad1799113e1c77",
-    "docs/changes/54_scopeKafkaBindingIdentity.md": "103ec3f330ad4e80a9c2134d890609f0ef263ad8f45e36920d80e4c3cf6af430",
+    "docs/changes/54_scopeKafkaBindingIdentity.md": "995bde316c8f96339c2a6bcef465fe06471194923b1defa6dbfc58ddf3dfbc94",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
