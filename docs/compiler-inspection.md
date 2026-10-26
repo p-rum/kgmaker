@@ -550,6 +550,28 @@ Core ani test fixture nic implicitně nestahují. Mandatory CI vyžaduje skuteč
 a oba skutečné JVM workery; chybějící vstup je FAIL, ne PASS. Viz
 [change note42](changes/42_resolveBoundedSpringImports.md).
 
+## Required CI prerequisites (T003-S11-W04)
+
+`compiler-workers` explicitly prepares pinned JDK21, Kotlin2.1.10, K1/K2
+workers, TypeScript5.7.3, the mixed Maven fixture and Spring6.2.2 API inputs.
+`KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1` and
+`KGMAKER_REQUIRE_SPRING_IMPORTS=1` turn missing prerequisites into failures.
+The exporter job separately sets `KGMAKER_REQUIRE_EXPORTERS=1` and runs actual
+Maven/Gradle exports from an installed wheel. These flags belong to the test
+matrix; they do not authorize implicit builds in product commands.
+
+Run `python -m pytest -q tests/test_mandatory_worker_ci.py` to exercise the
+existing setup gates against absent K1, TS, K2, JDK and mixed-build inputs,
+with each flag unset, zero and one. The 15 negative cases assert the actual
+FAIL/SKIP exception contract, no subprocess, no worker-home creation and
+preservation of the last valid graph bytes. They acknowledge earlier
+prerequisites only to reach the selected missing input; positive execution
+remains the separate actual compiler/installed-exporter fixture suite.
+Spring API absence/corruption and exporter absence retain their existing
+negative tests. Local source-only suites may SKIP actual integrations; a
+second-JDK exploration is explicitly outside the required one-JDK matrix.
+Graph/store/protocol formats and runtime worker discovery are unchanged.
+
 ## Default body source mapping
 
 T003-S04-W02 adds declaration mappings on the existing explicit bytecode path:

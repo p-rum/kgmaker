@@ -195,3 +195,15 @@ scan, check a diff whitespace prošly; všech 5 main konceptů/9 vztahů je pře
 zachováno, 100 main epizod je přesný prefix celkových 103 epizod (dva původní
 W02 a nový integrační capture). Výsledný graph: 317 files, 3008 nodes,
 20104 relationships. Nový vzdálený CI běh je před publikací NOT_RUN.
+
+
+## Povinné CI gates — integrace e9027e9
+
+CI-only main e9027e9 zachovává všechny testované mapper/frontend/test bytes.
+Compiler job obsahuje jak nový test_mandatory_worker_ci.py, tak W02 golden
+matrici. Nové runtime změny ani opakovaný JVM/full běh nejsou součástí refresh.
+
+Focused core/protocol a mandatory prerequisite matice: **36 PASS**.
+Semantic validate/scan/check a diff whitespace prošly; main 101 epizod je
+přesný prefix, všech 5 konceptů/9 vztahů beze změny. Šest mapper/frontend/test
+souborů je byte-identických s ec040c9, který nezávisle ověřil reviewer.

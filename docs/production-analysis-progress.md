@@ -373,6 +373,17 @@ registrars/factories, libovolnou dynamickou resolution ani runtime availability.
 Celý S05/AC05 a T003 zůstávají PARTIAL. Evidence a přesné běhy:
 [change note42](changes/42_resolveBoundedSpringImports.md).
 
+## T003-S11-W04 — explicit required versus optional CI prerequisites
+
+The existing actual compiler and installed-exporter jobs remain mandatory in
+their declared matrix. A focused negative matrix now exercises the same
+compiler/K2 setup gates with absent JVM/TS/K2/JDK/mixed fixture inputs and
+unset/0/1 requirement flags. Required paths fail, optional paths skip, and no
+process runs or last-valid graph changes. Spring/exporter prerequisite
+negatives are retained. This is bounded CI coverage; second-JDK exploration,
+benchmark budgets, full end-to-end acceptance and release gates remain separate.
+See [change note48](changes/48_enforceMandatoryWorkerCi.md) for final results.
+
 ## T003-S04-W02 — bounded source declaration mappings
 
 The explicit bytecode path now separates generated identity from compiler-proven
