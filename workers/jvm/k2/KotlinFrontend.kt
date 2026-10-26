@@ -25,12 +25,13 @@ import java.nio.file.Path
  * resolved. Unsupported light methods and source execution semantics stay visible.
  */
 class KotlinFrontend(private val state: State) {
+    private lateinit var methodLookup: Bytecode
     companion object {
         const val backend = "k2-analysis-api-2.1.10-v1"
         const val compiler = "kotlin-2.1.10-k2-analysis-api"
         val capabilities = listOf("kotlin-2.1-analysis-api-attribution")
         val limitations = listOf("K2 Analysis API is pinned to 2.1.10; unrepresentable JVM signatures remain unresolved.",
-            "K2 source CFG, default-body/coroutine mapping, property/operator/reference/initializer call sites and local/lambda execution are not implemented.")
+            "K2 source CFG, constructor ABI, default-body/coroutine mapping, property/operator/reference/initializer call sites and local/lambda execution are not implemented.")
     }
 
     private fun loc(element: PsiElement): MutableMap<String, Any?> {
@@ -55,15 +56,22 @@ class KotlinFrontend(private val state: State) {
 
     private fun method(symbol: KaFunctionSymbol, source: PsiElement? = null): String? {
         // Local and synthesized signatures do not have a unique declaration ABI.
+        // Light constructors omit JVM synthetic enclosing-instance parameters.
+        // Never publish a guessed constructor descriptor until mapped explicitly.
+        if (symbol is org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol) return null
         val psi = symbol.psi ?: return null
+        if (psi !is KtNamedFunction && psi !is PsiMethod) return null
         val light = if (psi is PsiMethod) listOf(psi) else psi.toLightMethods()
         val candidates = light.filter { it.parameterList.parametersCount == symbol.valueParameters.size }
         val declaration = candidates.singleOrNull() ?: return null
         val owner = declaration.containingClass?.let { ClassUtil.getJVMClassName(it) } ?: return null
+        // Compiler built-ins can have light PSI without a corresponding JVM
+        // owner (e.g. Kotlin intrinsic types). Such an owner is not a JVM target.
         val parameters = declaration.parameterList.parameters.map { descriptor(it.type) ?: return null }
         val result = if (declaration.isConstructor) "V" else declaration.returnType?.let(::descriptor) ?: return null
         val name = if (declaration.isConstructor) "<init>" else declaration.name
         val signature = "(" + parameters.joinToString("") + ")" + result
+        if (source == null && !methodLookup.hasDeclaredMethod(owner, name, signature)) return null
         val metadata = State.map("compiler_backend", backend, "compiler_version", "2.1.10",
             "parameter_names", symbol.valueParameters.map { it.name.asString() },
             "parameter_types", declaration.parameterList.parameters.map { it.type.canonicalText },
@@ -77,6 +85,7 @@ class KotlinFrontend(private val state: State) {
         if (files.isEmpty()) return
         val disposable = Disposer.newDisposable()
         try {
+            methodLookup = Bytecode(state)
             val session = buildStandaloneAnalysisAPISession(disposable) {
                 buildKtModuleProvider {
                     platform = JvmPlatforms.defaultJvmPlatform
@@ -151,6 +160,7 @@ class KotlinFrontend(private val state: State) {
                 }
             }
         } finally {
+            if (::methodLookup.isInitialized) methodLookup.close()
             Disposer.dispose(disposable)
         }
     }

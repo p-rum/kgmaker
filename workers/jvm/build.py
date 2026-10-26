@@ -43,6 +43,8 @@ if any(not d.is_file() for d in dependencies):
 lock = {'kotlin_compiler': '2.1.10', 'jackson': '2.18.2', 'bytecode_engine': 'ASM bundled in Kotlin 2.1.10',
         'dependencies': [{'name': d.name, 'sha256': hashlib.sha256(d.read_bytes()).hexdigest()} for d in dependencies]}
 lock_path = root / ('dependencies-k2.lock.json' if args.backend == 'k2' else 'dependencies.lock.json')
+if args.backend == 'k2' and not lock_path.is_file():
+    raise SystemExit('Pinned K2 dependency lock is required before building')
 if lock_path.exists() and json.loads(lock_path.read_text()) != lock:
     raise SystemExit('Worker dependency checksum/version mismatch')
 classpath = ':'.join(str(d) for d in dependencies)

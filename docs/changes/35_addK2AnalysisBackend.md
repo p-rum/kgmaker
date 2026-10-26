@@ -40,7 +40,7 @@ protocol-v1 K1 handshake bez nového backend pole je dál čitelný; pro K2 se
 vyžaduje přesné versioned backend ID. Bez přepínače zůstává K1 compatibility.
 SOURCE_ONLY nepotřebuje JDK/Node a nespouští download, build ani worker.
 
-K2 dodává pouze dokumentovaný call subset; source CFG, property/operator/reference/
+K2 dodává pouze dokumentovaný call subset; source CFG, constructor ABI, property/operator/reference/
 initializer call sites, local/lambda execution, default-body/coroutine mapping
 a širší compiler/plugin matice zůstávají PARTIAL s diagnostikami.
 T003-S04/T003 nejsou dokončeny. Připnuté hashes jsou obsahová kontrola, nikoli
@@ -77,3 +77,24 @@ kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10 
 
 Maven repository musí předem obsahovat připnuté Jackson2.18.2 JARy; builder nic
 neřeší online. Další compiler a source mapping varianty mají samostatná zadání.
+
+## Integrační kontrola JVM ABI
+
+Negativní reálný probe `class Outer { inner class Inner }; fun construct(outer: Outer):
+Any = outer.Inner()` odhalil v light PSI chybějící implicitní enclosing-instance
+parametr. Původní cesta chybně vytvořila `Outer$Inner.<init>()V`; skutečné JVM ABI
+vyžaduje `(LOuter;)V`. `test_inner_constructor_does_not_invent_incomplete_jvm_abi`
+proto nejprve FAIL a backend nyní všechny dosud nemapované constructor targety
+zachová UNRESOLVED. Nezaměňuje source parametry za úplný JVM descriptor.
+
+Dependency target navíc musí mít skutečný owner class a přesnou metodu/descriptor
+v explicitní classpath nebo JDK platformě; Kotlin intrinsic light PSI bez JVM class nevytváří target.
+Existenci metody ověřuje sdílený ASM reader `Bytecode.hasDeclaredMethod` pouze
+čtením JAR/directory/JDK resource, bez načítání
+či inicializace projektové třídy. Non-method generated symboly nejsou mapovány
+na náhodnou light metodu. Source named functions zůstávají podporované.
+
+Post-PR8 integrační běh před tímto rozšířením: **295 PASS,7 SKIP/136.22s**.
+SKIP: Maven runner1, druhé JDK+Maven1, Gradle included1, Gradle variants2,
+Maven Kotlin options1 a Gradle Kotlin options1. Jde o chybějící execution prostředí,
+nikoli PASS ani výjimku z taskových K2 testů.

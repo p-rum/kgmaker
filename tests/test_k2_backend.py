@@ -41,7 +41,7 @@ def test_imported_unsupported_k2_compiler_version_fails_before_worker(tmp_path):
 
 @pytest.mark.parametrize("options", [{"language_version": "2.2"}, {"api_version": "1.9"},
                                      {"jvm_target": "17"}, {"plugins": ["all-open"]},
-                                     {"free_args": ["-Xcontext-receivers"]}])
+                                     {"free_args": ["-Xcontext-receivers"]}, {"progressive": True}])
 def test_unsupported_captured_k2_options_are_not_silently_ignored(options, tmp_path):
     with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
         with pytest.raises(AnalysisError, match="Unsupported K2"):
@@ -94,6 +94,7 @@ def actual_k2():
         kotlin.write_text("""package fixture
 fun target(x: Int): Int = Helper.plus(x)
 fun caller(): Int = target(3)
+fun jdk(s: String): String = s.substring(1)
 fun missing(): Int = absent(4)
 fun pick(x: String?): Int = 1
 fun pick(x: Int?): Int = 2
@@ -117,7 +118,8 @@ def test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence(actual
     actual = {(c["caller"].split(":method:")[-1], c["declared_target"].split(":method:")[-1])
               for c in calls if c.get("declared_target")}
     assert actual == {("fixture.WorkKt.target(I)I", "fixture.Helper.plus(I)I"),
-                      ("fixture.WorkKt.caller()I", "fixture.WorkKt.target(I)I")}
+                      ("fixture.WorkKt.caller()I", "fixture.WorkKt.target(I)I"),
+                      ("fixture.WorkKt.jdk(Ljava/lang/String;)Ljava/lang/String;", "java.lang.String.substring(I)Ljava/lang/String;")}
     assert [c["id"] for c in first["graph"]["call_sites"]] == [c["id"] for c in second["graph"]["call_sites"]]
     assert first["context"]["worker"]["kotlin_backend"] == "k2-analysis-api-2.1.10-v1"
     assert "kotlin-2.1-analysis-api-attribution" in first["context"]["worker"]["capabilities"]
@@ -189,3 +191,29 @@ def test_k1_and_k2_contexts_accumulate_without_replacement(actual_k2, tmp_path):
     with patch("subprocess.Popen", side_effect=AssertionError("offline process")):
         fresh = retain_compiler_layer(tmp_path, scan_repository(tmp_path))
     assert {context["kotlin_backend"] for context in fresh.contexts if context.get("analyzer_version")} == {"k1", "k2"}
+
+
+def test_inner_constructor_does_not_invent_incomplete_jvm_abi(actual_k2, tmp_path):
+    source = tmp_path / "src/main/kotlin/Inner.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text("class Outer { inner class Inner }\nfun construct(outer: Outer): Any = outer.Inner()\n")
+    result = inspect_jvm(tmp_path, home=HOME, kotlin_backend="k2", publish=False,
+                         classpath=[str(HOME / "jvm/target-k2/lib/kotlin-stdlib.jar")])
+    calls = result["graph"]["call_sites"]
+    assert len(calls) == 1
+    assert calls[0]["invocation_kind"] == "CONSTRUCTOR"
+    # JVM ABI needs an enclosing Outer parameter absent from source light PSI.
+    assert calls[0]["declared_target"] is None
+    assert calls[0]["evidence_kind"] == "UNRESOLVED"
+
+
+def test_intrinsic_light_method_without_jvm_member_is_unresolved(actual_k2, tmp_path):
+    source = tmp_path / "src/main/kotlin/Intrinsic.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text("fun intrinsic(): Int = 1.plus(2)\n")
+    result = inspect_jvm(tmp_path, home=HOME, kotlin_backend="k2", publish=False,
+                         classpath=[str(HOME / "jvm/target-k2/lib/kotlin-stdlib.jar")])
+    calls = result["graph"]["call_sites"]
+    assert len(calls) == 1
+    assert calls[0]["declared_target"] is None
+    assert calls[0]["evidence_kind"] == "UNRESOLVED"

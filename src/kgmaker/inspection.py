@@ -375,7 +375,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         for name, supported in (("language_version", "2.1"), ("api_version", "2.1"), ("jvm_target", "21")):
             if kotlin_options.get(name) not in {None, supported}:
                 raise AnalysisError("Unsupported K2 captured option: " + name + "; supported value: " + supported)
-        if any(kotlin_options.get(name) for name in ("free_args", "plugins", "plugin_options", "plugin_artifacts", "opt_in")):
+        if any(kotlin_options.get(name) for name in ("free_args", "plugins", "plugin_options", "plugin_artifacts", "opt_in", "progressive")):
             raise AnalysisError("Unsupported K2 compiler flags/plugins; this backend does not silently ignore captured options")
     argv = command("jvm", home, kotlin_backend=kotlin_backend)
     meta = handshake(argv, cwd=root)
