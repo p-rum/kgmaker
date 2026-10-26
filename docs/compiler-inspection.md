@@ -514,8 +514,11 @@ strict no-publication, offline refresh a instalace mimo checkout jsou v
 
 K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
 projection, ale nedodává obecný source CFG, constructor ABI, Spring/framework
-metadata, property/operator/reference/initializer call sites, local/lambda
-execution ani default-body/coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+metadata, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping je popsáno v
+[T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
+coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
+diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
@@ -589,3 +592,51 @@ Spring API absence/corruption and exporter absence retain their existing
 negative tests. Local source-only suites may SKIP actual integrations; a
 second-JDK exploration is explicitly outside the required one-JDK matrix.
 Graph/store/protocol formats and runtime worker discovery are unchanged.
+
+## Default body source mapping
+
+T003-S04-W02 adds declaration mappings on the existing explicit bytecode path:
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Import a validated execution-bound build manifest before selecting bytecode roots.
+# No compilation is triggered by scan, graph queries or source-only inspection.
+```
+
+Bytecode method IDs and generated call-site identities remain separate from source
+methods. Generated methods use their actual artifact realm scope and keep direct
+`path`/`range` empty; even an otherwise identical test-scope artifact cannot claim
+a production source declaration. `source_mapping_ids`, `source_mapping_reason`, `source_mapping_path` and
+`source_mapping_range` describe the enclosing **declaration**, never an exact source
+call expression. `maps_to_source` facts retain source hash/range, selected context and
+bytecode artifact hashes. Every generated call site has a localized `BYTECODE_ONLY_CALL_SITE` diagnostic:
+its declaration mapping does not prove a call-expression position.
+Generated instruction `path`/`range` remain absent;
+`source_line`/`SourceFile` are raw debug attributes, not inferred locators.
+
+The verified matrix uses JDK 21.0.6, Kotlin 2.1.10 and both explicit K1/K2 workers:
+Java interface default bodies and Kotlin `-Xjvm-default=all` use an exact declared
+owner/name/descriptor. Kotlin `-Xjvm-default=disable` DefaultImpls requires Kotlin
+Metadata (synthetic class + interface), a unique InnerClasses outer interface, an
+exact static receiver type, the same repository/module/source-set/scope realm and an actually declared interface signature matching
+the source symbol. The suffix alone proves nothing. Generic Java bridges require
+both ACC_BRIDGE/ACC_SYNTHETIC, a straight-line load/cast/single same-owner delegate/
+return body, no handlers and an actual nonsynthetic target declaration. Value and
+void returns are covered. Duplicate class owners never yield source mappings.
+Other generated shapes, absent or mismatched source
+signatures stay bytecode-only with localized `BYTECODE_ONLY_SOURCE_MAPPING`.
+No-debug fixtures remove only debug attributes from actual compiler output;
+source declaration locations remain available through compiler attribution.
+
+This is an additive worker-v1 payload extension; graph v1/v2/v3 readers and existing
+IDs/store format remain unchanged. It does not map statement-level lines, default
+argument masks, coroutine state machines, arbitrary bridges/dependency bodies or
+prove runtime dispatch/availability. Source-only mode has no new process path.
+
+
+Direct source mappings additionally require a compiler-proven `jvm_static` flag
+matching the physical method. Javac, K1 descriptor/codegen API and K2 light methods
+provide this flag; absence means UNKNOWN, not an inferred method-name convention.
+Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
+static-helper/interface-instance signature transform. Stale source static/instance
+changes never yield a source mapping even inside an identical repository realm.

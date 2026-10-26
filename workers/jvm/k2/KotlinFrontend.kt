@@ -84,6 +84,7 @@ class KotlinFrontend(private val state: State) {
         // authoritative source declaration, annotations, modifiers or throws.
         if (existing?.get("path")?.toString()?.endsWith(".java") == true) return identity
         val metadata = State.map("compiler_backend", backend, "compiler_version", "2.1.10",
+            "jvm_static", declaration.hasModifierProperty(com.intellij.psi.PsiModifier.STATIC),
             "parameter_names", symbol.valueParameters.map { it.name.asString() },
             "parameter_types", declaration.parameterList.parameters.map { it.type.canonicalText },
             "default_arguments", symbol.valueParameters.map { it.hasDefaultValue },

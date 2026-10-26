@@ -185,3 +185,28 @@ PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_mandat
 
 Skutečný K2/Javac/Spring běh a full suite nebyly při této CI-only refresh
 opakovány; předchozí actual 38-pass integrace zůstává zdokumentována výše.
+
+### Integrace source-mapping ABI metadata (main `33dc239`)
+
+Merged T003-S04-W02 adds compiler-proven JVM staticness to K1/K2 method metadata;
+this lets declaration mapping reject a static/instance mismatch while retaining
+the JPA use-site identity, annotation and property facts already provided by K2.
+Both local workers were rebuilt from the merged sources and pinned dependencies:
+K1 SHA-256 `b968550b6caec4efb5f02cc5bdc8a2c65a028c24dc770ab85b0384fc4840c7a1`,
+K2 SHA-256 `ad3435bf20b371cc920cc64fd5497317f6fa6c7fefe52624c6a4cd54092055f7`.
+
+Cílený běh obsahoval skutečný K2 JPA fixture, ABI mismatch golden test pro K1/K2
+v debug/no-debug bytecode matici a 15-case mandatory-worker prerequisite test:
+
+```text
+flock /workspace/kgmaker-heavy-tests.lock env JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed tests/test_default_body_mapping.py::test_same_realm_static_instance_abi_changes_never_map tests/test_mandatory_worker_ci.py
+# 20 passed in 68.23s
+```
+
+`framework.py` i Kotlin K2 annotation/property projection zůstávají byte-identické
+vůči schválenému S06 core; K2 worker zachovává tato fakta a přidává `jvm_static`.
+Aktuální main má 105 immutable semantic episodes jako přesný prefix; navazují
+předchozí S06 evidence a nový integrační capture. README semantic citations jsou
+ověřeny na `semantic prepare` line 162 a `semantic update/apply/validate` line 164;
+JPA/W02 architecture citations míří na aktuální source lines 515/598. Full suite
+nebyla znovu spuštěna; root CI běží na exact PR head.

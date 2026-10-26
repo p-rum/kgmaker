@@ -98,6 +98,7 @@ jobs:
           echo "c6e9e2636889828e19c8811d5ab890862538c89dc2a3101956dfee3c2a8ba6b1  $RUNNER_TEMP/kgmaker-tools/kotlin.zip" | sha256sum --check
           unzip -q "$RUNNER_TEMP/kgmaker-tools/kotlin.zip" -d "$RUNNER_TEMP/kgmaker-tools"
           echo "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/kgmaker-tools/kotlinc/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts --prefix workers/typescript
       - run: npm ci --ignore-scripts --prefix fixtures/build-inspection/frontend
       - name: Build actual mixed fixture and trusted workers
@@ -108,7 +109,7 @@ jobs:
           python workers/jvm/fetch_k2.py --output "$RUNNER_TEMP/kgmaker-tools/k2"
           python workers/jvm/build.py --backend k2 --analysis-api-home "$RUNNER_TEMP/kgmaker-tools/k2" --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
-      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py
+      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_default_body_mapping.py
       - name: Explicit Maven plan/runner/export
         run: |
           kgmaker project build-plan --root fixtures/build-inspection/maven --phase test --output "$RUNNER_TEMP/kgmaker-plan.json"
