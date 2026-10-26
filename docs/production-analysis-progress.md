@@ -218,6 +218,23 @@ Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP**
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
 
+## T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)
+
+Workspace v1 nyní může nést samostatnou deklaraci `service_ownership` v1 s
+explicitními roots, repo-qualified module IDs a external system IDs pro existující service IDs.
+Resolver používá pouze tyto deklarace a volající context ID; více kandidátů
+vrací AMBIGUOUS a žádný UNASSIGNED. Legacy `backend_repo` kontrakt a IDs zůstávají
+čitelné; samotná existence repozitáře/modulu/Spring anotace vlastnictví nedokládá.
+`tests/test_t007_define_service_ownership.py` pokrývá dvě explicitní služby,
+shared library, překryvy, legacy manifest, nevalidní deklaraci bez mutace a
+context mismatch, foreign repo-qualified context, qualified workspace path and
+unsupported direct schema version. Cílený běh po review opravách: 45 PASS včetně
+workspace/T005 regresí. Review full suite na předchozím HEAD `d00dd6a`:
+264 PASS, 23 SKIP; SKIP jsou chybějící Maven/JDK, Gradle 8.13 a skutečné JVM/TS
+workery. Po review opravách nebyl full suite opakován. `kgmaker check`, semantic
+validation a `git diff --check` prošly.
+T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
+Discovery, view aggregation ani T004 nejsou implementovány.
 
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
