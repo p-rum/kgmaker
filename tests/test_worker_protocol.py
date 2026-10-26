@@ -163,7 +163,7 @@ class WorkerProtocolTests(unittest.TestCase):
                         while state.exists():
                             try:
                                 status = state.read_text().split(') ', 1)[1].split()[0]
-                            except FileNotFoundError:
+                            except (FileNotFoundError, ProcessLookupError):
                                 break
                             if status == 'Z':
                                 break

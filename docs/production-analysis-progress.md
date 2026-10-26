@@ -1,5 +1,24 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W01 — TypeScript project references (2026-10-26)
+
+VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
+s transitive composite projekty, repo/config-qualified identities a skutečné
+Program/TypeChecker source redirects bez emitted outputs. Captured project graph
+v1 ukládá config/reference/options/file kontrakt; transitive změna vyřadí starou
+compiler vrstvu při offline refresh bez procesu. Missing/cycle/outside-root a
+overlapping source ownership mají lokalizovanou chybu a nulovou mutaci store.
+`tests/test_typescript_project_references.py` a [change note 36](changes/36_resolveTypeScriptProjectReferences.md)
+uvádějí přesnou matici. Historická strict sada s vlastním workerem v2:
+302 PASS / 7 SKIP po owner-checker a disabled-redirect review opravách nad
+main `3503309`. Integrace K2 navíc odmítá změnu úplného compiler input closure
+mezi preflight/analyze a zachovává původní TS selection slot; skutečné regrese
+a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
+nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
+mimo připravenou matici zůstávají výslovně SKIP.
+T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
+
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
 
 Skutečný Windows Server2025 restricted-user CI

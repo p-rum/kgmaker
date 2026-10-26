@@ -52,10 +52,11 @@ def _stale_context(context: dict, reason: str) -> dict:
 
 
 def _selection_key(context: dict) -> str:
-    if isinstance(context.get("selection_key"), str):
-        return context["selection_key"]
+    recorded = context.get("selection_key")
+    if isinstance(recorded, str) and context.get("language") != "typescript":
+        return recorded
     from .analysis_model import digest
-    return digest({key: context.get(key) for key in (
+    payload = {key: context.get(key) for key in (
         "repo_id", "module", "source_set", "scope", "language", "build_context_id",
         "build_profiles", "spring_profiles", "config_fingerprint", "compiler_options",
         "manifest_hash", "toolchain", "dependency_model_hash", "generated_source_roots",
@@ -64,8 +65,17 @@ def _selection_key(context: dict) -> str:
         "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
-        "kotlin_backend", "kotlin_version",
-    )})
+    )}
+    if context.get("language") == "jvm":
+        payload.update(kotlin_backend=context.get("kotlin_backend"),
+                       kotlin_version=context.get("kotlin_version"))
+    if isinstance(recorded, str):
+        # K2 briefly added two irrelevant None fields to frontend selectors.
+        # Recognize that exact digest, without reinterpreting opaque variants.
+        interim = digest({**payload, "kotlin_backend": None, "kotlin_version": None})
+        if recorded != interim:
+            return recorded
+    return digest(payload)
 
 
 def validate_context_snapshot(root: Path, context: dict) -> None:

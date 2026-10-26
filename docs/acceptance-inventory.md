@@ -1,5 +1,27 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W01 — project references
+
+| ID | Stav | Přímý test / podporovaná matice |
+|---|---|---|
+| T003-S08-W01-AC01 | VERIFIED_IN_SCOPE | `test_solution_programs_resolve_exact_source_project_identities_without_outputs`, `test_source_redirect_does_not_resolve_against_stale_emitted_declaration`: skutečný TS 5.7.3 / Node 24.19.0; missing/cycle/outside reference je lokalizovaná chyba |
+| T003-S08-W01-AC02 | VERIFIED_IN_SCOPE | `test_graph_loader_legacy_versions_remain_accepted`; původní single-project worker regression tests; additive project_graph v1, graph/store/protocol beze změny |
+| T003-S08-W01-AC03 | VERIFIED_IN_SCOPE | `test_invalid_reference_graph_is_localized_and_does_not_replace_store`, `test_overlapping_projects_do_not_arbitrarily_choose_symbol_owner`, `test_transitive_project_edit_invalidates_stored_compiler_layer_offline`: žádné falešné rozlišení, žádný zápis na chybě |
+| T003-S08-W01-AC04 | VERIFIED_IN_SCOPE | [change note 36](changes/36_resolveTypeScriptProjectReferences.md), [stavová matice](production-analysis-progress.md); celý S08/AC08 nadále PARTIAL |
+
+Review opravy W01: `test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg`
+ověřuje owner TypeChecker identity, owner CFG a argument parameter při rozdílném
+`strictNullChecks`; `test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation`
+odmítá stale `.d.ts` přes vypnuté source redirects. Finální integrovaná strict sada
+nad main `3503309`: **302 PASS / 7 SKIP**, vlastní worker v2; celý T003-AC08 zůstává PARTIAL.
+
+Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cannot_replace_last_graph`
+odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
+`test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
+ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
+K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
+zůstávají samostatné, nedokončené úkoly.
+
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
 | Kritérium | Stav | Evidence |
