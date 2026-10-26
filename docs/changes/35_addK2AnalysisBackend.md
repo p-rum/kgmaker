@@ -137,3 +137,42 @@ ani class-only soubor bez zpracovaných metod nevydal COMPLETE pro neimplementov
 source konstrukce. K2 Kotlin annotation/framework metadata nejsou dodány;
 `test_class_only_kotlin_never_claims_complete_source_coverage` ověřuje range/hash
 hranice a stav PARTIAL. K1 a Java podporované metadata zůstávají zachovány.
+
+## Finální integrační ověření
+
+Aktuální integrační base je `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`
+(main po XLS PR21); testovaný source HEAD `20aacfe24db889566909d59c19c736922e48bbde`.
+Oba required předchůdci W01/W04 jsou ověřené ancestors.
+
+- `PYTHONPATH=src KGMAKER_WORKERS_HOME=/workspace/k2/workers KGMAKER_REQUIRE_K2=1 /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_k2_backend.py`: **30 PASS/42.77s**.
+- Celá sada po obou nezávislých review opravách a integraci main:
+
+```bash
+JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH \
+PYTHONPATH=src KGMAKER_WORKERS_HOME=/workspace/k2/workers \
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+/workspace/kgmaker-venv/bin/python -m pytest -q -ra
+```
+
+Výsledek: **321 PASS,7 SKIP/136.03s**. Oba rebuilt K1/K2 workery, skutečný
+TypeScript worker a sdist→wheel→outside-checkout K2 instalace skutečně běžely.
+Připravený Maven mixed fixture target pochází ze skutečného trusted buildu;
+Maven ani Gradle nejsou v této testové PATH, druhé JDK není připraveno.
+Sedm uvedených runner/Gradle/druhé-JDK skipů zůstává SKIP, ne PASS.
+
+- Explicitní `fetch_k2.py --output /workspace/tools/k2-verified`: **8 skutečně
+  stažených artifactů, všechny připnuté SHA-256 PASS**; corrupted download
+  test nic nepublikuje.
+- K2 JAR testované distribuce SHA-256:
+  `6d02d7e09272bf3d6d76f3e35c5e071ff352d01def29982c26e69b54daff6c6d`.
+  K1 JAR: `4e4598b7e5646a0d0d260e0785544c828dbe02ad5459a78fe0629f7baa911d44`.
+- Scoped semantic update/apply/validate, implementační memory capture, generovaný
+  scan/check, compileall a `git diff --check`: **PASS** při lokálním předání.
+  Existující sémantické identity a historie z main jsou zachovány; bez nové
+  nepodložené technické vazby.
+- Remote CI, GitHub PR review a merge: zde **NOT_RUN**, provede samostatný
+  integrační/review workflow nad publikovaným current HEAD. Implementační agent
+  nevykonal externí push/PR/merge.
+
+Backend dodává pouze výslovně ověřený rozsah, nikoli dokončení T003-S04/T003.
