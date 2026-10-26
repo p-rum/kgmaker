@@ -1,13 +1,13 @@
 # Aktuální stav a zbývající práce
 
-## T003-S08-W03 — bounded callback candidate (2026-10-26)
+## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
 
 Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
 W02 head8e83937 (metadata integration; runtime identical to d416e2a); dependency CI/merge is not claimed. Actual TS5.7.3/Node24.19.0 red
 6FAIL1PASS and first7PASS, owner/strict/repo2PASS; wider callback/W01/provider34PASS.
 Source-final expanded13PASS includes local64-bound PARTIAL, dependency65 map calls
 and invalid-candidate store preservation. Further conditional-binding proof corrected
-candidate evidence; final protected15PASS61.69s; full validation PENDING, CI billing BLOCKED.
+candidate evidence; final protected15PASS61.69s; source-final full582PASS10SKIP641.43s, CI billing BLOCKED.
 [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md), [guide](typescript-callbacks.md)
 separate declared signatures, candidate bindings and runtime unknowns.
 Overload signature→implementation-body navigation remains UNKNOWN/PARTIAL. No whole S08,

@@ -60,3 +60,8 @@ ID vyber z konkrétního indexed symbolu, nevymýšlej ho z názvu. Skutečná f
 `fixtures/typescript-callbacks`; testy a pravdivý local/full/CI stav jsou v
 [note53](changes/53_resolveBoundedTypeScriptCallbacks.md). CI je samostatný acceptance
 gate a lokální důkaz jej nenahrazuje.
+
+Lokální Linux source-final matice: actual15PASS61.69s a full582PASS/10SKIP641.43s
+s vlastním workerem, pinned toolchain a mandatory workers/K2/Spring prerequisites.
+Required CI zůstává PENDING kvůli GitHub Actions billing/quota; nový Windows
+callback proof ani merge acceptance nejsou tvrzeny. Přesné příkazy/skips: note53.

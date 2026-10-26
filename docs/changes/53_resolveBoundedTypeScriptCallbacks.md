@@ -113,3 +113,44 @@ nepožaduje nový signature→body path kontrakt. Toto je výslovně PARTIAL/uns
 navigation hranice, nikoli důvod vymýšlet dispatch alias či přepisovat selected
 signature. Skutečný implementation-parameter binding proof je testován odděleně.
 Žádný runtime kód ani full freeze kvůli tomuto dokumentovanému omezení neměněn.
+
+## Konečný lokální source-final výsledek
+
+**582 PASS /10 SKIP**,641.43s, persistent `/tmp/ts-callbacks-full.log` a
+`/tmp/ts-callbacks-full.xml`. Worker/test/fixture SHA256 zůstaly shodné s
+protected15PASS61.69s; během full nebyla žádná runtime změna. Celý běh
+po actual prerequisite preflight PASS proběhl pod heavy flockem. Přesný příkaz:
+
+```sh
+flock /workspace/kgmaker-heavy-tests.lock env \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/ts-callbacks/workers \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs \
+  --junitxml=/tmp/ts-callbacks-full.xml
+```
+
+Final focused actual proof (stejný frozen worker a vlastní explicitní home):
+
+```sh
+env KGMAKER_REQUIRE_WORKERS=1 KGMAKER_WORKERS_HOME=/workspace/ts-callbacks/workers \
+  PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q \
+  tests/test_typescript_callbacks.py tests/test_typescript_callback_projects.py \
+  tests/test_typescript_callback_limits.py \
+  --junitxml=/tmp/ts-callbacks-final-focused.xml
+```
+
+Deset SKIP je stejná výslovně nepřipravená doplňková matice jako W02: Maven
+runner/exporter1, druhé real JDK+Maven1, installed Maven/Gradle exporters2, Gradle
+included/variants3, Kotlin Maven exporter1, Gradle8.13/Kotlin2.2.20 cache1 a actual
+non-admin Windows1. Maven/Gradle nebyly implicitně instalovány či přidány na PATH;
+mandatory compiler/K2/Spring prerequisites prošly. Missing toolchain není PASS.
+Nový W03 Windows proof se netvrdí.
+
+GitHub Actions billing/quota nadále blokuje required CI; žádné retry, bypass ani
+merge acceptance se tímto nedoplňuje. Lokální task postupuje do review, nikoli DONE.
+Bounded callback target matice je lokálně ověřena; overload signature→body path,
+heap/default/rest/forwarded callback inference a celý T003-S08 zůstávají uvedené
+hranice. Implementační agent nepushuje ani nemerguje; publikaci/review koordinuje parent.
