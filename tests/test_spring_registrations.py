@@ -74,7 +74,14 @@ public Product getObject(){throw new AssertionError("never invoke");} public Cla
 public Product getObject(){return new Product();} public Class<?> getObjectType(){return Other.class;} }''',
         "OtherFactory": '''package app; @org.springframework.stereotype.Component("otherFactory") public class OtherFactory implements org.springframework.beans.factory.FactoryBean<Other> {public Other getObject(){return new Other();} public Class<?> getObjectType(){return Other.class;}}''',
         "DualFactory": "package app; @org.springframework.stereotype.Component(\"dualFactory\") public class DualFactory implements org.springframework.beans.factory.FactoryBean<Product>, fake.FactoryBean {public Product getObject(){return new Product();} public Class<?> getObjectType(){return Product.class;}}",
-        "DecoyConsumer": "package app; import fake.FactoryBean; import org.springframework.stereotype.Service; import org.springframework.beans.factory.annotation.*; @Service public class DecoyConsumer { @Autowired @Qualifier(\"&literalFactory\") FactoryBean wrongFactory; @Autowired @Qualifier(\"&dualFactory\") FactoryBean validDual; }",
+        "DecoyConsumer": '''package app;
+import fake.FactoryBean;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.*;
+@Service public class DecoyConsumer {
+@Autowired @Qualifier("&literalFactory") FactoryBean wrongFactory;
+@Autowired @Qualifier("&dualFactory") FactoryBean validDual;
+}''',
         "FakeFactory": "package app; @org.springframework.stereotype.Component public class FakeFactory implements fake.FactoryBean {}",
         "FactoryParent": '''package app; public abstract class FactoryParent<T> implements org.springframework.beans.factory.FactoryBean<T> {public T getObject(){return null;} public Class<?> getObjectType(){return Product.class;}}''',
         "InheritedFactory": '''package app; @org.springframework.stereotype.Component("inheritedFactory") public class InheritedFactory extends FactoryParent<Product> {}''',
