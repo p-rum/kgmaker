@@ -324,6 +324,26 @@ Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS 
 Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
 store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
 
+## T009 — evidence a coverage agregovaných pohledů (omezený fallback)
+
+View v1 nyní zachovává samostatně evidence kind, resolution status, freshness a
+reference s explicitní supporting/contradicting polarity. Neoznačené nebo
+nepodporované polarity zůstávají UNKNOWN a vytvářejí diagnostiku; agregace
+neslučuje odlišné scope ani context ID. Coverage počítá nalezené, vyřešené,
+nevyřešené a vyloučené objekty pouze v dodaném výběru; prázdný vstup je UNKNOWN.
+Legacy view data se při načtení doplní pouze konzervativními unresolved/unknown
+výchozími hodnotami.
+
+T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
+není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
+konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
+zbývající omezení jsou v [change note 58](changes/58_propagateViewEvidence.md).
+Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
+check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
+kompletní pytest **445 PASS / 109 SKIP** (19.07 s); finální zdrojový strom čeká na
+kompletní `pytest -q -rs` ve frontě sdíleného JVM locku. Individuální důvody SKIP
+z předchozího běhu nebyly vypisovány, proto jej nepovažuji za finální test evidence.
+
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
 VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
