@@ -2,7 +2,7 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "aee4234d69d3d7b7023ecd7cc582b135f35dc87d74a7e98361a065ffa86ec1d8",
+    "README.md": "30b1b2196f45080b8cc76e006040ec3aa3594a2029cd2e47e73a8bbabd7b56a6",
     "docs/acceptance-inventory.md": "01a199cc0313b4c2b7e8cbb92881b1ece9fc984ef2d7a167c11d8e74d929a085",
     "docs/architecture.md": "ec3c70c431b4d595b974e87fd9f9908282cc1ab2714b924b7db11e82bf0c6228",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -35,7 +35,7 @@
     "docs/changes/46_mapDefaultBodySources.md": "0c5e9b608147d97fe4bdff184eed656ab4f04433d078329591bc4da2c7a2bb5f",
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
-    "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "06b13d8c9b6cc1757ff895189a595a5212701cd883ac366551f64b86e91d1bdc",
+    "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "0112eb6dde75790dce31c8a911e444536a5cd078178a4fc38e3ae041c9802db2",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",

@@ -197,7 +197,7 @@ snapshots keep conservative validation. See [TypeScript freshness and limits](do
 TypeScript worker4 preserves concrete generic/overload signatures through barrel
 exports and records named/inline callback bindings. Callback parameters and union
 values expose incomplete dispatch candidates; mutable/any callbacks remain unresolved.
-Offline navigation includes candidates only when requested. See
+Callee navigation includes candidates when explicitly requested. See
 [callback evidence and limits](docs/typescript-callbacks.md).
 
 ## Copilot workflow
