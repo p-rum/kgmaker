@@ -47,6 +47,12 @@ root files, effective options a source/reference content fingerprints, které se
 propagují po reference hranách. Symboly nesou `project_id`; stejnojmenné funkce
 v různých projektech se nesloučí. Starý single-project vstup zachovává tvar IDs;
 graph/store v1/v2/v3 a worker protocol v1 se nemění.
+Identita a deklarovaný typ source targetu pocházejí vždy z AST/TypeCheckeru jeho
+vlastnícího projektu, i když má consumer jiné compiler options. Call-site
+signature zůstává pohledem consumeru. Reference s nastavením
+`disableSourceOfProjectReferenceRedirect: true` jsou v tomto source-only
+inspection kontraktu odmítnuty diagnostikou `TS_PROJECT_REFERENCE_REDIRECT_DISABLED`
+před publikací; emitted declaration se nevydává za aktuální source target.
 
 `tests/test_typescript_project_references.py` ověřuje dva konkrétní přeshraniční
 targety i při neexistujících/stale `.d.ts` výstupech, transitive input freshness

@@ -9,6 +9,12 @@
 | T003-S08-W01-AC03 | VERIFIED_IN_SCOPE | `test_invalid_reference_graph_is_localized_and_does_not_replace_store`, `test_overlapping_projects_do_not_arbitrarily_choose_symbol_owner`, `test_transitive_project_edit_invalidates_stored_compiler_layer_offline`: žádné falešné rozlišení, žádný zápis na chybě |
 | T003-S08-W01-AC04 | VERIFIED_IN_SCOPE | [change note 36](changes/36_resolveTypeScriptProjectReferences.md), [stavová matice](production-analysis-progress.md); celý S08/AC08 nadále PARTIAL |
 
+Review opravy W01: `test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg`
+ověřuje owner TypeChecker identity, owner CFG a argument parameter při rozdílném
+`strictNullChecks`; `test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation`
+odmítá stale `.d.ts` přes vypnuté source redirects. Finální integrovaná strict sada
+nad main `3503309`: **302 PASS / 7 SKIP**, vlastní worker v2; celý T003-AC08 zůstává PARTIAL.
+
 ## Doplnění T003-S11-W01 (2026-10-26)
 
 | ID | Stav | Podporovaný rozsah a přímá evidence | Běh |

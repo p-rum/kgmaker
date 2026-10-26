@@ -92,7 +92,7 @@ def test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg(tmp_path
     payload['compilerOptions'].update(strict=False, strictNullChecks=False)
     library_config.write_text(json.dumps(payload))
     config(tmp_path, 'app', ('lib',)).write_text(
-        "import {choose} from '../../lib/src/index'; export function run() { return choose(2); }")
+        "import {choose} from '../../lib/src/index'; export function run(input: number) { return choose(input); }")
     (tmp_path / 'tsconfig.json').write_text(json.dumps({'files': [], 'references': [{'path': './app'}]}))
     result = inspect(tmp_path, publish=False)
     assert result['status'] == 'COMPLETE_WITHIN_SUPPORTED_MATRIX', result['diagnostics']
@@ -103,7 +103,10 @@ def test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg(tmp_path
     assert owner['type'] == '(x: number) => number'
     calls = [site for site in result['graph']['call_sites'] if site['path'] == 'app/src/index.ts']
     assert len(calls) == 1 and calls[0]['declared_target'] == owner['id']
+    assert 'null' in calls[0]['signature']  # Preserve the consumer checker's view.
     assert any(cfg['method'] == owner['id'] for cfg in result['graph']['cfgs'])
+    assert any(edge['kind'] == 'argument_to_parameter' and edge['target'] == owner['id'] + ':parameter:0'
+               for edge in result['graph']['edges'])
 
 
 def test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation(tmp_path):

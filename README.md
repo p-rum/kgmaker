@@ -119,6 +119,9 @@ source redirects without emitting outputs, and invalidates stored compiler facts
 when a transitive project input changes. Missing, cyclic, outside-root or
 overlapping reference graphs fail before publication. This does not add callback
 resolution or cross-repository TypeScript source analysis.
+Declaration identities use the owning project's checker even when consumer
+options differ. Referencing configs that disable source redirects are rejected
+before publication rather than trusting emitted declarations.
 
 ## Copilot workflow
 

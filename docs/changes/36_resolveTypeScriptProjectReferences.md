@@ -55,7 +55,7 @@ standardně zneplatní starou compiler vrstvu přes její SHA-256.
   skutečné JVM/TS workers a Maven fixture artefakty, bez dostupného Maven
   executable, Gradle a druhého JDK.
 - Nový skutečný fingerprint test a integrovaná methodology sada: 12 PASS / 12.65 s.
-- Finální integrovaná celá sada s vlastním upraveným workerem:
+- Integrovaná celá sada před nezávislým review s vlastním upraveným workerem:
   `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/kgmaker-venv/bin:$PATH PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`:
   **284 PASS / 7 SKIP / 199.57 s**. Obsahuje všech deset W01 scénářů,
   skutečné compiler workers, React/overload regresi a instalační sdist/wheel
@@ -70,6 +70,33 @@ standardně zneplatní starou compiler vrstvu přes její SHA-256.
   semantic apply/validate, memory capture a command-generated scan/check:
   **PASS**. Stávající ověřené semantic vztahy i historie z main jsou zachovány;
   nepřidává se žádný smyšlený semantic vztah.
+
+### Opravy po nezávislém review
+
+Review reprodukovalo dva P1 případy mimo původní matici. Při rozdílném
+`strictNullChecks` vznikaly dvě identity téže deklarace podle consumer checkeru;
+call target pak neměl owner CFG, ačkoli výstup tvrdil COMPLETE. Deklarace se nyní
+kanonizuje na AST a TypeChecker vlastnícího projektu podle přesné source polohy.
+Consumer call-site signature zůstává oddělená; target identity, argument parameter
+identity a owner CFG ukazují na stejnou vlastněnou deklaraci.
+
+`disableSourceOfProjectReferenceRedirect: true` dovoloval převzít stale emitted
+`.d.ts` jako current resolved target. Takový referencující config nyní v tomto
+source inspection režimu selže s lokalizovanou diagnostikou před zápisem store.
+Neobchází se explicitní compiler option a neimplementuje se nový build workflow.
+
+Obě skutečné acceptance před opravou FAIL, po první opravě 2 PASS / 7.84 s.
+Větev je znovu integrována s main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`;
+XLSX dokumentace, zdroj i všechny sémantické epizody main jsou zachovány.
+
+Finální strict běh po opravách s výše uvedeným explicitním vlastním worker home,
+Temurin 21.0.6+7 a TS 5.7.3: **302 PASS / 7 SKIP / 182.40 s**. Obsahuje všech
+12 W01 scénářů, skutečné původní compiler/React/worker-install testy a nové XLSX
+regrese z main. SKIP zůstávají stejné nedostupné Maven/Gradle/second-JDK scénáře.
+Poslední cílené dvě review reprodukce po doplnění owner parameter a consumer
+signature assertion: **2 PASS / 29.39 s**. Finální scoped semantic update/apply/
+validate, memory capture, scan/check a diff check prošly; žádná historie main
+nebyla přepsána starým branch snapshotem.
 
 ## Hranice a zbývající práce
 
