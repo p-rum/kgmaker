@@ -16,7 +16,7 @@
     "docs/changes/28_captureKotlinCompilerOptions.md": "ad0d6c0340c82d47d0998631d768170217ea36a8a1b167f865b178bc11fd4d5f",
     "docs/changes/29_mapCrossRepoArtifacts.md": "ac0f9bcbe744f806d1bdb4c708b21312e73576899de870096609c7ee68acd685",
     "docs/changes/2_addCompilerWorkers.md": "982ac3317cbd427bb3725e44d074e6012118265f19a195cdcd5e7910756ac293",
-    "docs/changes/30_packageWorkerResources.md": "8a375df4a8eda4f1f0334f33e314dca765519c4273cf5c5e11b7cd526f953b47",
+    "docs/changes/30_packageWorkerResources.md": "44e225fab350e4a94eb73ce3251a87f07575e44bc0d21c3dda5a017683a3ac81",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
@@ -128,7 +128,7 @@
     "docs/tasks/T003-S10-04-filesystemMutationEquivalence.md": "32495da1b6f092e17ae321ee203db4d9a075be39ff7f35bb03908fe87d3f581c",
     "docs/tasks/T003-S10-05-selectiveFeatureRevise.md": "1f98fe34c7632ff8b4d10346fdd378652c637d8db2714875df3befca8c79823c",
     "docs/tasks/T003-S10-06-cacheCorruptionConcurrency.md": "2740e653c99ad4896349915326f78409d2f8910cdf8afc3a0c4890bde1a23ec8",
-    "docs/tasks/T003-S11-01-workerCleanInstall.md": "b17240e98650310e3f217904b5dbce84c334e6ee953a1a1ab7602dacd4d71ba6",
+    "docs/tasks/T003-S11-01-workerCleanInstall.md": "49bc715ff315913884e0a7458b4992fa96325b9814930fe10b7bc54a9f2a97ac",
     "docs/tasks/T003-S11-02-buildExporterPackaging.md": "9d24d6ad5148a3707b470d5e4bc63b22a4b86dbbbb7d6fcae4eb2bd60193efed",
     "docs/tasks/T003-S11-03-windowsNoAdminInstall.md": "4cbb1281d0b5b540020e057499218b9f3f7053ccf14298abb2a1189807387414",
     "docs/tasks/T003-S11-04-mandatoryWorkerCi.md": "1d80fb41309b2458e35d26f425c4db51cf8b2082d5ae3d9f10445409789f5e75",
@@ -24795,6 +24795,192 @@
         }
       ],
       "id": "episode:ecd4cdf91e9b6fb0f788c026d983fc18fd7eeebf3dab1000c6cc57b54b3cb8ea"
+    },
+    {
+      "base_commit": "0c0902896c4803be7e7c1246aa0ba5da45f8ebe2",
+      "head_commit": "69ad5ecb740d30cad0c295a6f0981a2f637f5ace",
+      "worktree_fingerprint": "6469c53163356e148c0547fd8d68f7b4e8c852ddca8656fdfe55f7e614f9280a",
+      "title": "docs: document clean-install test prerequisites and CI evidence",
+      "changed_files": [
+        {
+          "path": ".github/workflows/test.yml",
+          "status": "M",
+          "sha256": "418b0bc60a1571f22b10206a38f704acc218f45c6c9b3a9b35f440d9bb86d5bc"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "0dce22d93e9d9830d3f0c00f85c80d63cf0e93007c022d74453a2c791c107400"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "1873c8106f7fa8697fd2f5af8331109f6ac24762f7f2fa3a14723237439c5877"
+        },
+        {
+          "path": "docs/changes/30_packageWorkerResources.md",
+          "status": "A",
+          "sha256": "44e225fab350e4a94eb73ce3251a87f07575e44bc0d21c3dda5a017683a3ac81"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "b62a7d357d2876b4e125a532e096c3938abd49e499d78d474d0a27168d953cec"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "5374b891660f62f3b8b1be080d5ef4819f37b0c2ff825022a4d4286e6bf94a1e"
+        },
+        {
+          "path": "docs/tasks/T003-S11-01-workerCleanInstall.md",
+          "status": "M",
+          "sha256": "49bc715ff315913884e0a7458b4992fa96325b9814930fe10b7bc54a9f2a97ac"
+        },
+        {
+          "path": "pyproject.toml",
+          "status": "M",
+          "sha256": "dcf831b9bb5143b98e7691113ee7bc47ca6bacaebf8bdf4a37a821a7900b9681"
+        },
+        {
+          "path": "src/kgmaker/inspection.py",
+          "status": "M",
+          "sha256": "ef60a866afda0349593d052016fa6c8934e4119b924b685c34b545b1c88877ea"
+        },
+        {
+          "path": "tests/test_worker_install.py",
+          "status": "A",
+          "sha256": "312478d258e49747c88ab58f1c7c2c59cbdad845673992bbf80391a1fdba662c"
+        },
+        {
+          "path": "workers/__init__.py",
+          "status": "A",
+          "sha256": "b8836a1b9c9845985663f8e3219e4146d4666df37c7dc3a53f054449ab8b547a"
+        }
+      ],
+      "affected_node_ids": [
+        "class:tests/test_worker_install.py:InstalledWorkerTests::44",
+        "class:tests/test_worker_install.py:WorkerSelectionTests::17",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/30_packageWorkerResources.md:30_packageWorkerResources.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/T003-S11-01-workerCleanInstall.md:T003-S11-01-workerCleanInstall.md",
+        "file:src/kgmaker/inspection.py:inspection.py",
+        "file:tests/test_worker_install.py:test_worker_install.py",
+        "file:workers/__init__.py:__init__.py",
+        "function:src/kgmaker/inspection.py:_jvm_worker_jar::53",
+        "function:src/kgmaker/inspection.py:artifact_hash::23",
+        "function:src/kgmaker/inspection.py:command::76",
+        "function:src/kgmaker/inspection.py:distribution::95",
+        "function:src/kgmaker/inspection.py:proof::217",
+        "function:src/kgmaker/inspection.py:relation::230",
+        "function:src/kgmaker/inspection.py:sanitize::101",
+        "function:src/kgmaker/inspection.py:source_snapshot::119",
+        "function:src/kgmaker/inspection.py:validate_response::177",
+        "function:src/kgmaker/inspection.py:worker_home::36",
+        "function:tests/test_worker_install.py:install_wheel::58",
+        "function:tests/test_worker_install.py:run_installed::96",
+        "function:tests/test_worker_install.py:setUpClass::48",
+        "function:tests/test_worker_install.py:test_ambiguous_jvm_distribution_is_rejected::32",
+        "function:tests/test_worker_install.py:test_environment_home_wins_over_packaged_resources::28",
+        "function:tests/test_worker_install.py:test_explicit_home_wins_and_never_falls_back::20",
+        "function:tests/test_worker_install.py:test_missing_installed_artifacts_do_not_mutate_last_graph::136",
+        "function:tests/test_worker_install.py:test_packaged_jvm_analyzes_outside_checkout::171",
+        "function:tests/test_worker_install.py:test_packaged_typescript_analyzes_outside_checkout::153",
+        "function:tests/test_worker_install.py:test_source_only_without_node_or_jdk_or_child_processes::106",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::306",
+        "section:README.md:Copilot workflow::110",
+        "section:README.md:Data prerequisite audit::209",
+        "section:README.md:Development::138",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::163",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::171",
+        "section:README.md:Implementation memory and workflow::127",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::102",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::3",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::137",
+        "section:docs/acceptance-inventory.md:T001::18",
+        "section:docs/acceptance-inventory.md:T002::97",
+        "section:docs/changes/30_packageWorkerResources.md:Distribuce workerů v instalovaném balíčku::1",
+        "section:docs/changes/30_packageWorkerResources.md:Integrační ověření 2026-10-26::58",
+        "section:docs/changes/30_packageWorkerResources.md:Ověření::26",
+        "section:docs/changes/30_packageWorkerResources.md:Použití a hranice::47",
+        "section:docs/changes/30_packageWorkerResources.md:Problém a skutečná změna::7",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::78",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::74",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::55",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::263",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::167",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::53",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::322",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::293",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::342",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::72",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::136",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::76",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::86",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::108",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::24",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::152",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::143",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::161",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::3",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Akceptační kritéria::39",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Akceptační kritéria::50",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Cíl::12",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Implementační kroky::24",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Implementační kroky::35",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Odůvodnění revize 2 (2026-10-26)::16",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Požadavky na testování::32",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Požadavky na testování::43",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Rozsah a konkrétní kontrakty::16",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Rozsah a konkrétní kontrakty::27",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:T003-S11-W01 — Worker distribuce mimo checkout::1",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Větev, PR a Definition of Done::46",
+        "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Větev, PR a Definition of Done::57"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/30_packageWorkerResources.md:Integrační ověření 2026-10-26::58",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Akceptační kritéria::50",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Implementační kroky::35",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Odůvodnění revize 2 (2026-10-26)::16",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Požadavky na testování::43",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Rozsah a konkrétní kontrakty::27",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Větev, PR a Definition of Done::57"
+        ],
+        "removed": [
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Akceptační kritéria::39",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Implementační kroky::24",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Požadavky na testování::32",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Rozsah a konkrétní kontrakty::16",
+          "section:docs/tasks/T003-S11-01-workerCleanInstall.md:Větev, PR a Definition of Done::46"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "strict242",
+          "status": "passed"
+        },
+        {
+          "label": "actual_maven_fixture",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:d05cadc3ecc6ace30805522c65b531c78141babe1be7b41b06e20a656aea43d6"
     }
   ]
 }

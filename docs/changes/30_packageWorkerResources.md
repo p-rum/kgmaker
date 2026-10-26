@@ -54,3 +54,24 @@ zdrojů; uživatel může instalovat i core bez binárních artefaktů.
 Windows transport, immutable publication, úplné benchmark/acceptance pokrytí,
 distribuce JDK/Node a zbývající T003/T004 features nejsou touto změnou dokončeny.
 Gradle a druhý JDK zde nebyly připraveny; jejich skutečné testy zůstávají SKIP.
+
+## Integrační ověření 2026-10-26
+
+Revize 2 zadání opravuje závislost samotného balení: existující worker protocol
+nevyužívá budoucí golden corpus ani callback/generic resolution. Beze změny
+AC01–AC04 umožňuje distribuovat současný podporovaný rozsah; T003-S04-W05,
+T003-S08-W03 i celkové release gates zůstávají povinné a nedokončené.
+Technickou nezávislost ověřilo samostatné code review resolveru a protokolu.
+
+Znovu byly explicitně připraveny Maven 3.9.9, Kotlin 2.1.10 a Jackson 2.18.2
+(shoda distribučních/lockfile checksumů), Temurin 21.0.6+7 a TypeScript 5.7.3.
+Skutečný Maven fixture build: BUILD SUCCESS, JUnit 1 PASS/0 SKIP.
+`KGMAKER_REQUIRE_WORKERS=1` s tímto JDK a
+`/workspace/kgmaker-venv/bin/python -m pytest -q`: **242 PASS / 7 SKIP**
+za 103.12 s, včetně skutečných instalací sdist → wheel mimo checkout.
+Maven nebyl na testovacím PATH, Gradle a druhý JDK nebyly připraveny;
+příslušných sedm testů je explicitně SKIP. Před přípravou úplného JDK selhal
+instalační test na systémovém JRE a před skutečným Maven buildem strict sada
+hlásila 14 setup errors; tyto pokusy nejsou vydávány za PASS.
+Semantic apply/validate a check PASS; navazující integrace do aktuálního main
+vyžaduje nové review přesné base/head dvojice a zelené CI.
