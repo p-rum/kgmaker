@@ -204,3 +204,15 @@ Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
 | Work package | Acceptance | Supported version and evidence | Actual run |
 |---|---|---|---|
 | T003-S03-W03 | AC01–AC04 | gradle-composite-1 / Gradle8.13; `tests/test_gradle_included.py` duplicate lib repos, stale jar substitution, exact resolved order, unique execution-bound producer realm, ambiguous ownership/no-mutation import; legacy manifests covered by existing build suite | rebased review-fix full suite 221 PASS, 0 SKIP; external roots UNBOUND/PARTIAL |
+
+| Work package acceptance | Scope/version | Evidence | Actual run |
+|---|---|---|---|
+| T003-S09-W04-AC01–AC04 | Offline approval sidecar v1; optional additive index hash, graph/store v1/v2/v3 unchanged | `tests/test_methodology_conflicts.py` (11 cases, včetně změny/smazání SVG a nulových procesů při freshness kontrole), existing `test_fa21_approved_requirement_conflict_preserves_authority` | 203 passed in 39.44 s; `KGMAKER_REQUIRE_WORKERS=1`, existing baseline build outputs reused; no whole-S09 claim |
+
+T003-S09-W04 integration against main `0c09028` (2026-10-26): focused feature/scanner/methodology **56 PASS**; full suite **229 PASS, 21 SKIP** without prepared compiler/build artifacts. Historical strict evidence above remains unchanged; see [change note 9](changes/9_bindMethodologyApproval.md).
+
+Prepared packets revalidate documentation conflict coverage outside checkout too; three external HTML/approval/attachment mutation tests reject stale approval without mutating packet/index.
+
+Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP** (5.00 s); focused **56 PASS**. Strict attempt blocked by missing actual Maven fixture (14 setup errors), documented in change note9; no worker PASS is claimed for this environment.
+
+After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.

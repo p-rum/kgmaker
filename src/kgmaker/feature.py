@@ -201,7 +201,8 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
     confluence_index = root / ".kgmaker/confluence-index.json"
     if confluence_index.is_file():
         try:
-            assertions = read_json(confluence_index).get("assertions", [])
+            from .confluence import current_documentation_assertions
+            assertions = current_documentation_assertions(read_json(confluence_index))
             coverage["documentation_conflicts"] = [
                 {key: item.get(key) for key in (
                     "id", "status", "category", "document_file", "section", "authority",
@@ -209,8 +210,8 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
                 ) if item.get(key) is not None}
                 for item in assertions if item.get("status") != "VERIFIED_BY_CODE"
             ]
-        except (AnalysisError, AttributeError):
-            coverage["limitations"].append("Confluence validation index is invalid; rerun `kgmaker docs check`.")
+        except (AnalysisError, AttributeError, KeyError, TypeError, OSError) as exc:
+            coverage["limitations"].append("Confluence validation index is invalid or stale; rerun `kgmaker docs check`: " + str(exc))
     from .flyway import configuration, DEFAULT_LOCATION
     config = configuration(root)
     if (root / DEFAULT_LOCATION).is_dir() or any('path' in p for p in config['provenance']):
@@ -243,13 +244,17 @@ def freshness(root: Path, packet: dict) -> list[str]:
         if selection is None:
             # Schema-v1 packets predate explicit graph selection and covered the
             # complete graph. Keep validating those without inventing a variant.
-            baseline, _, sources, _ = snapshot(root, workspace=workspace, _select_context=False)
+            baseline, current_coverage, sources, _ = snapshot(root, workspace=workspace, _select_context=False)
         else:
-            baseline, _, sources, _ = snapshot(root, workspace=workspace, scope=selection["scope"],
+            baseline, current_coverage, sources, _ = snapshot(root, workspace=workspace, scope=selection["scope"],
                                                context_id=selection.get("context_id"))
     except ValueError as exc:
         return ["selected graph context is unavailable: " + str(exc)]
     changes = []
+    # External export contents are outside the source manifest. Revalidate the
+    # documentation evidence retained in an already prepared packet as well.
+    if current_coverage.get("documentation_conflicts", []) != packet.get("coverage", {}).get("documentation_conflicts", []):
+        changes.append("coverage.documentation_conflicts changed or became stale")
     for key in ("graph_fingerprint", "working_tree_fingerprint", "parser_version", "semantic_hash",
                 "analysis_context_fingerprint"):
         if baseline[key] != packet["baseline"][key]:
