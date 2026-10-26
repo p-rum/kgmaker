@@ -338,3 +338,19 @@ def test_declared_binding_match_is_not_data_availability(kafka_workspace):
     assert result["candidate"]["input_requirements"][0]["availability"] == "UNKNOWN"
     assert not result["data_delivery_gaps"]
     assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("profiles,expression,expected", [([], "default", "orders-default"),
+    ([], "!blue", "orders-default"), ([], "default | prod", "orders-default"),
+    (["blue"], "default", "orders"), (["blue"], "!blue", "orders")])
+def test_explicit_default_profile_precedence_matches_spring(kafka_workspace, profiles, expression, expected):
+    root, manifest, document = kafka_workspace
+    for binding in document["kafka_bindings"]["bindings"]:
+        binding["profiles"] = profiles
+        binding["config_files"][1]["profile"] = expression
+    for repo in ("producer", "consumer"):
+        (root / repo / "src/main/resources/application-blue.properties").write_text("orders.topic=orders-default\n")
+    write_manifest(manifest, document)
+    graph = snapshot_workspace(manifest)[3]
+    bindings = [n for n in graph.nodes if n.kind == "kafka_binding"]
+    assert all(n.metadata["status"] == "RESOLVED" and n.metadata["topic"] == expected for n in bindings)

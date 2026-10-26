@@ -216,7 +216,7 @@ def build_links(workspace, graphs):
                     reasons.append("PROFILE_INPUTS_UNAVAILABLE"); active = False
                 else:
                     try:
-                        active = _profile(config["profile"], set(binding["profiles"]))
+                        active = _profile(config["profile"], set(binding["profiles"] or ["default"]))
                     except (ValueError, RecursionError):
                         reasons.append("PROFILE_EXPRESSION_UNSUPPORTED"); active = False
             if not active:
