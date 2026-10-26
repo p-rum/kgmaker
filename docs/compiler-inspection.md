@@ -268,7 +268,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v6 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -294,6 +294,22 @@ volí FIELD nebo PROPERTY access; embedded atributy a explicitní override mají
 vlastní uzly. Asociace nesou cílovou entitu a roli OWNING/INVERSE, přičemž
 `mappedBy` se váže na konkrétní protistranu. JoinColumn/JoinTable se nemíchá se
 scalar `@Column` a neověřený target či `mappedBy` zůstává diagnostikou.
+Při explicitním `--kotlin-backend k2` se pro constructor properties zachová
+K2 annotation identity a use-site target. `@field:Id`/`@field:EmbeddedId`
+vybere FIELD a `@get:Id` vybere PROPERTY; `@Access` má přednost, ale jeho
+nesoulad s identity targetem je diagnostikován a nevytvoří silnější atribut.
+Kotlin `@Id` bez explicitního FIELD/GET targetu zůstává nejednoznačný. Embedded
+Kotlin ID reuseuje stávající entity/embeddable uzly a nevyžaduje nový graph typ.
+Compiler values zachovají nested `@AttributeOverride` column a class literals;
+nevyřešená explicitní table/column/override hodnota zůstává UNKNOWN a nevytváří
+náhradní fyzické jméno. Testovací JPA API deklaruje skutečné FIELD/METHOD cíle,
+takže implicitní FIELD default i dual-use-site nejednoznačnost odpovídají API.
+Kotlin embeddable member annotations se filtrují podle Jakarta/Javax identity.
+Bez vlastního embeddable `@Access` se column metadata zachová jen pro
+jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
+zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
+známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
+subpackage se nepovažuje za compiler-resolved JPA API.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
@@ -496,8 +512,13 @@ missing/ambiguous call, oddělení test scope, backend/version evidence,
 strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
-K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
-call sites, local/lambda execution ani default-body mapping mimo W02 a coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
+projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI,
+runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping je popsáno v
+[T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
+coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
+diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
@@ -666,3 +687,63 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## T003-S05-W03 — typed condition matrix
+
+The JVM v6 evaluator preserves compiler member types alongside legacy annotation
+display strings. `@Profile` accepts a nonempty string array (OR); expressions
+support `!`, `&`, `|`, parentheses, at most256 tokens/64 nesting levels. Mixed
+`&`/`|` require parentheses, as in Spring. Explicit empty active profiles use
+Spring's ordinary `default` profile; custom default-profile configuration is
+outside this subset. Missing or malformed active-profile snapshots are UNKNOWN.
+
+`ConditionalOnProperty` accepts agreeing `value`/`name` aliases, an optional
+trimmed dot-delimited prefix, all property names (AND), a string `havingValue`
+and a genuine boolean `matchIfMissing`. Context property values must be literal
+strings: default matching accepts any string except case-insensitive false,
+including empty/other text. Case comparison supports ASCII and exact literal
+equality; unsupported non-ASCII case equivalence remains UNKNOWN rather than
+using Python's expanding casefold. Unresolved placeholders, collections and
+malformed members remain UNKNOWN.
+
+`ConditionalOnClass` requires all explicit `value` class literals and `name`
+strings to occur in `spring_available_classes`; `ConditionalOnMissingClass`
+requires all to be absent. An explicit empty inventory means absent; omitted
+inventory means UNKNOWN. Matching uses complete identities without simple-name
+inference. Unresolved compiler class literals stay UNKNOWN in both directions.
+This inventory is a declared selected-context snapshot, not a runtime probe.
+Custom/unsupported Boot conditions stay UNKNOWN and are never executed.
+
+Class, method, imported-configuration and component-scan reachability remain in
+the existing framework projection. INACTIVE dominates UNKNOWN across conditions;
+UNKNOWN dominates ACTIVE. A second raw-profile injection filter is removed, so
+proven negated/OR profiles retain their computed state. Evidence stays
+FRAMEWORK_DERIVED and retains source/compiler/context provenance; no bean runs.
+
+An explicit Python API example (the existing inspection CLI is unchanged):
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+result = inspect_jvm(Path("app"), classpath=["/prepared/api.jar"], publish=False,
+    build_context={"spring_profiles": ["qa"],
+        "spring_properties": {"feature.enabled": "true"},
+        "spring_available_classes": ["java.lang.String"],
+        "spring_component_packages": ["example"]})
+```
+
+Context IDs bind the input snapshot; offline validation detects tampering and
+requires reinspection for older Spring rule versions. Graph v1/v2/v3 remains
+readable; old framework facts are not silently promoted to current rules.
+Explicit variant-specific `project.input_files` and captured classpath hashes
+are checked per context, without narrowing shared build/source inputs. A change
+to one variant's external config/JAR leaves another untouched context fresh and
+the stored graph unchanged. No configuration loader, installation or build is
+implicit in the evaluator or offline freshness path.
+
+Actual API inputs: `fixtures/spring-conditions`, Spring6.2.2/Boot3.4.2, pinned
+hashes/licenses; preparation is an explicit Maven command. Required CI uses
+`KGMAKER_REQUIRE_SPRING_CONDITIONS=1` and runs the real K1/K2 fixture. Local
+missing tools/APIs are SKIP unless required. See
+[change note50](changes/50_expandSpringConditions.md) for final test results and
+remaining unsupported cases; this does not complete all of T003-S05.

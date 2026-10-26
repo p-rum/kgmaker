@@ -421,6 +421,23 @@ Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry
 návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
 ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
 repository metoda se na ni váže přes `uses_named_query`.
+K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
+explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
+properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
+`@Id` bez jednoznačného targetu zůstává UNKNOWN s diagnostikou. Embedded Kotlin
+ID tak zachovává stejné `orm_attribute`/`orm_embeddable` uzly jako Java cesta.
+JPA annotation constants, nested `@AttributeOverride` columns a class literals
+pocházejí z compiler values; částečně nevyřešená explicitní `@Table`, `@Column`
+nebo override hodnota nevytvoří defaultní fyzické mapování. K2 fixture používá
+JPA FIELD/METHOD annotation targets, aby ověřil skutečný implicitní FIELD
+default i samostatnou dual-use-site ambiguity. Kotlin embeddable columns se
+promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
+inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
+patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
+pojmenovaný subpackage není JPA evidence.
+K2 worker zvolíte výslovně při inspekci, například
+`kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
+nepřejde na K1.
 
 
 ## Compiler lifecycle
@@ -499,3 +516,13 @@ Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
 simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
+
+Spring condition rules v6 preserve typed compiler annotation members. Supported
+profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
+support aliases, prefix, all names, `havingValue` and boolean `matchIfMissing`.
+Class conditions compare all exact identities against an explicit context
+inventory. Missing/malformed/unresolved inputs remain UNKNOWN; custom conditions
+are never executed. Profile results also govern injection, so `!dev` is not
+incorrectly filtered as a literal profile name. See
+[the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
+for the bounded contract and explicit Python API example.

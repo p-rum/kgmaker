@@ -409,8 +409,8 @@ object Singleton {
 
             blue=inspect(['blue'],{'feature.custom':'false'})
             selected_context=next(item for item in blue.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v4',selected_context['framework_rule_versions']['spring'])
-            self.assertEqual('annotation-source-v4',selected_context['framework_analysis']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_rule_versions']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_analysis']['spring'])
             beans={node.name:node.id for node in blue.nodes if node.kind=='spring_bean'}
             injections={node.name:node.id for node in blue.nodes if node.kind=='spring_injection'}
             selected={(edge.source,edge.target) for edge in blue.edges if edge.kind=='injects_bean'}
