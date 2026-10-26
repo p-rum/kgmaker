@@ -36463,6 +36463,241 @@
         }
       ],
       "id": "episode:5c7a7af6c43071cea4648ce2caa29239d078e61d7b5ac11d68da59001281ff72"
+    },
+    {
+      "base_commit": "a83dbab6263eb2fe225f0da51f2f2549c0ab162e",
+      "head_commit": "af2c4e3853573e80101fd6ecfbac7471710a660f",
+      "worktree_fingerprint": "b255d82913b0f1a32a16f6fe571db94d7b13c013a9a758f6a8c86c65f61f094f",
+      "title": "Integrate Windows main into approved XLSX boundaries",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "a075679967987bd677912a9da9e95233d50c258e1e5063a3d1d888171258591e"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "d8cf994b0dda7117371beac663006924587a43bffca86cfa0bc01ef105ebbffd"
+        },
+        {
+          "path": "docs/changes/39_boundXlsxFormulaReferences.md",
+          "status": "A",
+          "sha256": "bce6745d60c2f1893b43966a927e8b451fc7a89acc8e9583c89d0701f7202824"
+        },
+        {
+          "path": "docs/feature-analysis.md",
+          "status": "M",
+          "sha256": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "415b0cd65e8e10a6adda5a79b54d9f18199d424f8906a389782bae4848e868dd"
+        },
+        {
+          "path": "src/kgmaker/feature.py",
+          "status": "M",
+          "sha256": "156b73144ced4874555f271cd12eca05e6802f7051299469255f08afec1d2cd5"
+        },
+        {
+          "path": "src/kgmaker/workbooks.py",
+          "status": "M",
+          "sha256": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0"
+        },
+        {
+          "path": "src/kgmaker/workspace.py",
+          "status": "M",
+          "sha256": "4da30f096925de3d9e53cf7b4db4f48be82e35a7654563c5860b15ce9b57eebf"
+        },
+        {
+          "path": "tests/test_workbooks.py",
+          "status": "M",
+          "sha256": "cf74c8dc08f8f6f46cb5d74f5ad95193f2ca6d5be089d7861ef78c2b99201c7c"
+        },
+        {
+          "path": "tests/test_xlsx_references.py",
+          "status": "A",
+          "sha256": "6314c056592f814b59c0ed6a2981d15a75187f0fb27139780c0c147075835e77"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/39_boundXlsxFormulaReferences.md:39_boundXlsxFormulaReferences.md",
+        "file:docs/feature-analysis.md:feature-analysis.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/feature.py:feature.py",
+        "file:src/kgmaker/workbooks.py:workbooks.py",
+        "file:src/kgmaker/workspace.py:workspace.py",
+        "file:tests/test_workbooks.py:test_workbooks.py",
+        "file:tests/test_xlsx_references.py:test_xlsx_references.py",
+        "function:src/kgmaker/feature.py:_analysis_details::23",
+        "function:src/kgmaker/feature.py:apply::415",
+        "function:src/kgmaker/feature.py:attach_schema::100",
+        "function:src/kgmaker/feature.py:current_graph::79",
+        "function:src/kgmaker/feature.py:freshness::254",
+        "function:src/kgmaker/feature.py:graph_for_packet::138",
+        "function:src/kgmaker/feature.py:load_packet::245",
+        "function:src/kgmaker/feature.py:packet_identity::241",
+        "function:src/kgmaker/feature.py:revise::442",
+        "function:src/kgmaker/feature.py:source_inventory::40",
+        "function:src/kgmaker/feature.py:source_path::131",
+        "function:src/kgmaker/feature.py:status::433",
+        "function:src/kgmaker/feature.py:validate::395",
+        "function:src/kgmaker/workbooks.py:_cell_value::112",
+        "function:src/kgmaker/workbooks.py:_column_name::133",
+        "function:src/kgmaker/workbooks.py:_column_number::126",
+        "function:src/kgmaker/workbooks.py:_formula_calls::160",
+        "function:src/kgmaker/workbooks.py:_formula_syntax::154",
+        "function:src/kgmaker/workbooks.py:_identity::72",
+        "function:src/kgmaker/workbooks.py:_part::93",
+        "function:src/kgmaker/workbooks.py:_range_cells::141",
+        "function:src/kgmaker/workbooks.py:_reference_matches::165",
+        "function:src/kgmaker/workbooks.py:_references::189",
+        "function:src/kgmaker/workbooks.py:_unsupported_reference_form::174",
+        "function:src/kgmaker/workbooks.py:_xml::76",
+        "function:src/kgmaker/workbooks.py:attach_workbooks::377",
+        "function:src/kgmaker/workbooks.py:binary_format::37",
+        "function:src/kgmaker/workbooks.py:extract::197",
+        "function:src/kgmaker/workbooks.py:locate_cell::422",
+        "function:src/kgmaker/workbooks.py:unsupported_binary::58",
+        "function:src/kgmaker/workbooks.py:workbook_hash::52",
+        "function:src/kgmaker/workspace.py:_qualified_annotation::101",
+        "function:src/kgmaker/workspace.py:_qualified_call_site::55",
+        "function:src/kgmaker/workspace.py:_qualified_cfg::69",
+        "function:src/kgmaker/workspace.py:_qualified_context::37",
+        "function:src/kgmaker/workspace.py:_qualified_symbol::46",
+        "function:src/kgmaker/workspace.py:_regular_file_hash::413",
+        "function:src/kgmaker/workspace.py:_release_artifact_links::316",
+        "function:src/kgmaker/workspace.py:_validate_release_artifact_snapshot::439",
+        "function:src/kgmaker/workspace.py:_validate_release_mapping::109",
+        "function:src/kgmaker/workspace.py:load_workspace::145",
+        "function:src/kgmaker/workspace.py:qualified::19",
+        "function:src/kgmaker/workspace.py:resolve_service_ownership::259",
+        "function:src/kgmaker/workspace.py:snapshot_workspace::478",
+        "function:src/kgmaker/workspace.py:source_key::33",
+        "function:src/kgmaker/workspace.py:source_path::468",
+        "function:src/kgmaker/workspace.py:split_id::23",
+        "function:tests/test_workbooks.py:test_data_check_uses_hash_bound_workbook_cell_locator::71",
+        "function:tests/test_workbooks.py:test_fa22_extracts_cells_formula_dependencies_named_ranges_and_cache::41",
+        "function:tests/test_workbooks.py:test_fa23_reports_shared_indirect_external_and_binary_xls::56",
+        "function:tests/test_workbooks.py:test_unsafe_relationship_and_archive_limit_fail_closed::100",
+        "function:tests/test_workbooks.py:write_xlsx::31",
+        "function:tests/test_xlsx_references.py:git_baseline_only::164",
+        "function:tests/test_xlsx_references.py:test_dynamic_audit_stays_unknown_and_forged_locator_preserves_store::149",
+        "function:tests/test_xlsx_references.py:test_formula_tokens_do_not_invent_cell_dependencies::81",
+        "function:tests/test_xlsx_references.py:test_literal_sheet_qualifiers_never_fall_back_to_local_cells::131",
+        "function:tests/test_xlsx_references.py:test_named_range_tokens_and_dynamic_boundary_use_same_rules::138",
+        "function:tests/test_xlsx_references.py:test_unsupported_formula_forms_are_boundaries::110",
+        "function:tests/test_xlsx_references.py:test_workspace_does_not_reuse_dependencies_from_old_workbook_parser::183",
+        "function:tests/test_xlsx_references.py:write_formula_book::20",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::377",
+        "section:README.md:Copilot workflow::156",
+        "section:README.md:Data prerequisite audit::271",
+        "section:README.md:Development::184",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::215",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::223",
+        "section:README.md:Implementation memory and workflow::173",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::148",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::25",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::191",
+        "section:docs/acceptance-inventory.md:T001::72",
+        "section:docs/acceptance-inventory.md:T002::151",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::251",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::296",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::284",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::16",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::3",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::275",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::34",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::55",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::45",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Integrace K2 základu::161",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Integrace aktuálního main před nezávislým review::82",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Integrace po ověřeném merge Confluence PR25::142",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Integrace skutečného Windows main po schválení PR27::171",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Kompatibilita a příklad::32",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Opravy z nezávislého review a integrace T006/T007::100",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Ověření::44",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Problém a skutečná změna::9",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Přesné tokeny a unresolved hranice XLSX vzorců::1",
+        "section:docs/changes/39_boundXlsxFormulaReferences.md:Zbývající rozsah::74",
+        "section:docs/feature-analysis.md:Agent reads packet.json and candidate-template.json, writes candidate.json.::56",
+        "section:docs/feature-analysis.md:CLI workflow::33",
+        "section:docs/feature-analysis.md:Candidate contract, schema version 1::114",
+        "section:docs/feature-analysis.md:Context budget and known limits::253",
+        "section:docs/feature-analysis.md:Current implementation::3",
+        "section:docs/feature-analysis.md:Deferred Confluence connection configuration::384",
+        "section:docs/feature-analysis.md:Deterministic data-check::329",
+        "section:docs/feature-analysis.md:Evidence::162",
+        "section:docs/feature-analysis.md:Feature analysis: implemented foundation and remaining milestones::1",
+        "section:docs/feature-analysis.md:Host invocation and tests::272",
+        "section:docs/feature-analysis.md:Implemented field and impact patterns (T001-S02 subset)::297",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::162",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::102",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::112",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::134",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::50",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::178",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::169",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::187",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::222",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::298",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::281",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::239",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::29",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::16",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::251",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::208",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::263"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "integration198",
+          "status": "passed"
+        },
+        {
+          "label": "sourceIdentity",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "graphCheck",
+          "status": "passed"
+        },
+        {
+          "label": "diffCheck",
+          "status": "passed"
+        },
+        {
+          "label": "nativeWindows",
+          "status": "skipped"
+        },
+        {
+          "label": "installedExporters2",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:e7fcbcfdd19e5abe7fe5ca36253a9e8aef963742ea3a7c5d49aa3601c567921f"
     }
   ]
 }
