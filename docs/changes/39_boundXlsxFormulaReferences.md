@@ -167,3 +167,29 @@ workbooks/XLSX/scanner/Confluence/context-selection/ownership: **106 PASS / 0.66
 Scoped semantic apply/validate: PASS, zachovány 4 koncepty/8 vztahů, původní
 main historie jako prefix a vlastní epizody. README citace prepare/update
 zůstávají 134/136. Generovaný scan/check a diff: PASS.
+
+### Integrace skutečného Windows main po schválení PR27
+
+Nová integrační base: `a83dbab6263eb2fe225f0da51f2f2549c0ab162e`, ověřený merge
+Windows PR24. Předchozí schválení nad `eff0d3d` / `c6850edd` ani zelené CI nad
+starou dvojicí nenahrazuje nezávislé review a CI nové integrace. Šest XLSX
+runtime/test souborů zůstává byte-identických s `c6850edd6188cab83d00b39b05ea3ccc07014d49`;
+všech 13 příchozích Windows/K2 source/test/workflow souborů je byte-identických
+s novou main base. Žádná formula ani Windows runtime implementace se nemění.
+Konflikty se týkaly pouze generovaného GRAPH a semantic JSON; graf se obnovuje
+příkazem. Aktuální main semantic facts (čtyři concepts/osm edges) zůstávají
+zachovány, všech80 main episodes tvoří přesný prefix a obě vlastní XLSX episodes
+jsou připojeny beze změny. README prepare/update citace jsou nyní 140/142.
+
+`PYTHONPATH=/workspace/xlsx-references/src /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_xlsx_references.py tests/test_workbooks.py tests/test_binary_xls.py tests/test_data_check.py tests/test_availability.py tests/test_feature.py tests/test_workspace.py tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py tests/test_cross_repo_artifacts.py tests/test_exporter_distribution.py tests/test_confluence_configuration.py tests/test_windows_install.py tests/test_worker_protocol.py -k 'not installed_exporters_run_real_builds'`:
+**198 PASS, 1 SKIP, 2 DESELECTED v 5.94 s**. Native non-admin Windows smoke má
+výslovný SKIP na tomto Linux hostu; dvě deselected varianty jsou skutečné installed
+Maven/Gradle exportery. Jejich předchozí ověřené výsledky ani stará XLSX full-suite
+evidence se nepřejmenovávají na tento nový běh. Kvůli integraci beze změny XLSX
+runtime se stabilní celý test matrix neopakuje.
+
+Scoped semantic update/apply/validate, scan/check a `git diff --check`: **PASS**.
+Durable implementation/test artifacts jsou zapsané, task čeká na review a
+implementační memory capture je součástí lokálního předání. Žádné remote writes ani merge
+tohoto vlastního integračního commitu se neprovádí; parent zajistí publikaci a
+nezávislé exact-pair review před autorizovaným mergem schváleného tasku.
