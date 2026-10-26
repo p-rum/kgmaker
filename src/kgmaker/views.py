@@ -101,10 +101,30 @@ def _release_mapping_pair(graph: KnowledgeGraph, mapping: Mapping, report: Mappi
                 output_path = safe_path(producer_root, report["producer_output_path"])
             if not classpath_path.is_absolute():
                 classpath_path = safe_path(consumer_root, report["consumer_classpath_path"])
-            for path, root in ((output_path, producer_root), (classpath_path, consumer_root)):
-                resolved = path.resolve(strict=True)
-                if not resolved.is_relative_to(root.resolve()) or path.is_symlink():
-                    return None, None, "RELEASE_MAPPING_PATH_INVALID"
+            # Producer outputs belong to the producer checkout. Consumer
+            # classpath entries may legitimately live in an external Maven or
+            # Gradle cache, so bind that path to the exact selected context
+            # entry instead of requiring checkout containment.
+            output_resolved = output_path.resolve(strict=True)
+            if (not output_resolved.is_relative_to(producer_root.resolve())
+                    or output_path.is_symlink()):
+                return None, None, "RELEASE_MAPPING_PATH_INVALID"
+            classpath_entries = [item for item in consumer_context.get("classpath", [])
+                                 if isinstance(item, dict) and item.get("sha256") == output_hash]
+            if len(classpath_entries) != 1:
+                return None, None, "RELEASE_MAPPING_PATH_INVALID"
+            selected_classpath = Path(classpath_entries[0].get("path", ""))
+            if not selected_classpath.is_absolute():
+                selected_classpath = safe_path(consumer_root, str(selected_classpath))
+            try:
+                classpath_resolved = classpath_path.resolve(strict=True)
+                selected_resolved = selected_classpath.resolve(strict=True)
+            except OSError:
+                return None, None, "RELEASE_MAPPING_PATH_INVALID"
+            if (classpath_path.is_symlink() or selected_classpath.is_symlink()
+                    or classpath_resolved != selected_resolved
+                    or not classpath_resolved.is_file()):
+                return None, None, "RELEASE_MAPPING_PATH_INVALID"
             if (file_hash(manifest) != report["manifest_sha256"]
                     or artifact_hash(output_path) != output_hash
                     or artifact_hash(classpath_path) != output_hash):

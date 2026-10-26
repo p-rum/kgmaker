@@ -265,6 +265,34 @@ def test_t006_release_report_without_graph_proof_stays_unresolved(tmp_path):
                for item in selection["diagnostics"])
 
 
+def test_t006_external_cache_classpath_is_bound_to_selected_entry(tmp_path):
+    graph, requests, release_mapping, roots, _, consumer_context, _ = _workspace_selection_fixture(tmp_path)
+    entry = consumer_context["classpath"][0]
+    original = Path(entry["path"])
+    external = tmp_path / "maven-cache" / original.name
+    external.parent.mkdir()
+    external.write_bytes(original.read_bytes())
+    entry["path"] = str(external)
+    report = release_mapping["report"]["mappings"][0]
+    report["consumer_classpath_path"] = str(external)
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"][0]["status"] == "CONTENT_VERIFIED"
+
+    # Matching bytes alone cannot substitute for the exact selected classpath path.
+    unrelated = tmp_path / "other-cache" / original.name
+    unrelated.parent.mkdir()
+    unrelated.write_bytes(external.read_bytes())
+    report["consumer_classpath_path"] = str(unrelated)
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_PATH_INVALID"
+               for item in selection["diagnostics"])
+
+
 def test_t006_shared_context_does_not_choose_an_arbitrary_service_owner(tmp_path):
     graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
     requests.insert(1, {**requests[0], "service_id": "shared-lib-alias"})

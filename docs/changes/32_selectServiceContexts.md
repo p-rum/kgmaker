@@ -21,7 +21,11 @@ libovolný request; workspace `@repo/path` snapshoty se pro single-repo provider
 ověří přes lokální relpaths na kopii contextu; producer BuildManifest selector
 se páruje s vybraným contextem podle `repo_id + build_context_id`; release report
 musí odpovídat deklarovaným repo ID/hash i graph `supplies_classpath` důkazu.
-Duplicitní, stale nebo neshodný report zůstává unresolved.
+Duplicitní, stale nebo neshodný report zůstává unresolved. Classpath položka
+může být v externím Maven/Gradle cache; report je i tak svázán s přesnou
+vybranou položkou kontextu, hashem a pravidly pro běžný soubor bez symlinku.
+Regrese ověřuje přijetí skutečné externí cesty i odmítnutí jiné cesty se stejnými
+byty.
 
 Vazby na zadání: T006-S01–S05, T006-AC01–AC06. Test mapování je v
 [`docs/acceptance-inventory.md`](../acceptance-inventory.md).
@@ -30,8 +34,8 @@ Vazby na zadání: T006-S01–S05, T006-AC01–AC06. Test mapování je v
 
 | Příkaz | Výsledek |
 |---|---|
-| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_cross_repo_artifacts.py tests/test_workspace.py tests/test_t005_add_view_model.py` | 62 passed in 1.72 s |
-| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs` | 275 passed, 23 skipped in 24.64 s on `aa9e64b`; skips are the Maven/JDK/exporter, Gradle 8.13, Kotlin cache, and JVM/TypeScript worker gates |
+| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_cross_repo_artifacts.py tests/test_workspace.py tests/test_inspection_contract.py tests/test_binary_xls.py` | 59 passed in 4.38 s |
+| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs` | 292 passed, 23 skipped in 21.75 s on merged main `3503309`; skips are Maven/JDK/exporter, Gradle 8.13, Kotlin cache, and JVM/TypeScript worker gates |
 | `git diff --check` | PASS |
 | Worker/compiler a Mermaid render | NOT_RUN; tato změna neupravuje compiler ani renderer |
 
@@ -42,5 +46,6 @@ coverage. Nebyl přidán CLI příkaz ani cross-service discovery. Actual compil
 Gradle, Maven, worker install and Mermaid render gates were not run because this
 change only projects saved contexts; full-suite skips are recorded above and are
 not reported as passing worker evidence. The branch includes PR #8 via rebase onto
-`aa9e64b`. Remote PR and CI are NOT_RUN here; the
+`3503309` was integrated with a merge commit to preserve both T006 and main history.
+Remote PR and CI are NOT_RUN here; the
 parent agent coordinates external publication and review.
