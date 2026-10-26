@@ -102,17 +102,8 @@ def actual_k2():
         test = root / "src/test/kotlin/Excluded.kt"
         for path in (java, kotlin, test):
             path.parent.mkdir(parents=True, exist_ok=True)
-        java.write_text("package fixture; public class Helper { public static int plus(int x) { return x + 1; } }")
-        kotlin.write_text("""package fixture
-fun target(x: Int): Int = Helper.plus(x)
-fun caller(): Int = target(3)
-fun jdk(x: Int): Int = java.lang.Math.abs(x)
-fun mappedBuiltin(s: String): String = s.substring(1)
-fun missing(): Int = absent(4)
-fun pick(x: String?): Int = 1
-fun pick(x: Int?): Int = 2
-fun ambiguous(): Int = pick(null)
-""")
+        java.write_text((ROOT / 'tests/fixtures/jvm-golden/Helper.java').read_text(encoding='utf-8'))
+        kotlin.write_text((ROOT / 'tests/fixtures/jvm-golden/Work.kt').read_text(encoding='utf-8'))
         test.write_text("fun excludedTestSymbol(): Int = 42")
         stdlib = HOME / "jvm/target-k2/lib/kotlin-stdlib.jar"
         options = {"kotlin_backend": "k2", "home": HOME, "classpath": [str(stdlib)],

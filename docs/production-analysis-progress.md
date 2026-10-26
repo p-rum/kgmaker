@@ -425,3 +425,13 @@ resume/failure boundaries; K2 source CFG and unresolved dependency ABI remain
 explicit UNKNOWN/PARTIAL. Generated state instructions do not become user source
 calls. Validation status and exact supported matrix are recorded in change51;
 runtime scheduler order and general coroutine state-machine CFG remain unsupported.
+
+## T003-S04-W05 — JVM golden acceptance corpus
+
+A hand-labelled, versioned compiler corpus compares exact source-call counts and
+identities with explicit K1/K2 unsupported boundaries, CFG branches, non-executing
+references and unresolved reflection targets. It reuses existing actual fixtures
+and the application model/provider pipeline, with no production runtime change.
+The local prerequisite stack is explicit; it does not imply those upstream PRs
+are already merged. Current validation and remaining limits are in change57;
+S04/T003 remain PARTIAL outside this bounded static matrix.

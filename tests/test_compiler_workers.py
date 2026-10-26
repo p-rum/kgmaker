@@ -227,26 +227,7 @@ class CompilerWorkerTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=root/'src/main/kotlin/Advanced.kt';source.parent.mkdir(parents=True)
-            source.write_text('''package fixture
-class Advanced(val seed: Int) {
-  var label: String = consume("initial")
-    get() = field
-    set(next) { field = next }
-  init { consume("init") }
-  constructor(): this(1) { consume("secondary") }
-  inline fun <T> apply(value: T, transform: (T) -> String): String = transform(value)
-  operator fun plus(other: Advanced): Advanced = Advanced(seed + other.seed)
-  suspend fun suspendValue(): String = consume("suspend")
-  fun consume(value: String): String = value
-  fun readLabel(): String = label
-  fun writeLabel() { label = "changed" }
-  fun scenario(): String {
-    val reference = ::consume
-    val lambda = { value: String -> consume(value) }
-    val combined = this + Advanced()
-    return apply("x", lambda) + reference("r") + combined.seed
-  }
-}''')
+            source.write_text((ROOT / 'tests/fixtures/jvm-golden/Advanced.kt').read_text(encoding='utf-8'))
             result=inspect_jvm(root,classpath=[str(ROOT/'workers/jvm/target/lib/kotlin-stdlib.jar')],publish=False)
             graph=KnowledgeGraph.from_dict(result['graph'])
             sites=[site for site in graph.call_sites if site.get('path')=='src/main/kotlin/Advanced.kt']
