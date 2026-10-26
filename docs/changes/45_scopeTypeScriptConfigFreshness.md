@@ -66,7 +66,7 @@ Lokální source checkpoint `6b0f17e` byl integrován s main
 `ff26a6d74679fc38820c1f2fe711b1db20af2ca1` (Spring imports a service inventory).
 Jediný textový konflikt byl CI seznam testů: zachovány všechny TS freshness,
 W01, Spring/K2 i Windows mandatory gates. TS CJS/helper, Python snapshot modul
- a test bytes byly před/po integraci porovnány a zůstaly shodné. Shared context
+a test bytes byly před/po integraci porovnány a zůstaly shodné. Shared context
 převzal main JVM-only Spring rule version a zachoval staré TS selector metadata;
 `test_spring_imports_context.py`: **2 PASS**,0.13s.
 
@@ -76,3 +76,33 @@ pinned lockfiles byly před kopírováním byte porovnány. Během testů se wor
 nebuildí ani nepřepisují. Final focus má persistent log/XML
 `/tmp/tsconfig-w02-final-focused.log` a `.xml` a je serializován heavy flockem;
 čekání na jiný legitimní full run není vykazováno jako PASS.
+
+## Finální source-protected focus a aktuální integrace
+
+Final focused suite: **70 PASS**,193.26s; persistent log
+`/tmp/tsconfig-w02-final-focused.log`, JUnit XML stejného stemu. Příkaz pod
+heavy flockem spustil `tests/test_tsconfig_freshness.py`,
+`tests/test_typescript_project_references.py`, `tests/test_graph_provider.py`,
+`tests/test_worker_install.py` a `tests/test_spring_imports_context.py` s vlastním
+PYTHONPATH/worker-home, JDK21 a mandatory workers/K2/Spring flags.
+
+Následně integrován actual main `33dc239a6d2eca2f42364a7b314aeb377e4b441a`
+(mandatory CI a JVM default/bridge source mapping). TS worker/helper/snapshot/tests
+byly SHA256 porovnány proti frozen source a jsou byte-identické. CI konflikt
+zachoval union mandatory CI, default-body, W01/W02, Spring/K2 a Windows gates.
+Před jediným source-final full během byly explicitně připraveny matching K1/K2
+artefakty po byte porovnání JVM/K2 sources, builderu a obou lockfiles; žádný build
+neprobíhá během validace ani offline commandu. Full log/XML:
+`/tmp/tsconfig-w02-full.log`, `/tmp/tsconfig-w02-full.xml`; výsledek dosud PENDING.
+
+GitHub Actions billing/quota nyní brání novému CI běhu. Uživatel povolil pokračovat
+lokálním proof/review a další práci ve stacked větvi; chybějící CI se tím nenahrazuje
+a merge acceptance se netvrdí. Žádné opakované CI retry ani bypass nejsou provedeny.
+
+První full pokus byl přerušen po **207 PASS /7 SKIP /50 setup ERROR**,49.68s:
+chyběly explicitní Maven/Spring fixture outputs a pinned Kotlin na PATH pro novou
+main default-body matici. Nejde o PASS ani runtime regresní závěr. Log/XML byly
+zachovány jako `/tmp/tsconfig-w02-prerequisite-interrupted-full.*`. Před novým
+během byly fixture sources byte porovnány s vlastními skutečně zbuilděnými
+checkouty a jejich output explicitně zkopírován. PATH doplněn o
+`/workspace/tools/kotlinc/bin` (Kotlin2.1.10); mandatory flags nebyly zeslabeny.

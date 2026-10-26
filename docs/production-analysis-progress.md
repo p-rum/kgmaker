@@ -3,11 +3,11 @@
 ## T003-S08-W02 — selected tsconfig freshness kandidát (2026-10-26)
 
 Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;
-profile nemění resolver ani runtime/data availability. Původní tři skutečné
+Změna nemění resolver ani runtime/data availability. Původní tři skutečné
 failure případy nyní prošly; širší snapshot/reference/provider sada46PASS a
 snapshot/installed-wheel sada41PASS jsou zaznamenány v
-[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected
-focus/full jsou povinné a dosud PENDING. Explicitní legacy fallback, stable
+[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected focus **70 PASS**,193.26s; full suite je povinná
+a dosud PENDING. CI je PENDING kvůli GitHub Actions billing/quota. Explicitní legacy fallback, stable
 selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
 [Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
 Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
