@@ -9,6 +9,14 @@
 - Závislosti: T003-S02; žádný jiný work package; průřezové požadavky `T003-R01–R10`.
 - Nadřazená acceptance: `T003-AC03`.
 
+## Stav implementace
+
+Implementováno ve větvi `feat/t003-s03-01-external-toolchain-selection`.
+BuildPlan váže explicitní Java home a hashe `java`/`javac`; BuildRun ověřuje jejich
+nezměněnost, nastaví vybrané prostředí a odmítne exporter hlásící jiné JDK bez
+publikace čerstvých outputs. Autoritativní výsledky testů jsou zapsány v change
+note tohoto work package.
+
 ## Cíl
 
 Doplnit deterministický výběr Maven/Gradle toolchainu a jeho otisk do build contextu.

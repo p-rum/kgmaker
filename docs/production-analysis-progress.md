@@ -33,11 +33,17 @@ doporučenou větev a vyžadují testy, sémantickou aktualizaci, change note, c
 push a samostatný PR. Jde pouze o připravené vykonavatele; žádný profil sám nemění
 stav work package ani nedokládá splnění jeho acceptance.
 
+T045 přidává projektový profil `code_review` pro review vytvořených PR a merge po
+`APPROVE` nad aktuálním HEAD, zelených required checks a ověření cílové větve.
+Jde o nakonfigurovaný proces; skutečné review a merge jednotlivých PR se
+dokládají jejich GitHub stavem a nejsou tímto odstavcem prohlášeny za hotové.
+Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kandidáty.
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
-| T003-S03 build a scope | PARTIAL | Classifier/scope před resolution, read-only Maven reactor discovery, Maven EventSpy `maven-session-2` s parent/BOM/effective dependencies/dependency management/profily/compiler release/toolchain/generated roots, Gradle SourceSet/generated-root export, runner/import; reálný `test_mv02_real_reactor_output_precedes_stale_repository_jar` ověřuje profilovou změnu manifestu, inherited BOM, přednost reactor outputu a content-bound annotation-processor source až po JVM symbol s `origin=generated`; `test_production_scope`, `test_build_runner`, `test_build_aware` | Externí toolchain selection, Gradle custom varianty/included builds, Kotlin options a cross-repo artefakty |
+| T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
 | T003-S04 JVM/Kotlin | PARTIAL | JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2/Analysis API, default-body/coroutine source mapping, širší corpus, dependency dispatch a úplná acceptance banka |
 | T003-S05 Spring | PARTIAL | Spring rules v3 přidávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Dynamic ImportSelector/registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
 | T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
@@ -48,6 +54,12 @@ stav work package ani nedokládá splnění jeho acceptance.
 | T003-S11 release/acceptance | PARTIAL | Šest CI jobů, skutečné buildy, rendering; core package | Clean-install worker distribuce, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
 | T003-S13 runtime | PARTIAL / OPTIONAL | Hash-bound `runtime import` validates context/build/config/source/worker scope and adds `RUNTIME_OBSERVED`; stale source is rejected; `test_build_aware` | Trace/export producer, RTA/value flow, async/reflective capture and deployment/data availability |
+
+Revize T003-S03-W04: Maven exporter označuje nerozřešené implicitní
+language/API defaults jako PARTIAL s diagnostikou místo invalidního placeholderu;
+plugin descriptor classpath včetně skutečného `all-open` JAR nese SHA-256 a
+změna souboru zneplatní manifest před zápisem. Plná sada s povinnými workery,
+Maven, Gradle 8.13 a JDK21/22: 213 PASS, 0 SKIP. S03 zůstává PARTIAL.
 
 ## Co lze nyní použít
 
@@ -93,6 +105,11 @@ feature packets nesou uložený scope/context, context fingerprint a graph evide
 IDs. S02/AC02 jsou ověřené v podporované matici; tyto kontroly neuzavírají celé
 S03/S06/S08/S09 ani další povinné etapy.
 
+Samostatná větev T003-S03-W01 následně ověřila explicitní `--java-home`,
+content-bound JDK binárky a mismatch bez fresh outputs: focused skutečný Maven
+scénář **3 passed in 4.16 s**, compiler workers **14 passed in 26.67 s** a celý
+suite **199 passed in 46.03 s**. Jde o dokončení W01, nikoli celého S03.
+
 [Run 38705043005](https://github.com/p-rum/kgmaker/actions/runs/38705043005) na
 `6b5aea1`: SUCCESS všech šesti jobů — Python 3.11/3.12/3.13, compiler-workers,
 gradle-build-export, rendering. Compiler job log: 29 passed; Maven JUnit fixture:
@@ -110,12 +127,51 @@ Při implementaci u každé změněné položky uveď Task/Step/Acceptance ID, k
 fixture/test/verze a odkaz na skutečný běh. PARTIAL není PASS. Neprovedená kontrola
 je NOT_RUN/blocked, ne úspěch. Historické výsledky nepřepisuj na výsledky nového commitu.
 
-## Nové zadání T004 — 2026-10-20
+T003-S03-W01: skutečná Maven fixture `test_external_toolchain_two_real_jdks` ověřuje explicitní launcher JDK21+22 a odlišné manifest fingerprints. JDK17 s aktuálním exporter bytecode není podporované; Maven compiler-plugin fork selection není tímto důkazem pokryto. Milník S03 zůstává PARTIAL; [evidence](changes/10_selectExternalToolchain.md).
+## T003-S03-W02 — custom Gradle source sets
 
-[High-level zobrazení projektu](tasks/4_addHighLevelProjectViews.md) je ve stavu
-**SPECIFICATION**. Čtyřicet samostatných úkolů T005–T044 pokrývá katalog rozhraní,
-topologii služeb, business průběhy, agentové anotace, exporty, invalidaci a acceptance.
-T005 dodává model a čistý validator schema v1; lokální test run eviduje 20
-specifických testů a celý suite 202 passed, 15 skipped. Tento výsledek se týká
-jen T005 AC01–AC05 a jeho izolovaného scope; CLI, discovery, renderery a další
-T004 capabilities zůstávají SPECIFICATION. Závislosti na T003 jsou explicitní.
+VERIFIED_IN_SCOPE for `gradle-source-sets-2`: explicit per-project custom scope
+mapping, exact built-ins, unknown/invalid declaration diagnostics and additive
+scope provenance. `tests/test_gradle_variants.py` uses actual Gradle 8.13 for
+main/test/generated/custom/unknown plus offline ambiguity and no-mutation tests.
+Android/KMP variant APIs and included builds remain outside this work package;
+T003-S03 remains PARTIAL. Final mandatory full suite: 206 passed in 55.56 s (JDK21/22, JVM/TS workers, Gradle8.13), no skips. See [change note13](changes/13_importGradleSourceSetScopes.md).
+
+## T003-S03-W02 review opravy (2026-10-19)
+
+Source snapshot nových JVM contextů je module/source-set qualified místo pouhého
+scope; offline scan/hook zachovají variantu po editaci sibling source setu stejného
+scope. Vybrané resources a sdílené build/config inputs nadále invalidují kontext.
+GRADLE_CONVENTION přijímá pouze main/production, test/test a testFixtures/test_fixture;
+legacy manifest bez provenance zůstává čitelný. Testy a aktuální celý běh jsou v
+[change note13](changes/13_importGradleSourceSetScopes.md). S03 zůstává PARTIAL.
+
+## T003-S03-W03 — captured composite builds
+
+VERIFIED_IN_SCOPE for `gradle-composite-1` / Gradle8.13: snapshot-contained included
+builds preserve repo-qualified source/context identity, existing classpath realm
+dependencies and deterministic Gradle order. Duplicate lib modules are separate;
+current included output replaces a stale external artifact through actual Gradle
+substitution. Ambiguous artifact ownership is diagnosed without a chosen realm.
+Imported classpath realm requires a unique execution-bound producer output with
+matching path/hash/identity; forged and ambiguous claims fail before store mutation.
+`tests/test_gradle_included.py` provides actual toolchain and negative evidence;
+rebased review-fix full suite 221 PASS, 0 SKIP (including strengthened classpath order fixture). Outside-snapshot roots remain UNBOUND/PARTIAL; T003-S03 remains PARTIAL.
+See [change note17](changes/17_exportGradleIncludedBuilds.md).
+
+T003-S03-W05: `test_cross_repo_artifacts.py` ověřuje `release_mapping` v1 nad
+dvěma producenty se stejným GAV a class name, ale různými JAR bytes. Pouze shodný
+BuildManifest output a compiler classpath hash vytvoří `supplies_classpath`;
+mismatch/duplicate zůstává PARTIAL a invalidní kontrakt zachová poslední store.
+Adresář se shodnými `.class`, ale rozdílným resource souborem je explicitně
+odmítnut jako unsupported kind a nevytvoří hranu.
+Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](changes/29_mapCrossRepoArtifacts.md). Integrovaný strict běh nad W01–W05: 242 PASS, 0 SKIP.
+
+## T005 — společný model pohledu (integrace 2026-10-26)
+
+T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
+Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
+T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
+Ověření modelu a integrace s aktuálním main je uvedeno v
+[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+work packages výše zůstávají beze změny.

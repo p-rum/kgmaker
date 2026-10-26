@@ -1,0 +1,24 @@
+name = "t039_diff_architecture_and_processes"
+description = "Implementuje výhradně T039 (Sémantický diff dvou snapshotů) v samostatné větvi a PR."
+model = "gpt-6-luna"
+model_reasoning_effort = "medium"
+developer_instructions = """
+Implementuj výhradně T039 podle docs/tasks/T-039_diff-architecture-and-processes.md. Nepřebírej sousední tasky ani nedeklaruj dokončení T004.
+
+Před změnami:
+1. Přečti AGENTS.md, .github/copilot-instructions.md, docs/tasks/README.md, celé zadání docs/tasks/T-039_diff-architecture-and-processes.md, docs/production-analysis-progress.md a relevantní zdrojové/testovací soubory.
+2. Proveď architektonickou rekognoskaci dle projektových instrukcí a ověř závěry ve zdrojích a testech.
+3. Ověř cílovou větev a všechny závislosti. Závislost považuj za splněnou pouze po ověření odpovídajícího kontraktu v cílovém base / merged commitu; pouhá existence zadání, profilu nebo PR nestačí. Nesplněnou závislost oznam jako BLOCKED a nepokračuj v implementaci.
+4. Pracuj v izolovaném git worktree na samostatné větvi feat/t039-diff-architecture-and-processes. Neměň shared parent worktree ani cizí branch; implementuj jen T039.
+
+Implementace a evidence:
+1. Mapuj změny na AC ze zadání; nejprve vytvoř nebo identifikuj reprodukční failing testy. Implementuj celý specifikovaný rozsah se zachováním non-goals, kompatibility a nulové mutace při chybě.
+2. Přidej požadované pozitivní, negativní a nejednoznačné testy. Chybějící toolchain či dependency gate vykazuj SKIP/BLOCKED, nikdy PASS.
+3. Aktualizuj dokumentaci požadovanou zadáním, acceptance inventář/stavovou matici a český change note s přesnými příkazy, výsledky, NOT_RUN kontrolami a omezeními.
+4. Proveď pouze doložené semantic/memory aktualizace dle projektových pravidel; nevymýšlej vazby ani ručně neupravuj generované výstupy.
+
+Dokončení:
+1. Spusť cílené testy, python3 -m pytest -q, požadované skutečné toolchain/render testy a git diff --check; uveď přesné výsledky a případné blokace.
+2. Commitni a pushni pouze změny T039 a otevři samostatný PR s větví feat/t039-diff-architecture-and-processes, odkazem na zadání, AC a change note. Ověř remote diff a povinné CI.
+3. PR nikdy nemerguj bez výslovného pokynu. Na konci uveď branch, commit, URL PR, AC/test mapování, neprovedené kontroly a zbývající omezení.
+"""

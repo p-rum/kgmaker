@@ -53,3 +53,26 @@ enum, nested field, NaN and non-JSON inputs return structured validation errors.
 nevybírá kontexty ani nesestavuje katalog/topologii/proces, nemá CLI ani renderer.
 T006 a další tasky zůstávají samostatné SPECIFICATION. Tato změna sama
 neprohlašuje T004 za dokončené. Pull request: #11.
+
+## Integrace s main — 2026-10-26
+
+PR #11 je integrován s `main` na
+`0c0902896c4803be7e7c1246aa0ba5da45f8ebe2`. Konflikty v progress dokumentu
+řeší zachování upstream evidence a připojení odděleného T005 stavu. Sémantická
+vrstva zachovává upstream historii; změněné README/architecture evidence jsou
+znovu ověřeny scoped patchem a generované grafy vznikají příkazem.
+
+Review odhalilo, že neznámá položka `generation_metadata` prošla validátorem,
+ale `from_dict` ji zahodilo. Validator ji nyní odmítá strukturovaným
+`UNKNOWN_FIELD`, v souladu s publikovaným JSON Schema; regresní test
+`test_unknown_generation_metadata_is_rejected_without_silent_data_loss` současně
+ověřuje nulovou mutaci vstupu (T005-AC02/AC04).
+
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t005_add_view_model.py`: **21 PASS**.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`: **242 PASS, 21 SKIP**, 5.46 s, Python 3.12.14 / pytest 8.3.4.
+  SKIP: nepřipravené skutečné JVM/TypeScript/Gradle/Maven a druhé JDK v tomto izolovaném worktree.
+  Změna T005 tyto worker/framework moduly neupravuje; starší výsledky výše nejsou přepisovány.
+- JSON Schema parse, compileall, `semantic update/apply/validate`, memory capture, `scan/check` a `git diff --check`: PASS při integračním předání.
+
+Samostatné T004 capabilities a nesplněné závislosti T003 zůstávají nedodané;
+tento PR neprohlašuje dokončení celého implementačního plánu.

@@ -123,6 +123,19 @@ worktree: `python3 -m pytest -q` — **184 passed in 15.93 s**, Python 3.12.
 | T002-BC-01 | VERIFIED_IN_SCOPE | graph v1/v2/v3 migration; offline refresh | `test_production_scope.py::test_bc01_existing_build_scan_and_hook_never_launch_project_tools`; `test_graph_provider.py` | 184 PASS |
 | T002-EX-01 | PARTIAL | worker timeout/cancel + copied-input mutation | `test_worker_protocol.py`; `test_build_runner.py::test_project_mutating_copied_inputs_cannot_produce_fresh_analysis` | 184 PASS |
 
+T003-S03-W05 doplňuje bounded workspace release mapping v1. Přímá evidence
+`test_content_bound_release_output_links_exact_consumer_classpath`,
+`test_same_gav_and_class_name_with_different_bytes_stays_partial`,
+`test_duplicate_content_match_is_ambiguous_and_creates_no_edge` a
+`test_invalid_release_mapping_preserves_existing_store_and_legacy_absence`;
+`test_directory_outputs_are_not_misreported_as_content_identical` drží
+class-directory/resource mismatch explicitně `PARTIAL`;
+`test_artifact_mutation_during_snapshot_is_stale_and_preserves_store` navíc
+ověřuje nulovou publikaci/cache mutaci při závodu. Sada pokrývá
+T003-S03-W05-AC01 až AC04. Stav je VERIFIED_IN_SCOPE pouze pro přesně
+deklarovaný BuildManifest output a fresh compiler context; celý T003-S03 zůstává
+PARTIAL a runtime deployment zůstává UNKNOWN.
+
 ## Neuzavřené blokátory
 
 Aktualizace 2026-10-16: následující evidence nahrazuje odpovídající starší řádky
@@ -133,7 +146,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 |---|---|---|---|
 | T001-FA-21 | VERIFIED_IN_SCOPE | `test_scanner.py::test_fa21_approved_requirement_conflict_preserves_authority` | Libovolná business/číselná ekvivalence není tímto tvrzena; explicitní hash-bound sidecar je dodaná provenance |
 | T002-MV-02 | VERIFIED_IN_SCOPE | `test_build_runner.py::test_mv02_real_reactor_output_precedes_stale_repository_jar` — skutečný Maven/JDK/exporter | Širší packaging/variant/toolchain matrix patří do S03/S11 |
-| T002-MV-01 | PARTIAL | stejná reálná fixture ověřuje `maven-session-2`, inherited profil, parent/BOM, effective dependencies/dependency management, compiler release, Java/Maven toolchain a content-bound annotation-processor source až po JVM symbol `origin=generated`; tamper je odmítnut | Externí toolchain selection a širší Gradle/variant matice |
+| T002-MV-01 / T003-S03-W01 / T003-S03-W04 | VERIFIED_IN_SCOPE | Testy explicitního Java home ověřují content-bound JDK selection/fingerprint, skutečné `JAVA_HOME`, změnu/chybění a mismatch bez fresh outputs. `test_kotlin_build_options.py` ověřuje reálný Maven 2.1.10 a Gradle 8.13 export task/execution-level Kotlin language/API/JVM targetu a flags; implicitní nevyřešené defaults dávají PARTIAL, skutečný Maven `all-open` plugin je SHA-256-bound a jeho výměna se odmítá před store zápisem. Změna flagu mění pouze dotčenou context identity; malformed options jsou odmítnuty bez implicitního procesu. Reactor fixture dále ověřuje `maven-session-2`, inherited profil, parent/BOM, dependency model a generated source až po JVM symbol `origin=generated` | Gradle custom varianty/included builds a cross-repo artefakty zůstávají v T003-S03; zachycené options nerozšiřují K1 podporu |
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
@@ -165,3 +178,20 @@ patří do S03–S10 a není součástí tohoto VERIFIED tvrzení.
 Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
 v T003; zelený souhrnný běh jejich chybějící varianty nedokládá.
+
+T003-S03-W01 AC01/AC03: `test_external_toolchain_two_real_jdks` ověřuje skutečný Maven/JDK21+22 export; `test_explicit_java_home_is_content_bound_and_used_by_build` ověřuje i omezený environment allowlist. Dvě JDK jsou povinná pro tuto fixture, nepřítomnost je SKIP, nikoli PASS. Detail běhu: [change note 10](changes/10_selectExternalToolchain.md).
+| Work package | Acceptance | Version/scope | Test evidence |
+|---|---|---|---|
+| T003-S03-W02 | AC01–AC04 | gradle-source-sets-2, Gradle 8.13 Java SourceSetContainer, custom explicit scope | `tests/test_gradle_variants.py`: real Gradle main/test/generated/custom/unknown; invalid provenance rejects publication; ambiguous membership stays unknown; mandatory full suite 206 passed in 55.56 s, no skips |
+
+T003-S03-W02 review P1 evidence: `test_selected_variant_snapshot_ignores_sibling_sources_and_configs_offline`
+proves selected variant freshness across sibling edits/additions and resource changes,
+while selected/shared config changes stale it without processes.
+`test_forged_gradle_convention_preserves_existing_store` rejects custom or mismatched
+conventional pairs before mutation; `test_conventional_pairs_and_legacy_manifest_remain_readable`
+preserves the three exact conventions and absent-provenance legacy input.
+Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
+
+| Work package | Acceptance | Supported version and evidence | Actual run |
+|---|---|---|---|
+| T003-S03-W03 | AC01–AC04 | gradle-composite-1 / Gradle8.13; `tests/test_gradle_included.py` duplicate lib repos, stale jar substitution, exact resolved order, unique execution-bound producer realm, ambiguous ownership/no-mutation import; legacy manifests covered by existing build suite | rebased review-fix full suite 221 PASS, 0 SKIP; external roots UNBOUND/PARTIAL |

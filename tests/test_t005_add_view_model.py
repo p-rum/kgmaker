@@ -89,6 +89,16 @@ def test_generation_metadata_is_outside_content_fingerprint():
     assert first.content_fingerprint == second.content_fingerprint
 
 
+def test_unknown_generation_metadata_is_rejected_without_silent_data_loss():
+    data = sample_view()
+    data["generation_metadata"] = {"generated_at": "2026-10-26T00:00:00Z", "build": "abc"}
+    before = deepcopy(data)
+    with pytest.raises(ViewValidationError) as caught:
+        ViewDocument.from_dict(data)
+    assert {"code": "UNKNOWN_FIELD", "path": "generation_metadata.build"} in caught.value.errors
+    assert data == before
+
+
 def test_scope_context_and_evidence_kind_are_preserved_without_upgrade():
     data = sample_view()
     data["nodes"][0]["attributes"]["scope"] = "test"

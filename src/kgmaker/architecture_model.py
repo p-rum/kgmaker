@@ -172,8 +172,11 @@ def validate_view_document(data: Mapping[str, Any]) -> None:
     generation = data.get("generation_metadata", {})
     if not isinstance(generation, Mapping):
         err("INVALID_GENERATION_METADATA", "generation_metadata")
-    elif "generated_at" in generation and not isinstance(generation.get("generated_at"), str):
-        err("INVALID_GENERATION_METADATA", "generation_metadata.generated_at")
+    else:
+        for key in set(generation) - {"generated_at"}:
+            err("UNKNOWN_FIELD", f"generation_metadata.{key}")
+        if "generated_at" in generation and not isinstance(generation.get("generated_at"), str):
+            err("INVALID_GENERATION_METADATA", "generation_metadata.generated_at")
     nodes = data.get("nodes") if isinstance(data.get("nodes"), list) else []
     edges = data.get("edges") if isinstance(data.get("edges"), list) else []
     provenance = data.get("provenance") if isinstance(data.get("provenance"), list) else []
@@ -265,4 +268,3 @@ def validate_view_document(data: Mapping[str, Any]) -> None:
                     err("INVALID_EVIDENCE_REFERENCE", f"{collection_name}[{i}].evidence_refs[{j}]")
     if errors:
         raise ViewValidationError(errors)
-

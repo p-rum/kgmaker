@@ -14,6 +14,68 @@ STATUSES = {"SUCCESS", "FAILED", "PARTIAL", "TIMED_OUT", "CANCELLED", "TOOLCHAIN
 HASH = re.compile(r"[0-9a-f]{64}\Z")
 
 
+def _validate_toolchain_selection(value: object) -> dict | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or value.get("selection") != "EXPLICIT_JAVA_HOME":
+        raise AnalysisError("Invalid explicit toolchain selection")
+    home = value.get("java_home")
+    executables = value.get("executables")
+    if not isinstance(home, str) or not home or not Path(home).is_absolute() or not isinstance(executables, dict):
+        raise AnalysisError("Explicit toolchain requires an absolute Java home and executable records")
+    for name in ("java", "javac"):
+        record = executables.get(name)
+        if (not isinstance(record, dict) or not isinstance(record.get("path"), str)
+                or not Path(record["path"]).is_absolute() or not HASH.fullmatch(str(record.get("sha256", "")))):
+            raise AnalysisError("Explicit toolchain executable record is invalid")
+    expected = digest({key: item for key, item in value.items() if key != "fingerprint"})
+    if value.get("fingerprint") != expected:
+        raise AnalysisError("Explicit toolchain fingerprint mismatch")
+    for name in ("java", "javac"):
+        record = executables[name]
+        path = Path(record["path"])
+        if not path.is_file() or file_hash(path) != record["sha256"]:
+            raise AnalysisError("STALE_TOOLCHAIN: selected Java toolchain changed", 3)
+    return value
+
+
+def validate_kotlin_options(options: dict) -> None:
+    """Captured configuration is not evidence that our frontend implements it."""
+    if not isinstance(options, dict) or type(options.get("schema_version")) is not int or options["schema_version"] != 1:
+        raise AnalysisError("Kotlin options require schema_version 1")
+    if options.get("status") not in {"CAPTURED_CONFIGURATION", "PARTIAL", "NOT_OBSERVED"}:
+        raise AnalysisError("Kotlin options require an explicit capture status")
+    for key in ("language_version", "api_version", "jvm_target", "compiler_version"):
+        value = options.get(key)
+        if value is not None and (not isinstance(value, str) or not value or "${" in value):
+            raise AnalysisError("Kotlin option is not resolved: " + key)
+    for key in ("free_args", "plugins", "plugin_options", "opt_in"):
+        value = options.get(key, [])
+        if not isinstance(value, list) or any(not isinstance(item, str) or "${" in item for item in value):
+            raise AnalysisError("Kotlin option requires resolved strings: " + key)
+    artifacts = options.get("plugin_artifacts")
+    if artifacts is not None:
+        if (not isinstance(artifacts, list)
+                or (options.get("status") == "CAPTURED_CONFIGURATION" and options.get("plugins") and not artifacts)):
+            raise AnalysisError("Kotlin plugin artifacts require resolved files")
+        seen = set()
+        for artifact in artifacts:
+            if (not isinstance(artifact, dict)
+                    or set(artifact) != {"coordinates", "path", "sha256"}
+                    or not isinstance(artifact.get("coordinates"), str) or not artifact["coordinates"]
+                    or not isinstance(artifact.get("path"), str) or not Path(artifact["path"]).is_absolute()
+                    or not HASH.fullmatch(str(artifact.get("sha256", "")))
+                    or artifact["path"] in seen):
+                raise AnalysisError("Kotlin plugin artifact record is invalid")
+            seen.add(artifact["path"])
+            path = Path(artifact["path"])
+            if path.is_symlink() or not path.is_file() or file_hash(path) != artifact["sha256"]:
+                raise AnalysisError("STALE_KOTLIN_PLUGIN: Kotlin plugin artifact changed", 3)
+    for key in ("java_parameters", "all_warnings_as_errors", "suppress_warnings", "progressive"):
+        if key in options and type(options[key]) is not bool:
+            raise AnalysisError("Kotlin option requires boolean: " + key)
+
+
 def validate_manifest(root: Path, manifest: dict) -> dict:
     if not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int or manifest["schema_version"] != 1:
         raise AnalysisError("BuildManifest schema_version must be 1")
@@ -33,13 +95,31 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
             raise AnalysisError("STALE_SOURCE: " + path, 3)
     if not isinstance(manifest.get("contexts"), list):
         raise AnalysisError("BuildManifest contexts are missing")
+    selected_toolchain = _validate_toolchain_selection(manifest.get("toolchain_selection"))
     ids = set()
+    output_producers: dict[str, list[tuple[str, dict[str, str]]]] = {}
+    build_repos = {}; repo_builds = {}
     for context in manifest["contexts"]:
         if not isinstance(context, dict) or not isinstance(context.get("id"), str) or context["id"] in ids:
             raise AnalysisError("Duplicate/invalid build context")
         ids.add(context["id"])
         if context.get("scope") not in SCOPES or not all(isinstance(context.get(k), str) and context[k] for k in ("module", "source_set", "repo_id")):
             raise AnalysisError("Build context requires repo/module/source-set/scope")
+        build_root = context.get("build_root")
+        if build_root is not None:
+            if not isinstance(build_root, str) or not build_root:
+                raise AnalysisError("Build root must be a snapshot-relative identity")
+            safe_path(root, build_root)
+            repo = context["repo_id"]
+            if (build_root != "." and repo == "local") or (build_root in build_repos and build_repos[build_root] != repo) or (repo in repo_builds and repo_builds[repo] != build_root):
+                raise AnalysisError("Ambiguous included build repository identity")
+            build_repos[build_root] = repo; repo_builds[repo] = build_root
+        scope_origin = context.get("scope_origin")
+        if scope_origin is not None and (not isinstance(scope_origin, str) or scope_origin not in {"GRADLE_CONVENTION", "EXPLICIT_MAPPING", "UNKNOWN"}
+                or (scope_origin == "UNKNOWN" and context["scope"] != "unknown")
+                or (scope_origin == "GRADLE_CONVENTION" and
+                    {"main": "production", "test": "test", "testFixtures": "test_fixture"}.get(context["source_set"]) != context["scope"])):
+            raise AnalysisError("Invalid source-set scope provenance")
         if not isinstance(context.get("source_roots"), list) or not isinstance(context.get("source_files"), list):
             raise AnalysisError("Build source roots/files must be arrays")
         for path in context["source_roots"] + context["source_files"]:
@@ -70,12 +150,17 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
             raise AnalysisError("Build profiles must be nonempty strings")
         if not isinstance(context.get("compiler_options", {}), dict):
             raise AnalysisError("Compiler options must be an object")
+        if "kotlin" in context.get("compiler_options", {}):
+            validate_kotlin_options(context["compiler_options"]["kotlin"])
         toolchain = context.get("toolchain")
         if toolchain is not None and (not isinstance(toolchain, dict)
                 or not isinstance(toolchain.get("java_version"), str) or not toolchain["java_version"]
                 or ("java_home" in toolchain and
                     (not isinstance(toolchain["java_home"], str) or not toolchain["java_home"]))):
             raise AnalysisError("Toolchain requires a captured Java version and valid optional home")
+        if selected_toolchain is not None and result["status"] == "SUCCESS":
+            if toolchain is None or Path(toolchain.get("java_home", "")).resolve() != Path(selected_toolchain["java_home"]).resolve():
+                raise AnalysisError("Explicit toolchain does not match the toolchain reported by the build")
         coordinates = ("group_id", "artifact_id", "version")
         for field in ("effective_dependencies", "dependency_management", "imported_boms"):
             values = context.get(field, [])
@@ -118,6 +203,24 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
                 path = safe_path(root, artifact["path"])
             if artifact_hash(path) != artifact.get("sha256"):
                 raise AnalysisError("STALE_OUTPUT: " + str(path), 3)
+            if artifact.get("freshness") == "EXECUTION_BOUND":
+                realm = {key: context[key] for key in ("repo_id", "module", "source_set", "scope")}
+                output_producers.setdefault(str(path.resolve()), []).append((artifact["sha256"], realm))
+    for context in manifest["contexts"]:
+        for artifact in context["classpath"]:
+            claimed_realm = artifact.get("realm")
+            if claimed_realm is None:
+                continue
+            if (not isinstance(claimed_realm, dict)
+                    or set(claimed_realm) != {"repo_id", "module", "source_set", "scope"}
+                    or any(not isinstance(value, str) or not value for value in claimed_realm.values())):
+                raise AnalysisError("Invalid classpath artifact realm")
+            path = Path(artifact["path"])
+            if not path.is_absolute():
+                path = safe_path(root, artifact["path"])
+            producers = output_producers.get(str(path.resolve()), [])
+            if len(producers) != 1 or producers[0] != (artifact["sha256"], claimed_realm):
+                raise AnalysisError("Classpath realm requires one matching execution-bound producer output")
     if snapshot.get("inventory") == "ALL_BUILD_INPUTS_V1":
         from .build_runner import snapshot as inventory
         if inventory(root) != snapshot["sources"]:
@@ -125,6 +228,39 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
     elif any(o.get("freshness") == "EXECUTION_BOUND" for c in manifest["contexts"] for o in c.get("outputs", [])):
         raise AnalysisError("Fresh outputs require a complete build-input inventory")
     return copy.deepcopy(manifest)
+
+
+def resolve_content_bound_output(root: Path, manifest: dict, *, context_id: str,
+                                 sha256: str) -> dict:
+    """Resolve one successful build output by context and content.
+
+    Coordinates and filenames are deliberately absent from the identity.  A
+    workspace mapping may only consume an execution-bound output from a
+    currently valid BuildManifest.
+    """
+    if not isinstance(context_id, str) or not context_id or not HASH.fullmatch(sha256):
+        raise AnalysisError("Invalid release output selector")
+    validated = validate_manifest(root, manifest)
+    contexts = [item for item in validated["contexts"] if item["id"] == context_id]
+    if not contexts:
+        raise AnalysisError("RELEASE_OUTPUT_CONTEXT_UNAVAILABLE: " + context_id, 3)
+    if len(contexts) != 1:
+        raise AnalysisError("RELEASE_OUTPUT_CONTEXT_AMBIGUOUS: " + context_id, 3)
+    matches = [
+        item for item in contexts[0].get("outputs", [])
+        if item.get("sha256") == sha256 and item.get("freshness") == "EXECUTION_BOUND"
+    ]
+    if not matches:
+        raise AnalysisError("RELEASE_OUTPUT_HASH_MISMATCH: " + sha256, 3)
+    if len(matches) != 1:
+        raise AnalysisError("RELEASE_OUTPUT_AMBIGUOUS: " + sha256, 3)
+    selected = matches[0]
+    path = Path(selected["path"])
+    if not path.is_absolute():
+        path = safe_path(root, selected["path"])
+    if path.is_symlink() or not path.is_file():
+        raise AnalysisError("RELEASE_OUTPUT_KIND_UNSUPPORTED: regular file required", 3)
+    return copy.deepcopy(selected)
 
 
 def import_manifest(root: Path, manifest: dict) -> dict:
@@ -163,7 +299,7 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
     handwritten_roots = [path for path in selected["source_roots"] if path not in generated_roots]
     handwritten_files = [path for path in selected["source_files"] if path not in generated_files]
     source_sets = [{"module": selected["module"], "id": selected["source_set"], "scope": selected["scope"],
-                    "roots": handwritten_roots, "files": handwritten_files}]
+                    "scope_origin": selected.get("scope_origin"), "roots": handwritten_roots, "files": handwritten_files}]
     if generated_roots or generated_files:
         source_sets.append({"module": selected["module"], "id": selected["source_set"] + ":generated",
                             "scope": selected["scope"], "roots": generated_roots,

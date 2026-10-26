@@ -76,6 +76,17 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    options = (context.get("compiler_options") or {}).get("kotlin")
+    if options is not None:
+        from .analysis_model import AnalysisError
+        from .build_model import validate_kotlin_options
+        try:
+            validate_kotlin_options(options)
+        except AnalysisError as error:
+            raise WorkerError("STALE_INDEX: invalid Kotlin configuration: " + str(error), "STALE") from error
+        if context.get("selection_key") and context["selection_key"] != _selection_key(
+                {key: value for key, value in context.items() if key != "selection_key"}):
+            raise WorkerError("STALE_INDEX: Kotlin compiler context configuration changed", "STALE")
     for item in (context.get("project") or {}).get("input_files", []) + context.get("worker", {}).get("distribution", []):
         if not Path(item["path"]).is_file() or file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("STALE_INDEX: project input or worker distribution changed", "STALE")
@@ -87,11 +98,8 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     if context.get("analyzer_version"):
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
-        current_files = dict(sorted((path, checksum) for path, checksum in current.files.items()
-                                    if any(node.kind == "file" and node.path == path
-                                           and (node.scope == context["scope"]
-                                                or (node.scope == "unknown" and node.role == "configuration"))
-                                           for node in current.nodes)))
+        from .inspection import source_snapshot
+        current_files = source_snapshot(root, current, context)
         if current_files != context.get("source_files", {}):
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
     for path, expected in context.get("source_files", {}).items():
@@ -110,6 +118,31 @@ def validate_compiler_snapshot(root: Path, graph: KnowledgeGraph) -> None:
     """Validate every usable compiler context without executing a process."""
     for context in _compiler_contexts(graph, include_stale=False):
         validate_context_snapshot(root, context)
+
+
+def resolve_context_classpath_artifact(root: Path, context: dict, sha256: str) -> dict:
+    """Resolve one fresh compiler classpath entry by content, never by GAV/name."""
+    from .analysis_model import AnalysisError
+    from .build_model import HASH
+    if not isinstance(context, dict) or not context.get("analyzer_version"):
+        raise AnalysisError("RELEASE_CONSUMER_CONTEXT_UNAVAILABLE", 3)
+    if not isinstance(sha256, str) or not HASH.fullmatch(sha256):
+        raise AnalysisError("Invalid release classpath selector")
+    validate_context_snapshot(root, context)
+    matches = [item for item in context.get("classpath", [])
+               if isinstance(item, dict) and item.get("sha256") == sha256]
+    if not matches:
+        raise AnalysisError("RELEASE_CLASSPATH_HASH_MISMATCH: " + sha256, 3)
+    if len(matches) != 1:
+        raise AnalysisError("RELEASE_CLASSPATH_AMBIGUOUS: " + sha256, 3)
+    selected = matches[0]
+    path = Path(selected["path"])
+    if not path.is_absolute():
+        from .analysis_model import safe_path
+        path = safe_path(root, selected["path"])
+    if path.is_symlink() or not path.is_file():
+        raise AnalysisError("RELEASE_CLASSPATH_KIND_UNSUPPORTED: regular file required", 3)
+    return dict(selected)
 
 
 def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
