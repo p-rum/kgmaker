@@ -182,6 +182,37 @@ public final class JavaFrontend {
             }catch(IllegalArgumentException error){reason="UNSUPPORTED_SIGNATURE:"+error.getMessage();}
             if(tree instanceof MemberReferenceTree)kind="METHOD_REFERENCE";
             String identity=state.site(caller,location,target,kind,receiver,reason);calls.put(tree,identity);
+            if(target!=null && element instanceof ExecutableElement executable && !(tree instanceof MemberReferenceTree)) {
+                List<? extends ExpressionTree> arguments=tree instanceof MethodInvocationTree call?call.getArguments():
+                    tree instanceof NewClassTree call?call.getArguments():List.of();
+                var parameters=executable.getParameters();boolean completeBinding=true;
+                List<? extends TypeMirror> parameterTypes=parameters.stream().map(VariableElement::asType).toList();
+                if(tree instanceof MethodInvocationTree call && trees.getTypeMirror(TreePath.getPath(unit,call.getMethodSelect())) instanceof ExecutableType attributed)
+                    parameterTypes=attributed.getParameterTypes();
+                for(int index=0;index<arguments.size();index++) {
+                    int parameterIndex=executable.isVarArgs()?Math.min(index,parameters.size()-1):index;
+                    if(parameterIndex<0 || parameterIndex>=parameters.size()) {
+                        state.diagnostic("JAVA_ARGUMENT_MAPPING_UNAVAILABLE","Attributed argument has no formal",location);completeBinding=false;break;
+                    }
+                    String transformation="DIRECT";
+                    if(executable.isVarArgs() && parameterIndex==parameters.size()-1) {
+                        var argumentType=trees.getTypeMirror(TreePath.getPath(unit,arguments.get(index)));
+                        var arrayType=parameterTypes.getLast();
+                        if(arrayType instanceof ArrayType array && array.getComponentType().getKind()==TypeKind.TYPEVAR) {
+                            completeBinding=false;
+                            state.diagnostic("JAVA_VARARG_TRANSFORMATION_UNAVAILABLE","Vararg array packing requires an instantiated formal type",loc(arguments.get(index)));
+                            continue;
+                        }
+                        transformation=arguments.size()==parameters.size() && argumentType!=null &&
+                            types.isAssignable(argumentType,arrayType)?"VARARG_ARRAY":"VARARG_ELEMENT";
+                    }
+                    if(!state.argumentBinding(identity,target,index,parameterIndex,parameters.get(parameterIndex).getSimpleName().toString(),
+                        transformation,loc(arguments.get(index)))) {
+                        completeBinding=false;state.diagnostic("JAVA_ARGUMENT_MAPPING_UNAVAILABLE","Argument expression locator is unavailable",location);
+                    }
+                }
+                state.bindingStatus(identity,completeBinding,completeBinding?"JAVAC_EXECUTABLE_ARGUMENT_MAPPING":"JAVA_ARGUMENT_MAPPING_UNAVAILABLE");
+            }
             if(dispatchEligible && target!=null && dispatchReceiver!=null && Set.of("VIRTUAL","INTERFACE").contains(kind))state.sites.getLast().putAll(map("dispatch_kind",kind,"dispatch_receiver",dispatchReceiver.replace('.','/')));
             if(target!=null && dispatchBoundary!=null && Set.of("VIRTUAL","INTERFACE").contains(kind)) {
                 state.sites.getLast().put("dispatch_completeness_reason",dispatchBoundary);

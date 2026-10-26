@@ -416,3 +416,15 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+## T003-S07-W01 — Argument → parameter binding
+
+Explicit compiler inspection records declared-contract argument bindings using
+Javac attribution, K1 resolved argument maps and TypeScript signatures. Named and
+omitted/default arguments, vararg aggregates, original call-site/context and
+transformation are preserved. K2 Kotlin/ASM unavailable proofs and erroneous or
+ambiguous mappings remain UNKNOWN/PARTIAL; candidate dispatch never becomes
+execution or data availability. Existing SOURCE_ONLY local parsing is separate.
+Actual fixtures and remaining boundaries are scoped in
+[change52](changes/52_bindArgumentParameterFlow.md); final results are reported
+only after validation. S07/T003 are not complete.

@@ -399,3 +399,12 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+## T003-S07-W01 — Argument → parameter binding
+
+| Acceptance | Implemented scope | Concrete evidence |
+|---|---|---|
+| AC01 | Attributed call-site argument → declared formal mapping with context/transformation; candidate execution not inferred | `tests/test_argument_parameter_flow.py`: actual Javac/K1/TS overload, named/default and vararg fixtures; virtual contract negative |
+| AC02 | Additive mapping version1; existing worker protocol v1 and graph/store v1/v2/v3 retained; legacy unversioned facts readable | graph/process roundtrip, legacy tests and existing model/store suites |
+| AC03 | Unknown K2/ASM bindings, compiler-error recovery, unresolved/reference boundaries, malformed/ambiguous and zero store mutation | actual negative compiler fixtures, atomic last-valid-store fixture, workspace qualification and candidate/legacy impact tests |
+| AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |

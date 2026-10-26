@@ -33,7 +33,7 @@ class KotlinFrontend(private val state: State) {
     companion object {
         const val backend = "k1-compat-1"
         const val compiler = "kotlin-2.1.10-k1"
-        val capabilities = listOf("kotlin-1.9-compatible-attribution")
+        val capabilities = listOf("k1-argument-parameter-bindings-v1","kotlin-1.9-compatible-attribution")
         val limitations = listOf("Kotlin frontend is the verified K1 language-1.9 compatibility subset, not full K2 Analysis API.")
     }
     private lateinit var binding: BindingContext
@@ -269,6 +269,32 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
+            if(target!=null && descriptor!=null && resolved!=null && resolved.status.isSuccess) {
+                val arguments=expression.valueArguments+expression.lambdaArguments
+                var completeBinding=true
+                for((parameter,value) in resolved.valueArguments) {
+                    if(value is org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument) {
+                        state.omittedArgument(identity,parameter.index,parameter.name.asString(),"DEFAULT_VALUE_NOT_EVALUATED")
+                    }
+                    for(argument in value.arguments) {
+                        val index=arguments.indexOf(argument)
+                        val argumentExpression=argument.getArgumentExpression()
+                        if(index<0 || argumentExpression==null) {
+                            state.diagnostic("K1_ARGUMENT_MAPPING_UNAVAILABLE","Compiler argument has no source expression",loc(expression))
+                            completeBinding=false
+                            continue
+                        }
+                        val transformation=if(parameter.varargElementType!=null) {
+                            if(argument.getSpreadElement()!=null)"VARARG_SPREAD" else "VARARG_ELEMENT"
+                        } else "DIRECT"
+                        if(!state.argumentBinding(identity,target,index,parameter.index,parameter.name.asString(),transformation,loc(argumentExpression))) {
+                            completeBinding=false
+                            state.diagnostic("K1_ARGUMENT_MAPPING_UNAVAILABLE","Argument expression locator is unavailable",loc(expression))
+                        }
+                    }
+                }
+                state.bindingStatus(identity,completeBinding,if(completeBinding)"K1_RESOLVED_ARGUMENT_MAPPING" else "K1_ARGUMENT_MAPPING_UNAVAILABLE")
+            }
             if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
                 resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
                 val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression

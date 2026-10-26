@@ -666,3 +666,48 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## Argument to parameter bindings
+
+T003-S07-W01 uses the existing canonical method and parameter IDs plus call-site
+argument value occurrences. Worker protocol v1 and graph/store v1/v2/v3 are
+unchanged; `argument_mapping_version=1` is additive. Formal IDs use the existing
+`METHOD_ID:parameter:INDEX` convention, independently from parameter names.
+
+| Compiler | Supported static binding proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Attributed overloads, ordinary method/constructor arguments, vararg element/array binding; generic methods use instantiated executable formal types | Erroneous/unresolved calls; generic constructor vararg packing without instantiated formal; unavailable expression locator |
+| K1/Kotlin2.1.10 | Successful resolved call argument map, named order, omitted defaults, vararg elements and spread aggregates | Implicit operator/accessor bindings outside ordinary call expressions and unsupported argument locators |
+| K2/Kotlin2.1.10 | Java part uses Javac binding | Kotlin call bindings remain UNKNOWN with `K2_ARGUMENT_BINDINGS_UNAVAILABLE`; no K1 fallback or guessed positions |
+| TypeScript5.7.3 | Resolved signature/overload, positional arguments, rest elements/spread aggregate, omitted explicit initializer | Compiler-error recovery signatures; spread before fixed formals without tuple proof; unresolved callbacks/any |
+| ASM | Declared target/candidates preserved | Operand-stack argument values are not inferred: `NO_SOURCE_ARGUMENT_BINDING_PROOF` |
+
+`DIRECT` binds a source expression **result** to a declared formal; it does not
+claim that the expression is an identity transformation or that implicit language
+conversions never occur. `VARARG_ELEMENT`, `VARARG_ARRAY` and `VARARG_SPREAD`
+retain packing semantics without inventing array contents or evaluation order.
+Omitted defaults have `DEFAULT_VALUE_NOT_EVALUATED` and no invented value edge.
+Callable references are `NOT_EXECUTION` and do not receive invocation arguments.
+
+The `argument_to_parameter` proof carries original call-site ID, argument/formal
+indices, context, declared-contract binding kind and transformation. It never
+binds a dispatch candidate implementation as an observed callee. The process JSON
+preserves original binding proofs even when dispatch prevents body expansion;
+`argument_binding_status` distinguishes PROVEN, UNKNOWN and legacy unavailable
+proof. Availability remains UNKNOWN and execution NOT_OBSERVED.
+
+Explicit examples after content-bound inspection:
+
+```bash
+kgmaker inspect code --root project --kotlin-backend k1 --kotlin-version 2.1.10
+kgmaker flow render --root project --entry METHOD_ID --view process --format json
+kgmaker impact --root project --entity ARGUMENT_ID --include-data-flow --format json
+```
+
+Use the existing explicit `--context`/`--scope` selection when variants exist.
+Directional impact traverses only versioned proven argument edges; legacy and
+candidate edges do not gain new strong paths. Its existing v1 path shape remains
+unchanged and supplemental `argument_parameter_bindings` retains typed provenance.
+Workspace federation qualifies argument/formal/call-site/context references;
+malformed or ambiguous bindings fail before replacing the last valid generation.
+No scan/hook/projection starts workers, builds or application code implicitly.

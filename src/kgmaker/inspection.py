@@ -212,6 +212,12 @@ def validate_response(response: dict, selected_context: dict):
         if fact.get("source") not in ids or fact.get("target") not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
 
+    from .dataflow import validate_argument_bindings
+    try:
+        validate_argument_bindings(response)
+    except ValueError as error:
+        raise WorkerError(str(error), "INVALID_PROTOCOL") from None
+
 
 def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, selected_context: dict,
                         *, project_model: dict | None = None) -> KnowledgeGraph:
@@ -239,6 +245,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                   "dispatch_completeness_reason": fact.get("dispatch_completeness_reason"),
                   "dispatch_classpath": fact.get("dispatch_classpath"),
                   "origin_trust": selected_context["origin_trust"], "freshness": selected_context["freshness"]}
+        if fact.get("argument_mapping_version") == 1:
+            record.update({key: fact.get(key) for key in ("argument_mapping_version", "call_site", "argument_index",
+                          "parameter_index", "parameter_name", "transformation", "binding_kind")})
         identity = "evidence:" + digest(record)
         evidence[identity] = {"id": identity, **record}
         return identity
