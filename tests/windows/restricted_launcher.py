@@ -13,6 +13,92 @@ import sys
 from types import SimpleNamespace
 
 
+class PrivateDesktop:
+    """Own an isolated noninteractive Win32 station/desktop for the same user.
+
+    Disabling the Administrators SID can remove access to a service runner's
+    inherited desktop. Granting this user explicitly on private objects avoids
+    changing any ACL on the runner's existing window station or desktop.
+    """
+    def __init__(self, token):
+        self.kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+        self.security = ctypes.WinDLL('advapi32', use_last_error=True)
+        self.user = ctypes.WinDLL('user32', use_last_error=True)
+        self.station = self.desktop = self.descriptor = None
+        signatures = [
+            (self.kernel, 'LocalFree', [w.HANDLE], w.HANDLE),
+            (self.security, 'GetTokenInformation', [w.HANDLE, ctypes.c_int, w.LPVOID,
+                w.DWORD, ctypes.POINTER(w.DWORD)], w.BOOL),
+            (self.security, 'ConvertSidToStringSidW', [w.LPVOID, ctypes.POINTER(w.LPWSTR)], w.BOOL),
+            (self.security, 'ConvertStringSecurityDescriptorToSecurityDescriptorW',
+                [w.LPCWSTR, w.DWORD, ctypes.POINTER(w.LPVOID), w.LPVOID], w.BOOL),
+            (self.user, 'GetProcessWindowStation', [], w.HANDLE),
+            (self.user, 'SetProcessWindowStation', [w.HANDLE], w.BOOL),
+            (self.user, 'CreateWindowStationW', [w.LPCWSTR, w.DWORD, w.DWORD, w.LPVOID], w.HANDLE),
+            (self.user, 'CloseWindowStation', [w.HANDLE], w.BOOL),
+            (self.user, 'CreateDesktopW', [w.LPCWSTR, w.LPCWSTR, w.LPVOID, w.DWORD,
+                w.DWORD, w.LPVOID], w.HANDLE),
+            (self.user, 'CloseDesktop', [w.HANDLE], w.BOOL),
+        ]
+        for library, name, args, result in signatures:
+            function = getattr(library, name)
+            function.argtypes, function.restype = args, result
+
+        def checked(value, operation):
+            if not value:
+                error = ctypes.get_last_error()
+                raise OSError(error, f'{operation}: {ctypes.FormatError(error)}')
+            return value
+
+        class Attributes(ctypes.Structure):
+            _fields_ = [('length', w.DWORD), ('descriptor', w.LPVOID), ('inherit', w.BOOL)]
+
+        size = w.DWORD()
+        self.security.GetTokenInformation(token, 1, None, 0, ctypes.byref(size))
+        buffer = ctypes.create_string_buffer(size.value)
+        checked(self.security.GetTokenInformation(token, 1, buffer, size, ctypes.byref(size)), 'GetTokenInformation(User)')
+        sid = ctypes.cast(buffer, ctypes.POINTER(w.LPVOID))[0]
+        sid_string = w.LPWSTR()
+        checked(self.security.ConvertSidToStringSidW(sid, ctypes.byref(sid_string)), 'ConvertSidToStringSidW')
+        try:
+            # Private DACL, not Everyone/Users/Administrators. SYSTEM retains access.
+            sddl = f'D:P(A;;GA;;;SY)(A;;GA;;;{sid_string.value})'
+        finally:
+            self.kernel.LocalFree(ctypes.cast(sid_string, w.HANDLE))
+        descriptor = w.LPVOID()
+        checked(self.security.ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, 1,
+            ctypes.byref(descriptor), None), 'ConvertStringSecurityDescriptorToSecurityDescriptorW')
+        self.descriptor = descriptor
+        try:
+            attributes = Attributes(ctypes.sizeof(Attributes), descriptor, False)
+            name = f'kgmaker_smoke_{os.getpid()}'
+            self.station = checked(self.user.CreateWindowStationW(name, 0, 0x000f037f,
+                ctypes.byref(attributes)), 'CreateWindowStationW(private)')
+            previous = checked(self.user.GetProcessWindowStation(), 'GetProcessWindowStation')
+            checked(self.user.SetProcessWindowStation(self.station), 'SetProcessWindowStation(private)')
+            try:
+                self.desktop = checked(self.user.CreateDesktopW('smoke', None, None, 0,
+                    0x000f01ff, ctypes.byref(attributes)), 'CreateDesktopW(private)')
+            finally:
+                checked(self.user.SetProcessWindowStation(previous), 'SetProcessWindowStation(restore)')
+            self.path = name + r'\smoke'
+            print(f'Private noninteractive desktop: {self.path}; ACL grants own user and SYSTEM', flush=True)
+        except BaseException:
+            self.close()
+            raise
+
+    def close(self):
+        if self.desktop:
+            self.user.CloseDesktop(self.desktop)
+            self.desktop = None
+        if self.station:
+            self.user.CloseWindowStation(self.station)
+            self.station = None
+        if self.descriptor:
+            self.kernel.LocalFree(self.descriptor)
+            self.descriptor = None
+
+
 def launch(command, root, timeout=900):
     if os.name != 'nt':
         raise OSError('Restricted-token smoke requires actual Windows')
@@ -57,6 +143,7 @@ def launch(command, root, timeout=900):
     source, restricted = w.HANDLE(), w.HANDLE()
     process = Process()
     job = None
+    desktop = None
     try:
         checked(security.OpenProcessToken(kernel.GetCurrentProcess(), 0x000b, ctypes.byref(source)), 'OpenProcessToken')
         sid = ctypes.create_string_buffer(68)  # SECURITY_MAX_SID_SIZE
@@ -67,8 +154,10 @@ def launch(command, root, timeout=900):
         checked(security.CreateRestrictedToken(source, 1, 1, ctypes.byref(deny), 0, None, 0, None,
             ctypes.byref(restricted)), 'CreateRestrictedToken')
         print('Created own-user restricted token: privileges disabled; Administrators deny-only', flush=True)
+        desktop = PrivateDesktop(source)
         startup = Startup()
         startup.cb = ctypes.sizeof(startup)
+        startup.desktop = desktop.path
         argv = ctypes.create_unicode_buffer(subprocess.list2cmdline(command))
         checked(security.CreateProcessAsUserW(restricted, command[0], argv, None, None, False,
             0x08000004, None, str(root), ctypes.byref(startup), ctypes.byref(process)), 'CreateProcessAsUserW')
@@ -83,7 +172,7 @@ def launch(command, root, timeout=900):
             raise TimeoutError(f'Restricted smoke wait failed/timed out: {outcome:#x}')
         code = w.DWORD()
         checked(kernel.GetExitCodeProcess(process.process, ctypes.byref(code)), 'GetExitCodeProcess')
-        print(f'Restricted smoke exit code: {code.value}', flush=True)
+        print(f'Restricted smoke exit code: {code.value} ({code.value:#010x})', flush=True)
         return code.value
     finally:
         if job is not None:
@@ -93,6 +182,8 @@ def launch(command, root, timeout=900):
             kernel.TerminateProcess.argtypes = [w.HANDLE, w.UINT]
             kernel.TerminateProcess(process.process, 1)
             kernel.WaitForSingleObject(process.process, 5000)
+        if desktop is not None:
+            desktop.close()
         for handle in (process.thread, process.process, restricted, source):
             if handle:
                 kernel.CloseHandle(handle)
@@ -111,4 +202,4 @@ if __name__ == '__main__':
     except Exception as error:
         print(f'Restricted launcher failed: {type(error).__name__}: {error}', flush=True)
         exit_code = 1
-    raise SystemExit(exit_code)
+    raise SystemExit(0 if exit_code == 0 else 1)

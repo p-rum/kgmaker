@@ -184,3 +184,26 @@ ověřují se OSError i KeyboardInterrupt před přiřazením. Po této úpravě
 cílená sada znovu **14 PASS / 1 SKIP**, 1.77s. Předchozí celá sada s init
 guardy měla **358 PASS / 10 SKIP**, 106.03s; finální strict own-worker celá sada po direct-kill
 pojistce má **358 PASS / 10 SKIP**, 81.61s. Windows acceptance zůstává PENDING.
+
+## Skutečný Windows CI: startup před PowerShell skriptem
+
+Kandidát `fe540a1`, run `40345519027`, job `121651274359`: restricted token
+vznikl, PID8140 se přiřadil/resumoval, ale child skončil **3221225794 /
+0xC0000142 (STATUS_DLL_INIT_FAILED)** ještě před PowerShell transcriptem/result.
+Transport smoke se vůbec neprovedl. Tento FAILED výsledek zůstává evidován.
+
+Dokumentovaný požadavek CreateProcessAsUserW je plný access tokenového useru
+k window station i desktopu. Původní NULL lpDesktop dědil objekty service runneru,
+jejichž admin-only přístup může po Administrators deny-only zaniknout. To je
+hypotéza odpovídající startup failure, nikoli prokázaná příčina tohoto logu.
+Oprava připraví izolovanou noninteractive window station a desktop s explicitní
+protected DACL pouze pro tentýž user SID a SYSTEM; přesné station\\desktop předá
+v STARTUPINFO. Parent svou station po vytvoření desktopu ihned obnoví, handles
+si ponechá do ukončení child. Nemění se shared desktop ACL, disabled privileges,
+Administrators deny-only ani nezávislé PowerShell/Python non-admin kontroly.
+Launcher navíc tiskne hex child exit code a vrací normalizovaný status0/1.
+
+Native startup musí znovu ověřit skutečný Windows CI. Lokálně pouze Python
+compile a transport/prerequisite **14 PASS / 1 Windows SKIP**; žádný Linux
+výsledek se neoznačuje jako Windows PASS. Produkční transport zůstává beze změny.
+K2 main integrace ještě následuje odděleně; K2 Windows podpora není tímto tvrzena.
