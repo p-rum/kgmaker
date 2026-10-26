@@ -700,3 +700,20 @@ hashes/licenses; preparation is an explicit Maven command. Required CI uses
 missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
+
+## T003-S09-W03 — statické Thymeleaf fragmenty
+
+`thymeleaf-bindings-2` zachovává dosavadní literal model-key/template-return vazby a
+přidává pouze statické `th:fragment`, `th:replace` a `th:insert`. Cíl musí být
+jedinečný ve stejném source scope a počet argumentů se musí přesně shodovat s
+parametry deklarace. Literal `${model.path}` se vede přes scoped parametr fragmentu;
+stejně pojmenované proměnné mimo fragment se proto nesloučí. Nejednoznačné,
+dynamické a špatně aritní odkazy mají lokalizovanou diagnostiku bez resolved
+include edge. Podmínky jsou PARTIAL a nepodporované výrazy UNKNOWN; nic se
+nevyhodnocuje ani nevykonává. Hrany zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`.
+
+To nedokazuje Spring MVC handler resolution, renderovaný výstup ani runtime
+availability. Jiné template dialecty, podmínková logika a PDF rendering nejsou
+implementovány; explicitní PDF service zůstává externí boundary. Viz
+[change note55](changes/55_expandThymeleafFragments.md) a
+[acceptance inventory](acceptance-inventory.md#t003-s09-w03--thymeleaf-fragment-provenance).

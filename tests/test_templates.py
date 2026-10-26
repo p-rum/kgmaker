@@ -2,6 +2,8 @@
 from kgmaker import feature
 from kgmaker.analysis_model import INPUT_METADATA
 from kgmaker.data_check import data_check
+from kgmaker.scanner import scan_repository
+from kgmaker.templates import attach_templates
 
 
 def fixture(root):
@@ -67,3 +69,99 @@ def test_template_variable_is_exact_line_evidence_for_data_check(tmp_path):
     assert evidence["location"] == {"type": "lines", "start": 2, "end": 2}
     assert "${account.balance}" in evidence["quote"]
     assert feature.validate(tmp_path, "template", result["candidate"])["valid"]
+
+
+def test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions(tmp_path):
+    source = tmp_path / "src/main/java/example/ReportController.java"
+    source.parent.mkdir(parents=True)
+    source.write_text('''class ReportController {
+  String report(Model model) {
+    model.addAttribute("order", order);
+    return "index";
+  }
+}
+''')
+    templates = tmp_path / "src/main/resources/templates"
+    (templates / "fragments").mkdir(parents=True)
+    (templates / "index.html").write_text('''<html xmlns:th="http://www.thymeleaf.org">
+<body><section th:replace="~{fragments/card :: card(account=${order.customer})}"></section></body>
+</html>
+''')
+    (templates / "fragments/card.html").write_text('''<div xmlns:th="http://www.thymeleaf.org" th:fragment="card(account)">
+<span th:text="${account.balance}">0</span>
+</div>
+''')
+
+    graph = feature.current_graph(tmp_path)[0]
+    card = next(n for n in graph.nodes if n.kind == "template_fragment" and n.name == "card")
+    scoped = next(n for n in graph.nodes if n.kind == "template_variable" and
+                  n.path.endswith("fragments/card.html") and n.name == "account.balance")
+    account_parameter = next(n for n in graph.nodes if n.kind == "template_variable" and
+                             n.path.endswith("fragments/card.html") and n.metadata and
+                             n.metadata.get("fragment_parameter") == "account")
+    report = next(n for n in graph.nodes if n.kind == "function" and n.name == "report")
+    parent = next(n for n in graph.nodes if n.kind == "template" and n.name == "index")
+    assert scoped.metadata["fragment"] == card.id
+    assert any(e.source == parent.id and e.target == card.id and e.kind == "includes_template_fragment"
+               for e in graph.edges)
+    assert any(e.source == parent.id and e.target == account_parameter.id and
+               e.kind == "passes_template_fragment_argument" for e in graph.edges)
+    assert any(e.source == account_parameter.id and e.target == scoped.id and
+               e.kind == "uses_fragment_parameter" for e in graph.edges)
+    fragment_edges = [e for e in graph.edges if e.kind in {
+        "includes_template_fragment", "passes_template_fragment_argument", "uses_fragment_parameter"}]
+    assert fragment_edges and all(e.evidence_kind == "SYNTAX_CANDIDATE" and e.context_ids
+                                  for e in fragment_edges)
+    assert any(e.source == report.id and e.target == "template_variable:src/main/resources/templates/index.html:order.customer" and
+               e.kind == "binds_template_variable" for e in graph.edges)
+    assert not any(e.source == report.id and e.target == scoped.id and e.kind == "binds_template_variable"
+                   for e in graph.edges)
+
+
+def test_conditional_and_unsupported_expressions_remain_partial_unknown(tmp_path):
+    templates = tmp_path / "src/main/resources/templates"
+    templates.mkdir(parents=True)
+    (templates / "conditional.html").write_text('''<div xmlns:th="http://www.thymeleaf.org"
+  th:if="${account.enabled}" th:text="${account.name}">name</div>
+<span th:if="${account.enabled and account.ready}">dynamic</span>
+<i th:if="true">literal-condition-not-evaluated</i>
+<b th:text="#{messages.title}">message</b>
+''')
+
+    graph = feature.current_graph(tmp_path)[0]
+    conditions = [n for n in graph.nodes if n.kind == "template_condition"]
+    assert len(conditions) == 3
+    simple = next(n for n in conditions if n.metadata["expression"] == "account.enabled")
+    unsupported = next(n for n in conditions if n.metadata["status"] == "UNKNOWN")
+    assert simple.metadata["status"] == "PARTIAL"
+    assert "no template expression is evaluated" in simple.metadata["reason"]
+    assert "and" in unsupported.metadata["expression"]
+    literal = next(n for n in conditions if n.metadata["expression"] == "true")
+    assert literal.metadata["status"] == "UNKNOWN"
+    assert any(d["code"] == "TEMPLATE_EXPRESSION_UNSUPPORTED" and "#{messages.title}" in d.get("expression", "")
+               for d in graph.diagnostics)
+    assert not any(e.kind == "evaluates_template_condition" for e in graph.edges)
+
+
+def test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges(tmp_path):
+    templates = tmp_path / "src/main/resources/templates"
+    templates.mkdir(parents=True)
+    (templates / "index.html").write_text('''<div xmlns:th="http://www.thymeleaf.org">
+<span th:replace="~{${dynamicTarget} :: card(account=${user})}"></span>
+<span th:replace="~{:: card}"></span>
+<span th:replace="~{:: pair(account=${user})}"></span>
+</div>
+<i th:fragment="card(user)"></i>
+<b th:fragment="card(user)"></b>
+<section th:fragment="pair(left,right)"></section>
+''')
+    before = scan_repository(tmp_path)
+    snapshot = before.to_dict()
+    graph = attach_templates(tmp_path, before)
+
+    assert before.to_dict() == snapshot
+    assert not any(edge.kind == "includes_template_fragment" for edge in graph.edges)
+    codes = {item["code"] for item in graph.diagnostics}
+    assert "TEMPLATE_FRAGMENT_UNRESOLVED" in codes
+    assert "TEMPLATE_FRAGMENT_AMBIGUOUS" in codes
+    assert "TEMPLATE_FRAGMENT_ARITY_MISMATCH" in codes

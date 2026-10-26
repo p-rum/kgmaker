@@ -78,7 +78,7 @@ def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
     by_kind = {kind: sum(node.kind == kind for node in graph.nodes) for kind in (
         "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
         "external_service", "technology", "concept", "workbook", "workbook_cell",
-        "template", "template_variable"
+        "template", "template_fragment", "template_variable", "template_condition"
     )}
     inferred_edges = sum(edge.confidence == "INFERRED" for edge in graph.edges)
     ambiguous_edges = sum(edge.confidence == "AMBIGUOUS" for edge in graph.edges)
@@ -105,7 +105,7 @@ def render_markdown(graph: KnowledgeGraph, scope: str = "production") -> str:
         f"- API endpoints: {by_kind['api_endpoint']}",
         f"- TypeScript frontend routes: {by_kind['frontend_route']}",
         f"- Workbooks/cells: {by_kind['workbook']}/{by_kind['workbook_cell']}",
-        f"- Templates/variables: {by_kind['template']}/{by_kind['template_variable']}",
+        f"- Templates/fragments/variables/conditions: {by_kind['template']}/{by_kind['template_fragment']}/{by_kind['template_variable']}/{by_kind['template_condition']}",
         f"- Semantic concepts: {by_kind['concept']}",
         f"- Implementation episodes: {len(episodes)}",
         f"- Inferred/ambiguous relationships: {inferred_edges}/{ambiguous_edges}",
@@ -188,7 +188,8 @@ def render_mermaid(graph: KnowledgeGraph, scope: str = "production") -> str:
     domain_kinds = {
         "db_table", "db_column", "kafka_topic", "api_endpoint", "frontend_route",
         "external_service", "technology", "concept", "workbook", "workbook_sheet",
-        "workbook_cell", "workbook_named_range", "template", "template_variable",
+        "workbook_cell", "workbook_named_range", "template", "template_fragment",
+        "template_variable", "template_condition",
     }
     selected: dict[str, tuple[str, str]] = {}
     for node in graph.nodes:
