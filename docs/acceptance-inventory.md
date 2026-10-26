@@ -1,5 +1,14 @@
 # Inventář acceptance T001 a T002
 
+## T003-S11-W02 — distribuce build exporterů
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S11-W02-AC01 | VERIFIED_IN_SCOPE | `test_installed_exporters_run_real_builds_outside_checkout` (Maven/Gradle), descriptor hash/protocol negative tests; Linux/Python3.12/JDK21 |
+| T003-S11-W02-AC02 | VERIFIED_IN_SCOPE | Aditivní `exporter_contract`, původní BuildPlan/BuildManifest v1 a graph v1/v2/v3; existující build-runner regrese |
+| T003-S11-W02-AC03 | VERIFIED_IN_SCOPE | `test_invalid_distribution_fails_before_process_or_store_mutation`, `test_changed_distribution_manifest_invalidates_existing_plan`, `test_output_protocol_mismatch_does_not_publish_manifest_or_graph` |
+| T003-S11-W02-AC04 | VERIFIED_IN_SCOPE | [Change note37](changes/37_packageBuildExporters.md) uvádí skutečné běhy i zbývající release gates; T003-S11 zůstává PARTIAL |
+
 ## Doplnění T003-S11-W01 (2026-10-26)
 
 | ID | Stav | Podporovaný rozsah a přímá evidence | Běh |

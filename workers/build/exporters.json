@@ -1,0 +1,18 @@
+{
+  "exporters": {
+    "gradle": {
+      "exporter": "gradle-composite-1",
+      "license": "LICENSE",
+      "path": "gradle/export.gradle",
+      "sha256": "b575a059b5a363a80f9d18d4cc87e3f621c974fd4e331762c4bec80f1f92a48d"
+    },
+    "maven": {
+      "exporter": "maven-session-2",
+      "license": "LICENSE",
+      "path": "maven/target/kgmaker-build-export.jar",
+      "sha256": "85bfbc9cf38bd3943040c5171e7bab4eeb3dd5640228501a335597699cf9867f"
+    }
+  },
+  "protocol_version": 1,
+  "schema_version": 1
+}

@@ -77,3 +77,21 @@ resolution, formula evaluation, macro execution ani runtime availability.
 Reference jsou bounded syntaktické A1/range vazby. Celý S09/AC09 a T003 tím nejsou
 dokončeny. Worker/buildy, live síť ani Excel rendering nebyly pro tuto offline
 opravu potřeba. Neprovádí se push/PR/merge; parent zajistí nezávislé review.
+
+## Integrace aktuálního main před nezávislým review
+
+Integrační base: `e656b8ef4c174d3d60600037d7c0d78fc514e39d` (PR22 exportery).
+Formula runtime (`workbooks.py`, `feature.py`, `workspace.py`) a oba workbook
+test soubory jsou byte-identické s kandidátem `cbf1d0e56aa532f7971105b3bfec5a0c27db6346`.
+Konflikty byly jen v generovaném GRAPH a semantic JSON. Obě dokumentační sekce
+i všech 52 sémantických episode záznamů obou rodičů zůstávají zachovány;
+README citace ukazují na skutečné prepare/update bullets (řádky 99/101).
+
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs tests/test_xlsx_references.py tests/test_workbooks.py tests/test_binary_xls.py tests/test_data_check.py tests/test_availability.py tests/test_feature.py tests/test_workspace.py tests/test_exporter_distribution.py`:
+**109 PASS, 2 SKIP v 6.31 s**. Všech osm exporter distribution negativních/compatibility
+případů prošlo; dvě skutečné installed-exporter Maven/Gradle varianty nemají v
+tomto izolovaném worktree připravený toolchain a jsou výslovně SKIP, nikoli PASS.
+Plná sada 298 PASS výše náleží původnímu kandidátu; kvůli této nesouvisející
+exporter integraci se neopakuje a nepovyšuje se na nový full-suite výsledek.
+Scoped semantic update/apply/validate, scan/check a diff check jsou zopakovány
+před lokálním merge commitem. Žádný push/PR/remote merge se neprovádí.

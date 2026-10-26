@@ -78,6 +78,58 @@
         "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
     },
+    "exporter_contract": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "exporter",
+        "descriptor",
+        "license"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "exporter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "descriptor": {
+          "type": "object",
+          "required": [
+            "path",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "license": {
+          "type": "object",
+          "required": [
+            "path",
+            "sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
     "timeout": {
       "type": "number",
       "exclusiveMinimum": 0
