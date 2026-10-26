@@ -369,10 +369,16 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v3 navíc počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
-bean. ImportSelector a registrar se nespouštějí a zůstávají diagnostickou hranicí.
+bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
+transitivní identitu. Java metoda s jediným literal `String[]` return propojí
+deklarované konfigurace přes `selects_import`; neznámé tělo, custom filter/group,
+chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_import`.
+Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
+Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
+source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný

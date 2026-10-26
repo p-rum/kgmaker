@@ -85,6 +85,7 @@ final class SourceMapping {
         return source(delegate.owner,delegate.name,delegate.desc,false);
     }
     Map<String,Object> mapMethod(ClassNode owner,MethodNode method,String bytecodeId) {
+        abiFailure=null;
         boolean ambiguous=ambiguousOwners.contains(owner.name);
         Map<String,Object> target=null;String reason=ambiguous?"AMBIGUOUS_BYTECODE_CLASS":"NO_SOURCE_MAPPING";
         if(!ambiguous && (method.access&(Opcodes.ACC_BRIDGE|Opcodes.ACC_SYNTHETIC))==0) {

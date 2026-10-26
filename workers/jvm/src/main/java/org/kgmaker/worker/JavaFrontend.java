@@ -14,6 +14,7 @@ import static org.kgmaker.worker.State.map;
 public final class JavaFrontend {
     private final State state;
     private Trees trees; private Types types; private Elements elements;
+    private SelectorFacts selectorFacts;
     private CompilationUnitTree unit; private Path file; private String source;
     private final Map<Tree,String> calls = new IdentityHashMap<>();
     private final List<Diagnostic<? extends JavaFileObject>> errors = new ArrayList<>();
@@ -30,6 +31,7 @@ public final class JavaFrontend {
             if(state.request.get("java_release")!=null)options.addAll(List.of("--release",state.request.get("java_release").toString()));
             var task=(JavacTask)compiler.getTask(null,files,collector,options,null,files.getJavaFileObjectsFromPaths(sources));
             var units=task.parse();task.analyze();trees=Trees.instance(task);types=task.getTypes();elements=task.getElements();
+            selectorFacts=new SelectorFacts(types,elements);
             for(var diagnostic:collector.getDiagnostics()) {
                 if(diagnostic.getKind()==Diagnostic.Kind.ERROR)errors.add(diagnostic);
                 state.diagnostic("JAVAC_"+diagnostic.getCode(),diagnostic.getMessage(Locale.ROOT),null);
@@ -120,6 +122,7 @@ public final class JavaFrontend {
             if(element instanceof TypeElement type) {
                 var metadata=annotations(type);metadata.put("kind",type.getKind().toString().toLowerCase(Locale.ROOT));
                 metadata.put("supertypes",types.directSupertypes(type.asType()).stream().map(TypeMirror::toString).toList());
+                metadata.putAll(selectorFacts.describe(type));
                 state.type(elements.getBinaryName(type).toString(),loc(tree),metadata);
             }
             return super.visitClass(tree,unused);
@@ -132,6 +135,8 @@ public final class JavaFrontend {
                 Map<String,Object> location=loc(tree);
                 if(location.get("range")==null)return null; // compiler-generated constructor has no invented source range
                 caller=method(executable,location);
+                var literal=selectorFacts.literalReturn(executable,tree,errorAt(tree));
+                if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
                 super.visitMethod(tree,unused);
                 if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"body",ir(tree.getBody())));
                 return null;
