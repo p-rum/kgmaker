@@ -405,6 +405,7 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         edges = [e for e in edges if e.kind in EXECUTION_EDGES or e.kind == "calls"]
     elif view == "configuration":
         edges = [e for e in edges if e.kind in {"configured_by", "resolves_property", "conditional_on",
+                                                "imports_configuration", "uses_import_selector", "selects_import", "may_select_import",
                                                 "defines_bean", "injects_bean", "advised_by",
                                                 "declares_entrypoint", "bypasses_proxy"}]
     elif view == "data-flow":
