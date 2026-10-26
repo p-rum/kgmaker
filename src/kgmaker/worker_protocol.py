@@ -147,6 +147,8 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None
         _terminate(process, job)
         raise
     finally:
+        if job is not None:
+            job.close()
         stopped.set()
         for thread in started:
             thread.join(timeout=1)

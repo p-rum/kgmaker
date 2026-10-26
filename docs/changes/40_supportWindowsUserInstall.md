@@ -98,3 +98,37 @@ Windows gate musí proběhnout na publikovaném exact HEAD před konečným při
 W03; kandidát proto patří do draft PR. Zbývá skutečný Windows výsledek.
 Immutable publikace, obecná production matice, benchmarky,
 Windows build execution a K2 Windows scope se tímto taskem neprohlašují za hotové.
+
+## Oprava review P1: zděděné pipes po ukončení workeru
+
+Nezávislé review odhalilo, že exit přímého workeru neznamená EOF jeho pipes:
+živý potomek je může stále držet. Původní `_terminate` přeskočil POSIX killpg
+po exit parentu a buffered close čekal na reader lock až do exit potomka.
+Nová skutečná regrese na původním kandidátu `4f07f21` selhala pro timeout i
+cancel: **5.17s / 5.28s**, místo požadovaného návratu pod 3s.
+
+POSIX nyní ukončuje vlastní process group i po exit leaderu. Raw nonblocking
+pipe I/O průběžně kontroluje stop event; cleanup nespoléhá na EOF ani na
+uvolnění buffered read locku. Windows spustí worker suspended, před spuštěním
+jeho kódu ho připojí do Job Object s KILL_ON_JOB_CLOSE a obnoví hlavní thread
+přes dokumentované Toolhelp/OpenThread/ResumeThread API. Job drží potomky i po
+exit leaderu a zavírá se před join readerů. Není použit shell, taskkill ani
+admin právo; odmítnuté přiřazení je explicitní TOOLCHAIN_UNAVAILABLE.
+
+Regrese ověřuje elapsed bound pro timeout i cancel po prokázaném exit parentu,
+reap přímého procesu, uzavřené streams, žádný transport thread, nezměněný graph
+sentinel a na Linuxu nezvýšený počet FD i ukončeného potomka. Zachovává se input,
+response i stderr bound. `tests/test_worker_protocol.py`: **9 PASS**, 1.84s;
+transport + Windows prerequisite sada: **12 PASS / 1 SKIP**, 1.91s (Linux).
+Job Object a nový regression test jsou součástí skutečného Windows CI gate;
+Linux PASS nepředstavuje důkaz jeho Windows chování.
+
+Integrace zachovává main `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9`, T006/T007,
+Confluence konfiguraci i úplnou immutable historii. Semantic merge zachovává
+čtyři ověřené concepts a osm vztahů včetně obnovených semantic.py vazeb;
+README evidence se znovu váže na skutečné řádky výsledného souboru.
+
+Po integraci main a cleanup opravě strict own-worker celá Linux sada:
+**356 PASS / 10 SKIP**, 101.74s. Příkaz je shodný s výše uvedeným strict
+příkazem; Windows gate zůstává mezi SKIP. Poslední zpřesnění FD/descendant
+assertions prošlo samostatně v devíti transport testech (1.84s).

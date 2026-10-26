@@ -86,6 +86,8 @@ class WorkerProtocolTests(unittest.TestCase):
                 watcher = threading.Thread(target=trigger)
                 if cancelled:
                     watcher.start()
+                descriptors = Path('/proc/self/fd')
+                before_fds = len(list(descriptors.iterdir())) if descriptors.exists() else None
                 started = time.monotonic()
                 try:
                     with patch('kgmaker.worker_protocol.subprocess.Popen', side_effect=capture):
@@ -99,6 +101,12 @@ class WorkerProtocolTests(unittest.TestCase):
                     self.assertTrue(all(stream.closed for stream in (processes[0].stdin, processes[0].stdout, processes[0].stderr)))
                     self.assertFalse([t for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
                     self.assertEqual(b'unchanged', sentinel.read_bytes())
+                    if before_fds is not None:
+                        self.assertEqual(before_fds, len(list(descriptors.iterdir())))
+                        state = Path('/proc') / marker.read_text() / 'stat'
+                        if state.exists():
+                            self.assertEqual('Z', state.read_text().split(') ', 1)[1].split()[0],
+                                'Inherited-pipe descendant must no longer execute')
                 finally:
                     stop.set()
                     if cancelled:
