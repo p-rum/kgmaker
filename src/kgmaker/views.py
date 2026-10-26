@@ -26,6 +26,94 @@ class ContextSelectionError(ValueError):
         super().__init__(diagnostic["message"])
 
 
+def _release_mapping_pair(graph: KnowledgeGraph, mapping: Mapping, report: Mapping,
+                          selected_contexts: Mapping[str, dict], repo_roots: Mapping[str, Path] | None
+                          ) -> tuple[str | None, str | None, str | None]:
+    """Return selected producer/consumer context IDs only for a bound proof."""
+    from .build_model import HASH
+    from .workspace import qualified
+
+    mapping_id = mapping.get("id")
+    producer, consumer = mapping.get("producer", {}), mapping.get("consumer", {})
+    producer_repo, consumer_repo = producer.get("repo_id"), consumer.get("repo_id")
+    build_context_id = producer.get("context_id")
+    consumer_context_id = consumer.get("context_id")
+    output_hash = mapping.get("output_sha256")
+    if (report.get("status") != "CONTENT_VERIFIED"
+            or report.get("producer_repo") != producer_repo
+            or report.get("consumer_repo") != consumer_repo
+            or report.get("sha256") != output_hash
+            or not isinstance(output_hash, str) or not HASH.fullmatch(output_hash)
+            or not isinstance(report.get("manifest_sha256"), str)
+            or not HASH.fullmatch(report["manifest_sha256"])
+            or not isinstance(report.get("producer_output_path"), str)
+            or not report["producer_output_path"]
+            or not isinstance(report.get("consumer_classpath_path"), str)
+            or not report["consumer_classpath_path"]):
+        return None, None, "RELEASE_MAPPING_REPORT_MISMATCH"
+
+    producer_contexts = [context for context in selected_contexts.values()
+                         if context.get("repo_id") == producer_repo
+                         and context.get("build_context_id") == build_context_id]
+    consumer_id = qualified(consumer_repo or "", consumer_context_id or "")
+    consumer_context = selected_contexts.get(consumer_id)
+    if len(producer_contexts) != 1 or consumer_context is None:
+        return None, None, "RELEASE_MAPPING_CONTEXT_MISMATCH"
+    producer_context = producer_contexts[0]
+
+    output_node_id = "workspace:release-output:" + str(mapping_id)
+    classpath_node_id = "workspace:classpath-artifact:" + str(mapping_id)
+    nodes = {node.id: node for node in graph.nodes}
+    output_node, classpath_node = nodes.get(output_node_id), nodes.get(classpath_node_id)
+    output_metadata = output_node.metadata or {} if output_node else {}
+    classpath_metadata = classpath_node.metadata or {} if classpath_node else {}
+    manifest_source = "@" + str(producer_repo) + "/" + str(producer.get("manifest_path", ""))
+    edge_bound = any(
+        edge.kind == "supplies_classpath" and edge.source == output_node_id
+        and edge.target == classpath_node_id and consumer_id in edge.context_ids
+        and edge.evidence_kind == "SYMBOL_RESOLVED"
+        for edge in graph.edges)
+    graph_bound = (
+        output_node is not None and output_node.kind == "workspace_release_output"
+        and output_node.path == manifest_source
+        and output_metadata.get("repo_id") == producer_repo
+        and output_metadata.get("build_context_id") == build_context_id
+        and output_metadata.get("sha256") == output_hash
+        and classpath_node is not None and classpath_node.kind == "workspace_classpath_artifact"
+        and classpath_metadata.get("repo_id") == consumer_repo
+        and classpath_metadata.get("compiler_context_id") == consumer_context_id
+        and classpath_metadata.get("sha256") == output_hash
+        and producer_context.get("build_context_id") == build_context_id
+        and consumer_context.get("repo_id") == consumer_repo
+        and edge_bound
+    )
+    if not graph_bound:
+        return None, None, "RELEASE_MAPPING_EVIDENCE_UNAVAILABLE"
+
+    if repo_roots is not None:
+        try:
+            from .analysis_model import file_hash, safe_path
+            from .inspection import artifact_hash
+            producer_root, consumer_root = Path(repo_roots[producer_repo]), Path(repo_roots[consumer_repo])
+            manifest = safe_path(producer_root, producer["manifest_path"])
+            output_path, classpath_path = Path(report["producer_output_path"]), Path(report["consumer_classpath_path"])
+            if not output_path.is_absolute():
+                output_path = safe_path(producer_root, report["producer_output_path"])
+            if not classpath_path.is_absolute():
+                classpath_path = safe_path(consumer_root, report["consumer_classpath_path"])
+            for path, root in ((output_path, producer_root), (classpath_path, consumer_root)):
+                resolved = path.resolve(strict=True)
+                if not resolved.is_relative_to(root.resolve()) or path.is_symlink():
+                    return None, None, "RELEASE_MAPPING_PATH_INVALID"
+            if (file_hash(manifest) != report["manifest_sha256"]
+                    or artifact_hash(output_path) != output_hash
+                    or artifact_hash(classpath_path) != output_hash):
+                return None, None, "RELEASE_MAPPING_STALE"
+        except (KeyError, OSError, ValueError):
+            return None, None, "RELEASE_MAPPING_STALE"
+    return producer_context["id"], consumer_id, None
+
+
 def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
                             scope: str, repo_roots: Mapping[str, Path] | None = None,
                             source_coverage: Mapping | None = None,
@@ -50,13 +138,37 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
             not isinstance(release_mapping, Mapping)
             or not isinstance(release_mapping.get("declaration"), Mapping)
             or not isinstance(release_mapping.get("report"), Mapping)
+            or type(release_mapping["declaration"].get("schema_version")) is not int
+            or release_mapping["declaration"].get("schema_version") != 1
+            or type(release_mapping["report"].get("schema_version")) is not int
+            or release_mapping["report"].get("schema_version") != 1
             or not isinstance(release_mapping["declaration"].get("mappings"), list)
             or not isinstance(release_mapping["report"].get("mappings"), list)):
         raise ContextSelectionError({"code": "INVALID_RELEASE_MAPPING", "message": "Release selection requires a validated declaration and snapshot report"})
+    if release_mapping is not None:
+        mapping_ids: set[str] = set()
+        for mapping in release_mapping["declaration"]["mappings"]:
+            if (not isinstance(mapping, Mapping)
+                    or not isinstance(mapping.get("id"), str) or not mapping["id"]
+                    or mapping["id"] in mapping_ids
+                    or not isinstance(mapping.get("producer"), Mapping)
+                    or not isinstance(mapping.get("consumer"), Mapping)
+                    or not isinstance(mapping.get("output_sha256"), str)):
+                raise ContextSelectionError({"code": "INVALID_RELEASE_MAPPING",
+                                             "message": "Release mapping declaration has malformed or duplicate selectors"})
+            mapping_ids.add(mapping["id"])
+            producer, consumer = mapping["producer"], mapping["consumer"]
+            if (not all(isinstance(producer.get(key), str) and producer[key]
+                        for key in ("repo_id", "manifest_path", "context_id"))
+                    or not all(isinstance(consumer.get(key), str) and consumer[key]
+                               for key in ("repo_id", "context_id"))):
+                raise ContextSelectionError({"code": "INVALID_RELEASE_MAPPING",
+                                             "message": "Release mapping declaration has incomplete producer or consumer selectors"})
     before = graph.to_dict()
     seen_services: set[str] = set()
     selected: list[dict] = []
     diagnostics: list[dict] = []
+    selected_contexts: dict[str, dict] = {}
     for index, request in enumerate(requests):
         if not isinstance(request, Mapping):
             raise ContextSelectionError({"code": "INVALID_SELECTION", "path": f"requests[{index}]",
@@ -91,7 +203,7 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
             raise ContextSelectionError({"code": "INVALID_SELECTION_MODE", "service_id": service,
                                          "message": "mode must be COMPILER or SOURCE_ONLY"})
         candidates = [context for context in graph.contexts
-                      if context.get("analyzer_version") and context.get("repo_id", repo) == repo
+                      if context.get("analyzer_version") and context.get("repo_id") == repo
                       and context.get("module") == module and context.get("scope") == scope]
         chosen_id = request.get("context_id")
         if "context_id" in request and (not isinstance(chosen_id, str) or not chosen_id):
@@ -120,11 +232,24 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
                     if artifact_hash(Path(artifact["path"])) != artifact["sha256"]:
                         raise ValueError("STALE_INDEX: classpath changed; import/inspect again")
                 from .graph_provider import validate_context_snapshot
-                validate_context_snapshot(Path(repo_roots[repo]), context)
+                validation_context = dict(context)
+                if context.get("id", "").startswith("repo:"):
+                    # Workspace contexts qualify source paths as @repo/path.
+                    # The provider validator consumes a single checkout.
+                    prefix = "@" + repo + "/"
+                    source_files = context.get("source_files", {})
+                    if not isinstance(source_files, Mapping) or any(
+                            not isinstance(path, str) or not path.startswith(prefix)
+                            for path in source_files):
+                        raise ValueError("STALE_INDEX: workspace source snapshot has invalid repo-qualified paths")
+                    validation_context["source_files"] = {
+                        path[len(prefix):]: checksum for path, checksum in source_files.items()}
+                validate_context_snapshot(Path(repo_roots[repo]), validation_context)
             except (ValueError, OSError) as error:
                 raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
                                              "context_id": context["id"], "next_command": context.get("next_command", "kgmaker inspect"),
                                              "message": str(error)}) from error
+        selected_contexts[context["id"]] = context
         fingerprint_data = {key: context.get(key) for key in (
             "id", "repo_id", "module", "source_set", "scope", "language", "build_context_id",
             "build_profiles", "spring_profiles", "manifest_hash", "dependency_model_hash",
@@ -154,22 +279,39 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
     if release_mapping is not None:
         declaration = release_mapping.get("declaration", {})
         report = release_mapping.get("report", {})
-        results = {item.get("id"): item for item in report.get("mappings", []) if isinstance(item, Mapping)}
-        by_context = {item["context_id"]: item for item in selected if item.get("context_id")}
+        results: dict[str, list[Mapping]] = {}
+        for item in report.get("mappings", []):
+            if isinstance(item, Mapping) and isinstance(item.get("id"), str):
+                results.setdefault(item["id"], []).append(item)
         for mapping in declaration.get("mappings", []):
             if not isinstance(mapping, Mapping):
+                raise ContextSelectionError({"code": "INVALID_RELEASE_MAPPING",
+                                             "message": "Release mapping declaration row must be an object"})
+            mapping_id = mapping.get("id")
+            rows = results.get(mapping_id, [])
+            if len(rows) != 1:
+                diagnostics.append({"code": "RELEASE_MAPPING_REPORT_AMBIGUOUS" if rows else "RELEASE_MAPPING_REPORT_MISSING",
+                                    "mapping_id": mapping_id,
+                                    "message": "Release mapping report must contain exactly one row for the declaration"})
                 continue
-            producer, consumer = mapping.get("producer", {}), mapping.get("consumer", {})
-            result = results.get(mapping.get("id"), {})
-            from .workspace import qualified
-            producer_id = qualified(producer.get("repo_id", ""), producer.get("context_id", ""))
-            consumer_id = qualified(consumer.get("repo_id", ""), consumer.get("context_id", ""))
-            if (result.get("status") == "CONTENT_VERIFIED" and producer_id in by_context
-                    and consumer_id in by_context):
-                compatible_pairs.append({"mapping_id": mapping["id"],
-                                         "producer_service": by_context[producer_id]["service_id"],
-                                         "consumer_service": by_context[consumer_id]["service_id"],
-                                         "status": "CONTENT_VERIFIED"})
+            producer_id, consumer_id, error_code = _release_mapping_pair(
+                graph, mapping, rows[0], selected_contexts, repo_roots)
+            if error_code:
+                diagnostics.append({"code": error_code, "mapping_id": mapping_id,
+                                    "message": "Declared release mapping has no matching verified report, context, and graph evidence"})
+                continue
+            producer_services = [item["service_id"] for item in selected
+                                 if item.get("context_id") == producer_id]
+            consumer_services = [item["service_id"] for item in selected
+                                 if item.get("context_id") == consumer_id]
+            if len(producer_services) != 1 or len(consumer_services) != 1:
+                diagnostics.append({"code": "RELEASE_MAPPING_SERVICE_AMBIGUOUS", "mapping_id": mapping_id,
+                                    "message": "A mapped context must identify exactly one selected service"})
+                continue
+            compatible_pairs.append({"mapping_id": mapping_id,
+                                     "producer_service": producer_services[0],
+                                     "consumer_service": consumer_services[0],
+                                     "status": "CONTENT_VERIFIED"})
     deployment_status = "UNKNOWN"
     diagnostics.append({"code": "DEPLOYMENT_UNKNOWN",
                         "message": "Context/profile selection does not establish deployment or environment compatibility"})

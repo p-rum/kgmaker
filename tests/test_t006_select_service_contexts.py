@@ -112,20 +112,40 @@ def test_source_only_requires_declared_repo_coverage_and_stays_partial():
 
 def test_content_verified_release_mapping_does_not_claim_deployment_compatibility():
     graph = graph_with_contexts()
-    mapping = {"id": "billing-to-ledger", "producer": {"repo_id": "billing", "context_id": "billing-prod"},
-               "consumer": {"repo_id": "ledger", "context_id": "ledger-test"}}
+    mapping = {"id": "billing-to-ledger",
+               "producer": {"repo_id": "billing", "manifest_path": "build.json",
+                            "context_id": "billing-prod"},
+               "consumer": {"repo_id": "ledger", "context_id": "ledger-test"},
+               "output_sha256": "a" * 64}
     result = select_service_contexts(graph, [
         {"service_id": "billing-api", "repo_id": "billing", "module": "app", "context_id": "repo:billing:billing-prod"},
         {"service_id": "ledger-api", "repo_id": "ledger", "module": "service", "context_id": "repo:ledger:ledger-test"},
     ], scope="production", release_mapping={
-        "declaration": {"mappings": [mapping]},
-        "report": {"mappings": [{"id": "billing-to-ledger", "status": "CONTENT_VERIFIED"}]},
+        "declaration": {"schema_version": 1, "mappings": [mapping]},
+        "report": {"schema_version": 1,
+                   "mappings": [{"id": "billing-to-ledger", "status": "CONTENT_VERIFIED"}]},
     })
-    assert result["release_compatibility"] == [{"mapping_id": "billing-to-ledger",
-                                                "producer_service": "billing-api",
-                                                "consumer_service": "ledger-api",
-                                                "status": "CONTENT_VERIFIED"}]
+    assert result["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_REPORT_MISMATCH"
+               for item in result["diagnostics"])
     assert result["deployment_compatibility"] == "UNKNOWN"
+
+
+def test_context_without_repo_identity_is_never_bound_to_requested_repo():
+    graph = graph_with_contexts()
+    legacy = {"id": "legacy-context", "module": "app", "scope": "production",
+              "analyzer_version": "jvm-1", "freshness": "CURRENT", "source_files": {},
+              "classpath": []}
+    graph.contexts = [legacy]
+    before = deepcopy(graph.to_dict())
+
+    with pytest.raises(ContextSelectionError) as caught:
+        select_service_contexts(graph, [
+            {"service_id": "one", "repo_id": "repo-one", "module": "app"},
+            {"service_id": "two", "repo_id": "repo-two", "module": "app"},
+        ], scope="production")
+    assert caught.value.diagnostic["code"] == "CONTEXT_UNAVAILABLE"
+    assert graph.to_dict() == before
 
 
 def test_invalid_scope_and_module_mismatch_fail_closed_without_input_mutation():

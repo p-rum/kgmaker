@@ -15,7 +15,8 @@ from kgmaker.graph_provider import resolve_context_classpath_artifact
 from kgmaker.inspection import artifact_hash, context
 from kgmaker.scanner import scan_repository
 from kgmaker.store import load_graph, save_graph
-from kgmaker.workspace import snapshot_workspace
+from kgmaker.workspace import qualified, snapshot_workspace
+from kgmaker.views import select_service_contexts
 
 
 def _jar(path: Path, marker: bytes) -> Path:
@@ -159,6 +160,121 @@ def _fixture(tmp_path: Path, *, consumer_markers: tuple[bytes, ...] = (b"A",)):
     consumer_context = _consumer(tmp_path / "consumer", artifacts)
     coordinator, manifest = _workspace(tmp_path, consumer_context, hash_a)
     return coordinator, manifest, hash_a, hash_b
+
+
+def _workspace_selection_fixture(tmp_path: Path):
+    coordinator, manifest, output_hash, _ = _fixture(tmp_path)
+    producer_root = tmp_path / "producer-a"
+    producer_graph = scan_repository(producer_root)
+    producer_context = context(
+        producer_root, producer_graph, "jvm", {}, repo_id="producer-a", module="shared",
+        source_set="main", scope="production",
+        build_context={"build_id": "build-a", "build_context_id": "shared:main",
+                       "classpath": [], "bytecode_artifacts": []},
+    )
+    producer_graph.contexts.append(producer_context)
+    save_graph(producer_graph, producer_root)
+    _, coverage, _, graph, metadata = snapshot_workspace(manifest)
+    consumer_context = next(item for item in graph.contexts
+                            if item.get("repo_id") == "consumer" and item.get("module") == "app")
+    requests = [
+        {"service_id": "shared-lib", "repo_id": "producer-a", "module": "shared",
+         "context_id": qualified("producer-a", producer_context["id"])},
+        {"service_id": "app", "repo_id": "consumer", "module": "app",
+         "context_id": consumer_context["id"]},
+    ]
+    selection = {"declaration": metadata["release_mapping"], "report": coverage["release_mapping"]}
+    roots = {key: Path(value) for key, value in metadata["roots"].items()}
+    return graph, requests, selection, roots, producer_context, consumer_context, output_hash
+
+
+def test_t006_selects_nonempty_workspace_contexts_and_real_release_mapping(tmp_path):
+    graph, requests, release_mapping, roots, producer_context, consumer_context, output_hash = (
+        _workspace_selection_fixture(tmp_path))
+    assert producer_context["id"] != "shared:main"
+    assert producer_context["build_context_id"] == "shared:main"
+    assert consumer_context["source_files"]
+    assert all(path.startswith("@consumer/") for path in consumer_context["source_files"])
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert len(selection["release_compatibility"]) == 1
+    assert selection["release_compatibility"][0] == {
+        "mapping_id": "shared-to-app", "producer_service": "shared-lib",
+        "consumer_service": "app", "status": "CONTENT_VERIFIED",
+    }
+    assert selection["context_selection"]["shared-lib"]["context_id"] == qualified(
+        "producer-a", producer_context["id"])
+    assert selection["services"][0]["context_fingerprint"]
+    assert output_hash == release_mapping["report"]["mappings"][0]["sha256"]
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("producer_repo", "other"),
+    ("consumer_repo", "other"),
+    ("sha256", "a" * 64),
+    ("status", "PARTIAL"),
+])
+def test_t006_release_report_must_match_declaration_and_graph_evidence(tmp_path, field, value):
+    graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
+    release_mapping["report"]["mappings"][0][field] = value
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_REPORT_MISMATCH"
+               for item in selection["diagnostics"])
+
+
+def test_t006_duplicate_release_report_rows_are_ambiguous(tmp_path):
+    graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
+    release_mapping["report"]["mappings"].append(
+        dict(release_mapping["report"]["mappings"][0]))
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_REPORT_AMBIGUOUS"
+               for item in selection["diagnostics"])
+
+
+def test_t006_release_mapping_becomes_stale_when_reported_output_changes(tmp_path):
+    graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
+    (tmp_path / "producer-a/build/libs/shared-1.0.jar").write_bytes(b"changed after workspace snapshot")
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_STALE"
+               for item in selection["diagnostics"])
+
+
+def test_t006_release_report_without_graph_proof_stays_unresolved(tmp_path):
+    graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
+    graph.edges = [edge for edge in graph.edges if edge.kind != "supplies_classpath"]
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_EVIDENCE_UNAVAILABLE"
+               for item in selection["diagnostics"])
+
+
+def test_t006_shared_context_does_not_choose_an_arbitrary_service_owner(tmp_path):
+    graph, requests, release_mapping, roots, *_ = _workspace_selection_fixture(tmp_path)
+    requests.insert(1, {**requests[0], "service_id": "shared-lib-alias"})
+
+    selection = select_service_contexts(graph, requests, scope="production", repo_roots=roots,
+                                        release_mapping=release_mapping)
+
+    assert selection["release_compatibility"] == []
+    assert any(item["code"] == "RELEASE_MAPPING_SERVICE_AMBIGUOUS"
+               for item in selection["diagnostics"])
 
 
 def test_content_bound_release_output_links_exact_consumer_classpath(tmp_path):

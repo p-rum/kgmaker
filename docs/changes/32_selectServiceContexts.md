@@ -16,6 +16,13 @@ jen knihovní projekce a příklady. CLI, discovery, renderery, nový store a
 deployment inference zůstávají mimo tento task. Graph schema v1/v2/v3 a jeho
 serializace se nemění; migrace není potřeba.
 
+Review opravila čtyři mezery před vydáním: context bez `repo_id` se už neváže na
+libovolný request; workspace `@repo/path` snapshoty se pro single-repo provider
+ověří přes lokální relpaths na kopii contextu; producer BuildManifest selector
+se páruje s vybraným contextem podle `repo_id + build_context_id`; release report
+musí odpovídat deklarovaným repo ID/hash i graph `supplies_classpath` důkazu.
+Duplicitní, stale nebo neshodný report zůstává unresolved.
+
 Vazby na zadání: T006-S01–S05, T006-AC01–AC06. Test mapování je v
 [`docs/acceptance-inventory.md`](../acceptance-inventory.md).
 
@@ -23,9 +30,9 @@ Vazby na zadání: T006-S01–S05, T006-AC01–AC06. Test mapování je v
 
 | Příkaz | Výsledek |
 |---|---|
-| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_t005_add_view_model.py tests/test_workspace.py` | 44 passed in 1.27 s on `aa9e64b` |
-| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs` | 265 passed, 23 skipped in 18.76 s on `aa9e64b`; skips: Maven/JDK/exporter unavailable (16), Gradle 8.13 unavailable (3), JVM/TypeScript workers unavailable (2), Kotlin Gradle cache unavailable (1), plus one two-JDK Maven gate |
-| `git diff --check` | PASS on final T006 diff |
+| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_cross_repo_artifacts.py tests/test_workspace.py tests/test_t005_add_view_model.py` | 62 passed in 1.72 s |
+| `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs` | 275 passed, 23 skipped in 24.64 s on `aa9e64b`; skips are the Maven/JDK/exporter, Gradle 8.13, Kotlin cache, and JVM/TypeScript worker gates |
+| `git diff --check` | PASS |
 | Worker/compiler a Mermaid render | NOT_RUN; tato změna neupravuje compiler ani renderer |
 
 Omezení: content-verified release mapping potvrzuje jen shodu deklarovaných
