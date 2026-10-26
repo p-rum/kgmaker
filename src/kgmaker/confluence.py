@@ -319,6 +319,7 @@ def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[Conflu
                 or not isinstance(approvals.get("requirements"), list):
             raise AnalysisError("Invalid approved-requirements sidecar")
         seen = set()
+        assertion_keys = set()
         allowed = {"id", "document_file", "document_sha256", "section", "subject", "relation", "target",
                    "statement", "decision_id", "decision_revision", "approval_status"}
         for item in approvals["requirements"]:
@@ -338,6 +339,10 @@ def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[Conflu
                     or any(not isinstance(item.get(key), str) or not item[key]
                            for key in ("section", "subject", "target", "statement")):
                 raise AnalysisError("Approved requirement has an unsupported assertion contract")
+            assertion_key = tuple(item[key] for key in ("document_file", "subject", "relation", "target", "statement"))
+            if assertion_key in assertion_keys:
+                raise AnalysisError("Ambiguous approvals for the same documented assertion")
+            assertion_keys.add(assertion_key)
             document.approvals.append(item)
     referenced = {item for doc in documents for item in [*doc.attachments, *doc.images]}
     for relative in sorted(referenced):
@@ -353,9 +358,33 @@ def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[Conflu
         for doc in documents:
             if relative in doc.attachments:
                 doc.diagrams.extend({"file": relative, "kind": item["kind"], "source": "", "relations": item["relations"]} for item in attachments[-1:])
-    cache = {"schema_version": 1, "directory": str(export_root), "pages": {doc.file: asdict(doc) for doc in documents}, "attachments": attachments}
+    # Validate exact extraction before publishing any cache generation.
+    for document in documents:
+        _assertions_from_document(document)
+    cache = {"approvals_sha256": _sha(approvals_path) if approvals_path.is_file() else None,
+             "schema_version": 1, "directory": str(export_root), "pages": {doc.file: asdict(doc) for doc in documents}, "attachments": attachments}
     _write_cache(repository_root, cache)
     return documents, attachments, cache
+
+
+def current_documentation_assertions(cache: dict[str, Any]) -> list[dict[str, Any]]:
+    """Read-only content check; legacy index remains readable but needs refresh."""
+    export_root = Path(cache["directory"])
+    if "approvals_sha256" not in cache:
+        raise AnalysisError("Confluence validation index is stale; rerun `kgmaker docs check`.")
+    approval_path = export_root / APPROVALS_FILE
+    current_hash = _sha(approval_path) if approval_path.is_file() else None
+    if current_hash != cache["approvals_sha256"]:
+        raise AnalysisError("Confluence approval index is stale; rerun `kgmaker docs check`.")
+    for relative, page in cache.get("pages", {}).items():
+        path = export_root / relative
+        if not path.is_file() or _sha(path) != page.get("sha256"):
+            raise AnalysisError("Confluence document index is stale; rerun `kgmaker docs check`.")
+    for attachment in cache.get("attachments", []):
+        path = export_root / attachment["file"]
+        if not path.is_file() or _sha(path) != attachment.get("sha256"):
+            raise AnalysisError("Confluence attachment index is stale; rerun `kgmaker docs check`.")
+    return cache.get("assertions", [])
 
 
 def _assertions_from_document(doc: ConfluenceDocument) -> list[DocumentationAssertion]:

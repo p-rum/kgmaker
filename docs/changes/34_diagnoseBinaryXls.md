@@ -40,7 +40,9 @@ kontrakt; acceptance inventář mapuje AC01–AC04 na konkrétní testy.
 
 ## Provedené ověření
 
-Baseline: `07ad86592d0b57d071fbc120de462f3400b51213`, izolovaná větev
+Původní baseline: `07ad86592d0b57d071fbc120de462f3400b51213`; finální integrace
+s main `aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533` zachovává metodika/approval
+freshness změny PR #8 i jeho sémantickou historii. Izolovaná větev
 `feat/t003-s09-02-binary-xls-diagnostics`, Python 3.12.14, Linux.
 
 - Projektový kgmaker skill, přímá architektonická rekognoskace source/testů,
@@ -60,6 +62,10 @@ Baseline: `07ad86592d0b57d071fbc120de462f3400b51213`, izolovaná větev
   toolchain testy a dva installed-worker případy; tento izolovaný worktree
   nepřebírá trusted worker/runtime build outputs parent checkoutu. Nejde o PASS
   chybějících toolchain variant. Testovaný task není compiler/build změna.
+- Po integraci main `aa9e64b`: stejná focused sada plus
+  `tests/test_methodology_conflicts.py tests/test_scanner.py`: **97 PASS v 2.89 s**.
+  Finální celý `pytest -q -rs`: **271 PASS, 23 SKIP v 24.76 s**, stejné
+  toolchain důvody uvedené výše. Schválená metodika z PR #8 zůstává zachována.
 - Scoped semantic update/apply/validate, memory capture, finální scan/check a
   `git diff --check`: provedeny před předáním; semantic patch zachovává doložené
   existující vztahy, bez vymyšleného runtime či workbook evidence.

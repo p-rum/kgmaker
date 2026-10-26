@@ -362,3 +362,5 @@ only when a unique execution-bound producer output matches the artifact, and ret
 exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
 --offline --output /tmp/composite-plan.json` and explicit `project build-run`
 perform the export; scan/feature/hook never launch Gradle.
+
+Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
