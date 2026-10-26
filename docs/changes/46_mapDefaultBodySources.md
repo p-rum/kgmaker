@@ -177,3 +177,21 @@ Relevantní actual mapping positive, same-realm ABI a scope + provider/protocol/
 JDK prerequisites: **28 PASS, 1 explicit Windows smoke SKIP /54.83 s**.
 Plná425 sada se pouze kvůli této kompozici neopakovala. Semantic union zachovává
 93 main epizod jako přesný prefix a oba původní W02 záznamy beze změny.
+
+
+## Finální integrace Spring a source-only views
+
+Main `4113a797` zachovává Spring SelectorFacts spolu s compiler `jvm_static`
+metadata. Po rebuild vlastních K1/K2 workers prošly skutečné mapping positive,
+ABI/scope negative, Spring K1/K2 a provider/protocol testy: **34 PASS,
+1 explicit Windows SKIP /91.80 s**. `abiFailure` se resetuje při každém mapMethod,
+aby předchozí ABI odmítnutí neoznačilo nesouvisející nenamapovanou deklaraci.
+Následný views-only main `ff26a6d` nepřináší změnu JVM workerů. Zachováno je
+100 main epizod jako přesný prefix a oba dosavadní W02 záznamy. Plná ABI sada
+425/10 zůstává předchozím ověřením; kvůli samotné integraci se neopakovala.
+
+Po ff26 refresh core provider/protocol: **21 PASS /2.02 s**. Semantic validate,
+scan, check a diff whitespace prošly; všech 5 main konceptů/9 vztahů je přesně
+zachováno, 100 main epizod je přesný prefix celkových 103 epizod (dva původní
+W02 a nový integrační capture). Výsledný graph: 317 files, 3008 nodes,
+20104 relationships. Nový vzdálený CI běh je před publikací NOT_RUN.
