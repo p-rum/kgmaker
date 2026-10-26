@@ -211,5 +211,9 @@ fixture, malformed vstupy, nejednoznačný compound container, nulové procesy p
 extrakci, nulová mutace uloženého grafu a UNKNOWN availability jsou ověřeny
 `tests/test_binary_xls.py`; focused 65 PASS. Skutečné XLS buňky/hodnoty se nečtou,
 libovolné přípony se nesniffují a signatura není důkaz platného Excel workbooku.
+Review oprava přidává streaming checksum oversized souborů a hash-only manifest
+metadata; změna stejné délky invaliduje packet i workspace cache bez zápisu do
+store. Přímý extractor kontroluje archive limit před hashováním. Finální focused
+100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
 Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
 Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).

@@ -13,7 +13,7 @@ from .analysis_model import (
     file_hash, inventory_candidate, read_json, safe_path, write_json,
 )
 from .scanner import EXTENSIONS, MAX_FILE_BYTES, SKIP_DIRS, SENSITIVE_NAMES, scan_repository
-from .workbooks import MAX_ARCHIVE_BYTES, binary_format, BINARY_DIAGNOSTICS_VERSION
+from .workbooks import MAX_ARCHIVE_BYTES, binary_format, workbook_hash, BINARY_DIAGNOSTICS_VERSION
 from .semantic import apply_semantic_layer
 from .dataflow import CAPABILITIES, extract_dataflow
 
@@ -59,6 +59,11 @@ def source_inventory(root: Path) -> tuple[dict, list]:
             size_limit = MAX_ARCHIVE_BYTES if suffix == ".xlsx" else MAX_FILE_BYTES
             if path.stat().st_size > size_limit:
                 excluded.append({"path": relative, "reason": "file exceeds source size limit"})
+                if suffix in {".xls", ".xlsx"}:
+                    # The parser limit excludes values, not the identity of an
+                    # unsupported artifact whose hash remains in coverage.
+                    sources[relative] = {"sha256": workbook_hash(path), "kind": "WORKBOOK",
+                                         "bytes": path.stat().st_size, "supported": False}
                 continue
             raw = path.read_bytes()
             if raw.startswith(REPORT_MARKER.encode()):
@@ -262,6 +267,20 @@ def freshness(root: Path, packet: dict) -> list[str]:
     except ValueError as exc:
         return ["selected graph context is unavailable: " + str(exc)]
     changes = []
+    if current_coverage.get("artifact_diagnostics", []) != packet.get("coverage", {}).get("artifact_diagnostics", []):
+        changes.append("coverage.artifact_diagnostics changed or became stale")
+    # Recheck every retained diagnostic, including files excluded from parsed
+    # inventories and diagnostics loaded through a workspace cache generation.
+    for diagnostic in packet.get("coverage", {}).get("artifact_diagnostics", []):
+        try:
+            artifact_root = root
+            if workspace is not None:
+                artifact_root = Path(packet["workspace"]["roots"][diagnostic["repo_id"]])
+            artifact = safe_path(artifact_root, diagnostic["path"])
+            if artifact.is_symlink() or workbook_hash(artifact) != diagnostic["sha256"]:
+                changes.append("artifact diagnostic source changed: " + diagnostic["path"])
+        except (OSError, ValueError, KeyError, TypeError):
+            changes.append("artifact diagnostic source unavailable: " + str(diagnostic.get("path")))
     # External export contents are outside the source manifest. Revalidate the
     # documentation evidence retained in an already prepared packet as well.
     if current_coverage.get("documentation_conflicts", []) != packet.get("coverage", {}).get("documentation_conflicts", []):

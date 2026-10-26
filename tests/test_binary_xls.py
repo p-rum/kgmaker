@@ -167,3 +167,71 @@ def test_workspace_preserves_repo_qualified_binary_gap_without_nodes(tmp_path):
     packet = feature.prepare(coordinator, "requirement.md", "legacy", 100_000, workspace=manifest,
                              scope="production")
     assert packet["coverage"]["artifact_diagnostics"] == diagnostics
+
+
+def test_inventory_excluded_large_xls_is_content_bound_without_unbounded_reads(tmp_path, monkeypatch):
+    from kgmaker.scanner import MAX_FILE_BYTES
+    path = tmp_path / "src/legacy.xls"
+    path.parent.mkdir()
+    raw = FIXTURE.read_bytes()
+    with path.open("wb") as stream:
+        stream.write(raw)
+        stream.truncate(MAX_FILE_BYTES + 1)
+    (tmp_path / "requirement.md").write_text("Inspect legacy amount.")
+    original_read_bytes = Path.read_bytes
+    def bounded_sources_only(selected):
+        assert selected != path, "oversized XLS must not be loaded into memory"
+        return original_read_bytes(selected)
+    monkeypatch.setattr(Path, "read_bytes", bounded_sources_only)
+    packet = feature.prepare(tmp_path, "requirement.md", "large", 100_000, scope="production")
+    diagnostic, = packet["coverage"]["artifact_diagnostics"]
+    assert diagnostic["status"] == "UNSUPPORTED"
+    assert packet["source_manifest"]["src/legacy.xls"]["sha256"] == diagnostic["sha256"]
+    assert packet["source_manifest"]["src/legacy.xls"]["supported"] is False
+    before_packet = feature.load_packet(tmp_path, "large")
+    with path.open("r+b") as stream:
+        stream.seek(-1, 2)
+        stream.write(b"x")
+    assert feature.freshness(tmp_path, packet)
+    assert feature.load_packet(tmp_path, "large") == before_packet
+
+
+def test_oversized_renamed_compound_rejected_before_full_hash_or_zip_parse(tmp_path):
+    from kgmaker.workbooks import MAX_ARCHIVE_BYTES
+    path = tmp_path / "oversized.xlsx"
+    with path.open("wb") as stream:
+        stream.write(bytes.fromhex("d0cf11e0a1b11ae1"))
+        stream.truncate(MAX_ARCHIVE_BYTES + 1)
+    with patch("kgmaker.workbooks.file_hash", side_effect=AssertionError("unbounded checksum")), \
+            patch("kgmaker.workbooks.zipfile.ZipFile", side_effect=AssertionError("XLSX parser")):
+        with pytest.raises(AnalysisError, match="exceeds"):
+            extract(path, path.name, Classifier(tmp_path))
+
+
+def test_oversized_workspace_xls_cache_refreshes_when_same_length_content_changes(tmp_path):
+    import json
+    from kgmaker.scanner import MAX_FILE_BYTES
+    from kgmaker.workspace import snapshot_workspace
+    root = tmp_path / "repo"
+    (root / "src").mkdir(parents=True)
+    path = root / "src/legacy.xls"
+    with path.open("wb") as stream:
+        stream.write(FIXTURE.read_bytes())
+        stream.truncate(MAX_FILE_BYTES + 1)
+    manifest = tmp_path / "workspace.json"
+    manifest.write_text(json.dumps({"schema_version": 1, "workspace_id": "large",
+                                    "repositories": [{"id": "repo", "role": "shared", "path": "repo"}]}))
+    coordinator = tmp_path / "coordinator"
+    coordinator.mkdir()
+    (coordinator / "requirement.md").write_text("Inspect legacy amount.")
+    packet = feature.prepare(coordinator, "requirement.md", "large", 100_000, workspace=manifest,
+                             scope="production")
+    old = packet["coverage"]["artifact_diagnostics"][0]["sha256"]
+    before_store = {p: p.read_bytes() for p in (coordinator / ".kgmaker").rglob("*") if p.is_file()}
+    with path.open("r+b") as stream:
+        stream.seek(-1, 2)
+        stream.write(b"x")
+    assert feature.freshness(coordinator, packet)
+    assert {p: p.read_bytes() for p in (coordinator / ".kgmaker").rglob("*") if p.is_file()} == before_store
+    coverage = snapshot_workspace(manifest)[1]
+    assert coverage["artifact_diagnostics"][0]["sha256"] != old

@@ -200,7 +200,12 @@ records also carry `repo_id`; production packets filter diagnostics by scope.
 Renamed binary `.xlsx` stays in `unsupported_sources`; malformed XLSX parsing also
 returns an UNSUPPORTED hash/file-locator diagnostic. `feature-inventory-5`
 invalidates older inventory/cache fingerprints; regenerate old packets explicitly.
-Graph/store schemas and the `xlsx-offline-1` cell-evidence contract are unchanged.
+Oversized spreadsheet files keep unsupported hash-only manifest entries while
+remaining excluded from parsing. Their checksums use bounded streaming buffers;
+retained diagnostic hashes are rechecked during packet freshness, including in
+workspaces. The direct XLSX extractor checks its archive size limit before any
+content hashing. Graph/store schemas and the `xlsx-offline-1` cell-evidence
+contract are unchanged.
 
 Evidence kind must match the packet source manifest. Source and cited location must
 exist and the quote/value must match; hash or location errors reject apply.

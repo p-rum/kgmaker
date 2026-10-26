@@ -6,6 +6,7 @@ values remain separate evidence with explicitly unknown freshness.
 from __future__ import annotations
 
 import re
+import hashlib
 import zipfile
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
@@ -48,6 +49,12 @@ def binary_format(header: bytes) -> str | None:
     return None
 
 
+def workbook_hash(path: Path) -> str:
+    """Hash unsupported/oversized artifacts with a bounded streaming buffer."""
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
 def unsupported_binary(path: Path, relative: str) -> dict | None:
     """Bounded preflight for declared .xls or binary content renamed to .xlsx."""
     with path.open("rb") as stream:
@@ -55,7 +62,7 @@ def unsupported_binary(path: Path, relative: str) -> dict | None:
     if path.suffix.lower() != ".xls" and detected is None:
         return None
     return {"path": relative, "code": "BINARY_XLS_UNSUPPORTED", "status": "UNSUPPORTED",
-            "detected_format": detected or "UNKNOWN", "sha256": file_hash(path),
+            "detected_format": detected or "UNKNOWN", "sha256": workbook_hash(path),
             "locator": {"type": "file", "path": relative}, "extractor": BINARY_DIAGNOSTICS_VERSION,
             "reason": "Legacy .xls or binary spreadsheet container is unsupported; no cells or values were read. "
                       "A signature or extension does not establish a valid workbook. "
@@ -153,11 +160,11 @@ def _references(expression: str) -> list[tuple[str | None, str, str | None, str]
 
 def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Node], list[Edge], list[dict], dict, list[dict]]:
     """Extract workbook nodes, dependency edges, diagnostics, context and evidence."""
+    if path.stat().st_size > MAX_ARCHIVE_BYTES:
+        raise AnalysisError(f"XLSX archive exceeds {MAX_ARCHIVE_BYTES} bytes")
     unsupported = unsupported_binary(path, relative)
     if unsupported is not None:
         raise AnalysisError(unsupported["reason"])
-    if path.stat().st_size > MAX_ARCHIVE_BYTES:
-        raise AnalysisError(f"XLSX archive exceeds {MAX_ARCHIVE_BYTES} bytes")
     try:
         archive = zipfile.ZipFile(path)
     except (OSError, zipfile.BadZipFile) as exc:
@@ -338,7 +345,7 @@ def attach_workbooks(root: Path, graph: KnowledgeGraph) -> KnowledgeGraph:
         try:
             local_nodes, local_edges, local_diagnostics, context, local_evidence = extract(path, relative, classifier)
         except AnalysisError as exc:
-            checksum = file_hash(path)
+            checksum = workbook_hash(path)
             diagnostics.append({"path": relative, "code": "XLSX_PARSE_FAILED", "status": "UNSUPPORTED",
                                 "scope": classifier.classify(relative).scope,
                                 "sha256": checksum, "locator": {"type": "file", "path": relative},

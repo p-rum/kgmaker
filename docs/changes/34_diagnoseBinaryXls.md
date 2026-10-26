@@ -81,3 +81,32 @@ celého BIFF/CFB souboru. Přípony mimo `.xls`/`.xlsx` se automaticky nesniffuj
 Nedokončuje se širší XLSX reference/template/report rozsah, celý S09/AC09,
 release matice ani T003. Neprovedeno: runtime/workbook aplikace, live síť,
 worker buildy či rendering; pro diagnostický task nejsou potřebné.
+
+
+## Opravy z nezávislého review
+
+Review původního HEAD `5a9de635` našlo dvě mezery: diagnostika XLS většího než
+source-inventory limit byla v packet coverage, ale její bytes nebyly svázané
+s freshness ani workspace cache key; přejmenovaný oversized OLE `.xlsx` se před
+kontrolou archive limitu hashoval přes neomezené `read_bytes`.
+
+Oversized spreadsheet nyní ponechá hash-only manifest položku se `supported:
+false`; parser size exclusion zůstává zachována. Hashování unsupported/oversized
+artefaktů používá `hashlib.file_digest` s bounded streaming bufferem. Přímý XLSX
+extractor kontroluje 20MiB limit před signaturou/hashováním. Packet freshness
+navíc porovná artifact diagnostics a read-only znovu ověří všechny jejich
+retained hashe, i když soubor není parsovaný nebo pochází z workspace cache.
+Změna ani chyba nepublikuje nový store/cache/packet.
+
+Tři nové regresní scénáře na původním HEAD: **3 FAIL**; po opravě focused
+workbook/feature/data/workspace/methodology/scanner sada: **100 PASS v 2.88 s**.
+Testy vytvářejí skutečné sparse oversized soubory, zakazují celé `read_bytes`,
+ověřují odmítnutí před hash/ZIP a změnu stejného počtu bytes po prepare včetně
+cached workspace; původní packet a persistované cache zůstávají beze změny.
+
+
+Finální ověření review opravy: stejná focused sada **100 PASS v 5.68 s**;
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs`:
+**274 PASS, 23 SKIP v 15.69 s**, stejné konkrétní toolchain důvody jako výše.
+Semantic update/apply/validate, review-fix memory capture, scan/check a diff check
+byly zopakovány po opravě. Žádný SKIP není tvrzením worker/compiler úspěchu.
