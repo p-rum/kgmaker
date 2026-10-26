@@ -32,6 +32,10 @@ nespotřebují tento local budget. Stávající symbol/call/input/response limit
 
 Heap/value-flow, returned functions, default/rest/destructured callback inference,
 interprocedural parameter forwarding a úplná runtime dispatch množina nejsou odvozeny.
+Samostatná overload signature a implementation body nemají nově vytvořený navigation
+bridge. Selected signature i body parameter bindings jsou doložené odděleně;
+callgraph path přes tuto hranici může zůstat UNKNOWN/PARTIAL. Nepřidává se fiktivní
+runtime dispatch candidate pouze proto, aby byla cesta dosažitelná.
 Neznámá binding může zůstat bez candidates. Framework UI/BE–FE flow, persistent
 compiler cache a celý T003-S08 nejsou tímto dokončeny. Source IR neprokazuje runtime
 pořadí, provedení callbacku ani dostupnost dat.

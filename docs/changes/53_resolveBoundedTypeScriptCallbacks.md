@@ -100,3 +100,16 @@ W02 **107 episodes** jsou exact immutable prefix, následované jedním vlastní
 implementation capture s actual15/regression34=passed, full/CI=unknown.
 Generované graph views jsou obnoveny příkazem, ne ručně. Full zůstává PENDING;
 žádná automatická instalace/build ani CI retry/bypass nebyly přidány.
+
+## Přesná hranice overload navigation
+
+Actual compiler/read-only probe nad stejnou fixture vybral qualified function
+`src/handlers.ts` /kind function /name asText (nikoli barrel alias). Generic run
+→asText vrací `STATIC_PATH` s DECLARED_TARGET a DISPATCH_CANDIDATE kroky;
+overloadedCallback→asText vrací `UNKNOWN`: selected overload signature a její
+implementation body jsou oddělené graph identity bez nově doplněného bridge.
+AC01 vyžaduje resolved canonical signature targety a nepovýšené callback ambiguity;
+nepožaduje nový signature→body path kontrakt. Toto je výslovně PARTIAL/unsupported
+navigation hranice, nikoli důvod vymýšlet dispatch alias či přepisovat selected
+signature. Skutečný implementation-parameter binding proof je testován odděleně.
+Žádný runtime kód ani full freeze kvůli tomuto dokumentovanému omezení neměněn.

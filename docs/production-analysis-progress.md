@@ -9,7 +9,8 @@ Source-final expanded13PASS includes local64-bound PARTIAL, dependency65 map cal
 and invalid-candidate store preservation. Further conditional-binding proof corrected
 candidate evidence; final protected15PASS61.69s; full validation PENDING, CI billing BLOCKED.
 [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md), [guide](typescript-callbacks.md)
-separate declared signatures, candidate bindings and runtime unknowns. No whole S08,
+separate declared signatures, candidate bindings and runtime unknowns.
+Overload signature→implementation-body navigation remains UNKNOWN/PARTIAL. No whole S08,
 UI/BE–FE flow or persistent compiler cache completion is claimed.
 
 
