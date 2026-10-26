@@ -27,6 +27,12 @@ These are **SPECIFICATION**, not implemented commands or completed capabilities.
 
 ## Install
 
+Windows user-space installation passed an actual restricted-user CI smoke with
+paths containing spaces (43 passed, 2 scoped skips). It covers the core, Java/K1
+Kotlin and TypeScript workers. K2 on Windows remains unverified; Windows
+`BUILD_EXECUTE` reports an explicit unsupported-platform error. See
+[Windows prerequisites and verification evidence](docs/windows-install.md).
+
 From the repository root:
 
 ```bash
