@@ -255,3 +255,51 @@ def test_new_alias_dependency_after_preflight_cannot_replace_last_graph(tmp_path
     assert store.read_bytes() == previous
     assert (root / 'src/app.ts').read_bytes() == app_bytes
     assert (root / 'tsconfig.json').read_bytes() == config_bytes
+
+
+@pytest.mark.parametrize('legacy_format', ['pre-k2', 'missing-key', 'interim-kotlin-fields'])
+def test_legacy_typescript_selection_is_replaced_without_duplicate_contexts(tmp_path, monkeypatch, legacy_format):
+    from kgmaker import inspection as inspection_module
+    from kgmaker.analysis_model import digest
+
+    (tmp_path / 'src').mkdir()
+    (tmp_path / 'src/app.ts').write_text(
+        'export function pick() { return 1; } export function run() { return pick(); }')
+    (tmp_path / 'tsconfig.json').write_text(json.dumps({
+        'compilerOptions': {'target': 'ES2022', 'strict': True}, 'include': ['src/*.ts']}))
+    # Persisted selection contract from 7b9a9ea, independently frozen here:
+    # frontend keys predate K2 and contain no JVM backend fields. Recreate the
+    # old selection before the real worker generates IDs/evidence for it.
+    legacy_fields = (
+        'repo_id', 'module', 'source_set', 'scope', 'language', 'build_context_id',
+        'build_profiles', 'spring_profiles', 'config_fingerprint', 'compiler_options',
+        'manifest_hash', 'toolchain', 'dependency_model_hash', 'generated_source_roots',
+        'spring_properties', 'spring_available_classes', 'spring_component_packages',
+        'framework_rule_versions', 'ui_framework', 'tsconfig', 'database_id',
+        'schema_stream_id', 'persistence_unit', 'naming_strategy',
+    )
+    real_context = inspection_module.context
+
+    def legacy_context(*args, **kwargs):
+        selected = real_context(*args, **kwargs)
+        payload = {key: selected.get(key) for key in legacy_fields}
+        if legacy_format == 'interim-kotlin-fields':
+            payload.update(kotlin_backend=None, kotlin_version=None)
+        selected['selection_key'] = digest(payload)
+        if legacy_format == 'missing-key':
+            selected.pop('selection_key')
+        selected['id'] = digest({key: value for key, value in selected.items() if key != 'id'})
+        return selected
+
+    with monkeypatch.context() as old_generation:
+        old_generation.setattr(inspection_module, 'context', legacy_context)
+        legacy = inspect(tmp_path)
+    old_contexts = [c for c in legacy['graph']['contexts'] if c.get('analyzer_version')]
+    assert len(old_contexts) == 1
+    current = inspect(tmp_path)
+    contexts = [c for c in current['graph']['contexts'] if c.get('analyzer_version')]
+    assert len(contexts) == 1, contexts
+    assert contexts[0]['id'] == current['context']['id']
+    assert contexts[0]['freshness'] == 'CONTENT_VERIFIED'
+    assert len(current['graph']['call_sites']) == 1
+    assert all(site['context_id'] == contexts[0]['id'] for site in current['graph']['call_sites'])

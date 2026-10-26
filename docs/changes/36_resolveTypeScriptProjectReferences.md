@@ -148,6 +148,41 @@ na řádcích 140/143. Zachovány jsou všechny související main vztahy i hist
 scoped semantic apply/validate, memory capture, command-generated scan/check,
 byte identity, syntax a diff check: PASS.
 
+### Úplný input closure a kompatibilita selektorů po integraci K2
+
+Větev je integrována s main `eff0d3d5d7620b017fe42a65a54f672af8068667`
+(K2 Analysis API, PR #26). CI zachovává skutečné K2 i TS acceptance. Genuine
+K1/K2 worker distribuce jsou převzaty z již sestaveného kontrolovaného worktree
+a jejich JVM zdroje, builder i pinned dependency locks byly před převzetím
+porovnány byte-for-byte s integrovaným main.
+
+Další skutečná reprodukce odhalila P1: paths alias dependency soubor chyběl při
+preflight, vznikl těsně před analyze a vstoupil do nově resolved call. Root source
+scan tento soubor mimo vybraný root neviděl a původní kontrola rehashovala pouze
+staré vstupy, takže nahradila store jako COMPLETE. Nová kontrola vyžaduje shodnou
+úplnou mapu path/SHA-256, validuje její tvar a při změně členství vrátí STALE před
+konstrukcí či publikací grafu. Projektový/config graph se nadále porovnává;
+žádná pravidla pro outside-root project references se neoslabují.
+
+`test_new_alias_dependency_after_preflight_cannot_replace_last_graph` používá
+skutečné oba worker requesty a řízenou změnu mezi nimi; kontroluje byte-identický
+poslední graph i source/config. Před opravou FAIL, po opravě **1 PASS / 2.05 s**;
+celá dosavadní skutečná TS matice **13 PASS / 55.42 s**. Strict celá sada po této
+opravě a integraci K2: **391 PASS / 9 SKIP / 330.87 s**.
+
+Integrace K2 také přidala frontend selectoru dvě irrelevantní Kotlin None pole.
+Reinspection původního TS snapshotu z kontraktu `7b9a9ea` pak zachovala dva čerstvé
+kontexty stejného projektu. Konstrukce nyní sdílí `_selection_key` s providerem;
+Kotlin backend/version vstupují pouze do JVM selectorů. Přesně známý dočasný TS
+digest se normalizuje na původní slot; opaque varianty a K1/K2 selector keys se
+zachovají. Nejde o obecnou JVM migraci nebo W02 selektivní cache.
+
+Skutečné legacy worker fixture pokrývají původní uložený klíč, absenci klíče a
+dočasný K2-era digest; při reinspection zbude jeden čerstvý context a jedna sada
+call sites. Původní klíč před opravou FAIL (dva contexts). Fokus legacy/provider/
+K2: **41 PASS / 2 DESELECTED / 304.11 s**. Přesné syntetické K1/K2 klíče byly
+před/po opravě porovnány a zůstaly shodné.
+
 ### Integrace konfigurovatelného Confluence připojení
 
 Integrace s main `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9`
@@ -157,3 +192,19 @@ project-reference testy: **62 PASS / 57.59 s**. Plná sada se kvůli této integ
 neopakovala. README semantic prepare/update evidence odpovídá řádkům 134/136;
 zachovány jsou 4 koncepty, všech 8 původních vztahů a sjednocená neměnná historie.
 Scoped semantic apply/validate, generovaný scan/check a diff check: PASS.
+
+### Finální strict validace po obou P1 opravách
+
+```sh
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/kgmaker-venv/bin:$PATH PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs
+```
+
+Výsledek: **394 PASS / 9 SKIP / 734.61 s**; zahrnuje všech 16 TS
+project-reference případů a skutečné K1/K2 compiler testy. Devět SKIP se týká
+Maven/trusted exporteru, druhého JDK s Maven, dvou installed exporterů
+(Maven/Gradle), Gradle included build, dvou Gradle variants a dvou Kotlin
+Maven/Gradle build-options fixture. Žádný skutečný TS/K2 test není SKIP.
+Scoped semantic apply/validate, scan/check, `node --check` a diff check: PASS.
+README evidence byla ověřena proti skutečným semantic prepare/update odrážkám
+na řádcích 134/136; architecture authority i ownership evidence odpovídají textu.
+Zachovány jsou 4 koncepty, 8 vztahů a všechny předchozí epizody obou větví.

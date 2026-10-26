@@ -23,10 +23,10 @@ def _jar(path: Path, marker: bytes) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
-            "META-INF/maven/example/shared/pom.properties",
+            zipfile.ZipInfo("META-INF/maven/example/shared/pom.properties", (2025, 1, 1, 0, 0, 0)),
             "groupId=example\nartifactId=shared\nversion=1.0\n",
         )
-        archive.writestr("example/Shared.class", marker)
+        archive.writestr(zipfile.ZipInfo("example/Shared.class", (2025, 1, 1, 0, 0, 0)), marker)
     return path
 
 

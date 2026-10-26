@@ -157,6 +157,9 @@ resolution or cross-repository TypeScript source analysis.
 Declaration identities use the owning project's checker even when consumer
 options differ. Referencing configs that disable source redirects are rejected
 before publication rather than trusting emitted declarations.
+Preflight and analysis must read the same compiler input closure; membership
+changes fail before publication. Reinspection replaces the same TypeScript
+selection slot across legacy and K2-era snapshot metadata.
 
 ## Copilot workflow
 
@@ -331,6 +334,15 @@ JVM inspection v ověřeném Kotlin 1.9 compatibility subsetu zachovává přesn
 constructor, lambda a callable-reference identity a compiler-resolved uživatelské
 operátory. Operator call site vstupuje do source CFG; inline/default/suspend jsou
 metadata, nikoli tvrzení o provedení compiler-generated body nebo coroutine state machine.
+Opt-in `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
+používá samostatně připravenou Standalone Analysis API/FIR distribuci. K2 backend
+nepřechází na K1; jiné verze či nepodporované captured flags/plugins odmítne před
+publikací. Mixed Java/Kotlin named-function calls mají compiler-owned JVM identity
+a backend/version provenance. K2 source CFG, property/lambda execution a širší
+Kotlin matice zůstávají PARTIAL; výchozí `--kotlin-backend k1` zachovává ověřený
+compatibility subset. Explicitní builder, classpath a omezení jsou v
+[compiler inspection](docs/compiler-inspection.md#t003-s04-w01--explicitní-k2-analysis-api).
+
 Custom Kotlin getter/setter mají vlastní method/CFG a property access používá přesný
 `ACCESSOR` call site. Class property initializers a `init` bloky patří ve zdrojovém
 pořadí do primary-constructor CFG. Top-level properties používají file-facade
