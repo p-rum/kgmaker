@@ -1,3 +1,5 @@
+import os
+import subprocess
 import json
 import sys
 import tempfile
@@ -58,6 +60,54 @@ class WorkerProtocolTests(unittest.TestCase):
             finally:
                 timer.join()
         self.assertFalse([t.name for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
+
+    def test_exited_parent_inherited_pipes_timeout_and_cancel_are_bounded(self):
+        for cancelled in (False, True):
+            with self.subTest(cancelled=cancelled), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                marker, cancel = root / 'child', root / 'cancel'
+                sentinel = root / 'graph.json'
+                sentinel.write_bytes(b'unchanged')
+                script = ("import subprocess,sys,pathlib; "
+                          "p=subprocess.Popen([sys.executable,'-c','import time; time.sleep(5)']); "
+                          "pathlib.Path(sys.argv[1]).write_text(str(p.pid))")
+                processes = []
+                original = subprocess.Popen
+                def capture(*args, **kwargs):
+                    process = original(*args, **kwargs)
+                    processes.append(process)
+                    return process
+                def trigger():
+                    while not marker.exists() or not processes or processes[0].poll() is None:
+                        if stop.wait(.01):
+                            return
+                    cancel.write_text('cancel')
+                stop = threading.Event()
+                watcher = threading.Thread(target=trigger)
+                if cancelled:
+                    watcher.start()
+                started = time.monotonic()
+                try:
+                    with patch('kgmaker.worker_protocol.subprocess.Popen', side_effect=capture):
+                        with self.assertRaises(WorkerError) as caught:
+                            request_worker([sys.executable, '-c', script, str(marker)], {}, cwd=root,
+                                timeout=10 if cancelled else 1, cancel_file=cancel if cancelled else None)
+                    self.assertEqual('CANCELLED' if cancelled else 'TIMED_OUT', caught.exception.status)
+                    self.assertLess(time.monotonic() - started, 3)
+                    self.assertTrue(marker.exists(), 'Worker must have created the inherited-pipe descendant')
+                    self.assertIsNotNone(processes[0].returncode)
+                    self.assertTrue(all(stream.closed for stream in (processes[0].stdin, processes[0].stdout, processes[0].stderr)))
+                    self.assertFalse([t for t in threading.enumerate() if t.name.startswith('kgmaker-worker-')])
+                    self.assertEqual(b'unchanged', sentinel.read_bytes())
+                finally:
+                    stop.set()
+                    if cancelled:
+                        watcher.join()
+                    if os.name == 'posix' and marker.exists():
+                        try:
+                            os.kill(int(marker.read_text()), 9)
+                        except ProcessLookupError:
+                            pass
 
 
 if __name__=='__main__':unittest.main()

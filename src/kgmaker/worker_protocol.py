@@ -25,20 +25,21 @@ class WorkerError(AnalysisError):
         self.status, self.stderr = status, stderr
 
 
-def _terminate(process):
-    if process.poll() is None:
-        try:
-            if os.name == "posix":
-                os.killpg(process.pid, signal.SIGKILL)
-            else:
-                process.kill()
-        except OSError:
-            if process.poll() is None:
-                raise
+def _terminate(process, job=None):
+    # The session leader may already have exited while descendants retain pipes.
+    try:
+        if job is not None:
+            job.terminate()
+        elif os.name == "posix":
+            os.killpg(process.pid, signal.SIGKILL)
+        elif process.poll() is None:
+            process.kill()
+    except ProcessLookupError:
+        pass
     process.wait()
 
 
-def _exchange(process, payload, *, deadline, cancel_file, max_response):
+def _exchange(process, payload, *, deadline, cancel_file, max_response, job=None):
     """Drain bounded byte streams using pipe operations available on Windows.
 
     Anonymous Windows pipes cannot be registered with a socket selector. Three
@@ -59,7 +60,14 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response):
     def read(stream, name):
         try:
             while not stopped.is_set():
-                block = stream.read(65536)
+                if os.name == 'posix':
+                    try:
+                        block = os.read(stream.fileno(), 65536)
+                    except BlockingIOError:
+                        stopped.wait(.01)
+                        continue
+                else:
+                    block = stream.read(65536)
                 if not block:
                     break
                 send(name, block)
@@ -70,8 +78,17 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response):
 
     def write():
         try:
-            process.stdin.write(payload)
-            process.stdin.flush()
+            if os.name == 'posix':
+                remaining = memoryview(payload)
+                while remaining and not stopped.is_set():
+                    try:
+                        count = os.write(process.stdin.fileno(), remaining[:65536])
+                        remaining = remaining[count:]
+                    except BlockingIOError:
+                        stopped.wait(.01)
+            else:
+                process.stdin.write(payload)
+                process.stdin.flush()
         except BrokenPipeError:
             pass
         except OSError as error:
@@ -92,9 +109,14 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response):
                threading.Thread(target=read, args=(process.stderr, 'stderr'), name='kgmaker-worker-stderr', daemon=True),
                threading.Thread(target=write, name='kgmaker-worker-stdin', daemon=True)]
     output, errors = bytearray(), bytearray()
-    for thread in threads:
-        thread.start()
+    if os.name == 'posix':
+        for stream in (process.stdin, process.stdout, process.stderr):
+            os.set_blocking(stream.fileno(), False)
+    started = []
     try:
+        for thread in threads:
+            thread.start()
+            started.append(thread)
         pending = {'stdout', 'stderr'}
         while pending:
             if cancel_file is not None and cancel_file.exists():
@@ -122,11 +144,11 @@ def _exchange(process, payload, *, deadline, cancel_file, max_response):
             raise WorkerError('Worker timed out after closing streams', 'TIMED_OUT') from error
         return output, errors, code
     except BaseException:
-        _terminate(process)
+        _terminate(process, job)
         raise
     finally:
         stopped.set()
-        for thread in threads:
+        for thread in started:
             thread.join(timeout=1)
 
 
@@ -142,20 +164,34 @@ def request_worker(argv: list[str], request: dict, *, cwd: Path, timeout: float 
         raise AnalysisError("Worker request exceeds protocol limit")
     if cancel_file is not None and cancel_file.exists():
         raise WorkerError("Worker cancelled before launch", "CANCELLED")
+    job = None
+    process = None
     try:
+        if os.name == 'nt':
+            from ._windows_job import Job
+            job = Job()
         process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, start_new_session=os.name == "posix")
+                                   stderr=subprocess.PIPE, start_new_session=os.name == "posix",
+                                   creationflags=0x00000004 if os.name == 'nt' else 0)
+        if job is not None:
+            job.attach_and_resume(process)
     except OSError as error:
+        if process is not None:
+            process.kill()
+            process.wait()
+            for stream in (process.stdin, process.stdout, process.stderr):
+                stream.close()
+        if job is not None:
+            job.close()
         raise WorkerError(str(error), "TOOLCHAIN_UNAVAILABLE") from error
     assert process.stdin is not None and process.stdout is not None and process.stderr is not None
     deadline = time.monotonic() + timeout
     try:
         output, errors, code = _exchange(process, payload, deadline=deadline,
-            cancel_file=cancel_file, max_response=max_response)
-    except BaseException:
-        _terminate(process)
-        raise
+            cancel_file=cancel_file, max_response=max_response, job=job)
     finally:
+        if job is not None:
+            job.close()
         for stream in (process.stdin, process.stdout, process.stderr):
             if not stream.closed:
                 stream.close()
