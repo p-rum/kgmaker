@@ -137,6 +137,15 @@ changing the graph. This model is an API foundation; view discovery, CLI
 commands, renderers and cross-service aggregation remain specified work in
 [T004](tasks/4_addHighLevelProjectViews.md).
 
+Workspace v1 optionally accepts a separate `service_ownership` schema v1.
+Each declaration attaches explicit repository-relative roots and/or exact
+repo-qualified module IDs to an already declared legacy service ID, with separately listed external
+system IDs. The pure `workspace.resolve_service_ownership` function requires a
+caller selected context and returns `RESOLVED` only for one matching declaration;
+multiple matches are `AMBIGUOUS`, and no match is `UNASSIGNED`. Existing
+`backend_repo` mappings and service IDs remain unchanged. A repository, Maven
+module, or Spring `@Service` annotation alone does not establish ownership.
+
 
 ## Compiler lifecycle provider
 

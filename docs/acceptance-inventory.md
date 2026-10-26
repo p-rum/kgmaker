@@ -20,6 +20,17 @@
 | T005-AC05 zachování scope, kontextu, evidence a unresolved coverage | PASS | `test_scope_context_and_evidence_kind_are_preserved_without_upgrade`; `test_complete_coverage_cannot_hide_unresolved_edges` | cílený běh |
 | T005-AC06 dokumentace a change note | PASS | `docs/changes/11_addViewModel.md` | PR #11 sloučen do main; finální integrované ověření je v change note |
 
+## T007 — explicitní vlastnictví služeb
+
+| Acceptance | Stav | Přímý test | Výsledek |
+|---|---|---|---|
+| T007-AC01 dvě explicitní služby, shared library bez vlastníka | PASS | `tests/test_t007_define_service_ownership.py::test_ac01_two_declared_services_and_shared_library_is_unassigned` | finální cílená a regresní sada 43 PASS |
+| T007-AC02 překryv roots/module mapping | PASS | `tests/test_t007_define_service_ownership.py::test_ac02_overlapping_roots_and_module_mapping_remain_ambiguous` | finální cílená a regresní sada 43 PASS |
+| T007-AC03 legacy workspace a service IDs | PASS | `tests/test_t007_define_service_ownership.py::test_ac03_legacy_manifest_without_ownership_preserves_service_identity` | finální cílená a regresní sada 43 PASS |
+| T007-AC04 invalidní manifest bez mutace | PASS | `tests/test_t007_define_service_ownership.py::test_ac04_invalid_ownership_is_rejected_without_manifest_mutation`; duplicate identity regression | finální cílená a regresní sada 43 PASS |
+| T007-AC05 kontext a nepovýšení evidence | PASS | `tests/test_t007_define_service_ownership.py::test_ac05_resolution_preserves_selected_context_and_never_guesses` | finální cílená a regresní sada 43 PASS |
+| T007-AC06 dokumentace a change note | PASS | README, architecture, status a tento inventář; `docs/changes/33_defineServiceOwnership.md` | `kgmaker check` PASS; `git diff --check` PASS |
+
 Datum auditu: 2026-10-15. Autoritativní scénáře jsou v
 [T001](tasks/1_featureAnalysis.md) a [T002](tasks/2_buildAwareInspection.md).
 `VERIFIED_IN_SCOPE` platí jen pro verzi adaptéru a fixture uvedené v řádku;

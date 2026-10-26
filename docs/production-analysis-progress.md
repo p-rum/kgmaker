@@ -199,3 +199,18 @@ Prepared packets revalidate documentation conflict coverage outside checkout too
 Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP** (5.00 s); focused **56 PASS**. Strict attempt blocked by missing actual Maven fixture (14 setup errors), documented in change note9; no worker PASS is claimed for this environment.
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
+
+## T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)
+
+Workspace v1 nyní může nést samostatnou deklaraci `service_ownership` v1 s
+explicitními roots, repo-qualified module IDs a external system IDs pro existující service IDs.
+Resolver používá pouze tyto deklarace a volající context ID; více kandidátů
+vrací AMBIGUOUS a žádný UNASSIGNED. Legacy `backend_repo` kontrakt a IDs zůstávají
+čitelné; samotná existence repozitáře/modulu/Spring anotace vlastnictví nedokládá.
+`tests/test_t007_define_service_ownership.py` pokrývá dvě explicitní služby,
+shared library, překryvy, legacy manifest, nevalidní deklaraci bez mutace a
+context mismatch. Cílený běh: 43 PASS včetně workspace/T005 regresí. Full suite:
+253 PASS, 23 SKIP; SKIP jsou chybějící Maven/JDK, Gradle 8.13 a skutečné JVM/TS
+workery. `kgmaker check`, semantic validation a `git diff --check` prošly.
+T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
+Discovery, view aggregation ani T004 nejsou implementovány.

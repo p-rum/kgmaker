@@ -53,6 +53,12 @@ deterministic JSON envelope for future high-level interface, topology and proces
 projections. It does not discover or render those views; the existing CLI is
 unchanged. See [architecture](docs/architecture.md) and the [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 
+Workspace v1 can optionally carry `service_ownership` v1 with explicit service
+roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
+returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
+legacy `services` entries remain readable and do not claim ownership by themselves.
+This contract does not discover deployment boundaries or infer runtime identity.
+
 ```text
 kgmaker init [--root PATH] [--force]
 kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
