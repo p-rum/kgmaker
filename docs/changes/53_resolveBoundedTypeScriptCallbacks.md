@@ -65,3 +65,25 @@ budget, source invocation nad64 bindings vrátí PARTIAL s64 candidates a explic
 `CALLBACK_TARGET_LIMIT`; nic netvrdí complete dispatch. Unknown callback ID zachová
 byte-identický poslední validní store. Worker4 zůstává protocol1; callgraph/model
 se nemění, protože existující candidate evidence kontrakt prokazatelně stačí.
+
+Další konkrétní negative proof: conditional callback argument se dvěma known
+function branches byl nesprávně označen jako dva resolved argument bindings.
+Actual red **1 FAIL /3 DESELECTED**,6.29s (`/tmp/ts-callbacks-union-binding-red.*`);
+one-line evidence oprava a protected sada **14 PASS**,78.88s. Další actual red
+**1 FAIL /4 DESELECTED**,5.66s (`/tmp/ts-callbacks-expression-limit-red.*`) prokázal
+chybějící přenos expression candidate limitu do parameter-invocation reason;
+bounded PARTIAL limit evidence se nyní přenáší i z jediného complex argumentu.
+Final source/test SHA256 freeze: `/tmp/ts-callbacks-source-final-freeze.json`;
+final15-case focus a full jsou spuštěny/queued s persistent log/XML a bez dalšího
+runtime přepisování. Prerequisite preflight po explicitní přípravě PASS; full
+mandatory workers/K2/Spring flags zůstávají1, JDK21/Kotlin2.1.10 jsou explicitně na PATH.
+
+Final protected source/test matice: **15 PASS**,61.69s,
+`/tmp/ts-callbacks-final-focused.log` a XML. Zahrnuje actual owner Program strict
+a non-strict consumer, dvě repo realms, overload→body parameter binding,65
+library/local/complex-expression callbacks, conditional candidate fact strength
+a actual corrupted candidate zachovávající store. Source/test freeze nyní odpovídá
+tomuto přesnému workeru a15-case matici. Heavy full byl znovu queued po opravách
+bez runtime přepisování; `/tmp/ts-callbacks-full.log/.xml`, výsledek PENDING.
+W02 dependency mezitím local source-final full dokončila567PASS10SKIP787.45s;
+required CI/merge PR36 stále pending kvůli billing/quota, není obejito.

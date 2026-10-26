@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W03 — bounded callbacks candidate / final proof pending
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | CANDIDATE / FINAL_VALIDATION_PENDING | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | CANDIDATE / FINAL_VALIDATION_PENDING | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | CANDIDATE / FINAL_VALIDATION_PENDING | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | IN_PROGRESS | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) name real fixture/toolchain/tests and pending full/CI |
+
+
 ## T003-S08-W02 — selected config freshness (finální validace pending)
 
 | ID | Stav | Evidence |

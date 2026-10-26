@@ -1,5 +1,18 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W03 — bounded callback candidate (2026-10-26)
+
+Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
+W02 head d416e2a; dependency CI/merge is not claimed. Actual TS5.7.3/Node24.19.0 red
+6FAIL1PASS and first7PASS, owner/strict/repo2PASS; wider callback/W01/provider34PASS.
+Source-final expanded13PASS includes local64-bound PARTIAL, dependency65 map calls
+and invalid-candidate store preservation. Further conditional-binding proof corrected
+candidate evidence; final protected15PASS61.69s; full validation PENDING, CI billing BLOCKED.
+[Note53](changes/53_resolveBoundedTypeScriptCallbacks.md), [guide](typescript-callbacks.md)
+separate declared signatures, candidate bindings and runtime unknowns. No whole S08,
+UI/BE–FE flow or persistent compiler cache completion is claimed.
+
+
 ## T003-S08-W02 — selected tsconfig freshness kandidát (2026-10-26)
 
 Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;

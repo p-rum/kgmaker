@@ -360,10 +360,12 @@ function analyze(request) {
           const fallback=symbolDeclaration(checker.getSymbolAtLocation(argument));
           const sources=bound.targets.length?bound.targets:fallback?[fallback]:[];
           const parameter=register(d);
+          if (callback && bound.reason==='CALLBACK_TARGET_LIMIT' && projectFor(d.getSourceFile().fileName) && !d.getSourceFile().isDeclarationFile)
+            limitedParameters.add(parameter);
           for (const source of sources) {
             const identity=register(source);
             facts.push({kind:'argument_to_parameter',source:identity,target:parameter,...loc,
-              evidence_kind:bound.targets.length && !bound.complete?'DISPATCH_CANDIDATE':'SYMBOL_RESOLVED'});
+              evidence_kind:bound.targets.length && (!bound.complete || bound.targets.length!==1)?'DISPATCH_CANDIDATE':'SYMBOL_RESOLVED'});
             if (callback && bound.targets.includes(source) && projectFor(d.getSourceFile().fileName) && !d.getSourceFile().isDeclarationFile) {
               if (!callbackBindings.has(parameter)) callbackBindings.set(parameter,new Set());
               const candidates=callbackBindings.get(parameter);
