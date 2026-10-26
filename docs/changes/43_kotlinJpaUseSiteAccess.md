@@ -163,3 +163,25 @@ JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:$
 
 Celá sada nebyla po této čistě testovací a mainline integrační změně opakována;
 poslední kompletní S06 výsledek zůstává 379 passed, 9 skipped před integrací T008.
+
+### Integrace mandatory-worker CI gate
+
+Na current main `e9027e9a14e048c891aec01ca5af812fc8cf46c7` je zachován
+mandatory compiler-worker gate: CI nastavuje `KGMAKER_REQUIRE_WORKERS=1`,
+`KGMAKER_REQUIRE_K2=1` a `KGMAKER_REQUIRE_SPRING_IMPORTS=1`; source-only unittest
+samostatně ověřuje, že chybná nebo chybějící povinná příprava není označena jako PASS.
+Opravený JPA test nadále používá `actual_k2`, takže volitelný job může přeskočit
+nedostupný K2/JDK, zatímco mandatory job hlásí FAIL. Integrace mění pouze CI,
+testy a dokumentaci; frameworková JPA implementace a K2 worker zůstávají
+byte-identické vůči schválenému core.
+
+Cílené pure tests pro mandatory gate a T008/Spring context zachovaly nulové
+spuštění workerů v offline cestách:
+
+```text
+PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_t008_project_service_inventory.py tests/test_spring_imports_context.py
+# 29 passed in 0.20s
+```
+
+Skutečný K2/Javac/Spring běh a full suite nebyly při této CI-only refresh
+opakovány; předchozí actual 38-pass integrace zůstává zdokumentována výše.
