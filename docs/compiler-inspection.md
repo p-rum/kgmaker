@@ -513,8 +513,8 @@ strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
 K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
-projection, ale nedodává obecný source CFG, constructor ABI, Spring/framework
-metadata, property/operator/reference/initializer call sites ani local/lambda
+projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI,
+runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
 execution. Omezené default-body source mapping je popsáno v
 [T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
 coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
