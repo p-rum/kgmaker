@@ -15,6 +15,7 @@ public final class JavaFrontend {
     private final State state;
     private Trees trees; private Types types; private Elements elements;
     private SelectorFacts selectorFacts;
+    private RegistrationFacts registrationFacts;
     private CompilationUnitTree unit; private Path file; private String source;
     private final Map<Tree,String> calls = new IdentityHashMap<>();
     private final List<Diagnostic<? extends JavaFileObject>> errors = new ArrayList<>();
@@ -32,6 +33,7 @@ public final class JavaFrontend {
             var task=(JavacTask)compiler.getTask(null,files,collector,options,null,files.getJavaFileObjectsFromPaths(sources));
             var units=task.parse();task.analyze();trees=Trees.instance(task);types=task.getTypes();elements=task.getElements();
             selectorFacts=new SelectorFacts(types,elements);
+            registrationFacts=new RegistrationFacts(trees,types,elements);
             for(var diagnostic:collector.getDiagnostics()) {
                 if(diagnostic.getKind()==Diagnostic.Kind.ERROR)errors.add(diagnostic);
                 state.diagnostic("JAVAC_"+diagnostic.getCode(),diagnostic.getMessage(Locale.ROOT),null);
@@ -108,6 +110,7 @@ public final class JavaFrontend {
     }
     private String method(ExecutableElement element,Map<String,Object> location) {
         var metadata=annotations(element);
+        metadata.put("jvm_static",element.getModifiers().contains(Modifier.STATIC));
         metadata.put("return_type",element.getReturnType().toString());
         metadata.put("parameter_types",element.getParameters().stream().map(p->p.asType().toString()).toList());
         metadata.put("parameter_names",element.getParameters().stream().map(p->p.getSimpleName().toString()).toList());
@@ -122,6 +125,7 @@ public final class JavaFrontend {
                 var metadata=annotations(type);metadata.put("kind",type.getKind().toString().toLowerCase(Locale.ROOT));
                 metadata.put("supertypes",types.directSupertypes(type.asType()).stream().map(TypeMirror::toString).toList());
                 metadata.putAll(selectorFacts.describe(type));
+                metadata.putAll(registrationFacts.describe(type));
                 state.type(elements.getBinaryName(type).toString(),loc(tree),metadata);
             }
             return super.visitClass(tree,unused);
@@ -136,6 +140,7 @@ public final class JavaFrontend {
                 caller=method(executable,location);
                 var literal=selectorFacts.literalReturn(executable,tree,errorAt(tree));
                 if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
+                state.symbols.get(caller).putAll(registrationFacts.method(executable,tree,getCurrentPath(),errorAt(tree)));
                 super.visitMethod(tree,unused);
                 if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"body",ir(tree.getBody())));
                 return null;

@@ -226,6 +226,13 @@ python -m pytest -q
 
 The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
 
+The required `compiler-workers` job prepares and exercises JVM/Kotlin K1, K2,
+TypeScript and the mixed Maven fixture. Its negative prerequisite matrix runs
+with `python -m pytest -q tests/test_mandatory_worker_ci.py`: an absent worker,
+JDK or mixed fixture fails a required gate and skips an optional local gate,
+without starting a process. The separate exporter job requires actual Maven and
+Gradle exports. Exploratory tests needing a second JDK remain optional.
+
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without
 JDK/Node. Optional JVM JARs/libraries and the pinned TypeScript installation are
@@ -391,7 +398,7 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v5 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
 bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
@@ -401,6 +408,16 @@ chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_im
 Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
 Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
 source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
+
+V5 navíc zachytí compiler-qualified literal `ImportBeanDefinitionRegistrar`
+registraci přes `registerBeanDefinition("name", new RootBeanDefinition(Type.class))`.
+Podmínka pochází z importující konfigurace. `FactoryBean<T>` rozlišuje objekt
+`&name` a produkt `name`; ACTIVE statická deklarace produktu vyžaduje shodný
+konkrétní generic typ, jediné `return new Type()` a jediné `return Type.class`.
+Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
+Žádný registrar, factory, konstruktor nebo Spring context se nespouští; statická
+deklarace není runtime availability. Přesný bounded scope a testy:
+[change note47](docs/changes/47_declareSpringRegistrations.md).
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
@@ -468,3 +485,12 @@ exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
 perform the export; scan/feature/hook never launch Gradle.
 
 Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
+
+
+`inspect code` with an explicit execution-bound bytecode build now emits
+`maps_to_source` declaration evidence for exact Java/Kotlin declarations with
+compatible compiler-proven static/instance ABI,
+Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
+simple same-owner compiler bridges. Generated method IDs remain distinct.
+Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
+prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
