@@ -210,10 +210,15 @@ Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](ch
 ## T005 — společný model pohledu (integrace 2026-10-26)
 
 T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
-Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
-T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
-Ověření modelu a integrace s aktuálním main je uvedeno v
-[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+T006 rozšiřuje `views.py` o explicitní výběr service/repo/module kontextu,
+fingerprinty, odmítnutí nejednoznačných/stale variant a označený SOURCE_ONLY
+fallback (module coverage zůstává UNKNOWN). CONTENT_VERIFIED release artifact pair
+nepovyšuje na deployment proof.
+T006 přidává jen knihovní projekci; CLI, discovery a renderery zůstávají mimo
+scope. Jeho konkrétní evidence je v [acceptance inventáři](acceptance-inventory.md)
+a [change note 32](changes/32_selectServiceContexts.md). T004 a T007–T044
+zůstávají SPECIFICATION; graph v1/v2/v3 se nemění. Ověření T005 je v
+[change note 11](changes/11_addViewModel.md); historické výsledky ostatních
 work packages výše zůstávají beze změny.
 
 ## T003-S09-W04 — hash-bound approved methodology
@@ -228,6 +233,23 @@ Final integration run after external-packet freshness fix: **232 PASS, 21 SKIP**
 
 After actual Maven fixture preparation, final strict integrated run **246 PASS, 7 SKIP** (84.81 s); both real compiler workers exercised. Remaining skips require Maven/Gradle executables or a second JDK; see change note9.
 
+## T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)
+
+Workspace v1 nyní může nést samostatnou deklaraci `service_ownership` v1 s
+explicitními roots, repo-qualified module IDs a external system IDs pro existující service IDs.
+Resolver používá pouze tyto deklarace a volající context ID; více kandidátů
+vrací AMBIGUOUS a žádný UNASSIGNED. Legacy `backend_repo` kontrakt a IDs zůstávají
+čitelné; samotná existence repozitáře/modulu/Spring anotace vlastnictví nedokládá.
+`tests/test_t007_define_service_ownership.py` pokrývá dvě explicitní služby,
+shared library, překryvy, legacy manifest, nevalidní deklaraci bez mutace a
+context mismatch, foreign repo-qualified context, qualified workspace path and
+unsupported direct schema version. Cílený běh po review opravách: 45 PASS včetně
+workspace/T005 regresí. Review full suite na předchozím HEAD `d00dd6a`:
+264 PASS, 23 SKIP; SKIP jsou chybějící Maven/JDK, Gradle 8.13 a skutečné JVM/TS
+workery. Po review opravách nebyl full suite opakován. `kgmaker check`, semantic
+validation a `git diff --check` prošly.
+T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
+Discovery, view aggregation ani T004 nejsou implementovány.
 
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 

@@ -114,7 +114,7 @@ vynechány; nejsou nově tvrzeny jako PASS. Celá 302-testová strict sada výš
 zůstává důkazem předchozího main `3503309`, neopakovala se pouze kvůli nezávislé
 exporter integraci bez změny TS runtime.
 
-READMЕ sémantická provenance je znovu ověřena proti skutečným command bullets:
+README sémantická provenance je znovu ověřena proti skutečným command bullets:
 `semantic prepare` na řádku 99 pro concept evidence, `semantic update --base REF`
 na řádku 101 pro README relationship evidence. Nejde pouze o kontrolu rozsahu
 řádků; cílové texty odpovídají evidenci. Scoped update/apply/validate,
@@ -127,3 +127,23 @@ samostatná zadání. Cross-repo source reference, runtime execution a persisten
 incremental compilation cache nejsou touto změnou dodány. Celá solution analysis
 zůstává jedním uloženým compiler kontextem; fingerprints umožní dohledat dotčené
 projekty, zatímco současný provider konzervativně invaliduje celý tento kontext.
+
+### Integrace context selection a service ownership z main
+
+Větev je znovu integrována s main
+`3a393e451b0d7b8f83de93f05f07d2307ba66ec3` po sloučení T006 a T007.
+Schválený TS worker/inspection/protocol i opravené TS testy zůstávají
+byte-identické s `74baab3`. `views.py`, `workspace.py` a nové context/ownership
+testy odpovídají přesně main; žádná další namespace politika se nepřidává.
+
+`KGMAKER_REQUIRE_WORKERS=1 KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_cross_repo_artifacts.py tests/test_typescript_project_references.py::test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg tests/test_typescript_project_references.py::test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation`:
+**52 PASS / 16.20 s**. Jde o relevantní integration gate včetně dvou skutečných
+TS reprodukcí; celá strict sada se pouze kvůli nezávislým views změnám neopakuje.
+
+README concept evidence je ověřena proti skutečnému `semantic prepare` bullet
+na řádku 130; `uses` evidence proti `semantic update --base REF` na řádku 132.
+Architecture source-authority evidence odpovídá skutečné větě na řádku 22;
+service-ownership concept/implementation evidence odpovídá odstavci a funkci
+na řádcích 140/143. Zachovány jsou všechny související main vztahy i historie;
+scoped semantic apply/validate, memory capture, command-generated scan/check,
+byte identity, syntax a diff check: PASS.
