@@ -353,3 +353,16 @@ K1/K2. [Change note42](changes/42_resolveBoundedSpringImports.md); celý S05/AC0
 | T003-S05-W01-AC02 | VERIFIED_IN_SCOPE | `test_legacy_facts_stay_readable_without_literal_promotion` — protocol-v1 legacy UNKNOWN a graph v1/v2/v3; existující actual AC05/compiler/K2 regrese |
 | T003-S05-W01-AC03 | VERIFIED_IN_SCOPE | `test_unknown_filters_and_deferred_groups_remain_unknown`, `test_bounded_missing_and_non_type_results_remain_boundaries`, `test_invalid_selector_fact_rejects_before_store_mutation`, strict/offline refresh, profile isolation a UNKNOWN data audit |
 | T003-S05-W01-AC04 | VERIFIED_IN_SCOPE | Reprodukovatelná pinned fixture POM + SHA/license lock, mandatory CI bootstrap a `test_required_api_inputs_fail_before_any_process`; README/capability/matice vymezují přesný scope |
+
+## T003-S11-W04 — required worker CI gates
+
+| AC | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `tests/test_mandatory_worker_ci.py::test_missing_prerequisite_fails_required_but_skips_optional` (5 absent prerequisites × unset/0/1); existing Spring and exporter prerequisite negatives | Required gates FAIL; optional gates SKIP; real command discovery, no processes |
+| AC02 | Existing graph v1/v2/v3 loader regressions and full suite; no product/schema changes | Existing persisted formats unchanged |
+| AC03 | Negative matrix checks unchanged last-valid graph bytes and absent worker home; prohibits subprocess | Missing prerequisites never manufacture compiler evidence |
+| AC04 | `compiler-workers` actual K1/K2/TS/mixed fixture/Spring6.2.2, separate installed Maven/Gradle exporter job | Pinned declared matrix; second JDK remains optional |
+
+Actual positive CI and final local outcomes are recorded in
+[change note 48](changes/48_enforceMandatoryWorkerCi.md); broader production
+coverage and later end-to-end/benchmark packages are separate gates.
