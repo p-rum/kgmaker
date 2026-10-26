@@ -16,6 +16,9 @@ from typing import Any
 
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
+from .spring_imports import selector_info
+
+SPRING_RULE_VERSION = "annotation-source-v4"
 
 
 SPRING_STEREOTYPES = {
@@ -75,7 +78,9 @@ def _string_arg(args: str, names: tuple[str, ...] = ("name", "value", "path")) -
         if match:
             return match.group(1) or match.group(2)
     match = re.match(r"\s*(?:[\"']([^\"']+)[\"']|([A-Za-z0-9_./:$-]+))", args)
-    return (match.group(1) or match.group(2)) if match else None
+    # Compiler annotations include default named members (e.g. proxyBeanMethods).
+    # An unrelated member name is not the positional bean/name/value argument.
+    return (match.group(1) or match.group(2)) if match and not re.match(r"\s*=", args[match.end():]) else None
 
 
 def _named_string_arg(args: str, name: str) -> str | None:
@@ -270,16 +275,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     annotation_types = {str(item.get("owner")): item for item in symbols.values()
                         if item.get("kind") == "annotation_type" and isinstance(item.get("owner"), str)}
 
-    def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str) -> str:
+    def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str,
+                     compiler_fact: dict | None = None) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
+        if compiler_fact is not None:
+            record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
+                          compiler_backend=compiler_fact.get("compiler_backend", "javac"))
         identity = "evidence:" + digest(record)
         evidence.setdefault(identity, {"id": identity, **record})
         return identity
 
     def add_edge(source: str, target: str, kind: str, path: str, line: int | None, detail: str,
-                 evidence_kind: str = "FRAMEWORK_DERIVED") -> None:
+                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None) -> None:
         if source not in nodes or target not in nodes:
             return
         key = (source, target, kind)
@@ -289,7 +298,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             old = edges[key]
             if old.evidence_kind == evidence_kind or evidence_kind != "FRAMEWORK_DERIVED":
                 return
-        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail)
+        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact)
         edges[key] = Edge(source, target, kind, detail, evidence_kind=evidence_kind,
                           context_ids=(context_id,), evidence_ids=(proof,), source_file=path, source_line=line)
 
@@ -442,6 +451,24 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     rank = {"INACTIVE": 0, "UNKNOWN": 1, "ACTIVE": 2}
     dynamic_imports: set[str] = set()
     reported_missing: set[tuple[str, str]] = set()
+    reported_dynamic: set[str] = set()
+    selector_cache: dict[str, dict | None] = {}
+
+    def processor(exact: str) -> dict | None:
+        if exact not in selector_cache:
+            selector_cache[exact] = selector_info(type_records[exact], type_records, symbols, context_id)
+        return selector_cache[exact]
+
+    def import_state(exact: str, state: str, reason: str) -> bool:
+        if rank[state] <= rank.get(imported_states.get(exact, "INACTIVE"), 0):
+            return False
+        target = type_records[exact]
+        imported_states[exact] = state
+        imported_reasons[exact] = [reason, *target["direct_reasons"]]
+        if target["configuration"]:
+            configuration_states[exact] = state
+        return True
+
     for _ in range(max(1, len(type_records))):
         changed = False
         for owner, record in type_records.items():
@@ -467,20 +494,52 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                 "type": imported, "reason": "Imported type is absent from the indexed compiler context."})
                         continue
                     target = type_records[exact]
-                    candidate_state = _combined_state(configuration_states[owner], target["direct_state"])
-                    if rank[candidate_state] > rank.get(imported_states.get(exact, "INACTIVE"), 0):
-                        imported_states[exact] = candidate_state
-                        imported_reasons[exact] = [f"imported by {owner}", *target["direct_reasons"]]
-                        if target["configuration"]:
-                            configuration_states[exact] = candidate_state
-                        changed = True
-                    supertypes = {_simple(str(value)) for value in target["symbol"].get("supertypes", [])}
-                    if exact not in dynamic_imports and supertypes & {"ImportSelector", "DeferredImportSelector", "ImportBeanDefinitionRegistrar"}:
-                        dynamic_imports.add(exact)
+                    info = processor(exact)
+                    importer = record["symbol"]
+                    if info is None:
+                        candidate_state = _combined_state(configuration_states[owner], target["direct_state"])
+                        changed |= import_state(exact, candidate_state, f"imported by {owner}")
+                        add_edge(importer["id"], target["symbol"]["id"], "imports_configuration", importer["path"],
+                                 (importer.get("range") or {}).get("start_line"), "Compiler-resolved static @Import")
+                        continue
+                    dynamic_imports.add(exact)
+                    info = {**info, "reasons": list(info["reasons"])}
+                    selected = []
+                    for name in info["targets"]:
+                        if name not in type_records:
+                            info["reasons"].append("TARGET_NOT_INDEXED:" + name)
+                        elif processor(name) is not None:
+                            info["reasons"].append("NESTED_SELECTOR_TARGET_UNSUPPORTED:" + name)
+                        else:
+                            selected.append(name)
+                    if info["reasons"]:
+                        info["status"] = "UNKNOWN"
+                    declaration = target["symbol"]
+                    selector_node = add_node("spring_import_selector", exact, declaration["path"],
+                        (declaration.get("range") or {}).get("start_line"), symbol_node(declaration),
+                        selector_type=exact, processor_kind=info["kind"], selection_status=info["status"],
+                        phase="DEFERRED" if info["kind"] == "DEFERRED_IMPORT_SELECTOR" else "NORMAL",
+                        targets=info["targets"], reasons=info["reasons"],
+                        literal_method=(info["method"] or {}).get("id"), execution="NOT_EXECUTED")
+                    add_edge(importer["id"], selector_node, "uses_import_selector", importer["path"],
+                             (importer.get("range") or {}).get("start_line"), "Compiler-qualified @Import processor")
+                    if info["status"] == "UNKNOWN" and exact not in reported_dynamic:
+                        reported_dynamic.add(exact)
                         diagnostics.append({"code": "SPRING_DYNAMIC_IMPORT_BOUNDARY", "path": target["symbol"].get("path"),
                                             "source_line": (target["symbol"].get("range") or {}).get("start_line"),
-                                            "type": exact,
-                                            "reason": "Import selector/registrar is not executed during offline analysis."})
+                                            "type": exact, "reasons": info["reasons"],
+                                            "reason": "Unsupported selector/registrar selection remains UNKNOWN; nothing was executed."})
+                    for name in selected:
+                        selected_record = type_records[name]
+                        state = _combined_state(configuration_states[owner], selected_record["direct_state"],
+                                                "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+                        changed |= import_state(name, state, f"literal import candidate from {exact} used by {owner}")
+                        method = info["method"]
+                        add_edge(selector_node, selected_record["symbol"]["id"],
+                                 "selects_import" if info["status"] == "RESOLVED_LITERAL" else "may_select_import",
+                                 method["path"], (method.get("range") or {}).get("start_line"),
+                                 f"Single compiler-attributed literal array return: {name}; selector never executed",
+                                 compiler_fact=method)
         if not changed:
             break
 
@@ -1397,7 +1456,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     contexts = list(graph.contexts)
     for index, current in enumerate(contexts):
         if current.get("id") == context_id:
-            contexts[index] = {**current, "framework_analysis": {"spring": "annotation-source-v3", "jpa": "annotation-source-v4",
+            contexts[index] = {**current, "framework_analysis": {"spring": SPRING_RULE_VERSION, "jpa": "annotation-source-v4",
                                                                   "schema_binding": "exact-name-only", "coverage": "PARTIAL"}}
             break
     result = replace(graph, nodes=sorted(nodes.values(), key=lambda item: item.id),

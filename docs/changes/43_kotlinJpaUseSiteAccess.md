@@ -116,3 +116,15 @@ before this independent mainline refresh; no full suite was repeated.
 Semantic history has the exact current-main 93-episode prefix followed by four
 S06 episodes. README semantic workflow citations and compiler-inspection JPA
 architecture citations were rechecked against the merged line locations.
+
+### Integrace bounded Spring imports
+
+Proti main `4113a7975451a8313321fd521252485c959908e3` byla zachována S06
+K2 frontend a JPA fixture; frameworková projekce nyní obsahuje obě ověřené větve:
+JPA mapování i bounded Spring `ImportSelector` selection. Merged K1/K2 workery
+byly sestaveny z připnutých lokálních vstupů (K1 SHA-256
+`1c9dd4585c05de861d127dd9a87b667ea7dcacc737683c8447e1ff4b9392fa6a`, K2
+SHA-256 `138ffc7c732799a4c5d07e939acad8b9cc05048e03f683120e00f152e16c77e7`).
+Actual K2 JPA, Javac AC06, Spring 6.2.2 selector/import fixtures a worker
+protocol: **37 passed**, s požadovanými worker gates zapnutými. Full suite se
+kvůli této integraci neopakovala.
