@@ -27,9 +27,10 @@ _MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 _REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _PKG_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 _CELL = re.compile(r"\$?([A-Z]{1,3})\$?([1-9][0-9]{0,6})\Z", re.I)
+# Start at an expression separator, never in the tail of an unsupported name.
 _REFERENCE = re.compile(
-    r"(?<![\w.$])(?:(?:'((?:[^']|'')+)'|([A-Za-z_][\w. ]*))!)?"
-    r"(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6})(?::(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6}))?"
+    r"(?<![^\s+\-*/^&=<>%,;:({])(?:(?:'((?:[^']|'')+)'|([\w.]+))\s*!\s*)?"
+    r"(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6})(?:\s*:\s*(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6}))?"
     r"(?![\w.$!]|\s*\()",
     re.I,
 )
@@ -154,19 +155,36 @@ def _range_cells(start: str, end: str | None) -> list[str]:
 
 def _formula_syntax(expression: str) -> str:
     """Mask Excel string literals; their contents are neither calls nor references."""
-    return re.sub(r'"(?:[^"]|"")*"', lambda match: " " * len(match.group(0)), expression)
+    return re.sub(r"'(?:[^']|'')*'\s*!|\"(?:[^\"]|\"\")*\"",
+                  lambda match: match.group(0) if match.group(0).startswith("'") else " " * len(match.group(0)), expression)
+
+
+def _formula_calls(syntax: str) -> str:
+    """Quoted sheet identifiers are literal names, never executable functions."""
+    return re.sub(r"'(?:[^']|'')*'(?=\s*!)", lambda match: " " * len(match.group(0)), syntax)
+
+
+def _reference_matches(syntax: str) -> list[re.Match[str]] | None:
+    matches = list(_REFERENCE.finditer(syntax))
+    # Every sheet separator must belong to a complete qualified reference.
+    # Otherwise fail closed for the expression, including whitespace after !;
+    # never reinterpret an unknown qualifier's trailing cell as a local cell.
+    covered = sum(match.group(0).count("!") for match in matches if match.group(1) or match.group(2))
+    return matches if covered == syntax.count("!") else None
 
 
 def _unsupported_reference_form(syntax: str) -> str | None:
     """Known reference forms outside the bounded A1/range subset; no evaluation."""
-    sheet = r"(?:'(?:[^']|''){1,63}'|[A-Za-z_][\w.]*)"
+    sheet = r"(?:'(?:[^']|''){1,63}'|[\w.]+)"
     if re.search(r"(?<![\w.])(?:" + sheet + r"\s*:\s*" + sheet
                  + r"!|'(?:[^']|''){0,63}:(?:[^']|''){0,63}'!)", syntax):
         return "3D sheet reference"
-    if re.search(r"(?<![\w.$])\$?[A-Z]{1,3}:\$?[A-Z]{1,3}(?![\w.$])", syntax, re.I):
+    if re.search(r"(?<![\w.$])\$?[A-Z]{1,3}\s*:\s*\$?[A-Z]{1,3}(?![\w.$])", syntax, re.I):
         return "whole-column reference"
-    if re.search(r"(?<![\w.$])\$?[1-9][0-9]{0,6}:\$?[1-9][0-9]{0,6}(?![\w.$])", syntax):
+    if re.search(r"(?<![\w.$])\$?[1-9][0-9]{0,6}\s*:\s*\$?[1-9][0-9]{0,6}(?![\w.$])", syntax):
         return "whole-row reference"
+    if "[" not in syntax and _reference_matches(syntax) is None:
+        return "unrecognized sheet qualifier"
     return None
 
 
@@ -175,7 +193,7 @@ def _references(expression: str) -> list[tuple[str | None, str, str | None, str]
     # not cell tokens. These boundaries do not constitute a full formula parser.
     cleaned = _formula_syntax(expression)
     return [((match.group(1) or match.group(2)), match.group(3), match.group(4), match.group(0))
-            for match in _REFERENCE.finditer(cleaned)]
+            for match in _reference_matches(cleaned) or []]
 
 
 def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Node], list[Edge], list[dict], dict, list[dict]]:
@@ -267,15 +285,16 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
                 if formula_node is not None:
                     unsupported = False
                     syntax = _formula_syntax(formula or "")
+                    calls = _formula_calls(syntax)
                     if formula_node.get("t") == "shared":
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_SHARED_FORMULA_UNSUPPORTED",
                                             "reason": f"Shared formula at {name}!{reference} is unresolved"})
-                    if re.search(r"\bINDIRECT\s*\(", syntax, re.I):
+                    if re.search(r"\bINDIRECT\s*\(", calls, re.I):
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_INDIRECT_UNSUPPORTED",
                                             "reason": f"INDIRECT at {name}!{reference} is unresolved"})
-                    if re.search(r"\bOFFSET\s*\(", syntax, re.I):
+                    if re.search(r"\bOFFSET\s*\(", calls, re.I):
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_OFFSET_UNSUPPORTED",
                                             "reason": f"OFFSET at {name}!{reference} is unresolved"})
@@ -320,7 +339,7 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
                                   metadata={"name": name, "expression": expression, "parser": VERSION}))
                 edges.append(Edge(workbook_id, identity, "defines_named_range", expression))
                 syntax = _formula_syntax(expression)
-                if re.search(r"\b(?:INDIRECT|OFFSET)\s*\(", syntax, re.I) or "[" in syntax:
+                if re.search(r"\b(?:INDIRECT|OFFSET)\s*\(", _formula_calls(syntax), re.I) or "[" in syntax:
                     diagnostics.append({"path": relative, "code": "XLSX_DYNAMIC_NAMED_RANGE_UNSUPPORTED",
                                         "reason": f"Named range {name} uses a dynamic or external expression"})
                     continue

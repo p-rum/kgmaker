@@ -19,7 +19,7 @@ REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 PKG = "http://schemas.openxmlformats.org/package/2006/relationships"
 
 
-def write_formula_book(path: Path, formulas: dict, *, defined_name=None):
+def write_formula_book(path: Path, formulas: dict, *, defined_name=None, extra_sheets=()):
     workbook = ET.Element(f"{{{MAIN}}}workbook")
     sheets = ET.SubElement(workbook, f"{{{MAIN}}}sheets")
     ET.SubElement(sheets, f"{{{MAIN}}}sheet", name="Scenario", sheetId="1", **{f"{{{REL}}}id": "rId1"})
@@ -28,6 +28,15 @@ def write_formula_book(path: Path, formulas: dict, *, defined_name=None):
         ET.SubElement(names, f"{{{MAIN}}}definedName", name="Input").text = defined_name
     relationships = ET.Element(f"{{{PKG}}}Relationships")
     ET.SubElement(relationships, f"{{{PKG}}}Relationship", Id="rId1", Type=REL + "/worksheet", Target="worksheets/sheet1.xml")
+    extras = {}
+    for index, name in enumerate(extra_sheets, 2):
+        ET.SubElement(sheets, f"{{{MAIN}}}sheet", name=name, sheetId=str(index), **{f"{{{REL}}}id": f"rId{index}"})
+        ET.SubElement(relationships, f"{{{PKG}}}Relationship", Id=f"rId{index}", Type=REL + "/worksheet", Target=f"worksheets/sheet{index}.xml")
+        extra = ET.Element(f"{{{MAIN}}}worksheet")
+        row = ET.SubElement(ET.SubElement(extra, f"{{{MAIN}}}sheetData"), f"{{{MAIN}}}row", r="1")
+        for address in ("A1", "B1", "C1"):
+            ET.SubElement(ET.SubElement(row, f"{{{MAIN}}}c", r=address), f"{{{MAIN}}}v").text = "77"
+        extras[f"xl/worksheets/sheet{index}.xml"] = ET.tostring(extra)
     sheet = ET.Element(f"{{{MAIN}}}worksheet")
     data = ET.SubElement(sheet, f"{{{MAIN}}}sheetData")
     # LOG10 and E10 are real cells: a false lexical match would create an edge.
@@ -48,11 +57,14 @@ def write_formula_book(path: Path, formulas: dict, *, defined_name=None):
                          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
                          '<Default Extension="xml" ContentType="application/xml"/>'
                          '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-                         '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')
+                         '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+                         + ''.join(f'<Override PartName="/{part}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' for part in extras) + '</Types>')
         archive.writestr("_rels/.rels", f'<Relationships xmlns="{PKG}"><Relationship Id="rId1" Type="{REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>')
         archive.writestr("xl/workbook.xml", ET.tostring(workbook))
         archive.writestr("xl/_rels/workbook.xml.rels", ET.tostring(relationships))
         archive.writestr("xl/worksheets/sheet1.xml", ET.tostring(sheet))
+        for part, content in extras.items():
+            archive.writestr(part, content)
 
 
 @pytest.mark.parametrize("formula,expected", [
@@ -61,6 +73,8 @@ def write_formula_book(path: Path, formulas: dict, *, defined_name=None):
     ("LOG10 (A1)", {"A1"}), ("SUM($A$1:$B$1)", {"A1", "B1"}),
     ("'Scenario'!$A$1:$B$1", {"A1", "B1"}),
     ("_xlfn.LOG10(A1)", {"A1"}), ("E10_rate", set()),
+    ("SUM(A1 : C1)", {"A1", "B1", "C1"}),
+    ("SUM('Scenario'!$A$1 : $C$1)", {"A1", "B1", "C1"}),
     ('IF(A1="OFFSET(""A1"")",B1,C1)', {"A1", "B1", "C1"}),
     ('"[external.xlsx]Sheet1!A1 INDIRECT("', set()),
 ])
@@ -84,6 +98,12 @@ def test_formula_tokens_do_not_invent_cell_dependencies(tmp_path, formula, expec
     ("SUM('Scenario:Other'!A1)", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
     ("SUM(A:A)", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
     ("SUM(1:10)", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("SUM(A : A)", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("SUM(1 : 10)", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("💼!A1", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("💼! A1", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("💼Scenario!A1", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
+    ("U\u0308bersicht!A1", "XLSX_REFERENCE_FORM_UNSUPPORTED"),
     (("A1+1", {"t": "shared", "si": "0"}), "XLSX_SHARED_FORMULA_UNSUPPORTED"),
     ((None, {"t": "shared", "si": "0"}), "XLSX_SHARED_FORMULA_UNSUPPORTED"),
 ])
@@ -95,6 +115,26 @@ def test_unsupported_formula_forms_are_boundaries(tmp_path, formula, code):
     assert "Scenario!A2" in diagnostic["reason"]
     assert not [edge for edge in graph.edges if edge.kind == "formula_references"]
     assert next(context for context in graph.contexts if context.get("mode") == "WORKBOOK_OFFLINE")["coverage"] == "PARTIAL"
+
+
+@pytest.mark.parametrize("formula,sheet,expected", [
+    ("Übersicht!A1", "Übersicht", {"Übersicht!A1"}),
+    ("Scenario!A1+Übersicht!B1", "Übersicht", {"Scenario!A1", "Übersicht!B1"}),
+    ("2026!A1", "2026", {"2026!A1"}),
+    ("'INDIRECT(A1)'!B1", "INDIRECT(A1)", {"INDIRECT(A1)!B1"}),
+    ("'INDIRECT(A1)' ! B1", "INDIRECT(A1)", {"INDIRECT(A1)!B1"}),
+    ("'OFFSET(A1)'!B1", "OFFSET(A1)", {"OFFSET(A1)!B1"}),
+    ("'O''Brien'!A1", "O'Brien", {"O'Brien!A1"}),
+    ("'Say\"Hi\"'!A1", 'Say"Hi"', {'Say"Hi"!A1'}),
+    ("'Bang!Sheet'!A1", "Bang!Sheet", {"Bang!Sheet!A1"}),
+])
+def test_literal_sheet_qualifiers_never_fall_back_to_local_cells(tmp_path, formula, sheet, expected):
+    write_formula_book(tmp_path / "scenario.xlsx", {"A2": formula}, extra_sheets=(sheet,))
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")), \
+            patch("socket.socket.connect", side_effect=AssertionError("external access")):
+        graph = feature.current_graph(tmp_path)[0]
+    assert {edge.target.split("scenario.xlsx:", 1)[-1] for edge in graph.edges if edge.kind == "formula_references"} == expected
+    assert not graph.diagnostics
 
 
 def test_named_range_tokens_and_dynamic_boundary_use_same_rules(tmp_path):
