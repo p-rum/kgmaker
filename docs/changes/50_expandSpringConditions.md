@@ -70,8 +70,14 @@ Výchozí main ff26; průběžná integrace obsahuje main33dc a SourceMapping/CI
 - První isolation test zachytil správné STALE, ale očekával přesnější text
   než existing provider wrapper; assertion nyní ověřuje classpath diagnostiku
   a status STALE, bez změny stávajícího provider error kontraktu.
-- Finální full suite a semantic/memory/scan/check: **pending** před dokončením
-  lokálního review. GitHub Actions: **NOT_RUN/BLOCKED**, všechny joby odmítá
+- Finální full suite: **573 PASS,10 explicitních volitelných SKIP v434.60s**.
+  Skutečné připravené K1/K2/TS workery, JDK21/Kotlin2.1.10 a pinned
+  Spring6.2.2/Boot3.4.2; required worker/K2/Spring flags zapnuté. Volitelné SKIP
+  jsou externí Maven/Gradle/second-JDK a nativní Windows gate tohoto Linux běhu.
+- Scoped semantic patch zachovává7 konceptů/25 hran; čtyři posunuté Python
+  function locators a K2 STATIC source-line byly znovu ověřeny. Immutable
+  prefix112 epizod PR32 zachován. Memory/scan/check/diff: PASS i po finálním zápisu full výsledku.
+- GitHub Actions: **NOT_RUN/BLOCKED**, všechny joby odmítá
   account billing/spendinglimit před spuštěním runneru; uživatel výslovně
   pozastavil tuto část a požaduje pokračovat další lokální implementací.
   Tento Draft není prohlášení celé T003-S05 za hotovou.
