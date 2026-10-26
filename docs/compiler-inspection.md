@@ -773,7 +773,9 @@ are outside this matrix. Explicit Java method references/lambda capture never
 activate an HTTP request. Unrelated Mono terminals do not activate another origin.
 All runtime execution/availability remain NOT_OBSERVED/UNKNOWN. Fresh scans/captures redact URI userinfo,
 query values and fragments before graph/context persistence, including SOURCE_ONLY
-signatures, documentation summaries and heading identities; opaque
+signatures, documentation summaries and heading identities. Privacy also covers
+unsupported URI schemes and scheme-relative authorities; HTTP recognition stays
+limited to HTTP/HTTPS, so redaction never makes an unsupported URI executable. Opaque
 input hashes preserve freshness without retaining credentials. Configuration
 mapping requires a selected `application.properties` or explicit active profile
 file, matching literal property and SHA. Explicit values without source provenance

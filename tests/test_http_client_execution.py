@@ -347,3 +347,24 @@ fun documented() {
     for secret in ['sourceUser','sourcePass','sourceQuery','relativeQuery','relativeFragment','docUser','docPass','docFragment','headingUser','headingPass','headingQuery']:
         assert secret not in serialized and secret not in persisted
     assert 'absolute' in serialized and 'relative' in serialized
+
+
+@pytest.mark.parametrize('uri',[
+ 'ftp://unsupportedUser:unsupportedPass@example.invalid/file',
+ 'postgresql://unsupportedUser:unsupportedPass@example.invalid/db',
+ 'jdbc:postgresql://unsupportedUser:unsupportedPass@example.invalid/db?token=unsupportedQuery',
+ '//unsupportedUser:unsupportedPass@example.invalid/path',
+ 'gopher://example.invalid/path?token=unsupportedQuery#unsupportedFragment',
+])
+def test_unsupported_uri_credentials_are_private_without_http_mapping(tmp_path,monkeypatch,uri):
+    from kgmaker.http_execution import prepare_context,uri_parts
+    from kgmaker.scanner import _public_source_text
+    from kgmaker.inspection import sanitize
+    monkeypatch.setattr('subprocess.Popen',lambda *a,**kw:pytest.fail('No implicit process'))
+    context=prepare_context(tmp_path,{'spring_properties':{'service.url':uri},'spring_profiles':[]})
+    assert context['spring_properties']['service.url'] is None
+    assert context['http_redacted_input_hash']
+    visible=json.dumps(context)+_public_source_text('fun call(url: String = '+json.dumps(uri)+')')+str(sanitize({'literal':{'value':uri}}))
+    assert 'unsupportedUser' not in visible and 'unsupportedPass' not in visible
+    assert 'unsupportedQuery' not in visible and 'unsupportedFragment' not in visible
+    assert uri_parts(uri)['status'] != 'LITERAL'

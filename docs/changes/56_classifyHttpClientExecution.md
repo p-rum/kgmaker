@@ -1,148 +1,124 @@
-# HTTP request definition versus static execution intent
+# Oddělení HTTP request definition od execution intent
 
-T003-S07-W06, AC01–AC04; implementační plán, nikoli dokončení S07/T003.
-Explicitní combined base `c7beaec95951267796c0c21baa6079fafe5fe124` má rodiče
-PR35 `89e50cf4cf8edbebc4f9d08879656698c75ebd50` a PR34
-`78d7968ea7408adea3ec9ce783769bb799522470`. Feature patří pouze do samostatné
-větve feat/t003-s07-06-http-client-execution; target je oddělený prereq stack.
+T003-S07-W06, AC01–AC04; implementovaný omezený kontrakt. Celý S07/T003 zůstává
+PARTIAL. Samostatná větev `feat/t003-s07-06-http-client-execution` je nad
+`c7beaec95951267796c0c21baa6079fafe5fe124`, target
+`stack/t003-s07-w06-prerequisites`: explicitní merge PR35
+`89e50cf4cf8edbebc4f9d08879656698c75ebd50` a PR34
+`78d7968ea7408adea3ec9ce783769bb799522470`. Žádná skrytá závislost na W01.
+Reviewovatelný source checkpoint je `0258bba647c66b218b465edb8399b3986f7a3bfd`;
+finální commit mění jen validation/memory/generated documentation.
 
-Před feature kódem byl ověřen independent architecture brief a actual RED se
-skutečnými Spring6.2.2/Reactor3.7.2 API: 5 compiler-attributed calls,
-0 cold request definitions; očekávané selhání assertion. Javac neměl chyby a
-neproběhlo žádné HTTP volání ani spuštění aplikace. Reused K1 source je identický
-ověřenému PR35; combined K2 a ostatní prereq proof jsou zaznamenané v change44.
+## Problém a skutečná změna
 
-Cíl je oddělit definition, typed same-origin terminal a runtime availability.
-WebClient publisher je cold; retrieve/bodyToMono/exchangeToMono nejsou trigger.
-Pouze doložený same-origin Reactor terminal znamená statický execution intent,
-nikoli skutečný runtime request či dostupná data. RestClient retrieve samo nestačí;
-Feign default/static/custom methods nejsou proxy HTTP proof. Escaped/returned/
-stored/passed publisher a neověřený helper/operator zůstane UNKNOWN.
+Dřívější SOURCE_ONLY HTTP reference nerozlišovala cold publisher od execution.
+Před feature kódem actual Spring6.2.2/Reactor3.7.2 API RED ukázal5 attributed
+calls a0 definitions; první acceptance **2 FAIL13.60s**, bez Javac errors.
 
-Nová projection bude pure nad stávajícím modelem/IR/evidence. Java literal/local
-binding fakta budou aditivní, ne odhad z masked labels. Config key/file hash/profile
-provenance musí být explicitní; URI credentials nesmí skončit v identities,
-metadata, contexte ani persistent source-only reference. Nepodporovaný proof se
-nevymýšlí. K1/K2 Kotlin bez potřebných IR facts zůstane konkrétní UNKNOWN.
+JavaFrontend nyní dodává aditivní compiler literal/local-binding/capture facts
+(`typed-java-literals-bindings-v1`) ve stávajícím IR. Pure `http_execution`
+projection používá skutečné compiler target/receiver/origin identities, nikoli
+source labels, method spelling samotné nebo confidence. Reuse Node/Edge/evidence,
+store/context/workspace, bez nového paralelního katalogu či runtime flow engine.
 
-Skutečné změny, kompatibilita, pinned API/license fixture, přesné test commands a
-výsledky budou doplněny podle dodaného kódu a provedených kontrol. Zatím nejsou
-pro HTTP feature tvrzené nové PASS výsledky. Remote CI billing zůstává pozastavené;
-žádný Draft merge bez povinných zelených gates není autorizovaný.
+WebClient retrieve/bodyToMono/bodyToFlux/exchangeToMono/Flux jsou cold definitions.
+Closed unused local publisher je UNSUBSCRIBED_WITHIN_SCOPE; doložený same-origin
+Mono block/blockOptional/subscribe/toFuture nebo Flux blockFirst/blockLast/subscribe
+je jen STATIC_TRIGGER/CONDITIONAL_STATIC_TRIGGER. Každý publisher má vlastní
+origin i při sdíleném request spec. RestClient retrieve sám nestačí; body/toEntity/
+toBodilessEntity/exchange je imperativní terminal. Feign pouze annotated abstract
+nonstatic contract + attributed call znamená FEIGN_INVOCATION_INTENT, proxy
+registration UNKNOWN. Default/static/custom methods se nepovyšují na HTTP proof.
 
-## Dodaný lokální kontrakt a kompatibilita
+Return/store/pass/capture/reference, anonymous capture, unsupported switch,
+unknown helper/operator či merged origin zůstávají UNKNOWN bez invented terminal.
+Neznámá reconfiguration nezachová původní konkrétní URI. Kotlin K1/K2 bez potřebného
+binding IR má explicitní HTTP_TYPED_IR_UNAVAILABLE/UNKNOWN. Integrations/data-flow
+JSON a process JSON/Markdown čtou typed inventory. Consumer process zahrnuje Feign
+intent přes terminal call-site caller; samotná unused deklarace execution není.
 
-Implementace používá stávající Node/Edge/evidence/graph/store3; nepřidává parallel
-catalog ani value propagation do jiné služby. JavaFrontend poskytuje aditivní
-compiler literal a source-location binding ID, explicitní capture/reference proof;
-K1 i K2 distribuce sdílejí stejný Javac frontend. Staré workery bez těchto optional
-facts, staré compiler kontexty a graph/store1/2/3 zůstávají čitelné; HTTP coverage
-bez nové rule version je UNKNOWN. Malformed nové IR facts se odmítnou před zápisem.
+URI method/base/path jsou oddělené, bez guessed concatenation. Simple @Value/
+PropertyResolver/Feign placeholder se mapuje jen při matching explicit property,
+selected application.properties/profile file a SHA provenance. Plain string
+placeholder, nested/default/SpEL/YAML a ambiguous/missing source jsou UNKNOWN.
+Fresh scans/captures redaktují URI userinfo/query/fragment před persistencí,
+včetně explicit context, SOURCE_ONLY signatures/doc summaries/heading IDs a
+legacy HTTP references. Opaque input hashes drží freshness bez plaintext secrets.
+Workspace kvalifikuje identities a source locators, nikoli URI paths; service
+binding ani cross-service path match se nevymýšlí. Runtime execution vždy
+NOT_OBSERVED a availability UNKNOWN. Žádné HTTP, klient či application neběžely.
 
-Pure `http_execution` projection rozlišuje definition/closed unused publisher,
-static/conditional terminal a Feign invocation intent. Každý publisher má vlastní
-origin, takže terminal jiného publisheru ze stejného request spec jej neaktivuje.
-Return/store/pass/capture/unknown operators a unsupported switch nevymýšlejí
-execution. Neznámá URI reconfiguration nezachová předchozí konkrétní route.
-Kotlin K1/K2 bez potřebných binding facts vydá HTTP_TYPED_IR_UNAVAILABLE/UNKNOWN.
-Read inventory se promítá do integrations/data-flow JSON a process JSON/Markdown;
-workspace kvalifikuje IDs a source locators, nikoli URI route string.
+## Kompatibilita a fixture
 
-URI userinfo/query/fragment se redaktují před persistencí včetně explicitního
-kontextu a staré SOURCE_ONLY reference. Opaque hash zachovává freshness. Config
-mapping vyžaduje explicitní matching properties/profile/source SHA; plain string
-placeholder, YAML/SpEL/default/nested placeholder či hodnoty bez provenance zůstávají
-UNKNOWN. `runtime_execution=NOT_OBSERVED`, `runtime_availability=UNKNOWN` vždy.
+Graph/store1/2/3 zůstává čitelný; bez HTTP version je coverage UNKNOWN. Protocol1
+má jen optional typed fields; malformed nové facts se odmítnou před publikací.
+Fresh capture binduje HTTP rule/config fingerprint a replay je validuje offline.
+Pure/source-only/config-failure testy zakazují subprocess a ověřují zachování
+posledního grafu. Historické store není implicitně přepisováno.
 
-Fixture explicitně připravuje API Spring6.2.2, Reactor3.7.2 a OpenFeign4.2.0,
-nikoli application/client. Lock obsahuje SHA skutečných JARů a publikovaných POMů
-plus jejich license name; JARy se nevendorizují. Povinný Linux compiler CI job
-explicitně kompiluje API fixture a zahrnuje HTTP test module. Remote gate nebyl
-spuštěn kvůli již potvrzenému Actions billing blockeru; nic nebylo mergováno.
+`fixtures/http-client-execution` explicitně připravuje Spring6.2.2, Reactor3.7.2,
+OpenFeign4.2.0 API. Lock obsahuje skutečné JAR/POM SHA a published POM license
+names (Apache2; reactive-streams MIT-0); JARy se nevendorizují. Actual tests ověřují
+bytes/license a vlastní worker home. Mandatory Linux compiler CI explicitně
+kompiluje fixture a zahrnuje HTTP module. [Capability matrix](../compiler-inspection.md#http-client-intent),
+README, architecture, acceptance inventory a progress mají stejný omezený scope.
 
-## Lokální kontroly (source frozen, full pending)
+## Přesné finální kontroly
 
 Env: `PYTHONPATH=/workspace/http-execution/src`,
 `KGMAKER_WORKERS_HOME=/workspace/http-execution/workers`,
 `KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2`,
-`KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`, JDK21.0.6/Kotlin2.1.10,
-Python `/workspace/kgmaker-venv/bin/python`. K1/K2 build sekvenčně a focused/full
-pod `flock /workspace/kgmaker-heavy-tests.lock`, runner `/tmp/http-final-validate.py`.
+`KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`; JDK21.0.6/Kotlin2.1.10,
+Python `/workspace/kgmaker-venv/bin/python`. Heavy runs pod týmovým flock.
 
-- Před implementací actual RED: `tests/test_http_client_execution.py` původní2
-  parametrizované případy **2 FAIL13.60s**, chyběly cold definitions; žádný Javac
-  error ani HTTP/app execution. Rozšířené průběžné kontroly zachytily missing
-  Kotlin boundary diagnostic a přísný validator odmítající legitimní null binding;
-  obě chyby opraveny před finálním runem. Jeden nový URI test původně volal
-  metodu na chybném API návratovém typu; opravena fixture, nikoli obcházen compiler error.
-- `python workers/jvm/build.py --kotlin-home /workspace/tools/kotlinc --maven-repository /workspace/tools/m2 --java-home /workspace/tools/jdk-21.0.6+7` **PASS14.07s**.
-- Totéž `--backend k2 --analysis-api-home /workspace/tools/k2-verified` **PASS12.36s**.
-- `python -m pytest -q tests/test_http_client_execution.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_dataflow.py tests/test_workspace.py tests/test_mandatory_worker_ci.py --maxfail=1` **85 PASS40.22s**; tehdejších26 HTTP případy včetně skutečných K1/K2 API a negative/legacy/privacy/store.
-- K1 runtime SHA256 `14eddbf8f31011c22a144e67552706268daa3138ca71993fd638d70a556f026b`;
-  K2 `3c84080730333731611f42dbacd91a1bf3f75b863f045de715be73fc3828a0b3`.
-- `python -m compileall -q src/kgmaker`, `git diff --check` **PASS**.
-- Bounded semantic update/apply/validate/CLI scan: **PASS**, původních7 concepts/25
-  relations zachováno, přidán1 HTTP concept/4 doložené relations; scanner ownership
-  target275 a Javac staticness citation112 aktualizovány. Všech119 původních memory
-  episodes zatím byte-identických; feature capture proběhne po final full.
+- Sequential actual `python workers/jvm/build.py --kotlin-home /workspace/tools/kotlinc --maven-repository /workspace/tools/m2 --java-home /workspace/tools/jdk-21.0.6+7`: **PASS14.07s**; také `--backend k2 --analysis-api-home /workspace/tools/k2-verified`: **PASS12.36s**. Pozdější opravy jsou pure Python; JVM source/bytes se nezměnily.
+- K1 SHA256 `14eddbf8f31011c22a144e67552706268daa3138ca71993fd638d70a556f026b`; K2 `3c84080730333731611f42dbacd91a1bf3f75b863f045de715be73fc3828a0b3`.
+- Read-only prerequisite preflight **PASS0.05s**. Final focused scanner/inspection-contract/HTTP/protocol/control-flow/dataflow/workspace/mandatory-CI **108 PASS41.80s**, všech27 HTTP případů včetně skutečných Java K1/K2 a Kotlin UNKNOWN.
+- `python -m pytest -q --basetemp=/workspace/http-final-proof/pytest-tmp --junitxml=/workspace/http-final-proof/full.xml`: **641 passed, 10 skipped in 624.24s (0:10:24)**. Runner 624.89s. XML: 641 PASS/10 SKIP,0 errors/0 failures. Optional tool/platform skips nejsou vydávány za mandatory worker PASS.
+- `TMPDIR=/workspace/http-final-proof/tmp`, persistent runner/log/XML/results/source-manifest v `/workspace/http-final-proof/`. Frozen109-file source manifest souhlasí před/po full; obě runtime SHA stejné.
+- `compileall`, `git diff --check`, bounded semantic update/apply/validate/CLI scan/check **PASS**. Zachováno původních7 concepts/25 relations, přidán1 HTTP concept/4 doložené relations. Scanner target258, HTTP prepare78/augment548, ownership275 a Javac citation112 jsou revalidované. Všech119 inherited episodes je immutable; finální workflow zachycuje jeden feature episode (`memory capture --base c7beaec95951267796c0c21baa6079fafe5fe124`) a obnovuje graf CLI.
 
-Full aktuálního frozen source běží, proto zatím není pro něj tvrzen PASS. Přesný
-výsledek, memory capture a final CLI check budou doplněny po dokončení. Remote
-mandatory CI, skutečné HTTP/runtime response a celý S07/T003 nejsou ověřené.
+## Uchovaná historie neúspěšných a přerušených kontrol
 
-První whole-suite run byl vědomě přerušen po **1 FAIL / 330 PASS / 7 SKIP,
-449.35s** (`/tmp/http-interrupted-full.log/.xml`). Starý
-`test_sensitive_headers_urls_and_property_defaults_are_redacted` vyžadoval
-ponechat `safe=1` query; nový HTTP privacy kontrakt záměrně odstraňuje celý URI
-s userinfo/query/fragment včetně hodnot, jejichž citlivost nelze staticky ověřit.
-Expectation tohoto testu byla aktualizována na `<redacted-uri>` a nepřítomnost
-query. Produktový source ani oba worker runtimes se nezměnily. Následuje contract+
-HTTP/relevant focused a nový celý run `/tmp/http-retry-full.log/.xml`, nikoli
-povýšení přerušeného runu na PASS. Testovací runner typo před retry neodstartoval
-žádné testy; opraven před spuštěním skutečného retry.
+První full: **1 FAIL330 PASS7 SKIP449.35s**, zastaven po legacy redaction assertion
+požadujícím ponechat public `safe=1` query. Expectation opraven na celý redacted URI;
+contract+relevant focus **86 PASS41.96s**. Produkt source/binary se tím neměnil.
+`/tmp/http-interrupted-full.log/.xml` jsou zachované. Jeden runner typo před retry
+neodstartoval žádné testy a byl opraven.
 
-Retry contract+HTTP/relevant focused: **86 PASS41.96s**, bez změny workerů či
-produktového source. Whole retry však zaplnil oddělený `/tmp` tmpfs4.9GiB;
-pytest skončil exit1/392.15s, sessionfinish/JUnit write hlásí Errno28 a XML má
-0 bytes. Tento run není validní evidence PASS ani spolehlivý per-test count.
-`df` doložil `/workspace`23GiB free versus `/tmp`32KiB free. Jen vlastní již
-ukončené pytest-545/547 artefakty byly přesunuty do `/workspace` a zachovány;
-žádné cizí pracovní stromy ani source se neměnily.
+Další retry exit1/392.15s zaplnil `/tmp` tmpfs4.9GiB; sessionfinish/JUnit write
+Errno28, XML0 bytes. Není to validní whole PASS ani spolehlivý per-test count.
+Jen vlastní ukončené pytest545/547 temporary artifacts byly zachovány přesunem do
+`/workspace/http-interrupted-pytest-545` a `http-enospc-pytest-547`; cizí data se
+neměnila. Další log/temp/XML používají spacious workspace.
 
-Další final run používá `/workspace/http-validation-final/run.py`,
-`TMPDIR=/workspace/http-validation-final/tmp`, explicitní pytest basetemp a
-persistent log/XML na `/workspace/http-validation-final/full.log`/`full.xml`.
-Read-only prerequisite preflight **PASS0.04s**, skutečný K1 cold/terminal smoke
-**1 PASS2.63s** (runner2.84s), obě runtime SHA jsou nadále stejné. Fresh full
-běží pod týmovým flock; finální výsledek bude zaznamenán bez přejmenování
-předchozích přerušených/ENOSPC runů na PASS.
+Při privacy auditu actual SOURCE_ONLY scan odhalil raw default-URL signature leak;
+regression scan/save/load/docs s Popen zákazem po fixu **2 PASS0.07s**. Před změnou
+byl full ukončen **159 PASS2 SKIP196.37s**. Následný actual Feign consumer-process
+assertion měl **RED1 FAIL3.10s**, po pure read filter fixu **GREEN1 PASS2.16s**;
+před touto změnou full ukončen **184 PASS2 SKIP311.54s**. Tyto runy nejsou konečný
+PASS; konečný neporušený výsledek je výše. Artifacty zůstávají v
+`/workspace/http-validation-final` a `/workspace/http-privacy-final`.
 
-Při závěrečném source privacy auditu byl actual SOURCE_ONLY scan s Kotlin default
-URL reprodukován jako leak v raw Node.signature (sourcePass/sourceQuery byly
-přítomné). Předchozí full byl proto zastaven jako **159 PASS / 2 SKIP196.37s**,
-nikoli PASS celé sady. Následný úzký fix aplikuje stejnou privacy transformaci na
-persistované scanner signatures/doc summaries a Markdown heading name/ID, včetně
-quoted relative URI defaults; nejde o odvozování HTTP významu ze source labels.
-Nový scan/save/load/generated-docs regression zakazuje Popen a s contract testem
-**2 PASS0.07s**. JVM source i runtime SHA zůstaly stejné. Final runner je nyní
-`/workspace/http-privacy-final/run.py`, source manifest109 files a persistent
-focused/full log/XML jsou ve stejném adresáři; temp storage je výhradně spacious
-workspace. Nový read-only prerequisite preflight **PASS0.06s**.
+## Neprovedené kontroly a hranice
 
-Finální focused po SOURCE_ONLY privacy fixu: `tests/test_scanner.py`, `test_inspection_contract.py`, `test_http_client_execution.py`, protocol/control-flow/dataflow/workspace/mandatory-CI **108 PASS43.53s**, včetně všech27 HTTP případů. Whole aktuálního source běží; předchozí výsledky zůstávají historické.
+Remote mandatory Actions gates jsou BLOCKED potvrzeným billing/spending limit;
+žádný remote PASS ani merge se netvrdí. Independent review a Draft publication
+provádí parent nad finálním exact HEAD. Nepodporovány jsou obecné custom clients,
+operator/interprocedural/generic publisher flow, dynamic URLs, libovolná proxy
+registration a skutečná HTTP/data availability. Specifikace S07/S13 runtime a
+celý T003 zůstávají samostatné, nedokončené kontrakty.
 
-Read-side acceptance kontrola našla a actual testem potvrdila další úzkou mezeru:
-Feign definition patří abstraktní deklaraci, ale process filter hledal jen tuto
-`metadata.caller`, takže consumer process nezobrazil prokázaný call-site intent.
-Přidaný assertion v původní skutečné Feign fixture **RED1 FAIL3.10s**. Inventory
-nyní vybírá také podle caller originů terminal call-sites; unused declaration se
-nepřidává jako execution. **GREEN1 PASS2.16s**. Předchozí source full byl zastaven
-**184 PASS / 2 SKIP311.54s** před úpravou, nikoli vydáván za konečný PASS.
+## Iteration1 — unsupported URI privacy boundary, final proof pending
 
-Aktuální final runner/log/XML/manifest jsou `/workspace/http-final-proof/`,
-`run.py`/`full.log`/`full.xml`/`source-manifest.json`; read-only prerequisite
-preflight **PASS0.05s**. Worker zdroje a SHA jsou stále identické, změnil se jen
-pure read-side filter a jeho actual regression. Scoped semantic preserve8/29 a
-119 immutable episodes byl znovu validován; scanner target258, HTTP prepare78,
-HTTP augment548, workspace ownership275 a Javac citation112 odpovídají source.
-Zde ještě není tvrzený full PASS; po dokončení následuje přesný výsledek a capture.
+Po úspěšném source0258bba full641/10 a capture episode85d60f byla pure negative
+kontrola explicitního contextu s `ftp://user:password@host` skutečně reprodukována
+jako plaintext leak. HTTP mapping správně zůstal UNKNOWN, ale privacy je širší
+kontrakt než podporované HTTP schemata; proto nelze tuto chybu skrýt za unsupported.
+Redaktor nyní používá URI authority/query/fragment proof i pro FTP/PostgreSQL/JDBC
+nested URI a scheme-relative authority, aniž by rozšířil HTTP recognition. Pět
+nových pure cases + SOURCE_ONLY/contract **7 PASS0.09s**, se zákazem Popen.
+JVM zdroje a binaries se nezměnily. Nový source/manifest a final focused/full běží
+v `/workspace/http-uri-final`; preflight **PASS0.06s**. Výše uvedený641/10 je
+historický verified checkpoint, nikoli automatický PASS nové iteration1. Původních
+119 episodes i vlastní právě zachycený120. episode jsou immutable a zůstanou zachované.

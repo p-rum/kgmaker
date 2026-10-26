@@ -55,14 +55,23 @@ def uri_parts(value):
 
 def redact_uri_text(value: str, *, relative=True) -> str:
     """Do not retain URI userinfo, query values or fragments in graph payloads."""
-    def clean(match):
-        uri = match.group(0)
-        info = uri_parts(uri)
-        return '<redacted-uri>' if info['status'] in {'REDACTED_URI', 'INVALID_URI'} else uri
-    result = re.sub(r'https?://[^\s\"\'<>]+', clean, value, flags=re.I)
+    def clean_uri(uri):
+        # Privacy applies even when this scheme is unsupported by HTTP analysis.
+        try:
+            parsed = urlsplit(uri)
+            if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
+                return '<redacted-uri>'
+            parsed.port  # malformed authorities must not retain opaque payloads
+            return uri
+        except ValueError:
+            return '<redacted-uri>'
+    result = re.sub(r'[A-Za-z][A-Za-z0-9+.-]*://[^\s\"\'<>]+',
+                    lambda match: clean_uri(match[0]), value)
     # Quoted relative URI defaults may also occur in source-only signatures.
-    result = re.sub(r"""(["'`])(/[^"'`\r\n]*[?#][^"'`\r\n]*)\1""",
-                    lambda match: match[1] + '<redacted-uri>' + match[1], result)
+    result = re.sub(r"""(["'`])(/[^"'`\r\n]*)\1""",
+                    lambda match: match[1] + clean_uri(match[2]) + match[1], result)
+    if result.startswith('//'):
+        result = clean_uri(result)
     if relative and ('?' in result or '#' in result) and not any(c.isspace() for c in result) and not result.startswith('#{'):
         return '<redacted-uri>'
     return result
