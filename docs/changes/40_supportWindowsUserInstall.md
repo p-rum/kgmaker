@@ -240,3 +240,34 @@ Java/K1 Kotlin/TypeScript smoke testy v cestách s mezerami:
 `KGMAKER_REQUIRE_WORKERS=1 JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:$PATH KGMAKER_WORKERS_HOME=/workspace/windows-install/workers PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_worker_install.py -k 'not packaged_k2'`:
 **8 PASS / 1 DESELECTED**, 45.10s. K2 installed test je zde explicitně oddělen;
 nejde o důkaz K2 Windows. Semantic validate, scan/check a diff check PASS.
+
+## Native startup diagnostika místo další neověřené opravy
+
+Skutečný kandidát `9033d14`, run `40347960136`, job `121659870361`, opět skončil
+FAILED před smoke: private desktop vznikl, PID4768 skončil 0xC0000142.
+Předchozí desktop-ACL hypotéza tento běh neopravila. Windows acceptance zůstává
+BLOCKED; transport assertions se ještě na Windows neprovedly.
+
+Nový diagnostický kandidát před smoke provede omezenou matici skutečných
+`cmd.exe`, pinned Python a PowerShell procesů. Původní restricted token se
+porovnává na inherited/private desktopu s vlastním Job Object/bez něj. Další
+oddělené diagnostické varianty porovnají explicitní process/thread object ACL,
+TokenDefaultDacl a obě ACL změny dohromady; všechny grantují pouze stejný user
+SID a SYSTEM, ponechávají maximum privileges disabled a Administrators deny-only.
+Source a restricted default DACL se tisknou jako SDDL spolu s explicitním user
+SDDL; logují se i dostupné UI restrictions parent jobu. Tím se rozlišuje default
+ACL tokenu od ACL počátečních process/thread objektů, které může vytvořit
+administrativní caller. ACL varianta není přijata jako oprava bez native důkazu.
+
+Každý proces má 5s startup limit a maximálně1s direct cleanup wait, vlastní
+process/thread handles a případný job se zavřou. JSON výstup obsahuje PID,
+wait result, decimal/hex exit code, cleanup wait a případný skutečný Python/
+PowerShell non-admin marker; Python má i marker dosažení user kódu před ctypes.
+Výsledky a Application Error/WER záznamy pro cmd/Python/PowerShell se uploadují
+společně s launcher logem. Toto je diagnostika, nikoli acceptance substitute.
+Skutečný smoke nadále používá původní restricted token a žádná experimentální
+varianta se do něj automaticky nepromítá. Není elevated fallback.
+
+Lokálně: Python compile, YAML a PowerShell syntax parse PASS; transport/
+prerequisite **14 PASS / 1 Windows SKIP**. Produkční source se nemění; další
+skutečný native běh teprve dodá příčinnou evidenci.

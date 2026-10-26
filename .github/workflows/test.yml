@@ -37,6 +37,9 @@ jobs:
           & $python $launcher --root $space -- $powershell -NoProfile -ExecutionPolicy Bypass -File $script -Python $python -WorkRoot $space 2>&1 | Tee-Object -FilePath $launcherLog
           $launcherExit = $LASTEXITCODE
           Write-Output "Restricted launcher exit code: $launcherExit"
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-15); Id = 1000,1001 } -ErrorAction SilentlyContinue |
+            Where-Object { $_.Message -match 'powershell.exe|python.exe|cmd.exe' } |
+            Format-List TimeCreated,Id,Message | Out-String | Tee-Object -FilePath (Join-Path $space 'startup-events.log')
           $resultPath = Join-Path $space 'result.json'
           $logPath = Join-Path $space 'restricted-smoke.log'
           if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath }
@@ -48,7 +51,9 @@ jobs:
         if: always()
         with:
           name: windows-restricted-install-smoke
-          path: ~/KGMAKER user space/*.log
+          path: |
+            ~/KGMAKER user space/*.log
+            ~/KGMAKER user space/*.json
 
   unittest:
     runs-on: ubuntu-latest
