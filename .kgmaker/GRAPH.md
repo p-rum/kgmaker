@@ -6,7 +6,7 @@
 - Scope: production; omitted files: 264
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `44e80919100f3e7fe65907789516eeeb7121b70156eb87e009cc1321db934ad1`; content: `67dd56bf7c9d75d3c2a4b3204f8eac608c866aa1e54c79aebcab8e8b383aa2b9`; freshness: CONTENT_VERIFIED
+- Context: `c38dfba42706f60b72b7bc1403a6e1f5c695a35eac4141e6419efe9a789fbee8`; content: `00e094c91309d71b7b2f9d74dcc0893ab77cddf846667e813d5052e05110da24`; freshness: CONTENT_VERIFIED
 - Files indexed: 59
 - Symbols and sections: 627
 - Internal imports: 179
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/variables: 0/0
 - Semantic concepts: 0
-- Implementation episodes: 106
+- Implementation episodes: 107
 - Inferred/ambiguous relationships: 3074/0
 
 ## Architecture diagram
@@ -749,7 +749,7 @@ flowchart LR
 - **function** `_method` line 16 — `_method(symbols, owner, name, context_id, descriptor=None)`
 - **function** `registrar_info` line 23 — `registrar_info(symbol, symbols, context_id, reasons=())`
 - **function** `factory_info` line 64 — `factory_info(symbol, symbols, context_id)`
-- **function** `registration_assignability` line 158 — `registration_assignability(declared_type, field_type, injection_kind, types)`
+- **function** `registration_assignability` line 160 — `registration_assignability(declared_type, field_type, injection_kind, types)`
 
 ### `src/kgmaker/spring_imports.py`
 - **function** `selector_info` line 14 — `selector_info(record: dict, types: dict, symbols: dict, context_id: str)`
@@ -1074,6 +1074,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/12_mapCrossRepoArtifacts.md, docs/flyway-workspace-proofs.md, docs/production-analysis-progress.md; validation: cr_directory_regression_6=passed, full_pytest_206=passed
 - **merge: integrate source-only views and validate final W02 composition** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/46_mapDefaultBodySources.md, docs/compiler-inspection.md; validation: mandatory_core_36_pass=passed, semantic=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, ac02-real-worker=passed
+- **Record final registrar and factory namespace validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: strict-full-558-final=passed, actual-focused-59=passed, optional-10=skipped
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest=passed, task_specs=passed, semantic=passed, diff_check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
@@ -2694,7 +2695,6 @@ flowchart LR
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 699; src/kgmaker/framework.py:699; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 700; src/kgmaker/framework.py:700; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 701; src/kgmaker/framework.py:701; INFERRED 0.85)
-- `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 707; src/kgmaker/framework.py:707; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 726; src/kgmaker/framework.py:726; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 727; src/kgmaker/framework.py:727; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 732; src/kgmaker/framework.py:732; INFERRED 0.85)
@@ -2743,7 +2743,7 @@ flowchart LR
 - `src/kgmaker/framework.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 993; src/kgmaker/framework.py:993; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `64 in `src/kgmaker/spring_beans.py`` (name match at line 667; src/kgmaker/framework.py:667; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `64 in `src/kgmaker/spring_beans.py`` (name match at line 694; src/kgmaker/framework.py:694; INFERRED 0.85)
-- `src/kgmaker/framework.py` may call `158 in `src/kgmaker/spring_beans.py`` (name match at line 821; src/kgmaker/framework.py:821; INFERRED 0.85)
+- `src/kgmaker/framework.py` may call `160 in `src/kgmaker/spring_beans.py`` (name match at line 821; src/kgmaker/framework.py:821; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `14 in `src/kgmaker/spring_imports.py`` (name match at line 408; src/kgmaker/framework.py:408; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 1276; src/kgmaker/framework.py:1276; INFERRED 0.85)
 - `src/kgmaker/framework.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 377; src/kgmaker/framework.py:377; INFERRED 0.85)
@@ -3369,25 +3369,26 @@ flowchart LR
 - `src/kgmaker/semantic.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 447; src/kgmaker/semantic.py:447; INFERRED 0.85)
 - `src/kgmaker/semantic.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 467; src/kgmaker/semantic.py:467; INFERRED 0.85)
 - `src/kgmaker/semantic.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 480; src/kgmaker/semantic.py:480; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 106; src/kgmaker/spring_beans.py:106; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 109; src/kgmaker/spring_beans.py:109; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 107; src/kgmaker/spring_beans.py:107; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 11; src/kgmaker/spring_beans.py:11; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 124; src/kgmaker/spring_beans.py:124; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 148; src/kgmaker/spring_beans.py:148; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 110; src/kgmaker/spring_beans.py:110; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 125; src/kgmaker/spring_beans.py:125; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 150; src/kgmaker/spring_beans.py:150; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 35; src/kgmaker/spring_beans.py:35; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 48; src/kgmaker/spring_beans.py:48; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 53; src/kgmaker/spring_beans.py:53; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 71; src/kgmaker/spring_beans.py:71; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 83; src/kgmaker/spring_beans.py:83; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 92; src/kgmaker/spring_beans.py:92; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 108; src/kgmaker/spring_beans.py:108; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 116; src/kgmaker/spring_beans.py:116; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 128; src/kgmaker/spring_beans.py:128; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 100; src/kgmaker/spring_beans.py:100; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 109; src/kgmaker/spring_beans.py:109; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 117; src/kgmaker/spring_beans.py:117; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 129; src/kgmaker/spring_beans.py:129; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 130; src/kgmaker/spring_beans.py:130; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 172; src/kgmaker/spring_beans.py:172; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 173; src/kgmaker/spring_beans.py:173; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 131; src/kgmaker/spring_beans.py:131; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 174; src/kgmaker/spring_beans.py:174; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 175; src/kgmaker/spring_beans.py:175; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 177; src/kgmaker/spring_beans.py:177; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 19; src/kgmaker/spring_beans.py:19; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 20; src/kgmaker/spring_beans.py:20; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 21; src/kgmaker/spring_beans.py:21; INFERRED 0.85)
@@ -3403,10 +3404,10 @@ flowchart LR
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 78; src/kgmaker/spring_beans.py:78; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 90; src/kgmaker/spring_beans.py:90; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 97; src/kgmaker/spring_beans.py:97; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 99; src/kgmaker/spring_beans.py:99; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 107; src/kgmaker/spring_beans.py:107; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 121; src/kgmaker/spring_beans.py:121; INFERRED 0.85)
-- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 145; src/kgmaker/spring_beans.py:145; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `136 in `src/kgmaker/schema_replay.py`` (name match at line 98; src/kgmaker/spring_beans.py:98; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 108; src/kgmaker/spring_beans.py:108; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 122; src/kgmaker/spring_beans.py:122; INFERRED 0.85)
+- `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 147; src/kgmaker/spring_beans.py:147; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 33; src/kgmaker/spring_beans.py:33; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 45; src/kgmaker/spring_beans.py:45; INFERRED 0.85)
 - `src/kgmaker/spring_beans.py` may call `195 in `workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java`` (name match at line 50; src/kgmaker/spring_beans.py:50; INFERRED 0.85)
