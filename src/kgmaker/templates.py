@@ -138,8 +138,11 @@ class _TemplateParser(HTMLParser):
         self.facts = facts
         self.stack: list[tuple[str, str | None]] = []
         self.fragments_by_id: dict[str, _Fragment] = {}
+        self.attribute_owner: tuple[str, Node] | None = None
 
     def _owner(self) -> tuple[str, Node]:
+        if self.attribute_owner is not None:
+            return self.attribute_owner
         fragment_id = next((item[1] for item in reversed(self.stack) if item[1]), None)
         if fragment_id:
             fragment = self.fragments_by_id[fragment_id]
@@ -273,39 +276,53 @@ class _TemplateParser(HTMLParser):
                     fragment.parameter_nodes[parameter] = parameter_node
                     self.facts.variables[parameter_node.id] = parameter_node
 
-        for name, value in attrs:
-            if not name:
-                continue
-            if name in {"th:fragment", "data-th-fragment"}:
-                continue
-            if name in _REFERENCE_ATTRIBUTES:
-                parsed = _parse_fragment_reference(value or "")
-                if parsed is None:
-                    self._diagnostic("TEMPLATE_FRAGMENT_UNRESOLVED",
-                                     "Fragment reference is dynamic or outside the supported literal grammar.",
-                                     line, expression=value or "")
-                else:
-                    target, fragment_name, arguments = parsed
-                    self.facts.references.append((current_fragment or self.facts.template.id,
-                                                  target, [fragment_name, *arguments], line))
-                    for argument in arguments:
-                        match = re.fullmatch(rf"({_IDENT})\s*=\s*\$\{{({_IDENT}(?:\.{_IDENT})*)\}}", argument)
-                        positional = re.fullmatch(rf"\$\{{({_IDENT}(?:\.{_IDENT})*)\}}", argument)
-                        if match:
-                            self._variable(match.group(2), line, "fragment_argument")
-                        elif positional:
-                            self._variable(positional.group(1), line, "fragment_argument")
-                continue
-            if attr_counts.get(name, 0) > 1:
-                self._diagnostic("TEMPLATE_ATTRIBUTE_AMBIGUOUS",
-                                 "Duplicate attribute values are not resolved.", line,
-                                 expression=value or "")
-                continue
-            if name in _CONDITION_ATTRIBUTES:
-                self._condition(name, value or "", line)
-                continue
-            if any(marker in (value or "") for marker in ("${", "#{", "*{", "@{", "~{")):
-                self._attribute_expressions(name, value or "", line)
+        owner_id = current_fragment or self.facts.template.id
+        owner_node = (self.fragments_by_id[owner_id].node
+                      if owner_id in self.fragments_by_id else self.facts.template)
+        references = [(name, value) for name, value in attrs if name in _REFERENCE_ATTRIBUTES]
+        ambiguous_reference = len(references) > 1
+        if ambiguous_reference:
+            self._diagnostic("TEMPLATE_FRAGMENT_REFERENCE_AMBIGUOUS",
+                             "Multiple fragment reference attributes or aliases on one element are not resolved.",
+                             line)
+        self.attribute_owner = (owner_id, owner_node)
+        try:
+            for name, value in attrs:
+                if not name:
+                    continue
+                if name in {"th:fragment", "data-th-fragment"}:
+                    continue
+                if name in _REFERENCE_ATTRIBUTES:
+                    if ambiguous_reference:
+                        continue
+                    parsed = _parse_fragment_reference(value or "")
+                    if parsed is None:
+                        self._diagnostic("TEMPLATE_FRAGMENT_UNRESOLVED",
+                                         "Fragment reference is dynamic or outside the supported literal grammar.",
+                                         line, expression=value or "")
+                    else:
+                        target, fragment_name, arguments = parsed
+                        self.facts.references.append((owner_id, target, [fragment_name, *arguments], line))
+                        for argument in arguments:
+                            match = re.fullmatch(rf"({_IDENT})\s*=\s*\$\{{({_IDENT}(?:\.{_IDENT})*)\}}", argument)
+                            positional = re.fullmatch(rf"\$\{{({_IDENT}(?:\.{_IDENT})*)\}}", argument)
+                            if match:
+                                self._variable(match.group(2), line, "fragment_argument")
+                            elif positional:
+                                self._variable(positional.group(1), line, "fragment_argument")
+                    continue
+                if attr_counts.get(name, 0) > 1:
+                    self._diagnostic("TEMPLATE_ATTRIBUTE_AMBIGUOUS",
+                                     "Duplicate attribute values are not resolved.", line,
+                                     expression=value or "")
+                    continue
+                if name in _CONDITION_ATTRIBUTES:
+                    self._condition(name, value or "", line)
+                    continue
+                if any(marker in (value or "") for marker in ("${", "#{", "*{", "@{", "~{")):
+                    self._attribute_expressions(name, value or "", line)
+        finally:
+            self.attribute_owner = None
 
         if tag not in _VOID_TAGS:
             self.stack.append((tag, current_fragment))
@@ -493,31 +510,30 @@ def attach_templates(root: Path, graph: KnowledgeGraph) -> KnowledgeGraph:
                                         "reason": "Static include is known, but this argument is not a literal model path.",
                                         "status": "PARTIAL"})
                     continue
-                # Add the caller-side model path as an evidence-backed variable
-                # so existing literal backend model-key bindings can reach it.
-                caller_variable_id = _node_id("template_variable", relative, expression.group(1))
+                # Resolve the exact argument expression in its caller's scope.
+                # A nested fragment must never acquire an unscoped alias merely
+                # because it passes a same-named local expression onward.
+                if owner_id == facts.template.id:
+                    caller_variable_id = _node_id("template_variable", relative, expression.group(1))
+                else:
+                    caller_fragment = next((item for item in facts.fragments
+                                            if item.node.id == owner_id), None)
+                    if caller_fragment is None:
+                        caller_variable_id = ""
+                    else:
+                        caller_variable_id = _node_id(
+                            "template_variable", relative,
+                            f"fragment:{caller_fragment.name}:{caller_fragment.node.line}:{expression.group(1)}")
                 caller_variable = facts.variables.get(caller_variable_id)
                 if caller_variable is None:
-                    caller_variable = Node(caller_variable_id, "template_variable", expression.group(1),
-                                           relative, line=line, summary="${" + expression.group(1) + "}",
-                                           scope=file_node.scope, role=file_node.role, origin=file_node.origin,
-                                           build_membership=file_node.build_membership,
-                                           classification_evidence=file_node.classification_evidence,
-                                           metadata={"dialect": "thymeleaf", "expression": expression.group(1),
-                                                     "root": expression.group(1).split(".", 1)[0],
-                                                     "usages": ["fragment_argument"], "parser": VERSION})
-                    facts.variables[caller_variable_id] = caller_variable
-                    nodes[caller_variable_id] = caller_variable
-                    pending_edges.append((facts.template.id, caller_variable_id, "declares_template_variable",
-                                          "Literal fragment argument model path", relative, line))
-                else:
-                    metadata = dict(caller_variable.metadata or {})
-                    metadata["usages"] = sorted(set(metadata.get("usages", [])) | {"fragment_argument"})
-                    caller_variable = replace(caller_variable, metadata=metadata)
-                    facts.variables[caller_variable_id] = caller_variable
-                    nodes[caller_variable_id] = caller_variable
+                    diagnostics.append({"code": "TEMPLATE_FRAGMENT_ARGUMENT_UNRESOLVED",
+                                        "path": relative, "source_line": line,
+                                        "expression": raw_value,
+                                        "reason": "Literal argument has no exact caller-scoped variable fact.",
+                                        "status": "UNKNOWN"})
+                    continue
                 parameter_node = fragment.parameter_nodes[parameter]
-                pending_edges.append((owner_id, parameter_node.id, "passes_template_fragment_argument",
+                pending_edges.append((caller_variable.id, parameter_node.id, "passes_template_fragment_argument",
                                       "Literal model path ${" + expression.group(1) + "} supplied for " + parameter,
                                       relative, line))
 

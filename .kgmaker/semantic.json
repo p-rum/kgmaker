@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
     "README.md": "6438a16eabac3fc3a66950aaa9ac9b30d6056eb878f9e4be097a7ab0500e77cf",
-    "docs/acceptance-inventory.md": "1f0eea537ae35f9982535eb22b865ca50eed0076c1ce52165dd27db39e048452",
+    "docs/acceptance-inventory.md": "3fe8b98de0fd5f93e0f5725c1f2fea9e41d4069cceeb107d46620d425cc03c20",
     "docs/architecture.md": "117d4e3a8c215e937fe954634ce08fe0877443a05cf4f799f9da304d233212cc",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -36,7 +36,7 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/50_expandSpringConditions.md": "e6094ec70a0e507c23aa442515a1b6324571aaa829bd48b823ad1799113e1c77",
-    "docs/changes/55_expandThymeleafFragments.md": "a342512f27eb96f796b26e9dd83030568433d388f28e94dbc902a7f9d535956e",
+    "docs/changes/55_expandThymeleafFragments.md": "25145834dab3a617e77e6f700b1bed1484d31c3cc67ab3baec25752cfc2cad9a",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
@@ -45,7 +45,7 @@
     "docs/feature-analysis.md": "00eb29032fbf74e774036a148fd8de11adaa6eb4c94636c575455b0f389c8ae6",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "4a4dc225239b633b29a74d3006f2443613d77db5744e0ca76b9963c1ea7177b5",
+    "docs/production-analysis-progress.md": "b3b390037d74cfc7447d38c0f9bb19403326e407e2e6ef45135cfe781b593bbb",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -254,7 +254,7 @@
     "src/kgmaker/spring_conditions.py": "70788d9310a8b41d954d91fc0ef52a13608fa1da23ae52cd791c6021e5c76ac8",
     "src/kgmaker/spring_imports.py": "ddc3ad6cd526797327c3a00c93f6d2c546f79fed0ea455f3db9909d19026f359",
     "src/kgmaker/store.py": "25536d3b1d9af1a1d07b07c50dd00dc3a00863926cd2127669a1f269a918a620",
-    "src/kgmaker/templates.py": "bab3bd6b1a2cc855fa2b4c8c0eea127a21eb9a24aa7fa96946e20a1e2cd246c5",
+    "src/kgmaker/templates.py": "0d07b9c1b0c2614098515ad0f8ca266dee35bf30be3d0f48e70faa8275754a96",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
     "src/kgmaker/views.py": "efdb1f99853595b85c621f467340c4e8334a538b7670d6d6837b27247b4eff3d",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
@@ -301,7 +301,7 @@
     "tests/test_t006_select_service_contexts.py": "464f78e848104daec15c304f8e21122fe3b9e5d47efdaf3720fd6f95404bee4b",
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
     "tests/test_t008_project_service_inventory.py": "c89b9c283cca4d47b4a3557a885eb9ea1b8854adcb29436ba600c0e5a655d4f5",
-    "tests/test_templates.py": "ed3c032b5deac1de6f394728939de9b814593ad270080cf369bda760ccffee87",
+    "tests/test_templates.py": "15694169df1d4af4fda45272bcdbea85f8011d245a67d4b53dccc2aea95ff8a2",
     "tests/test_typescript_project_references.py": "c3622cff3d5045504b5dcbf263e56d7f84f5e4f9bf3425ce9d57f59cf054fe81",
     "tests/test_windows_install.py": "8e6dafad019022a7b390d2b7c65381b6c36822b0064d5974bcdb602f694cdfa5",
     "tests/test_workbooks.py": "cf74c8dc08f8f6f46cb5d74f5ad95193f2ca6d5be089d7861ef78c2b99201c7c",
@@ -639,7 +639,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "target": "function:src/kgmaker/templates.py:attach_templates::336",
+      "target": "function:src/kgmaker/templates.py:attach_templates::353",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -655,26 +655,26 @@
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
       "source_line": 74,
-      "evidence": "The fixture verifies a literal caller model path passes into a scoped fragment parameter and its local property use without controller cross-binding."
+      "evidence": "The fixture verifies same-element fragment ownership, a literal caller model path, scoped parameter use and same-named variables remaining distinct across fragments."
     },
     {
-      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::119",
+      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::188",
       "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 121,
+      "source_line": 188,
       "evidence": "The fixture verifies PARTIAL/UNKNOWN conditions and unsupported selector diagnostics without evaluation."
     },
     {
-      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::144",
+      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::230",
       "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/test_templates.py",
-      "source_line": 146,
+      "source_line": 232,
       "evidence": "The negative fixture verifies dynamic, ambiguous and wrong-arity calls have diagnostics, no resolved include edge, and no input graph mutation."
     },
     {
@@ -686,6 +686,26 @@
       "source_file": "tests/test_templates.py",
       "source_line": 35,
       "evidence": "The existing regression verifies literal template variable IDs, backend binding and the explicit external PDF boundary remain present."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 140,
+      "evidence": "The public fixture verifies nested fragment arguments originate at the exact caller-scoped variable and traverse to the nested parameter without global aliases."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::213",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 213,
+      "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
     }
   ],
   "episodes": [
