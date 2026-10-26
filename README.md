@@ -414,3 +414,11 @@ exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
 perform the export; scan/feature/hook never launch Gradle.
 
 Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
+
+
+`inspect code` with an explicit execution-bound bytecode build now emits
+`maps_to_source` declaration evidence for exact Java/Kotlin declarations,
+Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
+simple same-owner compiler bridges. Generated method IDs remain distinct.
+Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
+prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).

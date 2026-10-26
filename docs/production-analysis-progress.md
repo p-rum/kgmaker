@@ -69,7 +69,7 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
 | T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
-| T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body/coroutine source mapping, širší corpus, dependency dispatch a úplná acceptance banka |
+| T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body source mapping mimo W02 a coroutine mapping, širší corpus, dependency dispatch a úplná acceptance banka |
 | T003-S05 Spring | PARTIAL | Spring rules v3 přidávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Dynamic ImportSelector/registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
 | T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
 | T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
@@ -219,7 +219,7 @@ K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
 K2 source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites, local/lambda
-execution a default-body/coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
+execution a default-body mapping mimo W02 a coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
 Jiné compiler/language/API/JVM verze a captured flags/plugins se odmítají bez
 implicitního fallbacku či publikace. T003-S04 a T003 zůstávají PARTIAL.
 
@@ -281,3 +281,18 @@ store. Přímý extractor kontroluje archive limit před hashováním. Finální
 100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
 Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
 Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).
+
+
+## T003-S04-W02 — bounded source declaration mappings
+
+The explicit bytecode path now separates generated identity from compiler-proven
+source declaration mappings. Actual JDK21/Kotlin2.1.10 golden fixtures cover Java
+default methods, value/void generic bridges and Kotlin DefaultImpls/JVM-default=all
+under K1/K2 with and without debug attributes. Missing/mismatched source stays
+bytecode-only; no source call locator or runtime availability is manufactured.
+See change46 and `tests/test_default_body_mapping.py`. S04 remains PARTIAL outside
+this declared matrix; coroutine/default-argument/state-machine mapping is pending.
+
+Final S04-W02 verification: **410 PASS / 9 optional toolchain SKIP**, including
+all 32 actual mapping cases; focused scope/duplicate guards **16 PASS**.
+Runtime/statement-level mapping remains outside this bounded declaration contract.
