@@ -1,10 +1,13 @@
-# Windows user-space instalace a portable worker transport — kandidát
+# Windows user-space instalace a portable worker transport — VERIFIED_IN_SCOPE
 
 Datum: 2026-10-26. Zadání:
 [T003-S11-W03](../tasks/T003-S11-03-windowsNoAdminInstall.md), AC01–AC04,
 nadřazené T003-AC11. Baseline `e656b8ef4c174d3d60600037d7c0d78fc514e39d`.
-Závislosti W01/W02 jsou sloučeny (PR18/22). **Windows CI zatím NOT_RUN**;
-tento dokument neprohlašuje Windows acceptance ani celý release za hotové.
+Závislosti W01/W02 jsou sloučeny (PR18/22). **Skutečný Windows gate PASS** na
+`d311231ed4e199ee0c19d9d5037ccfcdcdce199b`, run40351407076/job121672139333:
+43 PASS / 2 scoped SKIP, 50.23s. Review/merge ještě následují; celý release
+T003-S11/T003-AC11 zůstává PARTIAL. Starší odstavce níže jsou chronologická
+evidence původních kandidátů; finální skutečný výsledek je na konci poznámky.
 
 ## Problém a skutečná změna
 
@@ -83,19 +86,19 @@ Výstup/return marker a transcript jsou reviewovatelný CI artefakt.
 
 ## AC a kompatibilita
 
-- AC01: skutečný Windows restricted-user smoke je připravený, dosud NOT_RUN.
-  Lokální Linux worker/core smoke PASS není jeho náhrada.
+- AC01: skutečný Windows restricted-user smoke nyní PASS (run40351407076);
+  core a deklarované Java/K1/TS workery prošly. K2 Windows zůstává neověřené.
 - AC02: protocol1, graph/store v1/v2/v3 a worker home precedence beze změny;
-  existující loader/compiler/install regrese prošly na Linuxu.
+  existující loader/compiler/install regrese prošly na Linuxu i ve Windows smoke.
 - AC03: příslušné transport/no-tools/prerequisite testy ověřují žádné implicitní
-  procesy ani přepsání posledního grafu. Windows BUILD_EXECUTE je fail-closed;
+  procesy ani přepsání posledního grafu, nyní také na skutečném Windows. Windows BUILD_EXECUTE je fail-closed;
   žádný static/build výsledek nezískává runtime data availability.
 - AC04: README, Windows/capability guide i acceptance/progress matrix explicitně
-  rozlišují provedený Linux běh od čekajícího Windows CI výsledku.
+  rozlišují provedený Linux i Windows běh a dosud neověřené K2 Windows.
 
 Uživatelské příklady a prerequisite cesty jsou v [Windows guide](../windows-install.md).
-Windows gate musí proběhnout na publikovaném exact HEAD před konečným přijetím
-W03; kandidát proto patří do draft PR. Zbývá skutečný Windows výsledek.
+Windows gate proběhl na publikovaném exact HEAD d311231; metadata kandidát
+stále vyžaduje zelené checks a nezávislé review před přijetím PR24.
 Immutable publikace, obecná production matice, benchmarky,
 Windows build execution a K2 Windows scope se tímto taskem neprohlašují za hotové.
 
@@ -292,3 +295,73 @@ zatím ponechává pro izolaci, ale není příčinou opravy (native matice to v
 Diagnostická matice a její přesné výsledky zůstávají dostupné jako regrese.
 Plná skutečná Windows instalace/build/installed smoke se teprve musí provést
 na novém kandidátu; dílčí native EXIT0 není za tuto acceptance vydáván.
+
+## Finální skutečná Windows acceptance — 2026-10-26
+
+Exact runtime/harness head: `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`, base
+`eff0d3d5d7620b017fe42a65a54f672af8068667`; Actions checkout byl skutečný merge
+`380e04f` této dvojice. [Run40351407076](https://github.com/p-rum/kgmaker/actions/runs/40351407076)
+má všech sedm jobů SUCCESS. [Windows job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333)
+prošel; [artifact12664820415](https://github.com/p-rum/kgmaker/actions/runs/40351407076/artifacts/12664820415)
+obsahuje restricted launcher log, PowerShell transcript, native diagnostiku,
+non-admin marker JSON a result.json. Filtrované skutečné logs byly načteny přes
+GitHub job-log API, neodvozují se z Linuxu.
+
+Ověřená matice: Windows Server2025, Windows PowerShell **5.1.26100.33648**,
+CPython **3.12.10**, Temurin **21.0.6+7.0.LTS**, Kotlin compiler **2.1.10**
+(K1 compatibility backend), Jackson2.18.2, Node **24.19.0**, npm11.17.0,
+TypeScript **5.7.3**, Maven distribution **3.9.9**, pytest8.3.4,
+setuptools84.2.1 a wheel0.48.0. Maven/Kotlin archivy a compiler dependencies
+byly ověřeny stejnými committed checksum/lock kontrakty jako v CI skriptu.
+
+Přesná spuštěná acceptance cesta (proměnné odpovídají workflow/scriptu):
+
+```powershell
+$space = Join-Path $env:USERPROFILE 'KGMAKER user space'
+$source = Join-Path $space 'source checkout'
+& $python (Join-Path $source 'tests/windows/restricted_launcher.py') --root $space -- $powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $source 'tests/windows/no_admin_smoke.ps1') -Python $python -WorkRoot $space
+# Následuje již v restricted child, nikoli v administrativním bootstrapu:
+& $developerPython workers/jvm/build.py --kotlin-home (Join-Path $space 'kotlinc') --maven-repository (Join-Path $space 'maven repository') --java-home (Join-Path $space 'java runtime')
+& $developerPython workers/build/build.py --maven-home (Join-Path $space 'apache-maven-3.9.9') --java-home (Join-Path $space 'java runtime')
+$env:KGMAKER_REQUIRE_WORKERS = '1'
+$env:KGMAKER_REQUIRE_WINDOWS_SMOKE = '1'
+$env:KGMAKER_WORKERS_HOME = Join-Path $source 'workers'
+$env:PYTHONPATH = Join-Path $source 'src'
+& $developerPython -m pytest -q tests/test_worker_protocol.py tests/test_worker_install.py tests/test_windows_install.py tests/test_t005_add_view_model.py
+```
+
+Child s explicitním own-user+SYSTEM TokenDefaultDacl ponechal disabled privileges
+a Administrators deny-only. Native Python i PowerShell probes zapsaly
+`is_admin=false`; transcript má `Restricted token administrator membership: False`.
+Restricted smoke PID4120 skončil **exit0 / 0x00000000**, launcher **exit0**.
+Tvrzení není založeno na názvu účtu runneradmin: testuje skutečné členství tokenu.
+
+Všechny source/runtime/cache/venv/worker a instalované project cesty obsahovaly
+mezery pod `C:\Users\runneradmin\KGMAKER user space`. JDK/Node byly zkopírovány
+do user-local cest; venv/package instalace i explicitní workery vznikly až v
+restricted child. JVM build SUCCESS (Windows JAR SHA256
+`4e4598b7e5646a0d0d260e0785544c828dbe02ad5459a78fe0629f7baa911d44`), trusted
+Maven exporter offline build SUCCESS a npm pinned TypeScript příprava prošly.
+Exporter build není důkaz Windows BUILD_EXECUTE inspected projektů.
+
+Pytest: **43 PASS / 2 SKIP**, **50.23s**:
+
+- Protocol sada: skutečné Windows pipes, large stdin/stderr, strict JSON/output
+  limit, timeout/cancel včetně již ukončeného parentu s inherited pipes, bounded
+  elapsed time, žádné transport threads ani otevřené streams, graph sentinel.
+- Instalace: sdist → offline wheel → čisté venv mimo checkout; core SOURCE_ONLY
+  bez JDK/Node/child procesů; skutečné Java/K1 Kotlin/TypeScript calls, precedence,
+  missing/ambiguous distribution a zachování posledního validního grafu.
+- Native Windows non-admin/path-space gate, explicitní JRE/JDK17 prerequisite a
+  unsupported BUILD_EXECUTE bez procesu nebo mutace run/store.
+- T005 view/model a legacy graph/store v1/v2/v3 kompatibilita.
+- Přesně dva SKIP: POSIX-only `test_nonblocking_setup_failure_reaps_child_and_closes_pipes`
+  a `test_packaged_k2_analyzes_outside_checkout` bez připraveného K2 artefaktu.
+  Žádný povinný deklarovaný Windows worker ani non-admin gate nebyl přeskočen.
+
+AC01–AC04 jsou VERIFIED_IN_SCOPE pro tuto Windows matici. K2 Windows,
+Windows BUILD_EXECUTE, immutable release publication, celá production/benchmark
+matice a nadřazený T003-S11/T003-AC11 zůstávají otevřené/PARTIAL.
+Tento commit mění pouze dokumentaci/semantic metadata, runtime/harness byte
+obsah zůstává shodný s d311231. Durable task přechází do review, nikoli done;
+nový exact metadata HEAD vyžaduje vlastní sedm zelených CI jobů, review a merge.

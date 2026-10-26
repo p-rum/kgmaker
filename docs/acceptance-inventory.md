@@ -1,13 +1,17 @@
 # Inventář acceptance T001 a T002
 
-## T003-S11-W03 — Windows user-space kandidát
+## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
-| ID | Stav | Přímá evidence a zbývající gate |
+| Kritérium | Stav | Evidence |
 |---|---|---|
-| T003-S11-W03-AC01 | PARTIAL / WINDOWS_NOT_RUN | Linux skutečný installed core/Java/K1 Kotlin/TS smoke s mezerami; Windows restricted-user job čeká na publikaci kandidáta |
-| T003-S11-W03-AC02 | VERIFIED_IN_SCOPE_LINUX | Protocol1 a graph/store v1/v2/v3 beze změny; stávající loader/install/regrese, Windows loader smoke musí projít skutečným CI |
-| T003-S11-W03-AC03 | PARTIAL / WINDOWS_NOT_RUN | `test_worker_protocol.py`, `test_windows_install.py`, source-only/missing-artifact install varianty bez procesu nebo mutace posledního grafu; Windows ověření čeká |
-| T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Change note40](changes/40_supportWindowsUserInstall.md) a [Windows guide](windows-install.md) oddělují provedený Linux běh od pending Windows gate; T003-S11 zůstává PARTIAL |
+| T003-S11-W03-AC01 | VERIFIED_IN_SCOPE_WINDOWS | Skutečný restricted-user core/Java/K1 Kotlin/TS installed wheel smoke; Windows Server2025/Python3.12.10/JDK21.0.6/Kotlin2.1.10/Node24.19.0/TS5.7.3; paths s mezerami |
+| T003-S11-W03-AC02 | VERIFIED_IN_SCOPE_WINDOWS | Protocol1 a graph/store v1/v2/v3 beze změny; installed scan/save/load a T005 legacy loader/model sada prošly také na Windows |
+| T003-S11-W03-AC03 | VERIFIED_IN_SCOPE_WINDOWS | Source-only/no-process, missing/ambiguous distribution a JRE/JDK17 negatives; timeout/cancel inherited pipes, thread/stream cleanup a zachování posledního grafu; Windows BUILD_EXECUTE je explicitní unsupported před procesem/zápisem |
+| T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md), skutečný [run40351407076/job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333): 43 PASS / 2 SKIP, 50.23s; K2 Windows a celý T003-S11 nejsou dokončené |
+
+Evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`; následný metadata
+commit vyžaduje vlastní checks/review před merge. Dva SKIP: POSIX-only setup fault
+test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly skipped.
 
 ## T003-S11-W02 — distribuce build exporterů
 

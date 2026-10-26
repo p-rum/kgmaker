@@ -1,11 +1,14 @@
 # Windows instalace do uživatelských adresářů
 
-Stav T003-S11-W03: implementační kandidát, skutečné Windows CI dosud NOT_RUN.
-Linux regresní testy nejsou důkazem běhu na Windows. Úplný release T003-S11
-zůstává PARTIAL; přesné lokální výsledky uvádí
-[change note40](changes/40_supportWindowsUserInstall.md).
+Stav T003-S11-W03: VERIFIED_IN_SCOPE skutečným Windows restricted-user během
+[40351407076 / job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333)
+na kandidátu `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`: **43 PASS / 2 SKIP**, 50.23s.
+PowerShell i Python potvrdily non-admin token. Dva SKIP jsou POSIX-only setup
+fault test a nepřipravený K2 worker; core/Java/K1/TS povinné runtime nebyly skipped.
+Review/merge PR24 ještě následují; celý T003-S11 zůstává PARTIAL.
+Podrobnosti a historická selhání uvádí [change note40](changes/40_supportWindowsUserInstall.md).
 
-## Prerequisites a podporovaná matice kandidáta
+## Prerequisites a ověřená matice
 
 - Python3.12 s `venv`/`ensurepip`, instalovaný pro aktuálního uživatele; žádná
   machine-wide instalace ani aktivace PowerShell venv skriptem není potřeba.
@@ -73,6 +76,8 @@ Transport gate ověřuje timeout, cancellation, output limits, současný large
 stdin/stderr a cleanup blokovaného writeru. Žádný chybějící povinný runtime se v
 tomto jobu nepřeskakuje.
 
-Výsledek se publikuje až po skutečném běhu: lokální PowerShell parser a Linux
-transport testy nepovyšují Windows acceptance na PASS. Podrobnosti jsou v
+Skutečný výsledek výše pochází z Windows Server2025, Python3.12.10,
+Temurin21.0.6+7, Kotlin2.1.10 a Node24.19.0/TypeScript5.7.3. Protocol gate nyní
+na Windows ověřil také timeout/cancel po exit parentu se zděděnými pipes a žádné
+zbývající transport threads/otevřené streams. Lokální Linux parser není jeho náhrada. Podrobnosti jsou v
 [T003-S11-W03](tasks/T003-S11-03-windowsNoAdminInstall.md).
