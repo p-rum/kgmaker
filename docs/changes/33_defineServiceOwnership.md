@@ -47,12 +47,15 @@ service mapping se nepřeklápí na ownership automaticky.
 - `git diff --check` — **PASS**.
 - `kgmaker semantic update --base origin/main`, scoped semantic patch,
   `semantic apply`, `semantic validate` a následný scan — **PASS** nad aktuálním
-  main `aa9e64b`; následně byl integrován aktuální main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`; finální semantic update/apply/validate a scan po této integraci prošly; scan indexoval 282 souborů, 2,546 nodes a 15,916 relationships; `kgmaker check` zůstal PASS.
+  main `aa9e64b`; následně byl integrován aktuální main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`; finální semantic update/apply/validate a scan po této integraci prošly; scan indexoval 282 souborů, 2,546 nodes a 15,916 relationships; `kgmaker check` zůstal PASS. Při následném semantic audit bylo README konceptu `optional_agent_authored_semantic_layer` ověřeno na řádku 107 (semantic prepare); vztah `uses` na řádku 109 (semantic update), architektura ownership na řádku 140 a její `implements` vztah na řádku 143.
 - `kgmaker memory recall` — **PASS**, vrátil historická omezení a aktuální
   resolver location. `kgmaker memory capture --base origin/main` — **PASS**;
   zaznamenal ověřené příkazy a nedostupné toolchain gates jako skipped.
 - Po integraci main `35033096e8a2ea5d74ae8d2195a7b27d22c7590a`:
   `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_t005_add_view_model.py tests/test_binary_xls.py` — **61 passed**. Pokrývá T007/workspace/T005 a integrovanou XLS diagnostiku; úplná sada nebyla opakována, protože změna T007 se nepřekrývala s XLS parserem.
+- Po integraci exporter main `e656b8ef4c174d3d60600037d7c0d78fc514e39d`:
+  `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_t005_add_view_model.py tests/test_exporter_distribution.py` — **53 passed, 2 skipped**. Samostatný exporter-negative běh: **8 passed, 2 skipped**; skip jsou real Maven/JDK a real Gradle/JDK chybějící toolchainy. `src/kgmaker/workspace.py` a `tests/test_t007_define_service_ownership.py` jsou byte-identické vůči předchozímu integrovanému T007 HEAD `85e8a05`.
+- `kgmaker semantic update --base origin/main`, scoped patch, apply/validate a scan po integraci main `e656b8ef4c174d3d60600037d7c0d78fc514e39d` — **PASS**; finální scan po memory capture: 284 souborů, 2,292 declarations/sections, 16,059 relationships.
 - Skutečné build/compiler/render gate nejsou pro tuto změnu relevantní; změna
   nepřidává compiler/framework/parser ani renderer.
 
