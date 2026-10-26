@@ -204,6 +204,13 @@ python -m pytest -q
 
 The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
 
+The required `compiler-workers` job prepares and exercises JVM/Kotlin K1, K2,
+TypeScript and the mixed Maven fixture. Its negative prerequisite matrix runs
+with `python -m pytest -q tests/test_mandatory_worker_ci.py`: an absent worker,
+JDK or mixed fixture fails a required gate and skips an optional local gate,
+without starting a process. The separate exporter job requires actual Maven and
+Gradle exports. Exploratory tests needing a second JDK remain optional.
+
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without
 JDK/Node. Optional JVM JARs/libraries and the pinned TypeScript installation are
