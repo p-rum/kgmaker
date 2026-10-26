@@ -16,7 +16,7 @@ from .analysis_model import AnalysisError, digest, file_hash
 from .classification import Classifier
 from .model import Edge, KnowledgeGraph, Node
 
-VERSION = "xlsx-offline-1"
+VERSION = "xlsx-offline-2"
 BINARY_DIAGNOSTICS_VERSION = "xls-unsupported-1"
 MAX_ARCHIVE_BYTES = 20 * 1024 * 1024
 MAX_ENTRIES = 2_000
@@ -28,8 +28,9 @@ _REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _PKG_REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 _CELL = re.compile(r"\$?([A-Z]{1,3})\$?([1-9][0-9]{0,6})\Z", re.I)
 _REFERENCE = re.compile(
-    r"(?:(?:'((?:[^']|'')+)'|([A-Za-z_][\w. ]*))!)?"
-    r"(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6})(?::(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6}))?",
+    r"(?<![\w.$])(?:(?:'((?:[^']|'')+)'|([A-Za-z_][\w. ]*))!)?"
+    r"(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6})(?::(\$?[A-Z]{1,3}\$?[1-9][0-9]{0,6}))?"
+    r"(?![\w.$!]|\s*\()",
     re.I,
 )
 
@@ -151,9 +152,28 @@ def _range_cells(start: str, end: str | None) -> list[str]:
             for row in range(first_row, last_row + 1)]
 
 
+def _formula_syntax(expression: str) -> str:
+    """Mask Excel string literals; their contents are neither calls nor references."""
+    return re.sub(r'"(?:[^"]|"")*"', lambda match: " " * len(match.group(0)), expression)
+
+
+def _unsupported_reference_form(syntax: str) -> str | None:
+    """Known reference forms outside the bounded A1/range subset; no evaluation."""
+    sheet = r"(?:'(?:[^']|''){1,63}'|[A-Za-z_][\w.]*)"
+    if re.search(r"(?<![\w.])(?:" + sheet + r"\s*:\s*" + sheet
+                 + r"!|'(?:[^']|''){0,63}:(?:[^']|''){0,63}'!)", syntax):
+        return "3D sheet reference"
+    if re.search(r"(?<![\w.$])\$?[A-Z]{1,3}:\$?[A-Z]{1,3}(?![\w.$])", syntax, re.I):
+        return "whole-column reference"
+    if re.search(r"(?<![\w.$])\$?[1-9][0-9]{0,6}:\$?[1-9][0-9]{0,6}(?![\w.$])", syntax):
+        return "whole-row reference"
+    return None
+
+
 def _references(expression: str) -> list[tuple[str | None, str, str | None, str]]:
-    # Double-quoted Excel string literals are values, not cell references.
-    cleaned = re.sub(r'"(?:[^"]|"")*"', '""', expression)
+    # Exponents, longer identifiers and function names (including LOG10) are
+    # not cell tokens. These boundaries do not constitute a full formula parser.
+    cleaned = _formula_syntax(expression)
     return [((match.group(1) or match.group(2)), match.group(3), match.group(4), match.group(0))
             for match in _REFERENCE.finditer(cleaned)]
 
@@ -246,15 +266,25 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
                 edges.append(Edge(sheet_id, identity, "contains_cell", f"cell {reference}"))
                 if formula_node is not None:
                     unsupported = False
+                    syntax = _formula_syntax(formula or "")
                     if formula_node.get("t") == "shared":
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_SHARED_FORMULA_UNSUPPORTED",
                                             "reason": f"Shared formula at {name}!{reference} is unresolved"})
-                    if formula and re.search(r"\bINDIRECT\s*\(", formula, re.I):
+                    if re.search(r"\bINDIRECT\s*\(", syntax, re.I):
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_INDIRECT_UNSUPPORTED",
                                             "reason": f"INDIRECT at {name}!{reference} is unresolved"})
-                    if formula and "[" in formula:
+                    if re.search(r"\bOFFSET\s*\(", syntax, re.I):
+                        unsupported = True
+                        diagnostics.append({"path": relative, "code": "XLSX_OFFSET_UNSUPPORTED",
+                                            "reason": f"OFFSET at {name}!{reference} is unresolved"})
+                    form = _unsupported_reference_form(syntax)
+                    if form:
+                        unsupported = True
+                        diagnostics.append({"path": relative, "code": "XLSX_REFERENCE_FORM_UNSUPPORTED",
+                                            "reason": f"Unsupported {form} at {name}!{reference}"})
+                    if "[" in syntax:
                         unsupported = True
                         diagnostics.append({"path": relative, "code": "XLSX_EXTERNAL_REFERENCE_UNSUPPORTED",
                                             "reason": f"External workbook reference at {name}!{reference} is unresolved"})
@@ -289,9 +319,15 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
                                   classification_evidence=classification.classification_evidence,
                                   metadata={"name": name, "expression": expression, "parser": VERSION}))
                 edges.append(Edge(workbook_id, identity, "defines_named_range", expression))
-                if re.search(r"\b(?:INDIRECT|OFFSET)\s*\(", expression, re.I) or "[" in expression:
+                syntax = _formula_syntax(expression)
+                if re.search(r"\b(?:INDIRECT|OFFSET)\s*\(", syntax, re.I) or "[" in syntax:
                     diagnostics.append({"path": relative, "code": "XLSX_DYNAMIC_NAMED_RANGE_UNSUPPORTED",
                                         "reason": f"Named range {name} uses a dynamic or external expression"})
+                    continue
+                form = _unsupported_reference_form(syntax)
+                if form:
+                    diagnostics.append({"path": relative, "code": "XLSX_REFERENCE_FORM_UNSUPPORTED",
+                                        "reason": f"Named range {name} uses an unsupported {form}"})
                     continue
                 for raw_sheet, start, end, token in _references(expression):
                     sheet = (raw_sheet or "").replace("''", "'")

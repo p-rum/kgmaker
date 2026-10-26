@@ -204,8 +204,26 @@ Oversized spreadsheet files keep unsupported hash-only manifest entries while
 remaining excluded from parsing. Their checksums use bounded streaming buffers;
 retained diagnostic hashes are rechecked during packet freshness, including in
 workspaces. The direct XLSX extractor checks its archive size limit before any
-content hashing. Graph/store schemas and the `xlsx-offline-1` cell-evidence
-contract are unchanged.
+content hashing. Graph/store schemas and the sheet/cell/value citation shape
+remain unchanged across workbook adapters v1 and v2.
+
+`xlsx-offline-2` corrects the bounded formula-reference classifier: `1E10` is a
+numeric literal and `LOG10(A1)` references A1 without inventing a LOG10 cell edge.
+Double-quoted strings, including escaped quotes, contribute neither cell tokens
+nor dynamic/external diagnostics. Literal A1 references, `$` anchors, explicit
+sheet qualifiers and bounded A1 ranges are supported; this is not a full Excel
+grammar. Shared formulas (including followers), INDIRECT, OFFSET and external
+references remain unresolved. 3D sheet, whole-row and whole-column references
+produce `XLSX_REFERENCE_FORM_UNSUPPORTED` with the affected sheet/cell in the
+graph diagnostic. Unsupported formulas contribute no guessed dependency edges.
+Named-range expressions use the same token/boundary rules.
+
+For example, `kgmaker feature prepare --root . --requirement requirement.md
+--id scenario` records `coverage.parser_capabilities.workbooks: xlsx-offline-2`.
+Formula text and cached values remain separate citation fields with UNKNOWN
+freshness; a cached value is not proof of a formula result or runtime availability.
+The adapter version participates in workspace cache identity, so earlier v1
+dependency results are reparsed; regenerate existing packets explicitly.
 
 Evidence kind must match the packet source manifest. Source and cited location must
 exist and the quote/value must match; hash or location errors reject apply.
