@@ -34,6 +34,8 @@ def register(sub):
     p.add_argument("--profile", action="append", default=[])
     p.add_argument("--timeout", type=float, default=300)
     p.add_argument("--worker-home", type=Path)
+    p.add_argument("--java-home", type=Path,
+                   help="explicit JDK home bound into the plan and enforced during build execution")
     p.add_argument("--output", type=Path)
     p.add_argument("--offline", action="store_true")
     p = actions.add_parser("build-run", help="execute one explicit content-bound LOCAL_TRUSTED plan")
@@ -90,7 +92,8 @@ def run(args):
             from .analysis_model import write_json
             if args.project_command == "build-plan":
                 result = create_plan(root, phase=args.phase, build_system=args.build_system, executable=args.executable,
-                                     profiles=args.profile, timeout=args.timeout, home=args.worker_home, offline=args.offline)
+                                     profiles=args.profile, timeout=args.timeout, home=args.worker_home,
+                                     offline=args.offline, java_home=args.java_home)
                 if args.output:
                     write_json(args.output, result)
                 code = 0

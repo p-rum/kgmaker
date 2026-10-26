@@ -244,13 +244,17 @@ def freshness(root: Path, packet: dict) -> list[str]:
         if selection is None:
             # Schema-v1 packets predate explicit graph selection and covered the
             # complete graph. Keep validating those without inventing a variant.
-            baseline, _, sources, _ = snapshot(root, workspace=workspace, _select_context=False)
+            baseline, current_coverage, sources, _ = snapshot(root, workspace=workspace, _select_context=False)
         else:
-            baseline, _, sources, _ = snapshot(root, workspace=workspace, scope=selection["scope"],
+            baseline, current_coverage, sources, _ = snapshot(root, workspace=workspace, scope=selection["scope"],
                                                context_id=selection.get("context_id"))
     except ValueError as exc:
         return ["selected graph context is unavailable: " + str(exc)]
     changes = []
+    # External export contents are outside the source manifest. Revalidate the
+    # documentation evidence retained in an already prepared packet as well.
+    if current_coverage.get("documentation_conflicts", []) != packet.get("coverage", {}).get("documentation_conflicts", []):
+        changes.append("coverage.documentation_conflicts changed or became stale")
     for key in ("graph_fingerprint", "working_tree_fingerprint", "parser_version", "semantic_hash",
                 "analysis_context_fingerprint"):
         if baseline[key] != packet["baseline"][key]:

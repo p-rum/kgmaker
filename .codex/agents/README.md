@@ -1,14 +1,25 @@
 # Implementační agenti pro T003
 
-Tento adresář obsahuje projektové Codex subagenty pro 60 atomických work packages
-registrovaných v [`docs/tasks/README.md`](../../docs/tasks/README.md). Každý TOML
-soubor definuje právě jednoho implementačního agenta s pevně nastaveným modelem
-`gpt-5.6-luna` a `model_reasoning_effort = "medium"`.
+Tento adresář obsahuje 60 projektových implementačních profilů pro atomické work
+packages registrované v [`docs/tasks/README.md`](../../docs/tasks/README.md)
+a jeden profil pro review PR. Každý implementační TOML soubor definuje agenta
+s modelem `gpt-5.6-luna` a `model_reasoning_effort = "medium"`.
 
-Agent smí implementovat pouze své zadání. Jeho instrukce vyžadují kontrolu
+Implementační agent smí implementovat pouze své zadání. Jeho instrukce vyžadují kontrolu
 závislostí, architektonickou rekognoskaci, izolovaný worktree, samostatnou větev,
 povinné testy, dokumentaci, sémantickou aktualizaci, commit, push a samostatný
-pull request. Agent PR nikdy nemerguje bez explicitního pokynu.
+pull request. Implementační agent PR nemerguje.
+
+Samostatný [`code_review`](code-review.toml) používá `gpt-6.1-sol` s reasoning
+effort `high` a je projektovým reviewerem podle
+[T045](../../docs/tasks/45_addCodeReviewAgent.md). Po vytvoření PR mu koordinátor
+předá URL nebo číslo PR. Agent čte aktuální diff a kontroly, vrací konkrétní
+`REQUEST_CHANGES`/`BLOCKED`, nebo vydá `APPROVE` pro přesnou base/head SHA
+dvojici. Schválené ready PR merguje až po opětovném ověření obou SHA, kontrol,
+závislostí a mergeability. Draft si sám nepřepíná na ready.
+Vlastní GitHub PR nelze vždy schválit stejným účtem; tehdy agent zaznamená verdikt
+do PR komentáře a stále respektuje pravidla cílové větve. Stará lokální aprobace
+neplatí po změně base ani HEAD.
 
 Profily jsou projektové a Codex je načítá z `.codex/agents`. Po přidání nebo
 změně profilu založ novou session, aby se obnovil registr agentů. Spuštění agenta
@@ -20,10 +31,13 @@ Požádej koordinačního agenta například:
 
 ```text
 Implementuj T003-S03-W01 pomocí agenta t003_s03_w01_external_toolchain_selection.
+Po vytvoření PR předej jeho URL agentovi code_review; po APPROVE ověř a proveď merge.
 ```
 
 Koordinátor smí spustit pouze agenty, jejichž závislosti jsou splněné. Agenti se
 stejnými soubory nebo navazujícími kontrakty se nespouštějí souběžně.
+Interní Copilot [`kgmaker-review`](../../.github/agents/kgmaker-review.agent.md)
+hodnotí artifact úlohy v `kgmaker task`; nenahrazuje review GitHub PR.
 
 ## Registr
 
@@ -89,3 +103,14 @@ stejnými soubory nebo navazujícími kontrakty se nespouštějí souběžně.
 | T003-S13-W02 | `t003_s13_w02_runtime_rta_import` | [RTA a runtime dispatch import](../../docs/tasks/T003-S13-02-runtimeRtaImport.md) | `feat/t003-s13-02-runtime-rta-import` |
 | T003-S13-W03 | `t003_s13_w03_runtime_value_flow` | [Runtime value-flow evidence](../../docs/tasks/T003-S13-03-runtimeValueFlow.md) | `feat/t003-s13-03-runtime-value-flow` |
 | T003-S13-W04 | `t003_s13_w04_runtime_async_reflection` | [Async a reflective runtime capture](../../docs/tasks/T003-S13-04-runtimeAsyncReflection.md) | `feat/t003-s13-04-runtime-async-reflection` |
+
+## T004: konfigurace profilů pro T005–T044
+
+T004 přidává 40 profilů, jeden pro každý task T005–T044. Tyto profily používají
+`gpt-6-luna` a `model_reasoning_effort = "medium"`. Přehled tasků, závislostních
+gates a dispatch pravidel je v [dispatch reportu](dispatch-report.md); podrobnosti
+o změně jsou v [change note](../../docs/changes/14_configureLunaAgents.md).
+
+Tato konfigurace pouze zpřístupňuje profily v nové Codex session. Sama agenty
+nespouští a přítomnost profilu neznamená běžící implementační job ani dokončený
+task. Stav `SPECIFICATION` se nemění.

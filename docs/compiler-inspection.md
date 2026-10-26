@@ -17,16 +17,27 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 |---|---|---|
 | Python | 3.12.14, pytest 8.3.4 | Regrese a bounded worker transport |
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
-| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java |
+| Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
 | Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
-| Gradle | 8.12.1 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokálně blokované socket/IPC |
+| Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
 | React typings | React 18.3.1, @types/react 18.3.18 | Intrinsic JSX onClick v malé fixture |
 
 Kotlin Analysis API/K2 zatím není implementována; podpora compiler distribuce 2.1.10
 není tvrzením úplné podpory Kotlin language 2.1. Java release request je explicitní,
 Maven import přenáší získaný release. V integrační fixture byl ověřen pouze release 21.
+Kotlin options v manifestu nesou vlastní schema/status a vstupují do content-bound
+identity compiler kontextu. Změna flagu proto zneplatní dotčený kontext, ale
+nezmění ostatní module/source-set kontexty. Zachycený language/API target ani plugin
+není tvrzením, že jej současný K1 frontend umí analyzovat.
+Maven export zapisuje resolved plugin classpath jako soubory s SHA-256; import
+nebo offline kontrola odmítne změněný JAR před publikací. Maven default
+`${kotlin.compiler.*}` bez určené hodnoty se nezapisuje jako compiler option:
+context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření použij
+`kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
+pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
+`kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
 TypeScript projektové reference předává worker kompilátoru; úplná acceptance fixture
 s více projekty a re-exporty ještě chybí.
 
@@ -60,7 +71,8 @@ immutable versioned directories. Změna distribuce během analysis je odmítnuta
 
 ```bash
 kgmaker project build-plan --root fixtures/build-inspection/maven \
-  --phase test --offline --output /tmp/kgmaker-plan.json
+  --phase test --offline --java-home /path/to/jdk21 \
+  --output /tmp/kgmaker-plan.json
 kgmaker project build-run --plan /tmp/kgmaker-plan.json
 kgmaker project build-import --root fixtures/build-inspection/maven \
   --manifest /absolute/path/from/build-run/manifest.json
@@ -82,6 +94,12 @@ včetně dirty/untracked souborů, hash povoleného prostředí, timeout a polic
 hostitelské policy; kopie do `.kgmaker/build-runs/ID/snapshot` není sandbox.
 Žádný shell řetězec se nesestavuje. Dřívější target/build nejsou kopírovány.
 Plán je jednorázový, změna obsahu nebo povoleného prostředí jej zneplatní.
+Volitelné `--java-home` vybírá externí JDK explicitně. BuildPlan obsahově váže
+kanonický home, `java` a `javac`; build dostane přesné `JAVA_HOME` a jeho `bin`
+má přednost v `PATH`. Exporter musí ohlásit tentýž Java home. Chybějící nebo
+změněný JDK je `TOOLCHAIN_UNAVAILABLE`/`STALE_PLAN` před buildem, odlišný runtime
+JDK je `EXPLICIT_TOOLCHAIN_MISMATCH` bez čerstvých outputs. Bez přepínače zůstává
+kompatibilní host-default chování starších plánů.
 Gradle vyžaduje hostitelský režim s možností JVM socket/IPC; bez něj build
 vrací FAILED a zachová log, bez čerstvých outputs.
 
@@ -94,12 +112,17 @@ ověřuje, že profil a BOM změní manifest a že aktuální reactor output má
 před starým JAR v repository.
 
 Gradle exporter čte skutečné `SourceSetContainer`; Kotlin DSL se neparsuje regexem
-a export označuje roots pod `build/generated`. Obsah vytvořený annotation processorem
+a export označuje roots pod `build/generated`. Pokud source set obsahuje Kotlin compile
+task, exporter čte jeho finalizované `compilerOptions`: compiler/language/API/JVM
+verzi, relevantní booleany, opt-ins a free args. Pluginy jsou content-bound SHA-256
+identity a `-P` volby z compiler argumentů; nedostupné hodnoty zůstávají `PARTIAL`
+s diagnostikou. Maven EventSpy stejným způsobem zachytí effective konfiguraci
+úspěšného `compile`/`test-compile` mojo. Obsah vytvořený annotation processorem
 se přijímá jen z explicitního úspěšného buildu: zůstává pod konkrétním build runem,
 manifest ukládá SHA-256, execution ID a snapshot hash a jakákoli následná změna
 import zneplatní. Reálná fixture provede následnou JVM inspection a ověřuje
-`origin=generated`; scan ani běžná inspection processor nespouštějí. Externí Maven
-toolchain selection, Gradle custom varianty/included builds, Kotlin options a
+`origin=generated`; scan ani běžná inspection processor nespouštějí. Gradle
+custom varianty/included builds a
 cross-repo artefakty vyžadují další fixture. Tyto mezery drží T003-S03 v PARTIAL.
 
 Test result rozlišuje NOT_RUN, ZERO_TESTS, SKIPPED, PASSED, FAILED a počty z
@@ -231,3 +254,91 @@ veřejný sled, dvě profilové varianty, packet revision a classpath invalidaci
 Contextová projekce zachovává společné source/dataflow hrany a filtruje pouze
 konkurenční compiler vrstvy. T003-S02/AC02 je VERIFIED_IN_SCOPE pro výše uvedenou
 matici; rozšíření build/framework/jazykových variant patří do S03–S10.
+
+Explicitní `--java-home` vybírá launcher JDK (reálná Maven matice JDK21+22). Samostatný fork/toolchain compiler pluginu tento kontrakt nedokazuje; odlišný exportovaný Java home runner odmítne. Fixture dvou skutečných JDK přijímá `KGMAKER_TEST_OTHER_JAVA_HOME`; bez druhého JDK hlásí SKIP.
+## T003-S03-W02: explicit custom source sets
+
+Gradle exporter `gradle-source-sets-2` reads `SourceSetContainer` rather than
+inferring variants from build-script text. Exact built-ins `main`, `test`,
+`testFixtures` map to production/test/test_fixture. Projects may explicitly supply
+`ext.kgmakerSourceSetScopes = [integration: 'test', tooling: 'development']`
+in Groovy (`extra["kgmakerSourceSetScopes"] = mapOf("integration" to "test")`
+in Kotlin DSL). Allowed values are production/test/test_fixture/development/unknown.
+Custom names without a declaration remain unknown with UNMAPPED_GRADLE_SOURCE_SET;
+invalid declarations yield unknown with INVALID_GRADLE_SOURCE_SET_SCOPE. No
+substring heuristic grants test or production scope. Per-context `scope_origin`
+records GRADLE_CONVENTION / EXPLICIT_MAPPING / UNKNOWN; source-set IDs retain
+project identity. Existing manifests without this additive field remain accepted;
+graph/store v1/v2/v3 and worker transport do not change. Generated sources retain
+existing execution/hash binding. This does not add Android/KMP variant APIs.
+
+Explicit workflow (after reviewing the content-bound build plan):
+
+```bash
+kgmaker project build-plan --root . --build-system gradle --executable /path/to/gradle --offline --output /tmp/gradle-plan.json
+kgmaker project build-run --plan /tmp/gradle-plan.json
+kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json
+kgmaker inspect code --root . --build-id BUILD_ID --context :integration --scope test
+```
+
+Real Gradle 8.13 fixture in `tests/test_gradle_variants.py` covers main/test,
+generated Java, custom mapped integration and unknown contest under src/main;
+negative tests cover conflicting memberships and invalid provenance without mutation.
+
+### Review fixes: source-set freshness and convention provenance
+
+New JVM contexts with a supplied source-set model use
+`source_snapshot_version=selected-source-set-1`. Capture, pre-publication checks
+and offline replay share the same helper: selected module/set membership (including
+`:generated`), configuration directly in root/module ancestor directories, Gradle
+configuration under those directories, and explicit build/settings scripts. Selected
+resources remain inputs; sibling source sets/resources are excluded even with an
+identical scope. Configuration additions/removals and selected source additions are
+compared by content inventory. Legacy contexts without the marker retain their
+original scope-wide freshness gate until reinspection; no silent narrowing occurs.
+
+A supplied GRADLE_CONVENTION now requires exactly main→production, test→test or
+testFixtures→test_fixture. Custom sets must use EXPLICIT_MAPPING or UNKNOWN.
+Manifests lacking scope_origin remain accepted as legacy, without inventing a
+conventional origin. Negative imports validate before changing the store.
+`tests/test_gradle_variants.py` covers offline scan/hook/current_graph without
+subprocesses, shared/selected config invalidation, forged convention rejection,
+byte-for-byte preservation and valid/legacy provenance.
+
+## T003-S03-W03: Gradle composite identity
+
+`gradle-composite-1` coordinates explicit `kgmakerExport` tasks in included builds
+inside the captured snapshot. Each build writes a separate fragment; the root
+merges completed fragments. Included repository IDs derive deterministically from
+the build-root-relative path, not project names. Context IDs include that identity;
+modules with the same name in separate builds remain distinct. `build_root` is an
+optional manifest field; imports reject ambiguous repo/build-root ownership.
+Existing manifests without it and graph/store v1/v2/v3 remain readable.
+
+The existing ordered `classpath` and `realm` carry dependency evidence. Gradle's
+resolved project substitution selects current included outputs over stale external
+artifacts with the same coordinates. The runner preserves Gradle order, records
+content hashes and retains the included repo identity. Jar ownership comes from
+actual Gradle archive tasks; conflicting output ownership yields
+AMBIGUOUS_BUILD_OUTPUT_REALM without choosing either repo.
+Při importu je `classpath.realm` uznáno jen při jediném stejně hashovaném,
+execution-bound outputu odpovídajícího producenta. Samotný Jar task model
+neprokazuje existenci výstupu; chybějící nebo kolidující producer realm je
+odmítnut před publikací manifestu.
+
+```bash
+kgmaker project build-plan --root . --build-system gradle --offline --output /tmp/composite-plan.json
+kgmaker project build-run --plan /tmp/composite-plan.json
+kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json
+kgmaker inspect code --root . --build-id BUILD_ID --context INCLUDED_CONTEXT_ID --scope production
+```
+
+`tests/test_gradle_included.py` uses actual Gradle8.13 with duplicate lib modules,
+a stale local Maven jar and an independent external file dependency. It verifies
+substitution, exact classpath order, separate repo IDs and included inspection
+inputs; negative tests verify ambiguous realm ownership and no-mutation import
+failure. Included roots outside the captured tree emit UNBOUND_INCLUDED_BUILD;
+missing fragments emit INCLUDED_BUILD_EXPORT_UNAVAILABLE. Such scope is PARTIAL,
+never evidence of complete source coverage. Non-Java model aggregators retain
+UNSUPPORTED_GRADLE_VARIANT diagnostics. No implicit process is added to offline
+analysis commands.

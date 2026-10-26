@@ -89,3 +89,72 @@ def test_unextractable_approval_does_not_publish_cache(tmp_path):
     with pytest.raises(AnalysisError, match='extracted assertion'):
         ingest_export(export, tmp_path)
     assert not (tmp_path / '.kgmaker/confluence-index.json').exists()
+
+
+@pytest.mark.parametrize('mutation', ['changed', 'deleted'])
+def test_attachment_freshness_is_checked_offline_without_mutating_index(tmp_path, mutation):
+    from unittest.mock import patch
+    from kgmaker.analysis_model import read_json
+    from kgmaker.confluence import current_documentation_assertions
+
+    export, page, sidecar, item = export_fixture(tmp_path)
+    attachment = export / 'routing.svg'
+    attachment.write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    page.write_text(page.read_text() + '<img src="routing.svg">')
+    item['document_sha256'] = hashlib.sha256(page.read_bytes()).hexdigest()
+    sidecar.write_text(json.dumps(dict(schema_version=1, requirements=[item])))
+    documents, _, _ = ingest_export(export, tmp_path)
+    assertions = validate_documents(documents, scan_repository(tmp_path))
+    persist_validation_index(tmp_path, assertions)
+    index = tmp_path / '.kgmaker/confluence-index.json'
+    original = index.read_bytes()
+    cache = read_json(index)
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')):
+        assert any(a['authority'] == 'APPROVED_REQUIREMENT'
+                   for a in current_documentation_assertions(cache))
+        if mutation == 'changed':
+            attachment.write_text('<svg xmlns="http://www.w3.org/2000/svg"><text>new</text></svg>')
+        else:
+            attachment.unlink()
+        with pytest.raises(AnalysisError, match='attachment index is stale'):
+            current_documentation_assertions(cache)
+    packet = prepare(tmp_path, 'requirement.md', 'stale-attachment')
+    assert not packet['coverage'].get('documentation_conflicts')
+    assert any('attachment index is stale' in message for message in packet['coverage']['limitations'])
+    assert index.read_bytes() == original
+
+
+@pytest.mark.parametrize('mutation', ['page', 'approval', 'attachment'])
+def test_prepared_packet_rejects_stale_external_documentation(tmp_path, mutation):
+    from kgmaker.feature import freshness
+
+    root = tmp_path / 'repo'
+    root.mkdir()
+    export, page, sidecar, item = export_fixture(root)
+    attachment = export / 'routing.svg'
+    attachment.write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    page.write_text(page.read_text() + '<img src="routing.svg">')
+    item['document_sha256'] = hashlib.sha256(page.read_bytes()).hexdigest()
+    sidecar.write_text(json.dumps(dict(schema_version=1, requirements=[item])))
+    external = tmp_path / 'external-export'
+    export.rename(external)
+    documents, _, _ = ingest_export(external, root)
+    persist_validation_index(root, validate_documents(documents, scan_repository(root)))
+    packet = prepare(root, 'requirement.md', 'external-methodology')
+    assert any(c['authority'] == 'APPROVED_REQUIREMENT'
+               for c in packet['coverage']['documentation_conflicts'])
+    assert not freshness(root, packet)
+    index = root / '.kgmaker/confluence-index.json'
+    packet_path = root / '.kgmaker/analyses/external-methodology/packet.json'
+    original_index, original_packet = index.read_bytes(), packet_path.read_bytes()
+    if mutation == 'page':
+        page = external / page.name
+        page.write_text(page.read_text() + '<p>Version two</p>')
+    elif mutation == 'approval':
+        item['approval_status'] = 'UNAPPROVED'
+        (external / sidecar.name).write_text(json.dumps(dict(schema_version=1, requirements=[item])))
+    else:
+        (external / attachment.name).unlink()
+    assert 'coverage.documentation_conflicts changed or became stale' in freshness(root, packet)
+    assert index.read_bytes() == original_index
+    assert packet_path.read_bytes() == original_packet

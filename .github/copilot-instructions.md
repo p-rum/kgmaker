@@ -61,3 +61,16 @@ Scan/hook preserve content-validated compiler contexts and mark affected context
 stale without executing workers. Status/check report compiler freshness separately.
 T003-S02 remains incomplete until its full end-to-end acceptance is verified; do not
 claim support beyond the selected context, evidence IDs, and documented matrix.
+
+## Výslovná konvence T004 a jeho atomických úkolů (2026-10-20)
+
+Na požadavek uživatele mají atomické implementační úkoly T005–T044 soubor
+`docs/tasks/T-<NNN>_<kebab-case-slug>.md`, např. `T-005_add-view-model.md`.
+Je to stejná globální číselná řada (T-005 = T005), nikoli nový namespace.
+Nadřazený plán zůstává `docs/tasks/4_addHighLevelProjectViews.md`.
+Každý podúkol obsahuje podrobný rozsah, vlastní acceptance/testy, dependencies,
+přesnou větev `feat/t<NNN>-<slug>` a povinnost samostatného push/PR.
+Tato konvence má pro tento balík přednost před staršími naming odstavci
+i jejich kopiemi v agent templates. Historické T001–T003 soubory se nemění.
+Další ID alokuj nad maximem všech formátů v registru/main/open PRs; mezery nerecykluj.
+Change notes nadále používají nezávislou řadu `<N>_<lowerCamelCase>.md`.

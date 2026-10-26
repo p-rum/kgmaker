@@ -2,15 +2,20 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import os
+import re
+import stat
 import subprocess
 from dataclasses import replace
 from pathlib import Path
 from urllib.parse import quote, unquote
 
 from .analysis_model import AnalysisError, ID_PATTERN, digest, file_hash, read_json, safe_path
-from .model import KnowledgeGraph
+from .model import Edge, KnowledgeGraph, Node
 
 _REPO_CACHE = {}
+_CONTENT_HASH = re.compile(r'[0-9a-f]{64}\Z')
 
 
 def qualified(repo: str, identity: str) -> str:
@@ -103,6 +108,42 @@ def _qualified_annotation(repo: str, value: dict) -> dict:
     return result
 
 
+def _validate_release_mapping(data: dict, repo_ids: set[str]) -> None:
+    release = data.get('release_mapping')
+    if release is None:
+        return
+    if (not isinstance(release, dict) or set(release) != {'schema_version', 'mappings'}
+            or type(release.get('schema_version')) is not int or release['schema_version'] != 1
+            or not isinstance(release.get('mappings'), list) or not release['mappings']):
+        raise AnalysisError('Invalid release mapping contract; expected schema_version 1 and mappings')
+    mapping_ids = set()
+    roots = {repo['id']: Path(repo['_root']) for repo in data['repositories']}
+    for mapping in release['mappings']:
+        if (not isinstance(mapping, dict)
+                or set(mapping) != {'id', 'producer', 'consumer', 'output_sha256'}):
+            raise AnalysisError('Invalid release mapping entry')
+        identity = mapping.get('id')
+        if (not isinstance(identity, str) or not ID_PATTERN.fullmatch(identity)
+                or identity in mapping_ids):
+            raise AnalysisError('Duplicate/invalid release mapping ID')
+        mapping_ids.add(identity)
+        producer, consumer = mapping.get('producer'), mapping.get('consumer')
+        if (not isinstance(producer, dict)
+                or set(producer) != {'repo_id', 'manifest_path', 'context_id'}
+                or not isinstance(consumer, dict)
+                or set(consumer) != {'repo_id', 'context_id'}):
+            raise AnalysisError('Invalid release mapping producer/consumer selector')
+        if (producer.get('repo_id') not in repo_ids or consumer.get('repo_id') not in repo_ids
+                or producer['repo_id'] == consumer['repo_id']):
+            raise AnalysisError('Cross-repo release mapping requires distinct declared repositories')
+        if (not isinstance(producer.get('context_id'), str) or not producer['context_id']
+                or not isinstance(consumer.get('context_id'), str) or not consumer['context_id']):
+            raise AnalysisError('Invalid release mapping context selector')
+        safe_path(roots[producer['repo_id']], producer.get('manifest_path'))
+        if not isinstance(mapping.get('output_sha256'), str) or not _CONTENT_HASH.fullmatch(mapping['output_sha256']):
+            raise AnalysisError('Invalid release mapping output_sha256')
+
+
 def load_workspace(path: Path) -> dict:
     path = path.resolve()
     data = read_json(path)
@@ -157,9 +198,162 @@ def load_workspace(path: Path) -> dict:
             prefix = service.get(key, '')
             if not isinstance(prefix, str) or prefix and not prefix.startswith('/'):
                 raise AnalysisError('HTTP prefix must be empty or start with /')
+    _validate_release_mapping(data, ids)
     data['_manifest_path'] = str(path)
     data['_manifest_hash'] = file_hash(path)
     return data
+
+
+def _release_artifact_links(workspace: dict, graphs: dict[str, KnowledgeGraph]):
+    """Resolve declared cross-repo build outputs without executing any project."""
+    release = workspace.get('release_mapping')
+    if release is None:
+        return [], [], [], [], None
+    from .build_model import resolve_content_bound_output
+    from .graph_provider import resolve_context_classpath_artifact
+    from .worker_protocol import WorkerError
+
+    roots = {repo['id']: Path(repo['_root']) for repo in workspace['repositories']}
+    nodes, edges, evidence, diagnostics, results = [], [], [], [], []
+    for mapping in release['mappings']:
+        producer, consumer = mapping['producer'], mapping['consumer']
+        result = {'id': mapping['id'], 'producer_repo': producer['repo_id'],
+                  'consumer_repo': consumer['repo_id'], 'sha256': mapping['output_sha256']}
+        try:
+            manifest_path = safe_path(roots[producer['repo_id']], producer['manifest_path'])
+            if not manifest_path.is_file():
+                raise AnalysisError('RELEASE_MANIFEST_UNAVAILABLE: ' + producer['manifest_path'], 3)
+            manifest_hash = file_hash(manifest_path)
+            manifest_data = read_json(manifest_path)
+            if file_hash(manifest_path) != manifest_hash:
+                raise AnalysisError('RELEASE_MANIFEST_CHANGED_DURING_SNAPSHOT: '
+                                    + producer['manifest_path'], 3)
+            output = resolve_content_bound_output(
+                roots[producer['repo_id']], manifest_data,
+                context_id=producer['context_id'], sha256=mapping['output_sha256'],
+            )
+            contexts = [item for item in graphs[consumer['repo_id']].contexts
+                        if item.get('id') == consumer['context_id']]
+            if not contexts:
+                raise AnalysisError('RELEASE_CONSUMER_CONTEXT_UNAVAILABLE: '
+                                    + consumer['context_id'], 3)
+            if len(contexts) != 1:
+                raise AnalysisError('RELEASE_CONSUMER_CONTEXT_AMBIGUOUS: '
+                                    + consumer['context_id'], 3)
+            classpath = resolve_context_classpath_artifact(
+                roots[consumer['repo_id']], contexts[0], mapping['output_sha256'])
+        except (AnalysisError, WorkerError, OSError, ValueError) as error:
+            message = str(error)
+            code = ('RELEASE_CONSUMER_CONTEXT_STALE' if isinstance(error, WorkerError)
+                    else message.split(':', 1)[0])
+            if not code.startswith('RELEASE_'):
+                code = 'RELEASE_MAPPING_INVALID'
+            diagnostic = {'code': code, 'mapping_id': mapping['id'], 'reason': message,
+                          'status': 'PARTIAL'}
+            diagnostics.append(diagnostic)
+            results.append({**result, 'status': 'PARTIAL', 'diagnostic': code})
+            continue
+
+        output_id = 'workspace:release-output:' + mapping['id']
+        classpath_id = 'workspace:classpath-artifact:' + mapping['id']
+        evidence_id = 'workspace:evidence:release-output:' + mapping['id']
+        producer_source = source_key(producer['repo_id'], producer['manifest_path'])
+        classpath_path = Path(classpath['path'])
+        try:
+            consumer_path = source_key(
+                consumer['repo_id'],
+                classpath_path.resolve().relative_to(roots[consumer['repo_id']]).as_posix(),
+            )
+        except ValueError:
+            consumer_path = '@workspace/manifest.json'
+        nodes.extend([
+            Node(output_id, 'workspace_release_output', mapping['id'], producer_source,
+                 scope='production', role='resource', origin='generated',
+                 metadata={'repo_id': producer['repo_id'], 'build_context_id': producer['context_id'],
+                           'sha256': output['sha256']}),
+            Node(classpath_id, 'workspace_classpath_artifact', mapping['id'], consumer_path,
+                 scope='production', role='resource', origin='dependency',
+                 metadata={'repo_id': consumer['repo_id'], 'compiler_context_id': consumer['context_id'],
+                           'sha256': classpath['sha256']}),
+        ])
+        evidence.append({
+            'id': evidence_id, 'kind': 'SYMBOL_RESOLVED',
+            'method': 'CONTENT_HASH_MATCH_V1', 'sha256': mapping['output_sha256'],
+            'source': output_id, 'target': classpath_id,
+            'source_file': producer_source,
+            'context_ids': [qualified(consumer['repo_id'], consumer['context_id'])],
+        })
+        edges.append(Edge(
+            output_id, classpath_id, 'supplies_classpath',
+            evidence='BuildManifest output and compiler classpath contain identical bytes.',
+            confidence='CONTENT_VERIFIED', confidence_score=1.0,
+            source_file='@workspace/manifest.json', evidence_kind='SYMBOL_RESOLVED',
+            context_ids=(qualified(consumer['repo_id'], consumer['context_id']),),
+            evidence_ids=(evidence_id,),
+        ))
+        results.append({**result, 'status': 'CONTENT_VERIFIED',
+                        'manifest_sha256': manifest_hash,
+                        'producer_output_path': output['path'],
+                        'consumer_classpath_path': classpath['path']})
+    report = {'schema_version': 1,
+              'status': 'COMPLETE' if not diagnostics else 'PARTIAL',
+              'mappings': results, 'diagnostics': diagnostics}
+    return nodes, edges, evidence, diagnostics, report
+
+
+def _regular_file_hash(path: Path) -> str | None:
+    """Hash one unchanged regular file without following a swapped symlink."""
+    before = path.lstat()
+    if not stat.S_ISREG(before.st_mode):
+        return None
+    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+    descriptor = os.open(path, flags)
+    with os.fdopen(descriptor, 'rb') as stream:
+        opened = os.fstat(stream.fileno())
+        if not stat.S_ISREG(opened.st_mode):
+            return None
+        checksum = hashlib.sha256()
+        for chunk in iter(lambda: stream.read(65536), b''):
+            checksum.update(chunk)
+        read = os.fstat(stream.fileno())
+    after = path.lstat()
+    snapshots = (before, opened, read, after)
+    if any(not stat.S_ISREG(item.st_mode) for item in snapshots):
+        return None
+    identity = {(item.st_dev, item.st_ino) for item in snapshots}
+    content_state = {(item.st_size, item.st_mtime_ns) for item in snapshots}
+    if len(identity) != 1 or len(content_state) != 1:
+        return None
+    return checksum.hexdigest()
+
+
+def _validate_release_artifact_snapshot(workspace: dict, report: dict | None) -> None:
+    """Recheck every mapped byte source before publishing/cache mutation."""
+    if report is None:
+        return
+    roots = {repo['id']: Path(repo['_root']) for repo in workspace['repositories']}
+    declarations = {item['id']: item for item in workspace['release_mapping']['mappings']}
+    for result in report['mappings']:
+        if result['status'] != 'CONTENT_VERIFIED':
+            continue
+        declaration = declarations[result['id']]
+        producer = declaration['producer']
+        manifest = safe_path(roots[producer['repo_id']], producer['manifest_path'])
+        output = Path(result['producer_output_path'])
+        if not output.is_absolute():
+            output = safe_path(roots[producer['repo_id']], result['producer_output_path'])
+        classpath = Path(result['consumer_classpath_path'])
+        if not classpath.is_absolute():
+            classpath = safe_path(
+                roots[declaration['consumer']['repo_id']], result['consumer_classpath_path'])
+        try:
+            current = (_regular_file_hash(manifest) == result['manifest_sha256']
+                       and _regular_file_hash(output) == result['sha256']
+                       and _regular_file_hash(classpath) == result['sha256'])
+        except (AnalysisError, OSError, ValueError):
+            current = False
+        if not current:
+            raise AnalysisError('RELEASE_ARTIFACT_CHANGED_DURING_SNAPSHOT: ' + result['id'], 3)
 
 
 def source_path(packet: dict, key: str) -> Path:
@@ -254,6 +448,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]
     link_nodes, link_edges, link_diagnostics = federated_links(workspace, graphs, sources)
     nodes += link_nodes; edges += link_edges; diagnostics += link_diagnostics
+    release_nodes, release_edges, release_evidence, release_diagnostics, release_report = (
+        _release_artifact_links(workspace, graphs)
+    )
+    nodes += release_nodes; edges += release_edges
+    release_messages = [item['code'] + ': ' + item['mapping_id'] + ': ' + item['reason']
+                        for item in release_diagnostics]
+    diagnostics += release_messages
     from .test_analysis import test_data_diagnostics
     diagnostics += test_data_diagnostics(workspace, sources, schemas)
     for repo in workspace['repositories']:
@@ -266,6 +467,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             raise AnalysisError('Checkout appeared during workspace snapshot: ' + identity, 3)
     if file_hash(manifest) != workspace['_manifest_hash']:
         raise AnalysisError('Manifest changed during workspace snapshot', 3)
+    _validate_release_artifact_snapshot(workspace, release_report)
     _REPO_CACHE.update(pending_cache)
     if persist_cache and cache_root is not None:
         from .analysis_model import write_json
@@ -278,12 +480,15 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                            {k: v['sha256'] for k, v in sources.items()},
                            [{**_qualified_context(repo, context), 'repo_id': repo}
                             for repo, local in graphs.items() for context in local.contexts if 'id' in context],
-                           [{'repo_id': repo, **d} for repo, local in graphs.items() for d in local.diagnostics],
-                           [{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
-                             'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
-                             'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
-                             'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
-                            for repo, local in graphs.items() for e in local.evidence],
+                           ([{'repo_id': repo, **d}
+                             for repo, local in graphs.items() for d in local.diagnostics]
+                            + release_diagnostics),
+                           ([{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
+                              'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
+                              'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
+                              'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
+                             for repo, local in graphs.items() for e in local.evidence]
+                            + release_evidence),
                            symbols=sorted(symbols, key=lambda item: item['id']),
                            call_sites=sorted(call_sites, key=lambda item: item['id']),
                            cfgs=sorted(cfgs, key=lambda item: (item['method'], item.get('representation', ''))),
@@ -296,10 +501,19 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     coverage = {'roots': [r['id'] for r in workspace['repositories']], 'artifacts': sorted(sources),
                 'exclusions': exclusions, 'excluded_directories': [], 'dataflow_diagnostics': [],
                 'unsupported_sources': sorted(k for k, v in sources.items() if not v['supported']),
-                'parser_capabilities': {'workspace': 1, 'schema_replay': 1, 'local_checkout_only': True},
-                'limitations': ['No deployment compatibility is established without an explicit release mapping.',
+                'parser_capabilities': {'workspace': 1, 'schema_replay': 1,
+                                        'release_artifact_mapping': 1,
+                                        'local_checkout_only': True},
+                'limitations': [(
+                    'Runtime deployment remains unknown; release mapping proves only the declared '
+                    'BuildManifest output to compiler-classpath byte identity.'
+                    if release_report is not None else
+                    'No deployment compatibility is established without an explicit release mapping.'
+                ),
                                 'Static test assertions do not establish runtime PASS/FAIL.'] + diagnostics,
                 'pending': pending + diagnostics, 'repositories': copy.deepcopy(baseline_repos), 'schemas': schemas}
+    if release_report is not None:
+        coverage['release_mapping'] = release_report
     metadata = {'manifest_path': str(manifest.resolve()), 'manifest_hash': workspace['_manifest_hash'],
                 'workspace_id': workspace['workspace_id'], 'roots': {r['id']: r['_root'] for r in workspace['repositories']},
                 'release_mapping': workspace.get('release_mapping')}

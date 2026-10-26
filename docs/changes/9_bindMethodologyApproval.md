@@ -38,3 +38,38 @@ Live Confluence, autentizace schvalovatele a libovolná business ekvivalence nej
 součástí tohoto offline kontraktu. Samostatný rebuild toolchainů nebyl proveden; skutečné workers byly ověřeny v povinném full-suite běhu. Celý T003-S09 není dokončen.
 
 Scoped semantic update/apply/validate a memory capture nad `b947fc3`, následný scan/status: PASS. Dotčený existující koncept a pět doložených vztahů zachovány; nevznikly vymyšlené vztahy.
+
+## Integrace proti main (2026-10-26)
+
+PR byl znovu integrován proti `0c0902896c4803be7e7c1246aa0ba5da45f8ebe2`.
+Konflikty dokumentace zachovávají novější upstream popis Gradle/Kotlin/workspace
+i tento work package. Sémantická vrstva zachovává všechny unikátní historické
+epizody z obou větví; pět dotčených existujících vztahů bylo ověřeno ve zdroji
+a znovu aplikováno scoped patchem. Nevznikají nové tvrzené business vazby.
+
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_methodology_conflicts.py tests/test_feature.py tests/test_scanner.py`: **56 PASS**.
+- `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`: **229 PASS, 21 SKIP** (10.87 s), Python 3.12.14 bez připravených checkout worker/build artefaktů.
+- Dvě nové parametrizované varianty mění/mažou skutečnou SVG přílohu:
+  původní aktuální approval je zachován, po mutaci se konflikt nepřenese;
+  index zůstane byte-identický a samostatná freshness kontrola nespustí proces.
+- `semantic apply` a `semantic validate`: PASS; všechny původní graph/store
+  kontrakty zůstávají beze změn.
+
+Tato integrační evidence nenahrazuje historický worker běh uvedený výše.
+Live Confluence a autentizace zůstávají NOT_RUN; T003-S09 je PARTIAL.
+
+Review integrace navíc odhalilo a opravilo P1: změna exportu mimo checkout po
+`feature prepare` nebyla v source manifestu, takže starý packet mohl projít
+freshness kontrolou s dříve schváleným konfliktem. `feature.freshness` nyní porovná
+uložené konflikty s právě ověřeným documentation coverage. Tři skutečné externí
+varianty (HTML, sidecar, smazaná příloha) invalidují připravený packet bez změny
+packet/index souboru. Round-trip nezměněného externího exportu zůstává fresh.
+Veřejná schema i formát starého packetu zůstávají čitelné; chybějící seznam
+konfliktů se porovnává jako prázdný seznam.
+
+Finální lokální full suite po opravě external-packet freshness:
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q` —
+**232 PASS, 21 SKIP** (5.00 s). Strict pokus s připravenými JVM/TS worker
+artefakty bez skutečné Maven fixture: 229 PASS, 7 SKIP, 14 setup ERROR
+(`Actual Maven fixture build is required`), tedy nikoli PASS; změna nezakrývá
+chybějící toolchain/fixture. Nový vzdálený compiler CI musí tuto hranici ověřit.
