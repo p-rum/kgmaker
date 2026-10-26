@@ -67,6 +67,9 @@ Checksums jsou identity obsahu, nikoli nový důkaz publisher authenticity/sít�
 - Obě vlastní JVM distribuce byly explicitně znovu sestaveny offline přes
   `workers/jvm/build.py` se skutečnými Kotlin2.1.10/AnalysisAPI2.1.10, JDK21.0.6+7,
   Jackson2.18.2 a pinned locky. Python3.12.14, Linux.
+  Lokální K1 worker JAR SHA-256:
+  `1c9dd4585c05de861d127dd9a87b667ea7dcacc737683c8447e1ff4b9392fa6a`;
+  K2: `1ae2244ac20935ad36cdeb7416bba25d5a58cd30b7dda4ed8e8ac06bb753645b`.
 - `JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=... mvn -B -ntp -o -Dmaven.repo.local=/workspace/tools/m2 -f fixtures/spring-imports/pom.xml compile`:
   **BUILD SUCCESS, 6.397 s**, skutečný Java interface zkompilovaný proti Spring API.
 - První rozšířený actual suite: **69 PASS / 2 FAIL**; opraven expected rule version
@@ -81,9 +84,44 @@ Checksums jsou identity obsahu, nikoli nový důkaz publisher authenticity/sít�
   zdroj ani testy se kvůli nim nemění. Finální full používá standardní PATH bez
   optional Maven/Gradle a explicitně připravené Spring APIs z výše uvedeného
   offline Maven příkazu. Povinné worker/API guards zůstávají zapnuté.
+- Chybně sestavený minimal PATH bez managed Node vyvolal **14 setup ERROR**;
+  běh byl bezpečně přerušen SIGINT po **353 PASS, 9 SKIP v 157.51 s**. Není to
+  úspěšný full run. Následný preflight ověřil `shutil.which` pro JDK21, managed
+  Node24 a Kotlin2.1.10, skutečný fixture Worker.class/React dependencies a
+  K1/K2/TypeScript worker commands. Opravený běh zachovává inherited PATH a přidává
+  pouze explicitní JDK/Kotlin, nikoli Maven/Gradle.
 
-Finální full/focused kontroly a semantic/memory/scan/check evidence jsou doplněny
-před předáním; žádný local či CI test se nevydává za Spring application runtime.
+- Finální celá sada pod shared lockem: **402 PASS, 9 optional toolchain SKIP
+  v 228.52 s**, exit0. Obsahuje všech 18 nových actual compiler případů pro obě
+  distribuce, čtyři mandatory API guard negatives a dva pure TS/React context
+  případy; také existující AC05, K2, protocol, workspace a installed-wheel testy.
+  Žádný Spring/API test nebyl SKIP. Devět SKIP se týká Maven reactor/second JDK,
+  installed Maven/Gradle exporterů, Gradle included/variant a optional Maven/Gradle
+  Kotlin build options; nejsou vydávány za ověření těchto build features.
+
+Přesný finální full příkaz (inherited PATH zachovává managed Node24):
+
+```bash
+flock /workspace/kgmaker-heavy-tests.lock env \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_WORKERS_HOME=/workspace/dynamic-spring/workers \
+  PYTHONPATH=/workspace/dynamic-spring/src \
+  /workspace/kgmaker-venv/bin/python -m pytest -q -rs \
+  --basetemp=/tmp/kgmaker-spring-final-verified
+```
+
+Scoped semantic update/apply/validate/scan zachovává všechny čtyři core concepts,
+osm core edges a všech70 předchozích immutable implementation episodes. Znovu
+ověřené README citations míří na skutečné prepare/update bullets134/136.
+Nevznikají vymyšlené runtime semantic links. Durable implementation/test artifacts
+jsou zapsané a task čeká ve fázi review. `kgmaker semantic validate`, `kgmaker
+scan`, `kgmaker check` a `git diff --check`: **PASS**. Validovaná implementační
+paměť je zachycená; předání zachovává i historii následného zápisu skutečných
+výsledků. Runtime a test files jsou byte-identické s candidate `c96fd3d`.
+Žádný local či CI test se nevydává za Spring application runtime.
 
 ## Příklad a zbývající scope
 
