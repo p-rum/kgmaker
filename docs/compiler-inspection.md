@@ -641,7 +641,9 @@ bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol 
 `factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
 čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
 vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
-Producer i getter method hashes jsou součástí evidence. Nové product/registrar
+Producer i getter method hashes jsou součástí evidence. Factory object type je
+přesný component owner nebo validovaná skutečná literal producer implementation;
+custom method object assignability zůstává UNKNOWN. Nové product/registrar
 selection používá compiler-qualified field assignability a známé supertypes;
 foreign short-name shoda není resolved injection. Chybějící legacy evidence
 nepromuje registrace. Invalid facts/context
@@ -661,3 +663,10 @@ source/app code se nespouští. XML, BeanDefinition builders/properties/supplier
 post-processors a Spring/Boot factories metadata nejsou tímto scope interpretovány.
 Viz [change note47](changes/47_declareSpringRegistrations.md) pro testy a aktuální
 externě blokované Actions; lokální zelené testy nenahrazují nové CI ani review.
+
+
+S05-W02 injection fixture používá imported simple field types a samostatné
+annotated declaration lines. Existující bounded textual injection projection
+nepokrývá více deklarací na jednom řádku ani obecnou lowercase-leading FQN
+source grammar. Nové qualified hierarchy guards jsou compiler-backed v tomto
+podporovaném subsetu; nejde o nový úplný Java annotation parser.

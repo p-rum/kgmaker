@@ -137,14 +137,62 @@ neinstaluje ani nespustí. Bean ACTIVE zde označuje statickou condition deklara
 nikoli instanci, úspěšný custom constructor nebo dostupná produkční data.
 
 
-## Následný narrow namespace review
+## Následné namespace review a finální ověření
 
-Nezávislé actual review našlo ještě factory-object sibling: field
-`fake.FactoryBean` s qualifierem `&literalFactory` mohl převzít skutečný Spring
-factory object podle simple name. Source `f6719909` přidává qualified object
-assignability; exact official Spring FactoryBean generic path zůstává zachovaný.
-Actual fixture má odmítnutý fake field i pozitivní factory implementující obě
-rozhraní. Reviewer ověřil původní repro bez injects/may edges a předchozí producer
-opravy zůstaly správné. Nový focused a následný full mají samostatnou frontu na
-shared JVM lock; dřívější558PASS výsledek se nevydává za výsledek této nové verze.
-Dokud nejsou finální výsledky doplněny, kandidát zůstává Draft/review, nikoli done.
+Nezávislé actual review našlo factory-object sibling: field `fake.FactoryBean`
+s qualifierem `&literalFactory` mohl převzít skutečný Spring object podle simple
+name. Source `f6719909` přidal qualified object assignability; exact official
+Spring FactoryBean generic path zůstal zachovaný. Reviewer ověřil původní repro
+bez injects/may edges a předchozí anonymous/producer opravy zůstaly správné.
+
+První nový focused příkaz měl chybný název `test_spring_context_keys.py` místo
+`test_spring_imports_context.py`: žádné testy se nespustily, nebyl to PASS. Guard
+zabránil navazujícímu full a pouze jeho dosud queued proces byl bezpečně zrušen.
+Správný focused pak vykázal **57 PASS, 2 FAIL v125.85s**: nová fixture měla dvě
+annotated fields na jednom řádku a dosavadní bounded textual injection projection
+první field nevytvořila (StopIteration, nikoli namespace false-positive).
+Fixture `ec32256` používá samostatné deklarace; runtime zůstal byte-identický.
+Následně **59 PASS v125.31s** a strict **558 PASS, 10 SKIP v491.33s**.
+
+Tento stávající injection subset nepokrývá více anotovaných deklarací na jednom
+řádku ani obecnou Java formatting/FQN grammar; fixture používá imported simple
+types a samostatné declaration lines. Compiler-qualified field/hierarchy proof
+se používá pro nové registrar/product/object candidates. Netvrdí se podpora
+libovolného Java source formátu.
+
+Finální self-check nezávisle reprodukovaný reviewerem odhalil ještě slabou UNKNOWN
+may-edge pro `@Bean literalProducer` → fake.FactoryBean: method protocol má
+return_type a původní object metadata ignorovala validovaný factory_producer.type.
+Nešlo o falešný resolved/ACTIVE injection. `cd0f9f8` nyní používá jen přesný
+component owner nebo schema/index/contract-validovaný literal producer type;
+custom method implementations zůstávají UNKNOWN. Actual negative pro method
+factory a pozitivní method factory implementující obě rozhraní ověřují obě strany.
+Worker source/JARy se touto Python opravou nemění. Nezávislý původní method probe
+nyní nemá žádné edges; anonymous product je UNKNOWN a literalProducer ACTIVE.
+
+Finální actual focused nad `cd0f9f8`: **59 PASS v133.44s**. Poté pod stejným
+shared lockem strict full: **558 PASS, 10 SKIP v437.81s**, exit0; JUnit/log
+`/tmp/kgmaker-registrars-object-full.xml` a `.log`. Full se spustil pouze po
+returncode0 focused; oba reálné backendy/pinned Spring APIs byly mandatory.
+Volitelné skips jsou stejné Maven/Gradle/Windows gates uvedené výše, nikoli PASS.
+Předchozí passing logy jsou zachované jako `*-before-method.log`; failure excerpt
+z tool transcriptu je označen jako excerpt, ne jako původní přepsaný log.
+
+```bash
+# Stejný explicitní JAVA_HOME/PATH, workers home, PYTHONPATH a mandatory flags
+# jako v předchozím full příkazu; Maven/Gradle nejsou na PATH.
+python -m pytest -q --tb=short tests/test_spring_registrations.py \
+  tests/test_spring_imports.py tests/test_spring_imports_context.py \
+  tests/test_worker_protocol.py
+python -m pytest -q -rs --tb=short \
+  --basetemp=/tmp/kgmaker-registrars-object-full \
+  --junitxml=/tmp/kgmaker-registrars-object-full.xml
+```
+
+Finální scoped semantic apply/validate/scan/check a diff check PASS; core facts
+mimo scope a105 immutable main episodes zachovány, implementační paměť captured.
+Durable task končí v review, nikoli self-approved/done. Publikační connector
+odmítl Draft PR automatickým posouzením: chybí explicitní repository-egress
+souhlas pro private p-rum/kgmaker. Read-only app check ověřil repository1394670937,
+admin/push práva a přesný origin; žádný CLI/alternativní bypass ani retry/merge
+neproběhl. Dřívější push kandidáta d6a61b3 uspěl, aktuální finální source je lokální.
