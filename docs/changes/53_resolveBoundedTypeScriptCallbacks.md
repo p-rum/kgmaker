@@ -87,3 +87,16 @@ tomuto přesnému workeru a15-case matici. Heavy full byl znovu queued po oprav�
 bez runtime přepisování; `/tmp/ts-callbacks-full.log/.xml`, výsledek PENDING.
 W02 dependency mezitím local source-final full dokončila567PASS10SKIP787.45s;
 required CI/merge PR36 stále pending kvůli billing/quota, není obejito.
+
+## Stacked integrace a scoped semantic evidence
+
+Převzat metadata-only W02 final commit8e83937 (full567PASS10SKIP); všechny current
+worker/test SHA256 po merge7e8cfaa zůstaly shodné s final15PASS. W02 acceptance
+a vlastní W03 candidate sekce jsou zachovány společně. Scoped semantic update
+base8e83937 vytvořil nový packet; patch použil jeho přesné update_id/contexty,
+reanchored compiler documentation citation a doložený callback concept.
+`semantic apply` a `semantic validate` PASS: **8 concepts /23 static edges**.
+W02 **107 episodes** jsou exact immutable prefix, následované jedním vlastním
+implementation capture s actual15/regression34=passed, full/CI=unknown.
+Generované graph views jsou obnoveny příkazem, ne ručně. Full zůstává PENDING;
+žádná automatická instalace/build ani CI retry/bypass nebyly přidány.
