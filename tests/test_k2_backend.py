@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "workers"
 
 
-@pytest.mark.parametrize("backend,version", [("k2", "2.2.0"), ("k3", "2.1.10"), ("k1", "unknown")])
+@pytest.mark.parametrize("backend,version", [("k2", "2.2.0"), ("k3", "2.1.10"), ("k1", "unknown"), (["k2"], "2.1.10")])
 def test_unsupported_backend_or_version_never_runs_or_mutates(backend, version, tmp_path):
     store = tmp_path / ".kgmaker/graph.json"
     store.parent.mkdir()
@@ -37,6 +37,14 @@ def test_imported_unsupported_k2_compiler_version_fails_before_worker(tmp_path):
         with pytest.raises(AnalysisError, match="imported compiler version differs"):
             inspect_jvm(tmp_path, kotlin_backend="k2", home=HOME,
                         build_context={"compiler_options": {"kotlin": {"compiler_version": "2.2.20"}}})
+
+
+@pytest.mark.parametrize("context", [{"compiler_options": []}, {"compiler_options": {"kotlin": []}},
+                                     {"compiler_options": {"kotlin": {"language_version": []}}}])
+def test_malformed_k2_options_fail_structurally_before_worker(context, tmp_path):
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        with pytest.raises(AnalysisError):
+            inspect_jvm(tmp_path, kotlin_backend="k2", home=HOME, build_context=context)
 
 
 @pytest.mark.parametrize("options", [{"language_version": "2.2"}, {"api_version": "1.9"},
@@ -94,7 +102,8 @@ def actual_k2():
         kotlin.write_text("""package fixture
 fun target(x: Int): Int = Helper.plus(x)
 fun caller(): Int = target(3)
-fun jdk(s: String): String = s.substring(1)
+fun jdk(x: Int): Int = java.lang.Math.abs(x)
+fun mappedBuiltin(s: String): String = s.substring(1)
 fun missing(): Int = absent(4)
 fun pick(x: String?): Int = 1
 fun pick(x: Int?): Int = 2
@@ -119,7 +128,7 @@ def test_real_mixed_k2_calls_have_stable_jvm_symbols_and_backend_evidence(actual
               for c in calls if c.get("declared_target")}
     assert actual == {("fixture.WorkKt.target(I)I", "fixture.Helper.plus(I)I"),
                       ("fixture.WorkKt.caller()I", "fixture.WorkKt.target(I)I"),
-                      ("fixture.WorkKt.jdk(Ljava/lang/String;)Ljava/lang/String;", "java.lang.String.substring(I)Ljava/lang/String;")}
+                      ("fixture.WorkKt.jdk(I)I", "java.lang.Math.abs(I)I")}
     assert [c["id"] for c in first["graph"]["call_sites"]] == [c["id"] for c in second["graph"]["call_sites"]]
     assert first["context"]["worker"]["kotlin_backend"] == "k2-analysis-api-2.1.10-v1"
     assert "kotlin-2.1-analysis-api-attribution" in first["context"]["worker"]["capabilities"]
@@ -136,7 +145,8 @@ def test_unresolved_and_ambiguous_k2_calls_remain_partial(actual_k2):
     unresolved = [site for site in result["graph"]["call_sites"]
                   if site.get("evidence_kind") == "UNRESOLVED" and site["path"].endswith("Work.kt")]
     assert {site["caller"].split(":method:")[-1] for site in unresolved} == {
-        "fixture.WorkKt.missing()I", "fixture.WorkKt.ambiguous()I"}
+        "fixture.WorkKt.missing()I", "fixture.WorkKt.ambiguous()I",
+        "fixture.WorkKt.mappedBuiltin(Ljava/lang/String;)Ljava/lang/String;"}
     assert all(site["declared_target"] is None and not site["dispatch_candidates"] for site in unresolved)
     assert all(site["resolution_reason"] == "K2_UNRESOLVED_OR_UNSUPPORTED_CALL" for site in unresolved)
     assert result["status"] == "PARTIAL"
@@ -217,3 +227,64 @@ def test_intrinsic_light_method_without_jvm_member_is_unresolved(actual_k2, tmp_
     assert len(calls) == 1
     assert calls[0]["declared_target"] is None
     assert calls[0]["evidence_kind"] == "UNRESOLVED"
+
+
+def test_local_class_and_object_initializers_do_not_become_outer_calls(actual_k2, tmp_path):
+    source = tmp_path / "src/main/kotlin/Local.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text("""fun target(): Int = 1
+fun outer() { class Local { val x = target(); init { target() } } }
+fun objectLiteral() { val ref = object { val x = target(); init { target() } } }
+fun outerWithLive() { class Local { val x = target() }; target() }
+""")
+    result = inspect_jvm(tmp_path, home=HOME, kotlin_backend="k2", publish=False,
+                         classpath=[str(HOME / "jvm/target-k2/lib/kotlin-stdlib.jar")])
+    calls = result["graph"]["call_sites"]
+    assert len(calls) == 1, "unsupported nested initializers were attributed to outer execution"
+    assert calls[0]["caller"].endswith(":method:LocalKt.outerWithLive()V")
+    assert calls[0]["declared_target"].endswith(":method:LocalKt.target()I")
+    assert result["status"] == "PARTIAL"
+    diagnostics = [item for item in result["diagnostics"] if item["code"] in {
+        "K2_LOCAL_CLASS_BODY_UNSUPPORTED", "K2_OBJECT_LITERAL_BODY_UNSUPPORTED"}]
+    assert {item["code"] for item in diagnostics} == {
+        "K2_LOCAL_CLASS_BODY_UNSUPPORTED", "K2_OBJECT_LITERAL_BODY_UNSUPPORTED"}
+    assert all(item["path"] == "src/main/kotlin/Local.kt" and item["range"]["start_line"] in {2, 3, 4}
+               for item in diagnostics)
+
+
+def test_kotlin_call_preserves_authoritative_javac_declaration_metadata(actual_k2, tmp_path):
+    java = tmp_path / "src/main/java/Helper.java"
+    java.parent.mkdir(parents=True)
+    java.write_text("public class Helper { @Deprecated public static int plus(int x) "
+                    "throws IllegalArgumentException { return x+1; } }")
+    options = {"home": HOME, "kotlin_backend": "k2", "publish": False,
+               "classpath": [str(HOME / "jvm/target-k2/lib/kotlin-stdlib.jar")]}
+    before = inspect_jvm(tmp_path, **options)
+    kotlin = tmp_path / "src/main/kotlin/Caller.kt"
+    kotlin.parent.mkdir(parents=True)
+    kotlin.write_text("fun caller(): Int = Helper.plus(1)\n")
+    mixed = inspect_jvm(tmp_path, **options)
+    def declaration(result):
+        return next(symbol for symbol in result["graph"]["symbols"]
+                    if symbol.get("owner") == "Helper" and symbol["name"] == "plus")
+    original, retained = declaration(before), declaration(mixed)
+    assert original["annotations"] and original["throws"] == ["java.lang.IllegalArgumentException"]
+    assert original["return_type"] == "int" and original["modifiers"] == ["public", "static"]
+    for key in ("annotations", "modifiers", "return_type", "throws", "parameter_types", "parameter_names",
+                "path", "range", "sha256", "compiler_backend"):
+        assert retained.get(key) == original.get(key), key
+    site = next(site for site in mixed["graph"]["call_sites"] if site["path"].endswith("Caller.kt"))
+    assert site["declared_target"] == retained["id"]
+    assert site["compiler_backend"] == "k2-analysis-api-2.1.10-v1"
+
+
+def test_class_only_kotlin_never_claims_complete_source_coverage(actual_k2, tmp_path):
+    source = tmp_path / "src/main/kotlin/Empty.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text("class Empty\n")
+    result = inspect_jvm(tmp_path, home=HOME, kotlin_backend="k2", publish=False,
+                         classpath=[str(HOME / "jvm/target-k2/lib/kotlin-stdlib.jar")])
+    assert result["status"] == "PARTIAL"
+    diagnostic = next(item for item in result["diagnostics"] if item["code"] == "K2_SOURCE_MODEL_PARTIAL")
+    assert diagnostic["path"] == "src/main/kotlin/Empty.kt"
+    assert diagnostic["range"]["start_line"] == 1 and diagnostic["sha256"]

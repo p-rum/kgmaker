@@ -200,7 +200,7 @@ kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný whee
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
-K2 source CFG, constructor ABI, property/operator/reference/initializer call sites, local/lambda
+K2 source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites, local/lambda
 execution a default-body/coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
 Jiné compiler/language/API/JVM verze a captured flags/plugins se odmítají bez
 implicitního fallbacku či publikace. T003-S04 a T003 zůstávají PARTIAL.

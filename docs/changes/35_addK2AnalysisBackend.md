@@ -98,3 +98,42 @@ Post-PR8 integrační běh před tímto rozšířením: **295 PASS,7 SKIP/136.22
 SKIP: Maven runner1, druhé JDK+Maven1, Gradle included1, Gradle variants2,
 Maven Kotlin options1 a Gradle Kotlin options1. Jde o chybějící execution prostředí,
 nikoli PASS ani výjimku z taskových K2 testů.
+
+## Nezávislé review — local class/object initializer boundary
+
+Review reprodukovalo P1: `fun outer() { class Local { val x = target();
+init { target() } } }` bez vytvoření Local emitovalo dvě resolved volání
+`outer→target`. Přesný actual-worker test nejprve FAIL. Body visitor nyní
+zastaví vnořené class/object deklarace a object-literal bodies s lokalizovanými
+`K2_LOCAL_CLASS_BODY_UNSUPPORTED` / `K2_OBJECT_LITERAL_BODY_UNSUPPORTED`.
+Vlastní skutečné volání `target()` za vnořenou třídou zůstává v outer funkci.
+`test_local_class_and_object_initializers_do_not_become_outer_calls` ověřuje
+absence vymyšleného execution, zachování skutečného calleru, range diagnostik
+a PARTIAL; nejde o rozšíření na constructor/init execution.
+
+Průběžná dodatečná pozitivní kontrola `String.substring` ukázala také dosud
+nemapovaný Kotlin built-in owner; zůstává výslovně unresolved. Reálný
+Java/JDK interop pozitivní test používá `java.lang.Math.abs` s fyzicky ověřeným
+JVM memberem. Po ABI guardu focused23 PASS/49.67s; následující full běh byl
+přerušen kvůli výše uvedenému novému P1, proto není finální evidence.
+
+## Nezávislé review — zachování Javac declaration metadata
+
+P2 review doložilo, že přidání Kotlin volání `Helper.plus(1)` k Java metodě
+`@Deprecated public static int plus(int x) throws IllegalArgumentException`
+zahodilo původní `annotations`, modifiers/throws/return_type a přejmenovalo
+Java declaration provenance na K2. Actual-worker before/after test nejprve
+FAIL (`annotations: None` místo `java.lang.Deprecated`).
+
+K2 nyní použije kanonickou `State.methodIdentity` a při existující Javac source
+declaration vrátí její identitu bez přepsání metadat. K2 provenance zůstává na
+Kotlin call-site/evidence; deklarace a její Javac annotation/scope/throws/return
+provenance zůstávají zachovány. Test
+`test_kotlin_call_preserves_authoritative_javac_declaration_metadata` porovnává
+Java-only a mixed reálný běh, nikoli pouze očekávaný substring.
+
+Každý Kotlin soubor nese navíc content-bound `K2_SOURCE_MODEL_PARTIAL`, aby
+ani class-only soubor bez zpracovaných metod nevydal COMPLETE pro neimplementované
+source konstrukce. K2 Kotlin annotation/framework metadata nejsou dodány;
+`test_class_only_kotlin_never_claims_complete_source_coverage` ověřuje range/hash
+hranice a stav PARTIAL. K1 a Java podporované metadata zůstávají zachovány.

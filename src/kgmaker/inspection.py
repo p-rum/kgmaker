@@ -80,7 +80,7 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         raise WorkerError("Unsupported worker language: " + language, "TOOLCHAIN_UNAVAILABLE")
     home = worker_home(home)
     if language == "jvm":
-        if kotlin_backend not in {"k1", "k2"}:
+        if not isinstance(kotlin_backend, str) or kotlin_backend not in {"k1", "k2"}:
             raise AnalysisError("Unsupported Kotlin backend; select k1 or k2")
         java = shutil.which("java")
         if not java:
@@ -366,14 +366,19 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
                 publish=True, strict=False, sources=None, java_release=21,
                 kotlin_backend="k1", kotlin_version="2.1.10") -> dict:
     root = root.resolve()
-    if kotlin_backend not in {"k1", "k2"} or kotlin_version != "2.1.10":
+    if not isinstance(kotlin_backend, str) or kotlin_backend not in {"k1", "k2"} or kotlin_version != "2.1.10":
         raise AnalysisError("Unsupported Kotlin backend/version; supported: k1 compatibility or K2 Analysis API, compiler 2.1.10")
-    kotlin_options = (build_context or {}).get("compiler_options", {}).get("kotlin", {})
-    if kotlin_backend == "k2" and kotlin_options.get("compiler_version") not in {None, "2.1.10"}:
+    if build_context is not None and not isinstance(build_context, dict):
+        raise AnalysisError("Kotlin build context must be an object")
+    compiler_options = (build_context or {}).get("compiler_options", {})
+    if not isinstance(compiler_options, dict) or not isinstance(compiler_options.get("kotlin", {}), dict):
+        raise AnalysisError("Kotlin compiler options must be an object")
+    kotlin_options = compiler_options.get("kotlin", {})
+    if kotlin_backend == "k2" and kotlin_options.get("compiler_version") is not None and kotlin_options.get("compiler_version") != "2.1.10":
         raise AnalysisError("K2 Analysis API supports compiler 2.1.10 only; imported compiler version differs")
     if kotlin_backend == "k2":
         for name, supported in (("language_version", "2.1"), ("api_version", "2.1"), ("jvm_target", "21")):
-            if kotlin_options.get(name) not in {None, supported}:
+            if kotlin_options.get(name) is not None and kotlin_options.get(name) != supported:
                 raise AnalysisError("Unsupported K2 captured option: " + name + "; supported value: " + supported)
         if any(kotlin_options.get(name) for name in ("free_args", "plugins", "plugin_options", "plugin_artifacts", "opt_in", "progressive")):
             raise AnalysisError("Unsupported K2 compiler flags/plugins; this backend does not silently ignore captured options")

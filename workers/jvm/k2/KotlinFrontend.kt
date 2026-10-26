@@ -31,7 +31,7 @@ class KotlinFrontend(private val state: State) {
         const val compiler = "kotlin-2.1.10-k2-analysis-api"
         val capabilities = listOf("kotlin-2.1-analysis-api-attribution")
         val limitations = listOf("K2 Analysis API is pinned to 2.1.10; unrepresentable JVM signatures remain unresolved.",
-            "K2 source CFG, constructor ABI, default-body/coroutine mapping, property/operator/reference/initializer call sites and local/lambda execution are not implemented.")
+            "K2 source CFG, constructor ABI, default-body/coroutine mapping, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites and local/lambda execution are not implemented.")
     }
 
     private fun loc(element: PsiElement): MutableMap<String, Any?> {
@@ -72,13 +72,19 @@ class KotlinFrontend(private val state: State) {
         val name = if (declaration.isConstructor) "<init>" else declaration.name
         val signature = "(" + parameters.joinToString("") + ")" + result
         if (source == null && !methodLookup.hasDeclaredMethod(owner, name, signature)) return null
+        val location = source?.let(::loc)
+        val identity = state.methodIdentity(owner, name, signature, location)
+        val existing = state.symbols[identity]
+        // JavaFrontend ran first. A Kotlin reference must not replace Javac's
+        // authoritative source declaration, annotations, modifiers or throws.
+        if (existing?.get("path")?.toString()?.endsWith(".java") == true) return identity
         val metadata = State.map("compiler_backend", backend, "compiler_version", "2.1.10",
             "parameter_names", symbol.valueParameters.map { it.name.asString() },
             "parameter_types", declaration.parameterList.parameters.map { it.type.canonicalText },
             "default_arguments", symbol.valueParameters.map { it.hasDefaultValue },
             "suspend", (symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false,
             "inline", (symbol as? KaNamedFunctionSymbol)?.isInline ?: false)
-        return state.method(owner, name, signature, source?.let(::loc), metadata)
+        return state.method(owner, name, signature, location, metadata)
     }
 
     fun analyze(files: List<Path>) {
@@ -115,6 +121,8 @@ class KotlinFrontend(private val state: State) {
                 }
             }
             for (file in session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>().sortedBy { it.virtualFilePath }) {
+                state.diagnostic("K2_SOURCE_MODEL_PARTIAL",
+                    "K2 models non-local named-function declarations and explicit call expressions only; other source and framework constructs remain unmodeled", loc(file))
                 analyze(file) {
                     file.accept(object : KtTreeVisitorVoid() {
                         override fun visitNamedFunction(function: KtNamedFunction) {
@@ -126,6 +134,14 @@ class KotlinFrontend(private val state: State) {
                             }
                             state.diagnostic("K2_SOURCE_CFG_UNSUPPORTED", "Source CFG is not supplied by this K2 backend", loc(function))
                             function.bodyExpression?.accept(object : KtTreeVisitorVoid() {
+                                override fun visitClassOrObject(declaration: KtClassOrObject) {
+                                    state.diagnostic("K2_LOCAL_CLASS_BODY_UNSUPPORTED",
+                                        "Nested class/object bodies have a separate execution owner and are not attributed to the enclosing function", loc(declaration))
+                                }
+                                override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
+                                    state.diagnostic("K2_OBJECT_LITERAL_BODY_UNSUPPORTED",
+                                        "Object-literal initializer execution is not supplied by this backend", loc(expression))
+                                }
                                 override fun visitNamedFunction(nested: KtNamedFunction) {
                                     state.diagnostic("K2_LOCAL_FUNCTION_UNSUPPORTED", "Local function execution is unresolved", loc(nested))
                                 }

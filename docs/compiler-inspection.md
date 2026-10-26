@@ -419,7 +419,7 @@ missing/ambiguous call, oddělení test scope, backend/version evidence,
 strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
-K2 nyní nedodává source CFG, constructor ABI, property/operator/reference/initializer
+K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
 call sites, local/lambda execution ani default-body/coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
