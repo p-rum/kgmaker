@@ -97,3 +97,16 @@ README prepare/update evidence odpovídá řádkům 156/158; architecture invent
 odstavec zůstává na řádku 151. Scoped semantic apply/validate,
 generovaný scan/check a diff check: PASS. Plná sada se pouze kvůli této
 integraci neopakuje; nové vzdálené CI ověřuje aktuální HEAD.
+
+### Integrace Windows mainline
+
+Integrovaný base `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` zachovává
+`src/kgmaker/views.py` a `tests/test_t008_project_service_inventory.py` byte-identické
+s T008 schváleným HEAD `23e75d5dbf17f1909c0ba17e88820a2f6fde44b0`.
+Focused T005–T008/workspace/Windows worker sady: **84 passed, 5 skipped**
+(4 skutečné compiler workery nejsou v tomto prostředí připravené; Windows
+non-admin smoke vyžaduje Windows CI). Celá sada se kvůli nezávislé Windows
+změně neopakovala. Semantic artifact má současný main episode prefix 80 záznamů
+plus 3 T008 epizody; README semantic prepare/update evidence nyní cituje řádky
+162 a 164. `semantic validate`, regenerace `kgmaker scan`, `kgmaker check` a
+`git diff --check`: PASS; vygenerovaný graf obsahuje 301 souborů, 2,829 uzlů a 18,020 vztahů.
