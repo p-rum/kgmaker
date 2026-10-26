@@ -700,3 +700,55 @@ hashes/licenses; preparation is an explicit Maven command. Required CI uses
 missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
+
+
+## T003-S07-W04 — declared Kafka binding identity
+
+Optional workspace `kafka_bindings` schema1 reuses repositories, services
+(`transport: kafka`), service_ownership and graph/store v1/v2/v3. The executable
+example is `fixtures/kafka-bindings/workspace.json`; no broker API is called.
+`clusters` declares unique logical IDs only. Each bounded binding declares its
+repo/service/module/source_set/scope, optional selected context ID, direction,
+active profiles, ordered config_files (path/profile expression), binder-alias to
+cluster map, and contract repo/path/release plus payload label. Unknown fields,
+duplicate identities, invalid ownership, out-of-root/symlink/hidden/sensitive or
+>1MB artifacts fail before source processing/publication. There is no new approval
+flow: labels are explicit declarations, never runtime observations.
+
+Supported configuration is literal UTF-8 `.properties` (at most10000 lines),
+Cloud Stream `spring.cloud.stream.bindings.<binding>.destination` and `.binder`,
+and bounded whole-property `${key}` references (depth16, cycles unresolved). Base
+files precede profile files; explicit profile expressions reuse S05-W03 grammar.
+Captured properties of exactly one fresh matching JVM context take precedence.
+Multiple contexts require an explicit compatible context ID. Source-only scope
+requires conventional root/main or root/test resource paths; nonstandard layouts
+need matching compiler source-set membership. Unsupported/duplicate properties,
+missing files/profiles, partial placeholders/SpEL, YAML, multi-destination topics,
+missing release/payload, stale context or invalid JSON contract stay UNKNOWN.
+Configuration and contract files are content-hashed and checked again before
+cache publication; selected compiler snapshots are validated without execution.
+
+`kafka_binding` metadata records declared service realm, logical cluster, topic,
+contract SHA, release/payload, input hashes and exact selected context. Resolved
+static configuration produces FRAMEWORK_DERIVED `produces`/`consumes` and
+`kafka_binding_match` only for identical workspace cluster/topic/contract SHA/
+release/scope. JSON contract bytes identify an artifact; no schema compatibility
+or payload class mapping is inferred. `code_binding=UNPROVEN` and
+`delivery=NOT_OBSERVED` remain explicit. Raw properties, broker endpoints and
+credentials are never copied into new nodes/evidence. There is no implicit
+Kafka/AdminClient, network, build, package installation, registry or application
+execution. Existing Git baseline reads are unchanged.
+
+Legacy pattern topic nodes stay separate SYNTAX_CANDIDATE hints. Literal prefixes
+of concatenated/placeholder expressions no longer create guessed topics;
+`kafka_binding_boundary` records UNKNOWN. No source hint is promoted by matching a
+declared configuration label. Retry/DLT, binder auto-discovery, environment/default
+placeholder expansion, arbitrary YAML, Avro/protobuf/remote schema registries,
+serialization compatibility and runtime delivery are outside this bounded scope.
+
+Evidence: `tests/test_kafka_bindings.py` uses actual local repository/properties/
+JSON fixtures, two clusters with the same topic, profile/context precedence,
+dynamic/invalid/ambiguous cases, exact hash invalidation, source/store/cache
+atomicity, secret exclusion and no-process offline checks. Actual K1/K2 contexts
+verify property provenance and stale-source refusal; no Kafka toolchain is needed.
+See change note54 for exact commands/results.

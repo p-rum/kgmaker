@@ -44,7 +44,7 @@ KAFKA_LISTENER = re.compile(r"@KafkaListener\s*\(([\s\S]{0,1200}?)\)", re.MULTIL
 KAFKA_SEND = re.compile(r"\b(?:KafkaTemplate|kafkaTemplate|kafka\w*Template)\b[\s\S]{0,120}?\.send\s*\(\s*[\"']([^\"']+)[\"']")
 KAFKA_RECORD = re.compile(r"\b(?:ProducerRecord|NewTopic)\s*<[^>]*>\s*\(\s*[\"']([^\"']+)[\"']|\b(?:ProducerRecord|NewTopic)\s*\(\s*[\"']([^\"']+)[\"']")
 KAFKA_TOPIC_BUILDER = re.compile(r"\bTopicBuilder\s*\.\s*name\s*\(\s*[\"']([^\"']+)[\"']")
-KAFKA_CONFIG = re.compile(r"(?im)^\s*(?:[\w.-]*kafka[\w.-]*\.)?(?:topic|topics|destination)\s*[:=]\s*(?:\[\s*)?[\"']?([\w.-]+)")
+KAFKA_CONFIG = re.compile(r"(?im)^\s*(?:[\w.-]*kafka[\w.-]*\.)?(?:topic|topics|destination)\s*[:=]\s*([^\r\n]+)")
 
 SPRING_MAPPING = re.compile(r"@(?P<annotation>Get|Post|Put|Patch|Delete|Request)Mapping\s*(?:\((?P<args>[^)]*)\))?", re.MULTILINE)
 SPRING_EXCHANGE = re.compile(r"@(?P<method>Get|Post|Put|Patch|Delete)Exchange\s*(?:\((?P<args>[^)]*)\))?", re.MULTILINE)
@@ -198,9 +198,17 @@ def _kafka_references(text: str, path: str, file_id: str) -> tuple[list[Node], l
     found: dict[str, Node] = {}
     edges: list[Edge] = []
 
+    def boundary(offset):
+        identity = "kafka-boundary:" + path + ":" + str(offset)
+        found.setdefault(identity, Node(identity, "kafka_binding_boundary", "Unresolved Kafka topic", path,
+            line=_line(text, offset), role="contract", origin="generated",
+            metadata={"status": "UNKNOWN", "reason": "DYNAMIC_OR_UNSUPPORTED_TOPIC_EXPRESSION"}))
+        edges.append(Edge(file_id, identity, "unresolved_kafka_topic", "Dynamic topic expression is not evaluated"))
+
     def add(topic: str, offset: int, relation: str, evidence: str) -> None:
         topic = topic.strip()
-        if not topic or topic.startswith("${") or " " in topic or topic.startswith("#"):
+        if not topic or "${" in topic or "#{" in topic or not re.fullmatch(r"[A-Za-z0-9._-]{1,249}", topic) or topic in {".", ".."}:
+            boundary(offset)
             return
         node = found.setdefault(_canon(topic), _shared_node("kafka_topic", topic, topic, path, _line(text, offset)))
         edges.append(Edge(file_id, node.id, relation, evidence))
@@ -215,17 +223,39 @@ def _kafka_references(text: str, path: str, file_id: str) -> tuple[list[Node], l
                 topic_values = rest[1:end] if end >= 0 else rest
             else:
                 topic_values = rest.split(",", 1)[0]
-            for topic in _string_literals(topic_values):
-                add(topic, match.start(), "consumes", "@KafkaListener")
+            for value in topic_values.split(","):
+                literal = re.fullmatch(r'''\s*(["'])([^"']+)\1\s*''', value)
+                if literal:
+                    add(literal.group(2), match.start(), "consumes", "@KafkaListener")
+                else:
+                    boundary(match.start())
+    matched_calls = set()
     for pattern in (KAFKA_SEND, KAFKA_RECORD, KAFKA_TOPIC_BUILDER):
         for match in pattern.finditer(text):
+            matched_calls.add(match.start())
+            if text[match.end():].lstrip()[:1] not in {",", ")"}:
+                boundary(match.start())
+                continue
             topic = next((group for group in match.groups() if group), "")
             relation = "produces" if pattern in (KAFKA_SEND, KAFKA_RECORD) else "declares_topic"
             add(topic, match.start(), relation, match.group(0).strip()[:100])
 
+    starts = r"\b(?:KafkaTemplate|kafkaTemplate|kafka\w*Template)\b[\s\S]{0,120}?\.send\s*\(|\b(?:ProducerRecord|NewTopic)(?:\s*<[^>]*>)?\s*\(|\bTopicBuilder\s*\.\s*name\s*\("
+    for match in re.finditer(starts, text):
+        if match.start() not in matched_calls:
+            boundary(match.start())
     if KAFKA_MARKER.search(text):
         for match in KAFKA_CONFIG.finditer(text):
-            add(match.group(1), match.start(), "configures_topic", match.group(0).strip()[:100])
+            # Match the entire value; a dynamic expression has no literal topic.
+            value = match.group(1).strip()
+            array = re.fullmatch(r"\[\s*(.*?)\s*\]\s*(?:#.*)?", value)
+            if array:
+                value = array.group(1)
+            literal = re.fullmatch(r'''(?:(["'])([A-Za-z0-9._-]{1,249})\1|([A-Za-z0-9._-]{1,249}))\s*(?:#.*)?''', value)
+            if not literal:
+                boundary(match.start())
+                continue
+            add(literal.group(2) or literal.group(3), match.start(), "configures_topic", "Literal Kafka configuration hint")
     return list(found.values()), edges
 
 

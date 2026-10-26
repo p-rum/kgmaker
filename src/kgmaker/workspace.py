@@ -152,7 +152,7 @@ def load_workspace(path: Path) -> dict:
             or not isinstance(data.get('repositories'), list)):
         raise AnalysisError('Invalid workspace manifest version/identity/repositories')
     if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping',
-                    'service_ownership'}:
+                    'service_ownership', 'kafka_bindings'}:
         raise AnalysisError('Unknown workspace fields')
     roots, ids = [], set()
     for repo in data['repositories']:
@@ -183,8 +183,11 @@ def load_workspace(path: Path) -> dict:
             raise AnalysisError('Duplicate/invalid service ID')
         service_ids.add(service['id'])
         if set(service) - {'id', 'backend_repo', 'frontend_repos', 'test_repos', 'contract',
-                           'consumer_path_prefix', 'provider_path_prefix', 'generated_clients'}:
+                           'consumer_path_prefix', 'provider_path_prefix', 'generated_clients', 'transport'}:
             raise AnalysisError('Unknown service configuration')
+        transport = service.get('transport')
+        if transport is not None and (not isinstance(transport, str) or transport not in {'http', 'kafka'}):
+            raise AnalysisError('Unsupported service transport declaration')
         if service.get('backend_repo') not in ids:
             raise AnalysisError('Service backend_repo is not declared')
         for key in ('frontend_repos', 'test_repos'):
@@ -201,6 +204,8 @@ def load_workspace(path: Path) -> dict:
                 raise AnalysisError('HTTP prefix must be empty or start with /')
     _validate_service_ownership(data.get('service_ownership'), data['repositories'], service_ids)
     _validate_release_mapping(data, ids)
+    from .kafka_bindings import validate as validate_kafka_bindings
+    validate_kafka_bindings(data)
     data['_manifest_path'] = str(path)
     data['_manifest_hash'] = file_hash(path)
     return data
@@ -499,7 +504,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
+                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', 'kafka-binding-1'],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -517,11 +522,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             try:
                 cached = read_json(disk)
                 if cached['schema_version'] == 1 and cached['cache_key'] == key and digest(cached['payload']) == cached['payload_hash']:
-                    _REPO_CACHE[key] = (KnowledgeGraph.from_dict(cached['payload']['graph']), cached['payload']['schemas'])
+                    pending_cache[key] = (KnowledgeGraph.from_dict(cached['payload']['graph']), cached['payload']['schemas'])
             except (AnalysisError, KeyError, TypeError, ValueError, OSError):
                 pass  # corrupted cache is a cache miss, not evidence
         if key in _REPO_CACHE:
             local, local_schema = copy.deepcopy(_REPO_CACHE[key])
+        elif key in pending_cache:
+            local, local_schema = copy.deepcopy(pending_cache[key])
         else:
             local, _, error = feature.current_graph(root)
             local_schema = None
@@ -564,6 +571,10 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         _release_artifact_links(workspace, graphs)
     )
     nodes += release_nodes; edges += release_edges
+    from .kafka_bindings import build_links as kafka_links, validate_snapshot as validate_kafka_snapshot
+    kafka_nodes, kafka_edges, kafka_evidence, kafka_contexts, kafka_diagnostics, kafka_report = kafka_links(workspace, graphs)
+    nodes += kafka_nodes; edges += kafka_edges
+    diagnostics += ['KAFKA_BINDING_UNKNOWN: ' + item['binding_id'] for item in kafka_diagnostics]
     release_messages = [item['code'] + ': ' + item['mapping_id'] + ': ' + item['reason']
                         for item in release_diagnostics]
     diagnostics += release_messages
@@ -580,6 +591,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     if file_hash(manifest) != workspace['_manifest_hash']:
         raise AnalysisError('Manifest changed during workspace snapshot', 3)
     _validate_release_artifact_snapshot(workspace, release_report)
+    validate_kafka_snapshot(workspace, kafka_report)
     _REPO_CACHE.update(pending_cache)
     if persist_cache and cache_root is not None:
         from .analysis_model import write_json
@@ -591,16 +603,16 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                            sorted(set(edges), key=lambda e: (e.source, e.kind, e.target)),
                            {k: v['sha256'] for k, v in sources.items()},
                            [{**_qualified_context(repo, context), 'repo_id': repo}
-                            for repo, local in graphs.items() for context in local.contexts if 'id' in context],
+                            for repo, local in graphs.items() for context in local.contexts if 'id' in context] + kafka_contexts,
                            ([{'repo_id': repo, **d}
                              for repo, local in graphs.items() for d in local.diagnostics]
-                            + release_diagnostics),
+                            + release_diagnostics + kafka_diagnostics),
                            ([{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
                               'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
                               'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
                               'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
                              for repo, local in graphs.items() for e in local.evidence]
-                            + release_evidence),
+                            + release_evidence + kafka_evidence),
                            symbols=sorted(symbols, key=lambda item: item['id']),
                            call_sites=sorted(call_sites, key=lambda item: item['id']),
                            cfgs=sorted(cfgs, key=lambda item: (item['method'], item.get('representation', ''))),
@@ -628,6 +640,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                 'pending': pending + diagnostics, 'repositories': copy.deepcopy(baseline_repos), 'schemas': schemas}
     if release_report is not None:
         coverage['release_mapping'] = release_report
+    if kafka_report is not None:
+        coverage['kafka_bindings'] = kafka_report
+        coverage['parser_capabilities']['kafka_binding_identity'] = 1
     metadata = {'manifest_path': str(manifest.resolve()), 'manifest_hash': workspace['_manifest_hash'],
                 'workspace_id': workspace['workspace_id'], 'roots': {r['id']: r['_root'] for r in workspace['repositories']},
                 'release_mapping': workspace.get('release_mapping')}
