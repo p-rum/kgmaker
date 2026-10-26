@@ -316,13 +316,36 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope)
     preflight = request_worker(argv, {"operation": "project", "root": str(root), "tsconfig": tsconfig,
         "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
+
+    def input_closure(project: dict) -> dict[str, str]:
+        records = project.get("input_files") if isinstance(project, dict) else None
+        if not isinstance(records, list):
+            raise WorkerError("Malformed frontend compiler input closure", "INVALID_PROTOCOL")
+        inputs = {}
+        for record in records:
+            path = record.get("path") if isinstance(record, dict) else None
+            checksum = record.get("sha256") if isinstance(record, dict) else None
+            if (not isinstance(path, str) or not Path(path).is_absolute() or path in inputs
+                    or not isinstance(checksum, str) or len(checksum) != 64
+                    or any(character not in "0123456789abcdef" for character in checksum)):
+                raise WorkerError("Malformed frontend compiler input closure", "INVALID_PROTOCOL")
+            inputs[path] = checksum
+        return inputs
+
+    preflight_inputs = input_closure(preflight.get("project"))
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
                                       "framework_rule_versions": {"react": "react18-intrinsic-events-1"} if ui_framework == "react" else {}})
     response = request_worker(argv, {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
         "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
-    for item in preflight["project"]["input_files"]:
-        if file_hash(Path(item["path"])) != item["sha256"]:
+    if input_closure(response.get("project")) != preflight_inputs:
+        raise WorkerError("Frontend compiler input closure changed between preflight and analysis", "STALE")
+    for path, expected in preflight_inputs.items():
+        try:
+            actual = file_hash(Path(path))
+        except OSError as error:
+            raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE") from error
+        if actual != expected:
             raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE")
     if response["project"]["compiler_options"] != preflight["project"]["compiler_options"]:
         raise WorkerError("Frontend compiler options changed", "STALE")

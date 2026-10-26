@@ -208,3 +208,50 @@ def test_graph_loader_legacy_versions_remain_accepted(tmp_path):
         graph = KnowledgeGraph.from_dict({'schema_version': version, 'root': str(tmp_path),
             'generated_at': '', 'nodes': [], 'edges': [], 'files': {}})
         assert graph.schema_version == version
+
+
+def test_new_alias_dependency_after_preflight_cannot_replace_last_graph(tmp_path, monkeypatch):
+    from kgmaker import inspection as inspection_module
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+
+    root = tmp_path / 'project'
+    (root / 'src').mkdir(parents=True)
+    shared = tmp_path / 'shared'
+    shared.mkdir()
+    (root / 'src/app.ts').write_text(
+        "import {pick} from '@dep'; export function run() { return pick(); }")
+    (root / 'tsconfig.json').write_text(json.dumps({
+        'compilerOptions': {'target': 'ES2022', 'module': 'commonjs', 'strict': True,
+                            'baseUrl': '.', 'paths': {'@dep': ['../shared/value.ts']}},
+        'include': ['src/**/*.ts'],
+    }))
+    save_graph(scan_repository(root), root, generate_docs=False)
+    store = root / '.kgmaker/graph.json'
+    previous = store.read_bytes()
+    app_bytes = (root / 'src/app.ts').read_bytes()
+    config_bytes = (root / 'tsconfig.json').read_bytes()
+    real_request = inspection_module.request_worker
+    phases = []
+
+    def dependency_appears(argv, request, **options):
+        result = real_request(argv, request, **options)
+        phases.append(request['operation'])
+        if request['operation'] == 'project':
+            assert not any(Path(item['path']) == shared / 'value.ts'
+                           for item in result['project']['input_files'])
+            (shared / 'value.ts').write_text('export function pick() { return 7; }')
+        elif request['operation'] == 'analyze':
+            assert result['coverage']['calls_resolved'] == 1
+            assert any(Path(item['path']) == shared / 'value.ts'
+                       for item in result['project']['input_files'])
+        return result
+
+    monkeypatch.setattr(inspection_module, 'request_worker', dependency_appears)
+    with pytest.raises(WorkerError, match='compiler input closure changed') as error:
+        inspect(root)
+    assert error.value.status == 'STALE'
+    assert phases == ['project', 'analyze']
+    assert store.read_bytes() == previous
+    assert (root / 'src/app.ts').read_bytes() == app_bytes
+    assert (root / 'tsconfig.json').read_bytes() == config_bytes
