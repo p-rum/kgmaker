@@ -9,6 +9,15 @@
 | T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; unresolved explicit `@Table`/`@Column` does not emit physical defaults even with matching schema; unresolved `@Access` and unproven/mixed embeddable inheritance remain UNKNOWN; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
 | T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
 
+## T003-S06-W02 — zděděné persistence atributy
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W02-AC01 | VERIFIED_IN_SCOPE | `test_k2_jpa_mapped_superclass_attributes_keep_declaring_and_effective_owners` (actual K2) and `test_java_jpa_mapped_superclass_fields_and_properties_are_projected` (actual Javac): chain ownership, FIELD/PROPERTY IDs, overrides, SINGLE_TABLE/JOINED/TABLE_PER_CLASS root and subclass table selection |
+| T003-S06-W02-AC02 | VERIFIED_IN_SCOPE | Additive `orm_attribute` metadata and `inherits_attribute` reuse graph schema v3; `test_existing_graph_loader_is_unchanged` accepts store schemas v1/v2/v3; no migration is needed |
+| T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture rejects a foreign same-simple-name base, marks direct-field collision UNKNOWN without a column edge, and unresolved override UNKNOWN without fallback; W01 `test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` proves strict failure preserves last valid graph |
+| T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |
