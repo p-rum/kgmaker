@@ -717,7 +717,8 @@ flow: labels are explicit declarations, never runtime observations.
 
 Supported configuration is literal UTF-8 `.properties` (at most10000 lines),
 Cloud Stream `spring.cloud.stream.bindings.<binding>.destination` and `.binder`,
-and bounded whole-property `${key}` references (depth16, cycles unresolved). Base
+and bounded whole-property `${key}` references (depth16, cycles unresolved). An
+explicit empty active-profile list uses Spring `default`; an absent list is UNKNOWN. Base
 files precede profile files; explicit profile expressions reuse S05-W03 grammar.
 Captured properties of exactly one fresh matching JVM context take precedence.
 Multiple contexts require an explicit compatible context ID. Source-only scope

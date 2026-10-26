@@ -56,8 +56,11 @@ nevyžaduje přepis starého store. Workspace parser cache má nový version inp
 - Po této opravě **46 PASS v5.93s**. Další strict paths/ownership, disk cache
   rollback, profile/context, no-process a dynamic variable případy přidány.
 - Aktuální čistě offline sada: **49 PASS, 2 DESELECTED v3.72s**; oba actual K1/K2
-  context případy mají oddělené mandatory toolchain ověření. Finální výsledky budou
-  doplněny před předáním; queued/running test není PASS.
+  context případy mají oddělené mandatory toolchain ověření.
+- Relevantní finální sada s mandatory K1/K2: **51 PASS v5.29s**. Actual compiler
+  contexts skutečně vznikly a následná offline stale-source cesta byla odmítnuta.
+  Full s mandatoryWorkers/K2/SpringImports/SpringConditions je po preflightPASS
+  queued pod shared lock; queued/running test není PASS.
 
 Fixture `fixtures/kafka-bindings` má tři skutečné lokální roots, properties base/
 blue profile a JSON contract. Negatives mění consumer cluster při stejném topicu,
@@ -80,3 +83,27 @@ Spring binder discovery, retry/DLT, Avro/protobuf/remote registry a serializatio
 compatibility. Delivery/deployment/populated-data zůstávají UNKNOWN. GitHub Actions
 billing/quota je externí blocker; Draft PR se neoznačí ready a žádný CI retry/merge
 neprobíhá podle aktuálního uživatelského pokynu. Lokální suite nenahrazuje CI.
+
+
+Přesný final full příkaz (děděný PATH zachovává Node, Maven/Gradle nejsou exponované):
+
+```bash
+export JAVA_HOME=/workspace/tools/jdk-21.0.6+7
+export PATH="$JAVA_HOME/bin:/workspace/tools/kotlinc/bin:$PATH"
+/workspace/kgmaker-venv/bin/python /workspace/kgmaker-test-prerequisites.py /workspace/kafka-bindings
+flock /workspace/kgmaker-heavy-tests.lock env KGMAKER_REQUIRE_WORKERS=1 \
+  KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_REQUIRE_SPRING_CONDITIONS=1 KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/kafka-bindings/workers \
+  PYTHONPATH=/workspace/kafka-bindings/src /workspace/kgmaker-venv/bin/python \
+  -m pytest -q -rs --tb=short --basetemp=/tmp/kgmaker-kafka-final-full \
+  --junitxml=/tmp/kgmaker-kafka-final-full.xml
+```
+
+
+Před spuštěním final full odhalila kontrola helper callsite ještě explicitní
+default profile gap: při `profiles: []` chyběl aktivní Spring profile `default`.
+Actual properties regression **2 FAIL, 3 PASS v0.55s** pro default a grouped
+default/prod; reuse nyní předává stejný default set jako S05-W03. Vlastní full
+byl tehdy stále pouze queued a byl bezpečně zrušen před pytest child, nikoli
+přerušen validní running test. Nový full se spouští až nad touto opravou.

@@ -6,7 +6,7 @@
 - Scope: production; omitted files: 276
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `b06ab621b5f0b27df8e824ded4b566851a02881b186baaa606ed51355a1ef847`; content: `2507ba5fdaa4ebc6d77714be6a400027f607c50eb38d2fd0c0f13f388ce49130`; freshness: CONTENT_VERIFIED
+- Context: `9a4452f6aecaa79fd2dda34b5f77ae6e3024ca7ff97ea82e8413cb406c32ef77`; content: `22d8d89dc38fd3fe01249c4ec9bcc98f08bfff0d9a01bc26aa02da7e7999a787`; freshness: CONTENT_VERIFIED
 - Files indexed: 59
 - Symbols and sections: 628
 - Internal imports: 189
