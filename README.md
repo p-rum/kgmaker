@@ -257,6 +257,12 @@ produce `BINARY_XLS_UNSUPPORTED` with `status: UNSUPPORTED`, byte SHA-256 and
 a file locator; no workbook values are extracted. Feature packets and data audits
 retain these gaps in `coverage.artifact_diagnostics` (repo-qualified in workspaces).
 A binary signature identifies a container/header, not a validated Excel workbook.
+`xlsx-offline-3` extracts bounded A1/range tokens without treating exponents or
+function names such as `LOG10` as cells. OFFSET, shared formulas, INDIRECT,
+external references and unsupported 3D/whole-row/whole-column forms remain explicit
+graph diagnostics; formulas are never evaluated and audits keep UNKNOWN availability.
+Literal Unicode/quoted sheet qualifiers bind to their sheet; unrecognized qualifiers
+stay unresolved and cannot fall back to local cells. Spaced A1 ranges retain all cells.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
 evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an

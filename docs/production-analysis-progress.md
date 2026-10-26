@@ -294,3 +294,18 @@ store. Přímý extractor kontroluje archive limit před hashováním. Finální
 100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
 Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
 Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).
+
+## T003-S09-W01 — hranice formula tokenů a dynamických referencí
+
+VERIFIED_IN_SCOPE pro `xlsx-offline-3`: existující bounded offline XLSX extrakce
+zůstává zachována; nová oprava neinterpretuje exponent `1E10` ani function name
+`LOG10` jako buňku. Actual ZIP regressions ověřují quoted strings, sheet/$/range,
+shared/follower, INDIRECT, OFFSET, external a nepodporované 3D/whole-row/column
+formy. Tyto boundaries nevytvoří domyšlené dependency ani business missing verdict;
+audit zůstává UNKNOWN. Falešné cell locators se odmítají bez změny store.
+Workspace parser-version identity zahodí dřívější v1 výsledky bez worker procesů.
+Oprava z nezávislého review doplňuje multi-sheet Unicode/numeric/quoted qualifiers,
+literal sheet names s INDIRECT/OFFSET textem, explicitní boundary při neznámém
+qualifieru a spaced row/column/A1 range tvary; nevznikne falešný local fallback.
+Jde o opravu existujících AC01–AC04, ne plnou Excel grammar či dokončení S09/AC09.
+Přesné ověření a omezení: [change note39](changes/39_boundXlsxFormulaReferences.md).
