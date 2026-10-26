@@ -704,6 +704,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                        **{**(original.metadata or {}), "types": object_types, "qualifier": "&" + original_name,
                           "condition_status": object_state,
                           "registration_origin": "FACTORY_OBJECT", "factory_name": original_name,
+                          "declared_type": source.get("owner") if source.get("kind") == "class" else str(source.get("type") or "").split("<", 1)[0],
                           "factory_product_type": info["product_type"]})
         for key, edge in list(edges.items()):
             if edge.target == original.id:
@@ -814,14 +815,16 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             qualified_candidates = []
             for candidate in candidates:
                 metadata = nodes[candidate["bean"]].metadata or {}
-                if metadata.get("registration_origin") in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"}:
+                origin = metadata.get("registration_origin")
+                official_factory = str(field.get("type", "")).split("<", 1)[0] == FACTORY
+                if origin in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"} or origin == "FACTORY_OBJECT" and not official_factory:
                     assignability = registration_assignability(metadata.get("declared_type"), field.get("type"), injection_kind, type_records)
                     if assignability == "INCOMPATIBLE":
                         continue
                     if assignability == "UNKNOWN":
                         candidate = {**candidate, "condition_status": _combined_state(candidate["condition_status"], "UNKNOWN")}
                         diagnostics.append({"code": "SPRING_REGISTRATION_ASSIGNABILITY_BOUNDARY", "path": path,
-                            "source_line": line, "reason": "Qualified registration/product assignability is unproven."})
+                            "source_line": line, "reason": "Qualified registration/product/factory-object assignability is unproven."})
                 qualified_candidates.append(candidate)
             candidates = qualified_candidates
             if str(field.get("type", "")).split("<", 1)[0] == FACTORY:

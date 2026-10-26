@@ -73,6 +73,8 @@ public Product getObject(){throw new AssertionError("never invoke");} public Cla
         "MismatchFactory": '''package app; @org.springframework.stereotype.Component("mismatchFactory") public class MismatchFactory implements org.springframework.beans.factory.FactoryBean<Product> {
 public Product getObject(){return new Product();} public Class<?> getObjectType(){return Other.class;} }''',
         "OtherFactory": '''package app; @org.springframework.stereotype.Component("otherFactory") public class OtherFactory implements org.springframework.beans.factory.FactoryBean<Other> {public Other getObject(){return new Other();} public Class<?> getObjectType(){return Other.class;}}''',
+        "DualFactory": "package app; @org.springframework.stereotype.Component(\"dualFactory\") public class DualFactory implements org.springframework.beans.factory.FactoryBean<Product>, fake.FactoryBean {public Product getObject(){return new Product();} public Class<?> getObjectType(){return Product.class;}}",
+        "DecoyConsumer": "package app; import fake.FactoryBean; import org.springframework.stereotype.Service; import org.springframework.beans.factory.annotation.*; @Service public class DecoyConsumer { @Autowired @Qualifier(\"&literalFactory\") FactoryBean wrongFactory; @Autowired @Qualifier(\"&dualFactory\") FactoryBean validDual; }",
         "FakeFactory": "package app; @org.springframework.stereotype.Component public class FakeFactory implements fake.FactoryBean {}",
         "FactoryParent": '''package app; public abstract class FactoryParent<T> implements org.springframework.beans.factory.FactoryBean<T> {public T getObject(){return null;} public Class<?> getObjectType(){return Product.class;}}''',
         "InheritedFactory": '''package app; @org.springframework.stereotype.Component("inheritedFactory") public class InheritedFactory extends FactoryParent<Product> {}''',
@@ -169,6 +171,10 @@ def test_factory_producer_and_qualified_product_selection(registration_project):
     beans = {n["name"]: n for n in graph["nodes"] if n["kind"] == "spring_bean"}
     assert beans["anonymousFactory"]["metadata"]["condition_status"] == "UNKNOWN"
     assert beans["literalProducer"]["metadata"]["condition_status"] == "ACTIVE"
+    invalid_factory = next(n for n in graph["nodes"] if n["kind"] == "spring_injection" and n["name"] == "DecoyConsumer.wrongFactory")
+    assert not any(e["source"] == invalid_factory["id"] and e["kind"] in {"injects_bean", "may_inject_bean"} for e in graph["edges"])
+    valid_dual = next(n for n in graph["nodes"] if n["kind"] == "spring_injection" and n["name"] == "DecoyConsumer.validDual")
+    assert any(e["source"] == valid_dual["id"] and e["target"] == beans["&dualFactory"]["id"] and e["kind"] == "injects_bean" for e in graph["edges"])
     for field in ("factoryProduct", "registeredProduct"):
         injection = next(n for n in graph["nodes"] if n["kind"] == "spring_injection" and n["name"] == "ForeignConsumer." + field)
         assert not any(e["source"] == injection["id"] and e["kind"] in {"injects_bean", "may_inject_bean"} for e in graph["edges"])
