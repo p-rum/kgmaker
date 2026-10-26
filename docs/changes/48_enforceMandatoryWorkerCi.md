@@ -29,7 +29,9 @@ omezený kontrakt.
 [T003-S11-W04](../tasks/T003-S11-04-mandatoryWorkerCi.md), T003-S11, T003-AC11.
 Závislosti worker distribution PR18 a exporter distribution PR22 jsou v main;
 výchozí main `4113a7975451a8313321fd521252485c959908e3` již obsahuje i K2,
-Windows a Spring selektory.
+Windows a Spring selektory. Finální integrace a plný běh jsou nad
+`ff26a6d74679fc38820c1f2fe711b1db20af2ca1` s T008; product runtime je
+byte-identický tomuto main.
 
 | AC | Konkrétní důkaz |
 |---|---|
@@ -44,9 +46,17 @@ Windows a Spring selektory.
 - Počáteční běh negativní sady odhalil závislost očekávaného textu na JRE místo
   JDK hostitele a jiný text volitelného K2 SKIP. Opraveno deterministickými
   discovery-only tool cestami a oddělenou kontrolou povinné/volitelné diagnostiky.
-- `git diff --check`: PASS před finálním semantic/scan.
-- Plná sada se skutečnými připravenými workery a povinnými K1/K2/Spring flags:
-  běží/čeká na sdílený testovací lock; finální výsledek bude doplněn před PR ready.
+- `git diff --check`: PASS.
+- Plná sada: **498 PASS, 10 SKIP v 262.92 s**, JDK21.0.6, Kotlin2.1.10,
+  skutečné K1/K2/TypeScript workery, `KGMAKER_REQUIRE_WORKERS=1`,
+  `KGMAKER_REQUIRE_K2=1`, `KGMAKER_REQUIRE_SPRING_IMPORTS=1`, pinned Spring6.2.2
+  API. Volitelné SKIP patří nepřítomným Maven/Gradle/second-JDK či nativnímu
+  Windows rozsahu tohoto Linux běhu; samostatné skutečné CI joby zůstávají
+  požadované. Log/XML byly uchovány mimo repo.
+- Předchozí plný běh byl přerušen zrušením nástroje před dokončením; není
+  vydáván za PASS a byl nahrazen výše uvedeným dokončeným během.
+- Nezávislá source revize: bez blokujících nálezů; immutable prefix všech
+  100 main epizod zachován, existujících 5 konceptů/9 hran zachováno.
 - Nové CI této větve: NOT_RUN před publikací. Předchozí main PR30 měl všech sedm
   jobů SUCCESS (40370755215); to nenahrazuje CI nového HEAD.
 
