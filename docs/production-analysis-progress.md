@@ -167,6 +167,15 @@ Adresář se shodnými `.class`, ale rozdílným resource souborem je explicitn�
 odmítnut jako unsupported kind a nevytvoří hranu.
 Runtime deployment ani mapování podle názvu tím není tvrzeno; [evidence](changes/29_mapCrossRepoArtifacts.md). Integrovaný strict běh nad W01–W05: 242 PASS, 0 SKIP.
 
+## T005 — společný model pohledu (integrace 2026-10-26)
+
+T005 dodává `architecture_model.py`, čistý validator a JSON Schema view v1.
+Implementace nepřidává discovery, CLI ani renderery a nezvyšuje evidence.
+T004 a T006–T044 zůstávají SPECIFICATION; existující graph v1/v2/v3 se nemění.
+Ověření modelu a integrace s aktuálním main je uvedeno v
+[change note 11](changes/11_addViewModel.md). Historické výsledky ostatních
+work packages výše zůstávají beze změny.
+
 ## T003-S09-W04 — hash-bound approved methodology
 
 VERIFIED_IN_SCOPE: existing implementation-vs-approved-requirement conflict behavior is preserved. Feature packets now verify exported pages, attachments and approval-sidecar content before reusing conflicts. Stale/legacy indexes are omitted with a limitation; duplicate assertion decisions and unextractable approvals leave the previous cache unchanged. `tests/test_methodology_conflicts.py` covers two page versions, stale sidecar, legacy index and ambiguity; `tests/test_scanner.py::test_fa21_approved_requirement_conflict_preserves_authority` covers conflict provenance. Local `PYTHONPATH=src python3 -m pytest -q`: 203 passed in 39.44 s with `KGMAKER_REQUIRE_WORKERS=1` and reused existing baseline build outputs. This does not complete T003-S09.

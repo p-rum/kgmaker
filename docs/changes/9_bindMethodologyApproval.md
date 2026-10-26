@@ -89,3 +89,10 @@ TypeScript 5.7.3, Python 3.12.14). Oba skutečné compiler workery a všechny
 compiler acceptance testy prošly. SKIP jsou skutečné Maven/Gradle build-runner
 varianty bez executable na PATH a druhé JDK; nejde o nedostupné workery.
 Předchozí failed strict pokus zůstává výše jako historická evidence přípravy.
+
+Integrace po merge T005 / PR11 proti main
+`c0a10261c2ff1f83291125ec838bbaeea8723532`: methodology/feature/scanner +
+`tests/test_t005_add_view_model.py` **77 PASS** (1.12 s). Čistý model pohledu
+nemění compiler/provenance cestu; předchozí skutečný strict běh zůstává výše.
+Konflikty semantic historie opět zachovaly všechny unikátní identity obou větví
+a novější upstream provenance stejné identity.

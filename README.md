@@ -48,6 +48,11 @@ classify --root . --explain --format json`, `kgmaker graph rank --profile execut
 architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
+The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
+deterministic JSON envelope for future high-level interface, topology and process
+projections. It does not discover or render those views; the existing CLI is
+unchanged. See [architecture](docs/architecture.md) and the [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
+
 ```text
 kgmaker init [--root PATH] [--force]
 kgmaker scan [--root PATH] [--no-docs] [--confluence-dir PATH] [--confluence-report PATH]
