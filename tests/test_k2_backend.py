@@ -69,8 +69,12 @@ def test_missing_k2_distribution_never_falls_back_to_k1(tmp_path):
     plain = tmp_path / "jvm/target/kgmaker-jvm-worker.jar"
     plain.parent.mkdir(parents=True)
     plain.write_bytes(b"K1 exists but must never be selected")
+    java = tmp_path / 'jdk/bin/java.exe'
+    java.parent.mkdir(parents=True)
+    java.write_bytes(b'not executed')
+    (java.parent / 'javac.exe').write_bytes(b'not executed')
     with patch("subprocess.Popen", side_effect=AssertionError("implicit fallback process")), \
-         patch("kgmaker.inspection.shutil.which", return_value="java"):
+         patch("kgmaker.inspection.shutil.which", return_value=str(java)):
         with pytest.raises(WorkerError, match="Kotlin backend k2") as caught:
             inspect_jvm(tmp_path, kotlin_backend="k2", home=tmp_path)
     assert caught.value.status == "TOOLCHAIN_UNAVAILABLE"

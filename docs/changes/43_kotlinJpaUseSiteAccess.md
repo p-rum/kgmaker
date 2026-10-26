@@ -98,3 +98,10 @@ values, fail-closed JPA mappings, embeddable access, the canonical JPA package
 guard, and actual Javac/K2 tests.
 `semantic apply`, `semantic validate`, final `kgmaker scan`, `kgmaker check`,
 and `git diff --check` passed; memory capture recorded the follow-up review.
+
+Mainline integration was checked on `a83dbab6263eb2fe225f0da51f2f2549c0ab162e`.
+The S06 framework and K2 worker files are byte-identical to the reviewed core;
+mainline's Windows JDK-selection change is preserved. Actual K2/Javac compatibility,
+worker protocol/install, and Windows install slices passed (36 passed, 1 skipped
+across the two focused runs); the full S06 suite remains the recorded 379 passed,
+9 skipped run before this unrelated Windows integration.
