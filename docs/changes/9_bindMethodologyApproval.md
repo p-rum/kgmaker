@@ -73,3 +73,19 @@ Finální lokální full suite po opravě external-packet freshness:
 artefakty bez skutečné Maven fixture: 229 PASS, 7 SKIP, 14 setup ERROR
 (`Actual Maven fixture build is required`), tedy nikoli PASS; změna nezakrývá
 chybějící toolchain/fixture. Nový vzdálený compiler CI musí tuto hranici ověřit.
+
+Po dokončení skutečné Maven fixture v koordinujícím checkoutu (BUILD SUCCESS,
+JUnit 1 PASS) byly její ignorované `target` artefakty přeneseny do tohoto worktree
+a strict kontrola zopakována:
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/kgmaker-venv/bin:$PATH \
+PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q
+```
+
+Výsledek: **246 PASS, 7 SKIP** v 84.81 s (Temurin 21.0.6, Kotlin 2.1.10,
+TypeScript 5.7.3, Python 3.12.14). Oba skutečné compiler workery a všechny
+compiler acceptance testy prošly. SKIP jsou skutečné Maven/Gradle build-runner
+varianty bez executable na PATH a druhé JDK; nejde o nedostupné workery.
+Předchozí failed strict pokus zůstává výše jako historická evidence přípravy.
