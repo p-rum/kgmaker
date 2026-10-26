@@ -52,6 +52,40 @@ obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
 
+### Instalace mimo checkout
+
+Od T003-S11-W01 obsahuje wheel balíček `kgmaker_workers`. Jeho adresář má stejný
+layout jako `workers/` v checkoutu. Resolver používá v pořadí explicitní
+`--worker-home`, `KGMAKER_WORKERS_HOME`, instalovaný balíček a při přímém běhu ze
+zdrojů checkout. Explicitní chybějící či neúplný adresář nikdy nenahradí jiným
+workerem. Missing runtime/artifact a nejednoznačný versioned JVM JAR vracejí
+`TOOLCHAIN_UNAVAILABLE`; poslední index se nepřepíše.
+
+Core wheel obsahuje skripty, lockfiles a zdroje trusted builderů. JDK/Node,
+Maven/Kotlin ani npm samotné nejsou součástí wheelu. Runtime JARs s knihovnami a
+TypeScript 5.7.3 se zabalí pouze tehdy, když je release builder předem explicitně
+připraví níže uvedenými příkazy. Stejné artefakty jsou zahrnuty i do sdist.
+Po přípravě použijte čistý build adresář, aby starý `build/lib` nezanesl do wheelu
+odstraněné soubory; sestavení ani instalace nespouštějí npm či compiler builder.
+
+```bash
+# V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.
+python -m pip wheel --no-deps --no-build-isolation --wheel-dir /tmp/kgmaker-dist .
+# Cílový venv mimo checkout:
+python -m pip install --no-index --no-deps /tmp/kgmaker-dist/kgmaker-0.1.0-py3-none-any.whl
+kgmaker scan --root /path/to/project
+kgmaker inspect frontend --root /path/to/project
+# Alternativa s vlastní kompletní distribucí, bez fallbacku:
+KGMAKER_WORKERS_HOME=/opt/trusted/workers kgmaker inspect code --root /path/to/project
+kgmaker inspect frontend --root /path/to/project --worker-home /opt/trusted/workers
+```
+
+Linux acceptance v `tests/test_worker_install.py` skutečně sestaví wheel,
+nainstaluje jej offline do čistého venv, odstraní vstupy a analyzuje Java i
+TypeScript mimo checkout. Samostatná source-only varianta ověřuje sdist → wheel
+bez runtime artefaktů a scan bez JDK/Node nebo child procesů. Windows transport,
+immutable publication a úplná release matice zůstávají samostatnou prací.
+
 Závislosti workerů se instalují samostatně, nikdy při scan nebo hooku:
 
 ```bash

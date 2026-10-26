@@ -36,10 +36,19 @@ def artifact_hash(path: Path) -> str:
 
 
 def worker_home(path: Path | None = None) -> Path:
+    """Explicit selection wins; installed resources precede checkout fallback.
+
+    A missing explicit directory is never replaced by another distribution.
+    Resource lookup does not require or execute either optional runtime.
+    """
     if path is not None:
-        return path.resolve()
+        return path.expanduser().resolve()
     if os.environ.get("KGMAKER_WORKERS_HOME"):
-        return Path(os.environ["KGMAKER_WORKERS_HOME"]).resolve()
+        return Path(os.environ["KGMAKER_WORKERS_HOME"]).expanduser().resolve()
+    from importlib.util import find_spec
+    resources = find_spec("kgmaker_workers")
+    if resources is not None and resources.origin is not None:
+        return Path(resources.origin).resolve().parent
     return Path(__file__).resolve().parents[2] / "workers"
 
 
@@ -60,13 +69,15 @@ def _jvm_worker_jar(home: Path) -> Path:
     if len(candidates) == 1 and candidates[0].is_file():
         return candidates[0]
     raise WorkerError(
-        "Optional JVM worker/JDK unavailable; scan remains usable. "
-        "Build exactly one trusted JVM worker artifact explicitly.",
+        "Optional JVM worker unavailable or ambiguous at " + str(home) + "; scan remains usable. "
+        "Build exactly one trusted JVM worker artifact explicitly, or select --worker-home / KGMAKER_WORKERS_HOME.",
         "TOOLCHAIN_UNAVAILABLE",
     )
 
 
 def command(language: str, home: Path | None = None) -> list[str]:
+    if language not in {"jvm", "typescript"}:
+        raise WorkerError("Unsupported worker language: " + language, "TOOLCHAIN_UNAVAILABLE")
     home = worker_home(home)
     if language == "jvm":
         java = shutil.which("java")
@@ -76,8 +87,10 @@ def command(language: str, home: Path | None = None) -> list[str]:
         return [java, "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
     script = home / "typescript/worker.cjs"
-    if not node or not script.is_file() or not (home / "typescript/node_modules/typescript").exists():
-        raise WorkerError("Optional TypeScript worker/Node unavailable; install pinned worker dependencies explicitly.", "TOOLCHAIN_UNAVAILABLE")
+    if not node or not script.is_file() or not (home / "typescript/node_modules/typescript/lib/typescript.js").is_file():
+        raise WorkerError("Optional TypeScript worker/Node unavailable at " + str(home)
+                          + "; install pinned dependencies explicitly or select --worker-home / KGMAKER_WORKERS_HOME."
+                          + " SOURCE_ONLY scan remains usable.", "TOOLCHAIN_UNAVAILABLE")
     return [node, str(script)]
 
 

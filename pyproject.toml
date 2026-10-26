@@ -15,8 +15,27 @@ dependencies = []
 [project.scripts]
 kgmaker = "kgmaker.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["kgmaker", "kgmaker_workers"]
+package-dir = {"" = "src", "kgmaker_workers" = "workers"}
+include-package-data = false
+
+[tool.setuptools.package-data]
+kgmaker_workers = [
+  "typescript/worker.cjs", "typescript/package.json", "typescript/package-lock.json",
+  "typescript/node_modules/typescript/package.json",
+  "typescript/node_modules/typescript/LICENSE.txt",
+  "typescript/node_modules/typescript/ThirdPartyNoticeText.txt",
+  "typescript/node_modules/typescript/lib/*", "typescript/node_modules/typescript/lib/*/*.json",
+  "jvm/build.py", "jvm/pom.xml", "jvm/dependencies.lock.json",
+  "jvm/src/main/java/org/kgmaker/worker/*.java",
+  "jvm/src/main/kotlin/org/kgmaker/worker/*.kt",
+  "jvm/target/kgmaker-jvm-worker*.jar", "jvm/target/lib/*.jar",
+  "jvm/target/licenses/**/*",
+  "build/build.py", "build/gradle/export.gradle",
+  "build/maven/BuildExport.java", "build/maven/components.xml",
+  "build/maven/target/kgmaker-build-export.jar",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
