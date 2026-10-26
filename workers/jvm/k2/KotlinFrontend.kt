@@ -165,6 +165,20 @@ class KotlinFrontend(private val state: State) {
                                         null, reason)
                                     state.sites.last { it["id"] == id }.apply {
                                         put("compiler_backend", backend); put("compiler_version", "2.1.10")
+                                        val psi = targetSymbol?.psi
+                                        val declarations = if (psi is PsiMethod) listOf(psi) else (psi as? KtNamedFunction)?.toLightMethods().orEmpty()
+                                        val declaration = declarations.singleOrNull { it.parameterList.parametersCount == targetSymbol?.valueParameters?.size }
+                                        val receiverType = call?.partiallyAppliedSymbol?.dispatchReceiver?.type as? org.jetbrains.kotlin.analysis.api.types.KaClassType
+                                        if (target != null && declaration != null && receiverType != null &&
+                                            !declaration.hasModifierProperty(PsiModifier.STATIC) && !declaration.hasModifierProperty(PsiModifier.PRIVATE) &&
+                                            !declaration.hasModifierProperty(PsiModifier.FINAL) && declaration.containingClass?.hasModifierProperty(PsiModifier.FINAL) != true &&
+                                            (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
+                                            val classId = receiverType.classId
+                                            val receiver = (classId.packageFqName.asString().replace('.', '/') + "/" +
+                                                classId.relativeClassName.asString().replace('.', '$')).trimStart('/')
+                                            put("dispatch_kind", if (declaration.containingClass?.isInterface == true) "INTERFACE" else "VIRTUAL")
+                                            put("dispatch_receiver", receiver)
+                                        }
                                     }
                                 }
                             })

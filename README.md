@@ -414,3 +414,12 @@ exact Gradle classpath order. `kgmaker project build-plan --build-system gradle
 perform the export; scan/feature/hook never launch Gradle.
 
 Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
+
+Dependency dispatch používá bounded ordered classpath metadata index pro skutečné
+JARy/adresáře. Javac, K1/K2 call expressions a ASM virtual/interface sites zachovávají
+oddělený declared target a konzervativní kandidáty v artifact realms; nikdy tím
+nedokazují runtime execution ani data availability. Reference/static/private/final
+calls nejsou virtuálně rozšiřovány. Missing/corrupt/shadow/truncated hierarchy a
+unsupported multi-release JAR mají konkrétní důvod, `dispatch_complete=false`.
+Příklad: `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
+po explicitním build-importu; [matice a limity](docs/compiler-inspection.md#t003-s04-w04--ordered-dependency-dispatch).

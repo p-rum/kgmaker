@@ -70,7 +70,7 @@ public final class State {
         for(Map<String,Object> entry:classpath) {
             Path p=Path.of((String)entry.get("path"));
             boolean found=Files.isDirectory(p)&&Files.isRegularFile(p.resolve(resource));
-            if(!found&&p.toString().endsWith(".jar")) try(var jar=new JarFile(p.toFile())){found=jar.getJarEntry(resource)!=null;}catch(IOException ignored){}
+            if(!found&&p.toString().endsWith(".jar")) try(var jar=new JarFile(p.toFile(),false,JarFile.OPEN_READ,Runtime.version())){found=jar.getJarEntry(resource)!=null;}catch(IOException ignored){}
             if(found) {
                 Map<String,Object> value=entry.get("realm") instanceof Map<?,?>? (Map<String,Object>)entry.get("realm"):
                     map("repo_id","dependency","module",entry.containsKey("sha256")?entry.get("sha256"):artifactHash(Files.isDirectory(p)?p.resolve(resource):p),"source_set","classpath","scope",context.get("scope"));
