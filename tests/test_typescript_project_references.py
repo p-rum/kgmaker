@@ -84,6 +84,47 @@ def test_source_redirect_does_not_resolve_against_stale_emitted_declaration(tmp_
     assert output.read_text() == 'export declare function choose(x: string): boolean;'
 
 
+def test_consumer_options_do_not_fork_owner_declaration_or_lose_its_cfg(tmp_path):
+    library = config(tmp_path, 'lib')
+    library.write_text('export function choose(x: number) { if (x) return 1; return null; }')
+    library_config = tmp_path / 'lib/tsconfig.json'
+    payload = json.loads(library_config.read_text())
+    payload['compilerOptions'].update(strict=False, strictNullChecks=False)
+    library_config.write_text(json.dumps(payload))
+    config(tmp_path, 'app', ('lib',)).write_text(
+        "import {choose} from '../../lib/src/index'; export function run() { return choose(2); }")
+    (tmp_path / 'tsconfig.json').write_text(json.dumps({'files': [], 'references': [{'path': './app'}]}))
+    result = inspect(tmp_path, publish=False)
+    assert result['status'] == 'COMPLETE_WITHIN_SUPPORTED_MATRIX', result['diagnostics']
+    owners = [symbol for symbol in result['graph']['symbols']
+              if symbol['path'] == 'lib/src/index.ts' and symbol['name'] == 'choose']
+    assert len(owners) == 1, owners
+    owner = owners[0]
+    assert owner['type'] == '(x: number) => number'
+    calls = [site for site in result['graph']['call_sites'] if site['path'] == 'app/src/index.ts']
+    assert len(calls) == 1 and calls[0]['declared_target'] == owner['id']
+    assert any(cfg['method'] == owner['id'] for cfg in result['graph']['cfgs'])
+
+
+def test_disabled_source_redirect_rejects_stale_declaration_without_store_mutation(tmp_path):
+    solution(tmp_path)
+    inspect(tmp_path)
+    store = tmp_path / '.kgmaker/graph.json'
+    before = store.read_bytes()
+    path = tmp_path / 'app/tsconfig.json'
+    payload = json.loads(path.read_text())
+    payload['compilerOptions']['disableSourceOfProjectReferenceRedirect'] = True
+    path.write_text(json.dumps(payload))
+    output = tmp_path / 'left/dist/index.d.ts'
+    output.parent.mkdir()
+    output.write_text('export declare function choose(x: string): boolean;')
+    (tmp_path / 'app/src/index.ts').write_text(
+        "import {choose} from '../../left/src/index'; export function run() { return choose('stale-valid'); }")
+    with pytest.raises(WorkerError, match='TS_PROJECT_REFERENCE_REDIRECT_DISABLED:app/tsconfig.json'):
+        inspect(tmp_path)
+    assert store.read_bytes() == before
+
+
 def test_incremental_project_fingerprints_propagate_only_through_reference_edges(tmp_path):
     solution(tmp_path)
     before = inspect(tmp_path, publish=False)['context']['project']['project_graph']['projects']

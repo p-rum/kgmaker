@@ -26,11 +26,30 @@ function analyze(request) {
   const functionNodes = [];
   const rootFileSet = new Set();
   const sourceOwners = new Map();
+  const ownerDeclarationIndexes = new WeakMap();
 
   function projectFor(file) { return sourceOwners.get(path.resolve(file)); }
   function symbolPrefix(file) {
     const project = projectFor(file);
     return project && projects.size > 1 ? `${prefix}:project:${project.config}` : prefix;
+  }
+
+  function declarationContext(node) {
+    const source=node.getSourceFile(), project=projectFor(source.fileName);
+    if (!project) return {node,checker};
+    const owner=ownerPrograms.get(project.id);
+    const ownerSource=owner.program.getSourceFile(path.resolve(source.fileName));
+    if (!ownerSource) throw Error(`TS_PROJECT_OWNER_DECLARATION_MISSING:${project.config}: ${source.fileName}`);
+    if (ownerSource===source) return {node,checker:owner.checker};
+    let index=ownerDeclarationIndexes.get(ownerSource);
+    if (!index) {
+      index=new Map();
+      const visit=n=>{index.set(`${n.kind}:${n.pos}:${n.end}`,n);ts.forEachChild(n,visit);};
+      visit(ownerSource);ownerDeclarationIndexes.set(ownerSource,index);
+    }
+    const declaration=index.get(`${node.kind}:${node.pos}:${node.end}`);
+    if (!declaration) throw Error(`TS_PROJECT_OWNER_DECLARATION_MISSING:${project.config}: ${source.fileName}`);
+    return {node:declaration,checker:owner.checker};
   }
 
   function inside(file) {
@@ -79,12 +98,13 @@ function analyze(request) {
       ts.isFunctionExpression(node) || ts.isConstructorDeclaration(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node);
   }
   function id(node) {
+    const owned=declarationContext(node);node=owned.node;
     if (identityCache.has(node)) return identityCache.get(node);
     const loc = location(node);
     let signature = '';
     if (callable(node) || ts.isMethodSignature(node) || ts.isConstructSignatureDeclaration(node) || ts.isCallSignatureDeclaration(node)) {
-      const s = checker.getSignatureFromDeclaration(node);
-      if (s) signature = checker.signatureToString(s,node,ts.TypeFormatFlags.NoTruncation);
+      const s = owned.checker.getSignatureFromDeclaration(node);
+      if (s) signature = owned.checker.signatureToString(s,node,ts.TypeFormatFlags.NoTruncation);
     }
     let value = `${symbolPrefix(node.getSourceFile().fileName)}:${loc.path}:${owner(node)}:${name(node)}:${signature || ts.SyntaxKind[node.kind]}`;
     if (ts.isParameter(node) && node.parent.parameters) {
@@ -96,13 +116,14 @@ function analyze(request) {
     return value;
   }
   function register(node, kind) {
+    const owned=declarationContext(node);node=owned.node;
     const identity = id(node);
     if (!symbols.has(identity)) {
       if (symbols.size >= limits.symbols) throw Error('symbol output limit exceeded');
       const loc = location(node);
-      const type = node.name ? checker.getTypeAtLocation(node.name) : checker.getTypeAtLocation(node);
+      const type = node.name ? owned.checker.getTypeAtLocation(node.name) : owned.checker.getTypeAtLocation(node);
       symbols.set(identity,{id:identity,name:name(node),owner:owner(node),kind:kind || (callable(node)?'function':ts.SyntaxKind[node.kind]),
-        type:checker.typeToString(type,node,ts.TypeFormatFlags.NoTruncation),...loc,
+        type:owned.checker.typeToString(type,node,ts.TypeFormatFlags.NoTruncation),...loc,
         identity_stability:identity.includes(':snapshot:')?'SNAPSHOT':'DECLARATION',
         project_id:projectFor(node.getSourceFile().fileName)?.id || null,
         scope:context.scope,context_id:context.id});
@@ -179,6 +200,8 @@ function analyze(request) {
       onUnRecoverableConfigFileDiagnostic:d=>{throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.flattenDiagnosticMessageText(d.messageText,'\n'));}});
     if (!parsed) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: unable to parse tsconfig`);
     if (parsed.errors.length) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.formatDiagnostics(parsed.errors,{getCanonicalFileName:p=>p,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
+    if (parsed.options.disableSourceOfProjectReferenceRedirect && parsed.projectReferences?.length)
+      throw Error(`TS_PROJECT_REFERENCE_REDIRECT_DISABLED:${relative(config)}: source-reference analysis requires compiler source redirects`);
     const project = {id:`ts-project:${context.repo_id}:${relative(config)}`,config:relative(config),parsed,references:[]};
     projects.set(config,project);
     for (const reference of parsed.projectReferences || []) {
@@ -207,6 +230,7 @@ function analyze(request) {
     return {project,program:ts.createProgram({rootNames:project.parsed.fileNames,options:project.parsed.options,
       projectReferences:project.parsed.projectReferences,host})};
   });
+  const ownerPrograms=new Map(programs.map(({project,program})=>[project.id,{program,checker:program.getTypeChecker()}]));
   let checker;
   const fingerprints=new Map();
   const projectGraph={version:1,root_project:rootProject.id,projects:orderedProjects.map(project=>{
