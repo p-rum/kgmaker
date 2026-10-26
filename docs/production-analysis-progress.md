@@ -1,5 +1,24 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W01 — TypeScript project references (2026-10-26)
+
+VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
+s transitive composite projekty, repo/config-qualified identities a skutečné
+Program/TypeChecker source redirects bez emitted outputs. Captured project graph
+v1 ukládá config/reference/options/file kontrakt; transitive změna vyřadí starou
+compiler vrstvu při offline refresh bez procesu. Missing/cycle/outside-root a
+overlapping source ownership mají lokalizovanou chybu a nulovou mutaci store.
+`tests/test_typescript_project_references.py` a [change note 36](changes/36_resolveTypeScriptProjectReferences.md)
+uvádějí přesnou matici. Historická strict sada s vlastním workerem v2:
+302 PASS / 7 SKIP po owner-checker a disabled-redirect review opravách nad
+main `3503309`. Integrace K2 navíc odmítá změnu úplného compiler input closure
+mezi preflight/analyze a zachovává původní TS selection slot; skutečné regrese
+a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
+nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
+mimo připravenou matici zůstávají výslovně SKIP.
+T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
+
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
 
 Skutečný Windows Server2025 restricted-user CI
@@ -294,3 +313,18 @@ store. Přímý extractor kontroluje archive limit před hashováním. Finální
 100 PASS, celá sada 274 PASS / 23 toolchain SKIP (viz change note).
 Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
 Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).
+
+## T003-S09-W01 — hranice formula tokenů a dynamických referencí
+
+VERIFIED_IN_SCOPE pro `xlsx-offline-3`: existující bounded offline XLSX extrakce
+zůstává zachována; nová oprava neinterpretuje exponent `1E10` ani function name
+`LOG10` jako buňku. Actual ZIP regressions ověřují quoted strings, sheet/$/range,
+shared/follower, INDIRECT, OFFSET, external a nepodporované 3D/whole-row/column
+formy. Tyto boundaries nevytvoří domyšlené dependency ani business missing verdict;
+audit zůstává UNKNOWN. Falešné cell locators se odmítají bez změny store.
+Workspace parser-version identity zahodí dřívější v1 výsledky bez worker procesů.
+Oprava z nezávislého review doplňuje multi-sheet Unicode/numeric/quoted qualifiers,
+literal sheet names s INDIRECT/OFFSET textem, explicitní boundary při neznámém
+qualifieru a spaced row/column/A1 range tvary; nevznikne falešný local fallback.
+Jde o opravu existujících AC01–AC04, ne plnou Excel grammar či dokončení S09/AC09.
+Přesné ověření a omezení: [change note39](changes/39_boundXlsxFormulaReferences.md).

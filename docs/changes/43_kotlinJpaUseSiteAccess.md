@@ -105,3 +105,14 @@ mainline's Windows JDK-selection change is preserved. Actual K2/Javac compatibil
 worker protocol/install, and Windows install slices passed (36 passed, 1 skipped
 across the two focused runs); the full S06 suite remains the recorded 379 passed,
 9 skipped run before this unrelated Windows integration.
+
+Integration against current main `1091330b67a7ff67db329ffbbb2eaba162313b3f`
+preserves the reviewed S06 `framework.py`, K2 frontend, and K2 JPA tests
+byte-identically. Mainline TypeScript project-reference/context, XLSX formula/cache,
+workspace fingerprint, worker protocol, and Windows changes are retained. Actual
+K2/Javac JPA plus worker protocol checks: **13 passed** with prepared JDK 21,
+K1/K2 workers and fixtures. The full-suite result remains 379 passed, 9 skipped
+before this independent mainline refresh; no full suite was repeated.
+Semantic history has the exact current-main 93-episode prefix followed by four
+S06 episodes. README semantic workflow citations and compiler-inspection JPA
+architecture citations were rechecked against the merged line locations.

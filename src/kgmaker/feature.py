@@ -13,7 +13,7 @@ from .analysis_model import (
     file_hash, inventory_candidate, read_json, safe_path, write_json,
 )
 from .scanner import EXTENSIONS, MAX_FILE_BYTES, SKIP_DIRS, SENSITIVE_NAMES, scan_repository
-from .workbooks import MAX_ARCHIVE_BYTES, binary_format, workbook_hash, BINARY_DIAGNOSTICS_VERSION
+from .workbooks import MAX_ARCHIVE_BYTES, binary_format, workbook_hash, BINARY_DIAGNOSTICS_VERSION, VERSION as WORKBOOK_VERSION
 from .semantic import apply_semantic_layer
 from .dataflow import CAPABILITIES, extract_dataflow
 
@@ -208,7 +208,7 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
     coverage = {"roots": ["."], "artifacts": sorted(sources), "exclusions": excluded,
                 "excluded_directories": sorted(SKIP_DIRS) + ["hidden directories", GENERATED_PREFIX],
                 "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES,
-                                        "workbooks": "xlsx-offline-1", "binary_xls": BINARY_DIAGNOSTICS_VERSION,
+                                        "workbooks": WORKBOOK_VERSION, "binary_xls": BINARY_DIAGNOSTICS_VERSION,
                                         "templates": "thymeleaf-bindings-1"},
                 "artifact_diagnostics": artifact_diagnostics,
                 "dataflow_diagnostics": flow.diagnostics,
