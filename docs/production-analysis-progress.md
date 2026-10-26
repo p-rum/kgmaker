@@ -9,7 +9,9 @@ v1 ukládá config/reference/options/file kontrakt; transitive změna vyřadí s
 compiler vrstvu při offline refresh bez procesu. Missing/cycle/outside-root a
 overlapping source ownership mají lokalizovanou chybu a nulovou mutaci store.
 `tests/test_typescript_project_references.py` a [change note 36](changes/36_resolveTypeScriptProjectReferences.md)
-uvádějí přesnou matici. T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+uvádějí přesnou matici. Finální integrovaná strict sada s vlastním workerem v2:
+284 PASS / 7 SKIP (Maven/Gradle/druhé JDK mimo připravenou matici).
+T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
 ## T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)

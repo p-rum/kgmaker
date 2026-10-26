@@ -2,7 +2,9 @@
 
 Datum: 2026-10-26. Zadání: [T003-S08-W01](../tasks/T003-S08-01-typescriptProjectReferences.md),
 AC01–AC04 a nadřazené T003-AC08. Výchozí main `07ad86592d0b57d071fbc120de462f3400b51213`;
-závislost T003-S03-W05 je sloučena jako PR #17. Celý T003-S08 zůstává PARTIAL.
+závislost T003-S03-W05 je sloučena jako PR #17. Integrovaný main je
+`aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533` (včetně PR #8).
+Celý T003-S08 zůstává PARTIAL.
 
 ## Problém a skutečné změny
 
@@ -23,6 +25,9 @@ Missing, cyklický, outside-root reference či dvojí vlastnictví source soubor
 selže s konkrétní config cestou před publikací store. Preflight a analysis
 musí mít stejný project graph; opakovaná četba změněného vstupu je odmítnuta.
 Nevzniká paralelní store ani pozitivní runtime/data availability důkaz.
+Stávající compiler-workers CI job nyní výslovně spouští také novou referenční
+sadu po přípravě skutečného TS toolchainu; source-only CI její chybění dál
+poctivě vykazuje jako SKIP.
 
 ## Kompatibilita a použití
 
@@ -48,7 +53,23 @@ standardně zneplatní starou compiler vrstvu přes její SHA-256.
 - První focused matice před rozšířením fingerprint testu: 9 PASS / 85.75 s.
 - První strict celá sada nad pracovními vstupy: 272 PASS / 7 SKIP / 227.00 s;
   skutečné JVM/TS workers a Maven fixture artefakty, bez dostupného Maven
-  executable, Gradle a druhého JDK. Finální integrované kontroly následují.
+  executable, Gradle a druhého JDK.
+- Nový skutečný fingerprint test a integrovaná methodology sada: 12 PASS / 12.65 s.
+- Finální integrovaná celá sada s vlastním upraveným workerem:
+  `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_WORKERS_HOME=/workspace/ts-project-refs/workers JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/kgmaker-venv/bin:$PATH PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`:
+  **284 PASS / 7 SKIP / 199.57 s**. Obsahuje všech deset W01 scénářů,
+  skutečné compiler workers, React/overload regresi a instalační sdist/wheel
+  testy. Explicitní worker home zaručuje vlastní worker v2, nikoli resource
+  package z jiného editable checkoutu. Linux, Python 3.12.14, pytest 8.3.4,
+  Temurin 21.0.6+7, Kotlin 2.1.10, TypeScript 5.7.3 a Node 24.19.0.
+- SKIP: dva skutečné Maven scénáře (Maven executable není na PATH), druhý JDK
+  a čtyři Gradle scénáře. Nejde o tvrzení jejich úspěchu nebo nově spuštěného
+  Maven/Gradle buildu. Připravené genuine fixture/worker artefakty byly výslovně
+  převzaty z již sestavené kontrolované distribuce v pracovním prostředí.
+- `node --check workers/typescript/worker.cjs`, `git diff --check`, scoped
+  semantic apply/validate, memory capture a command-generated scan/check:
+  **PASS**. Stávající ověřené semantic vztahy i historie z main jsou zachovány;
+  nepřidává se žádný smyšlený semantic vztah.
 
 ## Hranice a zbývající práce
 

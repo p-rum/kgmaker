@@ -53,7 +53,7 @@ jobs:
           mvn -B -ntp -f fixtures/build-inspection/maven/pom.xml test
           python workers/jvm/build.py --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
-      - run: python -m pytest -q tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py
+      - run: python -m pytest -q tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_typescript_project_references.py
       - name: Explicit Maven plan/runner/export
         run: |
           kgmaker project build-plan --root fixtures/build-inspection/maven --phase test --output "$RUNNER_TEMP/kgmaker-plan.json"

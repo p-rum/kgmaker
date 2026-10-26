@@ -43,7 +43,8 @@ repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
 `context.project.project_graph` v1 uchovává repo/config identity, reference,
-root files a effective options. Symboly nesou `project_id`; stejnojmenné funkce
+root files, effective options a source/reference content fingerprints, které se
+propagují po reference hranách. Symboly nesou `project_id`; stejnojmenné funkce
 v různých projektech se nesloučí. Starý single-project vstup zachovává tvar IDs;
 graph/store v1/v2/v3 a worker protocol v1 se nemění.
 
