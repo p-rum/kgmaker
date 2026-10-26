@@ -106,3 +106,40 @@ zachovány jako `/tmp/tsconfig-w02-prerequisite-interrupted-full.*`. Před nový
 během byly fixture sources byte porovnány s vlastními skutečně zbuilděnými
 checkouty a jejich output explicitně zkopírován. PATH doplněn o
 `/workspace/tools/kotlinc/bin` (Kotlin2.1.10); mandatory flags nebyly zeslabeny.
+
+## Konečný lokální source-final výsledek
+
+**567 PASS /10 SKIP**,787.45s, persistent `/tmp/tsconfig-w02-full.log` a
+`/tmp/tsconfig-w02-full.xml`. Kód odpovídá reviewed Draft PR36 head d416e2a nad
+main33dc; worker/helper/snapshot/test frozen SHA256 zůstaly shodné. Full byl jediný
+dokončený source-final běh po explicitní přípravě všech missing fixtures. Příkaz:
+
+```sh
+flock /workspace/kgmaker-heavy-tests.lock env \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/tsconfig-freshness/workers \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs \
+  --junitxml=/tmp/tsconfig-w02-full.xml
+```
+
+Před tímto final během byl druhý prerequisite-only pokus přerušen:
+**1 FAIL /130 PASS /2 SKIP**,128.90s. React fixture neměla pinned @types/react,
+proto chyběl handles_event (TypeScript overload proof už PASS). Zachovaný
+`/tmp/tsconfig-w02-react-prerequisite-interrupted-full.log/.xml`; frontend package
+a lock/source byly byte porovnány a odpovídající genuine node_modules explicitně
+zkopírovány. Read-only `/workspace/kgmaker-test-prerequisites.py` poté PASS, bez
+instalace či buildu. Žádná runtime oprava nebyla potřebná; full následně prošel.
+
+Deset SKIP je výslovně mimo připravenou lokální matici: Maven/exporter runner1,
+druhé skutečné JDK+Maven1, installed Maven/Gradle exporters2, Gradle included/variant
+fixtures3, Kotlin build Maven exporter1 a Gradle8.13/Kotlin2.2.20 cache1, actual
+non-admin Windows1. Missing toolchain není vykázán jako PASS. Lokální TS/W01/K2 a
+Spring worker prerequisite gates zůstaly mandatory a prošly. Windows dříve
+merged proof ani samostatné build exporter acceptance se tímto znovu netvrdí.
+
+GitHub Actions billing/quota stále blokuje nové CI. Draft PR36 a nezávislé root
+source+actual18PASS19.07s review nejsou náhradou required CI; merge/durable task
+DONE zůstávají pending. Celý S08 a callbacks W03 nejsou touto W02 změnou dokončeny.

@@ -57,3 +57,8 @@ kgmaker status --root ./frontend
 
 Konkrétní skutečné testy a zbývající mezery eviduje
 [change note45](changes/45_scopeTypeScriptConfigFreshness.md).
+
+Lokální source-final matice nad main33dc: focused70PASS a full567PASS/10SKIP
+(787.45s), genuine pinned worker/toolchain. Skip detaily a předchozí setup opravy
+jsou v note45. GitHub Actions billing/quota blokuje nové CI; merge acceptance
+není lokálním proof nahrazena. Windows/K2/exporter runtime support se tímto nemění.
