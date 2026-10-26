@@ -145,6 +145,8 @@ caller selected context and returns `RESOLVED` only for one matching declaration
 multiple matches are `AMBIGUOUS`, and no match is `UNASSIGNED`. Existing
 `backend_repo` mappings and service IDs remain unchanged. A repository, Maven
 module, or Spring `@Service` annotation alone does not establish ownership.
+Repo-qualified compiler context IDs and workspace `@repo/path` symbols are checked
+against the same repository ID before matching roots or module IDs.
 
 
 ## Compiler lifecycle provider

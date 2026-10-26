@@ -57,7 +57,9 @@ Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
 legacy `services` entries remain readable and do not claim ownership by themselves.
-This contract does not discover deployment boundaries or infer runtime identity.
+Repo-qualified compiler contexts and `@repo/path` symbol paths must match the
+symbol repository. This contract does not discover deployment boundaries or infer
+runtime identity.
 
 ```text
 kgmaker init [--root PATH] [--force]

@@ -13,9 +13,12 @@ repozitáře, modulu ani Spring `@Service` sám o sobě není důkazem deployabl
   a externí system IDs. Legacy `backend_repo` a ostatní pole zůstávají beze změny.
 - `resolve_service_ownership` vrací `RESOLVED` pouze pro jedinou shodu;
   více explicitních shod zůstává `AMBIGUOUS`, žádná shoda je `UNASSIGNED`.
-  Výsledek zachovává zadaný context ID.
+  Výsledek zachovává zadaný context ID. Repo-qualified compiler context musí patřit
+  stejnému repo ID jako symbol; workspace paths `@<repo>/<relative-path>` se
+  normalizují pouze tehdy, když prefix odpovídá symbolu.
 - Nevalidní nebo duplicitní deklarace se odmítne při načtení manifestu. Resolver
-  nic nezapisuje a nepovyšuje kind evidence.
+  také odmítne přímou deklaraci s nepodporovanou verzí; nic nezapisuje a nepovyšuje
+  kind evidence.
 
 Související zadání: T007-S01–S05; acceptance T007-AC01–AC06.
 
@@ -33,7 +36,13 @@ service mapping se nepřeklápí na ownership automaticky.
   repo-qualified module selector. SKIP: Maven/JDK exporter, dvě JDK21+
   s Mavenem, 14 Maven fixtures, Gradle 8.13, Kotlin Gradle cache, JVM worker a
   TypeScript worker; žádný SKIP se nepočítá jako PASS.
-- Finální `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_t005_add_view_model.py` po integraci a zpřesnění module selectorů — **43 passed**.
+- Finální `PYTHONPATH=src /workspace/kgmaker-venv/bin/python3 -m pytest -q tests/test_t007_define_service_ownership.py tests/test_workspace.py tests/test_t005_add_view_model.py` po review opravách — **45 passed**.
+- Review regressions cover foreign repo-qualified contexts, a supported
+  repo-qualified context plus `@repo/path`, and direct schema version 99
+  rejection; the T007-only suite passed **8 tests**.
+- Reviewer full-suite result for pre-review commit `d00dd6a`: **264 passed,
+  23 skipped**. The full suite was not repeated after these narrow review fixes;
+  the focused workspace/T007/T005 suite above passed on the final code.
 - `kgmaker check --root .` — **PASS**.
 - `git diff --check` — **PASS**.
 - `kgmaker semantic update --base origin/main`, scoped semantic patch,
@@ -55,9 +64,21 @@ service mapping se nepřeklápí na ownership automaticky.
 ]}}
 ```
 
-`resolve_service_ownership({"repo_id":"backend","path":"orders/Order.kt"},
-declaration, context_id="jvm:orders")` vrátí vlastníka pouze tehdy, pokud jediná
-explicitní deklarace odpovídá. Překryv zůstává nejednoznačný.
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, qualified, resolve_service_ownership
+
+workspace = load_workspace(Path("workspace.json"))  # includes a legacy service id `orders`
+declaration = workspace["service_ownership"]
+context_id = qualified("backend", "jvm:orders")
+symbol = {"repo_id": "backend", "path": "@backend/orders/Order.kt",
+          "module": "com.example.orders", "context_id": context_id}
+result = resolve_service_ownership(symbol, declaration, context_id=context_id)
+```
+
+V manifestu musí být root nebo modul explicitně deklarovaný pro `orders`.
+Překryv zůstává nejednoznačný; cizí repo v context ID nebo `@` path resolver
+odmítne.
 
 ## Zbývající práce a omezení
 

@@ -209,8 +209,11 @@ vrací AMBIGUOUS a žádný UNASSIGNED. Legacy `backend_repo` kontrakt a IDs zů
 čitelné; samotná existence repozitáře/modulu/Spring anotace vlastnictví nedokládá.
 `tests/test_t007_define_service_ownership.py` pokrývá dvě explicitní služby,
 shared library, překryvy, legacy manifest, nevalidní deklaraci bez mutace a
-context mismatch. Cílený běh: 43 PASS včetně workspace/T005 regresí. Full suite:
-253 PASS, 23 SKIP; SKIP jsou chybějící Maven/JDK, Gradle 8.13 a skutečné JVM/TS
-workery. `kgmaker check`, semantic validation a `git diff --check` prošly.
+context mismatch, foreign repo-qualified context, qualified workspace path and
+unsupported direct schema version. Cílený běh po review opravách: 45 PASS včetně
+workspace/T005 regresí. Review full suite na předchozím HEAD `d00dd6a`:
+264 PASS, 23 SKIP; SKIP jsou chybějící Maven/JDK, Gradle 8.13 a skutečné JVM/TS
+workery. Po review opravách nebyl full suite opakován. `kgmaker check`, semantic
+validation a `git diff --check` prošly.
 T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
 Discovery, view aggregation ani T004 nejsou implementovány.

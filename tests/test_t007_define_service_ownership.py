@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from kgmaker.analysis_model import AnalysisError, write_json
-from kgmaker.workspace import load_workspace, resolve_service_ownership
+from kgmaker.workspace import load_workspace, qualified, resolve_service_ownership
 
 
 class T007ServiceOwnershipTests(unittest.TestCase):
@@ -41,8 +41,8 @@ class T007ServiceOwnershipTests(unittest.TestCase):
         declaration = workspace['service_ownership']
         self.assertEqual({'orders', 'billing'}, {item['id'] for item in declaration['services']})
         self.assertEqual('RESOLVED', resolve_service_ownership(
-            {'repo_id': 'backend', 'path': 'orders/OrderService.kt', 'module': 'com.example.orders', 'context_id': 'jvm:orders'},
-            declaration, context_id='jvm:orders')["status"])
+            {'repo_id': 'backend', 'path': '@backend/orders/OrderService.kt', 'module': 'com.example.orders', 'context_id': qualified('backend', 'jvm:orders')},
+            declaration, context_id=qualified('backend', 'jvm:orders'))["status"])
         shared = resolve_service_ownership(
             {'repo_id': 'shared', 'path': 'src/DateUtil.kt', 'module': 'com.example.shared', 'context_id': 'jvm:shared'},
             declaration, context_id='jvm:shared')
@@ -98,6 +98,30 @@ class T007ServiceOwnershipTests(unittest.TestCase):
             {'repo_id': 'shared', 'path': 'src/Order.kt', 'module': 'com.example.orders',
              'context_id': 'jvm:shared'}, repo_scoped, context_id='jvm:shared')
         self.assertEqual('UNASSIGNED', result['status'])
+
+    def test_qualified_context_must_match_repo_and_valid_qualified_context_resolves(self):
+        declaration = self.payload['service_ownership']
+        selected = qualified('backend', 'jvm:orders')
+        symbol = {'repo_id': 'backend', 'path': '@backend/orders/Order.kt',
+                  'module': 'com.example.orders', 'context_id': selected}
+        result = resolve_service_ownership(symbol, declaration, context_id=selected)
+        self.assertEqual('RESOLVED', result['status'])
+        self.assertEqual('orders', result['owner_id'])
+        foreign = qualified('shared', 'jvm:orders')
+        with self.assertRaises(AnalysisError):
+            resolve_service_ownership(
+                {**symbol, 'context_id': foreign}, declaration, context_id=foreign)
+        with self.assertRaises(AnalysisError):
+            resolve_service_ownership(
+                {**symbol, 'path': '@shared/orders/Order.kt'}, declaration, context_id=selected)
+
+    def test_direct_resolver_rejects_unsupported_declaration_version(self):
+        declaration = copy.deepcopy(self.payload['service_ownership'])
+        declaration['schema_version'] = 99
+        with self.assertRaises(AnalysisError):
+            resolve_service_ownership(
+                {'repo_id': 'backend', 'path': 'orders/Order.kt', 'context_id': 'jvm:orders'},
+                declaration, context_id='jvm:orders')
 
     def test_duplicate_service_identity_is_invalid_even_with_different_roots(self):
         invalid = copy.deepcopy(self.payload)

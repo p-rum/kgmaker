@@ -269,7 +269,23 @@ def resolve_service_ownership(symbol: dict, declaration: dict | None, *, context
     if (not isinstance(symbol, dict) or not isinstance(symbol.get('repo_id'), str)
             or symbol.get('context_id') != context_id):
         raise AnalysisError('Ownership symbol requires matching repo_id and context_id')
+    context_repo = split_id(context_id)[0] if context_id.startswith('repo:') else None
+    if context_repo is not None and context_repo != symbol['repo_id']:
+        raise AnalysisError('Ownership context belongs to a different repository')
+    if declaration is not None and (
+            not isinstance(declaration, dict)
+            or type(declaration.get('schema_version')) is not int
+            or declaration.get('schema_version') != 1
+            or set(declaration) != {'schema_version', 'services'}
+            or not isinstance(declaration.get('services'), list)):
+        raise AnalysisError('Unsupported or invalid service ownership declaration')
     path, module = symbol.get('path'), symbol.get('module')
+    if isinstance(path, str) and path.startswith('@'):
+        prefix, separator, path = path[1:].partition('/')
+        if not separator or prefix != symbol['repo_id'] or not path:
+            raise AnalysisError('Qualified ownership path must match symbol repo_id')
+        if source_key(prefix, path) != symbol['path']:
+            raise AnalysisError('Qualified ownership path is not canonical')
     if path is not None and (not isinstance(path, str) or not path or Path(path).is_absolute()
                              or '\\' in path or ':' in path or '..' in Path(path).parts):
         raise AnalysisError('Ownership symbol path must be repository-relative')
