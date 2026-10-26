@@ -108,3 +108,32 @@ Scoped semantic update/apply/validate, memory capture, command-generated
 scan/check, schema check a `git diff --check`: PASS nad integrovanými vstupy.
 Nový exact-head vzdálený CI musí provést publikační workflow; zde se nic
 nepushuje ani nemerguje do main.
+
+## Oprava prerequisites instalačního testu po CI
+
+Vzdálené CI nad integračním HEAD `47774a7` (run40327093326; stejně jako původní
+run40326031572) odhalilo chybnou klasifikaci volitelného Maven testu: GitHub
+unittest image obsahuje `mvn`/JDK, ale tento job explicitně nebuildí trusted
+Maven exporter JAR. Test přesto spustil installed build-plan, který správně
+odmítl chybějící adapter jako `Build exporter unavailable`. Nejde o chybu
+produkčního resolveru ani důvod instalovat/buildit worker implicitně.
+
+Prerequisite kontrola nyní čte výhradně
+`Path(__file__).resolve().parents[1] / workers/build/maven/target/kgmaker-build-export.jar`,
+nikoli resource path jiného editable checkoutu. Při chybějícím artefaktu vrací
+volitelná sada SKIP s konkrétním důvodem; `KGMAKER_REQUIRE_EXPORTERS=1` vrací
+FAIL/blocked. Připravený, ale hashově chybný artefakt se nepřeskakuje: negativní
+hash/protocol testy a všechny skutečné installed-export assertions zůstávají
+beze změny a neexistuje catch měnící runtime chybu na SKIP.
+
+Nový parametrizovaný regresní test simuluje právě preinstalled-tools/missing-own-JAR
+hranici a ověří odlišný optional/mandatory výsledek. Cíleně:
+`PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_exporter_distribution.py -k 'not installed_exporters_run_real_builds_outside_checkout'`
+— **8 PASS, 2 DESELECTED** v0.18s. Obě skutečné build varianty již prošly v
+povinném CI Gradle jobu nad předchozím HEAD; compiler/render joby také prošly.
+Nový exact-head CI se musí zopakovat při publikaci této test-only opravy.
+
+Produkční runtime, packaging, descriptor a CI příkazy jsou byte-identické s
+reviewovaným integračním commitem `47774a7`. Úplná lokální suite/expensive buildy
+se neopakují pouze kvůli opravě prerequisite klasifikace. Scoped semantic
+update/apply/validate, memory capture, scan/check a diff check: PASS.

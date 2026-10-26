@@ -12,6 +12,8 @@ import pytest
 from kgmaker.analysis_model import AnalysisError, file_hash
 from kgmaker.build_runner import create_plan, run_plan
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def distribution(tmp_path, *, protocol=1, checksum=None):
     home = tmp_path / 'workers'
@@ -110,6 +112,11 @@ def test_installed_exporters_run_real_builds_outside_checkout(tmp_path, installe
         if os.environ.get('KGMAKER_REQUIRE_EXPORTERS') == '1':
             pytest.fail('blocked: real Maven, Gradle and JDK required')
         pytest.skip('blocked: real ' + system + '/JDK unavailable')
+    if system == 'maven' and not (ROOT / 'workers/build/maven/target/kgmaker-build-export.jar').is_file():
+        reason = 'blocked: explicitly prepared Maven exporter artifact required in this checkout'
+        if os.environ.get('KGMAKER_REQUIRE_EXPORTERS') == '1':
+            pytest.fail(reason)
+        pytest.skip(reason)
     root = tmp_path / system
     (root / 'src/main/java/example').mkdir(parents=True)
     (root / 'src/main/java/example/App.java').write_text('package example; public class App {}\n')
@@ -148,3 +155,15 @@ assert (root/'.kgmaker/graph.json').read_bytes()==b'last valid graph'
     result = subprocess.run([str(installed_exporters.python), '-c', script, str(root), system],
         cwd=tmp_path, env=installed_exporters.environment, capture_output=True, text=True, timeout=150)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('mandatory', [False, True])
+def test_missing_prepared_exporter_is_optional_skip_but_mandatory_failure(tmp_path, monkeypatch, mandatory):
+    # Reproduce source-only CI: Maven/JDK executables exist, but no trusted JAR
+    # was explicitly built. Never use another editable installation's resources.
+    monkeypatch.setattr(sys.modules[__name__], 'ROOT', tmp_path / 'own-checkout')
+    monkeypatch.setattr(shutil, 'which', lambda name: '/prepared/tool/' + name)
+    monkeypatch.setenv('KGMAKER_REQUIRE_EXPORTERS', '1' if mandatory else '0')
+    expected = pytest.fail.Exception if mandatory else pytest.skip.Exception
+    with pytest.raises(expected, match='explicitly prepared Maven exporter artifact required'):
+        test_installed_exporters_run_real_builds_outside_checkout(tmp_path, None, 'maven')

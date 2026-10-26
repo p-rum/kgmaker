@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/variables: 0/0
 - Semantic concepts: 0
-- Implementation episodes: 50
+- Implementation episodes: 51
 - Inferred/ambiguous relationships: 2541/0
 
 ## Architecture diagram
@@ -918,6 +918,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003** — removed; files: .codex/agents/README.md, .codex/agents/t003-s03-w01-external-toolchain-selection.toml, .codex/agents/t003-s03-w02-gradle-custom-variants.toml, .codex/agents/t003-s03-w03-gradle-included-builds.toml, .codex/agents/t003-s03-w04-kotlin-compiler-options.toml; validation: agent-profiles=passed, toml=passed, codex-loader=passed, links=passed, pytest197=passed
 - **Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/26_addCodeReviewAgent.md; validation: profile197=passed, conflict=passed
 - **Integrate T045 code-review agent with feat/impl** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/26_addCodeReviewAgent.md; validation: full221=passed, graph=passed, toml=passed
+- **Change BuildInputs, Distribuce Maven/Gradle exporterů s ověřením obsahu, Finální ověření integrovaného worktree** — current; files: docs/changes/37_packageBuildExporters.md, tests/test_exporter_distribution.py; validation: exporter-prerequisites=passed, exporter-runtime-unchanged=passed
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest195=passed, focused51=passed, spring-collection-injection=passed, spring-provider-boundary=passed
 - **Document stacked Gradle PR validation** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/17_exportGradleIncludedBuilds.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: full221=passed, gradle=passed, integration=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/12_mapCrossRepoArtifacts.md, docs/flyway-workspace-proofs.md, docs/production-analysis-progress.md; validation: focused5=passed, workspace-provider=passed, real-maven-jdk21-jdk22=passed, mandatory-workers-full205=passed, semantic=passed
