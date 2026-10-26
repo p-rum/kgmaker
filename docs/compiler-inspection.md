@@ -40,7 +40,7 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+TypeScript worker v3 (project references od v2) podporuje solution-style project references uvnitř zvoleného
 repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
@@ -82,6 +82,20 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Selected tsconfig freshness (T003-S08-W02)
+
+Worker3 přidává `project.input_discovery` v1 a context marker
+`typescript-input-discovery-1`. TypeScript sám respektuje extends/baseUrl/paths/
+include/exclude; Python replayuje zachycené content hashes, existence/realpath
+pozorování a directory membership. Root/project package metadata a lockfiles
+jsou obsahově svázané. Změna nepoužitého sibling configu nebo excluded-unused
+obsahu nestaluje selected context; relevantní input či dříve missing dependency
+ano. Negativní/mixed snapshot nepublikuje graf, offline status/hook nespustí Node.
+Legacy snapshot, TS selector sloty a JVM politika zůstávají beze změny.
+Discovery membership je konzervativní a má explicitní limity; nejde o persistent
+incremental compilation cache. [Freshness guide](typescript-freshness.md) a
+[note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
 
 ### Windows user-space ověření (T003-S11-W03)
 
@@ -268,7 +282,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v3 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -279,7 +293,8 @@ injection přenáší všechny ACTIVE členy; Optional používá unikátní vý
 ObjectProvider/Provider je konzervativní lazy kandidát. Statický `@Import`
 rozšiřuje dosažitelný konfigurační graf i mimo component scan; stav podmínek
 konfigurace se skládá se stavem její `@Bean` metody. Obyčejná importovaná třída
-je bean, ale ImportSelector/registrar se neprovádí a hlásí explicitní boundary.
+je bean. ImportSelector/DeferredImportSelector používají níže popsaný bounded
+compiler subset; registrar se neprovádí a hlásí explicitní boundary.
 `@Bean` mimo compiler-resolved `@Configuration` je odmítnut. JPA
 `@Entity`/`@Table`/`@Column`, Spring Data
 repository/query a přesné názvy tabulek/sloupců se vážou na source-only schema
@@ -500,3 +515,51 @@ call sites, local/lambda execution ani default-body/coroutine mapping. Tyto hran
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
+
+## T003-S05-W01 — bounded Spring import selectors
+
+`annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
+typ od přesných `org.springframework.context.annotation.ImportSelector` a
+`DeferredImportSelector` v compiler-resolved transitivní hierarchii. Stejné krátké
+jméno v cizím package není selector. Zdrojové Java compiler facts používají obě
+JVM distribuce K1/K2; nejde o rozšíření nepodporovaných Kotlin annotation metadata.
+
+| Vstup | Výsledek v tomto scope |
+|---|---|
+| Přesná selector identita a jediný `return new String[]{"app.Configuration"};` | `spring_import_selector`, `uses_import_selector`, `selects_import`; deklarovaná konfigurace pokračuje existujícím condition/reachability modelem |
+| Zdrojový zděděný selector / default DeferredImportSelector | Stejná bounded literal cesta, konkrétní owner metody; deferred phase je metadata, nikoli provedený ordering |
+| Custom exclusion filter nebo deferred Group | UNKNOWN; známé literal targets mají pouze `may_select_import` a UNKNOWN condition |
+| Neznámé/komplexní tělo, chybějící metoda/target, vnořený selector target, neúplná hierarchie nebo legacy fakta | Explicitní `SPRING_DYNAMIC_IMPORT_BOUNDARY`; žádný odhadnutý ACTIVE selector bean |
+| Registrar/factory, Spring context nebo runtime registrace | Nespouští se; další samostatné work packages |
+
+Hierarchy i literal target array mají limit 128 položek; literal FQN nejvýše
+512 znaků. Nekonstantní výrazy, field reads, concatenation, `Class.getName()` ani
+jiné volání se nevyhodnocují. Libovolné return strings se nepublikují jako data.
+Selector třída se nepovažuje za běžný bean jen proto, že je v `@Import`.
+Evidence je `FRAMEWORK_DERIVED` se source method ID/hash, selected context a rule
+version; nejde o `SYMBOL_RESOLVED` invocation ani runtime/data availability proof.
+Statická selection proto nikdy sama nezpůsobí AVAILABLE nebo CONFIRMED_MISSING.
+
+Graph/store v1/v2/v3 a worker protocol v1 zůstávají čitelné. Aditivní symbol fields
+`type_hierarchy`, `import_selector` a `static_import_return` mají vlastní schema1;
+legacy worker bez nich zůstává pro selector selection UNKNOWN. Chybná nová facts
+se odmítnou před publikací. Rule v4 i obsah distribuce jsou ve fingerprintu nového
+inspection contextu; scan/feature/audit žádný worker ani selector nespustí.
+Nové Spring v4 metadata platí pouze pro JVM; TypeScript/React metadata a selection
+key se touto změnou nemigrují. Dva čisté regresní testy v
+`tests/test_spring_imports_context.py` porovnávají celé context hodnoty s baseline.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID app.DirectSelector
+```
+
+Classpath musí obsahovat skutečná schválená Spring API; profiles/properties a
+component packages musí mít dodaný scope, jinak jejich stav zůstává UNKNOWN.
+Pro reprodukovatelné testování se explicitně spouští
+`mvn -B -ntp -f fixtures/spring-imports/pom.xml compile`. Fixture pinne Spring6.2.2,
+Maven resources3.3.1/compiler3.13.0 a SHA-256/license entries šesti API JARů.
+Core ani test fixture nic implicitně nestahují. Mandatory CI vyžaduje skutečné API
+a oba skutečné JVM workery; chybějící vstup je FAIL, ne PASS. Viz
+[change note42](changes/42_resolveBoundedSpringImports.md).

@@ -1,5 +1,18 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W02 — selected tsconfig freshness kandidát (2026-10-26)
+
+Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;
+profile nemění resolver ani runtime/data availability. Původní tři skutečné
+failure případy nyní prošly; širší snapshot/reference/provider sada46PASS a
+snapshot/installed-wheel sada41PASS jsou zaznamenány v
+[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected
+focus/full jsou povinné a dosud PENDING. Explicitní legacy fallback, stable
+selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
+[Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
+Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
+z tohoto kontraktu odvozovány.
+
 ## T003-S08-W01 — TypeScript project references (2026-10-26)
 
 VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
@@ -16,7 +29,7 @@ mezi preflight/analyze a zachovává původní TS selection slot; skutečné reg
 a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
 nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
 mimo připravenou matici zůstávají výslovně SKIP.
-T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+T003-S08/T003-AC08 zůstávají PARTIAL; W02 stav je samostatně výše; W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
@@ -102,7 +115,7 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
 | T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
 | T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body/coroutine source mapping, širší corpus, dependency dispatch a úplná acceptance banka |
-| T003-S05 Spring | PARTIAL | Spring rules v3 přidávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Dynamic ImportSelector/registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
+| T003-S05 Spring | PARTIAL | Spring rules v4 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors mimo bounded literal subset, registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
 | T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
 | T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
@@ -297,6 +310,30 @@ validation a `git diff --check` prošly.
 T007-AC01–AC06 jsou VERIFIED_IN_SCOPE pro deklaraci a čistou resolver funkci;
 Discovery, view aggregation ani T004 nejsou implementovány.
 
+## T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)
+
+`views.project_service_inventory` vytváří T005 topology document z validovaného
+workspace ownership a T006 kontextů. ID service pochází z deklarovaného service ID;
+display label nemění identitu. Context se filtruje přes explicitní scope a vybírá
+T006 včetně freshness/variant diagnostik. SOURCE_ONLY zůstává PARTIAL a module
+coverage UNKNOWN. U skutečného SOURCE_ONLY snapshotu se repo-qualified artifacty a
+file nodes stejného repository i přesného scope matchují na explicitní T007 roots;
+production a test kořeny v jednom checkoutu se nekříží. Module identity zůstává UNKNOWN a
+produkční služba má PARTIAL status. Skutečný test zároveň vylučuje test fixture a
+zachovává external ledger UNKNOWN bez endpointů. Externí systémy pocházejí pouze z T007 deklarace; chybějící checkout nevytváří interní endpointy a implementation/runtime zůstává UNKNOWN.
+Workspace alias fixture ověřuje context zachycený pod `local` a kvalifikovaný při
+`snapshot_workspace` na deklarované repo ID; dependency symbol bez lokálního source
+path se nepřiřazuje.
+
+`tests/test_t008_project_service_inventory.py` pokrývá explicitní service versus
+test fixture/shared library/framework bean, missing external checkout, stable ID po
+změně labelu, nulovou mutaci při chybě, scope/context/provenance, SOURCE_ONLY,
+ambiguous variants, workspace alias a T005 round-trip. Cílená integrovaná sada
+pro T008/T005–T007/workspace/cross-repo: **83 PASS**; celá sada **320 PASS, 25 SKIP**.
+Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS worker a
+Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
+store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
+
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
 VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
@@ -328,3 +365,20 @@ literal sheet names s INDIRECT/OFFSET textem, explicitní boundary při neznám�
 qualifieru a spaced row/column/A1 range tvary; nevznikne falešný local fallback.
 Jde o opravu existujících AC01–AC04, ne plnou Excel grammar či dokončení S09/AC09.
 Přesné ověření a omezení: [change note39](changes/39_boundXlsxFormulaReferences.md).
+
+## T003-S05-W01 — deklarace import selectorů bez execution
+
+VERIFIED_IN_SCOPE pro `annotation-source-v4`: skutečný Javac21/Spring6.2.2
+prokazuje exact/transitive ImportSelector/DeferredImportSelector identitu,
+jediný literal String[] return a context-bound `selects_import` do deklarované
+konfigurace. Unknown těla, filtry/groups, chybějící targets, limity a legacy
+metadata mají explicitní boundary či alternativu UNKNOWN. Selector není obyčejný
+ACTIVE bean jen kvůli @Import. Fake short-name interface zůstává obyčejný typ.
+Profiles, strict no-publication, read-only refresh, schema v1/v2/v3 a UNKNOWN audit
+jsou přímo ověřeny v `tests/test_spring_imports.py` pro K1 i K2 distribuci.
+Skutečné API se připravuje jen explicitním pinned fixture Maven příkazem; mandatory
+CI neoznačí chybějící API/worker za PASS. Žádný Spring context ani aplikace se
+nespouští. Java subset nerozšiřuje Kotlin metadata a nedodává custom groups,
+registrars/factories, libovolnou dynamickou resolution ani runtime availability.
+Celý S05/AC05 a T003 zůstávají PARTIAL. Evidence a přesné běhy:
+[change note42](changes/42_resolveBoundedSpringImports.md).

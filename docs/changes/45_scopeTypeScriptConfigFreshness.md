@@ -59,3 +59,20 @@ inspection, legacy fallback, graph loader v1/v2/v3 a hash-bound helper.
 Po explicitním package markeru pro chybějící helper: shape/prerequisite negative
 sada **15 PASS / 18 DESELECTED**,0.12s, XML `/tmp/tsconfig-w02-shape.xml`.
 Final protected focus a full zůstávají před přijetím povinné.
+
+## Frozen source a main integrace před protected focus
+
+Lokální source checkpoint `6b0f17e` byl integrován s main
+`ff26a6d74679fc38820c1f2fe711b1db20af2ca1` (Spring imports a service inventory).
+Jediný textový konflikt byl CI seznam testů: zachovány všechny TS freshness,
+W01, Spring/K2 i Windows mandatory gates. TS CJS/helper, Python snapshot modul
+ a test bytes byly před/po integraci porovnány a zůstaly shodné. Shared context
+převzal main JVM-only Spring rule version a zachoval staré TS selector metadata;
+`test_spring_imports_context.py`: **2 PASS**,0.13s.
+
+Před actual testy byly explicitně převzaty matching genuine Spring-aware K1/K2
+artefakty a fixture output z parent checkoutu; JVM/K2 sources, builder a oba
+pinned lockfiles byly před kopírováním byte porovnány. Během testů se workery
+nebuildí ani nepřepisují. Final focus má persistent log/XML
+`/tmp/tsconfig-w02-final-focused.log` a `.xml` a je serializován heavy flockem;
+čekání na jiný legitimní full run není vykazováno jako PASS.

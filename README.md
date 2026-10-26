@@ -82,6 +82,28 @@ selection = select_service_contexts(
 The function is imported from `kgmaker.views`; the snippet shows the library
 contract and does not add a `kgmaker` CLI command.
 
+`views.project_service_inventory` builds a service-only `topology` document from
+explicit workspace ownership and the matching provider snapshot. Stable node IDs
+come from declared service IDs; `service_labels` changes display text only.
+Only services with provider contexts in the selected scope enter the inventory.
+Declared external systems remain visible without a local checkout, while their
+implementation and endpoints remain `UNKNOWN`. Source-only evidence stays
+`PARTIAL` and does not prove module completeness or deployment.
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.views import project_service_inventory
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, provider_graph, _ = snapshot_workspace(manifest)
+inventory = project_service_inventory(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+    service_labels={"orders": "Orders API"},
+)
+```
+
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
@@ -166,6 +188,11 @@ before publication rather than trusting emitted declarations.
 Preflight and analysis must read the same compiler input closure; membership
 changes fail before publication. Reinspection replaces the same TypeScript
 selection slot across legacy and K2-era snapshot metadata.
+New TypeScript snapshots also bind effective-config inputs, negative filesystem
+lookups, compiler directory discovery and package-manager lockfiles. Unrelated
+config or excluded-unused content edits preserve the selected context; relevant
+new dependencies/members invalidate it offline without running Node. Legacy
+snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
 
 ## Copilot workflow
 
@@ -369,10 +396,16 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v3 navíc počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
-bean. ImportSelector a registrar se nespouštějí a zůstávají diagnostickou hranicí.
+bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
+transitivní identitu. Java metoda s jediným literal `String[]` return propojí
+deklarované konfigurace přes `selects_import`; neznámé tělo, custom filter/group,
+chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_import`.
+Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
+Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
+source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
