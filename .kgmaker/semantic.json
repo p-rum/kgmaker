@@ -36386,6 +36386,362 @@
         }
       ],
       "id": "episode:7d0d7e294427b11d3269aa278cb095fcefb47e10a9ab9346ed11356e633a9c1d"
+    },
+    {
+      "base_commit": "a83dbab6263eb2fe225f0da51f2f2549c0ab162e",
+      "head_commit": "dc315fc37867c235730a06474df64b010a09d638",
+      "worktree_fingerprint": "c6d26b21aabaafcb39f69f51e744bfcdc133a1605fb280f3ab00b80967e6524b",
+      "title": "Integrate Windows main with bounded Spring imports",
+      "changed_files": [
+        {
+          "path": ".github/workflows/test.yml",
+          "status": "M",
+          "sha256": "1d89392e049168d0a9ab5eca81b931ec7ff45d15362a37ae7c5812fa875beb3e"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "dbb201b9a7147bd30827e750be4828252aea0c05da85354fcc102dce5135b38f"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "39b85b5fe84e14b120133353a923ce535a775c6ce898fa22a208925123e355ad"
+        },
+        {
+          "path": "docs/changes/42_resolveBoundedSpringImports.md",
+          "status": "A",
+          "sha256": "363639e64b4faa282b3bccd94ce56e1745043087b1cfb8c4e61d27da65a7e805"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "f760823c601885fd82b4448258f2317e909e7c51bc65421b527e30269434abd4"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "f55c513193ee0ccb6b7e488a8cfef390e5fcf2f7501b89530b268dd33540aade"
+        },
+        {
+          "path": "fixtures/spring-imports/.gitignore",
+          "status": "A",
+          "sha256": "306fd52e74fca6746e12acc750f232de15e71da917756a1270d74c91f5eb7368"
+        },
+        {
+          "path": "fixtures/spring-imports/README.md",
+          "status": "A",
+          "sha256": "faa9233b6339264f6a6bb978f0278360466a5160c83c680bd53a79bb4a47aab9"
+        },
+        {
+          "path": "fixtures/spring-imports/dependencies.lock.json",
+          "status": "A",
+          "sha256": "1aecef7caa91c53d18f30e80431d18f9b9fba0376eb305978edac2177a53ab17"
+        },
+        {
+          "path": "fixtures/spring-imports/pom.xml",
+          "status": "A",
+          "sha256": "2477966c4d5db7216a3646d9a1e0af7019a20d2fb33a78c115470870dc48f580"
+        },
+        {
+          "path": "fixtures/spring-imports/src/main/java/fixture/ApiInput.java",
+          "status": "A",
+          "sha256": "ee156f82ff0275b2f28888926ca0707b0f67efddc1c523193211def42c43c148"
+        },
+        {
+          "path": "fixtures/spring-imports/typescript-contexts-v1.json",
+          "status": "A",
+          "sha256": "f7cfb6d9ee2bd58e309427e743be5bff371c8aab85870a58ae4d60799286ba7e"
+        },
+        {
+          "path": "src/kgmaker/framework.py",
+          "status": "M",
+          "sha256": "1a0e01210638a81326474b13ba9d7c925f700cc2a996fd3f783d2efb35f4f5f6"
+        },
+        {
+          "path": "src/kgmaker/inspection.py",
+          "status": "M",
+          "sha256": "6bf945baba80bcb215bad71a64e4cf44bc22c87f7bc246d9abc7892932ef1aad"
+        },
+        {
+          "path": "src/kgmaker/spring_imports.py",
+          "status": "A",
+          "sha256": "ddc3ad6cd526797327c3a00c93f6d2c546f79fed0ea455f3db9909d19026f359"
+        },
+        {
+          "path": "src/kgmaker/views.py",
+          "status": "M",
+          "sha256": "ad3b10212c496aaf39a7073692ca41f7dea2021de80c1bcdfab1992d45a834ef"
+        },
+        {
+          "path": "tests/test_compiler_workers.py",
+          "status": "M",
+          "sha256": "035759516ef80a8f294e6612bbb154a875bac77b8c0906fa22f4861dca6b2cdd"
+        },
+        {
+          "path": "tests/test_spring_imports.py",
+          "status": "A",
+          "sha256": "df26d8f5cf1f9bd9b08f5d9387923f6ab0ced753a9c8f086b1d834fe83aa3cb0"
+        },
+        {
+          "path": "tests/test_spring_imports_context.py",
+          "status": "A",
+          "sha256": "ec54cbd7176bfaa0accf809ed6b04d49301fd21c8bed2fb39a37ab6ee7182f9e"
+        },
+        {
+          "path": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+          "status": "M",
+          "sha256": "5429a9644efa4a0882f02164d60bc3238361b26520054b31b05e274a97045244"
+        },
+        {
+          "path": "workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java",
+          "status": "A",
+          "sha256": "083177824a39304ba4ac24c0ce8fcde76515ec56973e6e12f50edac7d9e82fea"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/views.py:ContextSelectionError::19",
+        "class:tests/test_compiler_workers.py:CompilerWorkerTests::19",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.elements",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.file",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.selectorFacts",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.source",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.state",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.trees",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.types",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.unit",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:Visitor.caller",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.DEFERRED",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.LIMIT",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.REGISTRAR",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.SELECTOR",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.elements",
+        "data_field:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.types",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/42_resolveBoundedSpringImports.md:42_resolveBoundedSpringImports.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:fixtures/spring-imports/README.md:README.md",
+        "file:fixtures/spring-imports/dependencies.lock.json:dependencies.lock.json",
+        "file:fixtures/spring-imports/src/main/java/fixture/ApiInput.java:ApiInput.java",
+        "file:fixtures/spring-imports/typescript-contexts-v1.json:typescript-contexts-v1.json",
+        "file:src/kgmaker/framework.py:framework.py",
+        "file:src/kgmaker/inspection.py:inspection.py",
+        "file:src/kgmaker/spring_imports.py:spring_imports.py",
+        "file:src/kgmaker/views.py:views.py",
+        "file:tests/test_compiler_workers.py:test_compiler_workers.py",
+        "file:tests/test_spring_imports.py:test_spring_imports.py",
+        "file:tests/test_spring_imports_context.py:test_spring_imports_context.py",
+        "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+        "file:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:SelectorFacts.java",
+        "function:src/kgmaker/framework.py:_allowed_annotation::100",
+        "function:src/kgmaker/framework.py:_annotation::132",
+        "function:src/kgmaker/framework.py:_annotation_map::111",
+        "function:src/kgmaker/framework.py:_annotation_values::80",
+        "function:src/kgmaker/framework.py:_args::59",
+        "function:src/kgmaker/framework.py:_class_args::136",
+        "function:src/kgmaker/framework.py:_combined_state::142",
+        "function:src/kgmaker/framework.py:_derived_query::146",
+        "function:src/kgmaker/framework.py:_imports::96",
+        "function:src/kgmaker/framework.py:_line::55",
+        "function:src/kgmaker/framework.py:_named_string_arg::75",
+        "function:src/kgmaker/framework.py:_node_id::186",
+        "function:src/kgmaker/framework.py:_path_text::177",
+        "function:src/kgmaker/framework.py:_simple::51",
+        "function:src/kgmaker/framework.py:_string_arg::64",
+        "function:src/kgmaker/framework.py:augment_framework_graph::190",
+        "function:src/kgmaker/framework.py:bean_selection::258",
+        "function:src/kgmaker/framework.py:class_for::354",
+        "function:src/kgmaker/framework.py:component_scan_state::303",
+        "function:src/kgmaker/framework.py:condition_state::314",
+        "function:src/kgmaker/framework.py:expanded_annotations::273",
+        "function:src/kgmaker/framework.py:import_state::400",
+        "function:src/kgmaker/framework.py:in_schema_realm::713",
+        "function:src/kgmaker/framework.py:processor::395",
+        "function:src/kgmaker/framework.py:resolve_query_property::624",
+        "function:src/kgmaker/framework.py:symbol_node::255",
+        "function:src/kgmaker/inspection.py:_jvm_worker_jar::53",
+        "function:src/kgmaker/inspection.py:artifact_hash::23",
+        "function:src/kgmaker/inspection.py:command::76",
+        "function:src/kgmaker/inspection.py:distribution::106",
+        "function:src/kgmaker/inspection.py:proof::234",
+        "function:src/kgmaker/inspection.py:relation::250",
+        "function:src/kgmaker/inspection.py:sanitize::113",
+        "function:src/kgmaker/inspection.py:source_snapshot::131",
+        "function:src/kgmaker/inspection.py:validate_response::194",
+        "function:src/kgmaker/inspection.py:worker_home::36",
+        "function:src/kgmaker/spring_imports.py:legacy_supertypes::32",
+        "function:src/kgmaker/spring_imports.py:selector_info::14",
+        "function:src/kgmaker/views.py:__init__::23",
+        "function:src/kgmaker/views.py:project::378",
+        "function:src/kgmaker/views.py:rank::445",
+        "function:tests/test_compiler_workers.py:cli::103",
+        "function:tests/test_compiler_workers.py:git_only::99",
+        "function:tests/test_compiler_workers.py:inspect::403",
+        "function:tests/test_compiler_workers.py:setUpClass::23",
+        "function:tests/test_compiler_workers.py:test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle::70",
+        "function:tests/test_compiler_workers.py:test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard::316",
+        "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::479",
+        "function:tests/test_compiler_workers.py:test_bytecode_default_method_uses_most_specific_interface_not_classfile_order::600",
+        "function:tests/test_compiler_workers.py:test_bytecode_is_distinct_and_cha_completeness_is_not_invented::616",
+        "function:tests/test_compiler_workers.py:test_flow01_flow02_compiler_if_branch_preserves_opposite_overloads::160",
+        "function:tests/test_compiler_workers.py:test_jv02_kotlin_constructor_lambda_reference_operator_and_function_metadata::225",
+        "function:tests/test_compiler_workers.py:test_kotlin_file_facade_and_object_initializers_keep_distinct_callers::290",
+        "function:tests/test_compiler_workers.py:test_offline_refresh_preserves_real_call_sites_and_cfg::47",
+        "function:tests/test_compiler_workers.py:test_p0_jv01_real_mixed_compiler_calls_exactly_match_ground_truth::39",
+        "function:tests/test_compiler_workers.py:test_property_initializer_uses_primary_constructor_and_custom_accessor_has_exact_caller::212",
+        "function:tests/test_compiler_workers.py:test_protocol_handshakes_are_versioned_and_log_free::612",
+        "function:tests/test_compiler_workers.py:test_ts01_ts02_react_handler_and_overloads_use_typechecker_symbols::173",
+        "function:tests/test_compiler_workers.py:test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale::184",
+        "function:tests/test_spring_imports.py:actual_imports::46",
+        "function:tests/test_spring_imports.py:baseline_only::265",
+        "function:tests/test_spring_imports.py:legacy::225",
+        "function:tests/test_spring_imports.py:malformed::198",
+        "function:tests/test_spring_imports.py:test_actual_compiler_qualified_transitive_selector_facts::134",
+        "function:tests/test_spring_imports.py:test_bounded_missing_and_non_type_results_remain_boundaries::207",
+        "function:tests/test_spring_imports.py:test_inactive_profile_does_not_reuse_another_context_selection::240",
+        "function:tests/test_spring_imports.py:test_invalid_selector_fact_rejects_before_store_mutation::191",
+        "function:tests/test_spring_imports.py:test_legacy_facts_stay_readable_without_literal_promotion::220",
+        "function:tests/test_spring_imports.py:test_literal_and_static_imports_link_without_processor_beans::147",
+        "function:tests/test_spring_imports.py:test_required_api_inputs_fail_before_any_process::29",
+        "function:tests/test_spring_imports.py:test_static_import_selection_is_not_data_availability::250",
+        "function:tests/test_spring_imports.py:test_strict_failure_and_offline_refresh_preserve_generation::178",
+        "function:tests/test_spring_imports.py:test_unknown_filters_and_deferred_groups_remain_unknown::163",
+        "function:tests/test_spring_imports_context.py:test_spring_rule_bump_preserves_exact_legacy_typescript_context::12",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend::21",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:analyze::22",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:annotationValue::97",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:annotations::87",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:callsIn::210",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:declarationLocation::70",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:descriptor::55",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:errorAt::104",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:invocation::155",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:ir::219",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:label::82",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:loc::64",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:method::109",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:owner::59",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:reference::196",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:switch::47",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:typeDescriptor::45",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:describe::35",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:literalReturn::64",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:name::20",
+        "function:workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java:selectMethod::25",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::377",
+        "section:README.md:Copilot workflow::156",
+        "section:README.md:Data prerequisite audit::265",
+        "section:README.md:Development::184",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::215",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::223",
+        "section:README.md:Implementation memory and workflow::173",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::148",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::25",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::191",
+        "section:docs/acceptance-inventory.md:T001::72",
+        "section:docs/acceptance-inventory.md:T002::151",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::251",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::296",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::284",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::16",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::3",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::275",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::34",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::55",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::45",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Bounded deklarace dynamických Spring importů::1",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Integrace Windows main před nezávislým PR30 review::140",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Problém a skutečné změny::9",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Provedené kontroly::62",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Příklad a zbývající scope::126",
+        "section:docs/changes/42_resolveBoundedSpringImports.md:Reprodukovatelné vstupy a kompatibilita::37",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::127",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::123",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::73",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::89",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::104",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::313",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::216",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::55",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::372",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::343",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::392",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::430",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::476",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::121",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::92",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::57",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::162",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::102",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::112",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::134",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::50",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::178",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::169",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::187",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::222",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::298",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::281",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::239",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::29",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::16",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::251",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::208",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::263",
+        "section:fixtures/spring-imports/README.md:Pinned Spring import API fixture::1",
+        "type:fixtures/spring-imports/src/main/java/fixture/ApiInput.java:ApiInput::4",
+        "type:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:Visitor::117"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "integration38",
+          "status": "passed"
+        },
+        {
+          "label": "actualSpring24",
+          "status": "passed"
+        },
+        {
+          "label": "sourceIdentity",
+          "status": "passed"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "graphCheck",
+          "status": "passed"
+        },
+        {
+          "label": "diffCheck",
+          "status": "passed"
+        },
+        {
+          "label": "nativeWindows1",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:0259f6d1ab0bd80627e780c36963b4dd943a82b3946463be660aeebcff25ca6e"
     }
   ]
 }
