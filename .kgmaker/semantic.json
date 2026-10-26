@@ -3,8 +3,8 @@
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
     "README.md": "12fe2bddc5cbf281daf42f9a400f87899a4996b22498b86863bba6495f538fb0",
-    "docs/acceptance-inventory.md": "220c76ca2421f86190650e8a7c1123d68ff50e96956daef7c6c18765335d86e1",
-    "docs/architecture.md": "3c08a6e65dc3f860e92e08382c3529eca6f888902f3c5ac18150cbc652468125",
+    "docs/acceptance-inventory.md": "39f5222485b52f3de68e0dc90d3de34213338e2643a56f4a2c624620affa0d95",
+    "docs/architecture.md": "ec3c70c431b4d595b974e87fd9f9908282cc1ab2714b924b7db11e82bf0c6228",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/10_specifyHighLevelProjectViews.md": "b3fec8d3326b61942a4db84c74b9d97db63de3f1a0c5520df360c50605534253",
@@ -24,7 +24,7 @@
     "docs/changes/34_diagnoseBinaryXls.md": "9a9aa262f09e9213915a7c89be1466f0eaafb6c82e180f23d711dcd46b66b168",
     "docs/changes/37_packageBuildExporters.md": "e3a970bdf2c77e932572517fdf446b79241e6ffda0765f08de40fb764ee55c55",
     "docs/changes/3_unifyImplementationTasks.md": "a04e0116230f5d91f6559b072318aefee04c26d55eb53d60ebd455c6fc287f53",
-    "docs/changes/41_projectServiceInventory.md": "abd07b6bbf0eae555f41206915c850cd08926e4c806137472ec2c79ebc88252d",
+    "docs/changes/41_projectServiceInventory.md": "2843a7af28b19ebbf0a649f6d9092ce6358000f810398044171bca2440cc3a39",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
@@ -34,7 +34,7 @@
     "docs/feature-analysis.md": "1fa08e6ae656d16f65569516ee6ed045b7491d0b71bdcc42104eb2bf365422a3",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "0656104988ba6e52615c2194c24ac4a961b1e93ec0da7cafb247e9df0e8f61aa",
+    "docs/production-analysis-progress.md": "361adbac82b7909730e0fe8ce71376cf10e53bbe85d849323d247d0c7f0df390",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -234,7 +234,7 @@
     "src/kgmaker/store.py": "8decb965e0ab27516f18121ebc10ebc7adea588d0f0cc3afc668dd4044f2d2d6",
     "src/kgmaker/templates.py": "17027828fb32ae5931b53e839dd12de81fe7798c78b2abf97029c61079d9c884",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
-    "src/kgmaker/views.py": "491c25e6802754eb0ef46846925b9698c6d38e6d79d0a40ff40062a2125c947f",
+    "src/kgmaker/views.py": "99bcafc073af3e38bbc2418cb7ba42b6db7a1aee50d3e8731220453e031c7db2",
     "src/kgmaker/workbooks.py": "9d35769f5774d3fce65f3c7d5c4cfd4d919bb485b3d830d93407d8b84081e9be",
     "src/kgmaker/worker_protocol.py": "2a5081a701673d2d1a783d23d55ef2ddc9b468e85ab9aff62b56143e5d2a0d22",
     "src/kgmaker/workflow.py": "407dcaa5874aedd26866d612e17912c3890cf399c1150428c543afe138aed3c7",
@@ -271,7 +271,7 @@
     "tests/test_t005_add_view_model.py": "d84a921f1165b33622409d00178f9c7216431c54a552f4b809636c3958120a8e",
     "tests/test_t006_select_service_contexts.py": "464f78e848104daec15c304f8e21122fe3b9e5d47efdaf3720fd6f95404bee4b",
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
-    "tests/test_t008_project_service_inventory.py": "f73022800315cae359c59a7f0e8ac856d1361d69c84620dfce84865ee8b0f780",
+    "tests/test_t008_project_service_inventory.py": "c89b9c283cca4d47b4a3557a885eb9ea1b8854adcb29436ba600c0e5a655d4f5",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_workbooks.py": "aefe00b3e9e1983ab98d6ff58c6352b37308194717901d87afb00b52f1225cc8",
     "tests/test_worker_install.py": "312478d258e49747c88ab58f1c7c2c59cbdad845673992bbf80391a1fdba662c",
@@ -317,7 +317,7 @@
       "name": "Explicit service inventory projection",
       "source_file": "docs/architecture.md",
       "source_line": 151,
-      "summary": "The T008 topology view composes explicit ownership with provider contexts; SOURCE_ONLY roots remain PARTIAL and module coverage UNKNOWN."
+      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
     }
   ],
   "edges": [
@@ -30639,6 +30639,186 @@
         }
       ],
       "id": "episode:d31fbd6844ef8701e95c9c839955c6a9d2ed13814ae531fe348e7856f29ad53f"
+    },
+    {
+      "base_commit": "3a393e451b0d7b8f83de93f05f07d2307ba66ec3",
+      "head_commit": "8f3880401b464b71e6c11776abe056d6fb60eed9",
+      "worktree_fingerprint": "02fd67656fd6fe9919a50beb1f7f422d809aa056a49cff9eb5bcbfd3926282b0",
+      "title": "fix(t008): retain root-owned source inventory",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "12fe2bddc5cbf281daf42f9a400f87899a4996b22498b86863bba6495f538fb0"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "39f5222485b52f3de68e0dc90d3de34213338e2643a56f4a2c624620affa0d95"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "ec3c70c431b4d595b974e87fd9f9908282cc1ab2714b924b7db11e82bf0c6228"
+        },
+        {
+          "path": "docs/changes/41_projectServiceInventory.md",
+          "status": "A",
+          "sha256": "2843a7af28b19ebbf0a649f6d9092ce6358000f810398044171bca2440cc3a39"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "361adbac82b7909730e0fe8ce71376cf10e53bbe85d849323d247d0c7f0df390"
+        },
+        {
+          "path": "src/kgmaker/views.py",
+          "status": "M",
+          "sha256": "99bcafc073af3e38bbc2418cb7ba42b6db7a1aee50d3e8731220453e031c7db2"
+        },
+        {
+          "path": "tests/test_t008_project_service_inventory.py",
+          "status": "A",
+          "sha256": "c89b9c283cca4d47b4a3557a885eb9ea1b8854adcb29436ba600c0e5a655d4f5"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/views.py:ContextSelectionError::19",
+        "class:src/kgmaker/views.py:ServiceInventoryError::27",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:explicit_service_inventory_projection",
+        "concept:docs/architecture.md:explicit_workspace_service_ownership",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/41_projectServiceInventory.md:41_projectServiceInventory.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/views.py:views.py",
+        "file:tests/test_t008_project_service_inventory.py:test_t008_project_service_inventory.py",
+        "function:src/kgmaker/views.py:__init__::23",
+        "function:src/kgmaker/views.py:__init__::31",
+        "function:src/kgmaker/views.py:fail::57",
+        "function:src/kgmaker/views.py:project::752",
+        "function:src/kgmaker/views.py:rank::818",
+        "function:tests/test_t008_project_service_inventory.py:inventory_inputs::15",
+        "function:tests/test_t008_project_service_inventory.py:node_map::73",
+        "function:tests/test_t008_project_service_inventory.py:recording_resolver::194",
+        "function:tests/test_t008_project_service_inventory.py:test_ac01_inventory_includes_declared_production_service_not_fixture_or_random_beans::77",
+        "function:tests/test_t008_project_service_inventory.py:test_ac02_missing_external_checkout_keeps_declared_system_unknown_without_endpoints::99",
+        "function:tests/test_t008_project_service_inventory.py:test_ac03_stable_service_identity_is_independent_of_display_label::112",
+        "function:tests/test_t008_project_service_inventory.py:test_ac04_invalid_snapshot_fails_without_mutating_workspace_or_graph::124",
+        "function:tests/test_t008_project_service_inventory.py:test_ac05_context_and_provenance_are_preserved_and_not_upgraded::205",
+        "function:tests/test_t008_project_service_inventory.py:test_actual_source_only_snapshot_separates_production_and_test_within_repo::299",
+        "function:tests/test_t008_project_service_inventory.py:test_actual_workspace_source_only_snapshot_projects_declared_root_without_module::272",
+        "function:tests/test_t008_project_service_inventory.py:test_ambiguous_compiler_variants_remain_unknown_until_explicitly_selected::221",
+        "function:tests/test_t008_project_service_inventory.py:test_source_only_context_remains_partial_and_reports_unknown_module_coverage::235",
+        "function:tests/test_t008_project_service_inventory.py:test_t008_view_round_trips_through_t005_validator::265",
+        "function:tests/test_t008_project_service_inventory.py:test_unknown_scope_does_not_enter_production_inventory::254",
+        "function:tests/test_t008_project_service_inventory.py:test_workspace_alias_requalifies_default_local_compiler_context::141",
+        "section:README.md:Commands::42",
+        "section:README.md:Compiler lifecycle::374",
+        "section:README.md:Copilot workflow::168",
+        "section:README.md:Data prerequisite audit::277",
+        "section:README.md:Development::196",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::227",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::235",
+        "section:README.md:Implementation memory and workflow::185",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::160",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::12",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::190",
+        "section:docs/acceptance-inventory.md:T001::71",
+        "section:docs/acceptance-inventory.md:T002::150",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::263",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::3",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::21",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::54",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::32",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::43",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::178",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/41_projectServiceInventory.md:Kompatibilita::31",
+        "section:docs/changes/41_projectServiceInventory.md:Ověření::38",
+        "section:docs/changes/41_projectServiceInventory.md:Problém::3",
+        "section:docs/changes/41_projectServiceInventory.md:Příklad::50",
+        "section:docs/changes/41_projectServiceInventory.md:T008 — Inventář služeb a externích systémů::1",
+        "section:docs/changes/41_projectServiceInventory.md:Zbývající práce a omezení::65",
+        "section:docs/changes/41_projectServiceInventory.md:Změny::11",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::149",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::89",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::99",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::121",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::37",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::165",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::156",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::174",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::263",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::209",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::16",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::195",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::221",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::239"
+      ],
+      "graph_delta": {
+        "added": [
+          "concept:docs/architecture.md:explicit_service_inventory_projection",
+          "concept:docs/architecture.md:explicit_workspace_service_ownership"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full",
+          "status": "passed"
+        },
+        {
+          "label": "toolchain_skips",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "scan",
+          "status": "passed"
+        },
+        {
+          "label": "check",
+          "status": "passed"
+        },
+        {
+          "label": "diff_check",
+          "status": "passed"
+        },
+        {
+          "label": "workers",
+          "status": "skipped"
+        },
+        {
+          "label": "compiler_toolchains",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:d2387d71c812ae3d4549a781122e644a9d4bf6838029913080fbb634487dee2a"
     }
   ]
 }

@@ -296,3 +296,45 @@ def test_actual_workspace_source_only_snapshot_projects_declared_root_without_mo
     assert graph.to_dict() == before_graph
     assert manifest.read_bytes() == manifest_bytes
     assert (tmp_path / "backend/src/main/kotlin/OrderService.kt").read_bytes() == source_bytes
+
+
+def test_actual_source_only_snapshot_separates_production_and_test_within_repo(tmp_path):
+    manifest, _, _ = inventory_inputs(tmp_path)
+    test_source = tmp_path / "backend/src/test/kotlin/OrderTest.kt"
+    test_source.parent.mkdir(parents=True)
+    test_source.write_text("class OrderTest\n", encoding="utf-8")
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    data["repositories"] = [{"id": "backend", "role": "backend", "path": "backend"}]
+    data["services"][1]["backend_repo"] = "backend"
+    data["services"][1]["contract"]["repo_id"] = "backend"
+    data["service_ownership"]["services"][1]["roots"] = [
+        {"repo_id": "backend", "path": "src/test/kotlin"}]
+    data["service_ownership"]["services"][1]["modules"] = [
+        {"repo_id": "backend", "id": "fixture-app"}]
+    write_json(manifest, data)
+    workspace = load_workspace(manifest)
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    original_graph = graph.to_dict()
+    original_manifest = manifest.read_bytes()
+    original_sources = {
+        path: (tmp_path / "backend" / path.removeprefix("@backend/")).read_bytes()
+        for path in coverage["artifacts"]
+    }
+
+    production = project_service_inventory(workspace, graph, scope="production", source_coverage=coverage)
+    production_nodes = node_map(production)
+    assert "service:orders" in production_nodes
+    assert "service:fixture" not in production_nodes
+    assert production_nodes["service:orders"].attributes["context_status"] == "PARTIAL"
+    assert production_nodes["service:orders"].attributes["modules"] == []
+    assert production_nodes["external-system:ledger"].attributes["implementation_status"] == "UNKNOWN"
+    assert production_nodes["external-system:ledger"].attributes["endpoint_ids"] == []
+
+    test_view = project_service_inventory(workspace, graph, scope="test", source_coverage=coverage)
+    assert "service:fixture" in node_map(test_view)
+    assert "service:orders" not in node_map(test_view)
+    assert node_map(test_view)["service:fixture"].attributes["context_status"] == "PARTIAL"
+    assert graph.to_dict() == original_graph
+    assert manifest.read_bytes() == original_manifest
+    assert all((tmp_path / "backend" / path.removeprefix("@backend/")).read_bytes() == content
+               for path, content in original_sources.items())

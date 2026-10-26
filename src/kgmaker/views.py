@@ -121,7 +121,10 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     if coverage_artifacts:
         for node in graph.nodes:
             path = getattr(node, "path", None)
-            if isinstance(path, str) and path in coverage_artifacts and path in graph.files:
+            # Only the provider's file node establishes source membership here;
+            # declarations and arbitrary symbols inherit no scope on their own.
+            if (getattr(node, "kind", None) == "file" and isinstance(path, str)
+                    and path in coverage_artifacts and path in graph.files):
                 source_nodes_by_path[path].append(node)
     contexts_by_service: dict[str, dict[tuple[str, str], list[dict]]] = defaultdict(lambda: defaultdict(list))
     all_owner_scopes: dict[str, set[str]] = defaultdict(set)
@@ -138,8 +141,10 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
             # Workspace snapshot paths carry an authoritative repo qualifier;
             # the context itself supplies the exact repository realm and scope.
             prefix = "@" + repo_id + "/"
+            context_scope = context.get("scope")
             paths = sorted(path for path, nodes_at_path in source_nodes_by_path.items()
-                           if path.startswith(prefix) and nodes_at_path)
+                           if path.startswith(prefix) and context_scope == scope and any(
+                               getattr(node, "scope", None) == context_scope for node in nodes_at_path))
         owner_ids: set[str] = set()
         # Workspace projection qualifies a symbol's ID/path/context but does not
         # add repo/module fields to that public symbol. Join only by the exact
