@@ -704,7 +704,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                        **{**(original.metadata or {}), "types": object_types, "qualifier": "&" + original_name,
                           "condition_status": object_state,
                           "registration_origin": "FACTORY_OBJECT", "factory_name": original_name,
-                          "declared_type": source.get("owner") if source.get("kind") == "class" else str(source.get("type") or "").split("<", 1)[0],
+                          "declared_type": info["factory_type"],
                           "factory_product_type": info["product_type"]})
         for key, edge in list(edges.items()):
             if edge.target == original.id:

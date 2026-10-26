@@ -93,7 +93,8 @@ def factory_info(symbol, symbols, context_id):
                 pending.extend(parents)
     if fact is None and FACTORY not in ancestry:
         return None
-    result = {"status": "UNKNOWN", "product_type": None, "method": None, "reasons": [], "sources": []}
+    result = {"status": "UNKNOWN", "product_type": None, "method": None, "reasons": [], "sources": [],
+              "factory_type": symbol.get("owner") if field == "factory_bean" else None}
     if field == "factory_bean" and hierarchy.get("complete") is not True:
         result["reasons"].append("INCOMPLETE_FACTORY_HIERARCHY")
     if field == "factory_bean" and (symbol.get("kind") != "class" or "abstract" in symbol.get("modifiers", [])):
@@ -130,6 +131,7 @@ def factory_info(symbol, symbols, context_id):
         if declaration is None or declaration.get("factory_bean") != fact:
             result["reasons"].append("FACTORY_PRODUCER_NOT_INDEXED_OR_GENERIC")
             return result
+        result["factory_type"] = producer["type"]
     returns = []
     for kind, owner, method_name in (("OBJECT", fact["get_object_owner"], "getObject"),
                                       ("TYPE", fact["get_type_owner"], "getObjectType")):
