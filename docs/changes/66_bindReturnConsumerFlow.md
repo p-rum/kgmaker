@@ -90,3 +90,14 @@ Ancestor protocol fixes PR47 `f92c83e` a `ee14ea8` jsou převzaty jako `1537c10`
 a `ae5fa2b`: strict argument enums/callsite references, owner a canonical occurrence
 index. Finální full čeká jejich aktualizovaný parent s current-main integrací;
 předchozí155 PASS109.35s focus je historický source9f, nikoli finální current proof.
+
+Vlastní K1/K2 rebuild s real expression-body locator nyní PASS33.00s/PASS35.32s.
+Finální pre-parent nový modul70 PASS248.52s, bez skip. Skutečná compatibility
+regrese odhalila tsconfig program zahrnující test source mimo production snapshot:
+1 RED7.15s. Worker pro takový body neposílá optional typed proof version, zachová
+původní compiler graph a explicitní RETURN_SOURCE_NOT_CAPTURED; production caller
+má typed result, nikoli foreign body join. Forged locator ve version1 proof se stále
+striktně odmítá. Nejde o uvolnění snapshot validace.
+
+Combined argument parent `417e2aa` obsahuje current-main49c46b a TSversion5 callback/
+freshness kontrakty; jeho integrace a společný fokus/full jsou zatím PENDING.

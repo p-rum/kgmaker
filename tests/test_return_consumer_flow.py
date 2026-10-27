@@ -406,3 +406,13 @@ def test_future_string_ir_kind_is_unknown_not_declared_body(captured_return_resp
     sites=[s for s in result.call_sites if symbols.get(s.get('declared_target'),{}).get('name')=='make']
     assert sites and all(s.get('return_body_status')=='UNKNOWN' for s in sites)
     assert any(d.get('code')=='RETURN_CONTROL_FLOW_UNSUPPORTED' for d in result.diagnostics)
+
+
+def test_uncaptured_frontend_test_body_is_unknown_not_invalid_protocol(tmp_path):
+    graph=analyze(tmp_path,{'src/main.ts':'import {ignored} from "./test/Excluded"; export function make(){return 1;} export function use(){const result=ignored();return make();}',
+        'src/test/Excluded.ts':'export function ignored(){return 2;}'},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    excluded=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='ignored']
+    assert excluded and all(s.get('return_body_status')=='UNKNOWN' and s.get('return_body_reason')=='RETURN_SOURCE_NOT_CAPTURED' for s in excluded)
+    assert not any(p.get('return_mapping_version')==1 and p.get('source_file')=='src/test/Excluded.ts' for p in graph['evidence'])
+    assert any(p.get('return_mapping_version')==1 and p.get('source_file')=='src/main.ts' for p in graph['evidence'])

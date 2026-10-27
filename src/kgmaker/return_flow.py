@@ -402,7 +402,8 @@ class _Projection:
                 site['return_body_reason']='COMPILER_PROVEN_DIRECT_SOURCE_BODY'
             else:
                 site['return_body_status']='UNKNOWN'
-                site['return_body_reason']=(body.get('return_binding_boundary') or 'TS_MUTABLE_BODY_BINDING') if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE'
+                site['return_body_reason']=('RETURN_SOURCE_NOT_CAPTURED' if body.get('return_ir_reason')=='RETURN_SOURCE_NOT_CAPTURED' else
+                    (body.get('return_binding_boundary') or 'TS_MUTABLE_BODY_BINDING') if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE')
             if 'return_mapping_version' not in site:
                 self.status(site,'NOT_EXECUTION' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'UNKNOWN',
                     'METHOD_REFERENCE' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'RETURN_SOURCE_IR_UNAVAILABLE')
