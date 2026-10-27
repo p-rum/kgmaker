@@ -1,7 +1,7 @@
 # Projekce explicitních databázových resources
 
 T015, kroky S01–S05, AC01–AC06. Finální integrační base je ověřený main
-`5430388a282f19f6c9637319c12a1731ae6d0674`, obsahující T008/T009 kontrakty;
+`3a7f76b00bb5136bbe5990546d9c8942a7f53f73`, obsahující T008/T009 kontrakty;
 původní implementace začala na cbf17b1.
 Stávající podporovaný S06 persistence subset se pouze čte; celý S06/W08, T004
 ani produkční připravenost nejsou prohlášeny za dokončené.
@@ -167,3 +167,16 @@ jsou samostatně ověřený main. Relevantní focused integration checks jsou GR
 (T015 actual K1/K2, T008/T009, Flyway/workspace/dataflow, mandatory-CI a PR36 TS
 freshness);
 celý lokální suite se kvůli této integraci neopakuje.
+
+
+## Refresh po merged callback PR46
+
+Main `3a7f76b00bb5136bbe5990546d9c8942a7f53f73` přidává nezávisle ověřený
+bounded TypeScript callback subset. Vlastní T015 runtime/test source zůstává
+byte-identický6ef7f9a; inherited callback source a testy jsou převzaty beze změny.
+Main121 immutable episodes tvoří přesný prefix, všechny unikátní child captures
+zůstávají nezměněné. CI zachovává společně API-only přípravu, T015, freshness i
+callback tests. Relevantní pure integration kontroly: **161 PASS, 2 actual deselected v8.90s**; full612/10 ani
+předchozí actual2/174 se kvůli této integraci neopakují. Nezávislé feature source
+review a actual proof zůstávají v původním rozsahu; root vlastní finální exact-head
+review, publikaci a nové remote CI.
