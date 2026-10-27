@@ -35,7 +35,7 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
-    "docs/changes/64_propagateViewEvidence.md": "90af030b9b40d191e4092701739887613c9b9016e65e4e8be1a16872ef17a447",
+    "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
@@ -46441,6 +46441,52 @@
         }
       ],
       "id": "episode:754ff4894c2a1f398cfef6a0478a5f1937921519e84b5fcec6929b7c76a28721"
+    },
+    {
+      "base_commit": "7041008a7e7dd472a81129e5f45d67863bc7f42d",
+      "head_commit": "7041008a7e7dd472a81129e5f45d67863bc7f42d",
+      "worktree_fingerprint": "ad686d0837bbd7f5736c3b4e7ee6cb59cb881307dfb6e4c0671f3647e8f42b69",
+      "title": "Change Acceptance a ověření, Kompatibilita a omezení, Následné nezávislé review — aktuální source checkpoint",
+      "changed_files": [
+        {
+          "path": "docs/changes/64_propagateViewEvidence.md",
+          "status": "M",
+          "sha256": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791"
+        },
+        {
+          "path": "tests/windows/no_admin_smoke.ps1",
+          "status": "M",
+          "sha256": "5e1934d28af5b674c492e21bccb1015c9ba6f6b7f91cf53c4a41a8db114b81df"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/changes/64_propagateViewEvidence.md:64_propagateViewEvidence.md",
+        "section:docs/changes/64_propagateViewEvidence.md:Acceptance a ověření::11",
+        "section:docs/changes/64_propagateViewEvidence.md:Kompatibilita a omezení::26",
+        "section:docs/changes/64_propagateViewEvidence.md:Následné nezávislé review — aktuální source checkpoint::53",
+        "section:docs/changes/64_propagateViewEvidence.md:Obnovené GitHub CI a chybějící testovací závislost::57",
+        "section:docs/changes/64_propagateViewEvidence.md:Propagace evidence a coverage do pohledů (T009)::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "windows_dependency_focus",
+          "status": "passed"
+        },
+        {
+          "label": "actual_windows",
+          "status": "unknown"
+        },
+        {
+          "label": "remote_ci",
+          "status": "unknown"
+        }
+      ],
+      "id": "episode:30dcb465b7a2faa365b00aeb08744308569bad228c53be4d231a993e493dc5e6"
     }
   ]
 }
