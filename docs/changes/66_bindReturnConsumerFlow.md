@@ -101,3 +101,22 @@ striktně odmítá. Nejde o uvolnění snapshot validace.
 
 Combined argument parent `417e2aa` obsahuje current-main49c46b a TSversion5 callback/
 freshness kontrakty; jeho integrace a společný fokus/full jsou zatím PENDING.
+
+## Combined TS5 source closure a primitive fields
+
+CommonJS import přes mutable export property byl skutečně RED1/6.48s. Identifier
+není automaticky lexical function binding: nyní se vyžaduje exact compiler
+FunctionDeclaration symbol, nikoli import/alias/candidate. Skutečný #private member
+má vlastní marker; typed caller result zůstává PROVEN, body identity je UNKNOWN.
+Range line/column containers byly2 RED8.12s; nyní jsou primitive/positive/ordered,
+včetně direct-proof flags a všech call/source/target reference containers před
+hash lookup. VOID callsite source span se také kontroluje. Poslední cílené
+scope/import/#private/lexical positives3 PASS25.84s.
+
+Při parent integraci bylo nutné respektovat skutečný model: TS5 capture zahrnuje
+celý compiler program a inferred source-set deklaruje jeho roots production i přes
+folder convention (conflict zůstává viditelný). Skutečně nevybraný scope proto test
+vyjadřuje explicitním classification.json override; existující config se byte-for-
+byte zachová. Return projection používá classified Node.scope, nikoli jméno složky
+nebo raw worker.scope. Alias import node a declaration target zůstávají oddělené.
+Parent full733 PASS10 SKIP je ověřený, current return combined focus/full teprve následuje.

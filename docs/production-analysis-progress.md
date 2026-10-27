@@ -499,9 +499,9 @@ bindings. Workspace export qualifies their original identities and context.
 
 | Backend | Supported static proof | Explicit boundary |
 |---|---|---|
-| Javac/JDK21 | Declared returns, assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| Javac/JDK21 | Declared returns, local assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
 | K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
-| TypeScript5.7.3 | Typed results, assignments, nullable receivers, unassigned lexical-identifier/#private bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, property-based lexical references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
+| TypeScript5.7.3 | Typed results, local assignments, nullable receivers, exact unassigned FunctionDeclaration references / real #private member bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, import/alias/property-based references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
 | K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
 
 `returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control

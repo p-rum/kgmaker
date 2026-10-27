@@ -342,9 +342,15 @@ function analyze(request) {
       } else if (ts.isCallExpression(node) && symbolDeclaration(symbol) && ts.isVariableDeclaration(symbolDeclaration(symbol)) && !proof.complete && !signatureContract)
         reason='DYNAMIC_CALLBACK';
       else target=register(declaration);
+      const lexicalReference=ts.isIdentifier(node.expression)&&symbol&&!(symbol.flags&ts.SymbolFlags.Alias)&&symbol.valueDeclaration&&
+        ts.isFunctionDeclaration(symbol.valueDeclaration)&&declaration&&id(symbol.valueDeclaration)===id(declaration);
+      const memberSymbol=ts.isPropertyAccessExpression(node.expression)?checker.getSymbolAtLocation(node.expression.name):null;
+      const privateReference=ts.isPropertyAccessExpression(node.expression)&&ts.isPrivateIdentifier(node.expression.name)&&
+        declaration&&ts.isMethodDeclaration(declaration)&&declaration.name&&ts.isPrivateIdentifier(declaration.name)&&
+        memberSymbol&&memberSymbol.valueDeclaration&&id(memberSymbol.valueDeclaration)===id(declaration);
       const site={id:identity,caller,...loc,declared_target:target,argument_mapping_version:1,argument_mapping_status:'UNKNOWN',argument_mapping_reason:'NO_SOURCE_ARGUMENT_BINDING_PROOF',dispatch_candidates:[],dispatch_complete:false,
         invocation_kind:ts.isNewExpression(node)?'CONSTRUCTOR':'CALL',receiver_type:ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression) ? checker.typeToString(checker.getTypeAtLocation(node.expression.expression)) : null,
-        callable_type:checker.typeToString(expressionType),return_reference_kind:ts.isIdentifier(node.expression)?'LEXICAL_IDENTIFIER':'PROPERTY_OR_OTHER',
+        callable_type:checker.typeToString(expressionType),return_reference_kind:lexicalReference?'LEXICAL_IDENTIFIER':privateReference?'HARD_PRIVATE_MEMBER':'PROPERTY_OR_OTHER',
         signature:signature?checker.signatureToString(signature):null,
         resolution_reason:reason || 'TYPESCRIPT_RESOLVED_SIGNATURE',evidence_kind:target?'SYMBOL_RESOLVED':'UNRESOLVED',
         context_id:context.id};

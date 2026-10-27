@@ -17,7 +17,13 @@ _NULLABILITY={'UNKNOWN','MAY_BE_NULL','DECLARED_NON_NULL','NULL_LITERAL'}
 
 
 def _range(value):
-    return isinstance(value,dict) and all(type(value.get(k)) is int for k in ('start','end')) and 0<=value['start']<value['end']
+    if not (isinstance(value,dict) and all(type(value.get(k)) is int for k in ('start','end')) and 0<=value['start']<value['end']):return False
+    for key in ('start_line','end_line','start_column','end_column'):
+        if key in value and (type(value[key]) is not int or value[key]<1):return False
+    if 'start_line' in value and 'end_line' in value:
+        if value['end_line']<value['start_line']:return False
+        if value['end_line']==value['start_line'] and 'start_column' in value and 'end_column' in value and value['end_column']<=value['start_column']:return False
+    return True
 
 
 def _info(value):
@@ -102,6 +108,10 @@ def validate_return_ir(response,context=None):
         owner=symbols.get(body.get('method')) if isinstance(body.get('method'),str) else None
         if active:
             if owner is None or body.get('context_id')!=context_id:raise ValueError('Invalid return method owner/context')
+            if any(k in owner and owner[k] is not None and type(owner[k]) is not bool for k in ('jvm_static','suspend','async','generator')):
+                raise ValueError('Invalid return method flags')
+            if owner.get('modifiers') is not None and (not isinstance(owner['modifiers'],list) or not all(isinstance(v,str) for v in owner['modifiers'])):
+                raise ValueError('Invalid return method modifiers')
             location(owner,owner)
             location(body.get('body',{}),owner)
         pending=[(body.get('body',{}),0,owner)]
@@ -165,9 +175,9 @@ def validate_return_ir(response,context=None):
             if node.get('kind')=='call' and node.get('call_site') is not None:
                 site=sites.get(node['call_site']) if isinstance(node['call_site'],str) else None
                 if not site or site.get('caller')!=body['method']:raise ValueError('Return call belongs to another caller')
-                if 'return_reference_kind' in site and not _enum(site['return_reference_kind'],{'LEXICAL_IDENTIFIER','PROPERTY_OR_OTHER'}):
+                if 'return_reference_kind' in site and not _enum(site['return_reference_kind'],{'LEXICAL_IDENTIFIER','HARD_PRIVATE_MEMBER','PROPERTY_OR_OTHER'}):
                     raise ValueError('Invalid return callable reference proof')
-                if node.get('value_info',{}).get('status')=='VALUE' and (node.get('range')!=site.get('range') or node.get('path')!=site.get('path') or node.get('sha256')!=site.get('sha256')):
+                if active and (node.get('range')!=site.get('range') or node.get('path')!=site.get('path') or node.get('sha256')!=site.get('sha256')):
                     raise ValueError('Return call source range mismatch')
             # Kotlin's selector call excludes its receiver in the source span;
             # retain the enclosing expression/statement boundary for call children.
@@ -182,7 +192,7 @@ class _Projection:
         self.sites={s['id']:dict(s) for s in graph.call_sites}
         self.bodies={b['method']:b for b in bodies if b.get('context_id')==context['id']}
         self.edges=list(graph.edges);self.evidence=list(graph.evidence);self.evidence_ids={e["id"] for e in graph.evidence};self.diagnostics=list(graph.diagnostics)
-        self.returns={};self.supported={};self.pending=[];self.steps=0;self.current=None
+        self.returns={};self.supported={};self.pending=[];self.steps=0;self.current=None;self.out_of_scope=set()
         from .callgraph import strongly_connected
         self.recursive={m for component in strongly_connected(graph) for m in component}
 
@@ -228,7 +238,7 @@ class _Projection:
         target=self.symbols.get(site.get('declared_target'),{})
         body=self.bodies.get(site.get('declared_target'),{})
         if body.get('language')=='typescript':
-            return body.get('return_dispatch')=='HARD_PRIVATE' or (body.get('return_dispatch')=='LEXICAL' and site.get('return_reference_kind')=='LEXICAL_IDENTIFIER')
+            return (body.get('return_dispatch')=='HARD_PRIVATE' and site.get('return_reference_kind')=='HARD_PRIVATE_MEMBER') or (body.get('return_dispatch')=='LEXICAL' and site.get('return_reference_kind')=='LEXICAL_IDENTIFIER')
         modifiers=target.get('modifiers') or []
         return (target.get('jvm_static') is True or 'static' in modifiers or 'final' in modifiers or 'private' in modifiers
                 or site.get('invocation_kind') in {'STATIC','SPECIAL'} or body.get('return_dispatch') in {'STATIC','PRIVATE'})
@@ -356,6 +366,10 @@ class _Projection:
     def finish(self):
         for method,body in self.bodies.items():
             self.current=method
+            declaration=self.nodes.get(method)
+            if declaration is None or (self.context.get('scope')!='all' and declaration.scope!=self.context.get('scope')):
+                self.out_of_scope.add(method);self.supported[method]=False
+                continue
             if body.get('return_flow_version')!=1 or body.get('return_body_kind')!='DECLARED':continue
             self.supported[method]=True
             pending=[body.get('body',{})];unsupported=False
@@ -402,8 +416,13 @@ class _Projection:
                 site['return_body_reason']='COMPILER_PROVEN_DIRECT_SOURCE_BODY'
             else:
                 site['return_body_status']='UNKNOWN'
-                site['return_body_reason']=('RETURN_SOURCE_NOT_CAPTURED' if body.get('return_ir_reason')=='RETURN_SOURCE_NOT_CAPTURED' else
-                    (body.get('return_binding_boundary') or 'TS_MUTABLE_BODY_BINDING') if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE')
+                site['return_body_reason']='DECLARED_BODY_PROOF_UNAVAILABLE'
+                if body.get('return_ir_reason')=='RETURN_SOURCE_NOT_CAPTURED':site['return_body_reason']='RETURN_SOURCE_NOT_CAPTURED'
+                elif target in self.out_of_scope:site['return_body_reason']='RETURN_SOURCE_SCOPE_NOT_SELECTED'
+                elif body.get('language')=='typescript' and not self.direct(site):
+                    boundary=body.get('return_binding_boundary')
+                    site['return_body_reason']=(boundary if isinstance(boundary,str) else None) or ('TS_CALLEE_IDENTITY_NOT_CLOSED'
+                        if body.get('return_dispatch') in ('LEXICAL','HARD_PRIVATE') else 'TS_MUTABLE_BODY_BINDING')
             if 'return_mapping_version' not in site:
                 self.status(site,'NOT_EXECUTION' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'UNKNOWN',
                     'METHOD_REFERENCE' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'RETURN_SOURCE_IR_UNAVAILABLE')

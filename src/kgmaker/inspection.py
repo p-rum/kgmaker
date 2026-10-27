@@ -217,25 +217,29 @@ def validate_response(response: dict, selected_context: dict):
     for key in ("symbols", "call_sites", "bodies", "facts", "diagnostics"):
         if not isinstance(response.get(key), list) or not all(isinstance(v, dict) for v in response[key]):
             raise WorkerError("Malformed worker collection: " + key, "INVALID_PROTOCOL")
-    ids = {s.get("id") for s in response["symbols"]}
+    if any(not isinstance(s.get("id"), str) for s in response["symbols"]):
+        raise WorkerError("Malformed worker symbol identity", "INVALID_PROTOCOL")
+    ids = {s["id"] for s in response["symbols"]}
     if None in ids or len(ids) != len(response["symbols"]):
         raise WorkerError("Ambiguous/duplicate worker symbol identity", "INVALID_PROTOCOL")
     sites = set()
     for site in response["call_sites"]:
-        if not isinstance(site.get("id"), str) or site["id"] in sites or site.get("caller") not in ids:
+        if not isinstance(site.get("id"), str) or site["id"] in sites or not isinstance(site.get("caller"), str) or site["caller"] not in ids:
             raise WorkerError("Dangling/duplicate worker call site", "INVALID_PROTOCOL")
         sites.add(site["id"])
-        if site.get("declared_target") is not None and site["declared_target"] not in ids:
+        if site.get("declared_target") is not None and (not isinstance(site["declared_target"], str) or site["declared_target"] not in ids):
             raise WorkerError("Unknown declared target", "INVALID_PROTOCOL")
-        if not isinstance(site.get("dispatch_candidates", []), list) or any(t not in ids for t in site.get("dispatch_candidates", [])):
+        if not isinstance(site.get("dispatch_candidates", []), list) or any(not isinstance(t, str) or t not in ids for t in site.get("dispatch_candidates", [])):
             raise WorkerError("Unknown dispatch candidate", "INVALID_PROTOCOL")
+        if any(key in site and not isinstance(site[key], str) for key in ("invocation_kind", "evidence_kind")):
+            raise WorkerError("Malformed worker call classification", "INVALID_PROTOCOL")
         if site.get("evidence_kind") == "SYMBOL_RESOLVED" and not site.get("declared_target"):
             raise WorkerError("Resolved call has no declared target", "INVALID_PROTOCOL")
     for body in response["bodies"]:
         if not isinstance(body, dict) or not isinstance(body.get("method"), str) or body["method"] not in ids or body.get("context_id") != selected_context["id"]:
             raise WorkerError("Unknown method body/context", "INVALID_PROTOCOL")
     for fact in response["facts"]:
-        if fact.get("source") not in ids or fact.get("target") not in ids:
+        if not isinstance(fact.get("source"), str) or not isinstance(fact.get("target"), str) or fact["source"] not in ids or fact["target"] not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
 
     from .return_flow import validate_return_ir

@@ -18,7 +18,9 @@ def fixture_sources(language):
 
 
 
-def analyze(root,sources,*,language='jvm',backend='k1'):
+def analyze(root,sources,*,language='jvm',backend='k1',compiler_options=None):
+    store=root/'.kgmaker'
+    before={p.relative_to(store):p.read_bytes() for p in store.rglob('*') if p.is_file()} if store.exists() else None
     try:
         command(language,HOME,kotlin_backend=backend)
     except WorkerError as error:
@@ -28,13 +30,14 @@ def analyze(root,sources,*,language='jvm',backend='k1'):
     for name,text in sources.items():
         path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text)
     if language=='typescript':
-        (root/'tsconfig.json').write_text(json.dumps({'compilerOptions':{'strict':True,'target':'ES2020'},'include':['src/**/*.ts']}))
+        (root/'tsconfig.json').write_text(json.dumps({'compilerOptions':{'strict':True,'target':'ES2020',**(compiler_options or {})},'include':['src/**/*.ts']}))
         result=inspect_frontend(root,home=HOME,publish=False)
     else:
         result=inspect_jvm(root,home=HOME,publish=False,kotlin_backend=backend,
             classpath=[str(HOME/'jvm/target/lib/kotlin-stdlib.jar')])
     assert not any('.err.' in d.get('code','') for d in result['diagnostics']),result['diagnostics']
-    assert not (root/'.kgmaker').exists()
+    if before is None:assert not store.exists()
+    else:assert before=={p.relative_to(store):p.read_bytes() for p in store.rglob('*') if p.is_file()}
     return result['graph']
 
 
@@ -329,13 +332,15 @@ def captured_return_response(tmp_path_factory):
 export function other(){const value=make();return value;}
 function tuple():[number,string]{return [1,"x"];}
 export function unpack(){const[a,b]=tuple();}
+function sink(value:number):void{}
+export function consume(){sink(make());}
 ''','src/foreign.ts':'export function foreign(){return 3;}'},language='typescript')
     return root,captured,graph
 
 
 @pytest.mark.parametrize('mutation',[
     'foreign_literal','missing_literal_path','literal_hash','captured_foreign_literal','literal_range','body_owner','body_context',
-    'binding_path','binding_hash','binding_owner','binding_range','node_kind_list','body_kind_dict','body_root_list','body_method_list','status_list','nullability_dict','shape_kind_list','projection_status_dict','projection_kind_list','call_site_list','binding_method_dict','binding_symbol_list','language_list','dispatch_dict','boundary_list','reference_kind_list',
+    'binding_path','binding_hash','binding_owner','binding_range','node_kind_list','body_kind_dict','body_root_list','body_method_list','status_list','nullability_dict','shape_kind_list','projection_status_dict','projection_kind_list','call_site_list','binding_method_dict','binding_symbol_list','language_list','dispatch_dict','boundary_list','reference_kind_list','range_line_list','range_column_dict','modifiers_scalar','static_flag_list','invocation_kind_list','site_target_dict','site_caller_list','fact_source_list','candidate_dict','symbol_id_list','void_call_range',
 ])
 def test_actual_return_ir_tampering_rejected_without_store_mutation(captured_return_response,monkeypatch,mutation):
     import copy
@@ -359,8 +364,22 @@ def test_actual_return_ir_tampering_rejected_without_store_mutation(captured_ret
     if mutation=='foreign_literal':literal.update(path='src/not-captured.ts',sha256='0'*64)
     elif mutation=='missing_literal_path':literal.pop('path')
     elif mutation=='literal_hash':literal['sha256']='0'*64
+    elif mutation=='modifiers_scalar':symbols[body['method']]['modifiers']=42
+    elif mutation=='static_flag_list':symbols[body['method']]['jvm_static']=[]
+    elif mutation=='invocation_kind_list':response['call_sites'][0]['invocation_kind']=[]
+    elif mutation=='site_target_dict':response['call_sites'][0]['declared_target']={}
+    elif mutation=='site_caller_list':response['call_sites'][0]['caller']=[]
+    elif mutation=='fact_source_list':response['facts'][0]['source']=[]
+    elif mutation=='candidate_dict':response['call_sites'][0]['dispatch_candidates']=[{}]
+    elif mutation=='symbol_id_list':symbols[body['method']]['id']=[]
+    elif mutation=='void_call_range':
+        consumer=next(b for b in response['bodies'] if symbols[b['method']]['name']=='consume')
+        call=next(n for n in walk(consumer['body']) if n.get('kind')=='call' and n.get('value_info',{}).get('status')=='VOID')
+        call['range']={**call['range'],'start':call['range']['start']+1}
     elif mutation=='captured_foreign_literal':literal.update(path='src/foreign.ts',sha256=selected['source_files']['src/foreign.ts'])
     elif mutation=='literal_range':literal['range']={**literal['range'],'start':0,'end':1}
+    elif mutation=='range_line_list':literal['range']['start_line']=[]
+    elif mutation=='range_column_dict':literal['range']['end_column']={}
     elif mutation=='body_owner':body['method']=other['method']
     elif mutation=='body_context':body['context_id']='foreign'
     elif mutation=='call_site_list':next(n for n in walk(other['body']) if n.get('kind')=='call')['call_site']=[]
@@ -408,11 +427,27 @@ def test_future_string_ir_kind_is_unknown_not_declared_body(captured_return_resp
     assert any(d.get('code')=='RETURN_CONTROL_FLOW_UNSUPPORTED' for d in result.diagnostics)
 
 
-def test_uncaptured_frontend_test_body_is_unknown_not_invalid_protocol(tmp_path):
+def test_compiler_capture_does_not_upgrade_excluded_source_scope(tmp_path):
+    (tmp_path/'.kgmaker').mkdir()
+    (tmp_path/'.kgmaker/classification.json').write_text(json.dumps({'schema_version':1,'overrides':[{'path':'src/test','scope':'test','reason':'Explicit test source despite a broad compiler root'}]}))
     graph=analyze(tmp_path,{'src/main.ts':'import {ignored} from "./test/Excluded"; export function make(){return 1;} export function use(){const result=ignored();return make();}',
         'src/test/Excluded.ts':'export function ignored(){return 2;}'},language='typescript')
     symbols={s['id']:s for s in graph['symbols']}
     excluded=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='ignored']
-    assert excluded and all(s.get('return_body_status')=='UNKNOWN' and s.get('return_body_reason')=='RETURN_SOURCE_NOT_CAPTURED' for s in excluded)
+    assert excluded and all(s.get('return_body_status')=='UNKNOWN' and s.get('return_body_reason')=='RETURN_SOURCE_SCOPE_NOT_SELECTED' for s in excluded)
+    targets={s['declared_target'] for s in excluded}
+    assert all(n['scope']=='test' for n in graph['nodes'] if n['id'] in targets)
     assert not any(p.get('return_mapping_version')==1 and p.get('source_file')=='src/test/Excluded.ts' for p in graph['evidence'])
     assert any(p.get('return_mapping_version')==1 and p.get('source_file')=='src/main.ts' for p in graph['evidence'])
+
+
+def test_commonjs_import_alias_is_not_closed_lexical_body(tmp_path):
+    graph=analyze(tmp_path,{'src/dep.ts':'export function make(){return 1;}',
+        'src/main.ts':'''import {make} from "./dep";import * as dep from "./dep";
+(dep as any).make=()=>2;export function use(){return make();}'''},language='typescript',
+        compiler_options={'module':'CommonJS','esModuleInterop':False})
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='make']
+    assert sites and all(s.get('return_mapping_status')=='PROVEN' for s in sites)
+    assert all(s.get('return_body_status')=='UNKNOWN' for s in sites)
+    assert not any(e.get('transformation')=='DECLARED_BODY_RETURN' and e.get('call_site') in {s['id'] for s in sites} for e in graph['evidence'])
