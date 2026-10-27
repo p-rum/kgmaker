@@ -43,14 +43,15 @@ flowchart LR
   n41["src/kgmaker/spring_imports.py"]
   n42["src/kgmaker/store.py"]
   n43["src/kgmaker/templates.py"]
-  n44["src/kgmaker/views.py"]
-  n45["src/kgmaker/workbooks.py"]
-  n46["src/kgmaker/worker_protocol.py"]
-  n47["src/kgmaker/workflow.py"]
-  n48["src/kgmaker/workspace.py"]
-  n49["src/kgmaker/workspace_cli.py"]
-  n50{"technology: Kafka"}
-  n51{"technology: PostgreSQL"}
+  n44["src/kgmaker/typescript_snapshot.py"]
+  n45["src/kgmaker/views.py"]
+  n46["src/kgmaker/workbooks.py"]
+  n47["src/kgmaker/worker_protocol.py"]
+  n48["src/kgmaker/workflow.py"]
+  n49["src/kgmaker/workspace.py"]
+  n50["src/kgmaker/workspace_cli.py"]
+  n51{"technology: Kafka"}
+  n52{"technology: PostgreSQL"}
   n0 -->|imports| n15
   n4 -->|imports| n2
   n6 -->|imports| n26
@@ -60,8 +61,8 @@ flowchart LR
   n7 -->|imports| n26
   n7 -->|imports| n38
   n7 -->|imports| n40
-  n7 -->|imports| n45
-  n7 -->|imports| n48
+  n7 -->|imports| n46
+  n7 -->|imports| n49
   n9 -->|imports| n5
   n9 -->|imports| n24
   n9 -->|imports| n26
@@ -74,7 +75,7 @@ flowchart LR
   n12 -->|imports| n32
   n13 -->|imports| n5
   n13 -->|imports| n35
-  n13 -->|imports| n44
+  n13 -->|imports| n45
   n14 -->|imports| n5
   n15 -->|imports| n2
   n15 -->|imports| n3
@@ -91,9 +92,9 @@ flowchart LR
   n15 -->|imports| n38
   n15 -->|imports| n40
   n15 -->|imports| n42
-  n15 -->|imports| n44
-  n15 -->|imports| n47
-  n15 -->|imports| n49
+  n15 -->|imports| n45
+  n15 -->|imports| n48
+  n15 -->|imports| n50
   n16 -->|imports| n5
   n16 -->|imports| n35
   n17 -->|imports| n5
@@ -103,7 +104,7 @@ flowchart LR
   n19 -->|imports| n38
   n19 -->|imports| n40
   n19 -->|imports| n42
-  n19 -->|imports| n47
+  n19 -->|imports| n48
   n20 -->|imports| n5
   n21 -->|imports| n2
   n22 -->|imports| n5
@@ -111,16 +112,16 @@ flowchart LR
   n22 -->|imports| n9
   n22 -->|imports| n24
   n22 -->|imports| n42
-  n22 -->|imports| n48
+  n22 -->|imports| n49
   n23 -->|imports| n5
   n23 -->|imports| n8
   n23 -->|imports| n35
-  n23 -->|imports| n44
-  n23 -->|imports| n48
+  n23 -->|imports| n45
+  n23 -->|imports| n49
   n24 -->|imports| n35
   n25 -->|imports| n35
-  n25 -->|uses_messaging| n50
-  n25 -->|connects_to| n51
+  n25 -->|uses_messaging| n51
+  n25 -->|connects_to| n52
   n26 -->|imports| n5
   n26 -->|imports| n7
   n26 -->|imports| n9
@@ -133,9 +134,9 @@ flowchart LR
   n26 -->|imports| n39
   n26 -->|imports| n40
   n26 -->|imports| n43
-  n26 -->|imports| n44
   n26 -->|imports| n45
-  n26 -->|imports| n48
+  n26 -->|imports| n46
+  n26 -->|imports| n49
   n27 -->|imports| n5
   n27 -->|imports| n6
   n27 -->|imports| n7
@@ -144,15 +145,15 @@ flowchart LR
   n27 -->|imports| n24
   n27 -->|imports| n38
   n27 -->|imports| n40
-  n27 -->|imports| n44
+  n27 -->|imports| n45
   n28 -->|imports| n5
   n28 -->|imports| n13
-  n28 -->|imports| n44
+  n28 -->|imports| n45
   n29 -->|imports| n5
   n30 -->|imports| n5
   n30 -->|imports| n35
   n30 -->|imports| n41
-  n30 -->|uses_messaging| n50
+  n30 -->|uses_messaging| n51
   n31 -->|imports| n5
   n31 -->|imports| n11
   n31 -->|imports| n14
@@ -160,7 +161,8 @@ flowchart LR
   n31 -->|imports| n35
   n31 -->|imports| n38
   n31 -->|imports| n42
-  n31 -->|imports| n46
+  n31 -->|imports| n44
+  n31 -->|imports| n47
   n32 -->|imports| n5
   n32 -->|imports| n14
   n32 -->|imports| n20
@@ -169,16 +171,17 @@ flowchart LR
   n32 -->|imports| n35
   n32 -->|imports| n38
   n32 -->|imports| n42
-  n32 -->|imports| n46
+  n32 -->|imports| n44
+  n32 -->|imports| n47
   n33 -->|imports| n5
   n33 -->|imports| n11
   n33 -->|imports| n31
   n33 -->|imports| n32
   n33 -->|imports| n37
   n33 -->|imports| n42
-  n33 -->|imports| n44
-  n33 -->|imports| n46
-  n33 -->|uses_messaging| n50
+  n33 -->|imports| n45
+  n33 -->|imports| n47
+  n33 -->|uses_messaging| n51
   n34 -->|imports| n35
   n35 -->|imports| n14
   n36 -->|imports| n5
@@ -189,8 +192,8 @@ flowchart LR
   n36 -->|imports| n33
   n36 -->|imports| n38
   n36 -->|imports| n42
-  n36 -->|imports| n44
-  n36 -->|imports| n48
+  n36 -->|imports| n45
+  n36 -->|imports| n49
   n37 -->|imports| n5
   n37 -->|imports| n35
   n37 -->|imports| n42
@@ -207,32 +210,34 @@ flowchart LR
   n41 -->|imports| n5
   n42 -->|imports| n5
   n42 -->|imports| n35
-  n42 -->|imports| n44
+  n42 -->|imports| n45
   n43 -->|imports| n5
   n43 -->|imports| n35
   n44 -->|imports| n5
-  n44 -->|imports| n8
-  n44 -->|imports| n11
-  n44 -->|imports| n31
-  n44 -->|imports| n32
-  n44 -->|imports| n35
-  n44 -->|imports| n48
+  n44 -->|imports| n47
   n45 -->|imports| n5
-  n45 -->|imports| n14
+  n45 -->|imports| n8
+  n45 -->|imports| n11
+  n45 -->|imports| n31
+  n45 -->|imports| n32
   n45 -->|imports| n35
-  n46 -->|imports| n1
+  n45 -->|imports| n49
   n46 -->|imports| n5
-  n47 -->|imports| n34
-  n48 -->|imports| n5
-  n48 -->|imports| n11
-  n48 -->|imports| n14
-  n48 -->|imports| n31
-  n48 -->|imports| n35
-  n48 -->|imports| n39
-  n48 -->|imports| n46
+  n46 -->|imports| n14
+  n46 -->|imports| n35
+  n47 -->|imports| n1
+  n47 -->|imports| n5
+  n48 -->|imports| n34
   n49 -->|imports| n5
-  n49 -->|imports| n24
+  n49 -->|imports| n11
+  n49 -->|imports| n14
+  n49 -->|imports| n31
+  n49 -->|imports| n35
   n49 -->|imports| n39
-  n49 -->|imports| n42
-  n49 -->|imports| n44
-  n49 -->|imports| n48
+  n49 -->|imports| n47
+  n50 -->|imports| n5
+  n50 -->|imports| n24
+  n50 -->|imports| n39
+  n50 -->|imports| n42
+  n50 -->|imports| n45
+  n50 -->|imports| n49

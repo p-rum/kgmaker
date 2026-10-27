@@ -1,7 +1,7 @@
 # Projekce explicitních databázových resources
 
-T015, kroky S01–S05, AC01–AC06. Explicitní dependency base je T009/PR48
-`d0932d9c3f7de9827ea590b6f981aa29e5b39349`, obsahující T008/T009 kontrakty;
+T015, kroky S01–S05, AC01–AC06. Finální integrační base je ověřený main
+`5430388a282f19f6c9637319c12a1731ae6d0674`, obsahující T008/T009 kontrakty;
 původní implementace začala na cbf17b1.
 Stávající podporovaný S06 persistence subset se pouze čte; celý S06/W08, T004
 ani produkční připravenost nejsou prohlášeny za dokončené.
@@ -104,7 +104,7 @@ iteration1; neprobíhá self-approval.
 Před novým full byla integrována finální metadata T009
 `d0932d9c3f7de9827ea590b6f981aa29e5b39349`; produkce/testy/workers/pyproject jsou
 proti původnímu cbf17b1 byte-identické. Přesný parent prefix113 episodes je
-zachován, poté přidán původní nezměněný child capture. Finální base je d0932d9.
+zachován, poté přidán původní nezměněný child capture. Tehdejší base byla d0932d9.
 
 ## Skutečný upstream framework kontrakt
 
@@ -156,3 +156,14 @@ truststore; explicitní retry se systémovým CA truststore zachoval TLS verific
 zapnuté. Oba logy zůstávají v validation adresáři.
 Runtime a test source zůstávají byte-identické validovanému6ef7f9a; nový celý
 pytest se kvůli CI/bootstrap-only změně neopakuje.
+
+
+Finální integrační base je ověřený main
+`5430388a282f19f6c9637319c12a1731ae6d0674` (T009 CI fixes a PR36 TypeScript
+freshness). Main118 episodes tvoří přesný nezměněný prefix, následovaný unikátními
+nezměněnými child captures; semantic facts obou větví jsou zachovány. Vlastní
+T015 runtime/test source je byte-identický validovanému6ef7f9a; inherited změny
+jsou samostatně ověřený main. Relevantní focused integration checks jsou GREEN: **174 PASS v108.31s**, bez skips
+(T015 actual K1/K2, T008/T009, Flyway/workspace/dataflow, mandatory-CI a PR36 TS
+freshness);
+celý lokální suite se kvůli této integraci neopakuje.

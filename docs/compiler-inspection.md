@@ -40,7 +40,7 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+TypeScript worker v3 (project references od v2) podporuje solution-style project references uvnitř zvoleného
 repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
@@ -82,6 +82,20 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Selected tsconfig freshness (T003-S08-W02)
+
+Worker3 přidává `project.input_discovery` v1 a context marker
+`typescript-input-discovery-1`. TypeScript sám respektuje extends/baseUrl/paths/
+include/exclude; Python replayuje zachycené content hashes, existence/realpath
+pozorování a directory membership. Root/project package metadata a lockfiles
+jsou obsahově svázané. Změna nepoužitého sibling configu nebo excluded-unused
+obsahu nestaluje selected context; relevantní input či dříve missing dependency
+ano. Negativní/mixed snapshot nepublikuje graf, offline status/hook nespustí Node.
+Legacy snapshot, TS selector sloty a JVM politika zůstávají beze změny.
+Discovery membership je konzervativní a má explicitní limity; nejde o persistent
+incremental compilation cache. [Freshness guide](typescript-freshness.md) a
+[note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
 
 ### Windows user-space ověření (T003-S11-W03)
 
