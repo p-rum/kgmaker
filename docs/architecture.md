@@ -207,3 +207,15 @@ the complete T003-AC02 sequence remain required.
 Task identities and historical milestone aliases are defined only by
 [the registry](tasks/README.md). [Current status](production-analysis-progress.md)
 distinguishes existing capabilities from the normative [completion plan](tasks/3_finishProductionAnalysis.md).
+
+## Realm-bound data resources
+
+`data_resources.project_data_resources` is a pure topology projection over T008
+service ownership/context selection, T009 evidence partitions, and existing
+workspace schema/persistence facts. Resource identity uses workspace, repository,
+explicit database and migration stream; table and ORM IDs are drill-down references.
+Only current, source-hash-checked selected-context query edges add access claims.
+Migration derivation remains an attribute of SOURCE_ONLY evidence, never a new
+runtime evidence kind. Missing/foreign/conflicting realms, unsupported scope and
+upstream truncation stay visible. The projection never connects to a database,
+reconstructs a parallel schema catalog, executes a worker, or writes an artifact.
