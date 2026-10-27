@@ -105,6 +105,7 @@ jobs:
         run: |
           mvn -B -ntp -f fixtures/build-inspection/maven/pom.xml test
           mvn -B -ntp -f fixtures/spring-imports/pom.xml compile
+          mvn -B -ntp -f fixtures/data-resources/pom.xml compile
           python workers/jvm/build.py --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/jvm/fetch_k2.py --output "$RUNNER_TEMP/kgmaker-tools/k2"
           python workers/jvm/build.py --backend k2 --analysis-api-home "$RUNNER_TEMP/kgmaker-tools/k2" --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"

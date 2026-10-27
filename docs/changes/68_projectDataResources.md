@@ -53,7 +53,7 @@ Schema/store v1/v2/v3, stávající CLI, loader a renderery se nemění.
   nesměla zahodit inherited graph evidence; oprava fixture nemění runtime.
 - Actual runtime prerequisites byly explicitně zkopírovány z source-identického
   `default-body` checkoutu (celý JVM source diff bez rozdílu). Read-only prerequisite
-  preflight PASS. Instalace/build/fetch ani Maven/Gradle execution nebyly vyvolány.
+  preflight PASS. Při původní přípravě nebyly instalace/build/fetch ani Maven/Gradle execution vyvolány; následná explicitní cold API bootstrap validace je popsána níže.
 
 Opravený strict full je dokončený: **612 PASS, 10 SKIP v600.54s**, exit0. Příkaz pod sdíleným flockem používá
 JDK21.0.6+7/Kotlin2.1.10, vlastní K1/K2 resources, skutečnou Maven fixture a API
@@ -137,3 +137,22 @@ Maven/trusted exporter, Gradle8.13/Kotlin2.2.20 cache, druhý JDK21+ a non-admin
 Windows smoke gates; skutečné T015 K1/K2 případy nebyly přeskočeny.
 Log, XML, source manifest a `full-status.json` jsou v `/workspace/t015-validation/`.
 Metadata doplněná po běhu nemění runtime/test inputs.
+
+## Explicitní CI příprava API
+
+Nezávislé review našlo neúplný CI bootstrap: spring-imports fixture sama
+nepřipravuje všechny hashované JPA/Spring Data API. Nový API-only
+`fixtures/data-resources/pom.xml` pinne všech deset verzí, vylučuje transitives
+a neobsahuje aplikaci, Spring context ani DB. Compiler job explicitně spouští
+`mvn -B -ntp -f fixtures/data-resources/pom.xml compile` před actual testy.
+Projection ani test bootstrap samy nic nedofetchují a mandatory gates zůstávají.
+
+Prázdný test Maven repository správně selhal na chybějícím pinned API;
+mandatory-CI guards **15 PASS v0.20s**. Explicitní příprava do tohoto prázdného
+repository je GREEN: API-only Maven compile BUILD SUCCESS v4.840s; dvě actual
+K1/K2 varianty nad tímto nově připraveným repository **2 PASS, 45 deselected
+v4.13s**, bez skips. První cold Maven pokus skončil PKIX kvůli staženému JDK
+truststore; explicitní retry se systémovým CA truststore zachoval TLS verification
+zapnuté. Oba logy zůstávají v validation adresáři.
+Runtime a test source zůstávají byte-identické validovanému6ef7f9a; nový celý
+pytest se kvůli CI/bootstrap-only změně neopakuje.
