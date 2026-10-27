@@ -131,3 +131,23 @@ zůstává přesný prefix a přidává se jedna validated implementation captur
 CLI semantic validate/scan/check a git diff check jsou ověřeny před finálním
 lokálním commitem. Publikace, nezávislé exact-pair review a fresh CI nejsou
 provedeny autorem a zůstávají explicitními release gates.
+
+## Integrace aktuálního main po required full
+
+Před finálním předáním je integrován skutečný main
+`ec333966e657896382f310ef018835e3d696513e` po reviewed PR35 JVM dispatch.
+Model, testy, schema, explicitní fixture i capability API dokument jsou přesně
+byte-identické approved/full-tested source `95c3ed3`. Worker/inspection/flow
+source a workflow jsou přesně aktuální main; jejich vlastní fresh7CI proof
+je oddělený od starého model full. Nový JVM/full se kvůli čisté kompozici
+neprovádí. Pure T023/T005/T009/CFG integrace: **130 PASS v0.38s**, exit0.
+
+Main 134 immutable episodes je přesný prefix +1 nezměněná validated T023 capture
+`episode:680889529b4a51de7bcbadec3ecc9be877013eeaf11faa4be55ca8c1c0adb187`
+=135. Core11 concepts/30 relationships je unie, bez vymyšlených nových facts.
+README semantic bullets zůstávají167/169, Javac STATIC111, process composition
+cituje skutečnou capability59. Přesunutý Default body source mapping nadpis
+je nyní649; tento doložený citation rebind je proveden scoped semantic patchem
+pokrývajícím parent diff a následným current-main update/apply/validate. Graphy
+jsou regenerovány CLI. Následná metadata nevytvářejí další implementační epizodu
+a nepřepisují žádnou historickou capture.
