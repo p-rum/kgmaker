@@ -55,7 +55,7 @@ Schema/store v1/v2/v3, stávající CLI, loader a renderery se nemění.
   `default-body` checkoutu (celý JVM source diff bez rozdílu). Read-only prerequisite
   preflight PASS. Instalace/build/fetch ani Maven/Gradle execution nebyly vyvolány.
 
-Opravený strict full zatím nebyl spuštěn, nikoli PASS. Příkaz pod sdíleným flockem používá
+Opravený strict full je dokončený: **612 PASS, 10 SKIP v600.54s**, exit0. Příkaz pod sdíleným flockem používá
 JDK21.0.6+7/Kotlin2.1.10, vlastní K1/K2 resources, skutečnou Maven fixture a API
 cache. Log/XML/temp jsou v `/workspace/t015-validation/`, mimo malý `/tmp` tmpfs.
 
@@ -67,7 +67,7 @@ flock /workspace/kgmaker-heavy-tests.lock env \
   KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 KGMAKER_REQUIRE_WORKERS=1 \
   KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
   TMPDIR=/workspace/t015-validation/tmp /workspace/kgmaker-venv/bin/python \
-  -m pytest -q -rs --tb=short --basetemp=/workspace/t015-validation/pytest \
+  -m pytest -q -rs --tb=short --basetemp=/workspace/t015-validation/upstream-final-pytest \
   --junitxml=/workspace/t015-validation/full.xml
 ```
 
@@ -128,4 +128,12 @@ Pure public cases: **45 PASS, 2 actual deselected v1.32s**. Nové actual K1/K2
 fixture používají offline hashované skutečné JPA/Spring API, dva explicitní
 Flyway realms a Javac native read/write + JPQL; obě actual varianty jsou GREEN. Strict focused batch celé public module + T008/T009,
 Flyway/workspace/dataflow: **126 PASS v7.94s**, bez skips. Čistý batch bez actual
-variant: **124 PASS, 2 deselected v8.65s**. Strict full stále není PASS.
+variant: **124 PASS, 2 deselected v8.65s**. Strict full nad source checkpointem6ef7f9a je GREEN: **612 PASS, 10 SKIP v600.54s**, exit0.
+
+
+Finální XML obsahuje622 tests/0errors/0failures/10skips. Všech131 zmrazených
+source/test/fixture/JAR hashů zůstalo po běhu shodných. Skips jsou skutečné
+Maven/trusted exporter, Gradle8.13/Kotlin2.2.20 cache, druhý JDK21+ a non-admin
+Windows smoke gates; skutečné T015 K1/K2 případy nebyly přeskočeny.
+Log, XML, source manifest a `full-status.json` jsou v `/workspace/t015-validation/`.
+Metadata doplněná po běhu nemění runtime/test inputs.
