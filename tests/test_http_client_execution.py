@@ -340,11 +340,12 @@ fun documented() {
 }
 ''')
     (tmp_path/'README.md').write_text('# https://headingUser:headingPass@example.invalid/path?token=headingQuery\n')
+    (tmp_path/'app.py').write_text('def documented():\n    # see //embeddedUser:embeddedPass@example.invalid/path\n    pass\n')
     graph=scan_repository(tmp_path)
     save_graph(graph,tmp_path,generate_docs=True)
     serialized=json.dumps(load_graph(tmp_path).to_dict())
     persisted='\n'.join(p.read_text() for p in (tmp_path/'.kgmaker').glob('*') if p.is_file())
-    for secret in ['sourceUser','sourcePass','sourceQuery','relativeQuery','relativeFragment','docUser','docPass','docFragment','headingUser','headingPass','headingQuery']:
+    for secret in ['sourceUser','sourcePass','sourceQuery','relativeQuery','relativeFragment','docUser','docPass','docFragment','headingUser','headingPass','headingQuery','embeddedUser','embeddedPass']:
         assert secret not in serialized and secret not in persisted
     assert 'absolute' in serialized and 'relative' in serialized
 
@@ -368,3 +369,84 @@ def test_unsupported_uri_credentials_are_private_without_http_mapping(tmp_path,m
     assert 'unsupportedUser' not in visible and 'unsupportedPass' not in visible
     assert 'unsupportedQuery' not in visible and 'unsupportedFragment' not in visible
     assert uri_parts(uri)['status'] != 'LITERAL'
+
+
+@pytest.mark.parametrize('backend',['k1','k2'])
+def test_abrupt_conditional_loop_and_resource_operands_do_not_claim_unused(tmp_path,backend):
+    result=analyze(tmp_path,'''package demo;
+import org.springframework.web.reactive.function.client.WebClient;
+class E extends RuntimeException {E(Object value){}}
+class Resource implements AutoCloseable {Resource(Object value){} public void close(){}}
+class Clients {
+ static boolean consume(Object value){return true;}
+ void thrown(){var p=WebClient.create().get().uri("/throw").retrieve().bodyToMono(String.class);throw new E(p);}
+ void condition(){var p=WebClient.create().get().uri("/ternary").retrieve().bodyToMono(String.class);Object x=consume(p)?"yes":"no";}
+ void updated(boolean active){var p=WebClient.create().get().uri("/update").retrieve().bodyToMono(String.class);for(;active;p.block()){}}
+ void resource(){var p=WebClient.create().get().uri("/resource").retrieve().bodyToMono(String.class);try(var resource=new Resource(p)){}}
+ void unreachableUpdate(){var p=WebClient.create().get().uri("/break").retrieve().bodyToMono(String.class);for(;;p.block()){break;}}
+}''',backend=backend)
+    values={n['metadata']['path']:n['metadata'] for n in definitions(result)}
+    assert set(values)=={'/throw','/ternary','/update','/resource','/break'}
+    assert all(v['execution_status']=='UNKNOWN' and v['unknown_reasons'] for v in values.values())
+    assert not any(e['kind']=='may_execute_http_request' for e in result['graph']['edges'])
+
+
+@pytest.mark.parametrize('backend',['k1','k2'])
+def test_uri_callback_cannot_keep_original_literal_route(tmp_path,backend):
+    result=analyze(tmp_path,'''package demo;
+import org.springframework.web.reactive.function.client.WebClient;
+class Clients {void callback(){WebClient.create("https://orders.example.invalid").get().uri("/old",builder->builder.replacePath("/new").build()).retrieve().bodyToMono(String.class).block();}}
+''',backend=backend)
+    values=definitions(result)
+    assert len(values)==1
+    metadata=values[0]['metadata']
+    assert metadata['path'] is None and metadata['base_url'] is None
+    assert 'HTTP_URI_OVERLOAD_UNSUPPORTED' in metadata['unknown_reasons']
+    assert metadata['runtime_availability']=='UNKNOWN'
+
+
+def test_feign_client_prefix_is_not_an_exact_unprefixed_route(tmp_path):
+    result=analyze(tmp_path,'''package demo;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+@FeignClient(name="orders",url="https://orders.example.invalid",path="/api") interface Orders {@GetMapping("/orders") String get();}
+class Clients {String call(Orders orders){return orders.get();}}
+''')
+    metadata=definitions(result)[0]['metadata']
+    assert metadata['path'] is None
+    assert metadata['method_path']=='/orders' and metadata['client_path']=='/api'
+    assert metadata['uri_status']=='COMPOSED_ROUTE_UNKNOWN'
+    assert metadata['execution_status']=='FEIGN_INVOCATION_INTENT'
+
+
+@pytest.mark.parametrize('override',[
+ 'orders.base=https\\://overrides.example.invalid',
+ 'orders.base https://overrides.example.invalid',
+])
+def test_unsupported_properties_override_cannot_prove_first_literal(tmp_path,override):
+    from kgmaker.http_execution import prepare_context,_Projection
+    from kgmaker.model import KnowledgeGraph
+    path=tmp_path/'application.properties';path.write_text('orders.base=https://orders.example.invalid\n'+override+'\n')
+    context=prepare_context(tmp_path,{'id':'ctx','source_files':{'application.properties':hashlib.sha256(path.read_bytes()).hexdigest()},'spring_properties':{'orders.base':'https://orders.example.invalid'},'spring_profiles':[]})
+    projection=_Projection(KnowledgeGraph(3,'.','',[],[],{}),context)
+    assert projection.property_value('${orders.base}').kind=='unknown'
+    assert any(item['status']=='UNSUPPORTED_PROPERTY_SYNTAX' for item in context['http_config_provenance']['orders.base'])
+
+
+def test_prior_http_proof_is_stale_without_process_or_store_mutation(tmp_path,monkeypatch):
+    from kgmaker.http_execution import VERSION,prepare_context
+    from kgmaker.graph_provider import validate_context_snapshot
+    from kgmaker.model import KnowledgeGraph,Node
+    from kgmaker.store import save_graph
+    from kgmaker.analysis_model import digest
+    save_graph(KnowledgeGraph(2,str(tmp_path),'',[Node('valid','class','Valid','Valid.java')],[],{}),tmp_path,generate_docs=False)
+    before={p:p.read_bytes() for p in (tmp_path/'.kgmaker').rglob('*') if p.is_file()}
+    monkeypatch.setattr('subprocess.Popen',lambda *a,**kw:pytest.fail('No implicit refresh'))
+    old={'language':'jvm','framework_rule_versions':{'http':'http-client-execution-1'},'http_inputs_hash':digest({'sources':{},'redacted':None})}
+    with pytest.raises(WorkerError,match='HTTP rule/configuration proof changed') as error:
+        validate_context_snapshot(tmp_path,old)
+    assert error.value.status=='STALE'
+    assert VERSION=='http-client-execution-2'
+    current=prepare_context(tmp_path,{'language':'jvm','source_files':{}})
+    validate_context_snapshot(tmp_path,current)
+    assert before=={p:p.read_bytes() for p in (tmp_path/'.kgmaker').rglob('*') if p.is_file()}

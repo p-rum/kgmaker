@@ -117,3 +117,31 @@ provádí parent nad finálním exact HEAD. Nepodporovány jsou obecné custom c
 operator/interprocedural/generic publisher flow, dynamic URLs, libovolná proxy
 registration a skutečná HTTP/data availability. Specifikace S07/S13 runtime a
 celý T003 zůstávají samostatné, nedokončené kontrakty.
+
+## Nezávislé review PR49 — rule2 follow-up (aktuální full pending)
+
+Root dodal a zachovány jsou jeho uncommitted embedded scheme-relative URI privacy
+fix a SOURCE_ONLY Python doc-comment regression. Nezávislý reviewer doložil
+actual P1 false UNSUBSCRIBED přes throw operand, ternary condition a for update;
+nový combined actual test přidává resource a break/unreachable update negativy.
+Výrazy se navštíví, ale loop/try order se nevymýšlí: tato hranice je UNKNOWN,
+nikoli execution či uzavřený unused proof. Ternary branch aliases se mergují.
+
+Další actual repro URI(String,Function) měnilo efektivní path z /old na /new,
+ale původně se ukládalo /old. Unsupported multiargument URI nyní odstraní exact
+base/path, s HTTP_URI_OVERLOAD_UNSUPPORTED. Feign path prefix se ukládá zvlášť
+(client_path/method_path), composed path je UNKNOWN bez guessed concatenation.
+Escaped/whitespace properties overriding line už nesmí vytvořit MATCHED první
+hodnoty: unsupported meaningful syntax či nečitelný/oversized selected file
+invalidačně označí property provenance. Žádný nový properties evaluator.
+
+Před opravou nových7 parametrizovaných případů **7 FAIL27.39s** (skutečné
+Javac API v K1/K2, Feign a pure property negatives). Po fixu původních39 cases
+**39 PASS111.07s**, před version-only bump. Rule je nyní http-client-execution-2;
+předchozí v1 HTTP index je STALE při read bez procesu nebo store mutace.
+Pure privacy/property/v1-staleness subset **4 PASS0.72s**.
+
+Worker Java/Kotlin source i K1/K2 JAR SHA se neměnily. Aktuální striktní
+focused/full bude serializovaný po golden pod týmovým flock, s vlastním worker
+home a log/temp/XML na /workspace, nikoli malém /tmp tmpfs. Zatím se pro tento
+nový source netvrdí whole PASS; historický646/10 výše platí před review opravami.

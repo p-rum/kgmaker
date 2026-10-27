@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 from .analysis_model import digest, file_hash, safe_path
 from .model import Edge, KnowledgeGraph, Node
 
-VERSION = 'http-client-execution-1'
+VERSION = 'http-client-execution-2'
 WEB = 'org.springframework.web.reactive.function.client.WebClient'
 REST = 'org.springframework.web.client.RestClient'
 MONO = 'reactor.core.publisher.Mono'
@@ -70,8 +70,8 @@ def redact_uri_text(value: str, *, relative=True) -> str:
     # Quoted relative URI defaults may also occur in source-only signatures.
     result = re.sub(r"""(["'`])(/[^"'`\r\n]*)\1""",
                     lambda match: match[1] + clean_uri(match[2]) + match[1], result)
-    if result.startswith('//'):
-        result = clean_uri(result)
+    result = re.sub(r'(?<![A-Za-z0-9:/])//[^\s\"\'<>]+',
+                    lambda match: clean_uri(match[0]), result)
     if relative and ('?' in result or '#' in result) and not any(c.isspace() for c in result) and not result.startswith('#{'):
         return '<redacted-uri>'
     return result
@@ -114,23 +114,34 @@ def prepare_context(root: Path, context: dict) -> dict:
             path = Path(name)
             if path.name != 'application.properties' and path.name not in {'application-' + p + '.properties' for p in profiles}:
                 continue
+            def invalidate(status):
+                for key in properties:
+                    records.setdefault(key, []).append({'status': status, 'source_file': name, 'sha256': checksum})
             try:
                 source = safe_path(root, name)
                 if file_hash(source) != checksum:
                     raise ValueError('HTTP configuration snapshot changed')
                 if source.stat().st_size > 1024 * 1024:
+                    invalidate('PROPERTY_FILE_LIMIT')
                     continue
                 text = source.read_text(encoding='utf-8')
             except (OSError, UnicodeError):
+                invalidate('PROPERTY_FILE_UNREADABLE')
                 continue
-            seen = set()
+            parsed, complete = [], True
             for line in text.splitlines():
-                if not line.strip() or line.lstrip().startswith(('#', '!')) or '\\' in line:
+                if not line.strip() or line.lstrip().startswith(('#', '!')):
                     continue
                 match = re.fullmatch(r'\s*([A-Za-z0-9_.-]+)\s*[=:]\s*(.*?)\s*', line)
-                if not match:
-                    continue
-                key, value = match.groups()
+                if '\\' in line or not match:
+                    invalidate('UNSUPPORTED_PROPERTY_SYNTAX')
+                    complete = False
+                    break
+                parsed.append(match.groups())
+            if not complete:
+                continue
+            seen = set()
+            for key, value in parsed:
                 if key in seen:
                     records.setdefault(key, []).append({'status': 'DUPLICATE_PROPERTY'})
                 seen.add(key)
@@ -168,6 +179,7 @@ class _Projection:
         self.requests, self.handled, self.diagnostics = {}, set(), []
         self.steps = 0
         self.eval_depth = 0
+        self.unsupported_control_depth = 0
         self.shadowed_types = {s.get('owner') for s in graph.symbols if s.get('path') and s.get('kind') in {'class', 'interface', 'type', 'annotation_type'}}
         self.feign_targets = {}
 
@@ -317,7 +329,12 @@ class _Projection:
                 self.escape(receiver.origins, 'HTTP_REQUEST_ORIGIN_UNPROVEN')
                 return _Value(origins=receiver.origins, opaque=True)
             if name == 'uri' and receiver.origins:
-                self.update_uri(receiver.origins, arguments[0] if arguments else _Value(), node)
+                # URI callbacks/extra arguments can replace path or authority.
+                # The literal first argument alone is not the effective route.
+                if len(arguments) != 1:
+                    self.escape(receiver.origins, 'HTTP_URI_OVERLOAD_UNSUPPORTED')
+                    self.issue('HTTP_URI_OVERLOAD_UNSUPPORTED', site)
+                self.update_uri(receiver.origins, arguments[0] if len(arguments) == 1 else _Value(), node)
                 return receiver
             if name == 'retrieve' and receiver.origins:
                 return replace(receiver, kind='response')
@@ -342,6 +359,10 @@ class _Projection:
         return _Value(origins=origins, opaque=bool(origins))
 
     def trigger(self, receiver, site, conditional):
+        if self.unsupported_control_depth:
+            self.escape(receiver.origins, 'HTTP_UNSUPPORTED_CONTROL_FLOW')
+            self.issue('HTTP_UNSUPPORTED_CONTROL_FLOW', site)
+            return
         if receiver.opaque or len(receiver.origins) != 1:
             self.escape(receiver.origins, 'HTTP_TERMINAL_ORIGIN_AMBIGUOUS')
             self.issue('HTTP_TERMINAL_ORIGIN_AMBIGUOUS', site)
@@ -393,8 +414,13 @@ class _Projection:
                 self.escape(value.origins, 'HTTP_PUBLISHER_STORED_OR_UNBOUND')
             return value
         if kind == 'if':
-            return _merge(self.eval(node.get('then', {}), dict(aliases), caller, True),
-                          self.eval(node.get('else', {}), dict(aliases), caller, True))
+            self.eval(node.get('condition', {}), aliases, caller, conditional)
+            left, right = dict(aliases), dict(aliases)
+            yes = self.eval(node.get('then', {}), left, caller, True)
+            no = self.eval(node.get('else', {}), right, caller, True)
+            for key in left.keys() | right.keys():
+                aliases[key] = _merge(left.get(key, _Value()), right.get(key, _Value()))
+            return _merge(yes, no)
         refs = node.get('referenced_bindings', [])
         origins = frozenset().union(*(self.reference(r, aliases).origins for r in refs))
         self.escape(origins, 'HTTP_UNSUPPORTED_EXPRESSION_ESCAPE')
@@ -409,9 +435,9 @@ class _Projection:
         if kind == 'block':
             for child in node.get('statements', []):
                 self.execute(child, aliases, caller, conditional, depth+1)
-        elif kind == 'return':
+        elif kind in {'return', 'throw'}:
             value = self.eval(node.get('value', {}), aliases, caller, conditional)
-            self.escape(value.origins, 'HTTP_PUBLISHER_RETURNED')
+            self.escape(value.origins, 'HTTP_PUBLISHER_RETURNED' if kind == 'return' else 'HTTP_PUBLISHER_THROWN')
         elif kind == 'if':
             self.eval(node.get('condition', {}), aliases, caller, conditional)
             left, right = dict(aliases), dict(aliases)
@@ -420,14 +446,31 @@ class _Projection:
             for key in left.keys() | right.keys():
                 aliases[key] = _merge(left.get(key, _Value()), right.get(key, _Value()))
         elif kind in {'while', 'do', 'for', 'foreach', 'try'}:
+            # Visit every operand, but do not invent loop/catch/abrupt order.
+            # Updates may be unreachable (break/throw); resource construction
+            # and catches also require control-flow proof beyond this projection.
             before, after = dict(aliases), dict(aliases)
-            for key in ('initial', 'condition', 'iterable', 'body', 'finally'):
-                if isinstance(node.get(key), dict):
-                    self.execute(node[key], after, caller, True, depth+1)
-            for item in node.get('catches', []):
-                self.execute(item.get('body', {}), after, caller, True, depth+1)
+            prior_requests = set(self.requests)
+            self.unsupported_control_depth += 1
+            try:
+                for item in node.get('resources', []):
+                    self.execute(item, after, caller, True, depth+1)
+                for key in ('initial', 'condition', 'iterable', 'body', 'update', 'finally'):
+                    if isinstance(node.get(key), dict):
+                        self.execute(node[key], after, caller, True, depth+1)
+                for item in node.get('catches', []):
+                    self.execute(item.get('body', {}), after, caller, True, depth+1)
+            finally:
+                self.unsupported_control_depth -= 1
+            origins = frozenset().union(*(value.origins for value in [*before.values(), *after.values()]))
+            self.escape(origins | (set(self.requests) - prior_requests), 'HTTP_UNSUPPORTED_CONTROL_FLOW')
             for key in before.keys() | after.keys():
-                aliases[key] = _merge(before.get(key, _Value()), after.get(key, _Value()))
+                value = _merge(before.get(key, _Value()), after.get(key, _Value()))
+                aliases[key] = _Value(origins=value.origins, opaque=True)
+            diagnostic = {'code': 'HTTP_UNSUPPORTED_CONTROL_FLOW', 'reason': 'HTTP_UNSUPPORTED_CONTROL_FLOW',
+                          'context_id': self.context['id'], 'path': node.get('path'), 'range': node.get('range')}
+            if diagnostic not in self.diagnostics:
+                self.diagnostics.append(diagnostic)
         else:
             self.eval(node, aliases, caller, conditional)
 
@@ -453,6 +496,9 @@ class _Projection:
             service = self.property_value(name) if isinstance(name, str) else _Value()
             base = self.property_value(values.get('url')) if isinstance(values.get('url'), str) else _Value()
             info = uri_parts(base.literal)
+            prefix_declared = values.get('path') is not None and values.get('path') != ''
+            prefix = self.property_value(values.get('path')) if isinstance(values.get('path'), str) else _Value()
+            prefix_info = uri_parts(prefix.literal)
             inherited = parents(owner, set())
             for method in self.symbols.values():
                 if len(self.requests) >= 1000:
@@ -486,13 +532,15 @@ class _Projection:
                 path_info = uri_parts(route)
                 identity = 'http-request:' + digest({'context': self.context['id'], 'client': client['id'], 'method': method['id']})
                 self.requests[identity] = {'id': identity, 'family': 'FEIGN', 'method': verb,
-                    'base_url': info.get('public_uri'), 'path': path_info.get('path'),
-                    'uri_status': 'DECLARED_LITERAL' if path_info['status'] == 'LITERAL' else 'UNKNOWN_URI',
-                    'uri_provenance': list(base.provenance + service.provenance), 'origin_call_site': None,
+                    'base_url': info.get('public_uri'), 'path': None if prefix_declared else path_info.get('path'),
+                    'method_path': path_info.get('path'),
+                    'client_path': prefix_info.get('path') if prefix_info.get('base') is None else None,
+                    'uri_status': 'COMPOSED_ROUTE_UNKNOWN' if prefix_declared else 'DECLARED_LITERAL' if path_info['status'] == 'LITERAL' else 'UNKNOWN_URI',
+                    'uri_provenance': list(base.provenance + service.provenance + prefix.provenance), 'origin_call_site': None,
                     'caller': method['id'], 'declaration': method['id'], 'client_type': client['id'],
                     'declared_service_name': service.literal if isinstance(service.literal, str) and '<redacted' not in service.literal else None,
                     'proxy_registration': 'UNKNOWN', 'chain_call_site_ids': set(), 'terminals': [],
-                    'publisher': False, 'conditional': False, 'unknown_reasons': set(), 'uri_values': set(), 'children': set()}
+                    'publisher': False, 'conditional': False, 'unknown_reasons': {'HTTP_FEIGN_PATH_PREFIX_UNRESOLVED'} if prefix_declared else set(), 'uri_values': set(), 'children': set()}
                 self.feign_targets.setdefault(method['id'], []).append((owner, identity))
         for site in self.sites.values():
             if site.get('invocation_kind') == 'METHOD_REFERENCE':

@@ -534,3 +534,8 @@ request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
 publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
 static trigger, never observed network execution or available response data.
 See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).
+
+HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/method
+path components without guessing a composed route, and rejects URI-callback route
+guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
+starts a worker. See the HTTP matrix for property-file and privacy boundaries.

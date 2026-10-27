@@ -754,6 +754,8 @@ T003-S07-W06 reuses graph/store schema3 and existing compiler IR. The JVM protoc
 adds optional `typed-java-literals-bindings-v1` facts; old workers/indexes and
 schema1/2 graphs remain readable with HTTP coverage UNKNOWN. Fresh captures bind
 HTTP rule/config fingerprints; replay validates them without running a worker.
+Rule `http-client-execution-2` invalidates prior version1 HTTP proof as STALE;
+explicit reinspection is required, with no implicit process/store mutation.
 No source label, callee spelling alone, confidence score or runtime availability
 is used to resolve a request. No client is instantiated and no request is sent.
 
@@ -766,6 +768,10 @@ is used to resolve a request. No client is instantiated and no request is sent.
 | Literal URI; simple `@Value`/PropertyResolver/Feign placeholder + explicit matching properties/profile/source SHA | Separate method/base/path and config provenance | `test_bound_property_source_provenance_and_plain_literal_placeholder` |
 | Escaped, stored, returned, captured, unknown helper/operator/merged origin | UNKNOWN, no invented terminal | escape/capture/reference/branch tests |
 | Kotlin K1/K2 missing required typed binding IR | HTTP_TYPED_IR_UNAVAILABLE / UNKNOWN | `test_kotlin_unavailable_bindings_are_explicit_unknown` |
+| Throw/ternary operands; loop updates and try resources | Escapes UNKNOWN; loop/try control boundaries UNKNOWN with no invented terminal order | `test_abrupt_conditional_loop_and_resource_operands_do_not_claim_unused` K1/K2 |
+| URI callback/extra-argument overload | URI/base/path UNKNOWN even if same-origin terminal intent exists | `test_uri_callback_cannot_keep_original_literal_route` K1/K2 |
+| Feign nonempty client path prefix | Separate client_path/method_path; composed route UNKNOWN, no guessed concatenation | `test_feign_client_prefix_is_not_an_exact_unprefixed_route` |
+| Unsupported/escaped/whitespace properties syntax | Selected file cannot establish exact config value provenance | `test_unsupported_properties_override_cannot_prove_first_literal` |
 
 Custom clients/operators, cross-method publisher flow, dynamic URI construction,
 multiple/unknown routes, YAML/SpEL/default/nested placeholders and proxy registration
@@ -778,7 +784,11 @@ unsupported URI schemes and scheme-relative authorities; HTTP recognition stays
 limited to HTTP/HTTPS, so redaction never makes an unsupported URI executable. Opaque
 input hashes preserve freshness without retaining credentials. Configuration
 mapping requires a selected `application.properties` or explicit active profile
-file, matching literal property and SHA. Explicit values without source provenance
+file containing only the supported literal property syntax, matching property and SHA.
+Unsupported meaningful lines, escaped/continuation syntax or unreadable/oversized
+selected files invalidate that file's property provenance rather than hiding an
+overriding definition. Loop/try boundaries visit resources/updates/operands but
+remain UNKNOWN, including a break that makes the loop update unreachable. Explicit values without source provenance
 remain unknown. Workspace identities/source locators are repo-qualified, URI path
 strings stay paths, and no cross-service endpoint match is invented.
 
