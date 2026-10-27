@@ -227,3 +227,18 @@ the exact 115-episode main prefix, then the seven W01-only episodes in their
 original order. Semantic validation, graph regeneration/check, and diff checks
 are recorded for this integration. No full suite was repeated for this
 documentation/view-only main refresh.
+
+### Integrate current main `5430388` (T003-S08-W02)
+
+Current main adds selected TypeScript configuration freshness and preflight
+capture validation. The W01 JPA runtime/test files remain byte-identical to
+base `e71c622`: `framework.py`, the K2 frontend, the K2 backend tests, and the
+Javac compiler-worker tests retain their prior SHA-256 values.
+
+Focused Linux/JDK21/Kotlin2.1.10 compatibility checks included actual K2
+use-site access, actual Javac AC06, and the complete selected TypeScript
+freshness suite: **35 passed in 175.28 s**. No full suite was repeated for this
+base integration. Semantic history preserves the exact 118-episode current-main
+prefix followed by all eight W01-only episodes in their prior order; the new
+integration capture follows those. Scoped semantic validation, graph
+regeneration/check, and diff checks complete the refresh.
