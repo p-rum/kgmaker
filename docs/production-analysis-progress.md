@@ -1,5 +1,32 @@
 # Aktuální stav a zbývající práce
 
+## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
+
+Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
+W02 head8e83937 (metadata integration; runtime identical to d416e2a); dependency CI/merge is not claimed. Actual TS5.7.3/Node24.19.0 red
+6FAIL1PASS and first7PASS, owner/strict/repo2PASS; wider callback/W01/provider34PASS.
+Source-final expanded13PASS includes local64-bound PARTIAL, dependency65 map calls
+and invalid-candidate store preservation. Further conditional-binding proof corrected
+candidate evidence; final protected15PASS61.69s; source-final full582PASS10SKIP641.43s, CI billing BLOCKED.
+[Note53](changes/53_resolveBoundedTypeScriptCallbacks.md), [guide](typescript-callbacks.md)
+separate declared signatures, candidate bindings and runtime unknowns.
+Overload signature→implementation-body navigation remains UNKNOWN/PARTIAL. No whole S08,
+UI/BE–FE flow or persistent compiler cache completion is claimed.
+
+
+## T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
+
+Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;
+Změna nemění resolver ani runtime/data availability. Původní tři skutečné
+failure případy nyní prošly; širší snapshot/reference/provider sada46PASS a
+snapshot/installed-wheel sada41PASS jsou zaznamenány v
+[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected focus **70 PASS**,193.26s; source-final full **567 PASS /10 SKIP**,787.45s. CI je PENDING kvůli
+GitHub Actions billing/quota; lokální výsledek není CI/merge acceptance. Explicitní legacy fallback, stable
+selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
+[Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
+Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
+z tohoto kontraktu odvozovány.
+
 ## T003-S08-W01 — TypeScript project references (2026-10-26)
 
 VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
@@ -16,7 +43,7 @@ mezi preflight/analyze a zachovává původní TS selection slot; skutečné reg
 a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
 nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
 mimo připravenou matici zůstávají výslovně SKIP.
-T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+T003-S08/T003-AC08 zůstávají PARTIAL; W02 stav je samostatně výše; W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
@@ -322,6 +349,26 @@ Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS 
 Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
 store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
 
+## T009 — evidence a coverage agregovaných pohledů (omezený fallback)
+
+View v1 nyní zachovává samostatně evidence kind, resolution status, freshness a
+reference s explicitní supporting/contradicting polarity. Neoznačené nebo
+nepodporované polarity zůstávají UNKNOWN a vytvářejí diagnostiku; agregace
+neslučuje odlišné scope ani context ID. Coverage počítá nalezené, vyřešené,
+nevyřešené a vyloučené objekty pouze v dodaném výběru; prázdný vstup je UNKNOWN.
+Legacy view data se při načtení doplní pouze konzervativními unresolved/unknown
+výchozími hodnotami.
+
+T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
+není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
+konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
+zbývající omezení jsou v [change note 64](changes/64_propagateViewEvidence.md).
+Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
+check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
+kompletní pytest **445 PASS / 109 SKIP** (19.07 s); finální zdrojový strom čeká na
+kompletní `pytest -q -rs` ve frontě sdíleného JVM locku. Individuální důvody SKIP
+z předchozího běhu nebyly vypisovány, proto jej nepovažuji za finální test evidence.
+
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
 VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
@@ -428,6 +475,18 @@ execution or data availability. Existing SOURCE_ONLY local parsing is separate.
 Actual fixtures and remaining boundaries are scoped in
 [change52](changes/52_bindArgumentParameterFlow.md); final results are reported
 only after validation. S07/T003 are not complete.
+
+## T015 — explicit datasource resource projection
+
+Bounded implementation over T008/T009: explicit workspace/repository/database/stream
+resources, table drill-down references, existing selected-context read/write/delete
+facts and dependency-only entity/migration declarations. Flyway derivation is
+MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
+shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
+Complete persistence/schema-compatibility S06/W08, T004 and production readiness
+remain PARTIAL; this does not implement a new parser or discover datasources.
 
 ## Return → consumer bindings
 

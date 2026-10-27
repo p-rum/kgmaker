@@ -145,3 +145,39 @@ PASS ani mergem Draft PR.
 Finální source je připravený pro nezávislé review a stacked Draft do explicitní
 PR35 větve. GitHub billing stále blokuje remote povinné gates; lokální full tento
 blocker ani zákaz merge bez zeleného CI nenahrazuje.
+
+
+## Protocol guard opravy a kombinace s aktuálním parentem
+
+Nezávislé source review našlo kontradikce nového protocol proof: list/object
+enum měl raw TypeError, argument mohl tvrdit cizí owner nebo jiný occurrence
+index a list/object call_site obešel structured rejection. Opravy f92c83e a
+ee14ea8 kontrolují primitive enum type, source owner proti caller, canonical
+site:argument:index a případný explicitní source index před publikací.
+Actual captured Javac/TS response table: RED2 FAIL v13.59s, corrected focus
+51 PASS v99.49s a call_site followup11 PASS v9.69s; žádný SKIP. Původní605/10
+full je historický před těmito guards, ne finální validace změněného source.
+
+Parent integrace používá ověřený PR35 `10ad31912fb6d7c099a0b0a53c8e07bcca91f2ff`,
+obsahující main49c46b0/T015 a TS freshness/callbacks. JVM i argument test modul
+jsou byte-identickéee14ea8. TS worker5 označuje odlišný kombinovaný kontrakt:
+využívá jednou zachycené diagnostics a input_discovery; selected signatures a
+callback candidates zůstávají. Version1 value occurrence→declared formal proof
+je oddělený od původních unversioned callable→implementation-parameter candidates.
+Ordinary symbol arguments používají versioned occurrence a compiler derived_from,
+ne duplicitní neversioned formal claim. Candidate runtime dispatch zůstává otevřený.
+
+Tři material callback assertions na kombinovaném source byly skutečně RED:
+3 FAIL v44.59s (lowercase formal kind a nová oddělená occurrence edge). Minimální
+fixture adaptace dále vyžaduje exact canonical formal/owner/program identity, oba
+původní DISPATCH_CANDIDATE proofs a zvlášť version1 declared-contract proof.
+Potom GREEN3 PASS,4 deselected v93.89s. JVM/args testy se nezměnily; production
+guards se neoslabily. Oba bounded direct repro běhy měl root výslovně povolené
+mimo heavy lock, bez buildu/instalace/full. Původní queued matrix ani queued RED
+nezačaly (žádný pytest child); nahrazené vlastní queues byly zrušeny před startem.
+
+Jedna platná společná focused matrix je queued pod heavy lockem. Nový finální
+full bude spuštěn až po jejím úspěchu nad frozen combined source; zatím není PASS.
+Parent134 immutable episodes jsou exact prefix, unikátní původní child captures
+zůstávají nezměněné. Billing pause již byla odblokována; root vlastní nezávislé
+exact-head review a publikaci/CI, implementační agent nepushuje ani nemerguje main.
