@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
     "README.md": "62457418319be8d22ceb0fd5755138aac157a791017ca40c309ab97a2bde74d9",
-    "docs/acceptance-inventory.md": "fdb62438a0b7d695f680860d472eb3ec7a45ee8789eec78f7f3783c1c500a287",
+    "docs/acceptance-inventory.md": "7024932c7604ed74f90d63d329f13c0e43c6ff106459068ff43b8534751bc5d9",
     "docs/architecture.md": "a2f930b8aa670ee97d777ec6cf9c21ad88ff661f339b7a983d57dfca7e80b915",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -35,7 +35,7 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
-    "docs/changes/64_propagateViewEvidence.md": "9b1700b4a7aaaaa444a39f4d4e4573a9198a6116c41a6a2e2634f6d8b20967bf",
+    "docs/changes/64_propagateViewEvidence.md": "7209b1d2d3dd0d55604223c48409c9bfddab180493dd22fef6af9abb42c89348",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
@@ -46323,6 +46323,76 @@
         }
       ],
       "id": "episode:c0372b34a8ebb545fb7f4afec15914ba3edcf3cc1e6292f8a596eff995868e68"
+    },
+    {
+      "base_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
+      "head_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
+      "worktree_fingerprint": "99610ec8ba3cb184fb414579c7f0dd6fa6d1afeb86e3d71ea64c54fc841b94da",
+      "title": "Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002",
+      "changed_files": [
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "7024932c7604ed74f90d63d329f13c0e43c6ff106459068ff43b8534751bc5d9"
+        },
+        {
+          "path": "docs/changes/64_propagateViewEvidence.md",
+          "status": "M",
+          "sha256": "7209b1d2d3dd0d55604223c48409c9bfddab180493dd22fef6af9abb42c89348"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/64_propagateViewEvidence.md:64_propagateViewEvidence.md",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::47",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::236",
+        "section:docs/acceptance-inventory.md:T001::117",
+        "section:docs/acceptance-inventory.md:T002::196",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::299",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::384",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::359",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::3",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::344",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::332",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::38",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::25",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::371",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::323",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::56",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::100",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::67",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::78",
+        "section:docs/acceptance-inventory.md:T009 — propagace evidence a coverage::89",
+        "section:docs/changes/64_propagateViewEvidence.md:Acceptance a ověření::11",
+        "section:docs/changes/64_propagateViewEvidence.md:Kompatibilita a omezení::26",
+        "section:docs/changes/64_propagateViewEvidence.md:Následné nezávislé review — aktuální source checkpoint::53",
+        "section:docs/changes/64_propagateViewEvidence.md:Propagace evidence a coverage do pohledů (T009)::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full_suite",
+          "status": "passed"
+        },
+        {
+          "label": "compiler_prerequisites",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic_validate",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:ae010af4eee572ffb5e99108c5c3f5bd0c695efa83dfd1b0fa395ed28180553f"
     }
   ]
 }
