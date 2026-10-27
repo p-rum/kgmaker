@@ -402,3 +402,18 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+
+## T010 — HTTP provider inventory (bounded PARTIAL)
+
+| AC | Local evidence | Boundary |
+|---|---|---|
+| T010-AC01 | `test_two_services_in_same_repository_do_not_share_global_endpoint_identity` and two-repository `/orders` test | explicit service ownership; no inferred service realm |
+| T010-AC02 | `test_contract_revisions_stay_separate_without_automatic_handler_binding` and contract-only test | contracts never prove handler, deployment or runtime |
+| T010-AC03 | `test_actual_spring_class_method_mirrors_preserve_handlers_and_route_case` actual JDK21/K1/Spring6.2.2; dynamic-prefix test | exact annotation mirrors; unresolved/custom/inherited mappings remain UNKNOWN |
+| T010-AC04 | malformed metadata/hash/edge tests and no-process/network/file/store mutation checks | pure projection only; source/declaration mismatches fail closed |
+| T010-AC05 | explicit test scope, foreign context, missing ownership, legacy metadata and runtime-label/unbound-edge negatives | source evidence stays candidate; imported runtime binding unsupported UNKNOWN |
+| T010-AC06 | README, architecture guide, status matrix and [change67](changes/67_catalogHttpProviders.md) |145 focused +strict596 PASS/10optional SKIP; final main integration/exact review/remote CI pending (billing blocked) |
+
+Actual compiler is a static compiler fixture, not a real application runtime test.
+Runtime acceptance NOT_RUN; no data availability or overall T004 completion claim.

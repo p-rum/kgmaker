@@ -426,3 +426,36 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+
+## T010 — scoped HTTP provider projection
+
+`interfaces.project_http_providers` provides a pure `interfaces` ViewDocument on
+explicit T008/T007 ownership and T009 evidence. Service/method/case-preserving
+route identity is distinct from registration/contract variant identity. Existing
+API IDs remain unchanged; additive versioned source/hash-bound declaration
+metadata preserves otherwise lost route case and variants. Typed Spring mirrors
+support bounded exact class/method composition; source Spring/Ktor candidates,
+contract-only OpenAPI and unresolved dynamic prefixes remain distinguishable.
+
+Final combined focused **145 PASS**,87.81s and strict full **596 PASS /10 optional
+prerequisite SKIP**,479.68s passed. Mandatory WORKERS/K2/SPRING_IMPORTS/HTTP_PROVIDERS=1
+cases ran with own prepared JDK21/K1/K2/TS/Spring6.2.2 worker/API fixtures; ten frozen
+source/test/CI/fixture hashes matched before/after. The grouped actual fixture
+covers same-line overloads/owners, mapping/method/class-prefix variants, inherited/
+custom UNKNOWN and direct override, truncation, metadata and context isolation,
+and actual reinspection after unrelated files, same-file comment/line shifts and
+within-module relocation. Canonical compiler IDs stay stable and provenance updates.
+
+Historical pre-owner590/10 and interrupted pre-selection257/7/pre-overload148/2
+runs are not final acceptance. Root and independent architect source closure
+approved the final manifest; current main integration, exact Git-pair review and
+remote CI remain pending. Actions are billing-blocked again; no retry/bypass or
+remote PASS claim. Broader production/toolchain/runtime acceptance is separate.
+
+Bounded PARTIAL: imported runtime-to-interface binding is unsupported and retains
+original references in `HTTP_RUNTIME_BINDING_UNKNOWN`; deployment/runtime/data
+availability are UNKNOWN. Real application runtime test NOT_RUN. No endpoint
+consumer projection, inferred contract implementation, new resolver/store or
+T004 completion. Required CI and independent review are pending.
+See [change67](changes/67_catalogHttpProviders.md).
