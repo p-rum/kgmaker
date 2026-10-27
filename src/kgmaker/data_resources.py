@@ -227,7 +227,9 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
             if contexts[cid].get('repo_id') == repo
             and contexts[cid].get('source_files', {}).get(node.path) == graph.files.get(node.path)}
         if metadata.get('context_id') is not None:
-            member_contexts &= {metadata['context_id']} if isinstance(metadata['context_id'], str) else set()
+            declared = metadata['context_id']
+            member_contexts = {cid for cid in member_contexts if isinstance(declared, str)
+                and (declared == cid or qualified(repo, declared) == cid)}
         if not member_contexts:
             issue('DATA_RESOURCE_ORM_CONTEXT_UNKNOWN', source_id=node.id)
             continue
@@ -240,73 +242,113 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         current(node.path, graph.files.get(node.path))
         record['refs'].add(source_proof(node.id, kind='UNKNOWN', checksum=graph.files[node.path]))
 
-    for edge in graph.edges:
-        if edge.kind not in RELATIONS:
-            continue
-        source, target = nodes.get(edge.source), nodes.get(edge.target)
-        identity = table_resources.get(edge.target)
-        if source is None or target is None or identity is None or source.scope != scope:
-            issue('DATA_RESOURCE_ACCESS_SCOPE_OR_TARGET_UNKNOWN', source_id=edge.source)
-            continue
-        record = records[identity]
-        valid = (record['realm'] is not None and not record['ambiguous']
-                 and edge.evidence_kind in {'FRAMEWORK_DERIVED', 'SYMBOL_RESOLVED'}
-                 and len(edge.context_ids) == 1 and edge.context_ids[0] in selected and bool(edge.evidence_ids))
-        context = contexts.get(edge.context_ids[0], {}) if len(edge.context_ids) == 1 else {}
-        if realm(context.get('database_id'), context.get('schema_stream_id')) != record['realm']:
-            valid = False
-        repo, _ = local_path(source.path)
-        owner_ids = owners(repo, source.path, context) & selected.get(context.get('id'), set())
+    def endpoint_matches(node, context):
         captured = context.get('source_files', {})
-        captured = captured if isinstance(captured, Mapping) else {}
-        target_metadata = target.metadata or {}
-        source_metadata = source.metadata or {}
-        if not isinstance(target_metadata, Mapping) or not isinstance(source_metadata, Mapping):
-            raise DataResourceError('Invalid access endpoint context metadata')
-        if (repo != record['repo_id'] or not owner_ids or context.get('repo_id') != repo
-                or target.path not in files or files[target.path].scope != scope
-                or captured.get(source.path) != graph.files.get(source.path)
-                or captured.get(target.path) != graph.files.get(target.path)
-                or source.path not in captured or target.path not in captured
-                or source_metadata.get('context_id') not in (None, context.get('id'))
-                or target_metadata.get('context_id') not in (None, context.get('id'))):
-            valid = False
-        if not valid:
-            issue('DATA_RESOURCE_ACCESS_UNPROVEN', source_id=edge.source, target_id=edge.target)
-            continue
+        metadata = node.metadata or {}
+        if not isinstance(captured, Mapping) or not isinstance(metadata, Mapping):
+            return False
+        declared_context = metadata.get('context_id')
+        # Workspace qualifies public IDs and symbol records, while older generic
+        # Node metadata may still carry the original local context ID.
+        context_ok = (declared_context is None or declared_context == context['id']
+            or isinstance(declared_context, str)
+            and qualified(context['repo_id'], declared_context) == context['id'])
+        scope_ok = node.scope == scope or node.kind == 'db_table' and node.scope == 'unknown'
+        return (scope_ok and node.path in files and files[node.path].scope == scope
+            and node.path in captured and captured[node.path] == graph.files.get(node.path)
+            and context_ok and (metadata.get('sha256') is None or metadata['sha256'] == captured[node.path]))
+
+    def edge_reference(edge):
+        # Graph Edge has no standalone ID: retain its exact public composite
+        # identity and original evidence IDs rather than inventing a graph node.
+        return {'source': edge.source, 'target': edge.target, 'relation': edge.kind,
+                'context_ids': list(edge.context_ids), 'evidence_refs': list(edge.evidence_ids)}
+
+    def proofs_for(edge, context):
+        source, target = nodes[edge.source], nodes[edge.target]
+        if (edge.evidence_kind not in {'FRAMEWORK_DERIVED', 'SYMBOL_RESOLVED'}
+                or edge.context_ids != (context['id'],) or not edge.evidence_ids
+                or not endpoint_matches(source, context) or not endpoint_matches(target, context)):
+            return None
+        captured = context['source_files']
+        current(source.path, captured[source.path])
         current(target.path, captured[target.path])
-        refs, pending_proofs = [], []
+        proofs = []
         for ref in edge.evidence_ids:
             original = next((p for p in graph.evidence if p['id'] == ref), None)
             if (original is None or original.get('source') != edge.source or original.get('target') != edge.target
                     or original.get('relation') != edge.kind or original.get('kind') != edge.evidence_kind
                     or original.get('context_ids') != list(edge.context_ids)
                     or original.get('source_file') != source.path):
-                valid = False
-                continue
-            current(source.path, original.get('sha256'))
+                return None
             if original.get('freshness') not in (None, 'CURRENT', 'CONTENT_VERIFIED', 'EXECUTION_BOUND'):
-                valid = False
                 issue('DATA_RESOURCE_EVIDENCE_FRESHNESS_UNKNOWN', source_id=edge.source)
-                continue
-            proof = {'id': 'ev:data-access:' + digest({'original': ref, 'kind': edge.evidence_kind,
-                'source': edge.source, 'target': edge.target, 'relation': edge.kind,
-                'checksum': original['sha256'], 'target_checksum': captured[target.path],
-                'contexts': list(edge.context_ids)}),
-                'original_id': ref, 'evidence_kind': edge.evidence_kind, 'freshness': 'CURRENT',
-                'polarity': original.get('polarity', 'UNKNOWN'), 'source_id': source.id,
-                'source_file': source.path, 'content_hash': original['sha256'],
-                'target_source_file': target.path, 'target_content_hash': captured[target.path],
-                'context_ids': list(edge.context_ids)}
-            if not isinstance(proof['polarity'], str) or proof['polarity'] not in {'SUPPORTING', 'CONTRADICTING', 'UNKNOWN'}:
-                proof['polarity'] = 'UNKNOWN'
+                return None
+            checksum = original.get('sha256')
+            hash_provenance = 'ORIGINAL_FACT_SHA'
+            if checksum is None:
+                # Existing framework.evidence_for has no per-fact SHA unless a
+                # compiler_fact was supplied. Its exact context/source binding
+                # still provides a current captured hash; do not pretend the
+                # original fact carried that field.
+                checksum = captured[source.path]
+                hash_provenance = 'VALIDATED_CONTEXT_SOURCE'
+            if not isinstance(checksum, str) or checksum != captured[source.path]:
+                issue('DATA_RESOURCE_FACT_HASH_UNKNOWN_OR_STALE', source_id=edge.source)
+                return None
+            polarity = original.get('polarity', 'UNKNOWN')
+            if not isinstance(polarity, str) or polarity not in {'SUPPORTING', 'CONTRADICTING', 'UNKNOWN'}:
+                polarity = 'UNKNOWN'
                 issue('DATA_RESOURCE_EVIDENCE_POLARITY_UNKNOWN', source_id=edge.source)
-            pending_proofs.append(proof)
-            refs.append(proof['id'])
+            proof = {'original_id': ref, 'evidence_kind': edge.evidence_kind, 'freshness': 'CURRENT',
+                'polarity': polarity, 'source_id': source.id, 'source_file': source.path,
+                'content_hash': checksum, 'hash_provenance': hash_provenance,
+                'target_source_file': target.path, 'target_content_hash': captured[target.path],
+                'context_ids': list(edge.context_ids), 'original_edge': edge_reference(edge)}
+            proof['id'] = 'ev:data-access:' + digest(proof)
+            proofs.append(proof)
+        return proofs
+
+    for edge in graph.edges:
+        if edge.kind not in RELATIONS:
+            continue
+        path = [edge]
+        if edge.target not in table_resources and edge.kind in ACCESS:
+            mappings = [m for m in graph.edges if m.source == edge.target and m.kind == 'maps_to_table']
+            if len(mappings) != 1:
+                issue('DATA_RESOURCE_ENTITY_MAPPING_AMBIGUOUS_OR_MISSING', source_id=edge.source,
+                      target_id=edge.target, candidate_count=len(mappings))
+                continue
+            path.append(mappings[0])
+        target = nodes.get(path[-1].target)
+        source = nodes.get(edge.source)
+        identity = table_resources.get(path[-1].target)
+        if source is None or target is None or identity is None or source.scope != scope:
+            issue('DATA_RESOURCE_ACCESS_SCOPE_OR_TARGET_UNKNOWN', source_id=edge.source)
+            continue
+        record = records[identity]
+        context = contexts.get(edge.context_ids[0], {}) if len(edge.context_ids) == 1 else {}
+        valid = (record['realm'] is not None and not record['ambiguous']
+                 and context.get('id') in selected
+                 and realm(context.get('database_id'), context.get('schema_stream_id')) == record['realm'])
+        repo, _ = local_path(source.path)
+        owner_ids = owners(repo, source.path, context) & selected.get(context.get('id'), set())
+        if repo != record['repo_id'] or not owner_ids or context.get('repo_id') != repo:
+            valid = False
+        pending_proofs = []
+        if valid:
+            for member in path:
+                if member.source not in nodes or member.target not in nodes:
+                    valid = False; break
+                proofs = proofs_for(member, context)
+                if proofs is None:
+                    valid = False; break
+                pending_proofs.extend(proofs)
         if not valid:
-            issue('DATA_RESOURCE_ACCESS_UNPROVEN', source_id=edge.source, target_id=edge.target)
+            issue('DATA_RESOURCE_ACCESS_UNPROVEN', source_id=edge.source, target_id=path[-1].target)
             continue
         evidence.update((p['id'], p) for p in pending_proofs)
+        refs = sorted({p['id'] for p in pending_proofs})
         record['realm_verified'] = True
         record['scope_proven'] = True
         record['contexts'].add(context['id'])
@@ -315,11 +357,13 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         for owner in owner_ids:
             summary = _summarize_view_evidence(refs, evidence)
             claims.append(ViewEdge('data-access:' + digest({'owner': owner, 'target': identity,
-                'relation': edge.kind, 'contexts': edge.context_ids, 'evidence': sorted(refs)}), owner, identity,
-                RELATIONS[edge.kind], original_ids=(edge.source, edge.target), evidence_refs=tuple(refs),
+                'relation': edge.kind, 'contexts': edge.context_ids, 'evidence': refs}), owner, identity,
+                RELATIONS[edge.kind], original_ids=tuple(sorted({i for m in path for i in (m.source, m.target, *m.evidence_ids)})),
+                evidence_refs=tuple(refs),
                 resolution_status=('AMBIGUOUS' if summary['supporting_refs'] and summary['contradicting_refs'] else
                     'UNRESOLVED' if summary['contradicting_refs'] else 'RESOLVED'),
-                attributes={'scope': scope, 'context_ids': list(edge.context_ids)},
+                attributes={'scope': scope, 'context_ids': list(edge.context_ids),
+                            'original_edges': [edge_reference(m) for m in path]},
                 evidence_kinds=tuple(summary['evidence_kinds']), freshness=summary['freshness'],
                 supporting_refs=tuple(summary['supporting_refs']), contradicting_refs=tuple(summary['contradicting_refs']),
                 unknown_refs=tuple(summary['unknown_refs'])))

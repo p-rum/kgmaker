@@ -1,7 +1,8 @@
 # Projekce explicitních databázových resources
 
 T015, kroky S01–S05, AC01–AC06. Explicitní dependency base je T009/PR48
-`cbf17b1d57719c05c4e918851647c375811e8b07`, obsahující T008/T009 kontrakty.
+`d0932d9c3f7de9827ea590b6f981aa29e5b39349`, obsahující T008/T009 kontrakty;
+původní implementace začala na cbf17b1.
 Stávající podporovaný S06 persistence subset se pouze čte; celý S06/W08, T004
 ani produkční připravenost nejsou prohlášeny za dokončené.
 
@@ -54,7 +55,7 @@ Schema/store v1/v2/v3, stávající CLI, loader a renderery se nemění.
   `default-body` checkoutu (celý JVM source diff bez rozdílu). Read-only prerequisite
   preflight PASS. Instalace/build/fetch ani Maven/Gradle execution nebyly vyvolány.
 
-Strict full je zatím QUEUED, nikoli PASS. Příkaz pod sdíleným flockem používá
+Opravený strict full zatím nebyl spuštěn, nikoli PASS. Příkaz pod sdíleným flockem používá
 JDK21.0.6+7/Kotlin2.1.10, vlastní K1/K2 resources, skutečnou Maven fixture a API
 cache. Log/XML/temp jsou v `/workspace/t015-validation/`, mimo malý `/tmp` tmpfs.
 
@@ -78,9 +79,8 @@ ViewDocument a nic nezapisuje. Databáze se nekontaktuje. README a capability do
 uvádí stejný Python příklad; nový CLI command neexistuje.
 
 Sémantická aktualizace, memory a finální scan/check se zaznamenají po finální
-validaci. Required CI je nadále externě BLOCKED billing limitem a jeho řešení
-uživatel pozastavil. Parent vlastní nezávislé review/publikaci; žádný merge ani
-CI retry nebyl proveden.
+validaci. Parent vlastní nezávislé review, remote CI a publikaci. Lokálně nebyl proveden
+merge do main ani CI retry; dřívější billing pause byla uživatelem odblokována.
 
 ## Oprava target scope/context a finální dependency metadata
 
@@ -105,3 +105,27 @@ Před novým full byla integrována finální metadata T009
 `d0932d9c3f7de9827ea590b6f981aa29e5b39349`; produkce/testy/workers/pyproject jsou
 proti původnímu cbf17b1 byte-identické. Přesný parent prefix113 episodes je
 zachován, poté přidán původní nezměněný child capture. Finální base je d0932d9.
+
+## Skutečný upstream framework kontrakt
+
+Actual Javac probe odhalil, že existující native/JPQL framework evidence nemá
+volitelné fact SHA a že JPQL query target je entity, nikoli přímo table. Silnější
+syntetický kontrakt tuto integrační hranici nezachytil. Před změnou byl zastaven
+pouze vlastní neplatný full nad75027d2: **168 PASS, 2 SKIP v250.25s**, exit2;
+XML170 tests/0errors/0failures/2skips a log/status/process evidence zůstávají
+v `interrupted-75027d2.*`. Nejde o dokončený full PASS.
+
+Chybějící fact SHA se odvozuje pouze z totožného selected-context source_files,
+graph.files a aktuálního souboru. Výstup výslovně uvádí
+`hash_provenance=VALIDATED_CONTEXT_SOURCE`; existující SHA zůstává
+`ORIGINAL_FACT_SHA`. Stale nebo malformed dodané SHA nevytvoří access.
+JPQL může využít jedinou existující exact entity→maps_to_table edge, pokud oba
+kroky splní stejné scope/context/realm/evidence guards. Zachovávají se obě
+původní composite edge identity a evidence refs; žádný name match, parser nebo
+nový resolver nevzniká. Ambiguity nebo foreign mezikrok zůstávají UNKNOWN.
+
+Pure public cases: **45 PASS, 2 actual deselected v1.32s**. Nové actual K1/K2
+fixture používají offline hashované skutečné JPA/Spring API, dva explicitní
+Flyway realms a Javac native read/write + JPQL; obě actual varianty jsou GREEN. Strict focused batch celé public module + T008/T009,
+Flyway/workspace/dataflow: **126 PASS v7.94s**, bez skips. Čistý batch bez actual
+variant: **124 PASS, 2 deselected v8.65s**. Strict full stále není PASS.

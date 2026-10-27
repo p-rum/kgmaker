@@ -647,7 +647,12 @@ service ownership and selected contexts, including `selected_contexts` pins.
 - Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
   `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
   exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
-  Existing `maps_to_table` and migration declarations establish only dependencies.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
 - `coverage.schemas` inventories/configuration must match the workspace declaration,
   graph table inventory, realm IDs and actual local hashes. Stale or malformed
   snapshots fail without mutation. Unmapped default Flyway database IDs remain
@@ -661,6 +666,8 @@ service ownership and selected contexts, including `selected_contexts` pins.
 
 `tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
 workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
 It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
 is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
 physical naming/schema compatibility, live databases and data population remain

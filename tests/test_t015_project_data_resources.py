@@ -334,3 +334,164 @@ def test_valid_access_carries_both_endpoint_hashes_from_selected_context(tmp_pat
         assert proof['context_ids'] == [ctx['id']]
         assert proof['content_hash'] == ctx['source_files'][proof['source_file']]
         assert proof['target_content_hash'] == ctx['source_files'][proof['target_source_file']]
+
+
+def test_optional_fact_hash_uses_only_validated_context_source_provenance(tmp_path):
+    workspace, graph, coverage, ctx, query, _ = access_inputs(tmp_path)
+    for proof in graph.evidence:
+        if proof.get('source') == query:
+            proof.pop('sha256', None)
+    view = project_data_resources(workspace, graph, source_coverage=coverage)
+    access = [e for e in view.edges if e.relation in {'reads', 'writes'}]
+    assert {e.relation for e in access} == {'reads', 'writes'}
+    for proof in view.provenance:
+        if proof.get('original_id', '').startswith('proof:'):
+            assert proof['hash_provenance'] == 'VALIDATED_CONTEXT_SOURCE'
+            assert proof['content_hash'] == ctx['source_files'][proof['source_file']]
+    assert all('sha256' not in p for p in graph.evidence if p.get('source') == query)
+
+
+@pytest.mark.parametrize('checksum', [[], {}, '0' * 64])
+def test_malformed_or_stale_optional_fact_hash_is_a_boundary(tmp_path, checksum):
+    workspace, graph, coverage, _, query, _ = access_inputs(tmp_path)
+    for proof in graph.evidence:
+        if proof.get('source') == query:
+            proof['sha256'] = checksum
+    before = deepcopy(graph.to_dict())
+    view = project_data_resources(workspace, graph, source_coverage=coverage)
+    assert not any(e.relation in {'reads', 'writes', 'deletes'} for e in view.edges)
+    assert any(d['code'] == 'DATA_RESOURCE_FACT_HASH_UNKNOWN_OR_STALE' for d in view.diagnostics)
+    assert graph.to_dict() == before
+
+
+def entity_access_inputs(tmp_path):
+    from dataclasses import replace
+    workspace, graph, coverage, ctx, query, table = access_inputs(tmp_path)
+    path = '@backend/src/main/java/Orders.java'
+    entity = qualified('backend', 'entity:orders')
+    graph.nodes.append(Node(entity, 'class', 'Order', path, scope='production', metadata={'context_id': 'prod'}))
+    graph.edges = [replace(e, target=entity) if e.source == query else e for e in graph.edges]
+    for proof in graph.evidence:
+        if proof.get('source') == query:
+            proof['target'] = entity
+    identity = 'proof:maps-to-table'
+    graph.evidence.append({'id': identity, 'source': entity, 'target': table, 'relation': 'maps_to_table',
+        'kind': 'FRAMEWORK_DERIVED', 'context_ids': [ctx['id']], 'source_file': path})
+    graph.edges.append(Edge(entity, table, 'maps_to_table', evidence_kind='FRAMEWORK_DERIVED',
+        context_ids=(ctx['id'],), evidence_ids=(identity,), source_file=path))
+    return workspace, graph, coverage, ctx, query, entity, table
+
+
+def test_entity_access_composes_only_existing_mapping_and_preserves_both_refs(tmp_path):
+    workspace, graph, coverage, _, query, entity, table = entity_access_inputs(tmp_path)
+    view = project_data_resources(workspace, graph, source_coverage=coverage)
+    access = [e for e in view.edges if e.relation in {'reads', 'writes'}]
+    assert {e.relation for e in access} == {'reads', 'writes'}
+    assert all({query, entity, table, 'proof:maps-to-table'} <= set(e.original_ids) for e in access)
+    for edge in access:
+        proofs = [p for p in view.provenance if p['id'] in edge.evidence_refs]
+        assert {p['original_edge']['relation'] for p in proofs} in ({'query_reads', 'maps_to_table'}, {'query_writes', 'maps_to_table'})
+
+
+@pytest.mark.parametrize('mutation', ['ambiguous', 'foreign_mapping', 'test_entity', 'stale_mapping_hash'])
+def test_entity_mapping_ambiguity_and_foreign_or_stale_proof_never_create_access(tmp_path, mutation):
+    from dataclasses import replace
+    workspace, graph, coverage, _, _, entity, _ = entity_access_inputs(tmp_path)
+    mapping = next(e for e in graph.edges if e.kind == 'maps_to_table')
+    if mutation == 'ambiguous':
+        proof = deepcopy(next(p for p in graph.evidence if p['id'] == 'proof:maps-to-table'))
+        proof['id'] = 'proof:other-mapping'; graph.evidence.append(proof)
+        graph.edges.append(replace(mapping, evidence_ids=(proof['id'],)))
+    elif mutation == 'foreign_mapping':
+        graph.contexts.append({'id': 'foreign', 'repo_id': 'foreign', 'scope': 'production'})
+        graph.edges = [replace(e, context_ids=('foreign',)) if e == mapping else e for e in graph.edges]
+        next(p for p in graph.evidence if p['id'] == 'proof:maps-to-table')['context_ids'] = ['foreign']
+    elif mutation == 'test_entity':
+        graph.nodes = [replace(n, scope='test') if n.id == entity else n for n in graph.nodes]
+    else:
+        next(p for p in graph.evidence if p['id'] == 'proof:maps-to-table')['sha256'] = '0' * 64
+    view = project_data_resources(workspace, graph, source_coverage=coverage)
+    assert not any(e.relation in {'reads', 'writes', 'deletes'} for e in view.edges)
+    assert view.coverage['status'] == 'PARTIAL'
+
+
+def jpa_api_jars():
+    import hashlib
+    import os
+    import xml.etree.ElementTree as ET
+    from kgmaker.worker_protocol import WorkerError
+    repository = Path(os.environ.get('KGMAKER_TEST_MAVEN_REPOSITORY', Path.home() / '.m2/repository'))
+    lock = json.loads((Path(__file__).resolve().parents[1] / 'fixtures/data-resources/dependencies.lock.json').read_text())
+    jars = []
+    for item in lock['artifacts']:
+        jar, pom = repository / item['path'], repository / item['license_pom']
+        artifact_pom = repository / item['artifact_pom']
+        if (not artifact_pom.is_file() or hashlib.sha256(artifact_pom.read_bytes()).hexdigest() != item['artifact_pom_sha256']
+                or not jar.is_file() or not pom.is_file() or hashlib.sha256(jar.read_bytes()).hexdigest() != item['sha256']
+                or hashlib.sha256(pom.read_bytes()).hexdigest() != item['license_pom_sha256']):
+            raise WorkerError('Pinned existing JPA API/POM unavailable: ' + item['path'], 'TOOLCHAIN_UNAVAILABLE')
+        license_name = ET.parse(pom).getroot().findtext('{http://maven.apache.org/POM/4.0.0}licenses/{http://maven.apache.org/POM/4.0.0}license/{http://maven.apache.org/POM/4.0.0}name')
+        assert license_name == item['license_name']
+        jars.append(str(jar))
+    return jars
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_existing_jpa_native_and_entity_query_facts_project_offline(tmp_path, backend):
+    import os
+    from kgmaker.inspection import command, inspect_jvm
+    from kgmaker.worker_protocol import WorkerError
+    home = Path(__file__).resolve().parents[1] / 'workers'
+    try:
+        command('jvm', home, kotlin_backend=backend)
+        jars = jpa_api_jars()
+    except WorkerError as error:
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1' or (backend == 'k2' and os.environ.get('KGMAKER_REQUIRE_K2') == '1'):
+            pytest.fail(str(error))
+        pytest.skip('actual JPA/worker prerequisites: ' + str(error))
+    workspace, _, _ = inputs(tmp_path)
+    root = Path(workspace['repositories'][0]['_root'])
+    source = root / 'src/main/java/demo/RepositoryInput.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('''package demo;
+import jakarta.persistence.Entity; import jakarta.persistence.Id; import jakarta.persistence.Table;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.stereotype.Repository;
+@Entity @Table(name="orders") class Order { @Id Long id; }
+@Repository interface OrdersRepository extends JpaRepository<Order,Long> {
+ @Query(value="select * from orders",nativeQuery=true) java.util.List<Order> readNative();
+ @Modifying @Query(value="update orders set id = 1",nativeQuery=true) int writeNative();
+ @Query("select o from Order o") java.util.List<Order> readJpql();
+}
+''')
+    captured = inspect_jvm(root, home=home, classpath=jars, kotlin_backend=backend,
+        repo_id='backend', module='app', publish=True,
+        build_context={'database_id': 'db-one', 'schema_stream_id': 'one', 'spring_profiles': [],
+                       'spring_properties': {}, 'spring_component_packages': ['demo']})
+    assert not any('.err.' in d.get('code', '') for d in captured['diagnostics'])
+    manifest = Path(workspace['_manifest_path'])
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    before = deepcopy((workspace, graph.to_dict(), coverage))
+    persisted = {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / '.kgmaker').rglob('*') if p.is_file()}
+    with patch('subprocess.Popen', side_effect=AssertionError('projection may not run a worker')):
+        view = project_data_resources(workspace, graph, source_coverage=coverage)
+    access = [e for e in view.edges if e.relation in {'reads', 'writes'}]
+    assert {e.relation for e in access} == {'reads', 'writes'}
+    queries = {n.id: n for n in graph.nodes if n.kind == 'orm_query'}
+    covered_queries = {identity for e in access for identity in e.original_ids if identity in queries}
+    assert len(covered_queries) == 3  # both native calls and the JPQL entity path
+    target = next(n for n in view.nodes if n.id == access[0].target)
+    assert target.attributes['database_id'] == 'db-one'
+    assert not any(e.target != target.id for e in access)
+    input_evidence = {p['id']: p for p in graph.evidence}
+    proofs = [p for p in view.provenance if p.get('original_id') in input_evidence]
+    assert proofs and any(p['hash_provenance'] == 'VALIDATED_CONTEXT_SOURCE' for p in proofs)
+    for proof in proofs:
+        context = next(c for c in graph.contexts if c['id'] == proof['context_ids'][0])
+        assert proof['content_hash'] == context['source_files'][proof['source_file']]
+        assert proof['target_content_hash'] == context['source_files'][proof['target_source_file']]
+    assert (workspace, graph.to_dict(), coverage) == before
+    assert persisted == {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / '.kgmaker').rglob('*') if p.is_file()}
+    assert all(n.attributes['data_availability'] == 'UNKNOWN' for n in resources(view))
