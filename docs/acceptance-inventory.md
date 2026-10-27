@@ -25,7 +25,7 @@
 | T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, and annotation fallback for untouched partial mappings |
 | T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves `metadata-complete` suppression of annotation-only table/column bindings, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes` behavior |
 | T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, unknown namespace, unsupported mapping constructs and DTD/external-entity rejection; unsupported targets remain UNKNOWN without annotation physical fallback |
-| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note59](changes/59_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
+| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note59](changes/65_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
 
 ## T003-S08-W01 — project references
 

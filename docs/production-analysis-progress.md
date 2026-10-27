@@ -11,7 +11,7 @@ pořadí a precedence. Neznámý namespace/verze, unsupported constructs,
 nevyřešené reference, DTD/entities a soubory mimo root zůstávají UNKNOWN bez
 annotation fallbacku. Strict diagnostika nemění poslední uložený graph;
 schema/store v3 zůstává beze změny. Viz [acceptance inventář](acceptance-inventory.md)
-a [change note 59](changes/59_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
+a [change note 59](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
 
 ## T003-S06-W02 — zděděné JPA persistence atributy (2026-10-26)
 
