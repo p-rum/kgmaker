@@ -40,7 +40,7 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+TypeScript worker v3 (project references od v2) podporuje solution-style project references uvnitř zvoleného
 repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
@@ -82,6 +82,33 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Selected tsconfig freshness (T003-S08-W02)
+
+Worker3 přidává `project.input_discovery` v1 a context marker
+`typescript-input-discovery-1`. TypeScript sám respektuje extends/baseUrl/paths/
+include/exclude; Python replayuje zachycené content hashes, existence/realpath
+pozorování a directory membership. Root/project package metadata a lockfiles
+jsou obsahově svázané. Změna nepoužitého sibling configu nebo excluded-unused
+obsahu nestaluje selected context; relevantní input či dříve missing dependency
+ano. Negativní/mixed snapshot nepublikuje graf, offline status/hook nespustí Node.
+Legacy snapshot, TS selector sloty a JVM politika zůstávají beze změny.
+Discovery membership je konzervativní a má explicitní limity; nejde o persistent
+incremental compilation cache. [Freshness guide](typescript-freshness.md) a
+[note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
+
+### Bounded TypeScript callbacks (T003-S08-W03)
+
+Worker4 keeps compiler-selected generic/overload signatures and canonical owner
+parameter IDs through barrel aliases. Named and inline callback arguments bind to
+local higher-order parameters. Parameter invocations and unions use incomplete
+`dispatch_candidates`; mutable/any values never promote an arbitrary initializer
+or signature to a concrete target. Ambient declared callable contracts remain
+compiler evidence, separate from runtime implementation proof. Protocol1/model
+schemas are unchanged; existing candidate navigation is reused.
+[Callback guide](typescript-callbacks.md) documents limits, non-goals and CLI examples;
+[note53](changes/53_resolveBoundedTypeScriptCallbacks.md) records exact local proof,
+remaining full validation and blocked CI. This does not complete all of T003-S08.
 
 ### Windows user-space ověření (T003-S11-W03)
 
@@ -711,3 +738,56 @@ unchanged and supplemental `argument_parameter_bindings` retains typed provenanc
 Workspace federation qualifies argument/formal/call-site/context references;
 malformed or ambiguous bindings fail before replacing the last valid generation.
 No scan/hook/projection starts workers, builds or application code implicitly.
+
+## Data resource projection (T015)
+
+The public pure Python API consumes an already captured workspace:
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.data_resources import project_data_resources
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_data_resources(workspace, graph, source_coverage=coverage,
+                              scope="production")
+print(view.to_json())
+```
+
+Capture is separate from projection; the latter reads only explicit local source
+snapshots and never starts a process or connects to a database. It reuses T008
+service ownership and selected contexts, including `selected_contexts` pins.
+
+- Two explicit database/stream realms with an `orders` table stay two resources.
+  Table IDs are references, not database identities; JDBC URLs and class names do
+  not identify a resource.
+- Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
+  `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
+- `coverage.schemas` inventories/configuration must match the workspace declaration,
+  graph table inventory, realm IDs and actual local hashes. Stale or malformed
+  snapshots fail without mutation. Unmapped default Flyway database IDs remain
+  unresolved; a default is accepted only when explicitly declared as a datasource.
+- Flyway resources carry `derivation=["MIGRATION_DERIVED"]`, while evidence keeps
+  its original T009 kind. Deployment and data availability remain `UNKNOWN`.
+  An ORM node tag alone supplies no new FRAMEWORK_DERIVED proof. Unknown polarity
+  is not promoted; explicit conflicts retain both buckets and AMBIGUOUS status.
+- Known foreign test scopes are excluded. Unknown file scope is not converted to
+  production because its repository belongs to a production service.
+
+`tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
+workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
+It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
+is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
+physical naming/schema compatibility, live databases and data population remain
+outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.

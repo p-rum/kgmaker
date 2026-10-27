@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "preparation": "Explicit mvn -B -ntp -f fixtures/data-resources/pom.xml compile prepares these pinned APIs; projection never fetches dependencies. Parent POM license declarations are pinned explicitly.",
+  "artifacts": [
+    {
+      "path": "jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar",
+      "sha256": "475389446d35c6f46c565728b756dc508c284644ea2690644e0d8e7e339d42fd",
+      "artifact_pom": "jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.pom",
+      "artifact_pom_sha256": "f876fc8d886733540f59815ab77b1b998beec7080032dfb1526cade46ceeccbd",
+      "license_pom": "jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.pom",
+      "license_pom_sha256": "f876fc8d886733540f59815ab77b1b998beec7080032dfb1526cade46ceeccbd",
+      "license_name": "Eclipse Public License v. 2.0"
+    },
+    {
+      "path": "org/springframework/data/spring-data-jpa/3.4.2/spring-data-jpa-3.4.2.jar",
+      "sha256": "8ec10a21d16d965719a7b5ecf1bc54c276b371d894214602af69d04ecc09f77e",
+      "artifact_pom": "org/springframework/data/spring-data-jpa/3.4.2/spring-data-jpa-3.4.2.pom",
+      "artifact_pom_sha256": "4e16ccb49348d3db3360ceecee3af28bcf0373b28c05819746de1e5581917e0c",
+      "license_pom": "org/springframework/data/build/spring-data-parent/3.4.2/spring-data-parent-3.4.2.pom",
+      "license_pom_sha256": "9cd636f773985b82329ffc89c6ba129c8a6b7014822d7349f1d6b67662c4c4f5",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/data/spring-data-commons/3.4.2/spring-data-commons-3.4.2.jar",
+      "sha256": "57a92c28c02195d87d1aa43098bda6a9a5a06707644e86b90e7b3dfdc44c2649",
+      "artifact_pom": "org/springframework/data/spring-data-commons/3.4.2/spring-data-commons-3.4.2.pom",
+      "artifact_pom_sha256": "2afb80ffd9b784177b18a2af15398263ce58faa76478bfa8ca062ca17c0ec866",
+      "license_pom": "org/springframework/data/build/spring-data-parent/3.4.2/spring-data-parent-3.4.2.pom",
+      "license_pom_sha256": "9cd636f773985b82329ffc89c6ba129c8a6b7014822d7349f1d6b67662c4c4f5",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.jar",
+      "sha256": "9e745d6c4d375fc661e39ab1af73f488d565b7a6960f867a9f8b13398bfe2f85",
+      "artifact_pom": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.pom",
+      "artifact_pom_sha256": "95bb7cdd69324e1e715b8b3a673d0593a638377daf69025d89ba30b71ebcb5d9",
+      "license_pom": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.pom",
+      "license_pom_sha256": "95bb7cdd69324e1e715b8b3a673d0593a638377daf69025d89ba30b71ebcb5d9",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.jar",
+      "sha256": "50ca16d01f939abe26496161585756dac0f61b18f0b9fb706d869a47fdb28a9c",
+      "artifact_pom": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.pom",
+      "artifact_pom_sha256": "7c5f873d32e314709b2b855950a1a84f85b46b66b3afba4986b5c0882904970e",
+      "license_pom": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.pom",
+      "license_pom_sha256": "7c5f873d32e314709b2b855950a1a84f85b46b66b3afba4986b5c0882904970e",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.jar",
+      "sha256": "bdb5370f08156ca32be8ed1aa9b879b66d7125a55bc8659c1a60193037b700a3",
+      "artifact_pom": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.pom",
+      "artifact_pom_sha256": "18ebd6d3292e219392e8b7ce3531a92eabaaf254740b94dbfd31b292a190d525",
+      "license_pom": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.pom",
+      "license_pom_sha256": "18ebd6d3292e219392e8b7ce3531a92eabaaf254740b94dbfd31b292a190d525",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.jar",
+      "sha256": "be9ecf9b0dc6b88a869c9079b9076121e4d658d7e12856cc60598f1fe2d70d8a",
+      "artifact_pom": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.pom",
+      "artifact_pom_sha256": "6d93008a4d434021394ac01ffa3129b069cad5e2e7c33992f0c8e5c4f123d575",
+      "license_pom": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.pom",
+      "license_pom_sha256": "6d93008a4d434021394ac01ffa3129b069cad5e2e7c33992f0c8e5c4f123d575",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.jar",
+      "sha256": "36b4666730c80e6599359ca8c81adead8b52b15fefe8cc25e061717fe87d93ed",
+      "artifact_pom": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.pom",
+      "artifact_pom_sha256": "df1cf7fe47c8c91d1c9517f9d3aa7c9a9d53135a255cda051f30ce173c1a4a5a",
+      "license_pom": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.pom",
+      "license_pom_sha256": "df1cf7fe47c8c91d1c9517f9d3aa7c9a9d53135a255cda051f30ce173c1a4a5a",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.jar",
+      "sha256": "359c8ada456a181bbd87be42c53b381feba1f3f2b5820eb6ca713e5dc793a3e2",
+      "artifact_pom": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.pom",
+      "artifact_pom_sha256": "85ceb2c7e6332f6c389b7c60082956030874273532716adefd64f33236575d3f",
+      "license_pom": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.pom",
+      "license_pom_sha256": "85ceb2c7e6332f6c389b7c60082956030874273532716adefd64f33236575d3f",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "path": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.jar",
+      "sha256": "27d5db562dc47196699819ae9b970b90ea47829a6b4216500eb4844f24fbc4b4",
+      "artifact_pom": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.pom",
+      "artifact_pom_sha256": "1c65ca2bd239ec20fc4bb1fac798a15d661bb84c76d66a5e98a19356152bf97b",
+      "license_pom": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.pom",
+      "license_pom_sha256": "1c65ca2bd239ec20fc4bb1fac798a15d661bb84c76d66a5e98a19356152bf97b",
+      "license_name": "Apache License, Version 2.0"
+    }
+  ]
+}

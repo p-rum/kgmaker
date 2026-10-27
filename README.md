@@ -55,12 +55,17 @@ architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
-deterministic JSON envelope for future high-level interface, topology and process
-projections. `kgmaker.views.select_service_contexts` builds an explicit,
-read-only service/repository/module context selection from an existing graph;
-it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
-deployment limits. It does not discover or render interface/topology/process views;
-the CLI is unchanged. See [architecture](docs/architecture.md), the
+deterministic JSON envelope for high-level interface, topology and process
+projections. Nodes and edges retain evidence kind, resolution status, freshness,
+and separate supporting, contradicting and unknown references. Their coverage
+counts describe the supplied selected inventory, not the unobserved system.
+`kgmaker.views.select_service_contexts` builds an explicit, read-only
+service/repository/module context selection from an existing graph; it requires a
+context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
+limits. `project_service_inventory` provides a read-only service-only topology
+projection using that selection and explicit ownership. The CLI still does not
+expose architecture view commands, and evidence ranking remains a separate,
+unfinished upstream capability. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 
@@ -188,6 +193,17 @@ before publication rather than trusting emitted declarations.
 Preflight and analysis must read the same compiler input closure; membership
 changes fail before publication. Reinspection replaces the same TypeScript
 selection slot across legacy and K2-era snapshot metadata.
+New TypeScript snapshots also bind effective-config inputs, negative filesystem
+lookups, compiler directory discovery and package-manager lockfiles. Unrelated
+config or excluded-unused content edits preserve the selected context; relevant
+new dependencies/members invalidate it offline without running Node. Legacy
+snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
+
+TypeScript worker4 preserves concrete generic/overload signatures through barrel
+exports and records named/inline callback bindings. Callback parameters and union
+values expose incomplete dispatch candidates; mutable/any callbacks remain unresolved.
+Callee navigation includes candidates when explicitly requested. See
+[callback evidence and limits](docs/typescript-callbacks.md).
 
 ## Copilot workflow
 
@@ -510,3 +526,13 @@ unsupported/erroneous bindings expose specific UNKNOWN boundaries.
 `kgmaker flow render --entry METHOD_ID --view process --format json` includes
 binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
 retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
+
+T015 adds a pure database-resource view through
+`kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
+Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
+repository/database/stream identities remain separate from table drill-down IDs.
+Only existing selected-context query facts contribute read/write/delete claims;
+entity mappings and migrations contribute dependencies. Flyway is
+`MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
+Missing datasource mappings remain unresolved; no database connection or new CLI
+command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
