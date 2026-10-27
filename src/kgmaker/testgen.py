@@ -265,6 +265,35 @@ def _citation(root,packet,citation):
         raise AnalysisError('Citation quote is not present at the stated location')
 
 
+def _json_equal(left, right):
+    """JSON equality: booleans are distinct from numbers, including nested values."""
+    if isinstance(left, bool) or isinstance(right, bool):
+        return type(left) is bool and type(right) is bool and left == right
+    if left is None or right is None:
+        return left is None and right is None
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return left == right
+    if isinstance(left, str) and isinstance(right, str):
+        return left == right
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(_json_equal(a, b) for a, b in zip(left, right))
+    if isinstance(left, dict) and isinstance(right, dict):
+        return left.keys() == right.keys() and all(_json_equal(left[k], right[k]) for k in left)
+    return False
+
+
+def _output_path(root, value):
+    """Validate the canonical path used both for deduplication and actual writes."""
+    target = safe_path(root, value)
+    canonical = target.relative_to(root.resolve()).as_posix()
+    if value != canonical:
+        raise AnalysisError('Output path must be canonical and repository-relative')
+    if (any(part.casefold() in {'.git', '.github', '.kgmaker'} for part in Path(canonical).parts)
+            or is_sensitive_path(canonical)):
+        raise AnalysisError('Output path is protected or sensitive')
+    return target
+
+
 def schema_errors(value,schema,path='$'):
     """Supported JSON-schema subset, returning concrete violation paths."""
     errors,unchecked = [],[]
@@ -276,11 +305,17 @@ def schema_errors(value,schema,path='$'):
     types = {'object':dict,'array':list,'string':str,'integer':int,'number':(int,float),'boolean':bool,'null':type(None)}
     if kind not in types:
         raise AnalysisError('Dataset schema requires a supported type')
-    if value is None and schema.get('nullable') is True:
-        return errors,unchecked
-    if not isinstance(value,types[kind]) or kind in {'integer','number'} and isinstance(value,bool):
-        return [path+':type'],unchecked
-    if 'enum' in schema and value not in schema['enum']: errors.append(path+':enum')
+    nullable = value is None and schema.get('nullable') is True
+    if not nullable and (not isinstance(value, types[kind]) or
+                         kind in {'integer', 'number'} and isinstance(value, bool)):
+        return [path + ':type'], unchecked
+    if 'enum' in schema:
+        if not isinstance(schema['enum'], list) or not schema['enum']:
+            raise AnalysisError('Dataset enum must be a non-empty array')
+        if not any(_json_equal(value, choice) for choice in schema['enum']):
+            errors.append(path + ':enum')
+    if nullable:
+        return errors, unchecked
     if kind in {'integer','number'}:
         for field,op in [('minimum',lambda x,y:x<y),('maximum',lambda x,y:x>y)]:
             if field in schema and op(value,schema[field]): errors.append(path+':'+field)
@@ -377,9 +412,11 @@ def _validate(root,suite,candidate):
             other=next(d for d in candidate['datasets'] if d['id']==fk['dataset_id'])
             if not isinstance(dataset['data'],list) or not isinstance(other['data'],list):
                 raise AnalysisError('Foreign keys require row datasets')
-            values=[r.get(fk['target_field']) for r in other['data'] if isinstance(r,dict)]
+            values = [r[fk['target_field']] for r in other['data']
+                      if isinstance(r, dict) and fk['target_field'] in r]
             for i,row in enumerate(dataset['data']):
-                if not isinstance(row,dict) or fk['field'] not in row or row[fk['field']] not in values:
+                if (not isinstance(row, dict) or fk['field'] not in row or
+                        not any(_json_equal(row[fk['field']], value) for value in values)):
                     errors.append(f'$[{i}].'+fk['field']+':foreign_key')
         if dataset['negative']:
             if not errors or sorted(errors)!=sorted(dataset['expected_violations']):
@@ -393,8 +430,8 @@ def _validate(root,suite,candidate):
         if not isinstance(item,dict) or set(item)!={'path','content','case_ids'} or not isinstance(item['content'],str) or not item['content'].strip():
             raise AnalysisError('Invalid generated test file')
         path=item['path']
-        safe_path(root,path)
-        if is_sensitive_path(path) or path.startswith(('.kgmaker/','.git/','.github/')) or path in paths:
+        _output_path(root, path)
+        if path in paths:
             raise AnalysisError('Unsafe or duplicate test output path')
         if not packet['framework']:
             raise AnalysisError('Executable test code is BLOCKED without a selected framework')
@@ -464,9 +501,7 @@ def export(root,suite,*,data_dir='tests/fixtures/kgmaker',data_format='json'):
                 writer.writeheader();writer.writerows(rows);content=buffer.getvalue()
             files[name]=content
         if not files: raise AnalysisError('No files or datasets to export')
-        paths={name:safe_path(root,name) for name in files}
-        if any(is_sensitive_path(n) or n.startswith(('.kgmaker/','.git/','.github/')) for n in files):
-            raise AnalysisError('Unsafe export destination')
+        paths = {name: _output_path(root, name) for name in files}
         if any(p.exists() for p in paths.values()):
             raise AnalysisError('Export collision; existing files preserved')
         # Preflight ancestor collisions before creating any files.

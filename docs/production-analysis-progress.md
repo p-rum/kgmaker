@@ -418,3 +418,6 @@ Veřejné CLI a kompletní end-to-end release dodává až S06.
 
 T046-S03: knihovní inkrement existing-function test design library; ověření viz change note 58.
 Veřejné CLI a kompletní end-to-end release dodává až S06.
+
+
+T046 review corrections S01–S03: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
