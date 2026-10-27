@@ -19,7 +19,7 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
 | Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
 | Kotlin K2 (opt-in) | Standalone Analysis API / FIR 2.1.10, backend `k2-analysis-api-2.1.10-v1` | Mixed Java/Kotlin named-function calls, compiler PSI light-method JVM descriptors, explicit unresolved/ambiguous boundaries; source CFG/property/lambda semantics remain PARTIAL |
-| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
+| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, ordered selected-classpath CHA (open world) |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
 | Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
@@ -529,6 +529,53 @@ nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
 
+## T003-S04-W04 — Ordered dependency dispatch
+
+Javac a K1/K2 2.1.10 předávají u podporovaných virtuálních/interface call expressions
+compiler-proven erased receiver. ASM používá stejný hierarchy index pro bytecode
+`invokevirtual`/`invokeinterface`. Metadata selected JARů a adresářů se čtou bez
+class loadingu, inicializace, buildů či aplikace. První classpath entry pro daný
+binary class name vyhrává; pozdější kopie se nesjednocují. Explicitní artifact realm
+zůstává zachovaný, bez mapování se používá stávající SHA-256 dependency realm.
+
+`declared_target` je compiler/JVM declaration; `dispatch_candidates` jsou oddělené
+`DISPATCH_CANDIDATE` důkazy. `dispatch_algorithm=CHA_ORDERED_SELECTED_CLASSPATH`,
+`dispatch_classpath` a `dispatch_completeness_reason` jsou součástí provenance.
+Candidate class musí být subtype compiler-erased receiveru **i** owneru skutečného
+`declared_target`. Source type-variable/intersection receiver je konzervativně
+unsupported: úplné upper bounds se zde nereprezentují, proto se kandidáti nevydají
+a declared target i konkrétní compiler diagnostic zůstanou zachované.
+Defining owner zděděného implementation body sám tyto dva vztahy splňovat nemusí.
+Cache klíč obsahuje receiver, declared contract, method name a descriptor.
+`dispatch_complete` zůstává false kvůli otevřenému runtime světu. Výsledek není
+runtime observation, call-path feasibility ani dostupnost dat. Reference a
+invokedynamic creation nejsou provedení; static/private/final/super targety
+nedostávají virtuální enrichment.
+
+Index má limity 10000 classes, 100000 archive/filesystem entries, 16 MiB/class a
+128 MiB souhrnně čtených class bytes; hierarchy lookup nejvýše 256 visited types. Chybějící parent, corrupt archive/class,
+shadow, duplicate entry či truncation mají lokalizovanou diagnostiku. Multi-release
+JAR candidate enumeration je explicitně unsupported; physical declared lookup
+používá bounded runtime-effective JarFile metadata včetně version-only classes,
+aby je nenahradila pozdější plain kopie. Chybějící hierarchy nepřidává domnělou
+implementaci. Package-private override access zůstává konzervativní hranicí.
+K2 property/operator/local/lambda semantics zůstávají v dosavadním PARTIAL subsetu.
+K2 source owner bez type-hierarchy proof nepřebírá subtype vazby ze staré compiled kopie.
+Source overlay a physical hierarchy mají oddělené lookup/cache. Skutečné JDK
+platform resources mají parent-first přednost a toolchain realm; metadata
+`module-info.class` nejsou candidate classes. Compiler-proven `jvm_static`
+kontradikce source/physical canonical vrací `SOURCE_BINARY_ABI_CONFLICT`, unresolved
+site/PARTIAL a generated body bez nekompatibilního source locator/mapping.
+Před physical canonical bindingem se ověřuje také úplný realm tuple
+repo_id/module/source_set/scope: mismatch dává `SOURCE_BINARY_REALM_CONFLICT`,
+source declaration zůstává zachovaná.
+
+Příklad: po explicitním získání a importu content-bound ordered classpath spusť
+`kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`;
+`kgmaker callgraph callees --help` popisuje přepnutí dispatch kandidátů při navigaci.
+Fixture `tests/test_dependency_dispatch.py` skutečně sestaví JDK21 API/base JAR a
+dva implementation JARy v odlišných realms. Protocol v1 ani graph/store v1/v2/v3
+se nemění; nová provenance pole jsou aditivní a staré vstupy zůstávají čitelné.
 ## T003-S05-W01 — bounded Spring import selectors
 
 `annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
@@ -684,9 +731,9 @@ jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, includ
 empty controls rather than truthy fallback. The official event declaration families
 are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
 on form is covered too. Same-named checkout declarations do not qualify. Full
-validation before the mutable-binding correction:624 PASS/10 SKIP, focused
-UI/distribution matrix43 PASS. Change69 records current validation separately,
-including earlier failures/interruptions and remote status.
+current frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
+factory and event-control matrix36 PASS. Change69 preserves the earlier v2 and
+pre-fix results, interrupted runs and current remote status.
 
 UI binding proof excludes ordinary member callable references and their aliases.
 Lexical function/const bindings use a compiler-symbol syntactic write catalog

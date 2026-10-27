@@ -361,6 +361,14 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+| Acceptance | Evidence within scope | Test/fixture |
+|---|---|---|
+| AC01 | Declared API target separate from realm-specific candidate implementations; missing hierarchy explains incomplete result | `test_source_interface_call_finds_two_dependency_implementation_realms`, `test_missing_parent_excludes_unprovable_implementation`, actual JDK21 JARs |
+| AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
+| AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
+| AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
 `xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
@@ -429,14 +437,14 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 |---|---|---|
 | AC01 | `test_ui_events.py::test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence` | pinned versions/declaration/package hashes, direct and sole-return forwarder |
 | AC02 | existing graph v1/v2/v3 and worker installation tests; legacy context equality | additive evidence, same protocol/store |
-| AC03 | changed library, mutable/conditional/spread/fake/missing-package negatives; offline store snapshot | no stronger handler/runtime/data claims |
+| AC03 | changed library, lexical writes/member aliases/eval/factory overwrite/duplicate bindings and conditional/spread/fake/missing-package negatives; offline old-rule/store snapshots | no stronger handler/runtime/data claims |
 | AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
 
 Current actual results are recorded in change69; remote CI is available again, while this local candidate awaits publication and independent review.
 
-T003-S08-W04 final frozen proof: complete advertised matrix43 PASS/32 DESELECTED
-237.28s; prepared strict full624 PASS/10 SKIP762.95s, all41 UI cases, zero failures/
-errors. onChange input/select/textarea and form onSubmit are actual positives;
+T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;
+full624 PASS/10 SKIP762.95s. Current rule3 proof: final focus36 PASS/30 DESELECTED
+266.43s; prepared strict full727 PASS/10 SKIP791.26s, all66 UI cases, zero failures/errors. onChange input/select/textarea and form onSubmit are actual positives;
 source/runtime availability remains UNKNOWN.
 
 ## T015 — database resource projection

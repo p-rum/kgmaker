@@ -204,6 +204,52 @@ Následující vlastní focus byl bezpečně přerušen před úpravou catalogu:
 initialized var collision: **26 PASS, 1 FAIL, 30 DESELECTED /149.10s**. Compiler
 pro tuto collision vydal dvě TS2300; fix využívá tyto skutečné compiler diagnostics,
 nikoli textový name resolver. Následný opravený focus: **27 PASS, 30 DESELECTED
-/124.52s** (`/workspace/ui-events-binding-27pass.xml`). Finální rozšířený focus
-se všemi write shapes a předchozími rule generations běží na frozen source;
-nový full zatím nebyl deklarován jako PASS.
+/124.52s** (`/workspace/ui-events-binding-27pass.xml`). Rozšířený write/cache focus skončil **35 PASS, 30 DESELECTED /164.77s**
+(`/workspace/ui-events-binding-35pass.log` a `.xml`).
+
+
+## Finální v3 přijetí mutable-binding opravy (2026-10-27)
+
+Nezávislé review doplnilo stejný write/dynamic audit také na renderer namespace a
+createElement declarations. Skutečný valid TypeScript s explicitním přepsáním
+React.createElement měl nula TS diagnostics, ale původně vytvořil false event:
+RED **1 FAIL, 65 DESELECTED /3.85s** (`/workspace/ui-events-factory-write-red.*`).
+Po opravě běžel frozen focus **36 PASS, 30 DESELECTED /266.43s**. Původní odhad41
+byl dvojí započtení form-control případů již zahrnutých přes verified_wrapper;
+JUnit prokazuje skutečné input/select/textarea onChange, form onSubmit, onClick,
+oficiální factory modes a všechny nové binding/renderer/cache negativy.
+Artefakty: `/workspace/ui-events-final-binding-acceptance.log` a `.xml`.
+
+Main49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce je explicitně integrován v lokálním
+source commit96df82a7f063b3b542d92768756219d0a637ad5e. Mandatory compiler job
+zachovává původní i T015 a UI testy. Tři nezávisle reviewované source/test SHA se
+při integraci nezměnily; vlastní worker distributions nebyly přestavovány ani
+měněny. Jedna still-queued flock instance byla ukončena před pytest kvůli chybějícímu
+explicitnímu test Maven repository exportu: exit143, žádný child/log/test/PASS.
+Opravený runner teprve poté získal shared lock. Přesný příkaz je zachován v
+`/workspace/ui-events-mutability-full.sh`:
+
+```bash
+flock /workspace/kgmaker-heavy-tests.lock env \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  PYTHONPATH=/workspace/ui-events/src \
+  KGMAKER_WORKERS_HOME=/workspace/ui-events/workers \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  TMPDIR=/workspace/ui-events-validation-tmp \
+  /workspace/kgmaker-venv/bin/python -m pytest -q \
+  --junitxml=/workspace/ui-events-mutability-full.xml
+```
+
+Jediný finální required full: **727 PASS, 10 SKIP /791.26s**, exit0. JUnit737
+cases má zero failures/errors a všech66 UI cases skutečně proběhlo. Deset SKIP
+zůstává optional tool/exporter/Windows matrix; missing mandatory setup není PASS.
+`/workspace/ui-events-mutability-full.log`, `.xml` a `.exit` zachovávají výsledek.
+Preflight ověřil core compiler/API/fixture vstupy, navíc přesné JPA JAR/POM/parent
+license SHA z nově integrované T015 fixture; nebyl spuštěn build ani install.
+Po full sedělo všech201 položek source/test/fixture/config/worker manifestu
+`/workspace/ui-events-mutability-full-frozen.json`. Během validního běhu nebyl
+změněn runtime/helper/test. Předchozí624/10 ani žádný RED/partial nejsou vydávány
+za aktuální v3 proof. Exact Git-pair review, publikaci a vzdálené CI řídí root;
+tento autor nic nepublikoval ani nemergoval. Nadřazený S08 zůstává PARTIAL.
