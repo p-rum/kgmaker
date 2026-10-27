@@ -66,6 +66,8 @@ def _selection_key(context: dict) -> str:
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
     )}
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react" and "ui_adapters" in context.get("project", {}):
+        payload["ui_adapters"] = context["project"]["ui_adapters"]
     if context.get("language") == "jvm":
         payload.update(kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
@@ -89,6 +91,11 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react":
+        from .inspection import UI_RULE_VERSION
+        if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
+                or "ui_adapters" not in context.get("project", {})):
+            raise WorkerError("STALE_INDEX: UI adapter rules changed; inspect frontend again", "STALE")
     options = (context.get("compiler_options") or {}).get("kotlin")
     if options is not None:
         from .analysis_model import AnalysisError

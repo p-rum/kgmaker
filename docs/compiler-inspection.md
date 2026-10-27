@@ -646,3 +646,33 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+### T003-S08-W04: bounded versioned React event evidence
+
+`--ui-framework react` uses `react-jsx-events-2`, pinned React18.3.1 and
+@types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
+must select that external declaration's DOMAttributes event member. Evidence keeps
+package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
+The existing protocol1 `handles_event` fact and graph/store model are reused.
+
+Supported: onClick/onChange/onSubmit on intrinsic tags; a checkout function with
+one props parameter and sole intrinsic JSX return forwarding the same official
+prop. Arbitrary wrappers, spreads, mutable/ambiguous callbacks, redirected fake
+React modules, unknown versions and missing packages are explicit unresolved
+boundaries. Existing S08-W03 callback candidates remain open-world. No JSX/React JS
+or application executes. This rule does not prove a click, scheduling or availability.
+
+Adapter package/declaration inputs use the existing TypeScript discovery closure,
+are compared between preflight/analyze and revalidated offline. UI context and
+selector bind the adapter snapshot; old UI rules require reinspection. Non-UI and
+legacy context construction keep their existing identity. The helper is included
+in worker distribution hashes and wheel; incomplete marked distributions fail
+before starting a worker. No package installation or network is implicit.
+
+The JSX renderer is part of that proof: classic React factory lookup must resolve
+the lexical value to the official React namespace/createElement, including actual
+import aliases; a locally shadowed object annotated as typeof React is insufficient.
+Automatic default react-jsx/react-jsxdev modes require the pinned external runtime
+declaration. Custom importSource/per-file JSX directives remain UNKNOWN. Uppercase
+component names and checkout-added custom IntrinsicElements cannot bypass wrapper
+proof just because their props reuse React's event types.

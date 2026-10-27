@@ -495,3 +495,10 @@ Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
 simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
+
+React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
+uses opt-in `react-jsx-events-2`: React18.3.1/@types/react18.3.18 with the pinned
+compiler declaration hash. Intrinsic event props and one verified source forwarding
+wrapper retain package/declaration provenance. Unknown versions, fake modules,
+mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
+static handler binding is not a click or data-availability proof. See change69.

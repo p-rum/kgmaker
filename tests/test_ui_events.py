@@ -1,0 +1,196 @@
+"""Actual pinned React TSX adapter evidence; no UI or application execution."""
+import json
+import os
+from pathlib import Path
+import shutil
+
+import pytest
+
+from kgmaker.inspection import inspect_frontend
+from kgmaker.model import KnowledgeGraph
+
+ROOT = Path(__file__).resolve().parents[1]
+HOME = ROOT / 'workers'
+
+@pytest.fixture
+def ui_project(tmp_path):
+    dependencies = ROOT / 'fixtures/build-inspection/frontend/node_modules'
+    if not shutil.which('node') or not (HOME / 'typescript/node_modules/typescript/lib/typescript.js').is_file() or not (dependencies / '@types/react/index.d.ts').is_file():
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
+            pytest.fail('Prepared TypeScript and pinned React packages required')
+        pytest.skip('Prepared TypeScript/React fixture missing')
+    shutil.copytree(dependencies, tmp_path / 'node_modules')
+    (tmp_path / 'tsconfig.json').write_text(json.dumps({'compilerOptions': {'jsx': 'react', 'strict': True, 'esModuleInterop': True, 'target': 'ES2020', 'moduleResolution': 'node', 'skipLibCheck': True}, 'include': ['src/**/*.tsx']}))
+    (tmp_path / 'src').mkdir()
+    (tmp_path / 'src/App.tsx').write_text('''import React from 'react';
+export function direct() {}
+export function forwarded() {}
+export function swallowed() {}
+export function unrelated() {}
+export function Wrapper(props: React.ButtonHTMLAttributes<HTMLButtonElement>) { return <button onClick={props.onClick}/>; }
+export function Swallow(props: React.ButtonHTMLAttributes<HTMLButtonElement>) { return <button/>; }
+export function Other(props: {onClick: () => void}) { return <span/>; }
+export function App() { return <><button onClick={direct}/><Wrapper onClick={forwarded}/><Swallow onClick={swallowed}/><Other onClick={unrelated}/></>; }
+''')
+    return tmp_path
+
+
+def inspect(root):
+    before = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    result = inspect_frontend(root, home=HOME, repo_id='ui-fixture', ui_framework='react', publish=False)
+    assert before == {str(p.relative_to(root)): p.read_bytes() for p in root.rglob('*') if p.is_file()}
+    return result, KnowledgeGraph.from_dict(result['graph'])
+
+
+def handler_names(graph):
+    symbols = {s['id']: s for s in graph.symbols}
+    return {symbols[e.target]['name'] for e in graph.edges if e.kind == 'handles_event'}
+
+
+def test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence(ui_project):
+    result, graph = inspect(ui_project)
+    assert handler_names(graph) == {'direct', 'forwarded'}
+    evidence = [p for p in graph.evidence if p['relation'] == 'handles_event']
+    assert len(evidence) == 2
+    for proof in evidence:
+        assert proof['kind'] == 'FRAMEWORK_DERIVED'
+        adapter = proof['ui_adapter']
+        assert adapter['rule'] == 'react-jsx-events-2'
+        assert adapter['react_version'] == '18.3.1' and adapter['types_version'] == '18.3.18'
+        assert adapter['declaration_sha256'] == 'b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34'
+        assert proof['execution'] == 'NOT_OBSERVED'
+    assert result['context']['framework_rule_versions']['react'] == 'react-jsx-events-2'
+    assert result['context']['project']['ui_adapters']
+
+
+@pytest.mark.parametrize('change', ['runtime-version', 'types-version', 'declaration'])
+def test_changed_or_unsupported_library_never_reuses_version_rule(ui_project, change):
+    _, original = inspect(ui_project)
+    if change == 'declaration':
+        file = ui_project / 'node_modules/@types/react/index.d.ts'
+        file.write_text(file.read_text() + '\n// changed declaration\n')
+    else:
+        file = ui_project / ('node_modules/react/package.json' if change == 'runtime-version' else 'node_modules/@types/react/package.json')
+        data = json.loads(file.read_text()); data['version'] = '99.0.0'; file.write_text(json.dumps(data))
+    _, changed = inspect(ui_project)
+    assert not handler_names(changed)
+    assert changed.contexts[-1]['id'] != original.contexts[-1]['id']
+    assert any(d['code'] == 'UNSUPPORTED_UI_ADAPTER' for d in changed.diagnostics)
+
+
+@pytest.mark.parametrize('case', ['mutable', 'conditional', 'spread', 'fake-module', 'missing-runtime'])
+def test_unknown_bindings_never_create_framework_event(ui_project, case):
+    file = ui_project / 'src/App.tsx'
+    if case == 'mutable':
+        file.write_text("import React from 'react'; function first(){} function second(){} let handler=first; handler=second; export function App(){return <button onClick={handler}/>;}\n")
+    elif case == 'conditional':
+        file.write_text("import React from 'react'; function first(){} function second(){} declare const flag:boolean; export function App(){return <button onClick={flag?first:second}/>;}\n")
+    elif case == 'spread':
+        file.write_text("import React from 'react'; function first(){} const extra={onClick:()=>{}}; export function App(){return <button onClick={first} {...extra}/>;}\n")
+    elif case == 'fake-module':
+        (ui_project / 'src/fake.tsx').write_text("export const value=1;\n")
+        config = json.loads((ui_project / 'tsconfig.json').read_text());config['compilerOptions'].update(baseUrl='.', paths={'react':['src/fake.tsx']});(ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    else:
+        shutil.rmtree(ui_project / 'node_modules/react')
+    _, graph = inspect(ui_project)
+    assert not handler_names(graph)
+    assert any(d['code'] in {'UNSUPPORTED_UI_ADAPTER','MUTABLE_CALLBACK','UNRESOLVED_UI_HANDLER','UI_ATTRIBUTE_SPREAD_UNSUPPORTED','UI_WRAPPER_UNPROVEN','UI_RENDERER_UNPROVEN'} for d in graph.diagnostics)
+
+
+def test_published_context_detects_package_change_offline(ui_project):
+    from unittest.mock import patch
+    from kgmaker.graph_provider import retain_compiler_layer
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    _, graph = inspect(ui_project)
+    save_graph(graph, ui_project)
+    store = ui_project / '.kgmaker/graph.json'; previous = store.read_bytes()
+    with patch('subprocess.Popen', side_effect=AssertionError('offline UI context must not launch process')):
+        retained = retain_compiler_layer(ui_project, scan_repository(ui_project))
+    assert handler_names(retained) == {'direct','forwarded'}
+    package = ui_project / 'node_modules/react/package.json'
+    package.write_text(package.read_text().replace('18.3.1','18.3.0'))
+    with patch('subprocess.Popen', side_effect=AssertionError('offline UI context must not launch process')):
+        stale = retain_compiler_layer(ui_project, scan_repository(ui_project))
+    assert any(c.get('freshness') == 'STALE' for c in stale.contexts if c.get('ui_framework'))
+    assert store.read_bytes() == previous
+
+
+@pytest.mark.parametrize('tag', ['Fancy', 'fancy'])
+def test_local_intrinsic_augmentation_cannot_bypass_wrapper_proof(ui_project, tag):
+    (ui_project / 'src/App.tsx').write_text('''import React from 'react';
+declare global { namespace JSX { interface IntrinsicElements { TAG: React.ButtonHTMLAttributes<HTMLButtonElement> } } }
+function Fancy(props: React.ButtonHTMLAttributes<HTMLButtonElement>) { return <button/>; }
+function swallowed() {}
+export function App() { return <TAG onClick={swallowed}/>; }
+'''.replace('TAG', tag))
+    _, graph = inspect(ui_project)
+    assert not handler_names(graph)
+
+
+@pytest.mark.parametrize('case', ['factory', 'lexical-shadow', 'typed-shadow', 'pragma', 'import-source'])
+def test_custom_renderer_never_gets_react_event_claim(ui_project, case):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    prefix = "import React from 'react';\n"
+    if case == 'factory':
+        config['compilerOptions']['jsxFactory'] = 'h'
+        prefix += 'function h(tag:any,props:any,...children:any[]):any{return null;}\n'
+    elif case == 'lexical-shadow':
+        prefix = "import R from 'react'; const React={createElement(tag:any,props:any,...children:any[]):any{return null;}};\n"
+    elif case == 'typed-shadow':
+        prefix = "import R from 'react'; const React={createElement(tag:any,props:any,...children:any[]):any{return null;}} as unknown as typeof R;\n"
+    elif case == 'pragma':
+        prefix = '/** @jsx h */\n' + prefix + 'function h(tag:any,props:any,...children:any[]):any{return null;}\n'
+    else:
+        config['compilerOptions']['jsx'] = 'react-jsx'
+        config['compilerOptions']['jsxImportSource'] = 'other-renderer'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/App.tsx').write_text(prefix+'export function swallowed(){} export function App(){return <button onClick={swallowed}/>;}\n')
+    _, graph = inspect(ui_project)
+    assert not handler_names(graph)
+
+
+@pytest.mark.parametrize('mode', ['alias', 'automatic', 'automatic-dev'])
+def test_compiler_bound_official_factory_modes_remain_supported(ui_project, mode):
+    config=json.loads((ui_project / 'tsconfig.json').read_text())
+    if mode=='alias':
+        config['compilerOptions']['jsxFactory']='R.createElement'
+        text="import R from 'react';"
+    else:
+        config['compilerOptions']['jsx']='react-jsxdev' if mode=='automatic-dev' else 'react-jsx'
+        text="import React from 'react';"
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/App.tsx').write_text(text+' export function handler(){} export function App(){return <button onClick={handler}/>;}')
+    _, graph=inspect(ui_project)
+    assert handler_names(graph)=={'handler'}
+
+
+
+def test_missing_versioned_worker_contract_preserves_last_valid_store(ui_project, monkeypatch):
+    from kgmaker import inspection
+    from kgmaker.worker_protocol import WorkerError
+    store=ui_project / '.kgmaker/graph.json';store.parent.mkdir();store.write_bytes(b'last valid index')
+    original=inspection.request_worker
+    def legacy_peer(argv, request, **kwargs):
+        response=original(argv,request,**kwargs)
+        if request.get('operation')=='project':
+            response['project'].pop('ui_adapters',None)
+        return response
+    monkeypatch.setattr(inspection,'request_worker',legacy_peer)
+    before={str(p.relative_to(ui_project)):p.read_bytes() for p in ui_project.rglob('*') if p.is_file()}
+    with pytest.raises(WorkerError,match='lacks versioned UI adapter'):
+        inspect_frontend(ui_project,home=HOME,ui_framework='react')
+    assert before=={str(p.relative_to(ui_project)):p.read_bytes() for p in ui_project.rglob('*') if p.is_file()}
+
+
+def test_incomplete_marked_distribution_fails_before_process(tmp_path, monkeypatch):
+    from kgmaker.inspection import command
+    from kgmaker.worker_protocol import WorkerError
+    from unittest.mock import patch
+    worker=tmp_path / 'typescript';(worker / 'node_modules/typescript/lib').mkdir(parents=True)
+    (worker / 'worker.cjs').write_text('')
+    (worker / 'node_modules/typescript/lib/typescript.js').write_text('')
+    (worker / 'package.json').write_text(json.dumps({'kgmaker_ui_adapter':1}))
+    with patch('subprocess.Popen',side_effect=AssertionError('incomplete worker must not launch')):
+        with pytest.raises(WorkerError,match='UI adapter helper unavailable'):
+            command('typescript',tmp_path)

@@ -411,3 +411,14 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+## T003-S08-W04 — versioned bounded React events
+
+| AC | Actual check | Scope |
+|---|---|---|
+| AC01 | `test_ui_events.py::test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence` | pinned versions/declaration/package hashes, direct and sole-return forwarder |
+| AC02 | existing graph v1/v2/v3 and worker installation tests; legacy context equality | additive evidence, same protocol/store |
+| AC03 | changed library, mutable/conditional/spread/fake/missing-package negatives; offline store snapshot | no stronger handler/runtime/data claims |
+| AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
+
+Current actual results are recorded in change69; remote gates remain paused.

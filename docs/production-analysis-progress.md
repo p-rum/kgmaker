@@ -433,3 +433,12 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+## T003-S08-W04 — versioned React event subset
+
+Opt-in react-jsx-events-2 binds official pinned React18.3.1/@types18.3.18 declaration
+and package metadata to static handles_event evidence and frontend freshness.
+Intrinsic events and sole-return source forwarding wrappers are supported;
+unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
+click, data availability or full UI framework support is claimed. Explicit base is
+PR46 head1e21140. Actual validation and pending gates are in change69.
