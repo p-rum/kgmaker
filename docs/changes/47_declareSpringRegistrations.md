@@ -287,3 +287,28 @@ a1 explicitní platform SKIP; nejde o nový full. Frozen feature proof558/10
 zůstává platný pro nezměněné Factory/JVM blobs. Finální semantic validate,
 CLI scan/check a git diff check jsou ověřeny před lokálním merge commitem;
 remote7CI musí být fresh pro nový přesný head po publikaci rootem.
+
+## Refresh po merge PR46 (2026-10-27)
+
+Aktuální main `3a7f76b00bb5136bbe5990546d9c8942a7f53f73` obsahuje samostatně
+schválené TypeScript callback/generic hranice. Integrace zachovává jejich runtime,
+fixtures a tři testové moduly přesně jako main; Factory/JVM runtime a8 chráněných
+feature/test blobs zůstávají byte-identické `7859e165`. Mandatory compiler CI
+zachovává callback testy i Spring registrations, všech7gate a Windows přípravu.
+
+Current main121 immutable episodes zůstává přesným prefixem +2 původní nezměněné
+Factory episodes =123; core9concepts/26relationships je doložená unie. Default body
+source mapping cituje skutečný nadpis602 v integrovaném capability dokumentu;
+README semantic bullets167/169 a Javac STATIC113 zůstávají přesné. Grafy jsou
+regenerovány CLI, nikoli ručně. Starší actual38/59 a full558/10 jsou historický
+feature/source-compatibility proof; nový čistý merge je znovu nespouští.
+Relevantní pure integrační výsledek a semantic/check/diff jsou zaznamenány níže;
+root po nezávislém review publikuje a vyžádá fresh7remoteCI pro přesný nový head.
+
+Aktuální3a7 čistá integrační sada: **103 PASS, 1 native-Windows SKIP v2.20s**,
+exit0; T005/T006/T008/T009, mandatory CI, Windows preparation, Spring TS-context
+identity a worker protocol. `node --check workers/typescript/worker.cjs` PASS.
+Persistent log/XML: `/workspace/validation/spring-factory-integration-3a7/`.
+Žádný actual JVM/full repeat, worker rebuild, instalace, push či author self-merge.
+Finální scoped semantic update/apply/validate, CLI scan/check a diff check PASS;
+staré feature důkazy jsou výslovně odlišeny od tohoto čistého integration run.
