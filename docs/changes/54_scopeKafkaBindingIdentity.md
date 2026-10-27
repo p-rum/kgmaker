@@ -194,3 +194,46 @@ v11.78s**; s pozitivním repo aliasem producer→local **114 PASS, 2 DESELECTED
 v14.09s**. Reálné K1/K2 případy nyní rovněž žádají T006 selection nad citlivým
 captured input a hlídají private store; novou actual/full validaci nelze
 vydávat za dokončenou. Žádný souběžný heavy test ani external write.
+
+
+### Finální proof nad privacy/T006 opravou `581667b`
+
+Povinný preflight prošel beze sestavení/instalace. Pod jedním shared flockem
+nejprve **2 actual K1/K2 PASS v6.83s**: genuine inspect_jvm private capture →
+redacted public workspace → T006 CURRENT selection a private store beze změny.
+Pouze po exit0 tohoto prerequisite se spustil strict full:
+**656 PASS, 10 SKIP v454.81s**, exit0. Povinné Workers/K2/SpringImports/
+SpringConditions APIs skutečně běžely; deset skips je pouze optional Maven/
+Gradle/exporter/variant/plugin a skutečný Windows gate, nikoli PASS.
+
+Aktuální offline public Kafka/workspace/availability/T006 sada má **114 PASS,
+2 DESELECTED v10.21s**; její dva actual případy ověřil oddělený prerequisite
+a následně full. Historical613PASS i původní queued/cancelled pokus nejsou
+vydávané za proof nové opravy. Root/architect source review potvrdil původní
+P1 i T006 kompatibilitu; finální pair čeká na samostatné potvrzení po metadata.
+
+Veškeré nové plné artefakty jsou v persistent
+`/workspace/validation/kafka-privacy-581667b/`: preflight.log, actual.log/actual.xml,
+actual-exit-status.txt, full.log/full.xml, exit-status.txt a vlastní basetemp.
+Předchozí RED, collection error a cancelled queue stop reason jsou zachované v
+`/workspace/validation/kafka-privacy-2fff818/`; žádný cizí validní test se nerušil.
+
+```bash
+export JAVA_HOME=/workspace/tools/jdk-21.0.6+7
+export PATH="$JAVA_HOME/bin:/workspace/tools/kotlinc/bin:$PATH"
+# Děděný PATH zachovává managed Node; Maven/Gradle nejsou exponované.
+/workspace/kgmaker-venv/bin/python /workspace/kgmaker-test-prerequisites.py /workspace/kafka-bindings
+flock /workspace/kgmaker-heavy-tests.lock env KGMAKER_REQUIRE_WORKERS=1 \
+  KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_REQUIRE_SPRING_CONDITIONS=1 KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/kafka-bindings/workers \
+  PYTHONPATH=/workspace/kafka-bindings/src /workspace/kgmaker-venv/bin/python \
+  /workspace/validation/kafka-privacy-581667b/run.py
+```
+
+`run.py` pouze spustí explicitní pytest actual prerequisite a po exit0 tentýž
+Python execne do full pytest; persistent logs/XML/basetemp má mimo `/tmp`.
+Source/worker/test bytes po zahájení validace zůstaly frozen. Finální metadata
+obsahují scoped semantic update/apply/validate, capture nové implementační
+paměti, scan/check a diff check. Root publikuje až po review; autor nic neposílá,
+neopakoval CI a nemerguje. Nadřazený S07 zůstává PARTIAL, runtime/data UNKNOWN.
