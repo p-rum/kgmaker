@@ -646,7 +646,7 @@ service ownership and selected contexts, including `selected_contexts` pins.
   not identify a resource.
 - Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
   `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
-  exact evidence references, selected service ownership and current source hashes.
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
   Existing `maps_to_table` and migration declarations establish only dependencies.
 - `coverage.schemas` inventories/configuration must match the workspace declaration,
   graph table inventory, realm IDs and actual local hashes. Stale or malformed

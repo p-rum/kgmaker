@@ -215,9 +215,22 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         if node.kind != 'orm_table' or node.scope != scope:
             continue
         repo, _ = local_path(node.path)
+        if node.path not in files or files[node.path].scope != scope:
+            excluded += 1
+            issue('DATA_RESOURCE_ORM_SCOPE_UNKNOWN_OR_EXCLUDED', source_id=node.id)
+            continue
         metadata = node.metadata or {}
         if not isinstance(metadata, Mapping):
             raise DataResourceError('Invalid ORM realm metadata')
+        member_contexts = {cid for edge in graph.edges if edge.target == node.id
+            and edge.context_ids and set(edge.context_ids) <= set(selected) for cid in edge.context_ids
+            if contexts[cid].get('repo_id') == repo
+            and contexts[cid].get('source_files', {}).get(node.path) == graph.files.get(node.path)}
+        if metadata.get('context_id') is not None:
+            member_contexts &= {metadata['context_id']} if isinstance(metadata['context_id'], str) else set()
+        if not member_contexts:
+            issue('DATA_RESOURCE_ORM_CONTEXT_UNKNOWN', source_id=node.id)
+            continue
         selected_realm = realm(metadata.get('database_id'), metadata.get('schema_stream_id'))
         identity = resource(repo, selected_realm, 'orm:' + node.id)
         record = records[identity]
@@ -244,9 +257,25 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
             valid = False
         repo, _ = local_path(source.path)
         owner_ids = owners(repo, source.path, context) & selected.get(context.get('id'), set())
-        if repo != record['repo_id'] or not owner_ids:
+        captured = context.get('source_files', {})
+        captured = captured if isinstance(captured, Mapping) else {}
+        target_metadata = target.metadata or {}
+        source_metadata = source.metadata or {}
+        if not isinstance(target_metadata, Mapping) or not isinstance(source_metadata, Mapping):
+            raise DataResourceError('Invalid access endpoint context metadata')
+        if (repo != record['repo_id'] or not owner_ids or context.get('repo_id') != repo
+                or target.path not in files or files[target.path].scope != scope
+                or captured.get(source.path) != graph.files.get(source.path)
+                or captured.get(target.path) != graph.files.get(target.path)
+                or source.path not in captured or target.path not in captured
+                or source_metadata.get('context_id') not in (None, context.get('id'))
+                or target_metadata.get('context_id') not in (None, context.get('id'))):
             valid = False
-        refs = []
+        if not valid:
+            issue('DATA_RESOURCE_ACCESS_UNPROVEN', source_id=edge.source, target_id=edge.target)
+            continue
+        current(target.path, captured[target.path])
+        refs, pending_proofs = [], []
         for ref in edge.evidence_ids:
             original = next((p for p in graph.evidence if p['id'] == ref), None)
             if (original is None or original.get('source') != edge.source or original.get('target') != edge.target
@@ -262,19 +291,22 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
                 continue
             proof = {'id': 'ev:data-access:' + digest({'original': ref, 'kind': edge.evidence_kind,
                 'source': edge.source, 'target': edge.target, 'relation': edge.kind,
-                'checksum': original['sha256'], 'contexts': list(edge.context_ids)}),
+                'checksum': original['sha256'], 'target_checksum': captured[target.path],
+                'contexts': list(edge.context_ids)}),
                 'original_id': ref, 'evidence_kind': edge.evidence_kind, 'freshness': 'CURRENT',
                 'polarity': original.get('polarity', 'UNKNOWN'), 'source_id': source.id,
                 'source_file': source.path, 'content_hash': original['sha256'],
+                'target_source_file': target.path, 'target_content_hash': captured[target.path],
                 'context_ids': list(edge.context_ids)}
             if not isinstance(proof['polarity'], str) or proof['polarity'] not in {'SUPPORTING', 'CONTRADICTING', 'UNKNOWN'}:
                 proof['polarity'] = 'UNKNOWN'
                 issue('DATA_RESOURCE_EVIDENCE_POLARITY_UNKNOWN', source_id=edge.source)
-            evidence[proof['id']] = proof
+            pending_proofs.append(proof)
             refs.append(proof['id'])
         if not valid:
             issue('DATA_RESOURCE_ACCESS_UNPROVEN', source_id=edge.source, target_id=edge.target)
             continue
+        evidence.update((p['id'], p) for p in pending_proofs)
         record['realm_verified'] = True
         record['scope_proven'] = True
         record['contexts'].add(context['id'])

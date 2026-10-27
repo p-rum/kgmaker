@@ -95,7 +95,7 @@ test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly sk
 | T009-AC03 empty unanalysed input is UNKNOWN with zero counts | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac03_empty_unanalyzed_input_is_unknown_with_zero_counts` |
 | T009-AC04 invalid inputs leave caller data unchanged | PASS | `test_ac04_invalid_claim_does_not_mutate_inputs`; `test_ac04_malformed_scope_inputs_return_structured_errors_without_mutation` |
 | T009-AC05 selected scope/context remains isolated and unsupported polarity UNKNOWN | PASS | `test_ac05_scope_context_exclusions_and_invalid_polarity_stay_unknown`; T008 production/test workspace regressions |
-| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full queued after independent review guards; earlier455/109 is intermediate |
+| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full466 PASS/109 prerequisite SKIP after all independent review guards; earlier455/109 is intermediate |
 
 ## T006 — výběr kontextů pro více služeb
 
@@ -412,4 +412,4 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
 | AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
 | AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
-| AC06 | [Change note68](changes/68_projectDataResources.md) | Public31 cases; broader focused110 PASS/6.80s; final full tracked there |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |

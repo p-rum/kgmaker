@@ -433,8 +433,8 @@ Bounded implementation over T008/T009: explicit workspace/repository/database/st
 resources, table drill-down references, existing selected-context read/write/delete
 facts and dependency-only entity/migration declarations. Flyway derivation is
 MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
-Default/unmapped/conflicting/stale/foreign scope is not promoted. Public31 cases
-and broader pure focused110 PASS (6.80s); local strict full is queued under the
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
 shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
 Complete persistence/schema-compatibility S06/W08, T004 and production readiness
 remain PARTIAL; this does not implement a new parser or discover datasources.

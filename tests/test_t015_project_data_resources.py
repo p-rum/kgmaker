@@ -296,3 +296,41 @@ def test_explicit_conflicting_access_evidence_keeps_both_polarities(tmp_path):
     assert read_view.supporting_refs and read_view.contradicting_refs
     assert any(d['code'] == 'CONTRADICTORY_VIEW_EVIDENCE' for d in view.diagnostics)
     assert view.coverage['status'] == 'PARTIAL'
+
+
+@pytest.mark.parametrize('mutation', ['test_file', 'unknown_file', 'foreign_target_context', 'missing_context_snapshot'])
+def test_shared_migration_resource_cannot_mask_foreign_target_scope_or_snapshot(tmp_path, mutation):
+    from dataclasses import replace
+    workspace, graph, coverage, ctx, _, table = access_inputs(tmp_path)
+    if mutation in {'test_file', 'unknown_file'}:
+        root = Path(workspace['repositories'][0]['_root'])
+        path = root / 'src/test/java/TestEntity.java'
+        path.parent.mkdir(parents=True); path.write_text('class TestEntity {}\n')
+        qualified_path = '@backend/src/test/java/TestEntity.java'
+        graph.files[qualified_path] = file_hash(path)
+        graph.nodes.append(Node('test-file', 'file', 'TestEntity.java', qualified_path,
+                                scope='test' if mutation == 'test_file' else 'unknown'))
+        # The endpoint's claimed scope alone cannot override its qualified file.
+        graph.nodes = [replace(n, path=qualified_path) if n.id == table else n for n in graph.nodes]
+    elif mutation == 'foreign_target_context':
+        graph.nodes = [replace(n, metadata={**n.metadata, 'context_id': 'foreign'}) if n.id == table else n for n in graph.nodes]
+    else:
+        ctx['source_files'].pop('@backend/src/main/java/Orders.java')
+    before = deepcopy(graph.to_dict())
+    with patch('subprocess.Popen', side_effect=AssertionError('no process')):
+        view = project_data_resources(workspace, graph, source_coverage=coverage)
+    assert any(n.attributes['database_id'] == 'db-one' for n in resources(view))
+    assert not any(e.relation in {'reads', 'writes', 'deletes'} for e in view.edges)
+    assert not any(p.get('original_id', '').startswith('proof:') for p in view.provenance)
+    assert graph.to_dict() == before
+
+
+def test_valid_access_carries_both_endpoint_hashes_from_selected_context(tmp_path):
+    workspace, graph, coverage, ctx, _, _ = access_inputs(tmp_path)
+    view = project_data_resources(workspace, graph, source_coverage=coverage)
+    proofs = [p for p in view.provenance if p.get('original_id', '').startswith('proof:')]
+    assert len(proofs) == 2
+    for proof in proofs:
+        assert proof['context_ids'] == [ctx['id']]
+        assert proof['content_hash'] == ctx['source_files'][proof['source_file']]
+        assert proof['target_content_hash'] == ctx['source_files'][proof['target_source_file']]

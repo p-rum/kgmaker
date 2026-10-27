@@ -37,13 +37,13 @@ Schema/store v1/v2/v3, stávající CLI, loader a renderery se nemění.
   má skutečný analyze/plan artifact a bounded packet; memory recall proběhl.
 - RED: nový public module import chyběl (collection ERROR); po implementaci prvních
   deset skutečných public workspace/replay a negativních kontraktů GREEN0.66s.
-- Public suite nyní31 případů pokrývá všechna AC01–AC05. Root read-only review
+- Public suite nyní36 případů pokrývá všechna AC01–AC05. Root read-only review
   reprodukoval polarity `[]` TypeError; fix a pět variant mají explicitní UNKNOWN
   a nezměněné vstupy. Stale/malformed freshness mají čtyři další varianty.
 - `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q --tb=short
   tests/test_t015_project_data_resources.py tests/test_t008_project_service_inventory.py
   tests/test_t009_propagate_view_evidence.py tests/test_flyway.py tests/test_workspace.py
-  tests/test_dataflow.py`: **110 PASS v6.80s**.
+  tests/test_dataflow.py`: **115 PASS v6.79s**.
 - Skutečné SQL scripts, workspace snapshot a reconstruct se připravují před
   subprocess zákazem. Access cases dodávají veřejný bounded upstream Graph/Edge
   kontrakt; nejde o tvrzení nového compiler worker acceptance.
@@ -81,3 +81,27 @@ Sémantická aktualizace, memory a finální scan/check se zaznamenají po finá
 validaci. Required CI je nadále externě BLOCKED billing limitem a jeho řešení
 uživatel pozastavil. Parent vlastní nezávislé review/publikaci; žádný merge ani
 CI retry nebyl proveden.
+
+## Oprava target scope/context a finální dependency metadata
+
+Vlastní následné read-only probe nad9445f81 a potvrzení parentem našlo P1:
+ORM node mohl tvrdit production, ale odkazovat na skutečný test/unknown file.
+Sdílený validní migration resource maskoval chybějící target context proof.
+Před jakoukoli editací byl zastaven jen vlastní full pytest63637 a jeho worker68416,
+oba následně ověřeny jako ukončené. Přerušený log/XML/status zůstávají jako
+`/workspace/t015-validation/interrupted-9445f81.*`: **487 PASS, 9 SKIP**,
+346.36s, exit2 KeyboardInterrupt. XML496 tests/0errors/0failures/9skips je validní
+část běhu, nikoli celý PASS. Žádný jiný queued/running suite nebyl ukončen.
+
+Fix vyžaduje scope a SHA obou endpoint files ze stejného selected contextu,
+explicitní endpoint metadata nesmí tvrdit jiný context. Unselected/foreign ORM
+tables se nepřenášejí ani jako drill-down proof; invalid access nevytváří unused
+foreign provenance. View proof nyní uchovává source i target snapshot hash.
+Čtyři negativní varianty a platný production round-trip doplňují36 public cases;
+broad focused **115 PASS v6.79s**. Durable feedback přechází test→implement,
+iteration1; neprobíhá self-approval.
+
+Před novým full byla integrována finální metadata T009
+`d0932d9c3f7de9827ea590b6f981aa29e5b39349`; produkce/testy/workers/pyproject jsou
+proti původnímu cbf17b1 byte-identické. Přesný parent prefix113 episodes je
+zachován, poté přidán původní nezměněný child capture. Finální base je d0932d9.

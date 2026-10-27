@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
     "README.md": "8fb7099dae4ea17ee3091a82cb74b331f01fa914002f356d046c27b9939a6e51",
-    "docs/acceptance-inventory.md": "5e60a2acdf31cfe2b4dc4558e35359b1584bac6d55c0455890f6e412709cbf50",
+    "docs/acceptance-inventory.md": "f697685828983de900fed1c7cadd0fe5465a392be308a9a444f7b5718ffa7acf",
     "docs/architecture.md": "5ed386346dc23996688f92b7eeb86cbded2686bad0ca7bbad0966b3483a3b746",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -35,16 +35,16 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
-    "docs/changes/64_propagateViewEvidence.md": "9b1700b4a7aaaaa444a39f4d4e4573a9198a6116c41a6a2e2634f6d8b20967bf",
-    "docs/changes/68_projectDataResources.md": "29fe2ac3f74f406cc746f51efbb5435b7b9eaeeaa3a6efa5520a801696d43517",
+    "docs/changes/64_propagateViewEvidence.md": "ec8d2fd74d17a739564bc9691d478304a77ab20b0c7ccac60cf5e289f4b7d8ea",
+    "docs/changes/68_projectDataResources.md": "c67cee16dd58ec1d58bfc045d715e2becffd7339b022fde32ec05967b3eab581",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "9a87c1532c41419b0851f2c8be51b474f575eded05d083296645067d8056de7b",
+    "docs/compiler-inspection.md": "cee434612ed7d7219e6ea46c7003eb61286fec27b75edf9dde2c8bb951d9c83c",
     "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "871ad055d251accead70cdc54678705f0a026e9b29617fe68ec06d03d812d438",
+    "docs/production-analysis-progress.md": "1b97550f5edd02458891692ced144ac5dfb080f00a96c2093b7fab7f39932843",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -231,7 +231,7 @@
     "src/kgmaker/control_flow.py": "9f0eb24649f569d9cf9155ad101e32bf2e4938088a9491ba55b8a7b9a0c98867",
     "src/kgmaker/data_agent.py": "415ee77b71f47a73b4587f231d20b52e0de444ea0636027f29e4e89420acd20e",
     "src/kgmaker/data_check.py": "54368ea59a443a691306795ad4d6742a036ec77fe564677587f1f61514708201",
-    "src/kgmaker/data_resources.py": "e0134ae2abff4d9ef31bd4e6721ae797f4b6bf803447cc8054674bc5de3a93e7",
+    "src/kgmaker/data_resources.py": "9cf8aaebc1f2b3bb191a0c625872c01e4152a3b09af1afe9beaf4f7ac0cd8c2c",
     "src/kgmaker/dataflow.py": "e68ac2a8f64f51c3f9fa83354b70652056c92f57cddfd9df66b5b7cca582107d",
     "src/kgmaker/domain.py": "e8af7d6f2b86527df08453a836293ff015cbd09c961f60a33252542952dd3e56",
     "src/kgmaker/feature.py": "156b73144ced4874555f271cd12eca05e6802f7051299469255f08afec1d2cd5",
@@ -298,7 +298,7 @@
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
     "tests/test_t008_project_service_inventory.py": "59e40fcddf315ef06fc8739ccf60ceedd42da35e2dd0845a9b6f5204a807b18b",
     "tests/test_t009_propagate_view_evidence.py": "22c259428b00ab80d7e2e1b8246d3f91c109e08f68b705763d3ae948200d2ed6",
-    "tests/test_t015_project_data_resources.py": "381065ea4527e9b418b62ad747e9ff205be655e70a514e757fb05dec00b8b014",
+    "tests/test_t015_project_data_resources.py": "c29b8f49168d4c6b377797602c6fd6332a9b1288d844c6607914c423924b8f87",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_typescript_project_references.py": "c3622cff3d5045504b5dcbf263e56d7f84f5e4f9bf3425ce9d57f59cf054fe81",
     "tests/test_windows_install.py": "8e6dafad019022a7b390d2b7c65381b6c36822b0064d5974bcdb602f694cdfa5",
@@ -46347,6 +46347,76 @@
     {
       "base_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
       "head_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
+      "worktree_fingerprint": "99610ec8ba3cb184fb414579c7f0dd6fa6d1afeb86e3d71ea64c54fc841b94da",
+      "title": "Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002",
+      "changed_files": [
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "7024932c7604ed74f90d63d329f13c0e43c6ff106459068ff43b8534751bc5d9"
+        },
+        {
+          "path": "docs/changes/64_propagateViewEvidence.md",
+          "status": "M",
+          "sha256": "7209b1d2d3dd0d55604223c48409c9bfddab180493dd22fef6af9abb42c89348"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/64_propagateViewEvidence.md:64_propagateViewEvidence.md",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::47",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::236",
+        "section:docs/acceptance-inventory.md:T001::117",
+        "section:docs/acceptance-inventory.md:T002::196",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::299",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::384",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::359",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::3",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::344",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::332",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::38",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::25",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::371",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::323",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::56",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::100",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::67",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::78",
+        "section:docs/acceptance-inventory.md:T009 — propagace evidence a coverage::89",
+        "section:docs/changes/64_propagateViewEvidence.md:Acceptance a ověření::11",
+        "section:docs/changes/64_propagateViewEvidence.md:Kompatibilita a omezení::26",
+        "section:docs/changes/64_propagateViewEvidence.md:Následné nezávislé review — aktuální source checkpoint::53",
+        "section:docs/changes/64_propagateViewEvidence.md:Propagace evidence a coverage do pohledů (T009)::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused",
+          "status": "passed"
+        },
+        {
+          "label": "full_suite",
+          "status": "passed"
+        },
+        {
+          "label": "compiler_prerequisites",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic_validate",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:ae010af4eee572ffb5e99108c5c3f5bd0c695efa83dfd1b0fa395ed28180553f"
+    },
+    {
+      "base_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
+      "head_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",
       "worktree_fingerprint": "6539f2251c329b87f94f716ae4816e3a0688a7db55ea27db3ca82d43fb0c03a0",
       "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:",
       "changed_files": [
@@ -46560,6 +46630,230 @@
         }
       ],
       "id": "episode:5cf19d02ec68458d85ca082436f51d8a9075467ba8b789c5a47c00b11968c653"
+    },
+    {
+      "base_commit": "d0932d9c3f7de9827ea590b6f981aa29e5b39349",
+      "head_commit": "9445f8140ff7e9ca17e932ccbea07a721e1744ff",
+      "worktree_fingerprint": "80db57dfd7858391e607200079bc31161197a813979cfdc9038a6ac23bf9dc58",
+      "title": "Project explicit datasource resources from scoped upstream evidence",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "8fb7099dae4ea17ee3091a82cb74b331f01fa914002f356d046c27b9939a6e51"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "f697685828983de900fed1c7cadd0fe5465a392be308a9a444f7b5718ffa7acf"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "5ed386346dc23996688f92b7eeb86cbded2686bad0ca7bbad0966b3483a3b746"
+        },
+        {
+          "path": "docs/changes/68_projectDataResources.md",
+          "status": "A",
+          "sha256": "c67cee16dd58ec1d58bfc045d715e2becffd7339b022fde32ec05967b3eab581"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "cee434612ed7d7219e6ea46c7003eb61286fec27b75edf9dde2c8bb951d9c83c"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "1b97550f5edd02458891692ced144ac5dfb080f00a96c2093b7fab7f39932843"
+        },
+        {
+          "path": "src/kgmaker/data_resources.py",
+          "status": "A",
+          "sha256": "9cf8aaebc1f2b3bb191a0c625872c01e4152a3b09af1afe9beaf4f7ac0cd8c2c"
+        },
+        {
+          "path": "tests/test_t015_project_data_resources.py",
+          "status": "A",
+          "sha256": "c29b8f49168d4c6b377797602c6fd6332a9b1288d844c6607914c423924b8f87"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/data_resources.py:DataResourceError::22",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:explicit_service_inventory_projection",
+        "concept:docs/architecture.md:explicit_workspace_service_ownership",
+        "concept:docs/architecture.md:realm_bound_data_resources",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "concept:docs/architecture.md:view_evidence_and_coverage",
+        "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/68_projectDataResources.md:68_projectDataResources.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/data_resources.py:data_resources.py",
+        "file:tests/test_t015_project_data_resources.py:test_t015_project_data_resources.py",
+        "function:src/kgmaker/data_resources.py:current::75",
+        "function:src/kgmaker/data_resources.py:issue::59",
+        "function:src/kgmaker/data_resources.py:local_path::64",
+        "function:src/kgmaker/data_resources.py:owners::85",
+        "function:src/kgmaker/data_resources.py:realm::105",
+        "function:src/kgmaker/data_resources.py:resource::108",
+        "function:src/kgmaker/data_resources.py:source_proof::119",
+        "function:tests/test_t015_project_data_resources.py:access_inputs::47",
+        "function:tests/test_t015_project_data_resources.py:inputs::16",
+        "function:tests/test_t015_project_data_resources.py:resources::43",
+        "function:tests/test_t015_project_data_resources.py:test_default_database_and_dto_never_gain_access_or_a_resolved_realm::103",
+        "function:tests/test_t015_project_data_resources.py:test_entity_mapping_is_only_a_dependency_not_read_or_write::214",
+        "function:tests/test_t015_project_data_resources.py:test_explicit_conflicting_access_evidence_keeps_both_polarities::283",
+        "function:tests/test_t015_project_data_resources.py:test_identity_ignores_table_details_and_input_order::159",
+        "function:tests/test_t015_project_data_resources.py:test_invalid_or_ambiguous_access_does_not_become_read_write::116",
+        "function:tests/test_t015_project_data_resources.py:test_invalid_schema_snapshot_cannot_be_republished::197",
+        "function:tests/test_t015_project_data_resources.py:test_malformed_extra_polarity_is_unknown_without_input_mutation::255",
+        "function:tests/test_t015_project_data_resources.py:test_missing_table_inventory_is_rejected_against_the_existing_graph::275",
+        "function:tests/test_t015_project_data_resources.py:test_only_existing_context_bound_read_write_is_projected::90",
+        "function:tests/test_t015_project_data_resources.py:test_plain_connection_configuration_never_creates_database_access::226",
+        "function:tests/test_t015_project_data_resources.py:test_shared_migration_resource_cannot_mask_foreign_target_scope_or_snapshot::302",
+        "function:tests/test_t015_project_data_resources.py:test_stale_migration_fails_without_mutating_last_valid_artifact::146",
+        "function:tests/test_t015_project_data_resources.py:test_stale_or_malformed_evidence_freshness_never_becomes_current_access::268",
+        "function:tests/test_t015_project_data_resources.py:test_stale_selected_context_does_not_retain_read_write::176",
+        "function:tests/test_t015_project_data_resources.py:test_truncation_is_visible_and_orm_node_label_does_not_mint_evidence::243",
+        "function:tests/test_t015_project_data_resources.py:test_two_actual_datasources_keep_distinct_resources_and_table_drilldown::73",
+        "function:tests/test_t015_project_data_resources.py:test_unknown_file_scope_is_not_promoted_from_repository_identity::185",
+        "function:tests/test_t015_project_data_resources.py:test_valid_access_carries_both_endpoint_hashes_from_selected_context::326",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::431",
+        "section:README.md:Copilot workflow::197",
+        "section:README.md:Data prerequisite audit::319",
+        "section:README.md:Development::225",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::263",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::271",
+        "section:README.md:Implementation memory and workflow::214",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::175",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::47",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::236",
+        "section:docs/acceptance-inventory.md:T001::117",
+        "section:docs/acceptance-inventory.md:T002::196",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::299",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::384",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::359",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::3",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::344",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::332",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::38",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::25",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::371",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::323",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::56",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::100",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::67",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::78",
+        "section:docs/acceptance-inventory.md:T009 — propagace evidence a coverage::89",
+        "section:docs/acceptance-inventory.md:T015 — database resource projection::406",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::107",
+        "section:docs/architecture.md:Compiler lifecycle provider::191",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::131",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Realm-bound data resources::211",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/68_projectDataResources.md:Oprava target scope/context a finální dependency metadata::85",
+        "section:docs/changes/68_projectDataResources.md:Ověření a akceptace::33",
+        "section:docs/changes/68_projectDataResources.md:Použití a zbývající hranice::73",
+        "section:docs/changes/68_projectDataResources.md:Problém a skutečná změna::8",
+        "section:docs/changes/68_projectDataResources.md:Projekce explicitních databázových resources::1",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::156",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::152",
+        "section:docs/compiler-inspection.md:Data resource projection (T015)::623",
+        "section:docs/compiler-inspection.md:Default body source mapping::575",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::102",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::118",
+        "section:docs/compiler-inspection.md:Import a validated execution-bound build manifest before selecting bytecode roots.::581",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::133",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::342",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::245",
+        "section:docs/compiler-inspection.md:No compilation is triggered by scan, graph queries or source-only inspection.::582",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::84",
+        "section:docs/compiler-inspection.md:Required CI prerequisites (T003-S11-W04)::553",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::401",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::372",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::421",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::459",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::505",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::150",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::121",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::86",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::184",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::124",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::134",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::156",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::69",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::200",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::191",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::209",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::244",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::407",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::379",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::364",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::347",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::261",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::48",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::35",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::22",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::396",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::273",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::230",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::285",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::303",
+        "section:docs/production-analysis-progress.md:T009 — evidence a coverage agregovaných pohledů (omezený fallback)::327",
+        "section:docs/production-analysis-progress.md:T015 — explicit datasource resource projection::430"
+      ],
+      "graph_delta": {
+        "added": [
+          "concept:README.md:optional_agent_authored_semantic_layer",
+          "concept:docs/architecture.md:explicit_service_inventory_projection",
+          "concept:docs/architecture.md:explicit_workspace_service_ownership",
+          "concept:docs/architecture.md:realm_bound_data_resources",
+          "concept:docs/architecture.md:source_code_is_authoritative",
+          "concept:docs/architecture.md:view_evidence_and_coverage",
+          "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused115",
+          "status": "passed"
+        },
+        {
+          "label": "target_scope_guard",
+          "status": "passed"
+        },
+        {
+          "label": "strict_full",
+          "status": "unknown"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:09d2c044beab8c7e4bd43659dc612d3e8424ccfbefc9dcfbabf0fbc730694364"
     }
   ]
 }
