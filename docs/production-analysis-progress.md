@@ -410,3 +410,7 @@ remains a separate mandatory gate, not a local PASS.
 
 T046-S01: knihovní inkrement reference contracts and v1/v2 metadata; ověření viz change note 56.
 Veřejné CLI a kompletní end-to-end release dodává až S06.
+
+
+T046-S02: knihovní inkrement project template library; ověření viz change note 57.
+Veřejné CLI a kompletní end-to-end release dodává až S06.

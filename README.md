@@ -490,3 +490,9 @@ prove a source call expression. See [compiler scope](docs/compiler-inspection.md
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+
+
+### T046-S02 — project template library
+
+Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
+CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
