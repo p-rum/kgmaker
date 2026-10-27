@@ -433,3 +433,14 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
 | AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
 | AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
+
+## T023 — explicit process model
+
+| Acceptance | Stav | Konkrétní důkaz | Hranice |
+|---|---|---|---|
+| T023-AC01 | VERIFIED_IN_SCOPE | `test_ac01_diamond_loop_exception_and_async_roundtrip_preserve_exact_ids`, `test_documented_fixture_loads_on_public_api_with_loop_and_no_guessed_branch_join` | Explicitní JSON struktura, nikoli discovery/observed execution |
+| T023-AC02 | VERIFIED_IN_SCOPE | `test_ac02_approved_czech_label_never_changes_technical_truth` | Review stav je dodané metadata, ne nové approval rozhodnutí |
+| T023-AC03 | VERIFIED_IN_SCOPE | `test_ac03_annotation_technical_injection_is_rejected` | Pouze allowlisted semantic overlay |
+| T023-AC04 | VERIFIED_IN_SCOPE | invalidní revision/target/evidence input před/po; `test_pure_parse_and_serialization_perform_no_file_network_or_process_io` | Žádný model apply/store API |
+| T023-AC05 | VERIFIED_IN_SCOPE | missing/stale/foreign/unused proof, truncation a kind/status negatives v `test_t023_define_business_process_model.py` | PARTIAL/UNKNOWN a no evidence upgrade |
+| T023-AC06 | IN_VALIDATION | [note70](changes/70_defineBusinessProcessModel.md), [capability](process-model.md), schema/fixture | Frozen full a nezávislé review/CI se zapisují podle skutečného stavu |

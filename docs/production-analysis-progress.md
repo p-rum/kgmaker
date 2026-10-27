@@ -465,3 +465,17 @@ and broader pure focused115 PASS (6.79s); local strict full is queued under the
 shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
 Complete persistence/schema-compatibility S06/W08, T004 and production readiness
 remain PARTIAL; this does not implement a new parser or discover datasources.
+
+## T023 — ProcessDefinition / ProcessView (explicit model)
+
+T023 přidává čisté version1 Python API pro explicitní definici/revizi a process
+view nad T005/T009. Scope/context a origin/evidence refs jsou validovány;
+alternativy, exception, loop/retry i async nepřecházejí na lineární pořadí.
+Semantic annotations mají strict allowlist; APPROVED label nezvyšuje technical
+status, druh evidence, freshness ani data availability. Missing/foreign/stale
+proof je explicitní boundary nebo invalidní input.
+
+[Capability a příklad](process-model.md), [change note70](changes/70_defineBusinessProcessModel.md).
+Modelové AC mají konkrétní pozitivní/negativní testy, finální frozen full je
+IN_VALIDATION. Nejde o discovery/projection, process review/catalog/store ani
+nové CLI/render. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
