@@ -35,7 +35,7 @@
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
-    "docs/changes/64_propagateViewEvidence.md": "7209b1d2d3dd0d55604223c48409c9bfddab180493dd22fef6af9abb42c89348",
+    "docs/changes/64_propagateViewEvidence.md": "90af030b9b40d191e4092701739887613c9b9016e65e4e8be1a16872ef17a447",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
@@ -46393,6 +46393,54 @@
         }
       ],
       "id": "episode:ae010af4eee572ffb5e99108c5c3f5bd0c695efa83dfd1b0fa395ed28180553f"
+    },
+    {
+      "base_commit": "d0932d9c3f7de9827ea590b6f981aa29e5b39349",
+      "head_commit": "d0932d9c3f7de9827ea590b6f981aa29e5b39349",
+      "worktree_fingerprint": "277f57edcb4f321b7df792df629d2bd1a5d4d6f8361437979d3866d4ea6bdc97",
+      "title": "Change Acceptance a ověření, Kompatibilita a omezení, Následné nezávislé review — aktuální source checkpoint",
+      "changed_files": [
+        {
+          "path": ".github/workflows/test.yml",
+          "status": "M",
+          "sha256": "e884ad930b7a66ced17a8fd8c34c15ba36ca5634fc3bc2518c814609f2821c2f"
+        },
+        {
+          "path": "docs/changes/64_propagateViewEvidence.md",
+          "status": "M",
+          "sha256": "90af030b9b40d191e4092701739887613c9b9016e65e4e8be1a16872ef17a447"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/changes/64_propagateViewEvidence.md:64_propagateViewEvidence.md",
+        "section:docs/changes/64_propagateViewEvidence.md:Acceptance a ověření::11",
+        "section:docs/changes/64_propagateViewEvidence.md:Kompatibilita a omezení::26",
+        "section:docs/changes/64_propagateViewEvidence.md:Následné nezávislé review — aktuální source checkpoint::53",
+        "section:docs/changes/64_propagateViewEvidence.md:Obnovené GitHub CI a chybějící testovací závislost::57",
+        "section:docs/changes/64_propagateViewEvidence.md:Propagace evidence a coverage do pohledů (T009)::1"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/64_propagateViewEvidence.md:Obnovené GitHub CI a chybějící testovací závislost::57"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "ci_dependency_focus",
+          "status": "passed"
+        },
+        {
+          "label": "remote_ci",
+          "status": "unknown"
+        },
+        {
+          "label": "semantic_validate",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:754ff4894c2a1f398cfef6a0478a5f1937921519e84b5fcec6929b7c76a28721"
     }
   ]
 }
