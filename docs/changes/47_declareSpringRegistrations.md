@@ -328,3 +328,20 @@ XML `/workspace/factory-main49-pure.xml`. Původní actual38 a full558/10 se pro
 nezměněné feature source neopakují. Nový head/base vyžaduje čerstvé remote CI.
 Main prefix127 immutable episodes i dva původní Factory captures zůstávají
 beze změny; generated grafy obnovuje pouze CLI.
+
+## Spojení s merged dependency dispatch
+
+Parent `ec333966e657896382f310ef018835e3d696513e` obsahuje PR35. Automaticky
+spojený JavaFrontend zachovává původní čtyři registrační hooks na aktuální main
+hierarchy/invocation implementaci. RegistrationFacts, Python Factory projection
+a registration testy jsou beze změny; celý JVM bundle již zahrnuje také dispatch,
+takže původní full558/10 a actual38 jsou historickým feature důkazem, nikoli novým
+během kombinované distribuce.
+
+Čistá společná projekční/CI kontrola: **124 PASS**, dva samostatně doložené
+actual T015 případy deselected, **2.72s**, `/workspace/factory-mainEc-pure.xml`.
+Nový compiler-worker CI musí explicitně sestavit kombinovanou K1/K2 distribuci a
+spustit registrars i dispatch testy před merge; nepoužívá se starý lokální JAR
+jako důkaz nové kombinace. Main prefix134 immutable episodes a všechny původní
+Factory captures jsou zachovány. Stavová tabulka zachovává pouze jednu aktuální
+řádku pro S04 a S05; celý milník zůstává PARTIAL.
