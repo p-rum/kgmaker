@@ -2,7 +2,9 @@
 
 from copy import deepcopy
 import json
+from pathlib import Path
 
+import jsonschema
 import pytest
 
 from kgmaker.architecture_model import ViewDocument, ViewValidationError, validate_view_document
@@ -41,10 +43,24 @@ def test_round_trip_valid_model_preserves_public_contract():
     decoded = ViewDocument.from_dict(source)
     serialized = json.loads(decoded.to_json())
     assert serialized["view_id"] == source["view_id"]
-    assert serialized["nodes"] == sorted(source["nodes"], key=lambda n: n["id"])
+    node = next(item for item in serialized["nodes"] if item["id"] == "interface:billing:get-invoice")
+    assert node["evidence_refs"] == ["ev:route"]
+    assert node["unknown_refs"] == ["ev:route"]
+    assert node["resolution_status"] == "UNRESOLVED"
+    assert node["freshness"] == "UNKNOWN"
     assert serialized["edges"][0]["evidence_refs"] == ["ev:route"]
-    assert serialized["provenance"] == source["provenance"]
+    assert serialized["edges"][0]["unknown_refs"] == ["ev:route"]
+    assert serialized["provenance"][0]["evidence_kind"] == "FRAMEWORK_DERIVED"
+    assert serialized["provenance"][0]["freshness"] == "UNKNOWN"
+    assert serialized["provenance"][0]["polarity"] == "UNKNOWN"
     assert serialized["coverage"] == source["coverage"]
+
+
+def test_t009_additive_fields_validate_against_public_view_schema():
+    schema = json.loads((Path(__file__).parents[1] / "docs/schemas/view-v1.schema.json").read_text())
+    document = ViewDocument.from_dict(sample_view()).to_dict()
+    document["coverage"]["counts"] = {"found": 1, "resolved": 0, "unresolved": 1, "excluded": 0}
+    jsonschema.validate(document, schema)
 
 
 def test_duplicate_node_id_has_structured_validation_error():
