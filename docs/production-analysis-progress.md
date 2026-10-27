@@ -18,6 +18,14 @@ a [change note 59](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
 VERIFIED_IN_SCOPE pro actual K2 2.1.10 a actual Javac21: JPA
 `@MappedSuperclass` field/getter ID určuje zděděný FIELD/PROPERTY access; atributy
 jsou projektovány na entity s odděleným `declaring_owner` a `effective_owner`.
+Entity attribute indexes and Spring Data repository generic resolution use exact
+compiler-qualified owners; a repository for `right.Thing` cannot resolve a
+derived predicate against same-simple-name `left.Thing`. An unproven generic
+owner remains unbound.
+Explicit JPQL entity names and query return declarations also use exact compiler
+identities; a simple source return name needs a matching canonical JVM method
+descriptor. Missing qualified owners and erased generic variables do not receive
+a repository-model or first-match fallback.
 Řetězené mapped superclasses, compiler-qualified parent identity, entity-level
 override precedence, kolize, unresolved override a SingleTable/Joined/Table-per-class
 root/subclass table selection mají fixture v `tests/test_k2_backend.py`.
@@ -28,6 +36,20 @@ targets, embedded-attribute overrides, deployment/naming-strategy compatibility
 a širší provider matice zůstávají PARTIAL/UNKNOWN; T003-S06 zůstává PARTIAL.
 Přesné testy a konečné výsledky jsou v [acceptance inventáři](acceptance-inventory.md)
 a [change note49](changes/49_projectJpaInheritedAttributes.md).
+
+## T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
+
+Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;
+Změna nemění resolver ani runtime/data availability. Původní tři skutečné
+failure případy nyní prošly; širší snapshot/reference/provider sada46PASS a
+snapshot/installed-wheel sada41PASS jsou zaznamenány v
+[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected focus **70 PASS**,193.26s; source-final full **567 PASS /10 SKIP**,787.45s. CI je PENDING kvůli
+GitHub Actions billing/quota; lokální výsledek není CI/merge acceptance. Explicitní legacy fallback, stable
+selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
+[Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
+Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
+z tohoto kontraktu odvozovány.
+
 
 ## T003-S08-W01 — TypeScript project references (2026-10-26)
 
@@ -45,7 +67,7 @@ mezi preflight/analyze a zachovává původní TS selection slot; skutečné reg
 a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
 nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
 mimo připravenou matici zůstávají výslovně SKIP.
-T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+T003-S08/T003-AC08 zůstávají PARTIAL; W02 stav je samostatně výše; W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
@@ -353,6 +375,26 @@ pro T008/T005–T007/workspace/cross-repo: **83 PASS**; celá sada **320 PASS, 2
 Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS worker a
 Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
 store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
+
+## T009 — evidence a coverage agregovaných pohledů (omezený fallback)
+
+View v1 nyní zachovává samostatně evidence kind, resolution status, freshness a
+reference s explicitní supporting/contradicting polarity. Neoznačené nebo
+nepodporované polarity zůstávají UNKNOWN a vytvářejí diagnostiku; agregace
+neslučuje odlišné scope ani context ID. Coverage počítá nalezené, vyřešené,
+nevyřešené a vyloučené objekty pouze v dodaném výběru; prázdný vstup je UNKNOWN.
+Legacy view data se při načtení doplní pouze konzervativními unresolved/unknown
+výchozími hodnotami.
+
+T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
+není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
+konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
+zbývající omezení jsou v [change note 64](changes/64_propagateViewEvidence.md).
+Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
+check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
+kompletní pytest **445 PASS / 109 SKIP** (19.07 s); finální zdrojový strom čeká na
+kompletní `pytest -q -rs` ve frontě sdíleného JVM locku. Individuální důvody SKIP
+z předchozího běhu nebyly vypisovány, proto jej nepovažuji za finální test evidence.
 
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 

@@ -33,9 +33,14 @@ PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
 PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_orm_xml_overrides.py
 ```
 
-Focused actual-Javac XML fixture — 14 passed. Úplný suite
+Focused actual-Javac XML fixture — původně 14 passed; po integraci W02 exact-owner
+indexu suite prokázala 15 passed včetně dvou tříd `Order` s odděleným XML
+`metadata-complete` scope. W02 exact-owner repository regression: 1 passed;
+actual K2 mapped-superclass owner fixture: 1 passed. Úplný suite
 `PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q`
-pod sdíleným lockem — 533 passed, 28 skipped in 451.74 s. Před plným během
+pod sdíleným lockem — 533 passed, 28 skipped in 451.74 s (historický běh před
+W02 exact-owner merge a aktuální regression test; tento refresh plný suite
+neopakuje, protože se mění jen scoped XML owner lookup a metadata). Před plným během
 `kgmaker-test-prerequisites.py` potvrdil existující core compiler/fixture/API
 artefakty a neprovedl build ani instalaci. Semantic validace, `kgmaker scan`,
 `kgmaker check` a `git diff --check` prošly. T003-S06 nadále zůstává PARTIAL;

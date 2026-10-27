@@ -55,12 +55,17 @@ architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
-deterministic JSON envelope for future high-level interface, topology and process
-projections. `kgmaker.views.select_service_contexts` builds an explicit,
-read-only service/repository/module context selection from an existing graph;
-it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
-deployment limits. It does not discover or render interface/topology/process views;
-the CLI is unchanged. See [architecture](docs/architecture.md), the
+deterministic JSON envelope for high-level interface, topology and process
+projections. Nodes and edges retain evidence kind, resolution status, freshness,
+and separate supporting, contradicting and unknown references. Their coverage
+counts describe the supplied selected inventory, not the unobserved system.
+`kgmaker.views.select_service_contexts` builds an explicit, read-only
+service/repository/module context selection from an existing graph; it requires a
+context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
+limits. `project_service_inventory` provides a read-only service-only topology
+projection using that selection and explicit ownership. The CLI still does not
+expose architecture view commands, and evidence ranking remains a separate,
+unfinished upstream capability. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 
@@ -188,6 +193,11 @@ before publication rather than trusting emitted declarations.
 Preflight and analysis must read the same compiler input closure; membership
 changes fail before publication. Reinspection replaces the same TypeScript
 selection slot across legacy and K2-era snapshot metadata.
+New TypeScript snapshots also bind effective-config inputs, negative filesystem
+lookups, compiler directory discovery and package-manager lockfiles. Unrelated
+config or excluded-unused content edits preserve the selected context; relevant
+new dependencies/members invalidate it offline without running Node. Legacy
+snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
 
 ## Copilot workflow
 
@@ -449,6 +459,13 @@ placement zdědí access strategy. Fixture ověřuje K2 i Javac, řetězené map
 superclasses, FIELD/PROPERTY access, tři JPA inheritance strategy values,
 entity-level override precedence a kolizi atributu. Kolize a unresolved override
 zůstávají UNKNOWN bez vybraného column edge; graph/store schema zůstává v3.
+Spring Data repository generic selects its entity by exact compiler-qualified
+owner. Same-simple-name entities no longer share inherited attributes; an
+unresolved generic remains unbound rather than using a simple-name fallback.
+Explicit JPQL entity names and repository return types also resolve by compiler
+owner; simple source return names require an exact JVM method descriptor owner.
+Missing qualified types and generic type variables remain UNKNOWN rather than
+binding to an unrelated same-simple-name class.
 Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
 tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například

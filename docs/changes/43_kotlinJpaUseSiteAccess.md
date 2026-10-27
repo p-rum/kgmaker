@@ -210,3 +210,35 @@ předchozí S06 evidence a nový integrační capture. README semantic citations
 ověřeny na `semantic prepare` line 162 a `semantic update/apply/validate` line 164;
 JPA/W02 architecture citations míří na aktuální source lines 515/598. Full suite
 nebyla znovu spuštěna; root CI běží na exact PR head.
+
+### Integrace T009 view evidence na main `09d351d`
+
+T009 adds the view evidence/coverage API, schema, and integration tests. The W01
+JPA implementation remains byte-identical to approved base `e71c622` across
+`src/kgmaker/framework.py`, `workers/jvm/k2/KotlinFrontend.kt`,
+`tests/test_k2_backend.py`, and `tests/test_compiler_workers.py`; the compiler
+guide now retains a direct statement of the supported K2 JPA annotation and
+fail-closed boundaries.
+
+Focused integration checks on Linux/JDK 21.0.6/Kotlin 2.1.10 covered the actual
+K2 use-site fixture, actual Javac AC06, T005 views, T008 service views, and the
+T009 view evidence suite: **66 passed in 43.39 s**. The semantic history keeps
+the exact 115-episode main prefix, then the seven W01-only episodes in their
+original order. Semantic validation, graph regeneration/check, and diff checks
+are recorded for this integration. No full suite was repeated for this
+documentation/view-only main refresh.
+
+### Integrate current main `5430388` (T003-S08-W02)
+
+Current main adds selected TypeScript configuration freshness and preflight
+capture validation. The W01 JPA runtime/test files remain byte-identical to
+base `e71c622`: `framework.py`, the K2 frontend, the K2 backend tests, and the
+Javac compiler-worker tests retain their prior SHA-256 values.
+
+Focused Linux/JDK21/Kotlin2.1.10 compatibility checks included actual K2
+use-site access, actual Javac AC06, and the complete selected TypeScript
+freshness suite: **35 passed in 175.28 s**. No full suite was repeated for this
+base integration. Semantic history preserves the exact 118-episode current-main
+prefix followed by all eight W01-only episodes in their prior order; the new
+integration capture follows those. Scoped semantic validation, graph
+regeneration/check, and diff checks complete the refresh.

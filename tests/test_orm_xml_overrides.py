@@ -116,6 +116,35 @@ def test_orm_xml_metadata_complete_suppresses_annotation_fallback(tmp_path):
     assert extra.metadata["mapping_status"] == "UNKNOWN"
 
 
+def test_orm_xml_metadata_complete_isolated_by_canonical_entity_owner(tmp_path):
+    mapping = '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
+      <entity class="demo.Order" metadata-complete="true"><table name="demo_orders"/><attributes>
+        <id name="id"><column name="demo_id"/></id>
+        <basic name="name"><column name="demo_name"/></basic>
+      </attributes></entity></entity-mappings>'''
+    root = project(tmp_path, mapping=mapping)
+    other = root / "src/main/java/other/Order.java"
+    other.parent.mkdir(parents=True, exist_ok=True)
+    other.write_text('''package other;
+import jakarta.persistence.*;
+@Entity @Table(name="other_orders") class Order {
+  @Id @Column(name="other_id") long id;
+  @Column(name="other_name") String name;
+}
+''', encoding="utf-8")
+
+    graph = inspect(root)
+    other_name = next(node for node in graph.nodes if node.kind == "orm_attribute"
+                      and node.name == "Order.name"
+                      and node.path == "src/main/java/other/Order.java")
+    assert [next(node.name for node in graph.nodes if node.id == edge.target)
+            for edge in graph.edges if edge.source == other_name.id and edge.kind == "maps_to_column"] == ["other_name"]
+    demo_extra = next(node for node in graph.nodes if node.kind == "orm_attribute"
+                      and node.name == "Order.extra"
+                      and node.path == "src/main/java/demo/Order.java")
+    assert demo_extra.metadata["mapping_status"] == "UNKNOWN"
+
+
 def test_invalid_xml_class_reference_is_diagnostic_and_strict_publication_preserves_graph(tmp_path):
     valid = '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
   <entity class="demo.Order"><table name="valid_orders"/></entity></entity-mappings>'''

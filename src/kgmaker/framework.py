@@ -1058,27 +1058,48 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     # Constructor/field injection is intentionally conservative.  A matching
     # type is a candidate, while qualifier/primary/profile controls the result.
-    def resolve_query_property(model_name: str, property_name: str) -> tuple[str | None, str | None]:
+    def resolve_query_property(model_owner: str, property_name: str) -> tuple[str | None, str | None]:
         normalized = property_name.replace("_", "").casefold()
-        direct = entity_attributes.get(model_name, {}).get(normalized)
+        direct = entity_attributes.get(model_owner, {}).get(normalized)
         if direct:
             return direct, property_name
-        for outer, outer_id in entity_attributes.get(model_name, {}).items():
+        for outer, outer_id in entity_attributes.get(model_owner, {}).items():
             if not normalized.startswith(outer) or len(normalized) == len(outer):
                 continue
-            embedded_type = entity_embedded_types.get((model_name, outer))
+            embedded_type = entity_embedded_types.get((model_owner, outer))
             suffix = normalized[len(outer):]
             nested = next((identity for (owner, name), identity in embeddable_attributes.items()
                            if owner == embedded_type and name.casefold() == suffix), None)
             if nested:
                 return nested, f"{outer}.{suffix}"
-            associated_type = entity_association_types.get((model_name, outer))
-            associated = entity_attributes.get(associated_type or "", {}).get(suffix)
+            associated_type = entity_association_types.get((model_owner, outer))
+            associated_owners = entity_owners_by_simple.get(associated_type or "", [])
+            associated = (entity_attributes.get(associated_owners[0], {}).get(suffix)
+                          if len(associated_owners) == 1 else None)
             if associated:
                 return associated, f"{outer}.{suffix}"
         return None, None
 
     repository_models: dict[str, str] = {}
+
+    def repository_entity_owner(repository_symbol: dict[str, Any] | None) -> str | None:
+        """Select a repository entity only from compiler-resolved generic facts."""
+        if not repository_symbol:
+            return None
+        owners: set[str] = set()
+        for supertype in repository_symbol.get("supertypes", []):
+            match = re.fullmatch(r"([\w.$]+)\s*<(.+)>", str(supertype))
+            if not match:
+                continue
+            repository_type = match.group(1).replace("$", ".")
+            if not repository_type.startswith("org.springframework.data.") \
+                    or _simple(repository_type) not in JPA_REPOSITORIES:
+                continue
+            model_type = match.group(2).split(",", 1)[0].strip().replace("$", ".")
+            if model_type in entity_decls_by_owner:
+                owners.add(model_type)
+        return next(iter(owners)) if len(owners) == 1 else None
+
     for path, source in source_text.items():
         imports = _imports(source)
         if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
@@ -1230,11 +1251,46 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         add_edge(source_node.id, mapped_id, "declares_mapped_superclass", declaration["path"], declaration["line"],
                  "Compiler-resolved JPA @MappedSuperclass declaration")
 
-    entity_nodes = {declaration["node"].name: declaration["node"].id for declaration in entity_decls}
-    entity_decls_by_owner = {str(item["symbol"].get("owner", "")): item for item in entity_decls}
+    entity_decls_by_owner = {
+        str(item["symbol"]["owner"]): item for item in entity_decls
+        if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")
+    }
+    entity_decls_by_simple: dict[str, list[dict[str, Any]]] = {}
+    for declaration in entity_decls:
+        entity_decls_by_simple.setdefault(declaration["node"].name, []).append(declaration)
+    entity_owners_by_simple = {
+        name: [str(item["symbol"].get("owner", "")) for item in declarations
+               if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")]
+        for name, declarations in entity_decls_by_simple.items()
+    }
+    # A simple name is suitable for display, but never selects one of multiple
+    # compiler-resolved entity owners.
+    entity_nodes = {name: declarations[0]["node"].id for name, declarations in entity_decls_by_simple.items()
+                    if len(declarations) == 1}
+    entity_nodes_by_owner = {owner: item["node"].id for owner, item in entity_decls_by_owner.items() if owner}
+    entity_query_owners: dict[str, list[str]] = {}
+    for owner, declaration in entity_decls_by_owner.items():
+        entity_annotation = next((item for item in declaration["symbol"].get("annotations", [])
+                                  if isinstance(item, dict) and isinstance(item.get("name"), str)
+                                  and _simple(item["name"]) == "Entity"), None)
+        if entity_annotation is None or entity_annotation.get("values_resolved") is False:
+            continue
+        raw_entity_values = entity_annotation.get("values") if isinstance(entity_annotation.get("values"), dict) else {}
+        explicit_entity_name = raw_entity_values.get("name", raw_entity_values.get("value"))
+        if explicit_entity_name is not None and not isinstance(explicit_entity_name, str):
+            continue
+        entity_name = explicit_entity_name or declaration["node"].name
+        entity_query_owners.setdefault(entity_name, []).append(owner)
+
+    def entity_index_key(declaration: dict[str, Any]) -> str:
+        owner = declaration["symbol"].get("owner")
+        # A graph node ID is an opaque per-declaration key for incomplete test or
+        # legacy inputs; it cannot be confused with a compiler-qualified owner.
+        return owner if isinstance(owner, str) and owner else "unresolved-owner:" + declaration["node"].id
+
     entity_table_nodes: dict[str, str] = {}
     entity_table_by_owner: dict[str, str] = {}
-    entity_attributes: dict[str, dict[str, str]] = {name: {} for name in entity_nodes}
+    entity_attributes: dict[str, dict[str, str]] = {entity_index_key(item): {} for item in entity_decls}
     entity_embedded_types: dict[tuple[str, str], str] = {}
     embeddable_inherited_accesses: dict[str, set[str]] = {}
     entity_association_types: dict[tuple[str, str], str] = {}
@@ -1324,6 +1380,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     for entity in entity_decls:
         node: Node = entity["node"]
+        entity_owner = entity_index_key(entity)
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
         table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
@@ -1344,8 +1401,9 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                 schema_stream_id=context.get("schema_stream_id"),
                                 persistence_unit=context.get("persistence_unit"),
                                 naming_strategy=context.get("naming_strategy"))
-            entity_table_nodes[node.name] = table_id
-            entity_table_by_owner[str(entity["symbol"].get("owner", node.name))] = table_id
+            entity_table_nodes[entity_owner] = table_id
+            if entity["symbol"].get("owner"):
+                entity_table_by_owner[entity_owner] = table_id
             add_edge(node.id, table_id, "maps_to_table", entity["path"], entity["line"],
                      "@Table name" if not inferred else "Entity name fallback; physical naming strategy not verified")
         if table_values_unknown:
@@ -1530,7 +1588,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
                                  identifier=identifier, embedded=embedded)
-            entity_attributes[node.name][field_name.casefold()] = attribute
+            entity_attributes[entity_owner][field_name.casefold()] = attribute
             if table_id:
                 add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
             if identifier:
@@ -1538,7 +1596,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                          entity["path"], field_line, "JPA identifier placement determines FIELD access")
             if embedded:
                 embedded_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_embedded_types[(node.name, field_name.casefold())] = embedded_type
+                entity_embedded_types[(entity_owner, field_name.casefold())] = embedded_type
                 embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                 target = embeddable_nodes.get(embedded_type)
                 if target:
@@ -1583,7 +1641,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             if relation:
                 mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_association_types[(node.name, field_name.casefold())] = target_type
+                entity_association_types[(entity_owner, field_name.casefold())] = target_type
                 association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
@@ -1663,7 +1721,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 attribute = add_node("orm_attribute", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                      attribute=property_name, type=property_type, access="PROPERTY",
                                      identifier=identifier, embedded=embedded, getter=getter_name)
-                entity_attributes[node.name][property_name.casefold()] = attribute
+                entity_attributes[entity_owner][property_name.casefold()] = attribute
                 if table_id:
                     add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
                              "JPA property-access persistent attribute")
@@ -1672,7 +1730,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                              entity["path"], property_line, "JPA identifier placement determines PROPERTY access")
                 if embedded:
                     embedded_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_embedded_types[(node.name, property_name.casefold())] = embedded_type
+                    entity_embedded_types[(entity_owner, property_name.casefold())] = embedded_type
                     embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                     if embedded_type in embeddable_nodes:
                         add_edge(attribute, embeddable_nodes[embedded_type], "embeds_type", entity["path"], property_line,
@@ -1683,7 +1741,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 if relation_entry:
                     mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                     target_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_association_types[(node.name, property_name.casefold())] = target_type
+                    entity_association_types[(entity_owner, property_name.casefold())] = target_type
                     association = add_node("orm_association", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                            association=_simple(relation_entry[0]), target_type=target_type,
                                            mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING",
@@ -1782,7 +1840,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     for entity in entity_decls:
         node: Node = entity["node"]
-        effective_owner = str(entity["symbol"].get("owner", node.name))
+        raw_effective_owner = entity["symbol"].get("owner")
+        if not isinstance(raw_effective_owner, str) or not raw_effective_owner:
+            diagnostics.append({"code": "ORM_ENTITY_OWNER_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "Compiler-qualified entity owner is absent; inherited persistence attributes are not projected."})
+            continue
+        effective_owner = raw_effective_owner
         inherited_declarations: list[dict[str, Any]] = []
         ancestry_unknown = False
         for parent_value in entity["symbol"].get("supertypes", []):
@@ -1818,7 +1882,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     inherited_declarations.extend(chain)
         if not inherited_declarations or ancestry_unknown:
             continue
-        table_id = entity_table_nodes.get(node.name)
+        table_id = entity_table_nodes.get(effective_owner)
         table = nodes.get(table_id) if table_id else None
         access = str((table.metadata or {}).get("access_strategy", "UNKNOWN")) if table else "UNKNOWN"
         if access not in {"FIELD", "PROPERTY"}:
@@ -1929,7 +1993,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 override_map.setdefault(attribute_name.casefold(), []).append((override_owner, column_name, unresolved))
         for normalized, candidates in seen_decls.items():
             attribute_name = candidates[0]["name"]
-            existing = entity_attributes.get(node.name, {}).get(normalized)
+            existing = entity_attributes.get(effective_owner, {}).get(normalized)
             if existing or len(candidates) != 1:
                 for identity in ([existing] if existing else []):
                     if identity in nodes:
@@ -2008,7 +2072,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                      "Compiler-attributed persistent property projected from its mapped superclass")
             add_edge(node.id, inherited_attribute, "has_persistent_attribute", entity["path"], entity["line"],
                      "Mapped superclass property effective for this entity")
-            entity_attributes.setdefault(node.name, {})[normalized] = inherited_attribute
+            entity_attributes.setdefault(effective_owner, {})[normalized] = inherited_attribute
             if mapping_table_id:
                 add_edge(inherited_attribute, mapping_table_id, "declared_on_table", entity["path"], item["line"],
                          "Effective mapped superclass property on entity table")
@@ -2026,7 +2090,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 embedded_name = embedded_type[0] if embedded_type else ""
                 target = embeddable_nodes.get(embedded_name)
                 if target:
-                    entity_embedded_types[(node.name, normalized)] = embedded_name
+                    entity_embedded_types[(effective_owner, normalized)] = embedded_name
                     add_edge(inherited_attribute, target, "embeds_type", entity["path"], item["line"],
                              "Mapped superclass embedded attribute")
                 else:
@@ -2039,7 +2103,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 mapped_by = _named_string_arg(relation_args, "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", str(field.get("type", "")))[-1:]
                 target_type = target_type[0] if target_type else "UNKNOWN"
-                entity_association_types[(node.name, normalized)] = target_type
+                entity_association_types[(effective_owner, normalized)] = target_type
                 association = add_node("orm_association", f"{node.name}.{attribute_name}", entity["path"],
                                        item["line"], node, association=_simple(relation_name),
                                        target_type=target_type, mapped_by=mapped_by,
@@ -2124,17 +2188,26 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             generic = re.search(r"(?:JpaRepository|CrudRepository|PagingAndSortingRepository|Repository)\s*<\s*([\w.]+)", match.group(2))
             if not generic or not any(item.startswith("org.springframework.data") for item in imports):
                 continue
-            repo_name, model_name = match.group(1), generic.group(1).rsplit(".", 1)[-1]
+            repo_name, declared_model = match.group(1), generic.group(1).rsplit(".", 1)[-1]
             line = _line(source, match.start())
             repo = next((node for node in nodes.values() if node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
-            models = [candidate for candidate in nodes.values() if candidate.name == model_name and candidate.kind in {"class", "type"}]
-            if repo and len(models) == 1:
-                add_edge(repo.id, models[0].id, "repository_for", path, line, "Spring Data repository generic")
-                repository_owner = str((symbols.get(repo.id) or {}).get("owner", ""))
-                if repository_owner:
-                    repository_models[repository_owner] = model_name
-            elif repo and not models:
-                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line, "repository": repo.id, "model": model_name})
+            repository_symbol = symbols.get(repo.id) if repo else None
+            model_owner = repository_entity_owner(repository_symbol)
+            model_name = _simple(model_owner) if model_owner else declared_model
+            if repo and model_owner:
+                model_node = nodes.get(entity_nodes_by_owner[model_owner])
+                if model_node:
+                    add_edge(repo.id, model_node.id, "repository_for", path, line,
+                             "Compiler-resolved Spring Data repository generic entity")
+                    repository_owner = str((repository_symbol or {}).get("owner", ""))
+                    if repository_owner:
+                        repository_models[repository_owner] = model_owner
+                else:
+                    model_owner = None
+            if repo and model_owner is None:
+                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line,
+                                    "repository": repo.id, "model": declared_model,
+                                    "reason": "Repository generic does not resolve to exactly one compiler-owned entity; no simple-name fallback is used."})
             if repo:
                 # Derived query names use a bounded Spring Data grammar and are
                 # checked against the selected entity/embedded attribute model.
@@ -2153,14 +2226,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     resolved_predicates = []
                     unresolved_predicates = []
                     for predicate in parsed["predicates"]:
-                        target, resolved_path = resolve_query_property(model_name, predicate["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", predicate["property"])
                         value = {**predicate, "resolved_path": resolved_path, "attribute_id": target}
                         resolved_predicates.append(value)
                         if target is None:
                             unresolved_predicates.append(predicate["property"])
                     resolved_orders = []
                     for order in parsed["order_by"]:
-                        target, resolved_path = resolve_query_property(model_name, order["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", order["property"])
                         resolved_orders.append({**order, "resolved_path": resolved_path, "attribute_id": target})
                         if target is None:
                             unresolved_predicates.append(order["property"])
@@ -2171,7 +2244,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         validated=not unresolved_predicates)
                     add_edge(method.id, query_id, "declares_query", path, query_line,
                              "Spring Data derived query method")
-                    entity_id = entity_nodes.get(model_name)
+                    entity_id = entity_nodes_by_owner.get(model_owner or "")
                     if entity_id:
                         relation = "query_deletes" if parsed["action"] in {"delete", "remove"} else "query_reads"
                         add_edge(query_id, entity_id, relation, path, query_line,
@@ -2189,6 +2262,21 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "source_line": query_line, "method": method.id,
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
+
+    type_nodes_by_owner: dict[str, Node] = {}
+    for symbol in symbols.values():
+        symbol_node_value = nodes.get(str(symbol.get("id", "")))
+        owner = symbol.get("owner")
+        if symbol_node_value is None or symbol_node_value.kind not in {"class", "interface", "type"} \
+                or not isinstance(owner, str) or not owner:
+            continue
+        type_nodes_by_owner[owner.replace("$", ".")] = symbol_node_value
+
+    def descriptor_return_owner(descriptor: Any) -> str | None:
+        if not isinstance(descriptor, str):
+            return None
+        match = re.search(r"\)(?:\[*)L([^;<]+);$", descriptor)
+        return match.group(1).replace("/", ".").replace("$", ".") if match else None
 
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
@@ -2217,8 +2305,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         unbound = sorted(set(query_parameters) - set(parameter_names))
         return_type = str(item.get("return_type", ""))
         return_parts = re.findall(r"[A-Za-z_$][\w.$]*", return_type)
-        projection_type = _simple(return_parts[-1]) if return_parts else None
-        model_name = repository_models[str(item.get("owner"))]
+        projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
+        projection_type = _simple(projection_type_ref) if projection_type_ref else None
+        projection_node = type_nodes_by_owner.get(projection_type_ref or "")
+        return_owner = descriptor_return_owner(item.get("descriptor"))
+        if (projection_node is None and return_owner and projection_type
+                and _simple(return_owner) == projection_type):
+            # A source-level simple name does not prove its owner. The compiler
+            # method descriptor does: use its exact erased class identity only
+            # when it agrees with the declared return type's simple name. This
+            # also keeps type variables (whose erasure is Object) from binding
+            # to an unrelated local class with the same name.
+            projection_node = type_nodes_by_owner.get(return_owner)
+        model_owner = repository_models[str(item.get("owner"))]
+        model_name = _simple(model_owner)
         named_query_name = _named_string_arg(raw, "name")
         if value is None and named_query_name:
             named = named_queries.get(named_query_name)
@@ -2252,37 +2352,51 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
-            projection = next((candidate for candidate in nodes.values()
-                               if candidate.name == projection_type and candidate.kind in {"class", "interface", "type"}), None)
-            if projection:
-                add_edge(query_id, projection.id, "returns_entity" if projection_type in entity_nodes else "returns_projection",
-                         path, line, "Compiler return type of repository query")
+            if projection_node:
+                projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
+                                         if node_id == projection_node.id), None)
+                add_edge(query_id, projection_node.id,
+                         "returns_entity" if projection_owner is not None else "returns_projection",
+                         path, line, "Compiler-qualified return type of repository query")
             else:
                 diagnostics.append({"code": "SPRING_DATA_QUERY_PROJECTION_UNRESOLVED", "path": path,
-                                    "source_line": line, "method": method.id, "projection_type": projection_type})
+                                    "source_line": line, "method": method.id, "projection_type": projection_type_ref})
+                query_node = nodes.get(query_id)
+                if query_node:
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
             entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = _simple(entity_match.group(1)) if entity_match else model_name
+            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
             alias = entity_match.group(2) if entity_match else None
-            entity_id = entity_nodes.get(query_entity)
+            query_owners = entity_query_owners.get(query_entity or "", [])
+            query_owner = query_owners[0] if len(query_owners) == 1 else None
+            entity_id = entity_nodes_by_owner.get(query_owner or "")
             if entity_id:
                 add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
             else:
                 diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity})
+                                    "method": method.id, "entity": query_entity or "UNKNOWN",
+                                    "candidates": query_owners,
+                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                current_query = nodes.get(query_id)
+                if current_query:
+                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
             if alias:
                 for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
                     property_name = "".join(part[:1].upper() + part[1:] if index else part
                                             for index, part in enumerate(attribute_path.split(".")))
-                    target, resolved_path = resolve_query_property(query_entity, property_name)
+                    target, resolved_path = resolve_query_property(query_owner or "", property_name)
                     if target:
                         add_edge(query_id, target, "filters_by", path, line,
                                  f"JPQL path {resolved_path} resolved against entity model")
                     else:
                         diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
                                             "source_line": line, "method": method.id, "attribute": attribute_path})
+                        current_query = nodes.get(query_id)
+                        if current_query:
+                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:
@@ -2375,7 +2489,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if owner in entity_decls_by_owner:
             for table_id in remove_entity_tables(entity_id):
                 nodes.pop(table_id, None)
-        attribute_ids = set(entity_attributes.get(declaration["node"].name, {}).values())
+        attribute_ids = set(entity_attributes.get(owner, {}).values())
         attribute_ids.update(candidate.id for candidate in nodes.values()
                              if candidate.kind == "orm_attribute"
                              and ((candidate.metadata or {}).get("effective_owner") == owner
@@ -2471,7 +2585,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 if excluded_by_xml or excluded_by_persistence:
                     declaration = entity_decls_by_owner[owner]
                     remove_entity_tables(declaration["node"].id)
-                    attribute_ids = set(entity_attributes.get(declaration["node"].name, {}).values())
+                    attribute_ids = set(entity_attributes.get(owner, {}).values())
                     attribute_ids.update(candidate.id for candidate in nodes.values()
                                          if candidate.kind == "orm_attribute"
                                          and (candidate.metadata or {}).get("effective_owner") == owner)
@@ -2604,7 +2718,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             xml_overrides = record.get("overrides", {})
             selected_names = set(xml_attributes) | set(xml_overrides)
             if record.get("metadata_complete"):
-                current_attribute_ids = set(entity_attributes.get(declaration["node"].name, {}).values())
+                current_attribute_ids = set(entity_attributes.get(owner, {}).values())
                 current_attribute_ids.update(candidate.id for candidate in nodes.values()
                                              if candidate.kind == "orm_attribute"
                                              and ((candidate.metadata or {}).get("effective_owner") == owner
@@ -2675,7 +2789,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             mapping_status="PARTIAL", mapping_source="ORM_XML",
                                             declaring_owner=owner, effective_owner=owner, inherited=False,
                                             **spec.get("provenance", {}), **jpa_rule_metadata)
-                    entity_attributes.setdefault(declaration["node"].name, {})[attribute_name.casefold()] = attribute_id
+                    entity_attributes.setdefault(owner, {})[attribute_name.casefold()] = attribute_id
                     attribute_ids = [attribute_id]
                     if is_id:
                         add_edge(entity_id, attribute_id, "has_embedded_id" if spec.get("kind") == "embedded-id" else "has_id",
