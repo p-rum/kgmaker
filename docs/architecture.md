@@ -133,9 +133,22 @@ semantics and integration adapters remain open.
 `architecture_model.py` defines deterministic schema-v1 JSON documents for
 interface, topology and process projections. It validates node/edge identity,
 endpoints, provenance references and coverage status without writing to or
-changing the graph. This model is an API foundation; view discovery, CLI
-commands, renderers and cross-service aggregation remain specified work in
-[T004](tasks/4_addHighLevelProjectViews.md).
+changing the graph. View nodes and edges carry independent evidence kind,
+resolution, freshness, and polarity-reference fields; legacy documents load
+with unresolved/unknown defaults. `aggregate_view_edges` groups only claims with
+the same endpoints, relation, explicit scope and exact context identity. It
+retains each claim's references/status, keeps unclassified polarity UNKNOWN,
+and reports found/resolved/unresolved/excluded counts for the supplied claims.
+An empty set is UNKNOWN. These counts do not estimate an unobserved system.
+The helper does not implement evidence ranking or infer polarity.
+
+`views.project_service_inventory` is a read-only service-only topology
+projection using explicit T007 ownership and T006 context selection. It uses
+the same additive evidence fields and records unknown deployment/runtime state.
+The architecture CLI and renderers remain separate work. T003-S07-W08 ranking
+is not implemented; this projection is not a substitute for ranking. See
+[T009](tasks/T-009_propagate-view-evidence.md) and the larger
+[T004 plan](tasks/4_addHighLevelProjectViews.md).
 
 Workspace v1 optionally accepts a separate `service_ownership` schema v1.
 Each declaration attaches explicit repository-relative roots and/or exact
@@ -194,3 +207,15 @@ the complete T003-AC02 sequence remain required.
 Task identities and historical milestone aliases are defined only by
 [the registry](tasks/README.md). [Current status](production-analysis-progress.md)
 distinguishes existing capabilities from the normative [completion plan](tasks/3_finishProductionAnalysis.md).
+
+## Realm-bound data resources
+
+`data_resources.project_data_resources` is a pure topology projection over T008
+service ownership/context selection, T009 evidence partitions, and existing
+workspace schema/persistence facts. Resource identity uses workspace, repository,
+explicit database and migration stream; table and ORM IDs are drill-down references.
+Only current, source-hash-checked selected-context query edges add access claims.
+Migration derivation remains an attribute of SOURCE_ONLY evidence, never a new
+runtime evidence kind. Missing/foreign/conflicting realms, unsupported scope and
+upstream truncation stay visible. The projection never connects to a database,
+reconstructs a parallel schema catalog, executes a worker, or writes an artifact.

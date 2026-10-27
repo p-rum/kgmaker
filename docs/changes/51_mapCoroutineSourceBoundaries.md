@@ -110,3 +110,36 @@ Rebuild používal `python workers/jvm/build.py --kotlin-home
 /workspace/tools/jdk-21.0.6+7`; K2 navíc `--backend k2 --analysis-api-home
 /workspace/tools/k2-verified`. Všechny build/test subprocessy byly explicitní
 validační akce; offline source/query cesty žádný build ani aplikaci nespustily.
+
+
+## Kompozice s aktuálním dependency-dispatch parentem
+
+Integrační base je ověřený main
+`ec333966e657896382f310ef018835e3d696513e`. Původní frozen feature c8867f3
+a její584/10 full jsou historický důkaz, nikoli validace nové kombinované JVM.
+Před editací proběhla přímá architektonická rekognoskace task/spec, původních
+DebugMetadata/realm/ABI guards a current physical/source hierarchy views; memory
+recall je zaznamenán v externím validačním adresáři.
+
+Bytecode.java je převzat přesně z main: physical application mapping view se
+nezaměňuje se source hierarchy view pro dispatch. SourceMapping.java,
+control_flow.py a celý coroutine test modul zůstávají přesněc8867f3; SMAP,
+DebugMetadata, čtyři realm fields, source hash/range a statické ABI guards se
+neodstraňují. K1/K2 call-site bloky zachovávají zvlášť suspend/async markers a
+main dispatch metadata. K2 light-declaration výběr používá stejný continuation
+a extension-receiver ABI count/filter jako původní coroutine method guard.
+Nevzniká nový scheduler, async runtime ani odhad source-expression mapping.
+
+CI zachovává všechny main testy a explicitní API-only bootstrap; coroutine suite
+se přidává do mandatory compiler jobu. Main134 immutable episodes tvoří přesný
+prefix, všechny unikátní původní captures zůstávají beze změny. Zastaralé
+vygenerované views se obnovují CLI.
+
+Nové vlastní clean-classes K1/K2 buildy a actual coroutine/dispatch/default-body
+focus jsou queued pod shared heavy lockem. Receipt zaznamenává přesné source
+hashes, příkazy, exit codes a nové JAR SHA; původní c886 JARy jsou archivovány
+jen jako historical. Žádný stale artifact nebyl použit jako nový proof.
+Zdrojové/source review a jeden fresh frozen strict full následují až po green
+focus; zatím nejsou PASS. Logy a receipts: `/workspace/coroutine-main-integration/`.
+Současné remote CI je externě billing BLOCKED, bez retry/bypass; lokální autorizovaná
+integrace pokračuje a implementační agent nepushuje ani neself-schvaluje source.
