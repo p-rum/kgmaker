@@ -5,6 +5,10 @@
 VERIFIED_IN_SCOPE pro actual K2 2.1.10 a actual Javac21: JPA
 `@MappedSuperclass` field/getter ID určuje zděděný FIELD/PROPERTY access; atributy
 jsou projektovány na entity s odděleným `declaring_owner` a `effective_owner`.
+Entity attribute indexes and Spring Data repository generic resolution use exact
+compiler-qualified owners; a repository for `right.Thing` cannot resolve a
+derived predicate against same-simple-name `left.Thing`. An unproven generic
+owner remains unbound.
 Řetězené mapped superclasses, compiler-qualified parent identity, entity-level
 override precedence, kolize, unresolved override a SingleTable/Joined/Table-per-class
 root/subclass table selection mají fixture v `tests/test_k2_backend.py`.

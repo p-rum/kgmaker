@@ -442,6 +442,9 @@ placement zdědí access strategy. Fixture ověřuje K2 i Javac, řetězené map
 superclasses, FIELD/PROPERTY access, tři JPA inheritance strategy values,
 entity-level override precedence a kolizi atributu. Kolize a unresolved override
 zůstávají UNKNOWN bez vybraného column edge; graph/store schema zůstává v3.
+Spring Data repository generic selects its entity by exact compiler-qualified
+owner. Same-simple-name entities no longer share inherited attributes; an
+unresolved generic remains unbound rather than using a simple-name fallback.
 Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
 tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například

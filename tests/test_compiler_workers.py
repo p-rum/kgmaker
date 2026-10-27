@@ -598,6 +598,66 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
             self.assertTrue(any(edge.kind=='uses_named_query' and edge.source==named.id
                                 and edge.target==named_definition.id for edge in graph.edges))
 
+    def test_repository_generic_uses_exact_entity_owner_for_same_simple_names(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            annotations={
+                'Entity':'@Target(ElementType.TYPE) public @interface Entity {}',
+                'MappedSuperclass':'@Target(ElementType.TYPE) public @interface MappedSuperclass {}',
+                'Id':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}',
+                'Column':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default ""; }',
+            }
+            for name,declaration in annotations.items():
+                path=root/'src/main/java/jakarta/persistence'/f'{name}.java'
+                path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_text(f'package jakarta.persistence; import java.lang.annotation.*; @Retention(RetentionPolicy.RUNTIME) {declaration}')
+            repository_api=root/'src/main/java/org/springframework/data/jpa/repository/JpaRepository.java'
+            repository_api.parent.mkdir(parents=True,exist_ok=True)
+            repository_api.write_text('package org.springframework.data.jpa.repository; public interface JpaRepository<T,ID> {}')
+            sources={
+                'left/LeftBase.java':'package left; import jakarta.persistence.*; @MappedSuperclass public class LeftBase { @Id @Column(name="left_id") Long leftId; }',
+                'right/RightBase.java':'package right; import jakarta.persistence.*; @MappedSuperclass public class RightBase { @Id @Column(name="right_id") Long rightId; }',
+                'left/Thing.java':'package left; import jakarta.persistence.*; @Entity public class Thing extends LeftBase {}',
+                'right/Thing.java':'package right; import jakarta.persistence.*; @Entity public class Thing extends RightBase {}',
+                'right/ThingRepository.java':'''package right;
+import org.springframework.data.jpa.repository.JpaRepository;
+public interface ThingRepository extends JpaRepository<Thing,Long> {
+  Thing findByLeftId(Long id);
+  Thing findByRightId(Long id);
+}''',
+            }
+            for relative,content in sources.items():
+                path=root/'src/main/java'/relative
+                path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_text(content)
+            result=inspect_jvm(root,classpath=[],publish=False)
+            graph=KnowledgeGraph.from_dict(result['graph'])
+            classes={(node.path,node.kind,node.name):node for node in graph.nodes if node.kind=='class'}
+            right_entity=classes[('src/main/java/right/Thing.java','class','Thing')]
+            left_attribute=next(node for node in graph.nodes if node.kind=='orm_attribute'
+                                and node.metadata.get('effective_owner')=='left.Thing'
+                                and node.metadata.get('attribute')=='leftId')
+            right_attribute=next(node for node in graph.nodes if node.kind=='orm_attribute'
+                                 and node.metadata.get('effective_owner')=='right.Thing'
+                                 and node.metadata.get('attribute')=='rightId')
+            queries={node.name:node for node in graph.nodes if node.kind=='orm_query'
+                     and node.path=='src/main/java/right/ThingRepository.java'}
+            wrong=queries['findByLeftId:DERIVED']
+            correct=queries['findByRightId:DERIVED']
+            self.assertFalse(wrong.metadata['validated'])
+            self.assertIsNone(wrong.metadata['predicates'][0]['attribute_id'])
+            self.assertTrue(correct.metadata['validated'])
+            self.assertEqual(right_attribute.id,correct.metadata['predicates'][0]['attribute_id'])
+            self.assertNotEqual(left_attribute.id,correct.metadata['predicates'][0]['attribute_id'])
+            self.assertFalse(any(edge.source==wrong.id and edge.kind=='filters_by' for edge in graph.edges))
+            self.assertTrue(any(edge.source==correct.id and edge.kind=='filters_by'
+                                and edge.target==right_attribute.id for edge in graph.edges))
+            repository=next(node for node in graph.nodes if node.path=='src/main/java/right/ThingRepository.java'
+                            and node.name=='ThingRepository')
+            self.assertTrue(any(edge.source==repository.id and edge.kind=='repository_for'
+                                and edge.target==right_entity.id for edge in graph.edges))
+
     def test_bytecode_default_method_uses_most_specific_interface_not_classfile_order(self):
         import tempfile
         import subprocess
