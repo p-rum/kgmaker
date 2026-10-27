@@ -407,22 +407,20 @@ all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
 
+## T046 — Šablony, testovací návrhy a dohledatelnost
 
-T046-S01: knihovní inkrement reference contracts and v1/v2 metadata; ověření viz change note 56.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
+T046-S01–S06: implementováno v omezeném offline kontraktu popsaném v
+[delivery workflow](delivery-workflow.md). Projektové šablony, konzervativní výběr
+funkcionality/frameworku, host-agent proposals, citace, syntetické JSON/CSV data,
+content-bound revize, export bez přepisu, explicitní obousměrné vazby a lokální
+rozhodnutí jsou dostupné. Brány jsou volitelné, default off; review binding
+používá skutečný source fingerprint. V1 se čte, implementace/review doplní v2 bez
+změny ID. Tím se nemění stav ostatních T003/T004 acceptance.
 
-
-T046-S02: knihovní inkrement project template library; ověření viz change note 57.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
-
-
-T046-S03: knihovní inkrement existing-function test design library; ověření viz change note 58.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
-
-
-T046-S04: knihovní inkrement synthetic data acceptance; ověření viz change note 59.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
-
-
-T046-S05: knihovní inkrement optional local approval gates; ověření viz change note 60.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
+Ověření: `tests/test_artifact_templates.py`, `tests/test_delivery.py` a
+`tests/test_synthetic_data.py`; doplněné výsledky v change notes 56–61. Lokální
+unittest E2E prokáže citlivost exportovaného testu na změnu chování. Pytest,
+nezávislé review a GitHub CI nejsou tímto zápisem označeny za úspěšné. Širší
+frameworky mají návrhový kontrakt, nikoli univerzálně ověřené execution adaptéry.
+Očekávání z kódu není business oracle, syntetická data nejsou runtime proof a
+LOCAL_DECLARED není autentizace. Freshness je konzervativní přes celý snapshot.

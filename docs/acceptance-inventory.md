@@ -391,3 +391,18 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+## T046 — Offline delivery workflow
+
+| Požadavek / acceptance | Implementace | Ověření / scénář |
+|---|---|---|
+| T046-R01 / AC01 | artifact_templates, template CLI, init | test_artifact_templates: defaults, custom content, hash, preserved edits, collision and symlink guards |
+| T046-R02 / AC02–03 | testgen prepare/validate/apply/export | test_delivery: existing-function E2E, actual PASS then deliberate behaviour FAIL, framework/target ambiguity |
+| T046-R05 / AC04 | schema_errors, JSON/CSV export | test_synthetic_data + delivery negative dataset, foreign-key and preflight tests |
+| T046-R03 / AC05 | provenance journal, trace sync/show/check | delivery forward/backward traversal, requirement/test/data refs, staleness and missing actors |
+| T046-R04 / AC06 | policy, decisions, workflow save gate | delivery optional gate, direct-save bypass rejection, review source binding and agent rejection |
+| T046-R05 / AC07–08 | workflow v1/v2, CAS, atomic state | delivery ID preservation, journal tampering, writer conflict, invalid-input zero mutation and Git-only metadata process guard |
+
+Výsledky skutečných běhů a limity prostředí jsou v change notes 56–61. Testovací
+návrh má NOT_RUN; výsledek unittest E2E je oddělená validační evidence. Tato tabulka
+nenahrazuje review ani chybějící pytest/compiler/GitHub CI běhy.

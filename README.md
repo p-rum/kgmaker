@@ -485,32 +485,34 @@ simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
+## Project templates, test proposals and delivery traceability
 
-### T046-S01 — reference contracts and v1/v2 metadata
+`kgmaker template` manages project-local, versioned artifact templates for requirements,
+analyses, implementation tasks, test cases/data/code and filenames. `kgmaker init`
+installs editable defaults while preserving user files. `kgmaker testgen` prepares
+bounded evidence for **existing functionality without a diff**; the host Copilot
+agent proposes cases, synthetic data and code, then kgmaker validates citations,
+constraints and freshness before an explicit export. It never calls a model API
+or runs the proposed tests. Code-derived expectations are characterizations,
+not independent business correctness proofs.
 
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+```bash
+kgmaker template list
+kgmaker testgen prepare --id regression --target src/calculator.py --scope all
+kgmaker testgen validate --id regression --candidate candidate.json
+kgmaker testgen apply --id regression --candidate candidate.json
+kgmaker testgen export --id regression
+kgmaker trace sync-task --id <runtime-task-id>
+kgmaker trace sync-analysis --id <analysis-id>
+kgmaker trace sync-testgen --id regression
+kgmaker trace show <reference> --format markdown
+```
 
-
-### T046-S02 — project template library
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
-
-### T046-S03 — existing-function test design library
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
-
-### T046-S04 — synthetic data acceptance
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
-
-### T046-S05 — optional local approval gates
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+`trace` records explicit, revision-bound links from requirements through analyses,
+tasks and changes to tests. Local requested/approved/rejected/revoked decisions
+show who recorded them and when, with `LOCAL_DECLARED` identity trust. Optional
+approval gates are disabled by default. They can require approval of the current
+request/plan before implementation and a source-bound review before completion.
+Generated tests remain `NOT_RUN` until separately executed by the project runner.
+See [workflow, schemas, examples and limitations](docs/delivery-workflow.md) and
+[specification T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).

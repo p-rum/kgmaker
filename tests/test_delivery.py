@@ -164,7 +164,8 @@ class GeneratedTest(unittest.TestCase):
         self.assertEqual({r['key'] for r in forward['references']},{r['key'] for r in backward['references']})
         self.assertIn('uses_dataset',{l['relation'] for l in forward['links']})
         self.assertIn('REQ',p.markdown(forward))
-
+        args=build_parser().parse_args(['testgen','prepare','--id','x','--target','calculator.py','--workspace','workspace.json'])
+        self.assertEqual('testgen',args.command)
 
     def test_completion_gate_binds_review_to_source_and_preserves_v1_identity(self):
         task=w.add_task(self.root,'Review calculator')

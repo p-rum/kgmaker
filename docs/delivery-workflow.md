@@ -1,5 +1,3 @@
-> S01–S05 implementují knihovní základ. CLI příklady níže jsou cílem S06; dostupné budou až po integraci celého balíku.
-
 # Šablony, testovací návrhy a dohledatelnost (T046)
 
 Python standard-library rozšíření nabízí příkazy `template`, `testgen` a `trace`.
