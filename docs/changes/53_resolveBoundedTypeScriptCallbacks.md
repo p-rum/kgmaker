@@ -154,3 +154,20 @@ merge acceptance se tímto nedoplňuje. Lokální task postupuje do review, niko
 Bounded callback target matice je lokálně ověřena; overload signature→body path,
 heap/default/rest/forwarded callback inference a celý T003-S08 zůstávají uvedené
 hranice. Implementační agent nepushuje ani nemerguje; publikaci/review koordinuje parent.
+
+
+## Integrace ověřeného main
+
+Zmrazený source-final1e21140 byl integrován s main
+`5430388a282f19f6c9637319c12a1731ae6d0674` (T009 evidence model a ověřené CI fixes).
+Callback worker a tři callback test moduly zůstávají byte-identické původnímu
+source-final; dřívější full582PASS10SKIP se neopakuje. Main118 episodes tvoří
+přesný nezměněný prefix, následovaný unikátními nezměněnými child captures;
+sémantické facts obou větví jsou zachovány a citations revalidovány přes CLI packet.
+Relevantní actual callback kontroly jsou **15 PASS v46.79s**, bez skips, pod
+heavy flockem s mandatory worker flag a vlastním explicitním worker home.
+Pure T005/T008/T009 view/evidence integration: **64 PASS v0.89s**. Všechny čtyři
+zmrazené callback worker/test SHA256 zůstaly beze změny. Logy jsou v
+`/workspace/ts-callbacks-validation/`; nové full582PASS10SKIP se netvrdí.
+Dřívější billing pause byla odblokována; root vlastní remote CI/review/publikaci.
+Žádný push, CI retry ani merge do main nebyl tímto integračním agentem proveden.

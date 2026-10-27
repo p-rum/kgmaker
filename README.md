@@ -55,12 +55,17 @@ architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
-deterministic JSON envelope for future high-level interface, topology and process
-projections. `kgmaker.views.select_service_contexts` builds an explicit,
-read-only service/repository/module context selection from an existing graph;
-it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
-deployment limits. It does not discover or render interface/topology/process views;
-the CLI is unchanged. See [architecture](docs/architecture.md), the
+deterministic JSON envelope for high-level interface, topology and process
+projections. Nodes and edges retain evidence kind, resolution status, freshness,
+and separate supporting, contradicting and unknown references. Their coverage
+counts describe the supplied selected inventory, not the unobserved system.
+`kgmaker.views.select_service_contexts` builds an explicit, read-only
+service/repository/module context selection from an existing graph; it requires a
+context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
+limits. `project_service_inventory` provides a read-only service-only topology
+projection using that selection and explicit ownership. The CLI still does not
+expose architecture view commands, and evidence ranking remains a separate,
+unfinished upstream capability. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 
