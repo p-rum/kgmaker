@@ -433,4 +433,4 @@ and final full-suite evidence are recorded in
 custom defaults, Unicode case equivalence and unsupported dynamic expressions
 remain outside this bounded proof; T003-S05 stays PARTIAL.
 
-HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change56](changes/56_classifyHttpClientExecution.md); remote CI billing remains blocked.
+HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change56](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
