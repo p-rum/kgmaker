@@ -193,13 +193,15 @@ def test_actual_argument_proof_rejects_enum_and_occurrence_contradictions(tmp_pa
     monkeypatch.setattr('subprocess.Popen', lambda *a, **k: pytest.fail('implicit process'))
     failures = []
     for case in ['status-list', 'status-object', 'transform-list', 'transform-object',
-                 'owner', 'owner-missing', 'fact-index', 'source-index', 'source-identity']:
+                 'call-site-list', 'call-site-object', 'owner', 'owner-missing',
+                 'fact-index', 'source-index', 'source-identity']:
         changed = copy.deepcopy(response)
         fact = next(f for f in changed['facts'] if f == original)
         argument = next(s for s in changed['symbols'] if s['id'] == fact['source'])
         site = next(s for s in changed['call_sites'] if s['id'] == fact['call_site'])
         if case.startswith('status-'): site['argument_mapping_status'] = [] if case.endswith('list') else {}
         elif case.startswith('transform-'): fact['transformation'] = [] if case.endswith('list') else {}
+        elif case.startswith('call-site-'): fact['call_site'] = [] if case.endswith('list') else {}
         elif case == 'owner': argument['owner_method'] = site['declared_target']
         elif case == 'owner-missing': argument.pop('owner_method')
         elif case == 'fact-index': fact['argument_index'] += 42

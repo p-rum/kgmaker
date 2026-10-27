@@ -366,6 +366,8 @@ def validate_argument_bindings(response: dict) -> None:
             continue
         if type(fact['argument_mapping_version']) is not int or fact['argument_mapping_version'] != 1:
             raise ValueError('Unsupported argument mapping version')
+        if not isinstance(fact.get('call_site'), str):
+            raise ValueError('Invalid compiler argument binding call site')
         site = sites.get(fact.get('call_site'))
         parameter, argument = symbols.get(fact.get('target'), {}), symbols.get(fact.get('source'), {})
         indices = (fact.get('argument_index'), fact.get('parameter_index'))
