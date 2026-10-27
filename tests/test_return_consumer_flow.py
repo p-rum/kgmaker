@@ -255,6 +255,10 @@ def test_stale_return_rule_is_rejected_without_implicit_refresh(tmp_path,monkeyp
     ('function make(){return 1;} function use(){return make();} for([make] of [[()=>2]]){} export const result=use();','make'),
     ('function make(){return 1;} function use(){return make();} for(make in {}){} export const result=use();','make'),
     ('function make(){return 1;} const alias:any=globalThis;alias.make=()=>2;function use(){return make();} use();','make'),
+    ('function make(){return 1;} function use(){return make();} ({make}={make:()=>2});export const result=use();','make'),
+    ('function make(){return 1;} function use(){return make();} for({make} of [{make:()=>2}]){} export const result=use();','make'),
+    ('function make(){return 1;} function use(){return make();} ({slot:make}={slot:()=>2});export const result=use();','make'),
+    ('function make(){return 1;} function use(){return make();} ({make=()=>2}={});export const result=use();','make'),
 ])
 def test_mutable_typescript_bodies_do_not_claim_original_return(tmp_path,source,callee):
     graph=analyze(tmp_path,{'src/mutable.ts':source},language='typescript')
@@ -275,3 +279,130 @@ export function use(){const result=lexical();return result;} export const b=new 
     sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name') in {'lexical','#make'}]
     assert len(sites)==2
     assert all(s.get('return_body_status')=='DECLARED_SOURCE_BODY' for s in sites)
+
+
+def test_compiler_bound_direct_eval_makes_lexical_body_unknown(tmp_path):
+    graph=analyze(tmp_path,{'src/eval.ts':'''function make(){return 1;}
+function use(){eval("make=()=>2");return make();} export const result=use();'''},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='make']
+    assert sites and all(s.get('return_body_status')=='UNKNOWN' for s in sites)
+    assert all(s.get('return_body_reason')=='TS_DIRECT_BUILTIN_EVAL' for s in sites)
+    assert all(s.get('return_mapping_status')=='PROVEN' for s in sites)
+    assert not any(e.get('transformation')=='DECLARED_BODY_RETURN' and e.get('call_site') in {s['id'] for s in sites} for e in graph['evidence'])
+
+
+def test_const_local_eval_function_is_not_builtin_eval(tmp_path):
+    graph=analyze(tmp_path,{'src/shadow.ts':'''function container(){
+const eval=(source:string)=>0; function lexical(){return 1;}
+function use(){eval("ignored");return lexical();} return use();} container();'''},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='lexical']
+    assert sites and all(s.get('return_body_status')=='DECLARED_SOURCE_BODY' for s in sites)
+
+
+def test_ambiguous_local_eval_alias_does_not_claim_lexical_body(tmp_path):
+    graph=analyze(tmp_path,{'src/alias-eval.ts':'''function container(){
+const eval=globalThis.eval;function lexical(){return 1;}
+function use(){eval("lexical=()=>2");return lexical();} return use();} container();'''},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')=='lexical']
+    assert sites and all(s.get('return_body_status')=='UNKNOWN' for s in sites)
+    assert all(s.get('return_body_reason')=='TS_DIRECT_EVAL_IDENTITY_UNKNOWN' for s in sites)
+
+
+@pytest.fixture(scope='module')
+def captured_return_response(tmp_path_factory):
+    """One real compiler response, replayed offline for protocol tampering tests."""
+    import copy
+    import kgmaker.inspection as inspection
+    root=tmp_path_factory.mktemp('captured-return')
+    captured={};original=inspection.request_worker
+    def capture(argv,payload,**kwargs):
+        response=original(argv,payload,**kwargs)
+        if payload['operation']=='analyze':
+            captured.update(response=copy.deepcopy(response),selected=copy.deepcopy(payload['context']))
+        return response
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(inspection,'request_worker',capture)
+        graph=analyze(root,{'src/main.ts':'''export function make(){return 1;}
+export function other(){const value=make();return value;}
+function tuple():[number,string]{return [1,"x"];}
+export function unpack(){const[a,b]=tuple();}
+''','src/foreign.ts':'export function foreign(){return 3;}'},language='typescript')
+    return root,captured,graph
+
+
+@pytest.mark.parametrize('mutation',[
+    'foreign_literal','missing_literal_path','literal_hash','captured_foreign_literal','literal_range','body_owner','body_context',
+    'binding_path','binding_hash','binding_owner','binding_range','node_kind_list','body_kind_dict','body_root_list','body_method_list','status_list','nullability_dict','shape_kind_list','projection_status_dict','projection_kind_list','call_site_list','binding_method_dict','binding_symbol_list','language_list','dispatch_dict','boundary_list','reference_kind_list',
+])
+def test_actual_return_ir_tampering_rejected_without_store_mutation(captured_return_response,monkeypatch,mutation):
+    import copy
+    from kgmaker.inspection import graph_from_response
+    from kgmaker.model import KnowledgeGraph
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    root,captured,graph=captured_return_response
+    response=copy.deepcopy(captured['response']);selected=copy.deepcopy(captured['selected'])
+    symbols={s['id']:s for s in response['symbols']}
+    body=next(b for b in response['bodies'] if symbols[b['method']]['name']=='make')
+    other=next(b for b in response['bodies'] if symbols[b['method']]['name']=='other')
+    def walk(value):
+        if isinstance(value,dict):
+            yield value
+            for child in value.values():yield from walk(child)
+        elif isinstance(value,list):
+            for child in value:yield from walk(child)
+    literal=next(n['value'] for n in walk(body['body']) if n.get('kind')=='return')
+    binding=next(n['value_binding'] for n in walk(other['body']) if isinstance(n.get('value_binding'),dict))
+    if mutation=='foreign_literal':literal.update(path='src/not-captured.ts',sha256='0'*64)
+    elif mutation=='missing_literal_path':literal.pop('path')
+    elif mutation=='literal_hash':literal['sha256']='0'*64
+    elif mutation=='captured_foreign_literal':literal.update(path='src/foreign.ts',sha256=selected['source_files']['src/foreign.ts'])
+    elif mutation=='literal_range':literal['range']={**literal['range'],'start':0,'end':1}
+    elif mutation=='body_owner':body['method']=other['method']
+    elif mutation=='body_context':body['context_id']='foreign'
+    elif mutation=='call_site_list':next(n for n in walk(other['body']) if n.get('kind')=='call')['call_site']=[]
+    elif mutation=='binding_method_dict':binding['method']={}
+    elif mutation=='binding_symbol_list':binding['symbol']=[]
+    elif mutation=='language_list':body['language']=[]
+    elif mutation=='dispatch_dict':body['return_dispatch']={}
+    elif mutation=='boundary_list':body['return_binding_boundary']=[]
+    elif mutation=='reference_kind_list':response['call_sites'][0]['return_reference_kind']=[]
+    elif mutation=='binding_path':binding['path']='src/not-captured.ts'
+    elif mutation=='binding_hash':binding['sha256']='0'*64
+    elif mutation=='binding_owner':binding['method']=body['method']
+    elif mutation=='binding_range':binding['range']={**binding['range'],'start':0,'end':1}
+    elif mutation=='node_kind_list':literal['kind']=[]
+    elif mutation=='body_kind_dict':body['return_body_kind']={}
+    elif mutation=='body_root_list':body['body']=[]
+    elif mutation=='body_method_list':body['method']=[]
+    elif mutation=='status_list':literal['value_info']['status']=[]
+    elif mutation=='nullability_dict':literal['value_info']['nullability']={}
+    elif mutation=='shape_kind_list':next(n['value_shape'] for n in walk(response['bodies']) if isinstance(n.get('value_shape'),dict))['kind']=[]
+    elif mutation=='projection_kind_list':next(n['projection'] for n in walk(response['bodies']) if isinstance(n.get('projection'),dict))['kind']=[]
+    elif mutation=='projection_status_dict':next(n['projection'] for n in walk(response['bodies']) if isinstance(n.get('projection'),dict))['status']={}
+    save_graph(KnowledgeGraph.from_dict(graph),root,generate_docs=False)
+    before={p.relative_to(root):p.read_bytes() for p in (root/'.kgmaker').rglob('*') if p.is_file()}
+    base=scan_repository(root)
+    monkeypatch.setattr('subprocess.Popen',lambda *a,**kw:pytest.fail('Offline response validation must not launch'))
+    with pytest.raises(WorkerError) as error:graph_from_response(root,base,response,selected)
+    assert error.value.status=='INVALID_PROTOCOL'
+    assert before=={p.relative_to(root):p.read_bytes() for p in (root/'.kgmaker').rglob('*') if p.is_file()}
+
+
+def test_future_string_ir_kind_is_unknown_not_declared_body(captured_return_response,monkeypatch):
+    import copy
+    from kgmaker.inspection import graph_from_response
+    from kgmaker.scanner import scan_repository
+    root,captured,_=captured_return_response
+    response=copy.deepcopy(captured['response'])
+    symbols={s['id']:s for s in response['symbols']}
+    body=next(b for b in response['bodies'] if symbols[b['method']]['name']=='make')
+    body['body']['statements'][0]['value']['kind']='future_control_expression'
+    monkeypatch.setattr('subprocess.Popen',lambda *a,**kw:pytest.fail('Offline IR replay must not launch'))
+    result=graph_from_response(root,scan_repository(root),response,captured['selected'])
+    sites=[s for s in result.call_sites if symbols.get(s.get('declared_target'),{}).get('name')=='make']
+    assert sites and all(s.get('return_body_status')=='UNKNOWN' for s in sites)
+    assert any(d.get('code')=='RETURN_CONTROL_FLOW_UNSUPPORTED' for d in result.diagnostics)

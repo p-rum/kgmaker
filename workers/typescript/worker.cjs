@@ -431,7 +431,10 @@ function analyze(request) {
       declaration=symbol?.valueDeclaration || symbol?.declarations?.[0];
     }
     if(!declaration || !(ts.isVariableDeclaration(declaration)||ts.isBindingElement(declaration)||ts.isParameter(declaration)) || !ts.isIdentifier(declaration.name))return null;
-    const loc=location(declaration);let parent=declaration.parent;while(parent && !callable(parent))parent=parent.parent;
+    const loc=location(declaration);
+    // External/global declaration locators are not captured source binding proof.
+    if (!context.source_files || context.source_files[loc.path]!==loc.sha256)return null;
+    let parent=declaration.parent;while(parent && !callable(parent))parent=parent.parent;
     const identity=ts.isParameter(declaration)?id(declaration):`${symbolPrefix(declaration.getSourceFile().fileName)}:binding:${loc.path}:${loc.sha256}:${loc.range.start}:${loc.range.end}`;
     return {version:1,id:identity,name:declaration.name.text,kind:ts.isParameter(declaration)?'PARAMETER':'LOCAL_VARIABLE',method:parent?id(parent):null,symbol:null,type:valueInfo(declaration),...loc};
   }
@@ -506,15 +509,19 @@ function analyze(request) {
   // Lexical declarations may be assigned too. Refuse their original body when
   // the compiler binds an assignment target to that declaration; members are
   // mutable regardless of static/TypeScript-private modifiers.
-  const reassignedFunctions=new Set();
+  const reassignedFunctions=new Set(), directEvalCalls=[], dynamicScopeFiles=new Map();
   function assignedFunctions(node) {
-    if (ts.isIdentifier(node)) {
-      const owned=declarationContext(node), symbol=owned.checker.getSymbolAtLocation(owned.node);
+    if (ts.isIdentifier(node)||ts.isShorthandPropertyAssignment(node)) {
+      const owned=declarationContext(node);
+      const symbol=ts.isShorthandPropertyAssignment(owned.node)
+        ? owned.checker.getShorthandAssignmentValueSymbol(owned.node)
+        : owned.checker.getSymbolAtLocation(owned.node);
       for (const declaration of symbol&&symbol.declarations||[])
         if (ts.isFunctionDeclaration(declaration)) reassignedFunctions.add(id(declaration));
     } else ts.forEachChild(node,assignedFunctions);
   }
   function inspectAssignments(node) {
+    if (ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='eval') directEvalCalls.push(node.expression);
     if (ts.isForOfStatement(node)||ts.isForInStatement(node)) assignedFunctions(node.initializer);
     if (ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
       assignedFunctions(node.left);
@@ -523,10 +530,27 @@ function analyze(request) {
     ts.forEachChild(node,inspectAssignments);
   }
   for (const source of projectFiles) inspectAssignments(source);
+  const builtinEvalFile=fs.realpathSync(path.join(path.dirname(require.resolve('typescript')),'lib.es5.d.ts'));
+  for (const expression of directEvalCalls) {
+    const owned=declarationContext(expression);
+    let symbol=owned.checker.getSymbolAtLocation(owned.node);
+    if (symbol&&(symbol.flags&ts.SymbolFlags.Alias)) symbol=owned.checker.getAliasedSymbol(symbol);
+    const declarations=symbol&&symbol.declarations||[];
+    const builtin=declarations.some(d=>d.getSourceFile().isDeclarationFile&&fs.realpathSync(d.getSourceFile().fileName)===builtinEvalFile&&ts.isFunctionDeclaration(d)&&d.name&&d.name.text==='eval');
+    const knownLocal=declarations.length>0&&declarations.every(d=>
+      ts.isFunctionDeclaration(d)&&d.body&&!d.getSourceFile().isDeclarationFile&&
+        ((ts.isSourceFile(d.parent)&&ts.isExternalModule(d.parent))||ts.isBlock(d.parent))&&!reassignedFunctions.has(id(d))||
+      ts.isVariableDeclaration(d)&&d.initializer&&ts.isVariableDeclarationList(d.parent)&&(d.parent.flags&ts.NodeFlags.Const)&&
+        (ts.isArrowFunction(d.initializer)||ts.isFunctionExpression(d.initializer)));
+    if (!knownLocal||builtin) {
+      const file=path.resolve(expression.getSourceFile().fileName);
+      if (builtin||!dynamicScopeFiles.has(file)) dynamicScopeFiles.set(file,builtin?'TS_DIRECT_BUILTIN_EVAL':'TS_DIRECT_EVAL_IDENTITY_UNKNOWN');
+    }
+  }
   for (const node of functionNodes) {
     const flags=ts.getCombinedModifierFlags(node);
     const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
-    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&((ts.isSourceFile(node.parent)&&ts.isExternalModule(node.parent))||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_binding_boundary:dynamicScopeFiles.get(path.resolve(node.getSourceFile().fileName))||null,return_dispatch:ts.isFunctionDeclaration(node)&&!dynamicScopeFiles.has(path.resolve(node.getSourceFile().fileName))&&((ts.isSourceFile(node.parent)&&ts.isExternalModule(node.parent))||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
   }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');

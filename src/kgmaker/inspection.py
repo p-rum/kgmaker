@@ -208,7 +208,7 @@ def validate_response(response: dict, selected_context: dict):
         if site.get("evidence_kind") == "SYMBOL_RESOLVED" and not site.get("declared_target"):
             raise WorkerError("Resolved call has no declared target", "INVALID_PROTOCOL")
     for body in response["bodies"]:
-        if body.get("method") not in ids or body.get("context_id") != selected_context["id"]:
+        if not isinstance(body, dict) or not isinstance(body.get("method"), str) or body["method"] not in ids or body.get("context_id") != selected_context["id"]:
             raise WorkerError("Unknown method body/context", "INVALID_PROTOCOL")
     for fact in response["facts"]:
         if fact.get("source") not in ids or fact.get("target") not in ids:

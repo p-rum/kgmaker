@@ -204,7 +204,7 @@ class KotlinFrontend(private val state: State) {
                 super.visitNamedFunction(function)
                 function.bodyExpression?.let { state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],"return_flow_version",1,
                     "return_body_kind",if(descriptor.isSuspend)"ASYNC" else if(function.parent !is KtFile && function.parent !is KtClassBody)"CALLABLE" else "DECLARED","return_type",valueInfo(descriptor.returnType),
-                    "body",if(function.hasBlockBody())ir(it) else State.map("kind","return","value",ir(it)))) }
+                    "body",if(function.hasBlockBody())ir(it) else State.map("kind","return","value",ir(it)).apply {putAll(loc(it))})) }
             }catch(error: Exception) {state.diagnostic("KOTLIN_UNSUPPORTED_MAPPING",error.message?:error.javaClass.name,loc(function))}
             finally{caller=old}
         }

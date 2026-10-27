@@ -64,3 +64,29 @@ initializer targets podle compiler bindings. Top-level script functions jsou glo
 object members, tedy UNKNOWN; pouze source module/block lexical jsou kandidáti
 closed proof. Finální grouped TS10 PASS44.62s. Předchozí9f full byl přerušen po
 konkrétním nálezu266.95s (pytest SIGINT interruption), nikoli final PASS.
+
+## Grouped protocol/source-proof repair před finálním full
+
+Shorthand assignment targets nyní používají veřejné TypeChecker
+`getShorthandAssignmentValueSymbol`; plain/loop/default shorthand byly3 RED,
+renamed property již PASS, grouped14 actual TS PASS69.31s. Compiler-bound direct
+builtin eval či ambiguous eval identity zneplatní lexical body join v celém souboru;
+string se nečte/nevyhodnocuje, skutečný const local arrow eval je odlišen.
+Builtin identity používá skutečný lib.es5.d.ts locator; targeted3 PASS7.10s.
+
+Actual captured-response replay prokázal12 RED/2 PASS2.56s: non-call return locator
+nebyl svázán s captured snapshot/owner, některé container enums způsobily TypeError.
+Oprava váže source proof na metodu/context/path/SHA a enclosing IR range, validuje
+binding declaration ownership a canonical local/parameter identity. UNKNOWN future
+IR kind zůstane boundary; list/dict kind/status/nullability/reference jsou
+INVALID_PROTOCOL bez změny posledního validního store. Nyní28 actual-response
+replay cases PASS7.90s (27 tamper +future-string). Interval index omezuje opakované
+hledání enclosing method. Uncaptured TS dependency/global declaration binding se
+nevydává za source binding proof; typed caller expression zůstává zachována.
+K1 expression-body wrapper dostává skutečný compiler body locator; rebuild čeká
+sdílený lock, aktuální whole-module/final-full zatím NENÍ tvrzen PASS.
+
+Ancestor protocol fixes PR47 `f92c83e` a `ee14ea8` jsou převzaty jako `1537c10`
+a `ae5fa2b`: strict argument enums/callsite references, owner a canonical occurrence
+index. Finální full čeká jejich aktualizovaný parent s current-main integrací;
+předchozí155 PASS109.35s focus je historický source9f, nikoli finální current proof.

@@ -22,8 +22,12 @@ def _range(value):
 
 def _info(value):
     return (isinstance(value,dict) and type(value.get('version')) is int and value['version']==1
-            and value.get('status') in _VALUE_STATUSES and isinstance(value.get('type_ref'),str)
-            and len(value['type_ref'])<=2048 and value.get('nullability') in _NULLABILITY)
+            and _enum(value.get('status'),_VALUE_STATUSES) and isinstance(value.get('type_ref'),str)
+            and len(value['type_ref'])<=2048 and _enum(value.get('nullability'),_NULLABILITY))
+
+
+def _enum(value,allowed):
+    return isinstance(value,str) and value in allowed
 
 
 def _children(node):
@@ -42,22 +46,76 @@ def _children(node):
 
 def validate_return_ir(response,context=None):
     """Optional IR extension: reject malformed proof before graph publication."""
-    ids={s['id'] for s in response['symbols']};sites={s['id']:s for s in response['call_sites']}
+    symbols={s['id']:s for s in response['symbols']};ids=set(symbols);sites={s['id']:s for s in response['call_sites']}
     snapshot=(context or {}).get('source_files')
+    context_id=(context or {}).get('id',response.get('context_id'))
+    owners=[symbols[b['method']] for b in response['bodies'] if isinstance(b.get('method'),str) and b['method'] in symbols]
+    # Interval trees avoid scanning every method for every repeated local read.
+    groups={}
+    for owner in owners:
+        if (owner.get('context_id')==context_id and isinstance(owner.get('path'),str)
+                and isinstance(owner.get('sha256'),str) and _range(owner.get('range'))):
+            groups.setdefault((owner['path'],owner['sha256']),[]).append(owner)
+    def index(values):
+        if not values:return None
+        middle=len(values)//2;left=index(values[:middle]);right=index(values[middle+1:]);value=values[middle]
+        return value,max(value['range']['end'],left[1] if left else 0,right[1] if right else 0),left,right
+    indexes={key:index(sorted(values,key=lambda o:(o['range']['start'],o['range']['end']))) for key,values in groups.items()}
+    def enclosing_owners(value):
+        pending=[indexes.get((value['path'],value['sha256']))];result=[];span=value['range']
+        while pending:
+            entry=pending.pop()
+            if entry is None or entry[1]<span['end']:continue
+            owner,_,left,right=entry
+            if owner['range']['start']<=span['start']:
+                if span['end']<=owner['range']['end']:result.append(owner)
+                pending.append(right)
+            pending.append(left)
+        return result
+
+    def location(value,owner=None):
+        if not isinstance(value,dict):raise ValueError('Invalid return proof source locator')
+        path=value.get('path');checksum=value.get('sha256');span=value.get('range')
+        if (not isinstance(path,str) or not isinstance(checksum,str) or not _range(span)
+                or not isinstance(snapshot,dict) or path not in snapshot or snapshot[path]!=checksum):
+            raise ValueError('Return proof source snapshot/range mismatch')
+        if owner is not None and (owner.get('context_id')!=context_id or owner.get('path')!=path
+                or owner.get('sha256')!=checksum or not _range(owner.get('range'))
+                or not owner['range']['start']<=span['start']<span['end']<=owner['range']['end']):
+            raise ValueError('Return proof source owner mismatch')
+
     count=0
     for body in response['bodies']:
         if 'return_flow_version' not in body:continue
         if type(body['return_flow_version']) is not int or body['return_flow_version']!=1:
             raise ValueError('Unsupported return IR version')
-        if body.get('return_body_kind') not in {'DECLARED','ERROR','CONSTRUCTOR','CALLABLE','ASYNC','GENERATOR','ACCESSOR'}:
+        if not _enum(body.get('return_body_kind'),{'DECLARED','ERROR','CONSTRUCTOR','CALLABLE','ASYNC','GENERATOR','ACCESSOR'}):
             raise ValueError('Invalid return body kind')
         if body['return_body_kind']=='DECLARED' and not _info(body.get('return_type')):
             raise ValueError('Invalid declared return type proof')
-        pending=[(body.get('body',{}),0)]
+        if not _enum(body.get('language'),{'java','kotlin','typescript'}):raise ValueError('Invalid return IR language')
+        if 'return_dispatch' in body and not _enum(body['return_dispatch'],{'OPEN','STATIC','PRIVATE','LEXICAL','HARD_PRIVATE'}):
+            raise ValueError('Invalid return dispatch proof')
+        if body.get('return_binding_boundary') is not None and not _enum(body['return_binding_boundary'],{'TS_DIRECT_BUILTIN_EVAL','TS_DIRECT_EVAL_IDENTITY_UNKNOWN'}):
+            raise ValueError('Invalid return binding boundary')
+        active=body['return_body_kind']=='DECLARED'
+        owner=symbols.get(body.get('method')) if isinstance(body.get('method'),str) else None
+        if active:
+            if owner is None or body.get('context_id')!=context_id:raise ValueError('Invalid return method owner/context')
+            location(owner,owner)
+            location(body.get('body',{}),owner)
+        pending=[(body.get('body',{}),0,owner)]
         while pending:
-            node,depth=pending.pop();count+=1
+            node,depth,parent=pending.pop();count+=1
             if not isinstance(node,dict) or count>200000 or depth>256:raise ValueError('Return IR bounds exceeded')
+            if not isinstance(node.get('kind'),str):raise ValueError('Invalid return IR kind')
             if 'value_info' in node and not _info(node['value_info']):raise ValueError('Invalid return expression type proof')
+            located=any(k in node for k in ('path','sha256','range'))
+            if active and (located or 'value_info' in node or node['kind'] in {'if','assign','destructure','safe_call'}):
+                location(node,owner)
+                if (parent.get('path')!=node['path'] or parent.get('sha256')!=node['sha256']
+                        or not parent['range']['start']<=node['range']['start']<node['range']['end']<=parent['range']['end']):
+                    raise ValueError('Return expression escapes enclosing source range')
             binding=node.get('value_binding')
             targets=node.get('value_targets',[])
             if not isinstance(targets,list) or len(targets)>256:raise ValueError('Invalid destructuring proof')
@@ -65,16 +123,33 @@ def validate_return_ir(response,context=None):
             for item in bindings:
                 if (not isinstance(item,dict) or type(item.get('version')) is not int or item['version']!=1
                         or not isinstance(item.get('id'),str) or not isinstance(item.get('name'),str)
-                        or item.get('kind') not in {'LOCAL_VARIABLE','PARAMETER','FIELD','ENUM_CONSTANT'}
+                        or not _enum(item.get('kind'),{'LOCAL_VARIABLE','PARAMETER','FIELD','ENUM_CONSTANT'})
                         or not _range(item.get('range')) or not isinstance(item.get('path'),str)
                         or not isinstance(item.get('sha256'),str) or not _info(item.get('type'))
-                        or (item.get('method') is not None and item['method'] not in ids)
-                        or (item.get('symbol') is not None and item['symbol'] not in ids)):
+                        or (item.get('method') is not None and (not isinstance(item['method'],str) or item['method'] not in ids))
+                        or (item.get('symbol') is not None and (not isinstance(item['symbol'],str) or item['symbol'] not in ids))):
                     raise ValueError('Invalid return consumer binding proof')
-                if isinstance(snapshot,dict) and item['path'] in snapshot and snapshot[item['path']]!=item['sha256']:
-                    raise ValueError('Return binding source snapshot mismatch')
+                if active:
+                    declaration_owner=symbols.get(item.get('method'))
+                    location(item,declaration_owner)
+                    if item['kind']=='PARAMETER':
+                        if declaration_owner is None or not item['id'].startswith(item['method']+':parameter:'):
+                            raise ValueError('Return parameter binding owner mismatch')
+                    elif item['kind']=='LOCAL_VARIABLE':
+                        span=item['range']
+                        enclosing=enclosing_owners(item)
+                        if enclosing:
+                            size=min(o['range']['end']-o['range']['start'] for o in enclosing)
+                            if item.get('method') not in {o['id'] for o in enclosing if o['range']['end']-o['range']['start']==size}:
+                                raise ValueError('Return local binding owner mismatch')
+                        if not item['id'].endswith(f":{item['path']}:{item['sha256']}:{span['start']}:{span['end']}"):
+                            raise ValueError('Return local binding identity mismatch')
+                    else:
+                        declaration=symbols.get(item.get('symbol'))
+                        if declaration is None or declaration.get('context_id')!=context_id or any(item.get(k)!=declaration.get(k) for k in ('path','sha256','range')):
+                            raise ValueError('Return field binding declaration mismatch')
             shape=node.get('value_shape')
-            if shape is not None and (not isinstance(shape,dict) or shape.get('kind') not in {'TUPLE_ELEMENT','OBJECT_PROPERTY'}
+            if shape is not None and (not isinstance(shape,dict) or not _enum(shape.get('kind'),{'TUPLE_ELEMENT','OBJECT_PROPERTY'})
                     or (shape['kind']=='TUPLE_ELEMENT' and (type(shape.get('size')) is not int or not 0<=shape['size']<=256))
                     or (shape['kind']=='OBJECT_PROPERTY' and (not isinstance(shape.get('keys'),list) or len(shape['keys'])>256 or not all(isinstance(k,str) for k in shape['keys'])))):
                 raise ValueError('Invalid return projection shape')
@@ -82,17 +157,22 @@ def validate_return_ir(response,context=None):
                 if not isinstance(node['value_targets'],list) or len(node['value_targets'])>256:raise ValueError('Invalid destructuring proof')
                 for target in node['value_targets']:
                     projection=target.get('projection') if isinstance(target,dict) else None
-                    if (not isinstance(projection,dict) or projection.get('status') not in {'PROVEN','UNKNOWN'}
-                            or projection.get('kind') not in {'DATA_COMPONENT','TUPLE_ELEMENT','OBJECT_PROPERTY'}
+                    if (not isinstance(projection,dict) or not _enum(projection.get('status'),{'PROVEN','UNKNOWN'})
+                            or not _enum(projection.get('kind'),{'DATA_COMPONENT','TUPLE_ELEMENT','OBJECT_PROPERTY'})
                             or type(projection.get('index')) is not int or projection['index']<0
-                            or (projection.get('component_target') is not None and projection['component_target'] not in ids)):
+                            or (projection.get('component_target') is not None and (not isinstance(projection['component_target'],str) or projection['component_target'] not in ids))):
                         raise ValueError('Invalid destructuring projection proof')
             if node.get('kind')=='call' and node.get('call_site') is not None:
-                site=sites.get(node['call_site'])
+                site=sites.get(node['call_site']) if isinstance(node['call_site'],str) else None
                 if not site or site.get('caller')!=body['method']:raise ValueError('Return call belongs to another caller')
+                if 'return_reference_kind' in site and not _enum(site['return_reference_kind'],{'LEXICAL_IDENTIFIER','PROPERTY_OR_OTHER'}):
+                    raise ValueError('Invalid return callable reference proof')
                 if node.get('value_info',{}).get('status')=='VALUE' and (node.get('range')!=site.get('range') or node.get('path')!=site.get('path') or node.get('sha256')!=site.get('sha256')):
                     raise ValueError('Return call source range mismatch')
-            pending.extend((child,depth+1) for child in _children(node))
+            # Kotlin's selector call excludes its receiver in the source span;
+            # retain the enclosing expression/statement boundary for call children.
+            anchor=node if active and located and node['kind']!='call' else parent
+            pending.extend((child,depth+1,anchor) for child in _children(node))
 
 
 class _Projection:
@@ -281,7 +361,7 @@ class _Projection:
             pending=[body.get('body',{})];unsupported=False
             while pending:
                 node=pending.pop()
-                if node.get('kind') in {'while','do','for','foreach','try','switch','unsupported','throw','break','continue','await'}:unsupported=True;break
+                if node.get('kind') not in {'block','return','if','call','reference','safe_call','assign','destructure','sequence','statement','empty','true','and','or','elvis'}:unsupported=True;break
                 pending.extend(_children(node))
             if unsupported:self.supported[method]=False;self.issue('RETURN_CONTROL_FLOW_UNSUPPORTED',body.get('body'));continue
             self.execute(body.get('body',{}),{})
@@ -322,7 +402,7 @@ class _Projection:
                 site['return_body_reason']='COMPILER_PROVEN_DIRECT_SOURCE_BODY'
             else:
                 site['return_body_status']='UNKNOWN'
-                site['return_body_reason']='TS_MUTABLE_BODY_BINDING' if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE'
+                site['return_body_reason']=(body.get('return_binding_boundary') or 'TS_MUTABLE_BODY_BINDING') if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE'
             if 'return_mapping_version' not in site:
                 self.status(site,'NOT_EXECUTION' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'UNKNOWN',
                     'METHOD_REFERENCE' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'RETURN_SOURCE_IR_UNAVAILABLE')
