@@ -788,3 +788,16 @@ properties, binder-alias privacy, benign references, complete graph/coverage
 absence of the synthetic secret, source/index/cache immutability, original
 context validation and unchanged non-JVM selection identity. See note54 for the
 independently reproduced prior defect and current validation evidence.
+
+
+Redacted public contexts remain selectable by T006 with an explicit repository
+checkout. `workspace.validate_projected_context` reads the existing private
+graph store, requires exactly one matching original context, and compares the
+entire rederived qualified/redacted projection (including repository alias) to
+the supplied context. It recomputes the raw selector and uses the existing
+validator on the original input for condition/source/classpath/worker freshness.
+The marker/hash alone establishes no authority. Missing store/root, duplicate or
+forged identity/marker/body/hash, and changed original bytes fail closed. Only
+the unchanged public redacted context continues through selection; private
+properties are never returned or substituted into the public graph/cache.
+Unprojected context validation retains its previous path.

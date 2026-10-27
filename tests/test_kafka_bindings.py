@@ -280,8 +280,16 @@ def test_actual_captured_context_properties_and_offline_staleness(kafka_workspac
     source.parent.mkdir(parents=True)
     source.write_text("package app; public class Producer { public String value(){return \"static\";} }")
     result = inspect_jvm(root / "producer", home=home, kotlin_backend=backend, repo_id="producer",
-        build_context={"spring_profiles": ["blue"], "spring_properties": {"orders.topic": "captured-topic"}})
+        build_context={"spring_profiles": ["blue"], "spring_properties": {"orders.topic": "captured-topic",
+            "spring.kafka.password": "SYNTHETIC_ACTUAL_CAPTURED_PRIVATE_VALUE"}})
+    original_store = (root / "producer/.kgmaker/graph.json").read_bytes()
     graph = snapshot_workspace(manifest)[3]
+    from kgmaker.views import select_service_contexts
+    selection = select_service_contexts(graph, [{"service_id": "producer-svc", "repo_id": "producer", "module": "root"}],
+        scope="production", repo_roots={"producer": root / "producer"})
+    assert selection["services"][0]["status"] == "CURRENT"
+    assert "SYNTHETIC_ACTUAL_CAPTURED_PRIVATE_VALUE" not in json.dumps([selection, graph.to_dict()])
+    assert (root / "producer/.kgmaker/graph.json").read_bytes() == original_store
     binding = next(n for n in graph.nodes if n.kind == "kafka_binding" and n.metadata["repo_id"] == "producer")
     assert binding.metadata["status"] == "RESOLVED" and binding.metadata["topic"] == "captured-topic"
     derived = next(c for c in graph.contexts if c["id"] == binding.metadata["context_id"])
@@ -376,15 +384,15 @@ def test_sensitive_property_reference_never_exports_topic(kafka_workspace, key, 
     assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
 
 
-def captured_config_context(root, repo, properties, *, language="jvm"):
+def captured_config_context(root, repo, properties, *, language="jvm", classpath=None, context_repo_id=None):
     """Offline captured-input fixture, not a claim of compiler execution."""
     from kgmaker.inspection import context
     from kgmaker.store import save_graph
     from kgmaker.graph_provider import validate_context_snapshot
     checkout = root / repo
     graph = scan_repository(checkout)
-    selected = context(checkout, graph, language, {}, repo_id=repo, module="root", source_set="main", scope="production",
-        build_context={"spring_profiles": ["blue"], "spring_properties": properties})
+    selected = context(checkout, graph, language, {}, repo_id=context_repo_id or repo, module="root", source_set="main", scope="production",
+        build_context={"spring_profiles": ["blue"], "spring_properties": properties, **({"classpath": classpath} if classpath is not None else {})})
     graph.contexts.append(selected)
     save_graph(graph, checkout)
     validate_context_snapshot(checkout, selected)
@@ -465,4 +473,89 @@ def test_public_kafka_projection_preserves_non_jvm_selection_identity(kafka_work
     assert exported["framework_rule_versions"] == selected["framework_rule_versions"]
     assert exported["spring_properties_projection"]["original_context_id"] == selected["id"]
     assert (root / "producer/.kgmaker/graph.json").read_bytes() == before
+    from kgmaker.views import select_service_contexts
+    selection = select_service_contexts(graph, [{"service_id": "producer-svc", "repo_id": "producer", "module": "root"}],
+        scope="production", repo_roots={"producer": root / "producer"})
+    assert selection["services"][0]["status"] == "CURRENT"
+    assert sentinel not in json.dumps(selection)
     validate_context_snapshot(root / "producer", selected)
+
+
+@pytest.mark.parametrize("context_repo_id", ["producer", "local"])
+def test_public_redacted_context_remains_selectable_from_valid_original(kafka_workspace, context_repo_id):
+    from kgmaker.views import select_service_contexts
+    root, manifest, _ = kafka_workspace
+    sentinel = "SYNTHETIC_T006_PRIVATE_VALUE"
+    original = captured_config_context(root, "producer", {"spring.kafka.password": sentinel, "orders.topic": "orders"}, context_repo_id=context_repo_id)
+    graph = snapshot_workspace(manifest)[3]
+    public = next(c for c in graph.contexts if c.get("repo_id") == "producer" and c.get("analyzer_version"))
+    before_graph = copy.deepcopy(graph.to_dict())
+    before_files = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    before_cache = copy.deepcopy(_REPO_CACHE)
+    with patch("subprocess.Popen", side_effect=AssertionError("selection must not run a process")):
+        selection = select_service_contexts(graph, [{"service_id": "producer-svc", "repo_id": "producer", "module": "root"}],
+            scope="production", repo_roots={"producer": root / "producer"})
+    assert selection["services"][0]["context_id"] == public["id"]
+    assert selection["services"][0]["status"] == "CURRENT"
+    assert sentinel not in json.dumps([selection, graph.to_dict()])
+    assert graph.to_dict() == before_graph and _REPO_CACHE == before_cache
+    assert before_files == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    assert public["selection_key"] == original["selection_key"]
+
+
+@pytest.mark.parametrize("case", ["marker", "marker-hash", "original-id", "map", "public-id", "public-repo", "missing-root",
+    "wrong-root", "missing-store", "duplicate-original", "source", "classpath", "forged-both-selector", "forged-both-condition"])
+def test_redacted_context_selection_rejects_forgery_or_stale_original(kafka_workspace, case):
+    import hashlib
+    from kgmaker.views import ContextSelectionError, select_service_contexts
+    root, manifest, _ = kafka_workspace
+    sentinel = "SYNTHETIC_T006_PRIVATE_VALUE"
+    dependency = root / "dep.jar"
+    dependency.write_bytes(b"original dependency")
+    original = captured_config_context(root, "producer", {"spring.kafka.password": sentinel},
+        classpath=[{"path": str(dependency), "sha256": hashlib.sha256(dependency.read_bytes()).hexdigest()}])
+    captured_config_context(root, "consumer", {"spring.kafka.password": sentinel})
+    graph = snapshot_workspace(manifest)[3]
+    public = next(c for c in graph.contexts if c.get("repo_id") == "producer" and c.get("analyzer_version"))
+    store = root / "producer/.kgmaker/graph.json"
+    roots = {"producer": root / "producer"}
+    if case == "marker":
+        public["spring_properties_projection"]["redacted"] = False
+    elif case == "marker-hash":
+        public["spring_properties_projection"]["sha256"] = "0" * 64
+    elif case == "original-id":
+        public["spring_properties_projection"]["original_context_id"] = "0" * 64
+    elif case == "map":
+        public["spring_properties"]["orders.topic"] = "forged"
+    elif case == "public-id":
+        public["id"] += "-forged"
+    elif case == "public-repo":
+        public["repo_id"] = "consumer"
+    elif case == "missing-root":
+        roots = None
+    elif case == "wrong-root":
+        roots["producer"] = root / "consumer"
+    elif case == "missing-store":
+        store.unlink()
+    elif case == "source":
+        (root / "producer/src/main/resources/application-blue.properties").write_text("orders.topic=edited\n")
+    elif case == "classpath":
+        dependency.write_bytes(b"changed dependency")
+    else:
+        payload = json.loads(store.read_text())
+        raw = next(c for c in payload["contexts"] if c.get("id") == original["id"])
+        if case == "duplicate-original":
+            payload["contexts"].append(copy.deepcopy(raw))
+        else:
+            field = "selection_key" if case == "forged-both-selector" else "spring_condition_inputs_hash"
+            raw[field] = public[field] = "f" * 64
+        store.write_text(json.dumps(payload))
+    before_graph = copy.deepcopy(graph.to_dict())
+    before_files = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    before_cache = copy.deepcopy(_REPO_CACHE)
+    with patch("subprocess.Popen", side_effect=AssertionError("failed selection must not run a process")):
+        with pytest.raises(ContextSelectionError):
+            select_service_contexts(graph, [{"service_id": "producer-svc", "repo_id": "producer", "module": "root"}],
+                scope="production", repo_roots=roots)
+    assert graph.to_dict() == before_graph and _REPO_CACHE == before_cache
+    assert before_files == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}

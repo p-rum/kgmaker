@@ -49,6 +49,41 @@ def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False)
     return result
 
 
+def validate_projected_context(root: Path, repo: str, public_context: dict) -> None:
+    """Validate a public redacted view against its private saved authority."""
+    from .store import load_graph
+    from .graph_provider import _selection_key, validate_context_snapshot
+    from .worker_protocol import WorkerError
+
+    def stale():
+        return WorkerError("STALE_INDEX: redacted context requires its matching valid original; inspect again", "STALE")
+
+    projection = public_context.get('spring_properties_projection')
+    if (not isinstance(projection, dict)
+            or set(projection) != {'redacted', 'sha256', 'original_context_id'}
+            or projection['redacted'] is not True
+            or not isinstance(projection['sha256'], str) or not _CONTENT_HASH.fullmatch(projection['sha256'])
+            or not isinstance(projection['original_context_id'], str)):
+        raise stale()
+    stored = load_graph(root)
+    matches = [context for context in stored.contexts if context.get('id') == projection['original_context_id']] if stored else []
+    if len(matches) != 1 or not matches[0].get('analyzer_version'):
+        raise stale()
+    original = matches[0]
+    expected = {**_qualified_context(repo, original, redact_kafka_properties=True), 'repo_id': repo}
+    # Compare the complete projection, not just caller-supplied marker hashes.
+    if expected != public_context:
+        raise stale()
+    recorded = original.get('selection_key')
+    recomputed = _selection_key({key: value for key, value in original.items() if key != 'selection_key'})
+    if not isinstance(recorded, str) or _selection_key(original) != recomputed:
+        raise stale()
+    try:
+        validate_context_snapshot(root, original)
+    except (ValueError, OSError):
+        raise stale() from None
+
+
 def _qualified_symbol(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])

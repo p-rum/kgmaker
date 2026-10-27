@@ -167,3 +167,30 @@ PYTHONPATH=/workspace/kafka-bindings/src /workspace/kgmaker-venv/bin/python \
 Aktuální oprava zůstává local-only pro root review před push; žádný vlastní
 publikační retry, CI retry nebo merge. Změna upřesňuje existující AC03, nepřidává
 nový task/milník ani runtime/data availability proof.
+
+
+### Zachování public T006 selection po redakci
+
+Nezávislé review `2fff818` potvrdilo opravu sensitive expansion, ale odhalilo
+kompatibilitu: T006 validoval redigovanou property mapu proti původnímu condition
+hash a vracel STALE_CONTEXT. Vlastní full byl stále pouze queued a byl bezpečně
+zrušen před pytest child; neproběhl žádný test ani PASS. Persistent stop reason
+je ve validation adresáři. Po opravě collection typo v novém testu (1 collection
+error, žádný PASS) actual public pozitivní regression před runtime opravou:
+**1 FAIL, 81 DESELECTED v0.27s**, přesné STALE_CONTEXT z T006.
+
+Root a architect schválili bounded gate v existujícím workspace/T006: načíst
+právě jeden původní kontext z explicitního checkout graph.json, znovu odvodit
+celou qualified/redacted reprezentaci a přesně ji porovnat s public kontextem
+včetně repo alias. Recompute raw selector a stávající validator poté ověří
+původní condition/source/classpath/worker snapshot. Marker ani hash samostatně
+není důkaz. Soukromý kontext neopustí helper, nepřepisuje public context/store/cache.
+Bez explicitního root, s missing/duplicitním store kontextem, forged
+marker/hash/id/map/repo/selector/condition nebo stale source/classpath gate
+fail closed bez procesů a bez mutace. Unprojected cesta zůstává původní.
+
+První public Kafka/workspace/availability/T006 focused: **113 PASS, 2 DESELECTED
+v11.78s**; s pozitivním repo aliasem producer→local **114 PASS, 2 DESELECTED
+v14.09s**. Reálné K1/K2 případy nyní rovněž žádají T006 selection nad citlivým
+captured input a hlídají private store; novou actual/full validaci nelze
+vydávat za dokončenou. Žádný souběžný heavy test ani external write.
