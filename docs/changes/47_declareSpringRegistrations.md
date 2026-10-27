@@ -196,3 +196,65 @@ odmítl Draft PR automatickým posouzením: chybí explicitní repository-egress
 souhlas pro private p-rum/kgmaker. Read-only app check ověřil repository1394670937,
 admin/push práva a přesný origin; žádný CLI/alternativní bypass ani retry/merge
 neproběhl. Dřívější push kandidáta d6a61b3 uspěl, aktuální finální source je lokální.
+
+
+## Integrace schváleného kandidáta s main09d (2026-10-27)
+
+Root publikoval původní schválený source `7859e165` jako DraftPR53; dřívější
+publikační/billing block výše popisuje historický stav. Billing byl obnoven.
+Nyní je lokálně integrován přesný main
+`09d351d379b43c697451f93c8735a008204d8d9b`: PR48/T009, rootem ověřených7 CI
+checks v run40483160106 a jsonschema4.23.0 v unit/Windows test preparation.
+Číslo47 a původní omezený work package zůstávají stejné.
+
+Main nemění Java worker source ani Factory runtime. Osm feature runtime/test
+souborů je blob-identických `7859e165`; jediný sdílený views.py má přesně
+stejný Factory added/removed patch jako před integrací a současně všechny
+nové T009 evidence/schema změny. Pinned worker/API vstupy se nemění, žádný
+implicitní rebuild/fetch. Nová jsonschema test dependency je v aktuálním
+sdíleném venv4.23.0; všech7 CI gate definitions a mandatory Spring suite zůstaly.
+
+Merge řeší jen generated graph a semantic artifact konflikty. Sémantická unie
+zachovává všech115 main episodes jako immutable prefix a obě jedinečné Factory
+episodes beze změny; core7 concepts/18edges je unie včetně T009. Citace README
+jsou na skutečných semantic prepare/update bullets167/169, architecture ownership/
+inventory156/164 a Javac STATIC proof113. Graph se regeneruje CLI, nikoli ručně.
+
+První integration focus (T005/T006/T008/T009 schema/service views, mandatory CI a
+Windows preparation): **90 PASS, 1 native-Windows SKIP v2.46s**. Actual Factory/
+imports/protocol/context compatibility se ověřuje samostatně pod shared lock;
+queued nebo running stav se nevydává za PASS. Starý **558PASS/10SKIP** zůstává
+feature proof pro byte-identický Factory runtime; whole local full se kvůli
+čistému merge neopakuje. Nový přesný integration head musí po root publication
+projít fresh všech7 remote checks; CI na předchozím main není proof nového páru.
+Autor nevykonává push, CI retry ani merge PR.
+
+Integration actual focus dokončen: **59 PASS v122.12s**, exit0, genuine K1/K2 a
+pinned Spring6.2.2 API classpath byly mandatory. Testy zahrnují Factory namespace/
+producer bounds, registry podmínky, legacy/protocol/store negatives a TS context
+identity. Persistent preflight/log/XML/basetemp jsou v
+`/workspace/validation/spring-factory-integration-09d/`; žádný souběžný full,
+implicitní worker build ani source mutation. Celkem dvě relevantní sady:
+**149 PASS a1 native-Windows SKIP**; nejde o nově provedený whole local full.
+
+```bash
+# Děděný PATH zachovává managed Node; explicitní JDK21+Kotlin prefix.
+export JAVA_HOME=/workspace/tools/jdk-21.0.6+7
+export PATH="$JAVA_HOME/bin:/workspace/tools/kotlinc/bin:$PATH"
+flock /workspace/kgmaker-heavy-tests.lock env KGMAKER_REQUIRE_WORKERS=1 \
+  KGMAKER_REQUIRE_K2=1 KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/spring-factories/workers \
+  PYTHONPATH=/workspace/spring-factories/src /workspace/kgmaker-venv/bin/python \
+  -m pytest -q -rs --tb=short tests/test_spring_registrations.py \
+  tests/test_spring_imports.py tests/test_spring_imports_context.py \
+  tests/test_worker_protocol.py \
+  --basetemp=/workspace/validation/spring-factory-integration-09d/actual-temp \
+  --junitxml=/workspace/validation/spring-factory-integration-09d/actual.xml
+```
+
+Finální scoped semantic update/apply/validate, CLI scan/check a diff check PASS;
+žádné nové semantic business facts ani přepsání zachovaných epizod se nevymýšlí.
+Původní dvě Factory implementační epizody už nesou validated source proof;
+čistá integrace je durable orchestrator artifact, nikoli nový implementation
+scope. Finální commit je lokální merge aktuálního main, bez publikace autorem.

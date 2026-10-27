@@ -48,7 +48,7 @@ try {
     $developerVenv = Join-Path $WorkRoot 'developer venv'
     Invoke-Tool $Python @('-m', 'venv', $developerVenv)
     $developerPython = Join-Path $developerVenv 'Scripts/python.exe'
-    Invoke-Tool $developerPython @('-m', 'pip', 'install', 'pytest==8.3.4', 'setuptools==84.2.1', 'wheel==0.48.0')
+    Invoke-Tool $developerPython @('-m', 'pip', 'install', 'pytest==8.3.4', 'jsonschema==4.23.0', 'setuptools==84.2.1', 'wheel==0.48.0')
     Invoke-Tool $developerPython @('-m', 'pip', 'install', '--no-build-isolation', '--no-deps', '-e', $source)
 
     $mavenArchive = Join-Path $WorkRoot 'maven.tar.gz'
