@@ -523,6 +523,13 @@ nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
 
+V tomto omezeném JPA subsetu K2 zachovává compiler-resolved annotation identity,
+use-site placement a konstantní či vnořené hodnoty. Explicitní nevyřešený
+`@Table`, `@Column`, override nebo access nevytvoří náhradní fyzické mapování;
+neznámý annotation subpackage není Jakarta/Javax JPA evidence. FIELD/PROPERTY
+výběr vyžaduje doložený identity target nebo `@Access`, včetně ověření přístupu
+pro embedded atributy.
+
 ## T003-S05-W01 — bounded Spring import selectors
 
 `annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
