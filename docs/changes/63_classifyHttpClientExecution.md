@@ -6,7 +6,7 @@ PARTIAL. Samostatná větev `feat/t003-s07-06-http-client-execution` je nad
 `stack/t003-s07-w06-prerequisites`: explicitní merge PR35
 `89e50cf4cf8edbebc4f9d08879656698c75ebd50` a PR34
 `78d7968ea7408adea3ec9ce783769bb799522470`. Žádná skrytá závislost na W01.
-Reviewovatelný source checkpoint je `e55c99d5970d560c44d1b44c5f8b524d98beaef8`;
+Aktuální reviewovatelný source checkpoint je `0484a8d0a5d5c0f341c8c43a375f963ea8cc8ba0`;
 finální commit mění jen validation/memory/generated documentation.
 
 ## Problém a skutečná změna
@@ -74,10 +74,10 @@ Python `/workspace/kgmaker-venv/bin/python`. Heavy runs pod týmovým flock.
 
 - Sequential actual `python workers/jvm/build.py --kotlin-home /workspace/tools/kotlinc --maven-repository /workspace/tools/m2 --java-home /workspace/tools/jdk-21.0.6+7`: **PASS14.07s**; také `--backend k2 --analysis-api-home /workspace/tools/k2-verified`: **PASS12.36s**. Pozdější opravy jsou pure Python; JVM source/bytes se nezměnily.
 - K1 SHA256 `14eddbf8f31011c22a144e67552706268daa3138ca71993fd638d70a556f026b`; K2 `3c84080730333731611f42dbacd91a1bf3f75b863f045de715be73fc3828a0b3`.
-- Read-only prerequisite preflight **PASS0.06s**. Final focused scanner/inspection-contract/HTTP/protocol/control-flow/dataflow/workspace/mandatory-CI **113 PASS53.12s**, všech32 HTTP případů včetně skutečných Java K1/K2 a Kotlin UNKNOWN.
-- `python -m pytest -q --basetemp=/workspace/http-uri-final/pytest-tmp --junitxml=/workspace/http-uri-final/full.xml`: **646 passed, 10 skipped in 611.39s (0:10:11)**. Runner 611.65s. XML: 646 PASS/10 SKIP,0 errors/0 failures. Optional tool/platform skips nejsou vydávány za mandatory worker PASS.
-- `TMPDIR=/workspace/http-uri-final/tmp`, persistent runner/log/XML/results/source-manifest v `/workspace/http-uri-final/`. Frozen109-file source manifest souhlasí před/po full; obě runtime SHA stejné.
-- `compileall`, `git diff --check`, bounded semantic update/apply/validate/CLI scan/check **PASS**. Zachováno původních7 concepts/25 relations, přidán1 HTTP concept/4 doložené relations. Scanner target258, HTTP prepare87/augment557, ownership275 a Javac citation112 jsou revalidované. Všech119 inherited episodes i historický feature episode85d60f (source0258bba) jsou immutable. Finální workflow zachycuje ještě jeden feature episode (`memory capture --base c7beaec95951267796c0c21baa6079fafe5fe124`) a obnovuje graf CLI.
+- Read-only prerequisite preflight **PASS0.07s**. Final focused scanner/inspection-contract/HTTP/protocol/control-flow/dataflow/workspace/mandatory-CI **121 PASS63.39s**, všech40 HTTP případů včetně skutečných Java K1/K2 a Kotlin UNKNOWN.
+- `python -m pytest -q --basetemp=/workspace/http-review-fix/full-tmp --junitxml=/workspace/http-review-fix/full.xml`: **654 passed, 10 skipped in 869.89s (0:14:29)**. Runner 870.22s. XML: 654 PASS/10 SKIP,0 errors/0 failures. Optional tool/platform skips nejsou vydávány za mandatory worker PASS.
+- `TMPDIR=/workspace/http-review-fix/tmp`, persistent runner/log/XML/results/source-manifest v `/workspace/http-review-fix/`. Frozen112-file source manifest souhlasí před/po full; obě runtime SHA stejné.
+- `compileall`, `git diff --check`, bounded semantic update/apply/validate/CLI scan/check **PASS**. Zachováno původních7 concepts/25 relations, přidán1 HTTP concept/4 doložené relations. Scanner target258, HTTP prepare87/augment605, ownership275 a Javac citation112 jsou revalidované. Všech119 inherited episodes i historický feature episode85d60f (source0258bba) jsou immutable. Finální workflow zachycuje ještě jeden feature episode (`memory capture --base c7beaec95951267796c0c21baa6079fafe5fe124`) a obnovuje graf CLI.
 
 ## Uchovaná historie neúspěšných a přerušených kontrol
 
@@ -118,7 +118,7 @@ operator/interprocedural/generic publisher flow, dynamic URLs, libovolná proxy
 registration a skutečná HTTP/data availability. Specifikace S07/S13 runtime a
 celý T003 zůstávají samostatné, nedokončené kontrakty.
 
-## Nezávislé review PR49 — rule2 follow-up (aktuální full pending)
+## Nezávislé review PR49 — ověřený rule2 follow-up
 
 Root dodal a zachovány jsou jeho uncommitted embedded scheme-relative URI privacy
 fix a SOURCE_ONLY Python doc-comment regression. Nezávislý reviewer doložil
@@ -142,6 +142,16 @@ předchozí v1 HTTP index je STALE při read bez procesu nebo store mutace.
 Pure privacy/property/v1-staleness subset **4 PASS0.72s**.
 
 Worker Java/Kotlin source i K1/K2 JAR SHA se neměnily. Aktuální striktní
-focused/full bude serializovaný po golden pod týmovým flock, s vlastním worker
-home a log/temp/XML na /workspace, nikoli malém /tmp tmpfs. Zatím se pro tento
-nový source netvrdí whole PASS; historický646/10 výše platí před review opravami.
+focused/full proběhl serializovaně po golden pod týmovým flock, s vlastním worker
+home a log/temp/XML na /workspace, nikoli malém /tmp tmpfs. Prerequisite preflight
+PASS0.07s, focused121 PASS63.39s, celý současný source654 PASS10 SKIP869.89s.
+Všech40 HTTP cases běželo bez skip/error/failure;112-file manifest a oba JAR
+hashes souhlasí před/po full. Historický sourcee55 měl646/10; nenahrazuje tento
+aktuální rule2 whole proof. Žádný JVM/IR rebuild nebyl nutný ani tvrzený.
+
+Scoped semantic update/apply/validate revalidoval8 manual concepts/29 relations,
+prepare_context87/augment_http_graph605 a všechny související citations.
+Všech121 předchozích episodes zůstává immutable; po kontrolách se přidává jediný
+review-fix episode nad přesným basec5c45f3. Závěrečný commit mění pouze metadata.
+Root provádí exact-source review a publikaci; autor nepushuje, nemerguje a
+nespouští billing-blocked remote CI. Return-flow zůstalo po dobu oprav zmrazené.
