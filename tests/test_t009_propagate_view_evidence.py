@@ -8,6 +8,23 @@ from kgmaker.architecture_model import (
 )
 
 
+@pytest.mark.parametrize("first,second", [
+    ("supporting_refs", "unknown_refs"),
+    ("contradicting_refs", "unknown_refs"),
+    ("supporting_refs", "contradicting_refs"),
+])
+def test_overlapping_polarity_buckets_are_rejected_without_mutation(first, second):
+    edge = ViewEdge("overlap", "a", "b", "uses", evidence_refs=("ev",),
+                    attributes={"scope": "production", "context_ids": ["ctx"]},
+                    **{first: ("ev",), second: ("ev",)})
+    evidence = [{"id": "ev"}]
+    before = deepcopy((edge, evidence))
+    with pytest.raises(ViewValidationError) as caught:
+        aggregate_view_edges([edge], evidence)
+    assert caught.value.errors[0]["code"] == "INVALID_EVIDENCE_POLARITY_PARTITION"
+    assert (edge, evidence) == before
+
+
 def claim(edge_id, *, kind, status, freshness, refs, polarity_refs=(), polarity="supporting", scope="production",
           context="ctx-prod"):
     return ViewEdge(

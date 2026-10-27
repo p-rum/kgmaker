@@ -140,7 +140,8 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
             if not refs:
                 result_diagnostics.append({"code": "VIEW_EVIDENCE_MISSING", "edge_id": claim.id,
                                            "message": "Claim has no evidence reference and cannot establish completeness"})
-            if supports & contras or (supports | contras | unknowns) != refs:
+            if (supports & contras or supports & unknowns or contras & unknowns
+                    or (supports | contras | unknowns) != refs):
                 raise ViewValidationError([{"code": "INVALID_EVIDENCE_POLARITY_PARTITION", "path": claim.id}])
             for ref in refs:
                 record = evidence.get(ref, {})

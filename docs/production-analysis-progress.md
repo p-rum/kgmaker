@@ -337,7 +337,7 @@ výchozími hodnotami.
 T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
 není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
 konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
-zbývající omezení jsou v [change note 58](changes/58_propagateViewEvidence.md).
+zbývající omezení jsou v [change note 64](changes/64_propagateViewEvidence.md).
 Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
 check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
 kompletní pytest **445 PASS / 109 SKIP** (19.07 s); finální zdrojový strom čeká na
