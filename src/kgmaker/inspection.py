@@ -259,6 +259,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                   "compiler_version": fact.get("compiler_version", selected_context.get("worker", {}).get("compiler_version")),
                   "worker_backend": selected_context.get("kotlin_backend"),
                   "resolution_reason": fact.get("resolution_reason"),
+                  "dispatch_algorithm": fact.get("dispatch_algorithm"),
+                  "dispatch_completeness_reason": fact.get("dispatch_completeness_reason"),
+                  "dispatch_classpath": fact.get("dispatch_classpath"),
                   "origin_trust": selected_context["origin_trust"], "freshness": selected_context["freshness"]}
         identity = "evidence:" + digest(record)
         evidence[identity] = {"id": identity, **record}

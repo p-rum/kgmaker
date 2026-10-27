@@ -268,3 +268,18 @@ ověřené actual T015 případy byly deselected, **4.32s**; XML
 `/workspace/jpa-main49-pure.xml`. Skutečný dřívější JPA35 run se pro tuto
 parent-only změnu neopakuje; nová dvojice vyžaduje čerstvé všech sedm CI kontrol.
 Main prefix127 a všechny původní child captures zůstávají immutable.
+
+## Spojení s merged dependency dispatch
+
+Parent `ec333966e657896382f310ef018835e3d696513e` obsahuje PR35. K2 frontend
+nyní kombinuje původní JPA annotation/use-site metadata s main hierarchy/dispatch
+metadata; JPA framework a oba feature test moduly zůstávají beze změny.
+Předchozí actual35 je historický feature důkaz, nikoli běh nové kombinované JVM
+distribuce. Ta musí být čerstvě sestavena a ověřena mandatory compiler CI,
+včetně skutečného K2 JPA fixture, Javac a dispatch testů před merge.
+
+Čistá společná projekční/CI kontrola: **124 PASS**, dva samostatně doložené
+actual T015 případy deselected, **2.91s**, `/workspace/jpa-mainEc-pure.xml`.
+Main prefix134 immutable episodes a všechny původní W01 captures jsou zachovány.
+Stavová tabulka slučuje aktuální S04 a konkrétní Kotlin JPA subset bez duplicit;
+celé S04/S06 zůstávají PARTIAL.
