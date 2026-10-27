@@ -133,6 +133,27 @@ class GeneratedTest(unittest.TestCase):
           'steps':[{'id':'s1','intent':'Implement','paths':['calculator.py'],'tests':['tests/test_existing.py']}],
           'out_of_scope':[]}
 
+    def test_optional_gates_work_at_api_and_save_boundaries(self):
+        task=w.add_task(self.root,'Change calculator')
+        for status in ('analyze','plan'):task=w.advance_task(self.root,task['id'],status)
+        task=w.record_artifact(self.root,task['id'],'architect',self.plan(task))
+        with p.transaction(self.root) as data:
+            refs=p.sync_task(data,task);data['identity']={'id':'bob','kind':'human'}
+            data['policy']['before_implement']=True
+        before=self.tree()
+        with self.assertRaises(w.WorkflowError):w.advance_task(self.root,task['id'],'implement')
+        self.assertEqual(before,self.tree())
+        forged=copy.deepcopy(task);forged['status']='implement'
+        with self.assertRaises(w.WorkflowError):w.save_task(self.root,forged)
+        with p.transaction(self.root) as data:
+            for r in refs:
+                if r['kind'] in {'requirement','plan'}:p.event(data,r['key'],'approved','Exact revision reviewed')
+        self.assertEqual('implement',w.advance_task(self.root,task['id'],'implement')['status'])
+        # Default policy preserves v1 workflow behaviour without requiring actors.
+        other=w.add_task(self.root,'Other task')
+        with p.transaction(self.root) as data:data['policy']['before_implement']=False
+        for status in ('analyze','plan','implement'):other=w.advance_task(self.root,other['id'],status)
+        self.assertEqual('implement',other['status'])
 
     def test_testgen_trace_references_and_cli_routing(self):
         packet=self.prepare();candidate=self.candidate(packet)
@@ -145,6 +166,34 @@ class GeneratedTest(unittest.TestCase):
         self.assertIn('REQ',p.markdown(forward))
 
 
+    def test_completion_gate_binds_review_to_source_and_preserves_v1_identity(self):
+        task=w.add_task(self.root,'Review calculator')
+        original_id=task['id']
+        for status in ('analyze','plan'):task=w.advance_task(self.root,task['id'],status)
+        task=w.record_artifact(self.root,task['id'],'architect',self.plan(task))
+        task=w.advance_task(self.root,task['id'],'implement')
+        implementation={'task_id':task['id'],'role':'implementation','phase':'implement','iteration':0,
+            'summary':'Changed calculator','status':'completed','cited_paths':['calculator.py'],
+            'cited_node_ids':[],'packet_id':None,'disposition':None,
+            'changed_paths':['calculator.py'],'notes':'Ready for review'}
+        task=w.record_artifact(self.root,task['id'],'implementation',implementation)
+        self.assertEqual(original_id,task['id']);self.assertEqual(2,task['schema_version'])
+        for status in ('test','review'):task=w.advance_task(self.root,task['id'],status)
+        review={'task_id':task['id'],'role':'review','phase':'review','iteration':0,
+            'summary':'Calculator reviewed','status':'completed','cited_paths':['calculator.py'],
+            'cited_node_ids':[],'packet_id':None,'disposition':None,'findings':[],'overall':'approve'}
+        task=w.record_artifact(self.root,task['id'],'review',review)
+        with p.transaction(self.root) as data:
+            refs=p.sync_task(data,task);data['identity']={'id':'reviewer','kind':'human'}
+            data['policy']['before_done']=True
+            for ref in refs:
+                if ref['kind'] in {'requirement','plan','review'}:p.event(data,ref['key'],'approved','Reviewed exact content')
+        (self.root/'calculator.py').write_text('def double(value):\n    return value * 3\n')
+        before=self.tree()
+        with self.assertRaisesRegex(w.WorkflowError,'stale'):w.advance_task(self.root,task['id'],'done')
+        self.assertEqual(before,self.tree())
+        (self.root/'calculator.py').write_text('def double(value):\n    return value * 2\n')
+        self.assertEqual('done',w.advance_task(self.root,task['id'],'done')['status'])
 
 
     def test_workspace_duplicate_entities_keep_repository_identity(self):

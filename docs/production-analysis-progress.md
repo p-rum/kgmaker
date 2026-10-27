@@ -422,3 +422,7 @@ Veřejné CLI a kompletní end-to-end release dodává až S06.
 
 T046-S04: knihovní inkrement synthetic data acceptance; ověření viz change note 59.
 Veřejné CLI a kompletní end-to-end release dodává až S06.
+
+
+T046-S05: knihovní inkrement optional local approval gates; ověření viz change note 60.
+Veřejné CLI a kompletní end-to-end release dodává až S06.

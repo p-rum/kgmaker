@@ -444,6 +444,8 @@ def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None
             if expected_revision is not None:
                 if not path.exists() or digest(load_task(root,validated['id'])) != expected_revision:
                     raise WorkflowError('Task changed concurrently; reload before writing')
+            if validated['status'] in {'implement', 'done'}:
+                enforce_gate(root, validated, validated['status'])
             _atomic_write(path, validated)
     except AnalysisError as exc:
         raise WorkflowError(str(exc)) from exc
