@@ -418,3 +418,7 @@ Veřejné CLI a kompletní end-to-end release dodává až S06.
 
 T046-S03: knihovní inkrement existing-function test design library; ověření viz change note 58.
 Veřejné CLI a kompletní end-to-end release dodává až S06.
+
+
+T046-S04: knihovní inkrement synthetic data acceptance; ověření viz change note 59.
+Veřejné CLI a kompletní end-to-end release dodává až S06.

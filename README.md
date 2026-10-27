@@ -502,3 +502,9 @@ CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem inte
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+
+
+### T046-S04 — synthetic data acceptance
+
+Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
+CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
