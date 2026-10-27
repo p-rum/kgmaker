@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | LOCAL_VERIFIED_IN_SCOPE | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | LOCAL_VERIFIED_IN_SCOPE | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | LOCAL_VERIFIED_IN_SCOPE | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) uvádějí actual15PASS/full582PASS10SKIP, overload navigation PARTIAL a pending CI billing |
+
+
 ## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
 
 | ID | Stav | Evidence |
