@@ -275,10 +275,11 @@ def test_new_snapshot_survives_supported_graph_loader_versions(tmp_path, version
     validate_context_snapshot(tmp_path, graph.contexts[0])
 
 
-def test_snapshot_helper_is_hash_bound_to_distribution(tmp_path):
+@pytest.mark.parametrize('helper_name', ['input_snapshot.cjs', 'ui_events.cjs'])
+def test_snapshot_helper_is_hash_bound_to_distribution(tmp_path, helper_name):
     custom = tmp_path / 'custom-workers/typescript'
     custom.mkdir(parents=True)
-    for name in ('worker.cjs', 'input_snapshot.cjs', 'package.json'):
+    for name in ('worker.cjs', 'input_snapshot.cjs', 'ui_events.cjs', 'package.json'):
         shutil.copy2(HOME / 'typescript' / name, custom / name)
     try:
         (custom / 'node_modules').symlink_to(HOME / 'typescript/node_modules', target_is_directory=True)
@@ -286,7 +287,7 @@ def test_snapshot_helper_is_hash_bound_to_distribution(tmp_path):
         pytest.skip('toolchain symlink permission unavailable')
     root = tmp_path / 'repo'
     result = project(root, home=custom.parent)
-    helper = custom / 'input_snapshot.cjs'
+    helper = custom / helper_name
     assert any(Path(item['path']) == helper for item in result['context']['worker']['distribution'])
     helper.write_text(helper.read_text() + '\n// changed distribution\n')
     with patch('subprocess.Popen', side_effect=AssertionError('distribution validation ran compiler')):

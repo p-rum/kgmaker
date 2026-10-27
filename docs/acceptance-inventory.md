@@ -421,4 +421,9 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC03 | changed library, mutable/conditional/spread/fake/missing-package negatives; offline store snapshot | no stronger handler/runtime/data claims |
 | AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
 
-Current actual results are recorded in change69; remote gates remain paused.
+Current actual results are recorded in change69; remote CI is available again, while this local candidate awaits publication and independent review.
+
+T003-S08-W04 final frozen proof: complete advertised matrix43 PASS/32 DESELECTED
+237.28s; prepared strict full624 PASS/10 SKIP762.95s, all41 UI cases, zero failures/
+errors. onChange input/select/textarea and form onSubmit are actual positives;
+source/runtime availability remains UNKNOWN.

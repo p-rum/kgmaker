@@ -502,3 +502,8 @@ compiler declaration hash. Intrinsic event props and one verified source forward
 wrapper retain package/declaration provenance. Unknown versions, fake modules,
 mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
 static handler binding is not a click or data-availability proof. See change69.
+
+The React subset covers pinned standard onClick/onChange/onSubmit props, including
+input/select/textarea and form. Classic official factory aliases and default
+automatic runtimes are supported; explicit legacy namespace/fragment/import-source
+controls and per-file JSX overrides remain UNKNOWN.

@@ -442,3 +442,10 @@ Intrinsic events and sole-return source forwarding wrappers are supported;
 unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
 click, data availability or full UI framework support is claimed. Explicit base is
 PR46 head1e21140. Actual validation and pending gates are in change69.
+
+S08-W04 final frozen validation:624 PASS/10 SKIP762.95s and complete43-case focus.
+The three advertised event types include actual standard input/select/textarea/
+form controls; unsupported renderer controls remain UNKNOWN. No browser/app ran,
+no runtime click or data availability is inferred. Remote Actions were resumed by
+root after the user upgrade; this local candidate still needs its own publication,
+base refresh and independent review.

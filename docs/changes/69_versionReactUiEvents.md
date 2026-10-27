@@ -23,7 +23,7 @@ Jiné verze, změněná deklarace, lokální redirected fake nebo chybějící b
 UNKNOWN diagnostic, bez nové handles_event hrany. Nic se neinstaluje automaticky.
 
 Podporované eventy: onClick/onChange/onSubmit. Intrinsic prop musí být skutečný
-compiler member oficiálního DOMAttributes. Jediný bounded wrapper tvar je checkout
+compiler member oficiálního DOMAttributes nebo pinned Input/Select/TextareaHTMLAttributes. Jediný bounded wrapper tvar je checkout
 function declaration s jedním props parametrem a jediným return JSX intrinsic,
 který předává přesně stejný oficiální prop jako props.onClick/onChange/onSubmit.
 Spready, další statements/returns, libovolné wrapper resolvery a podobná jména
@@ -98,3 +98,77 @@ handles_event bez ui_adapters snapshotu. Nové opt-in React inspect proto explic
 odmítne chybějící versioned preflight kontrakt; non-UI legacy worker a staré uložené
 graph formáty zůstávají čitelné. Samostatný regression hlídá source/last-valid-store
 při této chybě a neúplný marked helper selže ještě před spuštěním procesu.
+
+## Full fixture guard a oprava přípravy distribuce
+
+Final UI contract focus: **6 PASS, 29 DESELECTED /20.21s**. Připravený strict full
+pak našel starou test fixture `test_snapshot_helper_is_hash_bound_to_distribution`,
+která kopírovala nový marked worker bez jeho UI helperu. Guard správně odmítl
+neúplnou distribuci ještě před zamýšlenou mutací input_snapshot helperu. Nejde o
+runtime regression; reprodukce samostatného testu byla **1 FAIL /0.16s**.
+
+Na pokyn orchestrátora byl ukončen pouze vlastní známý invalidní full pomocí
+SIGINT. Pytest uložil JUnit a konečný částečný výsledek **494 PASS, 9 SKIP,
+1 FAIL /508.08s**, KeyboardInterrupt; není vydáván za whole PASS. Artefakty jsou
+`/workspace/ui-events-interrupted-fixture-full.log` a `.xml`. Před opravou byly
+všechny vlastní procesy ukončeny; žádný cizí validní běh se nerušil.
+
+Fixture nyní kopíruje kompletní nový worker a stejný test parametrizovaně ověřuje
+hash-bound invalidaci input_snapshot i ui_events helperu. Produkční source/worker
+bytes z checkpointu0171107 zůstaly beze změny. Actual repair focus:
+**5 PASS, 51 DESELECTED /15.24s** (oba helper hashes, neúplné distribuce, chybějící
+versioned UI kontrakt a last-valid store). Nový připravený frozen full čeká pod
+shared heavy lockem; finální výsledek bude doplněn skutečným logem/XML.
+
+
+## Konečná kompletní matice a strict full
+
+Actual TS5.7.3 `reactNamespace=Fake` audit prokázal další factory false positive:
+compiler emituje Fake.createElement, nikoli React; žádná aplikace neběžela.
+Vlastní známý invalidní full byl ukončen před úpravou source: **464 PASS, 9 SKIP
+/436.73s**, KeyboardInterrupt, bez whole PASS. Log/XML zůstávají v
+`/workspace/ui-events-interrupted-namespace-full.*`. Grouped RED pro namespace,
+explicit fragment a empty renderer controls: **4 FAIL /19.91s**.
+
+Finální whitelist rozlišuje undefined od prázdné hodnoty. Podporuje classic
+React default a skutečné official createElement import aliases přes jsxFactory;
+automatic default react-jsx/react-jsxdev vyžaduje pinned runtime declaration.
+Jakýkoli explicitní reactNamespace, jsxFragmentFactory, jsxImportSource a per-file
+jsx/jsxfrag/jsxruntime/jsximportsource pragma je mimo tento bounded subset UNKNOWN.
+Preserve/react-native ani malformed factory values nevyrábějí pozitivní UI edge.
+Public TS5.7 declarations neposkytují factory accessor; produkt nepoužívá privátní
+getJsxNamespace ani emit/transpile. Jednorázový transpileModule audit byl pouze
+validační, nikoli produktová cesta či spuštění aplikace.
+
+Audit všech tří inzerovaných eventů odhalil, že onChange na input/select/textarea
+má specializovanou oficiální deklaraci mimo DOMAttributes: RED **3 FAIL, 2 PASS
+/20.29s**. Vlastní incomplete full skončil před změnou **144 PASS, 2 SKIP /157.79s**,
+KeyboardInterrupt, nikoli whole PASS (`/workspace/ui-events-interrupted-controls-full.*`).
+Allowlist nyní obsahuje pouze čtyři známé pinned React interface families:
+DOMAttributes, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes;
+stále platí přesný declaration hash, official intrinsic tag a factory value proof.
+Stejnojmenné checkout interface samo nedostane framework binding.
+
+Kompletní frozen advertised matrix: **43 PASS, 32 DESELECTED /237.28s**
+(`/workspace/ui-events-complete-matrix.log` a `.xml`). Obsahuje onClick, všechny
+specializované onChange controls, form onSubmit, direct/verified wrapper positives,
+všech pět renderer controls a čtyři pragma forms, official aliases/automatic modes,
+critical fake/shadow/type/mutable/ambiguous/spread/version negatives a oba helper
+hash guards. Pure pre-process metadata guard používá tool-lookup stub a netvrdí
+skutečný compiler/toolchain PASS.
+
+Následný jediný full na stejných frozen source/test bytes: **624 PASS, 10 SKIP
+/762.95s**, JUnit634 cases,0 failures,0 errors; všech41 UI cases skutečně proběhlo.
+Preflight ověřil vlastní worker distributions, reálný Maven/React fixture a pinned
+Spring API bez buildu/installu. Explicitní own PYTHONPATH/workers, JDK21/Kotlin PATH,
+required Workers/K2/Spring flags, workspace TMPDIR a shared heavy lock jsou stejné
+jako v příkazech předaných orchestrátorovi. Persistent artifacts:
+`/workspace/ui-events-full.log`, `/workspace/ui-events-full.xml`.
+Deset SKIP je optional tool/exporter matrix a skutečný Windows gate; missing
+mandatory tools nejsou PASS. Předchozí neúplné/failing běhy nejsou přepsány.
+
+Po upgradu uživatele root obnovil GitHub Actions; historická billing pause již není
+aktuální blocker. Tento lokální candidate nemá vlastní nové CI výsledky ani merge;
+publikaci, aktuální dependency/base integraci a nezávislé review řídí root.
+Scoped semantic update zachovává existující facts/history, mění pouze doložené
+source anchors a zachytí nový validation episode. Nadřazený T003-S08 zůstává PARTIAL.

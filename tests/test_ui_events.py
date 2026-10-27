@@ -128,13 +128,36 @@ export function App() { return <TAG onClick={swallowed}/>; }
     assert not handler_names(graph)
 
 
-@pytest.mark.parametrize('case', ['factory', 'lexical-shadow', 'typed-shadow', 'pragma', 'import-source'])
+@pytest.mark.parametrize('case', ['factory', 'lexical-shadow', 'typed-shadow', 'pragma', 'import-source', 'namespace', 'fragment-factory', 'empty-factory', 'empty-import-source', 'preserve', 'react-native', 'legacy-react-namespace', 'canonical-fragment', 'explicit-react-import-source', 'runtime-pragma', 'fragment-pragma', 'import-source-pragma'])
 def test_custom_renderer_never_gets_react_event_claim(ui_project, case):
     config = json.loads((ui_project / 'tsconfig.json').read_text())
     prefix = "import React from 'react';\n"
     if case == 'factory':
         config['compilerOptions']['jsxFactory'] = 'h'
         prefix += 'function h(tag:any,props:any,...children:any[]):any{return null;}\n'
+    elif case == 'namespace':
+        config['compilerOptions']['reactNamespace']='Fake'
+        prefix += 'const Fake={createElement(tag:any,props:any,...children:any[]):any{return null;}};\n'
+    elif case == 'fragment-factory':
+        config['compilerOptions']['jsxFragmentFactory']='h'
+        prefix += 'function h(...children:any[]):any{return null;}\n'
+    elif case == 'empty-factory':
+        config['compilerOptions']['jsxFactory']=''
+    elif case == 'empty-import-source':
+        config['compilerOptions']['jsx']='react-jsx'
+        config['compilerOptions']['jsxImportSource']=''
+    elif case in {'preserve','react-native'}:
+        config['compilerOptions']['jsx']=case
+    elif case == 'legacy-react-namespace':
+        config['compilerOptions']['reactNamespace']='React'
+    elif case == 'canonical-fragment':
+        config['compilerOptions']['jsxFragmentFactory']='React.Fragment'
+    elif case == 'explicit-react-import-source':
+        config['compilerOptions']['jsx']='react-jsx'
+        config['compilerOptions']['jsxImportSource']='react'
+    elif case in {'runtime-pragma','fragment-pragma','import-source-pragma'}:
+        pragma={'runtime-pragma':'@jsxRuntime automatic','fragment-pragma':'@jsxFrag React.Fragment','import-source-pragma':'@jsxImportSource react'}[case]
+        prefix='/** '+pragma+' */\n'+prefix
     elif case == 'lexical-shadow':
         prefix = "import R from 'react'; const React={createElement(tag:any,props:any,...children:any[]):any{return null;}};\n"
     elif case == 'typed-shadow':
@@ -150,12 +173,15 @@ def test_custom_renderer_never_gets_react_event_claim(ui_project, case):
     assert not handler_names(graph)
 
 
-@pytest.mark.parametrize('mode', ['alias', 'automatic', 'automatic-dev'])
+@pytest.mark.parametrize('mode', ['alias', 'classic-explicit', 'function-alias', 'automatic', 'automatic-dev'])
 def test_compiler_bound_official_factory_modes_remain_supported(ui_project, mode):
     config=json.loads((ui_project / 'tsconfig.json').read_text())
     if mode=='alias':
         config['compilerOptions']['jsxFactory']='R.createElement'
         text="import R from 'react';"
+    elif mode in {'classic-explicit','function-alias'}:
+        config['compilerOptions']['jsxFactory']='React.createElement' if mode=='classic-explicit' else 'h'
+        text="import React from 'react';" if mode=='classic-explicit' else "import {createElement as h} from 'react';"
     else:
         config['compilerOptions']['jsx']='react-jsxdev' if mode=='automatic-dev' else 'react-jsx'
         text="import React from 'react';"
@@ -187,6 +213,8 @@ def test_incomplete_marked_distribution_fails_before_process(tmp_path, monkeypat
     from kgmaker.inspection import command
     from kgmaker.worker_protocol import WorkerError
     from unittest.mock import patch
+    # This is a pure pre-process metadata guard, not a toolchain PASS.
+    monkeypatch.setattr('kgmaker.inspection.shutil.which', lambda name: '/preflight-only-node')
     worker=tmp_path / 'typescript';(worker / 'node_modules/typescript/lib').mkdir(parents=True)
     (worker / 'worker.cjs').write_text('')
     (worker / 'node_modules/typescript/lib/typescript.js').write_text('')
@@ -194,3 +222,31 @@ def test_incomplete_marked_distribution_fails_before_process(tmp_path, monkeypat
     with patch('subprocess.Popen',side_effect=AssertionError('incomplete worker must not launch')):
         with pytest.raises(WorkerError,match='UI adapter helper unavailable'):
             command('typescript',tmp_path)
+
+
+@pytest.mark.parametrize('tag,interface,element,event', [
+    ('input','InputHTMLAttributes','HTMLInputElement','onChange'),
+    ('select','SelectHTMLAttributes','HTMLSelectElement','onChange'),
+    ('textarea','TextareaHTMLAttributes','HTMLTextAreaElement','onChange'),
+    ('form','FormHTMLAttributes','HTMLFormElement','onSubmit'),
+])
+def test_standard_form_controls_and_verified_wrappers_keep_official_events(ui_project, tag, interface, element, event):
+    (ui_project / 'src/App.tsx').write_text(f'''import React from 'react';
+export function direct() {{}}
+export function forwarded() {{}}
+function Wrapper(props:React.{interface}<{element}>) {{return <{tag} {event}={{props.{event}}}/>;}}
+export function App() {{return <><{tag} {event}={{direct}}/><Wrapper {event}={{forwarded}}/></>;}}
+''')
+    _,graph=inspect(ui_project)
+    assert handler_names(graph)=={'direct','forwarded'}
+
+
+def test_checkout_interface_with_official_event_type_name_is_not_official_property(ui_project):
+    (ui_project / 'src/App.tsx').write_text('''import React from 'react';
+interface InputHTMLAttributes {onChange:()=>void}
+function Wrapper(props:InputHTMLAttributes){return <input onChange={props.onChange}/>;}
+function unrelated(){}
+export function App(){return <Wrapper onChange={unrelated}/>;}
+''')
+    _,graph=inspect(ui_project)
+    assert not handler_names(graph)

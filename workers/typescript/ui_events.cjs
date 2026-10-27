@@ -3,6 +3,7 @@
 const path=require('node:path');
 const RULE='react-jsx-events-2';
 const DECLARATION_SHA='b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34';
+const EVENT_INTERFACES=new Set(['DOMAttributes','InputHTMLAttributes','SelectHTMLAttributes','TextareaHTMLAttributes']);
 
 function adapters(ts,programs,discovery,hash,enabled) {
   const byFile=new Map(), snapshots=[];
@@ -33,10 +34,15 @@ function adapters(ts,programs,discovery,hash,enabled) {
     const source=program.getSourceFile(file), options=project.parsed.options;
     const pragmas=['jsx','jsxfrag','jsximportsource','jsxruntime'].some(key=>source?.pragmas?.has(key));
     let renderer=null, runtimeDeclaration=null, runtimeSha=null;
-    if(!pragmas && !options.jsxImportSource && options.jsx===ts.JsxEmit.React) {
-      const factory=options.jsxFactory||'React.createElement';
+    // Only documented defaults + compiler-proven classic factory aliases.
+    // Explicit legacy namespace/fragment/import-source controls are not defaults,
+    // including empty strings; TypeScript may otherwise silently fall back.
+    const defaultControls=!pragmas && options.reactNamespace===undefined &&
+      options.jsxFragmentFactory===undefined && options.jsxImportSource===undefined;
+    if(defaultControls && options.jsx===ts.JsxEmit.React) {
+      const factory=options.jsxFactory===undefined?'React.createElement':options.jsxFactory;
       if(/^[A-Za-z_$][\w$]*(?:\.createElement)?$/.test(factory))renderer={kind:'classic',factory};
-    } else if(!pragmas && !options.jsxImportSource && !options.jsxFactory &&
+    } else if(defaultControls && options.jsxFactory===undefined &&
         [ts.JsxEmit.ReactJSX,ts.JsxEmit.ReactJSXDev].includes(options.jsx)) {
       const suffix=options.jsx===ts.JsxEmit.ReactJSXDev?'jsx-dev-runtime':'jsx-runtime';
       const runtimeModule=ts.resolveModuleName('react/'+suffix,file,options,discovery.host).resolvedModule;
@@ -99,7 +105,7 @@ function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackPro
     const property=checker.getPropertyOfType(checker.getTypeOfSymbolAtLocation(symbol,node),eventName);
     const declaration=symbolDeclaration(property);
     if(!declaration || path.resolve(declaration.getSourceFile().fileName)!==adapter.declaration ||
-       !ts.isInterfaceDeclaration(declaration.parent) || declaration.parent.name.text!=='DOMAttributes')return null;
+       !ts.isInterfaceDeclaration(declaration.parent) || !EVENT_INTERFACES.has(declaration.parent.name.text))return null;
     return declaration;
   }
   let attribute=officialAttribute(opening.tagName),wrapper=null;

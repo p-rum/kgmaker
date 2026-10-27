@@ -651,7 +651,7 @@ changes never yield a source mapping even inside an identical repository realm.
 
 `--ui-framework react` uses `react-jsx-events-2`, pinned React18.3.1 and
 @types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
-must select that external declaration's DOMAttributes event member. Evidence keeps
+must select that external declaration's DOMAttributes or pinned input/select/textarea event member. Evidence keeps
 package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
 The existing protocol1 `handles_event` fact and graph/store model are reused.
 
@@ -676,3 +676,13 @@ Automatic default react-jsx/react-jsxdev modes require the pinned external runti
 declaration. Custom importSource/per-file JSX directives remain UNKNOWN. Uppercase
 component names and checkout-added custom IntrinsicElements cannot bypass wrapper
 proof just because their props reuse React's event types.
+
+The supported renderer-control whitelist is explicit: classic default or an actual
+official createElement import alias via jsxFactory; automatic default react-jsx/
+react-jsxdev with pinned runtime declaration. Explicit reactNamespace,
+jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, including
+empty controls rather than truthy fallback. The official event declaration families
+are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
+on form is covered too. Same-named checkout declarations do not qualify. Full
+validation:624 PASS/10 SKIP, complete focused UI/distribution matrix43 PASS; change69
+records scope, all earlier failures/interruptions and current remote status.
