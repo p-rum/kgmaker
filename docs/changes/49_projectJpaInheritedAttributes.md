@@ -144,3 +144,26 @@ freeze serialized full suite pod `/workspace/kgmaker-heavy-tests.lock` prošel:
 `KGMAKER_REQUIRE_K2=1` byly aktivní; skips jsou zbývající optional
 toolchain-dependent cases. Tento výsledek pokrývá compiler-proven return owner
 guard; předchozí suite shrnutí výše patří ke staršímu source snapshotu.
+
+## Integrate refreshed W01 and T009 main `09d351d` (2026-10-27)
+
+The refreshed W01 parent includes T009 view evidence and coverage. Its local
+merge into this W02 branch leaves the JPA runtime and tests byte-identical to
+the pre-integration W02 head, including `framework.py`, the K2 worker,
+`test_k2_backend.py`, and `test_compiler_workers.py`; T009 contributes the view
+model, schema, tests, and CI/documentation changes.
+
+Focused compatibility checks under strict JDK/K1/K2/Javac requirements passed:
+the actual same-simple-name repository/JPQL identity fixture, actual Javac
+AC06, actual K2 use-site access, K2 mapped-superclass inheritance, and Java
+mapped-superclass projection — **5 passed in 70.51 s**. The refreshed W01
+T005/T008/T009 integration suite passed separately with 66 tests. No full suite
+was repeated for this pure-base integration; the frozen W02 source full result
+above remains applicable.
+
+Semantic history preserves the exact 115-episode main prefix, seven W01-only
+episodes, the W01 integration capture, and four W02-only implementation
+episodes; a new current-base integration capture follows. The W01 JPA semantic
+concept and W02 exact repository/JPQL identity concept are both retained with
+current compiler-inspection citations. Semantic validation and regenerated
+graph/check and diff checks are included in the integration validation.

@@ -4,26 +4,340 @@
   "title": "KGMAKER high-level view document v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "view_id", "kind", "baseline_fingerprint", "rules_version", "scope", "context_selection", "nodes", "edges", "diagnostics", "coverage", "limits", "provenance"],
+  "required": [
+    "schema_version",
+    "view_id",
+    "kind",
+    "baseline_fingerprint",
+    "rules_version",
+    "scope",
+    "context_selection",
+    "nodes",
+    "edges",
+    "diagnostics",
+    "coverage",
+    "limits",
+    "provenance"
+  ],
   "properties": {
-    "schema_version": {"const": 1},
-    "view_id": {"type": "string", "minLength": 1},
-    "kind": {"enum": ["interfaces", "topology", "process"]},
-    "baseline_fingerprint": {"type": "string", "minLength": 1},
-    "rules_version": {"type": "string", "minLength": 1},
-    "scope": {"type": "string", "minLength": 1},
-    "context_selection": {"type": "object"},
-    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
-    "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}},
-    "diagnostics": {"type": "array", "items": {"type": "object"}},
-    "coverage": {"type": "object", "required": ["status"], "properties": {"status": {"enum": ["COMPLETE_WITHIN_SELECTED_SCOPE", "PARTIAL", "UNKNOWN"]}}},
-    "limits": {"type": "array", "items": {"type": "string"}},
-    "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}},
-    "generation_metadata": {"type": "object", "properties": {"generated_at": {"type": "string"}}, "additionalProperties": false}
+    "schema_version": {
+      "const": 1
+    },
+    "view_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "interfaces",
+        "topology",
+        "process"
+      ]
+    },
+    "baseline_fingerprint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rules_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context_selection": {
+      "type": "object"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "COMPLETE_WITHIN_SELECTED_SCOPE",
+            "PARTIAL",
+            "UNKNOWN"
+          ]
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "found",
+            "resolved",
+            "unresolved",
+            "excluded"
+          ],
+          "properties": {
+            "found": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "resolved": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unresolved": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "excluded": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "limits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/provenance"
+      }
+    },
+    "generation_metadata": {
+      "type": "object",
+      "properties": {
+        "generated_at": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "$defs": {
-    "node": {"type": "object", "required": ["id", "kind", "label"], "properties": {"id": {"type": "string", "minLength": 1}, "kind": {"type": "string", "minLength": 1}, "label": {"type": "string", "minLength": 1}, "original_ids": {"type": "array", "items": {"type": "string"}}, "owner_id": {"type": ["string", "null"]}, "evidence_refs": {"type": "array", "items": {"type": "string"}}, "attributes": {"type": "object"}}, "additionalProperties": false},
-    "edge": {"type": "object", "required": ["id", "source", "target", "relation"], "properties": {"id": {"type": "string", "minLength": 1}, "source": {"type": "string", "minLength": 1}, "target": {"type": "string", "minLength": 1}, "relation": {"type": "string", "minLength": 1}, "original_ids": {"type": "array", "items": {"type": "string"}}, "evidence_refs": {"type": "array", "items": {"type": "string"}}, "resolution_status": {"enum": ["RESOLVED", "AMBIGUOUS", "UNRESOLVED"]}, "attributes": {"type": "object"}}, "additionalProperties": false},
-    "provenance": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "minLength": 1}}, "additionalProperties": true}
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "original_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "owner_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attributes": {
+          "type": "object"
+        },
+        "evidence_kinds": {
+          "$ref": "#/$defs/evidenceKinds"
+        },
+        "resolution_status": {
+          "$ref": "#/$defs/resolution"
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "supporting_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contradicting_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": [
+        "id",
+        "source",
+        "target",
+        "relation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "original_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resolution_status": {
+          "$ref": "#/$defs/resolution"
+        },
+        "attributes": {
+          "type": "object"
+        },
+        "evidence_kinds": {
+          "$ref": "#/$defs/evidenceKinds"
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "supporting_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contradicting_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceKinds": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "SYNTAX_CANDIDATE",
+          "SYMBOL_RESOLVED",
+          "DISPATCH_CANDIDATE",
+          "FRAMEWORK_DERIVED",
+          "RUNTIME_OBSERVED",
+          "UNRESOLVED",
+          "SOURCE_ONLY",
+          "UNKNOWN"
+        ]
+      }
+    },
+    "resolution": {
+      "enum": [
+        "RESOLVED",
+        "AMBIGUOUS",
+        "UNRESOLVED"
+      ]
+    },
+    "freshness": {
+      "enum": [
+        "CURRENT",
+        "STALE",
+        "UNKNOWN"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_kind": {
+          "enum": [
+            "SYNTAX_CANDIDATE",
+            "SYMBOL_RESOLVED",
+            "DISPATCH_CANDIDATE",
+            "FRAMEWORK_DERIVED",
+            "RUNTIME_OBSERVED",
+            "UNRESOLVED",
+            "SOURCE_ONLY",
+            "UNKNOWN"
+          ]
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "polarity": {
+          "enum": [
+            "SUPPORTING",
+            "CONTRADICTING",
+            "UNKNOWN"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
   }
 }
