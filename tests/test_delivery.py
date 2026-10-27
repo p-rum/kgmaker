@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 from unittest.mock import patch
 
@@ -238,3 +238,168 @@ class GeneratedTest(unittest.TestCase):
         receipt=t.export(self.root,'double')
         self.assertIn('tests/fixtures/kgmaker/double_numbers.json',receipt['files'])
         self.assertFalse((self.root/'tests/fixtures/kgmaker/changed_double_numbers.json').exists())
+
+    def test_reserved_export_paths_and_aliases_fail_without_mutation(self):
+        packet = self.prepare()
+        for path in ('./.github/new-workflow.yml', './.git/config', './.kgmaker/injected.json',
+                     './/.github/workflow.yml', '.GitHub/workflow.yml', 'tests/.git/config'):
+            candidate = self.candidate(packet)
+            candidate['files'][0]['path'] = path
+            before = self.tree()
+            with self.subTest(path=path), self.assertRaises(AnalysisError):
+                t.apply(self.root, 'double', candidate)
+            self.assertEqual(before, self.tree())
+        candidate = self.candidate(packet)
+        duplicate = copy.deepcopy(candidate['files'][0])
+        duplicate['path'] = './tests/test_generated.py'
+        candidate['files'].append(duplicate)
+        with self.assertRaises(AnalysisError):
+            t.validate(self.root, 'double', candidate)
+        t.apply(self.root, 'double', self.candidate(packet))
+        before = self.tree()
+        for data_dir in ('./.github', '.github', './.git', '.kgmaker', 'tests/.git'):
+            with self.subTest(data_dir=data_dir), self.assertRaises(AnalysisError):
+                t.export(self.root, 'double', data_dir=data_dir)
+            self.assertEqual(before, self.tree())
+
+    def test_foreign_key_requires_present_json_equal_target(self):
+        packet = self.prepare()
+        candidate = self.candidate(packet)
+        child = candidate['datasets'][0]
+        parent = copy.deepcopy(child)
+        parent.update(id='parents', data=[{}], schema={'type': 'array', 'items': {'type': 'object'}})
+        child.update(data=[{'input': None}], schema={'type': 'array', 'items': {'type': 'object'}},
+                     foreign_keys=[{'field': 'input', 'dataset_id': 'parents', 'target_field': 'id'}])
+        candidate['datasets'].append(parent)
+        before = self.tree()
+        with self.assertRaises(AnalysisError):
+            t.apply(self.root, 'double', candidate)
+        self.assertEqual(before, self.tree())
+        parent['data'] = [{'id': None}]
+        self.assertTrue(t.validate(self.root, 'double', candidate)['valid'])
+        child['data'] = [{'input': 0}]
+        parent['data'] = [{'id': False}]
+        with self.assertRaises(AnalysisError):
+            t.validate(self.root, 'double', candidate)
+        parent['data'] = [{'id': 0.0}]
+        self.assertTrue(t.validate(self.root, 'double', candidate)['valid'])
+
+    def test_record_and_direct_save_cannot_inject_implementation_before_gate(self):
+        task = w.add_task(self.root, 'Gate recording')
+        for status in ('analyze', 'plan'):
+            task = w.advance_task(self.root, task['id'], status)
+        with p.transaction(self.root) as data:
+            data['policy']['before_implement'] = True
+        implementation = {'task_id': task['id'], 'role': 'implementation', 'phase': 'implement',
+                          'iteration': 0, 'summary': 'Ungated change', 'status': 'completed',
+                          'cited_paths': ['calculator.py'], 'cited_node_ids': [], 'packet_id': None,
+                          'disposition': None, 'changed_paths': ['calculator.py'], 'notes': ''}
+        before = self.tree()
+        with self.assertRaises(w.WorkflowError):
+            w.record_artifact(self.root, task['id'], 'implementation', implementation)
+        self.assertEqual(before, self.tree())
+        implementation['id'] = w.artifact_id(implementation)
+        for target in ('plan', 'implement', 'test', 'review'):
+            forged = copy.deepcopy(task)
+            forged.update(status=target, artifacts=[implementation], artifact_ids=[implementation['id']])
+            with self.subTest(target=target), self.assertRaises(w.WorkflowError):
+                w.save_task(self.root, forged, expected_revision=digest(task))
+            self.assertEqual(before, self.tree())
+
+    def test_old_delivery_bindings_are_immutable_on_save(self):
+        task = w.add_task(self.root, 'Keep reviewed history')
+        for status in ('analyze', 'plan', 'implement'):
+            task = w.advance_task(self.root, task['id'], status)
+        artifact = {'task_id': task['id'], 'role': 'implementation', 'phase': 'implement',
+                    'iteration': 0, 'summary': 'Implemented', 'status': 'completed',
+                    'cited_paths': ['calculator.py'], 'cited_node_ids': [], 'packet_id': None,
+                    'disposition': None, 'changed_paths': ['calculator.py'], 'notes': ''}
+        task = w.record_artifact(self.root, task['id'], 'implementation', artifact)
+        before = self.tree()
+        changed = copy.deepcopy(task)
+        changed['delivery']['bindings'][task['artifact_ids'][0]]['source_fingerprint'] = '0' * 64
+        with self.assertRaises(w.WorkflowError):
+            w.save_task(self.root, changed, expected_revision=digest(task))
+        self.assertEqual(before, self.tree())
+
+        legacy = w.add_task(self.root, 'Preserve unknown historical binding')
+        legacy = w.advance_task(self.root, legacy['id'], 'analyze')
+        old = {'task_id': legacy['id'], 'role': 'architect', 'phase': 'analyze',
+               'iteration': 0, 'summary': 'Old evidence', 'status': 'completed',
+               'cited_paths': [], 'cited_node_ids': [], 'packet_id': None, 'disposition': None}
+        legacy = w.record_artifact(self.root, legacy['id'], 'architect', old)
+        before = self.tree()
+        injected = copy.deepcopy(legacy)
+        injected['schema_version'] = 2
+        injected['delivery'] = {'schema_version': 1, 'bindings': {
+            legacy['artifact_ids'][0]: {'head_commit': None, 'source_fingerprint': '0' * 64}}}
+        with self.assertRaises(w.WorkflowError):
+            w.save_task(self.root, injected, expected_revision=digest(legacy))
+        self.assertEqual(before, self.tree())
+
+    def test_trace_sync_commands_enforce_expected_revision_atomically(self):
+        from kgmaker import feature, delivery_cli
+        from kgmaker.analysis_model import inventory_candidate
+        (self.root / 'requirement.md').write_text('Double the calculator input.')
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        for key, value in [('user.name', 'Test'), ('user.email', 'test@local.invalid')]:
+            subprocess.run(['git', '-C', str(self.root), 'config', key, value], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'commit', '-qm', 'Baseline'], check=True)
+        (self.root / 'calculator.py').write_text('def double(value):\n    return value * 2\n# change\n')
+        analysis_packet = feature.prepare(self.root, 'requirement.md', 'analysis')
+        self.assertTrue(feature.apply(self.root, 'analysis', inventory_candidate(analysis_packet))['valid'])
+        packet = self.prepare()
+        t.apply(self.root, 'double', self.candidate(packet))
+        task = w.add_task(self.root, 'Trace change')
+        p.register_file(self.root, 'requirement', 'REQ', '1', 'requirement.md')
+        commands = [('sync-analysis', '--id', 'analysis'), ('sync-testgen', '--id', 'double'),
+                    ('capture-change', '--task', task['id'], '--base', 'HEAD')]
+        for command in commands:
+            revision = p.load(self.root)['revision']
+            before = self.tree()
+            argv = ['trace', *command, '--root', str(self.root), '--expected-revision', '0']
+            with self.subTest(command=command), redirect_stdout(io.StringIO()):
+                self.assertEqual(2, delivery_cli.run(build_parser().parse_args(argv)))
+            self.assertEqual(before, self.tree())
+            argv[-1] = str(revision)
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(0, delivery_cli.run(build_parser().parse_args(argv)))
+            self.assertEqual(revision + 1, p.load(self.root)['revision'])
+
+    def test_read_only_trace_commands_reject_revision_preconditions(self):
+        for command in ('show', 'check'):
+            with self.subTest(command=command), redirect_stdout(io.StringIO()), \
+                    redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    build_parser().parse_args(['trace', command, '--expected-revision', '0'])
+                self.assertEqual(2, error.exception.code)
+
+    def test_direct_save_verifies_or_captures_new_source_bindings(self):
+        from kgmaker.feature import source_inventory
+        task = w.add_task(self.root, 'Capture actual direct-save evidence')
+        for status in ('analyze', 'plan', 'implement'):
+            task = w.advance_task(self.root, task['id'], status)
+        artifact = {'task_id': task['id'], 'role': 'implementation', 'phase': 'implement',
+                    'iteration': 0, 'summary': 'Captured change', 'status': 'completed',
+                    'cited_paths': ['calculator.py'], 'cited_node_ids': [], 'packet_id': None,
+                    'disposition': None, 'changed_paths': ['calculator.py'], 'notes': ''}
+        artifact['id'] = w.artifact_id(artifact)
+        proposed = copy.deepcopy(task)
+        proposed.update(artifacts=[artifact], artifact_ids=[artifact['id']])
+        actual = {'head_commit': w._git_head(self.root),
+                  'source_fingerprint': digest(source_inventory(self.root)[0])}
+        before = self.tree()
+        for field, value in (('head_commit', '0' * 40), ('source_fingerprint', '0' * 64)):
+            forged = copy.deepcopy(proposed)
+            binding = {**actual, field: value}
+            forged.update(schema_version=2, delivery={'schema_version': 1,
+                          'bindings': {artifact['id']: binding}})
+            with self.subTest(field=field), self.assertRaises(w.WorkflowError):
+                w.save_task(self.root, forged, expected_revision=digest(task))
+            self.assertEqual(before, self.tree())
+        w.save_task(self.root, proposed, expected_revision=digest(task))
+        saved = w.load_task(self.root, task['id'])
+        self.assertEqual(2, saved['schema_version'])
+        self.assertEqual(actual, saved['delivery']['bindings'][artifact['id']])
+        self.assertEqual(actual['source_fingerprint'], saved['worktree_fingerprint'])

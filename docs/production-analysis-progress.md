@@ -424,3 +424,12 @@ nezávislé review a GitHub CI nejsou tímto zápisem označeny za úspěšné. 
 frameworky mají návrhový kontrakt, nikoli univerzálně ověřené execution adaptéry.
 Očekávání z kódu není business oracle, syntetická data nejsou runtime proof a
 LOCAL_DECLARED není autentizace. Freshness je konzervativní přes celý snapshot.
+
+### T046 — opravy review z 2026-10-27
+
+Šest nezávisle reprodukovaných nálezů je opraveno: create-or-load race, export
+přes nekanonické cesty, JSON enum, chybějící FK target, implement gate přes
+record/save a ignorovaná journal CAS volba. Regresní sady navíc chrání historii
+a review bindings. Původní 198-testový výsledek není důkazem těchto oprav; nové
+výsledky a přesné revidované SHA jsou doplněny v change notes 56–61 a v PR.
+Merge zůstává podmíněný novým review a CI pro nové revize.

@@ -82,6 +82,8 @@ def _load(root):
 @contextmanager
 def transaction(root: Path, expected_revision=None):
     """Serialize writers and replace one journal atomically; errors leave it intact."""
+    if expected_revision is not None and (type(expected_revision) is not int or expected_revision < 0):
+        raise AnalysisError('Expected journal revision must be a non-negative integer')
     path = safe_path(root, JOURNAL)
     path.parent.mkdir(parents=True, exist_ok=True)
     lock = safe_path(root, JOURNAL + '.lock')
@@ -297,7 +299,7 @@ def markdown(report):
     return '\n'.join(lines) + '\n'
 
 
-def sync_analysis(root, analysis_id):
+def sync_analysis(root, analysis_id, *, expected_revision=None):
     from . import feature
     path = safe_path(root,f'.kgmaker/analyses/{analysis_id}/analysis.json')
     candidate = read_json(path)
@@ -309,7 +311,7 @@ def sync_analysis(root, analysis_id):
         raise AnalysisError('Analysis receipt mismatch')
     ref=reference('analysis',analysis_id,str(candidate['revision']),candidate,
                   locator={'path':path.relative_to(root).as_posix(),'sha256':file_hash(path)})
-    with transaction(root) as data:
+    with transaction(root, expected_revision) as data:
         key=put(data,ref)
         for requirement in candidate['requirements']:
             r=reference('requirement',requirement['id'],str(candidate['revision']),requirement)
@@ -317,13 +319,13 @@ def sync_analysis(root, analysis_id):
     return key
 
 
-def sync_testgen(root,suite):
+def sync_testgen(root,suite, *, expected_revision=None):
     from . import testgen
     report=testgen.report(root,suite)
     candidate=report['candidate'];revision=str(report['revision']);packet=report['packet']
     ref=reference('test_suite',suite,revision,{'candidate_hash':report['sha256'],
                   'packet_id':candidate['packet_id'],'execution':'NOT_RUN','target':packet['target']['id']})
-    with transaction(root) as data:
+    with transaction(root, expected_revision) as data:
         key=put(data,ref)
         for case in candidate['cases']:
             c=reference('test_case',suite+':'+case['id'],revision,case)
@@ -344,7 +346,7 @@ def sync_testgen(root,suite):
     return key
 
 
-def capture_change(root,task_id,base,head=None):
+def capture_change(root,task_id,base,head=None, *, expected_revision=None):
     import subprocess
     from .workflow import load_task
     def git(*args):
@@ -368,7 +370,7 @@ def capture_change(root,task_id,base,head=None):
              'state':'COMMITTED' if head else 'WORKTREE','changed_paths':paths,
              'diff_sha256':digest(diff),'task_id':task['id']}
     ref=reference('change',task['id']+':change',digest(payload),payload)
-    with transaction(root) as data:
+    with transaction(root, expected_revision) as data:
         refs=sync_task(data,task);put(data,ref);connect(data,ref['key'],refs[1]['key'],'implements')
     return ref['key']
 

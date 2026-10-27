@@ -41,7 +41,8 @@ def register(sub):
     commands=p.add_subparsers(dest='delivery_action',required=True)
     for action in ('identity','policy','register','link','decide','sync-task','sync-analysis','sync-testgen','capture-change','show','check'):
         child=commands.add_parser(action);child.add_argument('--root',type=Path,default=Path.cwd())
-        child.add_argument('--expected-revision',type=int)
+        if action not in {'show', 'check'}:
+            child.add_argument('--expected-revision', type=int)
         if action=='identity':
             child.add_argument('--actor',required=True);child.add_argument('--kind',choices=('human','agent'),default='human')
         elif action=='policy':
@@ -109,9 +110,9 @@ def run(args):
             if action=='register':
                 result={'reference':provenance.register_file(root,args.kind,args.id,args.revision,args.path,
                     repo_id=args.repo_id,expected_revision=args.expected_revision)}
-            elif action=='sync-analysis': result={'reference':provenance.sync_analysis(root,args.id)}
-            elif action=='sync-testgen': result={'reference':provenance.sync_testgen(root,args.id)}
-            elif action=='capture-change': result={'reference':provenance.capture_change(root,args.task,args.base,args.head)}
+            elif action=='sync-analysis': result={'reference':provenance.sync_analysis(root,args.id,expected_revision=args.expected_revision)}
+            elif action=='sync-testgen': result={'reference':provenance.sync_testgen(root,args.id,expected_revision=args.expected_revision)}
+            elif action=='capture-change': result={'reference':provenance.capture_change(root,args.task,args.base,args.head,expected_revision=args.expected_revision)}
             elif action in {'show','check'}:
                 result=provenance.trace(root,getattr(args,'reference',None))
                 if action=='show' and args.format=='markdown':

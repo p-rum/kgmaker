@@ -406,3 +406,9 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 Výsledky skutečných běhů a limity prostředí jsou v change notes 56–61. Testovací
 návrh má NOT_RUN; výsledek unittest E2E je oddělená validační evidence. Tato tabulka
 nenahrazuje review ani chybějící pytest/compiler/GitHub CI běhy.
+
+T046 revize 2 doplňuje protipříklady review: delayed creator + immutable history
+(test_provenance), canonical protected code/data paths + FK missing-vs-null +
+record/direct-save gate + all trace CAS routes (test_delivery) a recursive typed
+enum equality (test_synthetic_data). Každý scénář před opravou reprodukoval chybu;
+nové běhy nejsou zaměňovány s původními 198 testy.

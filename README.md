@@ -516,3 +516,11 @@ request/plan before implementation and a source-bound review before completion.
 Generated tests remain `NOT_RUN` until separately executed by the project runner.
 See [workflow, schemas, examples and limitations](docs/delivery-workflow.md) and
 [specification T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
+
+Test/code/data exports require canonical repository-relative paths; aliases such
+as `./.github/...` and reserved metadata segments are rejected. Workflow writes
+preserve artifact history and require the current task revision for updates;
+concurrent task creation returns the existing state. All mutating trace commands
+support `--expected-revision`; a stale value fails without changing the journal.
+Dataset enum and foreign-key comparison uses JSON types, distinguishing booleans
+from numbers and absent target keys from explicit null values.

@@ -203,3 +203,32 @@ spolupracující klienty. Nové mutace tasku používají optimistic CAS; journa
 mají exclusive writer lock a atomickou výměnu JSON state. Pokud zůstane lock po
 pádu procesu, ověřte, že žádný writer neběží, a odstraňte pouze příslušný `.lock`.
 Zdrojové změny probíhající současně s generováním vyžadují novou přípravu.
+
+## Opravy review — revize 2
+
+Výstupní cesta musí být kanonická: bez `./`, zdvojených oddělovačů nebo
+chráněného segmentu `.git`, `.github`, `.kgmaker` (case-insensitive). Stejná
+kontrola platí pro kód i JSON/CSV data před jakýmkoliv zápisem. Nekanonické
+aliasy se odmítají; nepoužívají se k obcházení deduplikace a zákazu metadat.
+
+JSON enum a FK rozlišují boolean od number i uvnitř polí/objektů; 1 a 1.0
+jsou číselně ekvivalentní. Chybějící FK target key není null. Explicitní null
+se může spárovat pouze s explicitním null v cílovém klíči, pokud to schema
+dovoluje; nepoužívá se implicitní SQL-null nebo fallback na chybějící sloupec.
+
+`save_task` vyžaduje při změně existujícího záznamu `expected_revision=digest(task)`;
+uložení zcela stejného záznamu zůstává idempotentní. Založení tasku je atomické
+create-or-load pod stejným workflow lockem. Artefakty jsou neměnný prefix,
+staré bindings se nesmějí přepsat ani doplnit zpětně a nové artefakty musí mít
+aktuální fázi i iteraci. Přímý save nesmí přeskočit povolený přechod workflow.
+
+Všechny mutující `trace` příkazy předávají `--expected-revision N` do skutečné
+zapisující transakce. Nepřítomná volba zachová dosavadní chování; neplatné typy,
+záporné nebo zastaralé revize skončí chybou bez změny souborů. `show` a `check`
+volbu nepřijímají, protože nic nezapisují.
+
+Nový implement/review binding se při uložení vypočítá pod workflow lockem.
+Pokud caller dodá jiné hodnoty než skutečný HEAD a source inventory, zápis
+se odmítne. Chybějící binding nízkoúrovňového v1 save se doplní se schématem v2;
+identita tasku a artefaktu zůstane stejná. Top-level source observations se
+aktualizují pouze s novým implement/review artefaktem.
