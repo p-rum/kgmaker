@@ -436,3 +436,13 @@ Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`
 | T003-S05-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_registration_facts_remain_readable_without_promotion`: graph/store v1/v2/v3 a additive protocol1; TS ordinary/React context snapshots zůstávají současnému main stejné |
 | T003-S05-W02-AC03 | VERIFIED_IN_SCOPE | namespace/decoy receiver a129-call budget, `test_registration_profiles_do_not_cross_context`, malformed schema/owner/context/return, strict/timeout nulová store mutace a offline refresh; `test_registrar_and_factory_static_beans_are_not_data_availability` zachovává UNKNOWN/bez business missing verdictu |
 | T003-S05-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability, tato matice, production progress a note47 vymezují bounded literal scope a actual toolchain evidence; celý S05/AC05 zůstává PARTIAL |
+## T015 — database resource projection
+
+| Acceptance | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_two_actual_datasources_keep_distinct_resources_and_table_drilldown`, `test_identity_ignores_table_details_and_input_order` | Actual workspace/Flyway replay; two explicit realms, stable IDs and deterministic serialization |
+| AC02 | `test_only_existing_context_bound_read_write_is_projected`, `test_entity_mapping_is_only_a_dependency_not_read_or_write`, `test_plain_connection_configuration_never_creates_database_access` | Existing source/context/evidence-bound facts only; no query inference |
+| AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
+| AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
+| AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |

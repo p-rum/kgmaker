@@ -312,3 +312,19 @@ Persistent log/XML: `/workspace/validation/spring-factory-integration-3a7/`.
 Žádný actual JVM/full repeat, worker rebuild, instalace, push či author self-merge.
 Finální scoped semantic update/apply/validate, CLI scan/check a diff check PASS;
 staré feature důkazy jsou výslovně odlišeny od tohoto čistého integration run.
+
+## Integrace sloučeného T015
+
+Aktuální parent je main `49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce` (merged
+PR55). Factory/JVM source a původní registration testy zůstávají byte-identické
+reviewovanému `7859e16`; T015 projector, testy a pinned API fixture jsou přesně
+z main. CI zachovává explicitní API bootstrap i všechny main compiler testy a
+přidává registrars/factories modul. Sdílený configuration view nadále přidává
+pouze tři původní registration relation kinds.
+
+Čisté integrační kontroly T005/T008/T009/T015/mandatory: **124 PASS**, dva již
+samostatně doložené actual T015 případy byly úmyslně deselected, **3.44s**;
+XML `/workspace/factory-main49-pure.xml`. Původní actual38 a full558/10 se pro
+nezměněné feature source neopakují. Nový head/base vyžaduje čerstvé remote CI.
+Main prefix127 immutable episodes i dva původní Factory captures zůstávají
+beze změny; generated grafy obnovuje pouze CLI.

@@ -472,3 +472,14 @@ připravují explicitně, nikoli core/test fetch. Kotlin registration facts, obe
 builders, XML/factories metadata, runtime a production availability nejsou dodány.
 S05/AC05 a celý T003 zůstávají PARTIAL. Přesné běhy, externě blokované Actions a
 Draft stav: [change note47](changes/47_declareSpringRegistrations.md).
+## T015 — explicit datasource resource projection
+
+Bounded implementation over T008/T009: explicit workspace/repository/database/stream
+resources, table drill-down references, existing selected-context read/write/delete
+facts and dependency-only entity/migration declarations. Flyway derivation is
+MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
+shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
+Complete persistence/schema-compatibility S06/W08, T004 and production readiness
+remain PARTIAL; this does not implement a new parser or discover datasources.
