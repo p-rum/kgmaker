@@ -711,3 +711,32 @@ unchanged and supplemental `argument_parameter_bindings` retains typed provenanc
 Workspace federation qualifies argument/formal/call-site/context references;
 malformed or ambiguous bindings fail before replacing the last valid generation.
 No scan/hook/projection starts workers, builds or application code implicitly.
+
+## Return → consumer bindings
+
+T003-S07-W02 adds optional compiler-owned return IR without changing protocol v1
+or graph/store v1/v2/v3. Explicit inspection records typed call-result, assignment,
+return-expression and receiver occurrences with `return_mapping_version=1` evidence.
+Branch guards remain alternatives; nullability is declared compiler information,
+never an observed value. Process JSON/Markdown and directional impact retain the
+bindings. Workspace export qualifies their original identities and context.
+
+| Backend | Supported static proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Declared returns, assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
+| TypeScript5.7.3 | Typed results, assignments, nullable receivers, direct-body tuple/object destructuring | any, async/generator, open dispatch, computed/rest/default projections |
+| K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
+
+`returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control
+edge of the same name cannot establish value flow. Callee body joins require a
+supported direct source target, and recursion is bounded. No application executes,
+network request, store mutation during failed validation, runtime value observation,
+or implicit compiler refresh is introduced. Legacy indexes remain readable; an
+explicit obsolete return-rule version is STALE offline.
+
+Example after explicit compiler inspection: `kgmaker flow render --help` describes
+the existing process rendering commands; their JSON call blocks include
+`return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
+Actual coverage is in `tests/test_return_consumer_flow.py`; broader production
+interprocedural flow and complete S07 remain pending.

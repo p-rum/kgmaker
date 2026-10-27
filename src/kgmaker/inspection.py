@@ -178,6 +178,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     # and selection identity, including its pre-existing React overwrite behavior.
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
                                         "jpa": "annotation-source-v4"}
+    from .return_flow import VERSION as RETURN_VERSION
+    value["return_flow_rule_version"] = RETURN_VERSION
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
@@ -211,6 +213,12 @@ def validate_response(response: dict, selected_context: dict):
     for fact in response["facts"]:
         if fact.get("source") not in ids or fact.get("target") not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
+
+    from .return_flow import validate_return_ir
+    try:
+        validate_return_ir(response, selected_context)
+    except ValueError as error:
+        raise WorkerError(str(error), "INVALID_PROTOCOL") from error
 
     from .dataflow import validate_argument_bindings
     try:
@@ -325,6 +333,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         sorted(edges, key=lambda e: (e.source, e.kind, e.target, e.evidence_ids)), base.files,
         base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
         [evidence[i] for i in sorted(evidence)], metadata, call_sites, cfgs)
+    from .return_flow import augment_return_flow
+    graph = augment_return_flow(graph, sanitize(response["bodies"]), selected_context)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
 

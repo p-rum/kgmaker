@@ -510,3 +510,9 @@ unsupported/erroneous bindings expose specific UNKNOWN boundaries.
 `kgmaker flow render --entry METHOD_ID --view process --format json` includes
 binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
 retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
+
+Compiler inspection also records static return → assignment/argument/receiver
+bindings with branch guards and declared nullability. Java, K1 and TypeScript
+support the bounded [return-consumer matrix](docs/compiler-inspection.md#return--consumer-bindings);
+K2 Kotlin source CFG, opaque/recursive/async bodies and unsupported projections
+remain UNKNOWN. Process and impact reports carry the proof without runtime values.

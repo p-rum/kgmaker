@@ -11,7 +11,7 @@ const canonical = value => JSON.stringify(value);
 
 function handshake() {
   return {protocol_version:PROTOCOL,worker:VERSION,compiler_version:ts.version,
-    capabilities:['argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','source-ir','react-events'],
+    capabilities:['return-consumer-ir-v1','argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','source-ir','react-events'],
     limitations:['No Angular/Vue template semantics.','Dynamic callbacks/any remain unresolved.','Source IR is not runtime ordering.']};
 }
 
@@ -125,6 +125,7 @@ function analyze(request) {
       symbols.set(identity,{id:identity,name:name(node),owner:owner(node),kind:kind || (callable(node)?'function':ts.SyntaxKind[node.kind]),
         type:owned.checker.typeToString(type,node,ts.TypeFormatFlags.NoTruncation),...loc,
         identity_stability:identity.includes(':snapshot:')?'SNAPSHOT':'DECLARATION',
+        async:callable(node)&&!!(ts.getCombinedModifierFlags(node)&ts.ModifierFlags.Async),generator:callable(node)&&!!node.asteriskToken,
         project_id:projectFor(node.getSourceFile().fileName)?.id || null,
         scope:context.scope,context_id:context.id});
     }
@@ -397,9 +398,73 @@ function analyze(request) {
     if(node) v(node);
     return result;
   }
+  function valueInfo(node,declaredReturn=false) {
+    try {
+      const owned=declarationContext(node), c=owned.checker,n=owned.node;
+      if(bindingErrors.some(e=>e.file===n.getSourceFile().fileName && e.start<n.getEnd() && e.end>n.getStart()))
+        return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      if(!declaredReturn && n.kind===ts.SyntaxKind.NullKeyword)return {version:1,status:'VALUE',type_ref:'null',nullability:'NULL_LITERAL'};
+      const options=projectFor(n.getSourceFile().fileName)?.parsed?.options || parsed.options;
+      const strictNull=options.strictNullChecks ?? options.strict ?? false;
+      const signature=declaredReturn?c.getSignatureFromDeclaration(n):null;
+      const type=declaredReturn?(signature?c.getReturnTypeOfSignature(signature):null):c.getTypeAtLocation(n);
+      if(!type)return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      const parts=type.isUnion()?type.types:[type];
+      if(parts.some(t=>t.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)))
+        return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      if(parts.every(t=>t.flags & (ts.TypeFlags.Void|ts.TypeFlags.Never)))
+        return {version:1,status:'VOID',type_ref:'void',nullability:'UNKNOWN'};
+      const callable=parts.some(t=>t.getCallSignatures().length || t.getConstructSignatures().length);
+      const primitive=t=>t.flags&ts.TypeFlags.StringLike?'string':t.flags&ts.TypeFlags.NumberLike?'number':t.flags&ts.TypeFlags.BooleanLike?'boolean':t.flags&ts.TypeFlags.BigIntLike?'bigint':t.flags&ts.TypeFlags.Null?'null':t.flags&ts.TypeFlags.Undefined?'undefined':t.flags&ts.TypeFlags.TypeParameter?'type_parameter':c.isTupleType(t)?'tuple':'object';
+      const kinds=[...new Set(parts.map(primitive))].sort();
+      const nullable=parts.some(t=>t.flags&(ts.TypeFlags.Null|ts.TypeFlags.Undefined));
+      return {version:1,status:callable?'CALLABLE':'VALUE',type_ref:kinds.join('|'),
+        nullability:parts.every(t=>t.flags&ts.TypeFlags.Null)?'NULL_LITERAL':!strictNull?'UNKNOWN':nullable?'MAY_BE_NULL':'DECLARED_NON_NULL'};
+    }catch(error){return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};}
+  }
+  function valueBinding(node) {
+    if(!node)return null;
+    const owned=declarationContext(node),c=owned.checker,n=owned.node;
+    let declaration=n;
+    if(ts.isIdentifier(n)) {
+      let symbol=c.getSymbolAtLocation(n);if(symbol?.flags&ts.SymbolFlags.Alias)symbol=c.getAliasedSymbol(symbol);
+      declaration=symbol?.valueDeclaration || symbol?.declarations?.[0];
+    }
+    if(!declaration || !(ts.isVariableDeclaration(declaration)||ts.isBindingElement(declaration)||ts.isParameter(declaration)) || !ts.isIdentifier(declaration.name))return null;
+    const loc=location(declaration);let parent=declaration.parent;while(parent && !callable(parent))parent=parent.parent;
+    const identity=ts.isParameter(declaration)?id(declaration):`${symbolPrefix(declaration.getSourceFile().fileName)}:binding:${loc.path}:${loc.sha256}:${loc.range.start}:${loc.range.end}`;
+    return {version:1,id:identity,name:declaration.name.text,kind:ts.isParameter(declaration)?'PARAMETER':'LOCAL_VARIABLE',method:parent?id(parent):null,symbol:null,type:valueInfo(declaration),...loc};
+  }
+  function valueTargets(node) {
+    const pattern=node.name;if(!pattern || !(ts.isArrayBindingPattern(pattern)||ts.isObjectBindingPattern(pattern)))return [];
+    const c=declarationContext(node).checker;const type=c.getTypeAtLocation(node.initializer);
+    return pattern.elements.flatMap((entry,index)=>{
+      if(ts.isOmittedExpression(entry))return [];
+      const binding=valueBinding(entry);if(!binding)return [];
+      let status='PROVEN',kind=ts.isArrayBindingPattern(pattern)?'TUPLE_ELEMENT':'OBJECT_PROPERTY',key=null;
+      if(entry.dotDotDotToken || entry.initializer || !ts.isIdentifier(entry.name))status='UNKNOWN';
+      if(kind==='TUPLE_ELEMENT') {if(!c.isTupleType(type))status='UNKNOWN';}
+      else {
+        const property=entry.propertyName || entry.name;
+        key=ts.isIdentifier(property)?property.text:ts.isStringLiteral(property)?property.text:null;
+        if(key==null || !ts.isIdentifierText(key,ts.ScriptTarget.Latest))status='UNKNOWN';
+        const symbol=key==null?null:c.getPropertyOfType(type,key);
+        if(!symbol || symbol.declarations?.some(d=>ts.isGetAccessorDeclaration(d)||ts.isSetAccessorDeclaration(d)))status='UNKNOWN';
+      }
+      return [{binding,projection:{kind,index,key,status}}];
+    });
+  }
+  function literalShape(node) {
+    if(ts.isArrayLiteralExpression(node) && !node.elements.some(ts.isSpreadElement))return {kind:'TUPLE_ELEMENT',size:node.elements.length};
+    if(ts.isObjectLiteralExpression(node) && node.properties.every(p=>ts.isPropertyAssignment(p) && ts.isIdentifier(p.name)))
+      return {kind:'OBJECT_PROPERTY',keys:node.properties.map(p=>p.name.text)};
+    return null;
+  }
   function ir(node) {
     if (!node) return {kind:'empty'};
-    const base={...location(node),label:safeText(node),calls:calls(node)};
+    const base={...location(node),label:safeText(node),calls:calls(node),value_info:valueInfo(node)};
+    if(ts.isIdentifier(node))base.value_binding=valueBinding(node);
+    const shape=literalShape(node);if(shape)base.value_shape=shape;
     if (callable(node)) return {...base,kind:'reference',calls:[]};
     if (ts.isJsxExpression(node)) return ir(node.expression);
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
@@ -418,9 +483,9 @@ function analyze(request) {
       return value;
     }
     if(ts.isVariableStatement(node))return {...base,kind:'block',statements:node.declarationList.declarations.map(ir)};
-    if(ts.isVariableDeclaration(node))return {...base,kind:'assign',value:ir(node.initializer)};
+    if(ts.isVariableDeclaration(node))return ts.isIdentifier(node.name)?{...base,kind:'assign',value_binding:valueBinding(node),value:ir(node.initializer)}:{...base,kind:'destructure',value:ir(node.initializer),value_targets:valueTargets(node)};
     if(ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
-      return {...base,kind:'assign',value:ir(node.right)};
+      return {...base,kind:'assign',value_binding:valueBinding(node.left),value:ir(node.right)};
     if (ts.isBlock(node)) return {...base,kind:'block',statements:node.statements.map(ir)};
     if (ts.isIfStatement(node)) return {...base,kind:'if',condition:ir(node.expression),then:ir(node.thenStatement),else:ir(node.elseStatement)};
     if (ts.isWhileStatement(node) || ts.isDoStatement(node)) return {...base,kind:ts.isDoStatement(node)?'do':'while',condition:ir(node.expression),body:ir(node.statement)};
@@ -438,7 +503,11 @@ function analyze(request) {
     if (ts.isExpressionStatement(node)) return ir(node.expression);
     return {...base,kind:'statement'};
   }
-  for (const node of functionNodes) bodies.push({method:id(node),body:ir(node.body),language:'typescript',context_id:context.id});
+  for (const node of functionNodes) {
+    const flags=ts.getCombinedModifierFlags(node);
+    const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)||flags&ts.ModifierFlags.Static?'STATIC':flags&ts.ModifierFlags.Private||node.name&&ts.isPrivateIdentifier(node.name)?'PRIVATE':'OPEN'});
+  }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');
   for (const [file,before] of inputs) if(hash(fs.readFileSync(file))!==before.sha256) throw Error('MIXED_SNAPSHOT:'+before.path);
