@@ -44,10 +44,26 @@ def _children(node):
         values=node.get(key,[])
         if isinstance(values,list):
             yield from (v for v in values if isinstance(v,dict))
-    values=node.get('catches',[])
-    if isinstance(values,list):
-        for value in values:
-            if isinstance(value,dict) and isinstance(value.get('body'),dict):yield value['body']
+    for key in ('catches','cases'):
+        values=node.get(key,[])
+        if isinstance(values,list):
+            for value in values:
+                if isinstance(value,dict) and isinstance(value.get('body'),dict):yield value['body']
+
+
+def _child_shapes(node):
+    for key in ('body','value','receiver','condition','then','else','left','right','initial','update','iterable','finally'):
+        if key in node and not isinstance(node[key],dict) and not (key=='finally' and node[key] is None):
+            raise ValueError('Invalid return IR child: '+key)
+    for key in ('statements','arguments','expressions','resources'):
+        if key in node and (not isinstance(node[key],list) or not all(isinstance(v,dict) for v in node[key])):
+            raise ValueError('Invalid return IR child collection: '+key)
+    for key in ('catches','cases'):
+        if key in node and (not isinstance(node[key],list) or any(not isinstance(v,dict) or not isinstance(v.get('body'),dict) for v in node[key])):
+            raise ValueError('Invalid return IR clause collection: '+key)
+    if 'calls' in node and (not isinstance(node['calls'],list) or not all(isinstance(v,str) for v in node['calls'])):
+        raise ValueError('Invalid return IR call references')
+    if node.get('label') is not None and not isinstance(node['label'],str):raise ValueError('Invalid return IR label')
 
 
 def validate_return_ir(response,context=None):
@@ -119,6 +135,7 @@ def validate_return_ir(response,context=None):
             node,depth,parent=pending.pop();count+=1
             if not isinstance(node,dict) or count>200000 or depth>256:raise ValueError('Return IR bounds exceeded')
             if not isinstance(node.get('kind'),str):raise ValueError('Invalid return IR kind')
+            _child_shapes(node)
             if 'value_info' in node and not _info(node['value_info']):raise ValueError('Invalid return expression type proof')
             located=any(k in node for k in ('path','sha256','range'))
             if active and (located or 'value_info' in node or node['kind'] in {'if','assign','destructure','safe_call'}):

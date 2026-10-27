@@ -340,7 +340,7 @@ export function consume(){sink(make());}
 
 @pytest.mark.parametrize('mutation',[
     'foreign_literal','missing_literal_path','literal_hash','captured_foreign_literal','literal_range','body_owner','body_context',
-    'binding_path','binding_hash','binding_owner','binding_range','node_kind_list','body_kind_dict','body_root_list','body_method_list','status_list','nullability_dict','shape_kind_list','projection_status_dict','projection_kind_list','call_site_list','binding_method_dict','binding_symbol_list','language_list','dispatch_dict','boundary_list','reference_kind_list','range_line_list','range_column_dict','modifiers_scalar','static_flag_list','invocation_kind_list','site_target_dict','site_caller_list','fact_source_list','candidate_dict','symbol_id_list','void_call_range',
+    'binding_path','binding_hash','binding_owner','binding_range','node_kind_list','body_kind_dict','body_root_list','body_method_list','status_list','nullability_dict','shape_kind_list','projection_status_dict','projection_kind_list','call_site_list','binding_method_dict','binding_symbol_list','language_list','dispatch_dict','boundary_list','reference_kind_list','range_line_list','range_column_dict','modifiers_scalar','static_flag_list','invocation_kind_list','site_target_dict','site_caller_list','fact_source_list','candidate_dict','symbol_id_list','void_call_range','statements_none','statements_object','statement_none','arguments_none','argument_none','expressions_none','resources_object','catches_none','catch_none','catch_body_none','cases_none','case_body_none','child_value_none','calls_none',
 ])
 def test_actual_return_ir_tampering_rejected_without_store_mutation(captured_return_response,monkeypatch,mutation):
     import copy
@@ -364,6 +364,20 @@ def test_actual_return_ir_tampering_rejected_without_store_mutation(captured_ret
     if mutation=='foreign_literal':literal.update(path='src/not-captured.ts',sha256='0'*64)
     elif mutation=='missing_literal_path':literal.pop('path')
     elif mutation=='literal_hash':literal['sha256']='0'*64
+    elif mutation=='statements_none':body['body']['statements']=None
+    elif mutation=='statements_object':body['body']['statements']={}
+    elif mutation=='statement_none':body['body']['statements']=[None]
+    elif mutation=='arguments_none':next(n for n in walk(other['body']) if n.get('kind')=='call')['arguments']=None
+    elif mutation=='argument_none':next(n for n in walk(other['body']) if n.get('kind')=='call')['arguments']=[None]
+    elif mutation=='expressions_none':literal['expressions']=[None]
+    elif mutation=='resources_object':body['body']['resources']={}
+    elif mutation=='catches_none':body['body']['catches']=None
+    elif mutation=='catch_none':body['body']['catches']=[None]
+    elif mutation=='catch_body_none':body['body']['catches']=[{'body':None}]
+    elif mutation=='cases_none':body['body']['cases']=None
+    elif mutation=='case_body_none':body['body']['cases']=[{'body':None}]
+    elif mutation=='child_value_none':body['body']['statements'][0]['value']=None
+    elif mutation=='calls_none':body['body']['calls']=None
     elif mutation=='modifiers_scalar':symbols[body['method']]['modifiers']=42
     elif mutation=='static_flag_list':symbols[body['method']]['jvm_static']=[]
     elif mutation=='invocation_kind_list':response['call_sites'][0]['invocation_kind']=[]

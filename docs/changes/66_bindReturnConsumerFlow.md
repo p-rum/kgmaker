@@ -120,3 +120,11 @@ vyjadřuje explicitním classification.json override; existující config se byt
 byte zachová. Return projection používá classified Node.scope, nikoli jméno složky
 nebo raw worker.scope. Alias import node a declaration target zůstávají oddělené.
 Parent full733 PASS10 SKIP je ověřený, current return combined focus/full teprve následuje.
+
+Bounded root review před full odhalilo malformed child collections: v1 block
+statements=None/{} či [None] projde filtered traversal a následně havaruje. Známé
+child nodes/collections, catch/case bodies a call references jsou nyní striktně
+shape-checked před projekcí; nullable finally=None zůstává validní, legacy bez
+return_flow_version se nemění. Actual captured-response replay53 PASS10.65s,
+včetně14 nových child-container mutations a future-string UNKNOWN boundary.
+Žádný další whole run nebyl spuštěn; combined focus-only před root closure následuje.
