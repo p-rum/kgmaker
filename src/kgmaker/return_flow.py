@@ -147,6 +147,8 @@ class _Projection:
     def direct(self,site):
         target=self.symbols.get(site.get('declared_target'),{})
         body=self.bodies.get(site.get('declared_target'),{})
+        if body.get('language')=='typescript':
+            return body.get('return_dispatch') in {'LEXICAL','HARD_PRIVATE'}
         modifiers=target.get('modifiers') or []
         return (target.get('jvm_static') is True or 'static' in modifiers or 'final' in modifiers or 'private' in modifiers
                 or site.get('invocation_kind') in {'STATIC','SPECIAL'} or body.get('return_dispatch') in {'STATIC','PRIVATE'})
@@ -317,7 +319,10 @@ class _Projection:
             if result in self.nodes and contract in self.nodes and self.direct(site) and target not in self.recursive and set(site.get('dispatch_candidates',[])) <= {target}:
                 self.edge(contract,result,site,'CALL_RESULT',site=site['id'],condition=self.symbols[result].get('condition'),transformation='DECLARED_BODY_RETURN',declared_target=target)
                 site['return_body_status']='DECLARED_SOURCE_BODY'
-            else:site['return_body_status']='UNKNOWN'
+                site['return_body_reason']='COMPILER_PROVEN_DIRECT_SOURCE_BODY'
+            else:
+                site['return_body_status']='UNKNOWN'
+                site['return_body_reason']='TS_MUTABLE_BODY_BINDING' if body.get('language')=='typescript' and not self.direct(site) else 'DECLARED_BODY_PROOF_UNAVAILABLE'
             if 'return_mapping_version' not in site:
                 self.status(site,'NOT_EXECUTION' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'UNKNOWN',
                     'METHOD_REFERENCE' if site.get('invocation_kind')=='METHOD_REFERENCE' else 'RETURN_SOURCE_IR_UNAVAILABLE')

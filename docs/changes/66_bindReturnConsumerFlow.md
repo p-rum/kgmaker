@@ -39,3 +39,15 @@ Příklad: po explicitní inspekci `kgmaker flow render --root . --entry '<metho
 Fixture `fixtures/return-consumer` a `tests/test_return_consumer_flow.py` dokládají
 AC01–04 v této omezené matici. S07/T003 jako celek nejsou dokončeny; remote CI je
 pozastaveno kvůli billing limitu a autor neprovádí publish/merge.
+
+## Review: mutable TypeScript body boundary
+
+Review nad064da2b odhalilo mylný original-body join u mutable TS static/soft-private
+method. Vlastní full byl cíleně přerušen:239 PASS2 SKIP403.86s, NENÍ final PASS.
+Dvě skutečné member regression byly RED; třetí původní top-level test odhalil
+nepodporovaný top-level IR a byl opraven na skutečné function-body callsite.
+Nová sada static/soft-private/lexical-reassignment negatives a nezměněný lexical/
+ECMAScript #private positive:5 PASS20.51s před přidáním explicitního reason fieldu.
+TS body joins nyní ignorují JVM static/private modifiers; ordinary members jsou
+OPEN, lexical function se zjištěným compiler-bound assignment target také. Bez heap
+resolveru; typed caller result/consumer contract zůstává oddělený.

@@ -503,10 +503,29 @@ function analyze(request) {
     if (ts.isExpressionStatement(node)) return ir(node.expression);
     return {...base,kind:'statement'};
   }
+  // Lexical declarations may be assigned too. Refuse their original body when
+  // the compiler binds an assignment target to that declaration; members are
+  // mutable regardless of static/TypeScript-private modifiers.
+  const reassignedFunctions=new Set();
+  function assignedFunctions(node) {
+    if (ts.isIdentifier(node)) {
+      const owned=declarationContext(node), symbol=owned.checker.getSymbolAtLocation(owned.node);
+      for (const declaration of symbol&&symbol.declarations||[])
+        if (ts.isFunctionDeclaration(declaration)) reassignedFunctions.add(id(declaration));
+    } else ts.forEachChild(node,assignedFunctions);
+  }
+  function inspectAssignments(node) {
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
+      assignedFunctions(node.left);
+    if ((ts.isPrefixUnaryExpression(node)||ts.isPostfixUnaryExpression(node)) && [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator))
+      assignedFunctions(node.operand);
+    ts.forEachChild(node,inspectAssignments);
+  }
+  for (const source of projectFiles) inspectAssignments(source);
   for (const node of functionNodes) {
     const flags=ts.getCombinedModifierFlags(node);
     const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
-    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)||flags&ts.ModifierFlags.Static?'STATIC':flags&ts.ModifierFlags.Private||node.name&&ts.isPrivateIdentifier(node.name)?'PRIVATE':'OPEN'});
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
   }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');

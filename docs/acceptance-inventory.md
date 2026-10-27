@@ -408,3 +408,12 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC02 | Additive mapping version1; existing worker protocol v1 and graph/store v1/v2/v3 retained; legacy unversioned facts readable | graph/process roundtrip, legacy tests and existing model/store suites |
 | AC03 | Unknown K2/ASM bindings, compiler-error recovery, unresolved/reference boundaries, malformed/ambiguous and zero store mutation | actual negative compiler fixtures, atomic last-valid-store fixture, workspace qualification and candidate/legacy impact tests |
 | AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |
+
+## T003-S07-W02 — Return → consumer binding
+
+| AC | Bounded delivered proof | Evidence |
+|---|---|---|
+| AC01 | Compiler-owned ranges/direction, branch alternatives, distinct assignments, nullable/chained consumers | `tests/test_return_consumer_flow.py`, `fixtures/return-consumer` actual Javac/K1/TS |
+| AC02 | Additive protocol1/graph1/2/3; stale explicit rule stays offline | Legacy and stale-rule tests in the same module |
+| AC03 | Opaque/open/recursive/callable/void/any/async/custom-projection bodies remain UNKNOWN; malformed input does not mutate store | Actual worker negatives and malformed-IR/zero-store tests |
+| AC04 | `return-consumer-1` matrix; K2 Kotlin missing source CFG remains UNKNOWN; S07/T003 PARTIAL | [change66](changes/66_bindReturnConsumerFlow.md), [compiler matrix](compiler-inspection.md#return--consumer-bindings); full result pending |

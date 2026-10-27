@@ -244,3 +244,29 @@ def test_stale_return_rule_is_rejected_without_implicit_refresh(tmp_path,monkeyp
     with pytest.raises(WorkerError,match='return/consumer rules changed') as error:
         validate_context_snapshot(tmp_path,{'return_flow_rule_version':'unknown'})
     assert error.value.status=='STALE'
+
+
+@pytest.mark.parametrize('source,callee',[
+    ('class B { static make():number{return 1;} static run():number{return B.make();} } B.make=()=>2; export const result=B.run();','make'),
+    ('class B { private make():number{return 1;} run():number{return this.make();} } export const result=new B().run();','make'),
+    ('function make():number{return 1;} make=()=>2; export function use(){return make();}','make'),
+])
+def test_mutable_typescript_bodies_do_not_claim_original_return(tmp_path,source,callee):
+    graph=analyze(tmp_path,{'src/mutable.ts':source},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name')==callee]
+    assert sites
+    assert all(s.get('return_body_status')=='UNKNOWN' for s in sites)
+    assert all(s.get('return_mapping_status')=='PROVEN' for s in sites)
+    assert all(s.get('return_body_reason')=='TS_MUTABLE_BODY_BINDING' for s in sites)
+    assert not any(e.get('transformation')=='DECLARED_BODY_RETURN' and e.get('call_site') in {s['id'] for s in sites} for e in graph['evidence'])
+
+
+def test_unassigned_lexical_and_hard_private_typescript_bodies_keep_proof(tmp_path):
+    graph=analyze(tmp_path,{'src/closed.ts':'''function lexical():number{return 1;}
+class B { #make():number{return 2;} run():number{return this.#make();} }
+export function use(){const result=lexical();return result;} export const b=new B().run();'''},language='typescript')
+    symbols={s['id']:s for s in graph['symbols']}
+    sites=[s for s in graph['call_sites'] if symbols.get(s.get('declared_target'),{}).get('name') in {'lexical','#make'}]
+    assert len(sites)==2
+    assert all(s.get('return_body_status')=='DECLARED_SOURCE_BODY' for s in sites)
