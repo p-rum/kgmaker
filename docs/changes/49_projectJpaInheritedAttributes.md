@@ -167,3 +167,20 @@ episodes; a new current-base integration capture follows. The W01 JPA semantic
 concept and W02 exact repository/JPQL identity concept are both retained with
 current compiler-inspection citations. Semantic validation and regenerated
 graph/check and diff checks are included in the integration validation.
+
+## Refresh W01/W02 to current main `5430388` (2026-10-27)
+
+Current main adds selected TypeScript configuration freshness. The merge keeps
+W02 JPA runtime and regression-test sources byte-identical to the pre-refresh
+W02 head: `framework.py`, the K2 frontend, `test_k2_backend.py`, and
+`test_compiler_workers.py`. The new main changes add TypeScript snapshot handling,
+tests, documentation, and matrix entries.
+
+Focused JDK21/Kotlin2.1.10/Javac validation passed for the exact JPQL owner and
+partial-index return cases, Javac AC06, K2 use-site access, K2 mapped-superclass
+inheritance, and Java mapped-superclass projection: **5 passed in 64.66 s**.
+No full suite was repeated for this base refresh. Semantic history preserves the
+exact 118-episode current-main prefix, the nine W01-only entries including its
+current integration capture, and five W02-only implementation entries; a fresh
+W02 integration capture follows. Semantic validation, graph regeneration/check,
+and diff checks complete the refresh.
