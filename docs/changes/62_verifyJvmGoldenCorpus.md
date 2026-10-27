@@ -105,3 +105,24 @@ všech 7 konceptů/20 vztahů prerequisite stacku zůstává přesně zachováno
 110 upstream epizod tvoří immutable prefix; finální capture/scan/check/diff jsou
 součástí lokálního review kandidáta. Žádná samostatná produkční implementace
 upstream balíků se zde neduplikuje a remote billing/egress gates zůstávají BLOCKED.
+
+
+## Nový sjednocený připravený full run (2026-10-27)
+
+Na nezměněném production/test source HEAD `ed5ed7ce114886ce448e810665cd3e486be6e04e`
+proběhl samostatný strict full: **646 PASS, 10 SKIP /991.96 s**, bez failures
+a setup errors. JUnit potvrzuje všech656 cases včetně21 corpus checks. Předchozí
+640/10/6 environment setup errors a následný9 PASS repair zůstávají historické
+výsledky výše; nový výsledek je jediný skutečně sjednocený green run.
+
+Read-only prerequisite preflight ověřil vlastní K1/K2/TS workers, skutečný Maven
+fixture, React a SHA-bound Spring API. Příkaz používá stejné explicitní JDK21,
+Kotlin, vlastní workers a required Workers/K2/Spring env výše; navíc
+`TMPDIR=/workspace/golden-final-tmp`,
+`--basetemp=/workspace/golden-final-tmp/pytest` a
+`--junitxml=/workspace/golden-final-full.xml`, stále pod shared heavy lockem.
+Log `/workspace/golden-final-full.log` a XML jsou zachovány. Deset optional/
+platform SKIP není mandatory compiler PASS. Žádný CI retry ani merge neproběhl.
+
+Nepublikovaný change note57 byl přejmenován na62 kvůli nově zjištěné kolizi
+s publikovaným T046; historické immutable memory episodes se nepřepisují.

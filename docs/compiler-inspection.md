@@ -713,5 +713,5 @@ non-executing, and opposite branches never become a sequence.
 The corpus and its mutation checks reject missing/extra/retargeted/stronger
 observations. Store/protocol formats remain unchanged; source/class/store bytes
 and offline retention use the existing model/provider pipeline. The prerequisite
-stack is explicitly documented in change57; this is bounded static acceptance,
+stack is explicitly documented in change62; this is bounded static acceptance,
 not a complete JVM program, runtime scheduling or availability proof.

@@ -433,5 +433,7 @@ identities with explicit K1/K2 unsupported boundaries, CFG branches, non-executi
 references and unresolved reflection targets. It reuses existing actual fixtures
 and the application model/provider pipeline, with no production runtime change.
 The local prerequisite stack is explicit; it does not imply those upstream PRs
-are already merged. Current validation and remaining limits are in change57;
+are already merged. Current validation and remaining limits are in change62;
 S04/T003 remain PARTIAL outside this bounded static matrix.
+
+Golden corpus prepared full (2026-10-27): 646 PASS, 10 SKIP /991.96s; all21 corpus checks ran, no failures/setup errors. Source unchanged; remote gates remain paused.

@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
     "README.md": "084e1eeed3783d5b77079d515d3d8e055e5303da4ea0ea281e3dc05ea2c3f421",
-    "docs/acceptance-inventory.md": "3cc0cf422ee15199ed8b110253aa1f0818ef87c8c044e2064c1734438959077d",
+    "docs/acceptance-inventory.md": "f3598ebd99ba7ccb6a293bd061080d5d3af9981f84d0749c973b9c485d291ccf",
     "docs/architecture.md": "ec3c70c431b4d595b974e87fd9f9908282cc1ab2714b924b7db11e82bf0c6228",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -37,15 +37,15 @@
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/51_mapCoroutineSourceBoundaries.md": "b2d261ab0dc44dac2695ea514d39e94610ecc2e4a59ae3c9e3cfdbce69d73095",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
-    "docs/changes/62_verifyJvmGoldenCorpus.md": "3ca0adad5a73f6e5f5aa78deeba6b2f0e82aca1fd3156a2ffee7de6252e2e6a7",
+    "docs/changes/62_verifyJvmGoldenCorpus.md": "3dc687359a5e5378f311df5298bf3b41c350eddc78e4cbda01ad0fdec4b582cc",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "ce9be6a341a0047256d4804fcd1c93b9d90ce7d34d69f75bd29e6bf245ccb506",
+    "docs/compiler-inspection.md": "27a26895638e840fd1dcbc961d39e5de869d7dab4c9e7e94150367a1bb0f80c8",
     "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "9b6ac9ad2113ad766ac877c5827dd44d2f08cc0a27689ea89f8562a2208609f1",
+    "docs/production-analysis-progress.md": "d5363c48796a118aa746192fb78067ccf7fb82f4618cb270d07ba531967c86c1",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -47264,6 +47264,148 @@
         }
       ],
       "id": "episode:13d2861ff3080f4c306d94bee2daba0b276cae8ee330655e49e2b61cc67e8b63"
+    },
+    {
+      "base_commit": "ed5ed7ce114886ce448e810665cd3e486be6e04e",
+      "head_commit": "ed5ed7ce114886ce448e810665cd3e486be6e04e",
+      "worktree_fingerprint": "ae76f25c0c87592ae1c7bd9204144ef147a4d91405b5444a6a2c81a166edb556",
+      "title": "Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:",
+      "changed_files": [
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "f3598ebd99ba7ccb6a293bd061080d5d3af9981f84d0749c973b9c485d291ccf"
+        },
+        {
+          "path": "docs/changes/62_verifyJvmGoldenCorpus.md",
+          "status": "M",
+          "sha256": "3dc687359a5e5378f311df5298bf3b41c350eddc78e4cbda01ad0fdec4b582cc"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "27a26895638e840fd1dcbc961d39e5de869d7dab4c9e7e94150367a1bb0f80c8"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "d5363c48796a118aa746192fb78067ccf7fb82f4618cb270d07ba531967c86c1"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+        "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+        "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/62_verifyJvmGoldenCorpus.md:62_verifyJvmGoldenCorpus.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::47",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::225",
+        "section:docs/acceptance-inventory.md:T001::106",
+        "section:docs/acceptance-inventory.md:T002::185",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::288",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::381",
+        "section:docs/acceptance-inventory.md:T003-S04-W03 — bounded coroutine source mapping::403",
+        "section:docs/acceptance-inventory.md:T003-S04-W04 — Dependency dispatch hierarchy::333",
+        "section:docs/acceptance-inventory.md:T003-S04-W05 — exact hand-labelled JVM corpus::412",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::356",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::3",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::341",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::321",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::38",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::25",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::368",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::312",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::56",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::89",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::67",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::78",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Explicitní prerequisite stack::5",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Finální ověření stejného source::73",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Nový sjednocený připravený full run (2026-10-27)::110",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Opravy anotací během actual ověření::49",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Stejné env/lock; pouze temporary location pro opravený installed setup:::97",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:T003-S04-W05 — ručně anotovaný JVM acceptance corpus::1",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Validace::37",
+        "section:docs/changes/62_verifyJvmGoldenCorpus.md:Změna a meze::16",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::156",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Coroutine source boundaries (T003-S04-W03)::670",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::152",
+        "section:docs/compiler-inspection.md:Default body source mapping::622",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::102",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::118",
+        "section:docs/compiler-inspection.md:Hand-labelled JVM acceptance corpus::692",
+        "section:docs/compiler-inspection.md:Import a validated execution-bound build manifest before selecting bytecode roots.::628",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::133",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::342",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::245",
+        "section:docs/compiler-inspection.md:No compilation is triggered by scan, graph queries or source-only inspection.::629",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::84",
+        "section:docs/compiler-inspection.md:Required CI prerequisites (T003-S11-W04)::600",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::401",
+        "section:docs/compiler-inspection.md:Source/compiler inspection does not execute coroutine code or a scheduler.::680",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::372",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::421",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::459",
+        "section:docs/compiler-inspection.md:T003-S04-W04 — Ordered dependency dispatch::505",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::552",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::150",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::121",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::86",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::182",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::122",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::132",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::154",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::69",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::198",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::189",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::207",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::242",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::397",
+        "section:docs/production-analysis-progress.md:T003-S04-W03 — coroutine boundaries::420",
+        "section:docs/production-analysis-progress.md:T003-S04-W04 — Dependency dispatch hierarchy::342",
+        "section:docs/production-analysis-progress.md:T003-S04-W05 — JVM golden acceptance corpus::429",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::369",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::354",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::325",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::259",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::48",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::35",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::22",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::386",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::271",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::228",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::283",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::301"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/62_verifyJvmGoldenCorpus.md:Nový sjednocený připravený full run (2026-10-27)::110"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "prepared_full646_pass10_skip",
+          "status": "passed"
+        },
+        {
+          "label": "corpus21",
+          "status": "passed"
+        },
+        {
+          "label": "remote_ci",
+          "status": "unknown"
+        }
+      ],
+      "id": "episode:a8c63177b3e4e11cc5264475a0763efc7a755e5b11a01291c5b2bd6a8d781540"
     }
   ]
 }
