@@ -515,6 +515,7 @@ function analyze(request) {
     } else ts.forEachChild(node,assignedFunctions);
   }
   function inspectAssignments(node) {
+    if (ts.isForOfStatement(node)||ts.isForInStatement(node)) assignedFunctions(node.initializer);
     if (ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
       assignedFunctions(node.left);
     if ((ts.isPrefixUnaryExpression(node)||ts.isPostfixUnaryExpression(node)) && [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator))
@@ -525,7 +526,7 @@ function analyze(request) {
   for (const node of functionNodes) {
     const flags=ts.getCombinedModifierFlags(node);
     const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
-    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&(ts.isSourceFile(node.parent)||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&((ts.isSourceFile(node.parent)&&ts.isExternalModule(node.parent))||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
   }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');

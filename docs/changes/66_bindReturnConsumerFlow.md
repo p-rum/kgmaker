@@ -57,3 +57,10 @@ Stejná kontrola prokázala namespace export function jako mutable property pře
 function není lexical proof a lexical join navíc vyžaduje compiler-AST identifier
 callsite. Finální grouped TS sada6 PASS12.93s: member/namespace/reassignment
 negatives a lexical/#private positives, bez spuštění analyzované aplikace.
+
+Review9f357e6 dále prokázalo ForOf/ForIn initializer writes včetně destructuring.
+Sada3 RED/4 PASS52.00s; guard nyní pokrývá assignment/compound/unary i oba loop
+initializer targets podle compiler bindings. Top-level script functions jsou global
+object members, tedy UNKNOWN; pouze source module/block lexical jsou kandidáti
+closed proof. Finální grouped TS10 PASS44.62s. Předchozí9f full byl přerušen po
+konkrétním nálezu266.95s (pytest SIGINT interruption), nikoli final PASS.

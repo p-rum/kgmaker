@@ -251,6 +251,10 @@ def test_stale_return_rule_is_rejected_without_implicit_refresh(tmp_path,monkeyp
     ('class B { private make():number{return 1;} run():number{return this.make();} } export const result=new B().run();','make'),
     ('function make():number{return 1;} make=()=>2; export function use(){return make();}','make'),
     ('namespace N {export function make():number{return 1;}} const alias:any=N;alias.make=()=>2;export function use(){return N.make();}','make'),
+    ('function make(){return 1;} function use(){return make();} for(make of [()=>2]){} export const result=use();','make'),
+    ('function make(){return 1;} function use(){return make();} for([make] of [[()=>2]]){} export const result=use();','make'),
+    ('function make(){return 1;} function use(){return make();} for(make in {}){} export const result=use();','make'),
+    ('function make(){return 1;} const alias:any=globalThis;alias.make=()=>2;function use(){return make();} use();','make'),
 ])
 def test_mutable_typescript_bodies_do_not_claim_original_return(tmp_path,source,callee):
     graph=analyze(tmp_path,{'src/mutable.ts':source},language='typescript')
