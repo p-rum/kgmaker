@@ -176,8 +176,25 @@ guards se neoslabily. Oba bounded direct repro běhy měl root výslovně povole
 mimo heavy lock, bez buildu/instalace/full. Původní queued matrix ani queued RED
 nezačaly (žádný pytest child); nahrazené vlastní queues byly zrušeny před startem.
 
-Jedna platná společná focused matrix je queued pod heavy lockem. Nový finální
-full bude spuštěn až po jejím úspěchu nad frozen combined source; zatím není PASS.
+Jedna platná společná focused matrix pod heavy lockem je GREEN: **106 PASS
+v233.38s**, bez skips (arguments, callbacks, freshness, protocol a mandatory CI).
+Následující jediný fresh combined strict full je GREEN: **733 PASS,10 SKIP
+v1162.26s**, exit0; XML743 tests/0errors/0failures/10skips. Všech200 zmrazených
+source/test/fixture/JAR SHA256 zůstalo beze změny. Source checkpoint b5ac0f
+má přesně stejný tree100835a9583fd4feb2c68bf59556fc78946cb7e5 jako417e2aa;
+navíc obsahuje ancestry-only merge ověřeného main
+ec333966e657896382f310ef018835e3d696513e. Rozdíl417→b5 je prázdný.
 Parent134 immutable episodes jsou exact prefix, unikátní původní child captures
 zůstávají nezměněné. Billing pause již byla odblokována; root vlastní nezávislé
 exact-head review a publikaci/CI, implementační agent nepushuje ani nemerguje main.
+
+
+Finální persistent evidence: `/workspace/argument-main-integration/focus.log`,
+`focus.xml`, `full.log`, `full.xml`, `full-status.json` a `frozen-source.json`.
+Deset skips jsou pouze optional Maven/trusted exporter, Gradle8.13/Kotlin2.2.20
+cache, druhý JDK21+ a skutečný non-admin Windows smoke; žádný mandatory actual
+argument/callback/freshness případ nebyl přeskočen. Historické RED2/51/11 a
+původní605/10 zůstávají zachovány ve svém původním rozsahu. Finální metadata
+po běhu nemění žádný source/test/runtime byte. Semantický merge zachovává všechny
+podporované manual facts; obsolete resolve_service_ownership259 duplicate byl
+nahrazen skutečným current273 s ověřenou architecture citation156.
