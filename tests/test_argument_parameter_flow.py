@@ -166,15 +166,57 @@ def test_graph_evidence_roundtrip_and_process_preserve_call_binding(tmp_path):
 def binding_response():
     return {'context_id': 'context', 'symbols': [
         {'id': 'caller', 'kind': 'method'}, {'id': 'callee', 'kind': 'method'},
-        {'id': 'argument', 'kind': 'value', 'call_site': 'call', 'context_id': 'context'},
+        {'id': 'call:argument:0', 'kind': 'value', 'call_site': 'call', 'owner_method': 'caller', 'context_id': 'context'},
         {'id': 'parameter', 'kind': 'parameter', 'name': 'n', 'method': 'callee', 'parameter_index': 0, 'context_id': 'context'}],
         'call_sites': [{'id': 'call', 'caller': 'caller', 'declared_target': 'callee',
                         'invocation_kind': 'STATIC', 'context_id': 'context', 'argument_mapping_version': 1,
                         'argument_mapping_status': 'PROVEN', 'argument_mapping_reason': 'COMPILER_ARGUMENT_MAPPING'}], 'bodies': [], 'diagnostics': [],
-        'facts': [{'kind': 'argument_to_parameter', 'source': 'argument', 'target': 'parameter',
+        'facts': [{'kind': 'argument_to_parameter', 'source': 'call:argument:0', 'target': 'parameter',
                    'call_site': 'call', 'context_id': 'context', 'argument_index': 0, 'parameter_index': 0,
                    'argument_mapping_version': 1, 'binding_kind': 'DECLARED_PARAMETER',
                    'transformation': 'DIRECT', 'parameter_name': 'n', 'evidence_kind': 'SYMBOL_RESOLVED'}]}
+
+
+@pytest.mark.parametrize('language', ['jvm', 'typescript'])
+def test_actual_argument_proof_rejects_enum_and_occurrence_contradictions(tmp_path, monkeypatch, language):
+    import copy
+    from kgmaker.inspection import validate_response
+    sources = ({'src/main/java/Bound.java': 'class Bound {static int value(int n){return n;} static int use(){return value(1);}}'}
+               if language == 'jvm' else
+               {'src/main.ts': 'function value(n:number){return n;} export function use(){return value(1);} '})
+    response = analyze(tmp_path, sources, language=language)
+    validate_response(response, {'id': response['context_id']})
+    original = next(f for f in response['facts'] if f.get('argument_mapping_version') == 1)
+    store = tmp_path / '.kgmaker' / 'graph.json'
+    store.parent.mkdir(); store.write_bytes(b'last valid generation')
+    before = {p.relative_to(tmp_path).as_posix(): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    monkeypatch.setattr('subprocess.Popen', lambda *a, **k: pytest.fail('implicit process'))
+    failures = []
+    for case in ['status-list', 'status-object', 'transform-list', 'transform-object',
+                 'owner', 'owner-missing', 'fact-index', 'source-index', 'source-identity']:
+        changed = copy.deepcopy(response)
+        fact = next(f for f in changed['facts'] if f == original)
+        argument = next(s for s in changed['symbols'] if s['id'] == fact['source'])
+        site = next(s for s in changed['call_sites'] if s['id'] == fact['call_site'])
+        if case.startswith('status-'): site['argument_mapping_status'] = [] if case.endswith('list') else {}
+        elif case.startswith('transform-'): fact['transformation'] = [] if case.endswith('list') else {}
+        elif case == 'owner': argument['owner_method'] = site['declared_target']
+        elif case == 'owner-missing': argument.pop('owner_method')
+        elif case == 'fact-index': fact['argument_index'] += 42
+        elif case == 'source-index': argument['argument_index'] = fact['argument_index'] + 42
+        else:
+            argument['id'] += ':foreign-occurrence'
+            fact['source'] = argument['id']
+        try:
+            validate_response(changed, {'id': changed['context_id']})
+        except WorkerError as error:
+            assert error.status == 'INVALID_PROTOCOL'
+        except Exception as error:
+            failures.append((case, type(error).__name__))
+        else:
+            failures.append((case, 'accepted'))
+    assert before == {p.relative_to(tmp_path).as_posix(): p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    assert not failures, failures
 
 
 @pytest.mark.parametrize('change', [
@@ -201,7 +243,7 @@ def test_malformed_binding_fails_before_any_publication(tmp_path, monkeypatch, c
 def test_legacy_unversioned_binding_fact_remains_readable():
     from kgmaker.inspection import validate_response
     response = binding_response()
-    response['facts'] = [{'kind': 'argument_to_parameter', 'source': 'argument', 'target': 'parameter',
+    response['facts'] = [{'kind': 'argument_to_parameter', 'source': 'call:argument:0', 'target': 'parameter',
                           'evidence_kind': 'SYMBOL_RESOLVED'}]
     validate_response(response, {'id': 'context'})
 
