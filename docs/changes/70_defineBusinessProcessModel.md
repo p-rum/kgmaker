@@ -9,9 +9,9 @@ business katalog ani authority pro agentem navržený význam.
 
 Baseline je `49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce` (aktuální main po T015).
 T005 `c79c551`/`000d35a` a T009 `18b7070`/`cbf17b1`/merge `09d351d` jsou skuteční
-ancestors. Nezávislá rekognoskace z předchozího main3a7 ověřila source a61 shared
-model/evidence/CFG testů. Root potvrdil rezervaci čísla70 po kontrole main,
-otevřených PR a rezervace69. Implementace je izolovaná ve větvi
+ancestors. Nezávislá rekognoskace z předchozího main3a7 ověřila source a 61 shared
+model/evidence/CFG testů. Root potvrdil rezervaci čísla 70 po kontrole main,
+otevřených PR a rezervace 69. Implementace je izolovaná ve větvi
 `feat/t023-define-business-process-model`.
 
 ## Skutečné změny
@@ -46,8 +46,8 @@ otevřených PR a rezervace69. Implementace je izolovaná ve větvi
 | T023-AC06 | source, veřejný schema/fixture, tento note a capability/progress/acceptance dokumenty; finální příkazy a výsledky níže |
 
 RED před modelem: `ModuleNotFoundError` při collection nového AC souboru.
-První implementační focus36PASS/1FAIL chyběl nový schema soubor; tento skutečný
-mezistav nebyl vydáván za PASS. Po schématu a zesílení hranic focus123PASS0.49s
+První implementační focus 36 PASS/1 FAIL chyběl nový schema soubor; tento skutečný
+mezistav nebyl vydáván za PASS. Po schématu a zesílení hranic focus 123 PASS v0.49s
 (62 nových +61 shared/CFG); následně přidán test veřejné dokumentované fixture.
 Finální focused a frozen full výsledky budou zaznamenány po skutečném dokončení.
 
@@ -87,3 +87,47 @@ v XML. JSONschema i dokumentovaná fixture jsou zahrnuty. Frozen source manifest
 a required full budou v `/workspace/validation/t023/`; queued/running stav není
 PASS. Required full používá vlastní worker home/PYTHONPATH, JDK21+Kotlin prefix
 a děděný PATH s managed Node; Maven/Gradle nejsou přidávány na PATH.
+
+## Finální required validation (2026-10-27)
+
+Root bounded source review schválilo přesný candidate
+`95c3ed30576abde6ef02b22e63361543958dccb1` / tree
+`f36b85e0e14d40a2ec64db2bb22051668e42c599` po nezávislém přehrání malformed
+list/dict reprodukcí. Teprve poté byl spuštěn jeden required frozen full.
+
+- Focused T023/T005/T009/CFG: **130 PASS v1.00s** (69 T023 +61 sdílených), exit0.
+- Required full: **729 PASS, 10 SKIP v546.19s**, exit0; XML739 tests,0 errors,
+  0 failures,10 skipped,546.139s. Worker/K2/Spring imports byly mandatory.
+- Všech 515 frozen tracked/JAR hashes je po full beze změny; source checkout
+  zůstal čistý. Žádný druhý full ani dodatečný worker build/install.
+- 10 SKIP jsou existující optional Maven/Gradle/exporter/variant/2JDK a native
+  Windows případy. Maven/Gradle byly záměrně mimo standard inherited PATH;
+  tyto kontroly nejsou vydávány za lokální PASS. Fresh remote CI zajišťuje root.
+
+Persistent důkazy: `/workspace/validation/t023/full.xml`, `full.log`,
+`full-status.json`, `frozen-manifest.json`, `frozen-head.txt`,
+`full-preflight.log`, `full-exit-status.txt`, `final-focused.xml`.
+Skutečné spuštění bylo `bash /workspace/validation/t023/run-full.sh`; script
+vnitřně bere shared flock, žádný double-flock. Equivalent required příkaz:
+
+```bash
+export JAVA_HOME=/workspace/tools/jdk-21.0.6+7
+export PATH="$JAVA_HOME/bin:/workspace/tools/kotlinc/bin:$PATH"
+flock /workspace/kgmaker-heavy-tests.lock env \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  KGMAKER_REQUIRE_SPRING_IMPORTS=1 \
+  KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 \
+  KGMAKER_WORKERS_HOME=/workspace/process-model/workers \
+  PYTHONPATH=/workspace/process-model/src /workspace/kgmaker-venv/bin/python \
+  -m pytest -q -rs --tb=short \
+  --basetemp=/workspace/validation/t023/full-temp \
+  --junitxml=/workspace/validation/t023/full.xml
+```
+
+Finální metadata/semantic/memory refresh nemění schválený a otestovaný model,
+testy, schéma, fixture ani shared runtime. Semantická vazba je pouze doložený
+nový explicit-process koncept +3 source vztahy; main 127 immutable episodes
+zůstává přesný prefix a přidává se jedna validated implementation capture.
+CLI semantic validate/scan/check a git diff check jsou ověřeny před finálním
+lokálním commitem. Publikace, nezávislé exact-pair review a fresh CI nejsou
+provedeny autorem a zůstávají explicitními release gates.

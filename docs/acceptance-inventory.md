@@ -443,4 +443,4 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | T023-AC03 | VERIFIED_IN_SCOPE | `test_ac03_annotation_technical_injection_is_rejected` | Pouze allowlisted semantic overlay |
 | T023-AC04 | VERIFIED_IN_SCOPE | invalidní revision/target/evidence input před/po; `test_pure_parse_and_serialization_perform_no_file_network_or_process_io` | Žádný model apply/store API |
 | T023-AC05 | VERIFIED_IN_SCOPE | missing/stale/foreign/unused proof, truncation a kind/status negatives v `test_t023_define_business_process_model.py` | PARTIAL/UNKNOWN a no evidence upgrade |
-| T023-AC06 | IN_VALIDATION | [note70](changes/70_defineBusinessProcessModel.md), [capability](process-model.md), schema/fixture | Frozen full a nezávislé review/CI se zapisují podle skutečného stavu |
+| T023-AC06 | VERIFIED_IN_SCOPE | [note70](changes/70_defineBusinessProcessModel.md), [capability](process-model.md), schema/fixture; focused130 PASS; frozen full729 PASS/10 SKIP,515 hashes beze změny | Lokální model proof; publikace, exact-pair review a fresh CI jsou samostatné release gates |

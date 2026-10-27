@@ -476,6 +476,8 @@ status, druh evidence, freshness ani data availability. Missing/foreign/stale
 proof je explicitní boundary nebo invalidní input.
 
 [Capability a příklad](process-model.md), [change note70](changes/70_defineBusinessProcessModel.md).
-Modelové AC mají konkrétní pozitivní/negativní testy, finální frozen full je
-IN_VALIDATION. Nejde o discovery/projection, process review/catalog/store ani
-nové CLI/render. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
+Modelové AC mají konkrétní pozitivní/negativní testy: focused130 PASS1.00s;
+required frozen full729 PASS/10 optional SKIP546.19s,0 errors/failures a515
+nezměněných hashes na source95c3ed3. Nejde o discovery/projection, process
+review/catalog/store ani nové CLI/render. Exact-pair review/publikace/fresh CI
+zůstávají samostatnými release gates. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
