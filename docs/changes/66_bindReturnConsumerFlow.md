@@ -51,3 +51,9 @@ ECMAScript #private positive:5 PASS20.51s před přidáním explicitního reason
 TS body joins nyní ignorují JVM static/private modifiers; ordinary members jsou
 OPEN, lexical function se zjištěným compiler-bound assignment target také. Bez heap
 resolveru; typed caller result/consumer contract zůstává oddělený.
+
+Stejná kontrola prokázala namespace export function jako mutable property přes
+`alias:any`;7f1b345 focus byl před dalším full přerušen54 PASS45.09s. Namespace
+function není lexical proof a lexical join navíc vyžaduje compiler-AST identifier
+callsite. Finální grouped TS sada6 PASS12.93s: member/namespace/reassignment
+negatives a lexical/#private positives, bez spuštění analyzované aplikace.

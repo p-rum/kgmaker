@@ -284,7 +284,7 @@ function analyze(request) {
       const symbol=checker.getSymbolAtLocation(node.expression);
       const site={id:identity,caller,...loc,declared_target:target,argument_mapping_version:1,argument_mapping_status:'UNKNOWN',argument_mapping_reason:'NO_SOURCE_ARGUMENT_BINDING_PROOF',dispatch_candidates:[],dispatch_complete:false,
         invocation_kind:ts.isNewExpression(node)?'CONSTRUCTOR':'CALL',receiver_type:ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression) ? checker.typeToString(checker.getTypeAtLocation(node.expression.expression)) : null,
-        callable_type:checker.typeToString(expressionType),
+        callable_type:checker.typeToString(expressionType),return_reference_kind:ts.isIdentifier(node.expression)?'LEXICAL_IDENTIFIER':'PROPERTY_OR_OTHER',
         signature:signature?checker.signatureToString(signature):null,
         resolution_reason:reason || 'TYPESCRIPT_RESOLVED_SIGNATURE',evidence_kind:target?'SYMBOL_RESOLVED':'UNRESOLVED',
         context_id:context.id};
@@ -525,7 +525,7 @@ function analyze(request) {
   for (const node of functionNodes) {
     const flags=ts.getCombinedModifierFlags(node);
     const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
-    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:1,return_body_kind:kind,return_type:valueInfo(node,true),return_dispatch:ts.isFunctionDeclaration(node)&&(ts.isSourceFile(node.parent)||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
   }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');

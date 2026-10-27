@@ -148,7 +148,7 @@ class _Projection:
         target=self.symbols.get(site.get('declared_target'),{})
         body=self.bodies.get(site.get('declared_target'),{})
         if body.get('language')=='typescript':
-            return body.get('return_dispatch') in {'LEXICAL','HARD_PRIVATE'}
+            return body.get('return_dispatch')=='HARD_PRIVATE' or (body.get('return_dispatch')=='LEXICAL' and site.get('return_reference_kind')=='LEXICAL_IDENTIFIER')
         modifiers=target.get('modifiers') or []
         return (target.get('jvm_static') is True or 'static' in modifiers or 'final' in modifiers or 'private' in modifiers
                 or site.get('invocation_kind') in {'STATIC','SPECIAL'} or body.get('return_dispatch') in {'STATIC','PRIVATE'})

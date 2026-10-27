@@ -250,6 +250,7 @@ def test_stale_return_rule_is_rejected_without_implicit_refresh(tmp_path,monkeyp
     ('class B { static make():number{return 1;} static run():number{return B.make();} } B.make=()=>2; export const result=B.run();','make'),
     ('class B { private make():number{return 1;} run():number{return this.make();} } export const result=new B().run();','make'),
     ('function make():number{return 1;} make=()=>2; export function use(){return make();}','make'),
+    ('namespace N {export function make():number{return 1;}} const alias:any=N;alias.make=()=>2;export function use(){return N.make();}','make'),
 ])
 def test_mutable_typescript_bodies_do_not_claim_original_return(tmp_path,source,callee):
     graph=analyze(tmp_path,{'src/mutable.ts':source},language='typescript')
