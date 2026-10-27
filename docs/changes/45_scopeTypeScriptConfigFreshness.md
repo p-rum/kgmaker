@@ -143,3 +143,9 @@ merged proof ani samostatné build exporter acceptance se tímto znovu netvrdí.
 GitHub Actions billing/quota stále blokuje nové CI. Draft PR36 a nezávislé root
 source+actual18PASS19.07s review nejsou náhradou required CI; merge/durable task
 DONE zůstávají pending. Celý S08 a callbacks W03 nejsou touto W02 změnou dokončeny.
+
+## Integrace schváleného T009 main (2026-10-27)
+
+Větev byla integrována s main09d351d379b43c697451f93c8735a008204d8d9b po mergePR48. Všechny vlastní worker/runtime/guard zdroje jsou byte-identické schválenému8e839374302da7150ee75987203196e96703fb84; integrace přidává již ověřený view model/evidence a CI jsonschema dependency. Relevantní T005/T009/T006/T008/mandatory-CI sada **87 PASS, 1.19 s**; vlastní skutečná TS freshness sada **33 PASS, 242.84 s**, s REQUIRE_WORKERS=1 bez SKIP. Původní whole567/10 zůstává feature proof; další lokální whole se pro čistou integraci bez změny runtime neopakuje. Aktuální remote CI musí projít nad novým HEAD a base09d351d. Billing blokace byla po uživatelském upgradu odstraněna; žádný bypass kontrol.
+
+Sémantický merge zachovává115 epizod nového main jako přesný immutable prefix a dvě unikátní starší TS epizody beze změny, celkem117 před capture integrace. Osm konceptů/21 vztahů je union obou ověřených větví; aktualizována pouze skutečná posunutá compiler-documentation citace. Generovaný graf obnovuje CLI.
