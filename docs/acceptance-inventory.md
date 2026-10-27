@@ -8,6 +8,15 @@
 | T003-S06-W01-AC02 | VERIFIED_IN_SCOPE | Additive annotation metadata reuses graph schema v3, existing `orm_attribute`/`orm_embeddable` IDs and JPA rules `annotation-source-v4`; existing Java JPA fixture remains unchanged |
 | T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; unresolved explicit `@Table`/`@Column` does not emit physical defaults even with matching schema; unresolved `@Access` and unproven/mixed embeddable inheritance remain UNKNOWN; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
 | T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
+## T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | LOCAL_VERIFIED_IN_SCOPE | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | LOCAL_VERIFIED_IN_SCOPE | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | LOCAL_VERIFIED_IN_SCOPE | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) uvádějí actual15PASS/full582PASS10SKIP, overload navigation PARTIAL a pending CI billing |
+
 
 ## T003-S06-W02 — zděděné persistence atributy
 

@@ -184,3 +184,18 @@ exact 118-episode current-main prefix, the nine W01-only entries including its
 current integration capture, and five W02-only implementation entries; a fresh
 W02 integration capture follows. Semantic validation, graph regeneration/check,
 and diff checks complete the refresh.
+
+## Refresh W02 after W01 current-main reconciliation `1c49847` (2026-10-27)
+
+W01's refreshed main3a7 history and documentation are integrated through its
+approved local head. W02 runtime and test sources remain byte-identical to the
+pre-refresh W02 head: `framework.py` `28421d7e`, K2 frontend `31210488`,
+`test_k2_backend.py` `2e8d0009`, and `test_compiler_workers.py` `b753c35e`.
+The current-main history remains an exact 121-episode prefix, followed by W01
+implementation/integration history and the W02 task's own unique history.
+
+The actual repository-owner JPQL fixture, K2 use-site/access fixture, and K2
+mapped-superclass owner fixture passed: **3 passed in 56.73 s**. No full suite
+was repeated for this parent-only refresh. Semantic validation, scan/check and
+diff checks record the refreshed source graph; W03's XML overlay is integrated
+separately above this W02 head.
