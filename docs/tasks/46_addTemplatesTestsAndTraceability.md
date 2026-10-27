@@ -1,8 +1,8 @@
 # T046 — Šablony, testovací návrhy a dohledatelnost změn
 
 - Task ID: T046
-- Revision: 1
-- Datum: 2026-10-26
+- Revision: 2
+- Datum: 2026-10-27
 - Stav zadání: SPECIFICATION; skutečná implementace a kontroly jsou v change notes a stavové matici.
 - Baseline: `33dc239a6d2eca2f42364a7b314aeb377e4b441a`.
 - Zadavatel: uživatel této relace; osobní identita nebyla poskytnuta. Schvalovatel implementace: UNKNOWN.
@@ -87,3 +87,14 @@ DoD: konkrétní výsledky acceptance a regresí, aktualizované příklady/READ
 matice, české change notes a reviewovatelné PR. Neprovedené pytest/toolchain/CI
 kontroly musí být označeny NOT_RUN/SKIP/BLOCKED. Lokální hash není podpis,
 frameworkový návrh není důkaz spuštění a charakterizační test není business oracle.
+
+## Revize 2 — opravy nezávislého review
+
+T046-AC01 navíc vyžaduje kanonickou cestu před validací i exportem, zákaz
+segmentů .git/.github/.kgmaker bez ohledu na case a odmítnutí aliasů `./`.
+T046-AC04 rozlišuje boolean a number rekurzivně, dovoluje ekvivalentní JSON
+čísla 1/1.0 a rozlišuje chybějící FK cíl od explicitního null. T046-AC06
+kontroluje fázi každého nového artefaktu i při přímém save; historie a bindings
+jsou neměnné. T046-AC07 zahrnuje atomické create-or-load a CAS pro všechny
+mutující trace příkazy včetně sync-analysis/sync-testgen/capture-change.
+Regresní důkazy jsou v test_provenance, test_delivery a test_synthetic_data.

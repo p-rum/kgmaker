@@ -508,3 +508,6 @@ CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem inte
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+
+
+T046 review corrections S01–S04: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
