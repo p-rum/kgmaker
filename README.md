@@ -193,6 +193,11 @@ before publication rather than trusting emitted declarations.
 Preflight and analysis must read the same compiler input closure; membership
 changes fail before publication. Reinspection replaces the same TypeScript
 selection slot across legacy and K2-era snapshot metadata.
+New TypeScript snapshots also bind effective-config inputs, negative filesystem
+lookups, compiler directory discovery and package-manager lockfiles. Unrelated
+config or excluded-unused content edits preserve the selected context; relevant
+new dependencies/members invalidate it offline without running Node. Legacy
+snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
 
 ## Copilot workflow
 

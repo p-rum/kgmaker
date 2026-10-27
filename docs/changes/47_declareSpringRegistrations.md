@@ -258,3 +258,32 @@ Finální scoped semantic update/apply/validate, CLI scan/check a diff check PAS
 Původní dvě Factory implementační epizody už nesou validated source proof;
 čistá integrace je durable orchestrator artifact, nikoli nový implementation
 scope. Finální commit je lokální merge aktuálního main, bez publikace autorem.
+
+
+## Refresh po merge PR36 (2026-10-27)
+
+Následný přesný main je `5430388a282f19f6c9637319c12a1731ae6d0674` po PR36.
+Přidává dříve schválený scoped TypeScript input-discovery guard/helper a CI test;
+Java/Factory runtime ani testy se nemění. CI konflikt zachovává oba mandatory
+seznamy (`test_tsconfig_freshness.py` i `test_spring_registrations.py`) a všechny
+předchozí7gates. Pyproject ponechává TS snapshot helper jako hash-bound resource.
+
+Sémantická unie nyní má main118 immutable episodes jako přesný prefix + stejné
+2Factory episodes =120; core8/21 je unie. Source mapping heading je skutečně589,
+README semantic bullets167/169, architecture156/164, vlastní Javac STATIC113.
+Runtime/test blobs zůstávají `7859e165`; žádný worker rebuild/install nebo nové
+business facts. Relevantní view/schema/mandatory-CI/Windows preparation sada:
+**90 PASS, 1 native-Windows SKIP v2.46s** v předchozí09d integraci; aktuální543
+výsledky jsou doplněny samostatně po dokončení. Source compatibility ověří oba
+JVM backendy plus relevantní nový TS guard. Whole local full se neopakuje;
+old558/10 je nadále feature proof a current remote7CI zajišťuje root po publikaci.
+
+Aktuální543 scoped proof: view/T006/T008/T009/schema/mandatory-CI/Windows
+preparation **90 PASS, 1 native-Windows SKIP v1.44s**; genuine K1/K2 Factory
+producer/namespace/registrar + context/protocol a nové TS guard negatives
+**38 PASS v49.64s**, exit0. Persistent preflight/log/XML/basetemp jsou v
+`/workspace/validation/spring-factory-integration-543/`. Součet je128 PASS
+a1 explicitní platform SKIP; nejde o nový full. Frozen feature proof558/10
+zůstává platný pro nezměněné Factory/JVM blobs. Finální semantic validate,
+CLI scan/check a git diff check jsou ověřeny před lokálním merge commitem;
+remote7CI musí být fresh pro nový přesný head po publikaci rootem.

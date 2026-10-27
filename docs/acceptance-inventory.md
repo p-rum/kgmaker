@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
+
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |
@@ -19,8 +29,8 @@ Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cann
 odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
 `test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
 ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
-K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
-zůstávají samostatné, nedokončené úkoly.
+K2-era TS digest. W02 config-scoped freshness má samostatný stav výše; W03
+callback/generic rozsah zůstává samostatný nedokončený úkol.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
