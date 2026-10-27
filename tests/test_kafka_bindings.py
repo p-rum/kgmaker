@@ -354,3 +354,115 @@ def test_explicit_default_profile_precedence_matches_spring(kafka_workspace, pro
     graph = snapshot_workspace(manifest)[3]
     bindings = [n for n in graph.nodes if n.kind == "kafka_binding"]
     assert all(n.metadata["status"] == "RESOLVED" and n.metadata["topic"] == expected for n in bindings)
+
+
+@pytest.mark.parametrize("key", ["spring.kafka.password", "spring.kafka.PASSWD", "spring.kafka.secret",
+    "spring.kafka.credentials", "spring.kafka.api-key", "spring.kafka.access_token", "spring.kafka.authorization",
+    "spring.kafka.username", "spring.kafka.sasl.jaas.config", "spring.kafka.bootstrap-servers"])
+@pytest.mark.parametrize("chain", ["direct", "transitive"])
+def test_sensitive_property_reference_never_exports_topic(kafka_workspace, key, chain):
+    root, manifest, _ = kafka_workspace
+    sentinel = "SYNTHETIC_PRIVATE_KAFKA_VALUE"
+    for repo in ("producer", "consumer"):
+        value = "${" + key + "}" if chain == "direct" else "${safe.alias}"
+        (root / repo / "src/main/resources/application-blue.properties").write_text(
+            "orders.topic=" + value + "\nsafe.alias=${" + key + "}\n" + key + "=" + sentinel + "\n")
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    graph = snapshot_workspace(manifest)[3]
+    assert all(n.metadata["status"] == "UNKNOWN" and n.metadata["topic"] is None
+               for n in graph.nodes if n.kind == "kafka_binding")
+    assert not any(e.kind == "kafka_binding_match" for e in graph.edges)
+    assert sentinel not in json.dumps(graph.to_dict())
+    assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+def captured_config_context(root, repo, properties, *, language="jvm"):
+    """Offline captured-input fixture, not a claim of compiler execution."""
+    from kgmaker.inspection import context
+    from kgmaker.store import save_graph
+    from kgmaker.graph_provider import validate_context_snapshot
+    checkout = root / repo
+    graph = scan_repository(checkout)
+    selected = context(checkout, graph, language, {}, repo_id=repo, module="root", source_set="main", scope="production",
+        build_context={"spring_profiles": ["blue"], "spring_properties": properties})
+    graph.contexts.append(selected)
+    save_graph(graph, checkout)
+    validate_context_snapshot(checkout, selected)
+    return selected
+
+
+@pytest.mark.parametrize("case", ["sensitive-direct", "sensitive-chain", "file-secret-context-alias", "benign"])
+def test_public_workspace_captured_property_privacy_and_freshness(kafka_workspace, case):
+    from kgmaker.analysis_model import digest
+    from kgmaker.graph_provider import validate_context_snapshot
+    root, manifest, _ = kafka_workspace
+    sentinel = "SYNTHETIC_CAPTURED_KAFKA_PRIVATE_VALUE"
+    selected = {}
+    for repo, direction in (("producer", "out"), ("consumer", "in")):
+        target = "spring.cloud.stream.bindings.orders-" + direction + "-0.destination"
+        if case == "benign":
+            properties = {target: "${benign.topic}", "benign.topic": "captured-safe-topic"}
+        elif case == "file-secret-context-alias":
+            (root / repo / "src/main/resources/application-blue.properties").write_text("spring.kafka.password=" + sentinel + "\n")
+            properties = {target: "${safe.alias}", "safe.alias": "${spring.kafka.password}"}
+        else:
+            properties = {target: "${spring.kafka.password}" if case == "sensitive-direct" else "${safe.alias}",
+                          "safe.alias": "${spring.kafka.password}", "spring.kafka.password": sentinel}
+        selected[repo] = captured_config_context(root, repo, properties)
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    baseline, coverage, sources, graph, metadata = snapshot_workspace(manifest)
+    rows = [n for n in graph.nodes if n.kind == "kafka_binding"]
+    if case == "benign":
+        assert all(n.metadata["status"] == "RESOLVED" and n.metadata["topic"] == "captured-safe-topic" for n in rows)
+        assert len([e for e in graph.edges if e.kind == "kafka_binding_match"]) == 1
+    else:
+        assert all(n.metadata["status"] == "UNKNOWN" and n.metadata["topic"] is None for n in rows)
+        assert not any(e.kind == "kafka_binding_match" for e in graph.edges)
+        assert sentinel not in json.dumps([baseline, coverage, sources, graph.to_dict(), metadata])
+    for repo, original in selected.items():
+        validate_context_snapshot(root / repo, original)
+        exported = next(c for c in graph.contexts if c.get("repo_id") == repo and c.get("analyzer_version"))
+        assert exported["selection_key"] == original["selection_key"]
+        assert exported["spring_condition_inputs_hash"] == original["spring_condition_inputs_hash"]
+        if case in {"sensitive-direct", "sensitive-chain"}:
+            assert exported["spring_properties"]["spring.kafka.password"] == "<redacted>"
+            projection = exported["spring_properties_projection"]
+            assert projection["redacted"] is True and projection["sha256"] == digest(original["spring_properties"])
+            assert projection["original_context_id"] == original["id"]
+            assert original["spring_properties"]["spring.kafka.password"] == sentinel
+            assert digest(exported["spring_properties"]) != projection["sha256"]
+            cached = next(c for local, _ in _REPO_CACHE.values() for c in local.contexts if c.get("id") == original["id"])
+            assert cached["spring_properties"] == original["spring_properties"]
+    assert before == {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("sensitive", [True, False])
+def test_binding_cluster_alias_reference_privacy(kafka_workspace, sensitive):
+    root, manifest, _ = kafka_workspace
+    key = "spring.kafka.password" if sensitive else "benign.binder"
+    for repo, direction in (("producer", "out"), ("consumer", "in")):
+        (root / repo / "src/main/resources/application-blue.properties").write_text(
+            "orders.topic=orders-blue\nspring.cloud.stream.bindings.orders-" + direction + "-0.binder=${safe.alias}\n"
+            "safe.alias=${" + key + "}\n" + key + "=alpha\n")
+    graph = snapshot_workspace(manifest)[3]
+    rows = [n for n in graph.nodes if n.kind == "kafka_binding"]
+    assert all(n.metadata["status"] == ("UNKNOWN" if sensitive else "RESOLVED") for n in rows)
+    assert all(n.metadata["cluster_id"] == (None if sensitive else "cluster-a") for n in rows)
+    assert len([e for e in graph.edges if e.kind == "kafka_binding_match"]) == (0 if sensitive else 1)
+
+
+def test_public_kafka_projection_preserves_non_jvm_selection_identity(kafka_workspace):
+    from kgmaker.graph_provider import validate_context_snapshot
+    root, manifest, _ = kafka_workspace
+    sentinel = "SYNTHETIC_NON_JVM_CAPTURED_PRIVATE_VALUE"
+    selected = captured_config_context(root, "producer", {"spring.kafka.password": sentinel}, language="typescript")
+    before = (root / "producer/.kgmaker/graph.json").read_bytes()
+    graph = snapshot_workspace(manifest)[3]
+    exported = next(c for c in graph.contexts if c.get("analyzer_version"))
+    assert sentinel not in json.dumps(graph.to_dict())
+    assert exported["id"].endswith(selected["id"])
+    assert exported["selection_key"] == selected["selection_key"]
+    assert exported["framework_rule_versions"] == selected["framework_rule_versions"]
+    assert exported["spring_properties_projection"]["original_context_id"] == selected["id"]
+    assert (root / "producer/.kgmaker/graph.json").read_bytes() == before
+    validate_context_snapshot(root / "producer", selected)

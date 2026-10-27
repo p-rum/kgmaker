@@ -117,3 +117,53 @@ Scoped semantic update/apply/validate/scan/check a `git diff --check` PASS;
 původních115 epizod z explicitního stacked baseline zůstává immutable prefix.
 Capture implementační paměti zachovává tuto historii; žádné nové core semantic
 vazby se nevymýšlejí, pouze se aktualizuje skutečně posunutý ownership target.
+
+
+## Review oprava citlivých property references (2026-10-27)
+
+Root publikoval DraftPR51 z kandidáta `8dd2d58` nad explicitním stacked baseline
+`78d7968`; žádné CI/merge tím není doložené. Nezávislý actual review našel P1:
+`orders.topic=${spring.kafka.password}` v aktivním application-blue.properties
+rozbalil existující syntetické heslo jako RESOLVED topic a vytvořil match.
+Předchozí613PASS tento pozdější negativní případ nepokrývá. Public regression
+před opravou: **23 FAIL, 1 PASS v2.22s** (benign případ prošel).
+
+`kafka-binding-2` před každým destination/binder lookupem odmítá citlivý key,
+včetně transitive aliases a captured overrides. Normalizuje case/separators pro
+password/passwd/secret/credential/authorization/API-key/token/username/JAAS a
+bootstrap-server families; stejné bounded16-step/cycle guard. Žádný citlivý value
+se nečte pro odvození topic/cluster identity, nevstupuje do diagnostiky a nevytvoří
+match. Výsledek zůstává UNKNOWN s obecným unresolved reason.
+
+Read-only kontrola současně potvrdila, že workspace původně kopíroval celé
+captured Spring property mapy do veřejného graph.contexts. Parent schválil
+narrow Kafka-only postvalidation projection: původní kontext se nejprve vybere
+a ověří; až veřejná deep-copy reprezentace nahradí citlivé values `<redacted>`
+a reuse inspection sanitization. `spring_properties_projection` uchovává
+original_context_id, hash původní mapy a redacted:true. Původní selection key,
+condition hash, source hashes i persisted index/cache zůstávají beze změny.
+Redigovaná mapa se nevydává za vstup ověřující původní hash. Stejná ochrana mapy
+platí i u non-JVM kontextu, bez změny selectoru/framework metadat; workspace bez
+Kafka zachová původní chování. Žádná globální freshness/selector migrace.
+
+Offline focused po první opravě: **78 PASS, 2 DESELECTED v6.79s**. Rozšířená
+public workspace/availability sada: **90 PASS, 2 DESELECTED v8.23s**. Testy
+kontrolují přímé/nested references z properties i captured input, binder alias,
+benign topic/binder positive, úplný export bez syntetického hesla, původní bytes
+a cache, původní validaci kontextu a non-JVM selection identity. Jsou offline
+fixtures zachycených vstupů, nikoli falešný compiler/toolchain PASS. Dva actual
+K1/K2 případy jsou zde úmyslně deselected; jejich novou validaci/full nelze
+vydávat za provedenou. Golden full vlastní shared lock, žádný souběžný heavy
+test ani přerušení cizího testu neproběhlo.
+
+Příkaz focused:
+
+```bash
+PYTHONPATH=/workspace/kafka-bindings/src /workspace/kgmaker-venv/bin/python \
+  -m pytest -q --tb=short tests/test_kafka_bindings.py -k 'not actual' \
+  tests/test_workspace.py tests/test_availability.py
+```
+
+Aktuální oprava zůstává local-only pro root review před push; žádný vlastní
+publikační retry, CI retry nebo merge. Změna upřesňuje existující AC03, nepřidává
+nový task/milník ani runtime/data availability proof.

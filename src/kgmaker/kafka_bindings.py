@@ -10,7 +10,7 @@ from .classification import Classifier
 from .model import Edge, Node
 from .spring_conditions import _profile
 
-VERSION = "kafka-binding-1"
+VERSION = "kafka-binding-2"
 MAX_BYTES = 1_000_000
 MAX_BINDINGS = 512
 TOPIC = re.compile(r"[A-Za-z0-9._-]{1,249}\Z")
@@ -140,15 +140,43 @@ def _properties(content):
     return result, reasons
 
 
-def _resolve(value, properties):
+def sensitive_property(key):
+    """Conservative property-key privacy boundary, shared by lookup/projection."""
+    normalized = re.sub(r"[^a-z0-9]", "", str(key).lower())
+    return any(word in normalized for word in ("password", "passwd", "secret", "credential",
+        "authorization", "apikey", "token", "username", "jaas", "bootstrapservers"))
+
+
+def project_captured_context(context):
+    """Redact only the public view; original captured inputs/hashes stay intact."""
+    import copy
+    from .inspection import sanitize
+    result = copy.deepcopy(context)
+    properties = context.get("spring_properties")
+    if not isinstance(properties, dict):
+        return result
+    sanitized = sanitize(properties)
+    projected = {key: "<redacted>" if sensitive_property(key) else sanitized[key] for key in properties}
+    if projected != properties:
+        result["spring_properties"] = projected
+        result["spring_properties_projection"] = {"redacted": True, "sha256": digest(properties),
+            "original_context_id": context["id"]}
+    return result
+
+
+def _resolve(key, properties):
     seen = set()
     for _ in range(16):
-        if not isinstance(value, str) or len(value) > 4096 or value in seen:
+        # Never fetch a sensitive value, including through a benign alias chain.
+        if sensitive_property(key) or key in seen:
             return None
-        seen.add(value)
+        seen.add(key)
+        value = properties.get(key)
+        if not isinstance(value, str) or len(value) > 4096:
+            return None
         match = re.fullmatch(r"\$\{([A-Za-z0-9_.-]+)\}", value)
         if match:
-            value = properties.get(match.group(1))
+            key = match.group(1)
         else:
             return value if "${" not in value and "#{" not in value else None
     return None
@@ -235,10 +263,10 @@ def build_links(workspace, graphs):
             elif overrides is not None:
                 reasons.append("CONTEXT_PROPERTIES_UNSUPPORTED")
         prefix = "spring.cloud.stream.bindings." + binding["binding"]
-        topic = _resolve(properties.get(prefix + ".destination"), properties)
+        topic = _resolve(prefix + ".destination", properties)
         if topic is None or not TOPIC.fullmatch(topic) or topic in {".", ".."}:
             topic = None; reasons.append("TOPIC_UNRESOLVED")
-        binder = _resolve(properties.get(prefix + ".binder"), properties)
+        binder = _resolve(prefix + ".binder", properties)
         cluster = binding["binders"].get(binder)
         if cluster is None:
             reasons.append("CLUSTER_UNRESOLVED")

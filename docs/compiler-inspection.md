@@ -753,3 +753,38 @@ dynamic/invalid/ambiguous cases, exact hash invalidation, source/store/cache
 atomicity, secret exclusion and no-process offline checks. Actual K1/K2 contexts
 verify property provenance and stale-source refusal; no Kafka toolchain is needed.
 See change note54 for exact commands/results.
+
+
+### Kafka property privacy (`kafka-binding-2`)
+
+Every destination/binder lookup checks its property key before fetching the
+value, including all whole-property alias hops within the existing16-step/cycle
+budget. Key matching ignores separators/case and covers password/passwd, secret,
+credential, authorization, API key, token, username, JAAS and bootstrap-server
+families, consistent with existing configuration/inspection redaction. Sensitive
+references yield generic TOPIC_UNRESOLVED/CLUSTER_UNRESOLVED, UNKNOWN and no match;
+diagnostics never contain the referenced value. Benign topic/binder aliases retain
+their supported literal behavior.
+
+With `kafka_bindings` enabled, context selection/freshness checks consume the
+original captured context. Only the subsequent public workspace projection
+deep-copies and redacts captured `spring_properties` values using `<redacted>`
+and existing inspection sanitization. This also protects a captured Spring
+property map attached to another language without changing its selection key or
+framework metadata. Other workspaces preserve their prior serialization.
+
+`spring_properties_projection` explicitly records `redacted: true`, SHA256 of
+the original property map and `original_context_id`. Existing selection key,
+condition-input hash, source hashes and original identity remain content-bound
+to the private input. The redacted property map is a display projection and
+cannot validate/replay those original inputs. The persisted compiler index and
+in-memory input cache remain unchanged; validation still uses the original
+context, and no worker is launched to repair or sanitize it. Derived identity and
+workspace cache version change to `kafka-binding-2`; graph/store schemas remain
+v1/v2/v3-readable.
+
+Public fixture regressions cover direct/transitive application and captured
+properties, binder-alias privacy, benign references, complete graph/coverage
+absence of the synthetic secret, source/index/cache immutability, original
+context validation and unchanged non-JVM selection identity. See note54 for the
+independently reproduced prior defect and current validation evidence.

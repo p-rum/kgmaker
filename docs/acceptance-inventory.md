@@ -427,3 +427,14 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
   graph; offline source-only checks allow only existing Git baseline reads.
 - AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
   compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
+
+
+S07-W04 AC03 privacy correction: `test_sensitive_property_reference_never_exports_topic`,
+`test_public_workspace_captured_property_privacy_and_freshness` and
+`test_binding_cluster_alias_reference_privacy` exercise the public snapshot API
+for direct/transitive property references. `kafka-binding-2` returns UNKNOWN and
+no match before reading sensitive aliases; the full public graph redacts captured
+sensitive values while original input bytes/cache/context hashes remain valid.
+`test_public_kafka_projection_preserves_non_jvm_selection_identity` guards the
+postvalidation projection boundary. Prior613 full PASS does not cover this later
+review regression; note54 records separate current evidence.

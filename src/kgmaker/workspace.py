@@ -36,8 +36,12 @@ def source_key(repo: str, path: str) -> str:
     return '@' + repo + '/' + path
 
 
-def _qualified_context(repo: str, value: dict) -> dict:
-    result = copy.deepcopy(value)
+def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False) -> dict:
+    if redact_kafka_properties:
+        from .kafka_bindings import project_captured_context
+        result = project_captured_context(value)
+    else:
+        result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
     if isinstance(result.get('source_files'), dict):
         result['source_files'] = {source_key(repo, path): checksum
@@ -486,6 +490,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     from . import feature
     from .schema_replay import reconstruct
     from .test_analysis import federated_links
+    from .kafka_bindings import VERSION as kafka_binding_version
     workspace = load_workspace(manifest)
     baseline_repos, sources, exclusions, nodes, edges, graphs, schemas = {}, {}, [], [], [], {}, {}
     symbols, call_sites, cfgs, annotations = [], [], [], []
@@ -504,7 +509,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', 'kafka-binding-1'],
+                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', kafka_binding_version],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -602,7 +607,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     graph = KnowledgeGraph(3, '.', '', sorted(nodes, key=lambda n: n.id),
                            sorted(set(edges), key=lambda e: (e.source, e.kind, e.target)),
                            {k: v['sha256'] for k, v in sources.items()},
-                           [{**_qualified_context(repo, context), 'repo_id': repo}
+                           [{**_qualified_context(repo, context, redact_kafka_properties=workspace.get('kafka_bindings') is not None), 'repo_id': repo}
                             for repo, local in graphs.items() for context in local.contexts if 'id' in context] + kafka_contexts,
                            ([{'repo_id': repo, **d}
                              for repo, local in graphs.items() for d in local.diagnostics]

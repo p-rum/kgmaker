@@ -533,3 +533,11 @@ Dynamic, missing, ambiguous or unsupported inputs remain UNKNOWN. Cluster, relea
 and payload labels are declared; code binding, delivery, deployed schema and data
 availability remain unproven. Legacy name-only Kafka hints remain separate syntax
 evidence. Scan/query/feature/data checks never start a broker, application or build.
+
+
+Kafka privacy rules `kafka-binding-2` reject credential and broker-connection
+property keys before alias lookup, including nested references in captured
+properties. These bindings stay UNKNOWN. Public workspace contexts redact
+sensitive captured Spring property values and retain an explicit projection
+marker, original context identity and property-map hash. The private captured
+context remains the authority for validation and selection.
