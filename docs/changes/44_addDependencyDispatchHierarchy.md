@@ -204,3 +204,18 @@ child historie zůstává append-only. Finální CI musí běžet nad tímto nov
 
 Nová čistá integrační kontrola T005/T008/T009/mandatory guards: **79 PASS,
 0 SKIP v0.76s**, XML `/workspace/dispatch-main543-validation/main3a7-pure.xml`.
+
+
+## Parent refresh po merged T015
+
+Finální integrační parent je ověřený main
+`49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce`. JVM dispatch a jeho test modul
+zůstávají byte-identické89e50cf; T015 runtime/test source a explicitní pinned
+API-only bootstrap jsou převzaty přesně z main. CI zachovává všechny main
+compiler testy a dispatch navíc. Main127 immutable episodes tvoří přesný prefix,
+původní child capture objekty se nemění. Relevantní pure view/resource/CI
+kontroly: **124 PASS, 2 actual deselected v3.85s**, XML
+`/workspace/dispatch-main543-validation/main49-pure.xml`; předchozí actual120 i
+parent79 zůstávají historická validní
+evidence, žádný compiler/full se kvůli parent-only integraci neopakuje.
+Root vlastní finální exact-head review, publikaci a remote CI.
