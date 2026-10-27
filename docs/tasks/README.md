@@ -14,6 +14,8 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T004 | [4_addHighLevelProjectViews.md](4_addHighLevelProjectViews.md) | Integrační katalog, topologie služeb a business procesy; T005–T044 níže | SPECIFICATION |
 | T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION; profil není důkazem provedeného merge |
 
+| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION; implementace viz stavová matice |
+
 ## High-level zobrazení projektu — T004
 
 [T004 — hlavní zadání](4_addHighLevelProjectViews.md) obsahuje společné kontrakty,

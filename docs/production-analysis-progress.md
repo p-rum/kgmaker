@@ -406,3 +406,7 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+
+T046-S01: knihovní inkrement reference contracts and v1/v2 metadata; ověření viz change note 56.
+Veřejné CLI a kompletní end-to-end release dodává až S06.

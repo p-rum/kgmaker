@@ -484,3 +484,9 @@ Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
 simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
+
+
+### T046-S01 — reference contracts and v1/v2 metadata
+
+Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
+CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
