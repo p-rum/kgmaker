@@ -52,3 +52,8 @@ skips. Přesné nové výsledky CI a nové base/head jsou v PR; původní SHA an
 staré CI výsledky nejsou vydávány za schválení oprav. Python compile a diff
 whitespace check jsou součástí ověření. Lokální pytest se nepodařilo nainstalovat
 z dostupného indexu; úplnou pytest/worker matici ověřuje skutečné GitHub CI.
+
+CI dodatečně odhalilo zastaralé generované snapshoty v dílčích PR. Každý
+inkrement nyní zvlášť obnovuje semantic metadata a GRAPH.md/GRAPH.mmd příkazy
+semantic update/apply/validate a scan/check. Neoslabuje se CI ani validátor;
+chybný snapshot se nahrazuje výstupem nad přesným zdrojem daného inkrementu.

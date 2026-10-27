@@ -433,3 +433,7 @@ record/save a ignorovaná journal CAS volba. Regresní sady navíc chrání hist
 a review bindings. Původní 198-testový výsledek není důkazem těchto oprav; nové
 výsledky a přesné revidované SHA jsou doplněny v change notes 56–61 a v PR.
 Merge zůstává podmíněný novým review a CI pro nové revize.
+
+CI revizí T046 samostatně kontroluje i generované grafy každého inkrementu.
+S01–S05 mají vlastní aktualizované semantic/GRAPH snapshoty; jejich správnost
+není odvozena pouze z integračního S06.
