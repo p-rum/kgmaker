@@ -2,7 +2,7 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "5463de173c14b8e206f965ef592f0b6c3042295bb89e8a6cf37349ef25287bb3",
+    "README.md": "0249e6fb854f4743983dde97652ec1572a5808fdf1ef3403f3490be0e21f5cac",
     "docs/acceptance-inventory.md": "f0be3aee7d98d3922e40a087778362a9a75c3405ad662f61d027a6f51b3466cf",
     "docs/architecture.md": "ec3c70c431b4d595b974e87fd9f9908282cc1ab2714b924b7db11e82bf0c6228",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -34,15 +34,19 @@
     "docs/changes/46_mapDefaultBodySources.md": "0c5e9b608147d97fe4bdff184eed656ab4f04433d078329591bc4da2c7a2bb5f",
     "docs/changes/48_enforceMandatoryWorkerCi.md": "f9fdd66add62c37d3b7a53ab2bfec7054b36524988b4c0c63212fc1f5d831098",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
+    "docs/changes/56_addDeliveryReferences.md": "eaf3e0dfc2e4cd14fa2fe84859176099bf32d1c8a8274e3c23466ee206108d42",
+    "docs/changes/57_addArtifactTemplates.md": "5ad7e71e282726b2438fb340218f54b0f5bd9bf95ef6e1ee304cca50fcce7277",
+    "docs/changes/58_addExistingFunctionTests.md": "3972bacd27d809b84b30819fa7d334f84baead6d6285b77a2c57209266c56655",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "d7652fdd43a3026bb4af0a356c0164962267c2cb5c68126915d3192edc1c7a2b",
+    "docs/delivery-workflow.md": "a69b6e879e92f4a60416b0db26082caf234b32730e04352bb487238192de7884",
     "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "d7936cc22bcda6f97b35379063197a49f56d9c72aa97f827f995794b092d16ba",
+    "docs/production-analysis-progress.md": "9701cf18390b6489ae8714f54e60b8c07d41ba32c59c8e9ece210a7ad204aac0",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -56,8 +60,9 @@
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
     "docs/tasks/45_addCodeReviewAgent.md": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20",
+    "docs/tasks/46_addTemplatesTestsAndTraceability.md": "35f6cce08895f0824f9a6052ea84206368851dbd194ec86083137b73c6c05703",
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
-    "docs/tasks/README.md": "f7abda96e0cb0848bd1eb66cdb87c9974f7a9a5a749146d13b2a2c1fbc0f2da1",
+    "docs/tasks/README.md": "8fd95aad2bfcea9032d60bdd5c57132303de46eade23ff45753a115cef020973",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "891c74eac1397c5e224102e505c841b8830f7b1d1a9a6ddb5bba3fab462c8530",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -215,6 +220,7 @@
     "src/kgmaker/analysis_report.py": "230905b0bfcd2e51d1635ec82859f74f2412318f73eb58f1c55d7a1e2a202960",
     "src/kgmaker/analysis_validation.py": "43a907afb6bab919b639b55045e642266e55ad19820c97209afe1b7337c497a0",
     "src/kgmaker/architecture_model.py": "c4d4351dac1299c0f55201205c598997528b365c4751434055e7dd6035b5d232",
+    "src/kgmaker/artifact_templates.py": "9039b23f220727cc8bed4139bffd45ebe47badd1fb17597b94dd35a292a7d40c",
     "src/kgmaker/availability.py": "14b7988dba45770eab3c1a282f45a6b1f9bb0c442e80dba050a3b418b08f8eb5",
     "src/kgmaker/build_maven.py": "19e96f77b35473a1fc50d7167b6ac455d2b022389f66498a09deec42059d5223",
     "src/kgmaker/build_model.py": "63e11bc3c2d18e4e1f91eb9eb1033225051a7b7fdfb1ce8b2b4947c8ced74d8c",
@@ -242,6 +248,7 @@
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
+    "src/kgmaker/provenance.py": "57462645c34307e4e107ffbe74f841878752d64f09ce29c8f0414dd37b01537c",
     "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
     "src/kgmaker/scanner.py": "6e521415b4de154a2be08cda8f1e6de4c4f6a64a2b74c7a6624ce62de7ba4e47",
     "src/kgmaker/schema_replay.py": "537e1339c3e63fe2a08904d0734b6becb41da358799210dda0b310bc81b29b9e",
@@ -250,16 +257,18 @@
     "src/kgmaker/store.py": "8decb965e0ab27516f18121ebc10ebc7adea588d0f0cc3afc668dd4044f2d2d6",
     "src/kgmaker/templates.py": "17027828fb32ae5931b53e839dd12de81fe7798c78b2abf97029c61079d9c884",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
+    "src/kgmaker/testgen.py": "d072a77eb2eff1c9b0468459fae7e32d76b360929cb2d9c06e37dcc78fd64e0e",
     "src/kgmaker/views.py": "efdb1f99853595b85c621f467340c4e8334a538b7670d6d6837b27247b4eff3d",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
-    "src/kgmaker/workflow.py": "407dcaa5874aedd26866d612e17912c3890cf399c1150428c543afe138aed3c7",
+    "src/kgmaker/workflow.py": "ad6bdf50bd954aa10f4507ea42c1ec1af6371f154bdb72f85e8500e5187c3bfb",
     "src/kgmaker/workspace.py": "4da30f096925de3d9e53cf7b4db4f48be82e35a7654563c5860b15ce9b57eebf",
     "src/kgmaker/workspace_cli.py": "ce3c209ce7079ebd186c20f6e17d0d8cf98cd17c65762be1d9e0db1c7e90cd36",
     "tests/rendering/generate.py": "61c456d3641da2c1112d9dfc809fff2b15d2a6ef101d706a09e04e4fe7621ab5",
     "tests/rendering/package-lock.json": "65dd49c35e012e67c3f425d8f0667039c765a5f1dc1d77979563605d8b47c2f8",
     "tests/rendering/package.json": "327a9b9fa80307b4d408972edae4678e407884a087d6682a37182d2ecf7d4328",
     "tests/rendering/validate.mjs": "7254dbf243312cde2d7686bf3b764b9ccd7cb445af9e5fadaab1fcdc71f04f1f",
+    "tests/test_artifact_templates.py": "8211718739438656f80fbb99db6de80606480406f174a9198d457fe5da6dd900",
     "tests/test_availability.py": "0da5e955e8084d7b5ccbfa5bfe5f664f55245750a6c567d55f548f5ac215c4a6",
     "tests/test_binary_xls.py": "8ead893b31e2a70115c13307da6c24bc42d7298905b90bc458ed3ba698e65618",
     "tests/test_build_aware.py": "ed1e62cc9896782a542b38c5e2aa3d3097f1f1dcf2baa7dbae1357f827e722fa",
@@ -272,6 +281,7 @@
     "tests/test_data_check.py": "156e1d9cd477887743201fb5ebc8b1774781587d1dcc427814fbcf174998160b",
     "tests/test_dataflow.py": "5dfb650ced21cade17b6ada4b71c53a19e9386af989beb4acbee7eb23d83b937",
     "tests/test_default_body_mapping.py": "2498f54625b36253d989643d7a49dc9b8493bdefa21fcbbf608815eb1ac9e87d",
+    "tests/test_delivery.py": "16dbac1ee90efd58b90e6eda2225b29f34f52670da451491593865f30d74acff",
     "tests/test_exporter_distribution.py": "8554fe18fbc568ef79090a466585e7e879d5c5386f8614adec62ae27cefadaa6",
     "tests/test_feature.py": "83bf7ea486acda9eb46e3f6b1b2f8eba4c98d6007bbd93915d3cd1847053b261",
     "tests/test_feature_fixture.py": "24b824d658e9f4d75c20f9cfd643819c7648671637fab222ee0b9ec5236b8945",
@@ -287,6 +297,7 @@
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_methodology_conflicts.py": "e84cdd12916cbe1320c8835b3daf1a2a9f1f5c0167b4712f95b8ada81b8c9b73",
     "tests/test_production_scope.py": "f8379f420ba9591bf385cd26723184c1671528e589867712107006e011cade1f",
+    "tests/test_provenance.py": "b06ccf93641d899caf21a8d3c9d7b4172c9aa038cd112ac410190e05de8d2d65",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_spring_imports.py": "df26d8f5cf1f9bd9b08f5d9387923f6ab0ced753a9c8f086b1d834fe83aa3cb0",
     "tests/test_spring_imports_context.py": "ec54cbd7176bfaa0accf809ed6b04d49301fd21c8bed2fb39a37ab6ee7182f9e",
@@ -351,18 +362,18 @@
       "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 162,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
       "source_line": 575,
       "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 162,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
   "edges": [
@@ -415,46 +426,6 @@
       "source_file": "docs/architecture.md",
       "source_line": 151,
       "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 162,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 164,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -515,6 +486,46 @@
       "source_file": "workers/jvm/k2/KotlinFrontend.kt",
       "source_line": 82,
       "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 162,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 164,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     }
   ],
   "episodes": [
