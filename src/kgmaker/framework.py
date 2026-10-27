@@ -1896,7 +1896,6 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
 
     type_nodes_by_owner: dict[str, Node] = {}
-    type_nodes_by_simple: dict[str, list[Node]] = {}
     for symbol in symbols.values():
         symbol_node_value = nodes.get(str(symbol.get("id", "")))
         owner = symbol.get("owner")
@@ -1904,7 +1903,12 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 or not isinstance(owner, str) or not owner:
             continue
         type_nodes_by_owner[owner.replace("$", ".")] = symbol_node_value
-        type_nodes_by_simple.setdefault(symbol_node_value.name, []).append(symbol_node_value)
+
+    def descriptor_return_owner(descriptor: Any) -> str | None:
+        if not isinstance(descriptor, str):
+            return None
+        match = re.search(r"\)(?:\[*)L([^;<]+);$", descriptor)
+        return match.group(1).replace("/", ".").replace("$", ".") if match else None
 
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
@@ -1936,10 +1940,15 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
         projection_type = _simple(projection_type_ref) if projection_type_ref else None
         projection_node = type_nodes_by_owner.get(projection_type_ref or "")
-        if projection_node is None and projection_type:
-            simple_projection_candidates = type_nodes_by_simple.get(projection_type, [])
-            if len(simple_projection_candidates) == 1:
-                projection_node = simple_projection_candidates[0]
+        return_owner = descriptor_return_owner(item.get("descriptor"))
+        if (projection_node is None and return_owner and projection_type
+                and _simple(return_owner) == projection_type):
+            # A source-level simple name does not prove its owner. The compiler
+            # method descriptor does: use its exact erased class identity only
+            # when it agrees with the declared return type's simple name. This
+            # also keeps type variables (whose erasure is Object) from binding
+            # to an unrelated local class with the same name.
+            projection_node = type_nodes_by_owner.get(return_owner)
         model_owner = repository_models[str(item.get("owner"))]
         model_name = _simple(model_owner)
         named_query_name = _named_string_arg(raw, "name")

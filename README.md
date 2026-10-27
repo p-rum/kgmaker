@@ -446,8 +446,9 @@ Spring Data repository generic selects its entity by exact compiler-qualified
 owner. Same-simple-name entities no longer share inherited attributes; an
 unresolved generic remains unbound rather than using a simple-name fallback.
 Explicit JPQL entity names and repository return types also resolve by compiler
-owner; duplicate unqualified entity names remain UNKNOWN rather than inheriting
-the repository model.
+owner; simple source return names require an exact JVM method descriptor owner.
+Missing qualified types and generic type variables remain UNKNOWN rather than
+binding to an unrelated same-simple-name class.
 Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
 tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například

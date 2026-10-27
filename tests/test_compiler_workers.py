@@ -624,6 +624,8 @@ public @interface Query { String value() default ""; }''')
                 'right/RightBase.java':'package right; import jakarta.persistence.*; @MappedSuperclass public class RightBase { @Id @Column(name="right_id") Long rightId; }',
                 'left/Thing.java':'package left; import jakarta.persistence.*; @Entity(name="left.Thing") public class Thing extends LeftBase {}',
                 'right/Thing.java':'package right; import jakarta.persistence.*; @Entity(name="right.Thing") public class Thing extends RightBase {}',
+                'foreign/Thing.java':'package foreign; import jakarta.persistence.*; @Entity(name="foreign.Thing") public class Thing {}',
+                'right/T.java':'package right; public class T {}',
                 'right/ThingRepository.java':'''package right;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -633,6 +635,8 @@ public interface ThingRepository extends JpaRepository<Thing,Long> {
   @Query("select e from right.Thing e where e.rightId=1") Thing qualifiedRight();
   @Query("select e from left.Thing e where e.leftId=1") Thing qualifiedForeign();
   @Query("select e from Thing e where e.rightId=1") Thing ambiguousSimpleName();
+  @Query("select e from right.Thing e") foreign.Thing missingIndexedReturn();
+  @Query("select e from right.Thing e") <T> T genericReturn();
 }''',
             }
             for relative,content in sources.items():
@@ -688,6 +692,47 @@ public interface ThingRepository extends JpaRepository<Thing,Long> {
             self.assertFalse(ambiguous.metadata['validated'])
             self.assertFalse(any(edge.source==ambiguous.id and edge.kind in {'query_reads','filters_by'}
                                 for edge in graph.edges))
+            generic_return=queries['genericReturn:JPQL']
+            local_t=classes[('src/main/java/right/T.java','class','T')]
+            self.assertFalse(generic_return.metadata['validated'])
+            self.assertFalse(any(edge.source==generic_return.id
+                                and edge.kind in {'returns_entity','returns_projection'}
+                                and edge.target==local_t.id for edge in graph.edges))
+
+            # Simulate a valid partial compiler index: the repository method
+            # still carries its exact foreign.Thing return type, while that
+            # dependency declaration is unavailable and only right.Thing is
+            # indexed under the same simple name.
+            raw = result['graph']
+            dropped_ids = {classes[('src/main/java/left/Thing.java','class','Thing')].id,
+                           classes[('src/main/java/foreign/Thing.java','class','Thing')].id}
+            partial_nodes = [node for node in raw['nodes']
+                             if node['id'] not in dropped_ids
+                             and not node.get('kind','').startswith(('orm_','spring_'))]
+            kept_ids = {node['id'] for node in partial_nodes}
+            partial_symbols = [symbol for symbol in raw['symbols'] if symbol.get('id') not in dropped_ids]
+            partial_edges = [edge for edge in raw['edges']
+                             if edge['source'] in kept_ids and edge['target'] in kept_ids
+                             and edge.get('evidence_kind') != 'FRAMEWORK_DERIVED']
+            partial = dict(raw, nodes=partial_nodes, symbols=partial_symbols, edges=partial_edges,
+                           evidence=[item for item in raw.get('evidence', [])
+                                     if item.get('kind') != 'FRAMEWORK_DERIVED'])
+            partial_graph = KnowledgeGraph.from_dict(partial)
+            # Recreate framework facts over the intentionally partial compiler
+            # graph instead of editing a projected returns edge in place.
+            from kgmaker.framework import augment_framework_graph
+            partial_graph = augment_framework_graph(root, partial_graph, result['context'])
+            missing = next(node for node in partial_graph.nodes if node.kind=='orm_query'
+                           and node.name=='missingIndexedReturn:JPQL')
+            surviving_right = next(node for node in partial_graph.nodes
+                                   if node.id==right_entity.id)
+            self.assertFalse(missing.metadata['validated'])
+            self.assertFalse(any(edge.source==missing.id
+                                and edge.kind in {'returns_entity','returns_projection'}
+                                and edge.target==surviving_right.id for edge in partial_graph.edges))
+            self.assertTrue(any(item.get('code')=='SPRING_DATA_QUERY_PROJECTION_UNRESOLVED'
+                                and item.get('projection_type')=='foreign.Thing'
+                                for item in partial_graph.diagnostics))
 
     def test_bytecode_default_method_uses_most_specific_interface_not_classfile_order(self):
         import tempfile

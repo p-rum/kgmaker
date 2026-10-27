@@ -329,8 +329,10 @@ když compiler facts neprokáží jediného ownera.
 Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
 requires exactly one compiler-owned entity; the repository domain type never
 substitutes for an ambiguous query entity. Compiler return type identity likewise
-selects an exact entity/projection node; a duplicated simple return name without
-an exact owner remains unresolved.
+selects an exact entity/projection node. A source-level simple return name is
+accepted only when the JVM method descriptor proves its canonical owner; a
+missing qualified owner, erased generic type variable, or duplicate simple name
+without that proof remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association

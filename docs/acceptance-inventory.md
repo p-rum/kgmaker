@@ -13,9 +13,9 @@
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
-| T003-S06-W02-AC01 | VERIFIED_IN_SCOPE | K2 and Javac fixtures prove chain ownership, FIELD/PROPERTY IDs, overrides, and inheritance table selection; `CompilerWorkerTests.test_repository_generic_uses_exact_entity_owner_for_same_simple_names` proves derived and explicit JPQL entity/return bindings retain exact left/right owner identities |
+| T003-S06-W02-AC01 | VERIFIED_IN_SCOPE | K2 and Javac fixtures prove chain ownership, FIELD/PROPERTY IDs, overrides, and inheritance table selection; `CompilerWorkerTests.test_repository_generic_uses_exact_entity_owner_for_same_simple_names` proves derived and explicit JPQL entity/return bindings retain exact owners and do not guess missing or generic return types |
 | T003-S06-W02-AC02 | VERIFIED_IN_SCOPE | Additive `orm_attribute` metadata and `inherits_attribute` reuse graph schema v3; `test_existing_graph_loader_is_unchanged` accepts store schemas v1/v2/v3; no migration is needed |
-| T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves the foreign derived predicate and ambiguous simple JPQL entity unresolved, while qualified JPQL and compiler return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
+| T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves foreign derived predicates, ambiguous JPQL, missing indexed qualified returns, and generic `T` returns unresolved, while descriptor-proven return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
 | T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
 
 ## T003-S08-W01 — project references

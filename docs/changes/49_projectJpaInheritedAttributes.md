@@ -121,3 +121,26 @@ freeze. Serialized full suite na tomto zdroji —
 scénáře; strict K1/K2/Javac režim byl aktivní. Tento výsledek pokrývá JPQL
 identity guard. Starší full běhy v této poznámce se vztahují k předchozímu
 source snapshotu.
+
+## Compiler-proven return type owner (2026-10-27)
+
+Další partial-index audit našel, že chybějící `foreign.Thing` se po exact-owner
+lookupu ještě mohlo svázat s jediným dostupným `right.Thing`. Return projection
+proto už nikdy nepadá zpět na simple-name kandidáta. Kvalifikovaný typ vyžaduje
+exact owner; jednoduché source jméno může použít jen přesného ownera z JVM
+method descriptoru, pokud odpovídá deklarovanému jménu. Erased generic `T`
+nezíská owner z náhodné lokální třídy `T`; bez proof zůstává query UNKNOWN.
+
+Actual Javac regresní fixture ověřuje descriptor-proven `right.Thing` positive,
+partial compiler graph s nepřítomným `foreign.Thing` a jedinou lokální
+`right.Thing` negative, a generic `<T> T` vedle lokálního `right.T` negative.
+Chybějící return type nastaví `validated=false` a nevytvoří
+`returns_entity`/`returns_projection` edge.
+
+Focused Javac/AC06/defensive-fixture checks: 3 passed in 18.01 s. Core
+prerequisite preflight passed without builds or installs. Po source/test hash
+freeze serialized full suite pod `/workspace/kgmaker-heavy-tests.lock` prošel:
+538 passed, 10 skipped in 618.24 s. `KGMAKER_REQUIRE_WORKERS=1` a
+`KGMAKER_REQUIRE_K2=1` byly aktivní; skips jsou zbývající optional
+toolchain-dependent cases. Tento výsledek pokrývá compiler-proven return owner
+guard; předchozí suite shrnutí výše patří ke staršímu source snapshotu.
