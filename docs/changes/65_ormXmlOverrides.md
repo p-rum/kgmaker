@@ -46,3 +46,31 @@ artefakty a neprovedl build ani instalaci. Semantic validace, `kgmaker scan`,
 `kgmaker check` a `git diff --check` prošly. T003-S06 nadále zůstává PARTIAL;
 provider-specific XML constructs, širší relationship/query grammar a schema/
 deployment availability nejsou tímto omezeným XML subsetem prokázány.
+
+## W02 canonical-owner/current-main integration refresh `283987a` (2026-10-27)
+
+Čtyři XML overlay přístupy k `entity_attributes` nyní používají přesný owner
+vyřešený compilerem, včetně registrace XML-only scalar atributu. Skutečný Javac
+regression se dvěma třídami `Order` ověřuje, že `metadata-complete` pro
+`demo.Order` ponechá annotation column `other.Order` a potlačí pouze
+`demo.Order.extra`. W02 framework/compiler-source changes zůstávají společně s
+W03 XML overlay; W01/W02 parent refresh nepřepsal jejich testy.
+
+Finální actual-Javac XML sada: **15 passed**. Cílený W02 repository-owner
+regression a actual K2 mapped-superclass owner fixture: po jednom passed.
+Po posledním W01→W02→W03 refreshi proběhl nový plný běh:
+
+```bash
+flock /workspace/kgmaker-heavy-tests.lock env \
+  JAVA_HOME=/workspace/tools/jdk-21.0.6+7 \
+  PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH \
+  PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q
+```
+
+Výsledek: **614 passed, 28 skipped in 1009.11 s**. Před během
+`kgmaker-test-prerequisites.py /workspace/s06-w03` potvrdil existující core
+compiler/fixture/API vstupy; nic nestavěl ani neinstaloval. `kgmaker scan`,
+semantic validation, `kgmaker check` a `git diff --check` doplňují final refresh.
+T003-S06 zůstává PARTIAL; provider-specific XML constructs, širší
+relationship/query grammar a schema/deployment availability nejsou tímto subsetem
+prokázány.

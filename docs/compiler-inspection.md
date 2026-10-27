@@ -97,6 +97,19 @@ Discovery membership je konzervativní a má explicitní limity; nejde o persist
 incremental compilation cache. [Freshness guide](typescript-freshness.md) a
 [note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
 
+### Bounded TypeScript callbacks (T003-S08-W03)
+
+Worker4 keeps compiler-selected generic/overload signatures and canonical owner
+parameter IDs through barrel aliases. Named and inline callback arguments bind to
+local higher-order parameters. Parameter invocations and unions use incomplete
+`dispatch_candidates`; mutable/any values never promote an arbitrary initializer
+or signature to a concrete target. Ambient declared callable contracts remain
+compiler evidence, separate from runtime implementation proof. Protocol1/model
+schemas are unchanged; existing candidate navigation is reused.
+[Callback guide](typescript-callbacks.md) documents limits, non-goals and CLI examples;
+[note53](changes/53_resolveBoundedTypeScriptCallbacks.md) records exact local proof,
+remaining full validation and blocked CI. This does not complete all of T003-S08.
+
 ### Windows user-space ověření (T003-S11-W03)
 
 Transport používá omezené souběžné čtení pipe bez POSIX selectorů. Explicitní

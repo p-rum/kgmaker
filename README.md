@@ -199,6 +199,12 @@ config or excluded-unused content edits preserve the selected context; relevant
 new dependencies/members invalidate it offline without running Node. Legacy
 snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
 
+TypeScript worker4 preserves concrete generic/overload signatures through barrel
+exports and records named/inline callback bindings. Callback parameters and union
+values expose incomplete dispatch candidates; mutable/any callbacks remain unresolved.
+Callee navigation includes candidates when explicitly requested. See
+[callback evidence and limits](docs/typescript-callbacks.md).
+
 ## Copilot workflow
 
 Vývoj tohoto repozitáře má navíc projektové Codex implementační agenty v

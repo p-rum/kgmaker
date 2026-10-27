@@ -242,3 +242,18 @@ base integration. Semantic history preserves the exact 118-episode current-main
 prefix followed by all eight W01-only episodes in their prior order; the new
 integration capture follows those. Scoped semantic validation, graph
 regeneration/check, and diff checks complete the refresh.
+
+## Parent-only integrace po merge callbacků
+
+Finální parent baseline je main `3a7f76b00bb5136bbe5990546d9c8942a7f53f73`.
+Všechny JVM source, JPA framework a oba compiler test moduly zůstávají přesně
+`e71c6227f5a69128fede6ac4b2b75b6f7ad33ac7`; TypeScript worker a callback testy
+jsou byte-identické s novým main. Skutečná předchozí parent integrace na543
+měla **35 PASS / 0 SKIP v175.28s** (K2 JPA, Javac AC06, vybraná TS freshness
+matice); pro nový čistý parent-only merge se neopakují compiler/full běhy.
+
+Nové T005/T008/T009/mandatory integrační kontroly: **79 PASS / 0 SKIP v0.42s**,
+XML `/workspace/s06-w01-main3a7-pure.xml`. CI již není blokováno billingem;
+před merge jsou povinné aktuální source review a všech sedm remote kontrol.
+Main prefix121 immutable episodes a všechny původní child captures zůstávají
+beze změny; generované grafy se obnovují CLI.
