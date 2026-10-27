@@ -482,7 +482,7 @@ object Singleton {
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             annotations={
-                'Entity':'@Target(ElementType.TYPE) public @interface Entity {}',
+                'Entity':'@Target(ElementType.TYPE) public @interface Entity { String name() default ""; }',
                 'Table':'@Target(ElementType.TYPE) public @interface Table { String name(); String schema() default ""; }',
                 'Embeddable':'@Target(ElementType.TYPE) public @interface Embeddable {}',
                 'EmbeddedId':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface EmbeddedId {}',
@@ -603,7 +603,7 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             annotations={
-                'Entity':'@Target(ElementType.TYPE) public @interface Entity {}',
+                'Entity':'@Target(ElementType.TYPE) public @interface Entity { String name() default ""; }',
                 'MappedSuperclass':'@Target(ElementType.TYPE) public @interface MappedSuperclass {}',
                 'Id':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}',
                 'Column':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default ""; }',
@@ -615,16 +615,24 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
             repository_api=root/'src/main/java/org/springframework/data/jpa/repository/JpaRepository.java'
             repository_api.parent.mkdir(parents=True,exist_ok=True)
             repository_api.write_text('package org.springframework.data.jpa.repository; public interface JpaRepository<T,ID> {}')
+            query_api=root/'src/main/java/org/springframework/data/jpa/repository/Query.java'
+            query_api.write_text('''package org.springframework.data.jpa.repository;
+import java.lang.annotation.*; @Target(ElementType.METHOD) @Retention(RetentionPolicy.RUNTIME)
+public @interface Query { String value() default ""; }''')
             sources={
                 'left/LeftBase.java':'package left; import jakarta.persistence.*; @MappedSuperclass public class LeftBase { @Id @Column(name="left_id") Long leftId; }',
                 'right/RightBase.java':'package right; import jakarta.persistence.*; @MappedSuperclass public class RightBase { @Id @Column(name="right_id") Long rightId; }',
-                'left/Thing.java':'package left; import jakarta.persistence.*; @Entity public class Thing extends LeftBase {}',
-                'right/Thing.java':'package right; import jakarta.persistence.*; @Entity public class Thing extends RightBase {}',
+                'left/Thing.java':'package left; import jakarta.persistence.*; @Entity(name="left.Thing") public class Thing extends LeftBase {}',
+                'right/Thing.java':'package right; import jakarta.persistence.*; @Entity(name="right.Thing") public class Thing extends RightBase {}',
                 'right/ThingRepository.java':'''package right;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 public interface ThingRepository extends JpaRepository<Thing,Long> {
   Thing findByLeftId(Long id);
   Thing findByRightId(Long id);
+  @Query("select e from right.Thing e where e.rightId=1") Thing qualifiedRight();
+  @Query("select e from left.Thing e where e.leftId=1") Thing qualifiedForeign();
+  @Query("select e from Thing e where e.rightId=1") Thing ambiguousSimpleName();
 }''',
             }
             for relative,content in sources.items():
@@ -657,6 +665,29 @@ public interface ThingRepository extends JpaRepository<Thing,Long> {
                             and node.name=='ThingRepository')
             self.assertTrue(any(edge.source==repository.id and edge.kind=='repository_for'
                                 and edge.target==right_entity.id for edge in graph.edges))
+            left_entity=classes[('src/main/java/left/Thing.java','class','Thing')]
+            queries={node.name:node for node in graph.nodes if node.kind=='orm_query'
+                     and node.path=='src/main/java/right/ThingRepository.java'}
+            qualified_right=queries['qualifiedRight:JPQL']
+            self.assertTrue(qualified_right.metadata['validated'])
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='query_reads'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='returns_entity'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='filters_by'
+                                and edge.target==right_attribute.id for edge in graph.edges))
+            qualified_foreign=queries['qualifiedForeign:JPQL']
+            self.assertTrue(qualified_foreign.metadata['validated'])
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='query_reads'
+                                and edge.target==left_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='returns_entity'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='filters_by'
+                                and edge.target==left_attribute.id for edge in graph.edges))
+            ambiguous=queries['ambiguousSimpleName:JPQL']
+            self.assertFalse(ambiguous.metadata['validated'])
+            self.assertFalse(any(edge.source==ambiguous.id and edge.kind in {'query_reads','filters_by'}
+                                for edge in graph.edges))
 
     def test_bytecode_default_method_uses_most_specific_interface_not_classfile_order(self):
         import tempfile

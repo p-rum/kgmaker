@@ -9,6 +9,9 @@ Entity attribute indexes and Spring Data repository generic resolution use exact
 compiler-qualified owners; a repository for `right.Thing` cannot resolve a
 derived predicate against same-simple-name `left.Thing`. An unproven generic
 owner remains unbound.
+Explicit JPQL entity names and query return declarations also use exact compiler
+identities; duplicate simple entity/return names without a unique owner do not
+receive a repository-model or first-match fallback.
 Řetězené mapped superclasses, compiler-qualified parent identity, entity-level
 override precedence, kolize, unresolved override a SingleTable/Joined/Table-per-class
 root/subclass table selection mají fixture v `tests/test_k2_backend.py`.

@@ -900,6 +900,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     entity_nodes = {name: declarations[0]["node"].id for name, declarations in entity_decls_by_simple.items()
                     if len(declarations) == 1}
     entity_nodes_by_owner = {owner: item["node"].id for owner, item in entity_decls_by_owner.items() if owner}
+    entity_query_owners: dict[str, list[str]] = {}
+    for owner, declaration in entity_decls_by_owner.items():
+        entity_annotation = next((item for item in declaration["symbol"].get("annotations", [])
+                                  if isinstance(item, dict) and isinstance(item.get("name"), str)
+                                  and _simple(item["name"]) == "Entity"), None)
+        if entity_annotation is None or entity_annotation.get("values_resolved") is False:
+            continue
+        raw_entity_values = entity_annotation.get("values") if isinstance(entity_annotation.get("values"), dict) else {}
+        explicit_entity_name = raw_entity_values.get("name", raw_entity_values.get("value"))
+        if explicit_entity_name is not None and not isinstance(explicit_entity_name, str):
+            continue
+        entity_name = explicit_entity_name or declaration["node"].name
+        entity_query_owners.setdefault(entity_name, []).append(owner)
 
     def entity_index_key(declaration: dict[str, Any]) -> str:
         owner = declaration["symbol"].get("owner")
@@ -1882,6 +1895,17 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
 
+    type_nodes_by_owner: dict[str, Node] = {}
+    type_nodes_by_simple: dict[str, list[Node]] = {}
+    for symbol in symbols.values():
+        symbol_node_value = nodes.get(str(symbol.get("id", "")))
+        owner = symbol.get("owner")
+        if symbol_node_value is None or symbol_node_value.kind not in {"class", "interface", "type"} \
+                or not isinstance(owner, str) or not owner:
+            continue
+        type_nodes_by_owner[owner.replace("$", ".")] = symbol_node_value
+        type_nodes_by_simple.setdefault(symbol_node_value.name, []).append(symbol_node_value)
+
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
     # names in the selected persistence realm. Dynamic expressions stay unresolved.
@@ -1909,7 +1933,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         unbound = sorted(set(query_parameters) - set(parameter_names))
         return_type = str(item.get("return_type", ""))
         return_parts = re.findall(r"[A-Za-z_$][\w.$]*", return_type)
-        projection_type = _simple(return_parts[-1]) if return_parts else None
+        projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
+        projection_type = _simple(projection_type_ref) if projection_type_ref else None
+        projection_node = type_nodes_by_owner.get(projection_type_ref or "")
+        if projection_node is None and projection_type:
+            simple_projection_candidates = type_nodes_by_simple.get(projection_type, [])
+            if len(simple_projection_candidates) == 1:
+                projection_node = simple_projection_candidates[0]
         model_owner = repository_models[str(item.get("owner"))]
         model_name = _simple(model_owner)
         named_query_name = _named_string_arg(raw, "name")
@@ -1945,29 +1975,37 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
-            projection = next((candidate for candidate in nodes.values()
-                               if candidate.name == projection_type and candidate.kind in {"class", "interface", "type"}), None)
-            if projection:
-                add_edge(query_id, projection.id, "returns_entity" if projection_type in entity_nodes else "returns_projection",
-                         path, line, "Compiler return type of repository query")
+            if projection_node:
+                projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
+                                         if node_id == projection_node.id), None)
+                add_edge(query_id, projection_node.id,
+                         "returns_entity" if projection_owner is not None else "returns_projection",
+                         path, line, "Compiler-qualified return type of repository query")
             else:
                 diagnostics.append({"code": "SPRING_DATA_QUERY_PROJECTION_UNRESOLVED", "path": path,
-                                    "source_line": line, "method": method.id, "projection_type": projection_type})
+                                    "source_line": line, "method": method.id, "projection_type": projection_type_ref})
+                query_node = nodes.get(query_id)
+                if query_node:
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
             entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = _simple(entity_match.group(1)) if entity_match else model_name
+            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
             alias = entity_match.group(2) if entity_match else None
-            query_owners = entity_owners_by_simple.get(query_entity, [])
-            query_owner = (model_owner if query_entity == model_name else
-                           query_owners[0] if len(query_owners) == 1 else None)
+            query_owners = entity_query_owners.get(query_entity or "", [])
+            query_owner = query_owners[0] if len(query_owners) == 1 else None
             entity_id = entity_nodes_by_owner.get(query_owner or "")
             if entity_id:
                 add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
             else:
                 diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity})
+                                    "method": method.id, "entity": query_entity or "UNKNOWN",
+                                    "candidates": query_owners,
+                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                current_query = nodes.get(query_id)
+                if current_query:
+                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
             if alias:
                 for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
                     property_name = "".join(part[:1].upper() + part[1:] if index else part
@@ -1979,6 +2017,9 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     else:
                         diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
                                             "source_line": line, "method": method.id, "attribute": attribute_path})
+                        current_query = nodes.get(query_id)
+                        if current_query:
+                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:

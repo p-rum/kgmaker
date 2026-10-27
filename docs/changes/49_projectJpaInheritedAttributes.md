@@ -94,3 +94,30 @@ Oprava přiřazuje neúplným deklaracím jen opaque node-index (bez možnosti
 repository generic resolution) a doplňuje synthetic fixture explicitními
 compiler owner/generic facts. Source identity guard se neuvolnil. Následný
 serialized full retry prošel: 538 passed, 10 skipped in 489.03 s.
+
+## JPQL entity a return identity guard (2026-10-27)
+
+Následný actual Javac probe našel, že explicitní JPQL `from left.Thing` mohlo
+zdědit repository owner `right.Thing`; return type `right.Thing` se navíc
+vybíral podle prvního uzlu se simple name `Thing`. Projekce nyní mapuje přesné
+compiler `@Entity(name)` (při chybějícím či prázdném name používá JPA default
+class name) a vyžaduje jediného entity ownera. Repository domain už nepřebíjí
+query entity; neznámý nebo duplicitní JPQL name označí query UNKNOWN bez
+`query_reads`/`filters_by`. Návratový typ nejprve vybírá přes owner identity;
+prosté jméno se použije pouze při jediném compiler type match.
+
+Stejný actual Javac fixture ověřuje qualified `right.Thing` positive, qualified
+`left.Thing` query vedle compiler return `right.Thing`, a ambiguous unqualified
+`Thing` negative. FQ query a compiler return nesdílejí identity podle simple
+name; ambiguity nevytvoří první-match edge. Existing AC06 a hand-built
+framework fixture zůstávají green.
+
+Focused actual Javac checks po této identity guard změně: 3 passed in 20.18 s
+(new repository/JPA fixture, actual AC06, defensive hand-built framework
+fixture). Před finální suite proběhl worker/toolchain preflight a source hash
+freeze. Serialized full suite na tomto zdroji —
+`JAVA_HOME=/workspace/tools/jdk-21.0.6+7 PATH=/workspace/tools/jdk-21.0.6+7/bin:/workspace/tools/kotlinc/bin:$PATH PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/tools/m2 /workspace/kgmaker-venv/bin/python -m pytest -q` pod `/workspace/kgmaker-heavy-tests.lock` — prošel:
+538 passed, 10 skipped in 410.27 s. Skips jsou volitelné toolchain-dependent
+scénáře; strict K1/K2/Javac režim byl aktivní. Tento výsledek pokrývá JPQL
+identity guard. Starší full běhy v této poznámce se vztahují k předchozímu
+source snapshotu.

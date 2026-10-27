@@ -326,6 +326,11 @@ Spring Data repository model se vybírá z compiler-resolved generic supertype a
 přesného entity owneru. Entity atributy se indexují podle canonical owner
 identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
 když compiler facts neprokáží jediného ownera.
+Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
+requires exactly one compiler-owned entity; the repository domain type never
+substitutes for an ambiguous query entity. Compiler return type identity likewise
+selects an exact entity/projection node; a duplicated simple return name without
+an exact owner remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
