@@ -54,4 +54,3 @@ class ProvenanceTests(unittest.TestCase):
         task=w.advance_task(self.root,task['id'],'analyze')
         with self.assertRaisesRegex(w.WorkflowError,'concurrently'):w.save_task(self.root,task,expected_revision=old)
         self.assertEqual('analyze',w.load_task(self.root,task['id'])['status'])
-
