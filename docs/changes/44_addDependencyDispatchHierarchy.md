@@ -193,3 +193,14 @@ Sémantika zachovává přesný main prefix 118 immutable episodes a všechny č
 unikátní původní child captures. Žádný původní capture objekt se neupravuje.
 Generované grafy se obnovují výhradně CLI; žádný runtime/classpath důkaz není
 povýšen na pozorované spuštění aplikace.
+
+Po merge PR #46 navazuje další čistá parent integrace na main
+`3a7f76b00bb5136bbe5990546d9c8942a7f53f73`. JVM/dispatch source zůstává
+byte-identický `89e50cf`, TypeScript worker a všechny tři callback test moduly
+jsou přesně z tohoto main. Workflow zahrnuje oba původní mandatory test sets.
+Dřívější skutečný dispatch run 120/0 zůstává platným source důkazem; pro tuto
+parent-only změnu se neopakuje. Main prefix nyní obsahuje 121 immutable episodes;
+child historie zůstává append-only. Finální CI musí běžet nad tímto novým párem.
+
+Nová čistá integrační kontrola T005/T008/T009/mandatory guards: **79 PASS,
+0 SKIP v0.76s**, XML `/workspace/dispatch-main543-validation/main3a7-pure.xml`.
