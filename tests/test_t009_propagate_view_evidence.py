@@ -201,7 +201,9 @@ def test_explicit_unknown_polarity_cannot_be_relabelled_by_view_or_aggregation()
     data = {
         "schema_version": 1, "view_id": "view", "kind": "topology",
         "baseline_fingerprint": "sha256:test", "rules_version": "t009", "scope": "production",
-        "context_selection": {}, "nodes": [], "edges": [{
+        "context_selection": {}, "nodes": [
+            {"id": "a", "kind": "service", "label": "A"},
+            {"id": "b", "kind": "service", "label": "B"}], "edges": [{
             "id": "edge", "source": "a", "target": "b", "relation": "calls",
             "evidence_refs": ["ev:unknown"], "supporting_refs": ["ev:unknown"],
             "contradicting_refs": [], "unknown_refs": [], "attributes": {},
@@ -239,3 +241,97 @@ def test_ac04_non_sequence_edges_return_structured_error():
     with pytest.raises(ViewValidationError) as caught:
         aggregate_view_edges(None, [])
     assert "INVALID_EDGES" in {item["code"] for item in caught.value.errors}
+
+
+def test_claim_cannot_invent_runtime_evidence_from_syntax_provenance():
+    edge = claim("invented", kind="RUNTIME_OBSERVED", status="RESOLVED",
+                 freshness="CURRENT", refs=("syntax",))
+    provenance = [{"id": "syntax", "evidence_kind": "SYNTAX_CANDIDATE",
+                   "freshness": "CURRENT", "polarity": "SUPPORTING"}]
+    before = deepcopy((edge, provenance))
+    with pytest.raises(ViewValidationError) as caught:
+        aggregate_view_edges([edge], provenance)
+    assert "EVIDENCE_KIND_NOT_PRESERVED" in {error["code"] for error in caught.value.errors}
+    assert (edge, provenance) == before
+
+
+@pytest.mark.parametrize("collection", ["nodes", "edges"])
+@pytest.mark.parametrize("bucket,polarity", [
+    ("supporting_refs", "SUPPORTING"), ("contradicting_refs", "CONTRADICTING"),
+])
+def test_document_rejects_overlapping_unknown_polarity(collection, bucket, polarity):
+    data = {"schema_version": 1, "view_id": "v", "kind": "topology",
+            "baseline_fingerprint": "sha256:test", "rules_version": "t009",
+            "scope": "production", "context_selection": {},
+            "nodes": [{"id": "a", "kind": "service", "label": "A"},
+                      {"id": "b", "kind": "service", "label": "B"}],
+            "edges": [{"id": "e", "source": "a", "target": "b", "relation": "uses"}],
+            "diagnostics": [], "coverage": {"status": "UNKNOWN"}, "limits": [],
+            "provenance": [{"id": "ev", "polarity": polarity}]}
+    data[collection][0].update({"evidence_refs": ["ev"], bucket: ["ev"], "unknown_refs": ["ev"]})
+    before = deepcopy(data)
+    with pytest.raises(ViewValidationError) as caught:
+        ViewDocument.from_dict(data)
+    assert "INVALID_EVIDENCE_POLARITY_PARTITION" in {error["code"] for error in caught.value.errors}
+    assert data == before
+
+
+@pytest.mark.parametrize("location,field,value", [
+    ("node", "evidence_kinds", None), ("node", "evidence_kinds", [[]]),
+    ("node", "evidence_refs", [[]]), ("provenance", "evidence_kind", []),
+    ("provenance", "freshness", []),
+])
+def test_document_malformed_evidence_returns_structured_validation(location, field, value):
+    from kgmaker.architecture_model import ViewNode
+    data = ViewDocument("v", "topology", "sha256:test", "t009", "production", {},
+                        nodes=(ViewNode("a", "service", "A", evidence_refs=("ev",)),),
+                        coverage={"status": "UNKNOWN"}, provenance=({"id": "ev"},)).to_dict()
+    target = data["nodes"][0] if location == "node" else data["provenance"][0]
+    target[field] = value
+    before = deepcopy(data)
+    with pytest.raises(ViewValidationError):
+        ViewDocument.from_dict(data)
+    assert data == before
+
+
+def test_missing_provenance_polarity_stays_unknown_in_aggregation():
+    edge = ViewEdge("e", "a", "b", "uses", evidence_refs=("ev",), supporting_refs=("ev",))
+    with pytest.raises(ViewValidationError) as caught:
+        aggregate_view_edges([edge], [{"id": "ev", "evidence_kind": "SOURCE_ONLY"}])
+    assert "EVIDENCE_POLARITY_NOT_PRESERVED" in {error["code"] for error in caught.value.errors}
+
+
+@pytest.mark.parametrize("field,value", [
+    ("polarity", "FUTURE_POLARITY"), ("evidence_kind", "FUTURE_KIND"),
+    ("freshness", "FUTURE_FRESHNESS"),
+])
+def test_unknown_provenance_fallback_roundtrips_through_public_document(field, value):
+    from kgmaker.architecture_model import ViewNode
+    record = {"id": "ev", "evidence_kind": "SOURCE_ONLY", "freshness": "UNKNOWN",
+              "polarity": "UNKNOWN", field: value}
+    result = aggregate_view_edges([
+        ViewEdge("e", "a", "b", "uses", evidence_refs=("ev",), unknown_refs=("ev",),
+                 attributes={"scope": "production", "context_ids": ["ctx"]})], [record])
+    document = ViewDocument("v", "topology", "sha256:test", "t009", "production", {},
+                            nodes=(ViewNode("a", "service", "A"), ViewNode("b", "service", "B")),
+                            edges=result["edges"], provenance=result["provenance"],
+                            coverage=result["coverage"], diagnostics=result["diagnostics"])
+    data = document.to_dict()
+    assert ViewDocument.from_dict(data).to_dict() == data
+    assert data["provenance"][0][field] == "UNKNOWN"
+    assert data["coverage"]["status"] == "PARTIAL"
+
+
+def test_aggregate_rejects_empty_provenance_identity():
+    with pytest.raises(ViewValidationError) as caught:
+        aggregate_view_edges([ViewEdge("e", "a", "b", "uses", evidence_refs=("",))], [{"id": ""}])
+    assert "INVALID_PROVENANCE" in {error["code"] for error in caught.value.errors}
+
+
+def test_aggregate_rejects_duplicate_claim_identities():
+    edges = [ViewEdge("same", "a", "b", "uses"), ViewEdge("same", "a", "c", "uses")]
+    before = deepcopy(edges)
+    with pytest.raises(ViewValidationError) as caught:
+        aggregate_view_edges(edges, [])
+    assert "DUPLICATE_EDGE_ID" in {error["code"] for error in caught.value.errors}
+    assert edges == before

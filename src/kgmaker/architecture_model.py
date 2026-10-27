@@ -64,7 +64,7 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
     if not isinstance(provenance, (list, tuple)) or any(not isinstance(item, Mapping) for item in provenance):
         raise ViewValidationError([{"code": "INVALID_PROVENANCE", "path": "provenance"}])
     evidence = {item.get("id"): item for item in provenance
-                if isinstance(item.get("id"), str)}
+                if isinstance(item.get("id"), str) and item["id"]}
     if len(evidence) != len(provenance):
         raise ViewValidationError([{"code": "INVALID_PROVENANCE", "path": "provenance"}])
     if not isinstance(diagnostics, (list, tuple)) or any(not isinstance(item, Mapping) for item in diagnostics):
@@ -73,6 +73,7 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
     groups: dict[tuple, list[ViewEdge]] = {}
     excluded_identities: set[tuple] = set()
     result_diagnostics = [dict(item) for item in diagnostics]
+    seen_edge_ids: set[str] = set()
     for index, edge in enumerate(edges):
         if not isinstance(edge, ViewEdge):
             raise ViewValidationError([{"code": "INVALID_EDGE", "path": f"edges[{index}]"}])
@@ -80,6 +81,9 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
             raise ViewValidationError([{"code": "INVALID_RESOLUTION_STATUS", "path": f"edges[{index}].resolution_status"}])
         if any(not isinstance(value, str) or not value for value in (edge.id, edge.source, edge.target, edge.relation)):
             raise ViewValidationError([{"code": "INVALID_EDGE_IDENTITY", "path": f"edges[{index}]"}])
+        if edge.id in seen_edge_ids:
+            raise ViewValidationError([{"code": "DUPLICATE_EDGE_ID", "path": f"edges[{index}].id"}])
+        seen_edge_ids.add(edge.id)
         if not isinstance(edge.attributes, Mapping):
             raise ViewValidationError([{"code": "INVALID_ATTRIBUTES", "path": f"edges[{index}].attributes"}])
         if not isinstance(edge.evidence_refs, (list, tuple)) or any(not isinstance(ref, str) for ref in edge.evidence_refs):
@@ -122,6 +126,14 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
         originals: set[str] = set()
         claim_sources = []
         for claim in claims:
+            referenced_kinds = {
+                record.get("evidence_kind", "UNKNOWN")
+                if isinstance(record.get("evidence_kind", "UNKNOWN"), str)
+                and record.get("evidence_kind", "UNKNOWN") in EVIDENCE_KINDS else "UNKNOWN"
+                for record in (evidence[ref] for ref in claim.evidence_refs)
+            }
+            if claim.evidence_kinds and set(claim.evidence_kinds) != referenced_kinds:
+                raise ViewValidationError([{"code": "EVIDENCE_KIND_NOT_PRESERVED", "path": claim.id}])
             statuses.add(claim.resolution_status)
             all_refs.update(claim.evidence_refs)
             originals.update(claim.original_ids)
@@ -150,9 +162,9 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
                 if "evidence_kind" in record and (not isinstance(kind, str) or kind not in EVIDENCE_KINDS):
                     result_diagnostics.append({"code": "INVALID_EVIDENCE_KIND", "evidence_ref": ref,
                                                "message": "Unsupported evidence kind was retained as UNKNOWN"})
-                pol = record.get("polarity")
-                if ((ref in supports and pol not in (None, "SUPPORTING"))
-                        or (ref in contras and pol not in (None, "CONTRADICTING"))
+                pol = record.get("polarity", "UNKNOWN")
+                if ((ref in supports and pol != "SUPPORTING")
+                        or (ref in contras and pol != "CONTRADICTING")
                         or (ref in unknowns and pol in ("SUPPORTING", "CONTRADICTING"))):
                     raise ViewValidationError([{"code": "EVIDENCE_POLARITY_NOT_PRESERVED", "path": claim.id}])
                 if ref in supports or pol == "SUPPORTING":
@@ -210,6 +222,18 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
             freshness=freshness, supporting_refs=tuple(sorted(supporting)),
             contradicting_refs=tuple(sorted(contradicting)), unknown_refs=tuple(sorted(unknown)),
         ))
+    canonical_provenance = []
+    for record in provenance:
+        normalized = dict(record)
+        for field_name, allowed in (("evidence_kind", EVIDENCE_KINDS),
+                                    ("freshness", FRESHNESS_STATUSES),
+                                    ("polarity", EVIDENCE_POLARITIES)):
+            value = record.get(field_name, "UNKNOWN")
+            normalized[field_name] = value if isinstance(value, str) and value in allowed else "UNKNOWN"
+            if normalized[field_name] != value:
+                result_diagnostics.append({"code": "UNKNOWN_PROVENANCE_FIELD", "evidence_ref": record["id"],
+                                           "field": field_name, "message": "Unsupported value retained as UNKNOWN"})
+        canonical_provenance.append(normalized)
     found = len(result_edges)
     resolved = sum(edge.resolution_status == "RESOLVED" for edge in result_edges)
     unresolved = found - resolved
@@ -218,7 +242,7 @@ def aggregate_view_edges(edges: Sequence[ViewEdge], provenance: Sequence[Mapping
                        "PARTIAL" if unresolved or excluded or result_diagnostics
                        or any(edge.freshness != "CURRENT" for edge in result_edges) else
                        "COMPLETE_WITHIN_SELECTED_SCOPE")
-    return {"edges": tuple(result_edges), "provenance": tuple(sorted((dict(item) for item in provenance), key=_canonical)),
+    return {"edges": tuple(result_edges), "provenance": tuple(sorted(canonical_provenance, key=_canonical)),
             "diagnostics": tuple(sorted(result_diagnostics, key=_canonical)),
             "coverage": {"status": coverage_status,
                          "counts": {"found": found, "resolved": resolved,
@@ -492,7 +516,8 @@ def validate_view_document(data: Mapping[str, Any]) -> None:
             _, support, contra, unknown = _reference_buckets(
                 refs, node.get("supporting_refs", []), node.get("contradicting_refs", []),
                 node.get("unknown_refs") if "unknown_refs" in node else None)
-            if support & contra or (support | contra | unknown) != set(refs):
+            if (support & contra or support & unknown or contra & unknown
+                    or (support | contra | unknown) != set(refs)):
                 err("INVALID_EVIDENCE_POLARITY_PARTITION", path)
         if not isinstance(node.get("attributes", {}), Mapping):
             err("INVALID_ATTRIBUTES", path + ".attributes")
@@ -542,7 +567,8 @@ def validate_view_document(data: Mapping[str, Any]) -> None:
             _, support, contra, unknown = _reference_buckets(
                 refs, edge.get("supporting_refs", []), edge.get("contradicting_refs", []),
                 edge.get("unknown_refs") if "unknown_refs" in edge else None)
-            if support & contra or (support | contra | unknown) != set(refs):
+            if (support & contra or support & unknown or contra & unknown
+                    or (support | contra | unknown) != set(refs)):
                 err("INVALID_EVIDENCE_POLARITY_PARTITION", path)
         if not isinstance(edge.get("attributes", {}), Mapping):
             err("INVALID_ATTRIBUTES", path + ".attributes")
@@ -576,6 +602,9 @@ def validate_view_document(data: Mapping[str, Any]) -> None:
                 err("INVALID_EVIDENCE_POLARITY", f"provenance[{i}].polarity")
     if unresolved_edges and isinstance(coverage, Mapping) and coverage.get("status") == "COMPLETE_WITHIN_SELECTED_SCOPE":
         err("UNRESOLVED_EDGE_WITH_COMPLETE_COVERAGE", "coverage.status")
+    # Cross-reference checks below require the validated string-array shapes.
+    if errors:
+        raise ViewValidationError(errors)
     for collection_name in ("nodes", "edges"):
         collection = data.get(collection_name) if isinstance(data.get(collection_name), list) else []
         for i, item in enumerate(collection):
