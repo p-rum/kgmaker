@@ -257,3 +257,14 @@ XML `/workspace/s06-w01-main3a7-pure.xml`. CI již není blokováno billingem;
 před merge jsou povinné aktuální source review a všech sedm remote kontrol.
 Main prefix121 immutable episodes a všechny původní child captures zůstávají
 beze změny; generované grafy se obnovují CLI.
+
+## Parent-only integrace T015
+
+Main `49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce` nyní obsahuje T015. JVM,
+framework a oba původní compiler test moduly zůstávají byte-identické `e71c6227`;
+T015 projector/tests/pinned API fixture i TypeScript worker jsou přesně z main.
+Nová čistá kontrola T005/T008/T009/T015/mandatory: **124 PASS**, dva samostatně
+ověřené actual T015 případy byly deselected, **4.32s**; XML
+`/workspace/jpa-main49-pure.xml`. Skutečný dřívější JPA35 run se pro tuto
+parent-only změnu neopakuje; nová dvojice vyžaduje čerstvé všech sedm CI kontrol.
+Main prefix127 a všechny původní child captures zůstávají immutable.

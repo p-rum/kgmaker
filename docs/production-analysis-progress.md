@@ -431,3 +431,38 @@ process runs or last-valid graph changes. Spring/exporter prerequisite
 negatives are retained. This is bounded CI coverage; second-JDK exploration,
 benchmark budgets, full end-to-end acceptance and release gates remain separate.
 See [change note48](changes/48_enforceMandatoryWorkerCi.md) for final results.
+
+## T003-S04-W02 — bounded source declaration mappings
+
+The explicit bytecode path now separates generated identity from compiler-proven
+source declaration mappings. Actual JDK21/Kotlin2.1.10 golden fixtures cover Java
+default methods, value/void generic bridges and Kotlin DefaultImpls/JVM-default=all
+under K1/K2 with and without debug attributes. Missing/mismatched source stays
+bytecode-only; no source call locator or runtime availability is manufactured.
+See change46 and `tests/test_default_body_mapping.py`. S04 remains PARTIAL outside
+this declared matrix; coroutine/default-argument/state-machine mapping is pending.
+
+Historical pre-ABI S04-W02 verification: **410 PASS / 9 optional toolchain SKIP**, including
+all 32 actual mapping cases; focused scope/duplicate guards **16 PASS**.
+Runtime/statement-level mapping remains outside this bounded declaration contract.
+
+W02 static/instance ABI guard uses compiler flags from Javac/K1/K2, with an explicit
+DefaultImpls transform and no guessed method flags. Same-realm stale ABI regression
+is included in the expanded36-case matrix; final validation supersedes historical410/9.
+
+W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**,
+all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
+compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
+remains a separate mandatory gate, not a local PASS.
+
+## T015 — explicit datasource resource projection
+
+Bounded implementation over T008/T009: explicit workspace/repository/database/stream
+resources, table drill-down references, existing selected-context read/write/delete
+facts and dependency-only entity/migration declarations. Flyway derivation is
+MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
+shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
+Complete persistence/schema-compatibility S06/W08, T004 and production readiness
+remain PARTIAL; this does not implement a new parser or discover datasources.
