@@ -57,3 +57,8 @@ Druhá read-only kontrola oprav navíc ověřila, že nové implement/review bin
 se pod lockem odvozují od skutečného HEAD a source inventory. Dodaný rozdílný
 binding se odmítne bez mutace; chybějící binding se doplní při v1→v2 migraci,
 aniž by se změnila task/artifact ID.
+
+CI dodatečně odhalilo zastaralé generované snapshoty v dílčích PR. Každý
+inkrement nyní zvlášť obnovuje semantic metadata a GRAPH.md/GRAPH.mmd příkazy
+semantic update/apply/validate a scan/check. Neoslabuje se CI ani validátor;
+chybný snapshot se nahrazuje výstupem nad přesným zdrojem daného inkrementu.
