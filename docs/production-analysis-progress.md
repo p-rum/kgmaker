@@ -414,3 +414,7 @@ Veřejné CLI a kompletní end-to-end release dodává až S06.
 
 T046-S02: knihovní inkrement project template library; ověření viz change note 57.
 Veřejné CLI a kompletní end-to-end release dodává až S06.
+
+
+T046-S03: knihovní inkrement existing-function test design library; ověření viz change note 58.
+Veřejné CLI a kompletní end-to-end release dodává až S06.
