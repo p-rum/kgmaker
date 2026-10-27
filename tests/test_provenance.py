@@ -54,3 +54,66 @@ class ProvenanceTests(unittest.TestCase):
         task=w.advance_task(self.root,task['id'],'analyze')
         with self.assertRaisesRegex(w.WorkflowError,'concurrently'):w.save_task(self.root,task,expected_revision=old)
         self.assertEqual('analyze',w.load_task(self.root,task['id'])['status'])
+
+    def test_delayed_creator_returns_advanced_task_without_reset(self):
+        import threading
+        from unittest.mock import patch
+        ready = threading.Event()
+        release = threading.Event()
+        result, errors = [], []
+        from contextlib import contextmanager
+        original = p.transaction
+        @contextmanager
+        def delayed(*args, **kwargs):
+            if threading.current_thread().name == 'delayed-creator':
+                ready.set()
+                if not release.wait(5):
+                    raise RuntimeError('Creator was not released')
+            with original(*args, **kwargs) as data:
+                yield data
+        def create():
+            try:
+                result.append(w.add_task(self.root, 'Same request'))
+            except BaseException as exc:
+                errors.append(exc)
+        with patch.object(p, 'transaction', delayed):
+            thread = threading.Thread(target=create, name='delayed-creator')
+            thread.start()
+            try:
+                self.assertTrue(ready.wait(5))
+                task = w.add_task(self.root, 'Same request')
+                task = w.advance_task(self.root, task['id'], 'analyze')
+                before = self.tree()
+            finally:
+                release.set()
+                thread.join(5)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual([], errors)
+        self.assertEqual('analyze', result[0]['status'])
+        self.assertEqual(before, self.tree())
+
+    def test_direct_save_requires_revision_and_preserves_artifact_history(self):
+        task = w.add_task(self.root, 'Preserve history')
+        task = w.advance_task(self.root, task['id'], 'analyze')
+        artifact = {'task_id': task['id'], 'role': 'architect', 'phase': 'analyze',
+                    'iteration': 0, 'summary': 'Read calculator', 'status': 'completed',
+                    'cited_paths': ['calculator.py'], 'cited_node_ids': [],
+                    'packet_id': None, 'disposition': None}
+        task = w.record_artifact(self.root, task['id'], 'architect', artifact)
+        before = self.tree()
+        removed = copy.deepcopy(task)
+        removed['artifacts'] = []
+        removed['artifact_ids'] = []
+        for revision in (None, digest(task)):
+            with self.subTest(revision=revision), self.assertRaises(w.WorkflowError):
+                w.save_task(self.root, removed, expected_revision=revision)
+            self.assertEqual(before, self.tree())
+
+    def test_journal_revision_rejects_boolean_and_negative_values(self):
+        p.register_file(self.root, 'requirement', 'REQ', '1', 'calculator.py')
+        before = self.tree()
+        for value in (True, -1, '1'):
+            with self.subTest(value=value), self.assertRaises(AnalysisError):
+                with p.transaction(self.root, value):
+                    pass
+            self.assertEqual(before, self.tree())

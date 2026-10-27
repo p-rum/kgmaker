@@ -41,3 +41,14 @@ běhy se evidují odděleně. Neznámé constraints/syntaxe nejsou PASS. Konzerv
 freshness může vyžadovat nový packet i po exportu testů. Dokončení tohoto kroku
 neznamená dokončení jiných T003/T004 acceptance. Před merge zbývá nezávislé review
 a dostupné požadované CI; cílové schopnosti celého balíku zpřístupňuje až S06.
+
+## Opravy nezávislého review — 2026-10-27
+
+Integrace opraveného základu. Šablonový inkrement neměl vlastní funkční nález. Nový base přenáší atomické workflow vytvoření a ochranu historie; původní šablony a jejich ochrany se nemění.
+
+Vztah k T046 revizi 2, AC01/AC04/AC06/AC07. Cílená sada tohoto inkrementu
+má 21 testů; finální integrovaná stdlib sada má 209 případů, 5 explicitních
+skips. Přesné nové výsledky CI a nové base/head jsou v PR; původní SHA ani
+staré CI výsledky nejsou vydávány za schválení oprav. Python compile a diff
+whitespace check jsou součástí ověření. Lokální pytest se nepodařilo nainstalovat
+z dostupného indexu; úplnou pytest/worker matici ověřuje skutečné GitHub CI.
