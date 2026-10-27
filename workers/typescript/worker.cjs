@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const PROTOCOL = 1;
-const VERSION = 'typescript-worker-2';
+const VERSION = 'typescript-worker-3';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 
@@ -183,6 +183,7 @@ function analyze(request) {
     } else if (before!==null) throw Error('MIXED_CONFIG_SNAPSHOT:'+path.resolve(file));
     return text;
   };
+  const discovery=require('./input_snapshot.cjs').inputSnapshot(ts,root,readFile);
   const projects = new Map(), orderedProjects = [], activeProjects = new Set();
   const relative = file => path.relative(root,file).split(path.sep).join('/');
   function loadProject(config, parent=null) {
@@ -196,7 +197,7 @@ function analyze(request) {
     if (projects.has(config)) return projects.get(config);
     if (projects.size >= 128) throw Error(`TS_PROJECT_REFERENCE_LIMIT:${located}: maximum 128 projects`);
     activeProjects.add(config);
-    const parsed = ts.getParsedCommandLineOfConfigFile(config,{}, {...ts.sys,readFile,
+    const parsed = ts.getParsedCommandLineOfConfigFile(config,{}, {...ts.sys,...discovery.host,
       onUnRecoverableConfigFileDiagnostic:d=>{throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.flattenDiagnosticMessageText(d.messageText,'\n'));}});
     if (!parsed) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: unable to parse tsconfig`);
     if (parsed.errors.length) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.formatDiagnostics(parsed.errors,{getCanonicalFileName:p=>p,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
@@ -222,7 +223,7 @@ function analyze(request) {
   tsconfig=fs.realpathSync(tsconfig);
   const parsed=rootProject.parsed;
   const programs=orderedProjects.map(project=>{
-    const host=ts.createCompilerHost(project.parsed.options); host.readFile=readFile;
+    const host=Object.assign(ts.createCompilerHost(project.parsed.options),discovery.host);
     // Analysis follows the compiler's source redirects, never stale emitted .d.ts
     // and never invokes a solution builder or emit.
     host.useSourceOfProjectReferenceRedirect=()=>true;
@@ -244,13 +245,16 @@ function analyze(request) {
     return {id:project.id,repo_id:context.repo_id,config:project.config,references,fingerprint,
       root_files:sourceFiles.map(file=>file.path),source_files:sourceFiles,compiler_options:project.parsed.options};
   })};
+  discovery.lockfiles([...projects.keys()]);
+  const compilerDiagnostics=programs.map(({project,program})=>({project,diagnostics:ts.getPreEmitDiagnostics(program)}));
+  discovery.validate();
   if (request.operation === 'project') {
     return {...handshake(),status:'COMPLETE',context_id:context.id,project:{
-      input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),
+      input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
       compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph}};
   }
-  for (const {project,program} of programs) {
-    for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
+  for (const {project,diagnostics:capturedDiagnostics} of compilerDiagnostics) {
+    for (const diagnostic of capturedDiagnostics) {
       diagnostics.push({code:'TS'+diagnostic.code,reason:ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'),
         project_id:project.id,path:diagnostic.file?fileInfo(diagnostic.file).path:project.config,start:diagnostic.start??null});
     }
@@ -411,12 +415,13 @@ function analyze(request) {
   }
   for (const node of functionNodes) bodies.push({method:id(node),body:ir(node.body),language:'typescript',context_id:context.id});
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
+  discovery.validate();
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');
   for (const [file,before] of inputs) if(hash(fs.readFileSync(file))!==before.sha256) throw Error('MIXED_SNAPSHOT:'+before.path);
   if (request.ui_framework && request.ui_framework!=='react') diagnostics.push({code:'UNSUPPORTED_UI_FRAMEWORK',framework:request.ui_framework});
   return {...handshake(),status:diagnostics.length?'PARTIAL':'COMPLETE',context_id:context.id,
     symbols:[...symbols.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),call_sites:sites,bodies,facts,diagnostics,
-    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
+    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
       root_files:parsed.fileNames.map(f=>path.relative(root,f)),program_files:projectFiles.map(s=>({...fileInfo(s),root_input:rootFileSet.has(s.fileName)})),
       dependencies:[...inputs.values()].filter(i=>i.origin==='dependency')},
     coverage:{files_found:projectFiles.length,files_analyzed:projectFiles.length,methods_analyzed:bodies.length,

@@ -173,3 +173,23 @@ integrační episode108 zůstává historická; finální guard capture přidáv
 CLI scan/check a git diff --check PASS. Externí mandatory CI je blokováno GitHub
 Actions billing/spending limitem; tento lokální výsledek nenahrazuje sedm povinných
 remote gates ani skutečný Windows běh. Publikace může být Draft, bez merge.
+
+## Integrace aktuálního main po obnovení Actions
+
+Main `5430388a282f19f6c9637319c12a1731ae6d0674` obsahuje T009 a merged
+T003-S08-W02. JVM worker sources a celý dispatch test modul zůstávají byte-identické
+s předchozím reviewovaným `89e50cf`; Python bridge doplňuje pouze původní tři
+metadata dispatch pole do aktuálního inspection. CI zachovává aktuální dependency
+pins/Windows opravu a společně spouští dispatch i selected-tsconfig freshness.
+
+Cílená integrační validace: **120 PASS, žádný SKIP, 330.63 s** nad
+`tests/test_dependency_dispatch.py`, T005, T008, T009 a mandatory CI guards.
+Log/XML: `/workspace/dispatch-main543-validation/focus.log` a `focus.xml`.
+Původní full **575 PASS / 10 SKIP** stále dokládá nezměněné feature source;
+pro čistou integraci se další lokální full neopakoval. Před merge je nutný review
+přesného nového head/base a všech sedm aktuálních remote CI kontrol.
+
+Sémantika zachovává přesný main prefix 118 immutable episodes a všechny čtyři
+unikátní původní child captures. Žádný původní capture objekt se neupravuje.
+Generované grafy se obnovují výhradně CLI; žádný runtime/classpath důkaz není
+povýšen na pozorované spuštění aplikace.

@@ -1,5 +1,15 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
+
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |
@@ -19,8 +29,8 @@ Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cann
 odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
 `test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
 ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
-K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
-zůstávají samostatné, nedokončené úkoly.
+K2-era TS digest. W02 config-scoped freshness má samostatný stav výše; W03
+callback/generic rozsah zůstává samostatný nedokončený úkol.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
@@ -85,6 +95,17 @@ test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly sk
 | T008-AC04 invalid snapshot leaves inputs and checkout unchanged | PASS | `test_ac04_invalid_snapshot_fails_without_mutating_workspace_or_graph` | compares manifest, source file, workspace and graph bytes/state |
 | T008-AC05 scope, selected context, evidence and unresolved boundaries are preserved | PASS | `test_ac05_context_and_provenance_are_preserved_and_not_upgraded`; `test_source_only_context_remains_partial_and_reports_unknown_module_coverage`; `test_actual_workspace_source_only_snapshot_projects_declared_root_without_module`; `test_actual_source_only_snapshot_separates_production_and_test_within_repo`; `test_ambiguous_compiler_variants_remain_unknown_until_explicitly_selected`; `test_workspace_alias_requalifies_default_local_compiler_context` | actual snapshot root ownership and same-repository scope separation, T006 selection, SOURCE_ONLY partial status and repo alias behavior retained |
 | T008-AC06 implementation, tests, documentation and Czech change note | PASS | README, architecture, this inventory and `docs/changes/41_projectServiceInventory.md` | focused and integrated results are recorded in the change note |
+
+## T009 — propagace evidence a coverage
+
+| Acceptance | Stav | Přímý test / kontrakt |
+|---|---|---|
+| T009-AC01 evidence kind is not upgraded; legacy defaults remain unresolved/unknown | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac01_syntax_candidate_stays_syntax_candidate_and_legacy_defaults_do_not_upgrade`; `tests/test_t005_add_view_model.py::test_t009_additive_fields_validate_against_public_view_schema` |
+| T009-AC02 mixed support, contradiction and unknown refs remain visible; incomplete work stays PARTIAL | PASS | `test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics`; `test_explicit_unknown_polarity_cannot_be_relabelled_by_view_or_aggregation` |
+| T009-AC03 empty unanalysed input is UNKNOWN with zero counts | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac03_empty_unanalyzed_input_is_unknown_with_zero_counts` |
+| T009-AC04 invalid inputs leave caller data unchanged | PASS | `test_ac04_invalid_claim_does_not_mutate_inputs`; `test_ac04_malformed_scope_inputs_return_structured_errors_without_mutation` |
+| T009-AC05 selected scope/context remains isolated and unsupported polarity UNKNOWN | PASS | `test_ac05_scope_context_exclusions_and_invalid_polarity_stay_unknown`; T008 production/test workspace regressions |
+| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full466 PASS/109 prerequisite SKIP after all independent review guards; earlier455/109 is intermediate |
 
 ## T006 — výběr kontextů pro více služeb
 

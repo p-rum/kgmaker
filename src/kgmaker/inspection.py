@@ -6,6 +6,7 @@ No project build, npm script, migration or DB connection is implicit here.
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 from dataclasses import replace
@@ -102,6 +103,17 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         raise WorkerError("Optional TypeScript worker/Node unavailable at " + str(home)
                           + "; install pinned dependencies explicitly or select --worker-home / KGMAKER_WORKERS_HOME."
                           + " SOURCE_ONLY scan remains usable.", "TOOLCHAIN_UNAVAILABLE")
+    package = home / "typescript/package.json"
+    if package.is_file():
+        try:
+            package_data = json.loads(package.read_text(encoding="utf-8"))
+            marker = package_data.get("kgmaker_input_snapshot")
+        except (OSError, ValueError, AttributeError) as error:
+            raise WorkerError("Invalid TypeScript worker package metadata: " + str(package), "TOOLCHAIN_UNAVAILABLE") from error
+        if marker is not None and (type(marker) is not int or marker != 1):
+            raise WorkerError("Unsupported TypeScript worker input snapshot distribution", "TOOLCHAIN_UNAVAILABLE")
+        if marker == 1 and not (home / "typescript/input_snapshot.cjs").is_file():
+            raise WorkerError("TypeScript input snapshot helper unavailable at " + str(home) + "; prepare the complete trusted distribution explicitly", "TOOLCHAIN_UNAVAILABLE")
     return [node, str(script)]
 
 
@@ -109,6 +121,13 @@ def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]
     root = worker_home(home)
     target = root / "jvm" / ("target-k2" if kotlin_backend == "k2" else "target")
     paths = ([_jvm_worker_jar(root, kotlin_backend=kotlin_backend)] + sorted((target / "lib").glob("*.jar"))) if language == "jvm" else [root / "typescript/worker.cjs", root / "typescript/node_modules/typescript/lib/typescript.js"]
+    helper = root / "typescript/input_snapshot.cjs"
+    if language == "typescript":
+        if helper.is_file():
+            paths.append(helper)
+        package = root / "typescript/package.json"
+        if package.is_file():
+            paths.append(package)
     return [{"path": str(path.resolve()), "sha256": file_hash(path)} for path in paths]
 
 
@@ -132,6 +151,9 @@ def sanitize(value, *, key=""):
 
 def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
     """One capture/replay policy; legacy contexts retain their original scope gate."""
+    if selected.get("source_snapshot_version") == "typescript-input-discovery-1":
+        from .typescript_snapshot import captured_sources
+        return captured_sources(root, selected.get("project"))
     files = [node for node in graph.nodes if node.kind == "file"]
     if selected.get("source_snapshot_version") != "selected-source-set-1":
         return dict(sorted((node.path, graph.files[node.path]) for node in files
@@ -172,6 +194,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
         value.update(build_context)
     if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
         value["source_snapshot_version"] = "selected-source-set-1"
+    if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
+        value["source_snapshot_version"] = "typescript-input-discovery-1"
     value["source_files"] = source_snapshot(root, base, value)
     from .framework import SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
@@ -347,6 +371,9 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
             inputs[path] = checksum
         return inputs
 
+    from .typescript_snapshot import replay as replay_typescript, validate_capture
+    if "input_discovery" in preflight.get("project", {}):
+        validate_capture(preflight["project"])
     preflight_inputs = input_closure(preflight.get("project"))
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
@@ -362,6 +389,11 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
             raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE") from error
         if actual != expected:
             raise WorkerError("Frontend compiler inputs changed between preflight and analysis", "STALE")
+    if response["project"].get("input_discovery") != preflight["project"].get("input_discovery"):
+        raise WorkerError("Frontend compiler discovery changed between preflight and analysis", "STALE")
+    scoped = selected.get("source_snapshot_version") == "typescript-input-discovery-1"
+    if scoped:
+        replay_typescript(root, response["project"])
     if response["project"]["compiler_options"] != preflight["project"]["compiler_options"]:
         raise WorkerError("Frontend compiler options changed", "STALE")
     if response["project"].get("project_graph") != preflight["project"].get("project_graph"):
@@ -369,7 +401,10 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     model = {"source_sets": [{"module": module, "id": source_set, "scope": scope,
                               "files": [f["path"] for f in response["project"]["program_files"]]}]}
     after = scan_repository(root)
-    if before.files != after.files or before.contexts != after.contexts:
+    if scoped:
+        if digest(Classifier(root).config) != selected["classification_override_hash"]:
+            raise WorkerError("Classifier configuration changed during frontend analysis", "STALE")
+    elif before.files != after.files or before.contexts != after.contexts:
         raise WorkerError("Source/config snapshot changed during frontend analysis", "STALE")
     model_base = scan_repository(root, project_model=model, strict=strict)
     graph = graph_from_response(root, model_base, response, selected, project_model=model)
@@ -382,7 +417,11 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
         if file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("Frontend compiler input changed before publishing", "STALE")
     final = scan_repository(root)
-    if final.files != before.files or final.contexts != before.contexts:
+    if scoped:
+        replay_typescript(root, response["project"])
+        if digest(Classifier(root).config) != selected["classification_override_hash"]:
+            raise WorkerError("Classifier configuration changed before publishing", "STALE")
+    elif final.files != before.files or final.contexts != before.contexts:
         raise WorkerError("Source/config snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
