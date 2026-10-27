@@ -502,7 +502,7 @@ Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
 React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
-uses opt-in `react-jsx-events-2`: React18.3.1/@types/react18.3.18 with the pinned
+uses opt-in `react-jsx-events-3`: React18.3.1/@types/react18.3.18 with the pinned
 compiler declaration hash. Intrinsic event props and one verified source forwarding
 wrapper retain package/declaration provenance. Unknown versions, fake modules,
 mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
@@ -512,3 +512,13 @@ The React subset covers pinned standard onClick/onChange/onSubmit props, includi
 input/select/textarea and form. Classic official factory aliases and default
 automatic runtimes are supported; explicit legacy namespace/fragment/import-source
 controls and per-file JSX overrides remain UNKNOWN.
+
+T015 adds a pure database-resource view through
+`kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
+Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
+repository/database/stream identities remain separate from table drill-down IDs.
+Only existing selected-context query facts contribute read/write/delete claims;
+entity mappings and migrations contribute dependencies. Flyway is
+`MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
+Missing datasource mappings remain unresolved; no database connection or new CLI
+command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).

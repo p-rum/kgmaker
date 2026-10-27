@@ -649,7 +649,7 @@ changes never yield a source mapping even inside an identical repository realm.
 
 ### T003-S08-W04: bounded versioned React event evidence
 
-`--ui-framework react` uses `react-jsx-events-2`, pinned React18.3.1 and
+`--ui-framework react` uses `react-jsx-events-3`, pinned React18.3.1 and
 @types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
 must select that external declaration's DOMAttributes or pinned input/select/textarea event member. Evidence keeps
 package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
@@ -684,5 +684,68 @@ jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, includ
 empty controls rather than truthy fallback. The official event declaration families
 are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
 on form is covered too. Same-named checkout declarations do not qualify. Full
-validation:624 PASS/10 SKIP, complete focused UI/distribution matrix43 PASS; change69
-records scope, all earlier failures/interruptions and current remote status.
+validation before the mutable-binding correction:624 PASS/10 SKIP, focused
+UI/distribution matrix43 PASS. Change69 records current validation separately,
+including earlier failures/interruptions and remote status.
+
+UI binding proof excludes ordinary member callable references and their aliases.
+Lexical function/const bindings use a compiler-symbol syntactic write catalog
+(assignments, compound/unary targets and destructuring/loop targets), with direct
+or ambiguous eval and duplicate binding diagnostics as UNKNOWN boundaries.
+Classic renderer namespace/createElement declarations must pass the same write
+check. This bounded catalog does not infer heap identity or runtime execution.
+Previous v1/v2 UI captures require reinspection; offline freshness validation
+preserves the saved cache/store.
+
+## Data resource projection (T015)
+
+The public pure Python API consumes an already captured workspace:
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.data_resources import project_data_resources
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_data_resources(workspace, graph, source_coverage=coverage,
+                              scope="production")
+print(view.to_json())
+```
+
+Capture is separate from projection; the latter reads only explicit local source
+snapshots and never starts a process or connects to a database. It reuses T008
+service ownership and selected contexts, including `selected_contexts` pins.
+
+- Two explicit database/stream realms with an `orders` table stay two resources.
+  Table IDs are references, not database identities; JDBC URLs and class names do
+  not identify a resource.
+- Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
+  `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
+- `coverage.schemas` inventories/configuration must match the workspace declaration,
+  graph table inventory, realm IDs and actual local hashes. Stale or malformed
+  snapshots fail without mutation. Unmapped default Flyway database IDs remain
+  unresolved; a default is accepted only when explicitly declared as a datasource.
+- Flyway resources carry `derivation=["MIGRATION_DERIVED"]`, while evidence keeps
+  its original T009 kind. Deployment and data availability remain `UNKNOWN`.
+  An ORM node tag alone supplies no new FRAMEWORK_DERIVED proof. Unknown polarity
+  is not promoted; explicit conflicts retain both buckets and AMBIGUOUS status.
+- Known foreign test scopes are excluded. Unknown file scope is not converted to
+  production because its repository belongs to a production service.
+
+`tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
+workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
+It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
+is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
+physical naming/schema compatibility, live databases and data population remain
+outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.

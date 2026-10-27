@@ -9,7 +9,7 @@ závislostmi); není vydáván za merged main. Samostatná větev
 
 Původní handles_event hledal substring @types/react v cestě a měl hardcoded rule
 react-18.3.1 bez skutečné package/declaration provenance. React context pravidlo
-navíc přepisoval legacy generic framework map. Nový adaptér `react-jsx-events-2`
+navíc přepisoval legacy generic framework map. Nový adaptér `react-jsx-events-3`
 reuse TypeChecker, handles_event fact, protocol1 a graph/schema1/2/3; nevytváří
 paralelní UI model ani runtime/click/data availability proof.
 
@@ -172,3 +172,38 @@ aktuální blocker. Tento lokální candidate nemá vlastní nové CI výsledky 
 publikaci, aktuální dependency/base integraci a nezávislé review řídí root.
 Scoped semantic update zachovává existující facts/history, mění pouze doložené
 source anchors a zachytí nový validation episode. Nadřazený T003-S08 zůstává PARTIAL.
+
+
+## Dodatečná hranice mutable binding (před finálním přijetím)
+
+Nezávislý audit po předchozím full našel přepsanou function-declaration wrapper
+binding a mutable method handler, které neprávem přebíraly původní source proof.
+Výsledek **624 PASS /10 SKIP** výše je proto historický před touto opravou.
+UI nyní samostatně ověřuje compiler-bound lexical binding; obecný callbackProof
+pro non-UI source calls zůstává beze změny. Ordinary member handlers a jejich
+const aliases nemají silný handles_event proof. Jediný per-checker syntaktický
+write catalog používá veřejné TypeChecker symboly, včetně
+getShorthandAssignmentValueSymbol pro object shorthand/default destructuring;
+zahrnuje assignments/compound/unary/loop targets a initialized function redeclaration.
+Nejde o heap resolver ani pozorování spuštění callbacku. Direct/ambiguous eval
+znamená UNKNOWN pro lexical proof v daném source file; nečte ani nespouští string.
+Definite const local callable pojmenovaná eval je od builtin boundary odlišena.
+Duplicate/redeclared binding diagnostics TS2300/2451 na declaration-name span
+brání vybrání jedné z nekompatibilních compiler symbol declarations.
+
+Pravidlo v3 zneplatňuje uložené v1/v2 UI generations a frontend preflight odmítne
+snapshot staršího pravidla. Původní snapshot/cache/store se nepřepisuje; freshness
+kontrola zůstává offline. Main callback parent je explicitně integrován z
+3a7f76b00bb5136bbe5990546d9c8942a7f53f73, bez změny jeho non-UI callback resolveru.
+
+První actual mutability focus: **11 PASS /27.55s**. Kompletní běh před upravením
+staré diagnostic assertion skončil **51 PASS, 1 FAIL /291.02s**; jediný FAIL byl
+nový MUTABLE_UI_HANDLER reason mimo původní testový allowlist, bez false edge.
+Následující vlastní focus byl bezpečně přerušen před úpravou catalogu:
+**30 DESELECTED /10.90s**, žádný dokončený test ani whole PASS. Další focus odhalil
+initialized var collision: **26 PASS, 1 FAIL, 30 DESELECTED /149.10s**. Compiler
+pro tuto collision vydal dvě TS2300; fix využívá tyto skutečné compiler diagnostics,
+nikoli textový name resolver. Následný opravený focus: **27 PASS, 30 DESELECTED
+/124.52s** (`/workspace/ui-events-binding-27pass.xml`). Finální rozšířený focus
+se všemi write shapes a předchozími rule generations běží na frozen source;
+nový full zatím nebyl deklarován jako PASS.

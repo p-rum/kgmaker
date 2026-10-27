@@ -456,7 +456,7 @@ remains a separate mandatory gate, not a local PASS.
 
 ## T003-S08-W04 — versioned React event subset
 
-Opt-in react-jsx-events-2 binds official pinned React18.3.1/@types18.3.18 declaration
+Opt-in react-jsx-events-3 binds official pinned React18.3.1/@types18.3.18 declaration
 and package metadata to static handles_event evidence and frontend freshness.
 Intrinsic events and sole-return source forwarding wrappers are supported;
 unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
@@ -469,3 +469,15 @@ form controls; unsupported renderer controls remain UNKNOWN. No browser/app ran,
 no runtime click or data availability is inferred. Remote Actions were resumed by
 root after the user upgrade; this local candidate still needs its own publication,
 base refresh and independent review.
+
+## T015 — explicit datasource resource projection
+
+Bounded implementation over T008/T009: explicit workspace/repository/database/stream
+resources, table drill-down references, existing selected-context read/write/delete
+facts and dependency-only entity/migration declarations. Flyway derivation is
+MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
+shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
+Complete persistence/schema-compatibility S06/W08, T004 and production readiness
+remain PARTIAL; this does not implement a new parser or discover datasources.

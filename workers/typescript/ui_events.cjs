@@ -1,13 +1,19 @@
 'use strict';
 // Static, opt-in React18 adapter. No require/import of application or React JS.
 const path=require('node:path');
-const RULE='react-jsx-events-2';
+const RULE='react-jsx-events-3';
+const checkerSources=new WeakMap(), checkerBindingErrors=new WeakMap();
 const DECLARATION_SHA='b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34';
 const EVENT_INTERFACES=new Set(['DOMAttributes','InputHTMLAttributes','SelectHTMLAttributes','TextareaHTMLAttributes']);
 
 function adapters(ts,programs,discovery,hash,enabled) {
   const byFile=new Map(), snapshots=[];
   if(!enabled) return {byFile,snapshots};
+  for(const {program} of programs) {
+    const checker=program.getTypeChecker();
+    checkerSources.set(checker,program.getSourceFiles().filter(s=>!s.isDeclarationFile));
+    checkerBindingErrors.set(checker,program.getSemanticDiagnostics().filter(d=>[2300,2451].includes(d.code)&&d.file&&typeof d.start==='number'));
+  }
   function packageAt(directory,name) {
     for(let count=0;count<64;count++) {
       const file=path.join(directory,'node_modules',name,'package.json');
@@ -67,11 +73,88 @@ function adapters(ts,programs,discovery,hash,enabled) {
   return {byFile,snapshots};
 }
 
+
+// Public compiler symbols bind syntactic writes; this is not heap analysis.
+const bindingAudits=new WeakMap();
+function bindingAudit(ts,checker,source) {
+  const cached=bindingAudits.get(checker);
+  if(cached)return {written:cached.written,dynamic:cached.dynamicFiles.has(path.resolve(source.fileName))};
+  const written=new Set(),dynamicFiles=new Set();
+  const key=d=>`${path.resolve(d.getSourceFile().fileName)}:${d.kind}:${d.pos}:${d.end}`;
+  function symbol(at,shorthand=false) {
+    let value=shorthand?checker.getShorthandAssignmentValueSymbol(at):checker.getSymbolAtLocation(at);
+    if(value?.flags & ts.SymbolFlags.Alias)value=checker.getAliasedSymbol(value);
+    return value;
+  }
+  function target(node) {
+    if(!node)return;
+    if(ts.isIdentifier(node)||ts.isShorthandPropertyAssignment(node)) {
+      for(const declaration of symbol(node,ts.isShorthandPropertyAssignment(node))?.declarations||[])written.add(key(declaration));
+      return;
+    }
+    if(ts.isPropertyAssignment(node))return target(node.initializer);
+    if(ts.isBinaryExpression(node))return target(node.left);
+    if(ts.isParenthesizedExpression(node)||ts.isAsExpression(node)||ts.isTypeAssertionExpression(node)||ts.isNonNullExpression(node)||ts.isSatisfiesExpression(node))return target(node.expression);
+    ts.forEachChild(node,target);
+  }
+  function visit(node) {
+    if(ts.isBinaryExpression(node)&&node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)target(node.left);
+    if((ts.isPrefixUnaryExpression(node)||ts.isPostfixUnaryExpression(node))&&[ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator))target(node.operand);
+    if(ts.isForOfStatement(node)||ts.isForInStatement(node))target(node.initializer);
+    if(ts.isVariableDeclaration(node)&&node.initializer) {
+      for(const declaration of symbol(node.name)?.declarations||[])
+        if(ts.isFunctionDeclaration(declaration))written.add(key(declaration));
+    }
+    if(ts.isCallExpression(node)) {
+      let expression=node.expression;
+      while(ts.isParenthesizedExpression(expression)||ts.isAsExpression(expression)||ts.isTypeAssertionExpression(expression)||ts.isSatisfiesExpression(expression)||ts.isNonNullExpression(expression))expression=expression.expression;
+      if(ts.isIdentifier(expression)&&expression.text==='eval') {
+        const declarations=symbol(expression)?.declarations||[];
+        // Only a definite immutable local callable is distinct from dynamic eval.
+        const local=declarations.length===1&&ts.isVariableDeclaration(declarations[0])&&
+          !!(declarations[0].parent.flags&ts.NodeFlags.Const)&&declarations[0].initializer&&
+          (ts.isArrowFunction(declarations[0].initializer)||ts.isFunctionExpression(declarations[0].initializer));
+        if(!local)dynamicFiles.add(path.resolve(node.getSourceFile().fileName));
+      }
+    }
+    ts.forEachChild(node,visit);
+  }
+  for(const file of checkerSources.get(checker)||[source])visit(file);
+  const result={written:{has:declaration=>written.has(key(declaration))},dynamicFiles};
+  bindingAudits.set(checker,result);
+  return {written:result.written,dynamic:dynamicFiles.has(path.resolve(source.fileName))};
+}
+function immutableBinding(ts,checker,expression,seen=new Set()) {
+  if(!expression||seen.has(expression)||seen.size>=16)return false;
+  seen=new Set(seen);seen.add(expression);
+  if(ts.isParenthesizedExpression(expression)||ts.isAsExpression(expression)||ts.isTypeAssertionExpression(expression)||ts.isNonNullExpression(expression)||ts.isSatisfiesExpression(expression))return immutableBinding(ts,checker,expression.expression,seen);
+  if(ts.isConditionalExpression(expression))return immutableBinding(ts,checker,expression.whenTrue,seen)&&immutableBinding(ts,checker,expression.whenFalse,seen);
+  if(ts.isArrowFunction(expression)||ts.isFunctionExpression(expression))return !bindingAudit(ts,checker,expression.getSourceFile()).dynamic;
+  if(!ts.isIdentifier(expression))return false; // Ordinary member callables are mutable, including aliases.
+  let symbol=checker.getSymbolAtLocation(expression);
+  if(symbol?.flags&ts.SymbolFlags.Alias)symbol=checker.getAliasedSymbol(symbol);
+  const declarations=symbol?.declarations||[];
+  if(!declarations.length)return false;
+  return declarations.every(declaration=>{
+    const audit=bindingAudit(ts,checker,declaration.getSourceFile());
+    if(audit.dynamic||audit.written.has(declaration))return false;
+    const name=declaration.name;
+    if(name&&(checkerBindingErrors.get(checker)||[]).some(d=>
+        path.resolve(d.file.fileName)===path.resolve(declaration.getSourceFile().fileName)&&
+        d.start<name.end&&d.start+(d.length||1)>name.getStart()))return false;
+    if(ts.isFunctionDeclaration(declaration))return !!declaration.body&&
+      ((ts.isSourceFile(declaration.parent)&&ts.isExternalModule(declaration.parent))||ts.isBlock(declaration.parent));
+    return ts.isVariableDeclaration(declaration)&&!!(declaration.parent.flags&ts.NodeFlags.Const)&&immutableBinding(ts,checker,declaration.initializer,seen);
+  });
+}
+
 function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackProof,location) {
   const unknown=reason=>({reason});
   if(!adapter?.declaration)return unknown('UNSUPPORTED_UI_ADAPTER');
   function factoryProof(at,selected) {
     if(!selected?.declaration)return false;
+    const audit=bindingAudit(ts,checker,at.getSourceFile());
+    if(audit.dynamic)return false;
     if(selected.renderer?.kind==='automatic')return true;
     const parts=selected.renderer?.factory?.split('.');
     if(!parts)return false;
@@ -81,13 +164,13 @@ function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackPro
       // A checkout object annotated/cast as typeof React has the same member
       // declaration type but is not the selected library factory value.
       const namespaces=symbol?.declarations||[];
-      if(!namespaces.length || namespaces.some(d=>!ts.isModuleDeclaration(d) || d.name.text!=='React' ||
+      if(!namespaces.length || namespaces.some(d=>audit.written.has(d)||!ts.isModuleDeclaration(d) || d.name.text!=='React' ||
           path.resolve(d.getSourceFile().fileName)!==selected.declaration))return false;
       symbol=checker.getPropertyOfType(checker.getTypeOfSymbolAtLocation(symbol,at),parts[1]);
     }
     if(symbol?.flags & ts.SymbolFlags.Alias)symbol=checker.getAliasedSymbol(symbol);
     const declarations=symbol?.declarations||[];
-    return declarations.length>0 && declarations.every(d=>ts.isFunctionDeclaration(d) && d.name?.text==='createElement' &&
+    return declarations.length>0 && declarations.every(d=>!audit.written.has(d)&&ts.isFunctionDeclaration(d) && d.name?.text==='createElement' &&
       path.resolve(d.getSourceFile().fileName)===selected.declaration);
   }
   if(!factoryProof(node,adapter))return unknown('UI_RENDERER_UNPROVEN');
@@ -111,6 +194,7 @@ function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackPro
   let attribute=officialAttribute(opening.tagName),wrapper=null;
   if(!attribute) {
     wrapper=symbolDeclaration(checker.getSymbolAtLocation(opening.tagName));
+    if(!immutableBinding(ts,checker,opening.tagName))return unknown('MUTABLE_UI_WRAPPER');
     if(!wrapper || location(wrapper).origin!=='handwritten' || !ts.isFunctionDeclaration(wrapper) || !wrapper.body || wrapper.body.statements.length!==1 ||
        wrapper.parameters.length!==1 || !ts.isIdentifier(wrapper.parameters[0].name) || wrapper.parameters[0].initializer)
       return unknown('UI_WRAPPER_UNPROVEN');
@@ -131,7 +215,7 @@ function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackPro
   }
   if(opening.attributes.properties.filter(a=>ts.isJsxAttribute(a)&&a.name.text===eventName).length!==1 || opening.attributes.properties.some(a=>ts.isJsxSpreadAttribute(a)))return unknown('UI_ATTRIBUTE_SPREAD_UNSUPPORTED');
   const expression=node.initializer&&ts.isJsxExpression(node.initializer)?node.initializer.expression:null;
-  const binding=expression?callbackProof(expression):null;
+  const binding=expression&&immutableBinding(ts,checker,expression)?callbackProof(expression):{reason:'MUTABLE_UI_HANDLER'};
   const handler=binding?.complete && binding.targets.length===1?binding.targets[0]:null;
   if(!handler || !ts.isFunctionLike(handler) || !handler.body)return unknown(binding?.reason || 'UNRESOLVED_UI_HANDLER');
   return {handler,proof:{ui_adapter:{...adapter.snapshot,attribute_declaration:location(attribute),

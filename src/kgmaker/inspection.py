@@ -21,7 +21,7 @@ from .store import save_graph
 from .worker_protocol import WorkerError, handshake, request_worker
 
 VERSION = "inspection-1"
-UI_RULE_VERSION = "react-jsx-events-2"
+UI_RULE_VERSION = "react-jsx-events-3"
 
 
 def artifact_hash(path: Path) -> str:
@@ -383,7 +383,7 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     from .typescript_snapshot import replay as replay_typescript, validate_capture
     if "input_discovery" in preflight.get("project", {}):
         validate_capture(preflight["project"])
-    if ui_framework == "react" and not isinstance(preflight.get("project", {}).get("ui_adapters"), list):
+    if ui_framework == "react" and (not isinstance(preflight.get("project", {}).get("ui_adapters"), list) or any(not isinstance(adapter, dict) or adapter.get("rule") != UI_RULE_VERSION for adapter in preflight["project"]["ui_adapters"])):
         raise WorkerError("TypeScript worker lacks versioned UI adapter snapshot; prepare the supported distribution", "INVALID_PROTOCOL")
     preflight_inputs = input_closure(preflight.get("project"))
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,

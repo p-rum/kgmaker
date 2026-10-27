@@ -55,11 +55,11 @@ def test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence(ui_pro
     for proof in evidence:
         assert proof['kind'] == 'FRAMEWORK_DERIVED'
         adapter = proof['ui_adapter']
-        assert adapter['rule'] == 'react-jsx-events-2'
+        assert adapter['rule'] == 'react-jsx-events-3'
         assert adapter['react_version'] == '18.3.1' and adapter['types_version'] == '18.3.18'
         assert adapter['declaration_sha256'] == 'b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34'
         assert proof['execution'] == 'NOT_OBSERVED'
-    assert result['context']['framework_rule_versions']['react'] == 'react-jsx-events-2'
+    assert result['context']['framework_rule_versions']['react'] == 'react-jsx-events-3'
     assert result['context']['project']['ui_adapters']
 
 
@@ -94,7 +94,7 @@ def test_unknown_bindings_never_create_framework_event(ui_project, case):
         shutil.rmtree(ui_project / 'node_modules/react')
     _, graph = inspect(ui_project)
     assert not handler_names(graph)
-    assert any(d['code'] in {'UNSUPPORTED_UI_ADAPTER','MUTABLE_CALLBACK','UNRESOLVED_UI_HANDLER','UI_ATTRIBUTE_SPREAD_UNSUPPORTED','UI_WRAPPER_UNPROVEN','UI_RENDERER_UNPROVEN'} for d in graph.diagnostics)
+    assert any(d['code'] in {'UNSUPPORTED_UI_ADAPTER','MUTABLE_UI_HANDLER','MUTABLE_CALLBACK','UNRESOLVED_UI_HANDLER','UI_ATTRIBUTE_SPREAD_UNSUPPORTED','UI_WRAPPER_UNPROVEN','UI_RENDERER_UNPROVEN'} for d in graph.diagnostics)
 
 
 def test_published_context_detects_package_change_offline(ui_project):
@@ -250,3 +250,93 @@ export function App(){return <Wrapper onChange={unrelated}/>;}
 ''')
     _,graph=inspect(ui_project)
     assert not handler_names(graph)
+
+@pytest.mark.parametrize('mutation', [
+    '(Wrapper as any)=Swallow;',
+    '({Wrapper}={Wrapper:Swallow});',
+    'for ({Wrapper} of [{Wrapper:Swallow}]) {}',
+    '[Wrapper]=[Swallow];',
+    '({value:Wrapper}={value:Swallow});',
+    '({Wrapper=Swallow}={});',
+    'for (Wrapper in {}) {}',
+    '(Wrapper as any)+=Swallow;',
+    '++(Wrapper as any);',
+    '(Wrapper as any)--;',
+    'var Wrapper=Swallow;',
+    '(eval satisfies Function)("Wrapper=Swallow");',
+    'eval("Wrapper=Swallow");',
+])
+def test_mutable_wrapper_never_borrows_original_forwarder(ui_project, mutation):
+    source = ui_project / 'src/App.tsx'
+    source.write_text('''import React from 'react';
+function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}
+function Swallow(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button/>;}
+function swallowed(){}
+''' + mutation + '\nexport function App(){return <Wrapper onClick={swallowed}/>;}')
+    _, graph = inspect(ui_project)
+    assert handler_names(graph) == set()
+
+
+@pytest.mark.parametrize('binding', [
+    'function original(){} function other(){} original=other;',
+    'function original(){} function other(){} ({original}={original:other});',
+    'class Handlers {static original(){} static other(){}} Handlers.original=Handlers.other; const original=Handlers.original;',
+    'class Handlers {static original(){}} const original=Handlers.original;',
+    'function original(){} eval("original=()=>{}");',
+])
+def test_mutable_handler_does_not_claim_original_function(ui_project, binding):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react';\n" + binding + '\nexport function App(){return <button onClick={original}/>;}')
+    _, graph = inspect(ui_project)
+    assert handler_names(graph) == set()
+
+
+def test_definite_local_eval_named_callable_does_not_block_ui(ui_project):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react';\nconst eval=()=>0; eval(); function original(){} export function App(){return <button onClick={original}/>;}")
+    _, graph = inspect(ui_project)
+    assert handler_names(graph) == {'original'}
+
+
+def test_direct_mutable_method_handler_is_not_a_closed_binding(ui_project):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; class Handlers {static original(){} static other(){}} Handlers.original=Handlers.other; export function App(){return <button onClick={Handlers.original}/>;}")
+    _, graph = inspect(ui_project)
+    assert handler_names(graph) == set()
+
+
+def test_imported_wrapper_uses_write_catalog_from_declaration_source(ui_project):
+    (ui_project / 'src/Wrapper.tsx').write_text("import React from 'react'; export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;} function Swallow(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button/>;} Wrapper=Swallow;")
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; import {Wrapper} from './Wrapper'; function swallowed(){} export function App(){return <Wrapper onClick={swallowed}/>;}")
+    _, graph = inspect(ui_project)
+    assert handler_names(graph) == set()
+
+
+def test_immutable_arrow_and_const_alias_handlers_remain_supported(ui_project):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; const original=()=>{}; const alias=original; export function App(){return <button onClick={alias}/>;}")
+    _, graph = inspect(ui_project)
+    assert len([edge for edge in graph.edges if edge.kind == 'handles_event']) == 1
+
+
+@pytest.mark.parametrize('old_rule', ['react-jsx-events-1', 'react-jsx-events-2'])
+def test_previous_rule_generation_is_stale_offline_without_store_mutation(ui_project, old_rule):
+    from unittest.mock import patch
+    from kgmaker.graph_provider import retain_compiler_layer
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    _, graph = inspect(ui_project)
+    for context in graph.contexts:
+        if context.get('ui_framework') == 'react':
+            context['framework_rule_versions']['react'] = old_rule
+    save_graph(graph, ui_project)
+    store = ui_project / '.kgmaker/graph.json'
+    previous = store.read_bytes()
+    with patch('subprocess.Popen', side_effect=AssertionError('freshness must stay offline')):
+        retained = retain_compiler_layer(ui_project, scan_repository(ui_project))
+    assert any(c.get('freshness') == 'STALE' for c in retained.contexts if c.get('ui_framework') == 'react')
+    assert store.read_bytes() == previous
+
+
+def test_explicit_factory_write_cannot_borrow_official_renderer(ui_project):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; function localFactory(...args:any[]):any{return null;} (React.createElement as any)=localFactory; function swallowed(){} export function App(){return <button onClick={swallowed}/>;}")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+    assert any(d.get('code') == 'UI_RENDERER_UNPROVEN' for d in graph.diagnostics)
