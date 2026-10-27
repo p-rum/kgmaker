@@ -284,7 +284,9 @@ class KotlinFrontend(private val state: State) {
             if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
                 resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
                 val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
-                val actualType=expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                // A member extension has two receivers: the dot expression is not virtual dispatch.
+                val actualType=if(descriptor?.extensionReceiverParameter!=null) resolved.dispatchReceiver!!.type
+                    else expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
                 if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
                     val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
                     state.sites.last()["dispatch_completeness_reason"]=boundary

@@ -143,3 +143,18 @@ Zdrojové/source review a jeden fresh frozen strict full následují až po gree
 focus; zatím nejsou PASS. Logy a receipts: `/workspace/coroutine-main-integration/`.
 Současné remote CI je externě billing BLOCKED, bez retry/bypass; lokální autorizovaná
 integrace pokračuje a implementační agent nepushuje ani neself-schvaluje source.
+
+
+Nezávislé review před prvním novým buildem našlo P1 v převzatém dispatch bloku:
+member-extension `value.ext()` nesmí použít typ dot value jako dispatch receiver.
+Skutečný parent K1 donor e44e3dac pro Base.use(Derived) tvrdil jen Derived.ext,
+ačkoli compiler dispatch receiver je this:Base. Nově povolený K2 suspend ABI
+mohl otevřít tentýž chybný průchod. Původní vlastní build/focus queue byl před
+editací zastaven; neměl child a žádný build/test nezačal (status JSON zachován).
+
+K1 nyní pro member-extension bere compiler resolved dispatchReceiver.type; K2
+partiallyApplied dispatchReceiver.type, bez dot fallbacku při neprokázaném typu.
+Ordinary call dot narrowing se nemění. Čtyři actual regresní varianty K1/K2 ×
+ordinary/suspend kontrolují Base dispatch proti Derived extension receiveru,
+zachované ordinary Derived narrowing a nepovýšenou K2 neznámou source hierarchy.
+Guardy coroutine mappingu se nemění. Nové fresh buildy/focus jsou stále PENDING.

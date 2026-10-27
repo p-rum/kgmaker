@@ -194,7 +194,10 @@ class KotlinFrontend(private val state: State) {
                                         val declaration = declarations.singleOrNull { it.parameterList.parametersCount == dispatchParameters &&
                                             (!suspendDispatch || it.parameterList.parameters.lastOrNull()?.type?.let(::descriptor) == "Lkotlin/coroutines/Continuation;") }
                                         val receiverExpression = (expression.parent as? KtQualifiedExpression)?.receiverExpression
-                                        val actualReceiver = receiverExpression?.expressionType ?: call?.partiallyAppliedSymbol?.dispatchReceiver?.type
+                                        // Member-extension dot syntax supplies the extension receiver, not this/dispatch.
+                                        val actualReceiver = if (targetSymbol?.receiverParameter != null)
+                                            call?.partiallyAppliedSymbol?.dispatchReceiver?.type
+                                        else receiverExpression?.expressionType ?: call?.partiallyAppliedSymbol?.dispatchReceiver?.type
                                         val receiverType = actualReceiver as? org.jetbrains.kotlin.analysis.api.types.KaClassType
                                         if (target != null && declaration != null && receiverType != null &&
                                             !declaration.hasModifierProperty(PsiModifier.STATIC) && !declaration.hasModifierProperty(PsiModifier.PRIVATE) &&
