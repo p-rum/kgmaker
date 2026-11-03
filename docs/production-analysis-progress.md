@@ -681,9 +681,19 @@ strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integra
 236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
 PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
 
-HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change63](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
+## T003-S06-W04 — explicit persistence realms LOCAL_VERIFIED_IN_SCOPE
 
-S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+Explicit workspace replay reuses current compiler facts before qualification.
+Structured DB/stream pair plus schema/target and PU/context provenance prevents
+cross-realm name fallback; same stream across different databases works and exact
+duplicate pair is rejected. New unqualified source-only physical mappings remain
+UNKNOWN. Actual K1/K2 cases cover shared SQL paths, same entities across contexts,
+quoted-dot collisions, strict malformed boundaries and two-PU physical joins.
+One strict repository full passed **1348/10** with unchanged HEAD and623 inputs;
+actual/source closure and all evidence are in changes/74_isolatePersistenceRealms.md.
+Final remote review/merge is pending; this is not completion of T003/S06 or T004.
+Physical replay support is non-renamed tables/columns; creation-stable renamed IDs
+remain UNKNOWN pending S06-W08's explicit creation-identity lifecycle proof.
 
 ## T025 — local technical process path, explicit T024 stack
 

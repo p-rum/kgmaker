@@ -73,7 +73,8 @@ def _selection_key(context: dict) -> str:
         # legacy contexts remain readable with HTTP coverage UNKNOWN.
         payload["framework_rule_versions"] = {key: value for key, value in payload["framework_rule_versions"].items() if key != "http"}
     if context.get("language") == "jvm":
-        payload.update(kotlin_backend=context.get("kotlin_backend"),
+        payload.update(persistence_schema=context.get("persistence_schema"), flyway_target=context.get("flyway_target"),
+                       kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
     if isinstance(recorded, str):
         # K2 briefly added two irrelevant None fields to frontend selectors.
@@ -115,6 +116,19 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             valid_conditions = False
         if not valid_conditions:
             raise WorkerError("STALE_INDEX: Spring condition configuration changed; inspect again", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "jpa" in rules:
+        from .framework import JPA_RULE_VERSION
+        from .schema_replay import persistence_selection
+        from .analysis_model import digest
+        if rules['jpa'] != JPA_RULE_VERSION:
+            raise WorkerError('STALE_INDEX: persistence realm rules changed; inspect again', 'STALE')
+        try:
+            valid_realm = context.get('persistence_selection_hash') == digest(persistence_selection(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_realm = False
+        if not valid_realm:
+            raise WorkerError('STALE_INDEX: persistence selection changed; inspect again', 'STALE')
+
     if context.get("language") == "jvm" and isinstance(rules, dict) and "http" in rules:
         from .http_execution import VERSION as HTTP_VERSION
         from .analysis_model import digest
