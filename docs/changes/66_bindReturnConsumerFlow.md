@@ -280,3 +280,22 @@ facts, factory facts i return receiver parameter ID. Nové oba native buildy a
 společný Registrar/Factory/Conditions/Imports/Return/Arg/HTTP/protocol focus
 teprve následují; další full zatím není autorizován. Workflow feedback legálně
 přešel na implement iteration2/3, bez změny limitů.
+
+Full na aktuálním parentu `630538de` skončil **1260 PASS,9 SKIP,1 FAIL
+za1151.79s**.601source/30JAR/1493tool-fixture vstupů zůstalo shodných.
+Selhal historický T024 předpoklad, že K1 expression-body return nemá source
+locator. Zachovaný skutečný CFG ukazuje úplný SOURCE return blok nad přesným
+`"static"` výrazem, line7, source SHA a compiler range; W02 producent nyní
+přenáší `loc(it)` i na tento return. Historický raw worker response uložen nebyl,
+což se nezaměňuje za existující CFG důkaz. Test-only oprava zachytí raw response
+uvnitř stejných existujících inspekcí, ověří K1 body/context/scope/source/range
+plus joined CFG proof tuple, a očekává HTTP body AVAILABLE pouze jako
+SYNTAX_CANDIDATE. K2 zůstává bez Kotlin SOURCE body a bez triggerů. Všechny
+původní tamper/scope/store kontroly zůstávají. Runtime/native se nemění.
+
+Root schválil tento přesný test-only diff. Retry budget původního corrective
+tasku zůstává vyčerpaný/BLOCKED; samostatný explicitní scoped task
+`574934f1…` navazuje bez změny limitů. Nový coalesced focus teprve následuje,
+další full není tvrzen PASS. Původní log/XML/manifests a malý failed T024
+specimen jsou zachované; pouze dokončené disposable pytest projekty byly
+s auditem odstraněny a uvolnily přibližně1.5GiB.
