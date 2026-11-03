@@ -798,6 +798,9 @@ def project_http_consumers(workspace, graph, *, scope='production', selected_con
     ViewDocument.from_dict(document.to_dict())
     if before != (workspace,graph.to_dict(),source_coverage):
         _fail('HTTP_INPUT_MUTATED','Consumer projection changed a caller snapshot')
+    return document
+
+
 def project_kafka_interfaces(workspace, graph, *, scope='production', selected_contexts=None, source_coverage=None):
     """Read-only catalogue of upstream declarations, never transport execution.
 
