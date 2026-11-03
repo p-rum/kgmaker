@@ -610,3 +610,13 @@ semantic labels remain separate from technical evidence and status. See
 [the explicit fixture](fixtures/process-model/checkout.json).
 This supplies T023's model only; process discovery, annotation review, process
 CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
+
+Spring condition rules v6 preserve typed compiler annotation members. Supported
+profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
+support aliases, prefix, all names, `havingValue` and boolean `matchIfMissing`.
+Class conditions compare all exact identities against an explicit context
+inventory. Missing/malformed/unresolved inputs remain UNKNOWN; custom conditions
+are never executed. Profile results also govern injection, so `!dev` is not
+incorrectly filtered as a literal profile name. See
+[the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
+for the bounded contract and explicit Python API example.

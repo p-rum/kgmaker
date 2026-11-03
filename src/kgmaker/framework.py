@@ -20,9 +20,10 @@ from typing import Any
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
+from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v5"
+SPRING_RULE_VERSION = "annotation-source-v6"
 JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v2"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
@@ -551,7 +552,8 @@ def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]
                 args = str(raw_values)
             if unresolved:
                 args = "__UNRESOLVED__"
-            values.append((item["name"], args))
+            values.append((item["name"], AnnotationArguments(args, raw_values,
+                           item.get("values_resolved", True) is True)))
     if "annotations" not in symbol and symbol.get("path") and symbol.get("range", {}).get("start_line"):
         values = _annotation_values(source, int(symbol["range"]["start_line"]))
     return values
@@ -722,7 +724,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             elif simple == "Primary":
                 primary = True
             elif simple == "Profile" and value:
-                profiles.append(value)
+                raw = args.members.get("value") if isinstance(args, AnnotationArguments) and isinstance(args.members, dict) else None
+                profiles.extend(raw if isinstance(raw, list) and all(isinstance(x, str) for x in raw) else [value])
         return qualifiers, primary, profiles
 
     def expanded_annotations(values: list[tuple[str, str]], imports: set[str]) -> list[tuple[str, str]]:
@@ -767,44 +770,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             "INACTIVE", [f"package {package} is outside component scan"])
 
     def condition_state(values: list[tuple[str, str]], path: str, line: int | None) -> tuple[str, list[str]]:
-        states: list[str] = []
-        reasons: list[str] = []
-        active_profiles = context.get("spring_profiles")
-        properties = context.get("spring_properties")
-        available_classes = context.get("spring_available_classes")
+        imports = _imports(source_text.get(path, ""))
+        canonical = []
         for name, args in values:
-            simple = _simple(name)
-            if simple == "Profile" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.",)):
-                profile = _string_arg(args, ("value", "name"))
-                if not isinstance(active_profiles, list):
-                    states.append("UNKNOWN");reasons.append("active Spring profiles were not supplied")
-                elif profile and profile not in active_profiles:
-                    states.append("INACTIVE");reasons.append(f"profile {profile} is inactive")
-                else:
-                    states.append("ACTIVE")
-            elif simple == "ConditionalOnProperty" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.boot.autoconfigure.condition.",)):
-                key = _string_arg(args, ("name", "value"))
-                expected = _named_string_arg(args, "havingValue")
-                missing = (_named_string_arg(args, "matchIfMissing") or "false").casefold() == "true"
-                if not isinstance(properties, dict) or not key:
-                    states.append("UNKNOWN");reasons.append("condition properties or property name are unavailable")
-                elif key not in properties:
-                    states.append("ACTIVE" if missing else "INACTIVE");reasons.append(f"property {key} is missing")
-                else:
-                    actual = str(properties[key])
-                    matches = actual.casefold() != "false" if expected in (None, "") else actual == expected
-                    states.append("ACTIVE" if matches else "INACTIVE");reasons.append(f"property {key}={actual}")
-            elif simple == "ConditionalOnClass" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.boot.autoconfigure.condition.",)):
-                required = _string_arg(args, ("value", "name"))
-                if not isinstance(available_classes, list) or not required:
-                    states.append("UNKNOWN");reasons.append("condition classpath or required class is unavailable")
-                else:
-                    present = required in available_classes
-                    states.append("ACTIVE" if present else "INACTIVE");reasons.append(f"class {required} is {'present' if present else 'absent'}")
-            elif simple == "Conditional" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.context.annotation.",)):
-                states.append("UNKNOWN");reasons.append("custom Spring Condition is not executed")
-        status = "INACTIVE" if "INACTIVE" in states else "UNKNOWN" if "UNKNOWN" in states else "ACTIVE"
-        return status, reasons
+            if "." not in name:
+                # Legacy source-only annotation spellings cannot supply typed
+                # condition proof; recognize imports only to retain UNKNOWN.
+                candidates = [package + name for package in (
+                    "org.springframework.context.annotation.",
+                    "org.springframework.boot.autoconfigure.condition.")
+                    if package + name in imports or package + "*" in imports]
+                if len(candidates) == 1:
+                    name = candidates[0]
+            canonical.append((name, args))
+        return evaluate_conditions(canonical, context)
 
     def class_for(item: dict[str, Any]) -> dict[str, Any] | None:
         path = item.get("path")
@@ -1364,13 +1343,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             candidates = [bean for bean in candidates if bean.get("condition_status", "ACTIVE") != "INACTIVE"]
             if qualifier:
                 candidates = [bean for bean in candidates if qualifier in {bean["name"], *bean.get("qualifiers", [])}]
-            active_profiles = context.get("spring_profiles")
-            if isinstance(active_profiles, list):
-                candidates = [bean for bean in candidates if not bean.get("profiles") or
-                              set(bean["profiles"]) & set(active_profiles)]
-            elif any(bean.get("profiles") for bean in candidates):
-                diagnostics.append({"code": "SPRING_PROFILE_UNRESOLVED", "path": path, "source_line": line,
-                                    "type": type_name, "reason": "Active Spring profiles were not supplied; profile-specific candidates remain unresolved."})
+            # Profile expressions were already evaluated in condition_status;
+            # a second literal-name filter would discard proven !dev/OR matches.
             if len(candidates) > 1 and injection_kind in {"single", "optional"}:
                 primaries = [bean for bean in candidates if bean.get("primary")]
                 if len(primaries) == 1:

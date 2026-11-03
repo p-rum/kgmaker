@@ -186,3 +186,13 @@ spuštění skutečných AST helper bodies nad třemi případy (starý position
 Factory keyword a společná evidence) prošlo a prokázalo zachování obou proofs.
 Root source closure a následný combined actual focus jsou ještě samostatné
 kontroly; předchozí36/56 výsledky platí pro469 a nejsou vydávány za c76 PASS.
+
+
+Current8b kombinace prošla: **102 PASS, 0 SKIP v191.71s**,
+`/workspace/w03-main8b-focus.xml`. Jediný serialized batch zahrnul celé XML,
+Factory registrations, typed conditions/cache freshness a relevantní actual
+K2/Javac JPA owner/access/inheritance + dispatch. Manifest všech tracked runtime,
+testů, fixtures, worker inputů a obou JARů zůstal před/po přesně stejný;
+`/workspace/w03-main8b-focus-status.json` máexit0,unchanged=true,mismatches=[].
+Pure provider/TSfreshness/T010/workspace/T015 integrace: **134 PASS,
+2 actual T015 deselected v148.02s**, `/workspace/w03-main8b-pure.xml`.

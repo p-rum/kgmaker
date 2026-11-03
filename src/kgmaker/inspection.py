@@ -248,6 +248,9 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     # and selection identity, including its pre-existing React overwrite behavior.
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
                                         "jpa": JPA_RULE_VERSION if language == "jvm" else "annotation-source-v4"}
+    if language == "jvm":
+        from .spring_conditions import condition_inputs
+        value["spring_condition_inputs_hash"] = digest(condition_inputs(value))
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
