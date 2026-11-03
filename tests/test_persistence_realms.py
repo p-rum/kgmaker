@@ -226,7 +226,7 @@ def test_actual_resource_access_tracks_selected_realm_and_target(actual_realm_wo
         before = deepcopy(graph.to_dict())
         with patch('subprocess.Popen', side_effect=AssertionError('projection must remain offline')):
             view = project_data_resources(load_workspace(manifest), graph, source_coverage=snapshot[1],
-                selected_contexts={('app', 'app', 'main'): context['id']})
+                selected_contexts={('orders', 'app', 'app'): context['id']})
         reads = [e for e in view.edges if e.relation == 'reads']
         assert reads
         targets = {n.id: n for n in view.nodes}

@@ -120,3 +120,11 @@ kontroluje XML provenance, foreign-context attributes a chybějící PU nad
 skutečnými compiler facts i replay schemas bez mutace posledního validního store.
 Tento centrální 2PU physical join zatím není PASS; následuje source-delta review
 a jeden společný focused batch. Full zůstává nequeued.
+
+
+První grouped actual běh skončil **8 PASS, 1 FAIL v9.65s**, exit1,
+unchanged=true; `/workspace/s06-w04-selector-red-*` zachovává receipt. Testový
+T015 selector omylem použil(repo,module,source_set), místo veřejného kontraktu
+(service_id,repo_id,module). Opraven pouze tuple('orders','app','app'); replay
+týchž skutečných K1 facts s opraveným T015 testem prošel bez worker spuštění.
+Runtime se nemění, grouped compiler matrix se zopakuje s tímto testovým fixem.
