@@ -115,7 +115,16 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if context.get("selection_key") and context["selection_key"] != _selection_key(
                 {key: value for key, value in context.items() if key != "selection_key"}):
             raise WorkerError("STALE_INDEX: Kotlin compiler context configuration changed", "STALE")
-    for item in (context.get("project") or {}).get("input_files", []) + context.get("worker", {}).get("distribution", []):
+    scoped_typescript = context.get("source_snapshot_version") == "typescript-input-discovery-1"
+    if scoped_typescript:
+        if context.get("language") != "typescript":
+            raise WorkerError("STALE_INDEX: TypeScript snapshot on a non-TypeScript context", "STALE")
+        from .typescript_snapshot import replay
+        replay(root, context.get("project"))
+    elif str(context.get("source_snapshot_version", "")).startswith("typescript-"):
+        raise WorkerError("STALE_INDEX: unsupported TypeScript snapshot version", "STALE")
+    project_inputs = [] if scoped_typescript else (context.get("project") or {}).get("input_files", [])
+    for item in project_inputs + context.get("worker", {}).get("distribution", []):
         if not Path(item["path"]).is_file() or file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("STALE_INDEX: project input or worker distribution changed", "STALE")
     if context.get("classification_override_hash"):
@@ -123,7 +132,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         from .analysis_model import digest
         if digest(Classifier(root).config) != context["classification_override_hash"]:
             raise WorkerError("STALE_INDEX: classifier override changed", "STALE")
-    if context.get("analyzer_version"):
+    if context.get("analyzer_version") and not scoped_typescript:
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
         from .inspection import source_snapshot

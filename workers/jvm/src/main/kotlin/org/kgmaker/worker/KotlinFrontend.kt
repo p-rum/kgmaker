@@ -88,7 +88,11 @@ class KotlinFrontend(private val state: State) {
         val meta=State.map("jvm_static",staticAbi(descriptor),"annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
             "parameter_names",descriptor.valueParameters.map { it.name.asString() },"return_type",descriptor.returnType?.toString(),
             "extension_receiver_type",descriptor.extensionReceiverParameter?.type?.toString(),"suspend",descriptor.isSuspend,"inline",descriptor.isInline,
-            "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString())
+            "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString(),
+            "modifiers",listOfNotNull(descriptor.visibility.toString(),
+                if(descriptor.modality==Modality.FINAL)"final" else null,
+                if(descriptor.modality==Modality.ABSTRACT)"abstract" else null,
+                if(descriptor.dispatchReceiverParameter==null && descriptor !is ConstructorDescriptor)"static" else null))
         return state.method(owner(descriptor),name,signature.descriptor,element?.let(::loc),meta)
     }
     private fun property(descriptor: PropertyDescriptor, element: PsiElement?=null): String {
@@ -154,7 +158,11 @@ class KotlinFrontend(private val state: State) {
             if(descriptor!=null) {
                 val name=mapper.mapClass(descriptor).internalName.replace('/','.')
                 state.type(name,loc(declaration),State.map("annotations",annotations(descriptor),"kind",descriptor.kind.toString().lowercase(),
-                    "supertypes",descriptor.typeConstructor.supertypes.map { it.toString() }))
+                    "supertypes",descriptor.typeConstructor.supertypes.map { it.toString() },
+                    "jvm_superclass",descriptor.typeConstructor.supertypes.firstOrNull { (it.constructor.declarationDescriptor as? ClassDescriptor)?.kind != ClassKind.INTERFACE }?.let { mapper.mapType(it).internalName },
+                    "jvm_interfaces",descriptor.typeConstructor.supertypes.filter { (it.constructor.declarationDescriptor as? ClassDescriptor)?.kind == ClassKind.INTERFACE }.map { mapper.mapType(it).internalName },
+                    "modifiers",listOfNotNull(descriptor.visibility.toString(),if(descriptor.modality==Modality.FINAL)"final" else null,
+                        if(descriptor.modality==Modality.ABSTRACT)"abstract" else null)))
                 descriptor.unsubstitutedPrimaryConstructor?.let {constructor->
                     val old=caller
                     try {
@@ -261,6 +269,20 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
+            if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
+                resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
+                val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
+                val actualType=expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
+                    val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+                    state.sites.last()["dispatch_completeness_reason"]=boundary
+                    state.diagnostic(boundary,"Full generic/intersection receiver constraints are not represented; declared target retained without candidates",loc(expression))
+                } else {
+                    val type=mapper.mapType(actualType)
+                    if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
+                        "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
+                }
+            }
             if(target==null)state.diagnostic("KOTLIN_UNRESOLVED_CALL",reason,loc(expression))
             super.visitCallExpression(expression)
         }

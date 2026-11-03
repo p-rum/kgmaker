@@ -8,6 +8,34 @@
 | T003-S06-W01-AC02 | VERIFIED_IN_SCOPE | Additive annotation metadata reuses graph schema v3, existing `orm_attribute`/`orm_embeddable` IDs and JPA rules `annotation-source-v4`; existing Java JPA fixture remains unchanged |
 | T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; unresolved explicit `@Table`/`@Column` does not emit physical defaults even with matching schema; unresolved `@Access` and unproven/mixed embeddable inheritance remain UNKNOWN; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
 | T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
+## T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | LOCAL_VERIFIED_IN_SCOPE | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | LOCAL_VERIFIED_IN_SCOPE | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | LOCAL_VERIFIED_IN_SCOPE | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) uvádějí actual15PASS/full582PASS10SKIP, overload navigation PARTIAL a pending CI billing |
+
+
+## T003-S06-W02 — zděděné persistence atributy
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W02-AC01 | VERIFIED_IN_SCOPE | K2 and Javac fixtures prove chain ownership, FIELD/PROPERTY IDs, overrides, and inheritance table selection; `CompilerWorkerTests.test_repository_generic_uses_exact_entity_owner_for_same_simple_names` proves derived and explicit JPQL entity/return bindings retain exact owners and do not guess missing or generic return types |
+| T003-S06-W02-AC02 | VERIFIED_IN_SCOPE | Additive `orm_attribute` metadata and `inherits_attribute` reuse graph schema v3; `test_existing_graph_loader_is_unchanged` accepts store schemas v1/v2/v3; no migration is needed |
+| T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves foreign derived predicates, ambiguous JPQL, missing indexed qualified returns, and generic `T` returns unresolved, while descriptor-proven return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
+| T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
+
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
+
 
 ## T003-S08-W01 — project references
 
@@ -28,8 +56,8 @@ Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cann
 odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
 `test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
 ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
-K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
-zůstávají samostatné, nedokončené úkoly.
+K2-era TS digest. W02 config-scoped freshness má samostatný stav výše; W03
+callback/generic rozsah zůstává samostatný nedokončený úkol.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
@@ -94,6 +122,17 @@ test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly sk
 | T008-AC04 invalid snapshot leaves inputs and checkout unchanged | PASS | `test_ac04_invalid_snapshot_fails_without_mutating_workspace_or_graph` | compares manifest, source file, workspace and graph bytes/state |
 | T008-AC05 scope, selected context, evidence and unresolved boundaries are preserved | PASS | `test_ac05_context_and_provenance_are_preserved_and_not_upgraded`; `test_source_only_context_remains_partial_and_reports_unknown_module_coverage`; `test_actual_workspace_source_only_snapshot_projects_declared_root_without_module`; `test_actual_source_only_snapshot_separates_production_and_test_within_repo`; `test_ambiguous_compiler_variants_remain_unknown_until_explicitly_selected`; `test_workspace_alias_requalifies_default_local_compiler_context` | actual snapshot root ownership and same-repository scope separation, T006 selection, SOURCE_ONLY partial status and repo alias behavior retained |
 | T008-AC06 implementation, tests, documentation and Czech change note | PASS | README, architecture, this inventory and `docs/changes/41_projectServiceInventory.md` | focused and integrated results are recorded in the change note |
+
+## T009 — propagace evidence a coverage
+
+| Acceptance | Stav | Přímý test / kontrakt |
+|---|---|---|
+| T009-AC01 evidence kind is not upgraded; legacy defaults remain unresolved/unknown | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac01_syntax_candidate_stays_syntax_candidate_and_legacy_defaults_do_not_upgrade`; `tests/test_t005_add_view_model.py::test_t009_additive_fields_validate_against_public_view_schema` |
+| T009-AC02 mixed support, contradiction and unknown refs remain visible; incomplete work stays PARTIAL | PASS | `test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics`; `test_explicit_unknown_polarity_cannot_be_relabelled_by_view_or_aggregation` |
+| T009-AC03 empty unanalysed input is UNKNOWN with zero counts | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac03_empty_unanalyzed_input_is_unknown_with_zero_counts` |
+| T009-AC04 invalid inputs leave caller data unchanged | PASS | `test_ac04_invalid_claim_does_not_mutate_inputs`; `test_ac04_malformed_scope_inputs_return_structured_errors_without_mutation` |
+| T009-AC05 selected scope/context remains isolated and unsupported polarity UNKNOWN | PASS | `test_ac05_scope_context_exclusions_and_invalid_polarity_stay_unknown`; T008 production/test workspace regressions |
+| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full466 PASS/109 prerequisite SKIP after all independent review guards; earlier455/109 is intermediate |
 
 ## T006 — výběr kontextů pro více služeb
 
@@ -243,7 +282,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-MV-02 | VERIFIED_IN_SCOPE | `test_build_runner.py::test_mv02_real_reactor_output_precedes_stale_repository_jar` — skutečný Maven/JDK/exporter | Širší packaging/variant/toolchain matrix patří do S03/S11 |
 | T002-MV-01 / T003-S03-W01 / T003-S03-W04 | VERIFIED_IN_SCOPE | Testy explicitního Java home ověřují content-bound JDK selection/fingerprint, skutečné `JAVA_HOME`, změnu/chybění a mismatch bez fresh outputs. `test_kotlin_build_options.py` ověřuje reálný Maven 2.1.10 a Gradle 8.13 export task/execution-level Kotlin language/API/JVM targetu a flags; implicitní nevyřešené defaults dávají PARTIAL, skutečný Maven `all-open` plugin je SHA-256-bound a jeho výměna se odmítá před store zápisem. Změna flagu mění pouze dotčenou context identity; malformed options jsou odmítnuty bez implicitního procesu. Reactor fixture dále ověřuje `maven-session-2`, inherited profil, parent/BOM, dependency model a generated source až po JVM symbol `origin=generated` | Gradle custom varianty/included builds a cross-repo artefakty zůstávají v T003-S03; zachycené options nerozšiřují K1 podporu |
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
-| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v4`; bounded selector testy níže | Selectors mimo bounded literal subset, registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
+| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v5`; bounded selector/registration testy níže | Selectors mimo bounded literal subset, registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
@@ -339,6 +378,14 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+| Acceptance | Evidence within scope | Test/fixture |
+|---|---|---|
+| AC01 | Declared API target separate from realm-specific candidate implementations; missing hierarchy explains incomplete result | `test_source_interface_call_finds_two_dependency_implementation_realms`, `test_missing_parent_excludes_unprovable_implementation`, actual JDK21 JARs |
+| AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
+| AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
+| AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
 `xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
@@ -400,6 +447,55 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+
+## T003-S05-W02 — registrars a FactoryBean produkty
+
+Podporovaný Java/compiler subset, Spring6.2.2, rules `annotation-source-v5`.
+Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`;
+[change note47](changes/47_declareSpringRegistrations.md).
+
+| ID | Stav | Konkrétní evidence a hranice |
+|---|---|---|
+| T003-S05-W02-AC01 | VERIFIED_IN_SCOPE | `test_literal_registrar_preserves_origin_and_import_condition`, `test_factory_object_and_literal_product_are_distinct`: actual registry/FactoryBean APIs, inherited owner/generic, literal source facts, import conditions, distinct &object/product; custom body/overload/condition a abstract factory UNKNOWN |
+| T003-S05-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_registration_facts_remain_readable_without_promotion`: graph/store v1/v2/v3 a additive protocol1; TS ordinary/React context snapshots zůstávají současnému main stejné |
+| T003-S05-W02-AC03 | VERIFIED_IN_SCOPE | namespace/decoy receiver a129-call budget, `test_registration_profiles_do_not_cross_context`, malformed schema/owner/context/return, strict/timeout nulová store mutace a offline refresh; `test_registrar_and_factory_static_beans_are_not_data_availability` zachovává UNKNOWN/bez business missing verdictu |
+| T003-S05-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability, tato matice, production progress a note47 vymezují bounded literal scope a actual toolchain evidence; celý S05/AC05 zůstává PARTIAL |
+## T015 — database resource projection
+
+| Acceptance | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_two_actual_datasources_keep_distinct_resources_and_table_drilldown`, `test_identity_ignores_table_details_and_input_order` | Actual workspace/Flyway replay; two explicit realms, stable IDs and deterministic serialization |
+| AC02 | `test_only_existing_context_bound_read_write_is_projected`, `test_entity_mapping_is_only_a_dependency_not_read_or_write`, `test_plain_connection_configuration_never_creates_database_access` | Existing source/context/evidence-bound facts only; no query inference |
+| AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
+| AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
+| AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
+
+## T023 — explicit process model
+
+| Acceptance | Stav | Konkrétní důkaz | Hranice |
+|---|---|---|---|
+| T023-AC01 | VERIFIED_IN_SCOPE | `test_ac01_diamond_loop_exception_and_async_roundtrip_preserve_exact_ids`, `test_documented_fixture_loads_on_public_api_with_loop_and_no_guessed_branch_join` | Explicitní JSON struktura, nikoli discovery/observed execution |
+| T023-AC02 | VERIFIED_IN_SCOPE | `test_ac02_approved_czech_label_never_changes_technical_truth` | Review stav je dodané metadata, ne nové approval rozhodnutí |
+| T023-AC03 | VERIFIED_IN_SCOPE | `test_ac03_annotation_technical_injection_is_rejected` | Pouze allowlisted semantic overlay |
+| T023-AC04 | VERIFIED_IN_SCOPE | invalidní revision/target/evidence input před/po; `test_pure_parse_and_serialization_perform_no_file_network_or_process_io` | Žádný model apply/store API |
+| T023-AC05 | VERIFIED_IN_SCOPE | missing/stale/foreign/unused proof, truncation a kind/status negatives v `test_t023_define_business_process_model.py` | PARTIAL/UNKNOWN a no evidence upgrade |
+| T023-AC06 | VERIFIED_IN_SCOPE | [note70](changes/70_defineBusinessProcessModel.md), [capability](process-model.md), schema/fixture; focused130 PASS; frozen full729 PASS/10 SKIP,515 hashes beze změny | Lokální model proof; publikace, exact-pair review a fresh CI jsou samostatné release gates |
+
+## T010 — HTTP provider inventory (bounded PARTIAL)
+
+| AC | Local evidence | Boundary |
+|---|---|---|
+| T010-AC01 | `test_two_services_in_same_repository_do_not_share_global_endpoint_identity` and two-repository `/orders` test | explicit service ownership; no inferred service realm |
+| T010-AC02 | `test_contract_revisions_stay_separate_without_automatic_handler_binding` and contract-only test | contracts never prove handler, deployment or runtime |
+| T010-AC03 | `test_actual_spring_class_method_mirrors_preserve_handlers_and_route_case` actual JDK21/K1/Spring6.2.2; dynamic-prefix test | exact annotation mirrors; unresolved/custom/inherited mappings remain UNKNOWN |
+| T010-AC04 | malformed metadata/hash/edge tests and no-process/network/file/store mutation checks | pure projection only; source/declaration mismatches fail closed |
+| T010-AC05 | explicit test scope, foreign context, missing ownership, legacy metadata and runtime-label/unbound-edge negatives | source evidence stays candidate; imported runtime binding unsupported UNKNOWN |
+| T010-AC06 | README, architecture guide, status matrix and [change67](changes/67_catalogHttpProviders.md) |145 focused +strict596 PASS/10optional SKIP; main integration199 PASS; exact review/remote CI pending (billing blocked) |
+
+Actual compiler is a static compiler fixture, not a real application runtime test.
+Runtime acceptance NOT_RUN; no data availability or overall T004 completion claim.
 
 ## T003-S05-W03 — condition matrix
 

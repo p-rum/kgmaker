@@ -18,6 +18,7 @@ from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
+from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v6"
 
@@ -278,19 +279,23 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         if item.get("kind") == "annotation_type" and isinstance(item.get("owner"), str)}
 
     def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str,
-                     compiler_fact: dict | None = None) -> str:
+                     compiler_fact: dict | None = None, supporting_facts: list | None = None) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
         if compiler_fact is not None:
             record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
+        if supporting_facts:
+            record["compiler_sources"] = [{"symbol_id": fact["id"], "sha256": fact.get("sha256"),
+                "path": fact.get("path"), "context_id": fact.get("context_id")} for fact in supporting_facts]
         identity = "evidence:" + digest(record)
         evidence.setdefault(identity, {"id": identity, **record})
         return identity
 
     def add_edge(source: str, target: str, kind: str, path: str, line: int | None, detail: str,
-                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None) -> None:
+                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None,
+                 supporting_facts: list | None = None) -> None:
         if source not in nodes or target not in nodes:
             return
         key = (source, target, kind)
@@ -300,13 +305,17 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             old = edges[key]
             if old.evidence_kind == evidence_kind or evidence_kind != "FRAMEWORK_DERIVED":
                 return
-        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact)
+        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact, supporting_facts)
         edges[key] = Edge(source, target, kind, detail, evidence_kind=evidence_kind,
                           context_ids=(context_id,), evidence_ids=(proof,), source_file=path, source_line=line)
 
     def add_node(kind: str, name: str, path: str, line: int | None, source: Node | None = None,
+                 declaration_identity: str | None = None,
                  **metadata: Any) -> str:
-        identity = _node_id(kind, {"context": context_id, "path": path, "line": line, "name": name})
+        identity_fields = {"context": context_id, "path": path, "line": line, "name": name}
+        if declaration_identity is not None:
+            identity_fields["declaration_identity"] = declaration_identity
+        identity = _node_id(kind, identity_fields)
         if identity not in nodes:
             nodes[identity] = Node(identity, kind, name, path, line=line,
                                     signature=metadata.pop("signature", None),
@@ -432,6 +441,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     reported_missing: set[tuple[str, str]] = set()
     reported_dynamic: set[str] = set()
     selector_cache: dict[str, dict | None] = {}
+    registrar_candidates: dict[tuple[str, str], tuple[dict, str]] = {}
 
     def processor(exact: str) -> dict | None:
         if exact not in selector_cache:
@@ -483,6 +493,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         continue
                     dynamic_imports.add(exact)
                     info = {**info, "reasons": list(info["reasons"])}
+                    if info["kind"] == "REGISTRAR":
+                        declaration = target["symbol"]
+                        registrar = add_node("spring_registrar", exact, declaration["path"],
+                            (declaration.get("range") or {}).get("start_line"), symbol_node(declaration),
+                            registration_status=info["status"], reasons=info["reasons"], execution="NOT_EXECUTED")
+                        registrar_candidates[(owner, exact)] = (info, registrar)
+                        add_edge(importer["id"], registrar, "uses_bean_registrar", importer["path"],
+                                 (importer.get("range") or {}).get("start_line"), "Compiler-qualified @Import registrar")
+                        if info["status"] == "UNKNOWN" and exact not in reported_dynamic:
+                            reported_dynamic.add(exact)
+                            diagnostics.append({"code": "SPRING_REGISTRAR_BOUNDARY", "path": declaration["path"],
+                                "type": exact, "reasons": info["reasons"], "reason": "Custom registrar body is not executed."})
+                        continue
                     selected = []
                     for name in info["targets"]:
                         if name not in type_records:
@@ -667,29 +690,161 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     advice = add_node("spring_advice", f"{name}:{node.name}", path, line, node, advice=name)
                     add_edge(node.id, advice, "advised_by", path, line, f"@{name} advice declaration")
 
+    # Registrar declarations inherit the importing configuration's condition;
+    # RootBeanDefinition does not evaluate the target class's @Profile itself.
+    def registration_types(declared_type):
+        if not declared_type:
+            return []
+        hierarchy = (type_records.get(declared_type, {}).get("symbol", {}).get("type_hierarchy") or {})
+        names = hierarchy.get("types", []) if hierarchy.get("complete") is True else []
+        return list(dict.fromkeys([declared_type.rsplit(".", 1)[-1], *[name.rsplit(".", 1)[-1] for name in names]]))
+
+    declarations = {}
+    for (owner, exact), (info, registrar) in registrar_candidates.items():
+        method = info["method"]
+        for registration in info["registrations"]:
+            state = _combined_state(configuration_states[owner], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+            key = (exact, method["id"], registration["name"], registration["type"])
+            previous = declarations.get(key)
+            if previous is None or rank[state] > rank[previous[3]]:
+                declarations[key] = (info, registrar, registration, state, owner, exact)
+    for info, registrar, registration, state, owner, exact in declarations.values():
+        method = info["method"]
+        target = type_records.get(registration["type"])
+        if (target is None or target["configuration"] or processor(registration["type"]) is not None
+                or factory_info(target["symbol"], symbols, context_id) is not None
+                or target["symbol"].get("kind") != "class"
+                or "abstract" in target["symbol"].get("modifiers", [])):
+            diagnostics.append({"code": "SPRING_REGISTRAR_TARGET_UNSUPPORTED", "path": method["path"],
+                "type": registration["type"], "reason": "Registration target is not an indexed ordinary concrete class."})
+            old = nodes[registrar]
+            nodes[registrar] = replace(old, metadata={**(old.metadata or {}), "registration_status": "UNKNOWN",
+                "reasons": [*(old.metadata or {}).get("reasons", []), "TARGET_UNSUPPORTED:" + registration["type"]]})
+            continue
+        name, product = registration["name"], registration["type"].rsplit(".", 1)[-1]
+        product_types = registration_types(registration["type"])
+        line = (method.get("range") or {}).get("start_line")
+        bean = add_node("spring_bean", name, method["path"], line, symbol_node(method),
+            declaration_identity=exact,
+            registration_origin="REGISTRAR_LITERAL", registering_type=exact, declared_type=registration["type"],
+            types=product_types, qualifier=name, qualifiers=[], primary=False, profiles=[],
+            condition_status=state, condition_reasons=[f"importing configuration {owner} is {configuration_states[owner]}", *info["reasons"]])
+        add_edge(registrar, bean, "registers_bean", method["path"], line,
+                 "Compiler-attributed literal registry declaration; registrar never executed", compiler_fact=method)
+        spring_beans.append({"node": symbol_node(method), "bean": bean, "type": product, "types": product_types,
+            "name": name, "qualifiers": [], "primary": False, "profiles": [], "condition_status": state,
+            "condition_reasons": info["reasons"], "path": method["path"], "line": line})
+
+    # A FactoryBean object is dereferenced with '&'; its product is a different
+    # declaration. Unknown/custom production never becomes an ACTIVE product.
+    for bean in list(spring_beans):
+        source = symbols.get(bean["node"].id, {})
+        info = factory_info(source, symbols, context_id)
+        if info is None:
+            continue
+        original = nodes.pop(bean["bean"])
+        original_name = bean["name"]
+        object_types = (["FactoryBean"] if source.get("kind") == "method" else list(dict.fromkeys(
+            [source.get("name", "FactoryBean"), "FactoryBean", *[name.rsplit(".", 1)[-1]
+             for name in (source.get("type_hierarchy") or {}).get("types", [])]])))
+        object_state = _combined_state(bean["condition_status"], "UNKNOWN" if "FACTORY_NOT_CONCRETE" in info["reasons"] else "ACTIVE")
+        obj = add_node("spring_bean", "&" + original_name, original.path, original.line, bean["node"],
+                       **{**(original.metadata or {}), "types": object_types, "qualifier": "&" + original_name,
+                          "condition_status": object_state,
+                          "registration_origin": "FACTORY_OBJECT", "factory_name": original_name,
+                          "declared_type": info["factory_type"],
+                          "factory_product_type": info["product_type"]})
+        for key, edge in list(edges.items()):
+            if edge.target == original.id:
+                del edges[key]
+                add_edge(edge.source, obj, edge.kind, edge.source_file or original.path, edge.source_line,
+                         "FactoryBean object declaration; product is separate")
+        bean.update(bean=obj, name="&" + original_name, types=object_types, type=object_types[0], qualifiers=[], condition_status=object_state)
+        product = info["product_type"]
+        if product not in type_records:
+            info["reasons"].append("FACTORY_PRODUCT_NOT_INDEXED")
+            info["status"] = "UNKNOWN"
+        state = _combined_state(bean["condition_status"], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+        product_types = registration_types(product)
+        product_node = add_node("spring_bean", original_name, original.path, original.line, bean["node"],
+            **{**(original.metadata or {}), "registration_origin": "FACTORY_PRODUCT", "factory_name": original_name,
+               "declared_type": product, "types": product_types, "condition_status": state,
+               "condition_reasons": [*bean["condition_reasons"], *info["reasons"]], "execution": "NOT_EXECUTED"})
+        proof = info["method"] or source
+        add_edge(obj, product_node, "produces_bean", proof.get("path") or original.path,
+                 (proof.get("range") or {}).get("start_line") or original.line,
+                 "Compiler factory product declaration; custom code never executed", compiler_fact=proof,
+                 supporting_facts=info["sources"])
+        spring_beans.append({**bean, "bean": product_node, "name": original_name, "types": product_types,
+                             "type": product_types[0] if product_types else "", "condition_status": state,
+                             "qualifiers": (original.metadata or {}).get("qualifiers", [])})
+        if info["status"] == "UNKNOWN":
+            diagnostics.append({"code": "SPRING_FACTORY_BOUNDARY", "path": original.path,
+                "source_line": original.line, "bean": product_node, "reasons": info["reasons"],
+                "reason": "Custom or unproven FactoryBean product remains UNKNOWN."})
+
+    # No registry override order is executed. Conflicting registration names
+    # remain alternatives even when a Primary declaration exists elsewhere.
+    names = {}
+    for bean in spring_beans:
+        if bean["condition_status"] != "INACTIVE":
+            names.setdefault(bean["name"], []).append(bean)
+    for name, candidates in names.items():
+        if len({bean["bean"] for bean in candidates}) < 2 or not any(
+                (nodes[bean["bean"]].metadata or {}).get("registration_origin") for bean in candidates):
+            continue
+        for bean in candidates:
+            bean["condition_status"] = "UNKNOWN"
+            old = nodes[bean["bean"]]
+            nodes[old.id] = replace(old, metadata={**(old.metadata or {}), "condition_status": "UNKNOWN",
+                "condition_reasons": [*(old.metadata or {}).get("condition_reasons", []), "REGISTRATION_NAME_COLLISION"]})
+        diagnostics.append({"code": "SPRING_REGISTRATION_NAME_COLLISION", "name": name,
+            "reason": "Registry override order is not executed; competing declarations remain UNKNOWN."})
+
     # Constructor/field injection is intentionally conservative.  A matching
     # type is a candidate, while qualifier/primary/profile controls the result.
-    def resolve_query_property(model_name: str, property_name: str) -> tuple[str | None, str | None]:
+    def resolve_query_property(model_owner: str, property_name: str) -> tuple[str | None, str | None]:
         normalized = property_name.replace("_", "").casefold()
-        direct = entity_attributes.get(model_name, {}).get(normalized)
+        direct = entity_attributes.get(model_owner, {}).get(normalized)
         if direct:
             return direct, property_name
-        for outer, outer_id in entity_attributes.get(model_name, {}).items():
+        for outer, outer_id in entity_attributes.get(model_owner, {}).items():
             if not normalized.startswith(outer) or len(normalized) == len(outer):
                 continue
-            embedded_type = entity_embedded_types.get((model_name, outer))
+            embedded_type = entity_embedded_types.get((model_owner, outer))
             suffix = normalized[len(outer):]
             nested = next((identity for (owner, name), identity in embeddable_attributes.items()
                            if owner == embedded_type and name.casefold() == suffix), None)
             if nested:
                 return nested, f"{outer}.{suffix}"
-            associated_type = entity_association_types.get((model_name, outer))
-            associated = entity_attributes.get(associated_type or "", {}).get(suffix)
+            associated_type = entity_association_types.get((model_owner, outer))
+            associated_owners = entity_owners_by_simple.get(associated_type or "", [])
+            associated = (entity_attributes.get(associated_owners[0], {}).get(suffix)
+                          if len(associated_owners) == 1 else None)
             if associated:
                 return associated, f"{outer}.{suffix}"
         return None, None
 
     repository_models: dict[str, str] = {}
+
+    def repository_entity_owner(repository_symbol: dict[str, Any] | None) -> str | None:
+        """Select a repository entity only from compiler-resolved generic facts."""
+        if not repository_symbol:
+            return None
+        owners: set[str] = set()
+        for supertype in repository_symbol.get("supertypes", []):
+            match = re.fullmatch(r"([\w.$]+)\s*<(.+)>", str(supertype))
+            if not match:
+                continue
+            repository_type = match.group(1).replace("$", ".")
+            if not repository_type.startswith("org.springframework.data.") \
+                    or _simple(repository_type) not in JPA_REPOSITORIES:
+                continue
+            model_type = match.group(2).split(",", 1)[0].strip().replace("$", ".")
+            if model_type in entity_decls_by_owner:
+                owners.add(model_type)
+        return next(iter(owners)) if len(owners) == 1 else None
+
     for path, source in source_text.items():
         imports = _imports(source)
         if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
@@ -719,6 +874,40 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                           re.finditer(r"@([A-Za-z_][\w.]*)\s*(\([^\n]*\))?", match.group("ann") or "")]
             qualifier = next((_string_arg(args, ("value", "name")) for name, args in qualifiers if _simple(name) == "Qualifier"), None)
             candidates = [bean for bean in spring_beans if type_name in bean.get("types", [bean["type"]])]
+            # A user interface named FactoryBean is not the Spring contract.
+            # Use the compiler field's qualified type for this factory boundary.
+            owner_symbol = symbols.get(owner.id, {})
+            field = next((item for item in symbols.values() if item.get("kind") == "field"
+                          and item.get("owner") == owner_symbol.get("owner")
+                          and item.get("name") == match.group("name")
+                          and item.get("context_id") == context_id), {})
+            qualified_candidates = []
+            for candidate in candidates:
+                metadata = nodes[candidate["bean"]].metadata or {}
+                origin = metadata.get("registration_origin")
+                official_factory = str(field.get("type", "")).split("<", 1)[0] == FACTORY
+                if origin in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"} or origin == "FACTORY_OBJECT" and not official_factory:
+                    assignability = registration_assignability(metadata.get("declared_type"), field.get("type"), injection_kind, type_records)
+                    if assignability == "INCOMPATIBLE":
+                        continue
+                    if assignability == "UNKNOWN":
+                        candidate = {**candidate, "condition_status": _combined_state(candidate["condition_status"], "UNKNOWN")}
+                        diagnostics.append({"code": "SPRING_REGISTRATION_ASSIGNABILITY_BOUNDARY", "path": path,
+                            "source_line": line, "reason": "Qualified registration/product/factory-object assignability is unproven."})
+                qualified_candidates.append(candidate)
+            candidates = qualified_candidates
+            if str(field.get("type", "")).split("<", 1)[0] == FACTORY:
+                candidates = [bean for bean in candidates
+                              if (nodes[bean["bean"]].metadata or {}).get("registration_origin") == "FACTORY_OBJECT"]
+                requested = str(field.get("type", ""))
+                generic = re.fullmatch(re.escape(FACTORY) + r"<([\w.$]+)>", requested)
+                if generic:
+                    candidates = [bean for bean in candidates if (nodes[bean["bean"]].metadata or {}).get("factory_product_type") == generic.group(1)]
+                elif "<" in requested:
+                    candidates = [{**bean, "condition_status": _combined_state(bean["condition_status"], "UNKNOWN")}
+                                  for bean in candidates]
+                    diagnostics.append({"code": "SPRING_FACTORY_GENERIC_INJECTION_BOUNDARY", "path": path,
+                        "source_line": line, "type": requested, "reason": "Non-concrete FactoryBean generic selection remains UNKNOWN."})
             candidates = [bean for bean in candidates if bean.get("condition_status", "ACTIVE") != "INACTIVE"]
             if qualifier:
                 candidates = [bean for bean in candidates if qualifier in {bean["name"], *bean.get("qualifiers", [])}]
@@ -821,25 +1010,151 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             add_edge(embedded_id, attribute_id, "contains_attribute", declaration["path"], field_line,
                      "Persistent attribute declared by @Embeddable")
 
-    mapped_superclass_nodes: dict[str, str] = {}
+    mapped_superclass_ids_by_owner: dict[str, str] = {}
+    mapped_superclasses_by_owner: dict[str, dict[str, Any]] = {}
+    mapped_superclasses_by_simple: dict[str, list[dict[str, Any]]] = {}
     for declaration in mapped_superclass_decls:
         source_node: Node = declaration["node"]
+        owner = str(declaration["symbol"].get("owner", ""))
         mapped_id = add_node("orm_mapped_superclass", source_node.name, declaration["path"], declaration["line"], source_node,
-                             java_type=str(declaration["symbol"].get("owner", source_node.name)))
-        mapped_superclass_nodes[source_node.name] = mapped_id
+                             java_type=owner or source_node.name)
+        if owner:
+            mapped_superclass_ids_by_owner[owner] = mapped_id
+            mapped_superclasses_by_owner[owner] = declaration
+            mapped_superclasses_by_simple.setdefault(_simple(owner), []).append(declaration)
         add_edge(source_node.id, mapped_id, "declares_mapped_superclass", declaration["path"], declaration["line"],
                  "Compiler-resolved JPA @MappedSuperclass declaration")
 
-    entity_nodes = {declaration["node"].name: declaration["node"].id for declaration in entity_decls}
+    entity_decls_by_owner = {
+        str(item["symbol"]["owner"]): item for item in entity_decls
+        if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")
+    }
+    entity_decls_by_simple: dict[str, list[dict[str, Any]]] = {}
+    for declaration in entity_decls:
+        entity_decls_by_simple.setdefault(declaration["node"].name, []).append(declaration)
+    entity_owners_by_simple = {
+        name: [str(item["symbol"].get("owner", "")) for item in declarations
+               if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")]
+        for name, declarations in entity_decls_by_simple.items()
+    }
+    # A simple name is suitable for display, but never selects one of multiple
+    # compiler-resolved entity owners.
+    entity_nodes = {name: declarations[0]["node"].id for name, declarations in entity_decls_by_simple.items()
+                    if len(declarations) == 1}
+    entity_nodes_by_owner = {owner: item["node"].id for owner, item in entity_decls_by_owner.items() if owner}
+    entity_query_owners: dict[str, list[str]] = {}
+    for owner, declaration in entity_decls_by_owner.items():
+        entity_annotation = next((item for item in declaration["symbol"].get("annotations", [])
+                                  if isinstance(item, dict) and isinstance(item.get("name"), str)
+                                  and _simple(item["name"]) == "Entity"), None)
+        if entity_annotation is None or entity_annotation.get("values_resolved") is False:
+            continue
+        raw_entity_values = entity_annotation.get("values") if isinstance(entity_annotation.get("values"), dict) else {}
+        explicit_entity_name = raw_entity_values.get("name", raw_entity_values.get("value"))
+        if explicit_entity_name is not None and not isinstance(explicit_entity_name, str):
+            continue
+        entity_name = explicit_entity_name or declaration["node"].name
+        entity_query_owners.setdefault(entity_name, []).append(owner)
+
+    def entity_index_key(declaration: dict[str, Any]) -> str:
+        owner = declaration["symbol"].get("owner")
+        # A graph node ID is an opaque per-declaration key for incomplete test or
+        # legacy inputs; it cannot be confused with a compiler-qualified owner.
+        return owner if isinstance(owner, str) and owner else "unresolved-owner:" + declaration["node"].id
+
     entity_table_nodes: dict[str, str] = {}
-    entity_attributes: dict[str, dict[str, str]] = {name: {} for name in entity_nodes}
+    entity_table_by_owner: dict[str, str] = {}
+    entity_attributes: dict[str, dict[str, str]] = {entity_index_key(item): {} for item in entity_decls}
     entity_embedded_types: dict[tuple[str, str], str] = {}
     embeddable_inherited_accesses: dict[str, set[str]] = {}
     entity_association_types: dict[tuple[str, str], str] = {}
     named_queries: dict[str, dict[str, Any]] = {}
     association_records: list[dict[str, Any]] = []
+
+    def java_mapped_fields(declaration: dict[str, Any]) -> list[dict[str, Any]]:
+        if not str(declaration["path"]).endswith(".java"):
+            return []
+        text_lines = str(declaration["source"]).splitlines()
+        start = int(declaration["line"] or 1)
+        later_types = [int((item["symbol"].get("range") or {}).get("start_line") or item["line"])
+                       for item in [*entity_decls, *mapped_superclass_decls]
+                       if item["path"] == declaration["path"] and (item["line"] or 0) > start]
+        end = min(later_types or [len(text_lines) + 1])
+        body = "\n".join(text_lines[start - 1:end - 1])
+        field_pattern = re.compile(
+            r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*?\))?\s*)+)"
+            r"(?:(?:public|protected|private|static|final|transient|volatile)\s+)*"
+            r"(?P<type>[A-Za-z_$][\w.$<>?, \[\]]*)\s+(?P<name>[A-Za-z_$][\w$]*)\s*(?:[;=]|$)", re.M)
+        result = []
+        for match in field_pattern.finditer(body):
+            annotations = [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*?\))?", match.group("annotations"))
+                           if _allowed_jpa_annotation(name, declaration["imports"])]
+            result.append({"name": match.group("name"), "type": match.group("type").strip(),
+                           "annotations": annotations,
+                           "line": start + body[:match.start()].count("\n")})
+        return result
+
+    def inherited_mapped_access(symbol: dict[str, Any]) -> str | None:
+        """Return one compiler-proven access mode from mapped-superclass IDs."""
+        modes: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(owner: str) -> None:
+            if owner in visited:
+                return
+            visited.add(owner)
+            declaration = mapped_superclasses_by_owner.get(owner)
+            if declaration is None:
+                matches = mapped_superclasses_by_simple.get(_simple(owner), []) if "." not in owner else []
+                declaration = matches[0] if len(matches) == 1 else None
+            if declaration is None:
+                parent_entity = entity_decls_by_owner.get(owner)
+                if parent_entity:
+                    for parent_value in parent_entity["symbol"].get("supertypes", []):
+                        visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+                return
+            access_annotation = _annotation(declaration["annotations"], "Access")
+            if access_annotation and access_annotation[1] != "__UNRESOLVED__":
+                mode = (_string_arg(access_annotation[1], ("value",)) or "").rsplit(".", 1)[-1]
+                if mode in {"FIELD", "PROPERTY"}:
+                    modes.add(mode)
+            for field in symbols.values():
+                if field.get("kind") != "field" or field.get("owner") != declaration["symbol"].get("owner"):
+                    continue
+                for annotation in field.get("annotations", []):
+                    if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                        continue
+                    if _simple(annotation["name"]) not in {"Id", "EmbeddedId"} or not _allowed_jpa_annotation(
+                            annotation["name"], declaration["imports"]):
+                        continue
+                    target = str(annotation.get("use_site_target", "")).upper()
+                    if target in {"FIELD", "BACKING_FIELD"}:
+                        modes.add("FIELD")
+                    elif target in {"GET", "GETTER", "PROPERTY_GETTER"}:
+                        modes.add("PROPERTY")
+            if str(declaration["path"]).endswith(".java"):
+                for field in java_mapped_fields(declaration):
+                    if any(_simple(name) in {"Id", "EmbeddedId"} for name, _ in field["annotations"]):
+                        modes.add("FIELD")
+                for method in symbols.values():
+                    if method.get("kind") != "method" or method.get("owner") != declaration["symbol"].get("owner"):
+                        continue
+                    if not re.fullmatch(r"(?:get|is)[A-Z].*", str(method.get("name", ""))):
+                        continue
+                    method_values = _annotation_map(method, declaration["source"])
+                    if any(_simple(name) in {"Id", "EmbeddedId"} and
+                           _allowed_jpa_annotation(name, declaration["imports"]) for name, _ in method_values):
+                        modes.add("PROPERTY")
+            for parent_value in declaration["symbol"].get("supertypes", []):
+                visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+
+        for parent_value in symbol.get("supertypes", []):
+            visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+        return next(iter(modes)) if len(modes) == 1 else None
+
     for entity in entity_decls:
         node: Node = entity["node"]
+        entity_owner = entity_index_key(entity)
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
         table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
@@ -851,13 +1166,18 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         qualified_table = f"{table_schema}.{table_name}" if table_schema else table_name
         table_id = None
         if table_name is not None:
+            inheritance_annotation = _annotation(values, "Inheritance")
+            inheritance_strategy = (_named_string_arg(inheritance_annotation[1], "strategy") or "").rsplit(".", 1)[-1] if inheritance_annotation else "SINGLE_TABLE"
             table_id = add_node("orm_table", qualified_table, entity["path"], entity["line"], node,
                                 logical_name=table_name, schema=table_schema, inferred=inferred,
+                                inheritance_strategy=inheritance_strategy if inheritance_strategy in {"SINGLE_TABLE", "JOINED", "TABLE_PER_CLASS"} else "UNKNOWN",
                                 database_id=context.get("database_id"),
                                 schema_stream_id=context.get("schema_stream_id"),
                                 persistence_unit=context.get("persistence_unit"),
                                 naming_strategy=context.get("naming_strategy"))
-            entity_table_nodes[node.name] = table_id
+            entity_table_nodes[entity_owner] = table_id
+            if entity["symbol"].get("owner"):
+                entity_table_by_owner[entity_owner] = table_id
             add_edge(node.id, table_id, "maps_to_table", entity["path"], entity["line"],
                      "@Table name" if not inferred else "Entity name fallback; physical naming strategy not verified")
         if table_values_unknown:
@@ -888,10 +1208,22 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                          "Named query owner entity/table; static intent only")
             named_queries[query_name] = {"id": named_id, "language": language, "entity": node.name}
         for supertype in entity["symbol"].get("supertypes", []):
-            mapped = mapped_superclass_nodes.get(_simple(str(supertype)))
-            if mapped:
+            super_name = str(supertype).split("<", 1)[0].strip().replace("/", ".")
+            candidates = ([mapped_superclasses_by_owner[super_name]] if super_name in mapped_superclasses_by_owner
+                          else mapped_superclasses_by_simple.get(_simple(super_name), []) if "." not in super_name else [])
+            if len(candidates) == 1:
+                mapped_decl = candidates[0]
+                mapped = mapped_superclass_ids_by_owner.get(str(mapped_decl["symbol"].get("owner", "")))
+                if not mapped:
+                    continue
                 add_edge(node.id, mapped, "inherits_mapping", entity["path"], entity["line"],
                          "Compiler-resolved @MappedSuperclass inheritance")
+            elif len(candidates) > 1:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "supertype": super_name,
+                                    "candidates": [item["symbol"].get("owner") for item in candidates],
+                                    "reason": "Mapped superclass simple name is ambiguous; no inheritance edge is published."})
         matches = [candidate for candidate in schema_tables if table_id and in_schema_realm(candidate)
                    and (candidate.name.casefold() == qualified_table.casefold()
                         if table_schema else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
@@ -959,9 +1291,21 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 diagnostics.append({"code": "ORM_KOTLIN_ACCESS_TARGET_MISMATCH", "path": entity["path"],
                                     "source_line": entity["line"], "entity": node.id,
                                     "reason": f"Explicit {explicit_access} access conflicts with the compiler-reported Kotlin JPA identifier use-site target."})
-            entity_access = ("UNKNOWN" if access_values_unknown else
+            mapped_access = inherited_mapped_access(entity["symbol"])
+            local_access = ("FIELD" if has_field_id and not has_getter_id else
+                            "PROPERTY" if has_getter_id and not has_field_id else None)
+            access_conflict = bool(mapped_access and (
+                explicit_access in {"FIELD", "PROPERTY"} and explicit_access != mapped_access or
+                local_access and local_access != mapped_access))
+            entity_access = ("UNKNOWN" if access_values_unknown or access_conflict else
                              explicit_access if explicit_access in {"FIELD", "PROPERTY"} else
-                             "FIELD" if has_field_id and not has_getter_id else "PROPERTY" if has_getter_id and not has_field_id else "UNKNOWN")
+                             local_access or mapped_access or "UNKNOWN")
+            if access_conflict:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "local_access": local_access, "explicit_access": explicit_access,
+                                    "mapped_superclass_access": mapped_access,
+                                    "reason": "Entity and mapped superclass access evidence conflicts; persistence access remains UNKNOWN."})
             if access_values_unknown:
                 diagnostics.append({"code": "ORM_ACCESS_STRATEGY_UNKNOWN", "path": entity["path"],
                                     "source_line": entity["line"], "entity": node.id,
@@ -971,7 +1315,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "source_line": entity["line"], "entity": node.id,
                                     "reason": "Kotlin JPA identifier has no unique @field:/@get: target or explicit @Access; persistence access is not inferred."})
         else:
-            entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
+            mapped_access = inherited_mapped_access(entity["symbol"])
+            local_access = "PROPERTY" if property_id and not field_id else "FIELD" if field_id else None
+            access_conflict = bool(mapped_access and (
+                local_access and local_access != mapped_access or
+                explicit_access in {"FIELD", "PROPERTY"} and explicit_access != mapped_access))
+            entity_access = ("UNKNOWN" if access_conflict or access_values_unknown else
+                             explicit_access if explicit_access in {"FIELD", "PROPERTY"} else
+                             local_access or mapped_access or "FIELD")
+            if access_conflict:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "local_access": local_access, "mapped_superclass_access": mapped_access,
+                                    "reason": "Entity and mapped superclass access evidence conflicts; persistence access remains UNKNOWN."})
         table_node = nodes.get(table_id)
         if table_node is not None:
             nodes[table_id] = replace(table_node, metadata={**(table_node.metadata or {}), "access_strategy": entity_access})
@@ -1006,7 +1362,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
                                  identifier=identifier, embedded=embedded)
-            entity_attributes[node.name][field_name.casefold()] = attribute
+            entity_attributes[entity_owner][field_name.casefold()] = attribute
             if table_id:
                 add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
             if identifier:
@@ -1014,7 +1370,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                          entity["path"], field_line, "JPA identifier placement determines FIELD access")
             if embedded:
                 embedded_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_embedded_types[(node.name, field_name.casefold())] = embedded_type
+                entity_embedded_types[(entity_owner, field_name.casefold())] = embedded_type
                 embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                 target = embeddable_nodes.get(embedded_type)
                 if target:
@@ -1059,7 +1415,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             if relation:
                 mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_association_types[(node.name, field_name.casefold())] = target_type
+                entity_association_types[(entity_owner, field_name.casefold())] = target_type
                 association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
@@ -1139,7 +1495,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 attribute = add_node("orm_attribute", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                      attribute=property_name, type=property_type, access="PROPERTY",
                                      identifier=identifier, embedded=embedded, getter=getter_name)
-                entity_attributes[node.name][property_name.casefold()] = attribute
+                entity_attributes[entity_owner][property_name.casefold()] = attribute
                 if table_id:
                     add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
                              "JPA property-access persistent attribute")
@@ -1148,7 +1504,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                              entity["path"], property_line, "JPA identifier placement determines PROPERTY access")
                 if embedded:
                     embedded_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_embedded_types[(node.name, property_name.casefold())] = embedded_type
+                    entity_embedded_types[(entity_owner, property_name.casefold())] = embedded_type
                     embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                     if embedded_type in embeddable_nodes:
                         add_edge(attribute, embeddable_nodes[embedded_type], "embeds_type", entity["path"], property_line,
@@ -1159,7 +1515,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 if relation_entry:
                     mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                     target_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_association_types[(node.name, property_name.casefold())] = target_type
+                    entity_association_types[(entity_owner, property_name.casefold())] = target_type
                     association = add_node("orm_association", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                            association=_simple(relation_entry[0]), target_type=target_type,
                                            mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING",
@@ -1183,6 +1539,375 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                      logical_name=column_name, inferred=not bool(column_annotation))
                 add_edge(attribute, column_id, "maps_to_column", entity["path"], property_line,
                          "Property @Column name" if column_annotation else "Property name; naming strategy not verified")
+
+    # A mapped superclass has no table of its own. Build a declaration fact for
+    # each compiler-attributed persistent property, then project it per entity
+    # so the declaration owner and effective entity owner are never conflated.
+    def mapped_ancestors(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = mapped_superclasses_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            parent_decl = mapped_superclasses_by_owner.get(parent)
+            if parent_decl is None:
+                matches = mapped_superclasses_by_simple.get(_simple(parent), []) if "." not in parent else []
+                if len(matches) > 1:
+                    return None
+                parent_decl = matches[0] if matches else None
+            if parent_decl:
+                parent_chain = mapped_ancestors(str(parent_decl["symbol"].get("owner", "")), seen)
+                if parent_chain is None:
+                    return None
+                result.extend(parent_chain)
+        result.append(declaration)
+        return result
+
+    def entity_ancestors(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = entity_decls_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            if parent not in entity_decls_by_owner:
+                continue
+            chain = entity_ancestors(parent, seen)
+            if chain is None:
+                return None
+            result.extend(chain)
+            result.append(entity_decls_by_owner[parent])
+        return result
+
+    def mapped_ancestors_for_entity(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = entity_decls_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            mapped = mapped_superclasses_by_owner.get(parent)
+            if mapped:
+                chain = mapped_ancestors(str(mapped["symbol"].get("owner", "")))
+                if chain is None:
+                    return None
+                result.extend(chain)
+            elif parent in entity_decls_by_owner:
+                chain = mapped_ancestors_for_entity(parent, seen)
+                if chain is None:
+                    return None
+                result.extend(chain)
+        return result
+
+    for entity in entity_decls:
+        node: Node = entity["node"]
+        raw_effective_owner = entity["symbol"].get("owner")
+        if not isinstance(raw_effective_owner, str) or not raw_effective_owner:
+            diagnostics.append({"code": "ORM_ENTITY_OWNER_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "Compiler-qualified entity owner is absent; inherited persistence attributes are not projected."})
+            continue
+        effective_owner = raw_effective_owner
+        inherited_declarations: list[dict[str, Any]] = []
+        ancestry_unknown = False
+        for parent_value in entity["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            parent_decl = mapped_superclasses_by_owner.get(parent)
+            if parent_decl is None:
+                matches = mapped_superclasses_by_simple.get(_simple(parent), []) if "." not in parent else []
+                if len(matches) > 1:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_AMBIGUOUS", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id,
+                                        "supertype": parent, "candidates": [item["symbol"].get("owner") for item in matches],
+                                        "reason": "Mapped superclass identity is ambiguous; inherited attributes are omitted."})
+                elif matches:
+                    parent_decl = matches[0]
+            if parent_decl:
+                chain = mapped_ancestors(str(parent_decl["symbol"].get("owner", "")))
+                if chain is None:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_HIERARCHY_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "supertype": parent,
+                                        "reason": "Mapped superclass hierarchy is cyclic or ambiguous; inherited attributes are omitted."})
+                else:
+                    inherited_declarations.extend(chain)
+            elif parent in entity_decls_by_owner:
+                chain = mapped_ancestors_for_entity(parent)
+                if chain is None:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_HIERARCHY_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "supertype": parent,
+                                        "reason": "Entity ancestry is cyclic or ambiguous; mapped superclass attributes are omitted."})
+                else:
+                    inherited_declarations.extend(chain)
+        if not inherited_declarations or ancestry_unknown:
+            continue
+        table_id = entity_table_nodes.get(effective_owner)
+        table = nodes.get(table_id) if table_id else None
+        access = str((table.metadata or {}).get("access_strategy", "UNKNOWN")) if table else "UNKNOWN"
+        if access not in {"FIELD", "PROPERTY"}:
+            diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "The effective entity access strategy is unknown; mapped superclass attributes are not projected."})
+            continue
+        inherited_entity_declarations = entity_ancestors(effective_owner)
+        mapping_table_id = table_id
+        if inherited_entity_declarations is None:
+            mapping_table_id = None
+            diagnostics.append({"code": "ORM_ENTITY_INHERITANCE_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "Entity inheritance is cyclic or ambiguous; no effective table is selected."})
+        elif inherited_entity_declarations:
+            root_owner = str(inherited_entity_declarations[0]["symbol"].get("owner", ""))
+            root_table_id = entity_table_by_owner.get(root_owner)
+            root_table = nodes.get(root_table_id) if root_table_id else None
+            strategy = str((root_table.metadata or {}).get("inheritance_strategy", "UNKNOWN")) if root_table else "UNKNOWN"
+            if strategy in {"SINGLE_TABLE", "JOINED"}:
+                mapping_table_id = root_table_id
+            elif strategy == "TABLE_PER_CLASS":
+                mapping_table_id = table_id
+            else:
+                mapping_table_id = None
+                diagnostics.append({"code": "ORM_ENTITY_INHERITANCE_UNKNOWN", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "root_entity": root_owner,
+                                    "reason": "Root @Inheritance strategy is unresolved; inherited table mapping remains UNKNOWN."})
+        seen_decls: dict[str, list[dict[str, Any]]] = {}
+        for declaration in inherited_declarations:
+            owner = str(declaration["symbol"].get("owner", ""))
+            if str(declaration["path"]).endswith(".java"):
+                field_candidates = java_mapped_fields(declaration) if access == "FIELD" else []
+                if access == "PROPERTY":
+                    field_candidates = []
+                    for method in symbols.values():
+                        if method.get("kind") != "method" or method.get("owner") != owner:
+                            continue
+                        getter = str(method.get("name", ""))
+                        if not re.fullmatch(r"(?:get|is)[A-Z].*", getter):
+                            continue
+                        method_annotations = [(name, args) for name, args in _annotation_map(method, declaration["source"])
+                                              if _allowed_jpa_annotation(name, declaration["imports"])]
+                        property_name = getter[3:] if getter.startswith("get") else getter[2:]
+                        property_name = property_name[:1].lower() + property_name[1:]
+                        field_candidates.append({"name": property_name,
+                                                 "type": method.get("return_type", "UNKNOWN"),
+                                                 "annotations": method_annotations,
+                                                 "line": (method.get("range") or {}).get("start_line") or declaration["line"]})
+            else:
+                field_candidates = []
+                for field in symbols.values():
+                    if field.get("kind") != "field" or field.get("owner") != owner:
+                        continue
+                    raw_annotations = field.get("annotations", [])
+                    targets = {"FIELD", "BACKING_FIELD"} if access == "FIELD" else {"GET", "GETTER", "PROPERTY_GETTER"}
+                    selected_items = [item for item in raw_annotations if isinstance(item, dict)
+                                      and str(item.get("use_site_target", "")).upper() in targets]
+                    selected = {**field, "annotations": selected_items}
+                    field_annotations = [(name, args) for name, args in _annotation_map(selected, declaration["source"])
+                                         if _allowed_jpa_annotation(name, declaration["imports"])]
+                    field_candidates.append({"name": field.get("name"), "type": field.get("type", "UNKNOWN"),
+                                             "annotations": field_annotations,
+                                             "line": (field.get("range") or {}).get("start_line") or declaration["line"]})
+            for field in field_candidates:
+                field_annotations = field["annotations"]
+                if not field_annotations or any(_simple(name) == "Transient" for name, _ in field_annotations):
+                    continue
+                if not any(_simple(name) in JPA_FIELDS for name, _ in field_annotations):
+                    continue
+                attribute_name = str(field.get("name", ""))
+                if attribute_name:
+                    seen_decls.setdefault(attribute_name.casefold(), []).append(
+                        {"declaration": declaration, "field": field, "annotations": field_annotations,
+                         "name": attribute_name, "owner": owner,
+                         "line": field.get("line") or declaration["line"]})
+        override_map: dict[str, list[tuple[str, str | None, bool]]] = {}
+        unknown_class_override = False
+        override_declarations = [*inherited_declarations, *(inherited_entity_declarations or []), entity]
+        for override_declaration in override_declarations:
+            override_owner = str(override_declaration["symbol"].get("owner", ""))
+            imports = override_declaration["imports"]
+            for annotation in override_declaration["symbol"].get("annotations", []):
+                if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                    continue
+                name = annotation["name"]
+                if _simple(name) != "AttributeOverride" or not _allowed_jpa_annotation(name, imports):
+                    continue
+                unknown_class_override |= annotation.get("values_resolved") is False
+                values = annotation.get("values") if isinstance(annotation.get("values"), dict) else {}
+                attribute_name = values.get("name")
+                if not isinstance(attribute_name, str) or not attribute_name:
+                    continue
+                nested = values.get("column")
+                column_name = None
+                unresolved = annotation.get("values_resolved") is False
+                if isinstance(nested, dict):
+                    nested_name = nested.get("name")
+                    nested_values = nested.get("values") if isinstance(nested.get("values"), dict) else {}
+                    if not isinstance(nested_name, str) or not _allowed_jpa_annotation(nested_name, imports):
+                        continue
+                    nested_column = nested_values.get("name") or nested_values.get("value")
+                    column_name = nested_column if isinstance(nested_column, str) and nested_column else None
+                    unresolved = unresolved or nested.get("values_resolved") is False
+                else:
+                    unresolved = True
+                override_map.setdefault(attribute_name.casefold(), []).append((override_owner, column_name, unresolved))
+        for normalized, candidates in seen_decls.items():
+            attribute_name = candidates[0]["name"]
+            existing = entity_attributes.get(effective_owner, {}).get(normalized)
+            if existing or len(candidates) != 1:
+                for identity in ([existing] if existing else []):
+                    if identity in nodes:
+                        nodes[identity] = replace(nodes[identity], metadata={**(nodes[identity].metadata or {}),
+                                                                              "mapping_status": "UNKNOWN"})
+                        removed_columns = set()
+                        for edge_key, edge in list(edges.items()):
+                            if edge.source == identity and edge.kind == "maps_to_column":
+                                removed_columns.add(edge.target)
+                                edges.pop(edge_key, None)
+                        for column in removed_columns:
+                            if not any(edge.source == column or edge.target == column for edge in edges.values()):
+                                nodes.pop(column, None)
+                diagnostics.append({"code": "ORM_INHERITED_ATTRIBUTE_COLLISION", "path": entity["path"],
+                                    "source_line": entity["line"], "effective_owner": effective_owner,
+                                    "attribute": attribute_name,
+                                    "declarations": [item["owner"] for item in candidates],
+                                    "reason": "Inherited and declared persistent attributes share a name; no winner is selected."})
+                continue
+            item = candidates[0]
+            declaration = item["declaration"]
+            field = item["field"]
+            owner = item["owner"]
+            field_annotations = item["annotations"]
+            args = next((value for name, value in field_annotations if _simple(name) == "Column"), "")
+            embedded_id = any(_simple(name) == "EmbeddedId" for name, _ in field_annotations)
+            embedded = embedded_id or any(_simple(name) == "Embedded" for name, _ in field_annotations)
+            identifier = embedded_id or any(_simple(name) == "Id" for name, _ in field_annotations)
+            relation_entry = next(((name, value) for name, value in field_annotations
+                                   if _simple(name) in {"ManyToOne", "OneToMany", "OneToOne", "ManyToMany"}), None)
+            column_name = _string_arg(args, ("name", "value")) if args else attribute_name
+            status = "PARTIAL"
+            override_values = override_map.get(normalized, [])
+            latest_override_owner = override_values[-1][0] if override_values else None
+            selected_overrides = [item for item in override_values if item[0] == latest_override_owner]
+            if len(selected_overrides) > 1:
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id, "attribute": attribute_name,
+                                    "reason": "Multiple class-level @AttributeOverride declarations match; no physical column is selected."})
+            elif selected_overrides:
+                _, override_column, unresolved = selected_overrides[0]
+                if unresolved or override_column is None:
+                    status, column_name = "UNKNOWN", None
+                    diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "attribute": attribute_name,
+                                        "reason": "Explicit @AttributeOverride column is incomplete or unresolved; no fallback is published."})
+                else:
+                    column_name = override_column
+            elif unknown_class_override:
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_UNKNOWN", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "attribute": attribute_name,
+                                    "reason": "An explicit class-level @AttributeOverride is unresolved; inherited column fallback is omitted."})
+            if args == "__UNRESOLVED__":
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": declaration["path"],
+                                    "source_line": item["line"], "effective_owner": effective_owner,
+                                    "attribute": attribute_name,
+                                    "reason": "Explicit mapped superclass @Column is unresolved; no physical column is published."})
+            declaration_node = add_node("orm_attribute", f"{declaration['node'].name}.{attribute_name}",
+                                        declaration["path"], item["line"], declaration["node"],
+                                        attribute=attribute_name, type=field.get("type", "UNKNOWN"),
+                                        access=access, inherited=False, declaring_owner=owner,
+                                        effective_owner=None, identifier=identifier, embedded=embedded,
+                                        mapping_status="PARTIAL")
+            inherited_attribute = add_node("orm_attribute", f"{node.name}.{attribute_name}", declaration["path"],
+                                           item["line"], declaration["node"],
+                                           attribute=attribute_name, type=field.get("type", "UNKNOWN"),
+                                           access=access, inherited=True, declaring_owner=owner,
+                                           effective_owner=effective_owner, identifier=identifier, embedded=embedded,
+                                           mapping_status=status,
+                                           override=bool(override_values))
+            add_edge(inherited_attribute, declaration_node, "inherits_attribute", declaration["path"], item["line"],
+                     "Compiler-attributed persistent property projected from its mapped superclass")
+            add_edge(node.id, inherited_attribute, "has_persistent_attribute", entity["path"], entity["line"],
+                     "Mapped superclass property effective for this entity")
+            entity_attributes.setdefault(effective_owner, {})[normalized] = inherited_attribute
+            if mapping_table_id:
+                add_edge(inherited_attribute, mapping_table_id, "declared_on_table", entity["path"], item["line"],
+                         "Effective mapped superclass property on entity table")
+            elif status != "UNKNOWN":
+                nodes[inherited_attribute] = replace(nodes[inherited_attribute], metadata={**(nodes[inherited_attribute].metadata or {}),
+                                                                                          "mapping_status": "UNKNOWN"})
+                status = "UNKNOWN"
+                column_name = None
+            if identifier:
+                add_edge(node.id, inherited_attribute, "has_embedded_id" if embedded_id else "has_id",
+                         entity["path"], item["line"],
+                         "Mapped superclass identifier is effective for this entity")
+            if embedded:
+                embedded_type = re.findall(r"[A-Za-z_]\w*", str(field.get("type", "")))[-1:]
+                embedded_name = embedded_type[0] if embedded_type else ""
+                target = embeddable_nodes.get(embedded_name)
+                if target:
+                    entity_embedded_types[(effective_owner, normalized)] = embedded_name
+                    add_edge(inherited_attribute, target, "embeds_type", entity["path"], item["line"],
+                             "Mapped superclass embedded attribute")
+                else:
+                    diagnostics.append({"code": "ORM_EMBEDDABLE_TYPE_UNRESOLVED", "path": entity["path"],
+                                        "source_line": item["line"], "attribute": inherited_attribute,
+                                        "type": field.get("type")})
+                column_name = None
+            elif relation_entry:
+                relation_name, relation_args = relation_entry
+                mapped_by = _named_string_arg(relation_args, "mappedBy")
+                target_type = re.findall(r"[A-Za-z_]\w*", str(field.get("type", "")))[-1:]
+                target_type = target_type[0] if target_type else "UNKNOWN"
+                entity_association_types[(effective_owner, normalized)] = target_type
+                association = add_node("orm_association", f"{node.name}.{attribute_name}", entity["path"],
+                                       item["line"], node, association=_simple(relation_name),
+                                       target_type=target_type, mapped_by=mapped_by,
+                                       association_role="INVERSE" if mapped_by else "OWNING", access=access)
+                add_edge(inherited_attribute, association, "declares_association", entity["path"], item["line"],
+                         f"Mapped superclass JPA relationship @{_simple(relation_name)}")
+                association_records.append({"id": association, "owner": node.name, "field": attribute_name,
+                                            "target": target_type, "mapped_by": mapped_by,
+                                            "path": entity["path"], "line": item["line"]})
+                join_entry = next(((name, value) for name, value in field_annotations
+                                   if _simple(name) in {"JoinColumn", "JoinTable"}), None)
+                join_name = _string_arg(join_entry[1], ("name", "value")) if join_entry else None
+                if join_name:
+                    join_kind = "orm_join_table" if _simple(join_entry[0]) == "JoinTable" else "orm_column"
+                    join_node = add_node(join_kind, join_name, entity["path"], item["line"], node,
+                                         logical_name=join_name, inferred=False, join=True)
+                    add_edge(association, join_node,
+                             "maps_to_join_table" if join_kind == "orm_join_table" else "maps_to_join_column",
+                             entity["path"], item["line"], "Explicit mapped superclass join mapping")
+                column_name = None
+            if column_name:
+                column_id = add_node("orm_column", column_name, entity["path"], item["line"], node,
+                                     logical_name=column_name, inferred=not bool(args or override_values),
+                                     override=bool(override_values), mapping_status=status)
+                add_edge(inherited_attribute, column_id, "maps_to_column", entity["path"], item["line"],
+                         "Mapped superclass column or entity-level AttributeOverride")
+            elif status == "UNKNOWN":
+                diagnostics.append({"code": "ORM_INHERITED_COLUMN_UNKNOWN", "path": entity["path"],
+                                    "source_line": item["line"], "entity": node.id, "attribute": attribute_name,
+                                    "reason": "No physical column is published for unresolved inherited mapping."})
 
     for declaration in embeddable_decls:
         name = declaration["node"].name
@@ -1237,17 +1962,26 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             generic = re.search(r"(?:JpaRepository|CrudRepository|PagingAndSortingRepository|Repository)\s*<\s*([\w.]+)", match.group(2))
             if not generic or not any(item.startswith("org.springframework.data") for item in imports):
                 continue
-            repo_name, model_name = match.group(1), generic.group(1).rsplit(".", 1)[-1]
+            repo_name, declared_model = match.group(1), generic.group(1).rsplit(".", 1)[-1]
             line = _line(source, match.start())
             repo = next((node for node in nodes.values() if node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
-            models = [candidate for candidate in nodes.values() if candidate.name == model_name and candidate.kind in {"class", "type"}]
-            if repo and len(models) == 1:
-                add_edge(repo.id, models[0].id, "repository_for", path, line, "Spring Data repository generic")
-                repository_owner = str((symbols.get(repo.id) or {}).get("owner", ""))
-                if repository_owner:
-                    repository_models[repository_owner] = model_name
-            elif repo and not models:
-                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line, "repository": repo.id, "model": model_name})
+            repository_symbol = symbols.get(repo.id) if repo else None
+            model_owner = repository_entity_owner(repository_symbol)
+            model_name = _simple(model_owner) if model_owner else declared_model
+            if repo and model_owner:
+                model_node = nodes.get(entity_nodes_by_owner[model_owner])
+                if model_node:
+                    add_edge(repo.id, model_node.id, "repository_for", path, line,
+                             "Compiler-resolved Spring Data repository generic entity")
+                    repository_owner = str((repository_symbol or {}).get("owner", ""))
+                    if repository_owner:
+                        repository_models[repository_owner] = model_owner
+                else:
+                    model_owner = None
+            if repo and model_owner is None:
+                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line,
+                                    "repository": repo.id, "model": declared_model,
+                                    "reason": "Repository generic does not resolve to exactly one compiler-owned entity; no simple-name fallback is used."})
             if repo:
                 # Derived query names use a bounded Spring Data grammar and are
                 # checked against the selected entity/embedded attribute model.
@@ -1266,14 +2000,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     resolved_predicates = []
                     unresolved_predicates = []
                     for predicate in parsed["predicates"]:
-                        target, resolved_path = resolve_query_property(model_name, predicate["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", predicate["property"])
                         value = {**predicate, "resolved_path": resolved_path, "attribute_id": target}
                         resolved_predicates.append(value)
                         if target is None:
                             unresolved_predicates.append(predicate["property"])
                     resolved_orders = []
                     for order in parsed["order_by"]:
-                        target, resolved_path = resolve_query_property(model_name, order["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", order["property"])
                         resolved_orders.append({**order, "resolved_path": resolved_path, "attribute_id": target})
                         if target is None:
                             unresolved_predicates.append(order["property"])
@@ -1284,7 +2018,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         validated=not unresolved_predicates)
                     add_edge(method.id, query_id, "declares_query", path, query_line,
                              "Spring Data derived query method")
-                    entity_id = entity_nodes.get(model_name)
+                    entity_id = entity_nodes_by_owner.get(model_owner or "")
                     if entity_id:
                         relation = "query_deletes" if parsed["action"] in {"delete", "remove"} else "query_reads"
                         add_edge(query_id, entity_id, relation, path, query_line,
@@ -1302,6 +2036,21 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "source_line": query_line, "method": method.id,
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
+
+    type_nodes_by_owner: dict[str, Node] = {}
+    for symbol in symbols.values():
+        symbol_node_value = nodes.get(str(symbol.get("id", "")))
+        owner = symbol.get("owner")
+        if symbol_node_value is None or symbol_node_value.kind not in {"class", "interface", "type"} \
+                or not isinstance(owner, str) or not owner:
+            continue
+        type_nodes_by_owner[owner.replace("$", ".")] = symbol_node_value
+
+    def descriptor_return_owner(descriptor: Any) -> str | None:
+        if not isinstance(descriptor, str):
+            return None
+        match = re.search(r"\)(?:\[*)L([^;<]+);$", descriptor)
+        return match.group(1).replace("/", ".").replace("$", ".") if match else None
 
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
@@ -1330,8 +2079,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         unbound = sorted(set(query_parameters) - set(parameter_names))
         return_type = str(item.get("return_type", ""))
         return_parts = re.findall(r"[A-Za-z_$][\w.$]*", return_type)
-        projection_type = _simple(return_parts[-1]) if return_parts else None
-        model_name = repository_models[str(item.get("owner"))]
+        projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
+        projection_type = _simple(projection_type_ref) if projection_type_ref else None
+        projection_node = type_nodes_by_owner.get(projection_type_ref or "")
+        return_owner = descriptor_return_owner(item.get("descriptor"))
+        if (projection_node is None and return_owner and projection_type
+                and _simple(return_owner) == projection_type):
+            # A source-level simple name does not prove its owner. The compiler
+            # method descriptor does: use its exact erased class identity only
+            # when it agrees with the declared return type's simple name. This
+            # also keeps type variables (whose erasure is Object) from binding
+            # to an unrelated local class with the same name.
+            projection_node = type_nodes_by_owner.get(return_owner)
+        model_owner = repository_models[str(item.get("owner"))]
+        model_name = _simple(model_owner)
         named_query_name = _named_string_arg(raw, "name")
         if value is None and named_query_name:
             named = named_queries.get(named_query_name)
@@ -1365,37 +2126,51 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
-            projection = next((candidate for candidate in nodes.values()
-                               if candidate.name == projection_type and candidate.kind in {"class", "interface", "type"}), None)
-            if projection:
-                add_edge(query_id, projection.id, "returns_entity" if projection_type in entity_nodes else "returns_projection",
-                         path, line, "Compiler return type of repository query")
+            if projection_node:
+                projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
+                                         if node_id == projection_node.id), None)
+                add_edge(query_id, projection_node.id,
+                         "returns_entity" if projection_owner is not None else "returns_projection",
+                         path, line, "Compiler-qualified return type of repository query")
             else:
                 diagnostics.append({"code": "SPRING_DATA_QUERY_PROJECTION_UNRESOLVED", "path": path,
-                                    "source_line": line, "method": method.id, "projection_type": projection_type})
+                                    "source_line": line, "method": method.id, "projection_type": projection_type_ref})
+                query_node = nodes.get(query_id)
+                if query_node:
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
             entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = _simple(entity_match.group(1)) if entity_match else model_name
+            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
             alias = entity_match.group(2) if entity_match else None
-            entity_id = entity_nodes.get(query_entity)
+            query_owners = entity_query_owners.get(query_entity or "", [])
+            query_owner = query_owners[0] if len(query_owners) == 1 else None
+            entity_id = entity_nodes_by_owner.get(query_owner or "")
             if entity_id:
                 add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
             else:
                 diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity})
+                                    "method": method.id, "entity": query_entity or "UNKNOWN",
+                                    "candidates": query_owners,
+                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                current_query = nodes.get(query_id)
+                if current_query:
+                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
             if alias:
                 for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
                     property_name = "".join(part[:1].upper() + part[1:] if index else part
                                             for index, part in enumerate(attribute_path.split(".")))
-                    target, resolved_path = resolve_query_property(query_entity, property_name)
+                    target, resolved_path = resolve_query_property(query_owner or "", property_name)
                     if target:
                         add_edge(query_id, target, "filters_by", path, line,
                                  f"JPQL path {resolved_path} resolved against entity model")
                     else:
                         diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
                                             "source_line": line, "method": method.id, "attribute": attribute_path})
+                        current_query = nodes.get(query_id)
+                        if current_query:
+                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:

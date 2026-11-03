@@ -11,11 +11,39 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .model import KnowledgeGraph
+from .architecture_model import EVIDENCE_KINDS, EVIDENCE_POLARITIES, FRESHNESS_STATUSES, aggregate_view_edges
 
 EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_dispatch_to"}
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-1", "impact": "impact-1"}
+
+
+def _canonical_kind(value: Any) -> str:
+    return value if isinstance(value, str) and value in EVIDENCE_KINDS else "UNKNOWN"
+
+
+def _canonical_polarity(value: Any) -> str:
+    return value if isinstance(value, str) and value in EVIDENCE_POLARITIES else "UNKNOWN"
+
+
+def _canonical_freshness(value: Any) -> str:
+    return value if isinstance(value, str) and value in FRESHNESS_STATUSES else "UNKNOWN"
+
+
+def _summarize_view_evidence(refs, provenance):
+    records = [provenance[ref] for ref in refs if ref in provenance]
+    kinds = sorted({_canonical_kind(item.get("evidence_kind")) for item in records} or {"UNKNOWN"})
+    supporting = sorted({item["id"] for item in records if _canonical_polarity(item.get("polarity")) == "SUPPORTING"})
+    contradicting = sorted({item["id"] for item in records if _canonical_polarity(item.get("polarity")) == "CONTRADICTING"})
+    unknown = sorted(set(refs) - set(supporting) - set(contradicting))
+    freshness_values = [_canonical_freshness(item.get("freshness")) for item in records]
+    freshness = ("STALE" if "STALE" in freshness_values else
+                 "CURRENT" if freshness_values and all(value == "CURRENT" for value in freshness_values)
+                 and len(records) == len(set(refs)) else "UNKNOWN")
+    return {"evidence_kinds": kinds, "freshness": freshness,
+            "supporting_refs": supporting, "contradicting_refs": contradicting,
+            "unknown_refs": unknown}
 
 
 class ContextSelectionError(ValueError):
@@ -104,6 +132,7 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     manifest_evidence_id = "ev:workspace-manifest:" + workspace_id
     provenance[manifest_evidence_id] = {
         "id": manifest_evidence_id, "evidence_kind": "SOURCE_ONLY",
+        "freshness": "CURRENT", "polarity": "UNKNOWN",
         "source_id": "@workspace/manifest.json", "content_hash": manifest_hash,
     }
 
@@ -212,6 +241,14 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                                 "context_id": context["context_id"],
                                 "candidate_owner_ids": context["candidate_owner_ids"],
                                 "message": "Provider context matches multiple explicit ownership declarations"})
+            context_record = next((item for item in graph.contexts if item.get("id") == context["context_id"]), {})
+            evidence_id = "ev:compiler-context:" + context["context_id"]
+            provenance[evidence_id] = {
+                "id": evidence_id, "evidence_kind": _canonical_kind(context_record.get("mode")),
+                "freshness": _canonical_freshness(context_record.get("freshness")),
+                "polarity": _canonical_polarity(context_record.get("polarity", "UNKNOWN")),
+                "source_id": context["context_id"], "content_hash": digest(context_record),
+            }
 
     for service_id, groups in contexts_by_service.items():
         for (repo_id, module), candidates in groups.items():
@@ -237,8 +274,18 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                         evidence_id = "ev:source-context:" + context["id"]
                         provenance[evidence_id] = {
                             "id": evidence_id, "evidence_kind": "SOURCE_ONLY",
+                            "freshness": "UNKNOWN", "polarity": "UNKNOWN",
                             "source_id": context["id"],
                             "content_hash": context.get("content_hash") or digest(context),
+                        }
+                else:
+                    for context in candidates:
+                        evidence_id = "ev:compiler-context:" + context["id"]
+                        provenance[evidence_id] = {
+                            "id": evidence_id, "evidence_kind": _canonical_kind(context.get("mode")),
+                            "freshness": _canonical_freshness(context.get("freshness")),
+                            "polarity": _canonical_polarity(context.get("polarity", "UNKNOWN")),
+                            "source_id": context["id"], "content_hash": digest(context),
                         }
                 continue
             source_only = all(item.get("mode") == "SOURCE_ONLY" or not item.get("analyzer_version")
@@ -263,7 +310,18 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                 context_statuses[service_id].append(status)
                 selected_rows[service_id].append({"repo_id": repo_id, "module": module,
                                                   "scope": scope, "status": status,
+                                                  "evidence_kind": "SOURCE_ONLY" if source_only else
+                                                  _canonical_kind(candidates[0].get("mode")),
                                                   "context_id": None, "candidate_context_ids": candidate_ids})
+                for context in candidates:
+                    evidence_id = ("ev:source-context:" if source_only else "ev:compiler-context:") + context["id"]
+                    provenance[evidence_id] = {
+                        "id": evidence_id,
+                        "evidence_kind": "SOURCE_ONLY" if source_only else _canonical_kind(context.get("mode")),
+                        "freshness": _canonical_freshness(context.get("freshness")),
+                        "polarity": _canonical_polarity(context.get("polarity", "UNKNOWN")),
+                        "source_id": context["id"], "content_hash": digest(context.get("source_files", context)),
+                    }
                 continue
             row = dict(selection["services"][0])
             row["candidate_context_ids"] = candidate_ids
@@ -276,7 +334,9 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
             if row.get("context_id") and row.get("context_fingerprint"):
                 evidence_id = "ev:compiler-context:" + row["context_id"]
                 provenance[evidence_id] = {
-                    "id": evidence_id, "evidence_kind": row.get("evidence_kind", "UNKNOWN"),
+                    "id": evidence_id, "evidence_kind": _canonical_kind(row.get("evidence_kind")),
+                    "freshness": _canonical_freshness(row.get("freshness", row.get("status"))),
+                    "polarity": _canonical_polarity(row.get("polarity", "UNKNOWN")),
                     "source_id": row["context_id"], "content_hash": row["context_fingerprint"],
                 }
             elif source_only:
@@ -284,6 +344,7 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                     evidence_id = "ev:source-context:" + context["id"]
                     provenance[evidence_id] = {
                         "id": evidence_id, "evidence_kind": "SOURCE_ONLY",
+                        "freshness": "UNKNOWN", "polarity": "UNKNOWN",
                         "source_id": context["id"],
                         "content_hash": digest(context.get("source_files", {})),
                     }
@@ -312,23 +373,32 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                 evidence_id = "ev:compiler-context:" + context_id
                 if evidence_id in provenance:
                     refs.append(evidence_id)
-            elif row.get("status") == "PARTIAL":
+            else:
                 for candidate_id in row.get("candidate_context_ids", []):
-                    evidence_id = "ev:source-context:" + candidate_id
-                    if evidence_id in provenance:
-                        refs.append(evidence_id)
+                    for prefix in ("ev:source-context:", "ev:compiler-context:"):
+                        evidence_id = prefix + candidate_id
+                        if evidence_id in provenance:
+                            refs.append(evidence_id)
         service_node_id = f"service:{service_id}"
         external_system_ids = sorted(system["id"] for system in service["external_systems"])
         module_ids = sorted({row["module"] for row in rows if isinstance(row.get("module"), str)})
         repo_ids = sorted({row["repo_id"] for row in rows})
         selected_ids = sorted({row["context_id"] for row in rows if row.get("context_id")})
+        summary = _summarize_view_evidence(refs, provenance)
+        # The service's explicit manifest identity remains resolved even when
+        # its selected compiler context is partial/stale; that state is carried
+        # independently by freshness, context_status, and coverage.
+        resolution_status = "AMBIGUOUS" if service_status == "AMBIGUOUS" else "RESOLVED"
         nodes.append(ViewNode(
             id=service_node_id, kind="service", label=labels.get(service_id, service_id),
             original_ids=(service_id,), evidence_refs=tuple(sorted(set(refs))),
             attributes={"scope": scope, "context_status": service_status,
                         "repo_ids": repo_ids, "modules": module_ids, "context_ids": selected_ids,
                         "external_system_ids": external_system_ids,
-                        "evidence_kinds": sorted({row.get("evidence_kind", "UNKNOWN") for row in rows})},
+                        "evidence_kinds": summary["evidence_kinds"]},
+            evidence_kinds=tuple(summary["evidence_kinds"]), resolution_status=resolution_status,
+            freshness=summary["freshness"], supporting_refs=tuple(summary["supporting_refs"]),
+            contradicting_refs=tuple(summary["contradicting_refs"]), unknown_refs=tuple(summary["unknown_refs"]),
         ))
         context_selection[service_id] = {"scope": scope, "status": service_status,
                                          "contexts": sorted(rows, key=lambda item: (
@@ -343,13 +413,18 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                     original_ids=(system_id,), evidence_refs=(manifest_evidence_id,),
                     attributes={"implementation_status": "UNKNOWN", "checkout_status": "UNKNOWN",
                                 "endpoint_ids": [], "scope": scope},
+                    evidence_kinds=("SOURCE_ONLY",), resolution_status="RESOLVED", freshness="CURRENT",
+                    unknown_refs=(manifest_evidence_id,),
                 ))
             edge_id = f"edge:declares-external-system:{service_id}:{system_id}"
             edges.append(ViewEdge(
                 id=edge_id, source=service_node_id, target=external_node_id,
                 relation="declares_external_system", original_ids=(service_id, system_id),
                 evidence_refs=(manifest_evidence_id,), resolution_status="RESOLVED",
-                attributes={"implementation_status": "UNKNOWN"},
+                attributes={"implementation_status": "UNKNOWN", "scope": scope,
+                            "context_ids": selected_ids},
+                evidence_kinds=("SOURCE_ONLY",), freshness="CURRENT",
+                unknown_refs=(manifest_evidence_id,),
             ))
 
     if declaration is None:
@@ -369,6 +444,11 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     diagnostics.append({"code": "DEPLOYMENT_UNKNOWN",
                         "message": "A source/compiler context does not prove deployment or runtime availability"})
 
+    edge_aggregation = aggregate_view_edges(edges, tuple(provenance.values()), scope=scope,
+                                            diagnostics=diagnostics)
+    edges = list(edge_aggregation["edges"])
+    diagnostics = list(edge_aggregation["diagnostics"])
+
     if not selected_rows:
         coverage_status = "UNKNOWN"
     elif diagnostics or external_ids or any(status != "CURRENT" for values in context_statuses.values() for status in values):
@@ -376,6 +456,12 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     else:
         coverage_status = "COMPLETE_WITHIN_SELECTED_SCOPE"
     context_rows = {"services": context_selection}
+    unavailable_service_ids = {item.get("service_id") for item in diagnostics
+                               if item.get("code") == "SERVICE_CONTEXT_UNAVAILABLE"}
+    found_count = len(nodes) + len(unavailable_service_ids)
+    resolved_count = sum(node.resolution_status == "RESOLVED" for node in nodes)
+    unresolved_count = found_count - resolved_count
+    excluded_count = sum(bool(scopes) and scope not in scopes for scopes in all_owner_scopes.values())
     baseline_fingerprint = digest({"manifest_hash": manifest_hash, "source_hashes": graph.files,
                                    "scope": scope, "context_selection": context_rows})
     result = ViewDocument(
@@ -385,9 +471,13 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
         diagnostics=tuple(diagnostics),
         coverage={"status": coverage_status,
                   "reasons": ["Inventory contains only explicit ownership declarations and selected provider contexts.",
-                              "External-system implementation and deployment remain UNKNOWN."],
+                              "External-system implementation and deployment remain UNKNOWN.",
+                              "Counts describe explicit service declarations and emitted external-system objects only.",
+                              "Excluded counts include declarations proven to belong to a different selected scope."],
                   "selected_service_ids": sorted(context_selection),
-                  "external_system_ids": sorted(external_ids)},
+                  "external_system_ids": sorted(external_ids),
+                  "counts": {"found": found_count, "resolved": resolved_count,
+                             "unresolved": unresolved_count, "excluded": excluded_count}},
         limits=("Undeclared repositories, modules and framework beans are not services.",
                 "External-system checkout, endpoints, deployment and runtime availability are UNKNOWN."),
         provenance=tuple(provenance[key] for key in sorted(provenance)),
@@ -780,6 +870,7 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
     elif view == "configuration":
         edges = [e for e in edges if e.kind in {"configured_by", "resolves_property", "conditional_on",
                                                 "imports_configuration", "uses_import_selector", "selects_import", "may_select_import",
+                                                "uses_bean_registrar", "registers_bean", "produces_bean",
                                                 "defines_bean", "injects_bean", "advised_by",
                                                 "declares_entrypoint", "bypasses_proxy"}]
     elif view == "data-flow":
