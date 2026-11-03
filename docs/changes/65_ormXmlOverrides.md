@@ -146,3 +146,28 @@ Sémantický patch zachovává dotčené vazby a aktualizuje pouze posunutou cit
 TypeScript filesystem replay. GH CI je podle nového výslovného pokynu uživatele
 volitelné; ostatní acceptance, nezávislé review a dependency merge zůstávají
 povinné. Tento checkpoint sám nemerguje W03 ani neprohlašuje celý S06 za hotový.
+
+
+## Integrace merged W01/W02 a process-model main (2026-11-03)
+
+Finální cílová base při přípravě je469e615b2766f78f27c11b85172d223b929cb031.
+Vlastní framework.py,graph_provider.py,XML regressions a compiler tests zůstávají
+byte-identické auditovanému875eb5c3623830d53239b55de9d00df2a42bb14d, který
+má corrected full652/10. Inspection.py automaticky převzal pouze tři main
+dispatch evidence pole; vlastní XML input capture/replay guards se nemění.
+All JVM source/build/locks jsou přesně z merged main/W01.
+
+Aktuální JARy jsou převzaty z actual-build donor W01 po porovnání všech tracked
+JVM source/build/locks, library SHA a původní fresh-build receipt. Doklad je
+`/workspace/w03-main469-worker-receipt.json`; žádné source-only tvrzení o buildu.
+Current-composition actual XML+dispatch focus je samostatně připraven pod
+sdíleným flockem; dokončený výsledek se doplní níže. Nový full se pro parent
+integraci samotnou neopakuje. T003-S06 zůstává PARTIAL.
+
+Current-main469 validation dokončena: **36 PASS, 0 SKIP v33.91s**, XML
+`/workspace/w03-main469-actual.xml` (35 XML guard/actual Javac cases + jeden
+actual dependency dispatch). Provider/Gradle variant/TypeScript freshness sada:
+**56 PASS, 2 SKIP v166.40s**, `/workspace/w03-main469-provider.xml`; skips jsou
+explicitní Gradle8.13 gates. Vlastní čtyři nezměněné runtime/test SHA a inspection
+se třemi inherited dispatch poli byly znovu ověřeny po běhu. Tyto aktuální
+kompoziční výsledky nenahrazují ani znovu nespouštějí standalone corrected full652/10.

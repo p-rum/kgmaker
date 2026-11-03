@@ -216,7 +216,10 @@ neinstaluje do uživatelských projektů.
 Projektový [`code_review`](.codex/agents/code-review.toml) přebírá vytvořené PR,
 ověřuje diff a test evidence proti zadání a vrací `APPROVE`, `REQUEST_CHANGES`
 nebo `BLOCKED` pro konkrétní head SHA. Po `APPROVE` znovu ověří aktuální HEAD,
-required checks, závislosti a mergeability a teprve potom sloučí ready PR.
+povinné lokální acceptance/toolchain kontroly, závislosti a mergeability a potom
+sloučí ready PR. GH CI je doplňující evidence: jeho absence či billing blokace
+sama merge neblokuje, pokud vše ostatní prošlo; konkrétní chyby z CI a skutečná
+serverová pravidla zůstávají závazné.
 Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
 Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
@@ -532,6 +535,21 @@ perform the export; scan/feature/hook never launch Gradle.
 
 Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
 
+Dependency dispatch používá bounded ordered classpath metadata index pro skutečné
+JARy/adresáře. Javac, K1/K2 call expressions a ASM virtual/interface sites zachovávají
+oddělený declared target a konzervativní kandidáty v artifact realms; nikdy tím
+nedokazují runtime execution ani data availability. Reference/static/private/final
+calls nejsou virtuálně rozšiřovány. Missing/corrupt/shadow/truncated hierarchy a
+unsupported multi-release candidate enumeration mají konkrétní důvod, `dispatch_complete=false`.
+Příklad: `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
+po explicitním build-importu; [matice a limity](docs/compiler-inspection.md#t003-s04-w04--ordered-dependency-dispatch).
+
+Source type-variable/intersection receivers zůstávají explicitně unsupported bez
+kandidátů; jejich declared target se zachová. Podporovaná candidate class musí
+splnit receiver i declared contract. Physical lookup odděluje source overlay,
+respektuje skutečné JDK parent-first a runtime-effective MR metadata; známý
+source/binary static ABI nebo repo/module/source_set/scope realm konflikt vrací
+PARTIAL bez vymyšleného targetu a zachovává source canonical.
 
 `inspect code` with an explicit execution-bound bytecode build now emits
 `maps_to_source` declaration evidence for exact Java/Kotlin declarations with
@@ -540,3 +558,24 @@ Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
 simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
+
+T015 adds a pure database-resource view through
+`kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
+Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
+repository/database/stream identities remain separate from table drill-down IDs.
+Only existing selected-context query facts contribute read/write/delete claims;
+entity mappings and migrations contribute dependencies. Flyway is
+`MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
+Missing datasource mappings remain unresolved; no database connection or new CLI
+command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
+
+## Explicit business-process documents
+
+`kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
+explicit process documents using the shared view/evidence model. Stable IDs,
+branches, loops, exceptions and async boundaries survive round-trip; strict
+semantic labels remain separate from technical evidence and status. See
+[the Python API and example](docs/process-model.md) and
+[the explicit fixture](fixtures/process-model/checkout.json).
+This supplies T023's model only; process discovery, annotation review, process
+CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
