@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "30673e9502d1c4d6b4f3f3f14782a616ac7cdae869f1e599b05d8a530a1d6b24",
-    "docs/acceptance-inventory.md": "c80675d756b67f93830004c66f786b5cef2872106c3c812a854c7eec183cf990",
+    "README.md": "b40536868b95e6672d9b7fa1fa807b05a670e886ea267702fe81bd0217a0e48f",
+    "docs/acceptance-inventory.md": "2a5034345c931a542258f19d943589930d2e9299e8797dc959687e9e7dcadf20",
     "docs/architecture.md": "4740bb4bbee5aeab9adebacb3e65c6aa408a6ba5e3393301d1f183143946d77a",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -53,15 +53,17 @@
     "docs/changes/70_defineBusinessProcessModel.md": "371240cb3e74ac86c74a90b1660ac68d12871d8d89ab09f34c43b56d1acbd744",
     "docs/changes/71_discoverProcessTriggers.md": "884c1447a864445d0c83553767bebd943f102055087b5517bc1119f9e19c573e",
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
+    "docs/changes/76_catalogHttpConsumers.md": "c8e1cbc256db68a208ab352d96fa28da2941a46473b53e483c4678d7e3225d8f",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "f2100bde44d01fb5f2ecf6a26956bab0306ec03c2bd30b3cb8cd1761149fd9c3",
     "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
+    "docs/http-consumers.md": "cce59ca8c3a6c6f26f328d11eee2831c87ac335735e22ad8aa197a2ec5136cdc",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "e38be134c0ce6c7ac8e2da15053095324998918191a1ffd26c01a499d92cb568",
+    "docs/production-analysis-progress.md": "373f4e34a757768db278791594483ef8190afb3a40fdb2b2d5a12dedaa4d1a1c",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -280,7 +282,7 @@
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "68da31096fc5700d8be23025a5fbb0f633c9f51c80346d5016f502c13803985d",
     "src/kgmaker/inspection_cli.py": "a17f05badfa124e20c58b4c4f9810cc8b417e7a2ae477620f20bf4d40f7f246f",
-    "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
+    "src/kgmaker/interfaces.py": "e5d07b14d767553f6ddc6824486aa6a178a3c29be6d9613d71555928b0ff7859",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
@@ -361,6 +363,7 @@
     "tests/test_t009_propagate_view_evidence.py": "22c259428b00ab80d7e2e1b8246d3f91c109e08f68b705763d3ae948200d2ed6",
     "tests/test_t010_catalog_http_providers.py": "486ccb3778388a7fb7a226f61e7e62ec61ec4528e71a1bea852e2d95a35ae7c2",
     "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165",
+    "tests/test_t011_catalog_http_consumers.py": "725ba734b8e85d61a9e94b9005ac516452c6d4120f320cccdd9eee3a78e38e79",
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_t023_define_business_process_model.py": "7544ff1b84fbc6d9caf89f51cc1c83acb851dd9f844e0285000f998a0651151a",
     "tests/test_t024_discover_process_triggers.py": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7",
@@ -484,13 +487,6 @@
       "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 167,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
       "name": "Kotlin JPA use-site access",
       "source_file": "docs/compiler-inspection.md",
@@ -531,6 +527,20 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 969,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 167,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/http-consumers.md:typed_http_consumer_catalogue",
+      "name": "Typed HTTP consumer catalogue",
+      "source_file": "docs/http-consumers.md",
+      "source_line": 3,
+      "summary": "Pure consumer projection preserves selected typed request/caller/terminal identities and evidence without inferring observed traffic or remote service binding."
     }
   ],
   "edges": [
@@ -735,16 +745,6 @@
       "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
     },
     {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 225,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
       "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
       "target": "concept:docs/typescript-freshness.md:scoped_compiler_filesystem_discovery",
       "kind": "uses",
@@ -813,46 +813,6 @@
       "source_file": "workers/jvm/k2/KotlinFrontend.kt",
       "source_line": 82,
       "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 167,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 169,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source_file": "docs/compiler-inspection.md",
@@ -1153,6 +1113,56 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 971,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
+    },
+    {
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 225,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 167,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 169,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     }
   ],
   "episodes": [

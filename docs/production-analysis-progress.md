@@ -649,3 +649,12 @@ PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capabilit
 HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change63](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T011 — typed HTTP consumer catalogue
+
+Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
+explicit ownership/context selection and evidence buckets. Distinct request and
+Feign terminal callers remain distinct; static intent is not runtime execution.
+Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
+fresh full and final independent review are pending. Coverage remains PARTIAL,
+remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).

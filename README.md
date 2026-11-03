@@ -652,3 +652,13 @@ HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/meth
 path components without guessing a composed route, and rejects URI-callback route
 guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
 starts a worker. See the HTTP matrix for property-file and privacy boundaries.
+
+### HTTP consumer catalogue (T011)
+
+`kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
+source_coverage=coverage)` projects selected typed W06 requests into the shared
+interfaces view. Lazy definitions remain distinct from static terminal intent;
+Feign caller occurrences and same-path calls keep their original IDs. No client
+is run, and runtime/remote service binding stays unknown. See
+[HTTP consumers](docs/http-consumers.md) for the explicit snapshot example and
+proof/compatibility boundaries. No new CLI command is introduced.

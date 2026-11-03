@@ -560,3 +560,11 @@ Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note
 Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T011 — typed HTTP consumer inventory
+
+AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
+WebClient occurrences, AC04 offline/input preservation, AC05 malformed source/
+edge/scope/owner/SHA and selected stale siblings are in
+`tests/test_t011_catalog_http_consumers.py`. AC06 documentation and actual outcome
+are in [change76](changes/76_catalogHttpConsumers.md). Full/review pending; runtime NOT_RUN.
