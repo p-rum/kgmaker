@@ -198,3 +198,17 @@ původní605/10 zůstávají zachovány ve svém původním rozsahu. Finální m
 po běhu nemění žádný source/test/runtime byte. Semantický merge zachovává všechny
 podporované manual facts; obsolete resolve_service_ownership259 duplicate byl
 nahrazen skutečným current273 s ověřenou architecture citation156.
+
+## Integrace main po změně CI politiky a Kotlin JPA
+
+Main `b78d2e62148f225be7ba8c53c839f8b052ee269d` obsahuje T045 revizi2,
+Kotlin JPA W01 a T023. Integrace zachovává jejich runtime i vlastní argument
+proof guards; konflikty byly pouze v generovaných grafech a stavovém přehledu.
+Main149 immutable episodes tvoří přesný prefix a původní child captures zůstávají.
+Sémantické duplicitní ownership odkazy byly sjednoceny na doložený workspace modul.
+
+Dřívější full733PASS10SKIP platí pro vlastní nezměněný argument source; nová
+K2 kombinace vyžaduje čerstvý explicitní build a integrační actual kontroly.
+Jejich výsledek zatím není PASS. GH CI je podle výslovného pokynu uživatele
+volitelné, všechny ostatní acceptance a nezávislé review nad aktuálním párem
+zůstávají povinné. Celý T003-S07 ani T003/T004 nejsou dokončené.

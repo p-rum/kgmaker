@@ -9,6 +9,7 @@ turns a name match into a resolved call.
 from __future__ import annotations
 
 import re
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,14 @@ JPA_FIELDS = {
     "Access", "Transient",
 }
 JPA_REPOSITORIES = {"JpaRepository", "CrudRepository", "PagingAndSortingRepository", "Repository"}
+JPA_ANNOTATION_NAMES = JPA_TYPES | JPA_FIELDS | {
+    "Query", "NamedQuery", "NamedQueries", "NamedNativeQuery", "NamedNativeQueries",
+    "Basic", "Version", "GeneratedValue", "SequenceGenerator", "TableGenerator",
+    "Enumerated", "Temporal", "Lob", "ElementCollection", "CollectionTable",
+    "MapKey", "OrderBy", "OrderColumn", "Convert", "Converts", "EntityGraph",
+    "NamedEntityGraph", "IdClass", "Inheritance", "DiscriminatorColumn", "DiscriminatorValue",
+}
+JPA_ANNOTATION_PACKAGES = {"jakarta.persistence", "javax.persistence"}
 
 DERIVED_QUERY_OPERATORS = (
     "IsNotNull", "NotNull", "IsNull", "Null", "LessThanEqual", "GreaterThanEqual",
@@ -110,25 +119,77 @@ def _allowed_annotation(name: str, imports: set[str], families: tuple[str, ...])
     )
 
 
+def _allowed_jpa_annotation(name: str, imports: set[str]) -> bool:
+    """Accept only known annotations from the canonical JPA packages.
+
+    Prefix checks are appropriate for extensible frameworks, but a subpackage
+    such as ``jakarta.persistence.fake`` must never impersonate the API.
+    """
+    simple = _simple(name)
+    if simple not in JPA_ANNOTATION_NAMES:
+        return False
+    if "." in name:
+        return name.rsplit(".", 1)[0] in JPA_ANNOTATION_PACKAGES
+    return any(
+        item == f"{package}.{simple}" or item == f"{package}.*"
+        for package in JPA_ANNOTATION_PACKAGES for item in imports
+    )
+
+
 def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]]:
+    def render_value(value: Any) -> str:
+        if isinstance(value, dict) and isinstance(value.get("name"), str):
+            nested = value.get("values", {})
+            args = ",".join(f"{key}={render_value(item)}" for key, item in nested.items()) if isinstance(nested, dict) else ""
+            return f"@{value['name']}({args})"
+        if isinstance(value, str):
+            return json.dumps(value, ensure_ascii=False)
+        if isinstance(value, list):
+            return "{" + ",".join(render_value(item) for item in value) + "}"
+        if isinstance(value, bool):
+            return str(value).lower()
+        return json.dumps(value, ensure_ascii=False)
+
     values = []
     for item in symbol.get("annotations", []) if isinstance(symbol.get("annotations"), list) else []:
         if isinstance(item, dict) and isinstance(item.get("name"), str):
             raw_values = item.get("values", {})
+            unresolved = item.get("values_resolved") is False
+            if unresolved:
+                raw_values = {}
             if isinstance(raw_values, dict):
                 parts = []
                 for key, value in raw_values.items():
                     if isinstance(value, list):
-                        parts.extend(f'{key}="{entry}"' for entry in value if entry not in (None, ""))
+                        if all(isinstance(entry, (str, int, float, bool)) for entry in value):
+                            parts.extend(f"{key}={render_value(entry)}" for entry in value)
+                        else:
+                            parts.append(f"{key}={render_value(value)}")
                     elif value not in (None, ""):
-                        parts.append(f'{key}="{value}"')
+                        parts.append(f"{key}={render_value(value)}")
                 args = ",".join(parts)
             else:
                 args = str(raw_values)
+            if unresolved:
+                args = "__UNRESOLVED__"
             values.append((item["name"], args))
     if "annotations" not in symbol and symbol.get("path") and (symbol.get("range") or {}).get("start_line"):
         values = _annotation_values(source, int(symbol["range"]["start_line"]))
     return values
+
+
+def _format_annotation_value(value: Any) -> str:
+    if isinstance(value, dict) and isinstance(value.get("name"), str):
+        nested = value.get("values", {})
+        args = ",".join(f"{key}={_format_annotation_value(item)}" for key, item in nested.items()) if isinstance(nested, dict) else ""
+        return f"@{value['name']}({args})"
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, list):
+        return "{" + ",".join(_format_annotation_value(item) for item in value) + "}"
+    if isinstance(value, bool):
+        return str(value).lower()
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _annotation(values: list[tuple[str, str]], name: str) -> tuple[str, str] | None:
@@ -489,6 +550,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         source = source_text[path]
         imports = _imports(source)
         values = _annotation_map(item, source)
+        unresolved_jpa_values = [annotation for annotation in item.get("annotations", [])
+                                 if isinstance(annotation, dict) and annotation.get("values_resolved") is False
+                                 and _allowed_jpa_annotation(str(annotation.get("name", "")), imports)]
+        for annotation in unresolved_jpa_values:
+            diagnostics.append({"code": "ORM_ANNOTATION_VALUE_UNRESOLVED", "path": path,
+                                "source_line": (item.get("range") or {}).get("start_line"),
+                                "annotation": annotation.get("name"),
+                                "reason": "K2 could not resolve all annotation argument values; source spelling is not treated as a constant."})
         effective_values = expanded_annotations(values, imports)
         simple_kind = _simple(str(item.get("kind", "")))
         is_type = simple_kind in {"class", "interface", "enum", "type", "annotation_type"}
@@ -499,7 +568,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if is_type and str(item.get("owner")) in imported_states and str(item.get("owner")) not in dynamic_imports and not spring:
             spring = [("org.springframework.context.annotation.Import", "")]
         jpa = [value for value in values if is_type and _simple(value[0]) in JPA_TYPES and
-               _allowed_annotation(value[0], imports, ("jakarta.persistence.", "javax.persistence."))]
+               _allowed_jpa_annotation(value[0], imports)]
         node = symbol_node(item)
         if node is None:
             continue
@@ -716,6 +785,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     embeddable_nodes: dict[str, str] = {}
     embeddable_attributes: dict[tuple[str, str], str] = {}
+    embeddable_mapping_access: dict[str, str] = {}
     for declaration in embeddable_decls:
         source_node: Node = declaration["node"]
         embedded_id = add_node("orm_embeddable", source_node.name, declaration["path"], declaration["line"], source_node,
@@ -725,17 +795,54 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                  "Compiler-resolved JPA @Embeddable declaration")
         members = [item for item in symbols.values()
                    if item.get("owner") == declaration["symbol"].get("owner") and item.get("kind") == "field"]
+        embedded_access_annotation = _annotation(declaration["annotations"], "Access")
+        embedded_access_value = (_string_arg(embedded_access_annotation[1], ("value",)) or "").rsplit(".", 1)[-1] \
+            if embedded_access_annotation and embedded_access_annotation[1] != "__UNRESOLVED__" else ""
+        embedded_access_unknown = bool(embedded_access_annotation and embedded_access_annotation[1] == "__UNRESOLVED__")
+        embeddable_mapping_access[source_node.name] = (
+            embedded_access_value if embedded_access_value in {"FIELD", "PROPERTY"}
+            else "UNKNOWN" if embedded_access_unknown else "INHERIT")
         for field in members:
-            annotations_for_field = _annotation_map(field, declaration["source"])
+            source_annotations = field.get("annotations", [])
+            annotations_for_field = [(name, args) for name, args in _annotation_map(field, declaration["source"])
+                                     if _allowed_jpa_annotation(name, declaration["imports"])]
+            getter_column_without_access = False
+            if declaration["path"].endswith(".kt"):
+                allowed_targets = ({"PROPERTY_GETTER", "GETTER", "GET"} if embedded_access_value == "PROPERTY"
+                                   else {"FIELD", "BACKING_FIELD"})
+                getter_column_without_access = (
+                    not embedded_access_value and not embedded_access_unknown
+                    and any(isinstance(item, dict) and _simple(str(item.get("name", ""))) == "Column"
+                            and str(item.get("use_site_target", "")).upper() in {"PROPERTY_GETTER", "GETTER", "GET"}
+                            for item in source_annotations))
+                if embedded_access_unknown:
+                    annotations_for_field = []
+                else:
+                    selected_items = [item for item in source_annotations if isinstance(item, dict)
+                                      and str(item.get("use_site_target", "")).upper() in allowed_targets]
+                    selected_symbol = {**field, "annotations": selected_items}
+                    annotations_for_field = [(name, args) for name, args in _annotation_map(selected_symbol, declaration["source"])
+                                             if _allowed_jpa_annotation(name, declaration["imports"])]
             if any(_simple(name) == "Transient" for name, _ in annotations_for_field):
                 continue
             field_name = str(field.get("name"))
             column_annotation = next((args for name, args in annotations_for_field if _simple(name) == "Column"), "")
-            column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name
+            column_name = (None if column_annotation == "__UNRESOLVED__" or embedded_access_unknown else
+                           _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name)
             field_line = (field.get("range") or {}).get("start_line")
+            if column_annotation == "__UNRESOLVED__":
+                diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": declaration["path"],
+                                    "source_line": field_line, "attribute": field_name,
+                                    "reason": "Explicit @Column values are unresolved; no default embeddable column is published."})
+            elif getter_column_without_access or embedded_access_unknown:
+                diagnostics.append({"code": "ORM_EMBEDDABLE_ACCESS_UNKNOWN", "path": declaration["path"],
+                                    "source_line": field_line, "attribute": field_name,
+                                    "reason": "Embeddable property mapping depends on inherited or unresolved @Access; physical column is not inferred."})
             attribute_id = add_node("orm_embeddable_attribute", f"{source_node.name}.{field_name}", declaration["path"],
                                     field_line, source_node, attribute=field_name,
-                                    type=str(field.get("type") or field.get("descriptor") or "UNKNOWN"), default_column=column_name)
+                                    type=str(field.get("type") or field.get("descriptor") or "UNKNOWN"), default_column=column_name,
+                                    mapping_status="UNKNOWN" if column_name is None or getter_column_without_access else "PARTIAL",
+                                    _access_inheritance_unresolved=(column_name if getter_column_without_access else None))
             embeddable_attributes[(source_node.name, field_name)] = attribute_id
             add_edge(embedded_id, attribute_id, "contains_attribute", declaration["path"], field_line,
                      "Persistent attribute declared by @Embeddable")
@@ -753,6 +860,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     entity_table_nodes: dict[str, str] = {}
     entity_attributes: dict[str, dict[str, str]] = {name: {} for name in entity_nodes}
     entity_embedded_types: dict[tuple[str, str], str] = {}
+    embeddable_inherited_accesses: dict[str, set[str]] = {}
     entity_association_types: dict[tuple[str, str], str] = {}
     named_queries: dict[str, dict[str, Any]] = {}
     association_records: list[dict[str, Any]] = []
@@ -760,24 +868,32 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         node: Node = entity["node"]
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
-        table_name = _string_arg(table_annotation[1], ("name", "value")) if table_annotation else None
+        table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
+        table_name = _string_arg(table_annotation[1], ("name", "value")) if table_annotation and not table_values_unknown else None
         table_schema = _named_string_arg(table_annotation[1], "schema") if table_annotation else None
         inferred = table_name is None
-        table_name = table_name or node.name
+        inferred = inferred and not table_values_unknown
+        table_name = table_name or (None if table_values_unknown else node.name)
         qualified_table = f"{table_schema}.{table_name}" if table_schema else table_name
-        table_id = add_node("orm_table", qualified_table, entity["path"], entity["line"], node,
-                            logical_name=table_name, schema=table_schema, inferred=inferred,
-                            database_id=context.get("database_id"),
-                            schema_stream_id=context.get("schema_stream_id"),
-                            persistence_unit=context.get("persistence_unit"),
-                            naming_strategy=context.get("naming_strategy"))
-        entity_table_nodes[node.name] = table_id
-        add_edge(node.id, table_id, "maps_to_table", entity["path"], entity["line"],
-                 "@Table name" if not inferred else "Entity name fallback; physical naming strategy not verified")
+        table_id = None
+        if table_name is not None:
+            table_id = add_node("orm_table", qualified_table, entity["path"], entity["line"], node,
+                                logical_name=table_name, schema=table_schema, inferred=inferred,
+                                database_id=context.get("database_id"),
+                                schema_stream_id=context.get("schema_stream_id"),
+                                persistence_unit=context.get("persistence_unit"),
+                                naming_strategy=context.get("naming_strategy"))
+            entity_table_nodes[node.name] = table_id
+            add_edge(node.id, table_id, "maps_to_table", entity["path"], entity["line"],
+                     "@Table name" if not inferred else "Entity name fallback; physical naming strategy not verified")
+        if table_values_unknown:
+            diagnostics.append({"code": "ORM_ANNOTATION_VALUE_UNRESOLVED", "path": entity["path"],
+                                "source_line": entity["line"], "annotation": "Table",
+                                "reason": "Explicit @Table values are unresolved; no physical table fallback is published."})
         for annotation_name, annotation_args in values:
             named_kind = _simple(annotation_name)
-            if named_kind not in {"NamedQuery", "NamedNativeQuery"} or not _allowed_annotation(
-                    annotation_name, entity["imports"], ("jakarta.persistence.", "javax.persistence.")):
+            if named_kind not in {"NamedQuery", "NamedNativeQuery"} or not _allowed_jpa_annotation(
+                    annotation_name, entity["imports"]):
                 continue
             query_name = _named_string_arg(annotation_args, "name")
             query_text = _named_string_arg(annotation_args, "query")
@@ -793,18 +909,23 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                      f"Static JPA @{named_kind}")
             action = "query_deletes" if query_text.lstrip().casefold().startswith("delete") else (
                 "query_writes" if query_text.lstrip().casefold().startswith(("update", "insert")) else "query_reads")
-            add_edge(named_id, node.id if language == "JPQL" else table_id, action, entity["path"], entity["line"],
-                     "Named query owner entity/table; static intent only")
+            if language == "JPQL" or table_id:
+                add_edge(named_id, node.id if language == "JPQL" else table_id, action, entity["path"], entity["line"],
+                         "Named query owner entity/table; static intent only")
             named_queries[query_name] = {"id": named_id, "language": language, "entity": node.name}
         for supertype in entity["symbol"].get("supertypes", []):
             mapped = mapped_superclass_nodes.get(_simple(str(supertype)))
             if mapped:
                 add_edge(node.id, mapped, "inherits_mapping", entity["path"], entity["line"],
                          "Compiler-resolved @MappedSuperclass inheritance")
-        matches = [candidate for candidate in schema_tables if in_schema_realm(candidate)
+        matches = [candidate for candidate in schema_tables if table_id and in_schema_realm(candidate)
                    and (candidate.name.casefold() == qualified_table.casefold()
                         if table_schema else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
-        if inferred:
+        if table_values_unknown:
+            diagnostics.append({"code": "ORM_TABLE_MAPPING_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "An explicit @Table value is unresolved; physical table mapping remains unknown."})
+        elif inferred:
             matches = []
             diagnostics.append({"code": "ORM_NAMING_STRATEGY_UNVERIFIED", "path": entity["path"],
                                 "source_line": entity["line"], "entity": node.id,
@@ -825,41 +946,102 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         next_types = [item.get("line") for item in entity_decls if item.get("line") and item["line"] > start]
         body = "\n".join(text.splitlines()[start - 1:min(next_types or [len(text.splitlines()) + 1])])
         access_annotation = _annotation(values, "Access")
-        explicit_access = (_string_arg(access_annotation[1], ("value",)) or "").rsplit(".", 1)[-1] if access_annotation else ""
+        access_values_unknown = bool(access_annotation and access_annotation[1] == "__UNRESOLVED__")
+        explicit_access = (_string_arg(access_annotation[1], ("value",)) or "").rsplit(".", 1)[-1] if access_annotation and not access_values_unknown else ""
         property_id = bool(re.search(r"@(?:[\w.]*\.)?(?:Id|EmbeddedId)\b[^;{}]*\b(?:get|is)[A-Z]\w*\s*\(\s*\)", body, re.S))
         field_id = any(re.search(r"@(?:[\w.]*\.)?(?:Id|EmbeddedId)\b", candidate.group("annotations"))
                        for candidate in re.finditer(
                            r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+"
                            r"(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M))
-        entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
+        kotlin = entity["path"].endswith(".kt")
+        kotlin_properties = [candidate for candidate in symbols.values()
+                             if kotlin and candidate.get("owner") == entity["symbol"].get("owner")
+                             and candidate.get("kind") == "field" and candidate.get("path") == entity["path"]]
+        def property_site_annotations(candidate: dict[str, Any]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+            field_values, getter_values = [], []
+            for annotation in candidate.get("annotations", []):
+                if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                    continue
+                if not _allowed_jpa_annotation(annotation["name"], entity["imports"]):
+                    continue
+                site = str(annotation.get("use_site_target", "")).upper()
+                unresolved = annotation.get("values_resolved") is False
+                raw = annotation.get("values", {})
+                args = ("__UNRESOLVED__" if unresolved else
+                        ",".join(f"{key}={_format_annotation_value(value)}" for key, value in raw.items())
+                        if isinstance(raw, dict) else "")
+                pair = (annotation["name"], args)
+                if site in {"FIELD", "BACKING_FIELD"}:
+                    field_values.append(pair)
+                elif site in {"PROPERTY_GETTER", "GETTER", "GET"}:
+                    getter_values.append(pair)
+            return field_values, getter_values
+        if kotlin:
+            placed = [(candidate, *property_site_annotations(candidate)) for candidate in kotlin_properties]
+            has_field_id = any(_simple(name) in {"Id", "EmbeddedId"} for _, annotations, _ in placed for name, _ in annotations)
+            has_getter_id = any(_simple(name) in {"Id", "EmbeddedId"} for _, _, annotations in placed for name, _ in annotations)
+            if (explicit_access == "FIELD" and has_getter_id and not has_field_id) or (
+                    explicit_access == "PROPERTY" and has_field_id and not has_getter_id):
+                diagnostics.append({"code": "ORM_KOTLIN_ACCESS_TARGET_MISMATCH", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "reason": f"Explicit {explicit_access} access conflicts with the compiler-reported Kotlin JPA identifier use-site target."})
+            entity_access = ("UNKNOWN" if access_values_unknown else
+                             explicit_access if explicit_access in {"FIELD", "PROPERTY"} else
+                             "FIELD" if has_field_id and not has_getter_id else "PROPERTY" if has_getter_id and not has_field_id else "UNKNOWN")
+            if access_values_unknown:
+                diagnostics.append({"code": "ORM_ACCESS_STRATEGY_UNKNOWN", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "reason": "Explicit @Access value is unresolved; identifier placement cannot override it."})
+            if entity_access == "UNKNOWN":
+                diagnostics.append({"code": "ORM_KOTLIN_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "reason": "Kotlin JPA identifier has no unique @field:/@get: target or explicit @Access; persistence access is not inferred."})
+        else:
+            entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
         table_node = nodes.get(table_id)
         if table_node is not None:
             nodes[table_id] = replace(table_node, metadata={**(table_node.metadata or {}), "access_strategy": entity_access})
-        for field_match in re.finditer(r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M):
+        if kotlin:
+            field_records = []
+            for candidate, field_annotations, getter_annotations in placed:
+                selected_annotations = field_annotations if entity_access == "FIELD" else getter_annotations
+                if entity_access == "UNKNOWN" or not any(_simple(name) in JPA_FIELDS for name, _ in selected_annotations):
+                    continue
+                field_records.append({"name": candidate.get("name"), "type": candidate.get("type", ""),
+                                      "annotations": selected_annotations,
+                                      "line": (candidate.get("range") or {}).get("start_line") or entity["line"]})
+        else:
+            field_records = [{"name": match.group("name"), "type": match.group("type").strip(),
+                              "annotations": [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", match.group("annotations"))],
+                              "line": start + body[:match.start()].count("\n")}
+                             for match in re.finditer(r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)*)(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<name>[A-Za-z_]\w*)\s*(?:[;=]|$)", body, re.M)]
+        for field_match in field_records:
             if entity_access != "FIELD":
                 continue
-            field_annotations = [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", field_match.group("annotations"))]
+            field_annotations = field_match["annotations"]
             if not field_annotations or not any(_simple(name) in JPA_FIELDS for name, _ in field_annotations):
                 continue
             if any(_simple(name) == "Transient" for name, _ in field_annotations):
                 continue
-            field_line = start + body[:field_match.start()].count("\n")
-            field_name = field_match.group("name")
-            field_type = field_match.group("type").strip()
+            field_line = field_match["line"]
+            field_name = field_match["name"]
+            field_type = field_match["type"].strip()
             embedded_id_annotation = next((args for name, args in field_annotations if _simple(name) == "EmbeddedId"), None)
             embedded = embedded_id_annotation is not None or any(_simple(name) == "Embedded" for name, _ in field_annotations)
             identifier = embedded_id_annotation is not None or any(_simple(name) == "Id" for name, _ in field_annotations)
-            attribute = add_node("orm_attribute", f"{node.name}.{field_match.group('name')}", entity["path"], field_line, node,
+            attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
                                  identifier=identifier, embedded=embedded)
             entity_attributes[node.name][field_name.casefold()] = attribute
-            add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
+            if table_id:
+                add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
             if identifier:
                 add_edge(node.id, attribute, "has_embedded_id" if embedded_id_annotation is not None else "has_id",
                          entity["path"], field_line, "JPA identifier placement determines FIELD access")
             if embedded:
                 embedded_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
                 entity_embedded_types[(node.name, field_name.casefold())] = embedded_type
+                embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                 target = embeddable_nodes.get(embedded_type)
                 if target:
                     add_edge(attribute, target, "embeds_type", entity["path"], field_line,
@@ -868,6 +1050,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     diagnostics.append({"code": "ORM_EMBEDDABLE_TYPE_UNRESOLVED", "path": entity["path"],
                                         "source_line": field_line, "attribute": attribute, "type": embedded_type})
                 override = next((args for name, args in field_annotations if _simple(name) == "AttributeOverride"), "")
+                if override == "__UNRESOLVED__":
+                    diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_UNKNOWN", "path": entity["path"],
+                                        "source_line": field_line, "attribute": attribute,
+                                        "reason": "Explicit @AttributeOverride values are unresolved; physical override bindings are omitted."})
+                    nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
+                                                                           "mapping_status": "UNKNOWN"})
+                    continue
                 if override:
                     overridden = _named_string_arg(override, "name")
                     column_match = re.search(r"@(?:[\w.]*\.)?Column\s*\([^)]*\bname\s*=\s*[\"']([^\"']+)", override)
@@ -897,7 +1086,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
                 entity_association_types[(node.name, field_name.casefold())] = target_type
-                association = add_node("orm_association", f"{node.name}.{field_match.group('name')}", entity["path"], field_line, node,
+                association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
                 add_edge(attribute, association, "declares_association", entity["path"], field_line,
@@ -917,12 +1106,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             column_annotation = next((args for name, args in field_annotations if _simple(name) == "Column"), "")
             if relation or embedded:
                 continue
+            if column_annotation == "__UNRESOLVED__":
+                diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": entity["path"],
+                                    "source_line": field_line, "attribute": attribute,
+                                    "reason": "Explicit @Column values are unresolved; no default physical column is published."})
+                nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
+                                                                       "mapping_status": "UNKNOWN"})
+                continue
             column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name
             column_id = add_node("orm_column", column_name, entity["path"], field_line, node,
                                  logical_name=column_name, inferred=not bool(column_annotation))
             add_edge(attribute, column_id, "maps_to_column", entity["path"], field_line,
                      "@Column name" if column_annotation else "Persistent attribute name; converter/naming strategy not verified")
-            column_matches = [candidate for candidate in schema_columns if in_schema_realm(candidate)
+            column_matches = [candidate for candidate in schema_columns if table_name and in_schema_realm(candidate)
                               and candidate.name.casefold().rsplit(".", 1)[-1] == column_name.casefold()
                               and len(candidate.name.split(".")) >= 2
                               and candidate.name.split(".")[-2].casefold() == table_name.casefold()]
@@ -934,23 +1130,35 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "column": column_name, "candidates": [item.id for item in column_matches]})
 
         if entity_access == "PROPERTY":
-            getter_pattern = re.compile(
-                r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)+)"
-                r"(?:(?:public|protected|private|final|open|abstract)\s+)*"
-                r"(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<getter>get[A-Z]\w*|is[A-Z]\w*)\s*\(\s*\)", re.M)
-            for getter in getter_pattern.finditer(body):
-                property_annotations = [(name, args) for name, args in
-                                        re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", getter.group("annotations"))]
+            if kotlin:
+                getter_records = [{"name": candidate.get("name"), "type": candidate.get("type", ""),
+                                   "annotations": getter_annotations,
+                                   "line": (candidate.get("range") or {}).get("start_line") or entity["line"]}
+                                  for candidate, _, getter_annotations in placed]
+            else:
+                getter_pattern = re.compile(
+                    r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*\))?\s*)+)"
+                    r"(?:(?:public|protected|private|final|open|abstract)\s+)*"
+                    r"(?P<type>[A-Za-z_][\w.<>, ?\[\]]*)\s+(?P<getter>get[A-Z]\w*|is[A-Z]\w*)\s*\(\s*\)", re.M)
+                getter_records = []
+                for getter in getter_pattern.finditer(body):
+                    getter_name = getter.group("getter")
+                    prefix = "is" if getter_name.startswith("is") else "get"
+                    property_name = getter_name[len(prefix):]
+                    property_name = property_name[:1].lower() + property_name[1:]
+                    getter_records.append({"name": property_name, "type": getter.group("type"),
+                                           "annotations": [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*\))?", getter.group("annotations"))],
+                                           "line": start + body[:getter.start()].count("\n"), "getter": getter_name})
+            for getter in getter_records:
+                property_annotations = getter["annotations"]
                 if any(_simple(name) == "Transient" for name, _ in property_annotations):
                     continue
                 if not any(_simple(name) in JPA_FIELDS for name, _ in property_annotations):
                     continue
-                getter_name = getter.group("getter")
-                prefix = "is" if getter_name.startswith("is") else "get"
-                property_name = getter_name[len(prefix):]
-                property_name = property_name[:1].lower() + property_name[1:]
-                property_type = getter.group("type").strip()
-                property_line = start + body[:getter.start()].count("\n")
+                getter_name = getter.get("getter") or "get" + str(getter["name"][:1]).upper() + str(getter["name"])[1:]
+                property_name = getter["name"]
+                property_type = getter["type"].strip()
+                property_line = getter["line"]
                 embedded_id = any(_simple(name) == "EmbeddedId" for name, _ in property_annotations)
                 embedded = embedded_id or any(_simple(name) == "Embedded" for name, _ in property_annotations)
                 identifier = embedded_id or any(_simple(name) == "Id" for name, _ in property_annotations)
@@ -958,14 +1166,16 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                      attribute=property_name, type=property_type, access="PROPERTY",
                                      identifier=identifier, embedded=embedded, getter=getter_name)
                 entity_attributes[node.name][property_name.casefold()] = attribute
-                add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
-                         "JPA property-access persistent attribute")
+                if table_id:
+                    add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
+                             "JPA property-access persistent attribute")
                 if identifier:
                     add_edge(node.id, attribute, "has_embedded_id" if embedded_id else "has_id",
                              entity["path"], property_line, "JPA identifier placement determines PROPERTY access")
                 if embedded:
                     embedded_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
                     entity_embedded_types[(node.name, property_name.casefold())] = embedded_type
+                    embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                     if embedded_type in embeddable_nodes:
                         add_edge(attribute, embeddable_nodes[embedded_type], "embeds_type", entity["path"], property_line,
                                  "Property-access embedded value")
@@ -987,11 +1197,44 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                 "path": entity["path"], "line": property_line})
                     continue
                 column_annotation = next((args for name, args in property_annotations if _simple(name) == "Column"), "")
+                if column_annotation == "__UNRESOLVED__":
+                    diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": entity["path"],
+                                        "source_line": property_line, "attribute": attribute,
+                                        "reason": "Explicit @Column values are unresolved; no default physical column is published."})
+                    nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
+                                                                           "mapping_status": "UNKNOWN"})
+                    continue
                 column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else property_name
                 column_id = add_node("orm_column", column_name, entity["path"], property_line, node,
                                      logical_name=column_name, inferred=not bool(column_annotation))
                 add_edge(attribute, column_id, "maps_to_column", entity["path"], property_line,
                          "Property @Column name" if column_annotation else "Property name; naming strategy not verified")
+
+    for declaration in embeddable_decls:
+        name = declaration["node"].name
+        if embeddable_mapping_access.get(name) != "INHERIT":
+            continue
+        inherited = embeddable_inherited_accesses.get(name, set())
+        for (embeddable_name, attribute_name), attribute_id in embeddable_attributes.items():
+            if embeddable_name != name:
+                continue
+            current = nodes[attribute_id]
+            metadata = dict(current.metadata or {})
+            getter_candidate = metadata.pop("_access_inheritance_unresolved", None)
+            if inherited == {"FIELD"}:
+                if getter_candidate is not None:
+                    metadata["mapping_status"] = "PARTIAL"
+                    metadata["default_column"] = getter_candidate
+                    nodes[attribute_id] = replace(current, metadata=metadata)
+                elif metadata.get("mapping_status") != "UNKNOWN":
+                    nodes[attribute_id] = replace(current, metadata=metadata)
+                continue
+            metadata["default_column"] = None
+            metadata["mapping_status"] = "UNKNOWN"
+            nodes[attribute_id] = replace(current, metadata=metadata)
+            diagnostics.append({"code": "ORM_EMBEDDABLE_ACCESS_UNKNOWN", "path": declaration["path"],
+                                "source_line": declaration["line"], "attribute": attribute_id,
+                                "reason": "Embeddable access is inherited from a container with non-FIELD or unknown access; physical column mapping is not projected."})
 
     for association in association_records:
         target = entity_nodes.get(association["target"])

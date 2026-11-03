@@ -1,5 +1,14 @@
 # Aktuální stav a zbývající práce
 
+## Merge politika po uživatelské změně 2026-11-03
+
+[T045 revize 2](tasks/45_addCodeReviewAgent.md) dovoluje merge bez GH CI, pokud
+pro aktuální base/head projdou všechny ostatní povinné kontroly a nezávislé
+review. Historické CI_PENDING/billing-only BLOCKED řádky níže zachovávají stav
+skutečných běhů; samy již merge neblokují. Chybějící acceptance/toolchain,
+konkrétní chyba, konflikt, draft a nesplněná závislost nadále blokují. GH workflow
+zůstávají beze změny a serverová pravidla se neobcházejí.
+
 ## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
 
 Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
@@ -128,10 +137,9 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
 | T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
-| T003-S05 Spring | PARTIAL | Spring rules v4 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors mimo bounded literal subset, registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
-
 | T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body source mapping mimo W02 a coroutine mapping, širší corpus a úplná acceptance banka |
-| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
+| T003-S05 Spring | PARTIAL | Spring rules v4 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors mimo bounded literal subset, registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
+| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, Java FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; Kotlin K2 `@field:`/`@get:` identity target, explicit `@Access`, embedded ID, implicit FIELD vs dual-use-site ambiguity, nested override/class literal compiler facts, canonical JPA namespace guards, fail-closed unknown explicit table/column/access and unproven/mixed embeddable inheritance in `test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed`; Java regression `test_ac06_real_javac_embedded_id_and_association_roles`; Flyway tests | XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL, implicit Kotlin annotation target policy and complete multi-datasource matrix |
 | T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping a local field edges; S07-W01 přidává compiler-proven Javac/K1/TS argument→declared-parameter bindings s context/transformation a named/default/vararg proof (`test_argument_parameter_flow`, change52) | K2/ASM unsupported argument proof, return/async/Kafka/HTTP a úplné validované datové cesty |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
 | T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
@@ -278,8 +286,12 @@ kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný whee
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
-K2 source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites, local/lambda
-execution a default-body mapping mimo W02 a coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
+K2 source CFG, constructor ABI, širší Kotlin annotation/framework metadata,
+property/operator/reference/initializer call sites a local/lambda execution nejsou
+dodány; konkrétní diagnostiky zachovávají PARTIAL. Kotlin JPA use-site annotation
+facts jsou pouze omezenou projekcí T003-S06-W01. T003-S04-W02 mapuje jen doložené
+DefaultImpls a simple bridge declarations; další default-body/coroutine tvary
+zůstávají mimo podporovanou matici.
 Jiné compiler/language/API/JVM verze a captured flags/plugins se odmítají bez
 implicitního fallbacku či publikace. T003-S04 a T003 zůstávají PARTIAL.
 
@@ -487,3 +499,19 @@ and broader pure focused115 PASS (6.79s); local strict full is queued under the
 shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
 Complete persistence/schema-compatibility S06/W08, T004 and production readiness
 remain PARTIAL; this does not implement a new parser or discover datasources.
+
+## T023 — ProcessDefinition / ProcessView (explicit model)
+
+T023 přidává čisté version1 Python API pro explicitní definici/revizi a process
+view nad T005/T009. Scope/context a origin/evidence refs jsou validovány;
+alternativy, exception, loop/retry i async nepřecházejí na lineární pořadí.
+Semantic annotations mají strict allowlist; APPROVED label nezvyšuje technical
+status, druh evidence, freshness ani data availability. Missing/foreign/stale
+proof je explicitní boundary nebo invalidní input.
+
+[Capability a příklad](process-model.md), [change note70](changes/70_defineBusinessProcessModel.md).
+Modelové AC mají konkrétní pozitivní/negativní testy: focused130 PASS1.00s;
+required frozen full729 PASS/10 optional SKIP546.19s,0 errors/failures a515
+nezměněných hashes na source95c3ed3. Nejde o discovery/projection, process
+review/catalog/store ani nové CLI/render. Exact-pair review/publikace/fresh CI
+zůstávají samostatnými release gates. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
