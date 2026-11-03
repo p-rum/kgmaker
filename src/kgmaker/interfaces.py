@@ -879,11 +879,11 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         inputs=md.get('input_files')
         repo=declaration['repo_id']
         if not isinstance(inputs,dict):fail('Unselected declaration has no input identity')
-        allowed={'@workspace/manifest.json',source_key(declaration['contract']['repo_id'],declaration['contract']['path']),
+        allowed={source_key(declaration['contract']['repo_id'],declaration['contract']['path']),
                  *(source_key(repo,item['path']) for item in declaration['config_files'])}
         reference=declaration.get('code_ref')
         if reference:allowed.add(source_key(repo,reference['source_file']))
-        if (set(inputs)!=allowed or inputs.get('@workspace/manifest.json')!=workspace['_manifest_hash']
+        if (set(inputs)!=allowed
                 or any(value is not None and (not isinstance(value,str)
                     or re.fullmatch('[0-9a-f]{64}',value) is None) for value in inputs.values())
                 or not isinstance(context,dict)):
