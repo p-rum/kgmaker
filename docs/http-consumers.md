@@ -50,3 +50,8 @@ There is no new source parser, URI evaluator, cross-service join, client proxy
 bootstrap or runtime observation importer. Technical occurrence IDs are bound to
 the supplied compiler snapshot; no business identity match across changed source
 snapshots is inferred.
+
+Only `uri_status=DECLARED_LITERAL` can resolve a captured route. Other or future
+nonempty status strings remain opaque upstream status, produce an explicit URI
+UNKNOWN reason and never become a resolved route or observed network call. The
+projector does not add another URI interpreter or extend upstream client support.

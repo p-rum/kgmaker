@@ -51,3 +51,20 @@ Příklad a hranice: [HTTP consumers](../http-consumers.md). SOURCE_ONLY/legacy 
 se nepovyšují na typed execution, nepodporovaný rule version je boundary. Skutečný
 aplikační/runtime HTTP test NOT_RUN; statický compiler fixture není runtime PASS.
 T012, remote bindings, architecture CLI/rendering a celý T004 zůstávají mimo scope.
+
+## První skutečný grouped proof a current UI parent
+
+K1/K2 captured public suite je **52PASS,0SKIP,11.78s**, včetně16 malformed
+variant/back end, evidence polarity, CONFIG provenance, same-path/Feign
+callers a shared publisher terminals. Oba source/test hashes před/po jsou shodné;
+persistent grouped.log/XML a source manifest jsou v /workspace/t011-validation.
+Root earlysourceclosure APPROVE nad2acee91 nezjistilo blocker.
+
+Před jediným full je integrován UI-only main081d69ca69d14b4d131cc305e4e5c873960e71a3.
+Own interfaces.py a test file zůstávají přesné approved/focus source;17 JVM
+source/artifact hashes stále odpovídá actual-built50cf/2eb receipt, žádný rebuild.
+TypeScript package/lock porovnány s actual-tested UI checkoutem a dependencies
+explicitně zkopírovány; tracked worker/UI adapter pochází přímo z parenta.
+URI status behavior se nerozšiřuje: jen DECLARED_LITERAL může resolve; ostatní
+budoucí/neznámé nonempty statusy jsou dokumentované UNKNOWN. Relevantní current
+focus a nový full outcome jsou zatím PENDING, nikoli PASS.
