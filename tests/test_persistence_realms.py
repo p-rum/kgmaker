@@ -10,7 +10,7 @@ import pytest
 from kgmaker.analysis_model import AnalysisError, write_json
 from kgmaker.scanner import scan_repository
 from kgmaker.schema_replay import reconstruct, graph_entities, schema_mappings
-from kgmaker.workspace import snapshot_workspace, _REPO_CACHE
+from kgmaker.workspace import snapshot_workspace, _REPO_CACHE, qualified
 
 
 def two_datasources(tmp_path):
@@ -326,3 +326,86 @@ def test_actual_quoted_dot_binding_uses_components_not_flat_display(actual_realm
     assert {nodes[e.target].name for e in bindings} == {'a.b.c'}
     assert len({e.target for e in bindings}) == 2
     assert {nodes[e.target].metadata['persistence_realm']['database_id'] for e in bindings} == {configs[1]['database_id']}
+
+
+def test_actual_two_persistence_units_choose_their_own_physical_realm(actual_realm_workspace, tmp_path):
+    import shutil
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.worker_protocol import WorkerError
+    from kgmaker.store import load_graph
+    from kgmaker.framework import augment_framework_graph
+    from test_t015_project_data_resources import jpa_api_jars
+    original, configs, _, _, _ = actual_realm_workspace
+    root = tmp_path / 'app'
+    shutil.copytree(original, root, ignore=shutil.ignore_patterns('.kgmaker', '.git'))
+    subprocess.run(['git', 'init', '-q', str(root)], check=True)
+    meta = root / 'META-INF'; meta.mkdir()
+    mapping_one = 'src/main/resources/orm-one.xml'
+    mapping_two = 'src/main/resources/orm-two.xml'
+    (meta / 'persistence.xml').write_text('''<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.1">
+<persistence-unit name="unit-one"><mapping-file>src/main/resources/orm-one.xml</mapping-file></persistence-unit>
+<persistence-unit name="unit-two"><mapping-file>src/main/resources/orm-two.xml</mapping-file></persistence-unit>
+</persistence>''')
+    (root / mapping_one).write_text('''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
+<entity class="demo.Order"><table name="orders" schema="public"/><attributes><id name="id"><column name="id"/></id></attributes></entity>
+</entity-mappings>''')
+    (root / mapping_two).write_text('''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
+<entity class="demo.Order"><table name="c" schema="&quot;a.b&quot;"/><attributes><id name="id"><column name="id"/></id></attributes></entity>
+</entity-mappings>''')
+    write_json(root / '.kgmaker/classification.json', {'schema_version': 1, 'overrides': [
+        {'path': 'META-INF', 'scope': 'production', 'role': 'resource',
+         'reason': 'Explicit production JPA descriptor location for this actual compiler fixture'}]})
+    manifest = tmp_path / 'workspace.json'
+    write_json(manifest, dict(schema_version=1, workspace_id='two-pu', repositories=[
+        dict(id='app', role='backend', path='app', flyway=configs)]))
+    home = Path(__file__).resolve().parents[1] / 'workers'
+    backend = next(c['kotlin_backend'] for c in load_graph(original).contexts if c.get('language') == 'jvm')
+    # Context records identify the backend as K1_COMPATIBILITY/K2_ANALYSIS_API;
+    # inspection input uses the public k1/k2 selector.
+    backend = 'k2' if 'k2' in backend.lower() else 'k1'
+    stdlib = home / 'jvm' / ('target-k2' if backend == 'k2' else 'target') / 'lib/kotlin-stdlib.jar'
+    jars = [*jpa_api_jars(), str(stdlib)]
+    for index, config in enumerate(configs):
+        inspect_jvm(root, home=home, kotlin_backend=backend, classpath=jars,
+            repo_id='app', module='app', publish=True,
+            build_context={'database_id': config['database_id'], 'schema_stream_id': config['stream_id'],
+                           'persistence_unit': 'unit-one' if index == 0 else 'unit-two',
+                           'persistence_schema': 'public' if index == 0 else None, 'flyway_target': config['target']})
+    _, _, _, graph, _ = snapshot_workspace(manifest)
+    nodes = {n.id: n for n in graph.nodes}; proofs = {p['id']: p for p in graph.evidence}
+    expected = {'unit-one': (configs[0]['database_id'], ('public', 'orders'), mapping_one),
+                'unit-two': (configs[1]['database_id'], ('a.b', 'c'), mapping_two)}
+    for context in [c for c in graph.contexts if c.get('language') == 'jvm']:
+        database, sql_name, mapping_path = expected[context['persistence_unit']]
+        entity = next(n for n in graph.nodes if n.kind == 'class' and (n.metadata or {}).get('owner') == 'demo.Order'
+                      and qualified('app', str((n.metadata or {}).get('context_id'))) == context['id'])
+        orm = next(e.target for e in graph.edges if e.source == entity.id and e.kind == 'maps_to_table'
+                   and e.context_ids == (context['id'],))
+        binding = next(e for e in graph.edges if e.source == orm and e.kind == 'resolves_to_schema_table'
+                       and e.context_ids == (context['id'],))
+        target = nodes[binding.target]
+        assert tuple(target.metadata['schema_object']) == sql_name
+        assert target.metadata['persistence_realm']['database_id'] == database
+        assert nodes[orm].metadata['persistence_unit'] == context['persistence_unit']
+        assert all(proofs[p]['xml_mapping_file'] == mapping_path for p in binding.evidence_ids)
+        assert all(proofs[p]['persistence_selection']['persistence_unit'] == context['persistence_unit'] for p in binding.evidence_ids)
+    local = load_graph(root)
+    contexts = [c for c in local.contexts if c.get('language') == 'jvm']
+    foreign = contexts[1]['id']
+    foreign_nodes = deepcopy([n for n in local.nodes if (n.metadata or {}).get('context_id') == foreign])
+    fresh = augment_framework_graph(root, local, contexts[0])
+    assert [n for n in fresh.nodes if (n.metadata or {}).get('context_id') == foreign] == foreign_nodes
+    before = (root / '.kgmaker/graph.json').read_bytes()
+    ambiguous = inspect_jvm(root, home=home, kotlin_backend=backend, classpath=jars, publish=False,
+        repo_id='app', module='app', build_context={'database_id': configs[0]['database_id'], 'schema_stream_id': 'main'})
+    assert any(d.get('code') == 'ORM_XML_PERSISTENCE_UNIT_AMBIGUOUS' for d in ambiguous['diagnostics'])
+    from kgmaker.model import KnowledgeGraph
+    from kgmaker.feature import attach_schema
+    ambiguous_graph = KnowledgeGraph.from_dict(ambiguous['graph'])
+    with patch('subprocess.Popen', side_effect=AssertionError('ambiguous replay must stay offline')):
+        for config in configs:
+            ambiguous_graph = attach_schema(ambiguous_graph, reconstruct(root, config), root)
+        ambiguous_graph = augment_framework_graph(root, ambiguous_graph, ambiguous['context'])
+    assert not any(e.kind in {'maps_to_table', 'resolves_to_schema_table'}
+                   and e.context_ids == (ambiguous['context']['id'],) for e in ambiguous_graph.edges)
+    assert (root / '.kgmaker/graph.json').read_bytes() == before

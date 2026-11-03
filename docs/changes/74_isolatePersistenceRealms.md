@@ -98,3 +98,25 @@ compiler-declared JPA schema/table hodnoty. Deset partial/foreign/malformed
 variant včetně target hash a display-name tamper doplňuje oba backendy.
 Pure targeted sada nyní83PASS31actual-deselected5.18s. Nový společný actual
 batch čeká na jeden nový freeze; full stále není queued.
+
+
+## Skutečný multicontext RED a seskupená oprava
+
+První actual frozen batch skončil **6 PASS, 1 FAIL v8.23s**, exit1,
+unchanged=true. Receipt/log/XML/source manifest jsou zachované jako
+`/workspace/s06-w04-context-lookup-red*`. Dva správné physical bindings měly jen
+jednu native-query hranu: starý repository lookup podle cesty/jména vybral
+foreign compiler node. Tři existující class/method lookups nyní omezují výběr
+na selected symbol IDs. Sedm ORM/XML attribute/unknown/metadata-complete/inheritance
+lookupů navíc vyžaduje generated context_id, aby stejný canonical owner ve dvou
+PU nesdílel attributes. Root tyto přesné guardy schválil jako representation
+isolation, nikoli nový resolver. Offline replay původních skutečných K1 facts
+po opravě zachová dvě native-query hrany; nové compiler spuštění tím není tvrzeno.
+
+Připravený grouped actual případ kopíruje původní source/API fixture do vlastní
+izolované repository, přidá dva persistence units a dvě mapping files. Stejná
+entity class se váže na(public,orders) v DBone a(a.b,c) v DBtwo podle selected PU;
+kontroluje XML provenance, foreign-context attributes a chybějící PU nad
+skutečnými compiler facts i replay schemas bez mutace posledního validního store.
+Tento centrální 2PU physical join zatím není PASS; následuje source-delta review
+a jeden společný focused batch. Full zůstává nequeued.

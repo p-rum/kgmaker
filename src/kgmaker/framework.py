@@ -1343,7 +1343,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
             continue
         type_lines = [(node, (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0))
-                      for node in nodes.values() if node.path == path and node.kind in {"class", "interface"}]
+                      for node in nodes.values() if node.id in symbols and node.path == path and node.kind in {"class", "interface"}]
         for match in re.finditer(r"(?P<ann>@(?:Autowired|Inject|Resource|Qualifier)(?:\([^\n]*\))?\s*)*(?P<type>[A-Z][\w.]*(?:\s*<[^;=]+>)?)\s+(?P<name>\w+)\s*(?:[;=]|(?:=\s*lateinit))", source):
             line = _line(source, match.start())
             owner = max((node for node, start in type_lines if start <= line), key=lambda node: (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0), default=None)
@@ -2498,7 +2498,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 continue
             repo_name, declared_model = match.group(1), generic.group(1).rsplit(".", 1)[-1]
             line = _line(source, match.start())
-            repo = next((node for node in nodes.values() if node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
+            repo = next((node for node in nodes.values() if node.id in symbols and node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
             repository_symbol = symbols.get(repo.id) if repo else None
             model_owner = repository_entity_owner(repository_symbol)
             model_name = _simple(model_owner) if model_owner else declared_model
@@ -2527,7 +2527,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     parsed = _derived_query(method_name)
                     if parsed is None:
                         continue
-                    method = next((node for node in nodes.values() if node.path == path and node.kind == "method" and node.name == method_name), None)
+                    method = next((node for node in nodes.values() if node.id in symbols and node.path == path and node.kind == "method" and node.name == method_name), None)
                     if method is None:
                         continue
                     query_line = line + body[:derived.start()].count("\n")
@@ -2788,7 +2788,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         source_path = symbol.get("path")
         result = []
         for candidate in nodes.values():
-            if candidate.kind != "orm_attribute" or (candidate.metadata or {}).get("attribute") != attribute_name:
+            if candidate.kind != "orm_attribute" or (candidate.metadata or {}).get("context_id") != context_id \
+                    or (candidate.metadata or {}).get("attribute") != attribute_name:
                 continue
             metadata = candidate.metadata or {}
             if class_kind == "entity":
@@ -2814,6 +2815,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         attribute_ids = set(entity_attributes.get(owner, {}).values())
         attribute_ids.update(candidate.id for candidate in nodes.values()
                              if candidate.kind == "orm_attribute"
+                             and (candidate.metadata or {}).get("context_id") == context_id
                              and ((candidate.metadata or {}).get("effective_owner") == owner
                                   or (candidate.metadata or {}).get("declaring_owner") == owner))
         for attribute_id in attribute_ids:
@@ -2831,6 +2833,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         prefix = declaration["node"].name + "."
         for candidate in list(nodes.values()):
             if candidate.kind not in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                    or (candidate.metadata or {}).get("context_id") != context_id \
                     or candidate.path != source_path or not candidate.name.startswith(prefix):
                 continue
             for key, edge in list(edges.items()):
@@ -2910,6 +2913,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     attribute_ids = set(entity_attributes.get(owner, {}).values())
                     attribute_ids.update(candidate.id for candidate in nodes.values()
                                          if candidate.kind == "orm_attribute"
+                                         and (candidate.metadata or {}).get("context_id") == context_id
                                          and (candidate.metadata or {}).get("effective_owner") == owner)
                     for attribute_id in attribute_ids:
                         remove_attribute_columns(attribute_id)
@@ -2919,6 +2923,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         nodes.pop(attribute_id, None)
                     for candidate in list(nodes.values()):
                         if candidate.kind in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                                and (candidate.metadata or {}).get("context_id") == context_id \
                                 and candidate.path == declaration["path"] \
                                 and candidate.name.startswith(declaration["node"].name + "."):
                             for key, edge in list(edges.items()):
@@ -3025,7 +3030,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "reason": "XML table has no unique exact schema binding in the selected realm."})
                 simple_name = declaration["node"].name
                 class_path = declaration["path"]
-                for attr in [candidate for candidate in nodes.values() if candidate.kind == "orm_attribute"]:
+                for attr in [candidate for candidate in nodes.values() if candidate.kind == "orm_attribute"
+                and (candidate.metadata or {}).get("context_id") == context_id]:
                     metadata = attr.metadata or {}
                     belongs = (metadata.get("effective_owner") == owner or
                                attr.path == class_path and attr.name.startswith(simple_name + "."))
@@ -3041,6 +3047,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 current_attribute_ids = set(entity_attributes.get(owner, {}).values())
                 current_attribute_ids.update(candidate.id for candidate in nodes.values()
                                              if candidate.kind == "orm_attribute"
+                                             and (candidate.metadata or {}).get("context_id") == context_id
                                              and ((candidate.metadata or {}).get("effective_owner") == owner
                                                   or (candidate.metadata or {}).get("declaring_owner") == owner))
                 for attribute_id in current_attribute_ids:
@@ -3188,7 +3195,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             target_table_id = None
         for attribute in list(nodes.values()):
             metadata = attribute.metadata or {}
-            if attribute.kind != "orm_attribute" or metadata.get("effective_owner") != effective_owner \
+            if attribute.kind != "orm_attribute" or metadata.get("context_id") != context_id \
+                    or metadata.get("effective_owner") != effective_owner \
                     or not metadata.get("inherited"):
                 continue
             for key, edge in list(edges.items()):
