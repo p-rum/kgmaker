@@ -283,3 +283,23 @@ actual T015 případy deselected, **2.91s**, `/workspace/jpa-mainEc-pure.xml`.
 Main prefix134 immutable episodes a všechny původní W01 captures jsou zachovány.
 Stavová tabulka slučuje aktuální S04 a konkrétní Kotlin JPA subset bez duplicit;
 celé S04/S06 zůstávají PARTIAL.
+
+
+## Obnovení po změně merge pravidel 2026-11-03
+
+Integrační base je main54a3e01c7bcb1295973655d72b58a14e6a5d597d. Jeho změny
+jsou pouze dokumentace, review profil a generované semantic/memory metadata.
+Vlastní runtime/test/worker soubory zůstávají byte-identické bdbe4ca7777f0354ee2ed3e4a0e9defa8f5eda70.
+Přetrvávající root receipt `/workspace/combined-jvm-main-ec/verified-results.json`
+dokládá fresh vlastní K1/K2 build a skutečné tři compiler případy: **3 PASS,
+0 SKIP v24.866s**, actual K2 JPA/Javac AC06/dispatch. Tento důkaz se nepovyšuje
+na nový full. GitHub CI zablokované fakturací není podle výslovné nové policy
+povinný merge gate; stav se neoznačuje za PASS. Ostatní review/acceptance a
+závislosti zůstávají povinné. Pure integration kontrola a semantic/scan se
+provedou před publikací; nezávislé finální review vlastní root.
+
+Pure integrační sada po policy merge: **124 PASS, 2 deselected**, XML
+`/workspace/jpa-main-policy-pure.xml`; selector vyloučil pouze dva actual T015
+případy s již samostatnou evidencí. Dva úvodní příkazy měly neexistující název
+testového souboru a nespustily testy; byly nahrazeny skutečným test_t005_add_view_model.py.
+První širší selector následně prošel121/5, finální přesný selector124/2.

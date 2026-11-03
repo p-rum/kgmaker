@@ -216,7 +216,10 @@ neinstaluje do uživatelských projektů.
 Projektový [`code_review`](.codex/agents/code-review.toml) přebírá vytvořené PR,
 ověřuje diff a test evidence proti zadání a vrací `APPROVE`, `REQUEST_CHANGES`
 nebo `BLOCKED` pro konkrétní head SHA. Po `APPROVE` znovu ověří aktuální HEAD,
-required checks, závislosti a mergeability a teprve potom sloučí ready PR.
+povinné lokální acceptance/toolchain kontroly, závislosti a mergeability a potom
+sloučí ready PR. GH CI je doplňující evidence: jeho absence či billing blokace
+sama merge neblokuje, pokud vše ostatní prošlo; konkrétní chyby z CI a skutečná
+serverová pravidla zůstávají závazné.
 Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
 Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
