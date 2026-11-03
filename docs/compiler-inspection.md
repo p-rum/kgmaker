@@ -792,7 +792,7 @@ jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, includ
 empty controls rather than truthy fallback. The official event declaration families
 are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
 on form is covered too. Same-named checkout declarations do not qualify. Full
-current frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
+historical frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
 factory and event-control matrix36 PASS. Change69 preserves the earlier v2 and
 pre-fix results, interrupted runs and current remote status.
 

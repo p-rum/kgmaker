@@ -311,3 +311,17 @@ kontroly. Před retry byly odstraněny pouze dokončené vlastní pytest temp tr
 (5.3GiB) a diagnostic venv; logy/XML/manifesty/receipts nebyly odstraněny. Nový
 current focused batch včetně distribution musí opravdu proběhnout; není nahrazen
 starými168 PASS ani isolated diagnostic. Full se pouze kvůli parent neopakuje.
+
+## Current integration acceptance GREEN
+
+Finální current-parent focused batch nad source checkpointem
+`81fda85a5b00b2a59b31f34313eb75b9b838cae5` je **189 PASS,0 SKIP v319.29s**,
+exit0; XML189/0failures/0errors. Všech243 frozen source/test/fixture/config/JAR
+hashů po běhu souhlasí. Obsahuje všechny UI případy, tsconfig freshness,
+TypeScript callbacks, HTTP provider katalog/privacy, graph provider, worker
+installation/distribution a protocol. InstalledWorkerTests nyní skutečně prošly;
+původní168+setupERROR zůstává historický neúspěšný běh. Log/XML/exit/receipt a
+manifest jsou `/workspace/ui-events-final-parent-focus.*` a `-frozen.json`.
+Runtime/helper/tests/JARy se po validním běhu nemění; následují jen metadata,
+paměť a CLI graph refresh. Cílový parent je75d448ee, final exact-pair review a
+merge provede root; nový full se neopakoval, jiný milník se neprohlašuje hotový.
