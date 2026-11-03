@@ -83,3 +83,32 @@ full ani cizí proces se nerušil. Audit `queue-relocation.json`.
 Durable test artifact673c1ef1d8955ccb44863cac628c9268e4e977b2feafbc37837c3f0f1dac3c1d
 přesunul task do REVIEW. Current-main integrace, finální SHA-pair review a ready/
 merge zatím neproběhly; Draft PR59 není automaticky schválen tímto full výsledkem.
+
+## Current-parent integration after full
+
+Integrated main `8b1eeceb28b71c122c2d48bf179e08cefa79c43c` includes merged
+W02 inherited JPA, T010 HTTP, Factory registrations and typed condition rulesv6.
+Own T024 runtime/tests/API fixture bytes remain exact full-tested3b24cc6.
+Only workflow/docs/generated metadata conflicted; all parent API preparation and
+test commands are retained together with T024. No worker/runtime conflict edit.
+
+15 tracked JVM source/build/lock files match actual built Factory source0044123;
+K1 JAR9b95d55d and K2d881ff22 plus all declared libraries match actual buildlogs
+and successful28-case worker XML at `/workspace/factory-mainJpa-validation/`.
+Explicit copy receipt `/workspace/validation/t024/current-main-worker-receipt.json`.
+
+Current-parent pure inventory/query/model/conditions replay:231PASS11deselected
+v4.31s; three source-only pure cases with actual in their name were subsequently
+run explicitly:3PASS0.27s (pure-extra.xml). Actual T024 official K1/K2 fixture2PASS36.53s,
+39unrelated deselected, no skips. All221 current integration input hashes stayed
+unchanged. No second full or new build/install/fetch was run.
+
+Main172 immutable episodes form the unchanged prefix plus the single validated
+T024 capture. Final independent current-pair review, ready and merge remain pending.
+
+Scoped semantic update/apply/validate and CLI scan/check PASS. The parent already
+held the correct scanner function ID261; union initially retained obsolete child
+ID251 as an extra edge. Validation rejected it and a duplicated attempted rebind;
+neither invalid patch was applied. The final scoped patch omits only that obsolete
+child duplicate, preserving the existing main261 relationship. All14 parent
+concepts/47 edges remain byte-equivalent; final core15/48,172episode prefix+1=173.

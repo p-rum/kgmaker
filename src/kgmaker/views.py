@@ -870,6 +870,7 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
     elif view == "configuration":
         edges = [e for e in edges if e.kind in {"configured_by", "resolves_property", "conditional_on",
                                                 "imports_configuration", "uses_import_selector", "selects_import", "may_select_import",
+                                                "uses_bean_registrar", "registers_bean", "produces_bean",
                                                 "defines_bean", "injects_bean", "advised_by",
                                                 "declares_entrypoint", "bypasses_proxy"}]
     elif view == "data-flow":
