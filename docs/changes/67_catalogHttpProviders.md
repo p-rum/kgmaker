@@ -272,3 +272,10 @@ a pinned libraries ověřila původní build receipt, hash každého dependency 
 (e44e3dac / e2553425); persistent doklad `/workspace/t010-jpa-worker-copy.json`.
 Nejde o pouhou shodu nově mergnutého source s neprokázaným starým JAR. Další
 integrační actual fixture rozhodne reviewer; historický full se nepřepisuje.
+
+## Integrace explicitního process modelu
+
+Current main b78d2e62148f225be7ba8c53c839f8b052ee269d přidává nezávislý čistý
+T023 model. Je převzat beze změny; HTTP runtime/tests zůstávají3e9. Před finálním
+review následuje jediný bounded actual HTTP/JPA/dispatch focus a pure process
+regrese. Nejde o nový full suite ani rozšíření scope HTTP projekce.

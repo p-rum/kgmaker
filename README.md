@@ -564,3 +564,14 @@ entity mappings and migrations contribute dependencies. Flyway is
 `MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
 Missing datasource mappings remain unresolved; no database connection or new CLI
 command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
+
+## Explicit business-process documents
+
+`kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
+explicit process documents using the shared view/evidence model. Stable IDs,
+branches, loops, exceptions and async boundaries survive round-trip; strict
+semantic labels remain separate from technical evidence and status. See
+[the Python API and example](docs/process-model.md) and
+[the explicit fixture](fixtures/process-model/checkout.json).
+This supplies T023's model only; process discovery, annotation review, process
+CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
