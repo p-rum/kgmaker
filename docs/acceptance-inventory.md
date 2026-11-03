@@ -642,4 +642,4 @@ AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
 WebClient occurrences, AC04 offline/input preservation, AC05 malformed source/
 edge/scope/owner/SHA and selected stale siblings are in
 `tests/test_t011_catalog_http_consumers.py`. AC06 documentation and actual outcome
-are in [change76](changes/76_catalogHttpConsumers.md). Full/review pending; runtime NOT_RUN.
+are in [change76](changes/76_catalogHttpConsumers.md). Strict full1373PASS/10optionalSKIP; current-pair review pending; runtime NOT_RUN.

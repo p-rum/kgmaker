@@ -704,5 +704,6 @@ Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
 explicit ownership/context selection and evidence buckets. Distinct request and
 Feign terminal callers remain distinct; static intent is not runtime execution.
 Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
-fresh full and final independent review are pending. Coverage remains PARTIAL,
+strict full at b1163fc passed1373 tests (10 optional skips); final current-pair
+independent review is pending. Coverage remains PARTIAL,
 remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).
