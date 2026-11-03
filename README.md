@@ -485,6 +485,13 @@ promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
 inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
 patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
 pojmenovaný subpackage není JPA evidence.
+Vybraný persistence unit může doplnit standardní `META-INF/orm.xml` nebo
+pořadově deklarované mapping files. XML class/table/column mapping má přednost
+před annotations a evidence uchovává cestu, hash souboru, persistence unit i
+pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML je
+omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
+namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
+soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
 Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
 entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
 zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
@@ -599,6 +606,11 @@ coroutines API boundaries, with bounded named continuation declaration mapping.
 Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
 remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
 
+The [hand-labelled JVM corpus](tests/fixtures/jvm-golden/README.md) compares exact
+compiler source-call identities, counts and unsupported boundaries for the pinned
+K1/K2 support matrices. Run `python -m pytest -q tests/test_jvm_golden_corpus.py`
+after preparing compiler prerequisites. Passing this corpus is bounded static
+evidence, not runtime dispatch or production-project precision.
 T015 adds a pure database-resource view through
 `kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
 Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
@@ -629,3 +641,25 @@ are never executed. Profile results also govern injection, so `!dev` is not
 incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
+
+### Proven trigger inventory (T024)
+
+`kgmaker.process_triggers.discover_process_triggers(workspace, graph,
+source_coverage=coverage)` returns a shared process-kind trigger inventory from
+existing proved HTTP/Kafka/scheduler facts. Missing CFG retains a candidate with
+an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
+process paths, business identities, worker execution or runtime availability are
+inferred. See [API and boundaries](docs/process-triggers.md).
+
+HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
+integrations --format json` includes `http.requests`; process JSON/Markdown shows
+request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
+3.7.2 Java calls are compiler-attributed in both workers. An unused WebClient
+publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
+static trigger, never observed network execution or available response data.
+See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).
+
+HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/method
+path components without guessing a composed route, and rejects URI-callback route
+guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
+starts a worker. See the HTTP matrix for property-file and privacy boundaries.

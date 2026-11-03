@@ -415,3 +415,24 @@ def argument_parameter_bindings(graph: KnowledgeGraph, call_site: str) -> list[d
                            'evidence_kind': edge.evidence_kind, 'evidence_ids': [identity],
                            'availability': 'UNKNOWN', 'execution': 'NOT_OBSERVED'})
     return sorted(result, key=lambda value: (value['argument_index'], value['parameter_index'], value['parameter']))
+
+
+def http_request_inventory(graph, *, callers=None):
+    """Read existing typed HTTP facts; never infer terminals from call labels."""
+    values = []
+    sites = {site['id']: site for site in graph.call_sites} if callers is not None else {}
+    for node in graph.nodes:
+        if node.kind != 'http_request_definition':
+            continue
+        metadata = node.metadata or {}
+        if callers is not None and metadata.get('caller') not in callers:
+            # Feign definitions belong to the abstract contract, while static
+            # invocation intent belongs to the consuming call site's caller.
+            if not any(sites.get(identity, {}).get('caller') in callers
+                       for identity in metadata.get('terminal_call_site_ids', [])):
+                continue
+        values.append({'id': node.id, 'source_file': node.path, **metadata})
+    covered = any(c.get('framework_rule_versions', {}).get('http') for c in graph.contexts)
+    return {'coverage': 'INDEXED_WITH_BOUNDARIES' if covered else 'UNKNOWN_LEGACY_OR_SOURCE_ONLY',
+            'requests': sorted(values, key=lambda item: item['id']),
+            'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'}

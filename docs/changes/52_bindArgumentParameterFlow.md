@@ -243,3 +243,13 @@ Ostatní runtime hunks se složily automaticky. Pure current-parent sada:
 jsou obnovené příkazy, včetně posunutého coroutine odstavce a frontend řádků.
 Nový společný worker build a cílený actual běh pro tuto poslední kombinaci
 zatím nejsou PASS a zůstávají před merge povinné; full se jen kvůli parentu neopakuje.
+
+### Kompozice s HTTP execution, XML a trigger parentem
+
+Main `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` přidává typed HTTP literal
+bindings a související inventáře, XML overrides a trigger projection. Integrace
+zachovává oba validátory argumentů i HTTP request inventory, společný workspace
+qualifier a obě Java capabilities. Pure kontrola: **142 PASS, 1 deselected
+v5.19s**. Semantic apply/validate ověřily19 concepts/63 edges; obsolete duplicate
+byl sloučen se zachovaným current-main factem podle čerstvého CLI scanneru.
+Čerstvý společný build a actual kontrola této kombinace zatím nejsou PASS.

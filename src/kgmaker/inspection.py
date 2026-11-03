@@ -131,12 +131,12 @@ def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]
     return [{"path": str(path.resolve()), "sha256": file_hash(path)} for path in paths]
 
 
-def sanitize(value, *, key=""):
+def sanitize(value, *, key="", semantic=False):
     """Persistent graph metadata contains declarations, never secret payloads."""
     if isinstance(value, dict):
-        return {k: sanitize(v, key=k) for k, v in value.items()}
+        return {k: sanitize(v, key=k, semantic=semantic or k in {"annotations", "literal", "spring_properties"}) for k, v in value.items()}
     if isinstance(value, list):
-        return [sanitize(v, key=key) for v in value]
+        return [sanitize(v, key=key, semantic=semantic) for v in value]
     if isinstance(value, str):
         import re
         if any(word in key.lower() for word in ("password", "secret", "authorization", "access_token", "api_key")):
@@ -145,7 +145,9 @@ def sanitize(value, *, key=""):
         value = re.sub(r"(\b(?:X-Api-Key|Api-Key)\s*[:=]\s*)[^,;\r\n]+", r"\1[redacted]", value, flags=re.I)
         value = re.sub(r"(\$\{[^}:]*(?:password|secret|token|api[_-]?key)[^}:]*:)[^}]*\}", r"\1[redacted]}", value, flags=re.I)
         value = re.sub(r"(https?://)[^/@\s]+:[^/@\s]+@", r"\1[redacted]@", value)
-        return re.sub(r"([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&\s]*", r"\1[redacted]", value, flags=re.I)
+        value = re.sub(r"([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&\s]*", r"\1[redacted]", value, flags=re.I)
+        from .http_execution import redact_uri_text
+        return redact_uri_text(value, relative=semantic)
     return value
 
 
@@ -155,7 +157,9 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
         from .typescript_snapshot import captured_sources
         return captured_sources(root, selected.get("project"))
     files = [node for node in graph.nodes if node.kind == "file"]
-    if selected.get("source_snapshot_version") != "selected-source-set-1":
+    if (selected.get("source_snapshot_version") not in {"selected-source-set-1", "selected-source-set-2"}
+            or (selected.get("source_snapshot_version") == "selected-source-set-2"
+                and not (selected.get("project_model") or {}).get("source_sets"))):
         return dict(sorted((node.path, graph.files[node.path]) for node in files
                            if node.scope == selected["scope"] or (node.scope == "unknown" and node.role == "configuration")))
     source_sets = [item for item in (selected.get("project_model") or {}).get("source_sets", [])
@@ -183,6 +187,49 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
     return dict(sorted(result.items()))
 
 
+def jpa_xml_input_snapshot(root: Path, selected: dict) -> dict:
+    """Capture the selected JVM persistence XML closure, including absent candidates."""
+    from .framework import _safe_jpa_xml, _xml_local
+    # The framework contract currently selects only project-root JPA defaults;
+    # retain absent candidates so their later appearance invalidates replay.
+    candidate_paths = {"META-INF/persistence.xml", "META-INF/orm.xml"}
+    descriptor = "META-INF/persistence.xml"
+    try:
+        descriptor_target = (root / descriptor).resolve(strict=False)
+        descriptor_is_confined_file = descriptor_target.is_relative_to(root.resolve()) and descriptor_target.is_file()
+    except (OSError, RuntimeError, ValueError):
+        descriptor_is_confined_file = False
+    if descriptor in candidate_paths and descriptor_is_confined_file:
+        document, _ = _safe_jpa_xml(root, descriptor)
+        if document is not None:
+            units = [child for child in document if _xml_local(child)[1] == "persistence-unit"]
+            name = selected.get("persistence_unit")
+            units = [unit for unit in units if unit.get("name") == name] if name else units
+            if len(units) == 1:
+                for child in units[0]:
+                    if _xml_local(child)[1] == "mapping-file" and child.text and child.text.strip():
+                        candidate_paths.add(child.text.strip())
+    captured = []
+    for relative in sorted(candidate_paths):
+        try:
+            target = (root / relative).resolve(strict=False)
+            if not target.is_relative_to(root.resolve()):
+                captured.append({"path": relative, "status": "invalid", "resolved": str(target)})
+            elif target.is_file():
+                hasher = __import__("hashlib").sha256()
+                with target.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        hasher.update(chunk)
+                captured.append({"path": relative, "status": "present", "resolved": str(target),
+                                 "sha256": hasher.hexdigest()})
+            else:
+                captured.append({"path": relative, "status": "missing", "resolved": str(target)})
+        except (OSError, RuntimeError, ValueError):
+            captured.append({"path": relative, "status": "invalid"})
+    return {"version": "jpa-xml-input-capture-1", "persistence_unit": selected.get("persistence_unit"),
+            "inputs": captured}
+
+
 def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, repo_id: str,
             module: str, source_set: str, scope: str, build_context: dict | None = None) -> dict:
     value = {"mode": "BUILD_IMPORT", "repo_id": repo_id, "module": module, "source_set": source_set,
@@ -192,17 +239,20 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
              "classifier_contexts": [c for c in base.contexts if c.get("scope") == scope], "worker": metadata, "analyzer_version": VERSION}
     if build_context:
         value.update(build_context)
-    if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
-        value["source_snapshot_version"] = "selected-source-set-1"
+    if language == "jvm":
+        value["source_snapshot_version"] = "selected-source-set-2"
+        value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
         value["source_snapshot_version"] = "typescript-input-discovery-1"
     value["source_files"] = source_snapshot(root, base, value)
-    from .framework import SPRING_RULE_VERSION
+    from .framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
     # and selection identity, including its pre-existing React overwrite behavior.
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
-                                        "jpa": "annotation-source-v4"}
+                                        "jpa": JPA_RULE_VERSION if language == "jvm" else "annotation-source-v4"}
     if language == "jvm":
+        from .http_execution import prepare_context
+        value = prepare_context(root, value)
         from .spring_conditions import condition_inputs
         value["spring_condition_inputs_hash"] = digest(condition_inputs(value))
     from .graph_provider import _selection_key
@@ -235,6 +285,38 @@ def validate_response(response: dict, selected_context: dict):
     for body in response["bodies"]:
         if body.get("method") not in ids or body.get("context_id") != selected_context["id"]:
             raise WorkerError("Unknown method body/context", "INVALID_PROTOCOL")
+    # Additive typed binding/literal fields are optional for legacy workers.
+    pending = [(body.get("body", {}), 0) for body in response["bodies"]]
+    visited = 0
+    while pending:
+        value, depth = pending.pop()
+        visited += 1
+        if visited > 200000 or depth > 512:
+            raise WorkerError("Typed IR size/depth exceeded", "INVALID_PROTOCOL")
+        if isinstance(value, list):
+            pending.extend((item, depth + 1) for item in value)
+        elif isinstance(value, dict):
+            for key in ("binding", "binding_ref"):
+                if key in value and value[key] is not None:
+                    record = value[key]
+                    if (not isinstance(record, dict) or (record.get("id") is not None and (not isinstance(record["id"], str) or not record["id"]))
+                            or not isinstance(record.get("kind"), str)
+                            or (record.get("symbol") is not None and record["symbol"] not in ids)):
+                        raise WorkerError("Malformed typed binding", "INVALID_PROTOCOL")
+            for key in ("captured_bindings", "referenced_bindings"):
+                if key in value and (not isinstance(value[key], list) or len(value[key]) > 128
+                        or any(not isinstance(r, dict) or not isinstance(r.get("id"), str)
+                               or not isinstance(r.get("kind"), str) for r in value[key])):
+                    raise WorkerError("Malformed typed binding references", "INVALID_PROTOCOL")
+            if "binding_references_complete" in value and type(value["binding_references_complete"]) is not bool:
+                raise WorkerError("Malformed typed binding completeness", "INVALID_PROTOCOL")
+            if "literal" in value:
+                literal = value["literal"]
+                if (not isinstance(literal, dict) or not isinstance(literal.get("type"), str)
+                        or literal.get("source") not in {"COMPILER_LITERAL", "COMPILER_CONSTANT"}
+                        or isinstance(literal.get("value"), (dict, list))):
+                    raise WorkerError("Malformed typed literal", "INVALID_PROTOCOL")
+            pending.extend((item, depth + 1) for item in value.values() if isinstance(item, (dict, list)))
     for fact in response["facts"]:
         if fact.get("source") not in ids or fact.get("target") not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
@@ -248,6 +330,7 @@ def validate_response(response: dict, selected_context: dict):
 
 def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, selected_context: dict,
                         *, project_model: dict | None = None) -> KnowledgeGraph:
+    response = sanitize(response)
     validate_response(response, selected_context)
     classifier = Classifier(root, project_model)
     nodes = {n.id: n for n in base.nodes}
@@ -511,21 +594,29 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if (kotlin_backend == "k2" or response.get("kotlin_backend")) and response.get("kotlin_backend") != expected_backend:
         raise WorkerError("Worker analysis backend differs from selected context", "INVALID_PROTOCOL")
     after = scan_repository(root, project_model=project_model)
-    if source_snapshot(root, after, selected) != selected["source_files"] or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
-        raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
+    if (source_snapshot(root, after, selected) != selected["source_files"]
+            or jpa_xml_input_snapshot(root, selected) != selected.get("jpa_xml_inputs")
+            or base.contexts != after.contexts
+            or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
+            raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
     graph = graph_from_response(root, base, response, selected, project_model=project_model)
     # Framework rules consume the compiler-resolved graph; they never replace
     # or upgrade a worker fact.  Keep this phase in the explicit inspection
     # workflow so scan/build/feature commands remain offline and source-only.
     from .framework import augment_framework_graph
     graph = augment_framework_graph(root, graph, selected)
+    from .http_execution import augment_http_graph
+    graph = augment_http_graph(graph, sanitize(response["bodies"]), selected)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
     if strict and result["status"] == "PARTIAL":
         return {**result, "exit_code": 4}
     final = scan_repository(root, project_model=project_model)
-    if source_snapshot(root, final, selected) != selected["source_files"] or final.contexts != base.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
+    if (source_snapshot(root, final, selected) != selected["source_files"]
+            or jpa_xml_input_snapshot(root, selected) != selected.get("jpa_xml_inputs")
+            or final.contexts != base.contexts
+            or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
         raise WorkerError("Source/config/classpath snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")

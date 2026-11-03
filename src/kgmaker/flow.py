@@ -117,13 +117,15 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
         return ids[cfg["entry"]], ids[cfg["exit"]], ids[cfg["exceptional_exit"]]
 
     first, last, exceptional = expand(entry, 0, (entry,), (entry,))
+    from .dataflow import http_request_inventory
+    http = http_request_inventory(graph, callers=expanded_methods)
     return {"schema_version": 1, "view": "process", "entry": entry, "scope": scope, "contexts": graph.contexts,
             "status": "PARTIAL" if omitted or any(cfgs[m].get("diagnostics") for m in expanded_methods) else "COMPLETE_WITHIN_SUPPORTED_SYNTAX",
             "diagnostics": [d for m in sorted(expanded_methods) for d in cfgs[m].get("diagnostics", [])], "truncated": any(o["reason"].endswith("limit") for o in omitted),
             "cfg": {"entry": first, "exit": last, "exceptional_exit": exceptional,
                     "blocks": sorted(blocks.values(), key=lambda b: b["id"]),
                     "edges": sorted(edges, key=lambda e: (e["source"], e["target"], e["kind"]))},
-            "boundaries": omitted, "strongly_connected_components": strongly_connected(graph),
+            "http": http, "boundaries": omitted, "strongly_connected_components": strongly_connected(graph),
             "limits": {"max_depth": max_depth, "max_nodes": max_nodes},
             "limitations": ["Static expansion is not proof of runtime dispatch, input feasibility or global async order."]}
 
@@ -162,6 +164,10 @@ def markdown(report):
         location = f"{source}:{position.get('start_line', '?')}" if source else "synthetic control node"
         lines.append(f"- `{block['id']}`: {location}; original IDs: " + ", ".join("`" + i + "`" for i in block.get("original_ids", [])))
     lines.extend(["", "## Coverage/limits", "", *["- " + x for x in report.get("limitations", [])]])
+    if report.get("http"):
+        lines.extend(["", "## HTTP request intent (runtime availability UNKNOWN)", ""])
+        for item in report['http']['requests']:
+            lines.append("- `" + item['id'] + "`: " + item['execution_status'])
     if report.get("truncated"):
         lines.append("- PARTIAL: diagram is truncated; omitted detail is explicitly bounded.")
     return "\n".join(lines) + "\n"
