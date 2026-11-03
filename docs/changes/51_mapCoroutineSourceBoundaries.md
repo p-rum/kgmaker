@@ -178,3 +178,12 @@ Nový combined full zatím nebyl spuštěn; čeká na nezávislou source closure
 Historický584/10 full jej nenahrazuje. Uživatelská revize T045 v merged PR57
 činí GH CI volitelným při splnění všech ostatních kontrol; neprovedené nebo
 billing-only CI zůstává neověřené a konkrétní chyba správnosti je stále blokující.
+
+Po nezávislém root source closure nad K1/K2 member-extension fixem byl spuštěn
+jeden strict frozen combined full nad634576a: **755 PASS, 10 SKIP v1001.00s**,
+exit0. XML765/0failures/0errors; všech200 před/po source/test/fixture/JAR hashů
+zůstalo přesně shodných. Povinné workers/K2/Spring flags byly zapnuté; deset
+volitelných Maven/Gradle/exporter a non-admin Windows konfigurací je v logu
+pravdivě SKIP. Persistent evidence: `full.log`, `full.xml`, `full-status.json`
+a `full-inputs.json` v `/workspace/coroutine-main-integration/`. Tento výsledek
+nahrazuje výše uvedený PENDING combined full, nikoli omezení podporované matice.
