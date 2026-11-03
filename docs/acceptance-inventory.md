@@ -624,3 +624,14 @@ Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note
 Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T025 — local technical process path
+
+| Acceptance | Bounded evidence | Remaining gate |
+|---|---|---|
+| AC01 | Public diamond and actual Javac/K1: no left↔right path, nested bodies and returns_to | Source closure/full/final review |
+| AC02 | Recursion/dispatch/depth/async boundaries retain original call-site; actual target/complete/receiver mutations cannot expand another body | Bounded source CFG only; no runtime claim |
+| AC03 | Existing flow.process root overflow + typed output budgets1/2/3 preserve explicit node-limit boundary | No unbounded root copy |
+| AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
+| AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
+| AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |

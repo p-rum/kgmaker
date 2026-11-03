@@ -265,3 +265,51 @@ CLI inventory a jejich jednoznačného stejného path/name; main fakta jsou zach
 GH CI je doplňující dle T045 revize2, nikoli náhrada lokálních acceptance/review.
 Další parent refresh čeká na schválený Arg merge a vyžádá novou odpovídající
 current JVM source/distribution closure;192 se za tento budoucí běh nevydává.
+
+## Finální parent1915 acceptance
+
+Po merged Arg PR47 a template PR38 je parent
+`1915ebf0be25cab4cb8b0836e2fce25b05c7b10f`. Jediný runtime konflikt workspace
+root výslovně schválil: zachovat celý nový `_qualified_evidence` helper/comprehension
+pro argument/HTTP reference a připojit původní Kafka diagnostics/evidence/contexty.
+Vlastní Kafka modul/testy zůstávají přesně b726; všechny parent source guards jsou
+zachované. Main204 immutable episodes tvoří přesný prefix, dvě child captures
+zůstávají nezměněné. Semantická metadata se přepojila na actual CLI packet IDs a
+posunuté Thymeleaf/HTTP headings1168/1188, bez vymyšlených vztahů.
+
+Všech27 tracked worker/build/lock source souborů i30 JAR/library inputs je shodných
+se skutečnou fresh Arg distribucí/108-case receipt. Před copy ověřeno10/18 knihoven;
+nové K1 SHA2bf6cbdeed24ab37694d8b976b56791896433dd42d8a21289a15085aaa5912b4,
+K2 SHA24461c439d00e97d3d6583ecefc955e1b0bc42eedee078c11a604d4fb693b8e4.
+Celý starší241file Arg manifest má navíc4 známé template parent změny; netvrdí se
+jeho současná celková shoda, pouze skutečně ověřený worker closure a oddělený
+156-case template proof. Receipt `/workspace/kafka-final-worker-receipt.json`.
+
+Finální frozen source `0797d4c720f7fd25eb6e134e1cb3fd0f3ca99104`:
+**205 PASS,0 SKIP v17.97s**, exit0, XML205/0errors/0failures. Obsahuje předchozí
+192-case Kafka/workspace/T006/T008/T009/T010/privacy matrix, template cases a
+actual Arg Javac/K1/K2/TS plus workspace qualification. Oba Kafka actual backendy
+skutečně běžely. Všech253 input SHA po běhu souhlasí. Log/XML/exit/frozen/receipt
+jsou v `/workspace/kafka-current-validation/final-*`; předchozí192 receipt je
+oddělený. Nový full se kvůli parent refresh neopakoval. Následující metadata-only
+commit nemění runtime/test/fixture/JAR vstupy. Final exact-pair review a merge
+provádí root, GH CI se netvrdí PASS. T012 groups/code listener/send rozšíření
+není součástí tohoto PR; případná explicitní revize2 vzniká samostatně.
+
+## Poslední disjoint parent T025
+
+Cílový main `c6950e973e7b070061c7db6f27d5f57ad65cc4e8` navíc obsahuje T025
+local process paths. Jeho flow/process_paths a testy se převzaly přesně z main,
+bez runtime konfliktu s Kafka. Proti frozen205 input manifestu se změnil pouze
+parent `src/kgmaker/flow.py` a workflow test line; vlastní Kafka/tests a všechny
+worker/JAR inputs zůstaly přesně stejné. Main206 episodes jsou zachovaný prefix.
+
+Relevantní T023/T025/T006 seam: **117 PASS,2 SKIP v2.44s**, XML
+`/workspace/kafka-current-validation/t025-parent-pure.xml`. Dva SKIP jsou T025
+actual Javac/K1 API fixture, protože v tomto pure příkazu nebyl exportován explicitní
+M2 repository; nejde o current actual PASS. Root má pro toto totožné T025 parent
+source samostatný full1104/10 a aktuální125/0 proof. Kafka205 actual batch se pro
+nekolidující T025 parent neopakoval, stejně tak nevznikl nový full. Původní205
+receipt zůstává svázán s0797/1915; dodatečný parent je doložen diff/source closure a
+pure seam, nikoli přejmenováním původního běhu. Finální metadata jsou oddělené od
+validovaného runtime; root stále vlastní exact-current-pair review a merge.

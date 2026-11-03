@@ -710,3 +710,12 @@ HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/meth
 path components without guessing a composed route, and rejects URI-callback route
 guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
 starts a worker. See the HTTP matrix for property-file and privacy boundaries.
+
+### Local technical process paths (T025)
+
+`kgmaker.process_paths.build_local_process(graph, trigger_inventory, trigger_id,
+process_id="process:caller-selected", max_nodes=200)` adapts existing source CFG
+topology into a typed T023 ProcessView. Branches, call-sites and exception paths
+are preserved; root budgets, recursion, uncertain dispatch and missing/async
+bodies stay explicit boundaries. No business identity or runtime execution is
+inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
