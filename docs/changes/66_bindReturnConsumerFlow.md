@@ -196,3 +196,24 @@ pro oba backends současně kontroluje LOCAL_VARIABLE identity v obou IR kontrak
 compiler literal/value_info, lambda capture, canonical enum_constant a zachovaný
 DECLARED_BODY_RETURN proof. Fixture se pouze kompiluje; analyzovaná aplikace se
 nespouští. Před čerstvým buildem/focus není tento nový test uváděn jako PASS.
+
+## Skutečné čerstvé buildy a aktuální T025/Kafka parent
+
+Na e1f81777 oba vlastní buildy skutečně uspěly: K1 za14.33s a K2 za13.07s.
+Společná actual matrix má **295 PASS, 2 optional Gradle SKIP za365.39s**, exit0;
+XML297/0failure/0errors/2skips, všech575 source a30 post-build JAR hashů při
+běhu shodných. Obě nové dual-IR/backend integrační fixture prošly. Persistentní
+source/built-jars/results/focus log/XML jsou v
+`/workspace/return-consumer-current-validation`. JAR K1 má SHA47b4e624d14f1711d2f13445eedf96d45c26e04335ea9ad7d59b52486aa7e5f3,
+K2 b7157bd9b120b846eeb30a00f2ba1d974a052499f30257736cfb6fcfc98ec813.
+
+Před jediným finálním full byl absorbován main
+`ef3ab4050289aafd557caa5414c594698da006ea` s T025 a deklarovaným Kafka W04.
+Mezi1915 aef3 není žádný worker source delta; všech27 tracked worker/build
+vstupů a všech30 skutečně postavených JAR/lib hashů zůstává přesně shodných.
+Nový build se proto neopakuje; všech575 původních source hashů po parent změně
+za shodné prohlášeno není. Flow ponechává T025 root/type/async/site/body guards,
+caller-block clone prefix a argument i return sidecar. Workspace ponechává
+Kafka redacted contexts/diagnostics i return reference qualification.
+Relevantní current-parent focus a jediný strict full následují; jejich výsledek
+zatím není tvrzen PASS. T025 certifikace lokálních operací je jiná budoucí větev.

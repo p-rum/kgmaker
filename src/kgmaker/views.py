@@ -706,29 +706,38 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
             raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
                                          "context_id": context["id"], "next_command": context.get("next_command", "kgmaker inspect"),
                                          "message": context.get("stale_reason", "Compiler context is stale")})
+        projected = "spring_properties_projection" in context
+        if projected and (not repo_roots or repo not in repo_roots):
+            raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
+                                         "context_id": context["id"],
+                                         "message": "Redacted context requires an explicit original checkout"})
         if repo_roots and repo in repo_roots:
             try:
-                # Check content-bound artifacts first so a hash mismatch gets
-                # the precise diagnostic even on providers that wrap stale
-                # WorkerError subclasses as an unavailable-file error.
-                from .inspection import artifact_hash
-                for artifact in context.get("classpath", []) + context.get("bytecode_artifacts", []):
-                    if artifact_hash(Path(artifact["path"])) != artifact["sha256"]:
-                        raise ValueError("STALE_INDEX: classpath changed; import/inspect again")
-                from .graph_provider import validate_context_snapshot
-                validation_context = dict(context)
-                if context.get("id", "").startswith("repo:"):
-                    # Workspace contexts qualify source paths as @repo/path.
-                    # The provider validator consumes a single checkout.
-                    prefix = "@" + repo + "/"
-                    source_files = context.get("source_files", {})
-                    if not isinstance(source_files, Mapping) or any(
-                            not isinstance(path, str) or not path.startswith(prefix)
-                            for path in source_files):
-                        raise ValueError("STALE_INDEX: workspace source snapshot has invalid repo-qualified paths")
-                    validation_context["source_files"] = {
-                        path[len(prefix):]: checksum for path, checksum in source_files.items()}
-                validate_context_snapshot(Path(repo_roots[repo]), validation_context)
+                if projected:
+                    from .workspace import validate_projected_context
+                    validate_projected_context(Path(repo_roots[repo]), repo, context)
+                else:
+                    # Check content-bound artifacts first so a hash mismatch gets
+                    # the precise diagnostic even on providers that wrap stale
+                    # WorkerError subclasses as an unavailable-file error.
+                    from .inspection import artifact_hash
+                    for artifact in context.get("classpath", []) + context.get("bytecode_artifacts", []):
+                        if artifact_hash(Path(artifact["path"])) != artifact["sha256"]:
+                            raise ValueError("STALE_INDEX: classpath changed; import/inspect again")
+                    from .graph_provider import validate_context_snapshot
+                    validation_context = dict(context)
+                    if context.get("id", "").startswith("repo:"):
+                        # Workspace contexts qualify source paths as @repo/path.
+                        # The provider validator consumes a single checkout.
+                        prefix = "@" + repo + "/"
+                        source_files = context.get("source_files", {})
+                        if not isinstance(source_files, Mapping) or any(
+                                not isinstance(path, str) or not path.startswith(prefix)
+                                for path in source_files):
+                            raise ValueError("STALE_INDEX: workspace source snapshot has invalid repo-qualified paths")
+                        validation_context["source_files"] = {
+                            path[len(prefix):]: checksum for path, checksum in source_files.items()}
+                    validate_context_snapshot(Path(repo_roots[repo]), validation_context)
             except (ValueError, OSError) as error:
                 raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,
                                              "context_id": context["id"], "next_command": context.get("next_command", "kgmaker inspect"),

@@ -581,6 +581,34 @@ Runtime acceptance NOT_RUN; no data availability or overall T004 completion clai
 | AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
 | AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
 
+
+### T003-S07-W04 — bounded Kafka configuration identity
+
+- AC01: `test_exact_cluster_topic_contract_release_and_profile_identity` uses
+  actual base/blue properties and JSON contract: two same-topic clusters never
+  match; distinct release never matches. Dynamic/cyclic/partial values and
+  unsupported profile/config/contract remain UNKNOWN. No transport proof.
+- AC02: optional workspace schema1 block; old HTTP services default unchanged;
+  `test_config_and_contract_hash_changes_invalidate_bindings_without_source_mutation`
+  reads graph/store v1/v2/v3. Legacy syntax nodes remain distinct.
+- AC03: structural/path/ownership and context ambiguity fail closed; missing
+  evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
+  publish no cache/source/store changes. Actual K1/K2 captured context test verifies
+  precedence/freshness without implicit repair. Password sentinel is absent from
+  graph; offline source-only checks allow only existing Git baseline reads.
+- AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
+  compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
+
+
+S07-W04 AC03 privacy correction: `test_sensitive_property_reference_never_exports_topic`,
+`test_public_workspace_captured_property_privacy_and_freshness` and
+`test_binding_cluster_alias_reference_privacy` exercise the public snapshot API
+for direct/transitive property references. `kafka-binding-2` returns UNKNOWN and
+no match before reading sensitive aliases; the full public graph redacts captured
+sensitive values while original input bytes/cache/context hashes remain valid.
+`test_public_kafka_projection_preserves_non_jvm_selection_identity` guards the
+postvalidation projection boundary. Prior613 full PASS does not cover this later
+review regression; note54 records separate current evidence.
 ## T024 — bounded trigger inventory
 
 AC01/02: explicit and actual K1 HTTP/Kafka/scheduler candidates with production/test
@@ -605,3 +633,14 @@ Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note
 Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T025 — local technical process path
+
+| Acceptance | Bounded evidence | Remaining gate |
+|---|---|---|
+| AC01 | Public diamond and actual Javac/K1: no left↔right path, nested bodies and returns_to | Source closure/full/final review |
+| AC02 | Recursion/dispatch/depth/async boundaries retain original call-site; actual target/complete/receiver mutations cannot expand another body | Bounded source CFG only; no runtime claim |
+| AC03 | Existing flow.process root overflow + typed output budgets1/2/3 preserve explicit node-limit boundary | No unbounded root copy |
+| AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
+| AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
+| AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |

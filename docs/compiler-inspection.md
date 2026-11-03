@@ -1094,6 +1094,106 @@ missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
 
+
+## T003-S07-W04 — declared Kafka binding identity
+
+Optional workspace `kafka_bindings` schema1 reuses repositories, services
+(`transport: kafka`), service_ownership and graph/store v1/v2/v3. The executable
+example is `fixtures/kafka-bindings/workspace.json`; no broker API is called.
+`clusters` declares unique logical IDs only. Each bounded binding declares its
+repo/service/module/source_set/scope, optional selected context ID, direction,
+active profiles, ordered config_files (path/profile expression), binder-alias to
+cluster map, and contract repo/path/release plus payload label. Unknown fields,
+duplicate identities, invalid ownership, out-of-root/symlink/hidden/sensitive or
+>1MB artifacts fail before source processing/publication. There is no new approval
+flow: labels are explicit declarations, never runtime observations.
+
+Supported configuration is literal UTF-8 `.properties` (at most10000 lines),
+Cloud Stream `spring.cloud.stream.bindings.<binding>.destination` and `.binder`,
+and bounded whole-property `${key}` references (depth16, cycles unresolved). An
+explicit empty active-profile list uses Spring `default`; an absent list is UNKNOWN. Base
+files precede profile files; explicit profile expressions reuse S05-W03 grammar.
+Captured properties of exactly one fresh matching JVM context take precedence.
+Multiple contexts require an explicit compatible context ID. Source-only scope
+requires conventional root/main or root/test resource paths; nonstandard layouts
+need matching compiler source-set membership. Unsupported/duplicate properties,
+missing files/profiles, partial placeholders/SpEL, YAML, multi-destination topics,
+missing release/payload, stale context or invalid JSON contract stay UNKNOWN.
+Configuration and contract files are content-hashed and checked again before
+cache publication; selected compiler snapshots are validated without execution.
+
+`kafka_binding` metadata records declared service realm, logical cluster, topic,
+contract SHA, release/payload, input hashes and exact selected context. Resolved
+static configuration produces FRAMEWORK_DERIVED `produces`/`consumes` and
+`kafka_binding_match` only for identical workspace cluster/topic/contract SHA/
+release/scope. JSON contract bytes identify an artifact; no schema compatibility
+or payload class mapping is inferred. `code_binding=UNPROVEN` and
+`delivery=NOT_OBSERVED` remain explicit. Raw properties, broker endpoints and
+credentials are never copied into new nodes/evidence. There is no implicit
+Kafka/AdminClient, network, build, package installation, registry or application
+execution. Existing Git baseline reads are unchanged.
+
+Legacy pattern topic nodes stay separate SYNTAX_CANDIDATE hints. Literal prefixes
+of concatenated/placeholder expressions no longer create guessed topics;
+`kafka_binding_boundary` records UNKNOWN. No source hint is promoted by matching a
+declared configuration label. Retry/DLT, binder auto-discovery, environment/default
+placeholder expansion, arbitrary YAML, Avro/protobuf/remote schema registries,
+serialization compatibility and runtime delivery are outside this bounded scope.
+
+Evidence: `tests/test_kafka_bindings.py` uses actual local repository/properties/
+JSON fixtures, two clusters with the same topic, profile/context precedence,
+dynamic/invalid/ambiguous cases, exact hash invalidation, source/store/cache
+atomicity, secret exclusion and no-process offline checks. Actual K1/K2 contexts
+verify property provenance and stale-source refusal; no Kafka toolchain is needed.
+See change note54 for exact commands/results.
+
+
+### Kafka property privacy (`kafka-binding-2`)
+
+Every destination/binder lookup checks its property key before fetching the
+value, including all whole-property alias hops within the existing16-step/cycle
+budget. Key matching ignores separators/case and covers password/passwd, secret,
+credential, authorization, API key, token, username, JAAS and bootstrap-server
+families, consistent with existing configuration/inspection redaction. Sensitive
+references yield generic TOPIC_UNRESOLVED/CLUSTER_UNRESOLVED, UNKNOWN and no match;
+diagnostics never contain the referenced value. Benign topic/binder aliases retain
+their supported literal behavior.
+
+With `kafka_bindings` enabled, context selection/freshness checks consume the
+original captured context. Only the subsequent public workspace projection
+deep-copies and redacts captured `spring_properties` values using `<redacted>`
+and existing inspection sanitization. This also protects a captured Spring
+property map attached to another language without changing its selection key or
+framework metadata. Other workspaces preserve their prior serialization.
+
+`spring_properties_projection` explicitly records `redacted: true`, SHA256 of
+the original property map and `original_context_id`. Existing selection key,
+condition-input hash, source hashes and original identity remain content-bound
+to the private input. The redacted property map is a display projection and
+cannot validate/replay those original inputs. The persisted compiler index and
+in-memory input cache remain unchanged; validation still uses the original
+context, and no worker is launched to repair or sanitize it. Derived identity and
+workspace cache version change to `kafka-binding-2`; graph/store schemas remain
+v1/v2/v3-readable.
+
+Public fixture regressions cover direct/transitive application and captured
+properties, binder-alias privacy, benign references, complete graph/coverage
+absence of the synthetic secret, source/index/cache immutability, original
+context validation and unchanged non-JVM selection identity. See note54 for the
+independently reproduced prior defect and current validation evidence.
+
+
+Redacted public contexts remain selectable by T006 with an explicit repository
+checkout. `workspace.validate_projected_context` reads the existing private
+graph store, requires exactly one matching original context, and compares the
+entire rederived qualified/redacted projection (including repository alias) to
+the supplied context. It recomputes the raw selector and uses the existing
+validator on the original input for condition/source/classpath/worker freshness.
+The marker/hash alone establishes no authority. Missing store/root, duplicate or
+forged identity/marker/body/hash, and changed original bytes fail closed. Only
+the unchanged public redacted context continues through selection; private
+properties are never returned or substituted into the public graph/cache.
+Unprojected context validation retains its previous path.
 ## T003-S09-W03 — statické Thymeleaf fragmenty
 
 `thymeleaf-bindings-2` zachovává dosavadní literal model-key/template-return vazby a
