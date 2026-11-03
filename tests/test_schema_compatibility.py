@@ -191,6 +191,17 @@ class PropertyMoney {
         annotation['values'][member]=value
         rejected=schema_compatibility(schema,modified,context_id=result['context']['id'])
         assert next(x for x in rejected['items'] if x['attribute_id']==amount['attribute_id'])['status']=='UNKNOWN'
+    for member,value in [('nullable',0),('nullable','false'),('precision','oops'),('precision',True),
+                         ('precision',-1),('scale',-1),('scale',True),('scale','2'),('unique',1)]:
+        modified=KnowledgeGraph.from_dict(deepcopy(graph.to_dict()))
+        symbol=next(x for x in modified.symbols if x['id']==amount['compiler_symbol_id'])
+        canonical=next(n for n in modified.nodes if n.id==symbol['id'])
+        for annotations in (symbol['annotations'],canonical.metadata['annotations']):
+            next(a for a in annotations if a['name']=='jakarta.persistence.Column')['values'][member]=value
+        before_malformed=deepcopy(modified.to_dict())
+        rejected=schema_compatibility(schema,modified,context_id=result['context']['id'])
+        assert next(x for x in rejected['items'] if x['attribute_id']==amount['attribute_id'])['status']=='UNKNOWN'
+        assert modified.to_dict()==before_malformed
     modified=KnowledgeGraph.from_dict(deepcopy(graph.to_dict()))
     for context in modified.contexts:
         if context['id']==result['context']['id']: context['status']='ERROR'
@@ -353,3 +364,47 @@ def test_drop_recreate_creation_incarnation_and_legacy_metadata_are_not_aliases(
     forged=deepcopy(node.metadata);forged['schema_identity']['incarnation']='a'*12
     forged['schema_identity']['proof_hash']=digest({k:v for k,v in forged['schema_identity'].items() if k!='proof_hash'})
     assert schema_node_realm(replace(node,metadata=forged)) is None
+
+
+@pytest.mark.parametrize('stamp',[
+    'annotation-source-v6-persistence-realms',
+    'annotation-source-v7-persistence-realms-jpql',
+    'annotation-source-v7-schema-compatibility','CURRENT',
+    'unknown-future-jpa-rules',None,[],'MALFORMED_CONTAINER','UNSTAMPED'])
+def test_realm_aware_or_unknown_jpa_stamp_never_bypasses_physical_proof(tmp_path,stamp):
+    from test_t015_project_data_resources import access_inputs
+    from kgmaker.data_resources import project_data_resources
+    from kgmaker.framework import JPA_RULE_VERSION
+    workspace,graph,coverage,context,_,_=access_inputs(tmp_path)
+    if stamp!='UNSTAMPED':
+        context['framework_rule_versions']=[] if stamp=='MALFORMED_CONTAINER' else {'jpa':JPA_RULE_VERSION if stamp=='CURRENT' else stamp}
+    before=deepcopy((workspace,graph.to_dict(),coverage))
+    from unittest.mock import patch
+    with patch('subprocess.Popen',side_effect=AssertionError('pure projection')):
+        view=project_data_resources(workspace,graph,source_coverage=coverage)
+    access=[edge for edge in view.edges if edge.relation in {'reads','writes','deletes'}]
+    assert {e.relation for e in access}==({'reads','writes'} if stamp=='UNSTAMPED' else set())
+    if stamp in ('unknown-future-jpa-rules','MALFORMED_CONTAINER') or stamp is None or isinstance(stamp,list):
+        assert any(d.get('code')=='DATA_RESOURCE_JPA_RULE_VERSION_UNSUPPORTED' for d in view.diagnostics)
+    assert (workspace,graph.to_dict(),coverage)==before
+
+
+from test_persistence_realms import actual_realm_workspace
+
+
+def test_actual_selected_realm_without_physical_binding_stays_unknown(actual_realm_workspace):
+    from dataclasses import replace
+    from unittest.mock import patch
+    from kgmaker.workspace import load_workspace
+    from kgmaker.data_resources import project_data_resources
+    _,_,manifest,_,snapshot=actual_realm_workspace
+    graph=snapshot[3]
+    for context in [c for c in graph.contexts if c.get('language')=='jvm']:
+        changed=replace(graph,edges=[e for e in graph.edges if not (e.kind=='resolves_to_schema_table' and e.context_ids==(context['id'],))])
+        before=deepcopy(changed.to_dict())
+        with patch('subprocess.Popen',side_effect=AssertionError('no implicit process')):
+            view=project_data_resources(load_workspace(manifest),changed,source_coverage=snapshot[1],
+                selected_contexts={('orders','app','app'):context['id']})
+        assert not any(e.relation in {'reads','writes','deletes'} for e in view.edges)
+        assert any(d.get('code')=='DATA_RESOURCE_ACCESS_UNPROVEN' for d in view.diagnostics)
+        assert changed.to_dict()==before

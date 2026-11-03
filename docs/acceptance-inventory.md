@@ -672,3 +672,9 @@ Original stack base was W04 checkpoint7dc1016. Dependency PR62 is now merged; cu
 No data availability, deployment, live DB or unsupported FK association/typed XML
 constraint positive is inferred from compatibility. PROPERTY/inherited positive
 coverage must be established by actual fixtures before claiming that subset.
+
+W08 current-main + guard evidence update:23PASS/0SKIP91.73s current composition
+a29PASS/0SKIP86.52s relevantní P1/P2 guard matrix;385 immutable frozen inputs
+ověřeny. Actual positive type/null/decimal/PK/UK/FK + PROPERTY/inherited, current
+rename stableID/incarnation a unknown/malformed negatives jsou doloženy v note78.
+Full a nezávislé source/final review zůstávají pending; žádná availability promotion.

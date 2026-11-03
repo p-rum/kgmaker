@@ -720,3 +720,9 @@ workspace positive and snapshot mutation negatives; pure integration54PASS.
 Expanded current focus is pending, not PASS. See note78 and acceptance matrix.
 Unsupported XML effective constraints, naming/converters/composite or unproved
 FK associations stay UNKNOWN. No availability/deployment/population promotion.
+
+W08 current-main + guard evidence update:23PASS/0SKIP91.73s current composition
+a29PASS/0SKIP86.52s relevantní P1/P2 guard matrix;385 immutable frozen inputs
+ověřeny. Actual positive type/null/decimal/PK/UK/FK + PROPERTY/inherited, current
+rename stableID/incarnation a unknown/malformed negatives jsou doloženy v note78.
+Full a nezávislé source/final review zůstávají pending; žádná availability promotion.

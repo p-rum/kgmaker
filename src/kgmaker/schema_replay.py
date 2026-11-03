@@ -722,8 +722,16 @@ def _verified_mapping_annotations(symbol, canonical):
             if (annotation.get('values_resolved') is False or original.get('values_resolved') is False
                     or not isinstance(annotation.get('values'),dict) or not isinstance(original.get('values'),dict)):
                 return None
+            strings = {'name','table','columnDefinition','referencedColumnName','targetEntity','mappedBy'}
+            booleans = {'nullable','unique','optional'}
+            integers = {'precision','scale'}
             for name in names:
                 value, expected = annotation['values'].get(name), original['values'].get(name)
+                if name in annotation['values']:
+                    if (name in strings and type(value) is not str
+                            or name in booleans and type(value) is not bool
+                            or name in integers and (type(value) is not int or not 0 <= value <= 2147483647)):
+                        return None
                 if type(value) is not type(expected) or value != expected or type(value) not in {str,int,bool,type(None)}:
                     return None
     return list(actual.values())
@@ -1151,7 +1159,7 @@ def schema_compatibility(schema, graph, *, context_id=None):
             number = values.get(dimension)
             if descriptor != 'Ljava/math/BigDecimal;':
                 dims[dimension] = result('COMPATIBLE','NOT_REQUIRED_FOR_SUPPORTED_NON_DECIMAL') if expected else result('UNKNOWN','UNSUPPORTED_COMPILER_TYPE')
-            elif type(number) is int and values.get('precision',0) > 0:
+            elif type(number) is int and type(values.get('precision')) is int and values['precision'] > 0:
                 dims[dimension] = (result('COMPATIBLE' if int(decimal[index]) == number else 'CONFLICT', 'EXPLICIT_DECIMAL_DIMENSION')
                                    if decimal else result('UNKNOWN','SQL_DECIMAL_DIMENSIONS_UNPROVEN'))
         constraints = [x for x in schema['objects'].values() if x.get('kind') == 'constraint' and x.get('table') == table['name']]

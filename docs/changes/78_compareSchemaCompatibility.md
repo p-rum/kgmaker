@@ -79,3 +79,49 @@ checkpoint7dc1016 a current-main refresh zůstává povinný po dokončení froz
 Publikovaný draft PR64 má source checkpoint8dbaf878fcb18db1788e750a3d6b8fd53a933b7e.
 Aktuální actual focus43409/creation-source.json má269 frozen inputs a zatím není
 PASS. Full, finální semantic/memory a nezávislé exact-pair review nejsou hotovy.
+
+## Current-main skutečný focus a nezávislé review guardů
+
+Main9f6605db... integrován, runtime cache-list konflikt vyřešen zachováním všech
+parent Kafka i vlastních JPA/compatibility version tokens. Verified Arg donor
+15source/build/locks +30JAR, oba fresh SUCCESS build receipts a108PASS actual;
+K12bf6cbde/K224461c43, bez nového buildu. Current-main focus23PASS/0SKIP91.73s,
+runnerexit0/92.104s, všech283 source/test/fixture/JAR inputs beze změny, XMLmain.xml.
+Zahrnuje skutečnou FIELD/PROPERTY/inherited a FK/rename/incarnation matice, CLI,
+namespace/canonical-member negatives i XML/W04 reprojection/resource/two-unit seams.
+
+Nezávislé review našlo P1 v navazujícím T015 projector: hardcoded v6 stamp guard
+nevyžadoval physical binding pro v7. Repro2RESOLVEDreads/writes bez physicalproof
+byl skutečně potvrzen. Oprava používá přesnou množinu known historical v6/v7JPQL/
+v7compat + current JPA_RULE_VERSION; neznámý nebo malformed explicit stamp je
+UNKNOWN s diagnostikou, unstamped legacy kontrakt zůstává zachován. Producer
+rules_version je t015-data-resources-2-realm-rule-guards, schema/IDs beze změn.
+Pure65PASS/7actual deselected; actual selected-realm missing-proof negative pending.
+
+Review P2: precision='oops' současně v symbol i canonical Node members původně
+vyvolalo TypeError; scale=-1 mělo být unsupported UNKNOWN. Member-specific typed
+guards nyní kontrolují precision/scale exact int0..INT_MAX (bool není int), bool/
+string members podle kontraktu, před výpočtem. Nezávislý captured repro nyní
+GUARDED UNKNOWN;9 malformed-member public mutation případů je v grouped actual.
+
+Full prerequisite: po dokončeném validním focus znovu ověřeno15source+30JAR a
+zkopírováno kompletních102license files z téhož donor closure. Oba
+target/licenses/kotlin/LICENSE.txt mají SHA shodné s oficiálním Kotlin LICENSE.
+Receiptlicense-prerequisites.json. Další ignored fixture/runtime prerequisites
+se materializují až po aktuálním frozen guard focus; full zatím nefrontován.
+
+## Guard review — dokončený grouped actual
+
+Po dokončeném validním předchozím focus byl spuštěn pouze relevantní grouped
+guard focus: **29PASS/0SKIP86.52s, runnerexit0/86.917s**,
+`/workspace/validation/schema-compatibility/guards.xml`. Nezávislá kontrola XML
+a všech385 frozen source/test/JAR/license hashes prošla, beze změn.
+Zahrnuje P1 actual selected-realm missing-physical-proof negatives a zachované
+T015/W04 current positives; P2 devět malformed-member mutací současně v symbol
+a canonical Node (včetně precision='oops', negative/bool/string scale) končí
+UNKNOWN bez výjimky a bez mutace. FIELD/PROPERTY/inherited, FK/rename/incarnation,
+CLI a namespace scope běží na obou skutečných K1/K2 distributions s Javac facts.
+Nejde o implicitní runtime/DB proof ani univerzální Kotlin annotation coverage.
+
+Root REQUEST_CHANGES P1/P2 vyžaduje nezávislé přezkoumání tohoto checkpointu;
+pouhé29PASS není review APPROVE. Full ještě nebyl spuštěn.
