@@ -216,7 +216,10 @@ neinstaluje do uživatelských projektů.
 Projektový [`code_review`](.codex/agents/code-review.toml) přebírá vytvořené PR,
 ověřuje diff a test evidence proti zadání a vrací `APPROVE`, `REQUEST_CHANGES`
 nebo `BLOCKED` pro konkrétní head SHA. Po `APPROVE` znovu ověří aktuální HEAD,
-required checks, závislosti a mergeability a teprve potom sloučí ready PR.
+povinné lokální acceptance/toolchain kontroly, závislosti a mergeability a potom
+sloučí ready PR. GH CI je doplňující evidence: jeho absence či billing blokace
+sama merge neblokuje, pokud vše ostatní prošlo; konkrétní chyby z CI a skutečná
+serverová pravidla zůstávají závazné.
 Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
 Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
@@ -437,6 +440,23 @@ Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry
 návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
 ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
 repository metoda se na ni váže přes `uses_named_query`.
+K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
+explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
+properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
+`@Id` bez jednoznačného targetu zůstává UNKNOWN s diagnostikou. Embedded Kotlin
+ID tak zachovává stejné `orm_attribute`/`orm_embeddable` uzly jako Java cesta.
+JPA annotation constants, nested `@AttributeOverride` columns a class literals
+pocházejí z compiler values; částečně nevyřešená explicitní `@Table`, `@Column`
+nebo override hodnota nevytvoří defaultní fyzické mapování. K2 fixture používá
+JPA FIELD/METHOD annotation targets, aby ověřil skutečný implicitní FIELD
+default i samostatnou dual-use-site ambiguity. Kotlin embeddable columns se
+promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
+inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
+patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
+pojmenovaný subpackage není JPA evidence.
+K2 worker zvolíte výslovně při inspekci, například
+`kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
+nepřejde na K1.
 
 
 ## Compiler lifecycle
@@ -530,3 +550,14 @@ entity mappings and migrations contribute dependencies. Flyway is
 `MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
 Missing datasource mappings remain unresolved; no database connection or new CLI
 command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
+
+## Explicit business-process documents
+
+`kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
+explicit process documents using the shared view/evidence model. Stable IDs,
+branches, loops, exceptions and async boundaries survive round-trip; strict
+semantic labels remain separate from technical evidence and status. See
+[the Python API and example](docs/process-model.md) and
+[the explicit fixture](fixtures/process-model/checkout.json).
+This supplies T023's model only; process discovery, annotation review, process
+CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
