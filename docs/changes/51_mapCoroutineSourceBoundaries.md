@@ -217,3 +217,14 @@ Dřívější provisional Draft PR37 byl publikován s pravdivým PENDING stavem
 Lokální validační blokace je nyní uzavřena; nezávislé review přesného finálního
 base/head páru, ready stav, ověření závislostí a root guarded merge stále zbývají.
 Tato poznámka sama nepředstavuje review APPROVE ani merge.
+
+Poslední finální base je main
+`8b1eeceb28b71c122c2d48bf179e08cefa79c43c` s typed Spring conditions v6.
+Všech15 JVM source/build/lock hashů přesně odpovídá skutečnému Factory build
+receiptu výše; vlastní coroutine/source mapping/control-flow a regresní testy
+se nezměnily. Pure conditions/provider/CFG/HTTP integrace: **82 PASS,
+5 actual/real/fixture deselected v3.49s**, bez skips (`conditions-pure.log/xml`).
+Nejde o nový actual compiler nebo full run; platí předchozí obsahově shodné
+755/10 full a fresh current-JVM48actual výsledky. Sémantické K2 function anchors
+se při spojení nových parent facts přivázaly na aktuální deklarace; epizody
+main zůstávají nezměněným prefixem. Finální independent review zůstává rootovi.
