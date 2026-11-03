@@ -128,3 +128,21 @@ shape-checked před projekcí; nullable finally=None zůstává validní, legacy
 return_flow_version se nemění. Actual captured-response replay53 PASS10.65s,
 včetně14 nových child-container mutations a future-string UNKNOWN boundary.
 Žádný další whole run nebyl spuštěn; combined focus-only před root closure následuje.
+
+## Obnovení a skutečný společný argument/return fokus
+
+Po obnovení prostředí odpovídalo všech127 zmrazených source hashů i oba JARy
+manifestu6f4ec. Focus-only dokončil **124 PASS, 1 FAIL za91.67s**: starší actual
+argument fixture předávala do version1 replay pouze context ID, nikoli captured
+source_files. Produkční inspekce snapshot předává; strict return proof guard se
+nemění. Test-only captured_context nyní počítá SHA256 ze skutečných fixture bytes
+a canonical relative paths; synthetic legacy cases zůstávají nezměněné.
+
+Původně selhávající round-trip nyní **1 PASS za2.20s**. Celé actual argument a
+return moduly mají **128 PASS za106.89s**, bez skip, s mandatory vlastními K1/K2
+workers. Log/XML jsou persistentní `fixture-context-focus.*` v
+`/workspace/return-consumer-proof`. Root nezávisle schválil runtime closure i
+17řádkový testový diff. Jeden strict full s --maxfail=1 je autorizován až po tomto
+GREEN; jeho výsledek zatím není tvrzen PASS. Nový corrective durable task
+`181b317334c7051df72f974d483085db741842ccfb022a947db1c0729ca7d24d` navazuje na
+vyčerpaný historický retry budget707659; limity ani runtime guards se neuvolňují.
