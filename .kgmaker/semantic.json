@@ -39,9 +39,9 @@
     "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "ef9358324559dad9c2f79d22562d7767697632d6771483bb2e25f0da8ce6f227",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
-    "docs/changes/67_catalogHttpProviders.md": "4cc041fd13f52fda5c56d42e287d8f916edcad31aab594184a4fc09277441a4a",
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
+    "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "85084a8f16e6f3e530d3aea462bcb0e8a794134f7bff6d48dbcc207f32e98ee5",
@@ -195,7 +195,6 @@
     "fixtures/feature-analysis/expected/candidate-valid.json": "fd726df4a3e743f660eff5df32554fe3509d43dd8758f50a64c5227a896bc351",
     "fixtures/feature-analysis/requirements/additional-hedge-answers.json": "9d87e22c9f5880cce2a28daba80b828dbae923c533549634cb56b5ef90db4fc5",
     "fixtures/feature-analysis/requirements/additional-hedge.md": "7041a5dedf488018953ecfeb9f39034c1600ba6fe28c1e74dce4227e5d046599",
-    "fixtures/http-provider-projection/dependencies.lock.json": "90cc4cc8b6b3eabd361276d70d0f49c9e943741a7528432ed93c147be649a913",
     "fixtures/multirepo-analysis/README.md": "a49b04d145d39f35aee83fc1155e58c1816eb776f8bfac7ada2068e43dc3f954",
     "fixtures/multirepo-analysis/backend/contracts/exposure.json": "57a1f494ed8b0396307e82e7107a31edc6ce4579c54e605809289bdd449047d4",
     "fixtures/multirepo-analysis/backend/src/main/resources/db/migration/R__exposure_view.sql": "0fde4135686af9522aeb17b8bfda7ced0264b3b2896baeb89a9768f28a12b71c",
@@ -258,7 +257,6 @@
     "src/kgmaker/graph_provider.py": "08ab9d5061647f6acc8932fd3042ddb42faaf70bf2b779bec784e0b036cc1af2",
     "src/kgmaker/inspection.py": "25cc8de70cd89eac9c77f9a61a939d032f4c9aac4a27f7d3757f89e66b975bf5",
     "src/kgmaker/inspection_cli.py": "b5108462c83c77e07961771497ea2fb3f6e86a96ff676c18d34b37788c1dcff6",
-    "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
@@ -317,8 +315,6 @@
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
     "tests/test_t008_project_service_inventory.py": "59e40fcddf315ef06fc8739ccf60ceedd42da35e2dd0845a9b6f5204a807b18b",
     "tests/test_t009_propagate_view_evidence.py": "22c259428b00ab80d7e2e1b8246d3f91c109e08f68b705763d3ae948200d2ed6",
-    "tests/test_t010_catalog_http_providers.py": "486ccb3778388a7fb7a226f61e7e62ec61ec4528e71a1bea852e2d95a35ae7c2",
-    "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165",
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_tsconfig_freshness.py": "1cdaf38fde8df1a2ce6029872b233d1e101bd259aadb56b6c0cbef4d80fc9cd1",
@@ -351,7 +347,12 @@
     "workers/typescript/input_snapshot.cjs": "a407f4f525bb03a479888aa8e420a67eb455dd703844511b4c487328183aabea",
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "79a719c9e60fa1cd42cbb6979df1ae11752f83f85efc890527aa373eee633fac",
-    "workers/typescript/worker.cjs": "fb1aeb1c9ad5966921faf52f0c808d03bc88bf386d776822d0e8f73254f2894b"
+    "workers/typescript/worker.cjs": "fb1aeb1c9ad5966921faf52f0c808d03bc88bf386d776822d0e8f73254f2894b",
+    "docs/changes/67_catalogHttpProviders.md": "4cc041fd13f52fda5c56d42e287d8f916edcad31aab594184a4fc09277441a4a",
+    "fixtures/http-provider-projection/dependencies.lock.json": "90cc4cc8b6b3eabd361276d70d0f49c9e943741a7528432ed93c147be649a913",
+    "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
+    "tests/test_t010_catalog_http_providers.py": "486ccb3778388a7fb7a226f61e7e62ec61ec4528e71a1bea852e2d95a35ae7c2",
+    "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165"
   },
   "nodes": [
     {
@@ -374,13 +375,6 @@
       "source_file": "docs/typescript-callbacks.md",
       "source_line": 3,
       "summary": "TypeScript-selected signatures and canonical parameters preserve declared evidence while callback bindings and unions remain incomplete candidates, separate from runtime dispatch proof."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 589,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
     },
     {
       "id": "concept:docs/architecture.md:source_code_is_authoritative",
@@ -418,10 +412,17 @@
       "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
     },
     {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 589,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 186,
+      "source_line": 167,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
@@ -514,68 +515,8 @@
       "evidence": "Callback documentation identifies the reused candidate navigation contract instead of a parallel callgraph model."
     },
     {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 87,
-      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
-      "source_line": 107,
-      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
-    },
-    {
-      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_default_body_mapping.py",
-      "source_line": 1,
-      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
-      "source_line": 111,
-      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 88,
-      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 82,
-      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
-    },
-    {
       "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::261",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::251",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -664,13 +605,73 @@
       "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 87,
+      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
+      "source_line": 107,
+      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
+    },
+    {
+      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_default_body_mapping.py",
+      "source_line": 1,
+      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 111,
+      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 88,
+      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 82,
+      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 186,
+      "source_line": 167,
       "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
     },
     {
@@ -700,8 +701,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 188,
+      "source_line": 169,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::261",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
     },
     {
       "source": "concept:docs/architecture.md:scoped_http_provider_projection",
@@ -54237,6 +54248,145 @@
         }
       ],
       "id": "episode:5d3ef2d4d0a0ec521b27c805645a18016f5e94b4266c42ae3a85bc4d7266ce41"
+    },
+    {
+      "base_commit": "ec333966e657896382f310ef018835e3d696513e",
+      "head_commit": "ec333966e657896382f310ef018835e3d696513e",
+      "worktree_fingerprint": "48caf5a9939cb8aff23e4c7ac2234a7175bbf9b85f87767cc0945ed914cd51e2",
+      "title": "Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "M",
+          "sha256": "61fc87319a1f38c640f7d7e927b7e3d5ff7547640c6840c9824af6281a5ec798"
+        },
+        {
+          "path": ".codex/agents/code-review.toml",
+          "status": "M",
+          "sha256": "6d11215d84594f238f89c894eac743e950d09df3871bbc66ad641f70c8424d72"
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "M",
+          "sha256": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "dc6a1cfe5ae587565490b11dc21955f017d217627951f07b5f6f6c3235b42b1e"
+        },
+        {
+          "path": "docs/changes/72_makeGithubCiOptional.md",
+          "status": "A",
+          "sha256": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "75fb2a65565ad4e40b75382694e4be1d86e7ec7973f1ee17599f628612ab019b"
+        },
+        {
+          "path": "docs/tasks/45_addCodeReviewAgent.md",
+          "status": "M",
+          "sha256": "f58ff7405cca873bfa5ec39cd1aebe998070cdba4b53d8b67408787b6d958905"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "21bbb7d140ad9d126e7dcc3b466451be681fd486b434900b96bd2c9e2b334662"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:AGENTS.md:AGENTS.md",
+        "file:README.md:README.md",
+        "file:docs/changes/72_makeGithubCiOptional.md:72_makeGithubCiOptional.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/45_addCodeReviewAgent.md:45_addCodeReviewAgent.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:AGENTS.md:Autorita a rozsah::3",
+        "section:AGENTS.md:Implementace, evidence a předání::22",
+        "section:AGENTS.md:Merge kontroly — uživatelská revize 2026-11-03::34",
+        "section:AGENTS.md:Povinné názvy a číslování::12",
+        "section:AGENTS.md:Pravidla projektu KGMAKER pro agenty::1",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::445",
+        "section:README.md:Copilot workflow::208",
+        "section:README.md:Data prerequisite audit::333",
+        "section:README.md:Development::239",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::277",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::285",
+        "section:README.md:Implementation memory and workflow::228",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::175",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/72_makeGithubCiOptional.md:Kompatibilita a příklad::14",
+        "section:docs/changes/72_makeGithubCiOptional.md:Ověření a hranice::21",
+        "section:docs/changes/72_makeGithubCiOptional.md:Problém a změna::5",
+        "section:docs/changes/72_makeGithubCiOptional.md:Volitelné GitHub CI při splnění ostatních kontrol::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::218",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::158",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::168",
+        "section:docs/production-analysis-progress.md:Merge politika po uživatelské změně 2026-10-27::3",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::190",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::105",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::234",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::225",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::243",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::278",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::453",
+        "section:docs/production-analysis-progress.md:T003-S04-W04 — Dependency dispatch hierarchy::398",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::425",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::39",
+        "section:docs/production-analysis-progress.md:T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::26",
+        "section:docs/production-analysis-progress.md:T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::12",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::410",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::381",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::295",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::84",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::71",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::58",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::442",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::307",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::264",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::319",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::337",
+        "section:docs/production-analysis-progress.md:T009 — evidence a coverage agregovaných pohledů (omezený fallback)::361",
+        "section:docs/production-analysis-progress.md:T015 — explicit datasource resource projection::476",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Akceptace a ověření::48",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kompatibilita, DoD a zbývající práce::64",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kontrakt a kroky::22",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Problém, rozsah a hranice::10",
+        "section:docs/tasks/45_addCodeReviewAgent.md:T045 — Projektový code-review agent pro PR::1",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Uživatelská změna revize 2::72",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::74",
+        "section:docs/tasks/README.md:High-level zobrazení projektu — T004::17",
+        "section:docs/tasks/README.md:Jednotný formát::184",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::155",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::219",
+        "section:docs/tasks/README.md:Převod starších milníků::195",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "profiles",
+          "status": "passed"
+        },
+        {
+          "label": "links",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:e40f0673fe2c0c9bfe66e04bc25f7e2ff6777587b0a06bab19188ccb7a60adac"
     },
     {
       "base_commit": "cbf17b1d57719c05c4e918851647c375811e8b07",

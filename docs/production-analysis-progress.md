@@ -1,5 +1,14 @@
 # Aktuální stav a zbývající práce
 
+## Merge politika po uživatelské změně 2026-11-03
+
+[T045 revize 2](tasks/45_addCodeReviewAgent.md) dovoluje merge bez GH CI, pokud
+pro aktuální base/head projdou všechny ostatní povinné kontroly a nezávislé
+review. Historické CI_PENDING/billing-only BLOCKED řádky níže zachovávají stav
+skutečných běhů; samy již merge neblokují. Chybějící acceptance/toolchain,
+konkrétní chyba, konflikt, draft a nesplněná závislost nadále blokují. GH workflow
+zůstávají beze změny a serverová pravidla se neobcházejí.
+
 ## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
 
 Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),

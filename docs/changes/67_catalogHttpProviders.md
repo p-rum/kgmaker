@@ -252,3 +252,12 @@ ověřuje semantic validate, scan/check a diff-check. Nezávislý reviewer rozho
 o dostatečnosti zachované evidence; ztráta dočasných logů se nezatajuje.
 GH CI je dle nového výslovného pokynu uživatele nepovinné při splnění ostatních
 kontrol; lokální acceptance/toolchain ani review se tím nenahrazují.
+
+## Integrace revize merge pravidel
+
+Před publikací byl integrován policy-only main
+`54a3e01c7bcb1295973655d72b58a14e6a5d597d`. Vlastní runtime/test zdroje zůstávají
+byte-identické checkpointu3e9b6fb; není důvod opakovat full kvůli dokumentům a
+agent profilu. Nový main immutable episode prefix je zachován přesně, child
+episodes připojeny beze změn. GH CI zůstává pozorovaná doplňující evidence;
+lokální acceptance, toolchain a nezávislé exact-pair review jsou povinné.
