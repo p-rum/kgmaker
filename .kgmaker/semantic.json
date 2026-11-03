@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "12d9124f12f2dfb588c884b270faa3cfaff7c0e8b1aa4d024888c53a0d352e15",
-    "docs/acceptance-inventory.md": "377b77504f66a41acefc50361bfa8a648bde9e183ffcfe0442ce4fa811a36270",
+    "README.md": "50d6c5ace1fd808227cdf4b4b5477dca7a997e72b0d74277ac6ffd8136a4060d",
+    "docs/acceptance-inventory.md": "a5b317c323fbddf1d28ee27a5c2c7ded99b89b0ad3bd77a5e91d2dacd536c72a",
     "docs/architecture.md": "fac32404c4f3df434035dcc8f55a3d48872e26d0913c97e9fc346643aa962ba1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -43,6 +43,7 @@
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/70_defineBusinessProcessModel.md": "371240cb3e74ac86c74a90b1660ac68d12871d8d89ab09f34c43b56d1acbd744",
+    "docs/changes/71_discoverProcessTriggers.md": "f12f0eebe4a4da476440080b225668a5251f9bd80dbda68d5a0bf907946e7c2a",
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
@@ -51,7 +52,8 @@
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
-    "docs/production-analysis-progress.md": "64593aced81931866c539320c03b459bede277aa0e6385aa69731ff4e70298a8",
+    "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
+    "docs/production-analysis-progress.md": "0bd77bcb97265cd3172e6c66db7c83d5b3e43da8b10d7e2cb3c01f2256e3090e",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -215,6 +217,7 @@
     "fixtures/multirepo-analysis/tests/src/ExposureTest.java": "3e6709b513be58bbada38d0538dedc9f89224135d01c642d867ba9b6d6b252a6",
     "fixtures/multirepo-analysis/tests/src/model.ts": "a453e11794bf6c71b416a3e15de059f693aca33d6fae3462e8ea4f2713ef11e2",
     "fixtures/process-model/checkout.json": "3e359c9c18baa0d187577477ec93a3855e1a0540db85e1fcf883b9a20c82c851",
+    "fixtures/process-triggers/dependencies.lock.json": "298a78843fcc2a19646b3f4ea445210c7c2227e04f553be8e6432f90f37b7bd6",
     "fixtures/spring-imports/README.md": "faa9233b6339264f6a6bb978f0278360466a5160c83c680bd53a79bb4a47aab9",
     "fixtures/spring-imports/dependencies.lock.json": "1aecef7caa91c53d18f30e80431d18f9b9fba0376eb305978edac2177a53ab17",
     "fixtures/spring-imports/src/main/java/fixture/ApiInput.java": "ee156f82ff0275b2f28888926ca0707b0f67efddc1c523193211def42c43c148",
@@ -265,6 +268,7 @@
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
+    "src/kgmaker/process_triggers.py": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
     "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
     "src/kgmaker/scanner.py": "6e521415b4de154a2be08cda8f1e6de4c4f6a64a2b74c7a6624ce62de7ba4e47",
@@ -323,6 +327,7 @@
     "tests/test_t009_propagate_view_evidence.py": "22c259428b00ab80d7e2e1b8246d3f91c109e08f68b705763d3ae948200d2ed6",
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_t023_define_business_process_model.py": "7544ff1b84fbc6d9caf89f51cc1c83acb851dd9f844e0285000f998a0651151a",
+    "tests/test_t024_discover_process_triggers.py": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_tsconfig_freshness.py": "1cdaf38fde8df1a2ce6029872b233d1e101bd259aadb56b6c0cbef4d80fc9cd1",
     "tests/test_typescript_callback_limits.py": "ecdeed0b8335b0cf63f94b3717894af7dfaa43fd2bd7f94f69b12126be1684c9",
@@ -421,13 +426,6 @@
       "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 167,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/architecture.md:realm_bound_data_resources",
       "name": "Realm-bound data resources",
       "source_file": "docs/architecture.md",
@@ -440,6 +438,20 @@
       "source_file": "docs/process-model.md",
       "source_line": 1,
       "summary": "Versioned revision-bound process documents compose shared technical view/evidence with a strictly separate semantic overlay; they do not discover or execute processes."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 167,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "name": "Proved trigger inventory",
+      "source_file": "docs/process-triggers.md",
+      "source_line": 1,
+      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
     }
   ],
   "edges": [
@@ -704,6 +716,46 @@
       "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
     },
     {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 28,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
+      "source": "file:src/kgmaker/process_model.py:process_model.py",
+      "target": "concept:docs/process-model.md:explicit_business_process_model",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_model.py",
+      "source_line": 1,
+      "evidence": "Pure ProcessDefinition/ProcessView validate explicit versioned process documents without process discovery or execution."
+    },
+    {
+      "source": "file:tests/test_t023_define_business_process_model.py:test_t023_define_business_process_model.py",
+      "target": "concept:docs/process-model.md:explicit_business_process_model",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t023_define_business_process_model.py",
+      "source_line": 1,
+      "evidence": "Explicit public documents test branch/loop/async topology, revision binding, semantic injection rejection and evidence/scope preservation."
+    },
+    {
+      "source": "concept:docs/process-model.md:explicit_business_process_model",
+      "target": "file:src/kgmaker/architecture_model.py:architecture_model.py",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-model.md",
+      "source_line": 59,
+      "evidence": "ProcessView technical_view is the existing shared ViewDocument with kind process, retaining shared view/evidence semantics."
+    },
+    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
@@ -744,44 +796,14 @@
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "source": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "target": "file:src/kgmaker/process_triggers.py:process_triggers.py",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
-    },
-    {
-      "source": "file:src/kgmaker/process_model.py:process_model.py",
-      "target": "concept:docs/process-model.md:explicit_business_process_model",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_model.py",
-      "source_line": 1,
-      "evidence": "Pure ProcessDefinition/ProcessView validate explicit versioned process documents without process discovery or execution."
-    },
-    {
-      "source": "file:tests/test_t023_define_business_process_model.py:test_t023_define_business_process_model.py",
-      "target": "concept:docs/process-model.md:explicit_business_process_model",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t023_define_business_process_model.py",
-      "source_line": 1,
-      "evidence": "Explicit public documents test branch/loop/async topology, revision binding, semantic injection rejection and evidence/scope preservation."
-    },
-    {
-      "source": "concept:docs/process-model.md:explicit_business_process_model",
-      "target": "file:src/kgmaker/architecture_model.py:architecture_model.py",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-model.md",
-      "source_line": 59,
-      "evidence": "ProcessView technical_view is the existing shared ViewDocument with kind process, retaining shared view/evidence semantics."
+      "source_file": "docs/process-triggers.md",
+      "source_line": 3,
+      "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
     }
   ],
   "episodes": [

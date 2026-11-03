@@ -43,10 +43,16 @@ projekce/test preflight sama nic nefetchuje.
   byte identity a subprocess/network zákaz, structured error pro malformed input.
   AC06: capability, README, acceptance/progress a tento note; full a release pending.
 
-Po review budou zaznamenány current-main integration, required full, semantic a
-memory. Full zatím NEPROVEDEN a nefrontován; nejprve root early source closure.
+Current-main T024/T023/T008/T009/T015 focus je **199 PASS v47.71s**, včetně
+actual K1/K2 T024 a T015, bez skips. Root early source closure APPROVE; required
+full bude spuštěn právě jednou pod sdíleným flockem s --maxfail=1, nikoli předem
+vykázán jako PASS. Semantic update/apply/validate a CLI scan/check PASS.
 Původní worker receipt `artifact-provenance.json` platí pouze pro starý Ec source;
-po JPA main integraci se nesmí tvrdit aktuální toolchain proof bez nové provenance.
+nový receipt `jpa-main-artifact-provenance.json` porovnává všech14 JVM tracked
+source/build/lock files a identity obou JARů se skutečným build receipt
+`/workspace/combined-jvm-main-ec/verified-results.json` pro sourcebdbe4ca.
+K1e44e3dac a K2e2553425 artifacts se výslovně kopírují z own s06-jpa checkoutu,
+nikoli ze stale process-model cache. Žádný nový build/fetch/install.
 GH CI je dle T045 volitelné; jeho stav není vydáván za PASS.
 
 ## Kompatibilita a příklad
