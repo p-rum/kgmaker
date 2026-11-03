@@ -122,3 +122,19 @@ heavy lockem; dokud neskončí, nejde o current-main actualPASS. Historical full
 573/10 zůstává přesně původní standalone evidence, neopakuje se jen pro parent
 kompozici. GH CI dle nové uživatelské revize T045 není povinné; ostatní lokální
 acceptance/toolchain a nezávislé exact-pair review zůstávají povinné.
+
+Finální current-main bounded actual focus je **85PASS,0SKIP,182.91s**, exit0.
+Celý condition module zahrnuje oba skutečné K1/K2 backends a izolaci variantových
+config/classpath změn; celé registration a import selector moduly ověřují oba
+Factory/registrar a literal/static import kontrakty; skutečný compiler AC05
+ověřuje bean/injection/profile/qualifier/primary chování. Použit vlastní worker
+home/JDK21, pinned API, mandatory WORKERS/K2/SPRING_IMPORTS/SPRING_CONDITIONS=1
+pod heavy flockem. Všech215 zmrazených source/test/fixture/JAR hashů je shodných.
+Persistent evidence: `/workspace/spring-conditions-current-validation/actual.*`,
+`frozen.json`, `worker-copy.json`. Žádná aplikace ani Spring context neběžel.
+Existing mandatory-missing-prerequisite guard navíc **15PASS,0.35s** a126 local
+Markdown links PASS. Samostatný YAML-library parse NOT_RUN (PyYAML není přítomen);
+workflow conflict union byl přímo zkontrolován pro všechny parent i condition
+fixture/test příkazy. Žádný implicitní install nebyl proveden.
+Root source closure APPROVE nad provisionald2c2f52/basec76 pokrývá beze změny
+finální runtime; finální exact Git-pair release review a merge zůstává rootovi.
