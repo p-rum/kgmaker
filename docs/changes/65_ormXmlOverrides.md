@@ -171,3 +171,18 @@ actual dependency dispatch). Provider/Gradle variant/TypeScript freshness sada:
 explicitní Gradle8.13 gates. Vlastní čtyři nezměněné runtime/test SHA a inspection
 se třemi inherited dispatch poli byly znovu ověřeny po běhu. Tyto aktuální
 kompoziční výsledky nenahrazují ani znovu nespouštějí standalone corrected full652/10.
+
+
+## Integrace current main s Factory a HTTP projekcí
+
+Mainc76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a přidal Factory evidence helpers,
+HTTP projection a odpovídající Javac hooks. Runtime merge konflikt byl předem
+nahlášen rootovi a vyřešen pouze jeho explicitně určenou kompozicí: Spring rule
+v5 spolu s vlastními JPA/XML konstantami; helpers ponechávají xml_provenance i
+supporting_facts, starý poziční XML argument zůstává na svém místě a interní
+forward používá pojmenované argumenty. Oba provenance bloky se zachovaly.
+Audit všech helper callsites nenašel další poziční optional argument. Přímé
+spuštění skutečných AST helper bodies nad třemi případy (starý positional XML,
+Factory keyword a společná evidence) prošlo a prokázalo zachování obou proofs.
+Root source closure a následný combined actual focus jsou ještě samostatné
+kontroly; předchozí36/56 výsledky platí pro469 a nejsou vydávány za c76 PASS.

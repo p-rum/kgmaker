@@ -20,8 +20,9 @@ from typing import Any
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
+from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v4"
+SPRING_RULE_VERSION = "annotation-source-v5"
 JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v2"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
@@ -656,7 +657,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         if item.get("kind") == "annotation_type" and isinstance(item.get("owner"), str)}
 
     def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str,
-                     compiler_fact: dict | None = None, xml_provenance: dict[str, Any] | None = None) -> str:
+                     compiler_fact: dict | None = None, xml_provenance: dict[str, Any] | None = None, supporting_facts: list | None = None) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
@@ -665,13 +666,16 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
         if xml_provenance:
             record.update(xml_provenance)
+        if supporting_facts:
+            record["compiler_sources"] = [{"symbol_id": fact["id"], "sha256": fact.get("sha256"),
+                "path": fact.get("path"), "context_id": fact.get("context_id")} for fact in supporting_facts]
         identity = "evidence:" + digest(record)
         evidence.setdefault(identity, {"id": identity, **record})
         return identity
 
     def add_edge(source: str, target: str, kind: str, path: str, line: int | None, detail: str,
                  evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None,
-                 xml_provenance: dict[str, Any] | None = None) -> None:
+                 xml_provenance: dict[str, Any] | None = None, supporting_facts: list | None = None) -> None:
         if source not in nodes or target not in nodes:
             return
         key = (source, target, kind)
@@ -681,13 +685,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             old = edges[key]
             if old.evidence_kind == evidence_kind or evidence_kind != "FRAMEWORK_DERIVED":
                 return
-        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact, xml_provenance)
+        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail,
+                             compiler_fact=compiler_fact, xml_provenance=xml_provenance,
+                             supporting_facts=supporting_facts)
         edges[key] = Edge(source, target, kind, detail, evidence_kind=evidence_kind,
                           context_ids=(context_id,), evidence_ids=(proof,), source_file=path, source_line=line)
 
     def add_node(kind: str, name: str, path: str, line: int | None, source: Node | None = None,
+                 declaration_identity: str | None = None,
                  **metadata: Any) -> str:
-        identity = _node_id(kind, {"context": context_id, "path": path, "line": line, "name": name})
+        identity_fields = {"context": context_id, "path": path, "line": line, "name": name}
+        if declaration_identity is not None:
+            identity_fields["declaration_identity"] = declaration_identity
+        identity = _node_id(kind, identity_fields)
         if identity not in nodes:
             nodes[identity] = Node(identity, kind, name, path, line=line,
                                     signature=metadata.pop("signature", None),
@@ -836,6 +846,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     reported_missing: set[tuple[str, str]] = set()
     reported_dynamic: set[str] = set()
     selector_cache: dict[str, dict | None] = {}
+    registrar_candidates: dict[tuple[str, str], tuple[dict, str]] = {}
 
     def processor(exact: str) -> dict | None:
         if exact not in selector_cache:
@@ -887,6 +898,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         continue
                     dynamic_imports.add(exact)
                     info = {**info, "reasons": list(info["reasons"])}
+                    if info["kind"] == "REGISTRAR":
+                        declaration = target["symbol"]
+                        registrar = add_node("spring_registrar", exact, declaration["path"],
+                            (declaration.get("range") or {}).get("start_line"), symbol_node(declaration),
+                            registration_status=info["status"], reasons=info["reasons"], execution="NOT_EXECUTED")
+                        registrar_candidates[(owner, exact)] = (info, registrar)
+                        add_edge(importer["id"], registrar, "uses_bean_registrar", importer["path"],
+                                 (importer.get("range") or {}).get("start_line"), "Compiler-qualified @Import registrar")
+                        if info["status"] == "UNKNOWN" and exact not in reported_dynamic:
+                            reported_dynamic.add(exact)
+                            diagnostics.append({"code": "SPRING_REGISTRAR_BOUNDARY", "path": declaration["path"],
+                                "type": exact, "reasons": info["reasons"], "reason": "Custom registrar body is not executed."})
+                        continue
                     selected = []
                     for name in info["targets"]:
                         if name not in type_records:
@@ -1119,6 +1143,117 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     advice = add_node("spring_advice", f"{name}:{node.name}", path, line, node, advice=name)
                     add_edge(node.id, advice, "advised_by", path, line, f"@{name} advice declaration")
 
+    # Registrar declarations inherit the importing configuration's condition;
+    # RootBeanDefinition does not evaluate the target class's @Profile itself.
+    def registration_types(declared_type):
+        if not declared_type:
+            return []
+        hierarchy = (type_records.get(declared_type, {}).get("symbol", {}).get("type_hierarchy") or {})
+        names = hierarchy.get("types", []) if hierarchy.get("complete") is True else []
+        return list(dict.fromkeys([declared_type.rsplit(".", 1)[-1], *[name.rsplit(".", 1)[-1] for name in names]]))
+
+    declarations = {}
+    for (owner, exact), (info, registrar) in registrar_candidates.items():
+        method = info["method"]
+        for registration in info["registrations"]:
+            state = _combined_state(configuration_states[owner], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+            key = (exact, method["id"], registration["name"], registration["type"])
+            previous = declarations.get(key)
+            if previous is None or rank[state] > rank[previous[3]]:
+                declarations[key] = (info, registrar, registration, state, owner, exact)
+    for info, registrar, registration, state, owner, exact in declarations.values():
+        method = info["method"]
+        target = type_records.get(registration["type"])
+        if (target is None or target["configuration"] or processor(registration["type"]) is not None
+                or factory_info(target["symbol"], symbols, context_id) is not None
+                or target["symbol"].get("kind") != "class"
+                or "abstract" in target["symbol"].get("modifiers", [])):
+            diagnostics.append({"code": "SPRING_REGISTRAR_TARGET_UNSUPPORTED", "path": method["path"],
+                "type": registration["type"], "reason": "Registration target is not an indexed ordinary concrete class."})
+            old = nodes[registrar]
+            nodes[registrar] = replace(old, metadata={**(old.metadata or {}), "registration_status": "UNKNOWN",
+                "reasons": [*(old.metadata or {}).get("reasons", []), "TARGET_UNSUPPORTED:" + registration["type"]]})
+            continue
+        name, product = registration["name"], registration["type"].rsplit(".", 1)[-1]
+        product_types = registration_types(registration["type"])
+        line = (method.get("range") or {}).get("start_line")
+        bean = add_node("spring_bean", name, method["path"], line, symbol_node(method),
+            declaration_identity=exact,
+            registration_origin="REGISTRAR_LITERAL", registering_type=exact, declared_type=registration["type"],
+            types=product_types, qualifier=name, qualifiers=[], primary=False, profiles=[],
+            condition_status=state, condition_reasons=[f"importing configuration {owner} is {configuration_states[owner]}", *info["reasons"]])
+        add_edge(registrar, bean, "registers_bean", method["path"], line,
+                 "Compiler-attributed literal registry declaration; registrar never executed", compiler_fact=method)
+        spring_beans.append({"node": symbol_node(method), "bean": bean, "type": product, "types": product_types,
+            "name": name, "qualifiers": [], "primary": False, "profiles": [], "condition_status": state,
+            "condition_reasons": info["reasons"], "path": method["path"], "line": line})
+
+    # A FactoryBean object is dereferenced with '&'; its product is a different
+    # declaration. Unknown/custom production never becomes an ACTIVE product.
+    for bean in list(spring_beans):
+        source = symbols.get(bean["node"].id, {})
+        info = factory_info(source, symbols, context_id)
+        if info is None:
+            continue
+        original = nodes.pop(bean["bean"])
+        original_name = bean["name"]
+        object_types = (["FactoryBean"] if source.get("kind") == "method" else list(dict.fromkeys(
+            [source.get("name", "FactoryBean"), "FactoryBean", *[name.rsplit(".", 1)[-1]
+             for name in (source.get("type_hierarchy") or {}).get("types", [])]])))
+        object_state = _combined_state(bean["condition_status"], "UNKNOWN" if "FACTORY_NOT_CONCRETE" in info["reasons"] else "ACTIVE")
+        obj = add_node("spring_bean", "&" + original_name, original.path, original.line, bean["node"],
+                       **{**(original.metadata or {}), "types": object_types, "qualifier": "&" + original_name,
+                          "condition_status": object_state,
+                          "registration_origin": "FACTORY_OBJECT", "factory_name": original_name,
+                          "declared_type": info["factory_type"],
+                          "factory_product_type": info["product_type"]})
+        for key, edge in list(edges.items()):
+            if edge.target == original.id:
+                del edges[key]
+                add_edge(edge.source, obj, edge.kind, edge.source_file or original.path, edge.source_line,
+                         "FactoryBean object declaration; product is separate")
+        bean.update(bean=obj, name="&" + original_name, types=object_types, type=object_types[0], qualifiers=[], condition_status=object_state)
+        product = info["product_type"]
+        if product not in type_records:
+            info["reasons"].append("FACTORY_PRODUCT_NOT_INDEXED")
+            info["status"] = "UNKNOWN"
+        state = _combined_state(bean["condition_status"], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+        product_types = registration_types(product)
+        product_node = add_node("spring_bean", original_name, original.path, original.line, bean["node"],
+            **{**(original.metadata or {}), "registration_origin": "FACTORY_PRODUCT", "factory_name": original_name,
+               "declared_type": product, "types": product_types, "condition_status": state,
+               "condition_reasons": [*bean["condition_reasons"], *info["reasons"]], "execution": "NOT_EXECUTED"})
+        proof = info["method"] or source
+        add_edge(obj, product_node, "produces_bean", proof.get("path") or original.path,
+                 (proof.get("range") or {}).get("start_line") or original.line,
+                 "Compiler factory product declaration; custom code never executed", compiler_fact=proof,
+                 supporting_facts=info["sources"])
+        spring_beans.append({**bean, "bean": product_node, "name": original_name, "types": product_types,
+                             "type": product_types[0] if product_types else "", "condition_status": state,
+                             "qualifiers": (original.metadata or {}).get("qualifiers", [])})
+        if info["status"] == "UNKNOWN":
+            diagnostics.append({"code": "SPRING_FACTORY_BOUNDARY", "path": original.path,
+                "source_line": original.line, "bean": product_node, "reasons": info["reasons"],
+                "reason": "Custom or unproven FactoryBean product remains UNKNOWN."})
+
+    # No registry override order is executed. Conflicting registration names
+    # remain alternatives even when a Primary declaration exists elsewhere.
+    names = {}
+    for bean in spring_beans:
+        if bean["condition_status"] != "INACTIVE":
+            names.setdefault(bean["name"], []).append(bean)
+    for name, candidates in names.items():
+        if len({bean["bean"] for bean in candidates}) < 2 or not any(
+                (nodes[bean["bean"]].metadata or {}).get("registration_origin") for bean in candidates):
+            continue
+        for bean in candidates:
+            bean["condition_status"] = "UNKNOWN"
+            old = nodes[bean["bean"]]
+            nodes[old.id] = replace(old, metadata={**(old.metadata or {}), "condition_status": "UNKNOWN",
+                "condition_reasons": [*(old.metadata or {}).get("condition_reasons", []), "REGISTRATION_NAME_COLLISION"]})
+        diagnostics.append({"code": "SPRING_REGISTRATION_NAME_COLLISION", "name": name,
+            "reason": "Registry override order is not executed; competing declarations remain UNKNOWN."})
+
     # Constructor/field injection is intentionally conservative.  A matching
     # type is a candidate, while qualifier/primary/profile controls the result.
     def resolve_query_property(model_owner: str, property_name: str) -> tuple[str | None, str | None]:
@@ -1192,6 +1327,40 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                           re.finditer(r"@([A-Za-z_][\w.]*)\s*(\([^\n]*\))?", match.group("ann") or "")]
             qualifier = next((_string_arg(args, ("value", "name")) for name, args in qualifiers if _simple(name) == "Qualifier"), None)
             candidates = [bean for bean in spring_beans if type_name in bean.get("types", [bean["type"]])]
+            # A user interface named FactoryBean is not the Spring contract.
+            # Use the compiler field's qualified type for this factory boundary.
+            owner_symbol = symbols.get(owner.id, {})
+            field = next((item for item in symbols.values() if item.get("kind") == "field"
+                          and item.get("owner") == owner_symbol.get("owner")
+                          and item.get("name") == match.group("name")
+                          and item.get("context_id") == context_id), {})
+            qualified_candidates = []
+            for candidate in candidates:
+                metadata = nodes[candidate["bean"]].metadata or {}
+                origin = metadata.get("registration_origin")
+                official_factory = str(field.get("type", "")).split("<", 1)[0] == FACTORY
+                if origin in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"} or origin == "FACTORY_OBJECT" and not official_factory:
+                    assignability = registration_assignability(metadata.get("declared_type"), field.get("type"), injection_kind, type_records)
+                    if assignability == "INCOMPATIBLE":
+                        continue
+                    if assignability == "UNKNOWN":
+                        candidate = {**candidate, "condition_status": _combined_state(candidate["condition_status"], "UNKNOWN")}
+                        diagnostics.append({"code": "SPRING_REGISTRATION_ASSIGNABILITY_BOUNDARY", "path": path,
+                            "source_line": line, "reason": "Qualified registration/product/factory-object assignability is unproven."})
+                qualified_candidates.append(candidate)
+            candidates = qualified_candidates
+            if str(field.get("type", "")).split("<", 1)[0] == FACTORY:
+                candidates = [bean for bean in candidates
+                              if (nodes[bean["bean"]].metadata or {}).get("registration_origin") == "FACTORY_OBJECT"]
+                requested = str(field.get("type", ""))
+                generic = re.fullmatch(re.escape(FACTORY) + r"<([\w.$]+)>", requested)
+                if generic:
+                    candidates = [bean for bean in candidates if (nodes[bean["bean"]].metadata or {}).get("factory_product_type") == generic.group(1)]
+                elif "<" in requested:
+                    candidates = [{**bean, "condition_status": _combined_state(bean["condition_status"], "UNKNOWN")}
+                                  for bean in candidates]
+                    diagnostics.append({"code": "SPRING_FACTORY_GENERIC_INJECTION_BOUNDARY", "path": path,
+                        "source_line": line, "type": requested, "reason": "Non-concrete FactoryBean generic selection remains UNKNOWN."})
             candidates = [bean for bean in candidates if bean.get("condition_status", "ACTIVE") != "INACTIVE"]
             if qualifier:
                 candidates = [bean for bean in candidates if qualifier in {bean["name"], *bean.get("qualifiers", [])}]

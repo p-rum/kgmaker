@@ -109,6 +109,25 @@ inventory = project_service_inventory(
 )
 ```
 
+`interfaces.project_http_providers` returns an `interfaces` ViewDocument from
+that same explicit workspace snapshot. Logical HTTP identity includes the declared
+service, method and case-preserving route; registrations and contract revisions
+remain separate variants. Compiler Spring annotation mirrors can establish a
+class/method handler declaration. Source-pattern Spring/Ktor candidates and
+OpenAPI contracts retain their weaker evidence. Deployment, runtime and data
+availability remain `UNKNOWN`; unsupported imported-runtime binding is diagnostic.
+
+```python
+from kgmaker.interfaces import project_http_providers
+
+interfaces = project_http_providers(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+)
+```
+
+This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
@@ -417,7 +436,7 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v5 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
 bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
@@ -427,6 +446,18 @@ chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_im
 Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
 Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
 source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
+
+V5 navíc zachytí compiler-qualified literal `ImportBeanDefinitionRegistrar`
+registraci přes `registerBeanDefinition("name", new RootBeanDefinition(Type.class))`.
+Podmínka pochází z importující konfigurace. `FactoryBean<T>` rozlišuje objekt
+`&name` a produkt `name`; ACTIVE statická deklarace produktu vyžaduje shodný
+konkrétní generic typ, jediné `return new Type()` a jediné `return Type.class`.
+`@Bean` producer musí navíc přímo vracet jediný konkrétní no-argument constructor
+bez anonymous overrides; proof pochází ze skutečné implementace a produceru.
+Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
+Žádný registrar, factory, konstruktor nebo Spring context se nespouští; statická
+deklarace není runtime availability. Přesný bounded scope a testy:
+[change note47](docs/changes/47_declareSpringRegistrations.md).
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný

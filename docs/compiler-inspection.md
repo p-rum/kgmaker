@@ -756,6 +756,56 @@ Bridge delegates must remain instance-compatible. DefaultImpls retains its expli
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
 
+
+## T003-S05-W02 — registrar a FactoryBean declaration facts
+
+Spring `annotation-source-v5` přidává bounded Java/Javac compiler facts pro
+`ImportBeanDefinitionRegistrar` a `FactoryBean<T>`; metadata sdílejí oba JVM
+backends. Není to Kotlin metadata rozšíření, execution ani Spring bootstrap.
+
+| Podporovaný vstup | Výsledek |
+|---|---|
+| Exact/transitive registrar a2-parameter API method, přímé `registry.registerBeanDefinition("name", new RootBeanDefinition(Type.class))` statements | `spring_registrar`/`registers_bean`, source symbol/hash/context evidence; bean condition z importující konfigurace |
+| Custom3-parameter overload, branches/alias/helper/fake receiver, více než128 statements, chybějící/nepodporovaný target | Explicitní UNKNOWN boundary; žádný odhadnutý ACTIVE bean |
+| Concrete indexed FactoryBean<T>, sole zero-argument `return new T()` a `return T.class`, typy souhlasí | Samostatný `&name` factory object a `name` product, `produces_bean`, static condition z bean declaration |
+| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean bez prokázané konkrétní literal implementation | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
+
+Product type je kompilátorový typ včetně inherited generic substitution; fake
+FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Literal
+bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol fields
+`bean_registrar`, `bean_registrations`, `factory_bean`, `factory_bean_return` a
+`factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
+čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
+vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
+Producer i getter method hashes jsou součástí evidence. Factory object type je
+přesný component owner nebo validovaná skutečná literal producer implementation;
+custom method object assignability zůstává UNKNOWN. Nové product/registrar
+selection používá compiler-qualified field assignability a známé supertypes;
+foreign short-name shoda není resolved injection. Chybějící legacy evidence
+nepromuje registrace. Invalid facts/context
+se odmítnou před store publikací. Rule v5 je JVM-only a vstupuje do context
+fingerprintu, TypeScript/React selection key se nemění. Evidence zůstává
+FRAMEWORK_DERIVED, nezvyšuje compiler-call confidence ani availability.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID registeredProduct
+```
+
+Skutečné Spring6.2.2 API se explicitně připravuje existujícím pinned fixture POM;
+SHA/license lock a mandatory CI guard z W01 zůstávají. Fixture nic nestahuje a
+source/app code se nespouští. XML, BeanDefinition builders/properties/suppliers,
+post-processors a Spring/Boot factories metadata nejsou tímto scope interpretovány.
+Viz [change note47](changes/47_declareSpringRegistrations.md) pro testy a aktuální
+externě blokované Actions; lokální zelené testy nenahrazují nové CI ani review.
+
+
+S05-W02 injection fixture používá imported simple field types a samostatné
+annotated declaration lines. Existující bounded textual injection projection
+nepokrývá více deklarací na jednom řádku ani obecnou lowercase-leading FQN
+source grammar. Nové qualified hierarchy guards jsou compiler-backed v tomto
+podporovaném subsetu; nejde o nový úplný Java annotation parser.
 ## Data resource projection (T015)
 
 The public pure Python API consumes an already captured workspace:
