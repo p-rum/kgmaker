@@ -207,7 +207,7 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
             _details["graph_selection"] = {"scope": scope, "context_id": context_id}
     limitations = ["Static paths do not prove runtime availability; scoped supplied observations require approved mappings.",
                    "XLSX formulas are dependency evidence only; cached values have unknown freshness and are not evaluated.",
-                   "Thymeleaf support is limited to literal model keys/template returns; no arbitrary expression evaluation.",
+                   "Thymeleaf support is limited to literal model keys/template returns and unique static fragments; conditions are PARTIAL, unsupported expressions UNKNOWN, and nothing is evaluated.",
                    "No complete interprocedural parser in this milestone.",
                    "Only the supplied repository root is covered; external systems are not inspected."]
     if semantic_error:
@@ -217,7 +217,7 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
                 "excluded_directories": sorted(SKIP_DIRS) + ["hidden directories", GENERATED_PREFIX],
                 "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES,
                                         "workbooks": WORKBOOK_VERSION, "binary_xls": BINARY_DIAGNOSTICS_VERSION,
-                                        "templates": "thymeleaf-bindings-1"},
+                                        "templates": "thymeleaf-bindings-2"},
                 "artifact_diagnostics": artifact_diagnostics,
                 "dataflow_diagnostics": flow.diagnostics,
                 "limitations": limitations,

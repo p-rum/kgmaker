@@ -2,7 +2,7 @@
 
 T003-S06-W04, kroky1–5, AC01–AC04; baseline355e98fe2ab62fadbf4869eb4485cd3562173068.
 Závislosti W01/W02/W03 jsou merged, S03W05 content-bound cross-repo kontrakty
-byly znovu ověřeny18PASS. Toto je rozpracovaný bounded subset, nikoli dokončení S06.
+byly znovu ověřeny18PASS. Toto je lokálně ověřený bounded subset, nikoli dokončení S06.
 
 ## Problém a změna
 
@@ -128,3 +128,74 @@ T015 selector omylem použil(repo,module,source_set), místo veřejného kontrak
 (service_id,repo_id,module). Opraven pouze tuple('orders','app','app'); replay
 týchž skutečných K1 facts s opraveným T015 testem prošel bez worker spuštění.
 Runtime se nemění, grouped compiler matrix se zopakuje s tímto testovým fixem.
+
+
+Corrected společný batch: **182 PASS, 1 setup ERROR v227.54s**, exit1,
+unchanged=true, `/workspace/s06-w04-corrected-focus.{log,xml}` a status/source
+receipts. Všechny vlastní actual K1/K2 případy včetně 2PU physical join a
+malformed negatives, T015, XML, Factory a conditions/cache prošly. Sibling
+TypeScript prerequisite v Javac AC06 class setup chybělo v novém worktree;
+nejde o celý PASS. Po exact source/lock shodě byly explicitně offline zkopírovány
+TS a frontend node_modules včetně všech library SHA, bez install/network/build.
+Receipt `/workspace/s06-w04-node-provenance.json`. Dosud unstarted remaining
+AC06/HTTP flock byl ukončenzerochildren a bude sloučen s current-parent closure;
+nevzniká duplicitní 182-test rerun.
+
+
+## Current-parent closure preparation
+
+Current parent ef3ab4050289aafd557caa5414c594698da006ea obsahuje Arg/UI,
+Thymeleaf/T025 a Kafka51. Žádný JVM source delta W04 se nezavádí. Java/Kotlin
+2bf6cbde/24461c43 distribuce z actual Arg donoru byla ověřena proti source/build/
+lock receipt a přesnému30-JAR setu; TS/frontend source/lock a library SHA rovněž
+souhlasí (`/workspace/s06-w04-current-worker-provenance.json`). Kafka workspace
+properties projection a _qualified_evidence se zachovaly spolu s vlastní realm
+reaugmentation. Cache key zahrnuje aktuální schema parser i HTTP a Kafka verzi.
+New persistence_schema/flyway_target se zahrnují jen do JVM selection payload;
+3JVM digesty zůstaly shodné a2TS varianty odpovídají přesné parent funkci.
+Focused identity regression prošel. Chybějící realm se diagnostikuje pouze
+pro skutečné entity, nikoli pro nesouvisející HTTP/Spring kontext bez JPA.
+Zbývající AC06/HTTP a relevantní current-parent W04 případy jsou sloučeny
+do jednoho closure batch; předchozích182 PASS se bezdůvodně neopakuje.
+
+
+Current-parent closure je GREEN: **13 PASS, 0 SKIP v65.03s**, exit0,
+unchanged=true,mismatches=[]; `/workspace/s06-w04-current-closure.xml` a status
+receipt. Zahrnuje zbývající Javac AC06/HTTP cold+terminal cases a relevantní
+current Arg W04/JPA/T015 positive/idempotence/2PU případy. Vlastní Maven fixture
+byla explicitně čerstvě sestavena OFFLINE compile: BUILD SUCCESS8.632s; source
+a oba class-file SHA jsou v `/workspace/s06-w04-fixture-build-proof.json`.
+Následující read-only prerequisite preflight prošel; neprováděl build/instalaci.
+283 tracked source/JAR hashů zůstalo přes closure stejných.
+
+Compiler CI příkaz přidává skutečné XML a persistence-realm moduly s existující
+explicitní API/worker přípravou; GitHub CI tím není povinným merge gate.
+Schema/physical binding je podporovaný bounded důkaz; deployment, populated
+DB, provider naming/runtime compatibility a širší XML query-access projection
+bez dostatečné existující ownership evidence nadále zůstávají UNKNOWN.
+Jeden repository-wide frozen full nyní čeká na finální root source closure;
+předchozí partial runs nejsou vydávány za celý PASS.
+
+
+## Finální strict full a doložená hranice
+
+Jediný strict repository-wide full nadb75370da939a7f65d6e42f459029af37fc72dca1
+prošel **1348 PASS, 10 SKIP v1583.75s**, exit0. XML1358 tests/0failures/0errors;
+`/workspace/s06-w04-full-status.json` potvrzuje shodné pre/postHEAD a všech623
+tracked/runtime input SHA, unchanged=true,mismatches=[]. Příkaz měl
+KGMAKER_REQUIRE_WORKERS=1, KGMAKER_REQUIRE_K2=1,
+KGMAKER_REQUIRE_SPRING_IMPORTS=1 a KGMAKER_REQUIRE_HTTP_PROVIDERS=1,
+JDK21.0.6+7/Kotlin2.1.10, vlastní resources/M2 a shared flock; pytest
+-q -rs --maxfail=1 --tb=short, persistent basetemp/log/XML pod/workspace.
+Deset skutečných skips jsou explicitní Maven/trusted-exporter/multiple-JDK nebo
+Gradle8.13/Kotlin2.2.20 cache gates a non-admin Windows smoke. Vlastní actual
+realm/PU/K1/K2 případy nebyly přeskočeny. Historické partial/error/counts výše
+se zachovávají pravdivě a nejsou zaměňovány za tento finální full.
+
+Podporovaný physical binding subset jsou non-renamed replay tables/columns.
+Replay rename zachovává creation ID; současný přísný current-name/ID guard pak
+vrací UNKNOWN, nikoli unsafe positive. S06-W08 řeší samostatně creation-identity
+metadata a parser/cache version bez previous-name/display fallbacku. Tento PR
+neprokazuje širší schema lifecycle ani celé S06/T003/T004.
+Finální semantic/memory/scan a samostatný PR následují; runtime/test source se
+po full nemění kvůli těmto dokumentačním výsledkům.

@@ -581,7 +581,7 @@ def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]
                 args = "__UNRESOLVED__"
             values.append((item["name"], AnnotationArguments(args, raw_values,
                            item.get("values_resolved", True) is True)))
-    if "annotations" not in symbol and symbol.get("path") and symbol.get("range", {}).get("start_line"):
+    if "annotations" not in symbol and symbol.get("path") and (symbol.get("range") or {}).get("start_line"):
         values = _annotation_values(source, int(symbol["range"]["start_line"]))
     return values
 
@@ -1462,7 +1462,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     except (ValueError, TypeError):
         valid_selection = False
     valid_selectors = valid_selectors and valid_selection
-    if selected_pair is None or not valid_selectors:
+    if entity_decls and (selected_pair is None or not valid_selectors):
         diagnostics.append({"code": "PERSISTENCE_REALM_UNPROVEN",
                             "reason": "Explicit database_id and schema_stream_id with valid optional schema/target selectors are required for physical schema binding."})
 

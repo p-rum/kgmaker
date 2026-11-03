@@ -374,6 +374,17 @@ After actual Maven fixture preparation, final strict integrated run **246 PASS, 
 | AC04–AC05 | VERIFIED_IN_SCOPE | `test_confluence_configuration.py`, capability dokumentace a change note 38; focused 28 PASS, full 281 PASS / 23 toolchain SKIP |
 
 
+## T003-S09-W03 — Thymeleaf fragment provenance
+
+| Acceptance | Stav | Konkrétní evidence | Výsledek |
+|---|---|---|---|
+| T003-S09-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_templates.py::test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions`, `test_nested_fragment_arguments_follow_exact_scoped_variables`; existing `test_thymeleaf_literal_binding_and_pdf_boundary`; SOURCE_ONLY `SYNTAX_CANDIDATE` edges | full core: 475 PASS / 114 SKIP; focused: 65 PASS; no expression/render execution |
+| T003-S09-W03-AC02 | VERIFIED_IN_SCOPE | Existing literal template variable IDs and PDF boundary remain covered; graph/store schema unchanged; `thymeleaf-bindings-2` capability marker | existing tests plus focused template suite |
+| T003-S09-W03-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges`, `test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges`, `test_conditional_and_unsupported_expressions_remain_partial_unknown`, and `test_loop_and_local_alias_scopes_do_not_bind_model_variables`; input graph immutability | full core: 475 PASS / 114 SKIP |
+| T003-S09-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler-inspection capability, this matrix, progress status, and [change note55](changes/55_expandThymeleafFragments.md) bound the subset; T003-S09/AC09 remain PARTIAL | `kgmaker check` and `git diff --check` after final scan; full-suite skips and boundaries in change note55 |
+
+Only unique same-scope static fragment targets with exact arity are linked. Conditions are not evaluated, unsupported expressions remain UNKNOWN, and no MVC-handler/runtime claim is made.
+
 ## T003-S09-W02 — diagnostika binárních XLS
 
 Rozsah `xls-unsupported-1`, `feature-inventory-5`, Python 3.12, bez externího
@@ -456,6 +467,31 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
 
+## T003-S07-W01 — Argument → parameter binding
+
+| Acceptance | Implemented scope | Concrete evidence |
+|---|---|---|
+| AC01 | Attributed call-site argument → declared formal mapping with context/transformation; candidate execution not inferred | `tests/test_argument_parameter_flow.py`: actual Javac/K1/TS overload, named/default and vararg fixtures; virtual contract negative |
+| AC02 | Additive mapping version1; existing worker protocol v1 and graph/store v1/v2/v3 retained; legacy unversioned facts readable | graph/process roundtrip, legacy tests and existing model/store suites |
+| AC03 | Unknown K2/ASM bindings, compiler-error recovery, unresolved/reference boundaries, malformed/ambiguous and zero store mutation | actual negative compiler fixtures, atomic last-valid-store fixture, workspace qualification and candidate/legacy impact tests |
+| AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |
+
+## T003-S08-W04 — versioned bounded React events
+
+| AC | Actual check | Scope |
+|---|---|---|
+| AC01 | `test_ui_events.py::test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence` | pinned versions/declaration/package hashes, direct and sole-return forwarder |
+| AC02 | existing graph v1/v2/v3 and worker installation tests; legacy context equality | additive evidence, same protocol/store |
+| AC03 | changed library, lexical writes/member aliases/eval/factory overwrite/duplicate bindings and conditional/spread/fake/missing-package negatives; offline old-rule/store snapshots | no stronger handler/runtime/data claims |
+| AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
+
+Current rule4 results are recorded in change69; GH CI is optional under T045 revision2, while publication and independent exact-pair review remain required.
+
+T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;
+full624 PASS/10 SKIP762.95s. Historical rule3 proof: final focus36 PASS/30 DESELECTED
+266.43s; prepared strict full727 PASS/10 SKIP791.26s, all66 UI cases, zero failures/errors. onChange input/select/textarea and form onSubmit are actual positives;
+source/runtime availability remains UNKNOWN. Current rule4: full785 PASS10 SKIP and current-parent focused189 PASS0 SKIP; exact manifests and limits are in change69.
+
 ## T003-S04-W03 — bounded coroutine source mapping
 
 | AC | Evidence | Scope |
@@ -536,6 +572,34 @@ Runtime acceptance NOT_RUN; no data availability or overall T004 completion clai
 | AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
 | AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
 
+
+### T003-S07-W04 — bounded Kafka configuration identity
+
+- AC01: `test_exact_cluster_topic_contract_release_and_profile_identity` uses
+  actual base/blue properties and JSON contract: two same-topic clusters never
+  match; distinct release never matches. Dynamic/cyclic/partial values and
+  unsupported profile/config/contract remain UNKNOWN. No transport proof.
+- AC02: optional workspace schema1 block; old HTTP services default unchanged;
+  `test_config_and_contract_hash_changes_invalidate_bindings_without_source_mutation`
+  reads graph/store v1/v2/v3. Legacy syntax nodes remain distinct.
+- AC03: structural/path/ownership and context ambiguity fail closed; missing
+  evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
+  publish no cache/source/store changes. Actual K1/K2 captured context test verifies
+  precedence/freshness without implicit repair. Password sentinel is absent from
+  graph; offline source-only checks allow only existing Git baseline reads.
+- AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
+  compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
+
+
+S07-W04 AC03 privacy correction: `test_sensitive_property_reference_never_exports_topic`,
+`test_public_workspace_captured_property_privacy_and_freshness` and
+`test_binding_cluster_alias_reference_privacy` exercise the public snapshot API
+for direct/transitive property references. `kafka-binding-2` returns UNKNOWN and
+no match before reading sensitive aliases; the full public graph redacts captured
+sensitive values while original input bytes/cache/context hashes remain valid.
+`test_public_kafka_projection_preserves_non_jvm_selection_identity` guards the
+postvalidation projection boundary. Prior613 full PASS does not cover this later
+review regression; note54 records separate current evidence.
 ## T024 — bounded trigger inventory
 
 AC01/02: explicit and actual K1 HTTP/Kafka/scheduler candidates with production/test
@@ -547,14 +611,27 @@ and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in not
 integration236PASS is recorded; final independent review/merge remain pending (PR59).
 Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
 
-## T003-S06-W04 — Explicit persistence realms (IN_PROGRESS)
+## T003-S06-W04 — Explicit persistence realms (VERIFIED_IN_SCOPE)
 
-Pure tests/test_persistence_realms.py covers two databases sharing stream main
-with different actual offline migrations/targets, duplicate-pair rejection,
-shared migration-path isolation and delimiter/percent ID collisions. Existing
-source-only legacy bindings now remain UNKNOWN. Actual K1/K2 workspace joins,
-reprojection idempotence and downstream T015 access tests are prepared but NOT_RUN;
-full acceptance is pending. See change note74; no S06 completion is claimed.
+`tests/test_persistence_realms.py` covers two databases sharing stream main with
+different actual offline migrations/targets, exact duplicate-pair rejection,
+shared migration-path isolation, delimiter/percent IDs, quoted-dot SQL component
+collisions and metadata tamper. Actual K1/K2 contexts over the same entity retain
+separate native/JPQL scope, idempotent local reprojection and selected T015 access.
+Two actual persistence units bind the same entity to their own DB/schema/table
+with XML provenance; ambiguous PU produces no physical claim and preserves store.
+The new current-JPA layer rejects missing/partial/foreign realm proof. Legacy
+source-only regex fields remain readable, with no new strong physical link.
+
+Final strict full: **1348 PASS, 10 SKIP in1583.75s**, mandatory workers/K2/Spring/
+HTTP flags, XML1358 tests/0failures/0errors. Exact HEADb75370d and all623 frozen
+input hashes remained unchanged. Earlier182PASS+setupERROR is a partial result,
+not the final full. See change note74 and persistent validation receipts.
+
+Supported physical bindings are non-renamed replay tables/columns. Valid renamed
+objects with stable creation IDs currently remain UNKNOWN; S06-W08 supplies the
+creation-identity lifecycle follow-up. Broader provider, grammar, schema lifecycle,
+deployment and populated-data availability are not proved. S06 remains PARTIAL.
 
 ## T003-S07-W06 — HTTP client intent, omezený compiler subset
 
@@ -569,6 +646,17 @@ Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note
 Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T025 — local technical process path
+
+| Acceptance | Bounded evidence | Remaining gate |
+|---|---|---|
+| AC01 | Public diamond and actual Javac/K1: no left↔right path, nested bodies and returns_to | Source closure/full/final review |
+| AC02 | Recursion/dispatch/depth/async boundaries retain original call-site; actual target/complete/receiver mutations cannot expand another body | Bounded source CFG only; no runtime claim |
+| AC03 | Existing flow.process root overflow + typed output budgets1/2/3 preserve explicit node-limit boundary | No unbounded root copy |
+| AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
+| AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
+| AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
 
 ## T003-S06-W08 — schema compatibility (draft stack, pending full/review)
 

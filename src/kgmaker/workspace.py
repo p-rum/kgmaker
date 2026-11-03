@@ -52,8 +52,12 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
-def _qualified_context(repo: str, value: dict) -> dict:
-    result = copy.deepcopy(value)
+def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False) -> dict:
+    if redact_kafka_properties:
+        from .kafka_bindings import project_captured_context
+        result = project_captured_context(value)
+    else:
+        result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
     if isinstance(result.get('source_files'), dict):
         result['source_files'] = {source_key(repo, path): checksum
@@ -61,12 +65,61 @@ def _qualified_context(repo: str, value: dict) -> dict:
     return result
 
 
+def validate_projected_context(root: Path, repo: str, public_context: dict) -> None:
+    """Validate a public redacted view against its private saved authority."""
+    from .store import load_graph
+    from .graph_provider import _selection_key, validate_context_snapshot
+    from .worker_protocol import WorkerError
+
+    def stale():
+        return WorkerError("STALE_INDEX: redacted context requires its matching valid original; inspect again", "STALE")
+
+    projection = public_context.get('spring_properties_projection')
+    if (not isinstance(projection, dict)
+            or set(projection) != {'redacted', 'sha256', 'original_context_id'}
+            or projection['redacted'] is not True
+            or not isinstance(projection['sha256'], str) or not _CONTENT_HASH.fullmatch(projection['sha256'])
+            or not isinstance(projection['original_context_id'], str)):
+        raise stale()
+    stored = load_graph(root)
+    matches = [context for context in stored.contexts if context.get('id') == projection['original_context_id']] if stored else []
+    if len(matches) != 1 or not matches[0].get('analyzer_version'):
+        raise stale()
+    original = matches[0]
+    expected = {**_qualified_context(repo, original, redact_kafka_properties=True), 'repo_id': repo}
+    # Compare the complete projection, not just caller-supplied marker hashes.
+    if expected != public_context:
+        raise stale()
+    recorded = original.get('selection_key')
+    recomputed = _selection_key({key: value for key, value in original.items() if key != 'selection_key'})
+    if not isinstance(recorded, str) or _selection_key(original) != recomputed:
+        raise stale()
+    try:
+        validate_context_snapshot(root, original)
+    except (ValueError, OSError):
+        raise stale() from None
+
+
 def _qualified_symbol(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
+    for key in ('method', 'owner_method', 'call_site'):
+        if isinstance(value.get(key), str):
+            result[key] = qualified(repo, value[key])
     result['context_id'] = qualified(repo, value['context_id'])
     if isinstance(value.get('path'), str):
         result['path'] = source_key(repo, value['path'])
+    return result
+
+
+def _qualified_evidence(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result.update(repo_id=repo, id=qualified(repo, value['id']),
+                  source=qualified(repo, value['source']), target=qualified(repo, value['target']),
+                  source_file=source_key(repo, value['source_file']) if value.get('source_file') else None,
+                  context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
+    if isinstance(value.get('call_site'), str):
+        result['call_site'] = qualified(repo, value['call_site'])
     return result
 
 
@@ -168,7 +221,7 @@ def load_workspace(path: Path) -> dict:
             or not isinstance(data.get('repositories'), list)):
         raise AnalysisError('Invalid workspace manifest version/identity/repositories')
     if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping',
-                    'service_ownership'}:
+                    'service_ownership', 'kafka_bindings'}:
         raise AnalysisError('Unknown workspace fields')
     roots, ids = [], set()
     for repo in data['repositories']:
@@ -199,8 +252,11 @@ def load_workspace(path: Path) -> dict:
             raise AnalysisError('Duplicate/invalid service ID')
         service_ids.add(service['id'])
         if set(service) - {'id', 'backend_repo', 'frontend_repos', 'test_repos', 'contract',
-                           'consumer_path_prefix', 'provider_path_prefix', 'generated_clients'}:
+                           'consumer_path_prefix', 'provider_path_prefix', 'generated_clients', 'transport'}:
             raise AnalysisError('Unknown service configuration')
+        transport = service.get('transport')
+        if transport is not None and (not isinstance(transport, str) or transport not in {'http', 'kafka'}):
+            raise AnalysisError('Unsupported service transport declaration')
         if service.get('backend_repo') not in ids:
             raise AnalysisError('Service backend_repo is not declared')
         for key in ('frontend_repos', 'test_repos'):
@@ -217,6 +273,8 @@ def load_workspace(path: Path) -> dict:
                 raise AnalysisError('HTTP prefix must be empty or start with /')
     _validate_service_ownership(data.get('service_ownership'), data['repositories'], service_ids)
     _validate_release_mapping(data, ids)
+    from .kafka_bindings import validate as validate_kafka_bindings
+    validate_kafka_bindings(data)
     data['_manifest_path'] = str(path)
     data['_manifest_hash'] = file_hash(path)
     return data
@@ -499,6 +557,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     from .framework import JPA_RULE_VERSION
     from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
+    from .kafka_bindings import VERSION as kafka_binding_version
     workspace = load_workspace(manifest)
     baseline_repos, sources, exclusions, nodes, edges, graphs, schemas = {}, {}, [], [], [], {}, {}
     symbols, call_sites, cfgs, annotations = [], [], [], []
@@ -517,7 +576,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, COMPATIBILITY_VERSION, JPA_RULE_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION],
+                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, COMPATIBILITY_VERSION, JPA_RULE_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -535,11 +594,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             try:
                 cached = read_json(disk)
                 if cached['schema_version'] == 1 and cached['cache_key'] == key and digest(cached['payload']) == cached['payload_hash']:
-                    _REPO_CACHE[key] = (KnowledgeGraph.from_dict(cached['payload']['graph']), cached['payload']['schemas'])
+                    pending_cache[key] = (KnowledgeGraph.from_dict(cached['payload']['graph']), cached['payload']['schemas'])
             except (AnalysisError, KeyError, TypeError, ValueError, OSError):
                 pass  # corrupted cache is a cache miss, not evidence
         if key in _REPO_CACHE:
             local, local_schema = copy.deepcopy(_REPO_CACHE[key])
+        elif key in pending_cache:
+            local, local_schema = copy.deepcopy(pending_cache[key])
         else:
             local, _, error = feature.current_graph(root)
             local_schema = None
@@ -596,6 +657,10 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         _release_artifact_links(workspace, graphs)
     )
     nodes += release_nodes; edges += release_edges
+    from .kafka_bindings import build_links as kafka_links, validate_snapshot as validate_kafka_snapshot
+    kafka_nodes, kafka_edges, kafka_evidence, kafka_contexts, kafka_diagnostics, kafka_report = kafka_links(workspace, graphs)
+    nodes += kafka_nodes; edges += kafka_edges
+    diagnostics += ['KAFKA_BINDING_UNKNOWN: ' + item['binding_id'] for item in kafka_diagnostics]
     release_messages = [item['code'] + ': ' + item['mapping_id'] + ': ' + item['reason']
                         for item in release_diagnostics]
     diagnostics += release_messages
@@ -612,6 +677,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     if file_hash(manifest) != workspace['_manifest_hash']:
         raise AnalysisError('Manifest changed during workspace snapshot', 3)
     _validate_release_artifact_snapshot(workspace, release_report)
+    validate_kafka_snapshot(workspace, kafka_report)
     _REPO_CACHE.update(pending_cache)
     if persist_cache and cache_root is not None:
         from .analysis_model import write_json
@@ -622,18 +688,14 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
     graph = KnowledgeGraph(3, '.', '', sorted(nodes, key=lambda n: n.id),
                            sorted(set(edges), key=lambda e: (e.source, e.kind, e.target)),
                            {k: v['sha256'] for k, v in sources.items()},
-                           [{**_qualified_context(repo, context), 'repo_id': repo}
-                            for repo, local in graphs.items() for context in local.contexts if 'id' in context],
+                           [{**_qualified_context(repo, context, redact_kafka_properties=workspace.get('kafka_bindings') is not None), 'repo_id': repo}
+                            for repo, local in graphs.items() for context in local.contexts if 'id' in context] + kafka_contexts,
                            ([{'repo_id': repo, **d}
                              for repo, local in graphs.items() for d in local.diagnostics]
-                            + release_diagnostics),
-                           ([{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
-                              'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
-                              **({'call_site': qualified(repo, e['call_site'])} if e.get('call_site') else {}),
-                              'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
-                              'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
+                            + release_diagnostics + kafka_diagnostics),
+                           ([_qualified_evidence(repo, e)
                              for repo, local in graphs.items() for e in local.evidence]
-                            + release_evidence),
+                            + release_evidence + kafka_evidence),
                            symbols=sorted(symbols, key=lambda item: item['id']),
                            call_sites=sorted(call_sites, key=lambda item: item['id']),
                            cfgs=sorted(cfgs, key=lambda item: (item['method'], item.get('representation', ''))),
@@ -661,6 +723,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                 'pending': pending + diagnostics, 'repositories': copy.deepcopy(baseline_repos), 'schemas': schemas}
     if release_report is not None:
         coverage['release_mapping'] = release_report
+    if kafka_report is not None:
+        coverage['kafka_bindings'] = kafka_report
+        coverage['parser_capabilities']['kafka_binding_identity'] = 1
     metadata = {'manifest_path': str(manifest.resolve()), 'manifest_hash': workspace['_manifest_hash'],
                 'workspace_id': workspace['workspace_id'], 'roots': {r['id']: r['_root'] for r in workspace['repositories']},
                 'release_mapping': workspace.get('release_mapping')}

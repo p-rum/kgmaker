@@ -325,7 +325,11 @@ class KotlinFrontend(private val state: State) {
                                     val id = state.site(caller, loc(expression), target,
                                         if (targetSymbol is org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol) "CONSTRUCTOR" else "CALL",
                                         null, reason)
+                                    if(expression.valueArguments.isNotEmpty() || expression.lambdaArguments.isNotEmpty()) {
+                                        state.diagnostic("K2_ARGUMENT_BINDINGS_UNAVAILABLE", "Selected K2 path does not expose proven source argument/formal mapping", loc(expression))
+                                    }
                                     state.sites.last { it["id"] == id }.apply {
+                                        put("argument_mapping_reason", "K2_ARGUMENT_BINDINGS_UNAVAILABLE")
                                         put("compiler_backend", backend); put("compiler_version", "2.1.10")
                                         val coroutineApi = targetSymbol?.callableId?.asSingleFqName()?.asString()
                                         val apiSource = targetSymbol?.psi?.containingFile?.virtualFile?.path

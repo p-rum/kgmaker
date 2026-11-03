@@ -346,8 +346,14 @@ Literal Unicode/quoted sheet qualifiers bind to their sheet; unrecognized qualif
 stay unresolved and cannot fall back to local cells. Spaced A1 ranges retain all cells.
 Supported Thymeleaf templates contribute `${variable.path}` nodes. Literal
 `addAttribute`/`setVariable` keys and literal controller template returns create
-evidenced backend bindings; an explicit `pdfService`/`pdfRenderer` call remains an
-external PDF boundary.
+evidenced backend bindings. Static fragment declarations and references are linked
+only for a unique same-scope target with exact parameter arity; literal model-path
+arguments pass through fragment-scoped parameter nodes. Conditional expressions
+are PARTIAL and unsupported expressions are UNKNOWN; neither is evaluated. Dynamic
+or ambiguous fragment references have diagnostics and no resolved fragment edge.
+Unsupported `th:each`/`th:with` local scopes and their `data-th-*` aliases do not
+bind local names as global backend model variables; those expressions stay UNKNOWN.
+An explicit `pdfService`/`pdfRenderer` call remains an external PDF boundary.
 
 ### Data prerequisite audit
 
@@ -590,6 +596,29 @@ simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
+Explicit compiler inspection now records version1 `argument_to_parameter` bindings
+for supported Javac, K1 and TypeScript call expressions. Each proof retains its
+original call site, formal index, context and direct/vararg transformation.
+Named/default Kotlin arguments follow compiler binding, with omitted defaults
+marked as not evaluated. These are bindings to the declared contract; dispatch
+candidates remain candidates and availability stays UNKNOWN. K2 Kotlin and
+unsupported/erroneous bindings expose specific UNKNOWN boundaries.
+`kgmaker flow render --entry METHOD_ID --view process --format json` includes
+binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
+retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
+
+React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
+uses opt-in `react-jsx-events-4`: React18.3.1/@types/react18.3.18 with the pinned
+compiler declaration hash. Intrinsic event props and one verified source forwarding
+wrapper retain package/declaration provenance. Unknown versions, fake modules,
+mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
+static handler binding is not a click or data-availability proof. See change69.
+
+The React subset covers pinned standard onClick/onChange/onSubmit props, including
+input/select/textarea and form. Classic official factory aliases and default
+automatic runtimes are supported; explicit legacy namespace/fragment/import-source
+controls and per-file JSX overrides remain UNKNOWN.
+
 Coroutine source inspection preserves compiler-proven suspend and recognized
 coroutines API boundaries, with bounded named continuation declaration mapping.
 Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
@@ -631,6 +660,35 @@ incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
 
+
+### Declared Kafka workspace bindings (T003-S07-W04)
+
+An optional versioned `kafka_bindings` block in the existing workspace manifest
+projects Cloud Stream `.properties` bindings into `kafka_binding` nodes. Services
+use `transport: "kafka"` and existing explicit service ownership. Matches require
+the same declared logical cluster ID, case-sensitive topic, exact JSON contract
+SHA, release label and scope. Base configuration precedes explicit profile
+overrides; a uniquely selected fresh JVM context can supply captured property
+overrides. No compiler context is fabricated for source-only configuration.
+
+```bash
+kgmaker query --root . --workspace fixtures/kafka-bindings/workspace.json orders-blue
+```
+
+See [the fixture](fixtures/kafka-bindings/README.md) and
+[the bounded contract](docs/compiler-inspection.md#t003-s07-w04--declared-kafka-binding-identity).
+Dynamic, missing, ambiguous or unsupported inputs remain UNKNOWN. Cluster, release
+and payload labels are declared; code binding, delivery, deployed schema and data
+availability remain unproven. Legacy name-only Kafka hints remain separate syntax
+evidence. Scan/query/feature/data checks never start a broker, application or build.
+
+
+Kafka privacy rules `kafka-binding-2` reject credential and broker-connection
+property keys before alias lookup, including nested references in captured
+properties. These bindings stay UNKNOWN. Public workspace contexts redact
+sensitive captured Spring property values and retain an explicit projection
+marker, original context identity and property-map hash. The private captured
+context remains the authority for validation and selection.
 ### Proven trigger inventory (T024)
 
 `kgmaker.process_triggers.discover_process_triggers(workspace, graph,
@@ -640,7 +698,7 @@ an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
 process paths, business identities, worker execution or runtime availability are
 inferred. See [API and boundaries](docs/process-triggers.md).
 
-### Explicit persistence realm selection (T003-S06-W04, in progress)
+### Explicit persistence realm selection (T003-S06-W04, bounded subset)
 
 For physical schema links, provide database_id and schema_stream_id explicitly
 in the JVM build context and database_id/stream_id in each workspace repo.flyway
@@ -652,7 +710,9 @@ inspection carry these fields; the CLI remains kgmaker inspect jvm --root app
 --build-id BUILD_ID. Offline snapshot_workspace then joins existing fresh compiler
 facts to its explicit replay schemas; it never runs a worker, app or database.
 Legacy source-only @Table/@Column fields do not create new strong persisted_in
-links without a proven realm. See docs/changes/74_isolatePersistenceRealms.md for
+links without a proven realm. Supported physical replay binding currently covers
+non-renamed table/column identities; creation-stable IDs after a rename remain
+UNKNOWN pending S06-W08 lifecycle proof. See docs/changes/74_isolatePersistenceRealms.md for
 actual validation and incomplete scope.
 
 HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
@@ -667,6 +727,15 @@ HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/meth
 path components without guessing a composed route, and rejects URI-callback route
 guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
 starts a worker. See the HTTP matrix for property-file and privacy boundaries.
+
+### Local technical process paths (T025)
+
+`kgmaker.process_paths.build_local_process(graph, trigger_inventory, trigger_id,
+process_id="process:caller-selected", max_nodes=200)` adapts existing source CFG
+topology into a typed T023 ProcessView. Branches, call-sites and exception paths
+are preserved; root budgets, recursion, uncertain dispatch and missing/async
+bodies stay explicit boundaries. No business identity or runtime execution is
+inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
 ### Schema compatibility (T003-S06-W08 draft)
 
