@@ -12,7 +12,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T002 | [2_buildAwareInspection.md](2_buildAwareInspection.md) | JVM build, call graph, Spring a Hibernate | Normativní; částečně implementováno |
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
 | T004 | [4_addHighLevelProjectViews.md](4_addHighLevelProjectViews.md) | Integrační katalog, topologie služeb a business procesy; T005–T044 níže | SPECIFICATION |
-| T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION; profil není důkazem provedeného merge |
+| T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION, revize 2; GH CI je doplňující, ostatní kontroly zůstávají povinné; profil není důkazem merge |
 
 ## High-level zobrazení projektu — T004
 

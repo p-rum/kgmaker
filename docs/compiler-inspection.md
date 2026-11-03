@@ -19,7 +19,7 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
 | Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
 | Kotlin K2 (opt-in) | Standalone Analysis API / FIR 2.1.10, backend `k2-analysis-api-2.1.10-v1` | Mixed Java/Kotlin named-function calls, compiler PSI light-method JVM descriptors, explicit unresolved/ambiguous boundaries; source CFG/property/lambda semantics remain PARTIAL |
-| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
+| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, ordered selected-classpath CHA (open world) |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
 | Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
@@ -580,6 +580,53 @@ neznámý annotation subpackage není Jakarta/Javax JPA evidence. FIELD/PROPERTY
 výběr vyžaduje doložený identity target nebo `@Access`, včetně ověření přístupu
 pro embedded atributy.
 
+## T003-S04-W04 — Ordered dependency dispatch
+
+Javac a K1/K2 2.1.10 předávají u podporovaných virtuálních/interface call expressions
+compiler-proven erased receiver. ASM používá stejný hierarchy index pro bytecode
+`invokevirtual`/`invokeinterface`. Metadata selected JARů a adresářů se čtou bez
+class loadingu, inicializace, buildů či aplikace. První classpath entry pro daný
+binary class name vyhrává; pozdější kopie se nesjednocují. Explicitní artifact realm
+zůstává zachovaný, bez mapování se používá stávající SHA-256 dependency realm.
+
+`declared_target` je compiler/JVM declaration; `dispatch_candidates` jsou oddělené
+`DISPATCH_CANDIDATE` důkazy. `dispatch_algorithm=CHA_ORDERED_SELECTED_CLASSPATH`,
+`dispatch_classpath` a `dispatch_completeness_reason` jsou součástí provenance.
+Candidate class musí být subtype compiler-erased receiveru **i** owneru skutečného
+`declared_target`. Source type-variable/intersection receiver je konzervativně
+unsupported: úplné upper bounds se zde nereprezentují, proto se kandidáti nevydají
+a declared target i konkrétní compiler diagnostic zůstanou zachované.
+Defining owner zděděného implementation body sám tyto dva vztahy splňovat nemusí.
+Cache klíč obsahuje receiver, declared contract, method name a descriptor.
+`dispatch_complete` zůstává false kvůli otevřenému runtime světu. Výsledek není
+runtime observation, call-path feasibility ani dostupnost dat. Reference a
+invokedynamic creation nejsou provedení; static/private/final/super targety
+nedostávají virtuální enrichment.
+
+Index má limity 10000 classes, 100000 archive/filesystem entries, 16 MiB/class a
+128 MiB souhrnně čtených class bytes; hierarchy lookup nejvýše 256 visited types. Chybějící parent, corrupt archive/class,
+shadow, duplicate entry či truncation mají lokalizovanou diagnostiku. Multi-release
+JAR candidate enumeration je explicitně unsupported; physical declared lookup
+používá bounded runtime-effective JarFile metadata včetně version-only classes,
+aby je nenahradila pozdější plain kopie. Chybějící hierarchy nepřidává domnělou
+implementaci. Package-private override access zůstává konzervativní hranicí.
+K2 property/operator/local/lambda semantics zůstávají v dosavadním PARTIAL subsetu.
+K2 source owner bez type-hierarchy proof nepřebírá subtype vazby ze staré compiled kopie.
+Source overlay a physical hierarchy mají oddělené lookup/cache. Skutečné JDK
+platform resources mají parent-first přednost a toolchain realm; metadata
+`module-info.class` nejsou candidate classes. Compiler-proven `jvm_static`
+kontradikce source/physical canonical vrací `SOURCE_BINARY_ABI_CONFLICT`, unresolved
+site/PARTIAL a generated body bez nekompatibilního source locator/mapping.
+Před physical canonical bindingem se ověřuje také úplný realm tuple
+repo_id/module/source_set/scope: mismatch dává `SOURCE_BINARY_REALM_CONFLICT`,
+source declaration zůstává zachovaná.
+
+Příklad: po explicitním získání a importu content-bound ordered classpath spusť
+`kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`;
+`kgmaker callgraph callees --help` popisuje přepnutí dispatch kandidátů při navigaci.
+Fixture `tests/test_dependency_dispatch.py` skutečně sestaví JDK21 API/base JAR a
+dva implementation JARy v odlišných realms. Protocol v1 ani graph/store v1/v2/v3
+se nemění; nová provenance pole jsou aditivní a staré vstupy zůstávají čitelné.
 ## T003-S05-W01 — bounded Spring import selectors
 
 `annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
@@ -697,3 +744,56 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## Data resource projection (T015)
+
+The public pure Python API consumes an already captured workspace:
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.data_resources import project_data_resources
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_data_resources(workspace, graph, source_coverage=coverage,
+                              scope="production")
+print(view.to_json())
+```
+
+Capture is separate from projection; the latter reads only explicit local source
+snapshots and never starts a process or connects to a database. It reuses T008
+service ownership and selected contexts, including `selected_contexts` pins.
+
+- Two explicit database/stream realms with an `orders` table stay two resources.
+  Table IDs are references, not database identities; JDBC URLs and class names do
+  not identify a resource.
+- Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
+  `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
+- `coverage.schemas` inventories/configuration must match the workspace declaration,
+  graph table inventory, realm IDs and actual local hashes. Stale or malformed
+  snapshots fail without mutation. Unmapped default Flyway database IDs remain
+  unresolved; a default is accepted only when explicitly declared as a datasource.
+- Flyway resources carry `derivation=["MIGRATION_DERIVED"]`, while evidence keeps
+  its original T009 kind. Deployment and data availability remain `UNKNOWN`.
+  An ORM node tag alone supplies no new FRAMEWORK_DERIVED proof. Unknown polarity
+  is not promoted; explicit conflicts retain both buckets and AMBIGUOUS status.
+- Known foreign test scopes are excluded. Unknown file scope is not converted to
+  production because its repository belongs to a production service.
+
+`tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
+workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
+It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
+is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
+physical naming/schema compatibility, live databases and data population remain
+outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.

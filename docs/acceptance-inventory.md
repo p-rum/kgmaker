@@ -378,6 +378,14 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+| Acceptance | Evidence within scope | Test/fixture |
+|---|---|---|
+| AC01 | Declared API target separate from realm-specific candidate implementations; missing hierarchy explains incomplete result | `test_source_interface_call_finds_two_dependency_implementation_realms`, `test_missing_parent_excludes_unprovable_implementation`, actual JDK21 JARs |
+| AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
+| AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
+| AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
 `xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
@@ -439,3 +447,14 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
+
+## T015 — database resource projection
+
+| Acceptance | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_two_actual_datasources_keep_distinct_resources_and_table_drilldown`, `test_identity_ignores_table_details_and_input_order` | Actual workspace/Flyway replay; two explicit realms, stable IDs and deterministic serialization |
+| AC02 | `test_only_existing_context_bound_read_write_is_projected`, `test_entity_mapping_is_only_a_dependency_not_read_or_write`, `test_plain_connection_configuration_never_creates_database_access` | Existing source/context/evidence-bound facts only; no query inference |
+| AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
+| AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
+| AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |

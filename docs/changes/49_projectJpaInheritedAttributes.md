@@ -199,3 +199,33 @@ mapped-superclass owner fixture passed: **3 passed in 56.73 s**. No full suite
 was repeated for this parent-only refresh. Semantic validation, scan/check and
 diff checks record the refreshed source graph; W03's XML overlay is integrated
 separately above this W02 head.
+
+
+## Current-main/W01 integrace po změně CI pravidel (2026-11-03)
+
+Base je main966948b533a7a9417dea370733f300f91fd2b61c s merged W01. Vlastní
+framework.py a oba JPA compiler test moduly zůstávají byte-identické opravenému
+W02 checkpointu283987a98835462c29ac9fc39150233dc1a47b74, včetně canonical
+entity/JPQL owner a generic return guards. Starý remote c65ff není aktuální
+opravený source. Všechny JVM worker/build/lock soubory jsou nyní přesně z main.
+
+Aktuální worker JARy byly převzaty výhradně z W01 po porovnání všech tracked JVM
+source/build/lock souborů, všech library hashů a skutečné fresh-build receipt
+`/workspace/combined-jvm-main-ec/verified-results.json`. K1 SHA e44e3dac04ba28cd8899fed0ae183f5739c4311911b1ae656e6d1db26b64e15e,
+K2 SHA e2553425c3c24c310dccdc8893aa1d5acdf05dcbc7c3f07c5a3ead8751e9570a.
+Porovnání je zaznamenáno v `/workspace/w02-main966-worker-receipt.json`; samotná
+shoda source bez této build provenance by nestačila.
+
+Actual owner/return, K2 inheritance/use-site, Javac a dependency dispatch focus je
+připraven pod sdíleným flockem s mandatory workers/K2/Spring flags. Dokud není
+skutečný pytest dokončen, nejde o PASS. Nový full pro tuto parent-only integraci
+není plánován. GH CI je podle výslovné uživatelské změny volitelné, všechny
+ostatní acceptance, aktuální nezávislé review a dependency kontroly zůstávají.
+
+Actual focus dokončen: **6 PASS, 83 deselected v32.06s**, XML
+`/workspace/w02-main966-actual.xml` má0 failures/errors/skips. Běžely exact
+repository generic/JPQL return owner, K2 use-site a mapped-superclass, Java
+mapped-superclass, Javac AC06 a dependency interface dispatch. Pure integrace
+T005/T008/T009/T015/mandatory: **124 PASS, 2 actual T015 deselected v2.56s**,
+XML `/workspace/w02-main966-pure.xml`. Runtime/test source zůstal po celou
+frontu a actual běh beze změny.

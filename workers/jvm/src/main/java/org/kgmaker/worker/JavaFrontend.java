@@ -122,6 +122,9 @@ public final class JavaFrontend {
             if(element instanceof TypeElement type) {
                 var metadata=annotations(type);metadata.put("kind",type.getKind().toString().toLowerCase(Locale.ROOT));
                 metadata.put("supertypes",types.directSupertypes(type.asType()).stream().map(TypeMirror::toString).toList());
+                metadata.put("jvm_interfaces",type.getInterfaces().stream().map(t->elements.getBinaryName((TypeElement)types.asElement(types.erasure(t))).toString().replace('.','/')).toList());
+                metadata.put("jvm_superclass",type.getSuperclass().getKind()==TypeKind.NONE?null:elements.getBinaryName((TypeElement)types.asElement(types.erasure(type.getSuperclass()))).toString().replace('.','/'));
+                metadata.put("modifiers",type.getModifiers().stream().map(m->m.toString()).toList());
                 metadata.putAll(selectorFacts.describe(type));
                 state.type(elements.getBinaryName(type).toString(),loc(tree),metadata);
             }
@@ -155,22 +158,35 @@ public final class JavaFrontend {
         }
         private void invocation(Tree tree,String kind) {
             if(caller==null)return;
-            var location=loc(tree);String target=null,receiver=null,reason="UNRESOLVED_COMPILER_SYMBOL";
+            var location=loc(tree);String dispatchReceiver=null,dispatchBoundary=null;boolean dispatchEligible=false;String target=null,receiver=null,reason="UNRESOLVED_COMPILER_SYMBOL";
             var element=trees.getElement(getCurrentPath());
             if(element instanceof ExecutableElement executable && !errorAt(tree)) try {
                 Map<String,Object> targetLoc=declarationLocation(executable);
-                target=method(executable,targetLoc);receiver=owner(executable);reason="JAVAC_ATTRIBUTED_SYMBOL";
+                dispatchEligible=!executable.getModifiers().contains(Modifier.STATIC) && !executable.getModifiers().contains(Modifier.PRIVATE) && !executable.getModifiers().contains(Modifier.FINAL) && !executable.getEnclosingElement().getModifiers().contains(Modifier.FINAL);
+                target=method(executable,targetLoc);receiver=owner(executable);dispatchReceiver=receiver;reason="JAVAC_ATTRIBUTED_SYMBOL";
                 if(tree instanceof MethodInvocationTree invocation && invocation.getMethodSelect() instanceof MemberSelectTree select) {
                     var receiverPath=new TreePath(new TreePath(getCurrentPath(),select),select.getExpression());
-                    var receiverType=trees.getTypeMirror(receiverPath);if(receiverType!=null)receiver=receiverType.toString();
-                    if(select.getExpression() instanceof IdentifierTree identifier && identifier.getName().contentEquals("super"))kind="SPECIAL";
+                    var receiverType=trees.getTypeMirror(receiverPath);if(receiverType!=null){receiver=receiverType.toString();var erased=types.erasure(receiverType);if(erased instanceof DeclaredType declared && declared.asElement() instanceof TypeElement type)dispatchReceiver=elements.getBinaryName(type).toString();else dispatchReceiver=null;}
+                    if(dispatchEligible && receiverType!=null && (receiverType.getKind()==TypeKind.TYPEVAR || receiverType.getKind()==TypeKind.INTERSECTION)) {
+                        dispatchEligible=false;
+                        dispatchBoundary=receiverType.getKind()==TypeKind.TYPEVAR?"JAVA_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED":"JAVA_INTERSECTION_RECEIVER_DISPATCH_UNSUPPORTED";
+                    }
+                    if((select.getExpression() instanceof IdentifierTree identifier && identifier.getName().contentEquals("super")) ||
+                        (select.getExpression() instanceof MemberSelectTree qualifier && qualifier.getIdentifier().contentEquals("super"))) {
+                        kind="SPECIAL";dispatchEligible=false;
+                    }
                 }
                 if(executable.getModifiers().contains(Modifier.STATIC))kind="STATIC";
                 else if(executable.getModifiers().contains(Modifier.PRIVATE))kind="SPECIAL";
-                else if(executable.getEnclosingElement().getKind()==ElementKind.INTERFACE)kind="INTERFACE";
+                else if(!kind.equals("SPECIAL") && executable.getEnclosingElement().getKind()==ElementKind.INTERFACE)kind="INTERFACE";
             }catch(IllegalArgumentException error){reason="UNSUPPORTED_SIGNATURE:"+error.getMessage();}
             if(tree instanceof MemberReferenceTree)kind="METHOD_REFERENCE";
             String identity=state.site(caller,location,target,kind,receiver,reason);calls.put(tree,identity);
+            if(dispatchEligible && target!=null && dispatchReceiver!=null && Set.of("VIRTUAL","INTERFACE").contains(kind))state.sites.getLast().putAll(map("dispatch_kind",kind,"dispatch_receiver",dispatchReceiver.replace('.','/')));
+            if(target!=null && dispatchBoundary!=null && Set.of("VIRTUAL","INTERFACE").contains(kind)) {
+                state.sites.getLast().put("dispatch_completeness_reason",dispatchBoundary);
+                state.diagnostic(dispatchBoundary,"Full source receiver constraints are not represented; declared target is retained without dispatch candidates",location);
+            }
             if(target==null)state.diagnostic("JAVA_UNRESOLVED_CALL",reason,location);
             if(target!=null && (target.contains("java.lang.Class.forName") || target.contains("java.lang.reflect.Method.invoke")))
                 state.diagnostic("DYNAMIC_REFLECTION_BOUNDARY","Declared reflection API is resolved; runtime target is unknown",location);

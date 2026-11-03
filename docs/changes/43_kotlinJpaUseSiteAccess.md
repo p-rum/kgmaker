@@ -257,3 +257,49 @@ XML `/workspace/s06-w01-main3a7-pure.xml`. CI již není blokováno billingem;
 před merge jsou povinné aktuální source review a všech sedm remote kontrol.
 Main prefix121 immutable episodes a všechny původní child captures zůstávají
 beze změny; generované grafy se obnovují CLI.
+
+## Parent-only integrace T015
+
+Main `49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce` nyní obsahuje T015. JVM,
+framework a oba původní compiler test moduly zůstávají byte-identické `e71c6227`;
+T015 projector/tests/pinned API fixture i TypeScript worker jsou přesně z main.
+Nová čistá kontrola T005/T008/T009/T015/mandatory: **124 PASS**, dva samostatně
+ověřené actual T015 případy byly deselected, **4.32s**; XML
+`/workspace/jpa-main49-pure.xml`. Skutečný dřívější JPA35 run se pro tuto
+parent-only změnu neopakuje; nová dvojice vyžaduje čerstvé všech sedm CI kontrol.
+Main prefix127 a všechny původní child captures zůstávají immutable.
+
+## Spojení s merged dependency dispatch
+
+Parent `ec333966e657896382f310ef018835e3d696513e` obsahuje PR35. K2 frontend
+nyní kombinuje původní JPA annotation/use-site metadata s main hierarchy/dispatch
+metadata; JPA framework a oba feature test moduly zůstávají beze změny.
+Předchozí actual35 je historický feature důkaz, nikoli běh nové kombinované JVM
+distribuce. Ta musí být čerstvě sestavena a ověřena mandatory compiler CI,
+včetně skutečného K2 JPA fixture, Javac a dispatch testů před merge.
+
+Čistá společná projekční/CI kontrola: **124 PASS**, dva samostatně doložené
+actual T015 případy deselected, **2.91s**, `/workspace/jpa-mainEc-pure.xml`.
+Main prefix134 immutable episodes a všechny původní W01 captures jsou zachovány.
+Stavová tabulka slučuje aktuální S04 a konkrétní Kotlin JPA subset bez duplicit;
+celé S04/S06 zůstávají PARTIAL.
+
+
+## Obnovení po změně merge pravidel 2026-11-03
+
+Integrační base je main54a3e01c7bcb1295973655d72b58a14e6a5d597d. Jeho změny
+jsou pouze dokumentace, review profil a generované semantic/memory metadata.
+Vlastní runtime/test/worker soubory zůstávají byte-identické bdbe4ca7777f0354ee2ed3e4a0e9defa8f5eda70.
+Přetrvávající root receipt `/workspace/combined-jvm-main-ec/verified-results.json`
+dokládá fresh vlastní K1/K2 build a skutečné tři compiler případy: **3 PASS,
+0 SKIP v24.866s**, actual K2 JPA/Javac AC06/dispatch. Tento důkaz se nepovyšuje
+na nový full. GitHub CI zablokované fakturací není podle výslovné nové policy
+povinný merge gate; stav se neoznačuje za PASS. Ostatní review/acceptance a
+závislosti zůstávají povinné. Pure integration kontrola a semantic/scan se
+provedou před publikací; nezávislé finální review vlastní root.
+
+Pure integrační sada po policy merge: **124 PASS, 2 deselected**, XML
+`/workspace/jpa-main-policy-pure.xml`; selector vyloučil pouze dva actual T015
+případy s již samostatnou evidencí. Dva úvodní příkazy měly neexistující název
+testového souboru a nespustily testy; byly nahrazeny skutečným test_t005_add_view_model.py.
+První širší selector následně prošel121/5, finální přesný selector124/2.
