@@ -2,8 +2,8 @@
 
 - Task ID: `T025`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-03
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T023](T-023_define-business-process-model.md); [T024](T-024_discover-process-triggers.md); `T003-S04` (upstream; ověř konkrétní podporovaný kontrakt a acceptance, samotná existence zadání nestačí).
@@ -61,3 +61,37 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T025** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize2 — skutečné compiler důkazy lokálních operací před T026
+
+Původní T025 revize1 je dodaná v PR60, merge `c6950e9`. Tato revize vymezuje
+samostatný navazující PR na větvi `feat/t025-certify-local-operations` z main
+`ef3ab4050289aafd557caa5414c594698da006ea`; nejde o skrytou implementaci T026.
+
+- **T025-S06:** Optional versioned Javac IR witness pro literal evaluation a
+  literal assignment do compiler LOCAL_VARIABLE s primitive nebo canonical
+  java.lang.String typem. Jen named non-error method bodies. Legacy, Kotlin,
+  bytecode, initializer/lambda, boxed/field/array/call/cast/arithmetic případy
+  zůstávají bez certifikované assignment operace.
+- **T025-S07:** Validuj source/context/caller/hash, typed IR cestu/digest a přesnou
+  vazbu na CFG block včetně samostatných finally klonů. Reuse jediného CFG builderu.
+  Vlastní SYMBOL_RESOLVED operation proof dovolí RESOLVED pouze tomuto operation
+  uzlu; původní SYNTAX_CANDIDATE CFG evidence zůstává odděleně zachovaná a všechny
+  control transitions zůstávají původně UNRESOLVED. Tím se neprokazuje pořadí
+  runtime execution, feasibility, business význam ani dostupnost dat.
+- **T025-AC07:** Skutečný Javac local-literal chain má samostatné ověřitelné
+  operation proofs v obou podporovaných JVM backendech; neprokázané operace
+  nemají silnější status, než dovoluje jejich původní kontrakt.
+- **T025-AC08:** Chybějící/foreign/stale/pozměněný source/context/IR/CFG proof,
+  půjčený finally block či unsupported target nesmí vytvořit RESOLVED operaci.
+  Vstupy a poslední validní store zůstávají beze změny při chybě.
+- **T025-AC09:** Zachovej čtení starých worker/graph/process vstupů, Arg/HTTP
+  metadata, původní CFG/topology/provenance a nulové implicitní worker/app/network
+  spuštění v čisté projekci. Optional witness absent znamená UNKNOWN, nikoli PASS.
+
+Povinné testy: actual typed local/string/primitive positives; field/boxed/call/
+cast/error/legacy/Kotlin negatives; exact IR/body/source/context proof mutations;
+finally klony; workspace qualification; process roundtrip a syntactic transitions
+bez evidence promotion. Nový vlastní K1/K2 build, cílené regressions a jediný
+strict full následují po nezávislém source review. Výsledky patří do change79.
