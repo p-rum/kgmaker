@@ -187,3 +187,17 @@ volitelných Maven/Gradle/exporter a non-admin Windows konfigurací je v logu
 pravdivě SKIP. Persistent evidence: `full.log`, `full.xml`, `full-status.json`
 a `full-inputs.json` v `/workspace/coroutine-main-integration/`. Tento výsledek
 nahrazuje výše uvedený PENDING combined full, nikoli omezení podporované matice.
+
+## Ověření kombinovaného K2 s aktuální JPA podporou
+
+Integrace mainb78 zachovala všechny vlastní K1/SourceMapping/control-flow a
+coroutine test bytes z full755/10; K2 spojila nové parent JPA annotation fakty
+s původním coroutine ABI a member-extension dispatch guardem. Nový vlastní
+clean K2 build **exit0/21.684s**, SHA
+`ff65f40034a9b21ff7f87535b1ab059d250147ba2c0922f47fb9f8c91e40d46d`.
+Coalesced actual K1/K2 member-extension, suspend, continuation, missing-source,
+ordinary-name, K1 CFG, K2 JPA a celý dependency-dispatch subset:
+**64 PASS, 0 SKIP v299.45s**, XML64/0errors/0failures. Receipt potvrzuje všech14
+source/lock hashů nezměněných. Evidence je `integrated-build-receipt.json`,
+`integrated-focus.log/xml` v persistent validačním adresáři; nový full se
+kvůli parent integraci neopakoval.
