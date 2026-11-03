@@ -345,3 +345,25 @@ spustit registrars i dispatch testy před merge; nepoužívá se starý lokáln�
 jako důkaz nové kombinace. Main prefix134 immutable episodes a všechny původní
 Factory captures jsou zachovány. Stavová tabulka zachovává pouze jednu aktuální
 řádku pro S04 a S05; celý milník zůstává PARTIAL.
+
+## Integrace merged Kotlin JPA a volitelného GH CI
+
+Parent `966948b` obsahuje merge W01 JPA i T045 revizi2. GH CI je doplňující
+kontrola; všechny ostatní lokální acceptance/toolchain a nezávislé review gates
+zůstávají povinné. Starší požadavek povinného remote CI výše je historický.
+Automatický merge runtime zachovává K2 frontend přesně z tohoto main a vlastní
+SpringBeans, RegistrationFacts a registration testy přesně z `5fe066d`.
+Framework skládá původní Factory změny s již ověřenými main JPA guards;
+žádný runtime konflikt se neručně přepisoval.
+
+Pure integrační kontrola T005/T008/T009/T015/mandatory: **121 PASS,5 deselected
+v3.00s**; příliš široký filtr `not actual` vyřadil i tři pure případy. Ty byly
+poté explicitně spuštěny: **3 PASS,56 deselected v0.30s**. Celkem původních124
+pure případů prošlo, dvě actual compiler T015 varianty se v tomto batchi
+nespouštěly. XML `/workspace/factory-mainJpa-pure.xml` a `-pure-extra.xml`.
+
+Nová kombinovaná JVM distribuce vyžaduje vlastní explicitní K1/K2 build a
+actual registration/JPA/dispatch kontrolu; předchozí26 PASS nad `5fe066d` je
+historická evidence a nenahrazuje tento krok. Main148 immutable episodes tvoří
+přesný prefix; původní Factory captures jsou zachované beze změny. Finální
+exact-pair review, publikaci a merge řídí root.
