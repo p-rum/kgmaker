@@ -260,3 +260,21 @@ argument mapping a UI handles_event. CI seznam obsahuje obě sady. Semantic
 validate a plný scan/check nyní prošly; dřívější mezikrok `scan --no-docs`
 neobnovil human views a jeho check byl stale, proto je nahrazen plným scanem.
 Finální worker build/actual výsledek bude doplněn po skutečném běhu.
+
+### Skutečný společný worker výsledek a template parent
+
+Na checkpointu `63d3dbb` proběhly oba čerstvé vlastní K1/K2 buildy a společná
+argument/Factory/JPA/dispatch/coroutine/HTTP/UI actual sada: **108 PASS, 0 SKIP
+v312.16s**. Všech241 source/test/fixture vstupů a30 post-build JAR/lib hashů
+zůstalo při běhu beze změny. Persistent proof je
+`/workspace/argument-current-validation/` včetně obou build logů, manifestů,
+XML a PASS receipt. Tento výsledek není historický build z jiného parentu.
+
+Následná integrace main `2b0cf353c31f88c0c0226cf415585433843187f2` přidává pouze
+schválený SOURCE_ONLY Thymeleaf parser a jeho feature/store/report části.
+Žádný worker ani argumentový runtime konflikt nevznikl; vlastní JVM source a
+30 JAR/lib hashů zůstávají exact výše uvedenému actual buildu. Current-parent
+pure výsledek je uložený v `template-parent-pure.xml`; source/test selection
+s neexistujícími test_flow/test_impact moduly skončila exit4 ještě před testy,
+byla opravena na existující moduly a není uváděna jako PASS.
+Main197 immutable captures jsou exact prefix, šest child captures nezměněno.
