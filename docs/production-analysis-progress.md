@@ -1,5 +1,37 @@
 # Aktuální stav a zbývající práce
 
+## T003-S06-W02 — zděděné JPA persistence atributy (2026-10-26)
+
+VERIFIED_IN_SCOPE pro actual K2 2.1.10 a actual Javac21: JPA
+`@MappedSuperclass` field/getter ID určuje zděděný FIELD/PROPERTY access; atributy
+jsou projektovány na entity s odděleným `declaring_owner` a `effective_owner`.
+Entity attribute indexes and Spring Data repository generic resolution use exact
+compiler-qualified owners; a repository for `right.Thing` cannot resolve a
+derived predicate against same-simple-name `left.Thing`. An unproven generic
+owner remains unbound.
+Explicit JPQL entity names and query return declarations also use exact compiler
+identities; a simple source return name needs a matching canonical JVM method
+descriptor. Missing qualified owners and erased generic variables do not receive
+a repository-model or first-match fallback.
+Řetězené mapped superclasses, compiler-qualified parent identity, entity-level
+override precedence, kolize, unresolved override a SingleTable/Joined/Table-per-class
+root/subclass table selection mají fixture v `tests/test_k2_backend.py`.
+Původní `orm_attribute`/`orm_table`, graph/store v3 a kontextové evidence se
+zachovávají; schema migrace není potřeba. Entity field collision a unresolved
+override nevytvoří vybraný `maps_to_column` edge. Mapped-superclass relationship
+targets, embedded-attribute overrides, deployment/naming-strategy compatibility
+a širší provider matice zůstávají PARTIAL/UNKNOWN; T003-S06 zůstává PARTIAL.
+Přesné testy a konečné výsledky jsou v [acceptance inventáři](acceptance-inventory.md)
+a [change note49](changes/49_projectJpaInheritedAttributes.md).
+## Merge politika po uživatelské změně 2026-11-03
+
+[T045 revize 2](tasks/45_addCodeReviewAgent.md) dovoluje merge bez GH CI, pokud
+pro aktuální base/head projdou všechny ostatní povinné kontroly a nezávislé
+review. Historické CI_PENDING/billing-only BLOCKED řádky níže zachovávají stav
+skutečných běhů; samy již merge neblokují. Chybějící acceptance/toolchain,
+konkrétní chyba, konflikt, draft a nesplněná závislost nadále blokují. GH workflow
+zůstávají beze změny a serverová pravidla se neobcházejí.
+
 ## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
 
 Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
@@ -26,6 +58,7 @@ selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
 [Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
 Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
 z tohoto kontraktu odvozovány.
+
 
 ## T003-S08-W01 — TypeScript project references (2026-10-26)
 
@@ -128,10 +161,9 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
 | T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
-| T003-S05 Spring | PARTIAL | Spring rules v4 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors mimo bounded literal subset, registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
-
 | T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body source mapping mimo W02 a coroutine mapping, širší corpus a úplná acceptance banka |
-| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
+| T003-S05 Spring | PARTIAL | Spring rules v5 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors/registrars/factories mimo bounded literal subset, širší property/classpath varianty a runtime proxy/async execution |
+| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, Java/Kotlin FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, mapped-superclass declaration/effective owner projections over SingleTable/Joined/Table-per-class entity hierarchies, association target and OWNING/INVERSE `mappedBy`, explicit join without scalar-column invention, entity/table/column realm binding; bounded derived queries; compiler-owned JPQL/native `@Query`; fail-closed unknown explicit table/column/access/override and ambiguous inheritance in W01/W02 K2/Javac tests; Flyway tests | ORM XML override priority, inherited entity-declared attribute projection, broader JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL, implicit Kotlin annotation target policy and complete multi-datasource matrix |
 | T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
 | T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
@@ -278,8 +310,12 @@ kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný whee
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
-K2 source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites, local/lambda
-execution a default-body mapping mimo W02 a coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
+K2 source CFG, constructor ABI, širší Kotlin annotation/framework metadata,
+property/operator/reference/initializer call sites a local/lambda execution nejsou
+dodány; konkrétní diagnostiky zachovávají PARTIAL. Kotlin JPA use-site annotation
+facts jsou pouze omezenou projekcí T003-S06-W01. T003-S04-W02 mapuje jen doložené
+DefaultImpls a simple bridge declarations; další default-body/coroutine tvary
+zůstávají mimo podporovanou matici.
 Jiné compiler/language/API/JVM verze a captured flags/plugins se odmítají bez
 implicitního fallbacku či publikace. T003-S04 a T003 zůstávají PARTIAL.
 
@@ -466,7 +502,7 @@ remains a separate mandatory gate, not a local PASS.
 
 ## T003-S08-W04 — versioned React event subset
 
-Opt-in react-jsx-events-3 binds official pinned React18.3.1/@types18.3.18 declaration
+Opt-in react-jsx-events-4 binds official pinned React18.3.1/@types18.3.18 declaration
 and package metadata to static handles_event evidence and frontend freshness.
 Intrinsic events and sole-return source forwarding wrappers are supported;
 unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
@@ -483,6 +519,24 @@ no runtime click or data availability is inferred. Remote Actions were resumed b
 root after the user upgrade; this local candidate still needs its own publication,
 final exact-pair independent review and CI.
 
+
+## T003-S05-W02 — bounded registrar/factory deklarace
+
+VERIFIED_IN_SCOPE pro Java/Javac21, Spring6.2.2 a obě vlastní K1/K2 distribuce,
+Spring rules `annotation-source-v5`: přesná/transitivní registrar identita a
+straight-line literal registry calls na skutečném registry parametru, source
+method/hash/context provenance a importující configuration condition. FactoryBean
+objekt `&name` a produkt `name` jsou oddělené; produkt má ACTIVE statickou
+declaration condition pouze pro indexovaný konkrétní generic typ a shodné
+literal constructor/class returns. Custom bodies/overload/conditions, abstract
+factories, neznámé nebo neshodné typy a překročený budget zůstávají UNKNOWN.
+`tests/test_spring_registrations.py` ověřuje skutečné APIs, fake namespace/receiver,
+inherited generics, profiles, malformed facts, strict/timeout nulovou publikaci,
+offline refresh, legacy schemas a UNKNOWN data audit. Mandatory CI APIs se
+připravují explicitně, nikoli core/test fetch. Kotlin registration facts, obecné
+builders, XML/factories metadata, runtime a production availability nejsou dodány.
+S05/AC05 a celý T003 zůstávají PARTIAL. Přesné běhy, externě blokované Actions a
+Draft stav: [change note47](changes/47_declareSpringRegistrations.md).
 ## T015 — explicit datasource resource projection
 
 Bounded implementation over T008/T009: explicit workspace/repository/database/stream
@@ -494,3 +548,52 @@ and broader pure focused115 PASS (6.79s); local strict full is queued under the
 shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
 Complete persistence/schema-compatibility S06/W08, T004 and production readiness
 remain PARTIAL; this does not implement a new parser or discover datasources.
+
+## T023 — ProcessDefinition / ProcessView (explicit model)
+
+T023 přidává čisté version1 Python API pro explicitní definici/revizi a process
+view nad T005/T009. Scope/context a origin/evidence refs jsou validovány;
+alternativy, exception, loop/retry i async nepřecházejí na lineární pořadí.
+Semantic annotations mají strict allowlist; APPROVED label nezvyšuje technical
+status, druh evidence, freshness ani data availability. Missing/foreign/stale
+proof je explicitní boundary nebo invalidní input.
+
+[Capability a příklad](process-model.md), [change note70](changes/70_defineBusinessProcessModel.md).
+Modelové AC mají konkrétní pozitivní/negativní testy: focused130 PASS1.00s;
+required frozen full729 PASS/10 optional SKIP546.19s,0 errors/failures a515
+nezměněných hashes na source95c3ed3. Nejde o discovery/projection, process
+review/catalog/store ani nové CLI/render. Exact-pair review/publikace/fresh CI
+zůstávají samostatnými release gates. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
+
+## T010 — scoped HTTP provider projection
+
+`interfaces.project_http_providers` provides a pure `interfaces` ViewDocument on
+explicit T008/T007 ownership and T009 evidence. Service/method/case-preserving
+route identity is distinct from registration/contract variant identity. Existing
+API IDs remain unchanged; additive versioned source/hash-bound declaration
+metadata preserves otherwise lost route case and variants. Typed Spring mirrors
+support bounded exact class/method composition; source Spring/Ktor candidates,
+contract-only OpenAPI and unresolved dynamic prefixes remain distinguishable.
+
+Final combined focused **145 PASS**,87.81s and strict full **596 PASS /10 optional
+prerequisite SKIP**,479.68s passed. Mandatory WORKERS/K2/SPRING_IMPORTS/HTTP_PROVIDERS=1
+cases ran with own prepared JDK21/K1/K2/TS/Spring6.2.2 worker/API fixtures; ten frozen
+source/test/CI/fixture hashes matched before/after. The grouped actual fixture
+covers same-line overloads/owners, mapping/method/class-prefix variants, inherited/
+custom UNKNOWN and direct override, truncation, metadata and context isolation,
+and actual reinspection after unrelated files, same-file comment/line shifts and
+within-module relocation. Canonical compiler IDs stay stable and provenance updates.
+
+Historical pre-owner590/10 and interrupted pre-selection257/7/pre-overload148/2
+runs are not final acceptance. Root and independent architect source closure
+approved the final manifest; current main ec333 integration199 PASS167.32s (own runtime/tests unchanged,
+matching prepared current-main workers). Exact Git-pair review and remote CI
+remain pending. Actions are billing-blocked again; no retry/bypass or
+remote PASS claim. Broader production/toolchain/runtime acceptance is separate.
+
+Bounded PARTIAL: imported runtime-to-interface binding is unsupported and retains
+original references in `HTTP_RUNTIME_BINDING_UNKNOWN`; deployment/runtime/data
+availability are UNKNOWN. Real application runtime test NOT_RUN. No endpoint
+consumer projection, inferred contract implementation, new resolver/store or
+T004 completion. Required CI and independent review are pending.
+See [change67](changes/67_catalogHttpProviders.md).

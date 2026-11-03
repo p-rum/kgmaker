@@ -253,3 +253,33 @@ Po full sedělo všech201 položek source/test/fixture/config/worker manifestu
 změněn runtime/helper/test. Předchozí624/10 ani žádný RED/partial nejsou vydávány
 za aktuální v3 proof. Exact Git-pair review, publikaci a vzdálené CI řídí root;
 tento autor nic nepublikoval ani nemergoval. Nadřazený S08 zůstává PARTIAL.
+
+## V4: opaque module/namespace a canonical scope guards
+
+Root actual valid-TypeScript repro našlo dvě false positive cesty: CommonJS import
+s přepsáním exportu přes any alias a React namespace alias s přepsáním factory.
+V4 vyžaduje explicitní ESM compiler mode calleru i vlastníka, přímý compiler export
+s přesným valueDeclaration; CJS/interop/re-export chain zůstává UNKNOWN. Celý React
+namespace přes alias/cast/container představuje escape boundary, bez heap resolveru.
+Materializer navíc vyžaduje canonical classified scope handleru i wrapperu;
+explicitně test-classified declarations neprojdou production UI proof.
+
+Nová actual opaque/scope matrix: **23 PASS,60 deselected v148.92s**. Kompletní
+v4 UI/distribution matrix: **117 PASS,0 SKIP v522.58s**. Source checkpoint
+`8f660affdbe14909ef57028063550d7688bb2b25`, čtyři opaque SHA root review APPROVE.
+Jediný corrected strict full: **785 PASS,10 SKIP v891.07s**, exit0; XML795 tests,
+nula errors/failures. Všech230 source/test/fixture/config/JAR hashů před/po souhlasí.
+Persistent `/workspace/ui-events-v4-full.log`, `.xml`, `.exit`, `-frozen.json` a
+`-receipt.json`. Dřívější43 complete matrix je pre-v4 historický proof, nikoli
+finální v4 test. Žádná aplikace, React JS nebo browser nebyl spuštěn.
+
+Po ověření full integrován main `c76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a`
+(s Kotlin JPA/W02, HTTP katalogem, process model a Factory hooks). Čtyři vlastní
+opaque source/test SHA zůstaly přesně nezměněné, runtime merge byl bez konfliktů.
+Všech15 JVM source/builder/lock souborů je přesně source donor spring-factories,
+jehož vlastní fresh build a actual28 byly doložené před merge PR53. K1/K2 JARy
+převzaty až po porovnání všech10/18 library SHA; worker receipt je v
+`/workspace/ui-events-current-parent-worker-receipt.json`. Nejde o staré JARy
+odvozené pouze z názvu source větve. Aktuální parent focused integrace ještě čeká;
+nový full se pro nezměněný vlastní v4 runtime neopakuje. GH CI je volitelné dle
+výslovného T045 revize2; ostatní acceptance/toolchain a nezávislé review povinné.

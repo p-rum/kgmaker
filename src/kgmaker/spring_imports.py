@@ -61,8 +61,8 @@ def selector_info(record: dict, types: dict, symbols: dict, context_id: str) -> 
     if not complete:
         result["reasons"].append("INCOMPLETE_TYPE_HIERARCHY")
     if kind == KINDS[REGISTRAR]:
-        result["reasons"].append("REGISTRAR_EXECUTION_UNSUPPORTED")
-        return result
+        from .spring_beans import registrar_info
+        return registrar_info(symbol, symbols, context_id, result["reasons"])
     if contract is None:
         result["reasons"].append("NO_COMPILER_SELECTOR_CONTRACT")
         return result
