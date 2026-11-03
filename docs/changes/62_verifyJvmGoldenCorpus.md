@@ -164,3 +164,19 @@ K2 mixed a existující CFG regrese. Všech frozen source/test/fixture/JAR vstup
 zůstalo beze změny (`inputs.json`, `focus.log/xml`, `status.json` v persistent
 validačním adresáři). Nový celý pytest se kvůli source-identické parent kompozici
 neopakoval; historický646/10 full zůstává označen jako historický.
+
+## Finální parent po merge coroutine PR37
+
+Aktuální base je main `f2dad55c12c4fcf8af831cb3fff68e6ebbcf614f`; explicitní
+PR37 závislost je tím splněna. Vlastní runtime/JVM source nemá proti tomuto
+main žádný diff. Všech15 source/build/lock hashů dále odpovídá ověřenému fresh
+donor receiptu; všech deset corpus souborů zůstává přesně7bdb5cbc.
+Current typed-conditions/provider/CFG/HTTP pure integration:
+**82 PASS, 5 actual deselected v3.50s**, bez skips (`parent-pure.log/xml`).
+Nové actual32/21corpus výsledky výše se kvůli neměnnému workeru a corpus neopakují.
+
+Sémantické odkazy na K2 JPA a Javac AC06 test deklarace byly přivázány na aktuální
+scanner ID po dřívější extrakci shared fixtures; nejde o změnu acceptance.
+Main176 immutable episodes zůstává přesným prefixem, child captures beze změny.
+Nezávislé finální base/head review a guarded merge nyní vlastní root; hotový
+W05 bounded corpus neprohlašuje dokončení celé JVM/T003/T004 acceptance matice.
