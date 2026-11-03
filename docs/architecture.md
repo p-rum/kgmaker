@@ -280,3 +280,9 @@ context and evidence IDs without copying event payloads or claiming observations
 for a matching route. Runtime/deployment/data availability stay UNKNOWN; real
 application runtime acceptance is NOT_RUN. Coverage remains PARTIAL/UNKNOWN, and
 T003-S07-W08 ranking, architecture CLI/rendering and the rest of T004 are separate.
+
+Fresh SOURCE_ONLY scans redact URI credentials/query/fragment values in persisted
+signatures, documentation summaries and heading identities. This privacy transform
+supplies no semantic HTTP values: compiler-bound request origins and terminal
+intent are projected separately by `http_execution`, with runtime availability
+UNKNOWN. See the scoped [HTTP matrix](compiler-inspection.md#http-client-intent).

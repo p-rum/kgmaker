@@ -9,4 +9,7 @@ def test_sensitive_headers_urls_and_property_defaults_are_redacted():
     redacted=sanitize(value)
     assert 'literal-' not in str(redacted)
     assert redacted['query']==value['query']
-    assert 'safe=1' in redacted['url'] and '[redacted]' in redacted['url']
+    # HTTP intent never persists URI userinfo, query values or fragments,
+    # including parameters whose sensitivity cannot be determined statically.
+    assert redacted['url'] == '<redacted-uri>'
+    assert 'safe=1' not in str(redacted)

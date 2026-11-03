@@ -1,0 +1,11 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion><groupId>org.kgmaker.fixture</groupId><artifactId>http-client-execution</artifactId><version>1</version>
+  <properties><maven.compiler.release>21</maven.compiler.release></properties>
+  <dependencies>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-webflux</artifactId><version>6.2.2</version></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId><version>6.2.2</version></dependency>
+    <dependency><groupId>io.projectreactor</groupId><artifactId>reactor-core</artifactId><version>3.7.2</version></dependency>
+    <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-openfeign-core</artifactId><version>4.2.0</version></dependency>
+  </dependencies>
+  <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.13.0</version></plugin></plugins></build>
+</project>

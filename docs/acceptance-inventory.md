@@ -546,3 +546,17 @@ checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
 and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
 integration236PASS is recorded; final independent review/merge remain pending (PR59).
 Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
+
+## T003-S07-W06 — HTTP client intent, omezený compiler subset
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| AC01 | VERIFIED_IN_SCOPE | `test_http_client_execution.py`: actual Spring6.2.2/Reactor3.7.2 Java v K1/K2; cold publisher vs same-origin terminal, RestClient retrieve/body/exchange; explicit property source/profile/SHA provenance |
+| AC02 | VERIFIED_IN_SCOPE | `test_old_graph_store_versions_remain_readable` schema1/2/3; legacy coverage UNKNOWN; additive IR optional, fresh HTTP version/input fingerprint validated |
+| AC03 | VERIFIED_IN_SCOPE | Escaped/captured/stored/returned/unknown operators, unrelated terminals, reference and local fake negatives; URI credentials removed; malformed IR/config snapshot reject before store write |
+| AC04 | PARTIAL_MILESTONE | [Supported matrix](compiler-inspection.md#http-client-intent), [note63](changes/63_classifyHttpClientExecution.md); Kotlin missing bindings UNKNOWN, no runtime HTTP/availability or complete S07/T003 claim |
+
+Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note56.
+Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
+
+S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
