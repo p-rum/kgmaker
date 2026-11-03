@@ -157,7 +157,9 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
         from .typescript_snapshot import captured_sources
         return captured_sources(root, selected.get("project"))
     files = [node for node in graph.nodes if node.kind == "file"]
-    if selected.get("source_snapshot_version") != "selected-source-set-1":
+    if (selected.get("source_snapshot_version") not in {"selected-source-set-1", "selected-source-set-2"}
+            or (selected.get("source_snapshot_version") == "selected-source-set-2"
+                and not (selected.get("project_model") or {}).get("source_sets"))):
         return dict(sorted((node.path, graph.files[node.path]) for node in files
                            if node.scope == selected["scope"] or (node.scope == "unknown" and node.role == "configuration")))
     source_sets = [item for item in (selected.get("project_model") or {}).get("source_sets", [])
@@ -185,6 +187,49 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
     return dict(sorted(result.items()))
 
 
+def jpa_xml_input_snapshot(root: Path, selected: dict) -> dict:
+    """Capture the selected JVM persistence XML closure, including absent candidates."""
+    from .framework import _safe_jpa_xml, _xml_local
+    # The framework contract currently selects only project-root JPA defaults;
+    # retain absent candidates so their later appearance invalidates replay.
+    candidate_paths = {"META-INF/persistence.xml", "META-INF/orm.xml"}
+    descriptor = "META-INF/persistence.xml"
+    try:
+        descriptor_target = (root / descriptor).resolve(strict=False)
+        descriptor_is_confined_file = descriptor_target.is_relative_to(root.resolve()) and descriptor_target.is_file()
+    except (OSError, RuntimeError, ValueError):
+        descriptor_is_confined_file = False
+    if descriptor in candidate_paths and descriptor_is_confined_file:
+        document, _ = _safe_jpa_xml(root, descriptor)
+        if document is not None:
+            units = [child for child in document if _xml_local(child)[1] == "persistence-unit"]
+            name = selected.get("persistence_unit")
+            units = [unit for unit in units if unit.get("name") == name] if name else units
+            if len(units) == 1:
+                for child in units[0]:
+                    if _xml_local(child)[1] == "mapping-file" and child.text and child.text.strip():
+                        candidate_paths.add(child.text.strip())
+    captured = []
+    for relative in sorted(candidate_paths):
+        try:
+            target = (root / relative).resolve(strict=False)
+            if not target.is_relative_to(root.resolve()):
+                captured.append({"path": relative, "status": "invalid", "resolved": str(target)})
+            elif target.is_file():
+                hasher = __import__("hashlib").sha256()
+                with target.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        hasher.update(chunk)
+                captured.append({"path": relative, "status": "present", "resolved": str(target),
+                                 "sha256": hasher.hexdigest()})
+            else:
+                captured.append({"path": relative, "status": "missing", "resolved": str(target)})
+        except (OSError, RuntimeError, ValueError):
+            captured.append({"path": relative, "status": "invalid"})
+    return {"version": "jpa-xml-input-capture-1", "persistence_unit": selected.get("persistence_unit"),
+            "inputs": captured}
+
+
 def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, repo_id: str,
             module: str, source_set: str, scope: str, build_context: dict | None = None) -> dict:
     value = {"mode": "BUILD_IMPORT", "repo_id": repo_id, "module": module, "source_set": source_set,
@@ -194,16 +239,17 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
              "classifier_contexts": [c for c in base.contexts if c.get("scope") == scope], "worker": metadata, "analyzer_version": VERSION}
     if build_context:
         value.update(build_context)
-    if language == "jvm" and (value.get("project_model") or {}).get("source_sets"):
-        value["source_snapshot_version"] = "selected-source-set-1"
+    if language == "jvm":
+        value["source_snapshot_version"] = "selected-source-set-2"
+        value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
         value["source_snapshot_version"] = "typescript-input-discovery-1"
     value["source_files"] = source_snapshot(root, base, value)
-    from .framework import SPRING_RULE_VERSION
+    from .framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
     # and selection identity, including its pre-existing React overwrite behavior.
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
-                                        "jpa": "annotation-source-v4"}
+                                        "jpa": JPA_RULE_VERSION if language == "jvm" else "annotation-source-v4"}
     if language == "jvm":
         from .http_execution import prepare_context
         value = prepare_context(root, value)
@@ -539,8 +585,11 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if (kotlin_backend == "k2" or response.get("kotlin_backend")) and response.get("kotlin_backend") != expected_backend:
         raise WorkerError("Worker analysis backend differs from selected context", "INVALID_PROTOCOL")
     after = scan_repository(root, project_model=project_model)
-    if source_snapshot(root, after, selected) != selected["source_files"] or base.contexts != after.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
-        raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
+    if (source_snapshot(root, after, selected) != selected["source_files"]
+            or jpa_xml_input_snapshot(root, selected) != selected.get("jpa_xml_inputs")
+            or base.contexts != after.contexts
+            or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
+            raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
     graph = graph_from_response(root, base, response, selected, project_model=project_model)
     # Framework rules consume the compiler-resolved graph; they never replace
     # or upgrade a worker fact.  Keep this phase in the explicit inspection
@@ -555,7 +604,10 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if strict and result["status"] == "PARTIAL":
         return {**result, "exit_code": 4}
     final = scan_repository(root, project_model=project_model)
-    if source_snapshot(root, final, selected) != selected["source_files"] or final.contexts != base.contexts or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", [])):
+    if (source_snapshot(root, final, selected) != selected["source_files"]
+            or jpa_xml_input_snapshot(root, selected) != selected.get("jpa_xml_inputs")
+            or final.contexts != base.contexts
+            or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
         raise WorkerError("Source/config/classpath snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")

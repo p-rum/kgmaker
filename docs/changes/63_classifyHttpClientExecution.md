@@ -203,3 +203,49 @@ včetně typed Java bindings a KotlinFrontend capabilities. CI union přidává
 coroutine module bez odstranění HTTP/pinned parent gates.
 Následuje jediná nová ownK1/K2 build+actual queue pro tento aktuální source;
 nejde o duplicitní rebuild nebo změnu pořadí ostatních týmových queues.
+
+## Finální current-parent build a integrační důkaz
+
+Na frozen sourcec1d961db46f8d8a1ec9fd09e219f5b28eae883ec/basef2dad55 proběhl
+právě jeden fresh vlastní K1 a jeden K2 build: oba SUCCESS. K1SHA
+50cf8376c8e65fd5b8277d87d67e9791438bc952b2afc7627ddcb086093f31bd; K2SHA
+2eb240a5f4c78d88203de82ddc708c4ef28d394567584d4a931b0583a922024f.
+Nejde o staré HTTP ani Factory artifacty. Snapshot před buildem ověřil přesný
+HEAD a všech10 root-approved source hashes. Coalesced current-main fixture
+sada je **153PASS,0SKIP,320.65s**, exit0, všech224 zmrazených source/test/fixture/
+JAR hashů je po běhu totožných. Zahrnuje coroutine source/continuation/receiver
+regrese, celý HTTPexecution module, veřejné T010/providerprivacy i skutečný
+provider compiler matrix, Factoryregistration, typedconditions oboubackendů,
+K2JPAuse-site/mapped-superclass a JavacAC06. Vlastní workerhome/JDK21 a povinné
+WORKERS/K2/SPRING_IMPORTS/HTTP_PROVIDERS/SPRING_CONDITIONS=1; žádná aplikace neběžela.
+
+Persistent evidence je v `/workspace/http-current-validation/`: source-before a
+test-frozen manifests, oba SUCCESS build receipts, actual.log/XML a result.json.
+Další čistá dataflow/workspace/privacy/T008/T009/mandatoryprereq sada
+**82PASS,4.57s**;142 local links PASS. Combined privacy/T010/conditionpure
+**68PASS,4actualdeselected,2.13s** zůstává samostatný dřívější result. Původní
+standalone full654/10 se kvůli integraci beze změny ownHTTPcore neopakoval ani
+nepřejmenoval na mergedfull. Root earlysourceclosure pokrývá nezměněný vlastní
+core/Java/privacydelta; finální exactpairreview a merge jsou samostatné kroky.
+
+## Finální XML/golden/trigger parent refresh
+
+Current main355e98f zahrnuje XML PR50, golden PR52 a T024. Je integrován bez
+ručního runtime konfliktu: zachován XML input capturev2/selected-source-set-2,
+JPA rules5, Springconditionv6 input hash i HTTPrule/config sanitization.
+Všech17 ownJVM source/build/lock/JAR hashů se přesně shoduje s fresh153receipt;
+žádný rebuild ani kopie se neprovedly. Own HTTP core/oldtest/JavaIR/privacydelta
+zůstává root-reviewed source. Nový pureXML/HTTP/workspace/offlinecache focus
+**84PASS,0SKIP,2.86s**; bounded actual firstHTTPpositiveK1/K2 a celý T010compiler
+provider capture matrix **3PASS,0SKIP,39.72s**. Všechny current-parent frozen
+source/test/fixture/JAR hashes zůstaly totožné. Persistent `xml-parent-pure.*`,
+`xml-parent-actual.*`, `xml-parent-frozen.json` v current-validation adresáři.
+153PASS je přesně předchozí f2-parent coalesced proof,3PASS je nový355-parent
+proof; výsledky se neslévají na neprovedený wholefull.
+
+První pokus o tento merge narazil na plný workspace disk před dokončením Git
+indexu. Odstraněn pouze vlastní dokončený generated pytest tree
+`/workspace/http-review-fix/full-tmp`(~724MiB), log/XML/source manifests zachovány.
+Partialmerge writes obnoveny proti HEAD s uchováním vlastního proofnote; čtyři
+nové untracked parent docs byly před odstraněním byteově ověřeny proti355.
+Retrymerge prošel bez runtime konfliktu. Cizí queues ani artefakty se neměnily.

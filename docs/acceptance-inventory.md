@@ -27,6 +27,14 @@
 | T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves foreign derived predicates, ambiguous JPQL, missing indexed qualified returns, and generic `T` returns unresolved, while descriptor-proven return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
 | T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
 
+## T003-S06-W03 — ORM XML overrides
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, annotation fallback for untouched partial mappings, and owner-isolated shared mapped-superclass columns |
+| T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves standard nested `xml-mapping-metadata-complete` and `persistence-unit-defaults/access`, annotation suppression, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes`; XML freshness replay binds selected paths, content and target identities |
+| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, namespace reset, unsupported encoding, bounded input, UTF-8/UTF-16 DTD/entity rejection, unsupported mapping constructs and offline stale replay for changed/appeared/deleted/retargeted inputs; unsupported targets remain UNKNOWN without annotation physical fallback |
+| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note65](changes/65_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
 ## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
 
 | ID | Stav | Evidence |
@@ -457,6 +465,19 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC03 | `test_missing_sources_never_map_continuation`, `test_foreign_continuation_realm_never_claims_source`, metadata-negative and ordinary-name tests | no inferred scheduler/target/source instruction locator; byte snapshots unchanged |
 | AC04 | change51, pinned Kotlin2.1.10/coroutines SHA fixture | bounded static evidence; whole S04/T003 remains PARTIAL |
 
+## T003-S04-W05 — exact hand-labelled JVM corpus
+
+| AC | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_inventory_and_unsupported_identity_match_hand_annotations`, `tests/fixtures/jvm-golden/expected.json` | five scenarios × pinned K1/K2; counts, exact owner/descriptor/source locators and unsupported identities |
+| AC02 | Existing graph v1/v2/v3 loader tests + corpus graph roundtrip | no model/store/protocol change |
+| AC03 | `test_inventory_rejects_missing_extra_retargeted_and_stronger_observations`, reflection/reference/CFG and offline/store snapshots | no fabricated target, source line, runtime execution or availability |
+| AC04 | change62 and corpus README version/support matrix | explicit PR35+37 stack; whole S04/T003 remains PARTIAL |
+
+Validation is recorded in change62. Resolved source declarations, unsupported CFG
+results and runtime UNKNOWN are distinct; these counts are not production precision.
+
+Prepared strict golden full on ed5ed7c: **646 PASS, 10 SKIP /991.96s**, including21 corpus cases; no failures/setup errors. Historical environment-failed run remains in change62.
 
 ## T003-S05-W02 — registrars a FactoryBean produkty
 
@@ -514,6 +535,17 @@ Runtime acceptance NOT_RUN; no data availability or overall T004 completion clai
 | AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
 | AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
 | AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
+
+## T024 — bounded trigger inventory
+
+AC01/02: explicit and actual K1 HTTP/Kafka/scheduler candidates with production/test
+separation. AC03/05: unsupported scheduler/K2 annotation capture, missing CFG,
+canonical source/symbol/edge/proof/hash/scope negatives stay PARTIAL/UNKNOWN.
+AC04: actual offline projection forbids subprocess and compares inputs/captured
+checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
+and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
+integration236PASS is recorded; final independent review/merge remain pending (PR59).
+Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
 
 ## T003-S07-W06 — HTTP client intent, omezený compiler subset
 

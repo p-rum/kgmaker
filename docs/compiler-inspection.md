@@ -349,6 +349,17 @@ Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
 TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
 ne deployment/schema compatibility proof; nevyřešený access, type identity,
 inheritance strategy nebo class override zůstává UNKNOWN.
+Vybraný `persistence-unit` z `META-INF/persistence.xml` určuje mapping files v
+deklarovaném pořadí; bez explicitního seznamu se hledá `META-INF/orm.xml`.
+Podporovaný ORM XML subset používá přesné compiler-resolved class identity,
+tabulku a scalar ID/basic/version sloupce. XML mapping má přednost před
+annotations a `metadata-complete` skutečně potlačí annotation-only bindings.
+Hrany a uzly nesou cestu a SHA-256 mappingu, persistence unit a pořadí zdroje.
+Neznámý namespace/verze, neúplný nebo nepodporovaný construct, nevyřešená
+class/attribute reference a nebezpečný nebo root-escaping XML soubor zůstávají
+UNKNOWN bez odvození fyzického názvu z annotation fallbacku. Parser odmítá
+DOCTYPE/external entities a nic nestahuje ani nespouští; graph schema zůstává v3.
+
 Spring Data repository model se vybírá z compiler-resolved generic supertype a
 přesného entity owneru. Entity atributy se indexují podle canonical owner
 identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
@@ -766,6 +777,32 @@ unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
 remain outside this mapping contract. Store/protocol formats remain readable;
 metadata is additive and worker content identities invalidate older cached facts.
 
+## Hand-labelled JVM acceptance corpus
+
+T003-S04-W05 adds a versioned test inventory for T002-CG-01–05. It reuses the
+existing mixed five-call golden and actual ordered dependency fixture, with
+explicit Java owner/overload/reference/lambda/recursion/reflection and Kotlin
+extension/default/inline/suspend/Java-call supplements. Original inline source
+fixtures are shared files with byte-identical contents.
+
+```bash
+PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -q tests/test_jvm_golden_corpus.py
+```
+
+Source-call RESOLVED/UNRESOLVED counts and exact caller/target/range identities
+are compared separately from unsupported model/CFG diagnostic identities. K2
+SOURCE CFG remains unavailable; K1 default-argument CFG and collapsed Java
+expression order retain explicit boundaries. Source-level inline callable
+attribution does not prove a physical public facade invocation. Reflection APIs
+may resolve while their runtime targets stay unknown; method references remain
+non-executing, and opposite branches never become a sequence.
+
+The corpus and its mutation checks reject missing/extra/retargeted/stronger
+observations. Store/protocol formats remain unchanged; source/class/store bytes
+and offline retention use the existing model/provider pipeline. The prerequisite
+stack is explicitly documented in change62; this is bounded static acceptance,
+not a complete JVM program, runtime scheduling or availability proof.
 
 ## T003-S05-W02 — registrar a FactoryBean declaration facts
 
