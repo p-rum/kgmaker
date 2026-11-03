@@ -10,7 +10,7 @@ from dataclasses import dataclass, replace
 
 from .analysis_model import AnalysisError, digest
 
-VERSION = "source-cfg-1"
+VERSION = "source-cfg-2"
 
 
 @dataclass(frozen=True)
@@ -42,6 +42,8 @@ class Builder:
                                 "source_file": ir.get("path"), "source_range": ir.get("range"),
                                 "sha256": ir.get("sha256"), "original_ids": [original],
                                 "call_site_ids": [ir["call_site"]] if ir.get("call_site") else ir.get("calls", [])}
+        if ir.get("async_boundary") in {"SUSPEND", "LAUNCH", "ASYNC"}:
+            self.blocks[identity].update(async_boundary=ir["async_boundary"], scheduling="UNKNOWN")
         return identity
 
     def edge(self, source, target, kind="normal", **metadata):
@@ -191,6 +193,13 @@ class Builder:
             self.edge(node, env.exception, "exception", condition="completion failure/cancellation")
             return self.emit(ir.get("value", {"kind": "empty"}), node, env, depth + 1)
         if kind == "call":
+            boundary = ir.get("async_boundary")
+            if boundary in {"SUSPEND", "LAUNCH", "ASYNC"}:
+                continuation = self.node("async_boundary", boundary.lower(), ir, env)
+                self.edge(continuation, destination, "resume" if boundary == "SUSPEND" else "async",
+                          condition="source continuation; scheduling and child completion unknown")
+                self.edge(continuation, env.exception, "exception", condition="failure/cancellation boundary")
+                destination = continuation
             node = self.computation(ir, destination, env, kind="call", label=ir.get("label") or "call")
             result = node
             for argument in reversed(ir.get("arguments", [])):

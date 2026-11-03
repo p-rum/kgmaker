@@ -181,6 +181,9 @@ def run(args):
                 if args.view == "data-flow":
                     from .return_flow import return_consumer_bindings
                     result["return_consumer_bindings"] = return_consumer_bindings(selected)
+
+                from .dataflow import http_request_inventory
+                result["http"] = http_request_inventory(selected)
                 if args.format != "json":
                     raise AnalysisError("Integration/data views require --format json until the framework view renderer is available")
             if args.format == "mermaid":

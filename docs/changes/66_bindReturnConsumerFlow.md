@@ -171,3 +171,28 @@ v `/workspace/return-consumer-proof`. Proti517file manifestu se změnila pouze
 opravená test_default_body_mapping.py. Před jediným dalším strict full následuje
 nezávislé review checkpointu a integrace aktualizované argument dependency/main;
 nový full zatím není tvrzen PASS.
+
+## Jednorázová integrace aktuální argument dependency/main
+
+Po skutečném merge PR47 je current parent
+`1915ebf0be25cab4cb8b0836e2fce25b05c7b10f`. Převzatý main obsahuje společně
+argument mapping, HTTP typed literal/binding IR, Spring/ORM XML, coroutine,
+React rule4 a Thymeleaf změny. Return proof guards a obě opravy captured test
+kontextů z7385390 zůstávají beze změny; dřívější203/2 focus není vydáván za
+validaci nové kompozice.
+
+Java IR zachovává současně main binding/binding_ref/literal/captured_bindings
+pro HTTP a additive return value_info/value_binding/body metadata. Own field
+binding zachovává také canonical enum_constant/type metadata, aby nepřepsal
+parent enum proof. Context/freshness, HTTP a return validators jsou samostatné;
+workspace/CLI/process zachovávají oba inventáře i jejich původní refs.
+Root nezávisle přečetl Java i Python resolved diff a source closure schválil.
+Python compileall, TypeScript syntax a čistota diffu prošly. Následují oba
+čerstvé vlastní worker buildy a společný actual focus. Ani nové buildy/focus,
+ani jediný následný strict full zatím nejsou tvrzeny PASS.
+
+Nová skutečná integrační fixture `test_actual_java_ir_preserves_both_binding_consumers`
+pro oba backends současně kontroluje LOCAL_VARIABLE identity v obou IR kontraktech,
+compiler literal/value_info, lambda capture, canonical enum_constant a zachovaný
+DECLARED_BODY_RETURN proof. Fixture se pouze kompiluje; analyzovaná aplikace se
+nespouští. Před čerstvým buildem/focus není tento nový test uváděn jako PASS.

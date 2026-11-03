@@ -15,6 +15,8 @@ public final class JavaFrontend {
     private final State state;
     private Trees trees; private Types types; private Elements elements;
     private SelectorFacts selectorFacts;
+    private final Map<Element,Map<String,Object>> bindingCache=new IdentityHashMap<>();
+    private RegistrationFacts registrationFacts;
     private CompilationUnitTree unit; private Path file; private String source;
     private final Map<Tree,String> calls = new IdentityHashMap<>();
     private final List<Diagnostic<? extends JavaFileObject>> errors = new ArrayList<>();
@@ -32,6 +34,7 @@ public final class JavaFrontend {
             var task=(JavacTask)compiler.getTask(null,files,collector,options,null,files.getJavaFileObjectsFromPaths(sources));
             var units=task.parse();task.analyze();trees=Trees.instance(task);types=task.getTypes();elements=task.getElements();
             selectorFacts=new SelectorFacts(types,elements);
+            registrationFacts=new RegistrationFacts(trees,types,elements);
             for(var diagnostic:collector.getDiagnostics()) {
                 if(diagnostic.getKind()==Diagnostic.Kind.ERROR)errors.add(diagnostic);
                 state.diagnostic("JAVAC_"+diagnostic.getCode(),diagnostic.getMessage(Locale.ROOT),null);
@@ -126,6 +129,7 @@ public final class JavaFrontend {
                 metadata.put("jvm_superclass",type.getSuperclass().getKind()==TypeKind.NONE?null:elements.getBinaryName((TypeElement)types.asElement(types.erasure(type.getSuperclass()))).toString().replace('.','/'));
                 metadata.put("modifiers",type.getModifiers().stream().map(m->m.toString()).toList());
                 metadata.putAll(selectorFacts.describe(type));
+                metadata.putAll(registrationFacts.describe(type));
                 state.type(elements.getBinaryName(type).toString(),loc(tree),metadata);
             }
             return super.visitClass(tree,unused);
@@ -140,6 +144,7 @@ public final class JavaFrontend {
                 caller=method(executable,location);
                 var literal=selectorFacts.literalReturn(executable,tree,errorAt(tree));
                 if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
+                state.symbols.get(caller).putAll(registrationFacts.method(executable,tree,getCurrentPath(),errorAt(tree)));
                 super.visitMethod(tree,unused);
                 if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind",errorAt(tree)?"ERROR":executable.getKind()==ElementKind.CONSTRUCTOR?"CONSTRUCTOR":"DECLARED","return_type",valueInfo(executable.getReturnType()),"body",ir(tree.getBody())));
                 return null;
@@ -295,24 +300,70 @@ public final class JavaFrontend {
             methodId=method(method,declarationLocation(method));
             if(variable.getKind()==ElementKind.PARAMETER){int index=method.getParameters().indexOf(variable);if(index<0)return null;id=methodId+":parameter:"+index;}
         }
-        if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT)
-            symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,annotations(variable));
+        if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {
+            var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+            if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
+            symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,metadata);
+        }
         var record=map("version",1,"id",id,"name",variable.getSimpleName().toString(),"kind",variable.getKind().name(),
             "method",methodId,"symbol",symbol,"type",valueInfo(variable.asType()));
         record.putAll(location);return record;
+    }
+    private Map<String,Object> binding(Tree node) {
+        if(node==null)return null;
+        var path=TreePath.getPath(unit,node);var element=path==null?null:trees.getElement(path);
+        if(!(element instanceof VariableElement variable))return null;
+        if(bindingCache.containsKey(variable))return bindingCache.get(variable);
+        var location=declarationLocation(variable);
+        String symbol=null;
+        if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {
+            var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+            if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
+            symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,metadata);
+        }
+        Object identity=null;
+        if(location!=null && location.get("range") instanceof Map<?,?> range)
+            identity="binding:"+state.context.get("id")+":"+location.get("path")+":"+location.get("sha256")+":"+range.get("start")+":"+range.get("end");
+        var result=map("id",identity,"kind",variable.getKind().name(),"symbol",symbol);
+        bindingCache.put(variable,result);return result;
+    }
+    private List<Map<String,Object>> referencedBindings(Tree node) {
+        var result=new LinkedHashMap<String,Map<String,Object>>();
+        new TreeScanner<Void,Void>() {
+            @Override public Void scan(Tree tree,Void unused){if(tree==null || result.size()>=128)return null;return super.scan(tree,unused);}
+            private void add(Tree tree){var value=binding(tree);if(value!=null && value.get("id") instanceof String id)result.putIfAbsent(id,value);}
+            @Override public Void visitIdentifier(IdentifierTree tree,Void unused){add(tree);return super.visitIdentifier(tree,unused);}
+            @Override public Void visitMemberSelect(MemberSelectTree tree,Void unused){add(tree);return super.visitMemberSelect(tree,unused);}
+        }.scan(node,null);
+        return new ArrayList<>(result.values());
     }
     public Map<String,Object> ir(Tree node) {
         if(node==null)return map("kind","empty");
         var base=map("kind","statement","label",label(node),"calls",callsIn(node));base.putAll(loc(node));
         if(node instanceof ExpressionTree)base.put("value_info",valueInfo(node));
         switch(node.getKind()) {
-            case IDENTIFIER->{base.put("value_binding",valueBinding(node));var p=TreePath.getPath(unit,node);var e=p==null?null:trees.getElement(p);if(e instanceof TypeElement || e instanceof PackageElement)base.putAll(map("kind","reference","calls",List.of()));}
-            case MEMBER_SELECT->{base.put("value_binding",valueBinding(node));}
+            case IDENTIFIER,MEMBER_SELECT->{
+                base.put("value_binding",valueBinding(node));
+                var p=TreePath.getPath(unit,node);var e=p==null?null:trees.getElement(p);
+                if(e instanceof TypeElement || e instanceof PackageElement)base.putAll(map("kind","reference","calls",List.of()));
+                if(e instanceof VariableElement variable) {
+                    base.put("binding_ref",binding(node));
+                    if(variable.getConstantValue()!=null)base.put("literal",map("type",variable.asType().toString(),"value",variable.getConstantValue(),"source","COMPILER_CONSTANT"));
+                    if(variable.getKind()==ElementKind.ENUM_CONSTANT)base.put("enum_constant",map("owner",owner(variable),"name",variable.getSimpleName().toString(),"symbol",((Map<?,?>)base.get("binding_ref")).get("symbol")));
+                }
+            }
+            case STRING_LITERAL,CHAR_LITERAL,BOOLEAN_LITERAL,INT_LITERAL,LONG_LITERAL,FLOAT_LITERAL,DOUBLE_LITERAL,NULL_LITERAL->{
+                base.put("literal",map("type",node.getKind().name(),"value",((LiteralTree)node).getValue(),"source","COMPILER_LITERAL"));
+            }
             case METHOD_INVOCATION->{var t=(MethodInvocationTree)node;Tree receiver=t.getMethodSelect() instanceof MemberSelectTree s?s.getExpression():null;base.putAll(map("kind","call","call_site",calls.get(node),"arguments",t.getArguments().stream().map(this::ir).toList(),"receiver",ir(receiver)));}
-            case NEW_CLASS->{var t=(NewClassTree)node;base.putAll(map("kind","call","call_site",calls.get(node),"arguments",t.getArguments().stream().map(this::ir).toList(),"receiver",ir(t.getEnclosingExpression())));}
-            case VARIABLE->{base.putAll(map("kind","assign","value_binding",valueBinding(node),"value",ir(((VariableTree)node).getInitializer())));}
-            case ASSIGNMENT->{base.putAll(map("kind","assign","value_binding",valueBinding(((AssignmentTree)node).getVariable()),"value",ir(((AssignmentTree)node).getExpression())));}
-            case LAMBDA_EXPRESSION,MEMBER_REFERENCE->{base.putAll(map("kind","reference","calls",List.of()));}
+            case NEW_CLASS->{var t=(NewClassTree)node;base.putAll(map("kind","call","call_site",calls.get(node),"arguments",t.getArguments().stream().map(this::ir).toList(),"receiver",ir(t.getEnclosingExpression())));if(t.getClassBody()!=null){var refs=referencedBindings(t.getClassBody());base.put("captured_bindings",refs);base.put("binding_references_complete",refs.size()<128);}}
+            case VARIABLE->{base.putAll(map("kind","assign","value_binding",valueBinding(node),"binding",binding(node),"value",ir(((VariableTree)node).getInitializer())));}
+            case ASSIGNMENT->{base.putAll(map("kind","assign","value_binding",valueBinding(((AssignmentTree)node).getVariable()),"binding",binding(((AssignmentTree)node).getVariable()),"value",ir(((AssignmentTree)node).getExpression())));}
+            case LAMBDA_EXPRESSION,MEMBER_REFERENCE->{
+                var refs=referencedBindings(node);
+                base.putAll(map("kind","reference","calls",List.of(),"captured_bindings",refs,"binding_references_complete",refs.size()<128));
+                if(node instanceof MemberReferenceTree reference)base.put("reference_receiver",ir(reference.getQualifierExpression()));
+            }
             case BLOCK->{base.put("kind","block");base.put("statements",((BlockTree)node).getStatements().stream().map(this::ir).toList());}
             case IF->{var t=(IfTree)node;base.putAll(map("kind","if","condition",ir(t.getCondition()),"then",ir(t.getThenStatement()),"else",ir(t.getElseStatement())));}
             case WHILE_LOOP->{var t=(WhileLoopTree)node;base.putAll(map("kind","while","condition",ir(t.getCondition()),"body",ir(t.getStatement())));}
@@ -329,8 +380,9 @@ public final class JavaFrontend {
             case CONDITIONAL_AND,CONDITIONAL_OR->{var t=(BinaryTree)node;base.putAll(map("kind",node.getKind()==Tree.Kind.CONDITIONAL_AND?"and":"or","left",ir(t.getLeftOperand()),"right",ir(t.getRightOperand())));}
             case SWITCH,SWITCH_EXPRESSION->{base.put("kind","unsupported");base.put("reason","JAVA_SWITCH_CFG_NOT_YET_SUPPORTED");state.diagnostic("JAVA_SWITCH_CFG_NOT_YET_SUPPORTED","No guessed switch fallthrough",loc(node));}
             case LABELED_STATEMENT->{base.put("kind","unsupported");base.put("reason","LABELLED_CONTROL_FLOW");state.diagnostic("LABELLED_CONTROL_FLOW","No guessed labelled flow",loc(node));}
-            default->{}
+            default->{var refs=referencedBindings(node);base.put("referenced_bindings",refs);base.put("binding_references_complete",refs.size()<128);}
         }
+        if("unsupported".equals(base.get("kind"))){var refs=referencedBindings(node);base.put("referenced_bindings",refs);base.put("binding_references_complete",refs.size()<128);}
         return base;
     }
 }

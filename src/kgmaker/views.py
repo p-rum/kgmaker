@@ -856,7 +856,8 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         selected_ids.update(item.get("method") for item in graph.cfgs if item.get("context_id") == context_id)
         selected_ids.update(identity for edge in graph.edges if context_id in edge.context_ids
                             for identity in (edge.source, edge.target))
-        nodes = [node for node in nodes if node.id not in compiler_ids or node.id in selected_ids]
+        nodes = [node for node in nodes if (node.id not in compiler_ids or node.id in selected_ids)
+                 and (node.kind != "http_request_definition" or (node.metadata or {}).get("context_id") == context_id)]
     ids = {n.id for n in nodes}
     compiler_context_ids = {item.get("id") for item in graph.contexts
                             if item.get("analyzer_version") and isinstance(item.get("id"), str)}
@@ -870,6 +871,7 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
     elif view == "configuration":
         edges = [e for e in edges if e.kind in {"configured_by", "resolves_property", "conditional_on",
                                                 "imports_configuration", "uses_import_selector", "selects_import", "may_select_import",
+                                                "uses_bean_registrar", "registers_bean", "produces_bean",
                                                 "defines_bean", "injects_bean", "advised_by",
                                                 "declares_entrypoint", "bypasses_proxy"}]
     elif view == "data-flow":
@@ -878,10 +880,12 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                                 "resolves_to_schema_table", "resolves_to_schema_column", "repository_for",
                                                 "declares_query", "defines_named_query", "uses_named_query",
                                                 "query_reads", "query_writes", "query_deletes", "filters_by",
-                                                "orders_by", "returns_entity", "returns_projection", "persistence_intent"}]
+                                                "orders_by", "returns_entity", "returns_projection", "persistence_intent",
+                                                "defines_http_request", "may_execute_http_request"}]
     elif view == "integrations":
         edges = [e for e in edges if e.kind in SIDE_EFFECTS | {"implements_contract", "exposes_endpoint",
-                                                               "declares_entrypoint", "uses_external_service"}]
+                                                               "declares_entrypoint", "uses_external_service",
+                                                               "defines_http_request", "may_execute_http_request"}]
     sites = []
     for original in graph.call_sites:
         if original.get("id") not in ids or original.get("caller") not in ids:

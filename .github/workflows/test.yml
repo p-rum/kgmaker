@@ -75,6 +75,8 @@ jobs:
       KGMAKER_REQUIRE_WORKERS: "1"
       KGMAKER_REQUIRE_K2: "1"
       KGMAKER_REQUIRE_SPRING_IMPORTS: "1"
+      KGMAKER_REQUIRE_HTTP_PROVIDERS: "1"
+      KGMAKER_REQUIRE_SPRING_CONDITIONS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -106,11 +108,15 @@ jobs:
           mvn -B -ntp -f fixtures/build-inspection/maven/pom.xml test
           mvn -B -ntp -f fixtures/spring-imports/pom.xml compile
           mvn -B -ntp -f fixtures/data-resources/pom.xml compile
+          mvn -B -ntp -f fixtures/http-provider-projection/pom.xml compile
+          mvn -B -ntp -f fixtures/spring-conditions/pom.xml compile
+          mvn -B -ntp -f fixtures/process-triggers/pom.xml compile
+          mvn -B -ntp -f fixtures/http-client-execution/pom.xml compile
           python workers/jvm/build.py --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/jvm/fetch_k2.py --output "$RUNNER_TEMP/kgmaker-tools/k2"
           python workers/jvm/build.py --backend k2 --analysis-api-home "$RUNNER_TEMP/kgmaker-tools/k2" --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
-      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_default_body_mapping.py tests/test_t015_project_data_resources.py tests/test_tsconfig_freshness.py tests/test_typescript_callbacks.py tests/test_typescript_callback_projects.py tests/test_typescript_callback_limits.py tests/test_dependency_dispatch.py tests/test_argument_parameter_flow.py tests/test_return_consumer_flow.py
+      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_default_body_mapping.py tests/test_t015_project_data_resources.py tests/test_tsconfig_freshness.py tests/test_typescript_callbacks.py tests/test_typescript_callback_projects.py tests/test_typescript_callback_limits.py tests/test_dependency_dispatch.py tests/test_t010_catalog_http_providers.py tests/test_t010_compiler_providers.py tests/test_spring_registrations.py tests/test_spring_conditions.py tests/test_coroutine_mapping.py tests/test_t024_discover_process_triggers.py tests/test_jvm_golden_corpus.py tests/test_http_client_execution.py tests/test_http_provider_privacy_integration.py tests/test_argument_parameter_flow.py tests/test_ui_events.py tests/test_return_consumer_flow.py
       - name: Explicit Maven plan/runner/export
         run: |
           kgmaker project build-plan --root fixtures/build-inspection/maven --phase test --output "$RUNNER_TEMP/kgmaker-plan.json"

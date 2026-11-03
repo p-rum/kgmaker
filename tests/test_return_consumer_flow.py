@@ -465,3 +465,58 @@ def test_commonjs_import_alias_is_not_closed_lexical_body(tmp_path):
     assert sites and all(s.get('return_mapping_status')=='PROVEN' for s in sites)
     assert all(s.get('return_body_status')=='UNKNOWN' for s in sites)
     assert not any(e.get('transformation')=='DECLARED_BODY_RETURN' and e.get('call_site') in {s['id'] for s in sites} for e in graph['evidence'])
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+def test_actual_java_ir_preserves_both_binding_consumers(tmp_path, monkeypatch, backend):
+    """One real response supports return proofs and HTTP binding/capture readers."""
+    import copy
+    import kgmaker.inspection as inspection
+    captured = {}
+    original = inspection.request_worker
+
+    def capture(argv, payload, **kwargs):
+        result = original(argv, payload, **kwargs)
+        if payload['operation'] == 'analyze':
+            captured['response'] = copy.deepcopy(result)
+        return result
+
+    monkeypatch.setattr(inspection, 'request_worker', capture)
+    graph = analyze(tmp_path, {'src/main/java/Mixed.java': '''enum Flavor { RED }
+class Mixed {
+ static int value(){return 1;}
+ static int use(){int local=value(); Flavor mode=Flavor.RED;
+  Runnable later=()->System.out.println(local); return local;}
+}'''}, backend=backend)
+    response = captured['response']
+
+    def walk(value):
+        if isinstance(value, dict):
+            yield value
+            for child in value.values():
+                yield from walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from walk(child)
+
+    expressions = list(walk(response['bodies']))
+    local = next(value for value in expressions if value.get('kind') == 'assign'
+                 and (value.get('value_binding') or {}).get('name') == 'local')
+    assert local['binding']['id'] == local['value_binding']['id']
+    assert local['value_binding']['kind'] == local['binding']['kind'] == 'LOCAL_VARIABLE'
+    reference = next(value for value in expressions
+                     if (value.get('value_binding') or {}).get('name') == 'local'
+                     and value.get('binding_ref'))
+    assert reference['binding_ref']['id'] == local['binding']['id']
+    assert any(value.get('binding_references_complete') is True
+               and any(binding.get('id') == local['binding']['id']
+                       for binding in value.get('captured_bindings', [])) for value in expressions)
+    literal = next(value for value in expressions
+                   if (value.get('literal') or {}).get('source') == 'COMPILER_LITERAL'
+                   and value['literal']['value'] == 1)
+    assert literal['value_info']['status'] == 'VALUE'
+    enum = next(symbol for symbol in response['symbols']
+                if symbol.get('owner') == 'Flavor' and symbol.get('name') == 'RED')
+    assert enum['kind'] == 'enum_constant'
+    assert any(value.get('transformation') == 'DECLARED_BODY_RETURN'
+               for value in return_facts(graph))

@@ -198,3 +198,83 @@ původní605/10 zůstávají zachovány ve svém původním rozsahu. Finální m
 po běhu nemění žádný source/test/runtime byte. Semantický merge zachovává všechny
 podporované manual facts; obsolete resolve_service_ownership259 duplicate byl
 nahrazen skutečným current273 s ověřenou architecture citation156.
+
+## Integrace main po změně CI politiky a Kotlin JPA
+
+Main `b78d2e62148f225be7ba8c53c839f8b052ee269d` obsahuje T045 revizi2,
+Kotlin JPA W01 a T023. Integrace zachovává jejich runtime i vlastní argument
+proof guards; konflikty byly pouze v generovaných grafech a stavovém přehledu.
+Main149 immutable episodes tvoří přesný prefix a původní child captures zůstávají.
+Sémantické duplicitní ownership odkazy byly sjednoceny na doložený workspace modul.
+
+Dřívější full733PASS10SKIP platí pro vlastní nezměněný argument source; nová
+K2 kombinace vyžaduje čerstvý explicitní build a integrační actual kontroly.
+Jejich výsledek zatím není PASS. GH CI je podle výslovného pokynu uživatele
+volitelné, všechny ostatní acceptance a nezávislé review nad aktuálním párem
+zůstávají povinné. Celý T003-S07 ani T003/T004 nejsou dokončené.
+
+### Nový společný parent s FactoryBean a HTTP katalogem
+
+Po dokončení předchozího integračního běhu byl main posunut na
+`c76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a`. Předchozí vlastní K2 build a
+argument/JPA/dispatch focus skutečně prošly: **34 PASS, 0 SKIP v85.595s**;
+138 zmrazených tracked vstupů zůstalo shodných. Tento výsledek neprokazuje
+novou kombinaci Java registračních hooků a argumentových bindingů.
+
+Nová integrace má konflikty jen v dokumentaci, CI seznamu testů a semantic views;
+Java frontend se složil automaticky. CI zachovává HTTP, registration i argument
+moduly. Pure parent kontrola: **198 PASS, 20 SKIP, 9 deselected v5.23s**;
+přeskočené actual registrační případy v tomto příkazu neměly explicitní JDK PATH
+a nejsou uváděny jako PASS. Jejich existující samostatná Factory evidence zůstává
+v původním rozsahu. Nový kombinovaný K1/K2 build a skutečné integrační případy
+zůstávají nutné před finálním merge.
+
+### Kompozice s opraveným coroutine parentem
+
+Běh nad `bde389e` a Factory parentem skutečně dokončil čerstvé vlastní K1/K2
+buildy a **58 PASS, 0 SKIP v151.46s**. Oba frozen kontroly proběhly; root navíc
+porovnal všech209 manifest souborů s přesným Git commitem bde389e.
+
+Main následně přidal PR34/PR37 jako `f2dad55c12c4fcf8af831cb3fff68e6ebbcf614f`.
+Kompozice zachovává typed AnnotationArguments i původní null-range guard;
+K1 zachovává oba nezávislé bloky pro argument bindings a coroutine boundary.
+Ostatní runtime hunks se složily automaticky. Pure current-parent sada:
+**156 PASS, 5 actual deselected v2.67s**. Generované grafy a semantic citations
+jsou obnovené příkazy, včetně posunutého coroutine odstavce a frontend řádků.
+Nový společný worker build a cílený actual běh pro tuto poslední kombinaci
+zatím nejsou PASS a zůstávají před merge povinné; full se jen kvůli parentu neopakuje.
+
+### Kompozice s HTTP execution, XML a trigger parentem
+
+Main `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` přidává typed HTTP literal
+bindings a související inventáře, XML overrides a trigger projection. Integrace
+zachovává oba validátory argumentů i HTTP request inventory, společný workspace
+qualifier a obě Java capabilities. Pure kontrola: **142 PASS, 1 deselected
+v5.19s**. Semantic apply/validate ověřily19 concepts/63 edges; obsolete duplicate
+byl sloučen se zachovaným current-main factem podle čerstvého CLI scanneru.
+Čerstvý společný build a actual kontrola této kombinace zatím nejsou PASS.
+
+Aktuální kompozice dále obsahuje UI parent `081d69ca` beze změny jeho helperu a
+adapter rules. Konflikt v importu evidence zachovává dvě nezávislé větve pro
+argument mapping a UI handles_event. CI seznam obsahuje obě sady. Semantic
+validate a plný scan/check nyní prošly; dřívější mezikrok `scan --no-docs`
+neobnovil human views a jeho check byl stale, proto je nahrazen plným scanem.
+Finální worker build/actual výsledek bude doplněn po skutečném běhu.
+
+### Skutečný společný worker výsledek a template parent
+
+Na checkpointu `63d3dbb` proběhly oba čerstvé vlastní K1/K2 buildy a společná
+argument/Factory/JPA/dispatch/coroutine/HTTP/UI actual sada: **108 PASS, 0 SKIP
+v312.16s**. Všech241 source/test/fixture vstupů a30 post-build JAR/lib hashů
+zůstalo při běhu beze změny. Persistent proof je
+`/workspace/argument-current-validation/` včetně obou build logů, manifestů,
+XML a PASS receipt. Tento výsledek není historický build z jiného parentu.
+
+Následná integrace main `2b0cf353c31f88c0c0226cf415585433843187f2` přidává pouze
+schválený SOURCE_ONLY Thymeleaf parser a jeho feature/store/report části.
+Žádný worker ani argumentový runtime konflikt nevznikl; vlastní JVM source a
+30 JAR/lib hashů zůstávají exact výše uvedenému actual buildu. Current-parent
+pure výsledek je uložený v `template-parent-pure.xml`; source/test selection
+s neexistujícími test_flow/test_impact moduly skončila exit4 ještě před testy,
+byla opravena na existující moduly a není uváděna jako PASS.
+Main197 immutable captures jsou exact prefix, šest child captures nezměněno.
