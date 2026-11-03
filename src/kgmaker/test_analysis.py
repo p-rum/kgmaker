@@ -51,6 +51,8 @@ def federated_links(workspace, graphs, sources):
                        source_key(repo, path), line))
 
     for service in workspace.get('services', []):
+        if service.get('transport') == 'kafka':
+            continue
         declared = service['contract']; repo, path = declared['repo_id'], declared['path']
         if repo not in graphs:
             diagnostics.append('Contract checkout missing: ' + service['id']); continue

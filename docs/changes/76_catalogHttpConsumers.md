@@ -98,3 +98,17 @@ z built-jars.json odpovídá donor bytes před kopií; nové K1 2bf6cbde/K2 2446
 jsou skutečné aktuální Arg buildy, ne staré artefakty přeznačené podle HEAD.
 Persistent doklad /workspace/t011-validation/argument-worker-copy.json.
 Corrected grouped/full zůstávají PENDING do skutečného výsledku.
+
+## Corrected source a Kafka parent seam
+
+Corrected grouped focus nad6104e7c je **172PASS,0SKIP,51.15s** a245 source/test/
+fixture/JAR hashes zůstalo shodných. Obsahuje původní positives i6 nových
+negativních variant/back end a Arg/T025 current-parent kontrakty. Root přečetl
+přesný11řádkový delta a schválil sourceclosure obou oprav.
+
+Před corrected full je navíc integrován explicitně určený Kafka main
+ef3ab4050289aafd557caa5414c594698da006ea, beze změny interfaces/JVM source.
+Own source/test byteově6104; všech27 worker inputs odpovídá actual63d.
+Krátká Kafka/T006/provider/workspace sada **115PASS,2actualdeselected,7.67s**.
+Dva nové skutečné snapshot/offline consumer seam cases a corrected full jsou
+zatím PENDING; partial340/7exit2 se nikdy nezapočítává jako wholePASS.

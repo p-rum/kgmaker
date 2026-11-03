@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "workspace_id": "kafka-fixture",
+  "repositories": [
+    {
+      "id": "producer",
+      "role": "backend",
+      "path": "producer"
+    },
+    {
+      "id": "consumer",
+      "role": "backend",
+      "path": "consumer"
+    },
+    {
+      "id": "schemas",
+      "role": "shared",
+      "path": "schemas"
+    }
+  ],
+  "services": [
+    {
+      "id": "producer-svc",
+      "backend_repo": "producer",
+      "frontend_repos": [],
+      "test_repos": [],
+      "transport": "kafka",
+      "contract": {
+        "repo_id": "schemas",
+        "path": "Order.json"
+      }
+    },
+    {
+      "id": "consumer-svc",
+      "backend_repo": "consumer",
+      "frontend_repos": [],
+      "test_repos": [],
+      "transport": "kafka",
+      "contract": {
+        "repo_id": "schemas",
+        "path": "Order.json"
+      }
+    }
+  ],
+  "service_ownership": {
+    "schema_version": 1,
+    "services": [
+      {
+        "id": "producer-svc",
+        "roots": [
+          {
+            "repo_id": "producer",
+            "path": "src/main"
+          }
+        ],
+        "modules": [],
+        "external_systems": []
+      },
+      {
+        "id": "consumer-svc",
+        "roots": [
+          {
+            "repo_id": "consumer",
+            "path": "src/main"
+          }
+        ],
+        "modules": [],
+        "external_systems": []
+      }
+    ]
+  },
+  "kafka_bindings": {
+    "schema_version": 1,
+    "clusters": [
+      {
+        "id": "cluster-a"
+      },
+      {
+        "id": "cluster-b"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "producer-orders",
+        "repo_id": "producer",
+        "service_id": "producer-svc",
+        "module": "root",
+        "source_set": "main",
+        "scope": "production",
+        "context_id": null,
+        "binding": "orders-out-0",
+        "direction": "producer",
+        "profiles": [
+          "blue"
+        ],
+        "config_files": [
+          {
+            "path": "src/main/resources/application.properties",
+            "profile": null
+          },
+          {
+            "path": "src/main/resources/application-blue.properties",
+            "profile": "blue"
+          }
+        ],
+        "binders": {
+          "alpha": "cluster-a",
+          "beta": "cluster-b"
+        },
+        "contract": {
+          "repo_id": "schemas",
+          "path": "Order.json",
+          "release": "r1"
+        },
+        "payload": "Order"
+      },
+      {
+        "id": "consumer-orders",
+        "repo_id": "consumer",
+        "service_id": "consumer-svc",
+        "module": "root",
+        "source_set": "main",
+        "scope": "production",
+        "context_id": null,
+        "binding": "orders-in-0",
+        "direction": "consumer",
+        "profiles": [
+          "blue"
+        ],
+        "config_files": [
+          {
+            "path": "src/main/resources/application.properties",
+            "profile": null
+          },
+          {
+            "path": "src/main/resources/application-blue.properties",
+            "profile": "blue"
+          }
+        ],
+        "binders": {
+          "alpha": "cluster-a",
+          "beta": "cluster-b"
+        },
+        "contract": {
+          "repo_id": "schemas",
+          "path": "Order.json",
+          "release": "r1"
+        },
+        "payload": "Order"
+      }
+    ]
+  }
+}
