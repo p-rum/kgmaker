@@ -295,7 +295,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v6 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -349,6 +349,17 @@ Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
 TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
 ne deployment/schema compatibility proof; nevyřešený access, type identity,
 inheritance strategy nebo class override zůstává UNKNOWN.
+Vybraný `persistence-unit` z `META-INF/persistence.xml` určuje mapping files v
+deklarovaném pořadí; bez explicitního seznamu se hledá `META-INF/orm.xml`.
+Podporovaný ORM XML subset používá přesné compiler-resolved class identity,
+tabulku a scalar ID/basic/version sloupce. XML mapping má přednost před
+annotations a `metadata-complete` skutečně potlačí annotation-only bindings.
+Hrany a uzly nesou cestu a SHA-256 mappingu, persistence unit a pořadí zdroje.
+Neznámý namespace/verze, neúplný nebo nepodporovaný construct, nevyřešená
+class/attribute reference a nebezpečný nebo root-escaping XML soubor zůstávají
+UNKNOWN bez odvození fyzického názvu z annotation fallbacku. Parser odmítá
+DOCTYPE/external entities a nic nestahuje ani nespouští; graph schema zůstává v3.
+
 Spring Data repository model se vybírá z compiler-resolved generic supertype a
 přesného entity owneru. Entity atributy se indexují podle canonical owner
 identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
@@ -563,12 +574,11 @@ strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
 K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
-projection, ale nedodává obecný source CFG, constructor ABI, Spring/framework
-metadata, property/operator/reference/initializer call sites ani local/lambda
-execution. Omezené default-body source mapping je popsáno v
-[T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
-coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
-diagnostiky a stav PARTIAL;
+projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI, runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping popisuje W02 a bounded coroutine
+source/async boundaries W03 níže. Širší default-body coverage a obecné coroutine
+state-machine CFG/runtime scheduling zůstávají mimo podporovanou matici.
+Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
@@ -799,6 +809,54 @@ renderer. Handler/wrapper materialization also requires canonical selected class
 Previous v1/v2/v3 UI captures require reinspection; offline freshness validation
 preserves the saved cache/store.
 
+## Coroutine source boundaries (T003-S04-W03)
+
+The explicit JVM inspection preserves compiler-proven suspend call sites and
+recognized `kotlinx.coroutines.launch`/`async` boundaries. K1 source CFG retains
+calls with resume/failure boundaries; scheduling remains UNKNOWN. K2 preserves
+source boundaries even when dependency JVM signatures remain unresolved, and
+continues to report unavailable source CFG explicitly.
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Source/compiler inspection does not execute coroutine code or a scheduler.
+```
+
+Named ContinuationImpl `invokeSuspend` declarations can map through bounded
+Kotlin/DebugMetadata, enclosing-method signature, delegate and exact realm proof.
+Metadata suspension lines never become source call-expression locations.
+Generated state-machine instructions retain BYTECODE_ONLY locators and generated
+identities; missing/malformed metadata, foreign realm or absent source remains
+unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
+remain outside this mapping contract. Store/protocol formats remain readable;
+metadata is additive and worker content identities invalidate older cached facts.
+
+## Hand-labelled JVM acceptance corpus
+
+T003-S04-W05 adds a versioned test inventory for T002-CG-01–05. It reuses the
+existing mixed five-call golden and actual ordered dependency fixture, with
+explicit Java owner/overload/reference/lambda/recursion/reflection and Kotlin
+extension/default/inline/suspend/Java-call supplements. Original inline source
+fixtures are shared files with byte-identical contents.
+
+```bash
+PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -q tests/test_jvm_golden_corpus.py
+```
+
+Source-call RESOLVED/UNRESOLVED counts and exact caller/target/range identities
+are compared separately from unsupported model/CFG diagnostic identities. K2
+SOURCE CFG remains unavailable; K1 default-argument CFG and collapsed Java
+expression order retain explicit boundaries. Source-level inline callable
+attribution does not prove a physical public facade invocation. Reflection APIs
+may resolve while their runtime targets stay unknown; method references remain
+non-executing, and opposite branches never become a sequence.
+
+The corpus and its mutation checks reject missing/extra/retargeted/stronger
+observations. Store/protocol formats remain unchanged; source/class/store bytes
+and offline retention use the existing model/provider pipeline. The prerequisite
+stack is explicitly documented in change62; this is bounded static acceptance,
+not a complete JVM program, runtime scheduling or availability proof.
 
 ## T003-S05-W02 — registrar a FactoryBean declaration facts
 
@@ -901,3 +959,120 @@ It does not claim a new compiler/ORM adapter or complete S06/W08 support. Covera
 is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
 physical naming/schema compatibility, live databases and data population remain
 outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.
+
+## T003-S05-W03 — typed condition matrix
+
+The JVM v6 evaluator preserves compiler member types alongside legacy annotation
+display strings. `@Profile` accepts a nonempty string array (OR); expressions
+support `!`, `&`, `|`, parentheses, at most256 tokens/64 nesting levels. Mixed
+`&`/`|` require parentheses, as in Spring. Explicit empty active profiles use
+Spring's ordinary `default` profile; custom default-profile configuration is
+outside this subset. Missing or malformed active-profile snapshots are UNKNOWN.
+
+`ConditionalOnProperty` accepts agreeing `value`/`name` aliases, an optional
+trimmed dot-delimited prefix, all property names (AND), a string `havingValue`
+and a genuine boolean `matchIfMissing`. Context property values must be literal
+strings: default matching accepts any string except case-insensitive false,
+including empty/other text. Case comparison supports ASCII and exact literal
+equality; unsupported non-ASCII case equivalence remains UNKNOWN rather than
+using Python's expanding casefold. Unresolved placeholders, collections and
+malformed members remain UNKNOWN.
+
+`ConditionalOnClass` requires all explicit `value` class literals and `name`
+strings to occur in `spring_available_classes`; `ConditionalOnMissingClass`
+requires all to be absent. An explicit empty inventory means absent; omitted
+inventory means UNKNOWN. Matching uses complete identities without simple-name
+inference. Unresolved compiler class literals stay UNKNOWN in both directions.
+This inventory is a declared selected-context snapshot, not a runtime probe.
+Custom/unsupported Boot conditions stay UNKNOWN and are never executed.
+
+Class, method, imported-configuration and component-scan reachability remain in
+the existing framework projection. INACTIVE dominates UNKNOWN across conditions;
+UNKNOWN dominates ACTIVE. A second raw-profile injection filter is removed, so
+proven negated/OR profiles retain their computed state. Evidence stays
+FRAMEWORK_DERIVED and retains source/compiler/context provenance; no bean runs.
+
+An explicit Python API example (the existing inspection CLI is unchanged):
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+result = inspect_jvm(Path("app"), classpath=["/prepared/api.jar"], publish=False,
+    build_context={"spring_profiles": ["qa"],
+        "spring_properties": {"feature.enabled": "true"},
+        "spring_available_classes": ["java.lang.String"],
+        "spring_component_packages": ["example"]})
+```
+
+Context IDs bind the input snapshot; offline validation detects tampering and
+requires reinspection for older Spring rule versions. Graph v1/v2/v3 remains
+readable; old framework facts are not silently promoted to current rules.
+Explicit variant-specific `project.input_files` and captured classpath hashes
+are checked per context, without narrowing shared build/source inputs. A change
+to one variant's external config/JAR leaves another untouched context fresh and
+the stored graph unchanged. No configuration loader, installation or build is
+implicit in the evaluator or offline freshness path.
+
+Actual API inputs: `fixtures/spring-conditions`, Spring6.2.2/Boot3.4.2, pinned
+hashes/licenses; preparation is an explicit Maven command. Required CI uses
+`KGMAKER_REQUIRE_SPRING_CONDITIONS=1` and runs the real K1/K2 fixture. Local
+missing tools/APIs are SKIP unless required. See
+[change note50](changes/50_expandSpringConditions.md) for final test results and
+remaining unsupported cases; this does not complete all of T003-S05.
+
+## HTTP client intent
+
+T003-S07-W06 reuses graph/store schema3 and existing compiler IR. The JVM protocol
+adds optional `typed-java-literals-bindings-v1` facts; old workers/indexes and
+schema1/2 graphs remain readable with HTTP coverage UNKNOWN. Fresh captures bind
+HTTP rule/config fingerprints; replay validates them without running a worker.
+Rule `http-client-execution-2` invalidates prior version1 HTTP proof as STALE;
+explicit reinspection is required, with no implicit process/store mutation.
+No source label, callee spelling alone, confidence score or runtime availability
+is used to resolve a request. No client is instantiated and no request is sent.
+
+| Supported proof | Result | Actual fixture/test |
+| --- | --- | --- |
+| Java WebClient cold `retrieve`/`bodyToMono`/`bodyToFlux`/`exchangeToMono` | Definition; closed unused local publisher UNSUBSCRIBED_WITHIN_SCOPE | Spring6.2.2/Reactor3.7.2; `test_cold_request_and_same_origin_block_are_separate` K1/K2 |
+| Exact same publisher Mono block/blockOptional/subscribe/toFuture; Flux blockFirst/blockLast/subscribe | STATIC_TRIGGER or CONDITIONAL_STATIC_TRIGGER, runtime NOT_OBSERVED | `test_same_request_spec_does_not_mix_distinct_publishers`, branch boundary |
+| RestClient retrieve versus body/toEntity/toBodilessEntity/exchange | retrieve DEFINITION_ONLY; imperative terminal STATIC_TRIGGER | `test_imperative_retrieve_is_not_a_terminal` |
+| Source Feign interface abstract annotated method and attributed call | DECLARATION_ONLY / FEIGN_INVOCATION_INTENT; proxy registration UNKNOWN | OpenFeign4.2.0; `test_feign_declaration_only_and_abstract_invocation_intent` |
+| Literal URI; simple `@Value`/PropertyResolver/Feign placeholder + explicit matching properties/profile/source SHA | Separate method/base/path and config provenance | `test_bound_property_source_provenance_and_plain_literal_placeholder` |
+| Escaped, stored, returned, captured, unknown helper/operator/merged origin | UNKNOWN, no invented terminal | escape/capture/reference/branch tests |
+| Kotlin K1/K2 missing required typed binding IR | HTTP_TYPED_IR_UNAVAILABLE / UNKNOWN | `test_kotlin_unavailable_bindings_are_explicit_unknown` |
+| Throw/ternary operands; loop updates and try resources | Escapes UNKNOWN; loop/try control boundaries UNKNOWN with no invented terminal order | `test_abrupt_conditional_loop_and_resource_operands_do_not_claim_unused` K1/K2 |
+| URI callback/extra-argument overload | URI/base/path UNKNOWN even if same-origin terminal intent exists | `test_uri_callback_cannot_keep_original_literal_route` K1/K2 |
+| Feign nonempty client path prefix | Separate client_path/method_path; composed route UNKNOWN, no guessed concatenation | `test_feign_client_prefix_is_not_an_exact_unprefixed_route` |
+| Unsupported/escaped/whitespace properties syntax | Selected file cannot establish exact config value provenance | `test_unsupported_properties_override_cannot_prove_first_literal` |
+
+Custom clients/operators, cross-method publisher flow, dynamic URI construction,
+multiple/unknown routes, YAML/SpEL/default/nested placeholders and proxy registration
+are outside this matrix. Explicit Java method references/lambda capture never
+activate an HTTP request. Unrelated Mono terminals do not activate another origin.
+All runtime execution/availability remain NOT_OBSERVED/UNKNOWN. Fresh scans/captures redact URI userinfo,
+query values and fragments before graph/context persistence, including SOURCE_ONLY
+signatures, documentation summaries and heading identities. Privacy also covers
+unsupported URI schemes and scheme-relative authorities; HTTP recognition stays
+limited to HTTP/HTTPS, so redaction never makes an unsupported URI executable. Opaque
+input hashes preserve freshness without retaining credentials. Configuration
+mapping requires a selected `application.properties` or explicit active profile
+file containing only the supported literal property syntax, matching property and SHA.
+Unsupported meaningful lines, escaped/continuation syntax or unreadable/oversized
+selected files invalidate that file's property provenance rather than hiding an
+overriding definition. Loop/try boundaries visit resources/updates/operands but
+remain UNKNOWN, including a break that makes the loop update unreachable. Explicit values without source provenance
+remain unknown. Workspace identities/source locators are repo-qualified, URI path
+strings stay paths, and no cross-service endpoint match is invented.
+
+Explicit API preparation (never triggered by scan/inspection):
+
+```sh
+mvn -B -ntp -f fixtures/http-client-execution/pom.xml compile
+kgmaker inspect jvm --help
+kgmaker flow render --view integrations --entry '<canonical-method-id>' --format json
+```
+
+Use the existing inspection classpath options for the pinned API JARs listed in
+`fixtures/http-client-execution/dependencies.lock.json` (JAR/POM SHA and license).
+The actual API tests require the Maven cache and own worker home; mandatory CI
+prepares these APIs and runs `tests/test_http_client_execution.py`.

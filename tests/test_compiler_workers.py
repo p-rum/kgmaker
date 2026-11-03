@@ -227,26 +227,7 @@ class CompilerWorkerTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=root/'src/main/kotlin/Advanced.kt';source.parent.mkdir(parents=True)
-            source.write_text('''package fixture
-class Advanced(val seed: Int) {
-  var label: String = consume("initial")
-    get() = field
-    set(next) { field = next }
-  init { consume("init") }
-  constructor(): this(1) { consume("secondary") }
-  inline fun <T> apply(value: T, transform: (T) -> String): String = transform(value)
-  operator fun plus(other: Advanced): Advanced = Advanced(seed + other.seed)
-  suspend fun suspendValue(): String = consume("suspend")
-  fun consume(value: String): String = value
-  fun readLabel(): String = label
-  fun writeLabel() { label = "changed" }
-  fun scenario(): String {
-    val reference = ::consume
-    val lambda = { value: String -> consume(value) }
-    val combined = this + Advanced()
-    return apply("x", lambda) + reference("r") + combined.seed
-  }
-}''')
+            source.write_text((ROOT / 'tests/fixtures/jvm-golden/Advanced.kt').read_text(encoding='utf-8'))
             result=inspect_jvm(root,classpath=[str(ROOT/'workers/jvm/target/lib/kotlin-stdlib.jar')],publish=False)
             graph=KnowledgeGraph.from_dict(result['graph'])
             sites=[site for site in graph.call_sites if site.get('path')=='src/main/kotlin/Advanced.kt']
@@ -409,8 +390,8 @@ object Singleton {
 
             blue=inspect(['blue'],{'feature.custom':'false'})
             selected_context=next(item for item in blue.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v5',selected_context['framework_rule_versions']['spring'])
-            self.assertEqual('annotation-source-v5',selected_context['framework_analysis']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_rule_versions']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_analysis']['spring'])
             beans={node.name:node.id for node in blue.nodes if node.kind=='spring_bean'}
             injections={node.name:node.id for node in blue.nodes if node.kind=='spring_injection'}
             selected={(edge.source,edge.target) for edge in blue.edges if edge.kind=='injects_bean'}
@@ -539,8 +520,8 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
                                build_context={'database_id':'primary','schema_stream_id':'main','persistence_unit':'orders'})
             graph=KnowledgeGraph.from_dict(result['graph'])
             selected_context=next(item for item in graph.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v4',selected_context['framework_rule_versions']['jpa'])
-            self.assertEqual('annotation-source-v4',selected_context['framework_analysis']['jpa'])
+            self.assertEqual('annotation-source-v5-orm-xml-v2',selected_context['framework_rule_versions']['jpa'])
+            self.assertEqual('annotation-source-v5-orm-xml-v2',selected_context['framework_analysis']['jpa'])
             self.assertIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_embeddable'})
             self.assertNotIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_table'})
             order_id=next(node for node in graph.nodes if node.kind=='orm_attribute' and node.name=='Order.id')

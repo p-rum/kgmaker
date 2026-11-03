@@ -283,3 +283,31 @@ převzaty až po porovnání všech10/18 library SHA; worker receipt je v
 odvozené pouze z názvu source větve. Aktuální parent focused integrace ještě čeká;
 nový full se pro nezměněný vlastní v4 runtime neopakuje. GH CI je volitelné dle
 výslovného T045 revize2; ostatní acceptance/toolchain a nezávislé review povinné.
+
+## Current-parent compose HTTP/Spring/XML/coroutine
+
+Předchozí focused integrace nad `78d35c7` není kompletní PASS: **168 PASS,1 setup
+ERROR v368.52s**, XML169/1error/0fail. Chyba nastala v InstalledWorkerTests.setUpClass
+při Python3.12 ensurepip subprocess; původní stderr není v tracebacku zachovaný.
+Izolovaný následný explicitní offline ensurepip diagnostic uspěl; původní příčina
+není domýšlena. Všech213 tehdejších source/JAR hashů před refresh souhlasilo.
+Log/XML/receipt jsou zachované v `/workspace/ui-events-current-parent-focus.*`.
+
+Nový parent `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` přidává coroutine,
+Spring conditionsv6, ORM XMLv2, T024/golden a HTTP/privacy guards. Root přečetl a
+výslovně schválil kompozici tří konfliktů: UI adapter selection vedle HTTP rule
+filteru; React snapshot gate vedle JVM-only Spring condition a HTTP proof gates;
+JVM HTTP prepare/conditionhash a aktuální JPA rule zachované, React rule4 override
+pouze pro TS React s adapters. Canonical source/target/wrapper scope guards
+zůstávají přesně stejné. Inspection jako celek má kvůli parent additions jiné SHA;
+zbývající tři opaque helper/worker/test SHA jsou přesně z validovaného785/10 full.
+
+Aktuální HTTP donor má15 přesných JVM source/build/lock souborů a dva JARy shodné
+s jeho skutečnou153 PASS0SKIP320.65s + XML-parent3 PASS39.72s evidencí. K1/K2
+50cf8376/2eb240a5 byly převzaty až po ověření10/18 library SHA; receipt
+`/workspace/ui-events-http-parent-worker-receipt.json` uchovává celý closure.
+Zůstaly zachované raw source snapshot, XML cachev2, conditionv6 i HTTP privacy
+kontroly. Před retry byly odstraněny pouze dokončené vlastní pytest temp trees
+(5.3GiB) a diagnostic venv; logy/XML/manifesty/receipts nebyly odstraněny. Nový
+current focused batch včetně distribution musí opravdu proběhnout; není nahrazen
+starými168 PASS ani isolated diagnostic. Full se pouze kvůli parent neopakuje.

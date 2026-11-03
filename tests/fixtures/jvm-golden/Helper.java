@@ -1,0 +1,1 @@
+package fixture; public class Helper { public static int plus(int x) { return x + 1; } }
