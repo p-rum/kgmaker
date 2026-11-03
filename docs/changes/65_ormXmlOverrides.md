@@ -214,3 +214,12 @@ Receipt `/workspace/w03-mainf2-worker-receipt.json` odkazuje na původní
 factory-build-receipt s úspěšnými stage a actual48. Nejde o nový W03actualclaim.
 Finální CLI semantic update/apply/validate,memory/scan/check a clean diff se
 provádějí proti této finální base; root vlastní exact-pair review a merge.
+
+
+Finální target se posunul na c98ae1ea85934674eac743d60489b37b322f8fc9
+(T024 pure trigger projector). Vlastní XML/framework/provider/inspection/test
+soubor ani JVM sources se nemění;102actual a76parentpure zůstávají ve svém
+ověřeném scope. Main177 immutable episodes tvoří přesný prefix; sémantické
+aktuální funkční odkazy byly přivázány ke skutečným scanner IDs, historické
+episode objekty zůstávají beze změny. Relevantní T024/T023/provider pure
+integrace se kontroluje zvlášť; žádný další full/actual compiler batch.
