@@ -36,6 +36,22 @@ def source_key(repo: str, path: str) -> str:
     return '@' + repo + '/' + path
 
 
+def _qualified_http_metadata(repo: str, value: dict) -> dict:
+    """Qualify identities and locators, preserving URI paths as URI paths."""
+    result = copy.deepcopy(value)
+    for key in ('context_id', 'caller', 'origin_call_site', 'root_call_site', 'declaration', 'client_type'):
+        if isinstance(result.get(key), str):
+            result[key] = qualified(repo, result[key])
+    for key in ('terminal_call_site_ids', 'chain_call_site_ids'):
+        if key in result:
+            result[key] = [qualified(repo, item) for item in result[key]]
+    for record in result.get('uri_provenance', []):
+        if record.get('source_file'):
+            record['source_file'] = source_key(repo, record['source_file'])
+    result['repo_id'] = repo
+    return result
+
+
 def _qualified_context(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
@@ -480,6 +496,7 @@ def source_path(packet: dict, key: str) -> Path:
 def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persist_cache: bool = False) -> tuple[dict, dict, dict, KnowledgeGraph, dict]:
     from . import feature
     from .schema_replay import reconstruct
+    from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
     workspace = load_workspace(manifest)
     baseline_repos, sources, exclusions, nodes, edges, graphs, schemas = {}, {}, [], [], [], {}, {}
@@ -499,7 +516,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
+                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', HTTP_CAPTURE_VERSION],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -549,7 +566,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         for path, item in inventory.items():
             sources[source_key(identity, path)] = {**item, 'repo_id': identity, 'path': path}
         exclusions += [{'repo_id': identity, **item} for item in excluded]
-        nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path)) for n in local.nodes]
+        nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
+                          metadata=_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else n.metadata) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
@@ -597,6 +615,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                             + release_diagnostics),
                            ([{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
                               'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
+                              **({'call_site': qualified(repo, e['call_site'])} if e.get('call_site') else {}),
                               'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
                               'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
                              for repo, local in graphs.items() for e in local.evidence]

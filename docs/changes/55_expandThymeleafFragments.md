@@ -14,3 +14,16 @@ Příklad:
 ```
 
 Ověření: cílená template/feature/data-check/scanner/workbook sada `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q tests/test_templates.py tests/test_feature.py tests/test_data_check.py tests/test_scanner.py tests/test_workbooks.py` — 65 PASS. Celá core sada `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -q -rs` — 475 PASS, 114 SKIP. SKIP jsou nepřipravený JDK/JVM/K1/K2, Maven/exporter, Gradle 8.13/Kotlin cache, TypeScript/Node workery a skutečný Windows CI gate; žádný z nich se neuvádí jako PASS. Parser používá standard-library HTMLParser, nové template změny nevyžadují worker/JVM běh. Integrace proti PR34 head `78d7968ea7408adea3ec9ce783769bb799522470` přidala jeho dokumentaci a sémantická metadata; původní S09 source/test změny byly při integraci byte-identické a následné review opravy zůstaly omezené na S09 parser a jeho testy. Review opravil ownership atributů na fragment-declaration elementu, odmítnutí opakovaných reference atributů/aliasů a přesný scoped caller-variable → parameter tok vnořených fragmentů; regresní tests kontrolují i shodná formální jména napříč fragmenty. Nový regression test ověřuje, že nepodporované `th:each`/`th:with` lokální proměnné (včetně data aliasů) nezpůsobí falešnou backendovou vazbu. Po finálním scan: 326 souborů, 2 821 deklarací/sekcí a 21 845 vztahů ve výsledném grafu. `kgmaker semantic validate`, `kgmaker check` a `git diff --check` PASS. Sémantické epizody PR34 (115 záznamů) zůstávají přesným prefixem, následovaným S09 implementační epizodou. T003-S09/AC09 zůstává PARTIAL; nepokryté zůstávají jiné templating dialecty, vyhodnocení podmínek, MVC handler resolution a runtime/rendering.
+
+## Integrace současné hlavní větve
+
+Závislost conditions PR34 již byla sloučena. Nová kompozice obsahuje main
+`081d69ca69d14b4d131cc305e4e5c873960e71a3` se zachováním HTTP/XML/React a
+ostatních parent funkcí. Žádný runtime konflikt nevznikl; vlastní parser,
+feature capability a store renderer změny zůstaly beze změny. Dřívější full
+475PASS114SKIP je historická core evidence vlastního parseru, nikoli výsledek
+aktuálních workerů. Nové cílené kontroly budou uvedeny až po běhu.
+Main195 immutable episodes jsou exact prefix, dvě původní child captures
+zůstávají beze změny. Sémantické odkazy na posunuté funkce byly přepojeny pouze
+podle jednoznačných IDs z čerstvého CLI scanu; duplicitní parent fakta zachována
+jednou. GH CI je volitelné dle uživatelské revize T045, ostatní kontroly povinné.

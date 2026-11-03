@@ -178,6 +178,8 @@ def run(args):
                 selected = project(graph, args.scope, view=args.view)
                 result = {"status": "PARTIAL", "view": args.view, "scope": args.scope, "contexts": selected.contexts,
                           "entry": args.entry, "nodes": [n.id for n in selected.nodes], "edges": [e.__dict__ for e in selected.edges]}
+                from .dataflow import http_request_inventory
+                result["http"] = http_request_inventory(selected)
                 if args.format != "json":
                     raise AnalysisError("Integration/data views require --format json until the framework view renderer is available")
             if args.format == "mermaid":

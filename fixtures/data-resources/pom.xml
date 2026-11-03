@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kgmaker.fixture</groupId><artifactId>data-resource-api</artifactId><version>1</version>
+  <properties><maven.compiler.release>21</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
+  <!-- API-only classpath; each published artifact is explicit and hash-checked by the actual tests. -->
+  <dependencies>
+    <dependency><groupId>jakarta.persistence</groupId><artifactId>jakarta.persistence-api</artifactId><version>3.1.0</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-jpa</artifactId><version>3.4.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-commons</artifactId><version>3.4.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-tx</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-core</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-beans</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-jcl</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-aop</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-expression</artifactId><version>6.2.2</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-resources-plugin</artifactId><version>3.3.1</version></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.13.0</version></plugin>
+  </plugins></build>
+</project>

@@ -55,12 +55,17 @@ architecture views and hook context use production scope; `query --scope all`
 includes unknown/test inventory. Without a valid compiler index these are partial source-only analyses. Explicit `inspect` adds compiler-backed calls/CFG for the supported matrix. See [implementation progress](docs/production-analysis-progress.md).
 
 The library API `kgmaker.architecture_model.ViewDocument` provides a versioned,
-deterministic JSON envelope for future high-level interface, topology and process
-projections. `kgmaker.views.select_service_contexts` builds an explicit,
-read-only service/repository/module context selection from an existing graph;
-it requires a context ID when variants are ambiguous and reports SOURCE_ONLY and
-deployment limits. It does not discover or render interface/topology/process views;
-the CLI is unchanged. See [architecture](docs/architecture.md), the
+deterministic JSON envelope for high-level interface, topology and process
+projections. Nodes and edges retain evidence kind, resolution status, freshness,
+and separate supporting, contradicting and unknown references. Their coverage
+counts describe the supplied selected inventory, not the unobserved system.
+`kgmaker.views.select_service_contexts` builds an explicit, read-only
+service/repository/module context selection from an existing graph; it requires a
+context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
+limits. `project_service_inventory` provides a read-only service-only topology
+projection using that selection and explicit ownership. The CLI still does not
+expose architecture view commands, and evidence ranking remains a separate,
+unfinished upstream capability. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 
@@ -103,6 +108,25 @@ inventory = project_service_inventory(
     service_labels={"orders": "Orders API"},
 )
 ```
+
+`interfaces.project_http_providers` returns an `interfaces` ViewDocument from
+that same explicit workspace snapshot. Logical HTTP identity includes the declared
+service, method and case-preserving route; registrations and contract revisions
+remain separate variants. Compiler Spring annotation mirrors can establish a
+class/method handler declaration. Source-pattern Spring/Ktor candidates and
+OpenAPI contracts retain their weaker evidence. Deployment, runtime and data
+availability remain `UNKNOWN`; unsupported imported-runtime binding is diagnostic.
+
+```python
+from kgmaker.interfaces import project_http_providers
+
+interfaces = project_http_providers(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+)
+```
+
+This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
 
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
@@ -188,6 +212,17 @@ before publication rather than trusting emitted declarations.
 Preflight and analysis must read the same compiler input closure; membership
 changes fail before publication. Reinspection replaces the same TypeScript
 selection slot across legacy and K2-era snapshot metadata.
+New TypeScript snapshots also bind effective-config inputs, negative filesystem
+lookups, compiler directory discovery and package-manager lockfiles. Unrelated
+config or excluded-unused content edits preserve the selected context; relevant
+new dependencies/members invalidate it offline without running Node. Legacy
+snapshots keep conservative validation. See [TypeScript freshness and limits](docs/typescript-freshness.md).
+
+TypeScript worker4 preserves concrete generic/overload signatures through barrel
+exports and records named/inline callback bindings. Callback parameters and union
+values expose incomplete dispatch candidates; mutable/any callbacks remain unresolved.
+Callee navigation includes candidates when explicitly requested. See
+[callback evidence and limits](docs/typescript-callbacks.md).
 
 ## Copilot workflow
 
@@ -200,7 +235,10 @@ neinstaluje do uživatelských projektů.
 Projektový [`code_review`](.codex/agents/code-review.toml) přebírá vytvořené PR,
 ověřuje diff a test evidence proti zadání a vrací `APPROVE`, `REQUEST_CHANGES`
 nebo `BLOCKED` pro konkrétní head SHA. Po `APPROVE` znovu ověří aktuální HEAD,
-required checks, závislosti a mergeability a teprve potom sloučí ready PR.
+povinné lokální acceptance/toolchain kontroly, závislosti a mergeability a potom
+sloučí ready PR. GH CI je doplňující evidence: jeho absence či billing blokace
+sama merge neblokuje, pokud vše ostatní prošlo; konkrétní chyby z CI a skutečná
+serverová pravidla zůstávají závazné.
 Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
 Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
@@ -404,7 +442,7 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v5 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
 bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
@@ -414,6 +452,18 @@ chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_im
 Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
 Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
 source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
+
+V5 navíc zachytí compiler-qualified literal `ImportBeanDefinitionRegistrar`
+registraci přes `registerBeanDefinition("name", new RootBeanDefinition(Type.class))`.
+Podmínka pochází z importující konfigurace. `FactoryBean<T>` rozlišuje objekt
+`&name` a produkt `name`; ACTIVE statická deklarace produktu vyžaduje shodný
+konkrétní generic typ, jediné `return new Type()` a jediné `return Type.class`.
+`@Bean` producer musí navíc přímo vracet jediný konkrétní no-argument constructor
+bez anonymous overrides; proof pochází ze skutečné implementace a produceru.
+Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
+Žádný registrar, factory, konstruktor nebo Spring context se nespouští; statická
+deklarace není runtime availability. Přesný bounded scope a testy:
+[change note47](docs/changes/47_declareSpringRegistrations.md).
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
@@ -441,6 +491,29 @@ promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
 inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
 patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
 pojmenovaný subpackage není JPA evidence.
+Vybraný persistence unit může doplnit standardní `META-INF/orm.xml` nebo
+pořadově deklarované mapping files. XML class/table/column mapping má přednost
+před annotations a evidence uchovává cestu, hash souboru, persistence unit i
+pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML je
+omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
+namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
+soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
+Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
+entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
+zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
+placement zdědí access strategy. Fixture ověřuje K2 i Javac, řetězené mapped
+superclasses, FIELD/PROPERTY access, tři JPA inheritance strategy values,
+entity-level override precedence a kolizi atributu. Kolize a unresolved override
+zůstávají UNKNOWN bez vybraného column edge; graph/store schema zůstává v3.
+Spring Data repository generic selects its entity by exact compiler-qualified
+owner. Same-simple-name entities no longer share inherited attributes; an
+unresolved generic remains unbound rather than using a simple-name fallback.
+Explicit JPQL entity names and repository return types also resolve by compiler
+owner; simple source return names require an exact JVM method descriptor owner.
+Missing qualified types and generic type variables remain UNKNOWN rather than
+binding to an unrelated same-simple-name class.
+Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
+tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
 `kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.
@@ -499,6 +572,21 @@ perform the export; scan/feature/hook never launch Gradle.
 
 Offline methodology approval is bound to the exported page and approval sidecar hashes. `kgmaker feature prepare --requirement requirement.md --id routing` omits stale documentation conflicts with an explicit limitation; run `kgmaker docs check --confluence-dir export` before preparing a fresh packet. Already prepared packets become stale when that external documentation evidence changes. Duplicate decisions for one assertion are rejected without replacing the validation cache.
 
+Dependency dispatch používá bounded ordered classpath metadata index pro skutečné
+JARy/adresáře. Javac, K1/K2 call expressions a ASM virtual/interface sites zachovávají
+oddělený declared target a konzervativní kandidáty v artifact realms; nikdy tím
+nedokazují runtime execution ani data availability. Reference/static/private/final
+calls nejsou virtuálně rozšiřovány. Missing/corrupt/shadow/truncated hierarchy a
+unsupported multi-release candidate enumeration mají konkrétní důvod, `dispatch_complete=false`.
+Příklad: `kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`
+po explicitním build-importu; [matice a limity](docs/compiler-inspection.md#t003-s04-w04--ordered-dependency-dispatch).
+
+Source type-variable/intersection receivers zůstávají explicitně unsupported bez
+kandidátů; jejich declared target se zachová. Podporovaná candidate class musí
+splnit receiver i declared contract. Physical lookup odděluje source overlay,
+respektuje skutečné JDK parent-first a runtime-effective MR metadata; známý
+source/binary static ABI nebo repo/module/source_set/scope realm konflikt vrací
+PARTIAL bez vymyšleného targetu a zachovává source canonical.
 
 `inspect code` with an explicit execution-bound bytecode build now emits
 `maps_to_source` declaration evidence for exact Java/Kotlin declarations with
@@ -507,6 +595,49 @@ Kotlin 2.1.10 `DefaultImpls` with verified interface/receiver structure, and
 simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
+
+React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
+uses opt-in `react-jsx-events-4`: React18.3.1/@types/react18.3.18 with the pinned
+compiler declaration hash. Intrinsic event props and one verified source forwarding
+wrapper retain package/declaration provenance. Unknown versions, fake modules,
+mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
+static handler binding is not a click or data-availability proof. See change69.
+
+The React subset covers pinned standard onClick/onChange/onSubmit props, including
+input/select/textarea and form. Classic official factory aliases and default
+automatic runtimes are supported; explicit legacy namespace/fragment/import-source
+controls and per-file JSX overrides remain UNKNOWN.
+
+Coroutine source inspection preserves compiler-proven suspend and recognized
+coroutines API boundaries, with bounded named continuation declaration mapping.
+Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
+remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
+
+The [hand-labelled JVM corpus](tests/fixtures/jvm-golden/README.md) compares exact
+compiler source-call identities, counts and unsupported boundaries for the pinned
+K1/K2 support matrices. Run `python -m pytest -q tests/test_jvm_golden_corpus.py`
+after preparing compiler prerequisites. Passing this corpus is bounded static
+evidence, not runtime dispatch or production-project precision.
+T015 adds a pure database-resource view through
+`kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
+Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
+repository/database/stream identities remain separate from table drill-down IDs.
+Only existing selected-context query facts contribute read/write/delete claims;
+entity mappings and migrations contribute dependencies. Flyway is
+`MIGRATION_DERIVED`, with deployment and populated-data availability `UNKNOWN`.
+Missing datasource mappings remain unresolved; no database connection or new CLI
+command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
+
+## Explicit business-process documents
+
+`kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
+explicit process documents using the shared view/evidence model. Stable IDs,
+branches, loops, exceptions and async boundaries survive round-trip; strict
+semantic labels remain separate from technical evidence and status. See
+[the Python API and example](docs/process-model.md) and
+[the explicit fixture](fixtures/process-model/checkout.json).
+This supplies T023's model only; process discovery, annotation review, process
+CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
 
 Spring condition rules v6 preserve typed compiler annotation members. Supported
 profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
@@ -517,3 +648,25 @@ are never executed. Profile results also govern injection, so `!dev` is not
 incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
+
+### Proven trigger inventory (T024)
+
+`kgmaker.process_triggers.discover_process_triggers(workspace, graph,
+source_coverage=coverage)` returns a shared process-kind trigger inventory from
+existing proved HTTP/Kafka/scheduler facts. Missing CFG retains a candidate with
+an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
+process paths, business identities, worker execution or runtime availability are
+inferred. See [API and boundaries](docs/process-triggers.md).
+
+HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
+integrations --format json` includes `http.requests`; process JSON/Markdown shows
+request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
+3.7.2 Java calls are compiler-attributed in both workers. An unused WebClient
+publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
+static trigger, never observed network execution or available response data.
+See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).
+
+HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/method
+path components without guessing a composed route, and rejects URI-callback route
+guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
+starts a worker. See the HTTP matrix for property-file and privacy boundaries.
