@@ -180,3 +180,12 @@ scanner ID po dřívější extrakci shared fixtures; nejde o změnu acceptance.
 Main176 immutable episodes zůstává přesným prefixem, child captures beze změny.
 Nezávislé finální base/head review a guarded merge nyní vlastní root; hotový
 W05 bounded corpus neprohlašuje dokončení celé JVM/T003/T004 acceptance matice.
+
+Finální base byla doplněna na main
+`c98ae1ea85934674eac743d60489b37b322f8fc9` s čistým T024 trigger inventory.
+Žádný vlastní JVM ani Python runtime diff proti main nevzniká a deset corpus
+souborů zůstává nezměněných. T024/T023/CFG pure integrace je **115 PASS,
+4 actual/pinned deselected v1.41s**, bez skips (`t024-parent-pure.log/xml`).
+Worker i actual corpus32 receipts zůstávají platné při přesné shodě vstupů;
+žádný další build, actual run nebo celý pytest se neopakoval. Main177 epizod je
+nezměněný prefix; finální PR se retargetuje přímo na main, připravený pro root review.
