@@ -2,7 +2,7 @@
 
 T003-S06-W04, kroky1–5, AC01–AC04; baseline355e98fe2ab62fadbf4869eb4485cd3562173068.
 Závislosti W01/W02/W03 jsou merged, S03W05 content-bound cross-repo kontrakty
-byly znovu ověřeny18PASS. Toto je rozpracovaný bounded subset, nikoli dokončení S06.
+byly znovu ověřeny18PASS. Toto je lokálně ověřený bounded subset, nikoli dokončení S06.
 
 ## Problém a změna
 
@@ -175,3 +175,27 @@ DB, provider naming/runtime compatibility a širší XML query-access projection
 bez dostatečné existující ownership evidence nadále zůstávají UNKNOWN.
 Jeden repository-wide frozen full nyní čeká na finální root source closure;
 předchozí partial runs nejsou vydávány za celý PASS.
+
+
+## Finální strict full a doložená hranice
+
+Jediný strict repository-wide full nadb75370da939a7f65d6e42f459029af37fc72dca1
+prošel **1348 PASS, 10 SKIP v1583.75s**, exit0. XML1358 tests/0failures/0errors;
+`/workspace/s06-w04-full-status.json` potvrzuje shodné pre/postHEAD a všech623
+tracked/runtime input SHA, unchanged=true,mismatches=[]. Příkaz měl
+KGMAKER_REQUIRE_WORKERS=1, KGMAKER_REQUIRE_K2=1,
+KGMAKER_REQUIRE_SPRING_IMPORTS=1 a KGMAKER_REQUIRE_HTTP_PROVIDERS=1,
+JDK21.0.6+7/Kotlin2.1.10, vlastní resources/M2 a shared flock; pytest
+-q -rs --maxfail=1 --tb=short, persistent basetemp/log/XML pod/workspace.
+Deset skutečných skips jsou explicitní Maven/trusted-exporter/multiple-JDK nebo
+Gradle8.13/Kotlin2.2.20 cache gates a non-admin Windows smoke. Vlastní actual
+realm/PU/K1/K2 případy nebyly přeskočeny. Historické partial/error/counts výše
+se zachovávají pravdivě a nejsou zaměňovány za tento finální full.
+
+Podporovaný physical binding subset jsou non-renamed replay tables/columns.
+Replay rename zachovává creation ID; současný přísný current-name/ID guard pak
+vrací UNKNOWN, nikoli unsafe positive. S06-W08 řeší samostatně creation-identity
+metadata a parser/cache version bez previous-name/display fallbacku. Tento PR
+neprokazuje širší schema lifecycle ani celé S06/T003/T004.
+Finální semantic/memory/scan a samostatný PR následují; runtime/test source se
+po full nemění kvůli těmto dokumentačním výsledkům.
