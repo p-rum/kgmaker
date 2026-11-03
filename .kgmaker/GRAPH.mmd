@@ -36,30 +36,31 @@ flowchart LR
   n34["src/kgmaker/inspection_cli.py"]
   n35["src/kgmaker/interfaces.py"]
   n36["src/kgmaker/kafka_bindings.py"]
-  n37["src/kgmaker/memory.py"]
-  n38["src/kgmaker/model.py"]
-  n39["src/kgmaker/process_model.py"]
-  n40["src/kgmaker/process_paths.py"]
-  n41["src/kgmaker/process_triggers.py"]
-  n42["src/kgmaker/project_cli.py"]
-  n43["src/kgmaker/runtime_evidence.py"]
-  n44["src/kgmaker/scanner.py"]
-  n45["src/kgmaker/schema_replay.py"]
-  n46["src/kgmaker/semantic.py"]
-  n47["src/kgmaker/spring_beans.py"]
-  n48["src/kgmaker/spring_conditions.py"]
-  n49["src/kgmaker/spring_imports.py"]
-  n50["src/kgmaker/store.py"]
-  n51["src/kgmaker/templates.py"]
-  n52["src/kgmaker/typescript_snapshot.py"]
-  n53["src/kgmaker/views.py"]
-  n54["src/kgmaker/workbooks.py"]
-  n55["src/kgmaker/worker_protocol.py"]
-  n56["src/kgmaker/workflow.py"]
-  n57["src/kgmaker/workspace.py"]
-  n58["src/kgmaker/workspace_cli.py"]
-  n59{"technology: Kafka"}
-  n60{"technology: PostgreSQL"}
+  n37["src/kgmaker/local_operations.py"]
+  n38["src/kgmaker/memory.py"]
+  n39["src/kgmaker/model.py"]
+  n40["src/kgmaker/process_model.py"]
+  n41["src/kgmaker/process_paths.py"]
+  n42["src/kgmaker/process_triggers.py"]
+  n43["src/kgmaker/project_cli.py"]
+  n44["src/kgmaker/runtime_evidence.py"]
+  n45["src/kgmaker/scanner.py"]
+  n46["src/kgmaker/schema_replay.py"]
+  n47["src/kgmaker/semantic.py"]
+  n48["src/kgmaker/spring_beans.py"]
+  n49["src/kgmaker/spring_conditions.py"]
+  n50["src/kgmaker/spring_imports.py"]
+  n51["src/kgmaker/store.py"]
+  n52["src/kgmaker/templates.py"]
+  n53["src/kgmaker/typescript_snapshot.py"]
+  n54["src/kgmaker/views.py"]
+  n55["src/kgmaker/workbooks.py"]
+  n56["src/kgmaker/worker_protocol.py"]
+  n57["src/kgmaker/workflow.py"]
+  n58["src/kgmaker/workspace.py"]
+  n59["src/kgmaker/workspace_cli.py"]
+  n60{"technology: Kafka"}
+  n61{"technology: PostgreSQL"}
   n0 -->|imports| n15
   n4 -->|imports| n2
   n6 -->|imports| n26
@@ -67,10 +68,10 @@ flowchart LR
   n7 -->|imports| n9
   n7 -->|imports| n24
   n7 -->|imports| n26
-  n7 -->|imports| n44
-  n7 -->|imports| n46
-  n7 -->|imports| n54
-  n7 -->|imports| n57
+  n7 -->|imports| n45
+  n7 -->|imports| n47
+  n7 -->|imports| n55
+  n7 -->|imports| n58
   n9 -->|imports| n5
   n9 -->|imports| n24
   n9 -->|imports| n26
@@ -79,12 +80,12 @@ flowchart LR
   n11 -->|imports| n12
   n11 -->|imports| n14
   n11 -->|imports| n33
-  n11 -->|imports| n45
+  n11 -->|imports| n46
   n12 -->|imports| n5
   n12 -->|imports| n33
   n13 -->|imports| n5
-  n13 -->|imports| n38
-  n13 -->|imports| n53
+  n13 -->|imports| n39
+  n13 -->|imports| n54
   n14 -->|imports| n5
   n15 -->|imports| n2
   n15 -->|imports| n3
@@ -95,44 +96,44 @@ flowchart LR
   n15 -->|imports| n21
   n15 -->|imports| n26
   n15 -->|imports| n34
-  n15 -->|imports| n37
   n15 -->|imports| n38
-  n15 -->|imports| n42
-  n15 -->|imports| n44
-  n15 -->|imports| n46
-  n15 -->|imports| n50
-  n15 -->|imports| n53
-  n15 -->|imports| n56
-  n15 -->|imports| n58
+  n15 -->|imports| n39
+  n15 -->|imports| n43
+  n15 -->|imports| n45
+  n15 -->|imports| n47
+  n15 -->|imports| n51
+  n15 -->|imports| n54
+  n15 -->|imports| n57
+  n15 -->|imports| n59
   n16 -->|imports| n5
-  n16 -->|imports| n38
+  n16 -->|imports| n39
   n17 -->|imports| n5
   n18 -->|imports| n5
-  n19 -->|imports| n37
   n19 -->|imports| n38
-  n19 -->|imports| n44
-  n19 -->|imports| n46
-  n19 -->|imports| n50
-  n19 -->|imports| n56
+  n19 -->|imports| n39
+  n19 -->|imports| n45
+  n19 -->|imports| n47
+  n19 -->|imports| n51
+  n19 -->|imports| n57
   n20 -->|imports| n5
   n21 -->|imports| n2
   n22 -->|imports| n5
   n22 -->|imports| n6
   n22 -->|imports| n9
   n22 -->|imports| n24
-  n22 -->|imports| n50
-  n22 -->|imports| n57
+  n22 -->|imports| n51
+  n22 -->|imports| n58
   n23 -->|imports| n5
   n23 -->|imports| n8
-  n23 -->|imports| n38
-  n23 -->|imports| n45
-  n23 -->|imports| n53
-  n23 -->|imports| n57
-  n24 -->|imports| n38
+  n23 -->|imports| n39
+  n23 -->|imports| n46
+  n23 -->|imports| n54
+  n23 -->|imports| n58
+  n24 -->|imports| n39
   n25 -->|imports| n32
-  n25 -->|imports| n38
-  n25 -->|uses_messaging| n59
-  n25 -->|connects_to| n60
+  n25 -->|imports| n39
+  n25 -->|uses_messaging| n60
+  n25 -->|connects_to| n61
   n26 -->|imports| n5
   n26 -->|imports| n7
   n26 -->|imports| n9
@@ -140,50 +141,51 @@ flowchart LR
   n26 -->|imports| n24
   n26 -->|imports| n29
   n26 -->|imports| n31
-  n26 -->|imports| n38
-  n26 -->|imports| n44
+  n26 -->|imports| n39
   n26 -->|imports| n45
   n26 -->|imports| n46
-  n26 -->|imports| n51
-  n26 -->|imports| n53
+  n26 -->|imports| n47
+  n26 -->|imports| n52
   n26 -->|imports| n54
-  n26 -->|imports| n57
+  n26 -->|imports| n55
+  n26 -->|imports| n58
   n27 -->|imports| n5
   n27 -->|imports| n6
   n27 -->|imports| n7
   n27 -->|imports| n9
   n27 -->|imports| n22
   n27 -->|imports| n24
-  n27 -->|imports| n44
-  n27 -->|imports| n46
-  n27 -->|imports| n53
+  n27 -->|imports| n45
+  n27 -->|imports| n47
+  n27 -->|imports| n54
   n28 -->|imports| n5
   n28 -->|imports| n13
   n28 -->|imports| n24
-  n28 -->|imports| n53
+  n28 -->|imports| n54
   n29 -->|imports| n5
   n30 -->|imports| n5
-  n30 -->|imports| n38
-  n30 -->|imports| n45
-  n30 -->|imports| n47
+  n30 -->|imports| n39
+  n30 -->|imports| n46
   n30 -->|imports| n48
   n30 -->|imports| n49
-  n30 -->|uses_messaging| n59
+  n30 -->|imports| n50
+  n30 -->|uses_messaging| n60
   n31 -->|imports| n5
   n31 -->|imports| n11
   n31 -->|imports| n14
   n31 -->|imports| n30
   n31 -->|imports| n32
   n31 -->|imports| n33
-  n31 -->|imports| n38
-  n31 -->|imports| n44
+  n31 -->|imports| n37
+  n31 -->|imports| n39
   n31 -->|imports| n45
-  n31 -->|imports| n48
-  n31 -->|imports| n50
-  n31 -->|imports| n52
-  n31 -->|imports| n55
+  n31 -->|imports| n46
+  n31 -->|imports| n49
+  n31 -->|imports| n51
+  n31 -->|imports| n53
+  n31 -->|imports| n56
   n32 -->|imports| n5
-  n32 -->|imports| n38
+  n32 -->|imports| n39
   n33 -->|imports| n5
   n33 -->|imports| n14
   n33 -->|imports| n20
@@ -191,120 +193,126 @@ flowchart LR
   n33 -->|imports| n30
   n33 -->|imports| n31
   n33 -->|imports| n32
-  n33 -->|imports| n38
-  n33 -->|imports| n44
+  n33 -->|imports| n37
+  n33 -->|imports| n39
   n33 -->|imports| n45
-  n33 -->|imports| n48
-  n33 -->|imports| n50
-  n33 -->|imports| n52
-  n33 -->|imports| n55
+  n33 -->|imports| n46
+  n33 -->|imports| n49
+  n33 -->|imports| n51
+  n33 -->|imports| n53
+  n33 -->|imports| n56
   n34 -->|imports| n5
   n34 -->|imports| n11
   n34 -->|imports| n24
   n34 -->|imports| n31
   n34 -->|imports| n33
-  n34 -->|imports| n43
-  n34 -->|imports| n50
-  n34 -->|imports| n53
-  n34 -->|imports| n55
-  n34 -->|uses_messaging| n59
+  n34 -->|imports| n44
+  n34 -->|imports| n51
+  n34 -->|imports| n54
+  n34 -->|imports| n56
+  n34 -->|uses_messaging| n60
   n35 -->|imports| n5
   n35 -->|imports| n8
   n35 -->|imports| n25
   n35 -->|imports| n30
   n35 -->|imports| n32
-  n35 -->|imports| n38
-  n35 -->|imports| n53
-  n35 -->|imports| n57
+  n35 -->|imports| n39
+  n35 -->|imports| n54
+  n35 -->|imports| n58
   n36 -->|imports| n5
   n36 -->|imports| n14
   n36 -->|imports| n31
   n36 -->|imports| n33
-  n36 -->|imports| n38
-  n36 -->|imports| n44
-  n36 -->|imports| n48
-  n36 -->|imports| n55
-  n36 -->|imports| n57
-  n37 -->|imports| n38
-  n38 -->|imports| n14
-  n39 -->|imports| n8
-  n40 -->|imports| n5
+  n36 -->|imports| n39
+  n36 -->|imports| n45
+  n36 -->|imports| n49
+  n36 -->|imports| n56
+  n36 -->|imports| n58
+  n37 -->|imports| n5
+  n37 -->|imports| n41
+  n37 -->|imports| n42
+  n37 -->|imports| n58
+  n38 -->|imports| n39
+  n39 -->|imports| n14
   n40 -->|imports| n8
-  n40 -->|imports| n20
-  n40 -->|imports| n28
-  n40 -->|imports| n38
-  n40 -->|imports| n39
-  n40 -->|imports| n41
-  n40 -->|imports| n53
-  n40 -->|imports| n57
   n41 -->|imports| n5
   n41 -->|imports| n8
   n41 -->|imports| n20
-  n41 -->|imports| n53
-  n41 -->|imports| n57
-  n41 -->|uses_messaging| n59
+  n41 -->|imports| n28
+  n41 -->|imports| n37
+  n41 -->|imports| n39
+  n41 -->|imports| n40
+  n41 -->|imports| n42
+  n41 -->|imports| n54
+  n41 -->|imports| n58
   n42 -->|imports| n5
-  n42 -->|imports| n10
-  n42 -->|imports| n11
-  n42 -->|imports| n12
-  n42 -->|imports| n14
-  n42 -->|imports| n34
-  n42 -->|imports| n44
-  n42 -->|imports| n50
-  n42 -->|imports| n53
-  n42 -->|imports| n57
+  n42 -->|imports| n8
+  n42 -->|imports| n20
+  n42 -->|imports| n54
+  n42 -->|imports| n58
+  n42 -->|uses_messaging| n60
   n43 -->|imports| n5
-  n43 -->|imports| n38
-  n43 -->|imports| n50
+  n43 -->|imports| n10
+  n43 -->|imports| n11
+  n43 -->|imports| n12
+  n43 -->|imports| n14
+  n43 -->|imports| n34
+  n43 -->|imports| n45
+  n43 -->|imports| n51
+  n43 -->|imports| n54
+  n43 -->|imports| n58
   n44 -->|imports| n5
-  n44 -->|imports| n14
-  n44 -->|imports| n24
-  n44 -->|imports| n25
-  n44 -->|imports| n32
-  n44 -->|imports| n38
+  n44 -->|imports| n39
+  n44 -->|imports| n51
   n45 -->|imports| n5
-  n45 -->|imports| n29
-  n45 -->|imports| n38
-  n46 -->|imports| n37
-  n46 -->|imports| n38
-  n47 -->|imports| n5
-  n49 -->|imports| n5
-  n49 -->|imports| n47
+  n45 -->|imports| n14
+  n45 -->|imports| n24
+  n45 -->|imports| n25
+  n45 -->|imports| n32
+  n45 -->|imports| n39
+  n46 -->|imports| n5
+  n46 -->|imports| n29
+  n46 -->|imports| n39
+  n47 -->|imports| n38
+  n47 -->|imports| n39
+  n48 -->|imports| n5
   n50 -->|imports| n5
-  n50 -->|imports| n38
-  n50 -->|imports| n53
+  n50 -->|imports| n48
   n51 -->|imports| n5
-  n51 -->|imports| n38
+  n51 -->|imports| n39
+  n51 -->|imports| n54
   n52 -->|imports| n5
-  n52 -->|imports| n55
+  n52 -->|imports| n39
   n53 -->|imports| n5
-  n53 -->|imports| n8
-  n53 -->|imports| n11
-  n53 -->|imports| n31
-  n53 -->|imports| n33
-  n53 -->|imports| n38
-  n53 -->|imports| n57
+  n53 -->|imports| n56
   n54 -->|imports| n5
-  n54 -->|imports| n14
-  n54 -->|imports| n38
-  n55 -->|imports| n1
+  n54 -->|imports| n8
+  n54 -->|imports| n11
+  n54 -->|imports| n31
+  n54 -->|imports| n33
+  n54 -->|imports| n39
+  n54 -->|imports| n58
   n55 -->|imports| n5
-  n56 -->|imports| n37
-  n57 -->|imports| n5
-  n57 -->|imports| n11
-  n57 -->|imports| n14
-  n57 -->|imports| n25
-  n57 -->|imports| n29
-  n57 -->|imports| n30
-  n57 -->|imports| n31
-  n57 -->|imports| n36
+  n55 -->|imports| n14
+  n55 -->|imports| n39
+  n56 -->|imports| n1
+  n56 -->|imports| n5
   n57 -->|imports| n38
-  n57 -->|imports| n45
-  n57 -->|imports| n50
-  n57 -->|imports| n55
   n58 -->|imports| n5
-  n58 -->|imports| n24
-  n58 -->|imports| n45
-  n58 -->|imports| n50
-  n58 -->|imports| n53
-  n58 -->|imports| n57
+  n58 -->|imports| n11
+  n58 -->|imports| n14
+  n58 -->|imports| n25
+  n58 -->|imports| n29
+  n58 -->|imports| n30
+  n58 -->|imports| n31
+  n58 -->|imports| n36
+  n58 -->|imports| n39
+  n58 -->|imports| n46
+  n58 -->|imports| n51
+  n58 -->|imports| n56
+  n59 -->|imports| n5
+  n59 -->|imports| n24
+  n59 -->|imports| n46
+  n59 -->|imports| n51
+  n59 -->|imports| n54
+  n59 -->|imports| n58

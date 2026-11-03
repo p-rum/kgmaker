@@ -717,3 +717,18 @@ Current implementation/focus status is in [change76](changes/76_catalogHttpConsu
 strict full at b1163fc passed1373 tests (10 optional skips); current9f6605 parent
 focus passed205 tests without skips. Final current-pair independent review is pending. Coverage remains PARTIAL,
 remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).
+
+## T025 revision2 — local operation proof prerequisite (in progress)
+
+Separate candidate over merged T025 c695/main ef3 adds a bounded Javac typed
+literal/local-assignment witness, exact IR/CFG/source/context proof binding and
+independent operation resolution. CFG ordering and transitions remain syntax /
+UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data claim.
+Architecture independently reviewed; initial actual RED,11 protocol tests and120
+legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
+failed on declaration origin, then proof-retention bugs were corrected. Current
+Corrected actual integration341PASS/0SKIP on a617. Descendant cff803c superset
+full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
+parent runtime/distributions and unchanged input closure. This is descendant
+evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
+Independent final review/merge remain separate. T026 remains separate.

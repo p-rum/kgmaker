@@ -84,3 +84,42 @@ process claim. Current supplied SOURCE CFG must match the imported builder VERSI
 unsupported body stays opaque until provider reinspection. No schema/store
 migration is required. T026+ grouping, cross-service
 projection, business labels, catalog, CLI and rendering remain separate tasks.
+
+## Compiler-bound local operations
+
+T025 revision2 (`local-process-path-2-operations`) introduces a separate optional
+`java-local-operations-1` proof for named Java methods without source-file compiler
+errors. Supported operations are literal evaluation and assignment of a literal
+to a compiler-attributed LOCAL_VARIABLE with a primitive or canonical
+java.lang.String type. Field/parameter/boxed/array/call/cast/arithmetic assignments,
+Kotlin/bytecode/initializer/lambda and legacy bodies are not certified. Literal
+evaluation inside an otherwise unsupported assignment does not certify the
+assignment itself. No method body or application is executed by this projection.
+
+The producer retains existing Arg and HTTP IR. The materializer validates the
+selected source/caller/context/hash, typed IR path and escaped canonical JSON
+IR/body digest, then binds each occurrence to its precise CFG block. Finally
+clones receive distinct proof IDs. Graph schema3 remains unchanged; optional
+worker/body versions absent in old inputs yield no operation proof.
+
+A certified operation node carries only its admitted SYMBOL_RESOLVED operation
+proof as resolution evidence. Its original CFG refs remain in
+`attributes.cfg_evidence_refs`; transitions include these original syntax refs
+and remain UNRESOLVED. Entry/exit, call and boundary nodes are not upgraded.
+Workspace wrapping qualifies the new references without rewriting their original
+content hash. Missing, stale, foreign, borrowed or tampered operation evidence
+cannot authorize a resolved node or mutate the last valid store.
+
+Existing read-only usage is unchanged:
+
+```bash
+kgmaker inspect code --root /repo --kotlin-backend k1 --kotlin-version 2.1.10
+kgmaker flow render --root /repo --entry METHOD_ID --view process --format json
+```
+
+The T025 ProcessView adapter consumes the existing selected trigger inventory and
+provider graph; no new implicit inspection or CLI apply path is added. This is an
+upstream prerequisite for T026, whose business-step grouping remains a separate
+task. Corrected actual focus passed341 tests. A descendant superset full passed1566
+tests (10 explicit skips), including all1471 passing parent cases; change79
+records exact source hashes, pre/post closure and remaining limitations.
