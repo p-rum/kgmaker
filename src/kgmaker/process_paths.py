@@ -301,6 +301,7 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
             summary=_summarize_view_evidence(refs,provenance);kind=e['kind'] if e['kind'] in TRANSITION_KINDS else 'unknown'
             attributes={'scope':inventory.scope,'context_ids':[context['id']], 'loop_back':e.get('loop_back',False)}
             if call_site is not None:attributes['call_site']=call_site
+            if e.get('caller_block') is not None:attributes['caller_block']=e['caller_block']
             if kind in ('branch','true','false','case'):attributes['condition']=str(e.get('condition') or kind)
             technical_edges.append(ViewEdge('process-edge:'+digest(e),e['source'],e['target'],kind,
                 original_ids=tuple(sorted(set(e.get('original_ids') or [digest(e)])|({call_site} if call_site else set()))),evidence_refs=refs,attributes=attributes,

@@ -225,6 +225,11 @@ import org.springframework.web.bind.annotation.GetMapping;
  private static String right() { return "right"; }
  private static String nested() { return "nested"; }
  @GetMapping("/recursive") public String recursive() { return recursive(); }
+ @GetMapping("/finally") public String withFinally(boolean flag) {
+  try { if(flag) return left(); throw new IllegalStateException(); }
+  finally { cleanup(); }
+ }
+ private static void cleanup() {}
  @GetMapping("/twice") public String twice() { left(); return left(); }
  @GetMapping("/virtual") public String virtualEntry() { return virtualChild(); }
  public String virtualChild() { return "virtual"; }
@@ -239,6 +244,10 @@ import org.springframework.web.bind.annotation.GetMapping
    return right()
  }
  @GetMapping("/recursive") fun recursive(): String { return recursive() }
+ @GetMapping("/finally") fun withFinally(flag: Boolean): String {
+  try { if(flag) return left(); throw IllegalStateException() }
+  finally { cleanup() }
+ }
  @GetMapping("/twice") fun twice(): String { left(); return left() }
  @GetMapping("/virtual") fun virtualEntry(): String { return virtualChild() }
  fun virtualChild(): String { return "virtual" }
@@ -246,6 +255,7 @@ import org.springframework.web.bind.annotation.GetMapping
 private fun left(): String { return nested() }
 private fun right(): String { return "right" }
 private fun nested(): String { return "nested" }
+private fun cleanup() {}
 ''')
     manifest=tmp_path/'workspace.json'
     write_json(manifest,{'schema_version':1,'workspace_id':'real','repositories':[{'id':'backend','role':'backend','path':'backend'}],
@@ -296,6 +306,17 @@ private fun nested(): String { return "nested" }
         for edge in transitions:
             assert site['id'] in edge.original_ids
             assert originals<={proof_index[ref].get('original_id') for ref in edge.evidence_refs}
+    final=next(n for n in inv.nodes if method_names[n.attributes['entry_symbol_id']]=='withFinally')
+    cfg=next(cfg for cfg in graph.cfgs if cfg['method']==final.attributes['entry_symbol_id'])
+    cleanup=next(site for site in graph.call_sites if site['caller']==final.attributes['entry_symbol_id']
+        and method_names.get(site.get('declared_target'))=='cleanup')
+    final_before=deepcopy(graph.to_dict())
+    final_result=build_local_process(graph,inv,final.id,process_id='process:finally-real')
+    assert_finally_clone_topology(final_result,cfg,cleanup['id'])
+    assert len({edge.id for edge in final_result.transitions})==len(final_result.transitions)
+    bounded_final=build_local_process(graph,inv,final.id,process_id='process:finally-bounded',max_nodes=4)
+    assert len(bounded_final.steps)<=4 and bounded_final.technical_view.coverage['truncated']
+    assert graph.to_dict()==final_before
     # Actual captured sites have no independent receiver/complete-dispatch
     # metadata mirror. A changed site-table flag cannot turn this virtual call
     # into a proved unique body expansion.
@@ -387,3 +408,36 @@ def test_same_callee_two_calls_keep_each_original_site_on_call_return_and_except
         calls=[e for e in transitions if e.relation=='call'];returns=[e for e in transitions if e.relation=='returns_to']
         assert len(calls)==1 and returns
         assert all(paths(roundtrip.transitions,calls[0].target,e.source) for e in returns)
+
+
+def assert_finally_clone_topology(result,cfg,site_id):
+    view=ProcessView.from_dict(result.to_dict());nodes={n.id:n for n in view.steps}
+    originals={b['id'] for b in cfg['blocks'] if site_id in b.get('call_site_ids',[])}
+    assert len(originals)>=2
+    calls=[e for e in view.transitions if e.relation=='call' and e.attributes.get('call_site')==site_id]
+    assert len(calls)==len(originals) and len({e.target for e in calls})==len(calls)
+    assert {e.attributes['caller_block'] for e in calls}==originals
+    for call_edge in calls:
+        origin=call_edge.attributes['caller_block']
+        assert origin in call_edge.original_ids
+        for relation,original_kind in [('returns_to','normal'),('exception','exception')]:
+            expected={e['target'] for e in cfg['edges'] if e['source']==origin and e['kind']==original_kind}
+            edges=[e for e in view.transitions if e.relation==relation and e.attributes.get('caller_block')==origin]
+            assert edges and all(set(nodes[e.target].original_ids)&expected for e in edges)
+            assert all(e.attributes.get('call_site')==site_id and origin in e.original_ids for e in edges)
+
+
+def test_finally_return_throw_clones_do_not_share_callee_continuations(tmp_path):
+    w,g,c,m,s=setup(tmp_path);child=helper(g,s,'cleanup')
+    add_cfg(g,child['id'],child,ir(child,'statement',label='cleanup-body'))
+    cleanup=call(g,s,child,'cleanup')
+    body=ir(s,'try',body=ir(s,'if',condition=ir(s,'statement',label='flag'),
+        then=ir(s,'return',value=ir(s,'statement',label='returned')),
+        **{'else':ir(s,'throw',value=ir(s,'statement',label='thrown'))}),catches=[],**{'finally':cleanup})
+    cfg=add_cfg(g,m,s,body);inv,t=inventory(w,g,c,m);before=deepcopy((g.to_dict(),inv.to_dict()))
+    result=build_local_process(g,inv,t,process_id='process:finally')
+    assert_finally_clone_topology(result,cfg,g.call_sites[-1]['id'])
+    for limit in (1,2,len(cfg['blocks'])+3):
+        bounded=build_local_process(g,inv,t,process_id='process:finally-limit',max_nodes=limit)
+        assert len(bounded.steps)<=limit and bounded.technical_status=='PARTIAL'
+    assert (g.to_dict(),inv.to_dict())==before

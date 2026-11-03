@@ -127,16 +127,23 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
                 blocks[source_id]["boundary_reason"] = reason
                 omitted.append({"call_site": site["id"], "target": target, "reason": reason})
                 continue
-            child_entry, child_exit, child_exception = expand(target, depth + 1, ancestry + (target,), prefix + (site["id"],))
+            # A single lexical call-site can have several structural CFG clones
+            # (for example finally continuations for return and throw). Keep
+            # those caller contexts separate without changing the original site.
+            child_entry, child_exit, child_exception = expand(
+                target, depth + 1, ancestry + (target,), prefix + (site["id"], block["id"]))
             normal = [e for e in local_edges if e["source"] == source_id and e["kind"] == "normal"]
             exceptional = [e for e in local_edges if e["source"] == source_id and e["kind"] == "exception"]
             local_edges = [e for e in local_edges if e not in normal and e not in exceptional]
             local_edges.append({"source": source_id, "target": child_entry, "kind": "call",
-                                "call_site": site["id"], "original_ids": [site["id"]]})
+                                "call_site": site["id"], "caller_block": block["id"],
+                                "original_ids": [site["id"], block["id"]]})
             local_edges.extend({**e, "source": child_exit, "kind": "returns_to", "call_site": site["id"],
-                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"]]))} for e in normal)
+                                "caller_block": block["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"], block["id"]]))} for e in normal)
             local_edges.extend({**e, "source": child_exception, "kind": "exception", "call_site": site["id"],
-                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"]]))} for e in exceptional)
+                                "caller_block": block["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"], block["id"]]))} for e in exceptional)
         edges.extend(local_edges)
         return ids[cfg["entry"]], ids[cfg["exit"]], ids[cfg["exceptional_exit"]]
 

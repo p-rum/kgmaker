@@ -103,3 +103,32 @@ module + CFG focus: **50 PASS v14.36s**, bez skips, včetně actual Javac/K1 a
 obou nových regresních skupin. XML/log `review-corrected.xml`/`.log` v persistent
 `/workspace/validation/t025`. Předchozí45/41/25 výsledky jsou historické checkpoints.
 Full zatím nebyl spuštěn ani queued; vyžaduje nové root source closure.
+
+## Known-invalid full a oprava finally clone identity
+
+Další read-only public a genuine Javac fixture odhalily stejnou lexikální
+cleanup call-site ve třech strukturálních finally continuations (return/throw).
+Traversal prefix pouze podle site ID sdílel jediný callee subtree a vytvořil
+DUPLICATE_EDGE_ID v jinak validním ProcessView. Root výslovně autorizoval
+ukončení pouze tohoto nyní known-invalid full; nešlo o neúspěšný pytest test
+ani dokončený full PASS.
+
+SIGINT dostal jen vlastní pytest100647; jeho java worker108978 se vyčistil a
+celý známý subtree byl ověřen jako ukončený před source editací. Partial výsledek:
+**186 PASS,2 SKIP v367.54s**, exit2 KeyboardInterrupt; XML188tests/0errors/0failures/
+2skipped. Všech212 source/prerequisite hashů i HEAD39044a1 zůstalo shodných.
+Log/XML/status/manifest/start/preflight byly uchovány jako
+`/workspace/validation/t025/interrupted-finally-39044a1-*`; procesní audit
+`interrupted-finally-processes.json`. Žádný cizí proces/queue se nerušil.
+
+Localized fix rozlišuje callee clone pomocí původního site ID a strukturálního
+caller CFG block ID. Nezavádí nový CFG builder nebo novou source identitu;
+původní site/AST/method IDs se zachovávají, odvozené process clone IDs se opravují.
+Expanded call/return/exception edges navíc uchovají caller_block a origin reference.
+Public i actual Javac/K1 finally fixture ověřují samostatné callee entry IDs,
+exact normal/exception continuation, unikátní edge IDs, roundtrip a node limits.
+
+Nový RED měl1FAIL (valid finally input), corrected pureT023/CFG118PASS2actualdeselected
+v5.91s; vlastní module+CFG actual focus **51PASS v21.35s**, bez skips.
+`finally-red.log`, `finally-pure.xml`, `finally-corrected.xml` jsou persistent.
+Nový current-parent source checkpoint musí projít root closure před corrected full.

@@ -51,6 +51,9 @@ evidence kind and polarity. Static topology never means observed execution.
 The trigger-to-body association is explicitly UNKNOWN; the returned technical
 status is PARTIAL. Semantic annotations are empty and their review state remains
 PROPOSED. Original symbols, CFG block/edge origins and call-site IDs are retained.
+Finally continuations sharing one lexical call-site receive distinct structural
+callee clones; transition `caller_block` and original references preserve each
+normal/exception continuation without creating a cross-branch join.
 
 ## Supported scope and limits
 
