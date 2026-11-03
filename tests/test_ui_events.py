@@ -55,11 +55,11 @@ def test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence(ui_pro
     for proof in evidence:
         assert proof['kind'] == 'FRAMEWORK_DERIVED'
         adapter = proof['ui_adapter']
-        assert adapter['rule'] == 'react-jsx-events-3'
+        assert adapter['rule'] == 'react-jsx-events-4'
         assert adapter['react_version'] == '18.3.1' and adapter['types_version'] == '18.3.18'
         assert adapter['declaration_sha256'] == 'b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34'
         assert proof['execution'] == 'NOT_OBSERVED'
-    assert result['context']['framework_rule_versions']['react'] == 'react-jsx-events-3'
+    assert result['context']['framework_rule_versions']['react'] == 'react-jsx-events-4'
     assert result['context']['project']['ui_adapters']
 
 
@@ -315,7 +315,7 @@ def test_immutable_arrow_and_const_alias_handlers_remain_supported(ui_project):
     assert len([edge for edge in graph.edges if edge.kind == 'handles_event']) == 1
 
 
-@pytest.mark.parametrize('old_rule', ['react-jsx-events-1', 'react-jsx-events-2'])
+@pytest.mark.parametrize('old_rule', ['react-jsx-events-1', 'react-jsx-events-2', 'react-jsx-events-3'])
 def test_previous_rule_generation_is_stale_offline_without_store_mutation(ui_project, old_rule):
     from unittest.mock import patch
     from kgmaker.graph_provider import retain_compiler_layer
@@ -340,3 +340,117 @@ def test_explicit_factory_write_cannot_borrow_official_renderer(ui_project):
     assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
     assert handler_names(graph) == set()
     assert any(d.get('code') == 'UI_RENDERER_UNPROVEN' for d in graph.diagnostics)
+
+
+@pytest.mark.parametrize('shape', ['any', 'as', 'element'])
+def test_commonjs_imported_handler_and_wrapper_are_not_closed_bindings(ui_project, shape):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['module'] = 'commonjs'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/handlers.tsx').write_text("import React from 'react'; export function original(){} export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}")
+    aliases = {
+        'any': 'const alias:any=dep; alias.original=()=>{}; alias.Wrapper=()=>null;',
+        'as': 'const alias=dep as any; alias.original=()=>{}; alias.Wrapper=()=>null;',
+        'element': "const alias:any=dep; alias['original']=()=>{}; alias['Wrapper']=()=>null;",
+    }
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; import {original,Wrapper} from './handlers'; import * as dep from './handlers'; " + aliases[shape] + ' function swallowed(){} export function App(){return <><button onClick={original}/><Wrapper onClick={swallowed}/></>;}')
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+
+
+@pytest.mark.parametrize('escape', [
+    'const alias:any=React; alias.createElement=(...args:any[])=>null;',
+    'const alias=React as any; alias.createElement=(...args:any[])=>null;',
+    "const alias:any=React; alias['createElement']=(...args:any[])=>null;",
+    'const alias:any={React}; alias.React.createElement=(...args:any[])=>null;',
+    'const alias:any=[React]; alias[0].createElement=(...args:any[])=>null;',
+    'let alias:any; alias=React; alias.createElement=(...args:any[])=>null;',
+])
+def test_opaque_renderer_namespace_escape_is_unknown(ui_project, escape):
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; " + escape + ' function swallowed(){} export function App(){return <button onClick={swallowed}/>;}')
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+
+
+def test_explicit_esm_imports_keep_immutable_handler_and_wrapper_proof(ui_project):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['module'] = 'esnext'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/handlers.tsx').write_text("import React from 'react'; export function original(){} export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}")
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; import {original,Wrapper} from './handlers'; function forwarded(){} export function App(){return <><button onClick={original}/><Wrapper onClick={forwarded}/></>;} ")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == {'original', 'forwarded'}
+
+
+def test_esm_reexport_chain_is_not_a_direct_import_binding(ui_project):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['module'] = 'esnext'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/handlers.tsx').write_text("import React from 'react'; export function original(){} export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}")
+    (ui_project / 'src/bridge.tsx').write_text("export {original,Wrapper} from './handlers';")
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; import {original,Wrapper} from './bridge'; function forwarded(){} export function App(){return <><button onClick={original}/><Wrapper onClick={forwarded}/></>;} ")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+
+
+@pytest.mark.parametrize('owner_module,expected', [('commonjs', set()), ('esnext', {'original', 'forwarded'})])
+def test_import_binding_uses_declaration_owner_project_module(ui_project, owner_module, expected):
+    shutil.rmtree(ui_project / 'src')
+    for name, module in [('lib', owner_module), ('app', 'esnext')]:
+        directory = ui_project / name
+        (directory / 'src').mkdir(parents=True)
+        config = {'compilerOptions': {'jsx': 'react', 'strict': True, 'esModuleInterop': True,
+                  'target': 'ES2020', 'moduleResolution': 'node', 'skipLibCheck': True,
+                  'composite': True, 'declaration': True, 'module': module, 'rootDir': 'src', 'outDir': 'dist'},
+                  'include': ['src/**/*.tsx']}
+        if name == 'app':
+            config['references'] = [{'path': '../lib'}]
+        (directory / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'tsconfig.json').write_text(json.dumps({'files': [], 'references': [{'path': './app'}]}))
+    (ui_project / 'lib/src/handlers.tsx').write_text("import React from 'react'; export function original(){} export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}")
+    (ui_project / 'app/src/App.tsx').write_text("import React from 'react'; import {original,Wrapper} from '../../lib/src/handlers'; function forwarded(){} export function App(){return <><button onClick={original}/><Wrapper onClick={forwarded}/></>;} ")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == expected
+    assert all(not (ui_project / project / 'dist').exists() for project in ('lib', 'app'))
+    assert not list(ui_project.rglob('*.tsbuildinfo'))
+
+
+def test_renderer_namespace_escape_also_invalidates_official_factory_alias(ui_project):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['jsxFactory'] = 'h'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/App.tsx').write_text("import React,{createElement as h} from 'react'; const alias:any=React; alias['createElement']=(...args:any[])=>null; function swallowed(){} export function App(){return <button onClick={swallowed}/>;}")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+
+
+def test_automatic_runtime_namespace_escape_is_unknown(ui_project):
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['jsx'] = 'react-jsx'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    (ui_project / 'src/App.tsx').write_text("import * as runtime from 'react/jsx-runtime'; const alias:any=runtime; alias.jsx=(...args:any[])=>null; alias.jsxs=(...args:any[])=>null; function swallowed(){} export function App(){return <button onClick={swallowed}/>;}")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert handler_names(graph) == set()
+
+
+def test_ui_binding_cannot_compose_excluded_test_handler_or_wrapper(ui_project):
+    (ui_project / '.kgmaker').mkdir()
+    (ui_project / '.kgmaker/classification.json').write_text(json.dumps({'schema_version': 1, 'overrides': [{'path': 'src/tests', 'scope': 'test', 'reason': 'Explicit excluded harness'}]}))
+    config = json.loads((ui_project / 'tsconfig.json').read_text())
+    config['compilerOptions']['module'] = 'esnext'
+    (ui_project / 'tsconfig.json').write_text(json.dumps(config))
+    directory = ui_project / 'src/tests'
+    directory.mkdir()
+    (directory / 'handlers.tsx').write_text("import React from 'react'; export function original(){} export function Wrapper(props:React.ButtonHTMLAttributes<HTMLButtonElement>){return <button onClick={props.onClick}/>;}")
+    (ui_project / 'src/App.tsx').write_text("import React from 'react'; import {original,Wrapper} from './tests/handlers'; function forwarded(){} export function App(){return <><button onClick={original}/><Wrapper onClick={forwarded}/></>;} ")
+    _, graph = inspect(ui_project)
+    assert not [d for d in graph.diagnostics if str(d.get('code', '')).startswith('TS')]
+    assert any(node.name == 'original' and node.path == 'src/tests/handlers.tsx' and node.scope == 'test' for node in graph.nodes)
+    assert handler_names(graph) == set()

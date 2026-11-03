@@ -1,16 +1,20 @@
 'use strict';
 // Static, opt-in React18 adapter. No require/import of application or React JS.
 const path=require('node:path');
-const RULE='react-jsx-events-3';
-const checkerSources=new WeakMap(), checkerBindingErrors=new WeakMap();
+const RULE='react-jsx-events-4';
+const checkerSources=new WeakMap(), checkerBindingErrors=new WeakMap(),checkerModuleKinds=new WeakMap();
 const DECLARATION_SHA='b89c2ddec6bd955e8721d41e24ca667de06882338d88b183c2cdc1f41f4c5a34';
 const EVENT_INTERFACES=new Set(['DOMAttributes','InputHTMLAttributes','SelectHTMLAttributes','TextareaHTMLAttributes']);
 
 function adapters(ts,programs,discovery,hash,enabled) {
   const byFile=new Map(), snapshots=[];
   if(!enabled) return {byFile,snapshots};
+  const moduleKinds=new Map();
+  for(const {project} of programs)for(const file of project.parsed.fileNames)
+    moduleKinds.set(path.resolve(file),project.parsed.options.module);
   for(const {program} of programs) {
     const checker=program.getTypeChecker();
+    checkerModuleKinds.set(checker,moduleKinds);
     checkerSources.set(checker,program.getSourceFiles().filter(s=>!s.isDeclarationFile));
     checkerBindingErrors.set(checker,program.getSemanticDiagnostics().filter(d=>[2300,2451].includes(d.code)&&d.file&&typeof d.start==='number'));
   }
@@ -67,7 +71,7 @@ function adapters(ts,programs,discovery,hash,enabled) {
       types_version:typeof types?.data.version==='string'?types.data.version:null,
       react_package_sha256:runtime?.sha256||null,types_package_sha256:types?.sha256||null,
       declaration_sha256:declarationSha,renderer,runtime_declaration_sha256:runtimeSha};
-    snapshots.push(snapshot);byFile.set(path.resolve(file),{snapshot,declaration:supported?path.resolve(declaration):null,renderer});
+    snapshots.push(snapshot);byFile.set(path.resolve(file),{snapshot,declaration:supported?path.resolve(declaration):null,renderer,runtimeDeclaration});
   }
   snapshots.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return {byFile,snapshots};
@@ -78,8 +82,8 @@ function adapters(ts,programs,discovery,hash,enabled) {
 const bindingAudits=new WeakMap();
 function bindingAudit(ts,checker,source) {
   const cached=bindingAudits.get(checker);
-  if(cached)return {written:cached.written,dynamic:cached.dynamicFiles.has(path.resolve(source.fileName))};
-  const written=new Set(),dynamicFiles=new Set();
+  if(cached)return {written:cached.written,escaped:cached.escaped,dynamic:cached.dynamicFiles.has(path.resolve(source.fileName))};
+  const written=new Set(),escaped=new Set(),dynamicFiles=new Set();
   const key=d=>`${path.resolve(d.getSourceFile().fileName)}:${d.kind}:${d.pos}:${d.end}`;
   function symbol(at,shorthand=false) {
     let value=shorthand?checker.getShorthandAssignmentValueSymbol(at):checker.getSymbolAtLocation(at);
@@ -97,7 +101,22 @@ function bindingAudit(ts,checker,source) {
     if(ts.isParenthesizedExpression(node)||ts.isAsExpression(node)||ts.isTypeAssertionExpression(node)||ts.isNonNullExpression(node)||ts.isSatisfiesExpression(node))return target(node.expression);
     ts.forEachChild(node,target);
   }
+  function namespaceEscape(node) {
+    if(!ts.isIdentifier(node)&&!ts.isShorthandPropertyAssignment(node))return;
+    const declarations=symbol(node,ts.isShorthandPropertyAssignment(node))?.declarations||[];
+    const namespaces=declarations.filter(d=>ts.isModuleDeclaration(d)||ts.isSourceFile(d));
+    if(!namespaces.length)return;
+    // Type references and import declarations do not move a runtime value.
+    for(let parent=node.parent;parent;parent=parent.parent)
+      if(ts.isTypeNode(parent)||ts.isImportDeclaration(parent)||ts.isImportEqualsDeclaration(parent))return;
+    const parent=node.parent;
+    if((ts.isPropertyAccessExpression(parent)||ts.isElementAccessExpression(parent))&&parent.expression===node)return;
+    // Whole namespace values in aliases, casts, containers, returns or calls
+    // escape this bounded proof. Do not resolve subsequent heap writes.
+    for(const declaration of namespaces)escaped.add(key(declaration));
+  }
   function visit(node) {
+    namespaceEscape(node);
     if(ts.isBinaryExpression(node)&&node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)target(node.left);
     if((ts.isPrefixUnaryExpression(node)||ts.isPostfixUnaryExpression(node))&&[ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator))target(node.operand);
     if(ts.isForOfStatement(node)||ts.isForInStatement(node))target(node.initializer);
@@ -120,9 +139,33 @@ function bindingAudit(ts,checker,source) {
     ts.forEachChild(node,visit);
   }
   for(const file of checkerSources.get(checker)||[source])visit(file);
-  const result={written:{has:declaration=>written.has(key(declaration))},dynamicFiles};
+  const result={written:{has:declaration=>written.has(key(declaration))},
+    escaped:{inFile:file=>!!file&&[...escaped].some(value=>value.startsWith(path.resolve(file)+':'))},dynamicFiles};
   bindingAudits.set(checker,result);
-  return {written:result.written,dynamic:dynamicFiles.has(path.resolve(source.fileName))};
+  return {written:result.written,escaped:result.escaped,dynamic:dynamicFiles.has(path.resolve(source.fileName))};
+}
+function directEsmImport(ts,checker,expression,symbol,target) {
+  const kinds=checkerModuleKinds.get(checker),esm=new Set([ts.ModuleKind.ES2015,ts.ModuleKind.ES2020,ts.ModuleKind.ES2022,ts.ModuleKind.ESNext]);
+  if(!kinds||!esm.has(kinds.get(path.resolve(expression.getSourceFile().fileName))))return false;
+  const declarations=symbol.declarations||[];
+  if(declarations.length!==1)return false;
+  const binding=declarations[0];let clause,imported;
+  if(ts.isImportSpecifier(binding)) {
+    if(binding.isTypeOnly)return false;
+    clause=binding.parent.parent;imported=binding.propertyName?.text||binding.name.text;
+  } else if(ts.isImportClause(binding)) {clause=binding;imported='default';}
+  else return false;
+  const declaration=clause.parent;
+  if(clause.isTypeOnly||!ts.isImportDeclaration(declaration))return false;
+  const module=checker.getSymbolAtLocation(declaration.moduleSpecifier);
+  const files=(module?.declarations||[]).filter(ts.isSourceFile);
+  if(files.length!==1||files[0].isDeclarationFile||/\.c(?:ts|js)$/i.test(files[0].fileName)||
+      !esm.has(kinds.get(path.resolve(files[0].fileName)))||
+      !esm.has(kinds.get(path.resolve(target.getSourceFile().fileName))))return false;
+  // Direct compiler-selected exports only. Re-export chains and interop wrappers
+  // remain unknown rather than introducing a module/body resolver.
+  const exported=checker.getExportsOfModule(module).find(value=>value.name===imported);
+  return !!exported&&!(exported.flags&ts.SymbolFlags.Alias)&&exported.valueDeclaration===target;
 }
 function immutableBinding(ts,checker,expression,seen=new Set()) {
   if(!expression||seen.has(expression)||seen.size>=16)return false;
@@ -132,7 +175,11 @@ function immutableBinding(ts,checker,expression,seen=new Set()) {
   if(ts.isArrowFunction(expression)||ts.isFunctionExpression(expression))return !bindingAudit(ts,checker,expression.getSourceFile()).dynamic;
   if(!ts.isIdentifier(expression))return false; // Ordinary member callables are mutable, including aliases.
   let symbol=checker.getSymbolAtLocation(expression);
-  if(symbol?.flags&ts.SymbolFlags.Alias)symbol=checker.getAliasedSymbol(symbol);
+  if(symbol?.flags&ts.SymbolFlags.Alias) {
+    const target=checker.getAliasedSymbol(symbol);
+    if(!target?.valueDeclaration||!directEsmImport(ts,checker,expression,symbol,target.valueDeclaration))return false;
+    symbol=target;
+  }
   const declarations=symbol?.declarations||[];
   if(!declarations.length)return false;
   return declarations.every(declaration=>{
@@ -154,7 +201,7 @@ function event(ts,checker,node,adapter,allAdapters,symbolDeclaration,callbackPro
   function factoryProof(at,selected) {
     if(!selected?.declaration)return false;
     const audit=bindingAudit(ts,checker,at.getSourceFile());
-    if(audit.dynamic)return false;
+    if(audit.dynamic||audit.escaped.inFile(selected.declaration)||audit.escaped.inFile(selected.runtimeDeclaration))return false;
     if(selected.renderer?.kind==='automatic')return true;
     const parts=selected.renderer?.factory?.split('.');
     if(!parts)return false;

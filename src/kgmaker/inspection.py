@@ -21,7 +21,7 @@ from .store import save_graph
 from .worker_protocol import WorkerError, handshake, request_worker
 
 VERSION = "inspection-1"
-UI_RULE_VERSION = "react-jsx-events-3"
+UI_RULE_VERSION = "react-jsx-events-4"
 
 
 def artifact_hash(path: Path) -> str:
@@ -256,6 +256,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     evidence = {e["id"]: e for e in base.evidence}
     metadata = sanitize(response["symbols"])
     call_sites = sanitize(response["call_sites"])
+    ui_diagnostics = []
     context_id = selected_context["id"]
 
     def proof(fact: dict, kind: str, *, source: str, target: str, relation: str) -> str:
@@ -326,6 +327,21 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                                    scope=caller.scope, role="unknown", origin="unknown")
             relation(site["id"], boundary, "unresolved_boundary", site, "UNRESOLVED")
     for fact in sanitize(response["facts"]):
+        if fact.get("kind") == "handles_event" and selected_context.get("ui_framework") == "react":
+            adapter = fact.get("ui_adapter")
+            wrapper = adapter.get("wrapper") if isinstance(adapter, dict) else None
+            selected_scope = selected_context["scope"]
+            valid = (isinstance(adapter, dict) and adapter.get("rule") == UI_RULE_VERSION
+                     and nodes[fact["source"]].scope == selected_scope
+                     and nodes[fact["target"]].scope == selected_scope)
+            if wrapper is not None:
+                valid = (valid and isinstance(wrapper, dict) and isinstance(wrapper.get("path"), str)
+                         and classifier.classify(wrapper["path"]).scope == selected_scope)
+            if not valid:
+                ui_diagnostics.append({"code": "UI_CONTEXT_SCOPE_UNPROVEN", "path": fact.get("path"),
+                    "source": fact["source"], "target": fact["target"], "context_id": context_id,
+                    "reason": "UI handler and wrapper proof must belong to the selected classified scope and rule."})
+                continue
         relation(fact["source"], fact["target"], fact["kind"], fact, fact.get("evidence_kind", "SYMBOL_RESOLVED"))
     for diagnostic in response["diagnostics"]:
         if "CFG_UNSUPPORTED" not in diagnostic.get("code", ""):
@@ -350,7 +366,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                         "diagnostics": selected_context.get("diagnostics", []) + response["diagnostics"]}
     graph = KnowledgeGraph(3, base.root, base.generated_at, sorted(nodes.values(), key=lambda n: n.id),
         sorted(edges, key=lambda e: (e.source, e.kind, e.target, e.evidence_ids)), base.files,
-        base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
+        base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + ui_diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
         [evidence[i] for i in sorted(evidence)], metadata, call_sites, cfgs)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
