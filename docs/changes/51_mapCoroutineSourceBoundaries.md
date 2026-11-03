@@ -122,8 +122,9 @@ DebugMetadata/realm/ABI guards a current physical/source hierarchy views; memory
 recall je zaznamenán v externím validačním adresáři.
 
 Bytecode.java je převzat přesně z main: physical application mapping view se
-nezaměňuje se source hierarchy view pro dispatch. SourceMapping.java,
-control_flow.py a celý coroutine test modul zůstávají přesněc8867f3; SMAP,
+nezaměňuje se source hierarchy view pro dispatch. SourceMapping.java a
+control_flow.py zůstávají přesněc8867f3; původních50 actual coroutine případů je
+zachováno, pozdější P1 doplňuje čtyři regresní varianty níže. SMAP,
 DebugMetadata, čtyři realm fields, source hash/range a statické ABI guards se
 neodstraňují. K1/K2 call-site bloky zachovávají zvlášť suspend/async markers a
 main dispatch metadata. K2 light-declaration výběr používá stejný continuation
@@ -158,3 +159,22 @@ Ordinary call dot narrowing se nemění. Čtyři actual regresní varianty K1/K2
 ordinary/suspend kontrolují Base dispatch proti Derived extension receiveru,
 zachované ordinary Derived narrowing a nepovýšenou K2 neznámou source hierarchy.
 Guardy coroutine mappingu se nemění. Nové fresh buildy/focus jsou stále PENDING.
+
+## Obnovení validační evidence 2026-11-03
+
+Přetrvávající receipt a XML potvrzují dokončené vlastní clean buildy: K1
+`684394f8c1017805316918a4daefb8b09a3db0a61c86709f9ee7f8e774087656`, K2
+`f3f09bcf1171a5d9bce5ec87a026a62891328b01a9255f2bbd273efdcc617e7a`.
+Oba buildy mají exit0 a všech14 build source/lock hashů stále odpovídá.
+Combined focus z příkazu v `build-receipt.json` skutečně dokončil
+**166 PASS, 0 SKIP v803.20s** (XML166/0failures/0errors), zahrnuje všech54
+coroutine případů, dispatch/default-body, control-flow, protocol a CI guards.
+Všech200 frozen runtime/test/fixture/JAR hashů stále přesně odpovídá manifestu.
+Neopakuje se dokončený build ani focus. Původně final Derived bylo v regresní
+fixture před tímto během změněno na open, aby positive ordinary narrowing opravdu
+ověřovalo dynamický dispatch. Production se po validovaném buildu nezměnila.
+
+Nový combined full zatím nebyl spuštěn; čeká na nezávislou source closure.
+Historický584/10 full jej nenahrazuje. Uživatelská revize T045 v merged PR57
+činí GH CI volitelným při splnění všech ostatních kontrol; neprovedené nebo
+billing-only CI zůstává neověřené a konkrétní chyba správnosti je stále blokující.

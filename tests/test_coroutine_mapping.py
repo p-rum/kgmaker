@@ -215,7 +215,7 @@ def test_member_extension_uses_dispatch_receiver_not_extension_receiver(tmp_path
  FLAGfun use(value:Derived):String=value.ext()
  FLAGfun ordinary(value:Derived):String=value.plain()
 }
-class Derived:Base(){
+open class Derived:Base(){
  override FLAGfun Base.ext():String="derived"
  override FLAGfun plain():String="derived"
 }
