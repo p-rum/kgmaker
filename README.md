@@ -660,6 +660,35 @@ incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
 
+
+### Declared Kafka workspace bindings (T003-S07-W04)
+
+An optional versioned `kafka_bindings` block in the existing workspace manifest
+projects Cloud Stream `.properties` bindings into `kafka_binding` nodes. Services
+use `transport: "kafka"` and existing explicit service ownership. Matches require
+the same declared logical cluster ID, case-sensitive topic, exact JSON contract
+SHA, release label and scope. Base configuration precedes explicit profile
+overrides; a uniquely selected fresh JVM context can supply captured property
+overrides. No compiler context is fabricated for source-only configuration.
+
+```bash
+kgmaker query --root . --workspace fixtures/kafka-bindings/workspace.json orders-blue
+```
+
+See [the fixture](fixtures/kafka-bindings/README.md) and
+[the bounded contract](docs/compiler-inspection.md#t003-s07-w04--declared-kafka-binding-identity).
+Dynamic, missing, ambiguous or unsupported inputs remain UNKNOWN. Cluster, release
+and payload labels are declared; code binding, delivery, deployed schema and data
+availability remain unproven. Legacy name-only Kafka hints remain separate syntax
+evidence. Scan/query/feature/data checks never start a broker, application or build.
+
+
+Kafka privacy rules `kafka-binding-2` reject credential and broker-connection
+property keys before alias lookup, including nested references in captured
+properties. These bindings stay UNKNOWN. Public workspace contexts redact
+sensitive captured Spring property values and retain an explicit projection
+marker, original context identity and property-map hash. The private captured
+context remains the authority for validation and selection.
 ### Proven trigger inventory (T024)
 
 `kgmaker.process_triggers.discover_process_triggers(workspace, graph,
