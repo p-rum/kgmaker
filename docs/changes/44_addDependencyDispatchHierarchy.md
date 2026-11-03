@@ -174,6 +174,52 @@ CLI scan/check a git diff --check PASS. Externí mandatory CI je blokováno GitH
 Actions billing/spending limitem; tento lokální výsledek nenahrazuje sedm povinných
 remote gates ani skutečný Windows běh. Publikace může být Draft, bez merge.
 
+## Integrace aktuálního main po obnovení Actions
+
+Main `5430388a282f19f6c9637319c12a1731ae6d0674` obsahuje T009 a merged
+T003-S08-W02. JVM worker sources a celý dispatch test modul zůstávají byte-identické
+s předchozím reviewovaným `89e50cf`; Python bridge doplňuje pouze původní tři
+metadata dispatch pole do aktuálního inspection. CI zachovává aktuální dependency
+pins/Windows opravu a společně spouští dispatch i selected-tsconfig freshness.
+
+Cílená integrační validace: **120 PASS, žádný SKIP, 330.63 s** nad
+`tests/test_dependency_dispatch.py`, T005, T008, T009 a mandatory CI guards.
+Log/XML: `/workspace/dispatch-main543-validation/focus.log` a `focus.xml`.
+Původní full **575 PASS / 10 SKIP** stále dokládá nezměněné feature source;
+pro čistou integraci se další lokální full neopakoval. Před merge je nutný review
+přesného nového head/base a všech sedm aktuálních remote CI kontrol.
+
+Sémantika zachovává přesný main prefix 118 immutable episodes a všechny čtyři
+unikátní původní child captures. Žádný původní capture objekt se neupravuje.
+Generované grafy se obnovují výhradně CLI; žádný runtime/classpath důkaz není
+povýšen na pozorované spuštění aplikace.
+
+Po merge PR #46 navazuje další čistá parent integrace na main
+`3a7f76b00bb5136bbe5990546d9c8942a7f53f73`. JVM/dispatch source zůstává
+byte-identický `89e50cf`, TypeScript worker a všechny tři callback test moduly
+jsou přesně z tohoto main. Workflow zahrnuje oba původní mandatory test sets.
+Dřívější skutečný dispatch run 120/0 zůstává platným source důkazem; pro tuto
+parent-only změnu se neopakuje. Main prefix nyní obsahuje 121 immutable episodes;
+child historie zůstává append-only. Finální CI musí běžet nad tímto novým párem.
+
+Nová čistá integrační kontrola T005/T008/T009/mandatory guards: **79 PASS,
+0 SKIP v0.76s**, XML `/workspace/dispatch-main543-validation/main3a7-pure.xml`.
+
+
+## Parent refresh po merged T015
+
+Finální integrační parent je ověřený main
+`49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce`. JVM dispatch a jeho test modul
+zůstávají byte-identické89e50cf; T015 runtime/test source a explicitní pinned
+API-only bootstrap jsou převzaty přesně z main. CI zachovává všechny main
+compiler testy a dispatch navíc. Main127 immutable episodes tvoří přesný prefix,
+původní child capture objekty se nemění. Relevantní pure view/resource/CI
+kontroly: **124 PASS, 2 actual deselected v3.85s**, XML
+`/workspace/dispatch-main543-validation/main49-pure.xml`; předchozí actual120 i
+parent79 zůstávají historická validní
+evidence, žádný compiler/full se kvůli parent-only integraci neopakuje.
+Root vlastní finální exact-head review, publikaci a remote CI.
+
 ## Lokální prereq stack pro S07-W06
 
 Integrace zachovává přesné PR35 `89e50cf4cf8edbebc4f9d08879656698c75ebd50`

@@ -210,3 +210,96 @@ předchozí S06 evidence a nový integrační capture. README semantic citations
 ověřeny na `semantic prepare` line 162 a `semantic update/apply/validate` line 164;
 JPA/W02 architecture citations míří na aktuální source lines 515/598. Full suite
 nebyla znovu spuštěna; root CI běží na exact PR head.
+
+### Integrace T009 view evidence na main `09d351d`
+
+T009 adds the view evidence/coverage API, schema, and integration tests. The W01
+JPA implementation remains byte-identical to approved base `e71c622` across
+`src/kgmaker/framework.py`, `workers/jvm/k2/KotlinFrontend.kt`,
+`tests/test_k2_backend.py`, and `tests/test_compiler_workers.py`; the compiler
+guide now retains a direct statement of the supported K2 JPA annotation and
+fail-closed boundaries.
+
+Focused integration checks on Linux/JDK 21.0.6/Kotlin 2.1.10 covered the actual
+K2 use-site fixture, actual Javac AC06, T005 views, T008 service views, and the
+T009 view evidence suite: **66 passed in 43.39 s**. The semantic history keeps
+the exact 115-episode main prefix, then the seven W01-only episodes in their
+original order. Semantic validation, graph regeneration/check, and diff checks
+are recorded for this integration. No full suite was repeated for this
+documentation/view-only main refresh.
+
+### Integrate current main `5430388` (T003-S08-W02)
+
+Current main adds selected TypeScript configuration freshness and preflight
+capture validation. The W01 JPA runtime/test files remain byte-identical to
+base `e71c622`: `framework.py`, the K2 frontend, the K2 backend tests, and the
+Javac compiler-worker tests retain their prior SHA-256 values.
+
+Focused Linux/JDK21/Kotlin2.1.10 compatibility checks included actual K2
+use-site access, actual Javac AC06, and the complete selected TypeScript
+freshness suite: **35 passed in 175.28 s**. No full suite was repeated for this
+base integration. Semantic history preserves the exact 118-episode current-main
+prefix followed by all eight W01-only episodes in their prior order; the new
+integration capture follows those. Scoped semantic validation, graph
+regeneration/check, and diff checks complete the refresh.
+
+## Parent-only integrace po merge callbacků
+
+Finální parent baseline je main `3a7f76b00bb5136bbe5990546d9c8942a7f53f73`.
+Všechny JVM source, JPA framework a oba compiler test moduly zůstávají přesně
+`e71c6227f5a69128fede6ac4b2b75b6f7ad33ac7`; TypeScript worker a callback testy
+jsou byte-identické s novým main. Skutečná předchozí parent integrace na543
+měla **35 PASS / 0 SKIP v175.28s** (K2 JPA, Javac AC06, vybraná TS freshness
+matice); pro nový čistý parent-only merge se neopakují compiler/full běhy.
+
+Nové T005/T008/T009/mandatory integrační kontroly: **79 PASS / 0 SKIP v0.42s**,
+XML `/workspace/s06-w01-main3a7-pure.xml`. CI již není blokováno billingem;
+před merge jsou povinné aktuální source review a všech sedm remote kontrol.
+Main prefix121 immutable episodes a všechny původní child captures zůstávají
+beze změny; generované grafy se obnovují CLI.
+
+## Parent-only integrace T015
+
+Main `49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce` nyní obsahuje T015. JVM,
+framework a oba původní compiler test moduly zůstávají byte-identické `e71c6227`;
+T015 projector/tests/pinned API fixture i TypeScript worker jsou přesně z main.
+Nová čistá kontrola T005/T008/T009/T015/mandatory: **124 PASS**, dva samostatně
+ověřené actual T015 případy byly deselected, **4.32s**; XML
+`/workspace/jpa-main49-pure.xml`. Skutečný dřívější JPA35 run se pro tuto
+parent-only změnu neopakuje; nová dvojice vyžaduje čerstvé všech sedm CI kontrol.
+Main prefix127 a všechny původní child captures zůstávají immutable.
+
+## Spojení s merged dependency dispatch
+
+Parent `ec333966e657896382f310ef018835e3d696513e` obsahuje PR35. K2 frontend
+nyní kombinuje původní JPA annotation/use-site metadata s main hierarchy/dispatch
+metadata; JPA framework a oba feature test moduly zůstávají beze změny.
+Předchozí actual35 je historický feature důkaz, nikoli běh nové kombinované JVM
+distribuce. Ta musí být čerstvě sestavena a ověřena mandatory compiler CI,
+včetně skutečného K2 JPA fixture, Javac a dispatch testů před merge.
+
+Čistá společná projekční/CI kontrola: **124 PASS**, dva samostatně doložené
+actual T015 případy deselected, **2.91s**, `/workspace/jpa-mainEc-pure.xml`.
+Main prefix134 immutable episodes a všechny původní W01 captures jsou zachovány.
+Stavová tabulka slučuje aktuální S04 a konkrétní Kotlin JPA subset bez duplicit;
+celé S04/S06 zůstávají PARTIAL.
+
+
+## Obnovení po změně merge pravidel 2026-11-03
+
+Integrační base je main54a3e01c7bcb1295973655d72b58a14e6a5d597d. Jeho změny
+jsou pouze dokumentace, review profil a generované semantic/memory metadata.
+Vlastní runtime/test/worker soubory zůstávají byte-identické bdbe4ca7777f0354ee2ed3e4a0e9defa8f5eda70.
+Přetrvávající root receipt `/workspace/combined-jvm-main-ec/verified-results.json`
+dokládá fresh vlastní K1/K2 build a skutečné tři compiler případy: **3 PASS,
+0 SKIP v24.866s**, actual K2 JPA/Javac AC06/dispatch. Tento důkaz se nepovyšuje
+na nový full. GitHub CI zablokované fakturací není podle výslovné nové policy
+povinný merge gate; stav se neoznačuje za PASS. Ostatní review/acceptance a
+závislosti zůstávají povinné. Pure integration kontrola a semantic/scan se
+provedou před publikací; nezávislé finální review vlastní root.
+
+Pure integrační sada po policy merge: **124 PASS, 2 deselected**, XML
+`/workspace/jpa-main-policy-pure.xml`; selector vyloučil pouze dva actual T015
+případy s již samostatnou evidencí. Dva úvodní příkazy měly neexistující název
+testového souboru a nespustily testy; byly nahrazeny skutečným test_t005_add_view_model.py.
+První širší selector následně prošel121/5, finální přesný selector124/2.

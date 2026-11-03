@@ -155,3 +155,36 @@ Všech121 předchozích episodes zůstává immutable; po kontrolách se přidá
 review-fix episode nad přesným basec5c45f3. Závěrečný commit mění pouze metadata.
 Root provádí exact-source review a publikaci; autor nepushuje, nemerguje a
 nespouští billing-blocked remote CI. Return-flow zůstalo po dobu oprav zmrazené.
+
+## Current-main kompozice po sloučení prerequisites
+
+Main8b1eeceb28b71c122c2d48bf179e08cefa79c43c již obsahuje PR34conditions,
+PR35dispatch, Factory/JPA, HTTP provider catalog a process model. PR49 se proto
+retargetuje na main. Zachovány jsou všechny parent cache/context a conditionv6
+guards. Ruční Java konflikt zachovává BOTH bindingCache a RegistrationFacts;
+HTTP typed literal/binding IR i Factory hooks se nesmí navzájem odstranit.
+Own HTTP core module i původní HTTP test module jsou přesnědfe3250.
+
+Domain konflikt zachovává T010 provider-aware signature/branch a source SHA
+capture a HTTP consumer redaction. Konkrétní synthetic veřejný scanner/provider
+repro ukázal, že nový provider metadata sanitizer sice odstraní citlivé URI
+komponenty z metadata, ale legacy Node ID/name ještě obsahuje fragment nebo
+userinfo. Existing redact_uri_text nyní posoudí legacy_path před _api_node;
+při změně se použije existující unresolved hash branch, nikoli falešná literal
+cesta /<redacted-uri>. Nezměněné obyčejné route IDs/case zůstávají přesné.
+
+Captured public regressions pokrývají fragment/userinfo/query, UNKNOWN/no-leak
+graph i provider dokument a pozitivní obyčejnou route. Platný RED je1FAIL0.34s
+na původním fragmentlegacyname; GREEN s T010public a pureconditions je
+68PASS4actualdeselected2.13s. Před RED se opravila chyba test setupu(str vsPath);
+při GREEN se opravily testassertions pro existing repo-qualified IDs a správnou
+HTTP_UNSUPPORTED_ROUTE boundary namísto požadavku na vymyšlený interface node.
+Tyto testopravy nejsou dalším production nálezem.
+
+Current JVM source obsahuje vlastní Java IR a JvmWorker feature flag delta,
+proto parent Factory JAR nelze použít jen podle podobnosti zdroje. Čeká se na
+nezávislou earlysourceclosure, pak explicitní fresh own K1/K2build a jediný
+coalescedactualfocus. Dokud nejsou hotové, current-parent build/actual není PASS.
+Žádný full se neopakuje jen pro parent kompozici;654/10 zůstává historický
+exact-own-source full. GH CI je dle nové T045 uživatelské revize volitelné při
+splnění ostatních kontrol, lokální mandatorytoolchain a review tím nezanikají.
