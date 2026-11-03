@@ -140,3 +140,12 @@ byte-exact s původním built source donor receipt; všech132 původních JVM
 artifact hashes včetně kompletních licenses ověřeno před kopií i po ní.
 Receipt current944-workers.json; žádný nový build ani instalace. Nový focused
 actual a full jsou zatím neprovedené, před full následuje composition review.
+
+## Current-parent actual a source closure
+
+Current944 coalesced actual dokončen: **152PASS/0SKIP127.01s**, runnerexit0
+127.697s; XML current944.xml a status current944-status.json. Všech1471 broad
+frozen inputs a HEAD a1fe8306 beze změn, nezávisle znovu ověřeno. Zahrnuje
+compatibility guard matrix, local-operation proofs, HTTP consumer catalog a
+T015/W04 selected physical-realm seams. Root nezávisle schválil composition
+a1fe8306 a povolil jeden strict full; full výsledek zatím neexistuje.
