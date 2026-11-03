@@ -201,3 +201,19 @@ ordinary-name, K1 CFG, K2 JPA a celý dependency-dispatch subset:
 source/lock hashů nezměněných. Evidence je `integrated-build-receipt.json`,
 `integrated-focus.log/xml` v persistent validačním adresáři; nový full se
 kvůli parent integraci neopakoval.
+
+## Finální kombinace s main Factory/HTTP/JPA
+
+Po mainc76 integraci vlastní coroutine runtime/test source zůstává byte-identický
+full755/10. Nové parent Java registration hooks vyžadovaly skutečné vlastní fresh
+K1 i K2 buildy; oba mají exit0, receipt všech15 JVM source/build/lock hashů je
+nezměněný. Coalesced actual coroutine/member-extension/JPA/Javac a celý registrar/
+FactoryBean subset: **48 PASS, 0 SKIP v205.22s**, XML48/0failures/0errors.
+Před tímto během current HTTP/T023/T008/T009/CFG/workspace/dataflow pure integration
+ověřila **174 PASS v4.93s**. Evidence je `factory-build-receipt.json`,
+`factory-focus.log/xml` a `current-main-pure.log/xml`; nový full se neopakoval.
+
+Dřívější provisional Draft PR37 byl publikován s pravdivým PENDING stavem.
+Lokální validační blokace je nyní uzavřena; nezávislé review přesného finálního
+base/head páru, ready stav, ověření závislostí a root guarded merge stále zbývají.
+Tato poznámka sama nepředstavuje review APPROVE ani merge.
