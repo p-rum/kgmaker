@@ -269,10 +269,24 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
+            if(target!=null && descriptor!=null) {
+                val fqName=DescriptorUtils.getFqName(descriptor).asString()
+                val dependencyApi=state.symbols[target]?.get("path")==null
+                val boundary=if(descriptor.isSuspend) "SUSPEND" else if(!dependencyApi) null else when(fqName) {
+                    "kotlinx.coroutines.launch" -> "LAUNCH"
+                    "kotlinx.coroutines.async" -> "ASYNC"
+                    else -> null
+                }
+                if(boundary!=null)state.sites.last {it["id"]==identity}.putAll(State.map(
+                    "async_boundary",boundary,"async_boundary_evidence",if(descriptor.isSuspend) "COMPILER_SUSPEND_CALL" else "COMPILER_COROUTINES_API",
+                    "async_callable",fqName,"scheduling","UNKNOWN"))
+            }
             if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
                 resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
                 val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
-                val actualType=expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                // A member extension has two receivers: the dot expression is not virtual dispatch.
+                val actualType=if(descriptor?.extensionReceiverParameter!=null) resolved.dispatchReceiver!!.type
+                    else expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
                 if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
                     val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
                     state.sites.last()["dispatch_completeness_reason"]=boundary
@@ -383,6 +397,8 @@ class KotlinFrontend(private val state: State) {
             is KtSafeQualifiedExpression -> base.putAll(mapOf("kind" to "safe_call","receiver" to ir(expression.receiverExpression),"then" to ir(expression.selectorExpression)))
             is KtLabeledExpression -> {base["kind"]="unsupported";base["reason"]="LABELLED_CONTROL_FLOW";state.diagnostic("LABELLED_CONTROL_FLOW","No guessed labelled target",loc(expression))}
         }
+        val site=calls[expression]?.let {identity->state.sites.lastOrNull {it["id"]==identity}}
+        site?.get("async_boundary")?.let {base["async_boundary"]=it}
         return base
     }
 }

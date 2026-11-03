@@ -583,6 +583,11 @@ simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
+Coroutine source inspection preserves compiler-proven suspend and recognized
+coroutines API boundaries, with bounded named continuation declaration mapping.
+Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
+remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
+
 T015 adds a pure database-resource view through
 `kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
 Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
