@@ -337,6 +337,29 @@ jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
 zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
 známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
 subpackage se nepovažuje za compiler-resolved JPA API.
+Mapped-superclass atributy dostanou deklarující `orm_attribute` a zvláštní
+effective projekci pro každou ověřenou entitu. `declaring_owner` a
+`effective_owner` jsou exact compiler class identities; `inherits_attribute`
+váže projection na zdrojový uzel. Zděděné FIELD/PROPERTY access určuje ID v celé
+mapped-superclass hierarchii. K2 property annotations a Java field/getter facts
+zůstávají v jejich skutečném use-site/access scope. Entity-level
+`@AttributeOverride` přebije mapped-superclass hodnotu podle nejbližší deklarace;
+stejně pojmenované fieldy ani unresolved override nevytvoří vybraný column edge.
+Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
+TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
+ne deployment/schema compatibility proof; nevyřešený access, type identity,
+inheritance strategy nebo class override zůstává UNKNOWN.
+Spring Data repository model se vybírá z compiler-resolved generic supertype a
+přesného entity owneru. Entity atributy se indexují podle canonical owner
+identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
+když compiler facts neprokáží jediného ownera.
+Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
+requires exactly one compiler-owned entity; the repository domain type never
+substitutes for an ambiguous query entity. Compiler return type identity likewise
+selects an exact entity/projection node. A source-level simple return name is
+accepted only when the JVM method descriptor proves its canonical owner; a
+missing qualified owner, erased generic type variable, or duplicate simple name
+without that proof remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
@@ -744,6 +767,56 @@ unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
 remain outside this mapping contract. Store/protocol formats remain readable;
 metadata is additive and worker content identities invalidate older cached facts.
 
+
+## T003-S05-W02 — registrar a FactoryBean declaration facts
+
+Spring `annotation-source-v5` přidává bounded Java/Javac compiler facts pro
+`ImportBeanDefinitionRegistrar` a `FactoryBean<T>`; metadata sdílejí oba JVM
+backends. Není to Kotlin metadata rozšíření, execution ani Spring bootstrap.
+
+| Podporovaný vstup | Výsledek |
+|---|---|
+| Exact/transitive registrar a2-parameter API method, přímé `registry.registerBeanDefinition("name", new RootBeanDefinition(Type.class))` statements | `spring_registrar`/`registers_bean`, source symbol/hash/context evidence; bean condition z importující konfigurace |
+| Custom3-parameter overload, branches/alias/helper/fake receiver, více než128 statements, chybějící/nepodporovaný target | Explicitní UNKNOWN boundary; žádný odhadnutý ACTIVE bean |
+| Concrete indexed FactoryBean<T>, sole zero-argument `return new T()` a `return T.class`, typy souhlasí | Samostatný `&name` factory object a `name` product, `produces_bean`, static condition z bean declaration |
+| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean bez prokázané konkrétní literal implementation | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
+
+Product type je kompilátorový typ včetně inherited generic substitution; fake
+FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Literal
+bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol fields
+`bean_registrar`, `bean_registrations`, `factory_bean`, `factory_bean_return` a
+`factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
+čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
+vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
+Producer i getter method hashes jsou součástí evidence. Factory object type je
+přesný component owner nebo validovaná skutečná literal producer implementation;
+custom method object assignability zůstává UNKNOWN. Nové product/registrar
+selection používá compiler-qualified field assignability a známé supertypes;
+foreign short-name shoda není resolved injection. Chybějící legacy evidence
+nepromuje registrace. Invalid facts/context
+se odmítnou před store publikací. Rule v5 je JVM-only a vstupuje do context
+fingerprintu, TypeScript/React selection key se nemění. Evidence zůstává
+FRAMEWORK_DERIVED, nezvyšuje compiler-call confidence ani availability.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID registeredProduct
+```
+
+Skutečné Spring6.2.2 API se explicitně připravuje existujícím pinned fixture POM;
+SHA/license lock a mandatory CI guard z W01 zůstávají. Fixture nic nestahuje a
+source/app code se nespouští. XML, BeanDefinition builders/properties/suppliers,
+post-processors a Spring/Boot factories metadata nejsou tímto scope interpretovány.
+Viz [change note47](changes/47_declareSpringRegistrations.md) pro testy a aktuální
+externě blokované Actions; lokální zelené testy nenahrazují nové CI ani review.
+
+
+S05-W02 injection fixture používá imported simple field types a samostatné
+annotated declaration lines. Existující bounded textual injection projection
+nepokrývá více deklarací na jednom řádku ani obecnou lowercase-leading FQN
+source grammar. Nové qualified hierarchy guards jsou compiler-backed v tomto
+podporovaném subsetu; nejde o nový úplný Java annotation parser.
 ## Data resource projection (T015)
 
 The public pure Python API consumes an already captured workspace:
