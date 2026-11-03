@@ -594,6 +594,11 @@ unsupported/erroneous bindings expose specific UNKNOWN boundaries.
 binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
 retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
 
+Coroutine source inspection preserves compiler-proven suspend and recognized
+coroutines API boundaries, with bounded named continuation declaration mapping.
+Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
+remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
+
 T015 adds a pure database-resource view through
 `kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
 Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
@@ -614,3 +619,13 @@ semantic labels remain separate from technical evidence and status. See
 [the explicit fixture](fixtures/process-model/checkout.json).
 This supplies T023's model only; process discovery, annotation review, process
 CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
+
+Spring condition rules v6 preserve typed compiler annotation members. Supported
+profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
+support aliases, prefix, all names, `havingValue` and boolean `matchIfMissing`.
+Class conditions compare all exact identities against an explicit context
+inventory. Missing/malformed/unresolved inputs remain UNKNOWN; custom conditions
+are never executed. Profile results also govern injection, so `!dev` is not
+incorrectly filtered as a literal profile name. See
+[the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
+for the bounded contract and explicit Python API example.

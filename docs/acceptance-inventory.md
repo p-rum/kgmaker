@@ -458,6 +458,15 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |
 
 
+## T003-S04-W03 — bounded coroutine source mapping
+
+| AC | Evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_suspend_source_sites_keep_boundaries`, `test_actual_k1_cfg_preserves_suspend_calls_and_resume_boundary`, `test_real_continuation_maps_declaration_without_mapping_state_instructions` | actual suspend/launch/async/await, multiple suspension points, K1/K2 debug/no-debug; K2 CFG remains unavailable |
+| AC02 | Existing v1/v2/v3 graph/store loader suite; additive worker metadata | unchanged identities and persistence formats |
+| AC03 | `test_missing_sources_never_map_continuation`, `test_foreign_continuation_realm_never_claims_source`, metadata-negative and ordinary-name tests | no inferred scheduler/target/source instruction locator; byte snapshots unchanged |
+| AC04 | change51, pinned Kotlin2.1.10/coroutines SHA fixture | bounded static evidence; whole S04/T003 remains PARTIAL |
+
 
 ## T003-S05-W02 — registrars a FactoryBean produkty
 
@@ -506,3 +515,12 @@ Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`
 
 Actual compiler is a static compiler fixture, not a real application runtime test.
 Runtime acceptance NOT_RUN; no data availability or overall T004 completion claim.
+
+## T003-S05-W03 — condition matrix
+
+| AC | Test and supported proof |
+|---|---|
+| AC01 | `test_actual_pinned_conditions_and_negated_profile_injection`; `test_actual_variant_input_and_classpath_freshness_are_isolated`: labelled real annotations, explicit variant inputs, independently stale config/JAR with unchanged second context/store |
+| AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
+| AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
+| AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |

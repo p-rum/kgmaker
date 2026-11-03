@@ -228,3 +228,18 @@ přeskočené actual registrační případy v tomto příkazu neměly explicitn
 a nejsou uváděny jako PASS. Jejich existující samostatná Factory evidence zůstává
 v původním rozsahu. Nový kombinovaný K1/K2 build a skutečné integrační případy
 zůstávají nutné před finálním merge.
+
+### Kompozice s opraveným coroutine parentem
+
+Běh nad `bde389e` a Factory parentem skutečně dokončil čerstvé vlastní K1/K2
+buildy a **58 PASS, 0 SKIP v151.46s**. Oba frozen kontroly proběhly; root navíc
+porovnal všech209 manifest souborů s přesným Git commitem bde389e.
+
+Main následně přidal PR34/PR37 jako `f2dad55c12c4fcf8af831cb3fff68e6ebbcf614f`.
+Kompozice zachovává typed AnnotationArguments i původní null-range guard;
+K1 zachovává oba nezávislé bloky pro argument bindings a coroutine boundary.
+Ostatní runtime hunks se složily automaticky. Pure current-parent sada:
+**156 PASS, 5 actual deselected v2.67s**. Generované grafy a semantic citations
+jsou obnovené příkazy, včetně posunutého coroutine odstavce a frontend řádků.
+Nový společný worker build a cílený actual běh pro tuto poslední kombinaci
+zatím nejsou PASS a zůstávají před merge povinné; full se jen kvůli parentu neopakuje.
