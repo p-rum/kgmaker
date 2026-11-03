@@ -42,7 +42,7 @@
     "docs/changes/50_expandSpringConditions.md": "1b9cc650341b340e95ff0be535f56304760f378afd28afc6ab453c59452f1b23",
     "docs/changes/51_mapCoroutineSourceBoundaries.md": "a196c28c3ce4d6d00245649f0f20a43944b21a1f49602aec1dbac1e49c8b9193",
     "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "ef9358324559dad9c2f79d22562d7767697632d6771483bb2e25f0da8ce6f227",
-    "docs/changes/55_expandThymeleafFragments.md": "5ba9e31692e7c765ed6063b877a9361aad1d9ad4c072ad0cbab020eb3373a8c1",
+    "docs/changes/55_expandThymeleafFragments.md": "2eb1cb6cb0d23f5e4572e17a3e4c06864c202b1d84ad3b6bbcf30e18b1fb6a79",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/62_verifyJvmGoldenCorpus.md": "24af33421beedf19df9e17869911d4e967f5be846edea4ad09bd48ea267359c2",
     "docs/changes/63_classifyHttpClientExecution.md": "803a09ddfdffc2d95b00f9e08fb6f3fb71737f49e077e04424c9075f882e5e92",
@@ -484,7 +484,7 @@
       "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "name": "Bounded Thymeleaf static fragment provenance",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 704,
+      "source_line": 1023,
       "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     },
     {
@@ -547,7 +547,7 @@
       "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
       "name": "Typed HTTP request and terminal intent",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1023,
+      "source_line": 1043,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
     }
   ],
@@ -929,7 +929,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 706,
+      "source_line": 1025,
       "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
     },
     {
@@ -1249,7 +1249,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1259,7 +1259,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1269,7 +1269,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1279,7 +1279,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     }
   ],

@@ -27,3 +27,10 @@ Main195 immutable episodes jsou exact prefix, dvě původní child captures
 zůstávají beze změny. Sémantické odkazy na posunuté funkce byly přepojeny pouze
 podle jednoznačných IDs z čerstvého CLI scanu; duplicitní parent fakta zachována
 jednou. GH CI je volitelné dle uživatelské revize T045, ostatní kontroly povinné.
+
+Aktuální cílený běh: **156 PASS, 0 SKIP v2.45s** v template/feature/data-check/
+scanner/workbook a společných T005/T023 model testech. XML je uložené mimo checkout
+v `/workspace/template-current-validation/focus.xml`. Skutečné worker fixture
+nejsou pro neměněný SOURCE_ONLY parser potřeba; původní skips se neproměňují v PASS.
+Následná metadata oprava přepojila vlastní Thymeleaf a posunuté HTTP doc citations
+na ověřené aktuální řádky1023/1043, bez změny runtime či test source.
