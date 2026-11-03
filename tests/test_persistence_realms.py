@@ -409,3 +409,13 @@ def test_actual_two_persistence_units_choose_their_own_physical_realm(actual_rea
     assert not any(e.kind in {'maps_to_table', 'resolves_to_schema_table'}
                    and e.context_ids == (ambiguous['context']['id'],) for e in ambiguous_graph.edges)
     assert (root / '.kgmaker/graph.json').read_bytes() == before
+
+
+def test_new_persistence_selectors_change_jvm_identity_without_changing_typescript():
+    from kgmaker.graph_provider import _selection_key
+    baseline = dict(repo_id='app', module='app', source_set='main', scope='production')
+    ts = dict(baseline, language='typescript')
+    assert _selection_key(ts) == _selection_key(dict(ts, persistence_schema='public', flyway_target='2'))
+    jvm = dict(baseline, language='jvm')
+    assert _selection_key(jvm) != _selection_key(dict(jvm, persistence_schema='public'))
+    assert _selection_key(jvm) != _selection_key(dict(jvm, flyway_target='2'))

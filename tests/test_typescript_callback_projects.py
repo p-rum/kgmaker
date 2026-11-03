@@ -52,8 +52,17 @@ export function run(): string { return apply(1, alias); }
         assert inner['resolution_reason'] == 'CALLBACK_PARAMETER_OPEN_WORLD'
         assert {symbols[target]['name'] for target in inner['dispatch_candidates']} == {'handler'}
         assert all(symbols[target]['project_id'].endswith(':app/tsconfig.json') for target in inner['dispatch_candidates'])
-        parameters = [s for s in graph.symbols if s['name'] == 'callback' and s['kind'] == 'Parameter']
+        parameters = [s for s in graph.symbols if s['name'] == 'callback' and s['kind'] == 'parameter']
         assert len(parameters) == 1 and parameters[0]['project_id'].endswith(':lib/tsconfig.json')
+        assert parameters[0]['method'] == inner['caller']
+        assert parameters[0]['id'] == inner['caller'] + ':parameter:1'
+        occurrences = [edge for edge in graph.edges if edge.kind == 'argument_to_parameter'
+                       and edge.target == parameters[0]['id'] and symbols[edge.source]['kind'] == 'value']
+        assert len(occurrences) == 1 and occurrences[0].evidence_kind == 'SYMBOL_RESOLVED'
+        occurrence = symbols[occurrences[0].source]
+        outer = next(call for call in graph.call_sites if call['id'] == occurrence['call_site'])
+        assert occurrence['owner_method'] == outer['caller']
+        assert outer['declared_target'] == inner['caller']
         assert any(edge.kind == 'argument_to_parameter' and edge.target == parameters[0]['id']
                    and edge.source in inner['dispatch_candidates'] for edge in graph.edges)
         assert any(cfg['method'] == inner['caller'] for cfg in graph.cfgs)

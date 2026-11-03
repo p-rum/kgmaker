@@ -5,13 +5,13 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const PROTOCOL = 1;
-const VERSION = 'typescript-worker-4';
+const VERSION = 'typescript-worker-5';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 
 function handshake() {
   return {protocol_version:PROTOCOL,worker:VERSION,compiler_version:ts.version,
-    capabilities:['typescript-program','typechecker','overloads','aliases','project-references','bounded-callback-candidates','source-ir','react-events'],
+    capabilities:['argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','bounded-callback-candidates','source-ir','react-events'],
     limitations:['No Angular/Vue template semantics.','Dynamic callbacks/any remain unresolved.','Source IR is not runtime ordering.']};
 }
 
@@ -294,14 +294,20 @@ function analyze(request) {
   })};
   discovery.lockfiles([...projects.keys()]);
   const compilerDiagnostics=programs.map(({project,program})=>({project,diagnostics:ts.getPreEmitDiagnostics(program)}));
+  const uiAdapter=require('./ui_events.cjs');
+  const uiAdapters=uiAdapter.adapters(ts,programs,discovery,hash,request.ui_framework==='react');
+  const uiProject=request.ui_framework==='react'?{ui_adapters:uiAdapters.snapshots}:{};
   discovery.validate();
   if (request.operation === 'project') {
     return {...handshake(),status:'COMPLETE',context_id:context.id,project:{
-      input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
+      ...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
       compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph}};
   }
+  const bindingErrors=[];
   for (const {project,diagnostics:capturedDiagnostics} of compilerDiagnostics) {
     for (const diagnostic of capturedDiagnostics) {
+      if(diagnostic.category===ts.DiagnosticCategory.Error && diagnostic.file && diagnostic.start!=null)
+        bindingErrors.push({file:diagnostic.file.fileName,start:diagnostic.start,end:diagnostic.start+Math.max(1,diagnostic.length||0)});
       diagnostics.push({code:'TS'+diagnostic.code,reason:ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'),
         project_id:project.id,path:diagnostic.file?fileInfo(diagnostic.file).path:project.config,start:diagnostic.start??null});
     }
@@ -338,7 +344,7 @@ function analyze(request) {
       } else if (ts.isCallExpression(node) && symbolDeclaration(symbol) && ts.isVariableDeclaration(symbolDeclaration(symbol)) && !proof.complete && !signatureContract)
         reason='DYNAMIC_CALLBACK';
       else target=register(declaration);
-      const site={id:identity,caller,...loc,declared_target:target,dispatch_candidates:[],dispatch_complete:false,
+      const site={id:identity,caller,...loc,declared_target:target,argument_mapping_version:1,argument_mapping_status:'UNKNOWN',argument_mapping_reason:'NO_SOURCE_ARGUMENT_BINDING_PROOF',dispatch_candidates:[],dispatch_complete:false,
         invocation_kind:ts.isNewExpression(node)?'CONSTRUCTOR':'CALL',receiver_type:ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression) ? checker.typeToString(checker.getTypeAtLocation(node.expression.expression)) : null,
         callable_type:checker.typeToString(expressionType),
         signature:signature?checker.signatureToString(signature):null,
@@ -349,11 +355,45 @@ function analyze(request) {
       if (symbol) site.expression_symbol=checker.getFullyQualifiedName(symbol);
       sites.push(site); siteByNode.set(node,identity);
       if (reason) diagnostics.push({code:reason,path:loc.path,range:loc.range,call_site:identity});
+      const bindingError=bindingErrors.some(error=>error.file===node.getSourceFile().fileName && error.start<node.end && error.end>node.getStart());
+      if(target && signature && bindingError) {site.argument_mapping_reason='TS_ARGUMENT_MAPPING_UNAVAILABLE';diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'Call overlaps compiler error; recovery signature is not mapping proof',...loc,call_site:identity});}
+      if (target && signature && !bindingError) {
+        const args=node.arguments||[], parameters=signature.parameters;
+        const formal=index=>parameters[index]?.valueDeclaration || parameters[index]?.declarations?.[0];
+        const rest=parameters.length>0 && !!formal(parameters.length-1)?.dotDotDotToken;
+        const unsupportedSpread=args.some((argument,index)=>ts.isSpreadElement(argument) && (!rest || index<parameters.length-1));
+        let completeBinding=!unsupportedSpread;
+        if(unsupportedSpread) diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'Spread before fixed formals needs tuple binding proof',...loc,call_site:identity});
+        else for(let i=0;i<args.length;i++) {
+          const pi=rest?Math.min(i,parameters.length-1):i,d=formal(pi);
+          if(!d) { completeBinding=false;diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'No attributed formal for argument',...loc,call_site:identity});continue; }
+          const parameterId=register(d,'parameter');
+          Object.assign(symbols.get(parameterId),{kind:'parameter',method:target,parameter_index:pi});
+          const argumentId=identity+':argument:'+i,argument=ts.isSpreadElement(args[i])?args[i].expression:args[i];
+          const argumentLocation=location(argument);
+          if(symbols.size>=limits.symbols)throw Error('symbol output limit exceeded');
+          symbols.set(argumentId,{id:argumentId,name:'argument '+i,kind:'value',call_site:identity,owner_method:caller,
+            scope:context.scope,context_id:context.id,...argumentLocation});
+          const origin=symbolDeclaration(checker.getSymbolAtLocation(argument));
+          if(origin)facts.push({kind:'derived_from',source:argumentId,target:register(origin),...argumentLocation,evidence_kind:'SYMBOL_RESOLVED',resolution_reason:'TYPESCRIPT_ARGUMENT_SYMBOL_REFERENCE'});
+          const transformation=rest && pi===parameters.length-1?(ts.isSpreadElement(args[i])?'VARARG_SPREAD':'VARARG_ELEMENT'):'DIRECT';
+          facts.push({kind:'argument_to_parameter',source:argumentId,target:parameterId,call_site:identity,
+            argument_index:i,parameter_index:pi,parameter_name:symbols.get(parameterId).name,transformation,binding_kind:'DECLARED_PARAMETER',
+            argument_mapping_version:1,context_id:context.id,...argumentLocation,evidence_kind:'SYMBOL_RESOLVED',resolution_reason:'TYPESCRIPT_RESOLVED_SIGNATURE_ARGUMENT_MAPPING'});
+        }
+        site.argument_mapping_status=completeBinding?'PROVEN':'UNKNOWN';
+        site.argument_mapping_reason=completeBinding?'TYPESCRIPT_RESOLVED_SIGNATURE_ARGUMENT_MAPPING':'TS_ARGUMENT_MAPPING_UNAVAILABLE';
+        for(let pi=args.length;pi<parameters.length;pi++) {
+          const d=formal(pi);
+          if(d?.initializer)(site.argument_omissions ||= []).push({parameter_index:pi,parameter_name:parameters[pi].name,reason:'DEFAULT_VALUE_NOT_EVALUATED'});
+        }
+      }
       if (target && signature) {
         for (let i=0; i<(node.arguments||[]).length && i<signature.parameters.length; i++) {
           const parameterType=checker.getTypeOfSymbolAtLocation(signature.parameters[i],node);
           const callback=!(parameterType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)) && checker.getSignaturesOfType(parameterType,ts.SignatureKind.Call).length>0;
-          const d=callback?implementationParameter(signature,i):signature.parameters[i].valueDeclaration || signature.parameters[i].declarations?.[0];
+          if (!callback) continue; // ordinary argument occurrences use the versioned declared-formal proof above
+          const d=implementationParameter(signature,i);
           if (!d) continue;
           const argument=node.arguments[i], argumentType=checker.getTypeAtLocation(argument);
           const bound=callback && !(argumentType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown))?callbackProof(argument):{targets:[],complete:false};
@@ -402,21 +442,10 @@ function analyze(request) {
       }
     }
     if (request.ui_framework==='react' && ts.isJsxAttribute(node) && ['onClick','onChange','onSubmit'].includes(node.name.text)) {
-      let attributeSymbol=checker.getSymbolAtLocation(node.name);
-      {
-        const opening=node.parent.parent;
-        const tag=opening.tagName?.getText();
-        const intrinsic=checker.getJsxIntrinsicTagNamesAt(node).find(s=>s.name===tag);
-        if (intrinsic) attributeSymbol=checker.getPropertyOfType(checker.getTypeOfSymbolAtLocation(intrinsic,node),node.name.text);
-      }
-      const attributeDeclaration=symbolDeclaration(attributeSymbol);
-      const attrLoc=attributeDeclaration?location(attributeDeclaration):null;
-      const expression=node.initializer && ts.isJsxExpression(node.initializer)?node.initializer.expression:null;
-      const handler=expression?targetForExpression(expression):null;
-      if (handler && attrLoc && /@types\/react/.test(attrLoc.path)) {
-        facts.push({kind:'handles_event',source:caller,target:register(handler),event:node.name.text,
-          ...location(node),evidence_kind:'FRAMEWORK_DERIVED',rule:'react-18.3.1/jsx-event-1'});
-      } else diagnostics.push({code:'UNRESOLVED_UI_HANDLER',...location(node)});
+      const result=uiAdapter.event(ts,checker,node,uiAdapters.byFile.get(path.resolve(node.getSourceFile().fileName)),uiAdapters.byFile,symbolDeclaration,callbackProof,location);
+      if(result.handler) facts.push({kind:'handles_event',source:caller,target:register(result.handler),event:node.name.text,
+        ...location(node),evidence_kind:'FRAMEWORK_DERIVED',...result.proof});
+      else diagnostics.push({code:result.reason,...location(node)});
     }
     if (ts.isImportSpecifier(node) || ts.isExportSpecifier(node)) {
       const alias=checker.getSymbolAtLocation(node.name);
@@ -506,7 +535,7 @@ function analyze(request) {
   if (request.ui_framework && request.ui_framework!=='react') diagnostics.push({code:'UNSUPPORTED_UI_FRAMEWORK',framework:request.ui_framework});
   return {...handshake(),status:diagnostics.length?'PARTIAL':'COMPLETE',context_id:context.id,
     symbols:[...symbols.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),call_sites:sites,bodies,facts,diagnostics,
-    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
+    project:{...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
       root_files:parsed.fileNames.map(f=>path.relative(root,f)),program_files:projectFiles.map(s=>({...fileInfo(s),root_input:rootFileSet.has(s.fileName)})),
       dependencies:[...inputs.values()].filter(i=>i.origin==='dependency')},
     coverage:{files_found:projectFiles.length,files_analyzed:projectFiles.length,methods_analyzed:bodies.length,

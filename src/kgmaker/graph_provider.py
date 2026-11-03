@@ -64,14 +64,17 @@ def _selection_key(context: dict) -> str:
         "spring_component_packages",
         "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
-        "persistence_unit", "naming_strategy", "persistence_schema", "flyway_target",
+        "persistence_unit", "naming_strategy",
     )}
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react" and "ui_adapters" in context.get("project", {}):
+        payload["ui_adapters"] = context["project"]["ui_adapters"]
     if isinstance(payload.get("framework_rule_versions"), dict):
         # An additive HTTP capture layer replaces the same logical selection;
         # legacy contexts remain readable with HTTP coverage UNKNOWN.
         payload["framework_rule_versions"] = {key: value for key, value in payload["framework_rule_versions"].items() if key != "http"}
     if context.get("language") == "jvm":
-        payload.update(kotlin_backend=context.get("kotlin_backend"),
+        payload.update(persistence_schema=context.get("persistence_schema"), flyway_target=context.get("flyway_target"),
+                       kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
     if isinstance(recorded, str):
         # K2 briefly added two irrelevant None fields to frontend selectors.
@@ -93,6 +96,11 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react":
+        from .inspection import UI_RULE_VERSION
+        if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
+                or "ui_adapters" not in context.get("project", {})):
+            raise WorkerError("STALE_INDEX: UI adapter rules changed; inspect frontend again", "STALE")
     rules = context.get("framework_rule_versions")
     if context.get("language") == "jvm" and rules is not None and not isinstance(rules, dict):
         raise WorkerError("STALE_INDEX: malformed Spring rule snapshot", "STALE")

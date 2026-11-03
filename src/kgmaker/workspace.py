@@ -64,9 +64,23 @@ def _qualified_context(repo: str, value: dict) -> dict:
 def _qualified_symbol(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
+    for key in ('method', 'owner_method', 'call_site'):
+        if isinstance(value.get(key), str):
+            result[key] = qualified(repo, value[key])
     result['context_id'] = qualified(repo, value['context_id'])
     if isinstance(value.get('path'), str):
         result['path'] = source_key(repo, value['path'])
+    return result
+
+
+def _qualified_evidence(repo: str, value: dict) -> dict:
+    result = copy.deepcopy(value)
+    result.update(repo_id=repo, id=qualified(repo, value['id']),
+                  source=qualified(repo, value['source']), target=qualified(repo, value['target']),
+                  source_file=source_key(repo, value['source_file']) if value.get('source_file') else None,
+                  context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
+    if isinstance(value.get('call_site'), str):
+        result['call_site'] = qualified(repo, value['call_site'])
     return result
 
 
@@ -623,11 +637,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                            ([{'repo_id': repo, **d}
                              for repo, local in graphs.items() for d in local.diagnostics]
                             + release_diagnostics),
-                           ([{**e, 'repo_id': repo, 'id': qualified(repo, e['id']),
-                              'source': qualified(repo, e['source']), 'target': qualified(repo, e['target']),
-                              **({'call_site': qualified(repo, e['call_site'])} if e.get('call_site') else {}),
-                              'source_file': source_key(repo, e['source_file']) if e.get('source_file') else None,
-                              'context_ids': [qualified(repo, c) for c in e.get('context_ids', [])]}
+                           ([_qualified_evidence(repo, e)
                              for repo, local in graphs.items() for e in local.evidence]
                             + release_evidence),
                            symbols=sorted(symbols, key=lambda item: item['id']),

@@ -755,6 +755,105 @@ Bridge delegates must remain instance-compatible. DefaultImpls retains its expli
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
 
+## Argument to parameter bindings
+
+T003-S07-W01 uses the existing canonical method and parameter IDs plus call-site
+argument value occurrences. Worker protocol v1 and graph/store v1/v2/v3 are
+unchanged; `argument_mapping_version=1` is additive. Formal IDs use the existing
+`METHOD_ID:parameter:INDEX` convention, independently from parameter names.
+
+| Compiler | Supported static binding proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Attributed overloads, ordinary method/constructor arguments, vararg element/array binding; generic methods use instantiated executable formal types | Erroneous/unresolved calls; generic constructor vararg packing without instantiated formal; unavailable expression locator |
+| K1/Kotlin2.1.10 | Successful resolved call argument map, named order, omitted defaults, vararg elements and spread aggregates | Implicit operator/accessor bindings outside ordinary call expressions and unsupported argument locators |
+| K2/Kotlin2.1.10 | Java part uses Javac binding | Kotlin call bindings remain UNKNOWN with `K2_ARGUMENT_BINDINGS_UNAVAILABLE`; no K1 fallback or guessed positions |
+| TypeScript5.7.3 | Resolved signature/overload, positional arguments, rest elements/spread aggregate, omitted explicit initializer | Compiler-error recovery signatures; spread before fixed formals without tuple proof; unresolved callbacks/any |
+| ASM | Declared target/candidates preserved | Operand-stack argument values are not inferred: `NO_SOURCE_ARGUMENT_BINDING_PROOF` |
+
+`DIRECT` binds a source expression **result** to a declared formal; it does not
+claim that the expression is an identity transformation or that implicit language
+conversions never occur. `VARARG_ELEMENT`, `VARARG_ARRAY` and `VARARG_SPREAD`
+retain packing semantics without inventing array contents or evaluation order.
+Omitted defaults have `DEFAULT_VALUE_NOT_EVALUATED` and no invented value edge.
+Callable references are `NOT_EXECUTION` and do not receive invocation arguments.
+
+The `argument_to_parameter` proof carries original call-site ID, argument/formal
+indices, context, declared-contract binding kind and transformation. It never
+binds a dispatch candidate implementation as an observed callee. The process JSON
+preserves original binding proofs even when dispatch prevents body expansion;
+`argument_binding_status` distinguishes PROVEN, UNKNOWN and legacy unavailable
+proof. Availability remains UNKNOWN and execution NOT_OBSERVED.
+
+Explicit examples after content-bound inspection:
+
+```bash
+kgmaker inspect code --root project --kotlin-backend k1 --kotlin-version 2.1.10
+kgmaker flow render --root project --entry METHOD_ID --view process --format json
+kgmaker impact --root project --entity ARGUMENT_ID --include-data-flow --format json
+```
+
+Use the existing explicit `--context`/`--scope` selection when variants exist.
+Directional impact traverses only versioned proven argument edges; legacy and
+candidate edges do not gain new strong paths. Its existing v1 path shape remains
+unchanged and supplemental `argument_parameter_bindings` retains typed provenance.
+Workspace federation qualifies argument/formal/call-site/context references;
+malformed or ambiguous bindings fail before replacing the last valid generation.
+No scan/hook/projection starts workers, builds or application code implicitly.
+
+### T003-S08-W04: bounded versioned React event evidence
+
+`--ui-framework react` uses `react-jsx-events-4`, pinned React18.3.1 and
+@types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
+must select that external declaration's DOMAttributes or pinned input/select/textarea event member. Evidence keeps
+package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
+The existing protocol1 `handles_event` fact and graph/store model are reused.
+
+Supported: onClick/onChange/onSubmit on intrinsic tags; a checkout function with
+one props parameter and sole intrinsic JSX return forwarding the same official
+prop. Arbitrary wrappers, spreads, mutable/ambiguous callbacks, redirected fake
+React modules, unknown versions and missing packages are explicit unresolved
+boundaries. Existing S08-W03 callback candidates remain open-world. No JSX/React JS
+or application executes. This rule does not prove a click, scheduling or availability.
+
+Adapter package/declaration inputs use the existing TypeScript discovery closure,
+are compared between preflight/analyze and revalidated offline. UI context and
+selector bind the adapter snapshot; old UI rules require reinspection. Non-UI and
+legacy context construction keep their existing identity. The helper is included
+in worker distribution hashes and wheel; incomplete marked distributions fail
+before starting a worker. No package installation or network is implicit.
+
+The JSX renderer is part of that proof: classic React factory lookup must resolve
+the lexical value to the official React namespace/createElement, including actual
+import aliases; a locally shadowed object annotated as typeof React is insufficient.
+Automatic default react-jsx/react-jsxdev modes require the pinned external runtime
+declaration. Custom importSource/per-file JSX directives remain UNKNOWN. Uppercase
+component names and checkout-added custom IntrinsicElements cannot bypass wrapper
+proof just because their props reuse React's event types.
+
+The supported renderer-control whitelist is explicit: classic default or an actual
+official createElement import alias via jsxFactory; automatic default react-jsx/
+react-jsxdev with pinned runtime declaration. Explicit reactNamespace,
+jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, including
+empty controls rather than truthy fallback. The official event declaration families
+are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
+on form is covered too. Same-named checkout declarations do not qualify. Full
+historical frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
+factory and event-control matrix36 PASS. Change69 preserves the earlier v2 and
+pre-fix results, interrupted runs and current remote status.
+
+UI binding proof excludes ordinary member callable references and their aliases.
+Lexical function/const bindings use a compiler-symbol syntactic write catalog
+(assignments, compound/unary targets and destructuring/loop targets), with direct
+or ambiguous eval and duplicate binding diagnostics as UNKNOWN boundaries.
+Classic renderer namespace/createElement declarations must pass the same write
+check. This bounded catalog does not infer heap identity or runtime execution.
+Direct imported handlers/wrappers require explicit ESM compiler modes in caller and owner,
+and the exact exported value declaration; CommonJS, interop and re-export aliases stay UNKNOWN.
+Whole React namespace values escaping through aliases/casts/containers cannot prove an immutable
+renderer. Handler/wrapper materialization also requires canonical selected classified scope.
+Previous v1/v2/v3 UI captures require reinspection; offline freshness validation
+preserves the saved cache/store.
+
 ## Coroutine source boundaries (T003-S04-W03)
 
 The explicit JVM inspection preserves compiler-proven suspend call sites and
@@ -984,6 +1083,26 @@ mismatch claims without compiler-owned realm proof. Migration-derived schema,
 framework interpretation and runtime/deployed data availability remain separate.
 See change note74 for actual validation and remaining acceptance; no complete
 production/provider support is claimed.
+
+## T003-S09-W03 — statické Thymeleaf fragmenty
+
+`thymeleaf-bindings-2` zachovává dosavadní literal model-key/template-return vazby a
+přidává pouze statické `th:fragment`, `th:replace` a `th:insert`. Cíl musí být
+jedinečný ve stejném source scope a počet argumentů se musí přesně shodovat s
+parametry deklarace. Literal `${model.path}` se vede přes scoped parametr fragmentu;
+stejně pojmenované proměnné mimo fragment se proto nesloučí. Nejednoznačné,
+dynamické a špatně aritní odkazy mají lokalizovanou diagnostiku bez resolved
+include edge. Podmínky jsou PARTIAL a nepodporované výrazy UNKNOWN; nic se
+nevyhodnocuje ani nevykonává. `th:each`, `th:with` a jejich `data-th-*` aliasy
+zavádějí lokální jména, která tato verze nemodeluje; obsah těchto scope ani
+vnořené fragmentové argumenty se nevážou na globální model a dostávají UNKNOWN
+diagnostiku. Hrany zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`.
+
+To nedokazuje Spring MVC handler resolution, renderovaný výstup ani runtime
+availability. Jiné template dialecty, podmínková logika a PDF rendering nejsou
+implementovány; explicitní PDF service zůstává externí boundary. Viz
+[change note55](changes/55_expandThymeleafFragments.md) a
+[acceptance inventory](acceptance-inventory.md#t003-s09-w03--thymeleaf-fragment-provenance).
 
 ## HTTP client intent
 
