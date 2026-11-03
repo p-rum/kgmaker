@@ -64,7 +64,7 @@ def _selection_key(context: dict) -> str:
         "spring_component_packages",
         "framework_rule_versions",
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
-        "persistence_unit", "naming_strategy",
+        "persistence_unit", "naming_strategy", "persistence_schema", "flyway_target",
     )}
     if context.get("language") == "jvm":
         payload.update(kotlin_backend=context.get("kotlin_backend"),
@@ -104,6 +104,18 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             valid_conditions = False
         if not valid_conditions:
             raise WorkerError("STALE_INDEX: Spring condition configuration changed; inspect again", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "jpa" in rules:
+        from .framework import JPA_RULE_VERSION
+        from .schema_replay import persistence_selection
+        from .analysis_model import digest
+        if rules['jpa'] != JPA_RULE_VERSION:
+            raise WorkerError('STALE_INDEX: persistence realm rules changed; inspect again', 'STALE')
+        try:
+            valid_realm = context.get('persistence_selection_hash') == digest(persistence_selection(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_realm = False
+        if not valid_realm:
+            raise WorkerError('STALE_INDEX: persistence selection changed; inspect again', 'STALE')
     options = (context.get("compiler_options") or {}).get("kotlin")
     if options is not None:
         from .analysis_model import AnalysisError

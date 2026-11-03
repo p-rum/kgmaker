@@ -12,6 +12,7 @@ import re
 from .analysis_model import digest, file_hash, safe_path
 from .architecture_model import ViewDocument, ViewNode, ViewEdge, aggregate_view_edges
 from .model import KnowledgeGraph
+from .schema_replay import realm_prefix, persistence_pair, schema_realm
 from .views import project_service_inventory, _summarize_view_evidence, ServiceInventoryError
 from .workspace import load_workspace, qualified, resolve_service_ownership
 
@@ -104,7 +105,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         return ids
 
     def realm(database, stream):
-        return (database, stream) if all(isinstance(x, str) and IDENTIFIER.fullmatch(x) for x in (database, stream)) else None
+        return persistence_pair(database, stream)
 
     def resource(repo, selected_realm, boundary):
         identity = 'data-resource:' + digest({'workspace': verified['workspace_id'], 'repo': repo,
@@ -112,7 +113,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         if identity not in records:
             records[identity] = {'repo_id': repo, 'realm': selected_realm, 'tables': set(),
                 'refs': set(), 'owners': set(), 'derivation': set(), 'contexts': set(),
-                'scope_proven': False, 'realm_verified': False, 'ambiguous': False}
+                'scope_proven': False, 'realm_verified': False, 'ambiguous': False, 'schema_objects': {}}
         if selected_realm is None:
             issue('DATASOURCE_MAPPING_UNKNOWN', resource_id=identity, repo_id=repo)
         return identity
@@ -164,7 +165,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
             if known_scopes and scope not in known_scopes and 'unknown' not in known_scopes:
                 excluded += 1
                 continue
-            explicit = any(p.get('kind') == 'EXPLICIT_CONFIGURATION' and 'database_id' in p.get('keys', [])
+            explicit = any(p.get('kind') == 'EXPLICIT_CONFIGURATION' and {'database_id', 'stream_id'} <= set(p.get('keys', []))
                            for p in config.get('provenance', []))
             selected_realm = realm(config.get('database_id'), config.get('stream_id')) if explicit else None
             identity = resource(repo, selected_realm, 'migration:' + str(config.get('stream_id')))
@@ -181,7 +182,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
                 record['owners'].update(owners(repo, path))
             expected_tables = {qualified(repo, item['id']) for item in schema['objects'].values()
                 if isinstance(item, Mapping) and item.get('kind') == 'table' and isinstance(item.get('id'), str)}
-            prefix = qualified(repo, 'schema:' + config['database_id'] + ':' + config['stream_id'] + ':table:')
+            prefix = qualified(repo, 'schema:' + realm_prefix(config) + ':table:')
             graph_tables = {n.id for n in graph.nodes if n.kind == 'db_table' and n.id.startswith(prefix) and n.path in inventory_paths}
             if expected_tables != graph_tables:
                 raise DataResourceError('Migration table inventory snapshot does not match graph')
@@ -190,7 +191,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
                     raise DataResourceError('Invalid migration object snapshot')
                 if item.get('kind') != 'table':
                     continue
-                prefix = 'schema:' + config['database_id'] + ':' + config['stream_id'] + ':table:'
+                prefix = 'schema:' + realm_prefix(config) + ':table:'
                 if not item['id'].startswith(prefix):
                     raise DataResourceError('Migration table realm snapshot mismatch')
                 original = qualified(repo, item['id'])
@@ -205,6 +206,7 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
                 if files.get(target.path) is None or files[target.path].scope != scope:
                     issue('DATA_RESOURCE_TABLE_SCOPE_UNKNOWN_OR_EXCLUDED', source_id=original)
                     continue
+                record['schema_objects'][original] = (schema_realm(schema, schema_name=item['name'][0]), list(item['name']))
                 record['tables'].add(original)
                 table_resources[original] = identity
             if schema.get('status') != 'COMPLETE' or schema.get('diagnostics') or schema.get('mapping_diagnostics'):
@@ -336,6 +338,26 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         if repo != record['repo_id'] or not owner_ids or context.get('repo_id') != repo:
             valid = False
         pending_proofs = []
+        if valid and edge.kind in ACCESS and (context.get('framework_rule_versions') or {}).get('jpa') == 'annotation-source-v6-persistence-realms':
+            # Current realm-aware facts require the exact replay target/config,
+            # not merely an ORM node that happens to name the same datasource.
+            links = [m for m in graph.edges if m.source == target.id and m.kind == 'resolves_to_schema_table'
+                     and m.context_ids == edge.context_ids]
+            if len(links) != 1 or links[0].target not in record['schema_objects']:
+                valid = False
+            else:
+                physical = nodes.get(links[0].target)
+                expected_realm, expected_name = record['schema_objects'][links[0].target]
+                physical_meta = physical.metadata if physical is not None else None
+                binding_proofs = proofs_for(links[0], context)
+                originals = [next((p for p in graph.evidence if p['id'] == ref), None) for ref in links[0].evidence_ids]
+                valid = (isinstance(physical_meta, Mapping)
+                    and physical_meta.get('persistence_realm') == expected_realm
+                    and physical_meta.get('schema_object') == expected_name
+                    and binding_proofs is not None and bool(originals)
+                    and all(p is not None and p.get('persistence_realm') == expected_realm for p in originals))
+                if valid:
+                    pending_proofs.extend(binding_proofs)
         if valid:
             for member in path:
                 if member.source not in nodes or member.target not in nodes:

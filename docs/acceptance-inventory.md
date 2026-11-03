@@ -546,3 +546,12 @@ checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
 and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
 integration236PASS is recorded; final independent review/merge remain pending (PR59).
 Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
+
+## T003-S06-W04 — Explicit persistence realms (IN_PROGRESS)
+
+Pure tests/test_persistence_realms.py covers two databases sharing stream main
+with different actual offline migrations/targets, duplicate-pair rejection,
+shared migration-path isolation and delimiter/percent ID collisions. Existing
+source-only legacy bindings now remain UNKNOWN. Actual K1/K2 workspace joins,
+reprojection idempotence and downstream T015 access tests are prepared but NOT_RUN;
+full acceptance is pending. See change note74; no S06 completion is claimed.

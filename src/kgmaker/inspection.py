@@ -238,6 +238,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if build_context:
         value.update(build_context)
     if language == "jvm":
+        from .schema_replay import persistence_selection
+        value["persistence_selection_hash"] = digest(persistence_selection(value))
         value["source_snapshot_version"] = "selected-source-set-2"
         value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:

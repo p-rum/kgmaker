@@ -639,3 +639,18 @@ existing proved HTTP/Kafka/scheduler facts. Missing CFG retains a candidate with
 an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
 process paths, business identities, worker execution or runtime availability are
 inferred. See [API and boundaries](docs/process-triggers.md).
+
+### Explicit persistence realm selection (T003-S06-W04, in progress)
+
+For physical schema links, provide database_id and schema_stream_id explicitly
+in the JVM build context and database_id/stream_id in each workspace repo.flyway
+configuration. Distinct databases may reuse a stream name. Optional
+persistence_schema and flyway_target selectors constrain the supported offline
+replay target; ambiguous or missing realm evidence remains UNKNOWN. Python
+inspect_jvm(..., build_context={...}) and existing imported build-manifest
+inspection carry these fields; the CLI remains kgmaker inspect jvm --root app
+--build-id BUILD_ID. Offline snapshot_workspace then joins existing fresh compiler
+facts to its explicit replay schemas; it never runs a worker, app or database.
+Legacy source-only @Table/@Column fields do not create new strong persisted_in
+links without a proven realm. See docs/changes/74_isolatePersistenceRealms.md for
+actual validation and incomplete scope.

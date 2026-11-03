@@ -645,3 +645,12 @@ Bounded41PASS a current-base199PASS zahrnují actual K1/K2 a canonical mutations
 strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integrace
 236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
 PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
+
+## T003-S06-W04 — explicit persistence realms IN_PROGRESS
+
+The isolated implementation reuses explicit workspace Flyway replay and current
+compiler contexts. Structured database/stream identity replaces global-name
+fallback; same stream across different databases is supported, exact duplicate
+pair rejected. Source-only unqualified physical mappings remain UNKNOWN.
+Pure targeted checks pass; real K1/K2 joins, negatives, one full and independent
+review are pending. See changes/74_isolatePersistenceRealms.md. S06 remains PARTIAL.
