@@ -50,7 +50,7 @@
     "docs/changes/63_classifyHttpClientExecution.md": "803a09ddfdffc2d95b00f9e08fb6f3fb71737f49e077e04424c9075f882e5e92",
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
     "docs/changes/65_ormXmlOverrides.md": "d39ab8953dac8d1ed9b34a064a71cabf406840025af2627a4333143057721a70",
-    "docs/changes/66_bindReturnConsumerFlow.md": "7ba78987901efd7be70064a3cfc5a363fad82db022d68097e9d82d25b9ccef58",
+    "docs/changes/66_bindReturnConsumerFlow.md": "3db2ca24ba5ab24a7d97c1bf3e73b56ea326a8eed18feb87ffcb8f4876e2f8c9",
     "docs/changes/67_catalogHttpProviders.md": "ca88b9e652cb52f5cfafcaeb5dfd0293f1076a901290fe9617e7ecbb36349ca4",
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/69_versionReactUiEvents.md": "42c7312a3012fc05df5801aafe94153d1360d5bf75b2ef0a89f97760806a14e7",
@@ -61,7 +61,7 @@
     "docs/changes/73_buildLocalProcessPath.md": "74d0e1e2fa3e244010ada8959ae81bd015d09a7afdef2963b9b3dad3c0ce0d06",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "19997c5b3fc59d3b5586658c83144f8f1c04d3fafe8493a64dda48eb7d19628d",
+    "docs/compiler-inspection.md": "7b68afb7ceb107f00869ddd2b44b9d16db09a602224447d911846babf5748721",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
@@ -250,9 +250,10 @@
     "fixtures/return-consumer/typescript/src/returns.ts": "cda1578e54b16ad336825b3e17b015a1bf80cc9bafc9323a502f8ea1470266b2",
     "fixtures/spring-conditions/README.md": "32f1e8b3721ef859b795b0493da0859c5aba87fc695f13ab5c60c2f1f35a977a",
     "fixtures/spring-conditions/dependencies.lock.json": "695dcf9291d5a0315331c0768a50cc7bd5b95ff53e56bdddb8bf1b875623631a",
-    "fixtures/spring-imports/README.md": "faa9233b6339264f6a6bb978f0278360466a5160c83c680bd53a79bb4a47aab9",
+    "fixtures/spring-imports/README.md": "8d9d84fd59e32962e58606db403a12be0592bd99b00437c04501d654ac133155",
     "fixtures/spring-imports/dependencies.lock.json": "1aecef7caa91c53d18f30e80431d18f9b9fba0376eb305978edac2177a53ab17",
     "fixtures/spring-imports/src/main/java/fixture/ApiInput.java": "ee156f82ff0275b2f28888926ca0707b0f67efddc1c523193211def42c43c148",
+    "fixtures/spring-imports/typescript-contexts-return-v1.json": "ab4e18f4e8b197acbb07f441ec9c247401bedb77da8361b7d2a7c13ed2703c9d",
     "fixtures/spring-imports/typescript-contexts-v1.json": "29381501a3a105734404c9ad52c9dbaaf4788c474f5daf039859799ab99c1824",
     "fixtures/typescript-callbacks/README.md": "0b3d88689dfb95709b635413315c2d9c59c915ff05f00ff305af5fe077417aa8",
     "fixtures/typescript-callbacks/src/api.ts": "6e4adcefc83970fbe64953db855d58a7de8f4a85e8390b8b901c34058bc8d0b4",
@@ -376,7 +377,7 @@
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_spring_conditions.py": "2ff2de8247e192c40706fa56d1fca0a7f16910eb11aaf17e3b999957207bbdfd",
     "tests/test_spring_imports.py": "5deb8ae9d0bf46fe1256d973bd708b2784e49cf7a3c3a32c53fb138bd15b4600",
-    "tests/test_spring_imports_context.py": "ec54cbd7176bfaa0accf809ed6b04d49301fd21c8bed2fb39a37ab6ee7182f9e",
+    "tests/test_spring_imports_context.py": "3c8463498ba8f7a66d252e4729950b3f6b366559f48eae22f3e4eabc45d4e15e",
     "tests/test_spring_registrations.py": "d6d22c0c0c45f44d1dc38bc5fb61cd3cb428d9e0f8609629af5f166a24165e66",
     "tests/test_t005_add_view_model.py": "b9b241f71803c99d1f9626871f2d48a5fbce54e521ae62b17922b18e278300dd",
     "tests/test_t006_select_service_contexts.py": "464f78e848104daec15c304f8e21122fe3b9e5d47efdaf3720fd6f95404bee4b",
@@ -570,14 +571,14 @@
       "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
       "name": "Typed HTTP request and terminal intent",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1217,
+      "source_line": 1222,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
     },
     {
       "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "name": "Bounded Thymeleaf static fragment provenance",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1197,
+      "source_line": 1202,
       "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     }
   ],
@@ -1209,7 +1210,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1219,
+      "source_line": 1224,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1219,7 +1220,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1219,
+      "source_line": 1224,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1229,7 +1230,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1148,
+      "source_line": 1153,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1239,7 +1240,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1219,
+      "source_line": 1224,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     },
     {
@@ -1249,7 +1250,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1199,
+      "source_line": 1204,
       "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
     },
     {

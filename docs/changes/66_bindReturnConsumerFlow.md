@@ -242,3 +242,28 @@ Vyčerpaný corrective task181 je BLOCKED pouze z důvodu workflow retry budgetu
 explicitní nový golden corrective task navazuje bez změny limitů. Celý golden+
 return/protocol focus následuje před nezávislým review a jediným corrected full;
 žádný z těchto nových běhů zatím není uváděn jako PASS.
+
+## Obnovení a přesná TypeScript context kompatibilita
+
+Golden corrected full aa79 je skutečně dokončený, nikoli přerušený:
+**820 PASS, 9 SKIP, 1 FAIL za1023.60s**, exit1; všech589 source,30 post-build JAR
+a4 ignored prerequisite hashů při běhu zůstalo shodných. XML830 tests/1failure/
+0errors/9skips a log/results/manifests zůstávají v `golden-corrected/`. Po ověření
+ukončeného běhu a nulových /proc cwd/fd uživatelů byly smazány pouze disposable
+pytest projekty; audit je `disposable-temp-cleanup-audit.json`. Source/JAR/M2 ani
+aktuální fronty se nemažou. Žádný failed full není uváděn jako PASS.
+
+Selhal Spring-only exact TS context specimen: nová nezávislá return extension
+úmyslně přidává return_flow_rule_version a tím mění full context ID. Seskupený audit
+všech exact-context assertions našel pouze tento historický whole-context fixture,
+s variantami ordinary a React. V1 soubor zůstává byte-identický. Nový reviewed
+`typescript-contexts-return-v1.json` obsahuje pouze výslovně očekávané pole
+return-consumer-1 a kanonicky odvozená ID; všechny ostatní hodnoty a selection_key
+jsou přesně původní. Očekávání není převzaté z actual output. Stávající dva testy
+se přesměrovávají na nový fixture a nadále porovnávají celý dictionary; nic se
+neignoruje a runtime guards se neuvolňují.
+
+Nejmenší context/inspection-contract/protocol sada je **14 PASS za2.04s**.
+Capability docs a fixture README popisují aditivní context extension a původní
+historický fixture. Následuje společný context/freshness/return/protocol focus,
+nezávislé review a jediný corrected full; nové běhy zatím nejsou tvrzeny PASS.

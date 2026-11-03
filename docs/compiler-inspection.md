@@ -1028,6 +1028,11 @@ network request, store mutation during failed validation, runtime value observat
 or implicit compiler refresh is introduced. Legacy indexes remain readable; an
 explicit obsolete return-rule version is STALE offline.
 
+Both JVM and TypeScript captures include the optional `return_flow_rule_version`
+field. For unchanged capture inputs this updates the full context ID while the
+logical selection key and other legacy fields remain unchanged. Historical
+contexts remain readable without newly certified return-body evidence.
+
 Example after explicit compiler inspection: `kgmaker flow render --help` describes
 the existing process rendering commands; their JSON call blocks include
 `return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
