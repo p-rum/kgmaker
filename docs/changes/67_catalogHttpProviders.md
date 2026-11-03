@@ -279,3 +279,14 @@ Current main b78d2e62148f225be7ba8c53c839f8b052ee269d přidává nezávislý či
 T023 model. Je převzat beze změny; HTTP runtime/tests zůstávají3e9. Před finálním
 review následuje jediný bounded actual HTTP/JPA/dispatch focus a pure process
 regrese. Nejde o nový full suite ani rozšíření scope HTTP projekce.
+
+Final current-main bounded integration is GREEN: **104 PASS, 0 SKIP,80.14s**
+on frozen23401dc source. Command includes public T010 module, whole mandatory
+actual HTTP compiler matrix (same-line overloads/class arrays/prefix/truncation/
+source mutation/relocation), actual K2 JPA use-site parent fixture, real K1/K2
+virtual dispatch and source-interface dispatch, plus all T023 process-model tests.
+Own worker home/JDK21 and all WORKERS/K2/SPRING_IMPORTS/HTTP_PROVIDERS=1 were used
+under shared flock; no application runtime ran. Persistent log/XML and source
+manifest: `/workspace/t010-current-validation/`; every frozen hash is unchanged.
+This supplements historically observed standalone596/10 and integration199,
+without claiming a repeated full. Final independent current-pair review pending.
