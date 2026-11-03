@@ -151,3 +151,15 @@ je nyní649; tento doložený citation rebind je proveden scoped semantic patche
 pokrývajícím parent diff a následným current-main update/apply/validate. Graphy
 jsou regenerovány CLI. Následná metadata nevytvářejí další implementační epizodu
 a nepřepisují žádnou historickou capture.
+
+## Integrace revize merge politiky (2026-11-03)
+
+Aktuální main `54a3e01c7bcb1295973655d72b58a14e6a5d597d` přidává pouze
+T045 revizi 2: GH CI je doplňující evidence, všechny ostatní acceptance, lokální
+toolchain, nezávislé exact-pair review a merge kontroly zůstávají povinné. Starší
+formulace tohoto historického note o povinném fresh CI tento pokyn nenahrazují.
+T023 runtime, testy, schema a fixture zůstávají přesně full-tested95c3ed3.
+Main135 immutable episodes tvoří nezměněný prefix, T023 capture je136.
+
+Pure integrační focus T023/T005/T009/CFG: **130 PASS v0.33s**, exit0,
+`/workspace/validation/t023/integration-policy.xml`. Full se neopakuje.

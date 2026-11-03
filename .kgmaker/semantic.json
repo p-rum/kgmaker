@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
   "files": {
-    "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "6af857e9c12720526bc8b4cf87f471a35f1f3932f513f80b78de24764eb5a15a",
+    "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
+    "README.md": "a6593bb854caecf0f04cb0f5e8ddb95f3671792572893be2fd08a67b38d54543",
     "docs/acceptance-inventory.md": "0f6d2b8863f82079218b7713e791dcaa9d0435ad6fb6aa707a096d7577d60960",
     "docs/architecture.md": "fac32404c4f3df434035dcc8f55a3d48872e26d0913c97e9fc346643aa962ba1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -41,7 +41,8 @@
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
-    "docs/changes/70_defineBusinessProcessModel.md": "3176567e1d9a1fa640aaa4ef453c884ed6a99ce0b0e8bad0a19f9ea924ae2a90",
+    "docs/changes/70_defineBusinessProcessModel.md": "c16487308a7cb3e36f84bf02d3c7d8841808fe379ec6889cd0c04d792c0bd523",
+    "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "85084a8f16e6f3e530d3aea462bcb0e8a794134f7bff6d48dbcc207f32e98ee5",
@@ -49,7 +50,7 @@
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
-    "docs/production-analysis-progress.md": "ee1784d83a9c5f6c02cc1d13374973eb32aa9e0b9caec196dbe101dee5c22a4f",
+    "docs/production-analysis-progress.md": "b10fe9aa80111ca717221e809cf3bf895f6ab972759c80406fd3595c0c2e3912",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -63,9 +64,9 @@
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
-    "docs/tasks/45_addCodeReviewAgent.md": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20",
+    "docs/tasks/45_addCodeReviewAgent.md": "f58ff7405cca873bfa5ec39cd1aebe998070cdba4b53d8b67408787b6d958905",
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
-    "docs/tasks/README.md": "f7abda96e0cb0848bd1eb66cdb87c9974f7a9a5a749146d13b2a2c1fbc0f2da1",
+    "docs/tasks/README.md": "21bbb7d140ad9d126e7dcc3b466451be681fd486b434900b96bd2c9e2b334662",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "891c74eac1397c5e224102e505c841b8830f7b1d1a9a6ddb5bba3fab462c8530",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -380,7 +381,7 @@
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 649,
+      "source_line": 589,
       "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
     },
     {
@@ -54258,6 +54259,145 @@
         }
       ],
       "id": "episode:5d3ef2d4d0a0ec521b27c805645a18016f5e94b4266c42ae3a85bc4d7266ce41"
+    },
+    {
+      "base_commit": "ec333966e657896382f310ef018835e3d696513e",
+      "head_commit": "ec333966e657896382f310ef018835e3d696513e",
+      "worktree_fingerprint": "48caf5a9939cb8aff23e4c7ac2234a7175bbf9b85f87767cc0945ed914cd51e2",
+      "title": "Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "M",
+          "sha256": "61fc87319a1f38c640f7d7e927b7e3d5ff7547640c6840c9824af6281a5ec798"
+        },
+        {
+          "path": ".codex/agents/code-review.toml",
+          "status": "M",
+          "sha256": "6d11215d84594f238f89c894eac743e950d09df3871bbc66ad641f70c8424d72"
+        },
+        {
+          "path": "AGENTS.md",
+          "status": "M",
+          "sha256": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "dc6a1cfe5ae587565490b11dc21955f017d217627951f07b5f6f6c3235b42b1e"
+        },
+        {
+          "path": "docs/changes/72_makeGithubCiOptional.md",
+          "status": "A",
+          "sha256": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "75fb2a65565ad4e40b75382694e4be1d86e7ec7973f1ee17599f628612ab019b"
+        },
+        {
+          "path": "docs/tasks/45_addCodeReviewAgent.md",
+          "status": "M",
+          "sha256": "f58ff7405cca873bfa5ec39cd1aebe998070cdba4b53d8b67408787b6d958905"
+        },
+        {
+          "path": "docs/tasks/README.md",
+          "status": "M",
+          "sha256": "21bbb7d140ad9d126e7dcc3b466451be681fd486b434900b96bd2c9e2b334662"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "file:AGENTS.md:AGENTS.md",
+        "file:README.md:README.md",
+        "file:docs/changes/72_makeGithubCiOptional.md:72_makeGithubCiOptional.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:docs/tasks/45_addCodeReviewAgent.md:45_addCodeReviewAgent.md",
+        "file:docs/tasks/README.md:README.md",
+        "section:AGENTS.md:Autorita a rozsah::3",
+        "section:AGENTS.md:Implementace, evidence a předání::22",
+        "section:AGENTS.md:Merge kontroly — uživatelská revize 2026-11-03::34",
+        "section:AGENTS.md:Povinné názvy a číslování::12",
+        "section:AGENTS.md:Pravidla projektu KGMAKER pro agenty::1",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::445",
+        "section:README.md:Copilot workflow::208",
+        "section:README.md:Data prerequisite audit::333",
+        "section:README.md:Development::239",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::277",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::285",
+        "section:README.md:Implementation memory and workflow::228",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::175",
+        "section:README.md:kgmaker::1",
+        "section:docs/changes/72_makeGithubCiOptional.md:Kompatibilita a příklad::14",
+        "section:docs/changes/72_makeGithubCiOptional.md:Ověření a hranice::21",
+        "section:docs/changes/72_makeGithubCiOptional.md:Problém a změna::5",
+        "section:docs/changes/72_makeGithubCiOptional.md:Volitelné GitHub CI při splnění ostatních kontrol::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::218",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::158",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::168",
+        "section:docs/production-analysis-progress.md:Merge politika po uživatelské změně 2026-10-27::3",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::190",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::105",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::234",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::225",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::243",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::278",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::453",
+        "section:docs/production-analysis-progress.md:T003-S04-W04 — Dependency dispatch hierarchy::398",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::425",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::39",
+        "section:docs/production-analysis-progress.md:T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::26",
+        "section:docs/production-analysis-progress.md:T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::12",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::410",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::381",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::295",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::84",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::71",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::58",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::442",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::307",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::264",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::319",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::337",
+        "section:docs/production-analysis-progress.md:T009 — evidence a coverage agregovaných pohledů (omezený fallback)::361",
+        "section:docs/production-analysis-progress.md:T015 — explicit datasource resource projection::476",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Akceptace a ověření::48",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kompatibilita, DoD a zbývající práce::64",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Kontrakt a kroky::22",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Problém, rozsah a hranice::10",
+        "section:docs/tasks/45_addCodeReviewAgent.md:T045 — Projektový code-review agent pro PR::1",
+        "section:docs/tasks/45_addCodeReviewAgent.md:Uživatelská změna revize 2::72",
+        "section:docs/tasks/README.md:Atomické work packages pro dokončení T003::74",
+        "section:docs/tasks/README.md:High-level zobrazení projektu — T004::17",
+        "section:docs/tasks/README.md:Jednotný formát::184",
+        "section:docs/tasks/README.md:Matice pokrytí zbývající implementace::155",
+        "section:docs/tasks/README.md:Převod P0–P10 z předchozích progress/change dokumentů::219",
+        "section:docs/tasks/README.md:Převod starších milníků::195",
+        "section:docs/tasks/README.md:Registr implementačních zadání::1"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "profiles",
+          "status": "passed"
+        },
+        {
+          "label": "links",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:e40f0673fe2c0c9bfe66e04bc25f7e2ff6777587b0a06bab19188ccb7a60adac"
     },
     {
       "base_commit": "49c46b0bd165cf11e7b3eb0af04bf64fb93e23ce",
