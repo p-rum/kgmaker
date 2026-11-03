@@ -596,6 +596,17 @@ simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
+Explicit compiler inspection now records version1 `argument_to_parameter` bindings
+for supported Javac, K1 and TypeScript call expressions. Each proof retains its
+original call site, formal index, context and direct/vararg transformation.
+Named/default Kotlin arguments follow compiler binding, with omitted defaults
+marked as not evaluated. These are bindings to the declared contract; dispatch
+candidates remain candidates and availability stays UNKNOWN. K2 Kotlin and
+unsupported/erroneous bindings expose specific UNKNOWN boundaries.
+`kgmaker flow render --entry METHOD_ID --view process --format json` includes
+binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
+retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
+
 React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
 uses opt-in `react-jsx-events-4`: React18.3.1/@types/react18.3.18 with the pinned
 compiler declaration hash. Intrinsic event props and one verified source forwarding
