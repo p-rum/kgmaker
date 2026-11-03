@@ -148,3 +148,19 @@ skutečného current-parent vlastního buildu s receipt, source/lock a JAR hash
 porovnáním; samotná shoda checkout source nestačí. GH CI je volitelné podle
 uživatelské revize T045, ostatní acceptance, závislosti a nezávislé review zůstávají
 povinné. Nový full se kvůli této source-identické parent kompozici neplánuje.
+
+## Nová actual validace aktualizovaného parentu
+
+Donor není založen pouze na source shodě: vlastní fresh K1/K2 buildy coroutine
+parentu mají oba exit0 a následný kombinovaný actual48 run PASS. Všech15
+JVM source/build/lock hashů bylo před převzetím porovnáno;30 JAR/runtime-lib
+souborů bylo po kopii SHA-256 ověřeno. Donor receipt a copy receipt jsou
+`/workspace/coroutine-main-integration/factory-build-receipt.json` a
+`/workspace/golden-current-validation/donor-copy-receipt.json`.
+
+Nový frozen focus nad32bf655: **32 PASS, 0 SKIP v78.38s**, exit0, XML32/
+0failures/0errors. Obsahuje všech21 actual corpus checks plus sdílené K1 Advanced,
+K2 mixed a existující CFG regrese. Všech frozen source/test/fixture/JAR vstupů
+zůstalo beze změny (`inputs.json`, `focus.log/xml`, `status.json` v persistent
+validačním adresáři). Nový celý pytest se kvůli source-identické parent kompozici
+neopakoval; historický646/10 full zůstává označen jako historický.
