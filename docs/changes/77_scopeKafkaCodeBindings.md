@@ -45,3 +45,27 @@ AnalysisError místo očekávaného UNPROVEN; první Kotlin K2 positive expectat
 odhalilo chybějící worker metadata. Opravená explicitní matice je uvedena výše.
 Finální full, dependency bootstrap, semantic/memory/scan a nezávislé review jsou
 stále neprovedené/pending; T012 ani tato revize nejsou DONE.
+
+## Uzavření canonical proof guardů před full
+
+Nezávislé review našlo P1: vzájemně přepsaný method owner v raw symbolu a Node
+metadata původně prošel. Oprava váže id/owner/name/descriptor/kind/context/scope
+na původní compiler contains tuple. Producer má analogický původní call-site a
+canonical dependency-target tuple v declares_call proof. Vlastní actual negative
+navíc prokázal source annotation shadow se stejným oficiálním FQCN; adapter jej
+nyní odmítá podle skutečných compiler source symbols, bez source parseru.
+Podezření na code_ref ownership bylo nezávisle staženo: existující validace již
+vyžaduje unique explicit source ownership shodné s binding.service_id.
+
+Aktuální opravená matrix je **10 PASS / 54.287 s / 0 SKIP, FAIL, ERROR**, XML
+`/workspace/kafka-code-validation/final-guard-ten.xml`. Všech91 bounded input
+hashů je pre/post beze změny; nejde o celý full input manifest. Nezávislá source
+closure APPROVE je nad ef3ab405/f2f3dc4. Předchozí9 PASS zůstává pouze důkazem
+předchozího draft source. Semantic apply/validate a draft memory/scan/check byly
+provedeny; posunuté původní reference se obnovují před finálním full freeze.
+
+Pro full se explicitně připravují skutečné JDK21/Kotlin K1+K2/TypeScript5.7.3 a
+React18.3.1 fixture, byte-exact27 worker inputs a30JAR/lib closure z dříve
+ověřeného argument donor buildu. Source-only preflight nespouští build/install.
+Nový API-only Maven fixture má samostatný explicitní offline bootstrap ve FIFO
+frontě. Povinný strict full se teprve zařazuje; žádný full PASS ani DONE se netvrdí.
