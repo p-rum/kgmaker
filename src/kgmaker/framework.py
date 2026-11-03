@@ -643,8 +643,12 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         raise AnalysisError("Framework augmentation requires an analysis context")
     # Reproject only this context's framework layer after an explicit replay
     # attachment; compiler facts and other contexts remain immutable inputs.
-    owned_edges = [e for e in graph.edges if e.evidence_kind == "FRAMEWORK_DERIVED"
-                   and e.context_ids == (context_id,)]
+    owned_proofs = {p['id'] for p in graph.evidence if isinstance(p, dict) and isinstance(p.get('id'), str)
+                    and p.get('kind') == 'FRAMEWORK_DERIVED' and p.get('context_ids') == [context_id]
+                    and isinstance(p.get('framework_rules'), dict)}
+    owned_edges = {e for e in graph.edges if e.evidence_kind == "FRAMEWORK_DERIVED"
+                   and e.context_ids == (context_id,) and e.evidence_ids
+                   and set(e.evidence_ids) <= owned_proofs}
     other_edges = [e for e in graph.edges if e not in owned_edges]
     foreign_references = {endpoint for e in other_edges for endpoint in (e.source, e.target)}
     owned_nodes = ({endpoint for e in owned_edges for endpoint in (e.source, e.target)
@@ -660,8 +664,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                    if Path(path).suffix.lower() in {".java", ".kt", ".kts"}
                    and (not isinstance(captured, dict) or captured.get(path) == graph.files[path])}
     evidence = {item["id"]: item for item in graph.evidence if isinstance(item, dict)
-                and isinstance(item.get("id"), str) and not (item.get('kind') == 'FRAMEWORK_DERIVED'
-                and item.get('context_ids') == [context_id])}
+                and isinstance(item.get("id"), str) and item['id'] not in owned_proofs}
     edges = {(item.source, item.target, item.kind): item for item in other_edges}
     previous_diagnostics = [d for d in graph.diagnostics if d.get("framework_context_id") != context_id]
     diagnostics = []

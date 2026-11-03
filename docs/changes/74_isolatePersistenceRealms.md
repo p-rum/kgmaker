@@ -67,3 +67,17 @@ předcházejí jednomu novému frozen full; tento dokument žádný jejich PASS 
 Semantic/memory/scan a finální publikace/review jsou další kroky. Žádný merge
 implementační agent neprovádí; GH CI je volitelné dle T045, lokální acceptance a
 skutečný vyžadovaný toolchain zůstávají povinné.
+
+
+## Early current-main source checkpoint
+
+Merged HTTP parent75d448ee7791cffb3dc9f4cceff5136402a8f5e0 zachovává oba
+JPA selection a HTTP input guards. Samostatný regresní RED našel, že obecné
+smazání FRAMEWORK_DERIVED edges by odstranilo HTTP producer ve stejném kontextu.
+Oprava identifikuje pouze vlastní Spring/JPA provenance přes framework_rules;
+HTTP proof/edge/node zůstávají zachované. Tento scénář je GREEN. Exact-context
+symbol subset, orphan owned-node cleanup a scoped diagnostics umožňují bezpečný
+idempotentní přepočet nad dvěma kontexty. Pure sada82PASS9deselected5.80s;
+aktuální minimum7PASS22actual-deselected0.23s. Actual fixture nově ověřuje i
+T015 selected-realm access a osm partial/foreign/malformed proof variant pro
+oba backendy. Ještě nebyla spuštěna; full není queued.

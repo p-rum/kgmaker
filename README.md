@@ -654,3 +654,16 @@ facts to its explicit replay schemas; it never runs a worker, app or database.
 Legacy source-only @Table/@Column fields do not create new strong persisted_in
 links without a proven realm. See docs/changes/74_isolatePersistenceRealms.md for
 actual validation and incomplete scope.
+
+HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
+integrations --format json` includes `http.requests`; process JSON/Markdown shows
+request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
+3.7.2 Java calls are compiler-attributed in both workers. An unused WebClient
+publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
+static trigger, never observed network execution or available response data.
+See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).
+
+HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/method
+path components without guessing a composed route, and rejects URI-callback route
+guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
+starts a worker. See the HTTP matrix for property-file and privacy boundaries.

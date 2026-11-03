@@ -66,6 +66,10 @@ def _selection_key(context: dict) -> str:
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy", "persistence_schema", "flyway_target",
     )}
+    if isinstance(payload.get("framework_rule_versions"), dict):
+        # An additive HTTP capture layer replaces the same logical selection;
+        # legacy contexts remain readable with HTTP coverage UNKNOWN.
+        payload["framework_rule_versions"] = {key: value for key, value in payload["framework_rule_versions"].items() if key != "http"}
     if context.get("language") == "jvm":
         payload.update(kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
@@ -116,6 +120,14 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             valid_realm = False
         if not valid_realm:
             raise WorkerError('STALE_INDEX: persistence selection changed; inspect again', 'STALE')
+
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "http" in rules:
+        from .http_execution import VERSION as HTTP_VERSION
+        from .analysis_model import digest
+        expected_http = digest({'sources': context.get('http_config_provenance', {}),
+                                'redacted': context.get('http_redacted_input_hash')})
+        if rules['http'] != HTTP_VERSION or context.get('http_inputs_hash') != expected_http:
+            raise WorkerError("STALE_INDEX: HTTP rule/configuration proof changed; inspect again", "STALE")
     options = (context.get("compiler_options") or {}).get("kotlin")
     if options is not None:
         from .analysis_model import AnalysisError

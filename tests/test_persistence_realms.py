@@ -222,3 +222,64 @@ def test_actual_resource_access_tracks_selected_realm_and_target(actual_realm_wo
         targets = {n.id: n for n in view.nodes}
         assert {targets[e.target].attributes['database_id'] for e in reads} == {context['database_id']}
         assert graph.to_dict() == before
+
+
+def test_reprojection_preserves_another_framework_producer_in_same_context(tmp_path):
+    from kgmaker.framework import augment_framework_graph
+    from kgmaker.model import KnowledgeGraph, Node, Edge
+    ctx = {'id': 'same-context', 'language': 'jvm', 'scope': 'production', 'framework_rule_versions': {}}
+    proof = {'id': 'http-proof', 'kind': 'FRAMEWORK_DERIVED', 'source': 'caller', 'target': 'http-request',
+             'relation': 'defines_http_request', 'rule': 'http-client-execution-1', 'context_ids': [ctx['id']]}
+    edge = Edge('caller', 'http-request', 'defines_http_request', evidence_kind='FRAMEWORK_DERIVED',
+                context_ids=(ctx['id'],), evidence_ids=('http-proof',))
+    graph = KnowledgeGraph(3, str(tmp_path), 'now',
+        [Node('caller', 'method', 'caller', 'Caller.java'),
+         Node('http-request', 'http_request_definition', 'GET /orders', 'Caller.java')], [edge], {}, [ctx], [], [proof])
+    result = augment_framework_graph(tmp_path, graph, ctx)
+    assert edge in result.edges and proof in result.evidence
+    assert next(n for n in result.nodes if n.id == 'http-request') == graph.nodes[1]
+
+
+@pytest.mark.parametrize('mutation', ['missing_pair', 'partial_pair', 'wrong_target', 'wrong_schema',
+    'invalid_selector', 'foreign_schema_metadata', 'malformed_explicit_keys', 'missing_schema_provenance'])
+def test_actual_missing_partial_or_foreign_proof_never_uses_unique_name(actual_realm_workspace, mutation):
+    from dataclasses import replace
+    from kgmaker.feature import attach_schema
+    from kgmaker.framework import augment_framework_graph
+    from kgmaker.store import load_graph
+    app, configs, _, _, _ = actual_realm_workspace
+    graph = load_graph(app)
+    for config in configs:
+        graph = attach_schema(graph, reconstruct(app, config), app)
+    context = deepcopy(next(c for c in graph.contexts if c.get('database_id') == configs[0]['database_id']))
+    if mutation == 'missing_pair':
+        context.pop('database_id'); context.pop('schema_stream_id')
+    elif mutation == 'partial_pair':
+        context.pop('schema_stream_id')
+    elif mutation == 'wrong_target':
+        context['flyway_target'] = '2'
+    elif mutation == 'wrong_schema':
+        context['persistence_schema'] = 'archive'
+    elif mutation == 'invalid_selector':
+        context['persistence_schema'] = []
+    else:
+        changed = []
+        for node in graph.nodes:
+            metadata = deepcopy(node.metadata or {})
+            realm = metadata.get('persistence_realm')
+            if isinstance(realm, dict) and realm.get('database_id') == configs[0]['database_id']:
+                if mutation == 'foreign_schema_metadata':
+                    realm['database_id'] = configs[1]['database_id']
+                elif mutation == 'malformed_explicit_keys':
+                    realm['explicit_keys'] = None
+                else:
+                    metadata.pop('persistence_realm')
+                node = replace(node, metadata=metadata)
+            changed.append(node)
+        graph = replace(graph, nodes=changed)
+    before = deepcopy(graph.to_dict())
+    with patch('subprocess.Popen', side_effect=AssertionError('bounded proof replay must stay offline')):
+        result = augment_framework_graph(app, graph, context)
+    assert not any(e.kind in {'resolves_to_schema_table', 'resolves_to_schema_column'}
+                   and e.context_ids == (context['id'],) for e in result.edges)
+    assert graph.to_dict() == before
