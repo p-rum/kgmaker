@@ -217,3 +217,28 @@ caller-block clone prefix a argument i return sidecar. Workspace ponechává
 Kafka redacted contexts/diagnostics i return reference qualification.
 Relevantní current-parent focus a jediný strict full následují; jejich výsledek
 zatím není tvrzen PASS. T025 certifikace lokálních operací je jiná budoucí větev.
+
+## Hand-labelled golden return hranice
+
+Finální-parent focus nad ef205 skutečně prošel **159 PASS, 0 SKIP za22.07s**.
+Následný strict full skončil **419 PASS, 7 SKIP, 1 FAIL za719.36s**, exit1;
+všech589 source,30 post-build JAR a4 ignored prerequisite hashů zůstalo shodných.
+Log/XML/results/source receipts jsou zachované v
+`/workspace/return-consumer-current-validation/final-parent/failed-ef205/`.
+Nejde o full PASS. Golden inventory poprvé nečekalo nové správné return UNKNOWN
+hranice na Work.kt6 absent(4) a Work.kt9 ambiguous pick(null).
+
+Před dalším během byl ručně přečten celý golden source a všech5 scénářů pro oba
+backends proti return v1 kontraktu. Přidány jsou pouze dvě přesné K1 unsupported
+řádky pro tyto dvě source identity. K2 nemá Kotlin source return IR; Java ERROR,
+constructor/callable a suspend ASYNC bodies se nepovyšují na DECLARED return join.
+Ostatní mixed/Java/features/dispatch očekávání zůstávají nezměněná. Přesný
+unsupported Counter, multiplicity, call inventory, počty a target assertions se
+nemění; žádná diagnostická kategorie se nefiltruje a runtime guards se neuvolňují.
+`golden-source-audit.md` v persistent validation adresáři obsahuje ruční matici
+zdůvodnění před actual během. README corpus vysvětluje stejnou omezenou změnu.
+
+Vyčerpaný corrective task181 je BLOCKED pouze z důvodu workflow retry budgetu;
+explicitní nový golden corrective task navazuje bez změny limitů. Celý golden+
+return/protocol focus následuje před nezávislým review a jediným corrected full;
+žádný z těchto nových běhů zatím není uváděn jako PASS.
