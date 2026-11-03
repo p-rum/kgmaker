@@ -50,7 +50,7 @@
     "docs/changes/63_classifyHttpClientExecution.md": "803a09ddfdffc2d95b00f9e08fb6f3fb71737f49e077e04424c9075f882e5e92",
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
     "docs/changes/65_ormXmlOverrides.md": "d39ab8953dac8d1ed9b34a064a71cabf406840025af2627a4333143057721a70",
-    "docs/changes/66_bindReturnConsumerFlow.md": "b6aaa7f492dbf54e77201fecf31d6effe0830a1589aa5ba1c51fcbf7d50ebe85",
+    "docs/changes/66_bindReturnConsumerFlow.md": "7ba78987901efd7be70064a3cfc5a363fad82db022d68097e9d82d25b9ccef58",
     "docs/changes/67_catalogHttpProviders.md": "ca88b9e652cb52f5cfafcaeb5dfd0293f1076a901290fe9617e7ecbb36349ca4",
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/69_versionReactUiEvents.md": "42c7312a3012fc05df5801aafe94153d1360d5bf75b2ef0a89f97760806a14e7",
@@ -330,9 +330,9 @@
     "tests/fixtures/jvm-golden/Helper.java": "5accaf573d7b90b7d9ec19e1911485c3ec2ad753b6f2bf38ed783e6a55ef44ac",
     "tests/fixtures/jvm-golden/JavaCaller.java": "de073f6f65f761cba8864cdeccea71bd9bf41477b5a865102d691b1ac18f181a",
     "tests/fixtures/jvm-golden/KotlinFeatures.kt": "47554ea868a243884b6acaf9b2022dbb648010f219731cc333378faccb311c47",
-    "tests/fixtures/jvm-golden/README.md": "41e33024cd88a74e50a7aa198a2f04a48d417a9b664ed99eddedd1900a4c6838",
+    "tests/fixtures/jvm-golden/README.md": "0f4e7f7d0e7f3892430b0e48591ffca78b7ae2851de77627f9f36592901fa12f",
     "tests/fixtures/jvm-golden/Work.kt": "a3266cf19e65c5ec5711ea8f90a4285d9b3be083f444754e625e7b11ad8f144d",
-    "tests/fixtures/jvm-golden/expected.json": "f3becaf7d77a17db2e0c6e2024d547f4a3d9bc1e0fa7b00f0133db479409bb32",
+    "tests/fixtures/jvm-golden/expected.json": "694af57f5d9583ce136e9390d579e8a5825cfede75d0b6e8aa07f84a97a14b19",
     "tests/rendering/generate.py": "61c456d3641da2c1112d9dfc809fff2b15d2a6ef101d706a09e04e4fe7621ab5",
     "tests/rendering/package-lock.json": "65dd49c35e012e67c3f425d8f0667039c765a5f1dc1d77979563605d8b47c2f8",
     "tests/rendering/package.json": "327a9b9fa80307b4d408972edae4678e407884a087d6682a37182d2ecf7d4328",
@@ -1193,16 +1193,6 @@
       "evidence": "Inventory checks exact counts and caller/target/source identities; mutations reject missing, extra, retargeted or stronger observations."
     },
     {
-      "source": "file:tests/fixtures/jvm-golden/expected.json:expected.json",
-      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/fixtures/jvm-golden/expected.json",
-      "source_line": 3,
-      "evidence": "Hand-labelled per-backend expectations separate source call resolution from unsupported compiler/model diagnostics."
-    },
-    {
       "source": "file:fixtures/build-inspection/ground-truth.json:ground-truth.json",
       "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
       "kind": "models",
@@ -1321,6 +1311,16 @@
       "source_file": "tests/test_templates.py",
       "source_line": 253,
       "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
+    },
+    {
+      "source": "file:tests/fixtures/jvm-golden/expected.json:expected.json",
+      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/fixtures/jvm-golden/expected.json",
+      "source_line": 3,
+      "evidence": "Hand-labelled per-backend expectations separate source call resolution from unsupported compiler/model diagnostics."
     }
   ],
   "episodes": [
