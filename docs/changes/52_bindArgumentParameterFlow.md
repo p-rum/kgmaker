@@ -212,3 +212,19 @@ K2 kombinace vyžaduje čerstvý explicitní build a integrační actual kontrol
 Jejich výsledek zatím není PASS. GH CI je podle výslovného pokynu uživatele
 volitelné, všechny ostatní acceptance a nezávislé review nad aktuálním párem
 zůstávají povinné. Celý T003-S07 ani T003/T004 nejsou dokončené.
+
+### Nový společný parent s FactoryBean a HTTP katalogem
+
+Po dokončení předchozího integračního běhu byl main posunut na
+`c76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a`. Předchozí vlastní K2 build a
+argument/JPA/dispatch focus skutečně prošly: **34 PASS, 0 SKIP v85.595s**;
+138 zmrazených tracked vstupů zůstalo shodných. Tento výsledek neprokazuje
+novou kombinaci Java registračních hooků a argumentových bindingů.
+
+Nová integrace má konflikty jen v dokumentaci, CI seznamu testů a semantic views;
+Java frontend se složil automaticky. CI zachovává HTTP, registration i argument
+moduly. Pure parent kontrola: **198 PASS, 20 SKIP, 9 deselected v5.23s**;
+přeskočené actual registrační případy v tomto příkazu neměly explicitní JDK PATH
+a nejsou uváděny jako PASS. Jejich existující samostatná Factory evidence zůstává
+v původním rozsahu. Nový kombinovaný K1/K2 build a skutečné integrační případy
+zůstávají nutné před finálním merge.

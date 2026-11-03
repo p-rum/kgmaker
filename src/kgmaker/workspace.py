@@ -494,6 +494,7 @@ def source_path(packet: dict, key: str) -> Path:
 def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persist_cache: bool = False) -> tuple[dict, dict, dict, KnowledgeGraph, dict]:
     from . import feature
     from .schema_replay import reconstruct
+    from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
     workspace = load_workspace(manifest)
     baseline_repos, sources, exclusions, nodes, edges, graphs, schemas = {}, {}, [], [], [], {}, {}
@@ -513,7 +514,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1'],
+                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', HTTP_CAPTURE_VERSION],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:

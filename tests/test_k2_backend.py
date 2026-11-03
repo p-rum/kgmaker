@@ -293,6 +293,154 @@ class FieldEmbedded(@field:PrimaryKey val key: PropertyKey)
     assert "GET" in profile_targets
 
 
+def test_k2_jpa_mapped_superclass_attributes_keep_declaring_and_effective_owners(actual_k2, tmp_path):
+    _, options, _, _ = actual_k2
+    package = tmp_path / "src/main/java/jakarta/persistence"
+    package.mkdir(parents=True)
+    declarations = {
+        "Entity": "@Target(ElementType.TYPE) public @interface Entity {}",
+        "MappedSuperclass": "@Target(ElementType.TYPE) public @interface MappedSuperclass {}",
+        "Id": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}",
+        "Column": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default \"\"; }",
+        "Table": "@Target(ElementType.TYPE) public @interface Table { String name() default \"\"; }",
+        "AttributeOverride": "@Target({ElementType.TYPE,ElementType.FIELD,ElementType.METHOD}) public @interface AttributeOverride { String name(); Column column(); }",
+        "InheritanceType": "public enum InheritanceType { SINGLE_TABLE, JOINED, TABLE_PER_CLASS }",
+        "Inheritance": "@Target(ElementType.TYPE) public @interface Inheritance { InheritanceType strategy(); }",
+    }
+    for name, declaration in declarations.items():
+        prefix = "" if name == "InheritanceType" else "import java.lang.annotation.*; @Retention(RetentionPolicy.RUNTIME) "
+        (package / f"{name}.java").write_text(f"package jakarta.persistence; {prefix}{declaration}")
+    source = tmp_path / "src/main/kotlin/demo/Inheritance.kt"
+    source.parent.mkdir(parents=True)
+    source.write_text('''package demo
+import jakarta.persistence.*
+@MappedSuperclass open class AuditBase(@field:Id val id: Long, @field:Column(name="created_on") open val created: String)
+@MappedSuperclass open class TenantBase(@field:Column(name="tenant_id") val tenant: String) : AuditBase(0, "base")
+@Entity @Inheritance(strategy=InheritanceType.SINGLE_TABLE) @Table(name="single_rows")
+@AttributeOverride(name="created", column=Column(name="single_created"))
+open class SingleRow : TenantBase("single")
+@Entity @Table(name="single_child_rows")
+@AttributeOverride(name="created", column=Column(name="single_child_created"))
+class SingleChild : SingleRow()
+@Entity @Inheritance(strategy=InheritanceType.JOINED) @Table(name="joined_rows")
+open class JoinedRow : TenantBase("joined")
+@Entity @Table(name="joined_child_rows") class JoinedChild : JoinedRow()
+@Entity @Inheritance(strategy=InheritanceType.TABLE_PER_CLASS) @Table(name="class_rows")
+open class ClassRow : TenantBase("class")
+@Entity @Table(name="class_child_rows") class ClassChild : ClassRow()
+@Entity @Table(name="collision_rows")
+class CollisionRow : TenantBase("collision") { @field:Column(name="local_created") override val created = "local" }
+@Entity @Table(name="unknown_override")
+@AttributeOverride(name="created", column=Column(name=MISSING_COLUMN))
+class UnknownOverride : TenantBase("unknown")
+@Entity @Table(name="foreign_rows") class ForeignRow : other.AuditBase()
+''')
+    foreign_source = tmp_path / "src/main/kotlin/other/Other.kt"
+    foreign_source.parent.mkdir(parents=True)
+    foreign_source.write_text("package other\nopen class AuditBase\n")
+    run_options = {**options, "repo_id": "jpa-inheritance", "module": "inheritance",
+                   "classpath": options["classpath"], "publish": False}
+    result = inspect_jvm(tmp_path, **run_options)
+    graph = KnowledgeGraph.from_dict(result["graph"])
+    attributes = {node.name: node for node in graph.nodes if node.kind == "orm_attribute"}
+    for entity, table, column in (("SingleRow", "single_rows", "single_created"),
+                                  ("JoinedRow", "joined_rows", "created_on"),
+                                  ("ClassRow", "class_rows", "created_on")):
+        attribute = attributes[f"{entity}.created"]
+        assert attribute.metadata["declaring_owner"] == "demo.AuditBase"
+        assert attribute.metadata["effective_owner"] == f"demo.{entity}"
+        assert attribute.metadata["inherited"] is True
+        assert graph.schema_version == 3
+        assert next(node for node in graph.nodes if node.kind == "orm_table" and node.name == table).metadata[
+            "inheritance_strategy"] == {"single_rows": "SINGLE_TABLE", "joined_rows": "JOINED",
+                                        "class_rows": "TABLE_PER_CLASS"}[table]
+        assert any(edge.source == attribute.id and edge.kind == "declared_on_table"
+                   and next(node for node in graph.nodes if node.id == edge.target).name == table
+                   for edge in graph.edges)
+        assert any(node.kind == "orm_column" and node.name == column
+                   and any(edge.source == attribute.id and edge.target == node.id and edge.kind == "maps_to_column"
+                           for edge in graph.edges) for node in graph.nodes)
+    assert attributes["SingleRow.tenant"].metadata["declaring_owner"] == "demo.TenantBase"
+    assert attributes["SingleRow.tenant"].metadata["effective_owner"] == "demo.SingleRow"
+    for entity, table, column in (("SingleChild", "single_rows", "single_child_created"),
+                                  ("JoinedChild", "joined_rows", "created_on"),
+                                  ("ClassChild", "class_child_rows", "created_on")):
+        inherited = attributes[f"{entity}.created"]
+        assert inherited.metadata["declaring_owner"] == "demo.AuditBase"
+        assert inherited.metadata["effective_owner"] == f"demo.{entity}"
+        assert any(edge.source == inherited.id and edge.kind == "declared_on_table"
+                   and next(node for node in graph.nodes if node.id == edge.target).name == table
+                   for edge in graph.edges)
+        assert any(node.kind == "orm_column" and node.name == column
+                   and any(edge.source == inherited.id and edge.target == node.id and edge.kind == "maps_to_column"
+                           for edge in graph.edges) for node in graph.nodes)
+    collision = attributes["CollisionRow.created"]
+    assert collision.metadata["mapping_status"] == "UNKNOWN"
+    assert not any(edge.source == collision.id and edge.kind == "maps_to_column" for edge in graph.edges)
+    assert not any(node.kind == "orm_attribute" and node.name == "ForeignRow.created" for node in graph.nodes)
+    unknown_override = attributes["UnknownOverride.created"]
+    assert unknown_override.metadata["mapping_status"] == "UNKNOWN"
+    assert not any(edge.source == unknown_override.id and edge.kind == "maps_to_column" for edge in graph.edges)
+    assert any(diagnostic.get("code") == "ORM_INHERITED_ATTRIBUTE_COLLISION"
+               and diagnostic.get("effective_owner") == "demo.CollisionRow"
+               and diagnostic.get("attribute") == "created" for diagnostic in graph.diagnostics)
+
+
+def test_java_jpa_mapped_superclass_fields_and_properties_are_projected(actual_k2, tmp_path):
+    package = tmp_path / "src/main/java/jakarta/persistence"
+    package.mkdir(parents=True)
+    declarations = {
+        "Entity": "@Target(ElementType.TYPE) public @interface Entity {}",
+        "MappedSuperclass": "@Target(ElementType.TYPE) public @interface MappedSuperclass {}",
+        "Id": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}",
+        "Column": "@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default \"\"; }",
+        "Table": "@Target(ElementType.TYPE) public @interface Table { String name() default \"\"; }",
+    }
+    for name, declaration in declarations.items():
+        (package / f"{name}.java").write_text(
+            f"package jakarta.persistence; import java.lang.annotation.*; "
+            f"@Retention(RetentionPolicy.RUNTIME) {declaration}")
+    demo = tmp_path / "src/main/java/demo"
+    demo.mkdir(parents=True)
+    (demo / "FieldBase.java").write_text('''package demo;
+import jakarta.persistence.*;
+@MappedSuperclass class FieldBase { @Id Long id; @Column(name="field_created") String created; }
+''')
+    (demo / "FieldEntity.java").write_text('''package demo;
+import jakarta.persistence.*;
+@Entity @Table(name="field_entity") class FieldEntity extends FieldBase {}
+''')
+    (demo / "PropertyBase.java").write_text('''package demo;
+import jakarta.persistence.*;
+@MappedSuperclass class PropertyBase { private Long id; private String code;
+  @Id public Long getId() { return id; }
+  @Column(name="property_code") public String getCode() { return code; }
+}
+''')
+    (demo / "PropertyEntity.java").write_text('''package demo;
+import jakarta.persistence.*;
+@Entity @Table(name="property_entity") class PropertyEntity extends PropertyBase {}
+''')
+    result = inspect_jvm(tmp_path, kotlin_backend="k1", home=HOME, classpath=[], publish=False,
+                         repo_id="jpa-java-inheritance", module="models")
+    graph = KnowledgeGraph.from_dict(result["graph"])
+    attributes = {node.name: node for node in graph.nodes if node.kind == "orm_attribute"}
+    field_attr = attributes["FieldEntity.created"]
+    assert field_attr.metadata["declaring_owner"] == "demo.FieldBase"
+    assert field_attr.metadata["effective_owner"] == "demo.FieldEntity"
+    assert field_attr.metadata["access"] == "FIELD"
+    assert any(node.kind == "orm_column" and node.name == "field_created"
+               and any(edge.source == field_attr.id and edge.target == node.id and edge.kind == "maps_to_column"
+                       for edge in graph.edges) for node in graph.nodes)
+    property_attr = attributes["PropertyEntity.code"]
+    assert property_attr.metadata["declaring_owner"] == "demo.PropertyBase"
+    assert property_attr.metadata["effective_owner"] == "demo.PropertyEntity"
+    assert property_attr.metadata["access"] == "PROPERTY"
+    assert any(node.kind == "orm_column" and node.name == "property_code"
+               and any(edge.source == property_attr.id and edge.target == node.id and edge.kind == "maps_to_column"
+                       for edge in graph.edges) for node in graph.nodes)
+
+
 def test_unresolved_and_ambiguous_k2_calls_remain_partial(actual_k2):
     _, _, result, _ = actual_k2
     unresolved = [site for site in result["graph"]["call_sites"]

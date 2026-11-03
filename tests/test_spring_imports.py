@@ -159,7 +159,7 @@ def test_literal_and_static_imports_link_without_processor_beans(actual_imports)
         if edge["kind"] == "selects_import":
             assert edge["evidence_kind"] == "FRAMEWORK_DERIVED"
             assert tuple(edge["context_ids"]) == (result["context"]["id"],)
-            assert all(next(e for e in graph["evidence"] if e["id"] == identity)["framework_rules"]["spring"] == "annotation-source-v4" for identity in edge["evidence_ids"])
+            assert all(next(e for e in graph["evidence"] if e["id"] == identity)["framework_rules"]["spring"] == "annotation-source-v5" for identity in edge["evidence_ids"])
 
 
 def test_unknown_filters_and_deferred_groups_remain_unknown(actual_imports):
