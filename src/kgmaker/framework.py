@@ -24,7 +24,7 @@ from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v6"
-JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v2"
+JPA_RULE_VERSION = "annotation-source-v6-persistence-realms"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -79,6 +79,33 @@ DERIVED_QUERY_OPERATORS = (
 
 def _simple(value: str) -> str:
     return value.rsplit(".", 1)[-1]
+
+
+def _jpa_name_arg(args: str, names=("name", "value")) -> str | None:
+    """Decode a compiler constant's JSON string, preserving SQL quote markers."""
+    import json
+    for name in names:
+        match = re.search(r"\b" + re.escape(name) + r"\s*=\s*", args)
+        if match:
+            try:
+                value, _ = json.JSONDecoder().raw_decode(args[match.end():])
+            except (ValueError, TypeError):
+                return None
+            return value if isinstance(value, str) else None
+    return _string_arg(args, names)
+
+
+def _sql_identifier(value: str | None) -> str | None:
+    from .schema_replay import identifier, statements
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = statements(value)
+        if len(parsed) != 1 or len(parsed[0][0]) != 1 or parsed[0][0][0] != value:
+            return None
+        return identifier(parsed[0][0][0])
+    except AnalysisError:
+        return None
 
 
 def _line(text: str, offset: int) -> int:
@@ -641,12 +668,33 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     context_id = context.get("id")
     if not isinstance(context_id, str) or not context_id:
         raise AnalysisError("Framework augmentation requires an analysis context")
-    nodes = {node.id: node for node in graph.nodes}
-    symbols = {item.get("id"): item for item in graph.symbols if isinstance(item, dict) and isinstance(item.get("id"), str)}
-    source_text = {path: _path_text(root, path) for path in graph.files if Path(path).suffix.lower() in {".java", ".kt", ".kts"}}
-    evidence = {item["id"]: item for item in graph.evidence if isinstance(item, dict) and isinstance(item.get("id"), str)}
-    edges = {(item.source, item.target, item.kind): item for item in graph.edges}
-    diagnostics = list(graph.diagnostics)
+    # Reproject only this context's framework layer after an explicit replay
+    # attachment; compiler facts and other contexts remain immutable inputs.
+    owned_proofs = {p['id'] for p in graph.evidence if isinstance(p, dict) and isinstance(p.get('id'), str)
+                    and p.get('kind') == 'FRAMEWORK_DERIVED' and p.get('context_ids') == [context_id]
+                    and isinstance(p.get('framework_rules'), dict)}
+    owned_edges = {e for e in graph.edges if e.evidence_kind == "FRAMEWORK_DERIVED"
+                   and e.context_ids == (context_id,) and e.evidence_ids
+                   and set(e.evidence_ids) <= owned_proofs}
+    other_edges = [e for e in graph.edges if e not in owned_edges]
+    foreign_references = {endpoint for e in other_edges for endpoint in (e.source, e.target)}
+    owned_nodes = ({endpoint for e in owned_edges for endpoint in (e.source, e.target)
+                    if endpoint.startswith("framework:")} | {n.id for n in graph.nodes
+                    if n.id.startswith("framework:") and (n.metadata or {}).get("context_id") == context_id}) - foreign_references
+    nodes = {node.id: node for node in graph.nodes if node.id not in owned_nodes}
+    compiler_contexts = {c.get('id') for c in graph.contexts if c.get('language') == 'jvm'}
+    symbols = {item.get("id"): item for item in graph.symbols if isinstance(item, dict)
+               and isinstance(item.get("id"), str) and (item.get('context_id') == context_id
+               or item.get('context_id') is None and compiler_contexts == {context_id})}
+    captured = context.get('source_files')
+    source_text = {path: _path_text(root, path) for path in graph.files
+                   if Path(path).suffix.lower() in {".java", ".kt", ".kts"}
+                   and (not isinstance(captured, dict) or captured.get(path) == graph.files[path])}
+    evidence = {item["id"]: item for item in graph.evidence if isinstance(item, dict)
+                and isinstance(item.get("id"), str) and item['id'] not in owned_proofs}
+    edges = {(item.source, item.target, item.kind): item for item in other_edges}
+    previous_diagnostics = [d for d in graph.diagnostics if d.get("framework_context_id") != context_id]
+    diagnostics = []
     jpa_xml = _jpa_xml_model(root, context)
     diagnostics.extend(jpa_xml["diagnostics"])
     annotations: list[dict[str, Any]] = list(graph.analysis_annotations)
@@ -663,6 +711,18 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
+        if relation in {"query_reads", "query_writes", "query_deletes", "resolves_to_schema_table", "resolves_to_schema_column"}:
+            record["persistence_selection"] = {key: context.get(key) for key in
+                ("database_id", "schema_stream_id", "persistence_unit", "persistence_schema", "flyway_target")}
+            target_node = nodes.get(target)
+            if target_node is not None and isinstance((target_node.metadata or {}).get("persistence_realm"), dict):
+                record["persistence_realm"] = dict(target_node.metadata["persistence_realm"])
+            elif target_node is not None and target_node.kind == 'orm_table':
+                physical = [nodes[e.target] for e in edges.values() if e.source == target
+                            and e.kind == 'resolves_to_schema_table' and e.context_ids == (context_id,)
+                            and e.target in nodes]
+                if len(physical) == 1 and isinstance((physical[0].metadata or {}).get('persistence_realm'), dict):
+                    record['persistence_realm'] = dict(physical[0].metadata['persistence_realm'])
         if compiler_fact is not None:
             record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
@@ -701,6 +761,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             identity_fields["declaration_identity"] = declaration_identity
         identity = _node_id(kind, identity_fields)
         if identity not in nodes:
+            metadata["context_id"] = context_id
             nodes[identity] = Node(identity, kind, name, path, line=line,
                                     signature=metadata.pop("signature", None),
                                     summary=metadata.pop("summary", None),
@@ -1282,7 +1343,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
             continue
         type_lines = [(node, (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0))
-                      for node in nodes.values() if node.path == path and node.kind in {"class", "interface"}]
+                      for node in nodes.values() if node.id in symbols and node.path == path and node.kind in {"class", "interface"}]
         for match in re.finditer(r"(?P<ann>@(?:Autowired|Inject|Resource|Qualifier)(?:\([^\n]*\))?\s*)*(?P<type>[A-Z][\w.]*(?:\s*<[^;=]+>)?)\s+(?P<name>\w+)\s*(?:[;=]|(?:=\s*lateinit))", source):
             line = _line(source, match.start())
             owner = max((node for node, start in type_lines if start <= line), key=lambda node: (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0), default=None)
@@ -1371,12 +1432,57 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     # ORM entities, persistent attributes and repository/query declarations.
     schema_tables = [node for node in nodes.values() if node.kind == "db_table"]
     schema_columns = [node for node in nodes.values() if node.kind == "db_column"]
-    realm_prefix = None
-    if context.get("database_id") and context.get("schema_stream_id"):
-        realm_prefix = f"schema:{context['database_id']}:{context['schema_stream_id']}:"
+    from .schema_replay import persistence_pair, schema_node_realm, persistence_selection
+    selected_pair = persistence_pair(context.get("database_id"), context.get("schema_stream_id"))
+    selected_schema = context.get("persistence_schema")
+    selected_target = context.get("flyway_target")
+    valid_selectors = all(v is None or isinstance(v, str) and v and v == v.strip()
+                          for v in (selected_schema, selected_target))
+    recorded_contexts = [c for c in graph.contexts if c.get('id') == context_id]
+    try:
+        selection = persistence_selection(context)
+        valid_selection = (len(recorded_contexts) == 1
+            and persistence_selection(recorded_contexts[0]) == selection
+            and context.get('persistence_selection_hash') == digest(selection)
+            and recorded_contexts[0].get('persistence_selection_hash') == digest(selection))
+    except (ValueError, TypeError):
+        valid_selection = False
+    valid_selectors = valid_selectors and valid_selection
+    if entity_decls and (selected_pair is None or not valid_selectors):
+        diagnostics.append({"code": "PERSISTENCE_REALM_UNPROVEN",
+                            "reason": "Explicit database_id and schema_stream_id with valid optional schema/target selectors are required for physical schema binding."})
 
-    def in_schema_realm(candidate: Node) -> bool:
-        return realm_prefix is None or candidate.id.startswith(realm_prefix)
+    def in_schema_realm(candidate: Node, declared_schema: str | None = None) -> bool:
+        realm = schema_node_realm(candidate)
+        if selected_pair is None or not valid_selectors or not isinstance(realm, dict):
+            return False
+        if persistence_pair(realm.get("database_id"), realm.get("stream_id")) != selected_pair:
+            return False
+        if not {"database_id", "stream_id"} <= set(realm.get("explicit_keys", [])):
+            return False
+        if selected_target is not None and realm.get("target") != selected_target:
+            return False
+        declared_name = _sql_identifier(declared_schema)
+        selected_name = _sql_identifier(selected_schema)
+        if declared_schema is not None and declared_name is None or selected_schema is not None and selected_name is None:
+            return False
+        if declared_name is not None and selected_name is not None and declared_name != selected_name:
+            return False
+        expected_schema = selected_name or declared_name
+        if expected_schema is None:
+            available = set(realm['schemas'])
+            if len(available) != 1:
+                return False
+            expected_schema = next(iter(available))
+        return realm.get('schema') == expected_schema
+
+    def schema_table_matches(candidate: Node, table_name, table_schema) -> bool:
+        return (in_schema_realm(candidate, table_schema)
+                and candidate.metadata['schema_object'][1] == _sql_identifier(table_name))
+
+    def schema_column_matches(candidate: Node, table_name, table_schema, column_name) -> bool:
+        return (in_schema_realm(candidate, table_schema)
+                and candidate.metadata['schema_object'][1:] == [_sql_identifier(table_name), _sql_identifier(column_name)])
 
     embeddable_nodes: dict[str, str] = {}
     embeddable_attributes: dict[tuple[str, str], str] = {}
@@ -1423,7 +1529,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             field_name = str(field.get("name"))
             column_annotation = next((args for name, args in annotations_for_field if _simple(name) == "Column"), "")
             column_name = (None if column_annotation == "__UNRESOLVED__" or embedded_access_unknown else
-                           _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name)
+                           _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else field_name)
             field_line = (field.get("range") or {}).get("start_line")
             if column_annotation == "__UNRESOLVED__":
                 diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": declaration["path"],
@@ -1590,8 +1696,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
         table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
-        table_name = _string_arg(table_annotation[1], ("name", "value")) if table_annotation and not table_values_unknown else None
-        table_schema = _named_string_arg(table_annotation[1], "schema") if table_annotation else None
+        table_name = _jpa_name_arg(table_annotation[1], ("name", "value")) if table_annotation and not table_values_unknown else None
+        table_schema = _jpa_name_arg(table_annotation[1], ("schema",)) if table_annotation else None
         inferred = table_name is None
         inferred = inferred and not table_values_unknown
         table_name = table_name or (None if table_values_unknown else node.name)
@@ -1656,9 +1762,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "supertype": super_name,
                                     "candidates": [item["symbol"].get("owner") for item in candidates],
                                     "reason": "Mapped superclass simple name is ambiguous; no inheritance edge is published."})
-        matches = [candidate for candidate in schema_tables if table_id and in_schema_realm(candidate)
-                   and (candidate.name.casefold() == qualified_table.casefold()
-                        if table_schema else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
+        matches = [candidate for candidate in schema_tables if table_id and schema_table_matches(candidate, table_name, table_schema)]
         if table_values_unknown:
             diagnostics.append({"code": "ORM_TABLE_MAPPING_UNKNOWN", "path": entity["path"],
                                 "source_line": entity["line"], "entity": node.id,
@@ -1875,15 +1979,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
                                                                        "mapping_status": "UNKNOWN"})
                 continue
-            column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name
+            column_name = _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else field_name
             column_id = add_node("orm_column", column_name, entity["path"], field_line, node,
                                  logical_name=column_name, inferred=not bool(column_annotation))
             add_edge(attribute, column_id, "maps_to_column", entity["path"], field_line,
                      "@Column name" if column_annotation else "Persistent attribute name; converter/naming strategy not verified")
-            column_matches = [candidate for candidate in schema_columns if table_name and in_schema_realm(candidate)
-                              and candidate.name.casefold().rsplit(".", 1)[-1] == column_name.casefold()
-                              and len(candidate.name.split(".")) >= 2
-                              and candidate.name.split(".")[-2].casefold() == table_name.casefold()]
+            column_matches = [candidate for candidate in schema_columns if table_name
+                              and schema_column_matches(candidate, table_name, table_schema, column_name)]
             if not inferred and len(column_matches) == 1:
                 add_edge(column_id, column_matches[0].id, "resolves_to_schema_column", entity["path"], field_line, "Exact schema column name in selected table/realm")
             elif not inferred and len(column_matches) > 1:
@@ -1966,7 +2068,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
                                                                            "mapping_status": "UNKNOWN"})
                     continue
-                column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else property_name
+                column_name = _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else property_name
                 column_id = add_node("orm_column", column_name, entity["path"], property_line, node,
                                      logical_name=column_name, inferred=not bool(column_annotation))
                 add_edge(attribute, column_id, "maps_to_column", entity["path"], property_line,
@@ -2396,7 +2498,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 continue
             repo_name, declared_model = match.group(1), generic.group(1).rsplit(".", 1)[-1]
             line = _line(source, match.start())
-            repo = next((node for node in nodes.values() if node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
+            repo = next((node for node in nodes.values() if node.id in symbols and node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
             repository_symbol = symbols.get(repo.id) if repo else None
             model_owner = repository_entity_owner(repository_symbol)
             model_name = _simple(model_owner) if model_owner else declared_model
@@ -2425,7 +2527,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     parsed = _derived_query(method_name)
                     if parsed is None:
                         continue
-                    method = next((node for node in nodes.values() if node.path == path and node.kind == "method" and node.name == method_name), None)
+                    method = next((node for node in nodes.values() if node.id in symbols and node.path == path and node.kind == "method" and node.name == method_name), None)
                     if method is None:
                         continue
                     query_line = line + body[:derived.start()].count("\n")
@@ -2606,8 +2708,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:
-                matches = [candidate for candidate in nodes.values() if candidate.kind == "orm_table" and
-                           str((candidate.metadata or {}).get("logical_name", candidate.name)).casefold() == table_name.rsplit(".", 1)[-1].casefold()]
+                query_parts = table_name.split('.')
+                query_schema = query_parts[0] if len(query_parts) == 2 else None
+                matches = [candidate for candidate in nodes.values() if candidate.kind == "orm_table"
+                           and (candidate.metadata or {}).get('context_id') == context_id
+                           and len(query_parts) <= 2
+                           and _sql_identifier((candidate.metadata or {}).get("logical_name", candidate.name)) == _sql_identifier(query_parts[-1])
+                           and (query_schema is None or _sql_identifier((candidate.metadata or {}).get('schema')) == _sql_identifier(query_schema))]
                 if len(matches) == 1:
                     add_edge(query_id, matches[0].id, action, path, line,
                              "Native SQL exact table name in selected ORM projection")
@@ -2618,6 +2725,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     # Self-invocation is a framework boundary, not a normal proxy traversal.
     for site in graph.call_sites:
+        if site.get("caller") not in symbols:
+            continue
         caller = nodes.get(site.get("caller")); target = nodes.get(site.get("declared_target"))
         if not caller or not target or caller.id == target.id:
             continue
@@ -2679,7 +2788,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         source_path = symbol.get("path")
         result = []
         for candidate in nodes.values():
-            if candidate.kind != "orm_attribute" or (candidate.metadata or {}).get("attribute") != attribute_name:
+            if candidate.kind != "orm_attribute" or (candidate.metadata or {}).get("context_id") != context_id \
+                    or (candidate.metadata or {}).get("attribute") != attribute_name:
                 continue
             metadata = candidate.metadata or {}
             if class_kind == "entity":
@@ -2705,6 +2815,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         attribute_ids = set(entity_attributes.get(owner, {}).values())
         attribute_ids.update(candidate.id for candidate in nodes.values()
                              if candidate.kind == "orm_attribute"
+                             and (candidate.metadata or {}).get("context_id") == context_id
                              and ((candidate.metadata or {}).get("effective_owner") == owner
                                   or (candidate.metadata or {}).get("declaring_owner") == owner))
         for attribute_id in attribute_ids:
@@ -2722,6 +2833,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         prefix = declaration["node"].name + "."
         for candidate in list(nodes.values()):
             if candidate.kind not in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                    or (candidate.metadata or {}).get("context_id") != context_id \
                     or candidate.path != source_path or not candidate.name.startswith(prefix):
                 continue
             for key, edge in list(edges.items()):
@@ -2801,6 +2913,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     attribute_ids = set(entity_attributes.get(owner, {}).values())
                     attribute_ids.update(candidate.id for candidate in nodes.values()
                                          if candidate.kind == "orm_attribute"
+                                         and (candidate.metadata or {}).get("context_id") == context_id
                                          and (candidate.metadata or {}).get("effective_owner") == owner)
                     for attribute_id in attribute_ids:
                         remove_attribute_columns(attribute_id)
@@ -2810,6 +2923,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         nodes.pop(attribute_id, None)
                     for candidate in list(nodes.values()):
                         if candidate.kind in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                                and (candidate.metadata or {}).get("context_id") == context_id \
                                 and candidate.path == declaration["path"] \
                                 and candidate.name.startswith(declaration["node"].name + "."):
                             for key, edge in list(edges.items()):
@@ -2904,9 +3018,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                 "path": provenance["xml_mapping_file"], "class": owner,
                                                 "reason": "Existing query/table reference was invalidated by an XML table override."})
                 if xml_table is not None:
-                    matches = [candidate for candidate in schema_tables if in_schema_realm(candidate)
-                               and (candidate.name.casefold() == qualified.casefold() if table_schema
-                                    else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
+                    matches = [candidate for candidate in schema_tables if schema_table_matches(candidate, table_name, table_schema)]
                     if len(matches) == 1:
                         add_edge(table_id, matches[0].id, "resolves_to_schema_table",
                                  provenance["xml_mapping_file"], None,
@@ -2918,7 +3030,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "reason": "XML table has no unique exact schema binding in the selected realm."})
                 simple_name = declaration["node"].name
                 class_path = declaration["path"]
-                for attr in [candidate for candidate in nodes.values() if candidate.kind == "orm_attribute"]:
+                for attr in [candidate for candidate in nodes.values() if candidate.kind == "orm_attribute"
+                and (candidate.metadata or {}).get("context_id") == context_id]:
                     metadata = attr.metadata or {}
                     belongs = (metadata.get("effective_owner") == owner or
                                attr.path == class_path and attr.name.startswith(simple_name + "."))
@@ -2934,6 +3047,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 current_attribute_ids = set(entity_attributes.get(owner, {}).values())
                 current_attribute_ids.update(candidate.id for candidate in nodes.values()
                                              if candidate.kind == "orm_attribute"
+                                             and (candidate.metadata or {}).get("context_id") == context_id
                                              and ((candidate.metadata or {}).get("effective_owner") == owner
                                                   or (candidate.metadata or {}).get("declaring_owner") == owner))
                 for attribute_id in current_attribute_ids:
@@ -3081,7 +3195,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             target_table_id = None
         for attribute in list(nodes.values()):
             metadata = attribute.metadata or {}
-            if attribute.kind != "orm_attribute" or metadata.get("effective_owner") != effective_owner \
+            if attribute.kind != "orm_attribute" or metadata.get("context_id") != context_id \
+                    or metadata.get("effective_owner") != effective_owner \
                     or not metadata.get("inherited"):
                 continue
             for key, edge in list(edges.items()):
@@ -3112,11 +3227,11 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     for index, current in enumerate(contexts):
         if current.get("id") == context_id:
             contexts[index] = {**current, "framework_analysis": {"spring": SPRING_RULE_VERSION, "jpa": JPA_RULE_VERSION,
-                                                                  "schema_binding": "exact-name-only", "coverage": "PARTIAL"}}
+                                                                  "schema_binding": "explicit-replay-realm-1", "coverage": "PARTIAL"}}
             break
     result = replace(graph, nodes=sorted(nodes.values(), key=lambda item: item.id),
                      edges=sorted(edges.values(), key=lambda item: (item.source, item.kind, item.target)),
-                     contexts=contexts, diagnostics=diagnostics, evidence=sorted(evidence.values(), key=lambda item: item["id"]),
+                     contexts=contexts, diagnostics=previous_diagnostics + [{**d, "framework_context_id": context_id} for d in diagnostics], evidence=sorted(evidence.values(), key=lambda item: item["id"]),
                      analysis_annotations=annotations)
     KnowledgeGraph.from_dict(result.to_dict())
     return result

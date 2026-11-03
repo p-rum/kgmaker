@@ -611,6 +611,28 @@ and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in not
 integration236PASS is recorded; final independent review/merge remain pending (PR59).
 Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
 
+## T003-S06-W04 — Explicit persistence realms (VERIFIED_IN_SCOPE)
+
+`tests/test_persistence_realms.py` covers two databases sharing stream main with
+different actual offline migrations/targets, exact duplicate-pair rejection,
+shared migration-path isolation, delimiter/percent IDs, quoted-dot SQL component
+collisions and metadata tamper. Actual K1/K2 contexts over the same entity retain
+separate native/JPQL scope, idempotent local reprojection and selected T015 access.
+Two actual persistence units bind the same entity to their own DB/schema/table
+with XML provenance; ambiguous PU produces no physical claim and preserves store.
+The new current-JPA layer rejects missing/partial/foreign realm proof. Legacy
+source-only regex fields remain readable, with no new strong physical link.
+
+Final strict full: **1348 PASS, 10 SKIP in1583.75s**, mandatory workers/K2/Spring/
+HTTP flags, XML1358 tests/0failures/0errors. Exact HEADb75370d and all623 frozen
+input hashes remained unchanged. Earlier182PASS+setupERROR is a partial result,
+not the final full. See change note74 and persistent validation receipts.
+
+Supported physical bindings are non-renamed replay tables/columns. Valid renamed
+objects with stable creation IDs currently remain UNKNOWN; S06-W08 supplies the
+creation-identity lifecycle follow-up. Broader provider, grammar, schema lifecycle,
+deployment and populated-data availability are not proved. S06 remains PARTIAL.
+
 ## T003-S07-W06 — HTTP client intent, omezený compiler subset
 
 | ID | Stav | Přímá evidence |

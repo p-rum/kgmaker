@@ -47,3 +47,25 @@ Opraveno přesným odebráním/ověřením repository wrapperu, explicitními Ja
 primitive/String literal assignment conversions a mezemi, neprázdným ordered
 source spanem a calls-shape guardem. Rozšířená pure protocol sada nyní **32 PASS
 v0.25s**; raw worker/pipeline gate tím stále není nahrazen.
+
+## Oprava po skutečném worker běhu a integrace W04
+
+Oba vlastní fresh K1/K2 buildy na477b5f9 prošly (13.851/12.449s), ale následná
+sada skončila36PASS1setupERROR: standardní declaration location má optional
+origin=handwritten/generated, které Python consumer příliš striktně odmítal.
+Doplněn přesný whitelist tohoto existujícího pole v obou místech validace;
+source/SHA/range/binding/mirror kontroly zůstaly. Protocol regression zahrnuje
+oba origin i odmítnutí dependency origin. Nejde o nový worker build.
+
+Následný bounded actual repro odhalil ztrátu nových per-block evidence refs
+v graph_provider.preserve_contexts a views.project. Obě existující projekce teď
+přenášejí explicitní local_operation_evidence_ids z vybraných verzovaných CFG
+bloků; samotné uchování není povýšení důkazu. Consumer stále vyžaduje přesnou
+source/context/CFG/IR identity, source checksum a content hash. Stejný skutečný
+K1 workspace/process průchod po opravě prošel1PASS4.69s. Další skutečné testy a
+full zůstávají pending, původní neúspěšný log/XML zachovány.
+
+Parent9f6605d (PR62/W04) integrován bez konfliktu runtime; ručně sloučen pouze
+CI seznam testů a sémantická metadata, graf bude znovu CLI-generated. Vlastní
+Java změny jsou stále byte-exact fresh build checkpoint477b5f9. Zachována
+historie210 main epizod a dvě vlastní candidate epizody. Žádný ready/full PASS.

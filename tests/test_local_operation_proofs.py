@@ -126,9 +126,15 @@ def protocol_specimen():
     return response, context
 
 
-def test_explicit_protocol_preserves_two_distinct_operation_occurrences():
+@pytest.mark.parametrize('origin', [None, 'handwritten', 'generated'])
+def test_explicit_protocol_preserves_two_distinct_operation_occurrences(origin):
     from kgmaker.local_operations import validate_operations
-    response, context = protocol_specimen(); before = deepcopy((response, context))
+    response, context = protocol_specimen()
+    if origin is not None:
+        node = response['bodies'][0]['body']['statements'][0]
+        node['binding']['declaration']['origin'] = origin
+        node['local_operation']['target_declaration']['origin'] = origin
+    before = deepcopy((response, context))
     records = validate_operations(response, context)
     assert [r['operation'] for r in records] == ['LOCAL_LITERAL_ASSIGNMENT', 'LITERAL_EVALUATION']
     assert [r['ir_path'] for r in records] == [['statements', 0], ['statements', 0, 'value']]
@@ -138,12 +144,15 @@ def test_explicit_protocol_preserves_two_distinct_operation_occurrences():
 
 @pytest.mark.parametrize('change', ['field', 'boxed', 'missing_hash', 'foreign_hash', 'literal_outside',
     'target_identity', 'literal_reference', 'body_version', 'reserved_ref', 'nonblock_body',
-    'string_to_int', 'int_overflow', 'empty_literal', 'columns_reversed', 'long_to_int', 'char_overflow', 'calls_shape'])
+    'string_to_int', 'int_overflow', 'empty_literal', 'columns_reversed', 'long_to_int', 'char_overflow', 'calls_shape', 'foreign_origin'])
 def test_malformed_or_unsupported_protocol_cannot_mint_operation_proof(change):
     from kgmaker.local_operations import validate_operations
     response, context = protocol_specimen(); body = response['bodies'][0]
     node = body['body']['statements'][0]
-    if change == 'field': node['binding']['kind'] = 'FIELD'
+    if change == 'foreign_origin':
+        node['binding']['declaration']['origin'] = 'dependency'
+        node['local_operation']['target_declaration']['origin'] = 'dependency'
+    elif change == 'field': node['binding']['kind'] = 'FIELD'
     elif change == 'boxed': node['local_operation']['target_type'] = 'Ljava/lang/Integer;'
     elif change == 'missing_hash': context['source_files'].clear(); response['symbols'][0]['sha256'] = None
     elif change == 'foreign_hash': node['value']['sha256'] = '2' * 64

@@ -173,7 +173,9 @@ def _validate_operations(response, context):
                         or binding.get('type') != witness['target_type']
                         or binding.get('id') != witness['target_binding']
                         or binding.get('declaration') != declaration
-                        or not isinstance(declaration, dict) or set(declaration) != {'path', 'sha256', 'range'}
+                        or not isinstance(declaration, dict)
+                        or not {'path', 'sha256', 'range'} <= set(declaration) <= {'path', 'sha256', 'range', 'origin'}
+                        or ('origin' in declaration and declaration['origin'] not in {'handwritten', 'generated'})
                         or declaration['path'] != path or declaration['sha256'] != sha
                         or not _range(declaration['range']) or not _literal(literal)
                         or not _assignable(literal, witness['target_type'])
@@ -355,7 +357,9 @@ def validated_cfg_operations(graph, context):
                 if original['target_binding'] is not None or declaration is not None:
                     _fail('literal operation has a target binding')
             else:
-                if (not isinstance(declaration, dict) or set(declaration) != {'path', 'sha256', 'range'}
+                if (not isinstance(declaration, dict)
+                        or not {'path', 'sha256', 'range'} <= set(declaration) <= {'path', 'sha256', 'range', 'origin'}
+                        or ('origin' in declaration and declaration['origin'] not in {'handwritten', 'generated'})
                         or not _range(declaration['range']) or declaration['path'] != original['source_file']
                         or declaration['sha256'] != sha):
                     _fail('invalid original local declaration')
