@@ -149,3 +149,15 @@ frozen inputs a HEAD a1fe8306 beze změn, nezávisle znovu ověřeno. Zahrnuje
 compatibility guard matrix, local-operation proofs, HTTP consumer catalog a
 T015/W04 selected physical-realm seams. Root nezávisle schválil composition
 a1fe8306 a povolil jeden strict full; full výsledek zatím neexistuje.
+
+## Strict full — skutečný FAIL a testová korekce
+
+Full6576 skončil **75PASS/2SKIP/1FAIL54.710s**, runnerexit1/55.45s; všech1471
+vstupů i HEAD beze změn. Zachováno failed-full-6576/{full.log,full.xml,
+full-status.json,full-frozen.json}. AC06 compiler fixture očekávala hardcoded
+JPA v6, přestože tato dodávka záměrně zavádí nový current rule version.
+Korekce mění pouze dvě metadata assertions na importovaný JPA_RULE_VERSION;
+EmbeddedId, fyzické ORM a association assertions zůstávají beze změn. Root
+přezkoumal a schválil přesný minimální diff. Workflow zaznamenal failed test
+artifact a legální návrat test→implement (iteration1); žádný runtime rollback.
+Nový coalesced focus ani opravný full nejsou dosud PASS.

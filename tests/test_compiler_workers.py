@@ -9,6 +9,7 @@ import shutil
 import unittest
 from pathlib import Path
 
+from kgmaker.framework import JPA_RULE_VERSION
 from kgmaker.inspection import command, inspect_frontend, inspect_jvm
 from kgmaker.model import KnowledgeGraph
 from kgmaker.worker_protocol import WorkerError, handshake, request_worker
@@ -520,8 +521,8 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
                                build_context={'database_id':'primary','schema_stream_id':'main','persistence_unit':'orders'})
             graph=KnowledgeGraph.from_dict(result['graph'])
             selected_context=next(item for item in graph.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v6-persistence-realms',selected_context['framework_rule_versions']['jpa'])
-            self.assertEqual('annotation-source-v6-persistence-realms',selected_context['framework_analysis']['jpa'])
+            self.assertEqual(JPA_RULE_VERSION,selected_context['framework_rule_versions']['jpa'])
+            self.assertEqual(JPA_RULE_VERSION,selected_context['framework_analysis']['jpa'])
             self.assertIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_embeddable'})
             self.assertNotIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_table'})
             order_id=next(node for node in graph.nodes if node.kind=='orm_attribute' and node.name=='Order.id')
