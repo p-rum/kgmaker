@@ -198,3 +198,24 @@ JVM sources/build/locks se tím nemění. Bounded pure parent focus **130 PASS,
 2 actual deselected,2.12s**, XML `/workspace/validation/t025/ui-parent-pure.xml`.
 Nový full se kvůli tomuto parentu neopakuje. Parent195 immutable episodes jsou
 zachovány; konečný review/merge zůstává samostatný exact-pair gate.
+
+## Argument + template parent kompozice
+
+Jedna následná aktualizace přebírá main1915ebf0be25cab4cb8b0836e2fce25b05c7b10f
+(merged Arg PR47 a template PR38). `process_paths.py` a vlastní T025 test zůstávají
+byte-exact full566. `flow.py` automaticky přebírá pouze parent import a argument
+binding sidecar; vlastní finally(site,callerblock), rootbudget, async boundary a
+proof guards jsou zachovány. Žádný runtime merge konflikt nevznikl.
+
+Donor `/workspace/argument-flow`: všech15 git-tracked JVM source/build/lock files
+přesně odpovídá current parentu i skutečnému source manifestu; obě SUCCESS build
+receipts a30 JAR/library hashes byly ověřeny před kopií i po ní. K1
+2bf6cbdeed24ab37694d8b976b56791896433dd42d8a21289a15085aaa5912b4 a K2
+24461c439d00e97d3d6583ecefc955e1b0bc42eedee078c11a604d4fb693b8e4.
+Donor actual108PASS/0SKIP XML je ověřeno; receipt je
+`/workspace/validation/t025/argument-parent-worker-receipt.json`. Vlastní bounded
+combined focus dokončen: **125PASS/0SKIP v17.99s**, XML
+`/workspace/validation/t025/argument-parent.xml`;272 frozen source/test/fixture/JAR
+inputs beze změny. Zahrnuje vlastní actual Javac/K1 finally/diamond/budget,
+Arg actual Javac/K1/K2, graph/evidence/process binding a HTTP Feign boundary. Full se neopakuje kvůli parentu.
+Parent204 immutable episodes se zachovávají beze změny jako exact prefix.

@@ -90,9 +90,16 @@ export function run(flag: boolean) {
     site = next(site for site in graph.call_sites if ':apply:' in site['caller'])
     assert {symbols[target]['name'] for target in site['dispatch_candidates']} == {'asNumber', 'asString'}
     bindings = [edge for edge in graph.edges if edge.kind == 'argument_to_parameter'
-                and symbols[edge.target]['name'] == 'callback']
+                and symbols[edge.target]['name'] == 'callback' and symbols[edge.source]['kind'] != 'value']
     assert len(bindings) == 2
     assert all(edge.evidence_kind == 'DISPATCH_CANDIDATE' for edge in bindings)
+    occurrences = [edge for edge in graph.edges if edge.kind == 'argument_to_parameter'
+                   and symbols[edge.target]['name'] == 'callback' and symbols[edge.source]['kind'] == 'value']
+    assert len(occurrences) == 1 and occurrences[0].evidence_kind == 'SYMBOL_RESOLVED'
+    proof = next(proof for proof in graph.evidence if proof['id'] in occurrences[0].evidence_ids)
+    assert proof['argument_mapping_version'] == 1 and proof['binding_kind'] == 'DECLARED_PARAMETER'
+    outer = next(call for call in graph.call_sites if call['id'] == proof['call_site'])
+    assert symbols[occurrences[0].target]['method'] == outer['declared_target']
     assert site['declared_target'] is None and site['dispatch_complete'] is False
     assert result['status'] == 'PARTIAL'
 

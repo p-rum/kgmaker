@@ -7,6 +7,7 @@ from collections import defaultdict
 from .analysis_model import AnalysisError, digest
 from .callgraph import strongly_connected
 from .views import project
+from .dataflow import argument_parameter_bindings
 
 
 def _label(value):
@@ -123,6 +124,12 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
             reason = "async/coroutine unsupported" if async_hint else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
+            blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
+            blocks[source_id]["argument_binding_status"] = {
+                "status": site.get("argument_mapping_status", "UNKNOWN"),
+                "reason": site.get("argument_mapping_reason", "LEGACY_ARGUMENT_BINDINGS_UNAVAILABLE"),
+                "omitted_parameters": site.get("argument_omissions", []),
+                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
             if reason:
                 blocks[source_id]["boundary_reason"] = reason
                 omitted.append({"call_site": site["id"], "target": target, "reason": reason})
