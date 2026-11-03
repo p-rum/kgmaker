@@ -742,3 +742,13 @@ Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
 annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
 implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
 [change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
+
+## T013 — interface contract attachments (explicit draft stack)
+
+Shared bounded contract/generation capture and immutable interface attachment add
+role-separated declaration references and content revision fingerprints. Generated
+client origin stays visible when stale; DTO names do not prove compatibility.
+Pure fixtures/workspace regressions35PASS3.23s including final guards; actual Kafka
+revision matrix, full, current integration and review pending. No native extension,
+network/schema fetch or generator execution. [Capability](interface-contracts.md),
+[change85](changes/85_attachInterfaceContracts.md). Depends on pending T012 merge.

@@ -696,3 +696,13 @@ canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tupl
 regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
 AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
 Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.
+
+## T013 — explicit versioned contract attachments (draft stack)
+
+AC01 content revision/stable logical interface, AC02 same DTO name is not payload
+compatibility, AC03 generated origin survives stale contract SHA, AC04 bounded
+immutable/offline/error paths and AC05 scope/context/ambiguous/external schema
+boundaries are in `tests/test_t013_attach_interface_contracts.py`; captured actual
+Kafka revisions are in `tests/test_t013_captured_kafka_contracts.py` (pending run).
+AC06 [change85](changes/85_attachInterfaceContracts.md) records exact outcomes.
+Full/review/current dependency integration pending, runtime transport NOT_RUN.
