@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
   "files": {
-    "AGENTS.md": "9486ead4e1ebdb2a96cab0c5595b24ee6839f3653c7a31ce2161e8a8e14fcb55",
-    "README.md": "7f3db29b2cba797e59f489f246a94a0824d99d1bf7ebd930b918ee0c87f55954",
+    "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
+    "README.md": "87f403a27c9c1dc9869f5100c15fed7fa636b08862797446fb072715e36877cf",
     "docs/acceptance-inventory.md": "a913db307e2c37c5b26771323ea69709f1dcaea6b0769c35bc9190f87955c526",
     "docs/architecture.md": "2c2d851061a1844a2069f4b9a609b6bd616e1cd87e1c2129ef31d9e3df8983cc",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -39,6 +39,7 @@
     "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "ef9358324559dad9c2f79d22562d7767697632d6771483bb2e25f0da8ce6f227",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
+    "docs/changes/67_catalogHttpProviders.md": "0644f41ffe5e50eb7d54cfb12d9a944d1e169592cee2ec78747c13e8448b0ea7",
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
@@ -48,7 +49,7 @@
     "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
-    "docs/production-analysis-progress.md": "6416cbdadf5383f13dd651f0dfd50074f4fbec1cb930ef076d886d0711e385bc",
+    "docs/production-analysis-progress.md": "9b364ee43bef72c55214bfb6e215e142d6c2dfd81823a2434d0e12e2d3ec99b6",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -61,9 +62,9 @@
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
-    "docs/tasks/45_addCodeReviewAgent.md": "d81a08786cc5a0e675ca3e41a6bce3464ebc9e1bec0f5fac5109f1add1656e20",
+    "docs/tasks/45_addCodeReviewAgent.md": "f58ff7405cca873bfa5ec39cd1aebe998070cdba4b53d8b67408787b6d958905",
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
-    "docs/tasks/README.md": "f7abda96e0cb0848bd1eb66cdb87c9974f7a9a5a749146d13b2a2c1fbc0f2da1",
+    "docs/tasks/README.md": "21bbb7d140ad9d126e7dcc3b466451be681fd486b434900b96bd2c9e2b334662",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "891c74eac1397c5e224102e505c841b8830f7b1d1a9a6ddb5bba3fab462c8530",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -195,6 +196,7 @@
     "fixtures/feature-analysis/expected/candidate-valid.json": "fd726df4a3e743f660eff5df32554fe3509d43dd8758f50a64c5227a896bc351",
     "fixtures/feature-analysis/requirements/additional-hedge-answers.json": "9d87e22c9f5880cce2a28daba80b828dbae923c533549634cb56b5ef90db4fc5",
     "fixtures/feature-analysis/requirements/additional-hedge.md": "7041a5dedf488018953ecfeb9f39034c1600ba6fe28c1e74dce4227e5d046599",
+    "fixtures/http-provider-projection/dependencies.lock.json": "90cc4cc8b6b3eabd361276d70d0f49c9e943741a7528432ed93c147be649a913",
     "fixtures/multirepo-analysis/README.md": "a49b04d145d39f35aee83fc1155e58c1816eb776f8bfac7ada2068e43dc3f954",
     "fixtures/multirepo-analysis/backend/contracts/exposure.json": "57a1f494ed8b0396307e82e7107a31edc6ce4579c54e605809289bdd449047d4",
     "fixtures/multirepo-analysis/backend/src/main/resources/db/migration/R__exposure_view.sql": "0fde4135686af9522aeb17b8bfda7ced0264b3b2896baeb89a9768f28a12b71c",
@@ -257,6 +259,7 @@
     "src/kgmaker/graph_provider.py": "08ab9d5061647f6acc8932fd3042ddb42faaf70bf2b779bec784e0b036cc1af2",
     "src/kgmaker/inspection.py": "25cc8de70cd89eac9c77f9a61a939d032f4c9aac4a27f7d3757f89e66b975bf5",
     "src/kgmaker/inspection_cli.py": "b5108462c83c77e07961771497ea2fb3f6e86a96ff676c18d34b37788c1dcff6",
+    "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
@@ -315,6 +318,8 @@
     "tests/test_t007_define_service_ownership.py": "e20cfd4b935f9f5f28105d64023a20104d4339c4f0e8af3a1372260b0ab4a920",
     "tests/test_t008_project_service_inventory.py": "59e40fcddf315ef06fc8739ccf60ceedd42da35e2dd0845a9b6f5204a807b18b",
     "tests/test_t009_propagate_view_evidence.py": "22c259428b00ab80d7e2e1b8246d3f91c109e08f68b705763d3ae948200d2ed6",
+    "tests/test_t010_catalog_http_providers.py": "486ccb3778388a7fb7a226f61e7e62ec61ec4528e71a1bea852e2d95a35ae7c2",
+    "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165",
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_tsconfig_freshness.py": "1cdaf38fde8df1a2ce6029872b233d1e101bd259aadb56b6c0cbef4d80fc9cd1",
@@ -347,12 +352,7 @@
     "workers/typescript/input_snapshot.cjs": "a407f4f525bb03a479888aa8e420a67eb455dd703844511b4c487328183aabea",
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "79a719c9e60fa1cd42cbb6979df1ae11752f83f85efc890527aa373eee633fac",
-    "workers/typescript/worker.cjs": "fb1aeb1c9ad5966921faf52f0c808d03bc88bf386d776822d0e8f73254f2894b",
-    "docs/changes/67_catalogHttpProviders.md": "4cc041fd13f52fda5c56d42e287d8f916edcad31aab594184a4fc09277441a4a",
-    "fixtures/http-provider-projection/dependencies.lock.json": "90cc4cc8b6b3eabd361276d70d0f49c9e943741a7528432ed93c147be649a913",
-    "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
-    "tests/test_t010_catalog_http_providers.py": "486ccb3778388a7fb7a226f61e7e62ec61ec4528e71a1bea852e2d95a35ae7c2",
-    "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165"
+    "workers/typescript/worker.cjs": "fb1aeb1c9ad5966921faf52f0c808d03bc88bf386d776822d0e8f73254f2894b"
   },
   "nodes": [
     {
@@ -375,6 +375,13 @@
       "source_file": "docs/typescript-callbacks.md",
       "source_line": 3,
       "summary": "TypeScript-selected signatures and canonical parameters preserve declared evidence while callback bindings and unions remain incomplete candidates, separate from runtime dispatch proof."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 589,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
     },
     {
       "id": "concept:docs/architecture.md:source_code_is_authoritative",
@@ -412,17 +419,10 @@
       "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
     },
     {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 589,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
-    },
-    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 167,
+      "source_line": 186,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
@@ -515,8 +515,68 @@
       "evidence": "Callback documentation identifies the reused candidate navigation contract instead of a parallel callgraph model."
     },
     {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 87,
+      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
+      "source_line": 107,
+      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
+    },
+    {
+      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_default_body_mapping.py",
+      "source_line": 1,
+      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 111,
+      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 88,
+      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 82,
+      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
       "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::251",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::261",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -605,73 +665,13 @@
       "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 87,
-      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
-      "source_line": 107,
-      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
-    },
-    {
-      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_default_body_mapping.py",
-      "source_line": 1,
-      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
-      "source_line": 111,
-      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 88,
-      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 82,
-      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
-    },
-    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 167,
+      "source_line": 186,
       "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
     },
     {
@@ -701,18 +701,8 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 169,
+      "source_line": 188,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::261",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
     },
     {
       "source": "concept:docs/architecture.md:scoped_http_provider_projection",
