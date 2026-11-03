@@ -2,9 +2,9 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "3f6b70e77ec5692b02e647d71e7701d56e13dfae4858a4db5937c47ac14ed93f",
-    "docs/acceptance-inventory.md": "91e0d0eef724458a8de1126df6dd99204967c12291d52c36c85a0eaf5893fad9",
-    "docs/architecture.md": "4740bb4bbee5aeab9adebacb3e65c6aa408a6ba5e3393301d1f183143946d77a",
+    "README.md": "8ff5082173ba4ad87c51d57cf05296ee1e821572faee5750ae6e6d9c7499f022",
+    "docs/acceptance-inventory.md": "178089fae8196ac0d6e925ac2b8e6f43bb1a495809fadbf8c8b524a9bfcabced",
+    "docs/architecture.md": "068597a88000b88727c56285222b01f99a77b3b63b8bb098b3433b698bb4476d",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/10_specifyHighLevelProjectViews.md": "b3fec8d3326b61942a4db84c74b9d97db63de3f1a0c5520df360c50605534253",
@@ -42,6 +42,7 @@
     "docs/changes/50_expandSpringConditions.md": "1b9cc650341b340e95ff0be535f56304760f378afd28afc6ab453c59452f1b23",
     "docs/changes/51_mapCoroutineSourceBoundaries.md": "a196c28c3ce4d6d00245649f0f20a43944b21a1f49602aec1dbac1e49c8b9193",
     "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "ef9358324559dad9c2f79d22562d7767697632d6771483bb2e25f0da8ce6f227",
+    "docs/changes/55_expandThymeleafFragments.md": "2eb1cb6cb0d23f5e4572e17a3e4c06864c202b1d84ad3b6bbcf30e18b1fb6a79",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/62_verifyJvmGoldenCorpus.md": "24af33421beedf19df9e17869911d4e967f5be846edea4ad09bd48ea267359c2",
     "docs/changes/63_classifyHttpClientExecution.md": "803a09ddfdffc2d95b00f9e08fb6f3fb71737f49e077e04424c9075f882e5e92",
@@ -56,13 +57,13 @@
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "1e5fd6e217c4f0edc3d898877b9c4f67d9b5c3a3e3deb73870bb83ae0be58e3d",
-    "docs/feature-analysis.md": "87aca507460f2224eb4ce461e8d23867506429d4655de626b98bdefba2c68ac7",
+    "docs/compiler-inspection.md": "fc77bd1b55478223283960b237f9492848e61ab74efe94d19a6dafabb7c6cfc5",
+    "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "930ae67d0635edddf336179e684b681b08e1b36f4e17b008ab8be56e0bbc9541",
+    "docs/production-analysis-progress.md": "5318a63777255e8e26c62e415f38a03905ac88f218f7fb9e4c302738b2b6c0fe",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -272,7 +273,7 @@
     "src/kgmaker/data_resources.py": "4ea10151d53fe320f874ee0c95046bc916c9a46189b383b23cb6c42cf23f38b9",
     "src/kgmaker/dataflow.py": "dcd837e1f3b145b4218fd5f984a5589007f70aca5ef2804bfd29799543c0fed6",
     "src/kgmaker/domain.py": "1eacc3bf8d375a54bfab2ccb6263e8adb379830da015aa53f44b6802e2d66be6",
-    "src/kgmaker/feature.py": "156b73144ced4874555f271cd12eca05e6802f7051299469255f08afec1d2cd5",
+    "src/kgmaker/feature.py": "f51afbd8a4c25dd91d44ab5c1a02996671fc89dcdb7c7d7f7737536d8934317d",
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
     "src/kgmaker/flow.py": "cd3c4900b6a15bf6108d3c8854f49ef0cce7db3a5d9c4d05d63e31582cabdaa8",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
@@ -294,8 +295,8 @@
     "src/kgmaker/spring_beans.py": "3578bff2781501216031c60493f6737fd1b6a4e703294cd499f43c3e6544fd13",
     "src/kgmaker/spring_conditions.py": "70788d9310a8b41d954d91fc0ef52a13608fa1da23ae52cd791c6021e5c76ac8",
     "src/kgmaker/spring_imports.py": "7147ac065c5fd7c97edaa6483712837183071b16feaa2c34ac2e1fd23c73579c",
-    "src/kgmaker/store.py": "8decb965e0ab27516f18121ebc10ebc7adea588d0f0cc3afc668dd4044f2d2d6",
-    "src/kgmaker/templates.py": "17027828fb32ae5931b53e839dd12de81fe7798c78b2abf97029c61079d9c884",
+    "src/kgmaker/store.py": "25536d3b1d9af1a1d07b07c50dd00dc3a00863926cd2127669a1f269a918a620",
+    "src/kgmaker/templates.py": "609db10e9bdd41eebeeea97036105b6c5d088ab492e1ab6d7b0e68464633d327",
     "src/kgmaker/test_analysis.py": "84f75c4fbfd7f832cd7b39f5663a4d3c8e25250aeaf0f4ae609f1082ad792ab5",
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
     "src/kgmaker/views.py": "afe39e0aebe9fd1da5501470a1db61d3d75f9ceb352cae3181e8a74d57512d6e",
@@ -365,7 +366,7 @@
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_t023_define_business_process_model.py": "7544ff1b84fbc6d9caf89f51cc1c83acb851dd9f844e0285000f998a0651151a",
     "tests/test_t024_discover_process_triggers.py": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7",
-    "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
+    "tests/test_templates.py": "222296f34f4f5104c3f9a45fcf261e6ea56de3b9538c8513f9f84df21621ac16",
     "tests/test_tsconfig_freshness.py": "793d8c562cb9f1e7e2371dd363cb787999462964c28be9535f7f30226754e93e",
     "tests/test_typescript_callback_limits.py": "ecdeed0b8335b0cf63f94b3717894af7dfaa43fd2bd7f94f69b12126be1684c9",
     "tests/test_typescript_callback_projects.py": "15c08f9be380ba1fea319b2da36b058c0ce413a04a158b363d42cc50997aa786",
@@ -431,6 +432,13 @@
       "summary": "Versioned revision-bound process documents compose shared technical view/evidence with a strictly separate semantic overlay; they do not discover or execute processes."
     },
     {
+      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "name": "Proved trigger inventory",
+      "source_file": "docs/process-triggers.md",
+      "source_line": 1,
+      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
+    },
+    {
       "id": "concept:docs/architecture.md:source_code_is_authoritative",
       "name": "Source code is authoritative",
       "source_file": "docs/architecture.md",
@@ -450,6 +458,34 @@
       "source_file": "docs/architecture.md",
       "source_line": 164,
       "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 186,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 710,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "name": "Kotlin JPA use-site access",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 576,
+      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "name": "Bounded Thymeleaf static fragment provenance",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1023,
+      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     },
     {
       "id": "concept:docs/architecture.md:view_evidence_and_coverage",
@@ -473,39 +509,11 @@
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
-      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
-      "name": "Proved trigger inventory",
-      "source_file": "docs/process-triggers.md",
-      "source_line": 1,
-      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
-    },
-    {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 186,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 710,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
       "name": "Versioned React JSX event evidence",
       "source_file": "docs/compiler-inspection.md",
       "source_line": 758,
       "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "name": "Kotlin JPA use-site access",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 576,
-      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
     },
     {
       "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
@@ -539,7 +547,7 @@
       "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
       "name": "Typed HTTP request and terminal intent",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1023,
+      "source_line": 1043,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
     }
   ],
@@ -635,86 +643,6 @@
       "evidence": "ProcessView technical_view is the existing shared ViewDocument with kind process, retaining shared view/evidence semantics."
     },
     {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
-    },
-    {
-      "source": "concept:docs/architecture.md:source_code_is_authoritative",
-      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 136,
-      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t009_propagate_view_evidence.py",
-      "source_line": 70,
-      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
-    },
-    {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
-    },
-    {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 225,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
       "source": "concept:docs/process-triggers.md:proved_trigger_inventory",
       "target": "file:src/kgmaker/process_triggers.py:process_triggers.py",
       "kind": "implements",
@@ -723,26 +651,6 @@
       "source_file": "docs/process-triggers.md",
       "source_line": 3,
       "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::275",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
     },
     {
       "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
@@ -763,6 +671,56 @@
       "source_file": "workers/typescript/worker.cjs",
       "source_line": 148,
       "evidence": "callbackProof bounds callable expression evidence and worker parameter invocations retain incomplete binding candidates."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
+    },
+    {
+      "source": "concept:docs/architecture.md:source_code_is_authoritative",
+      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::275",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 143,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
     },
     {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
@@ -863,6 +821,226 @@
       "source_file": "workers/jvm/k2/KotlinFrontend.kt",
       "source_line": 82,
       "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 515,
+      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved nested override and class-literal values."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 21,
+      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::138",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 29,
+      "evidence": "The change note specifies direct canonical Jakarta/Javax package checks for known JPA annotations."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:_annotation_map::517",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 11,
+      "evidence": "The change note says unresolved explicit table, column, and override values do not create physical defaults."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:property_site_annotations::1698",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 5,
+      "evidence": "The change note ties FIELD or PROPERTY projection to compiler identity and explicit access."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:augment_framework_graph::632",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 22,
+      "evidence": "The change note says an unknown table remains without a physical schema binding."
+    },
+    {
+      "source": "function:tests/test_k2_backend.py:test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed::136",
+      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 34,
+      "evidence": "The actual K2 fixture covers foreign annotations and alias imports from a Jakarta persistence subpackage, along with access and fail-closed value cases."
+    },
+    {
+      "source": "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::460",
+      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 80,
+      "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "target": "function:src/kgmaker/templates.py:attach_templates::384",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1025,
+      "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 72,
+      "evidence": "The fixture verifies same-element fragment ownership, a literal caller model path, scoped parameter use and same-named variables remaining distinct across fragments."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::228",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 228,
+      "evidence": "The fixture verifies PARTIAL/UNKNOWN conditions and unsupported selector diagnostics without evaluation."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::270",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 270,
+      "evidence": "The negative fixture verifies dynamic, ambiguous and wrong-arity calls have diagnostics, no resolved include edge, and no input graph mutation."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 33,
+      "evidence": "The existing regression verifies literal template variable IDs, backend binding and the explicit external PDF boundary remain present."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 140,
+      "evidence": "The public fixture verifies nested fragment arguments originate at the exact caller-scoped variable and traverse to the nested parameter without global aliases."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::253",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_templates.py",
+      "source_line": 253,
+      "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 136,
+      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t009_propagate_view_evidence.py",
+      "source_line": 70,
+      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+    },
+    {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 28,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 225,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
     },
     {
       "source": "file:workers/typescript/ui_events.cjs:ui_events.cjs",
@@ -985,106 +1163,6 @@
       "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
     },
     {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
-      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved nested override and class-literal values."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 21,
-      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::138",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 29,
-      "evidence": "The change note specifies direct canonical Jakarta/Javax package checks for known JPA annotations."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_annotation_map::517",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 11,
-      "evidence": "The change note says unresolved explicit table, column, and override values do not create physical defaults."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1698",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 5,
-      "evidence": "The change note ties FIELD or PROPERTY projection to compiler identity and explicit access."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:augment_framework_graph::632",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 22,
-      "evidence": "The change note says an unknown table remains without a physical schema binding."
-    },
-    {
-      "source": "function:tests/test_k2_backend.py:test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed::136",
-      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 34,
-      "evidence": "The actual K2 fixture covers foreign annotations and alias imports from a Jakarta persistence subpackage, along with access and fail-closed value cases."
-    },
-    {
-      "source": "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::460",
-      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 80,
-      "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
-    },
-    {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "kind": "implements",
@@ -1171,7 +1249,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1181,7 +1259,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1191,7 +1269,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1201,7 +1279,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1025,
+      "source_line": 1045,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     }
   ],
@@ -80747,6 +80825,493 @@
         }
       ],
       "id": "episode:c2d7e750263814e8374b9d8c0085e6cf4f8f8f94d98cb0288023128b5662812c"
+    },
+    {
+      "base_commit": "78d7968ea7408adea3ec9ce783769bb799522470",
+      "head_commit": "4568cb051266155e214573cf489ee24fc5e52f3b",
+      "worktree_fingerprint": "d541b5555ceb7004c7bff4682ee694152cc00f8f52b921c36607ca383a94df0d",
+      "title": "Merge remote-tracking branch 'origin/feat/t003-s05-03-spring-condition-matrix' into feat/t003-s09-03-template-dialect-expansion",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "6438a16eabac3fc3a66950aaa9ac9b30d6056eb878f9e4be097a7ab0500e77cf"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "1f0eea537ae35f9982535eb22b865ca50eed0076c1ce52165dd27db39e048452"
+        },
+        {
+          "path": "docs/architecture.md",
+          "status": "M",
+          "sha256": "117d4e3a8c215e937fe954634ce08fe0877443a05cf4f799f9da304d233212cc"
+        },
+        {
+          "path": "docs/changes/55_expandThymeleafFragments.md",
+          "status": "A",
+          "sha256": "8d9ca1d8bd7becc511ea839da92a830e26d69f0acb49ddaf083949c540e326b5"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "2b5b376f04595a8a254e15dd150e0e8dd2437be61717bed09a345f824c136ed0"
+        },
+        {
+          "path": "docs/feature-analysis.md",
+          "status": "M",
+          "sha256": "00eb29032fbf74e774036a148fd8de11adaa6eb4c94636c575455b0f389c8ae6"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "4a4dc225239b633b29a74d3006f2443613d77db5744e0ca76b9963c1ea7177b5"
+        },
+        {
+          "path": "src/kgmaker/feature.py",
+          "status": "M",
+          "sha256": "f51afbd8a4c25dd91d44ab5c1a02996671fc89dcdb7c7d7f7737536d8934317d"
+        },
+        {
+          "path": "src/kgmaker/store.py",
+          "status": "M",
+          "sha256": "25536d3b1d9af1a1d07b07c50dd00dc3a00863926cd2127669a1f269a918a620"
+        },
+        {
+          "path": "src/kgmaker/templates.py",
+          "status": "M",
+          "sha256": "bab3bd6b1a2cc855fa2b4c8c0eea127a21eb9a24aa7fa96946e20a1e2cd246c5"
+        },
+        {
+          "path": "tests/test_templates.py",
+          "status": "M",
+          "sha256": "ed3c032b5deac1de6f394728939de9b814593ad270080cf369bda760ccffee87"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/templates.py:_Fragment::115",
+        "class:src/kgmaker/templates.py:_TemplateFacts::123",
+        "class:src/kgmaker/templates.py:_TemplateParser::130",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:explicit_service_inventory_projection",
+        "concept:docs/architecture.md:explicit_workspace_service_ownership",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+        "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+        "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/architecture.md:architecture.md",
+        "file:docs/changes/55_expandThymeleafFragments.md:55_expandThymeleafFragments.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/feature-analysis.md:feature-analysis.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/feature.py:feature.py",
+        "file:src/kgmaker/store.py:store.py",
+        "file:src/kgmaker/templates.py:templates.py",
+        "file:tests/test_templates.py:test_templates.py",
+        "function:src/kgmaker/feature.py:_analysis_details::23",
+        "function:src/kgmaker/feature.py:apply::415",
+        "function:src/kgmaker/feature.py:attach_schema::100",
+        "function:src/kgmaker/feature.py:current_graph::79",
+        "function:src/kgmaker/feature.py:freshness::254",
+        "function:src/kgmaker/feature.py:graph_for_packet::138",
+        "function:src/kgmaker/feature.py:load_packet::245",
+        "function:src/kgmaker/feature.py:packet_identity::241",
+        "function:src/kgmaker/feature.py:revise::442",
+        "function:src/kgmaker/feature.py:source_inventory::40",
+        "function:src/kgmaker/feature.py:source_path::131",
+        "function:src/kgmaker/feature.py:status::433",
+        "function:src/kgmaker/feature.py:validate::395",
+        "function:src/kgmaker/store.py:_edge_details::306",
+        "function:src/kgmaker/store.py:load_graph::55",
+        "function:src/kgmaker/store.py:render_bootstrap::277",
+        "function:src/kgmaker/store.py:render_context::231",
+        "function:src/kgmaker/store.py:render_markdown::63",
+        "function:src/kgmaker/store.py:render_mermaid::176",
+        "function:src/kgmaker/store.py:save_graph::38",
+        "function:src/kgmaker/templates.py:__init__::133",
+        "function:src/kgmaker/templates.py:_attribute_expressions::211",
+        "function:src/kgmaker/templates.py:_condition::181",
+        "function:src/kgmaker/templates.py:_diagnostic::148",
+        "function:src/kgmaker/templates.py:_expressions::40",
+        "function:src/kgmaker/templates.py:_line::24",
+        "function:src/kgmaker/templates.py:_node_id::28",
+        "function:src/kgmaker/templates.py:_owner::141",
+        "function:src/kgmaker/templates.py:_parse_fragment_declaration::69",
+        "function:src/kgmaker/templates.py:_parse_fragment_reference::94",
+        "function:src/kgmaker/templates.py:_split_arguments::84",
+        "function:src/kgmaker/templates.py:_template_root::32",
+        "function:src/kgmaker/templates.py:_variable::155",
+        "function:src/kgmaker/templates.py:attach_templates::336",
+        "function:src/kgmaker/templates.py:handle_data::322",
+        "function:src/kgmaker/templates.py:handle_endtag::316",
+        "function:src/kgmaker/templates.py:handle_startendtag::312",
+        "function:src/kgmaker/templates.py:handle_starttag::225",
+        "function:tests/test_templates.py:fixture::7",
+        "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::119",
+        "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::144",
+        "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
+        "function:tests/test_templates.py:test_template_variable_is_exact_line_evidence_for_data_check::49",
+        "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::447",
+        "section:README.md:Copilot workflow::192",
+        "section:README.md:Data prerequisite audit::318",
+        "section:README.md:Development::220",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::258",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::266",
+        "section:README.md:Implementation memory and workflow::209",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::170",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::56",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::234",
+        "section:docs/acceptance-inventory.md:T001::115",
+        "section:docs/acceptance-inventory.md:T002::194",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::297",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::393",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::368",
+        "section:docs/acceptance-inventory.md:T003-S05-W03 — condition matrix::415",
+        "section:docs/acceptance-inventory.md:T003-S06-W01 — Kotlin JPA use-site a access::3",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::12",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::353",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::341",
+        "section:docs/acceptance-inventory.md:T003-S09-W03 — Thymeleaf fragment provenance::330",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::47",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::34",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::380",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::321",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::65",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::98",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::76",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::87",
+        "section:docs/architecture.md:Architecture::1",
+        "section:docs/architecture.md:Build-aware JVM inspection implementation task::109",
+        "section:docs/architecture.md:Compiler lifecycle provider::180",
+        "section:docs/architecture.md:Extension points::45",
+        "section:docs/architecture.md:High-level view model foundation::133",
+        "section:docs/architecture.md:Hook lifecycle::41",
+        "section:docs/architecture.md:Isolated feature-analysis foundation::49",
+        "section:docs/architecture.md:Relationship confidence::28",
+        "section:docs/changes/55_expandThymeleafFragments.md:Omezené statické Thymeleaf fragmenty::1",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::156",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::152",
+        "section:docs/compiler-inspection.md:Default body source mapping::596",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::102",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::118",
+        "section:docs/compiler-inspection.md:Import a validated execution-bound build manifest before selecting bytecode roots.::602",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::133",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::358",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::245",
+        "section:docs/compiler-inspection.md:No compilation is triggered by scan, graph queries or source-only inspection.::603",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::84",
+        "section:docs/compiler-inspection.md:Required CI prerequisites (T003-S11-W04)::574",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::417",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::388",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::437",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::475",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::526",
+        "section:docs/compiler-inspection.md:T003-S05-W03 — typed condition matrix::644",
+        "section:docs/compiler-inspection.md:T003-S09-W03 — statické Thymeleaf fragmenty::704",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::150",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::121",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::86",
+        "section:docs/feature-analysis.md:Agent reads packet.json and candidate-template.json, writes candidate.json.::56",
+        "section:docs/feature-analysis.md:CLI workflow::33",
+        "section:docs/feature-analysis.md:Candidate contract, schema version 1::114",
+        "section:docs/feature-analysis.md:Context budget and known limits::253",
+        "section:docs/feature-analysis.md:Current implementation::3",
+        "section:docs/feature-analysis.md:Deferred Confluence connection configuration::384",
+        "section:docs/feature-analysis.md:Deterministic data-check::329",
+        "section:docs/feature-analysis.md:Evidence::162",
+        "section:docs/feature-analysis.md:Feature analysis: implemented foundation and remaining milestones::1",
+        "section:docs/feature-analysis.md:Host invocation and tests::272",
+        "section:docs/feature-analysis.md:Implemented field and impact patterns (T001-S02 subset)::297",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::181",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::121",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::131",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::153",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::69",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::197",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::188",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::206",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::241",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::392",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::364",
+        "section:docs/production-analysis-progress.md:T003-S05-W03 — typed profile/property/class conditions::415",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::345",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::328",
+        "section:docs/production-analysis-progress.md:T003-S09-W03 — statické Thymeleaf fragmenty::360",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::262",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::48",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::35",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::22",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::381",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::274",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::227",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::286",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::304"
+      ],
+      "graph_delta": {
+        "added": [
+          "concept:README.md:optional_agent_authored_semantic_layer",
+          "concept:docs/architecture.md:explicit_service_inventory_projection",
+          "concept:docs/architecture.md:explicit_workspace_service_ownership",
+          "concept:docs/architecture.md:source_code_is_authoritative",
+          "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+          "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+          "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "focused-regressions",
+          "status": "passed"
+        },
+        {
+          "label": "full-core",
+          "status": "passed"
+        },
+        {
+          "label": "optional-worker-matrix",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:431c56b9c42117da95f70798d6e085847f2e5f596eb3f2ec943656eb21a0abe6"
+    },
+    {
+      "base_commit": "c02aa6d4b8e32cad3212dfb1939ba2105263565b",
+      "head_commit": "c02aa6d4b8e32cad3212dfb1939ba2105263565b",
+      "worktree_fingerprint": "b5f75bdfdb4eb8d8738e8bd7aa1c9491142bb8b20bd9f234b840fc953061a042",
+      "title": "Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce",
+      "changed_files": [
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "da88c14019278cf16e5e345271633c9c7071b9ceeb8776e470856a296e0dec11"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "e471e0264240afcab8c18e24483ac70ae998a7c9be5b0e4203e5c40b9a20bb51"
+        },
+        {
+          "path": "docs/changes/55_expandThymeleafFragments.md",
+          "status": "M",
+          "sha256": "1bf6c845865114de4d2ef4f7003fc6102564031627888f04841b43e0b0945440"
+        },
+        {
+          "path": "docs/compiler-inspection.md",
+          "status": "M",
+          "sha256": "af3951261e27168c0d5661fd03a8d72df305feb14e9b5e4fbb3491e7cb64d92b"
+        },
+        {
+          "path": "docs/feature-analysis.md",
+          "status": "M",
+          "sha256": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "a19626342f66ce2c3da4ff8d71051db48e1ee8e8ed866acc0b33fe5319faf718"
+        },
+        {
+          "path": "src/kgmaker/templates.py",
+          "status": "M",
+          "sha256": "d48083e7c67b5cf6791976483d50c7b3b04e2c226e7d4aec4fc50d29d6094a38"
+        },
+        {
+          "path": "tests/test_templates.py",
+          "status": "M",
+          "sha256": "3a4015b4cedcd2d2229fb76ef8d907bffbe74bde2eca0d2a110a3059f8cfe76b"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/templates.py:_Fragment::116",
+        "class:src/kgmaker/templates.py:_TemplateFacts::124",
+        "class:src/kgmaker/templates.py:_TemplateParser::131",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+        "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+        "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/55_expandThymeleafFragments.md:55_expandThymeleafFragments.md",
+        "file:docs/compiler-inspection.md:compiler-inspection.md",
+        "file:docs/feature-analysis.md:feature-analysis.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:src/kgmaker/templates.py:templates.py",
+        "file:tests/test_templates.py:test_templates.py",
+        "function:src/kgmaker/templates.py:__init__::134",
+        "function:src/kgmaker/templates.py:_attribute_expressions::224",
+        "function:src/kgmaker/templates.py:_condition::194",
+        "function:src/kgmaker/templates.py:_diagnostic::156",
+        "function:src/kgmaker/templates.py:_expressions::41",
+        "function:src/kgmaker/templates.py:_line::25",
+        "function:src/kgmaker/templates.py:_node_id::29",
+        "function:src/kgmaker/templates.py:_owner::144",
+        "function:src/kgmaker/templates.py:_parse_fragment_declaration::70",
+        "function:src/kgmaker/templates.py:_parse_fragment_reference::95",
+        "function:src/kgmaker/templates.py:_split_arguments::85",
+        "function:src/kgmaker/templates.py:_template_root::33",
+        "function:src/kgmaker/templates.py:_variable::163",
+        "function:src/kgmaker/templates.py:_variable_scope_blocked::153",
+        "function:src/kgmaker/templates.py:attach_templates::377",
+        "function:src/kgmaker/templates.py:handle_data::363",
+        "function:src/kgmaker/templates.py:handle_endtag::357",
+        "function:src/kgmaker/templates.py:handle_startendtag::353",
+        "function:src/kgmaker/templates.py:handle_starttag::238",
+        "function:tests/test_templates.py:fixture::7",
+        "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::225",
+        "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::250",
+        "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::267",
+        "function:tests/test_templates.py:test_loop_and_local_alias_scopes_do_not_bind_model_variables::188",
+        "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
+        "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
+        "function:tests/test_templates.py:test_template_variable_is_exact_line_evidence_for_data_check::49",
+        "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::449",
+        "section:README.md:Copilot workflow::192",
+        "section:README.md:Data prerequisite audit::320",
+        "section:README.md:Development::220",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Feature feasibility analysis (foundation)::258",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::266",
+        "section:README.md:Implementation memory and workflow::209",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::170",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::56",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::234",
+        "section:docs/acceptance-inventory.md:T001::115",
+        "section:docs/acceptance-inventory.md:T002::194",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::297",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::393",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::368",
+        "section:docs/acceptance-inventory.md:T003-S05-W03 — condition matrix::415",
+        "section:docs/acceptance-inventory.md:T003-S06-W01 — Kotlin JPA use-site a access::3",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::12",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::353",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::341",
+        "section:docs/acceptance-inventory.md:T003-S09-W03 — Thymeleaf fragment provenance::330",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::47",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::34",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::380",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::321",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::65",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::98",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::76",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::87",
+        "section:docs/changes/55_expandThymeleafFragments.md:Omezené statické Thymeleaf fragmenty::1",
+        "section:docs/compiler-inspection.md:Alternativa s vlastní kompletní distribucí, bez fallbacku:::156",
+        "section:docs/compiler-inspection.md:Compiler inspection a explicitní build workflow::1",
+        "section:docs/compiler-inspection.md:Cílový venv mimo checkout:::152",
+        "section:docs/compiler-inspection.md:Default body source mapping::596",
+        "section:docs/compiler-inspection.md:Distribuce build exporteru::102",
+        "section:docs/compiler-inspection.md:Explicitní příprava trusted artefaktu a descriptoru před sestavením wheelu:::118",
+        "section:docs/compiler-inspection.md:Import a validated execution-bound build manifest before selecting bytecode roots.::602",
+        "section:docs/compiler-inspection.md:Instalace mimo checkout::133",
+        "section:docs/compiler-inspection.md:Integrace s běžným workflow::358",
+        "section:docs/compiler-inspection.md:JSON, resolution, CFG a omezení::245",
+        "section:docs/compiler-inspection.md:No compilation is triggered by scan, graph queries or source-only inspection.::603",
+        "section:docs/compiler-inspection.md:Ověřená matice a technologická volba::14",
+        "section:docs/compiler-inspection.md:Reprodukovatelné explicitní kroky::84",
+        "section:docs/compiler-inspection.md:Required CI prerequisites (T003-S11-W04)::574",
+        "section:docs/compiler-inspection.md:Review fixes: source-set freshness and convention provenance::417",
+        "section:docs/compiler-inspection.md:T003-S03-W02: explicit custom source sets::388",
+        "section:docs/compiler-inspection.md:T003-S03-W03: Gradle composite identity::437",
+        "section:docs/compiler-inspection.md:T003-S04-W01 — explicitní K2 Analysis API::475",
+        "section:docs/compiler-inspection.md:T003-S05-W01 — bounded Spring import selectors::526",
+        "section:docs/compiler-inspection.md:T003-S05-W03 — typed condition matrix::644",
+        "section:docs/compiler-inspection.md:T003-S09-W03 — statické Thymeleaf fragmenty::704",
+        "section:docs/compiler-inspection.md:V čisté kopii zdrojů; nejprve explicitně připravte volitelné workery níže.::150",
+        "section:docs/compiler-inspection.md:V čistém cílovém venv mimo checkout; nástroje musí být připravené na PATH:::121",
+        "section:docs/compiler-inspection.md:Windows user-space ověření (T003-S11-W03)::86",
+        "section:docs/feature-analysis.md:Agent reads packet.json and candidate-template.json, writes candidate.json.::56",
+        "section:docs/feature-analysis.md:CLI workflow::33",
+        "section:docs/feature-analysis.md:Candidate contract, schema version 1::114",
+        "section:docs/feature-analysis.md:Context budget and known limits::253",
+        "section:docs/feature-analysis.md:Current implementation::3",
+        "section:docs/feature-analysis.md:Deferred Confluence connection configuration::384",
+        "section:docs/feature-analysis.md:Deterministic data-check::329",
+        "section:docs/feature-analysis.md:Evidence::162",
+        "section:docs/feature-analysis.md:Feature analysis: implemented foundation and remaining milestones::1",
+        "section:docs/feature-analysis.md:Host invocation and tests::272",
+        "section:docs/feature-analysis.md:Implemented field and impact patterns (T001-S02 subset)::297",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::181",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::121",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::131",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::153",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::69",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::197",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::188",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::206",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::241",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::392",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::364",
+        "section:docs/production-analysis-progress.md:T003-S05-W03 — typed profile/property/class conditions::415",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::3",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::345",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::328",
+        "section:docs/production-analysis-progress.md:T003-S09-W03 — statické Thymeleaf fragmenty::360",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::262",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::48",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::35",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::22",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::381",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::274",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::227",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::286",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::304"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "templates",
+          "status": "passed"
+        },
+        {
+          "label": "focused-core",
+          "status": "passed"
+        },
+        {
+          "label": "full-core",
+          "status": "passed"
+        },
+        {
+          "label": "optional-prerequisites",
+          "status": "skipped"
+        },
+        {
+          "label": "semantic",
+          "status": "passed"
+        },
+        {
+          "label": "graph-scan",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:992716d13bdbda85fdc9a8a74d18031b3accc9e323d94a44e32055be4660efb5"
     }
   ]
 }
