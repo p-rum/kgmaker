@@ -178,3 +178,19 @@ def test_actual_kotlin_k1_listener_and_k2_annotation_boundary(capture):
     else:
         assert kotlin==[]
         assert any(d.get('code')=='K2_SOURCE_MODEL_PARTIAL' for d in graph.diagnostics)
+
+
+def test_actual_selected_context_ignores_stale_neighbor_capture(capture):
+    from dataclasses import replace
+    from kgmaker.interfaces import project_kafka_interfaces
+    workspace,graph,coverage=capture
+    compiler=[c for c in graph.contexts if c.get('mode') in {'BUILD_IMPORT','BUILD_EXECUTE'}]
+    selected={('consumer-svc' if c['repo_id']=='consumer' else 'producer-svc',c['repo_id'],c['module']):c['id']
+              for c in compiler if c['repo_id'] in {'producer','consumer'}}
+    stale=copy.deepcopy(next(c for c in compiler if c['repo_id']=='consumer'))
+    stale.update(id=stale['id']+':historical',freshness='STALE')
+    stale['source_files']={'@consumer/src/main/java/demo/old.java':'0'*64}
+    damaged=replace(graph,contexts=[*graph.contexts,stale]);before=damaged.to_dict()
+    view=project_kafka_interfaces(workspace,damaged,source_coverage=coverage,selected_contexts=selected).to_dict()
+    assert len([n for n in view['nodes'] if n['kind']=='kafka_interface' and n['attributes'].get('subscription_id')])==2
+    assert damaged.to_dict()==before
