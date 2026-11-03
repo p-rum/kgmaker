@@ -229,3 +229,13 @@ mapped-superclass, Javac AC06 a dependency interface dispatch. Pure integrace
 T005/T008/T009/T015/mandatory: **124 PASS, 2 actual T015 deselected v2.56s**,
 XML `/workspace/w02-main966-pure.xml`. Runtime/test source zůstal po celou
 frontu a actual běh beze změny.
+
+
+Finální base se posunula na mainb78d2e62148f225be7ba8c53c839f8b052ee269d
+s čistým T023 process projector modulem. Žádný JVM/framework/inspection ani
+původní W02 test source se tím nezměnil; actual6PASS zůstává stejným compiler
+důkazem. Relevantní čistá projekční integrace včetně T023 se ověří samostatně.
+
+Finální pure integration s T023: **193 PASS, 2 actual T015 deselected v2.62s**,
+XML `/workspace/w02-mainb78-pure.xml`. Semantic CLI, memory/scan/check a diff
+se dokončují nad touto finální base, nikoli starší parent dvojicí.
