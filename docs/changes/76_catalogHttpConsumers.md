@@ -135,3 +135,21 @@ Deset full SKIP jsou explicitní nedostupné volitelné Maven/Gradle, druhý JDK
 native Windows kontroly. Povinné skutečné K1/K2/TypeScript/compiler fixture
 kontroly proběhly. GH CI není lokálně vykazováno jako PASS. Finální nezávislé
 review nad aktuální dvojicí base/head zůstává před ready povinné.
+
+## Finální current-parent integrace
+
+Po W04 merge je jednou integrován main9f6605db0258d1b27bf233e25c7737bf0b675f5b
+v checkpointu93e95bd. Runtime konflikty nenastaly; CI seznam zachovává W04 i T011.
+interfaces.py a vlastní test zůstávají byteově6104, tedy opravený source ověřený
+full během b1163fc. Všech27 worker inputs a30 JAR/lib hashů odpovídá původnímu
+actual-built Arg receipt; nebyl proveden další build ani full.
+
+Root schválil source composition před jedinou coalesced sadou persistence realms,
+T011, T010 provider pure/compiler, T006 selected contexts, workspace a data resources.
+Výsledek je **205 PASS, 0 SKIP, 98.45s, exit0**, včetně skutečných K1/K2 captures.
+JUnit205 tests/0errors/0failures; všech355 frozen source/test/fixture/JAR/license
+hashů je shodných před/po i při závěrečném opětovném ověření. Persistent doklady:
+/workspace/t011-validation/final-parent.log, .xml, final-parent-passed a manifest.
+Semantic metadata zachovávají přesný210-episode main prefix a jedinou vlastní
+unikátní episode (celkem211). Finální nezávislé review/merge provádí root nad
+publikovanou aktuální dvojicí; tento dokument nepředjímá výsledek review.
