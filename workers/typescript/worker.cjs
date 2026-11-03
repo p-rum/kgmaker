@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const PROTOCOL = 1;
-const VERSION = 'typescript-worker-4';
+const VERSION = 'typescript-worker-5';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 
@@ -294,10 +294,13 @@ function analyze(request) {
   })};
   discovery.lockfiles([...projects.keys()]);
   const compilerDiagnostics=programs.map(({project,program})=>({project,diagnostics:ts.getPreEmitDiagnostics(program)}));
+  const uiAdapter=require('./ui_events.cjs');
+  const uiAdapters=uiAdapter.adapters(ts,programs,discovery,hash,request.ui_framework==='react');
+  const uiProject=request.ui_framework==='react'?{ui_adapters:uiAdapters.snapshots}:{};
   discovery.validate();
   if (request.operation === 'project') {
     return {...handshake(),status:'COMPLETE',context_id:context.id,project:{
-      input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
+      ...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
       compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph}};
   }
   for (const {project,diagnostics:capturedDiagnostics} of compilerDiagnostics) {
@@ -402,21 +405,10 @@ function analyze(request) {
       }
     }
     if (request.ui_framework==='react' && ts.isJsxAttribute(node) && ['onClick','onChange','onSubmit'].includes(node.name.text)) {
-      let attributeSymbol=checker.getSymbolAtLocation(node.name);
-      {
-        const opening=node.parent.parent;
-        const tag=opening.tagName?.getText();
-        const intrinsic=checker.getJsxIntrinsicTagNamesAt(node).find(s=>s.name===tag);
-        if (intrinsic) attributeSymbol=checker.getPropertyOfType(checker.getTypeOfSymbolAtLocation(intrinsic,node),node.name.text);
-      }
-      const attributeDeclaration=symbolDeclaration(attributeSymbol);
-      const attrLoc=attributeDeclaration?location(attributeDeclaration):null;
-      const expression=node.initializer && ts.isJsxExpression(node.initializer)?node.initializer.expression:null;
-      const handler=expression?targetForExpression(expression):null;
-      if (handler && attrLoc && /@types\/react/.test(attrLoc.path)) {
-        facts.push({kind:'handles_event',source:caller,target:register(handler),event:node.name.text,
-          ...location(node),evidence_kind:'FRAMEWORK_DERIVED',rule:'react-18.3.1/jsx-event-1'});
-      } else diagnostics.push({code:'UNRESOLVED_UI_HANDLER',...location(node)});
+      const result=uiAdapter.event(ts,checker,node,uiAdapters.byFile.get(path.resolve(node.getSourceFile().fileName)),uiAdapters.byFile,symbolDeclaration,callbackProof,location);
+      if(result.handler) facts.push({kind:'handles_event',source:caller,target:register(result.handler),event:node.name.text,
+        ...location(node),evidence_kind:'FRAMEWORK_DERIVED',...result.proof});
+      else diagnostics.push({code:result.reason,...location(node)});
     }
     if (ts.isImportSpecifier(node) || ts.isExportSpecifier(node)) {
       const alias=checker.getSymbolAtLocation(node.name);
@@ -506,7 +498,7 @@ function analyze(request) {
   if (request.ui_framework && request.ui_framework!=='react') diagnostics.push({code:'UNSUPPORTED_UI_FRAMEWORK',framework:request.ui_framework});
   return {...handshake(),status:diagnostics.length?'PARTIAL':'COMPLETE',context_id:context.id,
     symbols:[...symbols.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),call_sites:sites,bodies,facts,diagnostics,
-    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
+    project:{...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
       root_files:parsed.fileNames.map(f=>path.relative(root,f)),program_files:projectFiles.map(s=>({...fileInfo(s),root_input:rootFileSet.has(s.fileName)})),
       dependencies:[...inputs.values()].filter(i=>i.origin==='dependency')},
     coverage:{files_found:projectFiles.length,files_analyzed:projectFiles.length,methods_analyzed:bodies.length,
