@@ -125,3 +125,18 @@ Nejde o implicitní runtime/DB proof ani univerzální Kotlin annotation coverag
 
 Root REQUEST_CHANGES P1/P2 vyžaduje nezávislé přezkoumání tohoto checkpointu;
 pouhé29PASS není review APPROVE. Full ještě nebyl spuštěn.
+
+## Integrace aktuálního parentu 9442114
+
+Nezávislé root review uzavřelo P1/P2 nad1568d568. Jeho queued full nebyl
+spuštěn: vlastní flock136928 byl bez potomků i start markeru;1462 input hashes
+byly beze změn. Na pokyn koordinátora byla ukončena pouze tato neaktivní fronta
+(audit full-unstarted-cancelled-1568.json), nikoli platný běh. Žádný full PASS.
+
+Current main9442114 přidává local-operation proofs a T026/T011. Vlastní P1/P2,
+creation identity a compatibility runtime zůstávají zachované; workspace
+obsahuje i parent qualification proofů. Všech27 tracked worker souborů je
+byte-exact s původním built source donor receipt; všech132 původních JVM
+artifact hashes včetně kompletních licenses ověřeno před kopií i po ní.
+Receipt current944-workers.json; žádný nový build ani instalace. Nový focused
+actual a full jsou zatím neprovedené, před full následuje composition review.

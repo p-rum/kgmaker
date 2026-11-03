@@ -96,6 +96,10 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if "local_operation_rule_version" in context:
+        from .local_operations import VERSION as LOCAL_OPERATION_VERSION
+        if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:
+            raise WorkerError("STALE_INDEX: local operation rules changed; inspect again", "STALE")
     if context.get("language") == "typescript" and context.get("ui_framework") == "react":
         from .inspection import UI_RULE_VERSION
         if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
@@ -273,6 +277,12 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     evidence_ids = {identity for edge in edges for identity in edge.evidence_ids}
     for item in [*fresh.call_sites, *old_sites, *fresh.cfgs, *old_cfgs]:
         evidence_ids.update(item.get("evidence_ids", []))
+    for cfg in [*fresh.cfgs, *old_cfgs]:
+        for block in cfg.get('blocks', []):
+            if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+                refs = block.get('local_operation_evidence_ids', [])
+                if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs):
+                    evidence_ids.update(refs)
     contexts = []
     seen_contexts = set()
     for context in [*fresh.contexts, *preserved_contexts]:

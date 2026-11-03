@@ -120,6 +120,12 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
     if isinstance(value.get('call_site'), str):
         result['call_site'] = qualified(repo, value['call_site'])
+    if type(value.get('local_operation_version')) is int and value['local_operation_version'] == 1:
+        for key in ('method', 'compiler_symbol_id', 'cfg_block', 'target_binding', 'context_id'):
+            if isinstance(value.get(key), str):
+                result[key] = qualified(repo, value[key])
+        if isinstance(result.get('target_declaration'), dict):
+            result['target_declaration']['path'] = source_key(repo, result['target_declaration']['path'])
     return result
 
 
@@ -154,6 +160,9 @@ def _qualified_cfg(repo: str, value: dict) -> dict:
                                  for identity in block.get('call_site_ids', [])]
         item['original_ids'] = [qualified(repo, identity)
                                 for identity in block.get('original_ids', [])]
+        if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+            item['local_operation_evidence_ids'] = [qualified(repo, identity)
+                for identity in block.get('local_operation_evidence_ids', [])]
         if isinstance(block.get('source_file'), str):
             item['source_file'] = source_key(repo, block['source_file'])
         result['blocks'].append(item)
