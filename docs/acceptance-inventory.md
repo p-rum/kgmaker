@@ -678,3 +678,14 @@ both fresh workers built successfully; initial matrix36PASS1ERROR is preserved.
 After origin and proof-retention corrections,39purePASS and bounded actual K1
 workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
 T026 or whole T025/T003/T004 completion is implied by this row.
+
+## T026 — lossless business-step projection (candidate)
+
+| AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
+|---|---|---|
+| AC01 | actual Javac literal-local collapse; ordered roundtrip; parallel edges; finally clones and unused exit | Actual K1/K2 preliminary2PASS; final pending |
+| AC02 | disconnected equal DTO; diamond remains separate | Pure matrix preliminary82PASS; final pending |
+| AC03 | field/call/finally actual boundaries; decisions/loops/exception/unknown boundary matrix | Final focused pending |
+| AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
+| AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
+| AC06 | README, capability, status and change82 | Final strict full and independent source review pending; PR65 prerequisite |

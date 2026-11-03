@@ -729,3 +729,16 @@ legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
 failed on declaration origin, then proof-retention bugs were corrected. Current
 39purePASS and one actual K1 pipeline PASS; complete corrected integration/full
 remain pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.
+
+## T026 — reversible certified local-operation groups (candidate)
+
+The pure `business_process.collapse_business_steps` / `expand_business_steps`
+API reuses the T025 ProcessView and embedded certificates. It groups only maximal
+acyclic same-owner/method/context/scope normal chains, preserves ordered origin
+records and parallel external edges, and exactly restores canonical input.
+Decisions, calls, fields/side effects, loops, unknown boundaries and finally
+clones remain visible. Syntax adjacency keeps groups UNRESOLVED/PARTIAL; no
+runtime/business approval follows. Explicit dependency Draft PR65 a6170c18 must
+be reviewed/merged before readiness. Initial actual Javac RED1FAIL4.78s,
+actual K1+K2 GREEN2PASS10.20s and first matrix82PASS9.76s are historical source
+checks; final focused/full and independent review pending. See change82.

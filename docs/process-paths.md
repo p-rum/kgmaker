@@ -121,3 +121,47 @@ The T025 ProcessView adapter consumes the existing selected trigger inventory an
 provider graph; no new implicit inspection or CLI apply path is added. This is an
 upstream prerequisite for T026, whose business-step grouping remains a separate
 task. New worker/pipeline/full validation is pending; change79 records actual gates.
+
+## Reversible business-step projection (T026 candidate)
+
+`kgmaker.business_process.collapse_business_steps(process)` groups maximal
+acyclic chains of at least two adjacent certified local-operation basic blocks.
+It consumes the explicit T025 `ProcessView`, checks the embedded existing
+certificate's content identity and exact method/context/scope/CFG tuple, and
+reuses the shared process/view validators. It does not re-attest the physical
+checkout or issue new compiler certificates. Missing legacy certificates remain
+ungrouped. The explicit prerequisite is Draft PR65, exact `a6170c18`.
+
+```python
+from kgmaker.business_process import collapse_business_steps, expand_business_steps
+
+business = collapse_business_steps(process)
+assert expand_business_steps(business).to_json() == process.to_json()
+print([(node.id, node.kind) for node in business.steps])
+```
+
+Only same-method/owner/context/scope single-entry/single-exit normal adjacency
+is eligible. Decisions, calls, side effects, unknown/service/transaction/async
+boundaries, cycles and finally continuations stay visible. Equal DTO names,
+labels and semantic approvals do not supply eligibility. Annotated and explicit
+entry/exit/outcome targets are retained. A group has a neutral `action` label,
+versioned `attributes.business_group` records containing ordered complete origin
+nodes/internal edges and original external transitions. Its ID hashes those
+records. Expansion verifies the supported deterministic projection, including
+digest-consistent tampering; all external parallel edges and the unused
+exceptional exit survive. Canonical `ProcessView` order is restored exactly;
+member order follows CFG adjacency, not lexical sorting of node IDs.
+
+Normal CFG edges still carry UNRESOLVED/SYNTAX_CANDIDATE evidence. Aggregation
+preserves all operation and internal-edge evidence, polarity and freshness and
+keeps the action UNRESOLVED and the process PARTIAL. This proves static grouping,
+not execution, feasibility, business equivalence or semantic approval.
+
+Both APIs are pure, do not execute workers or perform I/O, and leave inputs
+unchanged on invalid/stale/foreign/tampered evidence. Invalid input raises
+`BusinessProcessError` with `diagnostic`. Bounds reject cyclic/deep metadata,
+more than 500,000 structural occurrences, depth above80, text above32 million
+characters, collections above50,000, or topology above10,000 nodes/30,000 edges.
+Expanded/grouped outputs obey the same structure limits. There is no new CLI,
+persistence format migration or runtime observation. Older documents without
+group metadata remain readable and expand unchanged.

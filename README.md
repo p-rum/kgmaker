@@ -754,3 +754,8 @@ transitions, execution, business meaning and data availability are not promoted.
 Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
 the complete corrected integration matrix and full validation; own fresh workers built successfully. See
 [local process scope](docs/process-paths.md#compiler-bound-local-operations).
+
+The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
+reversibly groups only adjacent certified local operations in an explicit process
+view. It preserves unresolved CFG adjacency and all origins; it does not approve
+business semantics or observe execution. This candidate is stacked on PR65.
