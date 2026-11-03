@@ -569,3 +569,18 @@ Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note
 Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T003-S06-W08 — schema compatibility (draft stack, pending full/review)
+
+Base W04 checkpoint7dc1016 is an explicit unmerged dependency; no milestone completion.
+
+| AC | Contract/test | Observed result |
+|---|---|---|
+| W08-AC01 | `test_actual_compiler_type_null_decimal_keys_and_later_target_conflict`: canonical Javac FIELD descriptor, explicit nullability, decimal12/2, single-column PK/UK; separate selected target | Earlier grouped6PASS/0SKIP9.22s verifies positive subset, custom type and foreign-target negative. Expanded same-current-target rename/drop/type and CLI/XML focus pending. |
+| W08-AC02 | `test_source_only_legacy_mapping_is_unknown_never_available`; missing snapshot fingerprint | Pure PASS; graph v1/v2/v3 explicit migration regression still NOT_RUN. |
+| W08-AC03 | Actual compiler customdemo.BigDecimal and mutated replay nullable/type/key without migration-SHA change; existing availability gate tests | Earlier grouped actual PASS; availability/feature/Flyway/W04 pure54PASS/30actual deselected. Extended customLong/String, SQLdomain and forged-edge cases pending. |
+| W08-AC04 | `docs/schema-compatibility.md`, note78 and this bounded matrix | Current draft documentation only; no full/ready/merge claim. |
+
+No data availability, deployment, live DB or unsupported FK association/typed XML
+constraint positive is inferred from compatibility. PROPERTY/inherited positive
+coverage must be established by actual fixtures before claiming that subset.

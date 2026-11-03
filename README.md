@@ -667,3 +667,12 @@ HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/meth
 path components without guessing a composed route, and rejects URI-callback route
 guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
 starts a worker. See the HTTP matrix for property-file and privacy boundaries.
+
+### Schema compatibility (T003-S06-W08 draft)
+
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
+uses existing offline replay and an explicitly inspected compiler context. It
+reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
+legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
+This is a draft stack on pending W04; compatibility never proves deployment or
+populated-data availability. No implicit worker/build/migration/DB operation.

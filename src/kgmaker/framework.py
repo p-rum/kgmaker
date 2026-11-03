@@ -24,7 +24,7 @@ from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v6"
-JPA_RULE_VERSION = "annotation-source-v6-persistence-realms"
+JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -769,6 +769,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     role="contract" if kind in {"spring_endpoint", "spring_entrypoint", "orm_query"} else "executable_code",
                                     origin="generated", metadata=metadata or None)
         return identity
+
+    def bind_persistent_attribute(attribute: str, owner: str, name: str, path: str, *, access="FIELD", relation="projects_persistent_attribute") -> None:
+        # This edge is an explicit compiler declaration witness, not a type-name
+        # resolver. Missing/overloaded/unsupported getter bindings remain absent.
+        facts = [fact for fact in symbols.values() if fact.get("owner") == owner
+                 and fact.get("name") == name and fact.get("path") == path
+                 and fact.get("kind") == ("field" if access == "FIELD" else "method")]
+        if len(facts) != 1 or facts[0].get("id") not in nodes:
+            return
+        fact = facts[0]
+        add_edge(fact["id"], attribute, relation, path,
+                 (fact.get("range") or {}).get("start_line"),
+                 "Exact compiler declaration of the effective persistent attribute",
+                 compiler_fact=fact)
 
     def symbol_node(item: dict[str, Any]) -> Node | None:
         return nodes.get(item.get("id"))
@@ -1897,7 +1911,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             identifier = embedded_id_annotation is not None or any(_simple(name) == "Id" for name, _ in field_annotations)
             attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
-                                 identifier=identifier, embedded=embedded)
+                                 identifier=identifier, embedded=embedded, declaring_owner=entity["symbol"].get("owner"))
+            bind_persistent_attribute(attribute, entity["symbol"].get("owner"), field_name, entity["path"])
             entity_attributes[entity_owner][field_name.casefold()] = attribute
             if table_id:
                 add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
@@ -1955,6 +1970,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
+                bind_persistent_attribute(association, entity["symbol"].get("owner"), field_name, entity["path"], relation="projects_persistent_association")
                 add_edge(attribute, association, "declares_association", entity["path"], field_line,
                          f"JPA relationship @{_simple(relation)}")
                 association_records.append({"id": association, "owner": node.name, "field": field_name,
@@ -2028,7 +2044,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 identifier = embedded_id or any(_simple(name) == "Id" for name, _ in property_annotations)
                 attribute = add_node("orm_attribute", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                      attribute=property_name, type=property_type, access="PROPERTY",
-                                     identifier=identifier, embedded=embedded, getter=getter_name)
+                                     identifier=identifier, embedded=embedded, getter=getter_name, declaring_owner=entity["symbol"].get("owner"))
+                bind_persistent_attribute(attribute, entity["symbol"].get("owner"), getter_name, entity["path"], access="PROPERTY")
                 entity_attributes[entity_owner][property_name.casefold()] = attribute
                 if table_id:
                     add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
@@ -2374,12 +2391,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                            attribute=attribute_name, type=field.get("type", "UNKNOWN"),
                                            access=access, inherited=True, declaring_owner=owner,
                                            effective_owner=effective_owner, identifier=identifier, embedded=embedded,
+                                           getter=field.get("name") if access == "PROPERTY" else None,
                                            mapping_status=status,
                                            override=bool(override_values))
             add_edge(inherited_attribute, declaration_node, "inherits_attribute", declaration["path"], item["line"],
                      "Compiler-attributed persistent property projected from its mapped superclass")
             add_edge(node.id, inherited_attribute, "has_persistent_attribute", entity["path"], entity["line"],
                      "Mapped superclass property effective for this entity")
+            bind_persistent_attribute(inherited_attribute, owner, field.get("name"), declaration["path"], access=access)
             entity_attributes.setdefault(effective_owner, {})[normalized] = inherited_attribute
             if mapping_table_id:
                 add_edge(inherited_attribute, mapping_table_id, "declared_on_table", entity["path"], item["line"],
@@ -3221,6 +3240,32 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 metadata = nodes.get(key[1])
                 if metadata is not None:
                     nodes[key[1]] = replace(metadata, metadata={**(metadata.metadata or {}), **jpa_rule_metadata})
+
+    # Finish physical column binding for effective PROPERTY/inherited mappings
+    # through the same selected-realm matcher used by declared FIELD mappings.
+    # XML has its own hashed-input projection and is deliberately not inferred.
+    for mapping in list(edges.values()):
+        if mapping.kind != "maps_to_column" or mapping.context_ids != (context_id,):
+            continue
+        attribute, column = nodes.get(mapping.source), nodes.get(mapping.target)
+        if attribute is None or column is None or attribute.kind != "orm_attribute" or (attribute.metadata or {}).get("mapping_status") == "UNKNOWN":
+            continue
+        if any("xml_mapping_file" in evidence.get(ref, {}) for ref in mapping.evidence_ids):
+            continue
+        column_metadata = column.metadata or {}
+        tables = [edge for edge in edges.values() if edge.source == attribute.id
+                  and edge.kind == "declared_on_table" and edge.context_ids == (context_id,)]
+        if len(tables) != 1 or column_metadata.get("inferred") is not False or column_metadata.get("mapping_status") == "UNKNOWN":
+            continue
+        table = nodes.get(tables[0].target)
+        table_metadata = table.metadata or {} if table is not None else {}
+        if table_metadata.get("inferred") is not False or table_metadata.get("naming_strategy") not in (None, "") or table_metadata.get("mapping_status") == "UNKNOWN":
+            continue
+        matches = [candidate for candidate in schema_columns if schema_column_matches(candidate,
+            table_metadata.get("logical_name"), table_metadata.get("schema"), column_metadata.get("logical_name"))]
+        if len(matches) == 1:
+            add_edge(column.id, matches[0].id, "resolves_to_schema_column", mapping.source_file,
+                     mapping.source_line, "Exact effective column in selected physical table/realm")
 
     # Make the capability and provenance visible in the selected context.
     contexts = list(graph.contexts)
