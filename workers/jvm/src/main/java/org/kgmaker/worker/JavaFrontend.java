@@ -297,7 +297,8 @@ public final class JavaFrontend {
         String id="binding:"+state.context.get("id")+":"+location.get("path")+":"+location.get("sha256")+":"+range.get("start")+":"+range.get("end");
         String methodId=null,symbol=null;
         if(variable.getEnclosingElement() instanceof ExecutableElement method){
-            methodId=method(method,declarationLocation(method));
+            methodId=state.methodIdentity(owner(method),method.getKind()==ElementKind.CONSTRUCTOR?"<init>":method.getSimpleName().toString(),
+                descriptor(method),declarationLocation(method));
             if(variable.getKind()==ElementKind.PARAMETER){int index=method.getParameters().indexOf(variable);if(index<0)return null;id=methodId+":parameter:"+index;}
         }
         if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {

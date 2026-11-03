@@ -267,3 +267,16 @@ Nejmenší context/inspection-contract/protocol sada je **14 PASS za2.04s**.
 Capability docs a fixture README popisují aditivní context extension a původní
 historický fixture. Následuje společný context/freshness/return/protocol focus,
 nezávislé review a jediný corrected full; nové běhy zatím nejsou tvrzeny PASS.
+
+Navazující full nad `a67418a` skutečně skončil **822 PASS, 9 SKIP,
+1 FAIL za896.91s**, nikoli PASS. Všechny590source/30JAR/4ignored-fixture
+hashes zůstaly stejné; log/XML/manifests jsou zachované. Selhal původní registrar
+test: nová return `valueBinding()` při čtení parametru znovu registrovala jeho
+metodu, čímž `State.method()` přepsal dříve ověřené `bean_registrations`.
+Minimální oprava používá existující čisté `State.methodIdentity()` se stejným
+owner/name/descriptor/location tuple; binding IDs a compiler/registrar guards
+se nemění. Regression nad skutečnou worker response ověřuje původní registrar
+facts, factory facts i return receiver parameter ID. Nové oba native buildy a
+společný Registrar/Factory/Conditions/Imports/Return/Arg/HTTP/protocol focus
+teprve následují; další full zatím není autorizován. Workflow feedback legálně
+přešel na implement iteration2/3, bez změny limitů.
