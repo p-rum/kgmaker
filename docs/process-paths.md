@@ -120,4 +120,6 @@ kgmaker flow render --root /repo --entry METHOD_ID --view process --format json
 The T025 ProcessView adapter consumes the existing selected trigger inventory and
 provider graph; no new implicit inspection or CLI apply path is added. This is an
 upstream prerequisite for T026, whose business-step grouping remains a separate
-task. New worker/pipeline/full validation is pending; change79 records actual gates.
+task. Corrected actual focus passed341 tests. A descendant superset full passed1566
+tests (10 explicit skips), including all1471 passing parent cases; change79
+records exact source hashes, pre/post closure and remaining limitations.

@@ -727,5 +727,8 @@ UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data clai
 Architecture independently reviewed; initial actual RED,11 protocol tests and120
 legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
 failed on declaration origin, then proof-retention bugs were corrected. Current
-39purePASS and one actual K1 pipeline PASS; complete corrected integration/full
-remain pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.
+Corrected actual integration341PASS/0SKIP on a617. Descendant cff803c superset
+full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
+parent runtime/distributions and unchanged input closure. This is descendant
+evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
+Independent final review/merge remain separate. T026 remains separate.
