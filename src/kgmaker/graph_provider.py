@@ -116,6 +116,30 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
                 {key: value for key, value in context.items() if key != "selection_key"}):
             raise WorkerError("STALE_INDEX: Kotlin compiler context configuration changed", "STALE")
     scoped_typescript = context.get("source_snapshot_version") == "typescript-input-discovery-1"
+    snapshot_version = context.get("source_snapshot_version")
+    if context.get("language") == "jvm" and snapshot_version is not None \
+            and (not isinstance(snapshot_version, str)
+                 or snapshot_version not in {"selected-source-set-1", "selected-source-set-2"}):
+        raise WorkerError("STALE_INDEX: unsupported JVM source snapshot version", "STALE")
+    if isinstance(snapshot_version, str) and snapshot_version in {"selected-source-set-1", "selected-source-set-2"} \
+            and context.get("language") != "jvm":
+        raise WorkerError("STALE_INDEX: JVM source snapshot on a non-JVM context", "STALE")
+    if context.get("source_snapshot_version") == "selected-source-set-2":
+        from .inspection import jpa_xml_input_snapshot
+        if context.get("jpa_xml_inputs") != jpa_xml_input_snapshot(root, context):
+            raise WorkerError("STALE_INDEX: selected persistence XML inputs changed; inspect again", "STALE")
+    elif context.get("language") == "jvm" and context.get("source_snapshot_version") == "selected-source-set-1":
+        # Older JVM contexts did not capture mapping XML. Keep XML-free legacy
+        # snapshots readable, but never trust one when a mapping input exists.
+        from .inspection import jpa_xml_input_snapshot
+        legacy_xml = jpa_xml_input_snapshot(root, context)
+        if any(item.get("status") != "missing" for item in legacy_xml["inputs"]):
+            raise WorkerError("STALE_INDEX: legacy JVM context has uncaptured persistence XML; inspect again", "STALE")
+    elif context.get("language") == "jvm" and context.get("source_snapshot_version") is None:
+        from .inspection import jpa_xml_input_snapshot
+        legacy_xml = jpa_xml_input_snapshot(root, context)
+        if any(item.get("status") != "missing" for item in legacy_xml["inputs"]):
+            raise WorkerError("STALE_INDEX: legacy JVM context has uncaptured persistence XML; inspect again", "STALE")
     if scoped_typescript:
         if context.get("language") != "typescript":
             raise WorkerError("STALE_INDEX: TypeScript snapshot on a non-TypeScript context", "STALE")

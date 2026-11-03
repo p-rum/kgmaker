@@ -27,6 +27,14 @@
 | T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves foreign derived predicates, ambiguous JPQL, missing indexed qualified returns, and generic `T` returns unresolved, while descriptor-proven return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
 | T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
 
+## T003-S06-W03 — ORM XML overrides
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, annotation fallback for untouched partial mappings, and owner-isolated shared mapped-superclass columns |
+| T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves standard nested `xml-mapping-metadata-complete` and `persistence-unit-defaults/access`, annotation suppression, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes`; XML freshness replay binds selected paths, content and target identities |
+| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, namespace reset, unsupported encoding, bounded input, UTF-8/UTF-16 DTD/entity rejection, unsupported mapping constructs and offline stale replay for changed/appeared/deleted/retargeted inputs; unsupported targets remain UNKNOWN without annotation physical fallback |
+| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note65](changes/65_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
 ## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
 
 | ID | Stav | Evidence |

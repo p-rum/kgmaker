@@ -349,6 +349,17 @@ Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
 TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
 ne deployment/schema compatibility proof; nevyřešený access, type identity,
 inheritance strategy nebo class override zůstává UNKNOWN.
+Vybraný `persistence-unit` z `META-INF/persistence.xml` určuje mapping files v
+deklarovaném pořadí; bez explicitního seznamu se hledá `META-INF/orm.xml`.
+Podporovaný ORM XML subset používá přesné compiler-resolved class identity,
+tabulku a scalar ID/basic/version sloupce. XML mapping má přednost před
+annotations a `metadata-complete` skutečně potlačí annotation-only bindings.
+Hrany a uzly nesou cestu a SHA-256 mappingu, persistence unit a pořadí zdroje.
+Neznámý namespace/verze, neúplný nebo nepodporovaný construct, nevyřešená
+class/attribute reference a nebezpečný nebo root-escaping XML soubor zůstávají
+UNKNOWN bez odvození fyzického názvu z annotation fallbacku. Parser odmítá
+DOCTYPE/external entities a nic nestahuje ani nespouští; graph schema zůstává v3.
+
 Spring Data repository model se vybírá z compiler-resolved generic supertype a
 přesného entity owneru. Entity atributy se indexují podle canonical owner
 identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
