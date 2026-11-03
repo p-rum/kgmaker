@@ -188,3 +188,18 @@ coalescedactualfocus. Dokud nejsou hotové, current-parent build/actual není PA
 Žádný full se neopakuje jen pro parent kompozici;654/10 zůstává historický
 exact-own-source full. GH CI je dle nové T045 uživatelské revize volitelné při
 splnění ostatních kontrol, lokální mandatorytoolchain a review tím nezanikají.
+
+## Nahrazení dosud nezačaté queue po coroutine merge
+
+Původní current8b build/actual queue nebyla spuštěná (žádný buildlog, childproces
+ani actualtest). Po explicitním pokynu rootu byl zastaven pouze její vlastní
+flock90210,0children, exit143; neukončil se platný testběh ani cizíqueue.
+Před prvním fresh buildem byl integrován nový main
+f2dad55c12c4fcf8af831cb3fff68e6ebbcf614f s již ověřeným coroutine mappingem.
+Žádný runtime konflikt: vlastní Java bindingCache i RegistrationFacts a oba
+HTTP/provider privacy kontrakty zůstaly přesné; parent K1/K2/SourceMapping a
+control_flow byly převzaty beze změn. JvmWorker zachovává union všech capabilities
+včetně typed Java bindings a KotlinFrontend capabilities. CI union přidává
+coroutine module bez odstranění HTTP/pinned parent gates.
+Následuje jediná nová ownK1/K2 build+actual queue pro tento aktuální source;
+nejde o duplicitní rebuild nebo změnu pořadí ostatních týmových queues.
