@@ -142,6 +142,23 @@ def test_explicit_protocol_preserves_two_distinct_operation_occurrences(origin):
     assert (response, context) == before
 
 
+@pytest.mark.parametrize('refs', [None, 'proof', [None], ['proof', 1]])
+def test_scope_projection_preserves_invalid_operation_shape_for_fail_closed_validation(refs):
+    from kgmaker.model import KnowledgeGraph, Node
+    from kgmaker.views import project
+    graph = KnowledgeGraph(3, '/fixture', 'now',
+        [Node('method', 'method', 'run', 'Demo.java', scope='production')], [], {},
+        contexts=[{'id': 'ctx', 'scope': 'production'}],
+        evidence=[{'id': 'proof', 'kind': 'SYMBOL_RESOLVED'}],
+        cfgs=[{'method': 'method', 'context_id': 'ctx', 'blocks': [
+            {'local_operation_version': 1, 'local_operation_evidence_ids': deepcopy(refs)}]}])
+    before = deepcopy(graph.to_dict())
+    selected = project(graph, 'production', context_id='ctx')
+    assert selected.cfgs[0]['blocks'][0]['local_operation_evidence_ids'] == refs
+    assert selected.evidence == []
+    assert graph.to_dict() == before
+
+
 @pytest.mark.parametrize('change', ['field', 'boxed', 'missing_hash', 'foreign_hash', 'literal_outside',
     'target_identity', 'literal_reference', 'body_version', 'reserved_ref', 'nonblock_body',
     'string_to_int', 'int_overflow', 'empty_literal', 'columns_reversed', 'long_to_int', 'char_overflow', 'calls_shape', 'foreign_origin'])

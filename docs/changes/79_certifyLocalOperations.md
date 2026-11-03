@@ -69,3 +69,10 @@ Parent9f6605d (PR62/W04) integrován bez konfliktu runtime; ručně sloučen pou
 CI seznam testů a sémantická metadata, graf bude znovu CLI-generated. Vlastní
 Java změny jsou stále byte-exact fresh build checkpoint477b5f9. Zachována
 historie210 main epizod a dvě vlastní candidate epizody. Žádný ready/full PASS.
+
+Nezávislé source review beafb9e APPROVE pro jeden nový coalesced focus, vlastní
+35purePASS. P2 malformed refs=None/string/mixed-list v generic projekci opraveno
+bez změny původních CFG fields: přenáší se jen list[str], consumer nadále odmítne
+neplatný kontrakt. Regression ověřuje read-only scope projection a nulové
+povýšení důkazů. Source review f74fc4d má stejný runtime jako beafb9e; semantic
+CLI apply/validate/scan/check prošly24scoped concepts/84edges, aggregate236/26423.

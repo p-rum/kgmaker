@@ -280,7 +280,9 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     for cfg in [*fresh.cfgs, *old_cfgs]:
         for block in cfg.get('blocks', []):
             if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
-                evidence_ids.update(block.get('local_operation_evidence_ids', []))
+                refs = block.get('local_operation_evidence_ids', [])
+                if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs):
+                    evidence_ids.update(refs)
     contexts = []
     seen_contexts = set()
     for context in [*fresh.contexts, *preserved_contexts]:
