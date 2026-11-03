@@ -230,3 +230,53 @@ is explicit and loops are valid. A strict semantic overlay cannot change
 technical facts. See [process-model.md](process-model.md); source freshness,
 trigger discovery, projection, review, rendering and storage keep their existing
 or separately planned ownership.
+
+## HTTP provider projection
+
+`interfaces.project_http_providers(workspace, graph, scope="production",
+selected_contexts=None, source_coverage=None)` composes the T008 inventory with
+T007 explicit ownership and the shared T005/T009 view model. Its `interfaces`
+ViewDocument preserves source/context hashes, upstream IDs, service identity,
+case-preserving routes, contract fingerprints and separate registration variants.
+Canonical compiler variants use the existing declaration owner/name/JVM descriptor
+and mapping values, so same-line overloads remain distinct. Unrelated source edits,
+comment/line movement and relocation within the same explicitly owned module do
+not rename those variants or unresolved logical operations; path/line/hash and
+snapshot handler IDs remain fresh provenance. Missing/malformed signatures stay
+UNKNOWN. Weak source expressions without canonical declaration identity retain
+a source locator and make no equivalent stability guarantee.
+Existing globally merged `api_endpoint` IDs remain unchanged. Additive version1
+`http_registrations` metadata captures each safe source declaration; absent legacy
+metadata produces `LEGACY_HTTP_REGISTRATION_UNKNOWN`, rather than reconstructing
+case from the lowercased legacy identity. Invalid metadata, hashes or declaration
+bindings fail without changing caller data or saved artifacts. Scanner capture
+reads one bounded raw snapshot and threads its byte SHA into the HTTP metadata,
+while preserving legacy normalized graph hashes and IDs. The existing workspace
+cache key includes the HTTP capture version; newline-only snapshot races are
+rejected before publishing a graph. No hash is repaired during projection.
+
+Source Spring/Ktor registrations remain `SYNTAX_CANDIDATE`; OpenAPI declarations
+remain contract-only. The supported compiler path composes literal Spring class
+and method annotation mirrors only within the same owner, source file and selected
+compiler context. Upstream T008 context selection filters sibling captures before
+current-source binding validation; stale/unselected proof refs remain diagnostic,
+while an explicitly requested source mismatch still fails closed. Canonical symbols must match the public declaration Node and
+captured source/context tuple (including raw SHA, scope and declaration line);
+endpoint edges and their referenced framework proofs must bind those exact IDs.
+An empty class prefix without a local mapping requires a consistent complete
+compiler hierarchy proving the root superclass. Known endpoint metadata cannot
+contradict the typed method/path variants. Unknown/custom/inherited mappings, placeholders and bounded
+variant truncation remain visible diagnostics. A typed handler declaration is
+`FRAMEWORK_DERIVED`, not proof of an active deployment. Framework/source variants
+are retained separately; route coincidence never upgrades source evidence or
+connects a contract to an implementation.
+
+The pure projection does not execute workers, applications, builds, installers or
+network requests, and does not reread source to resolve routes. Its explicit
+workspace validation reuses the existing read-only manifest/snapshot contract.
+HTTP consumers are excluded. Imported runtime-to-interface lifecycle/variant binding
+is not supported: `HTTP_RUNTIME_BINDING_UNKNOWN` preserves upstream source/target,
+context and evidence IDs without copying event payloads or claiming observations
+for a matching route. Runtime/deployment/data availability stay UNKNOWN; real
+application runtime acceptance is NOT_RUN. Coverage remains PARTIAL/UNKNOWN, and
+T003-S07-W08 ranking, architecture CLI/rendering and the rest of T004 are separate.

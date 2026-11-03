@@ -109,6 +109,25 @@ inventory = project_service_inventory(
 )
 ```
 
+`interfaces.project_http_providers` returns an `interfaces` ViewDocument from
+that same explicit workspace snapshot. Logical HTTP identity includes the declared
+service, method and case-preserving route; registrations and contract revisions
+remain separate variants. Compiler Spring annotation mirrors can establish a
+class/method handler declaration. Source-pattern Spring/Ktor candidates and
+OpenAPI contracts retain their weaker evidence. Deployment, runtime and data
+availability remain `UNKNOWN`; unsupported imported-runtime binding is diagnostic.
+
+```python
+from kgmaker.interfaces import project_http_providers
+
+interfaces = project_http_providers(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+)
+```
+
+This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
