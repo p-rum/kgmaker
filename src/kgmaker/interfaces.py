@@ -659,14 +659,28 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
                            metadata=_qualified_kafka_metadata(repo,authority.metadata))
         if expected != fact or graph.files.get(fact.path)!=local.files.get(authority.path):
             fail('Public code fact differs from canonical captured authority')
+        # Public Nodes are independent mirrors too: validating symbol/site records
+        # alone must not authorize a forged kind, owner scope or declaration Node.
+        local_nodes={node.id:node for node in local.nodes}
+        def check_original_node(identity):
+            original=local_nodes.get(identity)
+            if original is None:
+                fail('Original compiler Node is missing from saved authority')
+            expected_node=replace(original,id=qualified(repo,original.id),path=source_key(repo,original.path))
+            if by_id.get(expected_node.id)!=expected_node:
+                fail('Original public compiler Node is missing or changed')
+        check_original_node(authority.metadata['origin_id'])
         # Relevant original compiler declarations/sites must survive qualification.
         for symbol in local.symbols:
             if symbol.get('context_id')==context['id']:
+                check_original_node(symbol['id'])
                 expected_symbol=_qualified_symbol(repo,symbol)
                 if public_symbols.get(expected_symbol['id'])!=expected_symbol:
                     fail('Original compiler declaration tuple is changed')
         for site in local.call_sites:
             if site.get('context_id')==context['id']:
+                for identity in (site['id'],site['caller'],site.get('declared_target')):
+                    if identity is not None:check_original_node(identity)
                 expected_site=_qualified_call_site(repo,site)
                 if public_sites.get(expected_site['id'])!=expected_site:
                     fail('Original compiler call-site tuple is changed')
@@ -679,10 +693,12 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
                 for identity in edge.evidence_ids:
                     source=next((p for p in local.evidence if p['id']==identity),None)
                     if source is None: fail('Canonical declaration has no proof')
+                    check_original_node(source['source'])
                     refs.append(check_proof(_qualified_evidence(repo,source)))
                     for compiler_id in source.get('compiler_evidence_ids',[]):
                         compiler=next((p for p in local.evidence if p['id']==compiler_id),None)
                         if compiler is None: fail('Compiler evidence reference is missing')
+                        for identity in (compiler['source'],compiler['target']):check_original_node(identity)
                         check_proof(_qualified_evidence(repo,compiler))
         if not refs: fail('Code fact has no original declaration proof')
         owner=resolve_service_ownership({'id':md['origin_id'],'repo_id':repo,'path':fact.path,

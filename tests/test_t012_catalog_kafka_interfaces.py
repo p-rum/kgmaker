@@ -194,3 +194,23 @@ def test_actual_selected_context_ignores_stale_neighbor_capture(capture):
     view=project_kafka_interfaces(workspace,damaged,source_coverage=coverage,selected_contexts=selected).to_dict()
     assert len([n for n in view['nodes'] if n['kind']=='kafka_interface' and n['attributes'].get('subscription_id')])==2
     assert damaged.to_dict()==before
+
+
+@pytest.mark.parametrize('role', ['producer-origin','producer-caller','producer-target','listener-origin'])
+@pytest.mark.parametrize('field', ['kind','name','scope','path','line','metadata'])
+def test_actual_public_compiler_nodes_require_canonical_authority(capture, role, field):
+    from kgmaker.interfaces import InterfaceProjectionError, project_kafka_interfaces
+    workspace,graph,coverage=capture
+    payload=copy.deepcopy(graph.to_dict())
+    producer=next(n for n in payload['nodes'] if n['kind']=='kafka_code_producer')
+    listener=next(n for n in payload['nodes'] if n['kind']=='kafka_code_listener' and n['metadata']['method_name']=='one')
+    site=next(s for s in payload['call_sites'] if s['id']==producer['metadata']['origin_id'])
+    identity={'producer-origin':producer['metadata']['origin_id'],'producer-caller':site['caller'],
+              'producer-target':site['declared_target'],'listener-origin':listener['metadata']['origin_id']}[role]
+    node=next(n for n in payload['nodes'] if n['id']==identity)
+    node[field]=({'forged':True} if field=='metadata' else (node.get('line') or 0)+1 if field=='line'
+                 else 'test' if field=='scope' else 'CORRUPTED')
+    damaged=KnowledgeGraph.from_dict(payload);before=damaged.to_dict(),copy.deepcopy(workspace)
+    with pytest.raises(InterfaceProjectionError):
+        project_kafka_interfaces(workspace,damaged,source_coverage=coverage)
+    assert damaged.to_dict()==before[0] and workspace==before[1]
