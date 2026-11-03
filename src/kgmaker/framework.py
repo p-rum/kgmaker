@@ -1448,7 +1448,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     except (ValueError, TypeError):
         valid_selection = False
     valid_selectors = valid_selectors and valid_selection
-    if selected_pair is None or not valid_selectors:
+    if entity_decls and (selected_pair is None or not valid_selectors):
         diagnostics.append({"code": "PERSISTENCE_REALM_UNPROVEN",
                             "reason": "Explicit database_id and schema_stream_id with valid optional schema/target selectors are required for physical schema binding."})
 

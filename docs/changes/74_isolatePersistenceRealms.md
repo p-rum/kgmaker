@@ -140,3 +140,20 @@ TS a frontend node_modules včetně všech library SHA, bez install/network/buil
 Receipt `/workspace/s06-w04-node-provenance.json`. Dosud unstarted remaining
 AC06/HTTP flock byl ukončenzerochildren a bude sloučen s current-parent closure;
 nevzniká duplicitní 182-test rerun.
+
+
+## Current-parent closure preparation
+
+Current parent ef3ab4050289aafd557caa5414c594698da006ea obsahuje Arg/UI,
+Thymeleaf/T025 a Kafka51. Žádný JVM source delta W04 se nezavádí. Java/Kotlin
+2bf6cbde/24461c43 distribuce z actual Arg donoru byla ověřena proti source/build/
+lock receipt a přesnému30-JAR setu; TS/frontend source/lock a library SHA rovněž
+souhlasí (`/workspace/s06-w04-current-worker-provenance.json`). Kafka workspace
+properties projection a _qualified_evidence se zachovaly spolu s vlastní realm
+reaugmentation. Cache key zahrnuje aktuální schema parser i HTTP a Kafka verzi.
+New persistence_schema/flyway_target se zahrnují jen do JVM selection payload;
+3JVM digesty zůstaly shodné a2TS varianty odpovídají přesné parent funkci.
+Focused identity regression prošel. Chybějící realm se diagnostikuje pouze
+pro skutečné entity, nikoli pro nesouvisející HTTP/Spring kontext bez JPA.
+Zbývající AC06/HTTP a relevantní current-parent W04 případy jsou sloučeny
+do jednoho closure batch; předchozích182 PASS se bezdůvodně neopakuje.

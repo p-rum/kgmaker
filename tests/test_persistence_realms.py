@@ -248,6 +248,7 @@ def test_reprojection_preserves_another_framework_producer_in_same_context(tmp_p
     result = augment_framework_graph(tmp_path, graph, ctx)
     assert edge in result.edges and proof in result.evidence
     assert next(n for n in result.nodes if n.id == 'http-request') == graph.nodes[1]
+    assert not any(d.get('code') == 'PERSISTENCE_REALM_UNPROVEN' for d in result.diagnostics)
 
 
 @pytest.mark.parametrize('mutation', ['missing_pair', 'partial_pair', 'wrong_target', 'wrong_schema',
