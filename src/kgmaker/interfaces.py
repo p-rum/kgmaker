@@ -587,11 +587,88 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
                 or full_contexts.get(context['id'])!=context):
             fail('Virtual Kafka context is missing or not canonical')
         virtual_contexts.add(context['id'])
-    if any('kafka_binding_version' in c and c['id'] not in virtual_contexts
-           and c.get('scope')==scope and c.get('id','').startswith('workspace:kafka-context:')
-           for c in graph.contexts):
-        fail('Unexpected virtual Kafka context is not a selected declaration')
-    inventory_nodes=[n for n in graph.nodes if n.id not in expected_nodes]
+    virtual_nodes=set(expected_nodes)
+    # Unselected declarations are historical inputs, never current code proof.
+    # Validate their manifest-bound virtual identity/shape without reading stale
+    # compiler/source contents or promoting their resolved metadata into output.
+    all_declarations=(workspace.get('kafka_bindings') or {}).get('bindings',[])
+    for declaration in all_declarations:
+        if declaration['scope']!=scope or declaration in active:continue
+        candidates=[n for n in graph.nodes if isinstance(n.metadata,dict)
+            and n.metadata.get('binding_id')==declaration['id']]
+        if len(candidates)!=1:fail('Unselected virtual declaration is not unique')
+        historical=candidates[0];md=historical.metadata
+        context=full_contexts.get(md.get('context_id'))
+        inputs=md.get('input_files')
+        repo=declaration['repo_id']
+        if not isinstance(inputs,dict):fail('Unselected declaration has no input identity')
+        allowed={'@workspace/manifest.json',source_key(declaration['contract']['repo_id'],declaration['contract']['path']),
+                 *(source_key(repo,item['path']) for item in declaration['config_files'])}
+        reference=declaration.get('code_ref')
+        if reference:allowed.add(source_key(repo,reference['source_file']))
+        if (set(inputs)!=allowed or inputs.get('@workspace/manifest.json')!=workspace['_manifest_hash']
+                or any(value is not None and (not isinstance(value,str)
+                    or re.fullmatch('[0-9a-f]{64}',value) is None) for value in inputs.values())
+                or not isinstance(context,dict)):
+            fail('Unselected declaration input shape is not canonical')
+        selected_id=context.get('selected_compiler_context')
+        local_selected=None
+        if selected_id is not None:
+            try:selected_repo,local_selected=split_id(selected_id)
+            except (ValueError,TypeError):fail('Unselected compiler selector is not canonical')
+            original=full_contexts.get(selected_id)
+            if (selected_repo!=repo or not isinstance(original,dict)
+                    or any(original.get(k)!=declaration[k] for k in ('scope','module','source_set'))
+                    or original.get('repo_id')!=repo
+                    or reference is not None and local_selected!=reference['context_id']):
+                fail('Unselected virtual context is not bound to its explicit compiler realm')
+        expected_id='workspace:kafka-context:'+digest({'workspace':workspace['workspace_id'],
+            'binding':declaration,'inputs':inputs,'version':BINDING_VERSION,'selected':local_selected})
+        expected_context={'id':expected_id,'mode':'SOURCE_ONLY','scope':scope,'coverage':'PARTIAL',
+            'freshness':'CONTENT_VERIFIED','origin_trust':'WORKSPACE_DECLARATION','repo_id':repo,
+            'module':declaration['module'],'source_set':declaration['source_set'],'source_files':inputs,
+            'selected_compiler_context':selected_id,'kafka_binding_version':BINDING_VERSION}
+        binding_id='workspace:kafka-binding:'+digest({'context':expected_id,'declaration':declaration['id']})
+        identity_fields={'binding_id':declaration['id'],'repo_id':repo,'service_id':declaration['service_id'],
+            'module':declaration['module'],'source_set':declaration['source_set'],'direction':declaration['direction'],
+            'context_id':expected_id,'kafka_binding_version':BINDING_VERSION}
+        if (context!=expected_context or historical.id!=binding_id or historical.kind!='kafka_binding'
+                or historical.path!='@workspace/manifest.json' or historical.scope!=scope
+                or any(md.get(k)!=v for k,v in identity_fields.items())):
+            fail('Unselected virtual declaration identity is not canonical')
+        virtual_contexts.add(expected_id);virtual_nodes.add(binding_id)
+        # Only the exact generated topic/subscription IDs and fixed virtual path
+        # may leave the source ownership inventory; no source/code Node is hidden.
+        if md.get('status')=='RESOLVED':
+            topic_id='workspace:kafka-topic:'+digest({'workspace':workspace['workspace_id'],
+                'cluster':md.get('cluster_id'),'topic':md.get('topic'),'contract':md.get('contract_sha256'),
+                'release':md.get('release'),'scope':scope})
+            topic=full_nodes.get(topic_id)
+            if topic is None or topic.kind!='kafka_topic' or topic.path!='@workspace/manifest.json' or topic.scope!=scope:
+                fail('Unselected virtual topic identity is not canonical')
+            virtual_nodes.add(topic_id)
+        subscription_id=md.get('subscription_id')
+        if subscription_id is not None:
+            subscription=full_nodes.get(subscription_id)
+            code=full_nodes.get(md.get('code_fact_id'))
+            group=md.get('consumer_group') or {}
+            if not isinstance(code.metadata if code else None,dict):fail('Unselected subscription has no code reference')
+            logical='workspace:kafka-subscription:'+digest({'workspace':workspace['workspace_id'],
+                'repo_id':repo,'service_id':declaration['service_id'],'cluster':md.get('cluster_id'),
+                'listener':code.metadata.get('original_logical_id'),'group':group.get('value'),
+                'topic':md.get('topic'),'contract':md.get('contract_sha256'),'release':md.get('release'),'scope':scope})
+            try:code_repo,local_code=split_id(code.id)
+            except (ValueError,TypeError):fail('Unselected subscription code identity is malformed')
+            revision=digest({'logical_id':logical,'context_id':expected_id,'code_fact_id':local_code,'inputs':inputs})
+            if (code_repo!=repo or subscription_id!=logical+':capture:'+revision or subscription is None
+                    or subscription.kind!='kafka_subscription' or subscription.path!='@workspace/manifest.json'
+                    or subscription.scope!=scope or (subscription.metadata or {}).get('logical_id')!=logical):
+                fail('Unselected virtual subscription identity is not canonical')
+            virtual_nodes.add(subscription_id)
+    if any(c.get('id','').startswith('workspace:kafka-context:') and c.get('scope')==scope
+           and c['id'] not in virtual_contexts for c in graph.contexts):
+        fail('Unexpected virtual Kafka context has no canonical manifest declaration')
+    inventory_nodes=[n for n in graph.nodes if n.id not in virtual_nodes]
     inventory_ids={n.id for n in inventory_nodes}
     inventory_graph=replace(graph,nodes=inventory_nodes,
         edges=[e for e in graph.edges if e.source in inventory_ids and e.target in inventory_ids],

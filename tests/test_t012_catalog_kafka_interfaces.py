@@ -188,7 +188,9 @@ def test_actual_selected_context_ignores_stale_neighbor_capture(capture):
     selected={('consumer-svc' if c['repo_id']=='consumer' else 'producer-svc',c['repo_id'],c['module']):c['id']
               for c in compiler if c['repo_id'] in {'producer','consumer'}}
     stale=copy.deepcopy(next(c for c in compiler if c['repo_id']=='consumer'))
-    stale.update(id=stale['id']+':historical',freshness='STALE')
+    from kgmaker.workspace import split_id,qualified
+    repo,identity=split_id(stale['id'])
+    stale.update(id=qualified(repo,identity+':historical'),freshness='STALE')
     stale['source_files']={'@consumer/src/main/java/demo/old.java':'0'*64}
     damaged=replace(graph,contexts=[*graph.contexts,stale]);before=damaged.to_dict()
     view=project_kafka_interfaces(workspace,damaged,source_coverage=coverage,selected_contexts=selected).to_dict()
@@ -214,3 +216,60 @@ def test_actual_public_compiler_nodes_require_canonical_authority(capture, role,
     with pytest.raises(InterfaceProjectionError):
         project_kafka_interfaces(workspace,damaged,source_coverage=coverage)
     assert damaged.to_dict()==before[0] and workspace==before[1]
+
+
+@pytest.fixture(scope='module', params=['k1','k2'])
+def two_context_capture(tmp_path_factory, request):
+    workspace,_,_=capture.__wrapped__(tmp_path_factory,request)
+    manifest=Path(workspace['_manifest_path'])
+    document=json.loads(manifest.read_text())
+    consumer=next(r for r in workspace['repositories'] if r['id']=='consumer')
+    root=Path(consumer['_root'])
+    result=inspect_jvm(root,home=ROOT/'workers',kotlin_backend=request.param,repo_id='local',
+        classpath=actual_prerequisites(request.param)+extra_api_jars(),
+        build_context={'spring_profiles':['green'],'spring_properties':{'orders.topic':'orders-blue'}})
+    local=KnowledgeGraph.from_dict(result['graph'])
+    fact=next(n for n in local.nodes if n.kind=='kafka_code_listener' and n.metadata['method_name']=='two')
+    binding=next(b for b in document['kafka_bindings']['bindings'] if b['id']=='second-group')
+    binding['profiles']=['green'];binding['context_id']=result['context']['id']
+    binding['code_ref']={'kind':'listener','id':fact.metadata['origin_id'],
+        'context_id':result['context']['id'],'source_file':fact.metadata['source_file'],
+        'sha256':fact.metadata['source_sha256']}
+    manifest.write_text(json.dumps(document))
+    workspace=load_workspace(manifest)
+    _,coverage,_,graph,_=snapshot_workspace(manifest)
+    assert len([n for n in graph.nodes if n.kind=='kafka_subscription'])==2
+    return workspace,graph,coverage
+
+
+@pytest.mark.parametrize('group', ['group-one','group-two'])
+def test_actual_explicit_selection_filters_other_canonical_binding_context(two_context_capture, group):
+    from kgmaker.interfaces import project_kafka_interfaces
+    workspace,graph,coverage=two_context_capture
+    bindings=[n for n in graph.nodes if n.kind=='kafka_binding']
+    selected_consumer=next(n for n in bindings if (n.metadata.get('consumer_group') or {}).get('value')==group)
+    producer=next(n for n in bindings if n.metadata['direction']=='producer')
+    selected={('consumer-svc','consumer','root'):next(c['selected_compiler_context'] for c in graph.contexts if c['id']==selected_consumer.metadata['context_id']),
+              ('producer-svc','producer','root'):next(c['selected_compiler_context'] for c in graph.contexts if c['id']==producer.metadata['context_id'])}
+    before=graph.to_dict(),copy.deepcopy(workspace)
+    view=project_kafka_interfaces(workspace,graph,source_coverage=coverage,selected_contexts=selected).to_dict()
+    subscriptions=[n for n in view['nodes'] if n['kind']=='kafka_interface' and n['attributes'].get('subscription_id')]
+    assert len(subscriptions)==1 and subscriptions[0]['attributes']['consumer_group']==group
+    assert subscriptions[0]['attributes']['broker_realm']==('cluster-a' if group=='group-one' else 'cluster-b')
+    assert graph.to_dict()==before[0] and workspace==before[1]
+
+
+@pytest.mark.parametrize('field', ['kind','path','context-mode'])
+def test_actual_unselected_virtual_filter_is_not_an_ownership_bypass(two_context_capture,field):
+    from kgmaker.interfaces import InterfaceProjectionError,project_kafka_interfaces
+    workspace,graph,coverage=two_context_capture
+    payload=copy.deepcopy(graph.to_dict())
+    selected_binding=next(n for n in payload['nodes'] if n['kind']=='kafka_binding' and n['metadata']['binding_id']=='consumer-orders')
+    other=next(n for n in payload['nodes'] if n['kind']=='kafka_binding' and n['metadata']['binding_id']=='second-group')
+    context=next(c for c in payload['contexts'] if c['id']==selected_binding['metadata']['context_id'])
+    selected={('consumer-svc','consumer','root'):context['selected_compiler_context']}
+    if field=='context-mode':next(c for c in payload['contexts'] if c['id']==other['metadata']['context_id'])['mode']='BUILD_IMPORT'
+    else:other[field]='CORRUPTED'
+    damaged=KnowledgeGraph.from_dict(payload);before=damaged.to_dict()
+    with pytest.raises(InterfaceProjectionError):project_kafka_interfaces(workspace,damaged,source_coverage=coverage,selected_contexts=selected)
+    assert damaged.to_dict()==before
