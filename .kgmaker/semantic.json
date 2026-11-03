@@ -63,6 +63,7 @@
     "docs/changes/79_certifyLocalOperations.md": "2879af3158e31273726a71e92f9d8b5eabfde298a888bef6d7f493852970cc2f",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/82_collapseBusinessSteps.md": "26164cddc735066f61b091db30898c6d107455f11bc30e7fdeb8645646f13587",
+    "docs/changes/83_classifyOptionalCompilerPrerequisites.md": "1ebffd3fd18673420347d79c7f7391711614ea0cc0a02a7c594b93fe35e667cf",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "62af00ae69350ab313486db5b5eef53702f98b655def89b386067f32323324b2",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -347,7 +348,7 @@
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_control_flow.py": "47cef4aa22ca9bb557edd4872082dae27a103714d9d8aa94d534ced2c8a0cc5a",
-    "tests/test_coroutine_mapping.py": "def8ada1e61c2e02df0585376999a5e566b76efc20140bfecc133cec37ca7ac8",
+    "tests/test_coroutine_mapping.py": "4ddbd23084320611a2d15a32773629c43386619dd7d684917ff09ecaaf132404",
     "tests/test_cross_repo_artifacts.py": "2650d77f3f2f5a0a08b176f72b27bd859a2c9bf9fc8af2e3a878fe7c96345d8b",
     "tests/test_data_check.py": "156e1d9cd477887743201fb5ebc8b1774781587d1dcc427814fbcf174998160b",
     "tests/test_dataflow.py": "5dfb650ced21cade17b6ada4b71c53a19e9386af989beb4acbee7eb23d83b937",
@@ -372,7 +373,8 @@
     "tests/test_mandatory_worker_ci.py": "fb462c8b22f4e3a64894ea9af17df137bcf130e1666f18f7c6e9cfc028ca4dee",
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_methodology_conflicts.py": "e84cdd12916cbe1320c8835b3daf1a2a9f1f5c0167b4712f95b8ada81b8c9b73",
-    "tests/test_orm_xml_overrides.py": "ac7a999a086ec368bbc4419bef4f2a8dac5fefa1b2e0df679f8e7bbf2a5d0f22",
+    "tests/test_optional_compiler_prerequisites.py": "a10aa75cf2fb7b159e2129a29b67fb36da1caab8e186bf2f2b1e68436d2cbdeb",
+    "tests/test_orm_xml_overrides.py": "92953c1b704cfbb779a76846f0d9aaaba3d40c8cb7366b881493d12da727da3f",
     "tests/test_persistence_realms.py": "fc4ef5a244e2f128fb72fadae7dfda062202568c53074229381b1374c1d2e09a",
     "tests/test_production_scope.py": "30f8be276a512c634379f78eb7105b8ef169b56830aad53fef53599bbfe6f43a",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
@@ -1025,16 +1027,6 @@
       "evidence": "The JVM framework projection parses the selected, root-confined ORM XML subset, applies mapping precedence, and records XML provenance while suppressing unsupported physical bindings."
     },
     {
-      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
-    },
-    {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "kind": "implements",
@@ -1063,16 +1055,6 @@
       "source_file": "workers/jvm/k2/KotlinFrontend.kt",
       "source_line": 313,
       "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
-    },
-    {
-      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_coroutine_mapping.py",
-      "source_line": 75,
-      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
     },
     {
       "source": "file:tests/test_jvm_golden_corpus.py:test_jvm_golden_corpus.py",
@@ -1473,6 +1455,26 @@
       "source_file": "tests/test_t026_collapse_business_steps.py",
       "source_line": 12,
       "evidence": "The actual Javac workspace/process test collapses six certified operations and checks exact expansion, determinism and unresolved syntax confidence; the remaining matrix covers boundaries, tampering and immutable inputs."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
+    },
+    {
+      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_coroutine_mapping.py",
+      "source_line": 75,
+      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
     }
   ],
   "episodes": [

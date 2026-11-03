@@ -51,3 +51,7 @@ rodiče. Všech15trackedJVM souborů bylo byte-exact porovnáno s vlastními
 PR65workery;132JAR/license artefaktů ověřeno proti původnímu build receipt
 a zkopírováno bez buildu. Python3.12 samostatná rozhodovací sada16PASS0.11s.
 Nový optional full/strict actual nadále pending. Nejde o důkaz jejich úspěchu.
+
+Následně integrován také main9442114 (T026); žádné další JVM producer změny.
+Obě předchozí lokální fronty skončily před pytest, skutečný opravný běh dosud
+neproběhl. Aktuální kompletní sada bude obsahovat i T025/T026 nové testy.
