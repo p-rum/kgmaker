@@ -17,6 +17,19 @@ SEND_OWNERS = {'org.springframework.kafka.core.KafkaTemplate', 'org.springframew
 SEND_DESCRIPTOR = '(Ljava/lang/String;Ljava/lang/Object;)Ljava/util/concurrent/CompletableFuture;'
 
 
+def declaration_witness(symbol: dict) -> dict:
+    return {key: symbol.get(key) for key in
+            ('id', 'owner', 'name', 'descriptor', 'kind', 'context_id', 'scope')}
+
+
+def call_witness(site: dict, target: dict) -> dict:
+    return {'site': {key: site.get(key) for key in
+            ('id', 'caller', 'declared_target', 'context_id', 'path', 'sha256', 'range',
+             'argument_mapping_status', 'invocation_kind', 'evidence_kind')},
+            'target': {key: target.get(key) for key in
+            ('id', 'owner', 'name', 'descriptor', 'kind', 'context_id', 'origin', 'path')}}
+
+
 def analysis_stamp(context: dict) -> dict:
     return {'version': VERSION}
 
@@ -145,6 +158,7 @@ class _Capture:
         if not any(p.get('kind') == 'SYMBOL_RESOLVED' and p.get('relation') == 'contains'
                    and p.get('source') == source_nodes[0].id and p.get('target') == node.id
                    and p.get('context_ids') == [cid] and p.get('source_file') == path
+                   and p.get('compiler_declaration') == declaration_witness(symbol)
                    and p.get('compiler_realm') == {k: self.context.get(k)
                         for k in ('repo_id', 'module', 'source_set', 'scope')}
                    and (not annotation_witness or p.get('compiler_annotation_fingerprint') == digest(symbol['annotations']))
@@ -224,6 +238,9 @@ class _Capture:
             self.issue('LISTENER_SOURCE_CONTEXT_OR_COMPILER_UNPROVEN', symbol); return
         if len(candidates) != 1 or candidates[0].get('name') != LISTENER:
             self.issue('LISTENER_CANONICAL_ANNOTATION_OR_REPEATABLE_UNPROVEN', symbol); return
+        if any(s.get('owner') in {LISTENER, LISTENERS} and _string(s.get('path'))
+               and s.get('context_id') == self.context['id'] for s in self.symbols.values()):
+            self.issue('LISTENER_CANONICAL_ANNOTATION_SHADOWED_BY_SOURCE', symbol); return
         annotation = candidates[0]
         values = annotation.get('values')
         if (not isinstance(values, dict) or annotation.get('values_resolved') is False
@@ -354,7 +371,8 @@ class _Capture:
         if (call_node is None or call_node.kind != 'call_site' or call_node.scope != source.scope
                 or call_node.path != symbol['path'] or type(call_node.line) is not int or call_node.line != location['start_line']):
             self.issue('SEND_CANONICAL_CALL_UNPROVEN', site); return
-        call_refs = self.compiler_refs(source.id, site['id'], 'declares_call', symbol, location)
+        call_refs = self.compiler_refs(source.id, site['id'], 'declares_call', symbol, location,
+                                       {'compiler_call': call_witness(site, target)})
         arguments = call.get('arguments')
         if (not call_refs or site.get('argument_mapping_status') != 'PROVEN'
                 or not isinstance(arguments, list) or len(arguments) != 2 or not isinstance(arguments[0], dict)):

@@ -60,7 +60,7 @@ public class KafkaEntries {
     context = next(c for c in graph.contexts if c['id'] == result['context']['id'])
     fact = by_origin[methods['first']['id']]
     assert validate_code_fact(tmp_path, graph, context, fact)
-    for corruption in ['annotation', 'realm', 'source-range', 'weak-proof', 'missing-proof']:
+    for corruption in ['annotation', 'realm', 'owner', 'name', 'descriptor', 'source-range', 'weak-proof', 'missing-proof']:
         payload = copy.deepcopy(original)
         selected = next(c for c in payload['contexts'] if c['id'] == context['id'])
         method = next(m for m in payload['symbols'] if m['id'] == methods['first']['id'])
@@ -73,6 +73,12 @@ public class KafkaEntries {
                 next(a for a in target['annotations'] if a['name'] == LISTENER)['values']['groupId'] = 'forged-group'
         elif corruption == 'realm':
             selected['module'] = 'foreign-module'
+        elif corruption in {'owner', 'name', 'descriptor'}:
+            method[corruption] = node['metadata'][corruption] = 'foreign.ForgedOwner'
+            if corruption == 'name':
+                node['name'] = method['name']
+            elif corruption == 'descriptor':
+                node['signature'] = method['descriptor']
         elif corruption == 'source-range':
             method['range']['start'] = True
             node['metadata']['range']['start'] = True
@@ -185,6 +191,25 @@ public class Producer {
     assert fact.metadata['api_descriptor'] == '(Ljava/lang/String;Ljava/lang/Object;)Ljava/util/concurrent/CompletableFuture;'
     assert fact.metadata['code_origin'] == 'JAVAC_API_CONTRACT'
     assert not any(n.metadata.get('code_origin') == 'KOTLIN' for n in facts)
+    import copy
+    from kgmaker.kafka_code import validate_code_fact
+    context = next(c for c in graph.contexts if c['id'] == result['context']['id'])
+    assert validate_code_fact(tmp_path, graph, context, fact)
+    for corruption in ['caller-owner', 'api-owner', 'call-witness']:
+        payload = copy.deepcopy(graph.to_dict())
+        if corruption == 'call-witness':
+            for proof in payload['evidence']:
+                if proof.get('relation') == 'declares_call' and proof.get('target') == site['id']:
+                    proof.pop('compiler_call', None)
+        else:
+            target_id = site['caller'] if corruption == 'caller-owner' else site['declared_target']
+            value = 'foreign.ForgedOwner' if corruption == 'caller-owner' else 'org.springframework.kafka.core.KafkaOperations'
+            next(s for s in payload['symbols'] if s['id'] == target_id)['owner'] = value
+            next(n for n in payload['nodes'] if n['id'] == target_id)['metadata']['owner'] = value
+        damaged = KnowledgeGraph.from_dict(payload)
+        before = damaged.to_dict()
+        assert not validate_code_fact(tmp_path, damaged, context, fact), corruption
+        assert damaged.to_dict() == before
 
 
 from test_kafka_bindings import kafka_workspace
@@ -323,3 +348,24 @@ class Listeners {
     assert facts['missing'].metadata['group_id'] is None
     assert facts['regex'].metadata['status'] == 'REGEX_CANDIDATE'
     assert facts['regex'].metadata['topics'] == []
+
+
+def test_actual_source_shadow_of_official_annotation_is_not_canonical_api(tmp_path):
+    jars = actual_prerequisites('k1')
+    annotation = tmp_path / 'src/main/java/org/springframework/kafka/annotation/KafkaListener.java'
+    annotation.parent.mkdir(parents=True)
+    annotation.write_text('''package org.springframework.kafka.annotation;
+public @interface KafkaListener { String[] topics(); String groupId(); }
+''')
+    source = tmp_path / 'src/main/java/demo/Fake.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('''package demo;
+import org.springframework.kafka.annotation.KafkaListener;
+class Fake { @KafkaListener(topics={"orders"},groupId="fake") public void listen(String p) {} }
+''')
+    result = inspect_jvm(tmp_path, home=HOME, repo_id='shadow', classpath=jars, publish=False)
+    assert not any('.err.' in str(d.get('code', '')) for d in result['diagnostics'])
+    graph = KnowledgeGraph.from_dict(result['graph'])
+    assert any(s.get('owner') == LISTENER and s.get('path') == annotation.relative_to(tmp_path).as_posix()
+               for s in graph.symbols)
+    assert not any(n.kind == 'kafka_code_listener' for n in graph.nodes)

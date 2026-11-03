@@ -352,6 +352,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     ui_diagnostics = []
     context_id = selected_context["id"]
 
+    from .kafka_code import declaration_witness, call_witness
+    kafka_symbols = {s["id"]: s for s in metadata}
     # Preserve the original compiler realm only for prospective Kafka declarations.
     kafka_sources = {s.get("id") for s in metadata
                      if any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
@@ -384,6 +386,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         if relation == "contains" and fact.get("id") in kafka_sources:
             record["compiler_realm"] = {key: selected_context.get(key)
                                         for key in ("repo_id", "module", "source_set", "scope")}
+            record["compiler_declaration"] = declaration_witness(fact)
+        if relation == "declares_call" and fact.get("declared_target") in kafka_targets:
+            record["compiler_call"] = call_witness(fact, kafka_symbols[fact["declared_target"]])
         if fact.get("argument_mapping_version") == 1:
             record.update({key: fact.get(key) for key in ("argument_mapping_version", "call_site", "argument_index",
                           "parameter_index", "parameter_name", "transformation", "binding_kind")})
