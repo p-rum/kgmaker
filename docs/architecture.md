@@ -219,3 +219,14 @@ Migration derivation remains an attribute of SOURCE_ONLY evidence, never a new
 runtime evidence kind. Missing/foreign/conflicting realms, unsupported scope and
 upstream truncation stay visible. The projection never connects to a database,
 reconstructs a parallel schema catalog, executes a worker, or writes an artifact.
+
+## Explicit process document model (T023)
+
+`process_model.py` composes revision-bound `ProcessDefinition` and `ProcessView`
+with the existing `ViewDocument(kind="process")`; it does not infer a process
+from a call graph. Steps/transitions retain origin IDs and shared evidence,
+polarity, freshness, scope and context. Branch/exception/retry/async structure
+is explicit and loops are valid. A strict semantic overlay cannot change
+technical facts. See [process-model.md](process-model.md); source freshness,
+trigger discovery, projection, review, rendering and storage keep their existing
+or separately planned ownership.
