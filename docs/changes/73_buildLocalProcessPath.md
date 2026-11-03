@@ -2,7 +2,8 @@
 
 T025-S01–S05, AC01–AC06. Větev feat/t025-build-local-process-path, explicit stack
 nad Draft PR59, přesný head `3b24cc66ed70c269e43830181e7f50523c245b92`.
-T024 zatím není merged; T025 nesmí předběhnout jeho validation/review/merge.
+Při zahájení byl T024 pending; nyní je PR59 merged a je převzat v current parentu.
+T025 nepředběhl jeho validation/review/merge.
 S04 se reuse pouze v již skutečně ověřeném Javac/K1 SOURCE CFG subsetu; pending
 coroutine PR37 není prohlášen za merged ani podmínkou nové nepodložené podpory.
 
@@ -132,3 +133,25 @@ Nový RED měl1FAIL (valid finally input), corrected pureT023/CFG118PASS2actuald
 v5.91s; vlastní module+CFG actual focus **51PASS v21.35s**, bez skips.
 `finally-red.log`, `finally-pure.xml`, `finally-corrected.xml` jsou persistent.
 Nový current-parent source checkpoint musí projít root closure před corrected full.
+
+## Current-parent před corrected full
+
+Před corrected full je integrován main355e98fe2ab62fadbf4869eb4485cd3562173068
+(T024 merged, corpus, XMLcapturev2/JPA rulesv5 a conditionsv6, reviewed coroutine
+SOURCE CFGv2). T025 flow/adapter/test source je přesně opravenýe85c225; žádný
+ručně řešený runtime konflikt. Source CFG musí odpovídat aktuálnímu imported
+VERSION; starší unsupported body zůstane opaque, schema v1/v2/v3 decoding se nemění.
+
+15 JVM source/build/lock hashes a všechny kopírované libraries odpovídají skutečnému
+Coro/Factory build receipt a actual48 XML; K1 SHA714e2523/K2ad8cab7a. Explicit copy
+receipt `/workspace/validation/t025/current-parent-worker-receipt.json`. No newbuild
+install/fetch. První current-parent focus před test body ERRORoval kvůli ENOSPC;
+nešlo o correctnessFAIL. Odstraněny pouze moje dokončené disposable full-temp
+adresáře, logs/XML/status/source manifests a skutečný finallyrepro zachovány.
+Current parent focus je nyní **120PASS v8.02s**, bez skips, včetně actualJavac/K1
+finally/two-site/diamond/recursion/budget a T023/CFG/context fixtures; XMLcurrent355.xml.
+
+Všechny parent facts se zachovávají, unie přidává pouze vlastní nový concept a
+vazbu T025 oproti explicitnímu stack baseline. Parent187 immutable episodes jsou
+beze změny; vlastní validated implementation capture bude přidána po full.
+Root musí uzavřít tento nový source checkpoint před corrected full.

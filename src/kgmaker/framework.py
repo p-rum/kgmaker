@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import re
 import json
+import hashlib
+import xml.etree.ElementTree as ET
+from xml.parsers import expat
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -17,8 +20,23 @@ from typing import Any
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
+from .spring_conditions import AnnotationArguments, evaluate_conditions
+from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v4"
+SPRING_RULE_VERSION = "annotation-source-v6"
+JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v2"
+JPA_XML_NAMESPACES = {
+    "https://jakarta.ee/xml/ns/persistence/orm",
+    "http://xmlns.jcp.org/xml/ns/persistence/orm",
+    "http://java.sun.com/xml/ns/persistence/orm",
+}
+JPA_PERSISTENCE_NAMESPACES = {
+    "https://jakarta.ee/xml/ns/persistence",
+    "http://xmlns.jcp.org/xml/ns/persistence",
+    "http://java.sun.com/xml/ns/persistence",
+}
+JPA_XML_VERSIONS = {"1.0", "2.0", "2.1", "2.2", "3.0", "3.1", "3.2"}
+MAX_JPA_XML_BYTES = 2 * 1024 * 1024
 
 
 SPRING_STEREOTYPES = {
@@ -136,6 +154,368 @@ def _allowed_jpa_annotation(name: str, imports: set[str]) -> bool:
     )
 
 
+def _xml_local(element: ET.Element) -> tuple[str, str]:
+    tag = element.tag if isinstance(element.tag, str) else ""
+    if tag.startswith("{") and "}" in tag:
+        namespace, local = tag[1:].split("}", 1)
+        return namespace, local
+    return "", tag
+
+
+def _xml_bool(value: str | None) -> bool | None:
+    if value is None:
+        return False
+    if value.strip().lower() == "true":
+        return True
+    if value.strip().lower() == "false":
+        return False
+    return None
+
+
+def _safe_jpa_xml(root: Path, relative: str) -> tuple[ET.Element | None, dict[str, Any] | None]:
+    """Parse only small, root-confined XML data without DTD/entity processing."""
+    base = root.resolve()
+    try:
+        target = (root / relative).resolve(strict=True)
+        target.relative_to(base)
+        if not target.is_file():
+            return None, {"code": "ORM_XML_FILE_INVALID", "path": relative,
+                          "reason": "Mapping path is not a regular file inside the selected project root."}
+        # Read at most one byte beyond the contract limit. XML mappings are
+        # untrusted project input and must not cause an unbounded allocation.
+        with target.open("rb") as stream:
+            raw = stream.read(MAX_JPA_XML_BYTES + 1)
+    except (OSError, RuntimeError, ValueError):
+        return None, {"code": "ORM_XML_FILE_INVALID", "path": relative,
+                      "reason": "Mapping file is missing or escapes the selected project root."}
+    if len(raw) > MAX_JPA_XML_BYTES:
+        return None, {"code": "ORM_XML_SIZE_LIMIT", "path": relative,
+                      "reason": "XML exceeds the bounded 2 MiB metadata input limit."}
+    try:
+        # Expat recognizes BOMs and XML-declared UTF-16 encodings, unlike a
+        # byte regex. Reject declarations at parser level before ElementTree
+        # can expand internal entities.
+        guard = expat.ParserCreate()
+        def reject_doctype(*_args):
+            raise ValueError("DTD")
+        guard.StartDoctypeDeclHandler = reject_doctype
+        guard.EntityDeclHandler = reject_doctype
+        guard.Parse(raw, True)
+        document = ET.fromstring(raw)
+    except ValueError:
+        return None, {"code": "ORM_XML_UNSAFE_DECLARATION", "path": relative,
+                      "reason": "DTD and entity declarations are unsupported; external content is never fetched."}
+    except LookupError:
+        return None, {"code": "ORM_XML_ENCODING_UNSUPPORTED", "path": relative,
+                      "reason": "XML declares an unsupported character encoding."}
+    except (ET.ParseError, expat.ExpatError):
+        return None, {"code": "ORM_XML_PARSE_INVALID", "path": relative,
+                      "reason": "XML is malformed; annotation fallback is suppressed for the selected mapping scope."}
+    return document, {"path": target.relative_to(base).as_posix(),
+                      "sha256": hashlib.sha256(raw).hexdigest()}
+
+
+def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
+    """Read a selected persistence unit and bounded ORM XML class metadata."""
+    descriptor = root / "META-INF/persistence.xml"
+    model: dict[str, Any] = {"classes": {}, "diagnostics": [], "active": False,
+                             "global_unknown": False, "metadata_complete": False,
+                             "persistence_unit": context.get("persistence_unit"),
+                             "descriptor_path": None, "descriptor_sha256": None}
+    descriptor_info: dict[str, Any] | None = None
+    units: list[ET.Element] = []
+    descriptor_complete = False
+    if descriptor.exists():
+        parsed, descriptor_info = _safe_jpa_xml(root, "META-INF/persistence.xml")
+        if parsed is None:
+            model["diagnostics"].append(descriptor_info)
+            model["global_unknown"] = True
+            return model
+        namespace, local = _xml_local(parsed)
+        if local != "persistence" or namespace not in JPA_PERSISTENCE_NAMESPACES:
+            model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED",
+                                         "path": descriptor_info["path"],
+                                         "reason": "persistence.xml root or namespace is not a supported Jakarta/Javax JPA descriptor."})
+            model["global_unknown"] = True
+            return model
+        if parsed.get("version") not in JPA_XML_VERSIONS:
+            model["diagnostics"].append({"code": "ORM_XML_VERSION_UNSUPPORTED",
+                                         "path": descriptor_info["path"],
+                                         "version": parsed.get("version"),
+                                         "reason": "persistence.xml version is outside the supported JPA XML subset."})
+            model["global_unknown"] = True
+            return model
+        if any(_xml_local(item)[0] != namespace for item in parsed.iter()):
+            model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED",
+                                         "path": descriptor_info["path"],
+                                         "reason": "persistence.xml contains a foreign namespace element."})
+            model["global_unknown"] = True
+            return model
+        units = [child for child in parsed if _xml_local(child)[1] == "persistence-unit"]
+        model["descriptor_path"] = descriptor_info["path"]
+        model["descriptor_sha256"] = descriptor_info["sha256"]
+        selected_name = context.get("persistence_unit")
+        named = [item for item in units if item.get("name") == selected_name] if isinstance(selected_name, str) else []
+        if selected_name:
+            if len(named) != 1:
+                model["diagnostics"].append({"code": "ORM_XML_PERSISTENCE_UNIT_UNRESOLVED",
+                                             "path": descriptor_info["path"],
+                                             "persistence_unit": selected_name,
+                                             "reason": "Selected persistence unit is absent or duplicated in persistence.xml."})
+                model["global_unknown"] = True
+                return model
+            selected = named[0]
+        elif len(units) == 1:
+            selected = units[0]
+            selected_name = selected.get("name")
+        else:
+            model["diagnostics"].append({"code": "ORM_XML_PERSISTENCE_UNIT_AMBIGUOUS",
+                                         "path": descriptor_info["path"],
+                                         "reason": "A persistence unit must be selected when the descriptor has zero or multiple units."})
+            model["global_unknown"] = True
+            return model
+        model["persistence_unit"] = selected_name
+        explicit_files = [child.text.strip() for child in selected
+                          if _xml_local(child)[1] == "mapping-file" and child.text and child.text.strip()]
+        listed_classes = [child.text.strip() for child in selected
+                          if _xml_local(child)[1] == "class" and child.text and child.text.strip()]
+        excluded_node = next((child for child in selected if _xml_local(child)[1] == "exclude-unlisted-classes"), None)
+        excluded = _xml_bool((excluded_node.text or "true") if excluded_node is not None else None)
+        if excluded is None:
+            model["diagnostics"].append({"code": "ORM_XML_CLASS_LIST_UNKNOWN",
+                                         "path": descriptor_info["path"],
+                                         "reason": "exclude-unlisted-classes must be a literal true or false."})
+            model["global_unknown"] = True
+            return model
+        model["listed_classes"] = listed_classes
+        model["exclude_unlisted"] = bool(excluded)
+        pu_metadata = [child for child in selected if _xml_local(child)[1] == "persistence-unit-metadata"]
+        if len(pu_metadata) > 1:
+            model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": descriptor_info["path"],
+                                         "reason": "Persistence unit declares duplicate metadata sections."})
+            model["global_unknown"] = True
+        for metadata in pu_metadata:
+            for child in metadata:
+                child_name = _xml_local(child)[1]
+                if child_name == "xml-mapping-metadata-complete" and len(child) == 0:
+                    descriptor_complete = True
+                elif child_name == "persistence-unit-defaults":
+                    for default in child:
+                        if _xml_local(default)[1] == "access" and (default.text or "").strip() in {"FIELD", "PROPERTY"}:
+                            model["default_access"] = (default.text or "").strip()
+                        else:
+                            model["diagnostics"].append({"code": "ORM_XML_DEFAULT_UNSUPPORTED", "path": descriptor_info["path"],
+                                                         "construct": _xml_local(default)[1],
+                                                         "reason": "Persistence-unit metadata default is outside the supported access-only subset."})
+                            model["global_unknown"] = True
+                else:
+                    model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": descriptor_info["path"],
+                                                 "construct": child_name,
+                                                 "reason": "Persistence-unit metadata construct is outside the supported subset."})
+                    model["global_unknown"] = True
+        model["metadata_complete"] = descriptor_complete
+    else:
+        explicit_files = []
+
+    default_file = "META-INF/orm.xml"
+    mapping_files = [default_file] if (root / default_file).exists() else []
+    mapping_files.extend(item for item in explicit_files if item not in mapping_files)
+    if not mapping_files:
+        return model
+    model["active"] = True
+    for order, relative in enumerate(mapping_files):
+        document, info = _safe_jpa_xml(root, relative)
+        if document is None:
+            model["diagnostics"].append(info)
+            model["global_unknown"] = True
+            continue
+        namespace, local = _xml_local(document)
+        if local != "entity-mappings" or namespace not in JPA_XML_NAMESPACES:
+            model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED", "path": info["path"],
+                                         "reason": "orm.xml root or namespace is not a supported Jakarta/Javax ORM mapping descriptor."})
+            model["global_unknown"] = True
+            continue
+        if document.get("version") not in JPA_XML_VERSIONS:
+            model["diagnostics"].append({"code": "ORM_XML_VERSION_UNSUPPORTED", "path": info["path"],
+                                         "version": document.get("version"),
+                                         "reason": "orm.xml version is outside the supported JPA XML subset."})
+            model["global_unknown"] = True
+            continue
+        if any(_xml_local(item)[0] != namespace for item in document.iter()):
+            model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED", "path": info["path"],
+                                         "reason": "orm.xml contains a foreign namespace element."})
+            model["global_unknown"] = True
+            continue
+        root_complete = _xml_bool(document.get("metadata-complete"))
+        if root_complete is None:
+            model["diagnostics"].append({"code": "ORM_XML_METADATA_COMPLETE_UNKNOWN", "path": info["path"],
+                                         "reason": "metadata-complete must be the literal true or false."})
+            model["global_unknown"] = True
+            continue
+        root_access = document.get("access", model.get("default_access"))
+        if root_access is not None and root_access not in {"FIELD", "PROPERTY"}:
+            model["diagnostics"].append({"code": "ORM_XML_ACCESS_UNKNOWN", "path": info["path"],
+                                         "reason": "Mapping-level access must be FIELD or PROPERTY."})
+            model["global_unknown"] = True
+            continue
+        metadata_sections = [child for child in document if _xml_local(child)[1] == "persistence-unit-metadata"]
+        if len(metadata_sections) > 1:
+            model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": info["path"],
+                                         "reason": "orm.xml declares duplicate persistence-unit-metadata sections."})
+            model["global_unknown"] = True
+        standard_complete = False
+        defaults_sections = [child for child in document if _xml_local(child)[1] == "persistence-unit-defaults"]
+        for metadata in metadata_sections:
+            for nested in metadata:
+                nested_kind = _xml_local(nested)[1]
+                if nested_kind == "xml-mapping-metadata-complete" and len(nested) == 0:
+                    standard_complete = True
+                elif nested_kind == "persistence-unit-defaults":
+                    defaults_sections.append(nested)
+                else:
+                    model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": info["path"],
+                                                 "construct": nested_kind,
+                                                 "reason": "Persistence-unit metadata construct is outside the supported subset."})
+                    model["global_unknown"] = True
+        for defaults in defaults_sections:
+            for default in defaults:
+                default_kind = _xml_local(default)[1]
+                if default_kind == "access" and (default.text or "").strip() in {"FIELD", "PROPERTY"}:
+                    root_access = (default.text or "").strip()
+                else:
+                    model["diagnostics"].append({"code": "ORM_XML_DEFAULT_UNSUPPORTED", "path": info["path"],
+                                                 "construct": default_kind,
+                                                 "reason": "Persistence-unit mapping default is outside the supported access-only subset."})
+                    model["global_unknown"] = True
+        if root_access is not None:
+            model["default_access"] = root_access
+        model["metadata_complete"] = model["metadata_complete"] or root_complete or standard_complete
+        packages = [child.text.strip() for child in document if _xml_local(child)[1] == "package"
+                    and child.text and child.text.strip()]
+        if len(packages) > 1:
+            model["diagnostics"].append({"code": "ORM_XML_PACKAGE_AMBIGUOUS", "path": info["path"],
+                                         "reason": "orm.xml declares more than one default package."})
+            model["global_unknown"] = True
+            continue
+        package = packages[0] if packages else ""
+        class_elements = [child for child in document if _xml_local(child)[1] in
+                          {"entity", "mapped-superclass", "embeddable"}]
+        seen_in_file: set[str] = set()
+        for class_element in class_elements:
+            kind = _xml_local(class_element)[1]
+            raw_class = class_element.get("class", "").strip()
+            owner = raw_class if "." in raw_class or "$" in raw_class else f"{package}.{raw_class}" if package else ""
+            if not owner:
+                model["diagnostics"].append({"code": "ORM_XML_CLASS_UNRESOLVED", "path": info["path"],
+                                             "reason": "XML class must resolve to a fully qualified compiler owner."})
+                model["global_unknown"] = True
+                continue
+            if owner in seen_in_file:
+                record = model["classes"].setdefault(owner, {"owner": owner, "kind": kind, "unknown": False,
+                                                               "attributes": {}, "overrides": {}, "files": []})
+                record["unknown"] = True
+                model["diagnostics"].append({"code": "ORM_XML_CLASS_MAPPING_AMBIGUOUS", "path": info["path"],
+                                             "class": owner, "reason": "A class is mapped more than once in the same orm.xml."})
+                continue
+            seen_in_file.add(owner)
+            complete = _xml_bool(class_element.get("metadata-complete"))
+            if complete is None:
+                model["diagnostics"].append({"code": "ORM_XML_METADATA_COMPLETE_UNKNOWN", "path": info["path"],
+                                             "class": owner, "reason": "Class metadata-complete must be a literal true or false."})
+                complete = True
+            class_access = class_element.get("access", root_access)
+            if class_access is not None and class_access not in {"FIELD", "PROPERTY"}:
+                model["diagnostics"].append({"code": "ORM_XML_ACCESS_UNKNOWN", "path": info["path"],
+                                             "class": owner, "reason": "Class access must be FIELD or PROPERTY."})
+                class_access = "UNKNOWN"
+            provenance = {"xml_sha256": info["sha256"], "xml_mapping_file": info["path"],
+                          "persistence_xml_sha256": model["descriptor_sha256"],
+                          "persistence_xml_path": model["descriptor_path"],
+                          "persistence_unit": model["persistence_unit"], "xml_mapping_order": order,
+                          "xml_precedence": "ORM_XML_OVER_ANNOTATIONS"}
+            record = model["classes"].setdefault(owner, {"owner": owner, "kind": kind, "unknown": False,
+                                                           "attributes": {}, "overrides": {}, "files": []})
+            record["kind"] = kind
+            record["metadata_complete"] = bool(record.get("metadata_complete") or complete or root_complete or standard_complete)
+            if class_access is not None:
+                record["access"] = class_access
+                if class_access == "UNKNOWN":
+                    record["unknown"] = True
+            record["order"] = order
+            record["provenance"] = provenance
+            record["files"].append(info["path"])
+            for child in class_element:
+                child_name = _xml_local(child)[1]
+                if child_name == "table":
+                    record["table"] = {"name": child.get("name"), "schema": child.get("schema"),
+                                       "catalog": child.get("catalog"), "provenance": provenance}
+                elif child_name == "attributes":
+                    for attr in child:
+                        attr_kind = _xml_local(attr)[1]
+                        if attr_kind not in {"id", "embedded-id", "basic", "version", "embedded",
+                                             "many-to-one", "one-to-one", "one-to-many", "many-to-many",
+                                             "element-collection"}:
+                            record["unknown"] = True
+                            model["diagnostics"].append({"code": "ORM_XML_CONSTRUCT_UNSUPPORTED", "path": info["path"],
+                                                         "class": owner, "construct": attr_kind,
+                                                         "reason": "Unsupported XML attribute mapping remains UNKNOWN."})
+                            continue
+                        attr_name = attr.get("name", "").strip()
+                        if not attr_name:
+                            record["unknown"] = True
+                            model["diagnostics"].append({"code": "ORM_XML_ATTRIBUTE_UNRESOLVED", "path": info["path"],
+                                                         "class": owner, "reason": "XML attribute mapping has no name."})
+                            continue
+                        column = next((entry for entry in attr if _xml_local(entry)[1] == "column"), None)
+                        if any(_xml_local(entry)[1] != "column" for entry in attr):
+                            record["unknown"] = True
+                            model["diagnostics"].append({"code": "ORM_XML_CONSTRUCT_UNSUPPORTED", "path": info["path"],
+                                                         "class": owner, "attribute": attr_name,
+                                                         "reason": "Nested XML mapping construct is not supported by the scalar binding subset."})
+                        if column is not None and column.get("table"):
+                            record["unknown"] = True
+                            model["diagnostics"].append({"code": "ORM_XML_COLUMN_TABLE_UNSUPPORTED", "path": info["path"],
+                                                         "class": owner, "attribute": attr_name,
+                                                         "reason": "Column table remapping is outside the selected single-table attribute projection."})
+                        spec = {"kind": attr_kind, "column": column.get("name") if column is not None else None,
+                                "column_present": column is not None, "provenance": provenance}
+                        previous = record["attributes"].get(attr_name)
+                        if previous and previous.get("provenance", {}).get("xml_mapping_order") == order:
+                            spec["ambiguous"] = True
+                            previous["ambiguous"] = True
+                        record["attributes"][attr_name] = spec
+                elif child_name == "attribute-override":
+                    attr_name = child.get("name", "").strip()
+                    column = next((entry for entry in child if _xml_local(entry)[1] == "column"), None)
+                    spec = {"column": column.get("name") if column is not None else None,
+                            "column_present": column is not None, "provenance": provenance}
+                    if not attr_name:
+                        record["unknown"] = True
+                        model["diagnostics"].append({"code": "ORM_XML_ATTRIBUTE_UNRESOLVED", "path": info["path"],
+                                                     "class": owner, "reason": "Attribute override has no attribute name."})
+                    else:
+                        previous = record["overrides"].get(attr_name)
+                        if previous and previous.get("provenance", {}).get("xml_mapping_order") == order:
+                            spec["ambiguous"] = True
+                            previous["ambiguous"] = True
+                        record["overrides"][attr_name] = spec
+                elif child_name == "inheritance":
+                    strategy = child.get("strategy") or "SINGLE_TABLE"
+                    if strategy not in {"SINGLE_TABLE", "JOINED", "TABLE_PER_CLASS"}:
+                        record["unknown"] = True
+                        model["diagnostics"].append({"code": "ORM_XML_INHERITANCE_UNKNOWN", "path": info["path"],
+                                                     "class": owner, "strategy": strategy,
+                                                     "reason": "XML inheritance strategy is outside the supported JPA enum values."})
+                    else:
+                        record["inheritance_strategy"] = strategy
+                elif child_name != "description":
+                    record["unknown"] = True
+                    model["diagnostics"].append({"code": "ORM_XML_CONSTRUCT_UNSUPPORTED", "path": info["path"],
+                                                 "class": owner, "construct": child_name,
+                                                 "reason": "Unsupported class-level ORM XML construct remains UNKNOWN."})
+    return model
+
+
 def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]]:
     def render_value(value: Any) -> str:
         if isinstance(value, dict) and isinstance(value.get("name"), str):
@@ -172,7 +552,8 @@ def _annotation_map(symbol: dict[str, Any], source: str) -> list[tuple[str, str]
                 args = str(raw_values)
             if unresolved:
                 args = "__UNRESOLVED__"
-            values.append((item["name"], args))
+            values.append((item["name"], AnnotationArguments(args, raw_values,
+                           item.get("values_resolved", True) is True)))
     if "annotations" not in symbol and symbol.get("path") and symbol.get("range", {}).get("start_line"):
         values = _annotation_values(source, int(symbol["range"]["start_line"]))
     return values
@@ -266,6 +647,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     evidence = {item["id"]: item for item in graph.evidence if isinstance(item, dict) and isinstance(item.get("id"), str)}
     edges = {(item.source, item.target, item.kind): item for item in graph.edges}
     diagnostics = list(graph.diagnostics)
+    jpa_xml = _jpa_xml_model(root, context)
+    diagnostics.extend(jpa_xml["diagnostics"])
     annotations: list[dict[str, Any]] = list(graph.analysis_annotations)
     spring_beans: list[dict[str, Any]] = []
     entity_decls: list[dict[str, Any]] = []
@@ -276,19 +659,25 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         if item.get("kind") == "annotation_type" and isinstance(item.get("owner"), str)}
 
     def evidence_for(kind: str, source: str, target: str, relation: str, path: str, line: int | None, detail: str,
-                     compiler_fact: dict | None = None) -> str:
+                     compiler_fact: dict | None = None, xml_provenance: dict[str, Any] | None = None, supporting_facts: list | None = None) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "source_file": path, "source_line": line,
                   "detail": detail, "framework_rules": context.get("framework_rule_versions", {})}
         if compiler_fact is not None:
             record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
+        if xml_provenance:
+            record.update(xml_provenance)
+        if supporting_facts:
+            record["compiler_sources"] = [{"symbol_id": fact["id"], "sha256": fact.get("sha256"),
+                "path": fact.get("path"), "context_id": fact.get("context_id")} for fact in supporting_facts]
         identity = "evidence:" + digest(record)
         evidence.setdefault(identity, {"id": identity, **record})
         return identity
 
     def add_edge(source: str, target: str, kind: str, path: str, line: int | None, detail: str,
-                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None) -> None:
+                 evidence_kind: str = "FRAMEWORK_DERIVED", compiler_fact: dict | None = None,
+                 xml_provenance: dict[str, Any] | None = None, supporting_facts: list | None = None) -> None:
         if source not in nodes or target not in nodes:
             return
         key = (source, target, kind)
@@ -298,13 +687,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             old = edges[key]
             if old.evidence_kind == evidence_kind or evidence_kind != "FRAMEWORK_DERIVED":
                 return
-        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail, compiler_fact)
+        proof = evidence_for(evidence_kind, source, target, kind, path, line, detail,
+                             compiler_fact=compiler_fact, xml_provenance=xml_provenance,
+                             supporting_facts=supporting_facts)
         edges[key] = Edge(source, target, kind, detail, evidence_kind=evidence_kind,
                           context_ids=(context_id,), evidence_ids=(proof,), source_file=path, source_line=line)
 
     def add_node(kind: str, name: str, path: str, line: int | None, source: Node | None = None,
+                 declaration_identity: str | None = None,
                  **metadata: Any) -> str:
-        identity = _node_id(kind, {"context": context_id, "path": path, "line": line, "name": name})
+        identity_fields = {"context": context_id, "path": path, "line": line, "name": name}
+        if declaration_identity is not None:
+            identity_fields["declaration_identity"] = declaration_identity
+        identity = _node_id(kind, identity_fields)
         if identity not in nodes:
             nodes[identity] = Node(identity, kind, name, path, line=line,
                                     signature=metadata.pop("signature", None),
@@ -329,7 +724,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             elif simple == "Primary":
                 primary = True
             elif simple == "Profile" and value:
-                profiles.append(value)
+                raw = args.members.get("value") if isinstance(args, AnnotationArguments) and isinstance(args.members, dict) else None
+                profiles.extend(raw if isinstance(raw, list) and all(isinstance(x, str) for x in raw) else [value])
         return qualifiers, primary, profiles
 
     def expanded_annotations(values: list[tuple[str, str]], imports: set[str]) -> list[tuple[str, str]]:
@@ -374,44 +770,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             "INACTIVE", [f"package {package} is outside component scan"])
 
     def condition_state(values: list[tuple[str, str]], path: str, line: int | None) -> tuple[str, list[str]]:
-        states: list[str] = []
-        reasons: list[str] = []
-        active_profiles = context.get("spring_profiles")
-        properties = context.get("spring_properties")
-        available_classes = context.get("spring_available_classes")
+        imports = _imports(source_text.get(path, ""))
+        canonical = []
         for name, args in values:
-            simple = _simple(name)
-            if simple == "Profile" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.",)):
-                profile = _string_arg(args, ("value", "name"))
-                if not isinstance(active_profiles, list):
-                    states.append("UNKNOWN");reasons.append("active Spring profiles were not supplied")
-                elif profile and profile not in active_profiles:
-                    states.append("INACTIVE");reasons.append(f"profile {profile} is inactive")
-                else:
-                    states.append("ACTIVE")
-            elif simple == "ConditionalOnProperty" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.boot.autoconfigure.condition.",)):
-                key = _string_arg(args, ("name", "value"))
-                expected = _named_string_arg(args, "havingValue")
-                missing = (_named_string_arg(args, "matchIfMissing") or "false").casefold() == "true"
-                if not isinstance(properties, dict) or not key:
-                    states.append("UNKNOWN");reasons.append("condition properties or property name are unavailable")
-                elif key not in properties:
-                    states.append("ACTIVE" if missing else "INACTIVE");reasons.append(f"property {key} is missing")
-                else:
-                    actual = str(properties[key])
-                    matches = actual.casefold() != "false" if expected in (None, "") else actual == expected
-                    states.append("ACTIVE" if matches else "INACTIVE");reasons.append(f"property {key}={actual}")
-            elif simple == "ConditionalOnClass" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.boot.autoconfigure.condition.",)):
-                required = _string_arg(args, ("value", "name"))
-                if not isinstance(available_classes, list) or not required:
-                    states.append("UNKNOWN");reasons.append("condition classpath or required class is unavailable")
-                else:
-                    present = required in available_classes
-                    states.append("ACTIVE" if present else "INACTIVE");reasons.append(f"class {required} is {'present' if present else 'absent'}")
-            elif simple == "Conditional" and _allowed_annotation(name, _imports(source_text.get(path, "")), ("org.springframework.context.annotation.",)):
-                states.append("UNKNOWN");reasons.append("custom Spring Condition is not executed")
-        status = "INACTIVE" if "INACTIVE" in states else "UNKNOWN" if "UNKNOWN" in states else "ACTIVE"
-        return status, reasons
+            if "." not in name:
+                # Legacy source-only annotation spellings cannot supply typed
+                # condition proof; recognize imports only to retain UNKNOWN.
+                candidates = [package + name for package in (
+                    "org.springframework.context.annotation.",
+                    "org.springframework.boot.autoconfigure.condition.")
+                    if package + name in imports or package + "*" in imports]
+                if len(candidates) == 1:
+                    name = candidates[0]
+            canonical.append((name, args))
+        return evaluate_conditions(canonical, context)
 
     def class_for(item: dict[str, Any]) -> dict[str, Any] | None:
         path = item.get("path")
@@ -453,6 +825,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     reported_missing: set[tuple[str, str]] = set()
     reported_dynamic: set[str] = set()
     selector_cache: dict[str, dict | None] = {}
+    registrar_candidates: dict[tuple[str, str], tuple[dict, str]] = {}
 
     def processor(exact: str) -> dict | None:
         if exact not in selector_cache:
@@ -504,6 +877,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         continue
                     dynamic_imports.add(exact)
                     info = {**info, "reasons": list(info["reasons"])}
+                    if info["kind"] == "REGISTRAR":
+                        declaration = target["symbol"]
+                        registrar = add_node("spring_registrar", exact, declaration["path"],
+                            (declaration.get("range") or {}).get("start_line"), symbol_node(declaration),
+                            registration_status=info["status"], reasons=info["reasons"], execution="NOT_EXECUTED")
+                        registrar_candidates[(owner, exact)] = (info, registrar)
+                        add_edge(importer["id"], registrar, "uses_bean_registrar", importer["path"],
+                                 (importer.get("range") or {}).get("start_line"), "Compiler-qualified @Import registrar")
+                        if info["status"] == "UNKNOWN" and exact not in reported_dynamic:
+                            reported_dynamic.add(exact)
+                            diagnostics.append({"code": "SPRING_REGISTRAR_BOUNDARY", "path": declaration["path"],
+                                "type": exact, "reasons": info["reasons"], "reason": "Custom registrar body is not executed."})
+                        continue
                     selected = []
                     for name in info["targets"]:
                         if name not in type_records:
@@ -610,6 +996,54 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             if "MappedSuperclass" in kinds:
                 mapped_superclass_decls.append(declaration)
 
+    jpa_declarations = {
+        "entity": entity_decls,
+        "mapped-superclass": mapped_superclass_decls,
+        "embeddable": embeddable_decls,
+    }
+    for owner, xml_class in jpa_xml["classes"].items():
+        type_record = type_records.get(owner)
+        if type_record is None:
+            diagnostics.append({"code": "ORM_XML_CLASS_UNRESOLVED",
+                                "path": xml_class.get("provenance", {}).get("xml_mapping_file"),
+                                "class": owner,
+                                "reason": "XML class name does not match an exact compiler-attributed owner in this context."})
+            jpa_xml["global_unknown"] = True
+            xml_class["unknown"] = True
+            continue
+        selected_declarations = [declaration for collection in jpa_declarations.values()
+                                 for declaration in collection
+                                 if declaration["symbol"].get("owner") == owner]
+        if selected_declarations:
+            if len(selected_declarations) != 1 or selected_declarations[0] not in jpa_declarations.get(xml_class["kind"], []):
+                diagnostics.append({"code": "ORM_XML_CLASS_KIND_MISMATCH",
+                                    "path": xml_class.get("provenance", {}).get("xml_mapping_file"),
+                                    "class": owner, "xml_kind": xml_class["kind"],
+                                    "reason": "XML entity/mapped-superclass/embeddable kind conflicts with compiler-resolved annotation classification."})
+                xml_class["unknown"] = True
+            else:
+                selected_declarations[0]["xml_mapping"] = xml_class
+            continue
+        item = type_record["symbol"]
+        source_path = item.get("path")
+        node = symbol_node(item)
+        if node is None or not isinstance(source_path, str) or source_path not in source_text:
+            diagnostics.append({"code": "ORM_XML_CLASS_UNRESOLVED",
+                                "path": xml_class.get("provenance", {}).get("xml_mapping_file"),
+                                "class": owner,
+                                "reason": "Compiler class node or source declaration is absent from the selected context."})
+            xml_class["unknown"] = True
+            jpa_xml["global_unknown"] = True
+            continue
+        kind_label = xml_class["kind"]
+        jpa_annotations = [("jakarta.persistence." + {"entity": "Entity", "mapped-superclass": "MappedSuperclass",
+                                                        "embeddable": "Embeddable"}[kind_label], "")]
+        declaration = {"node": node, "symbol": item, "annotations": jpa_annotations,
+                       "path": source_path, "line": (item.get("range") or {}).get("start_line"),
+                       "source": source_text[source_path], "imports": type_record["imports"],
+                       "xml_mapping": xml_class}
+        jpa_declarations[kind_label].append(declaration)
+
     # @Bean methods only define beans when their containing configuration is
     # reachable. Method conditions refine the class/import condition.
     for item in symbols.values():
@@ -688,29 +1122,161 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     advice = add_node("spring_advice", f"{name}:{node.name}", path, line, node, advice=name)
                     add_edge(node.id, advice, "advised_by", path, line, f"@{name} advice declaration")
 
+    # Registrar declarations inherit the importing configuration's condition;
+    # RootBeanDefinition does not evaluate the target class's @Profile itself.
+    def registration_types(declared_type):
+        if not declared_type:
+            return []
+        hierarchy = (type_records.get(declared_type, {}).get("symbol", {}).get("type_hierarchy") or {})
+        names = hierarchy.get("types", []) if hierarchy.get("complete") is True else []
+        return list(dict.fromkeys([declared_type.rsplit(".", 1)[-1], *[name.rsplit(".", 1)[-1] for name in names]]))
+
+    declarations = {}
+    for (owner, exact), (info, registrar) in registrar_candidates.items():
+        method = info["method"]
+        for registration in info["registrations"]:
+            state = _combined_state(configuration_states[owner], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+            key = (exact, method["id"], registration["name"], registration["type"])
+            previous = declarations.get(key)
+            if previous is None or rank[state] > rank[previous[3]]:
+                declarations[key] = (info, registrar, registration, state, owner, exact)
+    for info, registrar, registration, state, owner, exact in declarations.values():
+        method = info["method"]
+        target = type_records.get(registration["type"])
+        if (target is None or target["configuration"] or processor(registration["type"]) is not None
+                or factory_info(target["symbol"], symbols, context_id) is not None
+                or target["symbol"].get("kind") != "class"
+                or "abstract" in target["symbol"].get("modifiers", [])):
+            diagnostics.append({"code": "SPRING_REGISTRAR_TARGET_UNSUPPORTED", "path": method["path"],
+                "type": registration["type"], "reason": "Registration target is not an indexed ordinary concrete class."})
+            old = nodes[registrar]
+            nodes[registrar] = replace(old, metadata={**(old.metadata or {}), "registration_status": "UNKNOWN",
+                "reasons": [*(old.metadata or {}).get("reasons", []), "TARGET_UNSUPPORTED:" + registration["type"]]})
+            continue
+        name, product = registration["name"], registration["type"].rsplit(".", 1)[-1]
+        product_types = registration_types(registration["type"])
+        line = (method.get("range") or {}).get("start_line")
+        bean = add_node("spring_bean", name, method["path"], line, symbol_node(method),
+            declaration_identity=exact,
+            registration_origin="REGISTRAR_LITERAL", registering_type=exact, declared_type=registration["type"],
+            types=product_types, qualifier=name, qualifiers=[], primary=False, profiles=[],
+            condition_status=state, condition_reasons=[f"importing configuration {owner} is {configuration_states[owner]}", *info["reasons"]])
+        add_edge(registrar, bean, "registers_bean", method["path"], line,
+                 "Compiler-attributed literal registry declaration; registrar never executed", compiler_fact=method)
+        spring_beans.append({"node": symbol_node(method), "bean": bean, "type": product, "types": product_types,
+            "name": name, "qualifiers": [], "primary": False, "profiles": [], "condition_status": state,
+            "condition_reasons": info["reasons"], "path": method["path"], "line": line})
+
+    # A FactoryBean object is dereferenced with '&'; its product is a different
+    # declaration. Unknown/custom production never becomes an ACTIVE product.
+    for bean in list(spring_beans):
+        source = symbols.get(bean["node"].id, {})
+        info = factory_info(source, symbols, context_id)
+        if info is None:
+            continue
+        original = nodes.pop(bean["bean"])
+        original_name = bean["name"]
+        object_types = (["FactoryBean"] if source.get("kind") == "method" else list(dict.fromkeys(
+            [source.get("name", "FactoryBean"), "FactoryBean", *[name.rsplit(".", 1)[-1]
+             for name in (source.get("type_hierarchy") or {}).get("types", [])]])))
+        object_state = _combined_state(bean["condition_status"], "UNKNOWN" if "FACTORY_NOT_CONCRETE" in info["reasons"] else "ACTIVE")
+        obj = add_node("spring_bean", "&" + original_name, original.path, original.line, bean["node"],
+                       **{**(original.metadata or {}), "types": object_types, "qualifier": "&" + original_name,
+                          "condition_status": object_state,
+                          "registration_origin": "FACTORY_OBJECT", "factory_name": original_name,
+                          "declared_type": info["factory_type"],
+                          "factory_product_type": info["product_type"]})
+        for key, edge in list(edges.items()):
+            if edge.target == original.id:
+                del edges[key]
+                add_edge(edge.source, obj, edge.kind, edge.source_file or original.path, edge.source_line,
+                         "FactoryBean object declaration; product is separate")
+        bean.update(bean=obj, name="&" + original_name, types=object_types, type=object_types[0], qualifiers=[], condition_status=object_state)
+        product = info["product_type"]
+        if product not in type_records:
+            info["reasons"].append("FACTORY_PRODUCT_NOT_INDEXED")
+            info["status"] = "UNKNOWN"
+        state = _combined_state(bean["condition_status"], "ACTIVE" if info["status"] == "RESOLVED_LITERAL" else "UNKNOWN")
+        product_types = registration_types(product)
+        product_node = add_node("spring_bean", original_name, original.path, original.line, bean["node"],
+            **{**(original.metadata or {}), "registration_origin": "FACTORY_PRODUCT", "factory_name": original_name,
+               "declared_type": product, "types": product_types, "condition_status": state,
+               "condition_reasons": [*bean["condition_reasons"], *info["reasons"]], "execution": "NOT_EXECUTED"})
+        proof = info["method"] or source
+        add_edge(obj, product_node, "produces_bean", proof.get("path") or original.path,
+                 (proof.get("range") or {}).get("start_line") or original.line,
+                 "Compiler factory product declaration; custom code never executed", compiler_fact=proof,
+                 supporting_facts=info["sources"])
+        spring_beans.append({**bean, "bean": product_node, "name": original_name, "types": product_types,
+                             "type": product_types[0] if product_types else "", "condition_status": state,
+                             "qualifiers": (original.metadata or {}).get("qualifiers", [])})
+        if info["status"] == "UNKNOWN":
+            diagnostics.append({"code": "SPRING_FACTORY_BOUNDARY", "path": original.path,
+                "source_line": original.line, "bean": product_node, "reasons": info["reasons"],
+                "reason": "Custom or unproven FactoryBean product remains UNKNOWN."})
+
+    # No registry override order is executed. Conflicting registration names
+    # remain alternatives even when a Primary declaration exists elsewhere.
+    names = {}
+    for bean in spring_beans:
+        if bean["condition_status"] != "INACTIVE":
+            names.setdefault(bean["name"], []).append(bean)
+    for name, candidates in names.items():
+        if len({bean["bean"] for bean in candidates}) < 2 or not any(
+                (nodes[bean["bean"]].metadata or {}).get("registration_origin") for bean in candidates):
+            continue
+        for bean in candidates:
+            bean["condition_status"] = "UNKNOWN"
+            old = nodes[bean["bean"]]
+            nodes[old.id] = replace(old, metadata={**(old.metadata or {}), "condition_status": "UNKNOWN",
+                "condition_reasons": [*(old.metadata or {}).get("condition_reasons", []), "REGISTRATION_NAME_COLLISION"]})
+        diagnostics.append({"code": "SPRING_REGISTRATION_NAME_COLLISION", "name": name,
+            "reason": "Registry override order is not executed; competing declarations remain UNKNOWN."})
+
     # Constructor/field injection is intentionally conservative.  A matching
     # type is a candidate, while qualifier/primary/profile controls the result.
-    def resolve_query_property(model_name: str, property_name: str) -> tuple[str | None, str | None]:
+    def resolve_query_property(model_owner: str, property_name: str) -> tuple[str | None, str | None]:
         normalized = property_name.replace("_", "").casefold()
-        direct = entity_attributes.get(model_name, {}).get(normalized)
+        direct = entity_attributes.get(model_owner, {}).get(normalized)
         if direct:
             return direct, property_name
-        for outer, outer_id in entity_attributes.get(model_name, {}).items():
+        for outer, outer_id in entity_attributes.get(model_owner, {}).items():
             if not normalized.startswith(outer) or len(normalized) == len(outer):
                 continue
-            embedded_type = entity_embedded_types.get((model_name, outer))
+            embedded_type = entity_embedded_types.get((model_owner, outer))
             suffix = normalized[len(outer):]
             nested = next((identity for (owner, name), identity in embeddable_attributes.items()
                            if owner == embedded_type and name.casefold() == suffix), None)
             if nested:
                 return nested, f"{outer}.{suffix}"
-            associated_type = entity_association_types.get((model_name, outer))
-            associated = entity_attributes.get(associated_type or "", {}).get(suffix)
+            associated_type = entity_association_types.get((model_owner, outer))
+            associated_owners = entity_owners_by_simple.get(associated_type or "", [])
+            associated = (entity_attributes.get(associated_owners[0], {}).get(suffix)
+                          if len(associated_owners) == 1 else None)
             if associated:
                 return associated, f"{outer}.{suffix}"
         return None, None
 
     repository_models: dict[str, str] = {}
+
+    def repository_entity_owner(repository_symbol: dict[str, Any] | None) -> str | None:
+        """Select a repository entity only from compiler-resolved generic facts."""
+        if not repository_symbol:
+            return None
+        owners: set[str] = set()
+        for supertype in repository_symbol.get("supertypes", []):
+            match = re.fullmatch(r"([\w.$]+)\s*<(.+)>", str(supertype))
+            if not match:
+                continue
+            repository_type = match.group(1).replace("$", ".")
+            if not repository_type.startswith("org.springframework.data.") \
+                    or _simple(repository_type) not in JPA_REPOSITORIES:
+                continue
+            model_type = match.group(2).split(",", 1)[0].strip().replace("$", ".")
+            if model_type in entity_decls_by_owner:
+                owners.add(model_type)
+        return next(iter(owners)) if len(owners) == 1 else None
+
     for path, source in source_text.items():
         imports = _imports(source)
         if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
@@ -740,16 +1306,45 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                           re.finditer(r"@([A-Za-z_][\w.]*)\s*(\([^\n]*\))?", match.group("ann") or "")]
             qualifier = next((_string_arg(args, ("value", "name")) for name, args in qualifiers if _simple(name) == "Qualifier"), None)
             candidates = [bean for bean in spring_beans if type_name in bean.get("types", [bean["type"]])]
+            # A user interface named FactoryBean is not the Spring contract.
+            # Use the compiler field's qualified type for this factory boundary.
+            owner_symbol = symbols.get(owner.id, {})
+            field = next((item for item in symbols.values() if item.get("kind") == "field"
+                          and item.get("owner") == owner_symbol.get("owner")
+                          and item.get("name") == match.group("name")
+                          and item.get("context_id") == context_id), {})
+            qualified_candidates = []
+            for candidate in candidates:
+                metadata = nodes[candidate["bean"]].metadata or {}
+                origin = metadata.get("registration_origin")
+                official_factory = str(field.get("type", "")).split("<", 1)[0] == FACTORY
+                if origin in {"REGISTRAR_LITERAL", "FACTORY_PRODUCT"} or origin == "FACTORY_OBJECT" and not official_factory:
+                    assignability = registration_assignability(metadata.get("declared_type"), field.get("type"), injection_kind, type_records)
+                    if assignability == "INCOMPATIBLE":
+                        continue
+                    if assignability == "UNKNOWN":
+                        candidate = {**candidate, "condition_status": _combined_state(candidate["condition_status"], "UNKNOWN")}
+                        diagnostics.append({"code": "SPRING_REGISTRATION_ASSIGNABILITY_BOUNDARY", "path": path,
+                            "source_line": line, "reason": "Qualified registration/product/factory-object assignability is unproven."})
+                qualified_candidates.append(candidate)
+            candidates = qualified_candidates
+            if str(field.get("type", "")).split("<", 1)[0] == FACTORY:
+                candidates = [bean for bean in candidates
+                              if (nodes[bean["bean"]].metadata or {}).get("registration_origin") == "FACTORY_OBJECT"]
+                requested = str(field.get("type", ""))
+                generic = re.fullmatch(re.escape(FACTORY) + r"<([\w.$]+)>", requested)
+                if generic:
+                    candidates = [bean for bean in candidates if (nodes[bean["bean"]].metadata or {}).get("factory_product_type") == generic.group(1)]
+                elif "<" in requested:
+                    candidates = [{**bean, "condition_status": _combined_state(bean["condition_status"], "UNKNOWN")}
+                                  for bean in candidates]
+                    diagnostics.append({"code": "SPRING_FACTORY_GENERIC_INJECTION_BOUNDARY", "path": path,
+                        "source_line": line, "type": requested, "reason": "Non-concrete FactoryBean generic selection remains UNKNOWN."})
             candidates = [bean for bean in candidates if bean.get("condition_status", "ACTIVE") != "INACTIVE"]
             if qualifier:
                 candidates = [bean for bean in candidates if qualifier in {bean["name"], *bean.get("qualifiers", [])}]
-            active_profiles = context.get("spring_profiles")
-            if isinstance(active_profiles, list):
-                candidates = [bean for bean in candidates if not bean.get("profiles") or
-                              set(bean["profiles"]) & set(active_profiles)]
-            elif any(bean.get("profiles") for bean in candidates):
-                diagnostics.append({"code": "SPRING_PROFILE_UNRESOLVED", "path": path, "source_line": line,
-                                    "type": type_name, "reason": "Active Spring profiles were not supplied; profile-specific candidates remain unresolved."})
+            # Profile expressions were already evaluated in condition_status;
+            # a second literal-name filter would discard proven !dev/OR matches.
             if len(candidates) > 1 and injection_kind in {"single", "optional"}:
                 primaries = [bean for bean in candidates if bean.get("primary")]
                 if len(primaries) == 1:
@@ -847,25 +1442,151 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             add_edge(embedded_id, attribute_id, "contains_attribute", declaration["path"], field_line,
                      "Persistent attribute declared by @Embeddable")
 
-    mapped_superclass_nodes: dict[str, str] = {}
+    mapped_superclass_ids_by_owner: dict[str, str] = {}
+    mapped_superclasses_by_owner: dict[str, dict[str, Any]] = {}
+    mapped_superclasses_by_simple: dict[str, list[dict[str, Any]]] = {}
     for declaration in mapped_superclass_decls:
         source_node: Node = declaration["node"]
+        owner = str(declaration["symbol"].get("owner", ""))
         mapped_id = add_node("orm_mapped_superclass", source_node.name, declaration["path"], declaration["line"], source_node,
-                             java_type=str(declaration["symbol"].get("owner", source_node.name)))
-        mapped_superclass_nodes[source_node.name] = mapped_id
+                             java_type=owner or source_node.name)
+        if owner:
+            mapped_superclass_ids_by_owner[owner] = mapped_id
+            mapped_superclasses_by_owner[owner] = declaration
+            mapped_superclasses_by_simple.setdefault(_simple(owner), []).append(declaration)
         add_edge(source_node.id, mapped_id, "declares_mapped_superclass", declaration["path"], declaration["line"],
                  "Compiler-resolved JPA @MappedSuperclass declaration")
 
-    entity_nodes = {declaration["node"].name: declaration["node"].id for declaration in entity_decls}
+    entity_decls_by_owner = {
+        str(item["symbol"]["owner"]): item for item in entity_decls
+        if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")
+    }
+    entity_decls_by_simple: dict[str, list[dict[str, Any]]] = {}
+    for declaration in entity_decls:
+        entity_decls_by_simple.setdefault(declaration["node"].name, []).append(declaration)
+    entity_owners_by_simple = {
+        name: [str(item["symbol"].get("owner", "")) for item in declarations
+               if isinstance(item["symbol"].get("owner"), str) and item["symbol"].get("owner")]
+        for name, declarations in entity_decls_by_simple.items()
+    }
+    # A simple name is suitable for display, but never selects one of multiple
+    # compiler-resolved entity owners.
+    entity_nodes = {name: declarations[0]["node"].id for name, declarations in entity_decls_by_simple.items()
+                    if len(declarations) == 1}
+    entity_nodes_by_owner = {owner: item["node"].id for owner, item in entity_decls_by_owner.items() if owner}
+    entity_query_owners: dict[str, list[str]] = {}
+    for owner, declaration in entity_decls_by_owner.items():
+        entity_annotation = next((item for item in declaration["symbol"].get("annotations", [])
+                                  if isinstance(item, dict) and isinstance(item.get("name"), str)
+                                  and _simple(item["name"]) == "Entity"), None)
+        if entity_annotation is None or entity_annotation.get("values_resolved") is False:
+            continue
+        raw_entity_values = entity_annotation.get("values") if isinstance(entity_annotation.get("values"), dict) else {}
+        explicit_entity_name = raw_entity_values.get("name", raw_entity_values.get("value"))
+        if explicit_entity_name is not None and not isinstance(explicit_entity_name, str):
+            continue
+        entity_name = explicit_entity_name or declaration["node"].name
+        entity_query_owners.setdefault(entity_name, []).append(owner)
+
+    def entity_index_key(declaration: dict[str, Any]) -> str:
+        owner = declaration["symbol"].get("owner")
+        # A graph node ID is an opaque per-declaration key for incomplete test or
+        # legacy inputs; it cannot be confused with a compiler-qualified owner.
+        return owner if isinstance(owner, str) and owner else "unresolved-owner:" + declaration["node"].id
+
     entity_table_nodes: dict[str, str] = {}
-    entity_attributes: dict[str, dict[str, str]] = {name: {} for name in entity_nodes}
+    entity_table_by_owner: dict[str, str] = {}
+    entity_attributes: dict[str, dict[str, str]] = {entity_index_key(item): {} for item in entity_decls}
     entity_embedded_types: dict[tuple[str, str], str] = {}
     embeddable_inherited_accesses: dict[str, set[str]] = {}
     entity_association_types: dict[tuple[str, str], str] = {}
     named_queries: dict[str, dict[str, Any]] = {}
     association_records: list[dict[str, Any]] = []
+
+    def java_mapped_fields(declaration: dict[str, Any]) -> list[dict[str, Any]]:
+        if not str(declaration["path"]).endswith(".java"):
+            return []
+        text_lines = str(declaration["source"]).splitlines()
+        start = int(declaration["line"] or 1)
+        later_types = [int((item["symbol"].get("range") or {}).get("start_line") or item["line"])
+                       for item in [*entity_decls, *mapped_superclass_decls]
+                       if item["path"] == declaration["path"] and (item["line"] or 0) > start]
+        end = min(later_types or [len(text_lines) + 1])
+        body = "\n".join(text_lines[start - 1:end - 1])
+        field_pattern = re.compile(
+            r"(?P<annotations>(?:@[\w.]+(?:\([^\n]*?\))?\s*)+)"
+            r"(?:(?:public|protected|private|static|final|transient|volatile)\s+)*"
+            r"(?P<type>[A-Za-z_$][\w.$<>?, \[\]]*)\s+(?P<name>[A-Za-z_$][\w$]*)\s*(?:[;=]|$)", re.M)
+        result = []
+        for match in field_pattern.finditer(body):
+            annotations = [(name, args) for name, args in re.findall(r"@([\w.]+)\s*(\([^\n]*?\))?", match.group("annotations"))
+                           if _allowed_jpa_annotation(name, declaration["imports"])]
+            result.append({"name": match.group("name"), "type": match.group("type").strip(),
+                           "annotations": annotations,
+                           "line": start + body[:match.start()].count("\n")})
+        return result
+
+    def inherited_mapped_access(symbol: dict[str, Any]) -> str | None:
+        """Return one compiler-proven access mode from mapped-superclass IDs."""
+        modes: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(owner: str) -> None:
+            if owner in visited:
+                return
+            visited.add(owner)
+            declaration = mapped_superclasses_by_owner.get(owner)
+            if declaration is None:
+                matches = mapped_superclasses_by_simple.get(_simple(owner), []) if "." not in owner else []
+                declaration = matches[0] if len(matches) == 1 else None
+            if declaration is None:
+                parent_entity = entity_decls_by_owner.get(owner)
+                if parent_entity:
+                    for parent_value in parent_entity["symbol"].get("supertypes", []):
+                        visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+                return
+            access_annotation = _annotation(declaration["annotations"], "Access")
+            if access_annotation and access_annotation[1] != "__UNRESOLVED__":
+                mode = (_string_arg(access_annotation[1], ("value",)) or "").rsplit(".", 1)[-1]
+                if mode in {"FIELD", "PROPERTY"}:
+                    modes.add(mode)
+            for field in symbols.values():
+                if field.get("kind") != "field" or field.get("owner") != declaration["symbol"].get("owner"):
+                    continue
+                for annotation in field.get("annotations", []):
+                    if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                        continue
+                    if _simple(annotation["name"]) not in {"Id", "EmbeddedId"} or not _allowed_jpa_annotation(
+                            annotation["name"], declaration["imports"]):
+                        continue
+                    target = str(annotation.get("use_site_target", "")).upper()
+                    if target in {"FIELD", "BACKING_FIELD"}:
+                        modes.add("FIELD")
+                    elif target in {"GET", "GETTER", "PROPERTY_GETTER"}:
+                        modes.add("PROPERTY")
+            if str(declaration["path"]).endswith(".java"):
+                for field in java_mapped_fields(declaration):
+                    if any(_simple(name) in {"Id", "EmbeddedId"} for name, _ in field["annotations"]):
+                        modes.add("FIELD")
+                for method in symbols.values():
+                    if method.get("kind") != "method" or method.get("owner") != declaration["symbol"].get("owner"):
+                        continue
+                    if not re.fullmatch(r"(?:get|is)[A-Z].*", str(method.get("name", ""))):
+                        continue
+                    method_values = _annotation_map(method, declaration["source"])
+                    if any(_simple(name) in {"Id", "EmbeddedId"} and
+                           _allowed_jpa_annotation(name, declaration["imports"]) for name, _ in method_values):
+                        modes.add("PROPERTY")
+            for parent_value in declaration["symbol"].get("supertypes", []):
+                visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+
+        for parent_value in symbol.get("supertypes", []):
+            visit(str(parent_value).split("<", 1)[0].strip().replace("/", "."))
+        return next(iter(modes)) if len(modes) == 1 else None
+
     for entity in entity_decls:
         node: Node = entity["node"]
+        entity_owner = entity_index_key(entity)
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
         table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
@@ -877,13 +1598,18 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         qualified_table = f"{table_schema}.{table_name}" if table_schema else table_name
         table_id = None
         if table_name is not None:
+            inheritance_annotation = _annotation(values, "Inheritance")
+            inheritance_strategy = (_named_string_arg(inheritance_annotation[1], "strategy") or "").rsplit(".", 1)[-1] if inheritance_annotation else "SINGLE_TABLE"
             table_id = add_node("orm_table", qualified_table, entity["path"], entity["line"], node,
                                 logical_name=table_name, schema=table_schema, inferred=inferred,
+                                inheritance_strategy=inheritance_strategy if inheritance_strategy in {"SINGLE_TABLE", "JOINED", "TABLE_PER_CLASS"} else "UNKNOWN",
                                 database_id=context.get("database_id"),
                                 schema_stream_id=context.get("schema_stream_id"),
                                 persistence_unit=context.get("persistence_unit"),
                                 naming_strategy=context.get("naming_strategy"))
-            entity_table_nodes[node.name] = table_id
+            entity_table_nodes[entity_owner] = table_id
+            if entity["symbol"].get("owner"):
+                entity_table_by_owner[entity_owner] = table_id
             add_edge(node.id, table_id, "maps_to_table", entity["path"], entity["line"],
                      "@Table name" if not inferred else "Entity name fallback; physical naming strategy not verified")
         if table_values_unknown:
@@ -914,10 +1640,22 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                          "Named query owner entity/table; static intent only")
             named_queries[query_name] = {"id": named_id, "language": language, "entity": node.name}
         for supertype in entity["symbol"].get("supertypes", []):
-            mapped = mapped_superclass_nodes.get(_simple(str(supertype)))
-            if mapped:
+            super_name = str(supertype).split("<", 1)[0].strip().replace("/", ".")
+            candidates = ([mapped_superclasses_by_owner[super_name]] if super_name in mapped_superclasses_by_owner
+                          else mapped_superclasses_by_simple.get(_simple(super_name), []) if "." not in super_name else [])
+            if len(candidates) == 1:
+                mapped_decl = candidates[0]
+                mapped = mapped_superclass_ids_by_owner.get(str(mapped_decl["symbol"].get("owner", "")))
+                if not mapped:
+                    continue
                 add_edge(node.id, mapped, "inherits_mapping", entity["path"], entity["line"],
                          "Compiler-resolved @MappedSuperclass inheritance")
+            elif len(candidates) > 1:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "supertype": super_name,
+                                    "candidates": [item["symbol"].get("owner") for item in candidates],
+                                    "reason": "Mapped superclass simple name is ambiguous; no inheritance edge is published."})
         matches = [candidate for candidate in schema_tables if table_id and in_schema_realm(candidate)
                    and (candidate.name.casefold() == qualified_table.casefold()
                         if table_schema else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
@@ -985,9 +1723,21 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 diagnostics.append({"code": "ORM_KOTLIN_ACCESS_TARGET_MISMATCH", "path": entity["path"],
                                     "source_line": entity["line"], "entity": node.id,
                                     "reason": f"Explicit {explicit_access} access conflicts with the compiler-reported Kotlin JPA identifier use-site target."})
-            entity_access = ("UNKNOWN" if access_values_unknown else
+            mapped_access = inherited_mapped_access(entity["symbol"])
+            local_access = ("FIELD" if has_field_id and not has_getter_id else
+                            "PROPERTY" if has_getter_id and not has_field_id else None)
+            access_conflict = bool(mapped_access and (
+                explicit_access in {"FIELD", "PROPERTY"} and explicit_access != mapped_access or
+                local_access and local_access != mapped_access))
+            entity_access = ("UNKNOWN" if access_values_unknown or access_conflict else
                              explicit_access if explicit_access in {"FIELD", "PROPERTY"} else
-                             "FIELD" if has_field_id and not has_getter_id else "PROPERTY" if has_getter_id and not has_field_id else "UNKNOWN")
+                             local_access or mapped_access or "UNKNOWN")
+            if access_conflict:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "local_access": local_access, "explicit_access": explicit_access,
+                                    "mapped_superclass_access": mapped_access,
+                                    "reason": "Entity and mapped superclass access evidence conflicts; persistence access remains UNKNOWN."})
             if access_values_unknown:
                 diagnostics.append({"code": "ORM_ACCESS_STRATEGY_UNKNOWN", "path": entity["path"],
                                     "source_line": entity["line"], "entity": node.id,
@@ -997,7 +1747,19 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "source_line": entity["line"], "entity": node.id,
                                     "reason": "Kotlin JPA identifier has no unique @field:/@get: target or explicit @Access; persistence access is not inferred."})
         else:
-            entity_access = explicit_access if explicit_access in {"FIELD", "PROPERTY"} else "PROPERTY" if property_id and not field_id else "FIELD"
+            mapped_access = inherited_mapped_access(entity["symbol"])
+            local_access = "PROPERTY" if property_id and not field_id else "FIELD" if field_id else None
+            access_conflict = bool(mapped_access and (
+                local_access and local_access != mapped_access or
+                explicit_access in {"FIELD", "PROPERTY"} and explicit_access != mapped_access))
+            entity_access = ("UNKNOWN" if access_conflict or access_values_unknown else
+                             explicit_access if explicit_access in {"FIELD", "PROPERTY"} else
+                             local_access or mapped_access or "FIELD")
+            if access_conflict:
+                diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "local_access": local_access, "mapped_superclass_access": mapped_access,
+                                    "reason": "Entity and mapped superclass access evidence conflicts; persistence access remains UNKNOWN."})
         table_node = nodes.get(table_id)
         if table_node is not None:
             nodes[table_id] = replace(table_node, metadata={**(table_node.metadata or {}), "access_strategy": entity_access})
@@ -1032,7 +1794,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             attribute = add_node("orm_attribute", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                  attribute=field_name, type=field_type, access="FIELD",
                                  identifier=identifier, embedded=embedded)
-            entity_attributes[node.name][field_name.casefold()] = attribute
+            entity_attributes[entity_owner][field_name.casefold()] = attribute
             if table_id:
                 add_edge(attribute, table_id, "declared_on_table", entity["path"], field_line, "JPA persistent attribute")
             if identifier:
@@ -1040,7 +1802,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                          entity["path"], field_line, "JPA identifier placement determines FIELD access")
             if embedded:
                 embedded_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_embedded_types[(node.name, field_name.casefold())] = embedded_type
+                entity_embedded_types[(entity_owner, field_name.casefold())] = embedded_type
                 embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                 target = embeddable_nodes.get(embedded_type)
                 if target:
@@ -1085,7 +1847,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             if relation:
                 mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                 target_type = re.findall(r"[A-Za-z_]\w*", field_type)[-1]
-                entity_association_types[(node.name, field_name.casefold())] = target_type
+                entity_association_types[(entity_owner, field_name.casefold())] = target_type
                 association = add_node("orm_association", f"{node.name}.{field_name}", entity["path"], field_line, node,
                                        association=_simple(relation), target_type=target_type,
                                        mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING")
@@ -1165,7 +1927,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 attribute = add_node("orm_attribute", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                      attribute=property_name, type=property_type, access="PROPERTY",
                                      identifier=identifier, embedded=embedded, getter=getter_name)
-                entity_attributes[node.name][property_name.casefold()] = attribute
+                entity_attributes[entity_owner][property_name.casefold()] = attribute
                 if table_id:
                     add_edge(attribute, table_id, "declared_on_table", entity["path"], property_line,
                              "JPA property-access persistent attribute")
@@ -1174,7 +1936,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                              entity["path"], property_line, "JPA identifier placement determines PROPERTY access")
                 if embedded:
                     embedded_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_embedded_types[(node.name, property_name.casefold())] = embedded_type
+                    entity_embedded_types[(entity_owner, property_name.casefold())] = embedded_type
                     embeddable_inherited_accesses.setdefault(embedded_type, set()).add(entity_access)
                     if embedded_type in embeddable_nodes:
                         add_edge(attribute, embeddable_nodes[embedded_type], "embeds_type", entity["path"], property_line,
@@ -1185,7 +1947,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 if relation_entry:
                     mapped_by = _named_string_arg(relation_entry[1], "mappedBy")
                     target_type = re.findall(r"[A-Za-z_]\w*", property_type)[-1]
-                    entity_association_types[(node.name, property_name.casefold())] = target_type
+                    entity_association_types[(entity_owner, property_name.casefold())] = target_type
                     association = add_node("orm_association", f"{node.name}.{property_name}", entity["path"], property_line, node,
                                            association=_simple(relation_entry[0]), target_type=target_type,
                                            mapped_by=mapped_by, association_role="INVERSE" if mapped_by else "OWNING",
@@ -1209,6 +1971,375 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                      logical_name=column_name, inferred=not bool(column_annotation))
                 add_edge(attribute, column_id, "maps_to_column", entity["path"], property_line,
                          "Property @Column name" if column_annotation else "Property name; naming strategy not verified")
+
+    # A mapped superclass has no table of its own. Build a declaration fact for
+    # each compiler-attributed persistent property, then project it per entity
+    # so the declaration owner and effective entity owner are never conflated.
+    def mapped_ancestors(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = mapped_superclasses_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            parent_decl = mapped_superclasses_by_owner.get(parent)
+            if parent_decl is None:
+                matches = mapped_superclasses_by_simple.get(_simple(parent), []) if "." not in parent else []
+                if len(matches) > 1:
+                    return None
+                parent_decl = matches[0] if matches else None
+            if parent_decl:
+                parent_chain = mapped_ancestors(str(parent_decl["symbol"].get("owner", "")), seen)
+                if parent_chain is None:
+                    return None
+                result.extend(parent_chain)
+        result.append(declaration)
+        return result
+
+    def entity_ancestors(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = entity_decls_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            if parent not in entity_decls_by_owner:
+                continue
+            chain = entity_ancestors(parent, seen)
+            if chain is None:
+                return None
+            result.extend(chain)
+            result.append(entity_decls_by_owner[parent])
+        return result
+
+    def mapped_ancestors_for_entity(owner: str, seen: set[str] | None = None) -> list[dict[str, Any]] | None:
+        seen = set() if seen is None else seen
+        if owner in seen:
+            return None
+        seen.add(owner)
+        declaration = entity_decls_by_owner.get(owner)
+        if declaration is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for parent_value in declaration["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            mapped = mapped_superclasses_by_owner.get(parent)
+            if mapped:
+                chain = mapped_ancestors(str(mapped["symbol"].get("owner", "")))
+                if chain is None:
+                    return None
+                result.extend(chain)
+            elif parent in entity_decls_by_owner:
+                chain = mapped_ancestors_for_entity(parent, seen)
+                if chain is None:
+                    return None
+                result.extend(chain)
+        return result
+
+    for entity in entity_decls:
+        node: Node = entity["node"]
+        raw_effective_owner = entity["symbol"].get("owner")
+        if not isinstance(raw_effective_owner, str) or not raw_effective_owner:
+            diagnostics.append({"code": "ORM_ENTITY_OWNER_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "Compiler-qualified entity owner is absent; inherited persistence attributes are not projected."})
+            continue
+        effective_owner = raw_effective_owner
+        inherited_declarations: list[dict[str, Any]] = []
+        ancestry_unknown = False
+        for parent_value in entity["symbol"].get("supertypes", []):
+            parent = str(parent_value).split("<", 1)[0].strip().replace("/", ".")
+            parent_decl = mapped_superclasses_by_owner.get(parent)
+            if parent_decl is None:
+                matches = mapped_superclasses_by_simple.get(_simple(parent), []) if "." not in parent else []
+                if len(matches) > 1:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_AMBIGUOUS", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id,
+                                        "supertype": parent, "candidates": [item["symbol"].get("owner") for item in matches],
+                                        "reason": "Mapped superclass identity is ambiguous; inherited attributes are omitted."})
+                elif matches:
+                    parent_decl = matches[0]
+            if parent_decl:
+                chain = mapped_ancestors(str(parent_decl["symbol"].get("owner", "")))
+                if chain is None:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_HIERARCHY_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "supertype": parent,
+                                        "reason": "Mapped superclass hierarchy is cyclic or ambiguous; inherited attributes are omitted."})
+                else:
+                    inherited_declarations.extend(chain)
+            elif parent in entity_decls_by_owner:
+                chain = mapped_ancestors_for_entity(parent)
+                if chain is None:
+                    ancestry_unknown = True
+                    diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_HIERARCHY_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "supertype": parent,
+                                        "reason": "Entity ancestry is cyclic or ambiguous; mapped superclass attributes are omitted."})
+                else:
+                    inherited_declarations.extend(chain)
+        if not inherited_declarations or ancestry_unknown:
+            continue
+        table_id = entity_table_nodes.get(effective_owner)
+        table = nodes.get(table_id) if table_id else None
+        access = str((table.metadata or {}).get("access_strategy", "UNKNOWN")) if table else "UNKNOWN"
+        if access not in {"FIELD", "PROPERTY"}:
+            diagnostics.append({"code": "ORM_MAPPED_SUPERCLASS_ACCESS_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "The effective entity access strategy is unknown; mapped superclass attributes are not projected."})
+            continue
+        inherited_entity_declarations = entity_ancestors(effective_owner)
+        mapping_table_id = table_id
+        if inherited_entity_declarations is None:
+            mapping_table_id = None
+            diagnostics.append({"code": "ORM_ENTITY_INHERITANCE_UNKNOWN", "path": entity["path"],
+                                "source_line": entity["line"], "entity": node.id,
+                                "reason": "Entity inheritance is cyclic or ambiguous; no effective table is selected."})
+        elif inherited_entity_declarations:
+            root_owner = str(inherited_entity_declarations[0]["symbol"].get("owner", ""))
+            root_table_id = entity_table_by_owner.get(root_owner)
+            root_table = nodes.get(root_table_id) if root_table_id else None
+            strategy = str((root_table.metadata or {}).get("inheritance_strategy", "UNKNOWN")) if root_table else "UNKNOWN"
+            if strategy in {"SINGLE_TABLE", "JOINED"}:
+                mapping_table_id = root_table_id
+            elif strategy == "TABLE_PER_CLASS":
+                mapping_table_id = table_id
+            else:
+                mapping_table_id = None
+                diagnostics.append({"code": "ORM_ENTITY_INHERITANCE_UNKNOWN", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "root_entity": root_owner,
+                                    "reason": "Root @Inheritance strategy is unresolved; inherited table mapping remains UNKNOWN."})
+        seen_decls: dict[str, list[dict[str, Any]]] = {}
+        for declaration in inherited_declarations:
+            owner = str(declaration["symbol"].get("owner", ""))
+            if str(declaration["path"]).endswith(".java"):
+                field_candidates = java_mapped_fields(declaration) if access == "FIELD" else []
+                if access == "PROPERTY":
+                    field_candidates = []
+                    for method in symbols.values():
+                        if method.get("kind") != "method" or method.get("owner") != owner:
+                            continue
+                        getter = str(method.get("name", ""))
+                        if not re.fullmatch(r"(?:get|is)[A-Z].*", getter):
+                            continue
+                        method_annotations = [(name, args) for name, args in _annotation_map(method, declaration["source"])
+                                              if _allowed_jpa_annotation(name, declaration["imports"])]
+                        property_name = getter[3:] if getter.startswith("get") else getter[2:]
+                        property_name = property_name[:1].lower() + property_name[1:]
+                        field_candidates.append({"name": property_name,
+                                                 "type": method.get("return_type", "UNKNOWN"),
+                                                 "annotations": method_annotations,
+                                                 "line": (method.get("range") or {}).get("start_line") or declaration["line"]})
+            else:
+                field_candidates = []
+                for field in symbols.values():
+                    if field.get("kind") != "field" or field.get("owner") != owner:
+                        continue
+                    raw_annotations = field.get("annotations", [])
+                    targets = {"FIELD", "BACKING_FIELD"} if access == "FIELD" else {"GET", "GETTER", "PROPERTY_GETTER"}
+                    selected_items = [item for item in raw_annotations if isinstance(item, dict)
+                                      and str(item.get("use_site_target", "")).upper() in targets]
+                    selected = {**field, "annotations": selected_items}
+                    field_annotations = [(name, args) for name, args in _annotation_map(selected, declaration["source"])
+                                         if _allowed_jpa_annotation(name, declaration["imports"])]
+                    field_candidates.append({"name": field.get("name"), "type": field.get("type", "UNKNOWN"),
+                                             "annotations": field_annotations,
+                                             "line": (field.get("range") or {}).get("start_line") or declaration["line"]})
+            for field in field_candidates:
+                field_annotations = field["annotations"]
+                if not field_annotations or any(_simple(name) == "Transient" for name, _ in field_annotations):
+                    continue
+                if not any(_simple(name) in JPA_FIELDS for name, _ in field_annotations):
+                    continue
+                attribute_name = str(field.get("name", ""))
+                if attribute_name:
+                    seen_decls.setdefault(attribute_name.casefold(), []).append(
+                        {"declaration": declaration, "field": field, "annotations": field_annotations,
+                         "name": attribute_name, "owner": owner,
+                         "line": field.get("line") or declaration["line"]})
+        override_map: dict[str, list[tuple[str, str | None, bool]]] = {}
+        unknown_class_override = False
+        override_declarations = [*inherited_declarations, *(inherited_entity_declarations or []), entity]
+        for override_declaration in override_declarations:
+            override_owner = str(override_declaration["symbol"].get("owner", ""))
+            imports = override_declaration["imports"]
+            for annotation in override_declaration["symbol"].get("annotations", []):
+                if not isinstance(annotation, dict) or not isinstance(annotation.get("name"), str):
+                    continue
+                name = annotation["name"]
+                if _simple(name) != "AttributeOverride" or not _allowed_jpa_annotation(name, imports):
+                    continue
+                unknown_class_override |= annotation.get("values_resolved") is False
+                values = annotation.get("values") if isinstance(annotation.get("values"), dict) else {}
+                attribute_name = values.get("name")
+                if not isinstance(attribute_name, str) or not attribute_name:
+                    continue
+                nested = values.get("column")
+                column_name = None
+                unresolved = annotation.get("values_resolved") is False
+                if isinstance(nested, dict):
+                    nested_name = nested.get("name")
+                    nested_values = nested.get("values") if isinstance(nested.get("values"), dict) else {}
+                    if not isinstance(nested_name, str) or not _allowed_jpa_annotation(nested_name, imports):
+                        continue
+                    nested_column = nested_values.get("name") or nested_values.get("value")
+                    column_name = nested_column if isinstance(nested_column, str) and nested_column else None
+                    unresolved = unresolved or nested.get("values_resolved") is False
+                else:
+                    unresolved = True
+                override_map.setdefault(attribute_name.casefold(), []).append((override_owner, column_name, unresolved))
+        for normalized, candidates in seen_decls.items():
+            attribute_name = candidates[0]["name"]
+            existing = entity_attributes.get(effective_owner, {}).get(normalized)
+            if existing or len(candidates) != 1:
+                for identity in ([existing] if existing else []):
+                    if identity in nodes:
+                        nodes[identity] = replace(nodes[identity], metadata={**(nodes[identity].metadata or {}),
+                                                                              "mapping_status": "UNKNOWN"})
+                        removed_columns = set()
+                        for edge_key, edge in list(edges.items()):
+                            if edge.source == identity and edge.kind == "maps_to_column":
+                                removed_columns.add(edge.target)
+                                edges.pop(edge_key, None)
+                        for column in removed_columns:
+                            if not any(edge.source == column or edge.target == column for edge in edges.values()):
+                                nodes.pop(column, None)
+                diagnostics.append({"code": "ORM_INHERITED_ATTRIBUTE_COLLISION", "path": entity["path"],
+                                    "source_line": entity["line"], "effective_owner": effective_owner,
+                                    "attribute": attribute_name,
+                                    "declarations": [item["owner"] for item in candidates],
+                                    "reason": "Inherited and declared persistent attributes share a name; no winner is selected."})
+                continue
+            item = candidates[0]
+            declaration = item["declaration"]
+            field = item["field"]
+            owner = item["owner"]
+            field_annotations = item["annotations"]
+            args = next((value for name, value in field_annotations if _simple(name) == "Column"), "")
+            embedded_id = any(_simple(name) == "EmbeddedId" for name, _ in field_annotations)
+            embedded = embedded_id or any(_simple(name) == "Embedded" for name, _ in field_annotations)
+            identifier = embedded_id or any(_simple(name) == "Id" for name, _ in field_annotations)
+            relation_entry = next(((name, value) for name, value in field_annotations
+                                   if _simple(name) in {"ManyToOne", "OneToMany", "OneToOne", "ManyToMany"}), None)
+            column_name = _string_arg(args, ("name", "value")) if args else attribute_name
+            status = "PARTIAL"
+            override_values = override_map.get(normalized, [])
+            latest_override_owner = override_values[-1][0] if override_values else None
+            selected_overrides = [item for item in override_values if item[0] == latest_override_owner]
+            if len(selected_overrides) > 1:
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_AMBIGUOUS", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id, "attribute": attribute_name,
+                                    "reason": "Multiple class-level @AttributeOverride declarations match; no physical column is selected."})
+            elif selected_overrides:
+                _, override_column, unresolved = selected_overrides[0]
+                if unresolved or override_column is None:
+                    status, column_name = "UNKNOWN", None
+                    diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_UNKNOWN", "path": entity["path"],
+                                        "source_line": entity["line"], "entity": node.id, "attribute": attribute_name,
+                                        "reason": "Explicit @AttributeOverride column is incomplete or unresolved; no fallback is published."})
+                else:
+                    column_name = override_column
+            elif unknown_class_override:
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_ATTRIBUTE_OVERRIDE_UNKNOWN", "path": entity["path"],
+                                    "source_line": entity["line"], "entity": node.id,
+                                    "attribute": attribute_name,
+                                    "reason": "An explicit class-level @AttributeOverride is unresolved; inherited column fallback is omitted."})
+            if args == "__UNRESOLVED__":
+                status, column_name = "UNKNOWN", None
+                diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": declaration["path"],
+                                    "source_line": item["line"], "effective_owner": effective_owner,
+                                    "attribute": attribute_name,
+                                    "reason": "Explicit mapped superclass @Column is unresolved; no physical column is published."})
+            declaration_node = add_node("orm_attribute", f"{declaration['node'].name}.{attribute_name}",
+                                        declaration["path"], item["line"], declaration["node"],
+                                        attribute=attribute_name, type=field.get("type", "UNKNOWN"),
+                                        access=access, inherited=False, declaring_owner=owner,
+                                        effective_owner=None, identifier=identifier, embedded=embedded,
+                                        mapping_status="PARTIAL")
+            inherited_attribute = add_node("orm_attribute", f"{node.name}.{attribute_name}", declaration["path"],
+                                           item["line"], declaration["node"],
+                                           attribute=attribute_name, type=field.get("type", "UNKNOWN"),
+                                           access=access, inherited=True, declaring_owner=owner,
+                                           effective_owner=effective_owner, identifier=identifier, embedded=embedded,
+                                           mapping_status=status,
+                                           override=bool(override_values))
+            add_edge(inherited_attribute, declaration_node, "inherits_attribute", declaration["path"], item["line"],
+                     "Compiler-attributed persistent property projected from its mapped superclass")
+            add_edge(node.id, inherited_attribute, "has_persistent_attribute", entity["path"], entity["line"],
+                     "Mapped superclass property effective for this entity")
+            entity_attributes.setdefault(effective_owner, {})[normalized] = inherited_attribute
+            if mapping_table_id:
+                add_edge(inherited_attribute, mapping_table_id, "declared_on_table", entity["path"], item["line"],
+                         "Effective mapped superclass property on entity table")
+            elif status != "UNKNOWN":
+                nodes[inherited_attribute] = replace(nodes[inherited_attribute], metadata={**(nodes[inherited_attribute].metadata or {}),
+                                                                                          "mapping_status": "UNKNOWN"})
+                status = "UNKNOWN"
+                column_name = None
+            if identifier:
+                add_edge(node.id, inherited_attribute, "has_embedded_id" if embedded_id else "has_id",
+                         entity["path"], item["line"],
+                         "Mapped superclass identifier is effective for this entity")
+            if embedded:
+                embedded_type = re.findall(r"[A-Za-z_]\w*", str(field.get("type", "")))[-1:]
+                embedded_name = embedded_type[0] if embedded_type else ""
+                target = embeddable_nodes.get(embedded_name)
+                if target:
+                    entity_embedded_types[(effective_owner, normalized)] = embedded_name
+                    add_edge(inherited_attribute, target, "embeds_type", entity["path"], item["line"],
+                             "Mapped superclass embedded attribute")
+                else:
+                    diagnostics.append({"code": "ORM_EMBEDDABLE_TYPE_UNRESOLVED", "path": entity["path"],
+                                        "source_line": item["line"], "attribute": inherited_attribute,
+                                        "type": field.get("type")})
+                column_name = None
+            elif relation_entry:
+                relation_name, relation_args = relation_entry
+                mapped_by = _named_string_arg(relation_args, "mappedBy")
+                target_type = re.findall(r"[A-Za-z_]\w*", str(field.get("type", "")))[-1:]
+                target_type = target_type[0] if target_type else "UNKNOWN"
+                entity_association_types[(effective_owner, normalized)] = target_type
+                association = add_node("orm_association", f"{node.name}.{attribute_name}", entity["path"],
+                                       item["line"], node, association=_simple(relation_name),
+                                       target_type=target_type, mapped_by=mapped_by,
+                                       association_role="INVERSE" if mapped_by else "OWNING", access=access)
+                add_edge(inherited_attribute, association, "declares_association", entity["path"], item["line"],
+                         f"Mapped superclass JPA relationship @{_simple(relation_name)}")
+                association_records.append({"id": association, "owner": node.name, "field": attribute_name,
+                                            "target": target_type, "mapped_by": mapped_by,
+                                            "path": entity["path"], "line": item["line"]})
+                join_entry = next(((name, value) for name, value in field_annotations
+                                   if _simple(name) in {"JoinColumn", "JoinTable"}), None)
+                join_name = _string_arg(join_entry[1], ("name", "value")) if join_entry else None
+                if join_name:
+                    join_kind = "orm_join_table" if _simple(join_entry[0]) == "JoinTable" else "orm_column"
+                    join_node = add_node(join_kind, join_name, entity["path"], item["line"], node,
+                                         logical_name=join_name, inferred=False, join=True)
+                    add_edge(association, join_node,
+                             "maps_to_join_table" if join_kind == "orm_join_table" else "maps_to_join_column",
+                             entity["path"], item["line"], "Explicit mapped superclass join mapping")
+                column_name = None
+            if column_name:
+                column_id = add_node("orm_column", column_name, entity["path"], item["line"], node,
+                                     logical_name=column_name, inferred=not bool(args or override_values),
+                                     override=bool(override_values), mapping_status=status)
+                add_edge(inherited_attribute, column_id, "maps_to_column", entity["path"], item["line"],
+                         "Mapped superclass column or entity-level AttributeOverride")
+            elif status == "UNKNOWN":
+                diagnostics.append({"code": "ORM_INHERITED_COLUMN_UNKNOWN", "path": entity["path"],
+                                    "source_line": item["line"], "entity": node.id, "attribute": attribute_name,
+                                    "reason": "No physical column is published for unresolved inherited mapping."})
 
     for declaration in embeddable_decls:
         name = declaration["node"].name
@@ -1263,17 +2394,26 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             generic = re.search(r"(?:JpaRepository|CrudRepository|PagingAndSortingRepository|Repository)\s*<\s*([\w.]+)", match.group(2))
             if not generic or not any(item.startswith("org.springframework.data") for item in imports):
                 continue
-            repo_name, model_name = match.group(1), generic.group(1).rsplit(".", 1)[-1]
+            repo_name, declared_model = match.group(1), generic.group(1).rsplit(".", 1)[-1]
             line = _line(source, match.start())
             repo = next((node for node in nodes.values() if node.path == path and node.name == repo_name and node.kind in {"class", "interface"}), None)
-            models = [candidate for candidate in nodes.values() if candidate.name == model_name and candidate.kind in {"class", "type"}]
-            if repo and len(models) == 1:
-                add_edge(repo.id, models[0].id, "repository_for", path, line, "Spring Data repository generic")
-                repository_owner = str((symbols.get(repo.id) or {}).get("owner", ""))
-                if repository_owner:
-                    repository_models[repository_owner] = model_name
-            elif repo and not models:
-                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line, "repository": repo.id, "model": model_name})
+            repository_symbol = symbols.get(repo.id) if repo else None
+            model_owner = repository_entity_owner(repository_symbol)
+            model_name = _simple(model_owner) if model_owner else declared_model
+            if repo and model_owner:
+                model_node = nodes.get(entity_nodes_by_owner[model_owner])
+                if model_node:
+                    add_edge(repo.id, model_node.id, "repository_for", path, line,
+                             "Compiler-resolved Spring Data repository generic entity")
+                    repository_owner = str((repository_symbol or {}).get("owner", ""))
+                    if repository_owner:
+                        repository_models[repository_owner] = model_owner
+                else:
+                    model_owner = None
+            if repo and model_owner is None:
+                diagnostics.append({"code": "SPRING_DATA_MODEL_UNRESOLVED", "path": path, "source_line": line,
+                                    "repository": repo.id, "model": declared_model,
+                                    "reason": "Repository generic does not resolve to exactly one compiler-owned entity; no simple-name fallback is used."})
             if repo:
                 # Derived query names use a bounded Spring Data grammar and are
                 # checked against the selected entity/embedded attribute model.
@@ -1292,14 +2432,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     resolved_predicates = []
                     unresolved_predicates = []
                     for predicate in parsed["predicates"]:
-                        target, resolved_path = resolve_query_property(model_name, predicate["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", predicate["property"])
                         value = {**predicate, "resolved_path": resolved_path, "attribute_id": target}
                         resolved_predicates.append(value)
                         if target is None:
                             unresolved_predicates.append(predicate["property"])
                     resolved_orders = []
                     for order in parsed["order_by"]:
-                        target, resolved_path = resolve_query_property(model_name, order["property"])
+                        target, resolved_path = resolve_query_property(model_owner or "", order["property"])
                         resolved_orders.append({**order, "resolved_path": resolved_path, "attribute_id": target})
                         if target is None:
                             unresolved_predicates.append(order["property"])
@@ -1310,7 +2450,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         validated=not unresolved_predicates)
                     add_edge(method.id, query_id, "declares_query", path, query_line,
                              "Spring Data derived query method")
-                    entity_id = entity_nodes.get(model_name)
+                    entity_id = entity_nodes_by_owner.get(model_owner or "")
                     if entity_id:
                         relation = "query_deletes" if parsed["action"] in {"delete", "remove"} else "query_reads"
                         add_edge(query_id, entity_id, relation, path, query_line,
@@ -1328,6 +2468,21 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "source_line": query_line, "method": method.id,
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
+
+    type_nodes_by_owner: dict[str, Node] = {}
+    for symbol in symbols.values():
+        symbol_node_value = nodes.get(str(symbol.get("id", "")))
+        owner = symbol.get("owner")
+        if symbol_node_value is None or symbol_node_value.kind not in {"class", "interface", "type"} \
+                or not isinstance(owner, str) or not owner:
+            continue
+        type_nodes_by_owner[owner.replace("$", ".")] = symbol_node_value
+
+    def descriptor_return_owner(descriptor: Any) -> str | None:
+        if not isinstance(descriptor, str):
+            return None
+        match = re.search(r"\)(?:\[*)L([^;<]+);$", descriptor)
+        return match.group(1).replace("/", ".").replace("$", ".") if match else None
 
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
@@ -1356,8 +2511,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         unbound = sorted(set(query_parameters) - set(parameter_names))
         return_type = str(item.get("return_type", ""))
         return_parts = re.findall(r"[A-Za-z_$][\w.$]*", return_type)
-        projection_type = _simple(return_parts[-1]) if return_parts else None
-        model_name = repository_models[str(item.get("owner"))]
+        projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
+        projection_type = _simple(projection_type_ref) if projection_type_ref else None
+        projection_node = type_nodes_by_owner.get(projection_type_ref or "")
+        return_owner = descriptor_return_owner(item.get("descriptor"))
+        if (projection_node is None and return_owner and projection_type
+                and _simple(return_owner) == projection_type):
+            # A source-level simple name does not prove its owner. The compiler
+            # method descriptor does: use its exact erased class identity only
+            # when it agrees with the declared return type's simple name. This
+            # also keeps type variables (whose erasure is Object) from binding
+            # to an unrelated local class with the same name.
+            projection_node = type_nodes_by_owner.get(return_owner)
+        model_owner = repository_models[str(item.get("owner"))]
+        model_name = _simple(model_owner)
         named_query_name = _named_string_arg(raw, "name")
         if value is None and named_query_name:
             named = named_queries.get(named_query_name)
@@ -1391,37 +2558,51 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
-            projection = next((candidate for candidate in nodes.values()
-                               if candidate.name == projection_type and candidate.kind in {"class", "interface", "type"}), None)
-            if projection:
-                add_edge(query_id, projection.id, "returns_entity" if projection_type in entity_nodes else "returns_projection",
-                         path, line, "Compiler return type of repository query")
+            if projection_node:
+                projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
+                                         if node_id == projection_node.id), None)
+                add_edge(query_id, projection_node.id,
+                         "returns_entity" if projection_owner is not None else "returns_projection",
+                         path, line, "Compiler-qualified return type of repository query")
             else:
                 diagnostics.append({"code": "SPRING_DATA_QUERY_PROJECTION_UNRESOLVED", "path": path,
-                                    "source_line": line, "method": method.id, "projection_type": projection_type})
+                                    "source_line": line, "method": method.id, "projection_type": projection_type_ref})
+                query_node = nodes.get(query_id)
+                if query_node:
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
             entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = _simple(entity_match.group(1)) if entity_match else model_name
+            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
             alias = entity_match.group(2) if entity_match else None
-            entity_id = entity_nodes.get(query_entity)
+            query_owners = entity_query_owners.get(query_entity or "", [])
+            query_owner = query_owners[0] if len(query_owners) == 1 else None
+            entity_id = entity_nodes_by_owner.get(query_owner or "")
             if entity_id:
                 add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
             else:
                 diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity})
+                                    "method": method.id, "entity": query_entity or "UNKNOWN",
+                                    "candidates": query_owners,
+                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                current_query = nodes.get(query_id)
+                if current_query:
+                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
             if alias:
                 for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
                     property_name = "".join(part[:1].upper() + part[1:] if index else part
                                             for index, part in enumerate(attribute_path.split(".")))
-                    target, resolved_path = resolve_query_property(query_entity, property_name)
+                    target, resolved_path = resolve_query_property(query_owner or "", property_name)
                     if target:
                         add_edge(query_id, target, "filters_by", path, line,
                                  f"JPQL path {resolved_path} resolved against entity model")
                     else:
                         diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
                                             "source_line": line, "method": method.id, "attribute": attribute_path})
+                        current_query = nodes.get(query_id)
+                        if current_query:
+                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:
@@ -1452,11 +2633,485 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "SPRING_SELF_INVOCATION_PROXY_BOUNDARY", "path": target.path,
                                 "source_line": target.line, "call_site": site["id"], "target": target.id})
 
+    # ORM XML is an explicit, root-confined mapping input. Apply it after the
+    # existing annotation projection so the same ORM entities/attributes are
+    # updated in place and XML never creates a parallel persistence catalog.
+    jpa_rule_metadata = {"jpa_rule_version": JPA_RULE_VERSION}
+
+    def remove_attribute_columns(attribute_id: str) -> None:
+        removed: set[str] = set()
+        for key, edge in list(edges.items()):
+            if edge.source == attribute_id and edge.kind == "maps_to_column":
+                removed.add(edge.target)
+                edges.pop(key, None)
+        for column_id in removed:
+            # A mapped-superclass column node can be shared by several
+            # effective entity attributes. Detach only this owner's edge;
+            # erase the physical node and its schema links once no attribute
+            # mapping still refers to it.
+            if any(edge.kind == "maps_to_column" and edge.target == column_id
+                   for edge in edges.values()):
+                continue
+            for key, edge in list(edges.items()):
+                if edge.source == column_id or edge.target == column_id:
+                    edges.pop(key, None)
+            if not any(edge.source == column_id or edge.target == column_id for edge in edges.values()):
+                nodes.pop(column_id, None)
+
+    def remove_entity_tables(entity_id: str) -> list[str]:
+        table_ids = []
+        for key, edge in list(edges.items()):
+            if edge.source == entity_id and edge.kind == "maps_to_table":
+                table_ids.append(edge.target)
+                edges.pop(key, None)
+        for table_id in table_ids:
+            for key, edge in list(edges.items()):
+                if edge.source == table_id or edge.target == table_id:
+                    edges.pop(key, None)
+            if not any(edge.source == table_id or edge.target == table_id for edge in edges.values()):
+                nodes.pop(table_id, None)
+        return table_ids
+
+    def entity_attribute_targets(owner: str, attribute_name: str, class_kind: str) -> list[str]:
+        type_record = type_records.get(owner)
+        symbol = type_record["symbol"] if type_record else {}
+        simple_name = str(symbol.get("name") or _simple(owner))
+        source_path = symbol.get("path")
+        result = []
+        for candidate in nodes.values():
+            if candidate.kind != "orm_attribute" or (candidate.metadata or {}).get("attribute") != attribute_name:
+                continue
+            metadata = candidate.metadata or {}
+            if class_kind == "entity":
+                if metadata.get("effective_owner") == owner or (
+                        metadata.get("effective_owner") is None and candidate.path == source_path
+                        and candidate.name == f"{simple_name}.{attribute_name}"):
+                    result.append(candidate.id)
+            elif class_kind == "mapped-superclass":
+                if metadata.get("declaring_owner") == owner:
+                    result.append(candidate.id)
+                elif metadata.get("effective_owner") is None and candidate.path == source_path and candidate.name == f"{simple_name}.{attribute_name}":
+                    result.append(candidate.id)
+        return sorted(set(result))
+
+    def xml_unknown(owner: str, record: dict[str, Any] | None, reason: str) -> None:
+        declaration = entity_decls_by_owner.get(owner) or mapped_superclasses_by_owner.get(owner)
+        if not declaration:
+            return
+        entity_id = declaration["node"].id
+        if owner in entity_decls_by_owner:
+            for table_id in remove_entity_tables(entity_id):
+                nodes.pop(table_id, None)
+        attribute_ids = set(entity_attributes.get(owner, {}).values())
+        attribute_ids.update(candidate.id for candidate in nodes.values()
+                             if candidate.kind == "orm_attribute"
+                             and ((candidate.metadata or {}).get("effective_owner") == owner
+                                  or (candidate.metadata or {}).get("declaring_owner") == owner))
+        for attribute_id in attribute_ids:
+            current = nodes.get(attribute_id)
+            if current is None:
+                continue
+            remove_attribute_columns(attribute_id)
+            metadata = {**(current.metadata or {}), "mapping_status": "UNKNOWN",
+                        "mapping_source": "ORM_XML_UNKNOWN", **jpa_rule_metadata}
+            if record:
+                metadata.update(record.get("provenance", {}))
+            nodes[attribute_id] = replace(current, metadata=metadata)
+        symbol = declaration["symbol"]
+        source_path = declaration["path"]
+        prefix = declaration["node"].name + "."
+        for candidate in list(nodes.values()):
+            if candidate.kind not in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                    or candidate.path != source_path or not candidate.name.startswith(prefix):
+                continue
+            for key, edge in list(edges.items()):
+                if edge.source == candidate.id or edge.target == candidate.id:
+                    edges.pop(key, None)
+                    if edge.target in nodes and nodes[edge.target].kind in {"orm_column", "orm_join_table"}:
+                        target = edge.target
+                        if not any(item.source == target or item.target == target for item in edges.values()):
+                            nodes.pop(target, None)
+            nodes.pop(candidate.id, None)
+        diagnostics.append({"code": "ORM_XML_MAPPING_UNKNOWN",
+                            "path": (record or {}).get("provenance", {}).get("xml_mapping_file"),
+                            "class": owner, "reason": reason})
+
+    def apply_xml_column(attribute_id: str, owner: str, attribute_name: str,
+                         spec: dict[str, Any], record: dict[str, Any], *, override: bool) -> None:
+        current = nodes.get(attribute_id)
+        provenance = spec.get("provenance") or record.get("provenance", {})
+        if current is None:
+            return
+        if spec.get("ambiguous"):
+            remove_attribute_columns(attribute_id)
+            nodes[attribute_id] = replace(current, metadata={**(current.metadata or {}),
+                "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **provenance,
+                **jpa_rule_metadata})
+            diagnostics.append({"code": "ORM_XML_ATTRIBUTE_AMBIGUOUS", "path": provenance.get("xml_mapping_file"),
+                                "class": owner, "attribute": attribute_name,
+                                "reason": "Conflicting XML attribute mappings have the same declared mapping-file order."})
+            return
+        if not spec.get("column_present") and override:
+            remove_attribute_columns(attribute_id)
+            nodes[attribute_id] = replace(current, metadata={**(current.metadata or {}),
+                "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **provenance,
+                **jpa_rule_metadata})
+            diagnostics.append({"code": "ORM_XML_COLUMN_UNKNOWN", "path": provenance.get("xml_mapping_file"),
+                                "class": owner, "attribute": attribute_name,
+                                "reason": "Explicit XML attribute override has no complete nested column mapping."})
+            return
+        column_name = spec.get("column") if spec.get("column_present") else attribute_name
+        if not isinstance(column_name, str) or not column_name.strip():
+            remove_attribute_columns(attribute_id)
+            nodes[attribute_id] = replace(current, metadata={**(current.metadata or {}),
+                "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **provenance,
+                **jpa_rule_metadata})
+            diagnostics.append({"code": "ORM_XML_COLUMN_UNKNOWN", "path": provenance.get("xml_mapping_file"),
+                                "class": owner, "attribute": attribute_name,
+                                "reason": "XML column name is explicitly empty or unresolved; annotation fallback is suppressed."})
+            return
+        remove_attribute_columns(attribute_id)
+        mapping_status = "PARTIAL"
+        nodes[attribute_id] = replace(current, metadata={**(current.metadata or {}),
+            "mapping_status": mapping_status, "mapping_source": "ORM_XML", "xml_override": override,
+            "column_name": column_name, "inferred_column": not bool(spec.get("column_present")),
+            **provenance, **jpa_rule_metadata})
+        column_id = add_node("orm_column", column_name, provenance["xml_mapping_file"], None,
+                             symbol_node(type_records[owner]["symbol"]),
+                             logical_name=column_name, inferred=not bool(spec.get("column_present")),
+                             override=override, mapping_source="ORM_XML", mapping_status=mapping_status,
+                             **provenance, **jpa_rule_metadata)
+        add_edge(attribute_id, column_id, "maps_to_column", provenance["xml_mapping_file"], None,
+                 "ORM XML mapping overrides annotation metadata" if override else "ORM XML attribute mapping",
+                 xml_provenance=provenance)
+
+    if jpa_xml["global_unknown"]:
+        for owner in list(entity_decls_by_owner):
+            xml_unknown(owner, jpa_xml["classes"].get(owner),
+                        "Selected persistence XML scope is incomplete or unsupported; annotation physical bindings are suppressed.")
+    else:
+        if jpa_xml["metadata_complete"] or jpa_xml.get("exclude_unlisted"):
+            for owner in list(entity_decls_by_owner):
+                excluded_by_xml = (jpa_xml["metadata_complete"] and owner not in jpa_xml["classes"])
+                excluded_by_persistence = (jpa_xml.get("exclude_unlisted") and owner not in jpa_xml["classes"]
+                                           and owner not in jpa_xml.get("listed_classes", []))
+                if excluded_by_xml or excluded_by_persistence:
+                    declaration = entity_decls_by_owner[owner]
+                    remove_entity_tables(declaration["node"].id)
+                    attribute_ids = set(entity_attributes.get(owner, {}).values())
+                    attribute_ids.update(candidate.id for candidate in nodes.values()
+                                         if candidate.kind == "orm_attribute"
+                                         and (candidate.metadata or {}).get("effective_owner") == owner)
+                    for attribute_id in attribute_ids:
+                        remove_attribute_columns(attribute_id)
+                        for key, edge in list(edges.items()):
+                            if edge.source == attribute_id or edge.target == attribute_id:
+                                edges.pop(key, None)
+                        nodes.pop(attribute_id, None)
+                    for candidate in list(nodes.values()):
+                        if candidate.kind in {"orm_association", "orm_named_query", "orm_attribute_override"} \
+                                and candidate.path == declaration["path"] \
+                                and candidate.name.startswith(declaration["node"].name + "."):
+                            for key, edge in list(edges.items()):
+                                if edge.source == candidate.id or edge.target == candidate.id:
+                                    edges.pop(key, None)
+                            nodes.pop(candidate.id, None)
+                    diagnostics.append({"code": "ORM_XML_METADATA_COMPLETE_CLASS_UNMAPPED",
+                                        "path": jpa_xml.get("descriptor_path"), "class": owner,
+                                        "reason": ("Complete XML metadata contains no entity mapping for this annotated class; annotation mapping is ignored."
+                                                    if excluded_by_xml else
+                                                    "The selected persistence unit excludes this unlisted class; annotation mapping is ignored.")})
+            for owner in list(mapped_superclasses_by_owner):
+                excluded_mapped = (jpa_xml["metadata_complete"] and owner not in jpa_xml["classes"])
+                excluded_mapped |= (jpa_xml.get("exclude_unlisted") and owner not in jpa_xml["classes"]
+                                    and owner not in jpa_xml.get("listed_classes", []))
+                if excluded_mapped:
+                    xml_unknown(owner, None,
+                                "Selected XML persistence-unit metadata excludes this mapped superclass; annotation inheritance is suppressed.")
+        for owner, record in jpa_xml["classes"].items():
+            declaration = entity_decls_by_owner.get(owner) or mapped_superclasses_by_owner.get(owner)
+            if declaration is None:
+                diagnostics.append({"code": "ORM_XML_CLASS_KIND_UNSUPPORTED",
+                                    "path": record.get("provenance", {}).get("xml_mapping_file"),
+                                    "class": owner,
+                                    "reason": "This XML mapping kind has no matching compiler-resolved entity projection in the selected subset."})
+                continue
+            if record.get("unknown"):
+                xml_unknown(owner, record, "The XML class mapping contains an unsupported or ambiguous construct; annotation fallback is suppressed.")
+                continue
+            entity_id = declaration["node"].id
+            xml_table = record.get("table")
+            if record["kind"] != "entity" and xml_table is not None:
+                xml_unknown(owner, record, "A table mapping is not valid for this XML class kind; annotation fallback is suppressed.")
+                continue
+            if record.get("access") in {"FIELD", "PROPERTY"} and record["kind"] == "entity":
+                current_access = next(((nodes.get(edge.target).metadata or {}).get("access_strategy")
+                                       for edge in edges.values() if edge.source == entity_id
+                                       and edge.kind == "maps_to_table" and nodes.get(edge.target)), None)
+                if current_access in {"FIELD", "PROPERTY"} and current_access != record["access"]:
+                    diagnostics.append({"code": "ORM_XML_ACCESS_OVERRIDE_UNSUPPORTED",
+                                        "path": record.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "annotation_access": current_access,
+                                        "xml_access": record["access"],
+                                        "reason": "XML changes the annotated access target; this subset does not rebind compiler properties across access modes."})
+                    xml_unknown(owner, record, "Conflicting XML access override cannot reuse the annotated property identity safely.")
+                    continue
+            if record["kind"] == "entity" and (record.get("metadata_complete") or xml_table is not None
+                                                  or record.get("inheritance_strategy") is not None):
+                table_spec = xml_table or {"name": declaration["node"].name, "schema": None,
+                                           "catalog": None, "provenance": record.get("provenance", {})}
+                table_name = table_spec.get("name")
+                table_schema = table_spec.get("schema")
+                provenance = table_spec.get("provenance") or record.get("provenance", {})
+                if (not isinstance(table_name, str) or not table_name.strip()
+                        or table_spec.get("catalog")):
+                    xml_unknown(owner, record, "XML table mapping is incomplete or uses an unsupported catalog; no annotation table fallback is allowed.")
+                    continue
+                prior_table_nodes = [nodes[edge.target] for edge in edges.values()
+                                     if edge.source == entity_id and edge.kind == "maps_to_table"
+                                     and edge.target in nodes]
+                prior_table_metadata = (prior_table_nodes[0].metadata or {}) if len(prior_table_nodes) == 1 else {}
+                old_tables = remove_entity_tables(entity_id)
+                qualified = f"{table_schema}.{table_name}" if table_schema else table_name
+                table_id = add_node("orm_table", qualified, provenance["xml_mapping_file"], None,
+                                    declaration["node"], logical_name=table_name, schema=table_schema,
+                                    catalog=None, inferred=xml_table is None,
+                                    mapping_source="ORM_XML", mapping_status="PARTIAL",
+                                    access_strategy=("UNKNOWN" if record.get("metadata_complete") else
+                                                     prior_table_metadata.get("access_strategy")),
+                                    inheritance_strategy=(record.get("inheritance_strategy") or
+                                                          prior_table_metadata.get("inheritance_strategy", "UNKNOWN")),
+                                    database_id=context.get("database_id"),
+                                    schema_stream_id=context.get("schema_stream_id"),
+                                    naming_strategy=context.get("naming_strategy"),
+                                    metadata_complete=bool(record.get("metadata_complete")),
+                                    **provenance, **jpa_rule_metadata)
+                add_edge(entity_id, table_id, "maps_to_table", provenance["xml_mapping_file"], None,
+                         "ORM XML table mapping overrides annotation metadata" if xml_table else
+                         "JPA default table name under complete XML metadata",
+                         xml_provenance=provenance)
+                entity_table_by_owner[owner] = table_id
+                entity_table_nodes[declaration["node"].name] = table_id
+                for old_table in old_tables:
+                    for key, edge in list(edges.items()):
+                        if edge.target == old_table and edge.kind == "declared_on_table":
+                            edges.pop(key, None)
+                            add_edge(edge.source, table_id, "declared_on_table", provenance["xml_mapping_file"], None,
+                                     "Effective attribute belongs to ORM XML mapped table", xml_provenance=provenance)
+                        elif edge.target == old_table and edge.kind not in {"maps_to_table", "resolves_to_schema_table"}:
+                            edges.pop(key, None)
+                            diagnostics.append({"code": "ORM_XML_TABLE_REFERENCE_UNRESOLVED",
+                                                "path": provenance["xml_mapping_file"], "class": owner,
+                                                "reason": "Existing query/table reference was invalidated by an XML table override."})
+                if xml_table is not None:
+                    matches = [candidate for candidate in schema_tables if in_schema_realm(candidate)
+                               and (candidate.name.casefold() == qualified.casefold() if table_schema
+                                    else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
+                    if len(matches) == 1:
+                        add_edge(table_id, matches[0].id, "resolves_to_schema_table",
+                                 provenance["xml_mapping_file"], None,
+                                 "Exact XML table name in selected schema realm", xml_provenance=provenance)
+                    else:
+                        diagnostics.append({"code": "ORM_SCHEMA_TABLE_UNRESOLVED" if not matches else "ORM_SCHEMA_TABLE_AMBIGUOUS",
+                                            "path": provenance["xml_mapping_file"], "entity": entity_id,
+                                            "table": qualified, "candidates": [item.id for item in matches],
+                                            "reason": "XML table has no unique exact schema binding in the selected realm."})
+                simple_name = declaration["node"].name
+                class_path = declaration["path"]
+                for attr in [candidate for candidate in nodes.values() if candidate.kind == "orm_attribute"]:
+                    metadata = attr.metadata or {}
+                    belongs = (metadata.get("effective_owner") == owner or
+                               attr.path == class_path and attr.name.startswith(simple_name + "."))
+                    if belongs and not any(edge.source == attr.id and edge.kind == "declared_on_table"
+                                           and edge.target == table_id for edge in edges.values()):
+                        add_edge(attr.id, table_id, "declared_on_table", provenance["xml_mapping_file"], None,
+                                 "Persistent attribute belongs to the XML mapped table", xml_provenance=provenance)
+
+            xml_attributes = record.get("attributes", {})
+            xml_overrides = record.get("overrides", {})
+            selected_names = set(xml_attributes) | set(xml_overrides)
+            if record.get("metadata_complete"):
+                current_attribute_ids = set(entity_attributes.get(owner, {}).values())
+                current_attribute_ids.update(candidate.id for candidate in nodes.values()
+                                             if candidate.kind == "orm_attribute"
+                                             and ((candidate.metadata or {}).get("effective_owner") == owner
+                                                  or (candidate.metadata or {}).get("declaring_owner") == owner))
+                for attribute_id in current_attribute_ids:
+                    current = nodes.get(attribute_id)
+                    if current is None:
+                        continue
+                    attr_name = str((current.metadata or {}).get("attribute", ""))
+                    if attr_name not in selected_names:
+                        remove_attribute_columns(attribute_id)
+                        nodes[attribute_id] = replace(current, metadata={**(current.metadata or {}),
+                            "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML_METADATA_COMPLETE",
+                            **record.get("provenance", {}), **jpa_rule_metadata})
+                        diagnostics.append({"code": "ORM_XML_ATTRIBUTE_UNMAPPED",
+                                            "path": record.get("provenance", {}).get("xml_mapping_file"),
+                                            "class": owner, "attribute": attr_name,
+                                            "reason": "Complete XML metadata has no mapping for this compiler attribute; annotation fallback is suppressed."})
+            for attribute_name, spec in xml_attributes.items():
+                if spec.get("kind") not in {"id", "embedded-id", "basic", "version"}:
+                    attribute_ids = entity_attribute_targets(owner, attribute_name, record["kind"])
+                    for attribute_id in attribute_ids:
+                        remove_attribute_columns(attribute_id)
+                        nodes[attribute_id] = replace(nodes[attribute_id], metadata={**(nodes[attribute_id].metadata or {}),
+                            "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **spec.get("provenance", {}),
+                            **jpa_rule_metadata})
+                    diagnostics.append({"code": "ORM_XML_ATTRIBUTE_KIND_UNSUPPORTED",
+                                        "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "attribute": attribute_name, "kind": spec.get("kind"),
+                                        "reason": "Association or embedded XML mapping is outside the scalar column projection subset."})
+                    continue
+                attribute_ids = entity_attribute_targets(owner, attribute_name, record["kind"])
+                if not attribute_ids:
+                    symbol = type_records[owner]["symbol"]
+                    fields = [item for item in symbols.values()
+                              if item.get("kind") == "field" and item.get("owner") == owner
+                              and item.get("name") == attribute_name]
+                    getters = [item for item in symbols.values() if item.get("kind") == "method"
+                               and item.get("owner") == owner
+                               and re.fullmatch(r"(?:get|is)[A-Z].*", str(item.get("name", "")))
+                               and ((str(item.get("name", ""))[3:] if str(item.get("name", "")).startswith("get")
+                                     else str(item.get("name", ""))[2:]).casefold() == attribute_name.casefold())]
+                    access = record.get("access")
+                    selected_member = None
+                    if not str(symbol.get("path", "")).endswith(".kt"):
+                        if access == "FIELD" and len(fields) == 1:
+                            selected_member = (fields[0], "FIELD", None)
+                        elif access == "PROPERTY" and len(getters) == 1:
+                            selected_member = (getters[0], "PROPERTY", str(getters[0].get("name")))
+                        elif access is None and len(fields) == 1 and not getters:
+                            selected_member = (fields[0], "FIELD", None)
+                        elif access is None and len(getters) == 1 and not fields:
+                            selected_member = (getters[0], "PROPERTY", str(getters[0].get("name")))
+                    if selected_member is None:
+                        diagnostics.append({"code": "ORM_XML_ATTRIBUTE_UNRESOLVED",
+                                            "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                            "class": owner, "attribute": attribute_name,
+                                            "reason": "XML attribute does not identify one supported compiler member/access target; no fallback binding is published."})
+                        continue
+                    field, access, getter_name = selected_member
+                    is_id = spec.get("kind") in {"id", "embedded-id"}
+                    attribute_id = add_node("orm_attribute", f"{declaration['node'].name}.{attribute_name}",
+                                            symbol["path"], (field.get("range") or {}).get("start_line"),
+                                            declaration["node"], attribute=attribute_name,
+                                            type=field.get("type") if access == "FIELD" else field.get("return_type", "UNKNOWN"),
+                                            access=access, getter=getter_name,
+                                            identifier=is_id, embedded=spec.get("kind") == "embedded-id",
+                                            mapping_status="PARTIAL", mapping_source="ORM_XML",
+                                            declaring_owner=owner, effective_owner=owner, inherited=False,
+                                            **spec.get("provenance", {}), **jpa_rule_metadata)
+                    entity_attributes.setdefault(owner, {})[attribute_name.casefold()] = attribute_id
+                    attribute_ids = [attribute_id]
+                    if is_id:
+                        add_edge(entity_id, attribute_id, "has_embedded_id" if spec.get("kind") == "embedded-id" else "has_id",
+                                 spec["provenance"]["xml_mapping_file"], None,
+                                 "Compiler field identity mapped by JPA ORM XML", xml_provenance=spec["provenance"])
+                    table_edges = [edge for edge in edges.values() if edge.source == entity_id and edge.kind == "maps_to_table"]
+                    if table_edges:
+                        add_edge(attribute_id, table_edges[0].target, "declared_on_table",
+                                 spec["provenance"]["xml_mapping_file"], None,
+                                 "XML persistent attribute belongs to mapped table", xml_provenance=spec["provenance"])
+                        if is_id and nodes.get(table_edges[0].target):
+                            table_node = nodes[table_edges[0].target]
+                            nodes[table_node.id] = replace(table_node, metadata={**(table_node.metadata or {}),
+                                                                                 "access_strategy": access})
+                if not attribute_ids:
+                    diagnostics.append({"code": "ORM_XML_ATTRIBUTE_AMBIGUOUS",
+                                        "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "attribute": attribute_name,
+                                        "reason": "XML attribute matches multiple compiler-proven ORM attributes; no column is selected."})
+                    continue
+                if record["kind"] == "mapped-superclass":
+                    for attribute_id in attribute_ids:
+                        apply_xml_column(attribute_id, owner, attribute_name, spec, record, override=False)
+                elif len(attribute_ids) == 1:
+                    apply_xml_column(attribute_ids[0], owner, attribute_name, spec, record, override=False)
+                else:
+                    diagnostics.append({"code": "ORM_XML_ATTRIBUTE_AMBIGUOUS",
+                                        "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "attribute": attribute_name,
+                                        "reason": "XML attribute matches multiple compiler-proven effective attributes."})
+                    for attribute_id in attribute_ids:
+                        remove_attribute_columns(attribute_id)
+                        nodes[attribute_id] = replace(nodes[attribute_id], metadata={**(nodes[attribute_id].metadata or {}),
+                            "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **spec.get("provenance", {}),
+                            **jpa_rule_metadata})
+            for attribute_name, spec in xml_overrides.items():
+                attribute_ids = entity_attribute_targets(owner, attribute_name, record["kind"])
+                if not attribute_ids:
+                    diagnostics.append({"code": "ORM_XML_OVERRIDE_TARGET_UNRESOLVED",
+                                        "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "attribute": attribute_name,
+                                        "reason": "XML attribute override target is absent or ambiguous in the compiler-owned hierarchy."})
+                    continue
+                if record["kind"] == "mapped-superclass":
+                    for attribute_id in attribute_ids:
+                        apply_xml_column(attribute_id, owner, attribute_name, spec, record, override=True)
+                elif len(attribute_ids) == 1:
+                    apply_xml_column(attribute_ids[0], owner, attribute_name, spec, record, override=True)
+                else:
+                    diagnostics.append({"code": "ORM_XML_OVERRIDE_TARGET_UNRESOLVED",
+                                        "path": spec.get("provenance", {}).get("xml_mapping_file"),
+                                        "class": owner, "attribute": attribute_name,
+                                        "reason": "XML override matches multiple compiler-proven attributes."})
+                    for attribute_id in attribute_ids:
+                        remove_attribute_columns(attribute_id)
+                        nodes[attribute_id] = replace(nodes[attribute_id], metadata={**(nodes[attribute_id].metadata or {}),
+                            "mapping_status": "UNKNOWN", "mapping_source": "ORM_XML", **spec.get("provenance", {}),
+                            **jpa_rule_metadata})
+
+    # XML may replace the root inheritance strategy after the initial annotation
+    # projection. Rebind inherited attributes from the compiler-owned hierarchy
+    # using the final effective root table metadata.
+    for effective_owner, declaration in entity_decls_by_owner.items():
+        ancestors = entity_ancestors(effective_owner)
+        if not ancestors:
+            continue
+        root_owner = str(ancestors[0]["symbol"].get("owner", ""))
+        root_table_id = entity_table_by_owner.get(root_owner)
+        root_table = nodes.get(root_table_id) if root_table_id else None
+        strategy = str((root_table.metadata or {}).get("inheritance_strategy", "UNKNOWN")) if root_table else "UNKNOWN"
+        if strategy in {"SINGLE_TABLE", "JOINED"}:
+            target_table_id = root_table_id
+        elif strategy == "TABLE_PER_CLASS":
+            target_table_id = entity_table_by_owner.get(effective_owner)
+        else:
+            target_table_id = None
+        for attribute in list(nodes.values()):
+            metadata = attribute.metadata or {}
+            if attribute.kind != "orm_attribute" or metadata.get("effective_owner") != effective_owner \
+                    or not metadata.get("inherited"):
+                continue
+            for key, edge in list(edges.items()):
+                if edge.source == attribute.id and edge.kind == "declared_on_table":
+                    edges.pop(key, None)
+            if target_table_id is not None and target_table_id in nodes:
+                add_edge(attribute.id, target_table_id, "declared_on_table", attribute.path,
+                         (attribute.metadata or {}).get("source_line"),
+                         "Inherited attribute table follows final ORM XML inheritance strategy")
+            else:
+                nodes[attribute.id] = replace(attribute, metadata={**metadata, "mapping_status": "UNKNOWN",
+                                                                     "mapping_source": "ORM_XML_UNKNOWN"})
+                diagnostics.append({"code": "ORM_XML_INHERITANCE_UNKNOWN", "path": declaration["path"],
+                                    "entity": declaration["node"].id, "root_entity": root_owner,
+                                    "reason": "Final XML inheritance strategy is unresolved; inherited table mapping remains UNKNOWN."})
+
+    for owner, declaration in entity_decls_by_owner.items():
+        for key, item in list(edges.items()):
+            if key[0] != declaration["node"].id:
+                continue
+            if key[2] in {"maps_to_table", "has_id", "has_embedded_id"} and not jpa_xml["active"]:
+                metadata = nodes.get(key[1])
+                if metadata is not None:
+                    nodes[key[1]] = replace(metadata, metadata={**(metadata.metadata or {}), **jpa_rule_metadata})
+
     # Make the capability and provenance visible in the selected context.
     contexts = list(graph.contexts)
     for index, current in enumerate(contexts):
         if current.get("id") == context_id:
-            contexts[index] = {**current, "framework_analysis": {"spring": SPRING_RULE_VERSION, "jpa": "annotation-source-v4",
+            contexts[index] = {**current, "framework_analysis": {"spring": SPRING_RULE_VERSION, "jpa": JPA_RULE_VERSION,
                                                                   "schema_binding": "exact-name-only", "coverage": "PARTIAL"}}
             break
     result = replace(graph, nodes=sorted(nodes.values(), key=lambda item: item.id),

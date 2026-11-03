@@ -80,5 +80,7 @@ unavailable annotation/CFG trigger input remains UNKNOWN upstream.
 Invalid input raises structured `ProcessPathError.diagnostic` without mutating
 inputs or writing a source/store artifact. Legacy graph v1/v2/v3 decoding is
 unchanged; a legacy graph without compiler witnesses cannot acquire a stronger
-process claim. No schema/store migration is required. T026+ grouping, cross-service
+process claim. Current supplied SOURCE CFG must match the imported builder VERSION; an older
+unsupported body stays opaque until provider reinspection. No schema/store
+migration is required. T026+ grouping, cross-service
 projection, business labels, catalog, CLI and rendering remain separate tasks.

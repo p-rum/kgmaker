@@ -227,26 +227,7 @@ class CompilerWorkerTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=root/'src/main/kotlin/Advanced.kt';source.parent.mkdir(parents=True)
-            source.write_text('''package fixture
-class Advanced(val seed: Int) {
-  var label: String = consume("initial")
-    get() = field
-    set(next) { field = next }
-  init { consume("init") }
-  constructor(): this(1) { consume("secondary") }
-  inline fun <T> apply(value: T, transform: (T) -> String): String = transform(value)
-  operator fun plus(other: Advanced): Advanced = Advanced(seed + other.seed)
-  suspend fun suspendValue(): String = consume("suspend")
-  fun consume(value: String): String = value
-  fun readLabel(): String = label
-  fun writeLabel() { label = "changed" }
-  fun scenario(): String {
-    val reference = ::consume
-    val lambda = { value: String -> consume(value) }
-    val combined = this + Advanced()
-    return apply("x", lambda) + reference("r") + combined.seed
-  }
-}''')
+            source.write_text((ROOT / 'tests/fixtures/jvm-golden/Advanced.kt').read_text(encoding='utf-8'))
             result=inspect_jvm(root,classpath=[str(ROOT/'workers/jvm/target/lib/kotlin-stdlib.jar')],publish=False)
             graph=KnowledgeGraph.from_dict(result['graph'])
             sites=[site for site in graph.call_sites if site.get('path')=='src/main/kotlin/Advanced.kt']
@@ -409,8 +390,8 @@ object Singleton {
 
             blue=inspect(['blue'],{'feature.custom':'false'})
             selected_context=next(item for item in blue.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v4',selected_context['framework_rule_versions']['spring'])
-            self.assertEqual('annotation-source-v4',selected_context['framework_analysis']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_rule_versions']['spring'])
+            self.assertEqual('annotation-source-v6',selected_context['framework_analysis']['spring'])
             beans={node.name:node.id for node in blue.nodes if node.kind=='spring_bean'}
             injections={node.name:node.id for node in blue.nodes if node.kind=='spring_injection'}
             selected={(edge.source,edge.target) for edge in blue.edges if edge.kind=='injects_bean'}
@@ -482,7 +463,7 @@ object Singleton {
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             annotations={
-                'Entity':'@Target(ElementType.TYPE) public @interface Entity {}',
+                'Entity':'@Target(ElementType.TYPE) public @interface Entity { String name() default ""; }',
                 'Table':'@Target(ElementType.TYPE) public @interface Table { String name(); String schema() default ""; }',
                 'Embeddable':'@Target(ElementType.TYPE) public @interface Embeddable {}',
                 'EmbeddedId':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface EmbeddedId {}',
@@ -539,8 +520,8 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
                                build_context={'database_id':'primary','schema_stream_id':'main','persistence_unit':'orders'})
             graph=KnowledgeGraph.from_dict(result['graph'])
             selected_context=next(item for item in graph.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v4',selected_context['framework_rule_versions']['jpa'])
-            self.assertEqual('annotation-source-v4',selected_context['framework_analysis']['jpa'])
+            self.assertEqual('annotation-source-v5-orm-xml-v2',selected_context['framework_rule_versions']['jpa'])
+            self.assertEqual('annotation-source-v5-orm-xml-v2',selected_context['framework_analysis']['jpa'])
             self.assertIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_embeddable'})
             self.assertNotIn('OrderId',{node.name for node in graph.nodes if node.kind=='orm_table'})
             order_id=next(node for node in graph.nodes if node.kind=='orm_attribute' and node.name=='Order.id')
@@ -597,6 +578,142 @@ interface OrderRepository extends JpaRepository<Order,OrderId> {
             self.assertTrue(named.metadata['validated'])
             self.assertTrue(any(edge.kind=='uses_named_query' and edge.source==named.id
                                 and edge.target==named_definition.id for edge in graph.edges))
+
+    def test_repository_generic_uses_exact_entity_owner_for_same_simple_names(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            annotations={
+                'Entity':'@Target(ElementType.TYPE) public @interface Entity { String name() default ""; }',
+                'MappedSuperclass':'@Target(ElementType.TYPE) public @interface MappedSuperclass {}',
+                'Id':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Id {}',
+                'Column':'@Target({ElementType.FIELD,ElementType.METHOD}) public @interface Column { String name() default ""; }',
+            }
+            for name,declaration in annotations.items():
+                path=root/'src/main/java/jakarta/persistence'/f'{name}.java'
+                path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_text(f'package jakarta.persistence; import java.lang.annotation.*; @Retention(RetentionPolicy.RUNTIME) {declaration}')
+            repository_api=root/'src/main/java/org/springframework/data/jpa/repository/JpaRepository.java'
+            repository_api.parent.mkdir(parents=True,exist_ok=True)
+            repository_api.write_text('package org.springframework.data.jpa.repository; public interface JpaRepository<T,ID> {}')
+            query_api=root/'src/main/java/org/springframework/data/jpa/repository/Query.java'
+            query_api.write_text('''package org.springframework.data.jpa.repository;
+import java.lang.annotation.*; @Target(ElementType.METHOD) @Retention(RetentionPolicy.RUNTIME)
+public @interface Query { String value() default ""; }''')
+            sources={
+                'left/LeftBase.java':'package left; import jakarta.persistence.*; @MappedSuperclass public class LeftBase { @Id @Column(name="left_id") Long leftId; }',
+                'right/RightBase.java':'package right; import jakarta.persistence.*; @MappedSuperclass public class RightBase { @Id @Column(name="right_id") Long rightId; }',
+                'left/Thing.java':'package left; import jakarta.persistence.*; @Entity(name="left.Thing") public class Thing extends LeftBase {}',
+                'right/Thing.java':'package right; import jakarta.persistence.*; @Entity(name="right.Thing") public class Thing extends RightBase {}',
+                'foreign/Thing.java':'package foreign; import jakarta.persistence.*; @Entity(name="foreign.Thing") public class Thing {}',
+                'right/T.java':'package right; public class T {}',
+                'right/ThingRepository.java':'''package right;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+public interface ThingRepository extends JpaRepository<Thing,Long> {
+  Thing findByLeftId(Long id);
+  Thing findByRightId(Long id);
+  @Query("select e from right.Thing e where e.rightId=1") Thing qualifiedRight();
+  @Query("select e from left.Thing e where e.leftId=1") Thing qualifiedForeign();
+  @Query("select e from Thing e where e.rightId=1") Thing ambiguousSimpleName();
+  @Query("select e from right.Thing e") foreign.Thing missingIndexedReturn();
+  @Query("select e from right.Thing e") <T> T genericReturn();
+}''',
+            }
+            for relative,content in sources.items():
+                path=root/'src/main/java'/relative
+                path.parent.mkdir(parents=True,exist_ok=True)
+                path.write_text(content)
+            result=inspect_jvm(root,classpath=[],publish=False)
+            graph=KnowledgeGraph.from_dict(result['graph'])
+            classes={(node.path,node.kind,node.name):node for node in graph.nodes if node.kind=='class'}
+            right_entity=classes[('src/main/java/right/Thing.java','class','Thing')]
+            left_attribute=next(node for node in graph.nodes if node.kind=='orm_attribute'
+                                and node.metadata.get('effective_owner')=='left.Thing'
+                                and node.metadata.get('attribute')=='leftId')
+            right_attribute=next(node for node in graph.nodes if node.kind=='orm_attribute'
+                                 and node.metadata.get('effective_owner')=='right.Thing'
+                                 and node.metadata.get('attribute')=='rightId')
+            queries={node.name:node for node in graph.nodes if node.kind=='orm_query'
+                     and node.path=='src/main/java/right/ThingRepository.java'}
+            wrong=queries['findByLeftId:DERIVED']
+            correct=queries['findByRightId:DERIVED']
+            self.assertFalse(wrong.metadata['validated'])
+            self.assertIsNone(wrong.metadata['predicates'][0]['attribute_id'])
+            self.assertTrue(correct.metadata['validated'])
+            self.assertEqual(right_attribute.id,correct.metadata['predicates'][0]['attribute_id'])
+            self.assertNotEqual(left_attribute.id,correct.metadata['predicates'][0]['attribute_id'])
+            self.assertFalse(any(edge.source==wrong.id and edge.kind=='filters_by' for edge in graph.edges))
+            self.assertTrue(any(edge.source==correct.id and edge.kind=='filters_by'
+                                and edge.target==right_attribute.id for edge in graph.edges))
+            repository=next(node for node in graph.nodes if node.path=='src/main/java/right/ThingRepository.java'
+                            and node.name=='ThingRepository')
+            self.assertTrue(any(edge.source==repository.id and edge.kind=='repository_for'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            left_entity=classes[('src/main/java/left/Thing.java','class','Thing')]
+            queries={node.name:node for node in graph.nodes if node.kind=='orm_query'
+                     and node.path=='src/main/java/right/ThingRepository.java'}
+            qualified_right=queries['qualifiedRight:JPQL']
+            self.assertTrue(qualified_right.metadata['validated'])
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='query_reads'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='returns_entity'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_right.id and edge.kind=='filters_by'
+                                and edge.target==right_attribute.id for edge in graph.edges))
+            qualified_foreign=queries['qualifiedForeign:JPQL']
+            self.assertTrue(qualified_foreign.metadata['validated'])
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='query_reads'
+                                and edge.target==left_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='returns_entity'
+                                and edge.target==right_entity.id for edge in graph.edges))
+            self.assertTrue(any(edge.source==qualified_foreign.id and edge.kind=='filters_by'
+                                and edge.target==left_attribute.id for edge in graph.edges))
+            ambiguous=queries['ambiguousSimpleName:JPQL']
+            self.assertFalse(ambiguous.metadata['validated'])
+            self.assertFalse(any(edge.source==ambiguous.id and edge.kind in {'query_reads','filters_by'}
+                                for edge in graph.edges))
+            generic_return=queries['genericReturn:JPQL']
+            local_t=classes[('src/main/java/right/T.java','class','T')]
+            self.assertFalse(generic_return.metadata['validated'])
+            self.assertFalse(any(edge.source==generic_return.id
+                                and edge.kind in {'returns_entity','returns_projection'}
+                                and edge.target==local_t.id for edge in graph.edges))
+
+            # Simulate a valid partial compiler index: the repository method
+            # still carries its exact foreign.Thing return type, while that
+            # dependency declaration is unavailable and only right.Thing is
+            # indexed under the same simple name.
+            raw = result['graph']
+            dropped_ids = {classes[('src/main/java/left/Thing.java','class','Thing')].id,
+                           classes[('src/main/java/foreign/Thing.java','class','Thing')].id}
+            partial_nodes = [node for node in raw['nodes']
+                             if node['id'] not in dropped_ids
+                             and not node.get('kind','').startswith(('orm_','spring_'))]
+            kept_ids = {node['id'] for node in partial_nodes}
+            partial_symbols = [symbol for symbol in raw['symbols'] if symbol.get('id') not in dropped_ids]
+            partial_edges = [edge for edge in raw['edges']
+                             if edge['source'] in kept_ids and edge['target'] in kept_ids
+                             and edge.get('evidence_kind') != 'FRAMEWORK_DERIVED']
+            partial = dict(raw, nodes=partial_nodes, symbols=partial_symbols, edges=partial_edges,
+                           evidence=[item for item in raw.get('evidence', [])
+                                     if item.get('kind') != 'FRAMEWORK_DERIVED'])
+            partial_graph = KnowledgeGraph.from_dict(partial)
+            # Recreate framework facts over the intentionally partial compiler
+            # graph instead of editing a projected returns edge in place.
+            from kgmaker.framework import augment_framework_graph
+            partial_graph = augment_framework_graph(root, partial_graph, result['context'])
+            missing = next(node for node in partial_graph.nodes if node.kind=='orm_query'
+                           and node.name=='missingIndexedReturn:JPQL')
+            surviving_right = next(node for node in partial_graph.nodes
+                                   if node.id==right_entity.id)
+            self.assertFalse(missing.metadata['validated'])
+            self.assertFalse(any(edge.source==missing.id
+                                and edge.kind in {'returns_entity','returns_projection'}
+                                and edge.target==surviving_right.id for edge in partial_graph.edges))
+            self.assertTrue(any(item.get('code')=='SPRING_DATA_QUERY_PROJECTION_UNRESOLVED'
+                                and item.get('projection_type')=='foreign.Thing'
+                                for item in partial_graph.diagnostics))
 
     def test_bytecode_default_method_uses_most_specific_interface_not_classfile_order(self):
         import tempfile

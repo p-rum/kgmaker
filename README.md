@@ -109,6 +109,25 @@ inventory = project_service_inventory(
 )
 ```
 
+`interfaces.project_http_providers` returns an `interfaces` ViewDocument from
+that same explicit workspace snapshot. Logical HTTP identity includes the declared
+service, method and case-preserving route; registrations and contract revisions
+remain separate variants. Compiler Spring annotation mirrors can establish a
+class/method handler declaration. Source-pattern Spring/Ktor candidates and
+OpenAPI contracts retain their weaker evidence. Deployment, runtime and data
+availability remain `UNKNOWN`; unsupported imported-runtime binding is diagnostic.
+
+```python
+from kgmaker.interfaces import project_http_providers
+
+interfaces = project_http_providers(
+    workspace, provider_graph, scope="production", source_coverage=coverage,
+)
+```
+
+This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
 returns `RESOLVED`, `AMBIGUOUS` or `UNASSIGNED` for the caller supplied context;
@@ -417,7 +436,7 @@ Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
 unikátní aktivní bean a ObjectProvider/Provider zůstává lazy `may_inject_bean`.
-Pravidla v4 počítají dosažitelnost `@Configuration` přes component scan a
+Pravidla v5 počítají dosažitelnost `@Configuration` přes component scan a
 statické `@Import`: importovaná konfigurace může ležet mimo scan scope, její
 class condition se přenese na `@Bean` metody a `@Bean` mimo konfiguraci nevytvoří
 bean. ImportSelector/DeferredImportSelector mají přesnou compiler-qualified
@@ -427,6 +446,18 @@ chybějící target nebo překročený limit zůstává UNKNOWN / `may_select_im
 Selektory, Spring ani aplikace se nespouštějí; registrar zůstává boundary.
 Tento omezený Java subset sdílejí distribuce K1/K2 a nejde o rozšíření Kotlin
 source/CFG matice nebo důkaz runtime registrace či dostupnosti dat.
+
+V5 navíc zachytí compiler-qualified literal `ImportBeanDefinitionRegistrar`
+registraci přes `registerBeanDefinition("name", new RootBeanDefinition(Type.class))`.
+Podmínka pochází z importující konfigurace. `FactoryBean<T>` rozlišuje objekt
+`&name` a produkt `name`; ACTIVE statická deklarace produktu vyžaduje shodný
+konkrétní generic typ, jediné `return new Type()` a jediné `return Type.class`.
+`@Bean` producer musí navíc přímo vracet jediný konkrétní no-argument constructor
+bez anonymous overrides; proof pochází ze skutečné implementace a produceru.
+Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
+Žádný registrar, factory, konstruktor nebo Spring context se nespouští; statická
+deklarace není runtime availability. Přesný bounded scope a testy:
+[change note47](docs/changes/47_declareSpringRegistrations.md).
 
 JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
@@ -454,6 +485,29 @@ promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
 inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
 patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
 pojmenovaný subpackage není JPA evidence.
+Vybraný persistence unit může doplnit standardní `META-INF/orm.xml` nebo
+pořadově deklarované mapping files. XML class/table/column mapping má přednost
+před annotations a evidence uchovává cestu, hash souboru, persistence unit i
+pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML je
+omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
+namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
+soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
+Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
+entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
+zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
+placement zdědí access strategy. Fixture ověřuje K2 i Javac, řetězené mapped
+superclasses, FIELD/PROPERTY access, tři JPA inheritance strategy values,
+entity-level override precedence a kolizi atributu. Kolize a unresolved override
+zůstávají UNKNOWN bez vybraného column edge; graph/store schema zůstává v3.
+Spring Data repository generic selects its entity by exact compiler-qualified
+owner. Same-simple-name entities no longer share inherited attributes; an
+unresolved generic remains unbound rather than using a simple-name fallback.
+Explicit JPQL entity names and repository return types also resolve by compiler
+owner; simple source return names require an exact JVM method descriptor owner.
+Missing qualified types and generic type variables remain UNKNOWN rather than
+binding to an unrelated same-simple-name class.
+Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
+tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
 `kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.
@@ -536,6 +590,16 @@ simple same-owner compiler bridges. Generated method IDs remain distinct.
 Unproved mappings emit `BYTECODE_ONLY_SOURCE_MAPPING`; debug lines alone do not
 prove a source call expression. See [compiler scope](docs/compiler-inspection.md#default-body-source-mapping).
 
+Coroutine source inspection preserves compiler-proven suspend and recognized
+coroutines API boundaries, with bounded named continuation declaration mapping.
+Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
+remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
+
+The [hand-labelled JVM corpus](tests/fixtures/jvm-golden/README.md) compares exact
+compiler source-call identities, counts and unsupported boundaries for the pinned
+K1/K2 support matrices. Run `python -m pytest -q tests/test_jvm_golden_corpus.py`
+after preparing compiler prerequisites. Passing this corpus is bounded static
+evidence, not runtime dispatch or production-project precision.
 T015 adds a pure database-resource view through
 `kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
 Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
@@ -556,6 +620,16 @@ semantic labels remain separate from technical evidence and status. See
 [the explicit fixture](fixtures/process-model/checkout.json).
 This supplies T023's model only; process discovery, annotation review, process
 CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
+
+Spring condition rules v6 preserve typed compiler annotation members. Supported
+profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
+support aliases, prefix, all names, `havingValue` and boolean `matchIfMissing`.
+Class conditions compare all exact identities against an explicit context
+inventory. Missing/malformed/unresolved inputs remain UNKNOWN; custom conditions
+are never executed. Profile results also govern injection, so `!dev` is not
+incorrectly filtered as a literal profile name. See
+[the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
+for the bounded contract and explicit Python API example.
 
 ### Proven trigger inventory (T024)
 
