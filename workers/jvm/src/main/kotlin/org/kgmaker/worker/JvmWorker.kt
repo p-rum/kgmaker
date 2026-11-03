@@ -9,7 +9,7 @@ private fun handshake()=linkedMapOf<String,Any?>("protocol_version" to PROTOCOL,
     "compiler_version" to "javac-${System.getProperty("java.version")}/${KotlinFrontend.compiler}",
     "kotlin_backend" to KotlinFrontend.backend,
     "worker_jdk" to System.getProperty("java.version"),
-    "capabilities" to listOf("java-attribution","bytecode-asm-bundled-kotlin-2.1.10","source-ir","cha-application-classes","cha-ordered-selected-classpath") + KotlinFrontend.capabilities,
+    "capabilities" to listOf("java-attribution","typed-java-literals-bindings-v1","bytecode-asm-bundled-kotlin-2.1.10","source-ir","cha-application-classes","cha-ordered-selected-classpath") + KotlinFrontend.capabilities,
     "limitations" to KotlinFrontend.limitations + listOf(
         "CHA is conservative within ordered selected classpath and application classes; runtime/classpath completeness is not assumed.","Bytecode offsets are unavailable; instruction indexes are explicitly labelled."))
 

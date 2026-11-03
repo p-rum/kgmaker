@@ -640,6 +640,19 @@ an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
 process paths, business identities, worker execution or runtime availability are
 inferred. See [API and boundaries](docs/process-triggers.md).
 
+HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
+integrations --format json` includes `http.requests`; process JSON/Markdown shows
+request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
+3.7.2 Java calls are compiler-attributed in both workers. An unused WebClient
+publisher is `UNSUBSCRIBED_WITHIN_SCOPE`; a same-origin `block`/`subscribe` is a
+static trigger, never observed network execution or available response data.
+See [the supported HTTP matrix](docs/compiler-inspection.md#http-client-intent).
+
+HTTP proof rule2 treats loop/try control as UNKNOWN, preserves Feign client/method
+path components without guessing a composed route, and rejects URI-callback route
+guesses. Prior HTTP rule1 indexes require explicit reinspection; reading never
+starts a worker. See the HTTP matrix for property-file and privacy boundaries.
+
 ### Local technical process paths (T025)
 
 `kgmaker.process_paths.build_local_process(graph, trigger_inventory, trigger_id,

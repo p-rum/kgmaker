@@ -4,8 +4,8 @@ T025-S01–S05, AC01–AC06. Větev feat/t025-build-local-process-path, explicit
 nad Draft PR59, přesný head `3b24cc66ed70c269e43830181e7f50523c245b92`.
 Při zahájení byl T024 pending; nyní je PR59 merged a je převzat v current parentu.
 T025 nepředběhl jeho validation/review/merge.
-S04 se reuse pouze v již skutečně ověřeném Javac/K1 SOURCE CFG subsetu; pending
-coroutine PR37 není prohlášen za merged ani podmínkou nové nepodložené podpory.
+S04 se reuse pouze v již skutečně ověřeném Javac/K1 SOURCE CFG subsetu; coroutine PR37 je nyní součástí current parentu; scheduling/runtime podpory se
+tím nedeklarují.
 
 ## Problém a skutečné změny
 
@@ -155,3 +155,29 @@ Všechny parent facts se zachovávají, unie přidává pouze vlastní nový con
 vazbu T025 oproti explicitnímu stack baseline. Parent187 immutable episodes jsou
 beze změny; vlastní validated implementation capture bude přidána po full.
 Root musí uzavřít tento nový source checkpoint před corrected full.
+
+## Current HTTP parent před freeze
+
+Final composition nyní používá main75d448ee7791cffb3dc9f4cceff5136402a8f5e0
+(merged HTTP execution intent PR49). Flow runtime se spojil automaticky: zachovává
+T025 rootbudget, async/coroutine/unknown-site guards i finally prefix(site,callerblock)
+a všechny call/return/exception origin/proof fields. Parent přidává pouze HTTP
+request inventory sidecar omezený na expanded_methods a jeho markdown output;
+žádný reason/prefix konflikt se ručně nepřepisoval. Inspection typed optional IR
+validation, URI privacy, HTTPcontext/cache tokens a publikace byly převzaty přesně
+z parenta, bez vlastní změny nebo druhého parseru.
+
+Všech15 tracked JVM source/build/lock souborů +2 JARy a declared libraries
+odpovídají skutečným HTTP fresh buildlogům, frozen manifestu a successful153
+actual XML +3 current-parent cases. K1 SHA50cf8376/K22eb240a5; explicit copy receipt
+`/workspace/validation/t025/http-parent-worker-receipt.json`. Žádný nový build.
+
+Jediný combined current-parent focus: **127PASS v40.01s**, bez skips; zahrnuje
+vlastní actualJavac/K1 finally/clone/diamond/two-site/budget, T023/CFG, skutečný
+HTTP Feign process-inventory boundary a cold/subscribed distinction, provider
+privacy/legacy regressions. XML/log `/workspace/validation/t025/http-parent.xml`
+a `.log`. Input source/test/worker tree zůstal po běhu beze změny.
+
+Parent191 immutable episodes jsou beze změny, vlastní semantic delta je jen
+jeden nový concept a jedna source-bound vazba. Corrected full se nesmí spustit
+před root final source closure tohoto current-parent checkpointu.

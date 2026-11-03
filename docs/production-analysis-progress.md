@@ -646,8 +646,9 @@ strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integra
 236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
 PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
 
-Bounded41PASS zahrnuje actual K1/K2 a canonical mutations; full/review/publikace
-zatím neprovedeny. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
+HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change63](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
+
+S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
 
 ## T025 — local technical process path, explicit T024 stack
 

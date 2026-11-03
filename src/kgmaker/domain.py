@@ -298,6 +298,10 @@ def _http_registration(method: str, route: str | None, source: str, text: str,
               'operation_id': operation if isinstance(operation, str) and re.fullmatch(r'[A-Za-z_][\w.-]{0,127}', operation) else None}
     legacy_path = route if route is not None else method_route
     if legacy_path is not None:
+        from .http_execution import redact_uri_text
+        if redact_uri_text(legacy_path) != legacy_path:
+            legacy_path = None
+    if legacy_path is not None:
         # Preserve legacy graph identity even when the new projection must keep
         # its route unresolved. Unsafe URI material is never copied to metadata.
         node = _api_node(method, legacy_path, source, line, record['operation_id'])
@@ -408,6 +412,8 @@ def _api_references(text: str, path: str, language: str, file_id: str, *, source
             edges.append(Edge(file_id, node.id, relation, evidence, source_file=path,
                               source_line=_line(text, offset)))
             return
+        from .http_execution import redact_uri_text
+        endpoint_path = redact_uri_text(endpoint_path)
         if not endpoint_path.startswith("/"):
             return
         node = _api_node(method, endpoint_path, path, _line(text, offset))
@@ -460,7 +466,9 @@ def _api_references(text: str, path: str, language: str, file_id: str, *, source
             name_match = FEIGN_NAME.search(match.group(1))
             url_match = FEIGN_URL.search(match.group(1))
             service = (name_match.group(1) if name_match else (url_match.group(1) if url_match else "")).strip()
-            if service:
+            from .http_execution import redact_uri_text
+            service = redact_uri_text(service)
+            if service and "<redacted-uri>" not in service:
                 service_node = _shared_node("external_service", service, service, path, _line(text, match.start()))
                 nodes.setdefault(service_node.id, service_node)
                 edges.append(Edge(file_id, service_node.id, "uses_external_service", "@FeignClient; endpoint URL omitted"))

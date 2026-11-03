@@ -219,3 +219,20 @@ kontroly: **124 PASS, 2 actual deselected v3.85s**, XML
 parent79 zůstávají historická validní
 evidence, žádný compiler/full se kvůli parent-only integraci neopakuje.
 Root vlastní finální exact-head review, publikaci a remote CI.
+
+## Lokální prereq stack pro S07-W06
+
+Integrace zachovává přesné PR35 `89e50cf4cf8edbebc4f9d08879656698c75ebd50`
+a PR34 `78d7968ea7408adea3ec9ce783769bb799522470`; nejde o HTTP implementaci.
+Semantic union zachovává všech115 PR34 episodes a109 PR35 episodes jako119
+immutable records, včetně všech7 concepts/25 relations. Citace a generated graph
+jsou znovu ověřené podle skutečného combined source. K1 source v workers/jvm/src/main je byte-identický PR35, proto je znovu použit
+ověřený runtime e44e3dac04ba28cd8899fed0ae183f5739c4311911b1ae656e6d1db26b64e15e,
+nikoli vydáván za nový rebuild. Vlastní combined K2 rebuild PASS12.93 s
+(`build.py --backend k2 --analysis-api-home /workspace/tools/k2-verified` s pinned
+Kotlin/m2/JDK jako výše), runtime e2553425c3c24c310dccdc8893aa1d5acdf05dcbc7c3f07c5a3ead8751e9570a.
+Focused actual K2 JPA, K1/K2 Spring conditions, W04 foreign/scope/ABI a protocol:
+**20 PASS, 48.92 s**, bez SKIP; přesná selection/env v /tmp/http-prereq-validate.py.
+Read-only required compiler/fixture/API preflight PASS. Scoped semantic7/25,
+immutable union119, CLI scan/check a diff check PASS. Whole-suite není opakován
+pouze kvůli integraci; feature S07-W06 má vlastní validation a note56.
