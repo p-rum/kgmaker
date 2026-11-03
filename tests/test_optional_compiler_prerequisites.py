@@ -32,13 +32,14 @@ def test_coroutine_unavailable_pin_never_compiles_or_passes(tmp_path, monkeypatc
 
 @pytest.mark.parametrize('required', [False, True])
 @pytest.mark.parametrize('strict', [False, True])
-def test_orm_unavailable_worker_respects_required_policy(tmp_path, monkeypatch, required, strict):
+@pytest.mark.parametrize('entry', ['graph', 'worker'])
+def test_orm_unavailable_worker_respects_required_policy(tmp_path, monkeypatch, required, strict, entry):
     def unavailable(*args, **kwargs):
         raise WorkerError('JDK21 or trusted worker unavailable', 'TOOLCHAIN_UNAVAILABLE')
     monkeypatch.setattr(orm, 'inspect_jvm', unavailable)
     monkeypatch.setenv('KGMAKER_REQUIRE_WORKERS', '1' if required else '0')
     with pytest.raises(pytest.fail.Exception if required else pytest.skip.Exception):
-        orm.inspect(tmp_path, strict=strict)
+        (orm.inspect if entry == 'graph' else orm._inspect_worker)(tmp_path, strict=strict)
 
 
 @pytest.mark.parametrize('required', [False, True])

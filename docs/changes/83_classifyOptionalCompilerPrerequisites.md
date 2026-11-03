@@ -30,3 +30,14 @@ zaznamená ORM SKIP; mandatory compiler job bez JDK21 selže, nikdy PASS.
 Přesný Python3.12 optional full a skutečné strict K1/K2 coroutine/XML moduly
 zůstávají pending. Podporovaný pinned compiler kontrakt se nemění, žádná migrace.
 Nová runtime dostupnost, whole T003/T004 completion ani úspěch GH CI se netvrdí.
+
+## Doplnění po skutečném Python3.12 full běhu
+
+První optional full skončil389PASS230SKIP1FAIL24.37s, se zachovanými vstupy.
+Strict actual krok se proto nespustil. Další ORM test obcházel graph helper a
+volal inspect_jvm přímo. Nyní všech osm takových volání používá společný
+_inspect_worker; jediné raw volání má tentýž úzký TOOLCHAIN_UNAVAILABLE guard.
+Chybové kódy produktu ani strict publication assertions se nemění. Regrese nyní
+ověřuje i přímou worker entry cestu. Python3.12 cíleně31PASS/20 skutečných
+prerequisite SKIP0.33s; tyto SKIP se nevydávají za compiler PASS. Nový complete
+optional full a strict actual moduly zůstávají pending, starý log/XML zachován.
