@@ -468,5 +468,6 @@ separation. AC03/05: unsupported scheduler/K2 annotation capture, missing CFG,
 canonical source/symbol/edge/proof/hash/scope negatives stay PARTIAL/UNKNOWN.
 AC04: actual offline projection forbids subprocess and compares inputs/captured
 checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
-and note71 supplied; full suite, final review and publication remain pending.
-Focused41PASS (actual K1/K2 included), no claim of runtime observation.
+and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
+integration and final review/ready/merge remain pending (Draft PR59).
+Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.

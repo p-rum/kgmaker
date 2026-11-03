@@ -63,3 +63,23 @@ Vrací shared process-kind ViewDocument s trigger nodes a bez process edges.
 Graph/schema/store v1/v2/v3 a T023 zůstávají kompatibilní, migrace není potřeba.
 Registration/execution/data availability jsou UNKNOWN, output nejvýše PARTIAL.
 T025+ path projection, CLI/render/review/export ani celý T003/T004 nejsou dodány.
+
+## Required frozen full (2026-11-03)
+
+Checkpoint `3b24cc66ed70c269e43830181e7f50523c245b92` strict full je GREEN:
+**812 PASS,10 optional SKIP v713.46s**, exit0. XML822 tests/0errors/0failures/
+10skipped,713.440s. Mandatory WORKERS/K2/SPRING a vlastní worker/source home
+byly zapnuté. Všech206 zmrazených source/test/fixture/JAR hashů zůstalo shodných.
+Log/XML/status/manifest jsou `/workspace/validation/t024/full.log`, `full.xml`,
+`full-status.json`, `full-frozen.json`. Skript `run-full.sh` bere jediný flock,
+runner `run-full.py` ověřuje hashe před i po běhu a používá --maxfail=1.
+
+10 SKIP jsou existující optional Maven/exporter/Gradle/Kotlin2.2.20 cache, druhý
+JDK a native non-admin Windows gates; actual T024 K1/K2 nejsou přeskočené.
+Jediná root-autorizovaná relokace vlastní neodstartované queue14138 byla ověřena
+bez childů, ukončena exit143 a nahrazena jedinou queue2517; žádný běžící validní
+full ani cizí proces se nerušil. Audit `queue-relocation.json`.
+
+Durable test artifact673c1ef1d8955ccb44863cac628c9268e4e977b2feafbc37837c3f0f1dac3c1d
+přesunul task do REVIEW. Current-main integrace, finální SHA-pair review a ready/
+merge zatím neproběhly; Draft PR59 není automaticky schválen tímto full výsledkem.

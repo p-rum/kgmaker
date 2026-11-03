@@ -511,5 +511,6 @@ owner/source/proof a oddělenou body availability. K1 genuine fixture dodává3
 trigger kinds; expression-body CFG zůstává UNAVAILABLE. K2 nemá authoritative
 annotation ownership ani SOURCE CFG: legacy hints se odmítají, UNKNOWN bez
 trigger claims. Žádná cesta procesu ani runtime registration/execution se nehádá.
-Bounded41PASS zahrnuje actual K1/K2 a canonical mutations; full/review/publikace
-zatím neprovedeny. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
+Bounded41PASS a current-base199PASS zahrnují actual K1/K2 a canonical mutations;
+strict frozen full812PASS/10optionalSKIP,206hashů shodných. Draft PR59 čeká na
+current-main integraci a finální review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
