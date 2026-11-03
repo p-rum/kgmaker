@@ -41,3 +41,13 @@ Chybové kódy produktu ani strict publication assertions se nemění. Regrese n
 ověřuje i přímou worker entry cestu. Python3.12 cíleně31PASS/20 skutečných
 prerequisite SKIP0.33s; tyto SKIP se nevydávají za compiler PASS. Nový complete
 optional full a strict actual moduly zůstávají pending, starý log/XML zachován.
+
+## Aktuální rodič před jediným opravným během
+
+Po mergePR65 integrován main32a3bca; původní opravná fronta na5c4e byla
+zrušena před startem, bez child procesu/pytest, s auditem. První skutečný
+neúspěšný full389/230/1 zůstává zachován. Následující běh ověří aktuálního
+rodiče. Všech15trackedJVM souborů bylo byte-exact porovnáno s vlastními
+PR65workery;132JAR/license artefaktů ověřeno proti původnímu build receipt
+a zkopírováno bez buildu. Python3.12 samostatná rozhodovací sada16PASS0.11s.
+Nový optional full/strict actual nadále pending. Nejde o důkaz jejich úspěchu.
