@@ -697,3 +697,13 @@ Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 m
 Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
+
+## T025 revision2 — local operation proof prerequisite (in progress)
+
+Separate candidate over merged T025 c695/main ef3 adds a bounded Javac typed
+literal/local-assignment witness, exact IR/CFG/source/context proof binding and
+independent operation resolution. CFG ordering and transitions remain syntax /
+UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data claim.
+Architecture independently reviewed; initial actual RED,11 protocol tests and120
+legacy tests executed. Complete worker builds, actual integration and full remain
+pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.

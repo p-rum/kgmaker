@@ -95,6 +95,10 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if "local_operation_rule_version" in context:
+        from .local_operations import VERSION as LOCAL_OPERATION_VERSION
+        if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:
+            raise WorkerError("STALE_INDEX: local operation rules changed; inspect again", "STALE")
     if context.get("language") == "typescript" and context.get("ui_framework") == "react":
         from .inspection import UI_RULE_VERSION
         if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION

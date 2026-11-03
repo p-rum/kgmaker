@@ -719,3 +719,11 @@ topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+
+T025 revision2 adds optional `java-local-operations-1` compiler evidence for a
+bounded Java literal/local-variable subset. It keeps source CFG ordering as
+SYNTAX_CANDIDATE and resolves only independently certified operation nodes;
+transitions, execution, business meaning and data availability are not promoted.
+Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
+fresh complete workers and integration/full validation; see
+[local process scope](docs/process-paths.md#compiler-bound-local-operations).

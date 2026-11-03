@@ -635,3 +635,14 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 | AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
 | AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
 | AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
+
+## T025 revision2 — compiler local operation evidence (candidate)
+
+T025-AC07–09 require the actual typed local-literal chain in both JVM backends,
+unsupported/error/legacy cases, exact IR/source/context/CFG proof mutation guards,
+finally-clone and workspace preservation, and unresolved control transitions.
+`tests/test_local_operation_proofs.py` contains these candidate checks. Executed:
+pre-feature actual RED1FAIL0.73s, explicit protocol11PASS and legacy/model/protocol
+120PASS2actualDESELECTED4.44s. JavaFrontend source-only javac compilation passed;
+complete fresh workers and actual process/full validation remain UNKNOWN. No
+T026 or whole T025/T003/T004 completion is implied by this row.
