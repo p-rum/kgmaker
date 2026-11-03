@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "api_versions": {
+    "spring": "6.2.2",
+    "reactor": "3.7.2",
+    "openfeign": "4.2.0"
+  },
+  "artifacts": [
+    {
+      "coordinate": "org.springframework:spring-core:6.2.2",
+      "path": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.jar",
+      "sha256": "bdb5370f08156ca32be8ed1aa9b879b66d7125a55bc8659c1a60193037b700a3",
+      "license_pom": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.pom",
+      "license_pom_sha256": "18ebd6d3292e219392e8b7ce3531a92eabaaf254740b94dbfd31b292a190d525",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-beans:6.2.2",
+      "path": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.jar",
+      "sha256": "be9ecf9b0dc6b88a869c9079b9076121e4d658d7e12856cc60598f1fe2d70d8a",
+      "license_pom": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.pom",
+      "license_pom_sha256": "6d93008a4d434021394ac01ffa3129b069cad5e2e7c33992f0c8e5c4f123d575",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-jcl:6.2.2",
+      "path": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.jar",
+      "sha256": "36b4666730c80e6599359ca8c81adead8b52b15fefe8cc25e061717fe87d93ed",
+      "license_pom": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.pom",
+      "license_pom_sha256": "df1cf7fe47c8c91d1c9517f9d3aa7c9a9d53135a255cda051f30ce173c1a4a5a",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-web:6.2.2",
+      "path": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.jar",
+      "sha256": "cebf79393931ccbbfb4b06a17cfff3bf151cb1f704761f762047f3c1182fe00c",
+      "license_pom": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.pom",
+      "license_pom_sha256": "d213c710faaf81892a39fbcd411c37e146d0ee1a8c03d82746abc4e6ea10006c",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-webflux:6.2.2",
+      "path": "org/springframework/spring-webflux/6.2.2/spring-webflux-6.2.2.jar",
+      "sha256": "a87cd7937c3da06d26c3b0086436022cabb22f1150d75c2a32da9b6fda5f7be6",
+      "license_pom": "org/springframework/spring-webflux/6.2.2/spring-webflux-6.2.2.pom",
+      "license_pom_sha256": "5a50d39221a9eb0a2167bcc3f54c8cd6fd3df9448ecd3ea24a1b5ec6b2674b0d",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-context:6.2.2",
+      "path": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.jar",
+      "sha256": "50ca16d01f939abe26496161585756dac0f61b18f0b9fb706d869a47fdb28a9c",
+      "license_pom": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.pom",
+      "license_pom_sha256": "7c5f873d32e314709b2b855950a1a84f85b46b66b3afba4986b5c0882904970e",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-expression:6.2.2",
+      "path": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.jar",
+      "sha256": "27d5db562dc47196699819ae9b970b90ea47829a6b4216500eb4844f24fbc4b4",
+      "license_pom": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.pom",
+      "license_pom_sha256": "1c65ca2bd239ec20fc4bb1fac798a15d661bb84c76d66a5e98a19356152bf97b",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "io.projectreactor:reactor-core:3.7.2",
+      "path": "io/projectreactor/reactor-core/3.7.2/reactor-core-3.7.2.jar",
+      "sha256": "2c09c49a2f1ce5c65f273c70ca2e7be74cb6eaefc6e57992418cc4459475f1cc",
+      "license_pom": "io/projectreactor/reactor-core/3.7.2/reactor-core-3.7.2.pom",
+      "license_pom_sha256": "f7f37fee6cbbf99d5d04c7882e80ac7e3250df367a21738b98131a187fc36ebb",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.reactivestreams:reactive-streams:1.0.4",
+      "path": "org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar",
+      "sha256": "f75ca597789b3dac58f61857b9ac2e1034a68fa672db35055a8fb4509e325f28",
+      "license_pom": "org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.pom",
+      "license_pom_sha256": "54ba23d87a2d438540c99ef8794a0856fc573a256b498678283c3c67ef18ada8",
+      "license_name": "MIT-0"
+    },
+    {
+      "coordinate": "org.springframework.cloud:spring-cloud-openfeign-core:4.2.0",
+      "path": "org/springframework/cloud/spring-cloud-openfeign-core/4.2.0/spring-cloud-openfeign-core-4.2.0.jar",
+      "sha256": "286618ab4413a5b30587af1fb3656c72feb33595b4f6f08830dcf1bf6ca9101b",
+      "license_pom": "org/springframework/cloud/spring-cloud-openfeign-core/4.2.0/spring-cloud-openfeign-core-4.2.0.pom",
+      "license_pom_sha256": "503338fec0fec791d056165efa809bb358fbc872d5444948f7ca62756f8a57f8",
+      "license_name": "Apache License, Version 2.0"
+    }
+  ]
+}

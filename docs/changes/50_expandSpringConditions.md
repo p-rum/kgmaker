@@ -97,3 +97,44 @@ Ne-ASCII case equivalence, dynamické placeholders, nested/collection property
 values, custom/unsupported Boot conditions zůstávají UNKNOWN. Vstupní inventory
 je explicitní deklarace kontextu, nikoli runtime classloader evidence. Další
 registrar/factory/proxy/async rozsah se implementuje samostatně.
+
+## Current-main integrace po Factory/JPA/HTTP
+
+Integrace mainc76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a zachovává celé
+Factory/registrar, inherited JPA, HTTP provider a process-model kontrakty.
+Jediné ruční runtime řešení je sloučení obou importů spring_conditions/spring_beans
+a novější společné SPRING_RULE_VERSION=annotation-source-v6; tři existující
+version assertions zachovávajív6. Vlastní spring_conditions.py a jeho tests jsou
+byte-identické historicky full-validovanému78d7968. Provider snapshot hash a
+inspection capture se složily s main bez ruční změny funkčního kontraktu.
+
+Všech15 tracked JVM source/builder/lock souborů se přesně shoduje s actual-built
+Factory+JPA donor checkoutem. K1SHA9b95d55d/K2SHAd881ff22 a každý pinned dependency
+byly porovnány s původními SUCCESS build receipts před explicitní kopií. Persistent
+doklad `/workspace/spring-conditions-current-validation/worker-copy.json`.
+TypeScript source/package/lock odpovídají parentu; dependency copy byla explicitní,
+nikoli implicitní install/build v runtime analýze.
+
+Pure integrační sada je **109PASS,6deselected,2.61s**: typed conditions bez actual
+variant, BuildAware contracts a veřejné T010/T008/T009 projekce. Nový bounded
+actual focus (celý condition/registration/import module a compiler AC05) čeká pod
+heavy lockem; dokud neskončí, nejde o current-main actualPASS. Historical full
+573/10 zůstává přesně původní standalone evidence, neopakuje se jen pro parent
+kompozici. GH CI dle nové uživatelské revize T045 není povinné; ostatní lokální
+acceptance/toolchain a nezávislé exact-pair review zůstávají povinné.
+
+Finální current-main bounded actual focus je **85PASS,0SKIP,182.91s**, exit0.
+Celý condition module zahrnuje oba skutečné K1/K2 backends a izolaci variantových
+config/classpath změn; celé registration a import selector moduly ověřují oba
+Factory/registrar a literal/static import kontrakty; skutečný compiler AC05
+ověřuje bean/injection/profile/qualifier/primary chování. Použit vlastní worker
+home/JDK21, pinned API, mandatory WORKERS/K2/SPRING_IMPORTS/SPRING_CONDITIONS=1
+pod heavy flockem. Všech215 zmrazených source/test/fixture/JAR hashů je shodných.
+Persistent evidence: `/workspace/spring-conditions-current-validation/actual.*`,
+`frozen.json`, `worker-copy.json`. Žádná aplikace ani Spring context neběžel.
+Existing mandatory-missing-prerequisite guard navíc **15PASS,0.35s** a126 local
+Markdown links PASS. Samostatný YAML-library parse NOT_RUN (PyYAML není přítomen);
+workflow conflict union byl přímo zkontrolován pro všechny parent i condition
+fixture/test příkazy. Žádný implicitní install nebyl proveden.
+Root source closure APPROVE nad provisionald2c2f52/basec76 pokrývá beze změny
+finální runtime; finální exact Git-pair release review a merge zůstává rootovi.
