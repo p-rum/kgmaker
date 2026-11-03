@@ -146,3 +146,28 @@ workers. Log/XML jsou persistentní `fixture-context-focus.*` v
 GREEN; jeho výsledek zatím není tvrzen PASS. Nový corrective durable task
 `181b317334c7051df72f974d483085db741842ccfb022a947db1c0729ca7d24d` navazuje na
 vyčerpaný historický retry budget707659; limity ani runtime guards se neuvolňují.
+
+## Seskupená kontrola replay kontextů
+
+Strict full nad4acbd77 skončil **158 PASS, 2 SKIP, 1 FAIL za87.87s**, exit1;
+všech517 zmrazených vstupů zůstalo shodných. XML161 tests/1failure/0errors/2skips,
+log, výsledky i manifest jsou zachované jako `failed-4acbd77-full-*`.
+Nejde o finální full PASS. Selhal actual default-body graph roundtrip s dalším
+historickým context ID bez source_files; production snapshot guard se neuvolňuje.
+
+Následný rg+AST audit všech18 přímých proof calls v6 test modules našel právě tento
+poslední actual caller. Ostatní graph-provider/workspace/Gradle vstupy jsou
+syntetické s production context helperem; skutečný return replay zachovává
+captured payload context. Legacy/malformed ID-only negatives zůstávají stejné.
+Default-body fixture nyní předává SHA256 skutečných Bridge.java/Defaults.kt/Modern.kt
+bytes, tedy přesně tří vstupů explicitní worker request. Oprava mění pouze test.
+
+Celá grouped matrix default-body, arguments, return, graph-provider, workspace a
+Gradle variants je GREEN: **203 PASS, 2 SKIP za280.13s**, exit0;
+XML205 tests/0failure/0errors/2skips. Oba skips jsou explicitně optional Gradle8.13
+gates bez KGMAKER_TEST_GRADLE; žádný actual default-body/K1/K2 případ nebyl přeskočen.
+`grouped-context-focus.log/xml` a `grouped-context-callers.json` jsou persistentní
+v `/workspace/return-consumer-proof`. Proti517file manifestu se změnila pouze
+opravená test_default_body_mapping.py. Před jediným dalším strict full následuje
+nezávislé review checkpointu a integrace aktualizované argument dependency/main;
+nový full zatím není tvrzen PASS.
