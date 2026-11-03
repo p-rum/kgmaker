@@ -708,6 +708,16 @@ Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou loká
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
+## T011 — typed HTTP consumer catalogue
+
+Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
+explicit ownership/context selection and evidence buckets. Distinct request and
+Feign terminal callers remain distinct; static intent is not runtime execution.
+Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
+strict full at b1163fc passed1373 tests (10 optional skips); current9f6605 parent
+focus passed205 tests without skips. Final current-pair independent review is pending. Coverage remains PARTIAL,
+remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).
+
 ## T025 revision2 — local operation proof prerequisite (in progress)
 
 Separate candidate over merged T025 c695/main ef3 adds a bounded Javac typed
@@ -715,5 +725,7 @@ literal/local-assignment witness, exact IR/CFG/source/context proof binding and
 independent operation resolution. CFG ordering and transitions remain syntax /
 UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data claim.
 Architecture independently reviewed; initial actual RED,11 protocol tests and120
-legacy tests executed. Complete worker builds, actual integration and full remain
-pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.
+legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
+failed on declaration origin, then proof-retention bugs were corrected. Current
+39purePASS and one actual K1 pipeline PASS; complete corrected integration/full
+remain pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.

@@ -737,10 +737,20 @@ are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
+### HTTP consumer catalogue (T011)
+
+`kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
+source_coverage=coverage)` projects selected typed W06 requests into the shared
+interfaces view. Lazy definitions remain distinct from static terminal intent;
+Feign caller occurrences and same-path calls keep their original IDs. No client
+is run, and runtime/remote service binding stays unknown. See
+[HTTP consumers](docs/http-consumers.md) for the explicit snapshot example and
+proof/compatibility boundaries. No new CLI command is introduced.
+
 T025 revision2 adds optional `java-local-operations-1` compiler evidence for a
 bounded Java literal/local-variable subset. It keeps source CFG ordering as
 SYNTAX_CANDIDATE and resolves only independently certified operation nodes;
 transitions, execution, business meaning and data availability are not promoted.
 Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
-fresh complete workers and integration/full validation; see
+the complete corrected integration matrix and full validation; own fresh workers built successfully. See
 [local process scope](docs/process-paths.md#compiler-bound-local-operations).
