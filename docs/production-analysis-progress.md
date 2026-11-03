@@ -681,9 +681,19 @@ strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integra
 236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
 PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
 
-HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change63](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
+## T003-S06-W04 — explicit persistence realms LOCAL_VERIFIED_IN_SCOPE
 
-S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+Explicit workspace replay reuses current compiler facts before qualification.
+Structured DB/stream pair plus schema/target and PU/context provenance prevents
+cross-realm name fallback; same stream across different databases works and exact
+duplicate pair is rejected. New unqualified source-only physical mappings remain
+UNKNOWN. Actual K1/K2 cases cover shared SQL paths, same entities across contexts,
+quoted-dot collisions, strict malformed boundaries and two-PU physical joins.
+One strict repository full passed **1348/10** with unchanged HEAD and623 inputs;
+actual/source closure and all evidence are in changes/74_isolatePersistenceRealms.md.
+Final remote review/merge is pending; this is not completion of T003/S06 or T004.
+Physical replay support is non-renamed tables/columns; creation-stable renamed IDs
+remain UNKNOWN pending S06-W08's explicit creation-identity lifecycle proof.
 
 ## T025 — local technical process path, explicit T024 stack
 
@@ -697,3 +707,44 @@ Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 m
 Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
+
+## T011 — typed HTTP consumer catalogue
+
+Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
+explicit ownership/context selection and evidence buckets. Distinct request and
+Feign terminal callers remain distinct; static intent is not runtime execution.
+Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
+strict full at b1163fc passed1373 tests (10 optional skips); current9f6605 parent
+focus passed205 tests without skips. Final current-pair independent review is pending. Coverage remains PARTIAL,
+remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).
+
+## T025 revision2 — local operation proof prerequisite (in progress)
+
+Separate candidate over merged T025 c695/main ef3 adds a bounded Javac typed
+literal/local-assignment witness, exact IR/CFG/source/context proof binding and
+independent operation resolution. CFG ordering and transitions remain syntax /
+UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data claim.
+Architecture independently reviewed; initial actual RED,11 protocol tests and120
+legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
+failed on declaration origin, then proof-retention bugs were corrected. Current
+Corrected actual integration341PASS/0SKIP on a617. Descendant cff803c superset
+full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
+parent runtime/distributions and unchanged input closure. This is descendant
+evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
+Independent final review/merge remain separate. T026 remains separate.
+
+## T026 — reversible certified local-operation groups (candidate)
+
+The pure `business_process.collapse_business_steps` / `expand_business_steps`
+API reuses the T025 ProcessView and embedded certificates. It groups only maximal
+acyclic same-owner/method/context/scope normal chains, preserves ordered origin
+records and parallel external edges, and exactly restores canonical input.
+Decisions, calls, fields/side effects, loops, unknown boundaries and finally
+clones remain visible. Syntax adjacency keeps groups UNRESOLVED/PARTIAL; no
+runtime/business approval follows. PR65 runtime a6170c18 is merged as main32a3bca and integrated; dependency gate
+is satisfied. Actual Javac RED1FAIL4.78s preceded source; historical focus265PASS43.62s ran
+without FIFO/prehash receipt. Source cff803c received independent APPROVE.
+Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without skip, immutable
+tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
+only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
+review/publication remain separate; see change82.

@@ -42,6 +42,8 @@ class Builder:
                                 "source_file": ir.get("path"), "source_range": ir.get("range"),
                                 "sha256": ir.get("sha256"), "original_ids": [original],
                                 "call_site_ids": [ir["call_site"]] if ir.get("call_site") else ir.get("calls", [])}
+        if isinstance(ir.get("_verified_local_operation"), str):
+            self.blocks[identity]["_verified_local_operation"] = ir["_verified_local_operation"]
         if ir.get("async_boundary") in {"SUSPEND", "LAUNCH", "ASYNC"}:
             self.blocks[identity].update(async_boundary=ir["async_boundary"], scheduling="UNKNOWN")
         return identity
