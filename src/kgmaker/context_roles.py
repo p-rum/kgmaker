@@ -64,6 +64,9 @@ def classify_context_role(context, *, workspace=None, contexts=None):
                 continue
             original = (contexts or {}).get(selected)
             if (repo != binding['repo_id'] or not isinstance(original, Mapping)
+                    or original.get('language') != 'jvm'
+                    or not isinstance(original.get('analyzer_version'), str) or not original['analyzer_version']
+                    or original.get('mode') not in ('BUILD_IMPORT', 'BUILD_EXECUTE')
                     or any(original.get(key) != binding[key] for key in ('repo_id', 'module', 'source_set', 'scope'))
                     or original.get('spring_profiles') != binding['profiles']):
                 continue

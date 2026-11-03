@@ -1,5 +1,6 @@
 """T006/T008 public mixed workspace context-role boundaries; no worker/build."""
 from copy import deepcopy
+from dataclasses import replace
 from unittest.mock import patch
 
 import pytest
@@ -20,14 +21,14 @@ def mixed_snapshot(kafka_workspace):
     return load_workspace(manifest), graph, coverage
 
 
-@pytest.mark.parametrize('catalog', ['inventory', 'http-providers', 'data-resources', 'triggers'])
+@pytest.mark.parametrize('catalog', ['inventory', 'http-providers', 'http-consumers', 'data-resources', 'triggers'])
 def test_full_mixed_snapshot_reaches_original_source_inventory_without_mutation(mixed_snapshot, catalog):
     workspace, graph, coverage = mixed_snapshot
-    from kgmaker.interfaces import project_http_providers
+    from kgmaker.interfaces import project_http_providers, project_http_consumers
     from kgmaker.data_resources import project_data_resources
     from kgmaker.process_triggers import discover_process_triggers
     project = {'inventory': project_service_inventory, 'http-providers': project_http_providers,
-               'data-resources': project_data_resources, 'triggers': discover_process_triggers}[catalog]
+               'http-consumers': project_http_consumers, 'data-resources': project_data_resources, 'triggers': discover_process_triggers}[catalog]
     before = deepcopy((workspace, graph.to_dict(), coverage))
     assert any(c.get('origin_trust') == 'WORKSPACE_DECLARATION' for c in graph.contexts)
     with patch('subprocess.Popen', side_effect=AssertionError('projection process')), patch('socket.create_connection', side_effect=AssertionError('projection network')):
@@ -43,16 +44,33 @@ def test_full_mixed_snapshot_reaches_original_source_inventory_without_mutation(
     assert all(n.kind not in {'http_endpoint', 'http_request', 'process_trigger'} for n in result.nodes)
 
 
-@pytest.mark.parametrize('mutation', ['version', 'origin', 'input-hash', 'scope', 'repo', 'identity'])
+@pytest.mark.parametrize('mutation', ['version', 'origin', 'input-hash', 'scope', 'repo', 'identity',
+                                    'version-shape', 'freshness-shape', 'module', 'source-set', 'extra-path', 'foreign-selector', 'captured-hash'])
 def test_malformed_derived_claim_is_diagnosed_without_ownership_fallback(mixed_snapshot, mutation):
     workspace, graph, coverage = mixed_snapshot
     candidate = next(c for c in graph.contexts if c.get('origin_trust') == 'WORKSPACE_DECLARATION')
     if mutation == 'version': candidate['kafka_binding_version'] = 'future-unknown'
     elif mutation == 'origin': candidate['origin_trust'] = 'UNRECOGNIZED_DERIVED_ROLE'
     elif mutation == 'input-hash': candidate['source_files'] = []
+    elif mutation == 'captured-hash': candidate['source_files'][next(iter(candidate['source_files']))] = '0' * 64
     elif mutation == 'scope': candidate['scope'] = 'test'
     elif mutation == 'repo': candidate['repo_id'] = 'schemas'
-    else: candidate['id'] += '-forged'
+    elif mutation == 'version-shape': candidate['kafka_binding_version'] = []
+    elif mutation == 'freshness-shape': candidate['freshness'] = []
+    elif mutation == 'module': candidate['module'] = 'foreign-module'
+    elif mutation == 'source-set': candidate['source_set'] = 'test'
+    elif mutation == 'extra-path': candidate['source_files']['@foreign/config.properties'] = 'f' * 64
+    elif mutation == 'foreign-selector':
+        from kgmaker.workspace import qualified
+        candidate['selected_compiler_context'] = qualified('schemas', 'foreign')
+    else:
+        old = candidate['id']; candidate['id'] += '-forged'; new = candidate['id']
+        # Keep the supplied Graph structurally valid so the identity guard,
+        # rather than dangling-reference validation, is what rejects the claim.
+        graph.edges = [replace(e, context_ids=tuple(new if c == old else c for c in e.context_ids)) for e in graph.edges]
+        for proof in graph.evidence:
+            if isinstance(proof.get('context_ids'), list):
+                proof['context_ids'] = [new if c == old else c for c in proof['context_ids']]
     before = deepcopy((workspace, graph.to_dict(), coverage))
     with patch('subprocess.Popen', side_effect=AssertionError('projection process')):
         result = project_service_inventory(workspace, graph, source_coverage=coverage)
@@ -101,4 +119,18 @@ def test_prefix_and_mode_alone_do_not_exempt_genuine_foreign_source_paths(mixed_
     with pytest.raises(ServiceInventoryError) as error:
         project_service_inventory(workspace, graph, source_coverage=coverage)
     assert error.value.diagnostic['code'] == 'INVALID_OWNERSHIP'
+    assert (workspace, graph.to_dict(), coverage) == before
+
+
+def test_config_only_derived_declarations_never_become_compiler_or_code_proof(kafka_workspace):
+    _, manifest, _ = kafka_workspace
+    workspace = load_workspace(manifest)
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    before = deepcopy((workspace, graph.to_dict(), coverage))
+    with patch('subprocess.Popen', side_effect=AssertionError('projection process')):
+        inventory = project_service_inventory(workspace, graph, source_coverage=coverage)
+    assert not any(n.kind in {'kafka_code_listener', 'kafka_code_producer'} for n in graph.nodes)
+    rows = [row for service in inventory.context_selection['services'].values() for row in service['contexts']]
+    assert all(row['status'] != 'CURRENT' for row in rows)
+    assert all(n.metadata['code_binding'] == 'UNPROVEN' for n in graph.nodes if n.kind == 'kafka_binding')
     assert (workspace, graph.to_dict(), coverage) == before

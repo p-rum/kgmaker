@@ -139,6 +139,12 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])
         result['compiler_evidence_ids'] = [qualified(repo, item) for item in value.get('compiler_evidence_ids', [])]
+    if type(value.get('local_operation_version')) is int and value['local_operation_version'] == 1:
+        for key in ('method', 'compiler_symbol_id', 'cfg_block', 'target_binding', 'context_id'):
+            if isinstance(value.get(key), str):
+                result[key] = qualified(repo, value[key])
+        if isinstance(result.get('target_declaration'), dict):
+            result['target_declaration']['path'] = source_key(repo, result['target_declaration']['path'])
     return result
 
 
@@ -173,6 +179,9 @@ def _qualified_cfg(repo: str, value: dict) -> dict:
                                  for identity in block.get('call_site_ids', [])]
         item['original_ids'] = [qualified(repo, identity)
                                 for identity in block.get('original_ids', [])]
+        if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+            item['local_operation_evidence_ids'] = [qualified(repo, identity)
+                for identity in block.get('local_operation_evidence_ids', [])]
         if isinstance(block.get('source_file'), str):
             item['source_file'] = source_key(repo, block['source_file'])
         result['blocks'].append(item)
@@ -572,7 +581,7 @@ def source_path(packet: dict, key: str) -> Path:
 
 def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persist_cache: bool = False) -> tuple[dict, dict, dict, KnowledgeGraph, dict]:
     from . import feature
-    from .schema_replay import reconstruct
+    from .schema_replay import reconstruct, PARSER_VERSION as SCHEMA_PARSER_VERSION
     from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
     from .kafka_bindings import VERSION as kafka_binding_version
@@ -594,7 +603,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
+                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -624,14 +633,24 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             local_schema = None
             if repo.get('flyway'):
                 configs = repo['flyway'] if isinstance(repo['flyway'], list) else [repo['flyway']]
+                from .flyway import configuration
+                from .schema_replay import persistence_pair
+                pairs = [persistence_pair(c['database_id'], c['stream_id']) for c in
+                         (configuration(root, cfg) for cfg in configs)]
+                if None in pairs or len(set(pairs)) != len(pairs):
+                    raise AnalysisError('Duplicate migration-stream ID or invalid persistence realm: ' + identity)
                 local_schema = [reconstruct(root, cfg) for cfg in configs]
-                if len({s['config']['stream_id'] for s in local_schema}) != len(local_schema):
-                    raise AnalysisError('Duplicate migration-stream ID: ' + identity)
                 for schema in local_schema:
                     local = feature.attach_schema(local, schema, root)
                     from .schema_replay import schema_mappings
                     _, schema['mapping_diagnostics'] = schema_mappings(root, schema, local)
                     schema.pop('checkpoints', None)  # execution/cache statistics are not baseline identity
+                # Explicit offline replay can join existing fresh compiler facts;
+                # this does not inspect, build, install or execute a repository.
+                from .framework import augment_framework_graph
+                for selected in list(local.contexts):
+                    if selected.get('language') == 'jvm' and selected.get('freshness') != 'STALE':
+                        local = augment_framework_graph(root, local, selected)
             if error:
                 diagnostics.append(identity + ': ' + error)
             pending_cache[key] = copy.deepcopy((local, local_schema)); parsed.append(identity)

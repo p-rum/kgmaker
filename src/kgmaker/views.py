@@ -934,6 +934,11 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
     selected_evidence.update(identity for site in sites for identity in site.get("evidence_ids", []))
     selected_cfgs = [c for c in graph.cfgs if c.get("method") in ids and (context_id is None or c.get("context_id") == context_id)]
     selected_evidence.update(identity for cfg in selected_cfgs for identity in cfg.get("evidence_ids", []))
+    selected_evidence.update(identity for cfg in selected_cfgs for block in cfg.get('blocks', [])
+        if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1
+        for refs in [block.get('local_operation_evidence_ids', [])]
+        if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs)
+        for identity in refs)
     return replace(graph, nodes=nodes, edges=edges,
                    files={p: h for p, h in graph.files.items() if any(n.path == p for n in nodes)},
                    contexts=[c for c in graph.contexts if (scope == "all" or c.get("scope") == scope) and (context_id is None or c.get("id") == context_id)],

@@ -14,8 +14,83 @@ from .analysis_model import AnalysisError, digest, file_hash, read_json, safe_pa
 from .flyway import migration_plan
 from .model import Edge, Node
 
-PARSER_VERSION = 'postgres-ddl-1'
+PARSER_VERSION = 'postgres-ddl-2-realms'
 _CHECKPOINTS: dict[str, dict] = {}
+
+
+def persistence_pair(database_id, stream_id):
+    """A structured explicit identity; never recover it by splitting node IDs."""
+    if any(not isinstance(v, str) or not v or len(v) > 128 or v != v.strip() or any(ord(c) < 32 for c in v) for v in (database_id, stream_id)):
+        return None
+    return database_id, stream_id
+
+
+def persistence_selection(context):
+    result = {key: context.get(key) for key in
+              ('database_id', 'schema_stream_id', 'persistence_unit', 'persistence_schema', 'flyway_target')}
+    for key, value in result.items():
+        if value is not None and (not isinstance(value, str) or not value or len(value) > 128
+                                  or value != value.strip() or any(ord(c) < 32 for c in value)):
+            raise AnalysisError('Invalid persistence selector: ' + key)
+    return result
+
+
+def realm_prefix(config):
+    pair = persistence_pair(config.get('database_id'), config.get('stream_id'))
+    if pair is None:
+        raise AnalysisError('Invalid persistence database/stream identity')
+    return ':'.join(quote(v, safe='') for v in pair)
+
+
+def schema_realm(schema, *, schema_name=None):
+    config = schema['config']
+    keys = sorted({key for p in config.get('provenance', [])
+                   if p.get('kind') == 'EXPLICIT_CONFIGURATION' for key in p.get('keys', [])})
+    result = {'database_id': config['database_id'], 'stream_id': config['stream_id'],
+            'schema': schema_name, 'schemas': list(config['schemas']), 'target': config['target'],
+            'config_fingerprint': digest(config), 'explicit_keys': keys,
+            'derivation': 'MIGRATION_DERIVED'}
+    result['proof_hash'] = digest(result)
+    return result
+
+
+def schema_node_realm(node):
+    """Validate the replay object's typed identity against its structured proof."""
+    metadata = node.metadata
+    if not isinstance(metadata, dict):
+        return None
+    realm, name = metadata.get('persistence_realm'), metadata.get('schema_object')
+    if not isinstance(realm, dict) or not isinstance(name, list) or not name or any(
+            not isinstance(n, str) or not n for n in name):
+        return None
+    expected_fields = {'database_id', 'stream_id', 'schema', 'schemas', 'target', 'config_fingerprint',
+                       'explicit_keys', 'derivation', 'proof_hash'}
+    if set(realm) != expected_fields:
+        return None
+    try:
+        valid_hash = realm['proof_hash'] == digest({k: v for k, v in realm.items() if k != 'proof_hash'})
+    except (TypeError, ValueError, RecursionError):
+        return None
+    if not valid_hash or node.name != '.'.join(name) or node.kind not in {'db_table', 'db_column'}:
+        return None
+    if len(name) != (2 if node.kind == 'db_table' else 3):
+        return None
+    pair = persistence_pair(realm.get('database_id'), realm.get('stream_id'))
+    keys, schemas = realm.get('explicit_keys'), realm.get('schemas')
+    if (pair is None or not isinstance(keys, list) or any(not isinstance(k, str) for k in keys)
+            or not {'database_id', 'stream_id'} <= set(keys)
+            or not isinstance(schemas, list) or any(not isinstance(s, str) or not s for s in schemas)
+            or realm.get('schema') != name[0] or name[0] not in schemas
+            or not isinstance(realm.get('target'), str) or not realm['target']
+            or realm.get('derivation') != 'MIGRATION_DERIVED'
+            or not isinstance(realm.get('config_fingerprint'), str)
+            or not re.fullmatch(r'[0-9a-f]{64}', realm['config_fingerprint'])
+            or not node.kind.startswith('db_')):
+        return None
+    expected = 'schema:' + realm_prefix({'database_id': pair[0], 'stream_id': pair[1]}) + ':' + Replay.key(node.kind[3:], name)
+    if node.id != expected and not re.fullmatch(re.escape(expected) + r':incarnation:[0-9a-f]{12}', node.id):
+        return None
+    return realm
 
 
 def statements(text: str) -> list[tuple[list[str], int]]:
@@ -125,7 +200,7 @@ class Replay:
         key = self.key(kind, name)
         if key in self.objects:
             raise AnalysisError('Object already exists: ' + key)
-        identity = 'schema:' + self.config['database_id'] + ':' + self.config['stream_id'] + ':' + key
+        identity = 'schema:' + realm_prefix(self.config) + ':' + key
         if any(old['id'] == identity for old in self.history):
             identity += ':incarnation:' + digest(self.evidence)[:12]
         item = {'id': identity, 'kind': kind, 'name': list(name), 'lifecycle': 'ACTIVE',
@@ -447,7 +522,7 @@ def reconstruct(root: Path, config: dict | None = None, *, use_cache: bool = Tru
                 replay.diagnostics.append(migration['path'] + ':' + str(line) + ': ' + error)
             changed = [obj['id'] for name, obj in replay.objects.items() if before.get(name) != obj]
             changed += [obj['id'] for name, obj in before.items() if name not in replay.objects]
-            replay.operations.append({'id': 'migration-operation:' + migration['path'] + ':' + str(ordinal + 1),
+            replay.operations.append({'id': 'migration-operation:' + realm_prefix(plan['config']) + ':' + migration['path'] + ':' + str(ordinal + 1),
                                       'kind': tokens[0].upper(), 'evidence': copy.deepcopy(replay.evidence),
                                       'targets': sorted(set(changed)), 'unresolved': error,
                                       'data_effect_only': tokens[0].upper() in {'INSERT', 'UPDATE', 'DELETE', 'MERGE'}})
@@ -475,14 +550,17 @@ def graph_entities(schema: dict) -> tuple[list[Node], list[Edge]]:
     nodes, edges = [], []
     if schema['inventory']:
         first = schema['inventory'][0]
-        database_id = 'database:' + schema['config']['database_id'] + ':' + schema['config']['stream_id']
+        database_id = 'database:' + realm_prefix(schema['config'])
         nodes.append(Node(database_id, 'database', schema['config']['database_id'], first['path'], 1,
-                          summary='Independent stream; no automatic stream merge or deployment confirmation'))
+                          summary='Independent stream; no automatic stream merge or deployment confirmation',
+                          metadata={'persistence_realm': schema_realm(schema)}))
     for item in schema['objects'].values():
         evidence = item['last_change']; path = evidence['path']
         kind = 'db_' + item['kind']
         nodes.append(Node(item['id'], kind, '.'.join(item['name']), path, evidence['line'],
-                          item.get('data_type'), 'MIGRATION_DERIVED; ' + schema['status']))
+                          item.get('data_type'), 'MIGRATION_DERIVED; ' + schema['status'],
+                          metadata={'persistence_realm': schema_realm(schema, schema_name=item['name'][0]),
+                                    'schema_object': list(item['name'])}))
         if item.get('table'):
             table = schema['objects'].get(Replay.key('table', tuple(item['table'])))
             if table:
@@ -494,14 +572,15 @@ def graph_entities(schema: dict) -> tuple[list[Node], list[Edge]]:
         if item['kind'] == 'view':
             for field in item['columns']:
                 identity = item['id'] + ':field:' + field['name']
-                nodes.append(Node(identity, 'db_view_field', field['name'], path, evidence['line'], field['data_type']))
+                nodes.append(Node(identity, 'db_view_field', field['name'], path, evidence['line'], field['data_type'],
+                                  metadata={'persistence_realm': schema_realm(schema, schema_name=item['name'][0])}))
                 edges.append(Edge(identity, field['source_id'], 'derived_from', 'Explicit view projection',
                                   source_file=path, source_line=evidence['line']))
     for op in schema['operations']:
-        ev = op['evidence']; migration_id = 'migration:' + ev['path']
+        ev = op['evidence']; migration_id = 'migration:' + realm_prefix(schema['config']) + ':' + ev['path']
         if not any(n.id == migration_id for n in nodes):
-            nodes.append(Node(migration_id, 'migration', ev['path'], ev['path'], 1))
-        nodes.append(Node(op['id'], 'migration_operation', op['kind'], ev['path'], ev['line'], summary=op['unresolved']))
+            nodes.append(Node(migration_id, 'migration', ev['path'], ev['path'], 1, metadata={'persistence_realm': schema_realm(schema)}))
+        nodes.append(Node(op['id'], 'migration_operation', op['kind'], ev['path'], ev['line'], summary=op['unresolved'], metadata={'persistence_realm': schema_realm(schema)}))
         edges.append(Edge(migration_id, op['id'], 'migration_changes', source_file=ev['path'], source_line=ev['line']))
         for target in op['targets']:
             if any(n.id == target for n in nodes):
@@ -517,47 +596,14 @@ def schema_mappings(root: Path, schema: dict, graph) -> tuple[list[Edge], list[d
         if node.kind != 'data_field' or Path(node.path).suffix not in {'.kt', '.java'}:
             continue
         text = safe_path(root, node.path).read_text(encoding='utf-8')
+        if not isinstance(node.name, str) or '.' not in node.name:
+            continue
         owner, field = node.name.rsplit('.', 1)
         declaration = re.search(r'\b(?:class|record)\s+' + re.escape(owner) + r'\b', text)
-        if not declaration:
+        if not declaration or not re.search(r'@Table\s*\(', text[max(0, declaration.start() - 500):declaration.start()]):
             continue
-        prefix = text[max(0, declaration.start() - 500):declaration.start()]
-        annotations = list(re.finditer(r'@Table\s*\(([^)]*)\)', prefix))
-        if not annotations:
+        if not re.search(r'@Column\s*\([^)]*\)\s*(?:val|var)\s+' + re.escape(field) + r'\b', text[declaration.end():]):
             continue
-        args = annotations[-1][1]
-        table = re.search(r'\bname\s*=\s*"([^"\n]+)"', args)
-        schema_name = re.search(r'\bschema\s*=\s*"([^"\n]+)"', args)
-        if not table:
-            continue
-        name = (schema_name[1] if schema_name else schema['config']['default_schema'], table[1])
-        column_annotation = re.search(r'@Column\s*\(([^)]*)\)\s*(?:val|var)\s+' + re.escape(field) + r'\b', text[declaration.end():])
-        if not column_annotation:
-            continue
-        column = re.search(r'\bname\s*=\s*"([^"\n]+)"', column_annotation[1])
-        if not column:
-            continue
-        effective = objects.get(Replay.key('column', name + (column[1],)))
-        line = text.count('\n', 0, declaration.end() + column_annotation.start()) + 1
-        if not effective:
-            diagnostics.append({'path': node.path, 'line': line, 'reason': 'Mapped column absent from selected schema target: ' + '.'.join(name + (column[1],))})
-            continue
-        edges.append(Edge(node.id, effective['id'], 'persisted_in', 'Explicit @Table/@Column identity; not populated-data proof',
-                          source_file=node.path, source_line=line))
-        java = (node.signature or '').rstrip('?')
-        db_type = effective['data_type'].lower().split()[0]
-        types = {'Double': {'double', 'numeric', 'decimal', 'float8'}, 'BigDecimal': {'numeric', 'decimal'},
-                 'Long': {'bigint', 'int8'}, 'Int': {'integer', 'int', 'int4'}, 'String': {'varchar', 'text', 'character'}}
-        if java in types and db_type not in types[java]:
-            diagnostics.append({'path': node.path, 'line': line, 'schema_evidence': effective['last_change'],
-                                'target': schema['config']['target'], 'reason': 'Backend/database type mismatch: ' + java + ' / ' + effective['data_type']})
-        if node.signature and node.signature.endswith('?') != effective['nullable']:
-            diagnostics.append({'path': node.path, 'line': line, 'schema_evidence': effective['last_change'],
-                                'target': schema['config']['target'], 'reason': 'Backend/database nullability mismatch'})
-        numeric = re.fullmatch(r'(?:numeric|decimal)\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)', effective['data_type'], re.I)
-        for key, group in [('precision', 1), ('scale', 2)]:
-            declared = re.search(r'\b' + key + r'\s*=\s*(\d+)', column_annotation[1])
-            if declared and (numeric is None or declared[1] != numeric[group]):
-                diagnostics.append({'path': node.path, 'line': line, 'schema_evidence': effective['last_change'],
-                                    'target': schema['config']['target'], 'reason': 'Backend/database ' + key + ' mismatch'})
+        diagnostics.append({'code': 'PERSISTENCE_REALM_UNPROVEN', 'path': node.path, 'line': node.line,
+                            'reason': 'Source-only field has no compiler-owned explicit persistence realm; no physical schema binding.'})
     return edges, diagnostics

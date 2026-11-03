@@ -1065,6 +1065,30 @@ missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
 
+## Explicit persistence realms (T003-S06-W04, verified bounded subset)
+
+Current physical schema binding requires an explicit database_id/schema_stream_id
+pair in the compiler selection and replay configuration. Optional
+persistence_schema/flyway_target context selectors are shape validated and hashed;
+a declared table schema or one supported replay schema may supply an unambiguous
+schema, while multiple choices remain UNKNOWN. W03 still owns persistence-unit
+selection and XML input replay. A globally unique table name cannot fill a
+missing realm. Legacy contexts remain readable but require reinspection under
+JPA rule annotation-source-v6-persistence-realms.
+
+An explicit workspace repo.flyway replay joins already captured fresh compiler
+facts locally before workspace qualification, without running a worker or build.
+Source-only @Table/@Column fields no longer create strong persisted_in or schema
+mismatch claims without compiler-owned realm proof. Migration-derived schema,
+framework interpretation and runtime/deployed data availability remain separate.
+Physical binding supports non-renamed replay table/column identities. A valid
+Replay rename retains its creation ID, so the current strict current-name/ID guard
+returns UNKNOWN after rename; it never guesses from previous/display names.
+S06-W08 owns the creation-identity metadata/parser-cache follow-up, not this PR.
+See change note74 for actual validation and remaining acceptance; no complete
+production/provider/schema-lifecycle support is claimed.
+
+
 
 ## T003-S07-W04 — declared Kafka binding identity
 

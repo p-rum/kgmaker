@@ -36,3 +36,27 @@ check měl3PASS/1FAIL: trigger view záměrně neobsahuje service nodes a test n
 nesprávně předpokládal opak; fixture assertion je opravena na jeho context_selection.
 Žádný coalesced/final focus ani full zatím neprošel. Current-main/T011 integrace
 zůstává před frozen final source review/full povinná; T016 ještě není dodán.
+
+## Current-parent scoped evidence before source review
+
+Parent `19b0594795ac1f9167916178907b77bb0f070f51` includes verified main944 and
+T011 consumers; it is merged into this isolated stack. T016 remains undelivered.
+One coalesced pure matrix over T005–T010/T015, existing Kafka/trigger contracts and
+new role cases: **294PASS/0SKIP/9actual DESELECTED v15.04s**, all606 frozen inputs
+unchanged. Model-invalid identity mutation initially correctly produced structured
+INVALID_SNAPSHOT; the regression now keeps reference integrity to exercise the
+actual canonical identity guard. The earlier10PASS/1fixtureFAIL is retained.
+
+Pure actual replay `/workspace/kafka-code-validation/main944/focus-pytest/` schema2
+capture: T008/T010/T011/T015/T024 all5projections pass, both real compiler contexts
+remain CURRENT and2derived contexts are excluded only from ownership/selection.
+Full graph/workspace/coverage/private stores remain byte/equality unchanged;
+Popen/network are forbidden during projections. No new compiler execution/build.
+Separate older T012 capture with3derived contexts also projects without error,
+but its legacy freshness gives0CURRENT contexts; it is not the current-positive
+proof. Source review and one final frozen full remain pending. Root owns publication.
+
+Dodatečný bounded canonical-hash negative (valid64hex změna input SHA bez změny
+context ID) prošel **1PASS/0.19s**. Doplnil výslovnou hash/identity coverage po
+coalesced294; produktový runtime po něm zůstává byte-exact jako při294 a actual
+replay. Změnil se pouze seznam parametrů testu. Finální full stále pending.

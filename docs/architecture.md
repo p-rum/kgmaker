@@ -288,3 +288,36 @@ signatures, documentation summaries and heading identities. This privacy transfo
 supplies no semantic HTTP values: compiler-bound request origins and terminal
 intent are projected separately by `http_execution`, with runtime availability
 UNKNOWN. See the scoped [HTTP matrix](compiler-inspection.md#http-client-intent).
+
+## Workspace-derived context roles
+
+T006/T008 revision2 separates source/compiler ownership from producer-owned
+workspace-derived declarations before service selection. The shared pure
+`context_roles.classify_context_role` validates the existing Kafka producer's
+exact context identity through `kafka_bindings._workspace_context`: explicit
+manifest binding, supported version, repo/module/source_set/scope, captured input
+paths and hashes, and original selected compiler realm. A prefix, SOURCE_ONLY,
+or an analyzer marker alone never exempts ownership checks or establishes current
+compiler selection.
+
+Role identity is separate from current-source freshness: historical unselected
+captured hashes remain identity inputs, and classification never replays a
+private compiler index. T006 still applies its ordinary source/variant/freshness
+checks for actual source/compiler selection. Unknown or malformed derived claims
+produce localized diagnostics and never fall back to source ownership. A derived
+context cannot be selected as source/compiler; genuine foreign repository paths
+remain invalid. Legacy ordinary SOURCE_ONLY contexts need no new marker.
+
+The supplied workspace, full graph (including derived nodes/proofs) and coverage
+remain unchanged for T010/T011/T015 and other projections. T008 rules_version2 is
+additive; previous ViewDocument outputs remain readable. The public API remains:
+
+```python
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_service_inventory(workspace, graph, source_coverage=coverage)
+```
+
+No CLI, worker/protocol/store schema, source parser, app execution or data
+availability proof is introduced. [Change84](changes/84_classifyWorkspaceContextRoles.md)
+separates pure fixtures from replay of actual captured compiler/workspace facts.
