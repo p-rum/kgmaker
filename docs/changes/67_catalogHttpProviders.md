@@ -261,3 +261,14 @@ byte-identické checkpointu3e9b6fb; není důvod opakovat full kvůli dokumentů
 agent profilu. Nový main immutable episode prefix je zachován přesně, child
 episodes připojeny beze změn. GH CI zůstává pozorovaná doplňující evidence;
 lokální acceptance, toolchain a nezávislé exact-pair review jsou povinné.
+
+## Integrace compiler JPA parenta
+
+Před finálním review byl integrován main
+`966948b533a7a9417dea370733f300f91fd2b61c` obsahující JPA PR32. Vlastní sedm
+T010 runtime/test souborů se nemění. Všech14 tracked JVM source/builder/lock
+souborů je totožných se skutečně sestaveným JPA checkoutem7819193. Kopie K1/K2
+a pinned libraries ověřila původní build receipt, hash každého dependency a JAR
+(e44e3dac / e2553425); persistent doklad `/workspace/t010-jpa-worker-copy.json`.
+Nejde o pouhou shodu nově mergnutého source s neprokázaným starým JAR. Další
+integrační actual fixture rozhodne reviewer; historický full se nepřepisuje.
