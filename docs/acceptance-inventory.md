@@ -635,3 +635,14 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 | AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
 | AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
 | AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
+
+### T003-S07-W04 revize2 — draft code/group acceptance
+
+`tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
+backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
+backend nemá method annotations). Replay mutation testy mění annotation mirrors,
+realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
+Schema2 public snapshot ověřuje explicitní původní code refs, group property
+provenance, subscription a private-property redakci; cizí ID/context/SHA se
+nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
+nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
