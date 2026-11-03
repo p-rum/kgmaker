@@ -572,7 +572,7 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 
 ## T003-S06-W08 — schema compatibility (draft stack, pending full/review)
 
-Base W04 checkpoint7dc1016 is an explicit unmerged dependency; no milestone completion.
+Original stack base was W04 checkpoint7dc1016. Dependency PR62 is now merged; current-main refresh and W08 gates remain pending, with no milestone completion.
 
 | AC | Contract/test | Observed result |
 |---|---|---|

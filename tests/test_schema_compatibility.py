@@ -223,6 +223,11 @@ class PropertyMoney {
     cli=json.loads(capsys.readouterr().out)
     assert next(x for x in cli['items'] if x['attribute_name']=='amount')['dimensions']['type']['status']=='COMPATIBLE'
     source.write_text(source.read_text().replace('@Id @Column(name="id",nullable=false) java.lang.Long id;', '@Id @Column(name="old_id",nullable=false) java.lang.Long id;'))
+    from kgmaker.scanner import scan_repository
+    from kgmaker.graph_provider import retain_compiler_layer
+    from kgmaker.store import save_graph
+    save_graph(retain_compiler_layer(tmp_path,scan_repository(tmp_path)),tmp_path,generate_docs=False)
+
     updated=inspect_jvm(tmp_path,home=home,kotlin_backend=backend,classpath=[*jars,str(stdlib)],publish=True,
         build_context=dict(database_id='money',schema_stream_id='main',persistence_schema='public',flyway_target='3'))
     updated_graph=augment_framework_graph(tmp_path,attach_schema(load_graph(tmp_path),missing_schema,tmp_path),updated['context'])

@@ -674,5 +674,5 @@ starts a worker. See the HTTP matrix for property-file and privacy boundaries.
 uses existing offline replay and an explicitly inspected compiler context. It
 reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
 legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
-This is a draft stack on pending W04; compatibility never proves deployment or
+W04 dependency PR62 is merged; current-main refresh and W08 full/review remain pending; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.

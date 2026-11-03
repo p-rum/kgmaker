@@ -1,7 +1,7 @@
 # Offline ORM/schema compatibility — W08 draft stack
 
-This work is stacked on W04 checkpoint7dc1016; upstream approval/merge and this
-work's independent review/full gate are pending. It does not establish T003-S06
+This work began as a draft stack on W04 checkpoint7dc1016. Dependency PR62 is
+now merged; current-main refresh and this work's independent review/full gate remain pending. It does not establish T003-S06
 completion or deployed/populated data.
 
 `kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`

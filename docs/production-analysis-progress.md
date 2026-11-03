@@ -661,7 +661,7 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 
 ## T003-S06-W08 — bounded schema compatibility draft
 
-Explicit stack dependency W04 checkpoint7dc1016 remains pending approval/merge.
+Original stack dependency W04 checkpoint7dc1016 is now merged via PR62; current-main refresh remains pending.
 Same Replay now carries structured FK referenced columns, guarded lifecycle and
 snapshot-bound compiler ORM compatibility dimensions. Public additive
 `schema compatibility` and coverage/report integration remain draft until current

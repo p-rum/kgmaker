@@ -71,3 +71,11 @@ zdrojů zahrnuje celý migration inventory prefix a snapshot provenance.
 Pure integrace66PASS/32actual deselected/2.73s, včetně strukturálního creation
 identity/rename/incarnation a legacy/availability immutability scope. Fresh grouped
 actual po těchto změnách běží/čeká; full/source closure/ready/merge stále pending.
+
+## Publikovaný draft checkpoint
+
+W04 dependency PR62 je nyní merged (ověřeno přes GitHub); W08 začínalo nad
+checkpoint7dc1016 a current-main refresh zůstává povinný po dokončení frozen focus.
+Publikovaný draft PR64 má source checkpoint8dbaf878fcb18db1788e750a3d6b8fd53a933b7e.
+Aktuální actual focus43409/creation-source.json má269 frozen inputs a zatím není
+PASS. Full, finální semantic/memory a nezávislé exact-pair review nejsou hotovy.
