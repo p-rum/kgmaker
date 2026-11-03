@@ -128,3 +128,15 @@ T015 selector omylem použil(repo,module,source_set), místo veřejného kontrak
 (service_id,repo_id,module). Opraven pouze tuple('orders','app','app'); replay
 týchž skutečných K1 facts s opraveným T015 testem prošel bez worker spuštění.
 Runtime se nemění, grouped compiler matrix se zopakuje s tímto testovým fixem.
+
+
+Corrected společný batch: **182 PASS, 1 setup ERROR v227.54s**, exit1,
+unchanged=true, `/workspace/s06-w04-corrected-focus.{log,xml}` a status/source
+receipts. Všechny vlastní actual K1/K2 případy včetně 2PU physical join a
+malformed negatives, T015, XML, Factory a conditions/cache prošly. Sibling
+TypeScript prerequisite v Javac AC06 class setup chybělo v novém worktree;
+nejde o celý PASS. Po exact source/lock shodě byly explicitně offline zkopírovány
+TS a frontend node_modules včetně všech library SHA, bez install/network/build.
+Receipt `/workspace/s06-w04-node-provenance.json`. Dosud unstarted remaining
+AC06/HTTP flock byl ukončenzerochildren a bude sloučen s current-parent closure;
+nevzniká duplicitní 182-test rerun.
