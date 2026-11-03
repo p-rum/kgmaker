@@ -14,8 +14,11 @@ attached = attach_interface_contracts(workspace, graph, catalogue, captured=capt
 
 The input catalogue must already be selected and validated by T010/T011/T012.
 Attachment preserves interface IDs, original IDs, technical resolution and evidence
-buckets. Existing canonical scoped type IDs are retained; no DTO name, return type,
-wrapper or serialization guess creates a payload type. Provider declarations and
+buckets. A type reference requires both a canonical selected TYPE declaration and
+a versioned upstream payload-reference proof. Current HTTP/Kafka facts do not
+supply the latter, so supplied type IDs remain `None` with `TYPE_REFERENCE_UNKNOWN`.
+A real class alone, DTO name, return type, wrapper or serialization guess does not
+create a payload binding. Explicit file/operation/schema declarations still bind. Provider declarations and
 client expectations remain separate roles. `payload_compatibility=UNKNOWN`: this
 API does not contain a schema compatibility validator.
 

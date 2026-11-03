@@ -56,3 +56,23 @@ Příklad a hranice: [interface contracts](../interface-contracts.md). Native co
 se zde nerozšiřuje. Actual Kafka fixture a finální source closure/focus/full/review
 jsou PENDING; readiness až po T012 merge/current integration. GH CI je volitelné
 podle výslovného uživatelského pravidla, ostatní gates nadále povinné.
+
+
+## Nezávislý type-reference nález a oprava
+
+Architect/root reprodukoval P1 nad5e935bd: method-not-a-type Node a symbol s
+contradictory scope/path prošel původním existence-only type guardem. Tento source
+není finálně schválený. Oprava odděluje canonical TYPE Node/symbol/source/hash/
+selected context/declaration proof od chybějícího upstream payload-reference proof.
+Současné versioned HTTP/Kafka facts žádný payload-type-ID producer nemají; supplied
+request/response/message_type_id se proto nepřenese jako důkaz, ale zůstane None
+s TYPE_REFERENCE_UNKNOWN. Explicitní contract operation/file/schema a generated
+origin positive se zachovávají samostatně. Nepřidává se vymyšlený proof envelope.
+Tamper matrix pokrývá method/fake-type/scope/path/context/metadata/missingproof pro
+všechna3 pole; actual canonicalclass-without-payloadproof negative je připraven.
+
+Provider pravidlo http-providers-2-ambiguous-variants je rozpoznané; AMBIGUOUS node
+nebo incident edge se nepovýší na BOUND ani při jedné odpovídající operation.
+Původní kandidáti/reasons/technický status se zachovávají. Unknown catalogue version
+fail-closed. Finální type-corrected T013+workspace sada **59PASS3.03s**; source closure a
+actual canonical-class/Kafka matrix stále PENDING. Starý35PASS receipt zůstává.

@@ -20,6 +20,17 @@ def test_actual_kafka_contract_revisions_keep_realm_group_logical_identity(captu
     assert {n.attributes['consumer_group'] for n in subscriptions}=={'group-one','group-two'}
     assert all(n.attributes['contract_bindings'][0]['status']=='BOUND_DECLARATION' for n in subscriptions)
     revisions={n.attributes['logical_id']:n.attributes['contract_bindings'][0]['revision_fingerprint'] for n in subscriptions}
+    # Even an actual canonical class declaration is not a message payload proof.
+    from dataclasses import replace
+    catalogue=project_kafka_interfaces(workspace,graph,source_coverage=coverage)
+    canonical=next(s for s in graph.symbols if s.get('kind')=='class' and s.get('owner')=='demo.Code' and s.get('path','').startswith('@producer/'))
+    changed=replace(catalogue,nodes=tuple(replace(n,attributes={**dict(n.attributes),'message_type_id':canonical['id']}) if n.kind=='kafka_interface' and n.attributes.get('direction')=='PRODUCER' else n for n in catalogue.nodes))
+    type_result=attach_interface_contracts(workspace,graph,changed,captured=capture_interface_contracts(workspace,graph))
+    producer=next(n for n in type_result.nodes if n.kind=='kafka_interface' and n.attributes.get('direction')=='PRODUCER')
+    assert producer.attributes['message_type_id'] is None
+    assert producer.attributes['contract_bindings'][0]['status']=='BOUND_DECLARATION'
+    assert any(d.get('code')=='TYPE_REFERENCE_UNKNOWN' and d.get('reason')=='PAYLOAD_TYPE_PROOF_UNAVAILABLE' for d in type_result.diagnostics)
+
     schema=next(Path(r['_root'])/'Order.json' for r in workspace['repositories'] if r['id']=='schemas')
     before=schema.read_bytes();schema.write_bytes(before.replace(b'"Order"',b'"Other"'))
     assert len(schema.read_bytes())==len(before) and schema.read_bytes()!=before

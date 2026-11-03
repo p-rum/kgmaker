@@ -1226,6 +1226,8 @@ def attach_interface_contracts(workspace, graph, interfaces, *, captured):
     ViewDocument.from_dict(interfaces.to_dict())
     KnowledgeGraph.from_dict(graph.to_dict())
     if interfaces.kind!='interfaces':_fail('INVALID_CONTRACT_VIEW','Expected interfaces view')
+    if interfaces.rules_version.removesuffix('+interface-contracts-1') not in {'http-providers-1','http-providers-2-ambiguous-variants','http-consumers-1','kafka-interfaces-1'}:
+        _fail('UNSUPPORTED_CONTRACT_VIEW_VERSION','No contract attachment authority for this catalogue version')
     before=deepcopy((workspace,graph.to_dict(),interfaces.to_dict(),captured))
     roots={r['id']:Path(r['_root']) for r in workspace['repositories']}
     services={s['id']:s for s in workspace.get('services',[])}
@@ -1373,6 +1375,8 @@ def attach_interface_contracts(workspace, graph, interfaces, *, captured):
     symbols={s['id']:s for s in graph.symbols}
     contexts={c['id']:c for c in graph.contexts}
     def source_state(node,attrs,service):
+        if node.resolution_status=='AMBIGUOUS' or any(e.target==node.id and e.resolution_status=='AMBIGUOUS' for e in interfaces.edges):
+            return 'UNKNOWN'
         path=attrs.get('source_path')
         if not isinstance(path,str) or not path.startswith('@'):return 'UNKNOWN'
         repo,separator,local=path[1:].partition('/')
@@ -1452,6 +1456,44 @@ def attach_interface_contracts(workspace, graph, interfaces, *, captured):
                 if checksum not in {now['raw_sha256'],now['source_sha256']}:return 'STALE'
             except (ValueError,OSError,UnicodeError):return 'STALE'
         return 'CURRENT'
+    def payload_type_status(identity,attrs,service):
+        from .workspace import _qualified_symbol
+        type_kinds={'class','interface','enum','record','annotation','annotation_type','type_alias','typealias'}
+        if not isinstance(identity,str):return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        declaration=by_id.get(identity);symbol=symbols.get(identity)
+        if declaration is None or declaration.kind not in type_kinds or not isinstance(symbol,Mapping):
+            return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        context=contexts.get(symbol.get('context_id'))
+        rows=selected.get(service['id'],{}).get('contexts',[]) if service else []
+        eligible={r.get('context_id') for r in rows if r.get('status')=='CURRENT'}
+        if (not isinstance(context,Mapping) or context.get('id') not in eligible
+                or context.get('mode') not in {'BUILD_IMPORT','BUILD_EXECUTE'}
+                or context.get('origin_trust')!='LOCAL_COMPILER_INPUTS'
+                or context.get('freshness')!='CONTENT_VERIFIED'
+                or not _compiler_source_binding(symbol,declaration,context,graph)):
+            return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        try:metadata=_qualified_symbol(context['repo_id'],declaration.metadata)
+        except (KeyError,TypeError,ValueError):return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        if metadata!=symbol:return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        proof_index={p['id']:p for p in graph.evidence}
+        proved=False
+        for edge in graph.edges:
+            if (edge.target!=identity or edge.kind!='contains' or edge.evidence_kind!='SYMBOL_RESOLVED'
+                    or edge.context_ids!=(context['id'],)):continue
+            source=by_id.get(edge.source)
+            if source is None or source.kind!='file' or source.path!=declaration.path or source.scope!=interfaces.scope:continue
+            for ref in edge.evidence_ids:
+                proof=proof_index.get(ref,{})
+                if (proof.get('kind')=='SYMBOL_RESOLVED' and proof.get('source')==edge.source
+                        and proof.get('target')==identity and proof.get('relation')=='contains'
+                        and proof.get('context_ids')==[context['id']] and proof.get('source_file')==declaration.path
+                        and proof.get('sha256')==symbol.get('sha256') and proof.get('source_range')==symbol.get('range')
+                        and proof.get('origin_trust')=='LOCAL_COMPILER_INPUTS' and proof.get('freshness')=='CONTENT_VERIFIED'):
+                    proved=True
+        if not proved:return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        # Current versioned HTTP/Kafka facts contain no payload type-ID reference
+        # producer. A genuine class declaration alone is not a payload binding.
+        return 'PAYLOAD_TYPE_PROOF_UNAVAILABLE'
     validated_sources=[]
     output=[]
     for node in interfaces.nodes:
@@ -1495,9 +1537,11 @@ def attach_interface_contracts(workspace, graph, interfaces, *, captured):
                 diagnostics.append({'code':'INTERFACE_SOURCE_OR_OPERATION_UNPROVEN','interface_id':node.id})
         for key in ('request_type_id','response_type_id','message_type_id'):
             identity=attrs.get(key)
-            if identity is not None and (identity not in by_id or by_id[identity].scope!=interfaces.scope
-                    or not any(s.get('id')==identity for s in graph.symbols)):
-                _fail('INVALID_CONTRACT_TYPE_REFERENCE','Type references require an existing canonical scoped symbol')
+            if identity is not None:
+                reason=payload_type_status(identity,attrs,service)
+                attrs[key]=None
+                diagnostics.append({'code':'TYPE_REFERENCE_UNKNOWN','interface_id':node.id,'field':key,
+                    'requested_id':identity if isinstance(identity,str) else None,'reason':reason})
         attrs.update(contract_bindings=bindings,contract_binding_version=1,payload_compatibility='UNKNOWN')
         output.append(replace(node,attributes=attrs))
     present={n.id for n in output}

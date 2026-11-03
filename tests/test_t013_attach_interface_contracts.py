@@ -237,3 +237,55 @@ def test_input_replaced_during_attachment_preserves_last_valid_artifact(fixture)
         with pytest.raises(InterfaceProjectionError):attach(workspace,graph,catalog,captured)
     assert changed and artifact.read_bytes()==saved
     assert (captured,catalog.to_dict(),graph.to_dict())==before
+
+
+@pytest.mark.parametrize('field',['request_type_id','response_type_id','message_type_id'])
+@pytest.mark.parametrize('mutation',['method','fake-type','wrong-scope','wrong-path','wrong-context','wrong-metadata','missing-proof'])
+def test_unproved_type_mirrors_never_become_payload_references(fixture,field,mutation):
+    from dataclasses import replace
+    from kgmaker.model import Node
+    workspace,graph,catalog=inputs(fixture)
+    identity='method-not-a-type';kind='method' if mutation=='method' else 'class'
+    source='@backend/src/main/java/Order.java'
+    node=Node(identity,kind,'notType',source,scope='production')
+    symbol={'id':identity,'kind':kind,'context_id':graph.contexts[0]['id'],'path':source,'scope':'production'}
+    if mutation=='method':symbol.update(path='@other/Bad.java',scope='test')
+    elif mutation=='wrong-scope':symbol['scope']='test'
+    elif mutation=='wrong-path':symbol['path']='@other/Bad.java'
+    elif mutation=='wrong-context':symbol['context_id']=next(c['id'] for c in graph.contexts if c.get('repo_id')=='client' and c.get('scope')=='production')
+    elif mutation=='wrong-metadata':node=replace(node,metadata={'owner':'contradictory'})
+    damaged=replace(graph,nodes=[*graph.nodes,node],symbols=[*graph.symbols,symbol])
+    selected=[]
+    for original in catalog.nodes:
+        selected.append(replace(original,attributes={**dict(original.attributes),field:identity}) if original.kind=='http_interface' else original)
+    catalogue=replace(catalog,nodes=tuple(selected));before=damaged.to_dict(),catalogue.to_dict()
+    result=attach(workspace,damaged,catalogue,capture(workspace,damaged))
+    provider=next(n for n in result.nodes if n.kind=='http_interface')
+    assert provider.attributes[field] is None
+    assert provider.attributes['contract_bindings'][0]['status']=='BOUND_DECLARATION'
+    assert any(d.get('code')=='TYPE_REFERENCE_UNKNOWN' and d.get('field')==field for d in result.diagnostics)
+    assert (damaged.to_dict(),catalogue.to_dict())==before
+
+
+@pytest.mark.parametrize('edge_only',[False,True])
+def test_ambiguous_upstream_catalogue_never_attaches_bound_operation(fixture,edge_only):
+    from dataclasses import replace
+    workspace,graph,catalog=inputs(fixture)
+    ids={n.id for n in catalog.nodes if n.kind=='http_interface'}
+    if edge_only:
+        damaged=replace(catalog,edges=tuple(replace(e,resolution_status='AMBIGUOUS') if e.target in ids else e for e in catalog.edges))
+    else:
+        damaged=replace(catalog,nodes=tuple(replace(n,resolution_status='AMBIGUOUS',attributes={**dict(n.attributes),'unresolved_reasons':['HTTP_NORMALIZED_ROUTE_AMBIGUOUS'],'candidate_routes':['/orders','/orders/']}) if n.id in ids else n for n in catalog.nodes))
+    before=damaged.to_dict()
+    result=attach(workspace,graph,damaged,capture(workspace,graph))
+    providers=[n for n in result.nodes if n.kind=='http_interface']
+    assert providers and all(b['status']!='BOUND_DECLARATION' for n in providers for b in n.attributes['contract_bindings'])
+    assert all(n.id in ids for n in providers) and damaged.to_dict()==before
+    if not edge_only:assert providers[0].attributes['candidate_routes']==['/orders','/orders/']
+
+
+def test_unknown_catalogue_version_has_no_attachment_authority(fixture):
+    from dataclasses import replace
+    from kgmaker.interfaces import InterfaceProjectionError
+    workspace,graph,catalog=inputs(fixture);captured=capture(workspace,graph)
+    with pytest.raises(InterfaceProjectionError):attach(workspace,graph,replace(catalog,rules_version='future-unknown'),captured)
