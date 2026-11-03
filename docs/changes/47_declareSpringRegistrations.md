@@ -367,3 +367,24 @@ actual registration/JPA/dispatch kontrolu; předchozí26 PASS nad `5fe066d` je
 historická evidence a nenahrazuje tento krok. Main148 immutable episodes tvoří
 přesný prefix; původní Factory captures jsou zachované beze změny. Finální
 exact-pair review, publikaci a merge řídí root.
+
+## Skutečná kombinovaná distribuce a refresh W02
+
+Vlastní explicitní K1 i K2 build nad `0044123d2035a1512a8f753b49bd6729107dcbda`
+uspěl. Následný mandatory actual batch registration modul + K2 JPA + Javac AC06
++ dva dispatch případy: **28 PASS,0 SKIP v134.56s**, exit0. XML má28 případů,
+nula failures/errors. Všech204 source/test/fixture/config hashů zůstalo beze změny.
+Logy/build dependency receipt/XML/manifest jsou trvale v
+`/workspace/factory-mainJpa-validation/`; jde o nový kombinovaný důkaz, nikoli
+opakování historického26 PASS.
+
+Poté integrován main `469e615b2766f78f27c11b85172d223b929cb031` s merged W02
+inherited JPA. Runtime framework a compiler testy se spojily automaticky bez
+konfliktu. Vlastní Factory delta zůstává původní; canonical repository/entity
+owner guards a inherited mapping jsou převzaty z main. Všechny JVM sources,
+builder/lock files zůstávají přesně jako při právě doloženém buildu, takže se
+JARy nepřebírají ani nerebuildí. Post-refresh pure integrační batch obsahující
+build-aware/framework, T005/T008/T009/T015/T023 a mandatory gates: **198 PASS,
+2 actual compiler T015 deselected v4.73s**. XML `/workspace/factory-mainW02-pure.xml`.
+Nový full ani opakovaný compiler batch po této Python-only integraci neproběhl;
+root vyhodnotí potřebné další kontroly při nezávislém exact-head review.
