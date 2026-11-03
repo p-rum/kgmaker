@@ -157,3 +157,21 @@ Focused identity regression prošel. Chybějící realm se diagnostikuje pouze
 pro skutečné entity, nikoli pro nesouvisející HTTP/Spring kontext bez JPA.
 Zbývající AC06/HTTP a relevantní current-parent W04 případy jsou sloučeny
 do jednoho closure batch; předchozích182 PASS se bezdůvodně neopakuje.
+
+
+Current-parent closure je GREEN: **13 PASS, 0 SKIP v65.03s**, exit0,
+unchanged=true,mismatches=[]; `/workspace/s06-w04-current-closure.xml` a status
+receipt. Zahrnuje zbývající Javac AC06/HTTP cold+terminal cases a relevantní
+current Arg W04/JPA/T015 positive/idempotence/2PU případy. Vlastní Maven fixture
+byla explicitně čerstvě sestavena OFFLINE compile: BUILD SUCCESS8.632s; source
+a oba class-file SHA jsou v `/workspace/s06-w04-fixture-build-proof.json`.
+Následující read-only prerequisite preflight prošel; neprováděl build/instalaci.
+283 tracked source/JAR hashů zůstalo přes closure stejných.
+
+Compiler CI příkaz přidává skutečné XML a persistence-realm moduly s existující
+explicitní API/worker přípravou; GitHub CI tím není povinným merge gate.
+Schema/physical binding je podporovaný bounded důkaz; deployment, populated
+DB, provider naming/runtime compatibility a širší XML query-access projection
+bez dostatečné existující ownership evidence nadále zůstávají UNKNOWN.
+Jeden repository-wide frozen full nyní čeká na finální root source closure;
+předchozí partial runs nejsou vydávány za celý PASS.
