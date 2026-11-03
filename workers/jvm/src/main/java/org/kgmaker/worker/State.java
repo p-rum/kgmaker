@@ -131,8 +131,43 @@ public final class State {
         String identity="call:"+caller+":"+loc.get("sha256")+":"+(range==null?"unknown":range.get("start")+":"+range.get("end"));
         var value=map("id",identity,"caller",caller,"declared_target",target,"invocation_kind",invocation,
             "receiver_type",receiver,"dispatch_candidates",new ArrayList<>(),"dispatch_complete",false,
+            "argument_mapping_version",1,"argument_mapping_status",invocation.equals("METHOD_REFERENCE")?"NOT_EXECUTION":"UNKNOWN",
+            "argument_mapping_reason","NO_SOURCE_ARGUMENT_BINDING_PROOF",
             "resolution_reason",reason,"evidence_kind",target==null?"UNRESOLVED":"SYMBOL_RESOLVED","context_id",context.get("id"));
         value.putAll(loc); sites.add(value);return identity;
+    }
+    public void bindingStatus(String siteId,boolean proven,String reason) {
+        var site=sites.getLast();
+        if(!siteId.equals(site.get("id")))throw new IllegalArgumentException("Argument status belongs to another call");
+        site.put("argument_mapping_status",proven?"PROVEN":"UNKNOWN");site.put("argument_mapping_reason",reason);
+    }
+    /** A binding of an attributed expression result to one declared formal; never execution proof. */
+    public boolean argumentBinding(String siteId,String methodId,int argumentIndex,int parameterIndex,String parameterName,
+                                String transformation,Map<String,Object> location) {
+        if(location==null || location.get("range")==null)return false;
+        var site=sites.stream().filter(value->siteId.equals(value.get("id"))).findFirst().orElseThrow();
+        if(!methodId.equals(site.get("declared_target")))throw new IllegalArgumentException("Argument binding has another declared target");
+        String parameterId=methodId+":parameter:"+parameterIndex,argumentId=siteId+":argument:"+argumentIndex;
+        var method=symbols.get(methodId);
+        symbols.putIfAbsent(parameterId,map("id",parameterId,"kind","parameter","name",parameterName,
+            "method",methodId,"parameter_index",parameterIndex,"scope",method.get("scope"),"context_id",context.get("id"),
+            "origin",method.get("origin"),"path",method.get("path"),"range",null));
+        var argument=map("id",argumentId,"kind","value","name","argument "+argumentIndex,"call_site",siteId,
+            "owner_method",site.get("caller"),"scope",context.get("scope"),"context_id",context.get("id"));
+        argument.putAll(location);symbols.put(argumentId,argument);
+        var fact=map("kind","argument_to_parameter","source",argumentId,"target",parameterId,
+            "call_site",siteId,"argument_index",argumentIndex,"parameter_index",parameterIndex,"parameter_name",parameterName,
+            "transformation",transformation,"binding_kind","DECLARED_PARAMETER","argument_mapping_version",1,
+            "evidence_kind","SYMBOL_RESOLVED","context_id",context.get("id"),"resolution_reason","COMPILER_ARGUMENT_MAPPING");
+        fact.putAll(location);facts.add(fact);
+        if(symbols.size()>20000)throw new IllegalStateException("symbol output limit exceeded");
+        return true;
+    }
+    @SuppressWarnings("unchecked")
+    public void omittedArgument(String siteId,int parameterIndex,String parameterName,String reason) {
+        var site=sites.stream().filter(value->siteId.equals(value.get("id"))).findFirst().orElseThrow();
+        ((List<Map<String,Object>>)site.computeIfAbsent("argument_omissions",ignored->new ArrayList<>()))
+            .add(map("parameter_index",parameterIndex,"parameter_name",parameterName,"reason",reason));
     }
     public void diagnostic(String code,String reason,Map<String,Object> loc) {
         var value=map("code",code,"reason",reason);if(loc!=null)value.putAll(loc);diagnostics.add(value);

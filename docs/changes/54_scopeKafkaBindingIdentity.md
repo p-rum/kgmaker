@@ -237,3 +237,31 @@ Source/worker/test bytes po zahájení validace zůstaly frozen. Finální metad
 obsahují scoped semantic update/apply/validate, capture nové implementační
 paměti, scan/check a diff check. Root publikuje až po review; autor nic neposílá,
 neopakoval CI a nemerguje. Nadřazený S07 zůstává PARTIAL, runtime/data UNKNOWN.
+
+## Integrace current main a kombinovaná Kafka acceptance
+
+Na parentu `081d69ca69d14b4d131cc305e4e5c873960e71a3` root schválil kompozici
+workspace: celý HTTP qualifier zachován, Kafka používá pouze volitelnou public
+redakci contextu před původní kvalifikací a parser-cache versions obsahují HTTP
+capture i Kafka binding verzi. Domain HTTP/privacy guards, views/T006 a ostatní
+parent funkce se spojily bez runtime konfliktu. Vlastní kafka_bindings modul a
+Kafka testy jsou přesně z `b72629c`; nejde o nové T012 consumer/group funkce.
+
+Původní full656PASS10SKIP a actual2PASS jsou zachované historické feature důkazy.
+Nový source checkpoint `409d60d88fdc0510374171fb976339347d2460bf` prošel pure114
+PASS se2actualdeselected v10.59s; následný bounded current batch má **192 PASS,
+0 SKIP v11.20s**, exit0, XML192/0errors/0failures. Obsahuje oba skutečné K1/K2
+private-capture → public-redacted-workspace → T006 CURRENT případy, kompletní
+Kafka modul, workspace/availability/T006/T008/T009/T010 a HTTP provider privacy.
+Všech252 frozen source/test/fixture/config/JAR SHA zůstalo beze změny. Log/XML/
+exit/receipt/manifest jsou v `/workspace/kafka-current-validation/`.
+
+K1/K2 distribuce50cf8376/2eb240a5 byly převzaty z HTTP donor až po ověření všech
+15 JVM source/build/lock souborů a10/18 library SHA proti jeho skutečné153+3
+acceptance closure; worker receipt `/workspace/kafka-current-worker-receipt.json`.
+Main195 immutable episodes tvoří přesný prefix, původní dvě child captures jsou
+nezměněné. Přesné stable graph function IDs se aktualizovaly jen podle čerstvého
+CLI inventory a jejich jednoznačného stejného path/name; main fakta jsou zachována.
+GH CI je doplňující dle T045 revize2, nikoli náhrada lokálních acceptance/review.
+Další parent refresh čeká na schválený Arg merge a vyžádá novou odpovídající
+current JVM source/distribution closure;192 se za tento budoucí běh nevydává.

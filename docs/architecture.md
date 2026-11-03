@@ -83,9 +83,11 @@ references produce explicit diagnostics. Workbook citations are re-read and
 hash-checked by the normal feature validator.
 
 `templates.py` supports a bounded Thymeleaf dialect: `${variable.path}` usage,
-literal MVC model keys, literal returned template names and explicit PDF renderer
-calls. It links the backend method, template variable and external PDF boundary
-without evaluating expressions or treating the renderer as local code.
+literal MVC model keys and returned template names, static fragment declarations
+and exact-arity same-scope references, and explicit PDF renderer calls. Fragment
+parameters are scoped and literal model paths pass through them. Conditional
+expressions remain PARTIAL, unsupported expressions UNKNOWN, and no expression is
+evaluated or renderer treated as local code.
 
 `confluence_sync.py` is separate from read-only HTML ingestion. It defines an
 adapter protocol and an explicitly non-live fake adapter. A publish package owns
