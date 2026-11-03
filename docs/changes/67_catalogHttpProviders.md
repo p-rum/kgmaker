@@ -169,6 +169,35 @@ placeholder, scope/context či ownership se nedopočítává.
   žádný implicitní build/download/install. Nové Actions jsou dle orchestrátora znovu
   billing-blocked; žádné CI retry/bypass ani tvrzení remote PASS.
 
+## Integrace skutečného main po source proof
+
+Po full596/10 byl vytvořen lokální checkpoint3e9b6fb a sloučen skutečný main
+`ec333966e657896382f310ef018835e3d696513e` (PR35 plus již merged T009/TS/T015).
+Všech7 vlastních runtime/test souborů je byte-identical s tímto validovaným
+checkpointem. Konflikty zachovaly oba dokumentační bloky, všechny povinné CI testy,
+obě HTTP/data API fixture přípravy i Windows/jsonschema gates. Main immutable
+134episode prefix a vlastní původní episode jsou beze změn; current facts union
+11concept/28edge s aktuálními README/architecture/scanner citations.
+
+Main přinesl jiný trusted JVM worker source. Před lokální kopii připravených K1/K2
+artifactů z `/workspace/dependency-dispatch` HEAD10ad319 bylo porovnáno všech14
+tracked JVM source/builder/lock souborů s integrovaným checkoutem; jar SHA po kopii
+jsou totožné s donor artifacty. Doklad `/tmp/t010-integrated-worker-copy.json`,
+prepared prerequisite preflight PASS. Nejde o implicitní install/build ani použití
+starého workeru z editable parent resources.
+
+Relevant integration suite **199 PASS**,167.32s, bez SKIP:
+`/tmp/t010-integrated-focused.log/.xml`. Zahrnuje celý T010 actual grouped matrix,
+source/context/ownership/snapshot/cache/scanner/T009/T015 a critical actual TS owner,
+redirect, negative lookup, extends a callback tests. Použit vlastní PYTHONPATH a
+worker home, JDK21, mandatory compiler flags. Neopakoval se celý full jen kvůli
+nezávislé main integraci bez změny vlastního runtime;596/10 je přesně standalone
+frozen source proof a199 je current-main integration proof, nikoli tvrzení nového
+celého merged full. Scoped semantic/validated memory a command-generated graph
+budou součástí finálního local merge commitu. Exact Git-pair review zůstává povinné; GH CI je podle následného výslovného
+pokynu uživatele volitelné při splnění všech ostatních kontrol. Actions stav se
+uvádí pravdivě, žádné retry/bypass ani falešné CI PASS.
+
 ## AC → konkrétní test
 
 - AC01: `test_ac01_same_post_route_in_two_real_services_stays_separate`,
@@ -182,7 +211,7 @@ placeholder, scope/context či ownership se nedopočítává.
 - AC05: explicit-test-scope, foreign-context, missing-ownership, legacy-metadata,
   consumer-only a runtime-named/unbound-edge tests ve stejném veřejném test file.
 - AC06: README library example, architecture guide, acceptance/status matrix,
-  tento český note; strict full596/10 lokálně PASS; finální main integration/semantic/check a exact Git-pair review/remote CI jsou dosud PENDING.
+  tento český note; strict full596/10 lokálně PASS; main integration199 PASS; finální exact Git-pair review/remote CI zůstávají PENDING.
 
 ## Hranice a zbývající práce
 
@@ -208,6 +237,18 @@ concept/implements edge, scanner function ID a README citations rebind podle
 skutečného graphu/textu. Immutable112episode base prefix beze změny; nový validated
 implementation episode `episode:d9c4a36a2276f7012c7f08a8a4182603c7450d4e4f581daa0d6a73b2e73e25d4`.
 Command-generated scan/check i diff-check PASS (326files/3125nodes/21422relations).
-Main integration a finální exact Git-pair review/CI dosud PENDING. T003-S07-W08 ranking není dokončen a projekce jej neimplementuje.
+Main integration199 PASS; finální exact Git-pair review/CI dosud PENDING. T003-S07-W08 ranking není dokončen a projekce jej neimplementuje.
 HTTP consumers, remote bindings, nový store/resolver, architektura CLI/diagram
 rendering a T004 jako celek nejsou scope tohoto PR.
+
+## Obnovení prostředí a zachování auditní hranice
+
+Po restartu prostředí 2026-11-03 zůstaly zdroje i rozpracovaná integrace na disku.
+Dočasné `/tmp/t010-*` logy, XML a kopírovací receipt již nejsou dostupné. Výsledky
+596/10 a199/0 výše jsou historické skutečné běhy zaznamenané před restartem;
+nejde o nově přečtené či znovu provedené běhy. Všech sedm vlastních runtime/test
+souborů zůstává byte-identických checkpointu3e9b6fb. Nový read-only resume audit
+ověřuje semantic validate, scan/check a diff-check. Nezávislý reviewer rozhodne
+o dostatečnosti zachované evidence; ztráta dočasných logů se nezatajuje.
+GH CI je dle nového výslovného pokynu uživatele nepovinné při splnění ostatních
+kontrol; lokální acceptance/toolchain ani review se tím nenahrazují.

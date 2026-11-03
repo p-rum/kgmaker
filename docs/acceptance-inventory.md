@@ -1,5 +1,25 @@
 # Inventář acceptance T001 a T002
 
+## T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | LOCAL_VERIFIED_IN_SCOPE | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | LOCAL_VERIFIED_IN_SCOPE | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | LOCAL_VERIFIED_IN_SCOPE | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) uvádějí actual15PASS/full582PASS10SKIP, overload navigation PARTIAL a pending CI billing |
+
+
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
+
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |
@@ -19,8 +39,8 @@ Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cann
 odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
 `test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
 ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
-K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
-zůstávají samostatné, nedokončené úkoly.
+K2-era TS digest. W02 config-scoped freshness má samostatný stav výše; W03
+callback/generic rozsah zůstává samostatný nedokončený úkol.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
@@ -95,7 +115,7 @@ test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly sk
 | T009-AC03 empty unanalysed input is UNKNOWN with zero counts | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac03_empty_unanalyzed_input_is_unknown_with_zero_counts` |
 | T009-AC04 invalid inputs leave caller data unchanged | PASS | `test_ac04_invalid_claim_does_not_mutate_inputs`; `test_ac04_malformed_scope_inputs_return_structured_errors_without_mutation` |
 | T009-AC05 selected scope/context remains isolated and unsupported polarity UNKNOWN | PASS | `test_ac05_scope_context_exclusions_and_invalid_polarity_stay_unknown`; T008 production/test workspace regressions |
-| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full queued after independent review guards; earlier455/109 is intermediate |
+| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full466 PASS/109 prerequisite SKIP after all independent review guards; earlier455/109 is intermediate |
 
 ## T006 — výběr kontextů pro více služeb
 
@@ -341,6 +361,14 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+| Acceptance | Evidence within scope | Test/fixture |
+|---|---|---|
+| AC01 | Declared API target separate from realm-specific candidate implementations; missing hierarchy explains incomplete result | `test_source_interface_call_finds_two_dependency_implementation_realms`, `test_missing_parent_excludes_unprovable_implementation`, actual JDK21 JARs |
+| AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
+| AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
+| AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
 `xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
@@ -403,6 +431,16 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
 
+## T015 — database resource projection
+
+| Acceptance | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_two_actual_datasources_keep_distinct_resources_and_table_drilldown`, `test_identity_ignores_table_details_and_input_order` | Actual workspace/Flyway replay; two explicit realms, stable IDs and deterministic serialization |
+| AC02 | `test_only_existing_context_bound_read_write_is_projected`, `test_entity_mapping_is_only_a_dependency_not_read_or_write`, `test_plain_connection_configuration_never_creates_database_access` | Existing source/context/evidence-bound facts only; no query inference |
+| AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
+| AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
+| AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
 
 ## T010 — HTTP provider inventory (bounded PARTIAL)
 
@@ -413,7 +451,7 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | T010-AC03 | `test_actual_spring_class_method_mirrors_preserve_handlers_and_route_case` actual JDK21/K1/Spring6.2.2; dynamic-prefix test | exact annotation mirrors; unresolved/custom/inherited mappings remain UNKNOWN |
 | T010-AC04 | malformed metadata/hash/edge tests and no-process/network/file/store mutation checks | pure projection only; source/declaration mismatches fail closed |
 | T010-AC05 | explicit test scope, foreign context, missing ownership, legacy metadata and runtime-label/unbound-edge negatives | source evidence stays candidate; imported runtime binding unsupported UNKNOWN |
-| T010-AC06 | README, architecture guide, status matrix and [change67](changes/67_catalogHttpProviders.md) |145 focused +strict596 PASS/10optional SKIP; final main integration/exact review/remote CI pending (billing blocked) |
+| T010-AC06 | README, architecture guide, status matrix and [change67](changes/67_catalogHttpProviders.md) |145 focused +strict596 PASS/10optional SKIP; main integration199 PASS; exact review/remote CI pending (billing blocked) |
 
 Actual compiler is a static compiler fixture, not a real application runtime test.
 Runtime acceptance NOT_RUN; no data availability or overall T004 completion claim.
