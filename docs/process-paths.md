@@ -120,7 +120,9 @@ kgmaker flow render --root /repo --entry METHOD_ID --view process --format json
 The T025 ProcessView adapter consumes the existing selected trigger inventory and
 provider graph; no new implicit inspection or CLI apply path is added. This is an
 upstream prerequisite for T026, whose business-step grouping remains a separate
-task. New worker/pipeline/full validation is pending; change79 records actual gates.
+task. Corrected actual focus passed341 tests. A descendant superset full passed1566
+tests (10 explicit skips), including all1471 passing parent cases; change79
+records exact source hashes, pre/post closure and remaining limitations.
 
 ## Reversible business-step projection (T026 candidate)
 
@@ -130,7 +132,7 @@ It consumes the explicit T025 `ProcessView`, checks the embedded existing
 certificate's content identity and exact method/context/scope/CFG tuple, and
 reuses the shared process/view validators. It does not re-attest the physical
 checkout or issue new compiler certificates. Missing legacy certificates remain
-ungrouped. The explicit prerequisite is Draft PR65, exact `a6170c18`.
+ungrouped. PR65 (runtime `a6170c18`) is merged as main `32a3bca` and integrated here.
 
 ```python
 from kgmaker.business_process import collapse_business_steps, expand_business_steps

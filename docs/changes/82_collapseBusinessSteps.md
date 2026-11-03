@@ -1,9 +1,10 @@
 # T026 — Bezztrátové seskupení doložených lokálních operací
 
-T026-S01–S05 / AC01–AC06. Explicitní draft stack nad PR65,
-`feat/t025-certify-local-operations`, exact `a6170c18c53333946dc6bb694e797170227a90fc`.
-Prerequisite má samostatný review/full/merge gate; readiness T026 čeká na jeho
-schválení a merge. Celé T003/T004 se tímto dokumentem neprohlašuje za dokončené.
+T026-S01–S05 / AC01–AC06. Původní explicitní stack nad PR65 měl runtime základ
+`a6170c18c53333946dc6bb694e797170227a90fc`. PR65 je nyní merged v main
+`32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6`, který je integrován do T026.
+Prerequisite je tím splněn; T026 čeká na finální exact-pair review/publikaci.
+Celé T003/T004 se tímto dokumentem neprohlašuje za dokončené.
 
 ## Změna a hranice důkazu
 
@@ -73,6 +74,21 @@ Všechny názvy níže jsou v `tests/test_t026_collapse_business_steps.py`:
 Příklady API jsou v `docs/process-paths.md`. Čisté funkce neprovádějí I/O,
 subprocess/network/DB/model ani aplikaci; nemění vstup nebo poslední artefakt.
 Runtime observations, business approval a GH CI NOT_RUN. Explicitní prerequisite
-PR65, finální exact-pair review a publikace patří root/code-review workflow;
+PR65 je merged; finální exact-pair review a publikace patří root/code-review workflow;
 implementační agent nemerguje. Full SKIP jsou přiznané scoped/optional případy
 z XML, nikoli potvrzení chybějícího povinného toolchainu.
+
+## Integrace merged prerequisite
+
+Main32a3bca proti původnímu a617 mění pouze pět metadata souborů; source/runtime/
+testy/distribuce zůstávají přesně cff803c a otestovanému full1566/10 stavu.
+Proto se compiler ani full neopakoval. Parent `superset-proof.json` ověřil všech
+1481 původních případů (1471PASS/10SKIP) v našem dokončeném full receipt.
+Sémantický merge zachovává všech214 main epizod jako nezměněný prefix a připojuje
+původní neměnnou T026 epizodu; neodstraňuje ruční fakty. CLI scoped semantic
+update/apply/validate a scan/check obnovují pouze doložené metadata/grafy.
+
+Deset full SKIP: čtyři Maven/multi-JDK, pět Gradle a jeden actual Windows smoke;
+T026 všech95 případů včetně actual Javac obou backendů prošlo bez skipu.
+Dočasný dokončený full-tmp byl po /proc auditu odstraněn, receipt/log/XML a všech
+2091 vstupních podkladů zůstalo zachováno. Žádné zdrojové/testovací změny po full.

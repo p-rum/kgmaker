@@ -76,3 +76,34 @@ bez změny původních CFG fields: přenáší se jen list[str], consumer nadál
 neplatný kontrakt. Regression ověřuje read-only scope projection a nulové
 povýšení důkazů. Source review f74fc4d má stejný runtime jako beafb9e; semantic
 CLI apply/validate/scan/check prošly24scoped concepts/84edges, aggregate236/26423.
+
+## Finální skutečné ověření 2026-11-03
+
+Na source-final `a6170c18c53333946dc6bb694e797170227a90fc` prošel corrected
+coalesced focus **341 PASS /0 SKIP v97.73s**;594source,132distribution/license
+a568fixture vstupů zůstalo shodných. Oba vlastní worker buildy jsou byte-exact
+s build checkpointem477b5f9; nepoužívá se cizí Arg worker jako nový producer.
+
+Úplná sada byla skutečně spuštěna na potomku T026
+`cff803c43ca3b8d03e6819ceb75bca4fecb0a428`: **1566 PASS /10 SKIP v1532.11s**.
+Jde o superset full na tomto SHA, nikoli samostatný full na a617. Nezávisle
+ověřeno všech1481rodičovských JUnit IDs:1471PASS/10SKIP; všechny existující
+runtime/test soubory a oba celé JVM distributions jsou byte-exact. Potomek
+přidává jen nový business_process modul/testy a dokumentaci, nemění rodičovský
+runtime/test/config. Všech2091dětských a2087rodičovských zachycených vstupů bylo
+ověřeno beze změny; rodičovský baseline předchází full běhu. Jediný rozdíl
+generated Maven inputFiles.lst jsou absolutní checkout cesty ke shodným zdrojům.
+
+Log/XML a pre/post receipts: /workspace/business-collapse-proof; nezávislý
+reuse audit: /workspace/local-operation-validation/superset-proof.json. Skutečný
+child příkaz neměl --maxfail=1; sada přesto doběhla bez chyby. Další full běhy
+mají tento přepínač používat. Deset SKIP je výslovně neověřené: druhý JDK,
+Maven/exporter/Gradle prerequisites a skutečný neadministrátorský Windows smoke;
+nejde o PASS. Runtime Python3.12.14/pytest8.3.4, JDK21/Kotlin pinned.
+
+Vlastní redundantní full čekající bez potomků byl po ověření superset důkazů
+zrušen před startem; nejde o přerušený pytest. Aktuální parent main9eb4
+zahrnuje W04 i T011. GH CI je volitelné dle uživatelské revize pravidel;
+nezávislé finální review/ready/merge se ověřují odděleně. T026 není tímto PR
+dodané. Žádná runtime proveditelnost, business význam ani data availability
+se z compiler operation proof neodvozuje.

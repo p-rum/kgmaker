@@ -727,8 +727,11 @@ UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data clai
 Architecture independently reviewed; initial actual RED,11 protocol tests and120
 legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
 failed on declaration origin, then proof-retention bugs were corrected. Current
-39purePASS and one actual K1 pipeline PASS; complete corrected integration/full
-remain pending; see [change79](changes/79_certifyLocalOperations.md). T026 remains separate.
+Corrected actual integration341PASS/0SKIP on a617. Descendant cff803c superset
+full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
+parent runtime/distributions and unchanged input closure. This is descendant
+evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
+Independent final review/merge remain separate. T026 remains separate.
 
 ## T026 — reversible certified local-operation groups (candidate)
 
@@ -738,9 +741,10 @@ acyclic same-owner/method/context/scope normal chains, preserves ordered origin
 records and parallel external edges, and exactly restores canonical input.
 Decisions, calls, fields/side effects, loops, unknown boundaries and finally
 clones remain visible. Syntax adjacency keeps groups UNRESOLVED/PARTIAL; no
-runtime/business approval follows. Explicit dependency Draft PR65 a6170c18 must
-be reviewed/merged before readiness. Actual Javac RED1FAIL4.78s preceded source; historical focus265PASS43.62s ran
+runtime/business approval follows. PR65 runtime a6170c18 is merged as main32a3bca and integrated; dependency gate
+is satisfied. Actual Javac RED1FAIL4.78s preceded source; historical focus265PASS43.62s ran
 without FIFO/prehash receipt. Source cff803c received independent APPROVE.
 Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without skip, immutable
-tracked/compiler/runtime/license/fixture receipts. Prerequisite/ready/publication
-remain separate; see change82.
+tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
+only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
+review/publication remain separate; see change82.
