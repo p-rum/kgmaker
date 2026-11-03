@@ -522,6 +522,25 @@ all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
 
+## T003-S08-W04 — versioned React event subset
+
+Opt-in react-jsx-events-4 binds official pinned React18.3.1/@types18.3.18 declaration
+and package metadata to static handles_event evidence and frontend freshness.
+Intrinsic events and sole-return source forwarding wrappers are supported;
+unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
+click, data availability or full UI framework support is claimed. Explicit base is
+PR46 head1e21140; its approved callback parent is now merged. Current composition
+is main75d448ee plus the UI feature. Actual validation and pending gates are in change69.
+
+S08-W04 historical pre-binding validation:624 PASS/10 SKIP762.95s and43-case focus.
+Historical rule3 frozen validation:727 PASS/10 SKIP791.26s, all66 UI cases, and
+36 PASS/30 DESELECTED266.43s focused binding/factory/event-control checks.
+The three advertised event types include actual standard input/select/textarea/
+form controls; unsupported renderer controls remain UNKNOWN. No browser/app ran,
+no runtime click or data availability is inferred. Remote Actions were resumed by
+root after the user upgrade. Current rule4 full785 PASS10 SKIP and parent focus189 PASS0 SKIP
+are documented in change69; final exact-pair independent review remains required. GH CI is optional.
+
 ## T003-S04-W03 — coroutine boundaries
 
 Bounded compiler source suspend/API markers and named ContinuationImpl declaration

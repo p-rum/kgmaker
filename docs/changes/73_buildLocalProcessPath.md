@@ -181,3 +181,20 @@ a `.log`. Input source/test/worker tree zůstal po běhu beze změny.
 Parent191 immutable episodes jsou beze změny, vlastní semantic delta je jen
 jeden nový concept a jedna source-bound vazba. Corrected full se nesmí spustit
 před root final source closure tohoto current-parent checkpointu.
+
+## Dokončený corrected full a UI parent
+
+Root source closure schválila exact5668659403cdfdea9e8f5d4e8865f3310d16c676/base75.
+Jeden corrected strict full dokončen: **1104 PASS,10 optional SKIP,1273.70s,exit0**.
+XML `/workspace/validation/t025/full.xml` obsahuje1114tests/0errors/0failures.
+`full-status.json` potvrzuje unchanged246 frozen inputs i exactHEAD; nezávislé
+post-run porovnání prošlo. Starší interrupted186/2/exit2 zůstává historicky neúspěšný
+full gate a není započítán jako PASS. Dokončený vlastní disposable full-temp byl
+odstraněn až po ověření proof; log/XML/manifests a repro zůstávají zachovány.
+
+Následná kompozice main081d69ca69d14b4d131cc305e4e5c873960e71a3 přebírá UI event
+versioning. Vlastní flow.py/process_paths.py a T025 test jsou byte-exact full566;
+JVM sources/build/locks se tím nemění. Bounded pure parent focus **130 PASS,
+2 actual deselected,2.12s**, XML `/workspace/validation/t025/ui-parent-pure.xml`.
+Nový full se kvůli tomuto parentu neopakuje. Parent195 immutable episodes jsou
+zachovány; konečný review/merge zůstává samostatný exact-pair gate.
