@@ -739,6 +739,15 @@ def project_http_consumers(workspace, graph, *, scope='production', selected_con
                           and all(isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,128}',v) for v in item['profiles']))
             if not literal and not configured:
                 fail('Unsupported or private URI provenance payload')
+            if configured:
+                config = context.get('http_config_provenance')
+                records = config.get(item['key']) if isinstance(config, Mapping) else None
+                if (not isinstance(records, list) or len(records) != 1 or not isinstance(records[0], Mapping)
+                        or not isinstance(records[0].get('source_file'), str)):
+                    fail('Configured URI provenance has no unique canonical context record')
+                canonical = {**records[0], 'source_file': source_key(repo, records[0]['source_file'])}
+                if dict(item) != canonical:
+                    fail('Configured URI provenance does not match its captured context tuple')
         for terminal_id, consumer, terminal_edge in terminals or [(None,caller,None)]:
             owner = resolve_service_ownership({'id':consumer.id,'path':consumer.path,'repo_id':repo,
                 'module':context.get('module'),'context_id':cid},workspace.get('service_ownership'),context_id=cid)
@@ -762,7 +771,7 @@ def project_http_consumers(workspace, graph, *, scope='production', selected_con
             resolution = 'RESOLVED' if not reasons and route is not None and md.get('method') else 'UNRESOLVED'
             attrs = {'direction':'CONSUMER','family':family,'execution_status':state,
                 'caller':consumer.id,'origin_call_site':origin,'terminal_call_site':terminal_id,
-                'request_definition_id':request.id,'declaration_id':md.get('declaration'),
+                'request_definition_id':request.id,'declaration_id':md.get('declaration') if family == 'FEIGN' else None,
                 'http_method':md.get('method'),'route_expression':route,'uri_status':md['uri_status'],
                 'uri_provenance':deepcopy(uri_provenance),'service_binding':None,
                 'request_contract_ref':None,'response_contract_ref':None,

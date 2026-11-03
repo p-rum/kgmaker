@@ -186,9 +186,9 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering; W02 dodává bounded Java/Kotlin DefaultImpls a bridge declaration mapping s přesným owner/name/descriptor, realm/ABI guard a bytecode-only diagnostics (`tests/test_default_body_mapping.py`); bounded compiler suspend/async boundaries a DebugMetadata continuation declaration mapping v `test_coroutine_mapping` | K2 širší source call/CFG matice a obecné coroutine state-machine CFG/runtime scheduling, další generated shapes, default-argument masks, statement-level LOC, širší corpus, úplná acceptance banka |
 | T003-S05 Spring | PARTIAL | Spring rules v6 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici; typed conditions zachovávají OR profile expressions, všechny property/class members a config hash; bounded registrar/FactoryBean subset je doložen samostatně W02 | Selectors/registrars/factories mimo bounded literal subset, širší property/classpath varianty a runtime proxy/async execution |
 | T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: Entity/Embeddable/MappedSuperclass, Java/Kotlin FIELD/PROPERTY identity, EmbeddedId/AttributeOverride, mapped-superclass and entity inheritance table projections, associations, derived queries, compiler-owned JPQL/native `@Query`; W03 selected persistence-unit XML precedence, mapping-file order, metadata-complete suppression, source hashes and fail-closed unsupported/unsafe inputs in actual Javac fixtures; Flyway tests | Broader JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL, implicit Kotlin target policy and complete multi-datasource/provider matrix |
-| T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
+| T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping a local field edges; S07-W01 přidává compiler-proven Javac/K1/TS argument→declared-parameter bindings s context/transformation a named/default/vararg proof (`test_argument_parameter_flow`, change52) | K2/ASM unsupported argument proof, return/async/Kafka/HTTP a úplné validované datové cesty |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
-| T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
+| T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings, static exact-arity fragment provenance, condition/unsupported diagnostics and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula/template evaluation zůstává non-goal |
 | T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
 | T003-S11 release/acceptance | PARTIAL | Sedm CI jobů; worker/exporter clean install na Linuxu a skutečný Windows non-admin core/Java/K1/TS smoke (43 PASS / 2 scoped SKIP) | K2 Windows, Windows BUILD_EXECUTE, immutable publikace, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
@@ -471,6 +471,10 @@ qualifieru a spaced row/column/A1 range tvary; nevznikne falešný local fallbac
 Jde o opravu existujících AC01–AC04, ne plnou Excel grammar či dokončení S09/AC09.
 Přesné ověření a omezení: [change note39](changes/39_boundXlsxFormulaReferences.md).
 
+## T003-S09-W03 — statické Thymeleaf fragmenty
+
+VERIFIED_IN_SCOPE pro `thymeleaf-bindings-2`: stávající literal model binding/template return IDs a PDF hranice zůstávají zachované. Unikátní same-scope fragment reference s přesnou aritou propojuje přesný caller model path s fragment-scoped parametrem a jeho literal property use, včetně vnořeného fragmentu. Dynamic/duplicate/ambiguous/wrong-arity reference vytváří diagnózu bez resolved include; conditions jsou PARTIAL/UNKNOWN a nepodporované expression selector forms UNKNOWN. `th:each`/`th:with` i data aliasy zůstávají fail-closed: lokální jména a vnořené fragmentové argumenty se nevážou na globální model. Nic se nevykonává a veškeré vztahy zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`; MVC handler ani renderovaný výsledek se netvrdí. Cílená sada: **65 PASS**; full core: **475 PASS / 114 SKIP** (JDK/JVM, Maven/exporter, Gradle, TypeScript/Node worker a Windows CI prerequisites jsou blokované/SKIP). [Change note55](changes/55_expandThymeleafFragments.md); celý T003-S09/AC09 zůstává PARTIAL.
+
 ## T003-S05-W01 — deklarace import selectorů bez execution
 
 VERIFIED_IN_SCOPE pro `annotation-source-v4`: skutečný Javac21/Spring6.2.2
@@ -521,6 +525,18 @@ W02 after compiler ABI guard and Windows main integration: **425 PASS /10 SKIP**
 all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
+
+## T003-S07-W01 — Argument → parameter binding
+
+Explicit compiler inspection records declared-contract argument bindings using
+Javac attribution, K1 resolved argument maps and TypeScript signatures. Named and
+omitted/default arguments, vararg aggregates, original call-site/context and
+transformation are preserved. K2 Kotlin/ASM unavailable proofs and erroneous or
+ambiguous mappings remain UNKNOWN/PARTIAL; candidate dispatch never becomes
+execution or data availability. Existing SOURCE_ONLY local parsing is separate.
+Actual fixtures and remaining boundaries are scoped in
+[change52](changes/52_bindArgumentParameterFlow.md); final results are reported
+only after validation. S07/T003 are not complete.
 
 ## T003-S08-W04 — versioned React event subset
 
@@ -668,6 +684,19 @@ PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capabilit
 HTTP AC01–AC04: scoped request/terminal/provenance, legacy schema1/2/3 readability, negative/ambiguous privacy/escape boundaries are covered by `tests/test_http_client_execution.py`. Runtime HTTP/response availability remains UNKNOWN; this does not complete T003-S07/T003. Local final checks are recorded in [change63](changes/63_classifyHttpClientExecution.md); remote CI billing remains blocked.
 
 S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T025 — local technical process path, explicit T024 stack
+
+Python adapter reuse flow.process/T023 zachovává sourceCFG branch/call/return/
+exception origin IDs. Root CFG větší než budget je explicitní opaque boundary,
+ne neomezená kopie; trigger se započítává do typed output budgetu. Missing body,
+recursion, dispatch/async/coroutine nejistota zůstávají PARTIAL boundaries.
+Source/context/scope/hash a obě call-site edge/proof vazby se kontrolují; žádná
+physical freshness ani observed execution se z dodaného JSON neodvozuje.
+Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 merge.
+Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
+důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
+[note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
 ## T011 — typed HTTP consumer catalogue
 

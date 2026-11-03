@@ -68,3 +68,33 @@ explicitně zkopírovány; tracked worker/UI adapter pochází přímo z parenta
 URI status behavior se nerozšiřuje: jen DECLARED_LITERAL může resolve; ostatní
 budoucí/neznámé nonempty statusy jsou dokumentované UNKNOWN. Relevantní current
 focus a nový full outcome jsou zatím PENDING, nikoli PASS.
+
+## Skutečné provenance nálezy po early closure
+
+Captured read-only replay odhalil2defekty: non-Feign metadata declaration se
+neověřeně kopírovalo do declaration_id; a CONFIG provenance dovolila cizí key
+při správném fileSHA, bez vazby na canonical context record. Root je potvrdil.
+První ownfull nad82dd790 byl proto šetrně přerušen pouze SIGINT vlastníhopytest
+(159843) a jeho worker strom byl ověřen pryč před editací. Zachovaný partial je
+**340PASS,7SKIP,634.79s,exit2**, XML347tests/0errors/0failures; není to fullPASS.
+Log/XML/process snapshot jsou interrupted-82dd790.* a všech242frozenhashů bylo
+po ukončení totožných. Cizí queues ani procesy nebyly zasaženy.
+
+Oprava emituje declaration_id jen pro ověřený FEIGN; extra pole jiných families
+se ignoruje. CONFIG key/status/profiles/source_file/SHA musí přesně odpovídat
+jedinému existujícímu hash-bound context.http_config_provenance recordu. Žádný
+parser ani resolver se nepřidává. Captured negatives pokrývají neověřený ref
+(str/object/list) i cizí key/profiles a input immutability; původní CONFIG/Feign
+pozitivní případy zůstávají. Nový grouped proof a corrected full zatím PENDING.
+
+## Jednorázový current parent refresh pro corrected source
+
+Po zastavení neplatného sourcefull je integrován1915/aktuální mainc6950e9
+(T025 je navíc čistý process-path/flow adapter). Žádný runtime konflikt vlastní
+projekce; zachované jsou Arg, Template i UI parent moduly a všechny CI gates.
+Všech27 tracked worker inputs bylo ověřeno přímo proti actual-built source
+receipt63d3dbb970933751ac74e093f8aac0073de27a94. Všech30 JAR/dependency hashů
+z built-jars.json odpovídá donor bytes před kopií; nové K1 2bf6cbde/K2 24461c43
+jsou skutečné aktuální Arg buildy, ne staré artefakty přeznačené podle HEAD.
+Persistent doklad /workspace/t011-validation/argument-worker-copy.json.
+Corrected grouped/full zůstávají PENDING do skutečného výsledku.

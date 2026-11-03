@@ -212,3 +212,31 @@ def test_unknown_request_rule_is_visible_without_strong_claim(captured):
     doc=project_http_consumers(w,graph,source_coverage=c)
     assert all(n.attributes['request_definition_id']!=request.id for n in consumers(doc))
     assert any(d['code']=='HTTP_CONSUMER_RULE_UNKNOWN' for d in doc.diagnostics)
+
+
+@pytest.mark.parametrize('unproved', ['repo:alpha:unproved-declaration', {'private':'unproved'}, ['unproved']])
+def test_non_feign_extra_declaration_is_not_emitted_as_proved_reference(captured, unproved):
+    from kgmaker.interfaces import project_http_consumers
+    w,original,c=captured;graph=deepcopy(original)
+    request=next(n for n in graph.nodes if n.kind=='http_request_definition' and n.metadata['path']=='/active')
+    request.metadata['declaration']=unproved
+    before=deepcopy((w,graph.to_dict(),c))
+    node=next(n for n in consumers(project_http_consumers(w,graph,source_coverage=c))
+              if n.attributes['request_definition_id']==request.id)
+    assert node.attributes['declaration_id'] is None
+    assert (w,graph.to_dict(),c)==before
+
+
+@pytest.mark.parametrize('field,value', [('key','missing.property'), ('profiles',['other']), ('source_file','caller')])
+def test_configured_uri_requires_exact_hash_bound_context_record(captured, field, value):
+    from kgmaker.interfaces import project_http_consumers, InterfaceProjectionError
+    w,original,c=captured;graph=deepcopy(original)
+    request=next(n for n in graph.nodes if n.kind=='http_request_definition' and n.metadata['path']=='/configured')
+    record=next(p for p in request.metadata['uri_provenance'] if p.get('status')=='MATCHED')
+    if field=='source_file':
+        record['source_file']=request.path;record['sha256']=graph.files[request.path]
+    else:
+        record[field]=value
+    before=deepcopy((w,graph.to_dict(),c))
+    with pytest.raises(InterfaceProjectionError):project_http_consumers(w,graph,source_coverage=c)
+    assert (w,graph.to_dict(),c)==before
