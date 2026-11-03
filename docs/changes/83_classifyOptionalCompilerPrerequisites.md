@@ -55,3 +55,19 @@ Nový optional full/strict actual nadále pending. Nejde o důkaz jejich úspěc
 Následně integrován také main9442114 (T026); žádné další JVM producer změny.
 Obě předchozí lokální fronty skončily před pytest, skutečný opravný běh dosud
 neproběhl. Aktuální kompletní sada bude obsahovat i T025/T026 nové testy.
+
+## Další skutečný prerequisite nález v instalovaném smoke testu
+
+Current-parent3476optional full: **868PASS640SKIP1FAIL45.96s**, všech
+599source+618tool/cache+132native inputs beze změny. Strict actual krok znovu
+NOT_RUN. InstalledWorkerTests kontroloval pouze java aJAR, zatímco produkt
+správně odmítl runtime-onlyJRE bezjavac. Nejde o selhání podpory JDK21.
+
+Tři host prerequisite guards (Java/Kotlin/K2 instalovaný smoke) nyní reuse
+stávající inspection.command bez spuštění procesu. Pouze host
+TOOLCHAIN_UNAVAILABLE vede optionalSKIP/requiredFAIL (workers neboK2flag).
+Chyby z již instalovaného balíčku se nadále nechytají a zůstávají FAIL; licence,
+obsah distribuce, skutečný compiler a store assertions zůstávají stejné.
+Žádná produktová či workflow změna. Pure RED9FAIL0.29s; po opravě
+celá rozhodovací matice **25PASS0.28s**. Nový opravený optional full a strict
+actualCoro/ORM/packaging jsou pending, oba starší FAIL logy/XML zachovány.
