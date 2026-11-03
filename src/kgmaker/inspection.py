@@ -21,6 +21,7 @@ from .store import save_graph
 from .worker_protocol import WorkerError, handshake, request_worker
 
 VERSION = "inspection-1"
+UI_RULE_VERSION = "react-jsx-events-4"
 
 
 def artifact_hash(path: Path) -> str:
@@ -114,6 +115,10 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
             raise WorkerError("Unsupported TypeScript worker input snapshot distribution", "TOOLCHAIN_UNAVAILABLE")
         if marker == 1 and not (home / "typescript/input_snapshot.cjs").is_file():
             raise WorkerError("TypeScript input snapshot helper unavailable at " + str(home) + "; prepare the complete trusted distribution explicitly", "TOOLCHAIN_UNAVAILABLE")
+        ui_marker = package_data.get("kgmaker_ui_adapter")
+        if ui_marker is not None and (type(ui_marker) is not int or ui_marker != 1
+                or not (home / "typescript/ui_events.cjs").is_file()):
+            raise WorkerError("TypeScript UI adapter helper unavailable or unsupported", "TOOLCHAIN_UNAVAILABLE")
     return [node, str(script)]
 
 
@@ -125,6 +130,9 @@ def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]
     if language == "typescript":
         if helper.is_file():
             paths.append(helper)
+        ui_helper = root / "typescript/ui_events.cjs"
+        if ui_helper.is_file():
+            paths.append(ui_helper)
         package = root / "typescript/package.json"
         if package.is_file():
             paths.append(package)
@@ -255,6 +263,9 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
         value = prepare_context(root, value)
         from .spring_conditions import condition_inputs
         value["spring_condition_inputs_hash"] = digest(condition_inputs(value))
+    if (language == "typescript" and value.get("ui_framework") == "react"
+            and "ui_adapters" in value.get("project", {})):
+        value["framework_rule_versions"] = {"react": UI_RULE_VERSION}
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
@@ -338,6 +349,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     evidence = {e["id"]: e for e in base.evidence}
     metadata = sanitize(response["symbols"])
     call_sites = sanitize(response["call_sites"])
+    ui_diagnostics = []
     context_id = selected_context["id"]
 
     def proof(fact: dict, kind: str, *, source: str, target: str, relation: str) -> str:
@@ -358,6 +370,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         if fact.get("argument_mapping_version") == 1:
             record.update({key: fact.get(key) for key in ("argument_mapping_version", "call_site", "argument_index",
                           "parameter_index", "parameter_name", "transformation", "binding_kind")})
+        if fact.get("kind") == "handles_event" and fact.get("ui_adapter"):
+            record.update(ui_adapter=fact["ui_adapter"], execution="NOT_OBSERVED")
         identity = "evidence:" + digest(record)
         evidence[identity] = {"id": identity, **record}
         return identity
@@ -409,6 +423,21 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                                    scope=caller.scope, role="unknown", origin="unknown")
             relation(site["id"], boundary, "unresolved_boundary", site, "UNRESOLVED")
     for fact in sanitize(response["facts"]):
+        if fact.get("kind") == "handles_event" and selected_context.get("ui_framework") == "react":
+            adapter = fact.get("ui_adapter")
+            wrapper = adapter.get("wrapper") if isinstance(adapter, dict) else None
+            selected_scope = selected_context["scope"]
+            valid = (isinstance(adapter, dict) and adapter.get("rule") == UI_RULE_VERSION
+                     and nodes[fact["source"]].scope == selected_scope
+                     and nodes[fact["target"]].scope == selected_scope)
+            if wrapper is not None:
+                valid = (valid and isinstance(wrapper, dict) and isinstance(wrapper.get("path"), str)
+                         and classifier.classify(wrapper["path"]).scope == selected_scope)
+            if not valid:
+                ui_diagnostics.append({"code": "UI_CONTEXT_SCOPE_UNPROVEN", "path": fact.get("path"),
+                    "source": fact["source"], "target": fact["target"], "context_id": context_id,
+                    "reason": "UI handler and wrapper proof must belong to the selected classified scope and rule."})
+                continue
         relation(fact["source"], fact["target"], fact["kind"], fact, fact.get("evidence_kind", "SYMBOL_RESOLVED"))
     for diagnostic in response["diagnostics"]:
         if "CFG_UNSUPPORTED" not in diagnostic.get("code", ""):
@@ -433,7 +462,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                         "diagnostics": selected_context.get("diagnostics", []) + response["diagnostics"]}
     graph = KnowledgeGraph(3, base.root, base.generated_at, sorted(nodes.values(), key=lambda n: n.id),
         sorted(edges, key=lambda e: (e.source, e.kind, e.target, e.evidence_ids)), base.files,
-        base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
+        base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + ui_diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
         [evidence[i] for i in sorted(evidence)], metadata, call_sites, cfgs)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
@@ -449,7 +478,7 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     before = scan_repository(root)
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope)
     preflight = request_worker(argv, {"operation": "project", "root": str(root), "tsconfig": tsconfig,
-        "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
+        "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
 
     def input_closure(project: dict) -> dict[str, str]:
         records = project.get("input_files") if isinstance(project, dict) else None
@@ -469,10 +498,12 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     from .typescript_snapshot import replay as replay_typescript, validate_capture
     if "input_discovery" in preflight.get("project", {}):
         validate_capture(preflight["project"])
+    if ui_framework == "react" and (not isinstance(preflight.get("project", {}).get("ui_adapters"), list) or any(not isinstance(adapter, dict) or adapter.get("rule") != UI_RULE_VERSION for adapter in preflight["project"]["ui_adapters"])):
+        raise WorkerError("TypeScript worker lacks versioned UI adapter snapshot; prepare the supported distribution", "INVALID_PROTOCOL")
     preflight_inputs = input_closure(preflight.get("project"))
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
-                                      "framework_rule_versions": {"react": "react18-intrinsic-events-1"} if ui_framework == "react" else {}})
+                                      "framework_rule_versions": {"react": UI_RULE_VERSION} if ui_framework == "react" else {}})
     response = request_worker(argv, {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
         "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
     if input_closure(response.get("project")) != preflight_inputs:
@@ -491,6 +522,8 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
         replay_typescript(root, response["project"])
     if response["project"]["compiler_options"] != preflight["project"]["compiler_options"]:
         raise WorkerError("Frontend compiler options changed", "STALE")
+    if response["project"].get("ui_adapters") != preflight["project"].get("ui_adapters"):
+        raise WorkerError("Frontend UI adapter inputs changed", "STALE")
     if response["project"].get("project_graph") != preflight["project"].get("project_graph"):
         raise WorkerError("Frontend project reference graph changed", "STALE")
     model = {"source_sets": [{"module": module, "id": source_set, "scope": scope,

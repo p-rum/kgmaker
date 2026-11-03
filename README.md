@@ -601,6 +601,18 @@ unsupported/erroneous bindings expose specific UNKNOWN boundaries.
 binding status; `kgmaker impact --entity ARGUMENT_ID --include-data-flow --format json`
 retains supplemental binding provenance. See [binding scope](docs/compiler-inspection.md#argument-to-parameter-bindings).
 
+React UI inspection (`kgmaker inspect frontend --root /repo --ui-framework react`)
+uses opt-in `react-jsx-events-4`: React18.3.1/@types/react18.3.18 with the pinned
+compiler declaration hash. Intrinsic event props and one verified source forwarding
+wrapper retain package/declaration provenance. Unknown versions, fake modules,
+mutable callbacks and unproved wrappers remain UNKNOWN. No React/app code executes;
+static handler binding is not a click or data-availability proof. See change69.
+
+The React subset covers pinned standard onClick/onChange/onSubmit props, including
+input/select/textarea and form. Classic official factory aliases and default
+automatic runtimes are supported; explicit legacy namespace/fragment/import-source
+controls and per-file JSX overrides remain UNKNOWN.
+
 Coroutine source inspection preserves compiler-proven suspend and recognized
 coroutines API boundaries, with bounded named continuation declaration mapping.
 Generated instructions keep bytecode-only locations; scheduling and K2 source CFG

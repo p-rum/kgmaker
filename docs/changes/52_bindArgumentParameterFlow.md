@@ -253,3 +253,10 @@ qualifier a obě Java capabilities. Pure kontrola: **142 PASS, 1 deselected
 v5.19s**. Semantic apply/validate ověřily19 concepts/63 edges; obsolete duplicate
 byl sloučen se zachovaným current-main factem podle čerstvého CLI scanneru.
 Čerstvý společný build a actual kontrola této kombinace zatím nejsou PASS.
+
+Aktuální kompozice dále obsahuje UI parent `081d69ca` beze změny jeho helperu a
+adapter rules. Konflikt v importu evidence zachovává dvě nezávislé větve pro
+argument mapping a UI handles_event. CI seznam obsahuje obě sady. Semantic
+validate a plný scan/check nyní prošly; dřívější mezikrok `scan --no-docs`
+neobnovil human views a jeho check byl stale, proto je nahrazen plným scanem.
+Finální worker build/actual výsledek bude doplněn po skutečném běhu.

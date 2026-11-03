@@ -800,6 +800,59 @@ Workspace federation qualifies argument/formal/call-site/context references;
 malformed or ambiguous bindings fail before replacing the last valid generation.
 No scan/hook/projection starts workers, builds or application code implicitly.
 
+### T003-S08-W04: bounded versioned React event evidence
+
+`--ui-framework react` uses `react-jsx-events-4`, pinned React18.3.1 and
+@types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
+must select that external declaration's DOMAttributes or pinned input/select/textarea event member. Evidence keeps
+package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
+The existing protocol1 `handles_event` fact and graph/store model are reused.
+
+Supported: onClick/onChange/onSubmit on intrinsic tags; a checkout function with
+one props parameter and sole intrinsic JSX return forwarding the same official
+prop. Arbitrary wrappers, spreads, mutable/ambiguous callbacks, redirected fake
+React modules, unknown versions and missing packages are explicit unresolved
+boundaries. Existing S08-W03 callback candidates remain open-world. No JSX/React JS
+or application executes. This rule does not prove a click, scheduling or availability.
+
+Adapter package/declaration inputs use the existing TypeScript discovery closure,
+are compared between preflight/analyze and revalidated offline. UI context and
+selector bind the adapter snapshot; old UI rules require reinspection. Non-UI and
+legacy context construction keep their existing identity. The helper is included
+in worker distribution hashes and wheel; incomplete marked distributions fail
+before starting a worker. No package installation or network is implicit.
+
+The JSX renderer is part of that proof: classic React factory lookup must resolve
+the lexical value to the official React namespace/createElement, including actual
+import aliases; a locally shadowed object annotated as typeof React is insufficient.
+Automatic default react-jsx/react-jsxdev modes require the pinned external runtime
+declaration. Custom importSource/per-file JSX directives remain UNKNOWN. Uppercase
+component names and checkout-added custom IntrinsicElements cannot bypass wrapper
+proof just because their props reuse React's event types.
+
+The supported renderer-control whitelist is explicit: classic default or an actual
+official createElement import alias via jsxFactory; automatic default react-jsx/
+react-jsxdev with pinned runtime declaration. Explicit reactNamespace,
+jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, including
+empty controls rather than truthy fallback. The official event declaration families
+are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
+on form is covered too. Same-named checkout declarations do not qualify. Full
+historical frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
+factory and event-control matrix36 PASS. Change69 preserves the earlier v2 and
+pre-fix results, interrupted runs and current remote status.
+
+UI binding proof excludes ordinary member callable references and their aliases.
+Lexical function/const bindings use a compiler-symbol syntactic write catalog
+(assignments, compound/unary targets and destructuring/loop targets), with direct
+or ambiguous eval and duplicate binding diagnostics as UNKNOWN boundaries.
+Classic renderer namespace/createElement declarations must pass the same write
+check. This bounded catalog does not infer heap identity or runtime execution.
+Direct imported handlers/wrappers require explicit ESM compiler modes in caller and owner,
+and the exact exported value declaration; CommonJS, interop and re-export aliases stay UNKNOWN.
+Whole React namespace values escaping through aliases/casts/containers cannot prove an immutable
+renderer. Handler/wrapper materialization also requires canonical selected classified scope.
+Previous v1/v2/v3 UI captures require reinspection; offline freshness validation
+preserves the saved cache/store.
 
 ## Coroutine source boundaries (T003-S04-W03)
 

@@ -465,6 +465,21 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC03 | Unknown K2/ASM bindings, compiler-error recovery, unresolved/reference boundaries, malformed/ambiguous and zero store mutation | actual negative compiler fixtures, atomic last-valid-store fixture, workspace qualification and candidate/legacy impact tests |
 | AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |
 
+## T003-S08-W04 — versioned bounded React events
+
+| AC | Actual check | Scope |
+|---|---|---|
+| AC01 | `test_ui_events.py::test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence` | pinned versions/declaration/package hashes, direct and sole-return forwarder |
+| AC02 | existing graph v1/v2/v3 and worker installation tests; legacy context equality | additive evidence, same protocol/store |
+| AC03 | changed library, lexical writes/member aliases/eval/factory overwrite/duplicate bindings and conditional/spread/fake/missing-package negatives; offline old-rule/store snapshots | no stronger handler/runtime/data claims |
+| AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
+
+Current rule4 results are recorded in change69; GH CI is optional under T045 revision2, while publication and independent exact-pair review remain required.
+
+T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;
+full624 PASS/10 SKIP762.95s. Historical rule3 proof: final focus36 PASS/30 DESELECTED
+266.43s; prepared strict full727 PASS/10 SKIP791.26s, all66 UI cases, zero failures/errors. onChange input/select/textarea and form onSubmit are actual positives;
+source/runtime availability remains UNKNOWN. Current rule4: full785 PASS10 SKIP and current-parent focused189 PASS0 SKIP; exact manifests and limits are in change69.
 
 ## T003-S04-W03 — bounded coroutine source mapping
 
