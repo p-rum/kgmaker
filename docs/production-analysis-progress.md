@@ -10,8 +10,17 @@ annotation-only fyzické vazby. Evidence zachovává XML SHA-256, cestu, unit,
 pořadí a precedence. Neznámý namespace/verze, unsupported constructs,
 nevyřešené reference, DTD/entities a soubory mimo root zůstávají UNKNOWN bez
 annotation fallbacku. Strict diagnostika nemění poslední uložený graph;
-schema/store v3 zůstává beze změny. Viz [acceptance inventář](acceptance-inventory.md)
-a [change note 59](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
+schema/store v3 zůstává beze změny. UTF-8/UTF-16 DTD/entity vstupy jsou
+encoding-independently rejected, XML read je limitovaný, namespace reset je
+UNKNOWN a nested standard metadata/default access se zpracují fail-closed.
+Selected XML closure (including missing defaults/references, hashes and resolved
+targets) is replayed offline; same-length edits and add/delete/retarget stale the
+context. JPA context rule v2 marks legacy XML-bearing contexts stale while
+XML-free legacy contexts remain readable. Shared inherited XML columns survive
+an override in only one entity; the final strict full suite passed 652 tests and
+skipped 10 explicit Maven/Gradle/Windows gates.
+Viz [acceptance inventář](acceptance-inventory.md) a
+[change note 65](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
 
 ## T003-S06-W02 — zděděné JPA persistence atributy (2026-10-26)
 

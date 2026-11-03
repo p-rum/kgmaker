@@ -12,6 +12,7 @@ import re
 import json
 import hashlib
 import xml.etree.ElementTree as ET
+from xml.parsers import expat
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -21,7 +22,7 @@ from .model import Edge, KnowledgeGraph, Node
 from .spring_imports import selector_info
 
 SPRING_RULE_VERSION = "annotation-source-v4"
-JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v1"
+JPA_RULE_VERSION = "annotation-source-v5-orm-xml-v2"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -178,19 +179,34 @@ def _safe_jpa_xml(root: Path, relative: str) -> tuple[ET.Element | None, dict[st
         if not target.is_file():
             return None, {"code": "ORM_XML_FILE_INVALID", "path": relative,
                           "reason": "Mapping path is not a regular file inside the selected project root."}
-        raw = target.read_bytes()
-    except (OSError, ValueError):
+        # Read at most one byte beyond the contract limit. XML mappings are
+        # untrusted project input and must not cause an unbounded allocation.
+        with target.open("rb") as stream:
+            raw = stream.read(MAX_JPA_XML_BYTES + 1)
+    except (OSError, RuntimeError, ValueError):
         return None, {"code": "ORM_XML_FILE_INVALID", "path": relative,
                       "reason": "Mapping file is missing or escapes the selected project root."}
     if len(raw) > MAX_JPA_XML_BYTES:
         return None, {"code": "ORM_XML_SIZE_LIMIT", "path": relative,
                       "reason": "XML exceeds the bounded 2 MiB metadata input limit."}
-    if re.search(br"<!\s*(?:DOCTYPE|ENTITY)\b", raw, re.I):
+    try:
+        # Expat recognizes BOMs and XML-declared UTF-16 encodings, unlike a
+        # byte regex. Reject declarations at parser level before ElementTree
+        # can expand internal entities.
+        guard = expat.ParserCreate()
+        def reject_doctype(*_args):
+            raise ValueError("DTD")
+        guard.StartDoctypeDeclHandler = reject_doctype
+        guard.EntityDeclHandler = reject_doctype
+        guard.Parse(raw, True)
+        document = ET.fromstring(raw)
+    except ValueError:
         return None, {"code": "ORM_XML_UNSAFE_DECLARATION", "path": relative,
                       "reason": "DTD and entity declarations are unsupported; external content is never fetched."}
-    try:
-        document = ET.fromstring(raw)
-    except ET.ParseError:
+    except LookupError:
+        return None, {"code": "ORM_XML_ENCODING_UNSUPPORTED", "path": relative,
+                      "reason": "XML declares an unsupported character encoding."}
+    except (ET.ParseError, expat.ExpatError):
         return None, {"code": "ORM_XML_PARSE_INVALID", "path": relative,
                       "reason": "XML is malformed; annotation fallback is suppressed for the selected mapping scope."}
     return document, {"path": target.relative_to(base).as_posix(),
@@ -206,6 +222,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                              "descriptor_path": None, "descriptor_sha256": None}
     descriptor_info: dict[str, Any] | None = None
     units: list[ET.Element] = []
+    descriptor_complete = False
     if descriptor.exists():
         parsed, descriptor_info = _safe_jpa_xml(root, "META-INF/persistence.xml")
         if parsed is None:
@@ -226,7 +243,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                          "reason": "persistence.xml version is outside the supported JPA XML subset."})
             model["global_unknown"] = True
             return model
-        if any(_xml_local(item)[0] not in {namespace, ""} for item in parsed.iter()):
+        if any(_xml_local(item)[0] != namespace for item in parsed.iter()):
             model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED",
                                          "path": descriptor_info["path"],
                                          "reason": "persistence.xml contains a foreign namespace element."})
@@ -270,6 +287,31 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
             return model
         model["listed_classes"] = listed_classes
         model["exclude_unlisted"] = bool(excluded)
+        pu_metadata = [child for child in selected if _xml_local(child)[1] == "persistence-unit-metadata"]
+        if len(pu_metadata) > 1:
+            model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": descriptor_info["path"],
+                                         "reason": "Persistence unit declares duplicate metadata sections."})
+            model["global_unknown"] = True
+        for metadata in pu_metadata:
+            for child in metadata:
+                child_name = _xml_local(child)[1]
+                if child_name == "xml-mapping-metadata-complete" and len(child) == 0:
+                    descriptor_complete = True
+                elif child_name == "persistence-unit-defaults":
+                    for default in child:
+                        if _xml_local(default)[1] == "access" and (default.text or "").strip() in {"FIELD", "PROPERTY"}:
+                            model["default_access"] = (default.text or "").strip()
+                        else:
+                            model["diagnostics"].append({"code": "ORM_XML_DEFAULT_UNSUPPORTED", "path": descriptor_info["path"],
+                                                         "construct": _xml_local(default)[1],
+                                                         "reason": "Persistence-unit metadata default is outside the supported access-only subset."})
+                            model["global_unknown"] = True
+                else:
+                    model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": descriptor_info["path"],
+                                                 "construct": child_name,
+                                                 "reason": "Persistence-unit metadata construct is outside the supported subset."})
+                    model["global_unknown"] = True
+        model["metadata_complete"] = descriptor_complete
     else:
         explicit_files = []
 
@@ -297,7 +339,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                          "reason": "orm.xml version is outside the supported JPA XML subset."})
             model["global_unknown"] = True
             continue
-        if any(_xml_local(item)[0] not in {namespace, ""} for item in document.iter()):
+        if any(_xml_local(item)[0] != namespace for item in document.iter()):
             model["diagnostics"].append({"code": "ORM_XML_NAMESPACE_UNSUPPORTED", "path": info["path"],
                                          "reason": "orm.xml contains a foreign namespace element."})
             model["global_unknown"] = True
@@ -308,13 +350,32 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                          "reason": "metadata-complete must be the literal true or false."})
             model["global_unknown"] = True
             continue
-        root_access = document.get("access")
+        root_access = document.get("access", model.get("default_access"))
         if root_access is not None and root_access not in {"FIELD", "PROPERTY"}:
             model["diagnostics"].append({"code": "ORM_XML_ACCESS_UNKNOWN", "path": info["path"],
                                          "reason": "Mapping-level access must be FIELD or PROPERTY."})
             model["global_unknown"] = True
             continue
-        for defaults in [child for child in document if _xml_local(child)[1] == "persistence-unit-defaults"]:
+        metadata_sections = [child for child in document if _xml_local(child)[1] == "persistence-unit-metadata"]
+        if len(metadata_sections) > 1:
+            model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": info["path"],
+                                         "reason": "orm.xml declares duplicate persistence-unit-metadata sections."})
+            model["global_unknown"] = True
+        standard_complete = False
+        defaults_sections = [child for child in document if _xml_local(child)[1] == "persistence-unit-defaults"]
+        for metadata in metadata_sections:
+            for nested in metadata:
+                nested_kind = _xml_local(nested)[1]
+                if nested_kind == "xml-mapping-metadata-complete" and len(nested) == 0:
+                    standard_complete = True
+                elif nested_kind == "persistence-unit-defaults":
+                    defaults_sections.append(nested)
+                else:
+                    model["diagnostics"].append({"code": "ORM_XML_METADATA_UNKNOWN", "path": info["path"],
+                                                 "construct": nested_kind,
+                                                 "reason": "Persistence-unit metadata construct is outside the supported subset."})
+                    model["global_unknown"] = True
+        for defaults in defaults_sections:
             for default in defaults:
                 default_kind = _xml_local(default)[1]
                 if default_kind == "access" and (default.text or "").strip() in {"FIELD", "PROPERTY"}:
@@ -324,7 +385,9 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                                  "construct": default_kind,
                                                  "reason": "Persistence-unit mapping default is outside the supported access-only subset."})
                     model["global_unknown"] = True
-        model["metadata_complete"] = model["metadata_complete"] or root_complete
+        if root_access is not None:
+            model["default_access"] = root_access
+        model["metadata_complete"] = model["metadata_complete"] or root_complete or standard_complete
         packages = [child.text.strip() for child in document if _xml_local(child)[1] == "package"
                     and child.text and child.text.strip()]
         if len(packages) > 1:
@@ -371,7 +434,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
             record = model["classes"].setdefault(owner, {"owner": owner, "kind": kind, "unknown": False,
                                                            "attributes": {}, "overrides": {}, "files": []})
             record["kind"] = kind
-            record["metadata_complete"] = bool(record.get("metadata_complete") or complete or root_complete)
+            record["metadata_complete"] = bool(record.get("metadata_complete") or complete or root_complete or standard_complete)
             if class_access is not None:
                 record["access"] = class_access
                 if class_access == "UNKNOWN":
@@ -2439,6 +2502,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 removed.add(edge.target)
                 edges.pop(key, None)
         for column_id in removed:
+            # A mapped-superclass column node can be shared by several
+            # effective entity attributes. Detach only this owner's edge;
+            # erase the physical node and its schema links once no attribute
+            # mapping still refers to it.
+            if any(edge.kind == "maps_to_column" and edge.target == column_id
+                   for edge in edges.values()):
+                continue
             for key, edge in list(edges.items()):
                 if edge.source == column_id or edge.target == column_id:
                     edges.pop(key, None)
