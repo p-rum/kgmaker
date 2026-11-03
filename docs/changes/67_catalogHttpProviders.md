@@ -290,3 +290,15 @@ under shared flock; no application runtime ran. Persistent log/XML and source
 manifest: `/workspace/t010-current-validation/`; every frozen hash is unchanged.
 This supplements historically observed standalone596/10 and integration199,
 without claiming a repeated full. Final independent current-pair review pending.
+
+## Refresh po inherited JPA attributes
+
+Main469e615b2766f78f27c11b85172d223b929cb031 je integrován před review.
+Převzal se celý parent framework JPA/query/inherited-attribute kontrakt; HTTP
+extractor se neslučoval ani neměnil, sedm vlastních T010runtime/test souborů
+zůstává byte-identical3e9. JVM source/builder/locks nemají proti předchozímu
+104PASS checkpointu žádný diff; ověřené K1/K2 artefakty se znovu nekopírovaly.
+Pure current-parent regressions: **146 PASS,0SKIP,2.29s**, public T010/T008/T009,
+T023 a celý BuildAwareContractsTest module. Persistent log/XML
+`/workspace/t010-current-validation/w02-pure.*`. Předchozí actual104PASS zůstává
+platný v nezměněné own/JVM matici; tento refresh není nový actual/full běh.

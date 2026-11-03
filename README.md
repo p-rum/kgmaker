@@ -473,6 +473,22 @@ promítnou jen při ověřeném explicitním accessu nebo jednoznačně FIELD
 inheritance; nepodložený či smíšený access zůstává UNKNOWN. JPA identity musí
 patřit přímo do `jakarta.persistence` nebo `javax.persistence`; podobně
 pojmenovaný subpackage není JPA evidence.
+Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
+entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
+zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
+placement zdědí access strategy. Fixture ověřuje K2 i Javac, řetězené mapped
+superclasses, FIELD/PROPERTY access, tři JPA inheritance strategy values,
+entity-level override precedence a kolizi atributu. Kolize a unresolved override
+zůstávají UNKNOWN bez vybraného column edge; graph/store schema zůstává v3.
+Spring Data repository generic selects its entity by exact compiler-qualified
+owner. Same-simple-name entities no longer share inherited attributes; an
+unresolved generic remains unbound rather than using a simple-name fallback.
+Explicit JPQL entity names and repository return types also resolve by compiler
+owner; simple source return names require an exact JVM method descriptor owner.
+Missing qualified types and generic type variables remain UNKNOWN rather than
+binding to an unrelated same-simple-name class.
+Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
+tento omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
 `kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.

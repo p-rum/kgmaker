@@ -337,6 +337,29 @@ jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
 zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
 známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
 subpackage se nepovažuje za compiler-resolved JPA API.
+Mapped-superclass atributy dostanou deklarující `orm_attribute` a zvláštní
+effective projekci pro každou ověřenou entitu. `declaring_owner` a
+`effective_owner` jsou exact compiler class identities; `inherits_attribute`
+váže projection na zdrojový uzel. Zděděné FIELD/PROPERTY access určuje ID v celé
+mapped-superclass hierarchii. K2 property annotations a Java field/getter facts
+zůstávají v jejich skutečném use-site/access scope. Entity-level
+`@AttributeOverride` přebije mapped-superclass hodnotu podle nejbližší deklarace;
+stejně pojmenované fieldy ani unresolved override nevytvoří vybraný column edge.
+Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
+TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
+ne deployment/schema compatibility proof; nevyřešený access, type identity,
+inheritance strategy nebo class override zůstává UNKNOWN.
+Spring Data repository model se vybírá z compiler-resolved generic supertype a
+přesného entity owneru. Entity atributy se indexují podle canonical owner
+identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
+když compiler facts neprokáží jediného ownera.
+Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
+requires exactly one compiler-owned entity; the repository domain type never
+substitutes for an ambiguous query entity. Compiler return type identity likewise
+selects an exact entity/projection node. A source-level simple return name is
+accepted only when the JVM method descriptor proves its canonical owner; a
+missing qualified owner, erased generic type variable, or duplicate simple name
+without that proof remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
