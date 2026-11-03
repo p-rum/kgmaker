@@ -470,3 +470,14 @@ AC04: actual offline projection forbids subprocess and compares inputs/captured
 checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
 and note71 supplied; full suite, final review and publication remain pending.
 Focused41PASS (actual K1/K2 included), no claim of runtime observation.
+
+## T025 — local technical process path
+
+| Acceptance | Bounded evidence | Remaining gate |
+|---|---|---|
+| AC01 | Public diamond and actual Javac/K1: no left↔right path, nested bodies and returns_to | Source closure/full/final review |
+| AC02 | Recursion/dispatch/depth/async boundaries retain original call-site; actual target/complete/receiver mutations cannot expand another body | Bounded source CFG only; no runtime claim |
+| AC03 | Existing flow.process root overflow + typed output budgets1/2/3 preserve explicit node-limit boundary | No unbounded root copy |
+| AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
+| AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
+| AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |

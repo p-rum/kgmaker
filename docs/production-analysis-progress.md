@@ -513,3 +513,16 @@ annotation ownership ani SOURCE CFG: legacy hints se odmítají, UNKNOWN bez
 trigger claims. Žádná cesta procesu ani runtime registration/execution se nehádá.
 Bounded41PASS zahrnuje actual K1/K2 a canonical mutations; full/review/publikace
 zatím neprovedeny. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
+
+## T025 — local technical process path, explicit T024 stack
+
+Python adapter reuse flow.process/T023 zachovává sourceCFG branch/call/return/
+exception origin IDs. Root CFG větší než budget je explicitní opaque boundary,
+ne neomezená kopie; trigger se započítává do typed output budgetu. Missing body,
+recursion, dispatch/async/coroutine nejistota zůstávají PARTIAL boundaries.
+Source/context/scope/hash a obě call-site edge/proof vazby se kontrolují; žádná
+physical freshness ani observed execution se z dodaného JSON neodvozuje.
+Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 merge.
+Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
+důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
+[note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.

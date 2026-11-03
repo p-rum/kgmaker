@@ -61,7 +61,7 @@ def process(graph, entry, *, scope="production", max_depth=3, max_nodes=500):
 No ordering is derived from a call graph. Recursive, dispatch-uncertain and
 size/depth-limited calls remain explicit boundaries with original call-site IDs.
 """
-    if max_depth < 0 or max_nodes < 1:
+    if type(max_depth) is not int or type(max_nodes) is not int or max_depth < 0 or max_nodes < 1:
         raise AnalysisError("Invalid traversal limits")
     graph = project(graph, scope)
     bodies = [c for c in graph.cfgs if c.get("representation") == "SOURCE"]
@@ -71,8 +71,29 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
     sites = {s["id"]: s for s in graph.call_sites}
     if entry not in cfgs:
         raise AnalysisError("Source CFG unavailable for process entry")
+    if len(cfgs[entry]["blocks"]) > max_nodes:
+        # An oversized root has no safe expansion within the requested budget.
+        # Preserve a single explicit entry boundary instead of silently copying
+        # its entire CFG or inventing edges between an arbitrary retained prefix.
+        cfg = cfgs[entry]
+        identity = "process:" + digest({"entry": entry, "boundary": "node limit"})[:24]
+        boundary = {"id": identity, "kind": "unresolved_boundary", "label": "node limit",
+                    "method": entry, "boundary_reason": "node limit",
+                    "original_ids": sorted({entry, cfg["entry"], cfg["exit"], cfg["exceptional_exit"]}),
+                    "omitted_blocks": len(cfg["blocks"])}
+        return {"schema_version": 1, "view": "process", "entry": entry, "scope": scope,
+                "contexts": graph.contexts, "status": "PARTIAL", "truncated": True,
+                "diagnostics": [{"code": "PROCESS_ROOT_NODE_LIMIT", "method": entry,
+                                 "omitted_blocks": len(cfg["blocks"])}],
+                "cfg": {"entry": identity, "exit": identity, "exceptional_exit": identity,
+                        "blocks": [boundary], "edges": []},
+                "boundaries": [{"target": entry, "reason": "node limit"}],
+                "strongly_connected_components": [],
+                "limits": {"max_depth": max_depth, "max_nodes": max_nodes},
+                "limitations": ["Root CFG omitted; static expansion is not observed execution."]}
     blocks, edges, omitted = {}, [], []
     expanded_methods = set()
+    symbols = {symbol["id"]: symbol for symbol in graph.symbols}
 
     def expand(method, depth, ancestry, prefix):
         cfg = cfgs[method]
@@ -88,11 +109,18 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
                 continue
             site = sites.get(call_ids[0])
             if not site:
+                blocks[ids[block["id"]]]["boundary_reason"] = "call-site proof unavailable"
+                blocks[ids[block["id"]]]["original_ids"].append(call_ids[0])
+                omitted.append({"call_site": call_ids[0], "target": None, "reason": "call-site proof unavailable"})
                 continue
             target = site.get("declared_target")
             candidates = set(site.get("dispatch_candidates", []))
             uncertain = len(candidates) > 1 or (candidates and candidates != {target}) or ((site.get("invocation_kind") in {"VIRTUAL", "INTERFACE", "INVOKEVIRTUAL", "INVOKEINTERFACE"} or (site.get("invocation_kind") == "CALL" and site.get("receiver_type"))) and not site.get("dispatch_complete"))
-            reason = "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
+            target_symbol = symbols.get(target, {})
+            async_hint = target_symbol.get("suspend") is True or any(
+                isinstance(annotation, dict) and annotation.get("name") == "org.springframework.scheduling.annotation.Async"
+                for annotation in (target_symbol.get("annotations") if isinstance(target_symbol.get("annotations"), list) else []))
+            reason = "async/coroutine unsupported" if async_hint else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
             if reason:
