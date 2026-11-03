@@ -522,3 +522,270 @@ def project_http_providers(workspace, graph, *, scope='production', selected_con
     if before != (workspace, graph.to_dict(), source_coverage):
         _fail('HTTP_INPUT_MUTATED', 'Provider projection changed a caller snapshot')
     return document
+
+
+def project_kafka_interfaces(workspace, graph, *, scope='production', selected_contexts=None, source_coverage=None):
+    """Read-only catalogue of upstream declarations, never transport execution.
+
+    Private captured authority validates public facts; configuration cannot mint a
+    listener/send. The existing upstream binding validator is replayed only to
+    compare original public identities and proofs, without publishing its output.
+    """
+    from dataclasses import replace
+    from pathlib import Path
+    from .kafka_code import VERSION as CODE_VERSION, validate_code_fact
+    from .kafka_bindings import VERSION as BINDING_VERSION, build_links
+    from .store import load_graph
+    from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
+    from .workspace import (qualified, _qualified_kafka_metadata, _qualified_evidence,
+                            _qualified_symbol, _qualified_call_site)
+
+    def fail(message):
+        _fail('INVALID_KAFKA_INTERFACE', message)
+
+    if not isinstance(workspace, Mapping) or not isinstance(graph, KnowledgeGraph):
+        fail('Expected loaded workspace and graph snapshots')
+    before = deepcopy((workspace, graph.to_dict(), source_coverage))
+    roots = {r['id']:Path(r['_root']) for r in workspace['repositories']}
+    local_graphs = {}
+
+    def local_graph(repo):
+        if repo not in local_graphs:
+            local_graphs[repo] = load_graph(roots[repo]) or KnowledgeGraph(3, '.', '', [], [], {})
+        return local_graphs[repo]
+
+    active=[]
+    for binding in (workspace.get('kafka_bindings') or {}).get('bindings',[]):
+        if binding['scope']!=scope:continue
+        requested=(selected_contexts or {}).get((binding['service_id'],binding['repo_id'],binding['module']))
+        reference=binding.get('code_ref')
+        if requested is not None and reference is not None and qualified(binding['repo_id'],reference['context_id'])!=requested:
+            continue
+        active.append(binding)
+    narrowed=deepcopy(workspace)
+    if narrowed.get('kafka_bindings') is not None:
+        narrowed['kafka_bindings']['bindings']=active
+    try:
+        expected_list,expected_edges,expected_proofs,expected_contexts,_,_=build_links(narrowed,
+            {repo:local_graph(repo) for repo in roots})
+    except (ValueError,OSError,RuntimeError) as error:
+        fail('Explicit upstream binding authority is unavailable: '+str(error))
+    expected_nodes={n.id:n for n in expected_list}
+    full_nodes={n.id:n for n in graph.nodes}
+    full_contexts={c['id']:c for c in graph.contexts}
+    # Only canonical validated virtual declarations are excluded from T008's
+    # source ownership walk. All source/compiler contexts remain unchanged.
+    for identity,node in expected_nodes.items():
+        if (node.kind not in {'kafka_binding','kafka_subscription','kafka_topic'}
+                or node.path!='@workspace/manifest.json' or full_nodes.get(identity)!=node):
+            fail('Virtual Kafka declaration is missing or not canonical')
+    virtual_contexts=set()
+    for context in expected_contexts:
+        if (not context['id'].startswith('workspace:kafka-context:')
+                or context.get('mode')!='SOURCE_ONLY' or context.get('origin_trust')!='WORKSPACE_DECLARATION'
+                or context.get('kafka_binding_version')!=BINDING_VERSION
+                or full_contexts.get(context['id'])!=context):
+            fail('Virtual Kafka context is missing or not canonical')
+        virtual_contexts.add(context['id'])
+    if any('kafka_binding_version' in c and c['id'] not in virtual_contexts
+           and c.get('scope')==scope and c.get('id','').startswith('workspace:kafka-context:')
+           for c in graph.contexts):
+        fail('Unexpected virtual Kafka context is not a selected declaration')
+    inventory_nodes=[n for n in graph.nodes if n.id not in expected_nodes]
+    inventory_ids={n.id for n in inventory_nodes}
+    inventory_graph=replace(graph,nodes=inventory_nodes,
+        edges=[e for e in graph.edges if e.source in inventory_ids and e.target in inventory_ids],
+        contexts=[c for c in graph.contexts if c['id'] not in virtual_contexts])
+    try:
+        inventory = project_service_inventory(workspace, inventory_graph, scope=scope,
+            selected_contexts=selected_contexts, source_coverage=source_coverage)
+    except (ContextSelectionError, ServiceInventoryError, AnalysisError) as error:
+        fail(str(error))
+    nodes = [n for n in inventory.nodes if n.kind == 'service']
+    edges, diagnostics = [], [dict(d) for d in inventory.diagnostics]
+    provenance = {p['id']: deepcopy(p) for p in inventory.provenance}
+    selected_rows = inventory.context_selection.get('services', {})
+    eligible = {r['context_id'] for s in selected_rows.values() for r in s.get('contexts', [])
+                if r.get('status') == 'CURRENT'}
+    by_id = {n.id:n for n in graph.nodes}
+    proofs = {p['id']:p for p in graph.evidence}
+    contexts = {c['id']:c for c in graph.contexts}
+    public_symbols = {s['id']:s for s in graph.symbols}
+    public_sites = {s['id']:s for s in graph.call_sites}
+    validated, code_refs = {}, {}
+
+    def check_proof(expected):
+        actual = proofs.get(expected['id'])
+        # Polarity is an independent T009 annotation, not authority for a fact.
+        comparable = {k:v for k,v in actual.items() if k != 'polarity'} if isinstance(actual, dict) else None
+        reference = {k:v for k,v in expected.items() if k != 'polarity'}
+        if comparable != reference:
+            fail('Original proof tuple is missing or changed')
+        item = deepcopy(actual)
+        item.update(evidence_kind=item.get('kind','UNKNOWN'), freshness=item.get('freshness','CONTENT_VERIFIED'),
+                    polarity=item.get('polarity','SUPPORTING'))
+        provenance[item['id']] = item
+        return item['id']
+
+    def qualified_edge(repo, edge):
+        return replace(edge, source=qualified(repo,edge.source), target=qualified(repo,edge.target),
+            context_ids=tuple(qualified(repo,c) for c in edge.context_ids),
+            evidence_ids=tuple(qualified(repo,e) for e in edge.evidence_ids),
+            source_file=source_key(repo,edge.source_file) if edge.source_file else None)
+
+    for fact in graph.nodes:
+        if fact.kind not in {'kafka_code_listener','kafka_code_producer'}:
+            continue
+        md = fact.metadata or {}
+        repo = md.get('repo_id')
+        original_context = md.get('original_context_id')
+        relevant = md.get('context_id') in eligible or (repo in roots and isinstance(original_context,str)
+                    and qualified(repo,original_context) in eligible)
+        if not relevant:
+            continue
+        if md.get('version') != CODE_VERSION:
+            diagnostics.append({'code':'KAFKA_CODE_VERSION_UNKNOWN','source_id':fact.id}); continue
+        if repo not in roots or not isinstance(md.get('original_origin_id'),str):
+            fail('Code fact has no canonical repository/original identity')
+        local = local_graph(repo)
+        matches = [n for n in local.nodes if qualified(repo,n.id)==fact.id]
+        selected = [c for c in local.contexts if c.get('id')==original_context]
+        if len(matches)!=1 or len(selected)!=1 or fact.scope!=scope:
+            fail('Code fact does not match its selected saved capture')
+        authority, context = matches[0], selected[0]
+        if not validate_code_fact(roots[repo],local,context,authority):
+            fail('Canonical compiler code proof is not valid')
+        expected = replace(authority,id=qualified(repo,authority.id),path=source_key(repo,authority.path),
+                           metadata=_qualified_kafka_metadata(repo,authority.metadata))
+        if expected != fact or graph.files.get(fact.path)!=local.files.get(authority.path):
+            fail('Public code fact differs from canonical captured authority')
+        # Relevant original compiler declarations/sites must survive qualification.
+        for symbol in local.symbols:
+            if symbol.get('context_id')==context['id']:
+                expected_symbol=_qualified_symbol(repo,symbol)
+                if public_symbols.get(expected_symbol['id'])!=expected_symbol:
+                    fail('Original compiler declaration tuple is changed')
+        for site in local.call_sites:
+            if site.get('context_id')==context['id']:
+                expected_site=_qualified_call_site(repo,site)
+                if public_sites.get(expected_site['id'])!=expected_site:
+                    fail('Original compiler call-site tuple is changed')
+        refs=[]
+        for edge in local.edges:
+            if edge.target==authority.id and edge.kind in {'declares_kafka_listener','declares_kafka_send'}:
+                expected_edge=qualified_edge(repo,edge)
+                if expected_edge not in graph.edges:
+                    fail('Original declaration edge is missing or changed')
+                for identity in edge.evidence_ids:
+                    source=next((p for p in local.evidence if p['id']==identity),None)
+                    if source is None: fail('Canonical declaration has no proof')
+                    refs.append(check_proof(_qualified_evidence(repo,source)))
+                    for compiler_id in source.get('compiler_evidence_ids',[]):
+                        compiler=next((p for p in local.evidence if p['id']==compiler_id),None)
+                        if compiler is None: fail('Compiler evidence reference is missing')
+                        check_proof(_qualified_evidence(repo,compiler))
+        if not refs: fail('Code fact has no original declaration proof')
+        owner=resolve_service_ownership({'id':md['origin_id'],'repo_id':repo,'path':fact.path,
+            'module':context.get('module'),'context_id':md['context_id']},workspace.get('service_ownership'),
+            context_id=md['context_id'])
+        service=owner.get('owner_id') if owner.get('status')=='RESOLVED' else None
+        if service is None:
+            diagnostics.append({'code':'KAFKA_OWNER_UNKNOWN','source_id':fact.id});continue
+        validated[fact.id]=(fact,service)
+        code_refs[fact.id]=refs
+
+    binding_refs={}
+    for identity,expected in expected_nodes.items():
+        if by_id.get(identity)!=expected:
+            fail('Original binding/subscription/topic identity or metadata is changed')
+        md=expected.metadata or {}
+        if md.get('kafka_binding_version')!=BINDING_VERSION:continue
+        if expected.kind=='kafka_binding' and md.get('code_binding')=='VERIFIED_STATIC' and md.get('code_fact_id') not in validated:
+            fail('Binding has no selected validated code authority')
+        for path,checksum in md.get('input_files',{}).items():
+            if path!='@workspace/manifest.json' and graph.files.get(path)!=checksum:
+                fail('Binding input source hash is changed')
+    for edge in expected_edges:
+        if edge not in graph.edges:fail('Original Kafka binding edge is missing or changed')
+        for identity in edge.evidence_ids:
+            expected=next((p for p in expected_proofs if p['id']==identity),None)
+            if expected is None:fail('Original binding proof is missing')
+            check_proof(expected)
+            binding_refs.setdefault(edge.source,[]).append(identity)
+            binding_refs.setdefault(edge.target,[]).append(identity)
+    active_ids={b['id'] for b in active}
+    for node in graph.nodes:
+        if node.kind=='kafka_binding' and node.scope==scope and (node.metadata or {}).get('binding_id') in active_ids:
+            if node.id not in expected_nodes:fail('Binding identity is not canonical')
+
+    bound=set()
+    def emit(identity,service,attributes,originals,refs,resolved):
+        if not refs:
+            declaration='ev:kafka-declaration:'+digest([identity,workspace['_manifest_hash'],attributes])
+            provenance[declaration]={'id':declaration,'evidence_kind':'UNKNOWN','freshness':'UNKNOWN',
+                'polarity':'UNKNOWN','original_ids':sorted(set(originals)),
+                'source_file':'@workspace/manifest.json','manifest_sha256':workspace['_manifest_hash'],
+                'detail':'Explicit configuration declaration only; code and broker binding remain unproven.'}
+            refs=[declaration]
+        refs=tuple(sorted(set(refs)))
+        buckets=_summarize_view_evidence(refs,provenance)
+        nodes.append(ViewNode(identity,'kafka_interface',attributes.get('topic_pattern') or
+            ', '.join(attributes.get('topics') or []) or 'UNKNOWN',original_ids=tuple(sorted(set(originals))),
+            owner_id=service,evidence_refs=refs,attributes={**attributes,'delivery':'NOT_OBSERVED',
+                'activation':'UNKNOWN','runtime_availability':'UNKNOWN','data_availability':'UNKNOWN',
+                'deployment_availability':'UNKNOWN'},resolution_status='RESOLVED' if resolved else 'UNRESOLVED',
+            **buckets))
+        edges.append(ViewEdge('edge:'+identity,'service:'+service,identity,'declares_kafka_interface',
+            evidence_refs=refs,resolution_status='RESOLVED' if resolved else 'UNRESOLVED',
+            **buckets))
+
+    for binding in expected_nodes.values():
+        if binding.kind!='kafka_binding':continue
+        md=binding.metadata
+        verified=md.get('code_binding')=='VERIFIED_STATIC'
+        fact=validated.get(md.get('code_fact_id'),(None,None))[0] if verified else None
+        subscription=expected_nodes.get(md.get('subscription_id'))
+        if verified:bound.add(fact.id)
+        originals=[binding.id]+([fact.id,md['code_origin_id']] if fact else [])
+        if subscription:originals.append(subscription.id)
+        refs=binding_refs.get(binding.id,[])+binding_refs.get(subscription.id,[]) if subscription else binding_refs.get(binding.id,[])
+        if fact:refs+=code_refs[fact.id]
+        emit('interface:kafka:'+binding.id,md['service_id'],{
+            'direction':md['direction'].upper(),'broker_realm':md.get('cluster_id'),
+            'topics':[md['topic']] if md.get('topic') is not None else [],'topic_pattern':None,
+            'subscription_kind':'TOPICS','consumer_group':(md.get('consumer_group') or {}).get('value'),
+            'subscription_id':subscription.id if subscription else None,
+            'subscription_logical_id':subscription.metadata['logical_id'] if subscription else None,
+            'origin_id':md.get('code_origin_id'),'code_fact_id':md.get('code_fact_id'),
+            'code_binding':md['code_binding'],'message_contract_ref':{
+                'sha256':md['contract_sha256'],'release':md['release'],
+                'source_file':source_key(next(b for b in active if b['id']==md['binding_id'])['contract']['repo_id'],
+                    next(b for b in active if b['id']==md['binding_id'])['contract']['path'])}
+                    if md.get('contract_sha256') else None,
+            'payload_origin':md.get('payload_origin'),'reasons':md.get('reasons',[])+md.get('code_binding_reasons',[])},
+            originals,refs,verified)
+    for identity,(fact,service) in validated.items():
+        if identity in bound:continue
+        md=fact.metadata
+        emit('interface:kafka:'+identity,service,{'direction':'CONSUMER' if fact.kind=='kafka_code_listener' else 'PRODUCER',
+            'broker_realm':None,'topics':md.get('topics',[md['topic']] if md.get('topic') else []),
+            'topic_pattern':md.get('topic_pattern'),'subscription_kind':md.get('subscription_kind','TOPICS'),
+            'consumer_group':md.get('group_id'),'subscription_id':None,'subscription_logical_id':md['logical_id'],
+            'origin_id':md['origin_id'],'code_fact_id':identity,
+            'code_binding':'UNPROVEN' if md.get('status')=='UNKNOWN' else 'VERIFIED_STATIC',
+            'upstream_status':md.get('status'),
+            'message_contract_ref':None,'reasons':['BROKER_REALM_UNPROVEN',*md.get('unresolved_reasons',[])]},
+            [identity,md['origin_id']],code_refs[identity],False)
+    result=aggregate_view_edges(edges,tuple(provenance.values()),scope=scope,diagnostics=diagnostics)
+    found=sum(n.kind=='kafka_interface' for n in nodes)
+    resolved=sum(n.kind=='kafka_interface' and n.resolution_status=='RESOLVED' for n in nodes)
+    document=ViewDocument('view:kafka-interfaces:'+workspace['workspace_id']+':'+scope,'interfaces',
+        digest([inventory.baseline_fingerprint,graph.files,'kafka-interfaces-1']),'kafka-interfaces-1',scope,
+        inventory.context_selection,nodes=tuple(nodes),edges=result['edges'],provenance=result['provenance'],
+        diagnostics=result['diagnostics'],coverage={'status':'PARTIAL' if found else 'UNKNOWN',
+            'counts':{'found':found,'resolved':resolved,'unresolved':found-resolved,'excluded':0}},
+        limits=('Static declarations do not prove activation, broker delivery or data availability.',
+                'Kotlin K2 annotation capture remains UNKNOWN; regex selectors are never expanded.'))
+    ViewDocument.from_dict(document.to_dict())
+    if before!=(workspace,graph.to_dict(),source_coverage):fail('Projection mutated input snapshot')
+    return document

@@ -723,3 +723,11 @@ topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+
+### Kafka interface catalogue
+
+The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
+listener/send declarations and declared bindings into the shared interfaces view.
+Broker realms and consumer groups remain distinct; configuration-only and regex
+subscriptions retain their unresolved boundaries. Explicit workspace/private
+compiler indexes are required; the projection performs no inspection or transport.

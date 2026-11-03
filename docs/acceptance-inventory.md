@@ -646,3 +646,11 @@ Schema2 public snapshot ověřuje explicitní původní code refs, group propert
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
 nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
 nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
+
+## T012 — Kafka interface catalogue
+
+AC01 two realms, AC02 distinct consumer groups, AC03 NewTopic/config-only vs
+canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tuples,
+regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
+AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
+Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.

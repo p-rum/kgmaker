@@ -697,3 +697,14 @@ Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 m
 Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
+
+## T012 — Kafka interface catalogue (revision2 draft stack)
+
+Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
+binding validation, T008 ownership/context and T009 evidence. Explicit workspace
+checkouts/private captures are required. Groups/realms and original listener/send
+IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
+Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
+annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
+implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
+[change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
