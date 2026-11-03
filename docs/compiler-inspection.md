@@ -777,6 +777,32 @@ unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
 remain outside this mapping contract. Store/protocol formats remain readable;
 metadata is additive and worker content identities invalidate older cached facts.
 
+## Hand-labelled JVM acceptance corpus
+
+T003-S04-W05 adds a versioned test inventory for T002-CG-01–05. It reuses the
+existing mixed five-call golden and actual ordered dependency fixture, with
+explicit Java owner/overload/reference/lambda/recursion/reflection and Kotlin
+extension/default/inline/suspend/Java-call supplements. Original inline source
+fixtures are shared files with byte-identical contents.
+
+```bash
+PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -q tests/test_jvm_golden_corpus.py
+```
+
+Source-call RESOLVED/UNRESOLVED counts and exact caller/target/range identities
+are compared separately from unsupported model/CFG diagnostic identities. K2
+SOURCE CFG remains unavailable; K1 default-argument CFG and collapsed Java
+expression order retain explicit boundaries. Source-level inline callable
+attribution does not prove a physical public facade invocation. Reflection APIs
+may resolve while their runtime targets stay unknown; method references remain
+non-executing, and opposite branches never become a sequence.
+
+The corpus and its mutation checks reject missing/extra/retargeted/stronger
+observations. Store/protocol formats remain unchanged; source/class/store bytes
+and offline retention use the existing model/provider pipeline. The prerequisite
+stack is explicitly documented in change62; this is bounded static acceptance,
+not a complete JVM program, runtime scheduling or availability proof.
 
 ## T003-S05-W02 — registrar a FactoryBean declaration facts
 

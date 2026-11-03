@@ -223,3 +223,10 @@ ověřeném scope. Main177 immutable episodes tvoří přesný prefix; sémantic
 aktuální funkční odkazy byly přivázány ke skutečným scanner IDs, historické
 episode objekty zůstávají beze změny. Relevantní T024/T023/provider pure
 integrace se kontroluje zvlášť; žádný další full/actual compiler batch.
+
+
+Finální parent-only refresh pro root review je02e2bbbceb0661f1c887020dbe47a61331d20698
+(merged W05 golden corpus). Parent přidává pouze testy/fixtures/docs/CI; nulový
+source/worker delta je ověřen. Vlastní XML runtime i ověřené JARy se nemění.
+Nevyvolává se další actual/full; current semantic/memory/scan/check a immutable
+main prefix se znovu ověřují proti této přesné base.

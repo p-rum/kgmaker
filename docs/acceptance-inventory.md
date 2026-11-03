@@ -465,6 +465,19 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 | AC03 | `test_missing_sources_never_map_continuation`, `test_foreign_continuation_realm_never_claims_source`, metadata-negative and ordinary-name tests | no inferred scheduler/target/source instruction locator; byte snapshots unchanged |
 | AC04 | change51, pinned Kotlin2.1.10/coroutines SHA fixture | bounded static evidence; whole S04/T003 remains PARTIAL |
 
+## T003-S04-W05 — exact hand-labelled JVM corpus
+
+| AC | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_inventory_and_unsupported_identity_match_hand_annotations`, `tests/fixtures/jvm-golden/expected.json` | five scenarios × pinned K1/K2; counts, exact owner/descriptor/source locators and unsupported identities |
+| AC02 | Existing graph v1/v2/v3 loader tests + corpus graph roundtrip | no model/store/protocol change |
+| AC03 | `test_inventory_rejects_missing_extra_retargeted_and_stronger_observations`, reflection/reference/CFG and offline/store snapshots | no fabricated target, source line, runtime execution or availability |
+| AC04 | change62 and corpus README version/support matrix | explicit PR35+37 stack; whole S04/T003 remains PARTIAL |
+
+Validation is recorded in change62. Resolved source declarations, unsupported CFG
+results and runtime UNKNOWN are distinct; these counts are not production precision.
+
+Prepared strict golden full on ed5ed7c: **646 PASS, 10 SKIP /991.96s**, including21 corpus cases; no failures/setup errors. Historical environment-failed run remains in change62.
 
 ## T003-S05-W02 — registrars a FactoryBean produkty
 

@@ -595,6 +595,11 @@ coroutines API boundaries, with bounded named continuation declaration mapping.
 Generated instructions keep bytecode-only locations; scheduling and K2 source CFG
 remain unknown. See [the coroutine contract](docs/compiler-inspection.md#coroutine-source-boundaries-t003-s04-w03).
 
+The [hand-labelled JVM corpus](tests/fixtures/jvm-golden/README.md) compares exact
+compiler source-call identities, counts and unsupported boundaries for the pinned
+K1/K2 support matrices. Run `python -m pytest -q tests/test_jvm_golden_corpus.py`
+after preparing compiler prerequisites. Passing this corpus is bounded static
+evidence, not runtime dispatch or production-project precision.
 T015 adds a pure database-resource view through
 `kgmaker.data_resources.project_data_resources(workspace, graph, source_coverage=coverage)`.
 Pass the loaded workspace and matching `snapshot_workspace` graph/coverage. Explicit
