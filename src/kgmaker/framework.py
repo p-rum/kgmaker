@@ -81,6 +81,33 @@ def _simple(value: str) -> str:
     return value.rsplit(".", 1)[-1]
 
 
+def _jpa_name_arg(args: str, names=("name", "value")) -> str | None:
+    """Decode a compiler constant's JSON string, preserving SQL quote markers."""
+    import json
+    for name in names:
+        match = re.search(r"\b" + re.escape(name) + r"\s*=\s*", args)
+        if match:
+            try:
+                value, _ = json.JSONDecoder().raw_decode(args[match.end():])
+            except (ValueError, TypeError):
+                return None
+            return value if isinstance(value, str) else None
+    return _string_arg(args, names)
+
+
+def _sql_identifier(value: str | None) -> str | None:
+    from .schema_replay import identifier, statements
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = statements(value)
+        if len(parsed) != 1 or len(parsed[0][0]) != 1 or parsed[0][0][0] != value:
+            return None
+        return identifier(parsed[0][0][0])
+    except AnalysisError:
+        return None
+
+
 def _line(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
@@ -1435,15 +1462,27 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             return False
         if selected_target is not None and realm.get("target") != selected_target:
             return False
-        if declared_schema is not None and selected_schema is not None and declared_schema != selected_schema:
+        declared_name = _sql_identifier(declared_schema)
+        selected_name = _sql_identifier(selected_schema)
+        if declared_schema is not None and declared_name is None or selected_schema is not None and selected_name is None:
             return False
-        expected_schema = selected_schema or declared_schema
+        if declared_name is not None and selected_name is not None and declared_name != selected_name:
+            return False
+        expected_schema = selected_name or declared_name
         if expected_schema is None:
             available = set(realm['schemas'])
             if len(available) != 1:
                 return False
             expected_schema = next(iter(available))
         return realm.get('schema') == expected_schema
+
+    def schema_table_matches(candidate: Node, table_name, table_schema) -> bool:
+        return (in_schema_realm(candidate, table_schema)
+                and candidate.metadata['schema_object'][1] == _sql_identifier(table_name))
+
+    def schema_column_matches(candidate: Node, table_name, table_schema, column_name) -> bool:
+        return (in_schema_realm(candidate, table_schema)
+                and candidate.metadata['schema_object'][1:] == [_sql_identifier(table_name), _sql_identifier(column_name)])
 
     embeddable_nodes: dict[str, str] = {}
     embeddable_attributes: dict[tuple[str, str], str] = {}
@@ -1490,7 +1529,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             field_name = str(field.get("name"))
             column_annotation = next((args for name, args in annotations_for_field if _simple(name) == "Column"), "")
             column_name = (None if column_annotation == "__UNRESOLVED__" or embedded_access_unknown else
-                           _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name)
+                           _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else field_name)
             field_line = (field.get("range") or {}).get("start_line")
             if column_annotation == "__UNRESOLVED__":
                 diagnostics.append({"code": "ORM_COLUMN_MAPPING_UNKNOWN", "path": declaration["path"],
@@ -1657,8 +1696,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         values = entity["annotations"]
         table_annotation = _annotation(values, "Table")
         table_values_unknown = bool(table_annotation and table_annotation[1] == "__UNRESOLVED__")
-        table_name = _string_arg(table_annotation[1], ("name", "value")) if table_annotation and not table_values_unknown else None
-        table_schema = _named_string_arg(table_annotation[1], "schema") if table_annotation else None
+        table_name = _jpa_name_arg(table_annotation[1], ("name", "value")) if table_annotation and not table_values_unknown else None
+        table_schema = _jpa_name_arg(table_annotation[1], ("schema",)) if table_annotation else None
         inferred = table_name is None
         inferred = inferred and not table_values_unknown
         table_name = table_name or (None if table_values_unknown else node.name)
@@ -1723,9 +1762,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "supertype": super_name,
                                     "candidates": [item["symbol"].get("owner") for item in candidates],
                                     "reason": "Mapped superclass simple name is ambiguous; no inheritance edge is published."})
-        matches = [candidate for candidate in schema_tables if table_id and in_schema_realm(candidate, table_schema)
-                   and (candidate.name.casefold() == qualified_table.casefold()
-                        if table_schema else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
+        matches = [candidate for candidate in schema_tables if table_id and schema_table_matches(candidate, table_name, table_schema)]
         if table_values_unknown:
             diagnostics.append({"code": "ORM_TABLE_MAPPING_UNKNOWN", "path": entity["path"],
                                 "source_line": entity["line"], "entity": node.id,
@@ -1942,15 +1979,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
                                                                        "mapping_status": "UNKNOWN"})
                 continue
-            column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else field_name
+            column_name = _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else field_name
             column_id = add_node("orm_column", column_name, entity["path"], field_line, node,
                                  logical_name=column_name, inferred=not bool(column_annotation))
             add_edge(attribute, column_id, "maps_to_column", entity["path"], field_line,
                      "@Column name" if column_annotation else "Persistent attribute name; converter/naming strategy not verified")
-            column_matches = [candidate for candidate in schema_columns if table_name and in_schema_realm(candidate, table_schema)
-                              and candidate.name.casefold().rsplit(".", 1)[-1] == column_name.casefold()
-                              and len(candidate.name.split(".")) >= 2
-                              and candidate.name.split(".")[-2].casefold() == table_name.casefold()]
+            column_matches = [candidate for candidate in schema_columns if table_name
+                              and schema_column_matches(candidate, table_name, table_schema, column_name)]
             if not inferred and len(column_matches) == 1:
                 add_edge(column_id, column_matches[0].id, "resolves_to_schema_column", entity["path"], field_line, "Exact schema column name in selected table/realm")
             elif not inferred and len(column_matches) > 1:
@@ -2033,7 +2068,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     nodes[attribute] = replace(nodes[attribute], metadata={**(nodes[attribute].metadata or {}),
                                                                            "mapping_status": "UNKNOWN"})
                     continue
-                column_name = _string_arg(column_annotation, ("name", "value")) if column_annotation else property_name
+                column_name = _jpa_name_arg(column_annotation, ("name", "value")) if column_annotation else property_name
                 column_id = add_node("orm_column", column_name, entity["path"], property_line, node,
                                      logical_name=column_name, inferred=not bool(column_annotation))
                 add_edge(attribute, column_id, "maps_to_column", entity["path"], property_line,
@@ -2678,8 +2713,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 matches = [candidate for candidate in nodes.values() if candidate.kind == "orm_table"
                            and (candidate.metadata or {}).get('context_id') == context_id
                            and len(query_parts) <= 2
-                           and str((candidate.metadata or {}).get("logical_name", candidate.name)).casefold() == query_parts[-1].casefold()
-                           and (query_schema is None or (candidate.metadata or {}).get('schema') == query_schema)]
+                           and _sql_identifier((candidate.metadata or {}).get("logical_name", candidate.name)) == _sql_identifier(query_parts[-1])
+                           and (query_schema is None or _sql_identifier((candidate.metadata or {}).get('schema')) == _sql_identifier(query_schema))]
                 if len(matches) == 1:
                     add_edge(query_id, matches[0].id, action, path, line,
                              "Native SQL exact table name in selected ORM projection")
@@ -2978,9 +3013,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                 "path": provenance["xml_mapping_file"], "class": owner,
                                                 "reason": "Existing query/table reference was invalidated by an XML table override."})
                 if xml_table is not None:
-                    matches = [candidate for candidate in schema_tables if in_schema_realm(candidate, table_schema)
-                               and (candidate.name.casefold() == qualified.casefold() if table_schema
-                                    else candidate.name.casefold().rsplit(".", 1)[-1] == table_name.casefold())]
+                    matches = [candidate for candidate in schema_tables if schema_table_matches(candidate, table_name, table_schema)]
                     if len(matches) == 1:
                         add_edge(table_id, matches[0].id, "resolves_to_schema_table",
                                  provenance["xml_mapping_file"], None,

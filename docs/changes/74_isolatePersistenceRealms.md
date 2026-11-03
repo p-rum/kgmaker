@@ -81,3 +81,20 @@ idempotentní přepočet nad dvěma kontexty. Pure sada82PASS9deselected5.80s;
 aktuální minimum7PASS22actual-deselected0.23s. Actual fixture nově ověřuje i
 T015 selected-realm access a osm partial/foreign/malformed proof variant pro
 oba backendy. Ještě nebyla spuštěna; full není queued.
+
+
+## Seskupená identity/provenance oprava před actual během
+
+Vlastní původní unstarted flock byl ukončen sezero children, bez startu testu
+(exit143; `/workspace/s06-w04-initial-cancelled-queue.json`). Oprava přidává
+content-consistency proof_hash bezpečného realm recordu, nikoli autentizaci.
+Node.name musí odpovídat strukturovanému SQL objektu; samotný shodný display
+text ale nestačí. Binding používá schema_object komponenty a existující SQL
+identifier/quote normalizaci. Compiler annotation JSON string constants se
+dekódují se zachováním SQL quote markerů, nevzniká nový SQL/query parser.
+Skutečný offline replay `"a.b".c` a `a."b.c"` má stejný display a dvě různé
+identity; pure regression prošel. Actual fixture stejnou kolizi zkouší i přes
+compiler-declared JPA schema/table hodnoty. Deset partial/foreign/malformed
+variant včetně target hash a display-name tamper doplňuje oba backendy.
+Pure targeted sada nyní83PASS31actual-deselected5.18s. Nový společný actual
+batch čeká na jeden nový freeze; full stále není queued.

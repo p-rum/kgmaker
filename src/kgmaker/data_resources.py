@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-import re
 
 from .analysis_model import digest, file_hash, safe_path
 from .architecture_model import ViewDocument, ViewNode, ViewEdge, aggregate_view_edges
@@ -19,7 +18,6 @@ from .workspace import load_workspace, qualified, resolve_service_ownership
 VERSION = 't015-data-resources-1'
 ACCESS = {'query_reads': 'reads', 'query_writes': 'writes', 'query_deletes': 'deletes'}
 RELATIONS = {**ACCESS, 'maps_to_table': 'depends_on'}
-IDENTIFIER = re.compile(r'[A-Za-z0-9_.-]{1,128}')
 
 
 class DataResourceError(ValueError):

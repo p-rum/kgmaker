@@ -135,12 +135,14 @@ def actual_realm_workspace(tmp_path_factory, request):
     app, configs, manifest = two_datasources(tmp_path_factory.mktemp('actual-realms-' + backend))
     (app / 'Order.kt').unlink()
     source = app / 'src/main/java/demo/RealmInput.java'; source.parent.mkdir(parents=True)
-    source.write_text('''package demo;
+    source.write_text(r'''package demo;
 import jakarta.persistence.Entity; import jakarta.persistence.Id; import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 @Entity @Table(name="orders", schema="public") class Order { @Id @Column(name="id") Long id; }
+@Entity @Table(name="c", schema="\"a.b\"") class DotSchema { @Id @Column(name="id") Long id; }
+@Entity @Table(name="\"b.c\"", schema="a") class DotTable { @Id @Column(name="id") Long id; }
 interface OrderRepository extends JpaRepository<Order, Long> {
   @Query(value="select * from orders", nativeQuery=true) java.util.List<Order> nativeRows();
   @Query("select o from Order o") java.util.List<Order> entityRows();
@@ -148,12 +150,19 @@ interface OrderRepository extends JpaRepository<Order, Long> {
 ''')
     anchor = app / 'src/main/kotlin/demo/RealmAnchor.kt'; anchor.parent.mkdir(parents=True)
     anchor.write_text('package demo\nclass RealmAnchor\n')
-    contexts = []
     for config in configs:
+        path = app / config['locations'][0] / 'V1__base.sql'
+        path.write_text(path.read_text() + 'CREATE TABLE "a.b".c (id bigint); CREATE TABLE a."b.c" (id bigint);\n')
+        config['schemas'] = ['public', 'a.b', 'a']
+    manifest_data = json.loads(manifest.read_text())
+    manifest_data['repositories'][0]['flyway'] = configs
+    write_json(manifest, manifest_data)
+    contexts = []
+    for index, config in enumerate(configs):
         result = inspect_jvm(app, home=home, kotlin_backend=backend, classpath=[*jars, str(stdlib)],
             repo_id='app', module='app', publish=True,
             build_context={'database_id': config['database_id'], 'schema_stream_id': config['stream_id'],
-                           'persistence_schema': 'public', 'flyway_target': config['target']})
+                           'persistence_schema': 'public' if index == 0 else None, 'flyway_target': config['target']})
         assert not any('.err.' in d.get('code', '') for d in result['diagnostics'])
         contexts.append(result['context']['id'])
     snapshot = snapshot_workspace(manifest)
@@ -168,7 +177,8 @@ def test_actual_compiler_contexts_join_only_their_own_replay_targets(actual_real
     contexts = {c['id']: c for c in graph.contexts}
     selected = [c for c in graph.contexts if c.get('language') == 'jvm']
     assert len(selected) == 2
-    bindings = [e for e in graph.edges if e.kind == 'resolves_to_schema_table']
+    bindings = [e for e in graph.edges if e.kind == 'resolves_to_schema_table'
+                and (nodes[e.source].metadata or {}).get('logical_name') == 'orders']
     reads = [e for e in graph.edges if e.kind == 'query_reads' and nodes[e.target].kind == 'orm_table']
     assert len(bindings) == 2 and len(reads) == 2
     for edge in bindings + reads:
@@ -241,7 +251,8 @@ def test_reprojection_preserves_another_framework_producer_in_same_context(tmp_p
 
 
 @pytest.mark.parametrize('mutation', ['missing_pair', 'partial_pair', 'wrong_target', 'wrong_schema',
-    'invalid_selector', 'foreign_schema_metadata', 'malformed_explicit_keys', 'missing_schema_provenance'])
+    'invalid_selector', 'foreign_schema_metadata', 'malformed_explicit_keys', 'missing_schema_provenance',
+    'wrong_display_name', 'tampered_realm_hash'])
 def test_actual_missing_partial_or_foreign_proof_never_uses_unique_name(actual_realm_workspace, mutation):
     from dataclasses import replace
     from kgmaker.feature import attach_schema
@@ -272,6 +283,10 @@ def test_actual_missing_partial_or_foreign_proof_never_uses_unique_name(actual_r
                     realm['database_id'] = configs[1]['database_id']
                 elif mutation == 'malformed_explicit_keys':
                     realm['explicit_keys'] = None
+                elif mutation == 'tampered_realm_hash':
+                    realm['target'] = '999'
+                elif mutation == 'wrong_display_name':
+                    node = replace(node, name=node.name + '_foreign')
                 else:
                     metadata.pop('persistence_realm')
                 node = replace(node, metadata=metadata)
@@ -283,3 +298,31 @@ def test_actual_missing_partial_or_foreign_proof_never_uses_unique_name(actual_r
     assert not any(e.kind in {'resolves_to_schema_table', 'resolves_to_schema_column'}
                    and e.context_ids == (context['id'],) for e in result.edges)
     assert graph.to_dict() == before
+
+
+def test_public_replay_preserves_quoted_dot_components_despite_same_display_name(tmp_path):
+    from dataclasses import replace
+    from kgmaker.schema_replay import schema_node_realm
+    folder = tmp_path / 'sql'; folder.mkdir()
+    (folder / 'V1__dots.sql').write_text('CREATE TABLE "a.b".c (id bigint); CREATE TABLE a."b.c" (id bigint);')
+    schema = reconstruct(tmp_path, dict(database_id='dots', stream_id='main', locations=['sql'], schemas=['a.b', 'a']))
+    tables = [n for n in graph_entities(schema)[0] if n.kind == 'db_table']
+    assert len(tables) == 2 and {n.name for n in tables} == {'a.b.c'}
+    assert len({n.id for n in tables}) == 2
+    assert {tuple(n.metadata['schema_object']) for n in tables} == {('a.b', 'c'), ('a', 'b.c')}
+    assert all(schema_node_realm(n) is not None for n in tables)
+    assert schema_node_realm(replace(tables[0], name='other.name')) is None
+    changed = deepcopy(tables[0].metadata); changed['persistence_realm']['target'] = '999'
+    assert schema_node_realm(replace(tables[0], metadata=changed)) is None
+
+
+def test_actual_quoted_dot_binding_uses_components_not_flat_display(actual_realm_workspace):
+    app, configs, _, _, snapshot = actual_realm_workspace
+    graph = snapshot[3]; nodes = {n.id: n for n in graph.nodes}
+    bindings = [e for e in graph.edges if e.kind == 'resolves_to_schema_table'
+                and tuple((nodes[e.target].metadata or {}).get('schema_object', [])) in {('a.b', 'c'), ('a', 'b.c')}]
+    assert len(bindings) == 2
+    assert {tuple(nodes[e.target].metadata['schema_object']) for e in bindings} == {('a.b', 'c'), ('a', 'b.c')}
+    assert {nodes[e.target].name for e in bindings} == {'a.b.c'}
+    assert len({e.target for e in bindings}) == 2
+    assert {nodes[e.target].metadata['persistence_realm']['database_id'] for e in bindings} == {configs[1]['database_id']}

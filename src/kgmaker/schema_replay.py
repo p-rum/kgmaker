@@ -46,10 +46,12 @@ def schema_realm(schema, *, schema_name=None):
     config = schema['config']
     keys = sorted({key for p in config.get('provenance', [])
                    if p.get('kind') == 'EXPLICIT_CONFIGURATION' for key in p.get('keys', [])})
-    return {'database_id': config['database_id'], 'stream_id': config['stream_id'],
+    result = {'database_id': config['database_id'], 'stream_id': config['stream_id'],
             'schema': schema_name, 'schemas': list(config['schemas']), 'target': config['target'],
             'config_fingerprint': digest(config), 'explicit_keys': keys,
             'derivation': 'MIGRATION_DERIVED'}
+    result['proof_hash'] = digest(result)
+    return result
 
 
 def schema_node_realm(node):
@@ -60,6 +62,18 @@ def schema_node_realm(node):
     realm, name = metadata.get('persistence_realm'), metadata.get('schema_object')
     if not isinstance(realm, dict) or not isinstance(name, list) or not name or any(
             not isinstance(n, str) or not n for n in name):
+        return None
+    expected_fields = {'database_id', 'stream_id', 'schema', 'schemas', 'target', 'config_fingerprint',
+                       'explicit_keys', 'derivation', 'proof_hash'}
+    if set(realm) != expected_fields:
+        return None
+    try:
+        valid_hash = realm['proof_hash'] == digest({k: v for k, v in realm.items() if k != 'proof_hash'})
+    except (TypeError, ValueError, RecursionError):
+        return None
+    if not valid_hash or node.name != '.'.join(name) or node.kind not in {'db_table', 'db_column'}:
+        return None
+    if len(name) != (2 if node.kind == 'db_table' else 3):
         return None
     pair = persistence_pair(realm.get('database_id'), realm.get('stream_id'))
     keys, schemas = realm.get('explicit_keys'), realm.get('schemas')
