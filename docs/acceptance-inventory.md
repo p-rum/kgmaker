@@ -683,9 +683,9 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 
 | AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
 |---|---|---|
-| AC01 | actual Javac literal-local collapse; ordered roundtrip; parallel edges; finally clones and unused exit | Actual K1/K2 preliminary2PASS; final pending |
-| AC02 | disconnected equal DTO; diamond remains separate | Pure matrix preliminary82PASS; final pending |
-| AC03 | field/call/finally actual boundaries; decisions/loops/exception/unknown boundary matrix | Final focused pending |
+| AC01 | actual Javac literal-local collapse; ordered roundtrip; parallel edges; finally clones and unused exit | Actual K1/K2; final full 1566PASS/10SKIP v 1532.43s |
+| AC02 | disconnected equal DTO; diamond remains separate | 95 T026 cases in strict full |
+| AC03 | field/call/finally actual boundaries; decisions/loops/exception/unknown boundary matrix | Strict full includes actual and pure cases |
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
-| AC06 | README, capability, status and change82 | Final strict full and independent source review pending; PR65 prerequisite |
+| AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 prerequisite |

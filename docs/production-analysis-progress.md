@@ -739,6 +739,8 @@ records and parallel external edges, and exactly restores canonical input.
 Decisions, calls, fields/side effects, loops, unknown boundaries and finally
 clones remain visible. Syntax adjacency keeps groups UNRESOLVED/PARTIAL; no
 runtime/business approval follows. Explicit dependency Draft PR65 a6170c18 must
-be reviewed/merged before readiness. Initial actual Javac RED1FAIL4.78s,
-actual K1+K2 GREEN2PASS10.20s and first matrix82PASS9.76s are historical source
-checks; final focused/full and independent review pending. See change82.
+be reviewed/merged before readiness. Actual Javac RED1FAIL4.78s preceded source; historical focus265PASS43.62s ran
+without FIFO/prehash receipt. Source cff803c received independent APPROVE.
+Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without skip, immutable
+tracked/compiler/runtime/license/fixture receipts. Prerequisite/ready/publication
+remain separate; see change82.
