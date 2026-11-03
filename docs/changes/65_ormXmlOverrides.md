@@ -196,3 +196,21 @@ testů, fixtures, worker inputů a obou JARů zůstal před/po přesně stejný;
 `/workspace/w03-main8b-focus-status.json` máexit0,unchanged=true,mismatches=[].
 Pure provider/TSfreshness/T010/workspace/T015 integrace: **134 PASS,
 2 actual T015 deselected v148.02s**, `/workspace/w03-main8b-pure.xml`.
+
+
+## Finální refresh po coroutine PR37
+
+Finální base je mainf2dad55c12c4fcf8af831cb3fff68e6ebbcf614f. Parent přidává
+coroutine source mapping/CFG marker a member-extension dispatch fix; framework,
+inspection,graph_provider a původní XML/compiler test source zůstávají přesně
+shodné kompozici8b s102PASS. Relevantní pure CFG/protocol/provider/T010/workspace
+kontrola má **76 PASS, 0 SKIP v8.33s**, `/workspace/w03-mainf2-pure.xml`.
+Nový actual/full se pro tento nezávislý parent neopakuje. Aktuální own worker
+resources jsou převzaty z coroutine-mapping po porovnání všech tracked JVM
+source/build/locks, library hashů a jeho skutečné current Factory+coroutine
+fresh-build receipt: K1 714e2523284e9d88644fbc9b828e1480fe8776189ac89aac9a471f3edd30e3ff,
+K2 ad8cab7a3d20673cfbce8cdc7293d42f5a418c59f4ef35122e3734c6dbb1df8f.
+Receipt `/workspace/w03-mainf2-worker-receipt.json` odkazuje na původní
+factory-build-receipt s úspěšnými stage a actual48. Nejde o nový W03actualclaim.
+Finální CLI semantic update/apply/validate,memory/scan/check a clean diff se
+provádějí proti této finální base; root vlastní exact-pair review a merge.

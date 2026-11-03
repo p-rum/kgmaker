@@ -574,12 +574,11 @@ strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
 K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
-projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI,
-runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
-execution. Omezené default-body source mapping je popsáno v
-[T003-S04-W02 change note](changes/46_mapDefaultBodySources.md); širší default-body
-coverage a coroutine mapping zůstávají mimo podporovanou matici. Tyto hranice mají
-diagnostiky a stav PARTIAL;
+projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI, runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping popisuje W02 a bounded coroutine
+source/async boundaries W03 níže. Širší default-body coverage a obecné coroutine
+state-machine CFG/runtime scheduling zůstávají mimo podporovanou matici.
+Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
@@ -755,6 +754,28 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## Coroutine source boundaries (T003-S04-W03)
+
+The explicit JVM inspection preserves compiler-proven suspend call sites and
+recognized `kotlinx.coroutines.launch`/`async` boundaries. K1 source CFG retains
+calls with resume/failure boundaries; scheduling remains UNKNOWN. K2 preserves
+source boundaries even when dependency JVM signatures remain unresolved, and
+continues to report unavailable source CFG explicitly.
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Source/compiler inspection does not execute coroutine code or a scheduler.
+```
+
+Named ContinuationImpl `invokeSuspend` declarations can map through bounded
+Kotlin/DebugMetadata, enclosing-method signature, delegate and exact realm proof.
+Metadata suspension lines never become source call-expression locations.
+Generated state-machine instructions retain BYTECODE_ONLY locators and generated
+identities; missing/malformed metadata, foreign realm or absent source remains
+unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
+remain outside this mapping contract. Store/protocol formats remain readable;
+metadata is additive and worker content identities invalidate older cached facts.
 
 
 ## T003-S05-W02 — registrar a FactoryBean declaration facts

@@ -67,8 +67,14 @@ class KotlinFrontend(private val state: State) {
         val psi = symbol.psi ?: return null
         if (psi !is KtNamedFunction && psi !is PsiMethod) return null
         val light = if (psi is PsiMethod) listOf(psi) else psi.toLightMethods()
-        val candidates = light.filter { it.parameterList.parametersCount == symbol.valueParameters.size }
-        val declaration = candidates.singleOrNull() ?: return null
+        val suspendCall = (symbol as? KaNamedFunctionSymbol)?.isSuspend == true
+        val expectedParameters = symbol.valueParameters.size + (if (symbol.receiverParameter != null) 1 else 0) + (if (suspendCall) 1 else 0)
+        val candidates = light.filter { it.parameterList.parametersCount == expectedParameters }
+            .filter { !suspendCall || it.parameterList.parameters.lastOrNull()?.type?.let(::descriptor) == "Lkotlin/coroutines/Continuation;" }
+        val declaration = candidates.singleOrNull() ?: run {
+            if(source != null) state.diagnostic("K2_JVM_SIGNATURE_UNAVAILABLE", "Expected compiler ABI parameters=$expectedParameters; light signatures="+light.map {it.parameterList.parameters.map {p->p.type.canonicalText}}, loc(source))
+            return null
+        }
         val owner = declaration.containingClass?.let { ClassUtil.getJVMClassName(it) } ?: return null
         // Compiler built-ins can have light PSI without a corresponding JVM
         // owner (e.g. Kotlin intrinsic types). Such an owner is not a JVM target.
@@ -321,11 +327,32 @@ class KotlinFrontend(private val state: State) {
                                         null, reason)
                                     state.sites.last { it["id"] == id }.apply {
                                         put("compiler_backend", backend); put("compiler_version", "2.1.10")
+                                        val coroutineApi = targetSymbol?.callableId?.asSingleFqName()?.asString()
+                                        val apiSource = targetSymbol?.psi?.containingFile?.virtualFile?.path
+                                        val apiSourcePath = apiSource?.let {runCatching {Path.of(it).toAbsolutePath().normalize()}.getOrNull()}
+                                        val selectedSource = apiSourcePath != null && (state.request["sources"] as? List<*>)
+                                            ?.filterIsInstance<String>()?.any { state.root.resolve(it).normalize() == apiSourcePath } == true
+                                        if (!selectedSource && coroutineApi in setOf("kotlinx.coroutines.launch", "kotlinx.coroutines.async")) {
+                                            put("async_boundary", if(coroutineApi == "kotlinx.coroutines.launch") "LAUNCH" else "ASYNC")
+                                            put("async_boundary_evidence", "COMPILER_COROUTINES_API")
+                                            put("async_callable", coroutineApi); put("scheduling", "UNKNOWN")
+                                        }
+                                        if ((targetSymbol as? KaNamedFunctionSymbol)?.isSuspend == true) {
+                                            put("async_boundary", "SUSPEND")
+                                            put("async_boundary_evidence", "COMPILER_SUSPEND_CALL")
+                                            put("scheduling", "UNKNOWN")
+                                        }
                                         val psi = targetSymbol?.psi
                                         val declarations = if (psi is PsiMethod) listOf(psi) else (psi as? KtNamedFunction)?.toLightMethods().orEmpty()
-                                        val declaration = declarations.singleOrNull { it.parameterList.parametersCount == targetSymbol?.valueParameters?.size }
+                                        val suspendDispatch = (targetSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
+                                        val dispatchParameters = (targetSymbol?.valueParameters?.size ?: 0) + (if (targetSymbol?.receiverParameter != null) 1 else 0) + (if (suspendDispatch) 1 else 0)
+                                        val declaration = declarations.singleOrNull { it.parameterList.parametersCount == dispatchParameters &&
+                                            (!suspendDispatch || it.parameterList.parameters.lastOrNull()?.type?.let(::descriptor) == "Lkotlin/coroutines/Continuation;") }
                                         val receiverExpression = (expression.parent as? KtQualifiedExpression)?.receiverExpression
-                                        val actualReceiver = receiverExpression?.expressionType ?: call?.partiallyAppliedSymbol?.dispatchReceiver?.type
+                                        // Member-extension dot syntax supplies the extension receiver, not this/dispatch.
+                                        val actualReceiver = if (targetSymbol?.receiverParameter != null)
+                                            call?.partiallyAppliedSymbol?.dispatchReceiver?.type
+                                        else receiverExpression?.expressionType ?: call?.partiallyAppliedSymbol?.dispatchReceiver?.type
                                         val receiverType = actualReceiver as? org.jetbrains.kotlin.analysis.api.types.KaClassType
                                         if (target != null && declaration != null && receiverType != null &&
                                             !declaration.hasModifierProperty(PsiModifier.STATIC) && !declaration.hasModifierProperty(PsiModifier.PRIVATE) &&

@@ -456,6 +456,15 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
 
+## T003-S04-W03 — bounded coroutine source mapping
+
+| AC | Evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_suspend_source_sites_keep_boundaries`, `test_actual_k1_cfg_preserves_suspend_calls_and_resume_boundary`, `test_real_continuation_maps_declaration_without_mapping_state_instructions` | actual suspend/launch/async/await, multiple suspension points, K1/K2 debug/no-debug; K2 CFG remains unavailable |
+| AC02 | Existing v1/v2/v3 graph/store loader suite; additive worker metadata | unchanged identities and persistence formats |
+| AC03 | `test_missing_sources_never_map_continuation`, `test_foreign_continuation_realm_never_claims_source`, metadata-negative and ordinary-name tests | no inferred scheduler/target/source instruction locator; byte snapshots unchanged |
+| AC04 | change51, pinned Kotlin2.1.10/coroutines SHA fixture | bounded static evidence; whole S04/T003 remains PARTIAL |
+
 
 ## T003-S05-W02 — registrars a FactoryBean produkty
 
