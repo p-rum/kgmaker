@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 352
+- Scope: production; omitted files: 354
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `72caa5128b7e86c6ca130248c3b51f61bf3f079bd62e2aff040408d25d1c4e37`; content: `75d49a98ebfaf64ccd7ce123093097f9af68293db2ab692e2ce2dda8a0adec32`; freshness: CONTENT_VERIFIED

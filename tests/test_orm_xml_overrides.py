@@ -1,11 +1,13 @@
 """Compiler-backed persistence XML precedence and fail-closed behavior."""
 from pathlib import Path
 import hashlib
+import os
 
 import pytest
 
 from kgmaker.inspection import inspect_jvm
 from kgmaker.model import KnowledgeGraph
+from kgmaker.worker_protocol import WorkerError
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "workers"
@@ -49,9 +51,16 @@ import jakarta.persistence.*;
 
 
 def inspect(root: Path, *, strict=False, persistence_unit="orders"):
-    result = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
-                         build_context={"persistence_unit": persistence_unit},
-                         publish=not strict, strict=strict)
+    try:
+        result = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+                             build_context={"persistence_unit": persistence_unit},
+                             publish=not strict, strict=strict)
+    except WorkerError as error:
+        if error.status != 'TOOLCHAIN_UNAVAILABLE':
+            raise
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
+            pytest.fail(str(error))
+        pytest.skip(str(error))
     return KnowledgeGraph.from_dict(result["graph"]) if not strict else result
 
 
