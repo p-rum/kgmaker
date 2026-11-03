@@ -112,3 +112,29 @@ ID251 as an extra edge. Validation rejected it and a duplicated attempted rebind
 neither invalid patch was applied. The final scoped patch omits only that obsolete
 child duplicate, preserving the existing main261 relationship. All14 parent
 concepts/47 edges remain byte-equivalent; final core15/48,172episode prefix+1=173.
+
+## Final current-parent coroutine integration
+
+Main `f2dad55c12c4fcf8af831cb3fff68e6ebbcf614f` adds reviewed coroutine mapping,
+member-extension dispatch ownership and source-cfg-2. Own T024 module/tests/API
+fixture remain byte-identical full-tested3b24cc6. The body guard already accepts
+both source-cfg-1 and the current SOURCE_CFG_VERSION; ordinary trigger declaration
+semantics do not change. All parent workflow cases plus T024 remain present.
+
+15 JVM source/build/lock hashes exactly match `/workspace/coroutine-mapping` and
+its successful fresh Factory-combined K1/K2 build receipt plus actual48-case XML
+in `/workspace/coroutine-main-integration/`. Both JAR and every declared library
+hash were checked before explicit copy. K1 SHA714e2523284e9d88644fbc9b828e1480fe8776189ac89aac9a471f3edd30e3ff,
+K2 SHAad8cab7a3d20673cfbce8cdc7293d42f5a418c59f4ef35122e3734c6dbb1df8f.
+Receipt `/workspace/validation/t024/coroutine-worker-receipt.json`.
+
+Focused T024/CFG/inventory pure replay **58PASS,4deselected v1.61s**. One bounded
+actual K1 official trigger/canonical-mutation replay over the changed SOURCE CFG
+path **1PASS v22.03s**; XML `coroutine-pure.xml`, `coroutine-actual.xml`. No skips.
+The previous main8b236-case composition proof remains historical, not a repeated
+f2 whole matrix; no duplicate236 suite or second full was run. K2's unchanged
+annotation-ownership/CFG limitation remains UNKNOWN, not a fresh K2 PASS claim.
+No uncommitted runtime/source/test changes occurred during these checks.
+
+Main176 immutable episodes form the unchanged prefix plus the original T024
+validated capture. Final review must bind this actual base/head before merge.
