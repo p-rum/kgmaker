@@ -151,3 +151,27 @@ je nyní649; tento doložený citation rebind je proveden scoped semantic patche
 pokrývajícím parent diff a následným current-main update/apply/validate. Graphy
 jsou regenerovány CLI. Následná metadata nevytvářejí další implementační epizodu
 a nepřepisují žádnou historickou capture.
+
+## Integrace revize merge politiky (2026-11-03)
+
+Aktuální main `54a3e01c7bcb1295973655d72b58a14e6a5d597d` přidává pouze
+T045 revizi 2: GH CI je doplňující evidence, všechny ostatní acceptance, lokální
+toolchain, nezávislé exact-pair review a merge kontroly zůstávají povinné. Starší
+formulace tohoto historického note o povinném fresh CI tento pokyn nenahrazují.
+T023 runtime, testy, schema a fixture zůstávají přesně full-tested95c3ed3.
+Main135 immutable episodes tvoří nezměněný prefix, T023 capture je136.
+
+Pure integrační focus T023/T005/T009/CFG: **130 PASS v0.33s**, exit0,
+`/workspace/validation/t023/integration-policy.xml`. Full se neopakuje.
+
+## Integrace JPA main (2026-11-03)
+
+Main `966948b533a7a9417dea370733f300f91fd2b61c` obsahuje schválené T003-S06-W01
+JPA. T023 vlastní model/test/schema/fixture/capability zůstává byte-identický
+full-tested95c3ed3. Převzatý compiler/framework source má vlastní upstream
+acceptance; tato integrace nedokládá nový worker build nebo nový full.
+
+T023/T005/T009/CFG + T008/T015 pure integrační suite: **184 PASS,
+5 actual deselected v2.25s**, exit0; `/workspace/validation/t023/integration-jpa.xml`.
+Všech 130 model/shared/CFG případů je zahrnuto. Main148 immutable episodes
+zůstává nezměněný prefix +1 T023 capture =149.
