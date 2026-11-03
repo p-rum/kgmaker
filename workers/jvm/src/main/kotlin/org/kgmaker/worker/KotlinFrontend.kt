@@ -269,20 +269,6 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
-            if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
-                resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
-                val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
-                val actualType=expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
-                if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
-                    val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
-                    state.sites.last()["dispatch_completeness_reason"]=boundary
-                    state.diagnostic(boundary,"Full generic/intersection receiver constraints are not represented; declared target retained without candidates",loc(expression))
-                } else {
-                    val type=mapper.mapType(actualType)
-                    if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
-                        "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
-                }
-            }
             if(target!=null && descriptor!=null) {
                 val fqName=DescriptorUtils.getFqName(descriptor).asString()
                 val dependencyApi=state.symbols[target]?.get("path")==null
@@ -294,6 +280,22 @@ class KotlinFrontend(private val state: State) {
                 if(boundary!=null)state.sites.last {it["id"]==identity}.putAll(State.map(
                     "async_boundary",boundary,"async_boundary_evidence",if(descriptor.isSuspend) "COMPILER_SUSPEND_CALL" else "COMPILER_COROUTINES_API",
                     "async_callable",fqName,"scheduling","UNKNOWN"))
+            }
+            if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
+                resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
+                val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
+                // A member extension has two receivers: the dot expression is not virtual dispatch.
+                val actualType=if(descriptor?.extensionReceiverParameter!=null) resolved.dispatchReceiver!!.type
+                    else expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
+                    val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+                    state.sites.last()["dispatch_completeness_reason"]=boundary
+                    state.diagnostic(boundary,"Full generic/intersection receiver constraints are not represented; declared target retained without candidates",loc(expression))
+                } else {
+                    val type=mapper.mapType(actualType)
+                    if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
+                        "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
+                }
             }
             if(target==null)state.diagnostic("KOTLIN_UNRESOLVED_CALL",reason,loc(expression))
             super.visitCallExpression(expression)

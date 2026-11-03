@@ -8,7 +8,9 @@ ambiguous relationships are omitted instead of guessed.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
+from dataclasses import replace
 from pathlib import Path
 
 from .model import Edge, Node
@@ -253,12 +255,77 @@ def _api_node(method: str, path: str, source: str, line: int | None, operation: 
     )
 
 
+HTTP_CAPTURE_VERSION = 'http-raw-capture-1'
+
+
+def _http_registration(method: str, route: str | None, source: str, text: str,
+                       line: int | None, provider: str, *, variant: str = "",
+                       method_route: str | None = None, class_prefix: str | None = "",
+                       operation: str | None = None, source_sha256: str | None = None) -> Node:
+    """Retain declaration data before the legacy shared endpoint ID loses it.
+
+    Only path components enter metadata. Full URIs, query/userinfo and arbitrary
+    annotation/configuration bodies never become copied registration payloads.
+    """
+    reasons = []
+    def safe_path(value):
+        if value is None:
+            return None
+        if (not isinstance(value, str) or len(value) > 8192 or any(c in value for c in '\r\n\0')
+                or re.match(r'^[A-Za-z][A-Za-z0-9+.-]*:', value) or '://' in value or value.startswith('//')):
+            reasons.append('UNSUPPORTED_ROUTE')
+            return None
+        if '?' in value or '#' in value:
+            reasons.append('ROUTE_QUERY_OMITTED')
+        return value.split('?', 1)[0].split('#', 1)[0]
+    original = safe_path(route)
+    method_path, prefix = safe_path(method_route), safe_path(class_prefix)
+    if original is None or prefix is None:
+        reasons.append('DYNAMIC_ROUTE')
+    if any('${' in value or '{{' in value for value in (original, method_path, prefix) if value is not None):
+        reasons.append('DYNAMIC_ROUTE')
+    if original and not original.startswith('/'):
+        reasons.append('DYNAMIC_ROUTE')
+    normalized = normalize_api_path(original) if original is not None and not reasons else None
+    variant_text = variant if isinstance(variant, str) else json.dumps(variant, sort_keys=True)
+    fingerprint = hashlib.sha256(json.dumps([variant_text, route, method_route, class_prefix], ensure_ascii=False).encode('utf-8')).hexdigest()
+    record = {'version': 1, 'provider': provider, 'http_method': method.upper(),
+              'original_route': original, 'normalized_route': normalized,
+              'method_route': method_path, 'class_prefix': prefix,
+              'source_path': source, 'source_sha256': source_sha256 or hashlib.sha256(text.encode('utf-8')).hexdigest(),
+              'source_line': line, 'variant_fingerprint': fingerprint,
+              'unresolved_reasons': sorted(set(reasons)),
+              'operation_id': operation if isinstance(operation, str) and re.fullmatch(r'[A-Za-z_][\w.-]{0,127}', operation) else None}
+    legacy_path = route if route is not None else method_route
+    if legacy_path is not None:
+        # Preserve legacy graph identity even when the new projection must keep
+        # its route unresolved. Unsafe URI material is never copied to metadata.
+        node = _api_node(method, legacy_path, source, line, record['operation_id'])
+    else:
+        key = hashlib.sha256(json.dumps([source, line, method, fingerprint]).encode()).hexdigest()
+        node = Node('api_endpoint:' + method.upper() + ':unresolved:' + key,
+                    'api_endpoint', method.upper() + ' UNKNOWN', source, line=line)
+    return replace(node, metadata={'http_registrations': [record]})
+
+
+def _merge_api_node(first: Node, second: Node) -> Node:
+    records = [*(first.metadata or {}).get('http_registrations', []),
+               *(second.metadata or {}).get('http_registrations', [])]
+    unique = {json.dumps(record, sort_keys=True, ensure_ascii=False): record for record in records}
+    return replace(first, metadata={**(first.metadata or {}),
+                                   'http_registrations': [unique[key] for key in sorted(unique)]})
+
+
+def _keep_api(nodes: dict[str, Node], node: Node) -> None:
+    nodes[node.id] = _merge_api_node(nodes[node.id], node) if node.id in nodes else node
+
+
 def _mapping_path(args: str) -> str | None:
     match = re.search(r"(?:path|value)\s*=\s*\{?\s*[\"']([^\"']+)[\"']|^\s*[\"']([^\"']+)[\"']", args)
     return next((group for group in match.groups() if group), None) if match else None
 
 
-def _openapi_yaml(text: str, path: str, file_id: str) -> tuple[list[Node], list[Edge]]:
+def _openapi_yaml(text: str, path: str, file_id: str, *, source_sha256: str | None = None) -> tuple[list[Node], list[Edge]]:
     lines = text.splitlines()
     paths_start = next((i for i, line in enumerate(lines) if re.match(r"^\s*paths\s*:\s*(?:#.*)?$", line)), None)
     if paths_start is None:
@@ -271,9 +338,11 @@ def _openapi_yaml(text: str, path: str, file_id: str) -> tuple[list[Node], list[
 
     def flush(offset: int) -> None:
         if current_path and current_method:
-            node = _api_node(current_method, current_path, path, offset + 1, current_operation)
-            nodes.setdefault(node.id, node)
-            edges.append(Edge(file_id, node.id, "declares_endpoint", current_operation or "OpenAPI path and method"))
+            node = _http_registration(current_method, current_path, path, text, offset + 1,
+                                      'openapi-yaml', source_sha256=source_sha256, variant=current_operation or '', operation=current_operation)
+            _keep_api(nodes, node)
+            edges.append(Edge(file_id, node.id, "declares_endpoint", current_operation or "OpenAPI path and method",
+                              source_file=path, source_line=offset + 1))
 
     for index in range(paths_start + 1, len(lines)):
         line = lines[index]
@@ -301,7 +370,7 @@ def _openapi_yaml(text: str, path: str, file_id: str) -> tuple[list[Node], list[
     return list(nodes.values()), edges
 
 
-def _openapi_json(text: str, path: str, file_id: str) -> tuple[list[Node], list[Edge]]:
+def _openapi_json(text: str, path: str, file_id: str, *, source_sha256: str | None = None) -> tuple[list[Node], list[Edge]]:
     try:
         document = json.loads(text)
     except (ValueError, TypeError):
@@ -317,17 +386,28 @@ def _openapi_json(text: str, path: str, file_id: str) -> tuple[list[Node], list[
             if method.lower() not in HTTP_METHODS:
                 continue
             operation_id = operation.get("operationId") if isinstance(operation, dict) else None
-            node = _api_node(method, api_path, path, None, operation_id)
-            nodes.setdefault(node.id, node)
-            edges.append(Edge(file_id, node.id, "declares_endpoint", operation_id or "OpenAPI path and method"))
+            node = _http_registration(method, api_path, path, text, None, 'openapi-json', source_sha256=source_sha256,
+                                      variant=operation_id or '', operation=operation_id)
+            _keep_api(nodes, node)
+            edges.append(Edge(file_id, node.id, "declares_endpoint", operation_id or "OpenAPI path and method",
+                              source_file=path))
     return list(nodes.values()), edges
 
 
-def _api_references(text: str, path: str, language: str, file_id: str) -> tuple[list[Node], list[Edge]]:
+def _api_references(text: str, path: str, language: str, file_id: str, *, source_sha256: str | None = None) -> tuple[list[Node], list[Edge]]:
     nodes: dict[str, Node] = {}
     edges: list[Edge] = []
 
-    def add(method: str, endpoint_path: str, offset: int, relation: str, evidence: str) -> None:
+    def add(method: str, endpoint_path: str | None, offset: int, relation: str, evidence: str,
+            *, provider: str | None = None, method_route: str | None = None,
+            class_prefix: str | None = "", variant: str = "") -> None:
+        if provider:
+            node = _http_registration(method, endpoint_path, path, text, _line(text, offset), provider, source_sha256=source_sha256,
+                                      method_route=method_route, class_prefix=class_prefix, variant=variant)
+            _keep_api(nodes, node)
+            edges.append(Edge(file_id, node.id, relation, evidence, source_file=path,
+                              source_line=_line(text, offset)))
+            return
         if not endpoint_path.startswith("/"):
             return
         node = _api_node(method, endpoint_path, path, _line(text, offset))
@@ -341,33 +421,39 @@ def _api_references(text: str, path: str, language: str, file_id: str) -> tuple[
             method = annotation.removesuffix("mapping").upper()
             args = match.group("args") or ""
             endpoint = _mapping_path(args)
-            if endpoint:
+            if endpoint is not None or annotation != 'request' or re.search(r'\bmethod\s*=', args):
                 if method == "REQUEST":
                     request_method = re.search(r"\bmethod\s*=\s*(?:RequestMethod\.)?(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)", args, re.IGNORECASE)
                     if not request_method:
                         continue  # A class-level mapping contributes a prefix, not an HTTP operation.
                     method = request_method.group(1).upper()
+                method_route = endpoint if endpoint is not None else ('' if not args.strip() else None)
+                prefix = ''
                 previous = [class_match for class_match in classes if class_match.start() < match.start()]
                 if previous:
                     current_class = previous[-1]
                     earlier_classes = [class_match for class_match in classes if class_match.start() < current_class.start()]
                     prefix_start = earlier_classes[-1].end() if earlier_classes else 0
                     class_annotations = text[prefix_start:current_class.start()]
-                    class_base = next((
-                        _mapping_path(class_mapping.group("args") or "")
+                    class_mapping = next((
+                        class_mapping
                         for class_mapping in SPRING_MAPPING.finditer(class_annotations)
                         if class_mapping.group("annotation").lower() == "request"
                     ), None)
-                    if class_base:
-                        endpoint = f"{class_base.rstrip('/')}/{endpoint.lstrip('/')}"
-                add(method, endpoint, match.start(), "declares_endpoint", "Spring MVC mapping annotation")
+                    if class_mapping:
+                        prefix_args = class_mapping.group('args') or ''
+                        prefix = _mapping_path(prefix_args) if prefix_args.strip() else ''
+                endpoint = f"{prefix.rstrip('/')}/{method_route.lstrip('/')}" if prefix is not None and method_route is not None else None
+                add(method, endpoint, match.start(), "declares_endpoint", "Spring MVC mapping annotation",
+                    provider='spring-source', method_route=method_route, class_prefix=prefix, variant=args)
         for match in SPRING_EXCHANGE.finditer(text):
             method = match.group("method").upper()
             endpoint = _mapping_path(match.group("args") or "")
             if endpoint:
                 add(method, endpoint, match.start(), "calls_endpoint", "Spring HTTP interface annotation")
         for match in KOTLIN_KTOR.finditer(text):
-            add(match.group("method"), match.group("path"), match.start(), "declares_endpoint", "Ktor route declaration candidate")
+            add(match.group("method"), match.group("path"), match.start(), "declares_endpoint", "Ktor route declaration candidate",
+                provider='ktor-source', method_route=match.group('path'))
         for match in WEBCLIENT_URI.finditer(text):
             add(match.group("method"), match.group(2), match.start(), "calls_endpoint", "WebClient or RestClient URI call")
         for match in FEIGN_CLIENT.finditer(text):
@@ -439,7 +525,7 @@ def _technology_nodes(text: str, path: str, file_id: str) -> tuple[list[Node], l
     return nodes, edges
 
 
-def extract_domain(path: str, text: str, language: str, file_id: str, symbols: list[Node]) -> tuple[list[Node], list[Edge]]:
+def extract_domain(path: str, text: str, language: str, file_id: str, symbols: list[Node], *, source_sha256: str | None = None) -> tuple[list[Node], list[Edge]]:
     """Return file-local domain nodes and evidence-backed edges."""
     nodes: list[Node] = []
     edges: list[Edge] = []
@@ -452,11 +538,11 @@ def extract_domain(path: str, text: str, language: str, file_id: str, symbols: l
         domain_nodes, domain_edges = _kafka_references(text, path, file_id)
         nodes.extend(domain_nodes)
         edges.extend(domain_edges)
-        domain_nodes, domain_edges = _api_references(text, path, language, file_id)
+        domain_nodes, domain_edges = _api_references(text, path, language, file_id, source_sha256=source_sha256)
         nodes.extend(domain_nodes)
         edges.extend(domain_edges)
     elif language == "javascript":
-        domain_nodes, domain_edges = _api_references(text, path, language, file_id)
+        domain_nodes, domain_edges = _api_references(text, path, language, file_id, source_sha256=source_sha256)
         nodes.extend(domain_nodes)
         edges.extend(domain_edges)
         if suffix in {".tsx", ".jsx"} or "/app/" in f"/{path}/" or "/pages/" in f"/{path}/":
@@ -474,12 +560,12 @@ def extract_domain(path: str, text: str, language: str, file_id: str, symbols: l
     return nodes, edges
 
 
-def extract_openapi(path: str, text: str, file_id: str) -> tuple[list[Node], list[Edge]]:
+def extract_openapi(path: str, text: str, file_id: str, *, source_sha256: str | None = None) -> tuple[list[Node], list[Edge]]:
     suffix = Path(path).suffix.lower()
     if suffix == ".json":
-        return _openapi_json(text, path, file_id)
+        return _openapi_json(text, path, file_id, source_sha256=source_sha256)
     if suffix in {".yaml", ".yml"}:
-        return _openapi_yaml(text, path, file_id)
+        return _openapi_yaml(text, path, file_id, source_sha256=source_sha256)
     return [], []
 
 
@@ -519,7 +605,10 @@ def merge_domain_nodes(nodes: list[Node]) -> list[Node]:
     unique: dict[str, Node] = {}
     for node in nodes:
         if node.kind in {"api_endpoint", "kafka_topic", "technology", "external_service", "db_table", "db_column"}:
-            unique.setdefault(node.id, node)
+            if node.kind == 'api_endpoint' and node.id in unique:
+                unique[node.id] = _merge_api_node(unique[node.id], node)
+            else:
+                unique.setdefault(node.id, node)
         else:
             unique[node.id] = node
     return list(unique.values())

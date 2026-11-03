@@ -40,7 +40,7 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+TypeScript worker v3 (project references od v2) podporuje solution-style project references uvnitř zvoleného
 repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
@@ -82,6 +82,33 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Selected tsconfig freshness (T003-S08-W02)
+
+Worker3 přidává `project.input_discovery` v1 a context marker
+`typescript-input-discovery-1`. TypeScript sám respektuje extends/baseUrl/paths/
+include/exclude; Python replayuje zachycené content hashes, existence/realpath
+pozorování a directory membership. Root/project package metadata a lockfiles
+jsou obsahově svázané. Změna nepoužitého sibling configu nebo excluded-unused
+obsahu nestaluje selected context; relevantní input či dříve missing dependency
+ano. Negativní/mixed snapshot nepublikuje graf, offline status/hook nespustí Node.
+Legacy snapshot, TS selector sloty a JVM politika zůstávají beze změny.
+Discovery membership je konzervativní a má explicitní limity; nejde o persistent
+incremental compilation cache. [Freshness guide](typescript-freshness.md) a
+[note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
+
+### Bounded TypeScript callbacks (T003-S08-W03)
+
+Worker4 keeps compiler-selected generic/overload signatures and canonical owner
+parameter IDs through barrel aliases. Named and inline callback arguments bind to
+local higher-order parameters. Parameter invocations and unions use incomplete
+`dispatch_candidates`; mutable/any values never promote an arbitrary initializer
+or signature to a concrete target. Ambient declared callable contracts remain
+compiler evidence, separate from runtime implementation proof. Protocol1/model
+schemas are unchanged; existing candidate navigation is reused.
+[Callback guide](typescript-callbacks.md) documents limits, non-goals and CLI examples;
+[note53](changes/53_resolveBoundedTypeScriptCallbacks.md) records exact local proof,
+remaining full validation and blocked CI. This does not complete all of T003-S08.
 
 ### Windows user-space ověření (T003-S11-W03)
 
@@ -294,6 +321,45 @@ volí FIELD nebo PROPERTY access; embedded atributy a explicitní override mají
 vlastní uzly. Asociace nesou cílovou entitu a roli OWNING/INVERSE, přičemž
 `mappedBy` se váže na konkrétní protistranu. JoinColumn/JoinTable se nemíchá se
 scalar `@Column` a neověřený target či `mappedBy` zůstává diagnostikou.
+Při explicitním `--kotlin-backend k2` se pro constructor properties zachová
+K2 annotation identity a use-site target. `@field:Id`/`@field:EmbeddedId`
+vybere FIELD a `@get:Id` vybere PROPERTY; `@Access` má přednost, ale jeho
+nesoulad s identity targetem je diagnostikován a nevytvoří silnější atribut.
+Kotlin `@Id` bez explicitního FIELD/GET targetu zůstává nejednoznačný. Embedded
+Kotlin ID reuseuje stávající entity/embeddable uzly a nevyžaduje nový graph typ.
+Compiler values zachovají nested `@AttributeOverride` column a class literals;
+nevyřešená explicitní table/column/override hodnota zůstává UNKNOWN a nevytváří
+náhradní fyzické jméno. Testovací JPA API deklaruje skutečné FIELD/METHOD cíle,
+takže implicitní FIELD default i dual-use-site nejednoznačnost odpovídají API.
+Kotlin embeddable member annotations se filtrují podle Jakarta/Javax identity.
+Bez vlastního embeddable `@Access` se column metadata zachová jen pro
+jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
+zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
+známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
+subpackage se nepovažuje za compiler-resolved JPA API.
+Mapped-superclass atributy dostanou deklarující `orm_attribute` a zvláštní
+effective projekci pro každou ověřenou entitu. `declaring_owner` a
+`effective_owner` jsou exact compiler class identities; `inherits_attribute`
+váže projection na zdrojový uzel. Zděděné FIELD/PROPERTY access určuje ID v celé
+mapped-superclass hierarchii. K2 property annotations a Java field/getter facts
+zůstávají v jejich skutečném use-site/access scope. Entity-level
+`@AttributeOverride` přebije mapped-superclass hodnotu podle nejbližší deklarace;
+stejně pojmenované fieldy ani unresolved override nevytvoří vybraný column edge.
+Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
+TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
+ne deployment/schema compatibility proof; nevyřešený access, type identity,
+inheritance strategy nebo class override zůstává UNKNOWN.
+Spring Data repository model se vybírá z compiler-resolved generic supertype a
+přesného entity owneru. Entity atributy se indexují podle canonical owner
+identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
+když compiler facts neprokáží jediného ownera.
+Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
+requires exactly one compiler-owned entity; the repository domain type never
+substitutes for an ambiguous query entity. Compiler return type identity likewise
+selects an exact entity/projection node. A source-level simple return name is
+accepted only when the JVM method descriptor proves its canonical owner; a
+missing qualified owner, erased generic type variable, or duplicate simple name
+without that proof remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
@@ -496,11 +562,23 @@ missing/ambiguous call, oddělení test scope, backend/version evidence,
 strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
-K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
-call sites, local/lambda execution ani default-body mapping mimo W02 a coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
+projection, ale nedodává obecný source CFG, constructor ABI, Spring/framework
+metadata, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping popisuje W02 a bounded coroutine
+source/async boundaries W03 níže. Širší default-body coverage a obecné coroutine
+state-machine CFG/runtime scheduling zůstávají mimo podporovanou matici.
+Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
+
+V tomto omezeném JPA subsetu K2 zachovává compiler-resolved annotation identity,
+use-site placement a konstantní či vnořené hodnoty. Explicitní nevyřešený
+`@Table`, `@Column`, override nebo access nevytvoří náhradní fyzické mapování;
+neznámý annotation subpackage není Jakarta/Javax JPA evidence. FIELD/PROPERTY
+výběr vyžaduje doložený identity target nebo `@Access`, včetně ověření přístupu
+pro embedded atributy.
 
 ## T003-S04-W04 — Ordered dependency dispatch
 
@@ -715,3 +793,105 @@ observations. Store/protocol formats remain unchanged; source/class/store bytes
 and offline retention use the existing model/provider pipeline. The prerequisite
 stack is explicitly documented in change62; this is bounded static acceptance,
 not a complete JVM program, runtime scheduling or availability proof.
+
+## T003-S05-W02 — registrar a FactoryBean declaration facts
+
+Spring `annotation-source-v5` přidává bounded Java/Javac compiler facts pro
+`ImportBeanDefinitionRegistrar` a `FactoryBean<T>`; metadata sdílejí oba JVM
+backends. Není to Kotlin metadata rozšíření, execution ani Spring bootstrap.
+
+| Podporovaný vstup | Výsledek |
+|---|---|
+| Exact/transitive registrar a2-parameter API method, přímé `registry.registerBeanDefinition("name", new RootBeanDefinition(Type.class))` statements | `spring_registrar`/`registers_bean`, source symbol/hash/context evidence; bean condition z importující konfigurace |
+| Custom3-parameter overload, branches/alias/helper/fake receiver, více než128 statements, chybějící/nepodporovaný target | Explicitní UNKNOWN boundary; žádný odhadnutý ACTIVE bean |
+| Concrete indexed FactoryBean<T>, sole zero-argument `return new T()` a `return T.class`, typy souhlasí | Samostatný `&name` factory object a `name` product, `produces_bean`, static condition z bean declaration |
+| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean bez prokázané konkrétní literal implementation | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
+
+Product type je kompilátorový typ včetně inherited generic substitution; fake
+FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Literal
+bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol fields
+`bean_registrar`, `bean_registrations`, `factory_bean`, `factory_bean_return` a
+`factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
+čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
+vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
+Producer i getter method hashes jsou součástí evidence. Factory object type je
+přesný component owner nebo validovaná skutečná literal producer implementation;
+custom method object assignability zůstává UNKNOWN. Nové product/registrar
+selection používá compiler-qualified field assignability a známé supertypes;
+foreign short-name shoda není resolved injection. Chybějící legacy evidence
+nepromuje registrace. Invalid facts/context
+se odmítnou před store publikací. Rule v5 je JVM-only a vstupuje do context
+fingerprintu, TypeScript/React selection key se nemění. Evidence zůstává
+FRAMEWORK_DERIVED, nezvyšuje compiler-call confidence ani availability.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID registeredProduct
+```
+
+Skutečné Spring6.2.2 API se explicitně připravuje existujícím pinned fixture POM;
+SHA/license lock a mandatory CI guard z W01 zůstávají. Fixture nic nestahuje a
+source/app code se nespouští. XML, BeanDefinition builders/properties/suppliers,
+post-processors a Spring/Boot factories metadata nejsou tímto scope interpretovány.
+Viz [change note47](changes/47_declareSpringRegistrations.md) pro testy a aktuální
+externě blokované Actions; lokální zelené testy nenahrazují nové CI ani review.
+
+
+S05-W02 injection fixture používá imported simple field types a samostatné
+annotated declaration lines. Existující bounded textual injection projection
+nepokrývá více deklarací na jednom řádku ani obecnou lowercase-leading FQN
+source grammar. Nové qualified hierarchy guards jsou compiler-backed v tomto
+podporovaném subsetu; nejde o nový úplný Java annotation parser.
+## Data resource projection (T015)
+
+The public pure Python API consumes an already captured workspace:
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.data_resources import project_data_resources
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_data_resources(workspace, graph, source_coverage=coverage,
+                              scope="production")
+print(view.to_json())
+```
+
+Capture is separate from projection; the latter reads only explicit local source
+snapshots and never starts a process or connects to a database. It reuses T008
+service ownership and selected contexts, including `selected_contexts` pins.
+
+- Two explicit database/stream realms with an `orders` table stay two resources.
+  Table IDs are references, not database identities; JDBC URLs and class names do
+  not identify a resource.
+- Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
+  `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
+- `coverage.schemas` inventories/configuration must match the workspace declaration,
+  graph table inventory, realm IDs and actual local hashes. Stale or malformed
+  snapshots fail without mutation. Unmapped default Flyway database IDs remain
+  unresolved; a default is accepted only when explicitly declared as a datasource.
+- Flyway resources carry `derivation=["MIGRATION_DERIVED"]`, while evidence keeps
+  its original T009 kind. Deployment and data availability remain `UNKNOWN`.
+  An ORM node tag alone supplies no new FRAMEWORK_DERIVED proof. Unknown polarity
+  is not promoted; explicit conflicts retain both buckets and AMBIGUOUS status.
+- Known foreign test scopes are excluded. Unknown file scope is not converted to
+  production because its repository belongs to a production service.
+
+`tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
+workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
+It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
+is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
+physical naming/schema compatibility, live databases and data population remain
+outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.

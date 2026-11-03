@@ -201,3 +201,51 @@ class RewriteMetadata {public static void main(String[] a)throws Exception {
                     str(helper), str(continuation), mode], check=True, capture_output=True)
     response = analyze((root, root / 'classes', library), backend)
     assert not [f for f in response['facts'] if f.get('resolution_reason') == 'KOTLIN_CONTINUATION_DECLARATION']
+
+
+@pytest.mark.parametrize('backend', ['k1', 'k2'])
+@pytest.mark.parametrize('suspend_call', [False, True], ids=['ordinary', 'suspend'])
+def test_member_extension_uses_dispatch_receiver_not_extension_receiver(tmp_path, backend, suspend_call):
+    """The dot value is the extension receiver; virtual dispatch uses this:Base."""
+    worker_home = Path(os.environ.get('KGMAKER_WORKERS_HOME', HOME))
+    source = tmp_path / 'Members.kt'
+    source.write_text('''open class Base {
+ open FLAGfun Base.ext():String="base"
+ open FLAGfun plain():String="base"
+ FLAGfun use(value:Derived):String=value.ext()
+ FLAGfun ordinary(value:Derived):String=value.plain()
+}
+open class Derived:Base(){
+ override FLAGfun Base.ext():String="derived"
+ override FLAGfun plain():String="derived"
+}
+FLAGfun entry():String=Base().use(Derived())
+'''.replace('FLAG', 'suspend ' if suspend_call else ''))
+    try:
+        worker = command('jvm', worker_home, kotlin_backend=backend)
+    except WorkerError as error:
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1' or backend == 'k2' and os.environ.get('KGMAKER_REQUIRE_K2') == '1':
+            pytest.fail(str(error))
+        pytest.skip(str(error))
+    before = source.read_bytes()
+    response = request_worker(worker, {'operation': 'analyze', 'root': str(tmp_path),
+        'context': {'id': 'member-extension-' + backend + str(suspend_call), 'repo_id': 'fixture',
+                    'module': 'member-extension', 'source_set': 'main', 'scope': 'production'},
+        'sources': ['Members.kt'], 'classpath': [str(worker_home / 'jvm/target/lib/kotlin-stdlib.jar')]}, cwd=tmp_path)
+    assert source.read_bytes() == before and not (tmp_path / '.kgmaker').exists()
+    assert not any(str(d.get('reason', '')).startswith('ERROR:') for d in response['diagnostics'])
+    extension = next(s for s in response['call_sites'] if '.use(' in s['caller'])
+    ordinary = next(s for s in response['call_sites'] if '.ordinary(' in s['caller'])
+    assert ':method:Base.ext(' in extension['declared_target']
+    assert extension['dispatch_receiver'] == 'Base'
+    assert ordinary['dispatch_receiver'] == 'Derived'  # retain normal expression narrowing
+    assert extension['dispatch_complete'] is False and ordinary['dispatch_complete'] is False
+    if backend == 'k1':
+        assert {c.split(':method:')[-1].split('(')[0] for c in extension['dispatch_candidates']} == {'Base.ext', 'Derived.ext'}
+        assert {c.split(':method:')[-1].split('(')[0] for c in ordinary['dispatch_candidates']} == {'Derived.plain'}
+    else:
+        # K2 source hierarchy is unavailable: compiled copies must not substitute.
+        assert extension['dispatch_candidates'] == []
+        assert 'SOURCE_HIERARCHY_UNAVAILABLE' in extension['dispatch_completeness_reason']
+    if suspend_call:
+        assert extension['async_boundary'] == ordinary['async_boundary'] == 'SUSPEND'

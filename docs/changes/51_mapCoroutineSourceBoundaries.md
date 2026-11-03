@@ -110,3 +110,94 @@ Rebuild používal `python workers/jvm/build.py --kotlin-home
 /workspace/tools/jdk-21.0.6+7`; K2 navíc `--backend k2 --analysis-api-home
 /workspace/tools/k2-verified`. Všechny build/test subprocessy byly explicitní
 validační akce; offline source/query cesty žádný build ani aplikaci nespustily.
+
+
+## Kompozice s aktuálním dependency-dispatch parentem
+
+Integrační base je ověřený main
+`ec333966e657896382f310ef018835e3d696513e`. Původní frozen feature c8867f3
+a její584/10 full jsou historický důkaz, nikoli validace nové kombinované JVM.
+Před editací proběhla přímá architektonická rekognoskace task/spec, původních
+DebugMetadata/realm/ABI guards a current physical/source hierarchy views; memory
+recall je zaznamenán v externím validačním adresáři.
+
+Bytecode.java je převzat přesně z main: physical application mapping view se
+nezaměňuje se source hierarchy view pro dispatch. SourceMapping.java a
+control_flow.py zůstávají přesněc8867f3; původních50 actual coroutine případů je
+zachováno, pozdější P1 doplňuje čtyři regresní varianty níže. SMAP,
+DebugMetadata, čtyři realm fields, source hash/range a statické ABI guards se
+neodstraňují. K1/K2 call-site bloky zachovávají zvlášť suspend/async markers a
+main dispatch metadata. K2 light-declaration výběr používá stejný continuation
+a extension-receiver ABI count/filter jako původní coroutine method guard.
+Nevzniká nový scheduler, async runtime ani odhad source-expression mapping.
+
+CI zachovává všechny main testy a explicitní API-only bootstrap; coroutine suite
+se přidává do mandatory compiler jobu. Main134 immutable episodes tvoří přesný
+prefix, všechny unikátní původní captures zůstávají beze změny. Zastaralé
+vygenerované views se obnovují CLI.
+
+Nové vlastní clean-classes K1/K2 buildy a actual coroutine/dispatch/default-body
+focus jsou queued pod shared heavy lockem. Receipt zaznamenává přesné source
+hashes, příkazy, exit codes a nové JAR SHA; původní c886 JARy jsou archivovány
+jen jako historical. Žádný stale artifact nebyl použit jako nový proof.
+Zdrojové/source review a jeden fresh frozen strict full následují až po green
+focus; zatím nejsou PASS. Logy a receipts: `/workspace/coroutine-main-integration/`.
+Současné remote CI je externě billing BLOCKED, bez retry/bypass; lokální autorizovaná
+integrace pokračuje a implementační agent nepushuje ani neself-schvaluje source.
+
+
+Nezávislé review před prvním novým buildem našlo P1 v převzatém dispatch bloku:
+member-extension `value.ext()` nesmí použít typ dot value jako dispatch receiver.
+Skutečný parent K1 donor e44e3dac pro Base.use(Derived) tvrdil jen Derived.ext,
+ačkoli compiler dispatch receiver je this:Base. Nově povolený K2 suspend ABI
+mohl otevřít tentýž chybný průchod. Původní vlastní build/focus queue byl před
+editací zastaven; neměl child a žádný build/test nezačal (status JSON zachován).
+
+K1 nyní pro member-extension bere compiler resolved dispatchReceiver.type; K2
+partiallyApplied dispatchReceiver.type, bez dot fallbacku při neprokázaném typu.
+Ordinary call dot narrowing se nemění. Čtyři actual regresní varianty K1/K2 ×
+ordinary/suspend kontrolují Base dispatch proti Derived extension receiveru,
+zachované ordinary Derived narrowing a nepovýšenou K2 neznámou source hierarchy.
+Guardy coroutine mappingu se nemění. Nové fresh buildy/focus jsou stále PENDING.
+
+## Obnovení validační evidence 2026-11-03
+
+Přetrvávající receipt a XML potvrzují dokončené vlastní clean buildy: K1
+`684394f8c1017805316918a4daefb8b09a3db0a61c86709f9ee7f8e774087656`, K2
+`f3f09bcf1171a5d9bce5ec87a026a62891328b01a9255f2bbd273efdcc617e7a`.
+Oba buildy mají exit0 a všech14 build source/lock hashů stále odpovídá.
+Combined focus z příkazu v `build-receipt.json` skutečně dokončil
+**166 PASS, 0 SKIP v803.20s** (XML166/0failures/0errors), zahrnuje všech54
+coroutine případů, dispatch/default-body, control-flow, protocol a CI guards.
+Všech200 frozen runtime/test/fixture/JAR hashů stále přesně odpovídá manifestu.
+Neopakuje se dokončený build ani focus. Původně final Derived bylo v regresní
+fixture před tímto během změněno na open, aby positive ordinary narrowing opravdu
+ověřovalo dynamický dispatch. Production se po validovaném buildu nezměnila.
+
+Nový combined full zatím nebyl spuštěn; čeká na nezávislou source closure.
+Historický584/10 full jej nenahrazuje. Uživatelská revize T045 v merged PR57
+činí GH CI volitelným při splnění všech ostatních kontrol; neprovedené nebo
+billing-only CI zůstává neověřené a konkrétní chyba správnosti je stále blokující.
+
+Po nezávislém root source closure nad K1/K2 member-extension fixem byl spuštěn
+jeden strict frozen combined full nad634576a: **755 PASS, 10 SKIP v1001.00s**,
+exit0. XML765/0failures/0errors; všech200 před/po source/test/fixture/JAR hashů
+zůstalo přesně shodných. Povinné workers/K2/Spring flags byly zapnuté; deset
+volitelných Maven/Gradle/exporter a non-admin Windows konfigurací je v logu
+pravdivě SKIP. Persistent evidence: `full.log`, `full.xml`, `full-status.json`
+a `full-inputs.json` v `/workspace/coroutine-main-integration/`. Tento výsledek
+nahrazuje výše uvedený PENDING combined full, nikoli omezení podporované matice.
+
+## Ověření kombinovaného K2 s aktuální JPA podporou
+
+Integrace mainb78 zachovala všechny vlastní K1/SourceMapping/control-flow a
+coroutine test bytes z full755/10; K2 spojila nové parent JPA annotation fakty
+s původním coroutine ABI a member-extension dispatch guardem. Nový vlastní
+clean K2 build **exit0/21.684s**, SHA
+`ff65f40034a9b21ff7f87535b1ab059d250147ba2c0922f47fb9f8c91e40d46d`.
+Coalesced actual K1/K2 member-extension, suspend, continuation, missing-source,
+ordinary-name, K1 CFG, K2 JPA a celý dependency-dispatch subset:
+**64 PASS, 0 SKIP v299.45s**, XML64/0errors/0failures. Receipt potvrzuje všech14
+source/lock hashů nezměněných. Evidence je `integrated-build-receipt.json`,
+`integrated-focus.log/xml` v persistent validačním adresáři; nový full se
+kvůli parent integraci neopakoval.
