@@ -225,6 +225,7 @@ import org.springframework.web.bind.annotation.GetMapping;
  private static String right() { return "right"; }
  private static String nested() { return "nested"; }
  @GetMapping("/recursive") public String recursive() { return recursive(); }
+ @GetMapping("/twice") public String twice() { left(); return left(); }
  @GetMapping("/virtual") public String virtualEntry() { return virtualChild(); }
  public String virtualChild() { return "virtual"; }
 }''')
@@ -238,6 +239,7 @@ import org.springframework.web.bind.annotation.GetMapping
    return right()
  }
  @GetMapping("/recursive") fun recursive(): String { return recursive() }
+ @GetMapping("/twice") fun twice(): String { left(); return left() }
  @GetMapping("/virtual") fun virtualEntry(): String { return virtualChild() }
  fun virtualChild(): String { return "virtual" }
 }
@@ -280,6 +282,20 @@ private fun nested(): String { return "nested" }
     assert any(n.attributes.get('boundary_reason') in ('recursive call','dispatch candidates')
         and n.attributes.get('call_site_ids') for n in recursive_view.steps)
 
+    twice=next(n for n in inv.nodes if method_names[n.attributes['entry_symbol_id']]=='twice')
+    twice_view=ProcessView.from_dict(build_local_process(graph,inv,twice.id,process_id='process:twice').to_dict())
+    proof_index={p['id']:p for p in twice_view.technical_view.provenance}
+    sites=[site for site in graph.call_sites if site['caller']==twice.attributes['entry_symbol_id']]
+    assert len(sites)==2 and len({site['declared_target'] for site in sites})==1
+    for site in sites:
+        transitions=[e for e in twice_view.transitions if e.attributes.get('call_site')==site['id']]
+        assert {'call','returns_to','exception'}<={e.relation for e in transitions}
+        originals={p['id'] for p in graph.evidence if p['id'] in site['evidence_ids']
+            and p['relation'] in ('declares_call','resolves_to') and p['kind']=='SYMBOL_RESOLVED'}
+        assert len(originals)==2
+        for edge in transitions:
+            assert site['id'] in edge.original_ids
+            assert originals<={proof_index[ref].get('original_id') for ref in edge.evidence_refs}
     # Actual captured sites have no independent receiver/complete-dispatch
     # metadata mirror. A changed site-table flag cannot turn this virtual call
     # into a proved unique body expansion.
@@ -320,3 +336,54 @@ def test_invalid_request_is_structured_and_never_mutates(tmp_path,kwargs):
     w,g,c,m,s=setup(tmp_path);inv,t=inventory(w,g,c,m);before=deepcopy((g.to_dict(),inv.to_dict()))
     with pytest.raises(ProcessPathError):build_local_process(g,inv,t,**{'process_id':'process:x',**kwargs})
     assert (g.to_dict(),inv.to_dict())==before
+
+
+@pytest.mark.parametrize('checksum',[None,'missing','not-a-sha','A'*64])
+def test_uncaptured_callee_missing_none_or_malformed_checksum_cannot_be_current(tmp_path,checksum):
+    w,g,c,m,s=setup(tmp_path);child=helper(g,s,'uncaptured')
+    add_cfg(g,child['id'],child,ir(child,'statement',label='UNCAPTURED-CALLEE-BODY'))
+    add_cfg(g,m,s,call(g,s,child,'uncaptured'));inv,t=inventory(w,g,c,m)
+    path='@backend/src/main/java/demo/Uncaptured.java'
+    child['path']=path
+    if checksum=='missing':child.pop('sha256',None)
+    else:child['sha256']=checksum
+    g.nodes=[replace(n,path=path,metadata=deepcopy(child)) if n.id==child['id'] else n for n in g.nodes]
+    g.nodes.append(Node('uncaptured-file','file','Uncaptured.java',path,scope='production'))
+    if checksum!='missing':
+        g.files[path]=checksum
+        next(ctx for ctx in g.contexts if ctx.get('id')==s['context_id'])['source_files'][path]=checksum
+    cfg=next(x for x in g.cfgs if x['method']==child['id'])
+    for block in cfg['blocks']:
+        if block.get('source_file'):
+            block['source_file']=path
+            if checksum=='missing':block.pop('sha256',None)
+            else:block['sha256']=checksum
+    proof=next(p for p in g.evidence if p['relation']=='control_flow' and p['source']==child['id'])
+    proof['source_file']=path
+    if checksum=='missing':proof.pop('sha256',None)
+    else:proof['sha256']=checksum
+    before=deepcopy(g.to_dict())
+    result=build_local_process(g,inv,t,process_id='process:uncaptured')
+    assert not any(n.label=='UNCAPTURED-CALLEE-BODY' for n in result.steps)
+    assert any(n.attributes.get('boundary_reason') for n in result.steps)
+    assert g.to_dict()==before
+
+
+def test_same_callee_two_calls_keep_each_original_site_on_call_return_and_exception(tmp_path):
+    w,g,c,m,s=setup(tmp_path);child=helper(g,s,'child')
+    add_cfg(g,child['id'],child,ir(child,'statement',label='child-body'))
+    first=call(g,s,child,'first');second=call(g,s,child,'second')
+    add_cfg(g,m,s,ir(s,'block',statements=[first,second]))
+    inv,t=inventory(w,g,c,m)
+    result=build_local_process(g,inv,t,process_id='process:two-sites')
+    roundtrip=ProcessView.from_dict(result.to_dict())
+    proofs={p['id']:p for p in roundtrip.technical_view.provenance}
+    for site in g.call_sites:
+        transitions=[e for e in roundtrip.transitions if e.attributes.get('call_site')==site['id']]
+        assert {'call','returns_to','exception'}<={e.relation for e in transitions}
+        for edge in transitions:
+            assert site['id'] in edge.original_ids
+            assert set(site['evidence_ids'])<={proofs[ref].get('original_id') for ref in edge.evidence_refs}
+        calls=[e for e in transitions if e.relation=='call'];returns=[e for e in transitions if e.relation=='returns_to']
+        assert len(calls)==1 and returns
+        assert all(paths(roundtrip.transitions,calls[0].target,e.source) for e in returns)

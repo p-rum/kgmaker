@@ -32,6 +32,15 @@ def _fail(code, message):
     raise ProcessPathError(code, message)
 
 
+def _source_checksum(graph, context, path):
+    captured=context.get('source_files')
+    if not isinstance(captured,Mapping) or path not in captured or path not in graph.files:
+        return None
+    checksum=graph.files[path]
+    return checksum if (isinstance(checksum,str) and len(checksum)==64
+        and all(c in '0123456789abcdef' for c in checksum) and captured[path]==checksum) else None
+
+
 def _selected_trigger(graph, inventory, trigger_id):
     if inventory.kind != 'process' or inventory.rules_version != TRIGGER_VERSION:
         _fail('INVALID_TRIGGER_INVENTORY', 'Expected a process-kind trigger inventory')
@@ -60,10 +69,8 @@ def _selected_trigger(graph, inventory, trigger_id):
             or symbol.get('path') != method.path or method.kind not in ('method', 'function')
             or not _canonical_symbol(symbol, method, context)):
         _fail('TRIGGER_DECLARATION_MISMATCH', 'Entry does not match its canonical compiler declaration')
-    checksum = graph.files.get(method.path)
-    if (not isinstance(context.get('source_files'), Mapping)
-            or context['source_files'].get(method.path) != checksum or not isinstance(checksum, str)
-            or len(checksum) != 64 or any(c not in '0123456789abcdef' for c in checksum)
+    checksum = _source_checksum(graph,context,method.path)
+    if (checksum is None
             or [n.scope for n in graph.nodes if n.kind == 'file' and n.path == method.path] != [scope]
             or symbol.get('sha256') != checksum):
         _fail('TRIGGER_SOURCE_MISMATCH', 'Entry is not bound to the supplied source snapshot')
@@ -120,14 +127,14 @@ def _cfg_proofs(graph, context, nodes, symbols):
     originals = {p['id']: p for p in graph.evidence}; accepted = {}; proofs = {}
     for cfg in graph.cfgs:
         method = nodes.get(cfg.get('method')); symbol = symbols.get(cfg.get('method'))
-        if (method is None or symbol is None or cfg.get('context_id') != context['id']
+        if (method is None or method.kind not in ('method','function','constructor') or symbol is None or cfg.get('context_id') != context['id']
                 or method.scope != context['scope'] or symbol.get('context_id') != context['id']
                 or symbol.get('path') != method.path or not _canonical_symbol(symbol, method, context)
                 or cfg.get('representation') != 'SOURCE' or cfg.get('version') != CFG_VERSION
                 or cfg.get('exceptional_exit') not in {b['id'] for b in cfg['blocks']}):
             continue
-        checksum = graph.files.get(method.path)
-        if (context['source_files'].get(method.path) != checksum or symbol.get('sha256') != checksum
+        checksum = _source_checksum(graph,context,method.path)
+        if (checksum is None or symbol.get('sha256') != checksum
                 or [n.scope for n in graph.nodes if n.kind == 'file' and n.path == method.path] != [context['scope']]):
             continue
         refs = cfg.get('evidence_ids')
@@ -166,15 +173,15 @@ def _cfg_proofs(graph, context, nodes, symbols):
 
 
 def _proved_sites(graph, context, nodes, symbols):
-    evidence = {p['id']: p for p in graph.evidence}; accepted = []
+    evidence = {p['id']: p for p in graph.evidence}; accepted = []; admitted_proofs={}
     def canonical(value, expected):
         return value == expected or isinstance(value, str) and qualified(context['repo_id'], value) == expected
     for site in graph.call_sites:
         node = nodes.get(site['id']); caller = nodes.get(site.get('caller')); symbol = symbols.get(site.get('caller'))
         if (node is None or node.kind != 'call_site' or caller is None or symbol is None or site.get('context_id') != context['id']
                 or node.scope != context['scope'] or node.path != caller.path or site.get('path') != caller.path
-                or site.get('sha256') != graph.files.get(caller.path)
-                or context['source_files'].get(caller.path) != site.get('sha256')
+                or _source_checksum(graph,context,caller.path) is None
+                or site.get('sha256') != _source_checksum(graph,context,caller.path)
                 or node.name != site.get('invocation_kind')
                 or not isinstance(site.get('range'), Mapping) or site['range'].get('start_line') != node.line
                 or not _canonical_symbol(symbol,caller,context)):
@@ -215,7 +222,10 @@ def _proved_sites(graph, context, nodes, symbols):
             if not meta or not all(key in meta for key in ('dispatch_complete','receiver_type','dispatch_candidates')):
                 site={**site,'dispatch_complete':False}
         accepted.append(site)
-    return accepted
+        admitted_proofs[site['id']]=[deepcopy(p) for p in refs if
+            proof(p,caller.id,site['id'],'declares_call')
+            or proof(p,site['id'],site.get('declared_target'),'resolves_to')]
+    return accepted,admitted_proofs
 
 
 def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, revision=1,
@@ -232,7 +242,8 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
         selected = project(graph, inventory.scope, context_id=context['id'])
         nodes = {n.id:n for n in selected.nodes}; symbols = {s['id']:s for s in selected.symbols}
         cfgs, cfg_proofs = _cfg_proofs(selected, context, nodes, symbols)
-        selected = replace(selected, call_sites=_proved_sites(selected,context,nodes,symbols))
+        proved_sites,site_proofs=_proved_sites(selected,context,nodes,symbols)
+        selected = replace(selected, call_sites=proved_sites)
     except ProcessPathError:
         raise
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as error:
@@ -277,12 +288,22 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
         by_id={n.id:n for n in technical_nodes}
         for e in report['cfg']['edges']:
             source,target=by_id[e['source']],by_id[e['target']]
-            refs=tuple(sorted(set(source.evidence_refs)|set(target.evidence_refs)))
+            call_site=e.get('call_site');call_refs=[]
+            for original in site_proofs.get(call_site,[]):
+                identity='ev:process-call:'+original['id'];call_refs.append(identity)
+                provenance[identity]={'id':identity,'original_id':original['id'],
+                    'source_id':original['source'],'source_file':original['source_file'],
+                    'source_range':deepcopy(original['source_range']),'content_hash':original['sha256'],
+                    'context_ids':[context['id']],'scope':inventory.scope,'evidence_kind':original['kind'],
+                    'freshness':'CURRENT','polarity':original.get('polarity','UNKNOWN'),
+                    'original_relation':original['relation'],'original_target':original['target']}
+            refs=tuple(sorted(set(source.evidence_refs)|set(target.evidence_refs)|set(call_refs)))
             summary=_summarize_view_evidence(refs,provenance);kind=e['kind'] if e['kind'] in TRANSITION_KINDS else 'unknown'
             attributes={'scope':inventory.scope,'context_ids':[context['id']], 'loop_back':e.get('loop_back',False)}
+            if call_site is not None:attributes['call_site']=call_site
             if kind in ('branch','true','false','case'):attributes['condition']=str(e.get('condition') or kind)
             technical_edges.append(ViewEdge('process-edge:'+digest(e),e['source'],e['target'],kind,
-                original_ids=tuple(e.get('original_ids') or [digest(e)]),evidence_refs=refs,attributes=attributes,
+                original_ids=tuple(sorted(set(e.get('original_ids') or [digest(e)])|({call_site} if call_site else set()))),evidence_refs=refs,attributes=attributes,
                 evidence_kinds=tuple(summary['evidence_kinds']),resolution_status='UNRESOLVED',freshness=summary['freshness'],
                 supporting_refs=tuple(summary['supporting_refs']),contradicting_refs=tuple(summary['contradicting_refs']),
                 unknown_refs=tuple(summary['unknown_refs'])))

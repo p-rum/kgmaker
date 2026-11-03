@@ -79,3 +79,27 @@ Finální bounded pre-review focus vlastního T025 modulu + existující CFG tes
 **45 PASS v12.51s**, včetně actualJavac/K1 a všech nových scope/proof/legacy
 negativních případů. XML/log `/workspace/validation/t025/pre-review.xml`,
 `pre-review.log`. Semantic/memory a full zůstávají pending; tohle není ready PR.
+
+## Nezávislé root review: dvě opravené skupiny nálezů
+
+Před full root našel traceability chybu: expanded returns_to/exception edges
+neměly čitelnou original call-site vazbu. flow.process nyní taguje call, returns_to
+a exception hranice call_site i original ID; typed adapter uchovává tuto vazbu
+v attributes/original_ids a přidává pouze skutečně admitted declares_call a
+resolves_to proof provenance, se zachováním kind/polarity. Public i actual Javac/K1
+fixture mají dvě různá místa volající stejný callee; roundtrip ověřuje každou
+call/return/exception vazbu a její dvě původní proof IDs zvlášť.
+
+Root dále reprodukoval P1: pro nepodchycený callee mohly chybějící hash hodnoty
+porovnáním None==None vytvořit CURRENT syntax body. Nový shared source-checksum
+guard vyžaduje skutečnou membership v graph.files i selected context.source_files,
+platný lower-hex64 nonempty hash a totožný symbol/proof hash, také pro site caller.
+Callee CFG musí vlastnit canonical method/function/constructor a source file scope.
+Missing/None/malformed/uppercase hash nevytváří body a input bytes se nemění.
+
+Skupinový RED: **4 FAIL,1 PASS** v0.48s (`root-review-red.log`), potom pure
+T025/T023/CFG **117 PASS,2 actual deselected v1.69s**. Finální corrected vlastní
+module + CFG focus: **50 PASS v14.36s**, bez skips, včetně actual Javac/K1 a
+obou nových regresních skupin. XML/log `review-corrected.xml`/`.log` v persistent
+`/workspace/validation/t025`. Předchozí45/41/25 výsledky jsou historické checkpoints.
+Full zatím nebyl spuštěn ani queued; vyžaduje nové root source closure.

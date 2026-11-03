@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "50d6c5ace1fd808227cdf4b4b5477dca7a997e72b0d74277ac6ffd8136a4060d",
-    "docs/acceptance-inventory.md": "a5b317c323fbddf1d28ee27a5c2c7ded99b89b0ad3bd77a5e91d2dacd536c72a",
+    "README.md": "cfb71de88cd79ad992033c4dfdfbe6087c08f5863d1675cc3e84b84adc716d85",
+    "docs/acceptance-inventory.md": "70955b71dcd0a2b80aaaa41bab99b580f7891f21d49ca31315bd69fdb5c7e3af",
     "docs/architecture.md": "fac32404c4f3df434035dcc8f55a3d48872e26d0913c97e9fc346643aa962ba1",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -45,6 +45,7 @@
     "docs/changes/70_defineBusinessProcessModel.md": "371240cb3e74ac86c74a90b1660ac68d12871d8d89ab09f34c43b56d1acbd744",
     "docs/changes/71_discoverProcessTriggers.md": "f12f0eebe4a4da476440080b225668a5251f9bd80dbda68d5a0bf907946e7c2a",
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
+    "docs/changes/73_buildLocalProcessPath.md": "bc7c942e9a0f764345031c1532b7993075711a14b6824f6f12304e4b4dad1003",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "ffe4d095e50b251dd886351584f2841097d1e7485b1d9e98d360aff8c071c3f6",
@@ -52,8 +53,9 @@
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
+    "docs/process-paths.md": "b78eb0197b1284b77dd9106421e07e68aa7974a3a74db0ebd1383cf3115470ad",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "0bd77bcb97265cd3172e6c66db7c83d5b3e43da8b10d7e2cb3c01f2256e3090e",
+    "docs/production-analysis-progress.md": "d688c1d496f70be658d6cde36b5f09cc8c30c0cc419043b5278bd81249cd6d3c",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -259,7 +261,7 @@
     "src/kgmaker/domain.py": "e8af7d6f2b86527df08453a836293ff015cbd09c961f60a33252542952dd3e56",
     "src/kgmaker/feature.py": "156b73144ced4874555f271cd12eca05e6802f7051299469255f08afec1d2cd5",
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
-    "src/kgmaker/flow.py": "5cb47938d3c4fce1e8d82cfb3dc7da85569d3d4142f5b982877e4a9125e5ec1d",
+    "src/kgmaker/flow.py": "294dceebc22579e4af487cabcca9c6c09b33df2a08bf16c672582e0d135c3123",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
     "src/kgmaker/framework.py": "acd67f05f68d262f38c4b5e6690dab8fe8d13940697eab4680c216636a40b671",
     "src/kgmaker/graph_provider.py": "08ab9d5061647f6acc8932fd3042ddb42faaf70bf2b779bec784e0b036cc1af2",
@@ -268,6 +270,7 @@
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
+    "src/kgmaker/process_paths.py": "7a549ed4cddaa3f8f2ac7bc77791b3a6ddf5ff8262daac8e38a1e5710ff0be16",
     "src/kgmaker/process_triggers.py": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
     "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
@@ -328,6 +331,7 @@
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_t023_define_business_process_model.py": "7544ff1b84fbc6d9caf89f51cc1c83acb851dd9f844e0285000f998a0651151a",
     "tests/test_t024_discover_process_triggers.py": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7",
+    "tests/test_t025_build_local_process_path.py": "8eb86564a064fdf2e76481924100f4d76262f5fb1b8848d4adbf6ea112d05b4b",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_tsconfig_freshness.py": "1cdaf38fde8df1a2ce6029872b233d1e101bd259aadb56b6c0cbef4d80fc9cd1",
     "tests/test_typescript_callback_limits.py": "ecdeed0b8335b0cf63f94b3717894af7dfaa43fd2bd7f94f69b12126be1684c9",
@@ -440,6 +444,13 @@
       "summary": "Versioned revision-bound process documents compose shared technical view/evidence with a strictly separate semantic overlay; they do not discover or execute processes."
     },
     {
+      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "name": "Proved trigger inventory",
+      "source_file": "docs/process-triggers.md",
+      "source_line": 1,
+      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
@@ -447,11 +458,11 @@
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
-      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
-      "name": "Proved trigger inventory",
-      "source_file": "docs/process-triggers.md",
+      "id": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
+      "name": "Bounded local technical process paths",
+      "source_file": "docs/process-paths.md",
       "source_line": 1,
-      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
+      "summary": "Pure typed adaptation reuses existing source CFG traversal and trigger evidence; opposite branches, original call-sites and explicit root/depth/dispatch/body boundaries remain separate from runtime or business claims."
     }
   ],
   "edges": [
@@ -756,6 +767,16 @@
       "evidence": "ProcessView technical_view is the existing shared ViewDocument with kind process, retaining shared view/evidence semantics."
     },
     {
+      "source": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "target": "file:src/kgmaker/process_triggers.py:process_triggers.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-triggers.md",
+      "source_line": 3,
+      "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
+    },
+    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
@@ -796,14 +817,14 @@
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
-      "source": "concept:docs/process-triggers.md:proved_trigger_inventory",
-      "target": "file:src/kgmaker/process_triggers.py:process_triggers.py",
+      "source": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
+      "target": "file:src/kgmaker/process_paths.py:process_paths.py",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "docs/process-triggers.md",
+      "source_file": "docs/process-paths.md",
       "source_line": 3,
-      "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
+      "evidence": "The documented build_local_process function adapts selected supplied T024/compiler snapshots into a T023 ProcessView without rebuilding or executing a CFG."
     }
   ],
   "episodes": [

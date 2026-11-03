@@ -131,9 +131,12 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
             normal = [e for e in local_edges if e["source"] == source_id and e["kind"] == "normal"]
             exceptional = [e for e in local_edges if e["source"] == source_id and e["kind"] == "exception"]
             local_edges = [e for e in local_edges if e not in normal and e not in exceptional]
-            local_edges.append({"source": source_id, "target": child_entry, "kind": "call", "original_ids": [site["id"]]})
-            local_edges.extend({**e, "source": child_exit, "kind": "returns_to"} for e in normal)
-            local_edges.extend({**e, "source": child_exception, "kind": "exception"} for e in exceptional)
+            local_edges.append({"source": source_id, "target": child_entry, "kind": "call",
+                                "call_site": site["id"], "original_ids": [site["id"]]})
+            local_edges.extend({**e, "source": child_exit, "kind": "returns_to", "call_site": site["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"]]))} for e in normal)
+            local_edges.extend({**e, "source": child_exception, "kind": "exception", "call_site": site["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"]]))} for e in exceptional)
         edges.extend(local_edges)
         return ids[cfg["entry"]], ids[cfg["exit"]], ids[cfg["exceptional_exit"]]
 
