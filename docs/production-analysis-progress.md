@@ -600,3 +600,15 @@ and final full-suite evidence are recorded in
 [change note50](changes/50_expandSpringConditions.md). Runtime condition execution,
 custom defaults, Unicode case equivalence and unsupported dynamic expressions
 remain outside this bounded proof; T003-S05 stays PARTIAL.
+
+## T024 — proved trigger inventory, local bounded implementation
+
+Pure API zachovává doložené selected-context HTTP/Kafka/scheduler deklarace,
+owner/source/proof a oddělenou body availability. K1 genuine fixture dodává3
+trigger kinds; expression-body CFG zůstává UNAVAILABLE. K2 nemá authoritative
+annotation ownership ani SOURCE CFG: legacy hints se odmítají, UNKNOWN bez
+trigger claims. Žádná cesta procesu ani runtime registration/execution se nehádá.
+Bounded41PASS a current-base199PASS zahrnují actual K1/K2 a canonical mutations;
+strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integrace
+236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
+PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).

@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "b3434c9d70009866b9349ea24ca765b3e1490ca2da3a62875876dd0d63afc805",
-    "docs/acceptance-inventory.md": "2f04dff3e8a60bccfbc7680a666c52c0b526b1165dfdc5bbf52cf12a5005272e",
+    "README.md": "5865fc37438e6c203e01b96e5b181b70bc6a8ff7972576181847a21e6e758821",
+    "docs/acceptance-inventory.md": "c76105f483ddbcc71ed84dffe52593d92383bbf2306fd0d8ab2e587449b91cf8",
     "docs/architecture.md": "1b73a892c02fbd45ae5b59fed3980552317c708e54a83c2b9fc8f31f91d70645",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -40,7 +40,7 @@
     "docs/changes/49_projectJpaInheritedAttributes.md": "76a3d655188a29e62be8342514b160273ff40685cd80144818b902ace50ff884",
     "docs/changes/4_completeBuildAwareInspection.md": "99c6ea3e253a448c0f0a60a2b471143e57e566220e3d08a96ba473f4fc566b88",
     "docs/changes/50_expandSpringConditions.md": "1b9cc650341b340e95ff0be535f56304760f378afd28afc6ab453c59452f1b23",
-    "docs/changes/51_mapCoroutineSourceBoundaries.md": "d5384f740bc9371673846a5a4a43cdec0144a04bb66b088da2ef0ec6f088205d",
+    "docs/changes/51_mapCoroutineSourceBoundaries.md": "a196c28c3ce4d6d00245649f0f20a43944b21a1f49602aec1dbac1e49c8b9193",
     "docs/changes/53_resolveBoundedTypeScriptCallbacks.md": "ef9358324559dad9c2f79d22562d7767697632d6771483bb2e25f0da8ce6f227",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/64_propagateViewEvidence.md": "f756b45c483e7131696df959f1017704ecaa70b18d04175e95e3278054bd6791",
@@ -48,6 +48,7 @@
     "docs/changes/68_projectDataResources.md": "ef422b44e5586145084a117bb6dd874bde618570f958ca4813ad5e966aa6bf40",
     "docs/changes/6_splitRemainingImplementation.md": "0fc25888fd5f5d8ac24b0c1e8a794ac376bd0b0c80fe48452e67bcd7425c5ad9",
     "docs/changes/70_defineBusinessProcessModel.md": "371240cb3e74ac86c74a90b1660ac68d12871d8d89ab09f34c43b56d1acbd744",
+    "docs/changes/71_discoverProcessTriggers.md": "884c1447a864445d0c83553767bebd943f102055087b5517bc1119f9e19c573e",
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
@@ -56,7 +57,8 @@
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
-    "docs/production-analysis-progress.md": "0f148d418c2249b7bf0bfa691fb1177ef4bb2726dd336021b3c84c8a63edd5b5",
+    "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
+    "docs/production-analysis-progress.md": "06aedd67cd1775ccc035e4f9a1b3960eac11a0f31bb534c96f750fc14dffca15",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -221,6 +223,7 @@
     "fixtures/multirepo-analysis/tests/src/ExposureTest.java": "3e6709b513be58bbada38d0538dedc9f89224135d01c642d867ba9b6d6b252a6",
     "fixtures/multirepo-analysis/tests/src/model.ts": "a453e11794bf6c71b416a3e15de059f693aca33d6fae3462e8ea4f2713ef11e2",
     "fixtures/process-model/checkout.json": "3e359c9c18baa0d187577477ec93a3855e1a0540db85e1fcf883b9a20c82c851",
+    "fixtures/process-triggers/dependencies.lock.json": "298a78843fcc2a19646b3f4ea445210c7c2227e04f553be8e6432f90f37b7bd6",
     "fixtures/spring-conditions/README.md": "32f1e8b3721ef859b795b0493da0859c5aba87fc695f13ab5c60c2f1f35a977a",
     "fixtures/spring-conditions/dependencies.lock.json": "695dcf9291d5a0315331c0768a50cc7bd5b95ff53e56bdddb8bf1b875623631a",
     "fixtures/spring-imports/README.md": "faa9233b6339264f6a6bb978f0278360466a5160c83c680bd53a79bb4a47aab9",
@@ -274,6 +277,7 @@
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
+    "src/kgmaker/process_triggers.py": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
     "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
     "src/kgmaker/scanner.py": "cd088341e17ca873ff42622a7d93c9f1c6967b1f922118877bd291f496ccb75e",
@@ -339,6 +343,7 @@
     "tests/test_t010_compiler_providers.py": "5b059b683d7bd114ab0ae4fd06d34e263bdbd100a0ed54e24ce98e29872b3165",
     "tests/test_t015_project_data_resources.py": "d5de963e27081fdcca3e3e18486d99d8633c84b3142693f39d3f42fdf14fc74e",
     "tests/test_t023_define_business_process_model.py": "7544ff1b84fbc6d9caf89f51cc1c83acb851dd9f844e0285000f998a0651151a",
+    "tests/test_t024_discover_process_triggers.py": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7",
     "tests/test_templates.py": "eda940aa71f0e8306662530215f170bf508272d24d18a5403b3c67fdf195f5bb",
     "tests/test_tsconfig_freshness.py": "1cdaf38fde8df1a2ce6029872b233d1e101bd259aadb56b6c0cbef4d80fc9cd1",
     "tests/test_typescript_callback_limits.py": "ecdeed0b8335b0cf63f94b3717894af7dfaa43fd2bd7f94f69b12126be1684c9",
@@ -396,6 +401,20 @@
       "summary": "TypeScript-selected signatures and canonical parameters preserve declared evidence while callback bindings and unions remain incomplete candidates, separate from runtime dispatch proof."
     },
     {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 699,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "name": "Kotlin JPA use-site access",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
+    },
+    {
       "id": "concept:docs/architecture.md:source_code_is_authoritative",
       "name": "Source code is authoritative",
       "source_file": "docs/architecture.md",
@@ -445,18 +464,11 @@
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 186,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
+      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
+      "name": "Repository entity owner resolution",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 699,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+      "source_line": 352,
+      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
     },
     {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
@@ -466,18 +478,18 @@
       "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
     },
     {
-      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "name": "Kotlin JPA use-site access",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 186,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
-      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
-      "name": "Repository entity owner resolution",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
+      "id": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "name": "Proved trigger inventory",
+      "source_file": "docs/process-triggers.md",
+      "source_line": 1,
+      "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
     }
   ],
   "edges": [
@@ -560,6 +572,106 @@
       "source_file": "docs/typescript-callbacks.md",
       "source_line": 47,
       "evidence": "Callback documentation identifies the reused candidate navigation contract instead of a parallel callgraph model."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 87,
+      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
+      "source_line": 107,
+      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
+    },
+    {
+      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_default_body_mapping.py",
+      "source_line": 1,
+      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 113,
+      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 88,
+      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 82,
+      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "evidence": "The K2 frontend emits compiler-resolved Kotlin annotation identity, use-site placement, and annotation values for the supported JPA subset."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "evidence": "Framework projection accepts only canonical Jakarta/Javax annotations and requires supported access/value evidence before creating physical JPA bindings."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:tests/test_k2_backend.py:test_k2_backend.py",
+      "kind": "validates",
+      "evidence": "Actual K2 fixtures cover use-site access, annotation values, unresolved values, canonical annotation packages, and inherited embeddable access."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
+      "kind": "validates",
+      "evidence": "Actual Javac compatibility fixtures cover JPA embedded identifiers and association roles alongside the Kotlin-specific K2 checks."
     },
     {
       "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
@@ -692,196 +804,6 @@
       "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
     },
     {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 186,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 188,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 87,
-      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
-      "source_line": 107,
-      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
-    },
-    {
-      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_default_body_mapping.py",
-      "source_line": 1,
-      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
-      "source_line": 113,
-      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 88,
-      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 82,
-      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 88,
-      "evidence": "Continuation declaration mapping checks DebugMetadata, outer signature/delegate, exact realm and source declaration proof."
-    },
-    {
-      "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 273,
-      "evidence": "K1 compiler descriptors preserve source suspend and exact coroutine API boundary markers in call sites and source IR."
-    },
-    {
-      "source": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 313,
-      "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
-    },
-    {
-      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/control_flow.py",
-      "source_line": 196,
-      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
-    },
-    {
-      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_coroutine_mapping.py",
-      "source_line": 75,
-      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "evidence": "The K2 frontend emits compiler-resolved Kotlin annotation identity, use-site placement, and annotation values for the supported JPA subset."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:src/kgmaker/framework.py:framework.py",
-      "kind": "implements",
-      "evidence": "Framework projection accepts only canonical Jakarta/Javax annotations and requires supported access/value evidence before creating physical JPA bindings."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:tests/test_k2_backend.py:test_k2_backend.py",
-      "kind": "validates",
-      "evidence": "Actual K2 fixtures cover use-site access, annotation values, unresolved values, canonical annotation packages, and inherited embeddable access."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
-      "kind": "validates",
-      "evidence": "Actual Javac compatibility fixtures cover JPA embedded identifiers and association roles alongside the Kotlin-specific K2 checks."
-    },
-    {
       "source": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
       "target": "file:src/kgmaker/framework.py:framework.py",
       "kind": "implements",
@@ -900,46 +822,6 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 352,
       "evidence": "Actual Javac regressions prove descriptor-backed right.Thing resolution and reject an unavailable foreign.Thing return when only unrelated right.Thing is indexed, as well as generic T when local right.T exists."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 565,
-      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved nested override and class-literal values."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 21,
-      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
@@ -1000,6 +882,146 @@
       "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
       "source_line": 80,
       "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 88,
+      "evidence": "Continuation declaration mapping checks DebugMetadata, outer signature/delegate, exact realm and source declaration proof."
+    },
+    {
+      "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 273,
+      "evidence": "K1 compiler descriptors preserve source suspend and exact coroutine API boundary markers in call sites and source IR."
+    },
+    {
+      "source": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 313,
+      "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
+    },
+    {
+      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/control_flow.py",
+      "source_line": 196,
+      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
+    },
+    {
+      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_coroutine_mapping.py",
+      "source_line": 75,
+      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 565,
+      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved nested override and class-literal values."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 21,
+      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 186,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 188,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/process-triggers.md:proved_trigger_inventory",
+      "target": "file:src/kgmaker/process_triggers.py:process_triggers.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-triggers.md",
+      "source_line": 3,
+      "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
     }
   ],
   "episodes": [
@@ -72068,6 +72090,211 @@
         }
       ],
       "id": "episode:9025e4f54545594eb6107f5b24a8f205c3c56de765c240f87b174d7cbf22d135"
+    },
+    {
+      "base_commit": "b78d2e62148f225be7ba8c53c839f8b052ee269d",
+      "head_commit": "3b24cc66ed70c269e43830181e7f50523c245b92",
+      "worktree_fingerprint": "df72942634707586b7011682654501c74759036b267dee35d59b0dd1b3766334",
+      "title": "docs(t024): include CLI-generated graph diagram",
+      "changed_files": [
+        {
+          "path": ".github/workflows/test.yml",
+          "status": "M",
+          "sha256": "74bfd5bb661a7a596a7303b5a308ef8117b7c857adbc78553dd2f36a6b3f0bac"
+        },
+        {
+          "path": "README.md",
+          "status": "M",
+          "sha256": "50d6c5ace1fd808227cdf4b4b5477dca7a997e72b0d74277ac6ffd8136a4060d"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "f4dd814c66ce2066ae96f7857a4acb27c5550b794f914696797c8b6aae60b6f1"
+        },
+        {
+          "path": "docs/changes/71_discoverProcessTriggers.md",
+          "status": "A",
+          "sha256": "ab1e4beec28deb0c038fb5e1852ae73a2ffa3511c6e82cddf43c77b452efccfc"
+        },
+        {
+          "path": "docs/process-triggers.md",
+          "status": "A",
+          "sha256": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "ad87b813f35eddb350e8da0f8f4bc5c64fa615712561e374a8ad894029d9b64a"
+        },
+        {
+          "path": "fixtures/process-triggers/dependencies.lock.json",
+          "status": "A",
+          "sha256": "298a78843fcc2a19646b3f4ea445210c7c2227e04f553be8e6432f90f37b7bd6"
+        },
+        {
+          "path": "fixtures/process-triggers/pom.xml",
+          "status": "A",
+          "sha256": "16cbb29a3d8bb2240684ef554354beb84d960e2e5a2a786a524d826c0b600284"
+        },
+        {
+          "path": "src/kgmaker/process_triggers.py",
+          "status": "A",
+          "sha256": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16"
+        },
+        {
+          "path": "tests/test_t024_discover_process_triggers.py",
+          "status": "A",
+          "sha256": "3989966fba7e1651df5232354c62f777e0d9cc89d2ec72d1161e86a890f1bec7"
+        }
+      ],
+      "affected_node_ids": [
+        "class:src/kgmaker/process_triggers.py:TriggerInventoryError::24",
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/process-triggers.md:proved_trigger_inventory",
+        "file:README.md:README.md",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/71_discoverProcessTriggers.md:71_discoverProcessTriggers.md",
+        "file:docs/process-triggers.md:process-triggers.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "file:fixtures/process-triggers/dependencies.lock.json:dependencies.lock.json",
+        "file:src/kgmaker/process_triggers.py:process_triggers.py",
+        "file:tests/test_t024_discover_process_triggers.py:test_t024_discover_process_triggers.py",
+        "function:src/kgmaker/process_triggers.py:__init__::28",
+        "function:src/kgmaker/process_triggers.py:_annotations::31",
+        "function:src/kgmaker/process_triggers.py:_canonical_symbol::40",
+        "function:src/kgmaker/process_triggers.py:_same_line::36",
+        "function:src/kgmaker/process_triggers.py:body_status::164",
+        "function:src/kgmaker/process_triggers.py:current::139",
+        "function:src/kgmaker/process_triggers.py:discover_process_triggers::81",
+        "function:src/kgmaker/process_triggers.py:endpoint_valid::150",
+        "function:src/kgmaker/process_triggers.py:issue::126",
+        "function:src/kgmaker/process_triggers.py:local_path::131",
+        "function:tests/test_t024_discover_process_triggers.py:actual_prerequisites::202",
+        "function:tests/test_t024_discover_process_triggers.py:api_jars::186",
+        "function:tests/test_t024_discover_process_triggers.py:inputs::27",
+        "function:tests/test_t024_discover_process_triggers.py:test_ac01_http_kafka_and_declared_scheduler_keep_distinct_type_origin_and_owner::71",
+        "function:tests/test_t024_discover_process_triggers.py:test_ac02_same_repo_test_controller_is_excluded_from_production::91",
+        "function:tests/test_t024_discover_process_triggers.py:test_ac03_unsupported_scheduler_has_gap_and_no_fabricated_path::100",
+        "function:tests/test_t024_discover_process_triggers.py:test_actual_official_http_kafka_scheduler_and_test_scope_capture::221",
+        "function:tests/test_t024_discover_process_triggers.py:test_canonical_source_symbol_contradictions_fail_closed_on_explicit_inputs::329",
+        "function:tests/test_t024_discover_process_triggers.py:test_input_order_and_t023_trigger_node_compatibility::154",
+        "function:tests/test_t024_discover_process_triggers.py:test_malformed_cfg_blocks_produce_structured_error_without_store_mutation::339",
+        "function:tests/test_t024_discover_process_triggers.py:test_malformed_endpoint_metadata_is_not_treated_as_missing_legacy_metadata::350",
+        "function:tests/test_t024_discover_process_triggers.py:test_missing_pinned_apis_fail_mandatory_before_worker_probe::320",
+        "function:tests/test_t024_discover_process_triggers.py:test_no_async_or_method_name_guess_creates_process_trigger::146",
+        "function:tests/test_t024_discover_process_triggers.py:test_scope_context_and_exact_fact_binding_never_borrow_other_trigger_proof::123",
+        "function:tests/test_t024_discover_process_triggers.py:test_stale_source_and_invalid_graph_leave_last_valid_generation_unchanged::173",
+        "function:tests/test_t024_discover_process_triggers.py:test_unavailable_cfg_preserves_declared_candidate_and_explicit_body_gap::109",
+        "scope:test_fixture:technology:kafka",
+        "section:README.md:Commands::48",
+        "section:README.md:Compiler lifecycle::462",
+        "section:README.md:Copilot workflow::208",
+        "section:README.md:Data prerequisite audit::333",
+        "section:README.md:Development::239",
+        "section:README.md:Documentation and implementation tasks::7",
+        "section:README.md:Explicit business-process documents::549",
+        "section:README.md:Feature feasibility analysis (foundation)::277",
+        "section:README.md:Follow candidate-template.json and write candidate.json with the host agent.::285",
+        "section:README.md:Implementation memory and workflow::228",
+        "section:README.md:Install::28",
+        "section:README.md:Planned high-level project views::15",
+        "section:README.md:Proven trigger inventory (T024)::560",
+        "section:README.md:Requirements::23",
+        "section:README.md:What gets indexed::175",
+        "section:README.md:kgmaker::1",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::75",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::264",
+        "section:docs/acceptance-inventory.md:T001::145",
+        "section:docs/acceptance-inventory.md:T002::224",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::327",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::420",
+        "section:docs/acceptance-inventory.md:T003-S04-W04 — Dependency dispatch hierarchy::372",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::395",
+        "section:docs/acceptance-inventory.md:T003-S06-W01 — Kotlin JPA use-site a access::3",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::31",
+        "section:docs/acceptance-inventory.md:T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING::21",
+        "section:docs/acceptance-inventory.md:T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING::11",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::380",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::360",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::66",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::53",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::407",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::351",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::84",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::128",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::95",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::106",
+        "section:docs/acceptance-inventory.md:T009 — propagace evidence a coverage::117",
+        "section:docs/acceptance-inventory.md:T015 — database resource projection::442",
+        "section:docs/acceptance-inventory.md:T023 — explicit process model::453",
+        "section:docs/acceptance-inventory.md:T024 — bounded trigger inventory::464",
+        "section:docs/changes/71_discoverProcessTriggers.md:Inventář doložených spouštěčů T024::1",
+        "section:docs/changes/71_discoverProcessTriggers.md:Kompatibilita a příklad::58",
+        "section:docs/changes/71_discoverProcessTriggers.md:Problém a skutečné změny::7",
+        "section:docs/changes/71_discoverProcessTriggers.md:Required frozen full (2026-11-03)::67",
+        "section:docs/changes/71_discoverProcessTriggers.md:Skutečné ověření a hranice::22",
+        "section:docs/process-triggers.md:Proven trigger inventory (T024)::1",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::217",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::157",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::167",
+        "section:docs/production-analysis-progress.md:Merge politika po uživatelské změně 2026-11-03::3",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::189",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::105",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::233",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::224",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::242",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::277",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::456",
+        "section:docs/production-analysis-progress.md:T003-S04-W04 — Dependency dispatch hierarchy::401",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::428",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::39",
+        "section:docs/production-analysis-progress.md:T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::26",
+        "section:docs/production-analysis-progress.md:T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::12",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::413",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::384",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::298",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::84",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::71",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::58",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::445",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::310",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::263",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::322",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::340",
+        "section:docs/production-analysis-progress.md:T009 — evidence a coverage agregovaných pohledů (omezený fallback)::364",
+        "section:docs/production-analysis-progress.md:T015 — explicit datasource resource projection::479",
+        "section:docs/production-analysis-progress.md:T023 — ProcessDefinition / ProcessView (explicit model)::491",
+        "section:docs/production-analysis-progress.md:T024 — proved trigger inventory, local bounded implementation::507"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/71_discoverProcessTriggers.md:Required frozen full (2026-11-03)::67"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "full812",
+          "status": "passed"
+        },
+        {
+          "label": "optional10",
+          "status": "skipped"
+        },
+        {
+          "label": "focus199",
+          "status": "passed"
+        },
+        {
+          "label": "frozen206",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:866709bcd21daf2bb70d4930d1ce85f7e215443247cbeade775c46cf5542365e"
     }
   ]
 }

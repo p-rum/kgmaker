@@ -514,3 +514,14 @@ Runtime acceptance NOT_RUN; no data availability or overall T004 completion clai
 | AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
 | AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
 | AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
+
+## T024 — bounded trigger inventory
+
+AC01/02: explicit and actual K1 HTTP/Kafka/scheduler candidates with production/test
+separation. AC03/05: unsupported scheduler/K2 annotation capture, missing CFG,
+canonical source/symbol/edge/proof/hash/scope negatives stay PARTIAL/UNKNOWN.
+AC04: actual offline projection forbids subprocess and compares inputs/captured
+checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
+and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
+integration236PASS is recorded; final independent review/merge remain pending (PR59).
+Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.

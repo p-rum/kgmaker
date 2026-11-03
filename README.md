@@ -618,3 +618,12 @@ are never executed. Profile results also govern injection, so `!dev` is not
 incorrectly filtered as a literal profile name. See
 [the condition matrix](docs/compiler-inspection.md#t003-s05-w03--typed-condition-matrix)
 for the bounded contract and explicit Python API example.
+
+### Proven trigger inventory (T024)
+
+`kgmaker.process_triggers.discover_process_triggers(workspace, graph,
+source_coverage=coverage)` returns a shared process-kind trigger inventory from
+existing proved HTTP/Kafka/scheduler facts. Missing CFG retains a candidate with
+an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
+process paths, business identities, worker execution or runtime availability are
+inferred. See [API and boundaries](docs/process-triggers.md).
