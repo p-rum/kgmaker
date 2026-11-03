@@ -509,6 +509,17 @@ explicit UNKNOWN/PARTIAL. Generated state instructions do not become user source
 calls. Validation status and exact supported matrix are recorded in change51;
 runtime scheduler order and general coroutine state-machine CFG remain unsupported.
 
+## T003-S04-W05 — JVM golden acceptance corpus
+
+A hand-labelled, versioned compiler corpus compares exact source-call counts and
+identities with explicit K1/K2 unsupported boundaries, CFG branches, non-executing
+references and unresolved reflection targets. It reuses existing actual fixtures
+and the application model/provider pipeline, with no production runtime change.
+The local prerequisite stack is explicit; it does not imply those upstream PRs
+are already merged. Current validation and remaining limits are in change62;
+S04/T003 remain PARTIAL outside this bounded static matrix.
+
+Golden corpus prepared full (2026-10-27): 646 PASS, 10 SKIP /991.96s; all21 corpus checks ran, no failures/setup errors. Source unchanged; remote gates remain paused.
 
 ## T003-S05-W02 — bounded registrar/factory deklarace
 
