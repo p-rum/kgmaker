@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import re
+import struct
 
 from .analysis_model import digest
 
@@ -27,9 +28,10 @@ def _range(value):
     return (isinstance(value, dict)
         and set(value) == {'start', 'end', 'start_line', 'end_line', 'start_column', 'end_column'}
         and all(type(v) is int for v in value.values())
-        and 0 <= value['start'] <= value['end']
+        and 0 <= value['start'] < value['end']
         and 1 <= value['start_line'] <= value['end_line']
-        and value['start_column'] >= 1 and value['end_column'] >= 1)
+        and value['start_column'] >= 1 and value['end_column'] >= 1
+        and (value['start_line'] != value['end_line'] or value['start_column'] < value['end_column']))
 
 
 def _walk(root):
@@ -67,12 +69,43 @@ def _literal(value):
         return False
     kind, item = value.get('type'), value.get('value')
     if kind in ('INT_LITERAL', 'LONG_LITERAL'):
-        return type(item) is int
+        bits = 32 if kind == 'INT_LITERAL' else 64
+        return type(item) is int and -(2 ** (bits - 1)) <= item < 2 ** (bits - 1)
     if kind == 'BOOLEAN_LITERAL':
         return type(item) is bool
     if kind in ('FLOAT_LITERAL', 'DOUBLE_LITERAL'):
-        return type(item) in (int, float) and math.isfinite(item)
-    return isinstance(item, str) and (kind == 'STRING_LITERAL' or kind == 'CHAR_LITERAL' and len(item) == 1)
+        if type(item) not in (int, float):
+            return False
+        try:
+            number = float(item)
+        except OverflowError:
+            return False
+        if not math.isfinite(number):
+            return False
+        if kind == 'FLOAT_LITERAL':
+            try:
+                rounded = struct.unpack('!f', struct.pack('!f', number))[0]
+            except (OverflowError, struct.error):
+                return False
+            return math.isfinite(rounded) and (number == 0 or rounded != 0)
+        return True
+    return isinstance(item, str) and (kind == 'STRING_LITERAL'
+        or kind == 'CHAR_LITERAL' and len(item) == 1 and ord(item) <= 65535)
+
+
+def _assignable(literal, target):
+    """Only JLS primitive/string literal assignment conversions, no resolver."""
+    source = _LITERALS[literal['type']]
+    if target in {'Z', 'Ljava/lang/String;'}:
+        return source == target
+    if source in {'Z', 'Ljava/lang/String;'}:
+        return False
+    value = ord(literal['value']) if source == 'C' else literal['value']
+    if target in {'B', 'S', 'C'}:
+        low, high = {'B': (-128, 127), 'S': (-32768, 32767), 'C': (0, 65535)}[target]
+        return source in {'I', 'C'} and low <= value <= high
+    return source in {'I': {'I', 'C'}, 'J': {'I', 'J', 'C'},
+                      'F': {'I', 'J', 'C', 'F'}, 'D': {'I', 'J', 'C', 'F', 'D'}}.get(target, set())
 
 
 def _validate_operations(response, context):
@@ -119,7 +152,8 @@ def _validate_operations(response, context):
                     or type(witness['schema_version']) is not int or witness['schema_version'] != 1
                     or not isinstance(witness['target_type'], str) or witness['target_type'] not in _TYPES
                     or node.get('path') != path or node.get('sha256') != sha
-                    or not _range(node.get('range')) or node.get('calls') or node.get('call_site')):
+                    or not _range(node.get('range')) or not isinstance(node.get('calls'), list)
+                    or node['calls'] or node.get('call_site')):
                 _fail('malformed operation/source witness')
             span = node['range']; parent = method['range']
             if not parent['start'] <= span['start'] <= span['end'] <= parent['end']:
@@ -142,7 +176,9 @@ def _validate_operations(response, context):
                         or not isinstance(declaration, dict) or set(declaration) != {'path', 'sha256', 'range'}
                         or declaration['path'] != path or declaration['sha256'] != sha
                         or not _range(declaration['range']) or not _literal(literal)
-                        or literal.get('type') not in _LITERALS or value.get('calls') or value.get('call_site')
+                        or not _assignable(literal, witness['target_type'])
+                        or literal.get('type') not in _LITERALS or not isinstance(value.get('calls'), list)
+                        or value['calls'] or value.get('call_site')
                         or value.get('path') != path or value.get('sha256') != sha or not _range(value.get('range'))
                         or not span['start'] <= value['range']['start'] <= value['range']['end'] <= span['end']
                         or value.get('local_operation', {}).get('operation') != 'LITERAL_EVALUATION'):
@@ -238,6 +274,8 @@ def _original_proof(proof, context):
     if not proof['id'].startswith('repo:'):
         return result
     repo = context['repo_id']
+    if result.pop('repo_id', None) != repo:
+        _fail('workspace proof wrapper belongs to another repository')
     def original(value):
         owner, raw = split_id(value)
         if owner != repo:

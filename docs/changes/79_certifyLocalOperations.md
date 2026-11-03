@@ -39,3 +39,11 @@ běhu; existing T025/T023/worker-protocol **120 PASS,2actualDESELECTED v4.44s**.
 Samostatná kompilace nového JavaFrontend proti neměnnému Arg State/JAR/lib API
 pomocí JDK21 javac prošla, ale není to nový kompletní K1/K2 worker ani runtime
 acceptance. Celé vlastní workery a actual pipeline/full jsou stále UNKNOWN.
+
+Nezávislé source review checkpointu cea9b5d požádalo o dvě konkrétní opravy před
+fresh worker buildem: workspace wrapper přidal repo_id do původního proof hashe;
+validator dále neodmítal int←String, integer overflow a prázdný literal span.
+Opraveno přesným odebráním/ověřením repository wrapperu, explicitními Java
+primitive/String literal assignment conversions a mezemi, neprázdným ordered
+source spanem a calls-shape guardem. Rozšířená pure protocol sada nyní **32 PASS
+v0.25s**; raw worker/pipeline gate tím stále není nahrazen.

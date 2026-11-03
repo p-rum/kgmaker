@@ -137,7 +137,8 @@ def test_explicit_protocol_preserves_two_distinct_operation_occurrences():
 
 
 @pytest.mark.parametrize('change', ['field', 'boxed', 'missing_hash', 'foreign_hash', 'literal_outside',
-    'target_identity', 'literal_reference', 'body_version', 'reserved_ref', 'nonblock_body'])
+    'target_identity', 'literal_reference', 'body_version', 'reserved_ref', 'nonblock_body',
+    'string_to_int', 'int_overflow', 'empty_literal', 'columns_reversed', 'long_to_int', 'char_overflow', 'calls_shape'])
 def test_malformed_or_unsupported_protocol_cannot_mint_operation_proof(change):
     from kgmaker.local_operations import validate_operations
     response, context = protocol_specimen(); body = response['bodies'][0]
@@ -152,9 +153,66 @@ def test_malformed_or_unsupported_protocol_cannot_mint_operation_proof(change):
     elif change == 'body_version': body['local_operation_version'] = True
     elif change == 'reserved_ref': node['_verified_local_operation'] = 'borrowed'
     elif change == 'nonblock_body': body['body'] = node
+    elif change == 'string_to_int':
+        node['value']['literal'].update(type='STRING_LITERAL', value='text')
+        node['value']['local_operation']['target_type'] = 'Ljava/lang/String;'
+    elif change == 'int_overflow': node['value']['literal']['value'] = 2 ** 70
+    elif change == 'empty_literal': node['value']['range']['end'] = node['value']['range']['start']
+    elif change == 'columns_reversed': node['value']['range']['end_column'] = 1
+    elif change == 'long_to_int':
+        node['value']['literal']['type'] = 'LONG_LITERAL'
+        node['value']['local_operation']['target_type'] = 'J'
+    elif change == 'char_overflow':
+        node['value']['literal'].update(type='CHAR_LITERAL', value=chr(0x10000))
+        node['value']['local_operation']['target_type'] = 'C'
+    elif change == 'calls_shape': node['calls'] = None
     before = deepcopy((response, context))
     with pytest.raises(ValueError): validate_operations(response, context)
     assert (response, context) == before
+
+
+@pytest.mark.parametrize('target,value,allowed', [('B', 127, True), ('B', 128, False),
+    ('S', -32768, True), ('S', -32769, False), ('C', 65535, True), ('C', -1, False),
+    ('J', 2 ** 31 - 1, True), ('D', 1, True)])
+def test_primitive_literal_assignment_conversion_boundaries(target, value, allowed):
+    from kgmaker.local_operations import validate_operations
+    response, context = protocol_specimen(); node = response['bodies'][0]['body']['statements'][0]
+    node['binding']['type'] = target
+    node['local_operation']['target_type'] = target
+    node['value']['literal']['value'] = value
+    if allowed:
+        assert len(validate_operations(response, context)) == 2
+    else:
+        with pytest.raises(ValueError): validate_operations(response, context)
+
+
+def test_workspace_proof_hash_undoes_only_the_verified_repository_wrapper():
+    from kgmaker.analysis_model import digest
+    from kgmaker.local_operations import _original_proof
+    from kgmaker.workspace import _qualified_evidence
+    proof = {'kind': 'SYMBOL_RESOLVED', 'source': 'method:one', 'target': 'method:one',
+        'method': 'method:one', 'compiler_symbol_id': 'method:one', 'cfg_block': 'cfg:one',
+        'context_id': 'ctx', 'context_ids': ['ctx'], 'source_file': 'src/App.java',
+        'local_operation_version': 1, 'target_binding': None, 'target_declaration': None}
+    proof['id'] = 'evidence:local-operation:' + digest(proof)
+    wrapped = _qualified_evidence('backend', proof)
+    assert _original_proof(wrapped, {'repo_id': 'backend'}) == proof
+    wrapped['repo_id'] = 'foreign'
+    with pytest.raises(ValueError): _original_proof(wrapped, {'repo_id': 'backend'})
+
+
+@pytest.mark.parametrize('value,allowed', [(3.4028235e38, True), (1.4e-45, True),
+    (1e39, False), (1e-60, False), (float('inf'), False)])
+def test_float_literal_json_rounding_preserves_java_bounds(value, allowed):
+    from kgmaker.local_operations import validate_operations
+    response, context = protocol_specimen(); node = response['bodies'][0]['body']['statements'][0]
+    node['binding']['type'] = 'F'; node['local_operation']['target_type'] = 'F'
+    node['value']['literal'].update(type='FLOAT_LITERAL', value=value)
+    node['value']['local_operation']['target_type'] = 'F'
+    if allowed:
+        assert len(validate_operations(response, context)) == 2
+    else:
+        with pytest.raises(ValueError): validate_operations(response, context)
 
 
 @pytest.fixture(scope='module', params=['k1', 'k2'])
