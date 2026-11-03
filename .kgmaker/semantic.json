@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "5ef4c8f1e6b386e22ff0386382cc9381efc2132d7bbdcfae86cc4e61a7800841",
-    "docs/acceptance-inventory.md": "97c91c136c4a5c326d36ea9b03babcc53335d37fd60de053a586739b25f87ff2",
+    "README.md": "66105513aa4d3c8887e9845833d2d1fc4b5a2d06d457ca9157018bd5d8983f2d",
+    "docs/acceptance-inventory.md": "fd4897a7cdd476b8984ebb0cbdf58bab811f4a6a65f99db4416c641173533a54",
     "docs/architecture.md": "068597a88000b88727c56285222b01f99a77b3b63b8bb098b3433b698bb4476d",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -59,6 +59,7 @@
     "docs/changes/72_makeGithubCiOptional.md": "fea3fe6fe161b50e5a7b94c0e4f05209cdc4ad47a4a6f21e61f436ef39afe36e",
     "docs/changes/73_buildLocalProcessPath.md": "74d0e1e2fa3e244010ada8959ae81bd015d09a7afdef2963b9b3dad3c0ce0d06",
     "docs/changes/74_isolatePersistenceRealms.md": "c5dd8437db45a6236a9a3aa591e09c3706d75af19be1261666ac1427493f116e",
+    "docs/changes/79_certifyLocalOperations.md": "325a4a1a2671ed1014f0426b1246165cc46bb733d7548dc63861d107c48f45d7",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "62af00ae69350ab313486db5b5eef53702f98b655def89b386067f32323324b2",
@@ -66,9 +67,9 @@
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
-    "docs/process-paths.md": "955abb3cf4546a142ee6bbb04449b613bdaaf1bb4b4868d25da70a2883ca42af",
+    "docs/process-paths.md": "3d54b65f962a8064662a67a57cf12d9d69c772b72cfd4dc8a15f5aa0b6f00d9f",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "116058401f835e5a601fab6b8ec0d084f79964be02a4a255e602583b4bff69bd",
+    "docs/production-analysis-progress.md": "8e69dbe9a5b144de04607848a06f7fcf86588e46ed5d8f99e30eddb4a3b50e5e",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -105,7 +106,7 @@
     "docs/tasks/T-022_render-topology-markdown.md": "05b5ace5179b529f3aaf1e62e38644c9a26fb84540bc96978215bb9692e27907",
     "docs/tasks/T-023_define-business-process-model.md": "9b07219c2cb039d083036133206fe41285a5780551e3cafcc2bea0daeb6fba28",
     "docs/tasks/T-024_discover-process-triggers.md": "bfab3b3e9438470e2abf29f7cd2e252e5e2e5e9e1e4c41f6b5d61d77c735526e",
-    "docs/tasks/T-025_build-local-process-path.md": "a506ea5d1bbbd6edad88577f7b77e787c0ef1d06e453fe1b9c07777e35b18b71",
+    "docs/tasks/T-025_build-local-process-path.md": "af061dc1ff6ee286d43b377208ec781840128bff5e83abcf094e2e5016336fa6",
     "docs/tasks/T-026_collapse-business-steps.md": "3cc8a45e8fe502e89032fbfe2da387801483c200d3db0824569ae1ea76e386d7",
     "docs/tasks/T-027_cross-http-process-boundary.md": "dc09217a3f7c194fe6303df716155ffc451f08b8430dcea94e0952cdd99100cb",
     "docs/tasks/T-028_cross-async-process-boundary.md": "906aab922be0c39f44721c3346138c5f30d069ecc86941e33abd51a394994778",
@@ -279,7 +280,7 @@
     "src/kgmaker/confluence_sync.py": "e76df309595a33c70aeed77c06d2fb9fad11425e3b5a7d354e9b2fe923c8e3c8",
     "src/kgmaker/confluence_sync_config.py": "9d7f26485ac1fde54898accb9b789c60243edcca8aee553931130fa31c55e0c0",
     "src/kgmaker/context.py": "f7391552b3b3cd79cb6e8f36312007ffcd3fe43f884796699c41a2223fc18f4b",
-    "src/kgmaker/control_flow.py": "8372a05bdc743d85416f55f8ee3a09574fdc1c4e0b4901eba88020245d1f7569",
+    "src/kgmaker/control_flow.py": "fb1d35d49b12ecbe81af4cd11a85d38d4628858f16fdf75252dfac94fbe2cfbf",
     "src/kgmaker/data_agent.py": "415ee77b71f47a73b4587f231d20b52e0de444ea0636027f29e4e89420acd20e",
     "src/kgmaker/data_check.py": "54368ea59a443a691306795ad4d6742a036ec77fe564677587f1f61514708201",
     "src/kgmaker/data_resources.py": "bb2e408d8d1edaa9e6d2b43b4a3d0ed09d92880ebaadcdfd64b9b240d25692b3",
@@ -290,16 +291,17 @@
     "src/kgmaker/flow.py": "5db5ddc99a051df4a3e0e00cb018ecb24370505875cddb70a32821b4fd0ca66d",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
     "src/kgmaker/framework.py": "5b57bcef66b4685b6e3147424446afdbc6c2fd72ef12931a10f201f448e3c932",
-    "src/kgmaker/graph_provider.py": "a4464f7908b358a371bb9a191b8a3155337266ffc95c7b6a4f517a00cbfe52b2",
+    "src/kgmaker/graph_provider.py": "03497e8b72f8b8ca0a6c6f4a19c8e1d8ad7392235a0f180dabe06cffc8447b7a",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
-    "src/kgmaker/inspection.py": "e6c812b77b52adee61d7301927cc82cbf58027a27c274a485f9b8eb349bc0ebf",
+    "src/kgmaker/inspection.py": "5eb8cb17e0649c363e709b7118f2ae63c1ac99c8d8f72139dc5ad2b333070868",
     "src/kgmaker/inspection_cli.py": "a17f05badfa124e20c58b4c4f9810cc8b417e7a2ae477620f20bf4d40f7f246f",
     "src/kgmaker/interfaces.py": "9d4ba520e100d7645716d3f2454ab8d1d4c7a9b7db4d4061270a51f3b478f97f",
     "src/kgmaker/kafka_bindings.py": "b6bcaf927f5f8554ea48c4967b1bdfca82867cea311cd74296611d87ca077bff",
+    "src/kgmaker/local_operations.py": "4e08c774db8a609520872e4773678e95f4d8da95aa32ac1d463215e90fba1619",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
     "src/kgmaker/model.py": "258ada88f0e57567a9cf30c0620043a31bd2b9aae1c97dd131273ad5e0ee0c82",
     "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
-    "src/kgmaker/process_paths.py": "a06b0282ca09c3bc1db8c4ac9e39f641a06da8e58810b297beb0566876434858",
+    "src/kgmaker/process_paths.py": "1450605b8d2969c1c3f3d0be65e9b4a83f81840e40f9543cfc3e4ad0f5668ea4",
     "src/kgmaker/process_triggers.py": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16",
     "src/kgmaker/project_cli.py": "144fbe1df830a4fe55e5743aa2e3d7e2b58ca8c968a6974bd29ef1e7a0a45482",
     "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
@@ -313,11 +315,11 @@
     "src/kgmaker/templates.py": "609db10e9bdd41eebeeea97036105b6c5d088ab492e1ab6d7b0e68464633d327",
     "src/kgmaker/test_analysis.py": "ef35fb4faa53bbccb95e792014da22d3410c5637264a057110a3934294c35fa2",
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
-    "src/kgmaker/views.py": "b4587b0c26d3255d40ab5721b388f2c693a42094b2723a2d5e6ae64e2cddec97",
+    "src/kgmaker/views.py": "a70238085cb55b9ccc76203fbb149000764345d3a8383988b9f405c148dd72e2",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
     "src/kgmaker/workflow.py": "407dcaa5874aedd26866d612e17912c3890cf399c1150428c543afe138aed3c7",
-    "src/kgmaker/workspace.py": "b2f74f337e19b7cca95408f146a2f844b4324aaf5319699e6fab3ec0949d3fdd",
+    "src/kgmaker/workspace.py": "955684fc1bc42e29d4e4224d627c36f525db1a17fcf394983b854f2fef5ea44f",
     "src/kgmaker/workspace_cli.py": "ce3c209ce7079ebd186c20f6e17d0d8cf98cd17c65762be1d9e0db1c7e90cd36",
     "tests/fixtures/jvm-golden/Advanced.kt": "ca314f687667241a465d056cb028ebfb1399dbbeb54de04dc1186abff0e5bb8a",
     "tests/fixtures/jvm-golden/Broken.java": "31a664c99fbb21b4d914dd4d94fa13b0885ab03fd386d3b32ccec6461b1cfb33",
@@ -362,6 +364,7 @@
     "tests/test_k2_backend.py": "c412a9848486eb05491eabe25841e37482f8f623eddf38f99cd0cf457f92c2dd",
     "tests/test_kafka_bindings.py": "32f1fa4da22ea3eec4149229e854448abe9d693baecc17c1759112e2e9e20e85",
     "tests/test_kotlin_build_options.py": "5cc92558d4af44b33e9b1e0c89cb31f3c4171f8723d15500a326ceaf47806507",
+    "tests/test_local_operation_proofs.py": "8a0efab9bf9398dd05f812a484fc399fdbd7bd20bb8de924bc6a271de1d5f831",
     "tests/test_mandatory_worker_ci.py": "fb462c8b22f4e3a64894ea9af17df137bcf130e1666f18f7c6e9cfc028ca4dee",
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_methodology_conflicts.py": "e84cdd12916cbe1320c8835b3daf1a2a9f1f5c0167b4712f95b8ada81b8c9b73",
@@ -407,21 +410,18 @@
     "workers/jvm/k2/KotlinFrontend.kt": "dc1ba29445df6737843ef450825a6ddd7f3ad560d42760a838ef7589730d1843",
     "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java": "b663fbe88f93b9e656a7ae34ecfbb29c66aca72eb1118278e90dab389ab7963e",
     "workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java": "7d74d465954860797c59724594223ebcc6ec892fc88fc3f096941eb7b7aa83ac",
-    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "8664a31e44018452d14595a2c8372525419ecf7e3b2fbe68914ede062bbd81f3",
+    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "7e19cd02ebb2a14728d2c7ab779c8ca38da75f5348df5f05cbc0bd8363a54f0b",
     "workers/jvm/src/main/java/org/kgmaker/worker/RegistrationFacts.java": "9db1fe4417f58a618418c67819fd49eeb1b325d2ab7ec6807f3a65bc9656af34",
     "workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java": "083177824a39304ba4ac24c0ce8fcde76515ec56973e6e12f50edac7d9e82fea",
     "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java": "7eed18dd31ff990a764723e6a75129ddaed20a15e4135a68b5a85057a3214410",
     "workers/jvm/src/main/java/org/kgmaker/worker/State.java": "7004fca4970adaad869dd91cd63707640b117f1241bbcae26b40cee870915728",
-    "workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt": "abf47e3511a3bfe627d437551c3fb67b757f42584ab76dd413e3e4839129d905",
+    "workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt": "75db127f72ac57322391d1a3a606361f3618a12c6341738d9c657f05b7618189",
     "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt": "bb47dd99a2423eec665b5c01df1fa68086144a4cae71da65938d5e74545c3f8a",
     "workers/typescript/input_snapshot.cjs": "a407f4f525bb03a479888aa8e420a67eb455dd703844511b4c487328183aabea",
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "3ae75f1708d0f383a306dd65740413720b83375dbc61028597a4a183fa371341",
     "workers/typescript/ui_events.cjs": "29a5c8cb4dfd9f43061b41b33e4f0aa97190743185e0999f4ef07e91832f72ee",
-    "workers/typescript/worker.cjs": "02b43af017effd5810e9533db6282fa6e72bbdf9e68ad253710f726b3651af47",
-    "docs/changes/79_certifyLocalOperations.md": "664bdfdc4cc5b85a83f4e66e8c37d86d682ff1094ed3d286b6c4cda4c7e7afcb",
-    "src/kgmaker/local_operations.py": "a1bd78566e42af29a0c39da87ce9b44674713c826366539dfacaa452a77f6672",
-    "tests/test_local_operation_proofs.py": "45f01ad7322345c10b5b24060f07bd5b0046aeafbacada9fc6700623e0bbfadf"
+    "workers/typescript/worker.cjs": "02b43af017effd5810e9533db6282fa6e72bbdf9e68ad253710f726b3651af47"
   },
   "nodes": [
     {
@@ -502,20 +502,6 @@
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
-      "id": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
-      "name": "Bounded local technical process paths",
-      "source_file": "docs/process-paths.md",
-      "source_line": 1,
-      "summary": "Pure typed adaptation reuses existing source CFG traversal and trigger evidence; opposite branches, original call-sites and explicit root/depth/dispatch/body boundaries remain separate from runtime or business claims."
-    },
-    {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 186,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
@@ -584,6 +570,20 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 1068,
       "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
+    },
+    {
+      "id": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
+      "name": "Bounded local technical process paths",
+      "source_file": "docs/process-paths.md",
+      "source_line": 1,
+      "summary": "Pure typed adaptation reuses existing source CFG traversal and trigger evidence; opposite branches, original call-sites and explicit root/depth/dispatch/body boundaries remain separate from runtime or business claims."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 186,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
       "id": "concept:docs/process-paths.md:compiler_bound_local_operations",
@@ -765,46 +765,6 @@
       "evidence": "callbackProof bounds callable expression evidence and worker parameter invocations retain incomplete binding candidates."
     },
     {
-      "source": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
-      "target": "file:src/kgmaker/process_paths.py:process_paths.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-paths.md",
-      "source_line": 3,
-      "evidence": "The documented build_local_process function adapts selected supplied T024/compiler snapshots into a T023 ProcessView without rebuilding or executing a CFG."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
-      "target": "concept:docs/typescript-freshness.md:scoped_compiler_filesystem_discovery",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/graph_provider.py",
-      "source_line": 158,
-      "evidence": "Offline context validation dispatches the versioned TypeScript snapshot to filesystem-only replay."
-    },
-    {
       "source": "file:src/kgmaker/data_resources.py:data_resources.py",
       "target": "concept:docs/architecture.md:realm_bound_data_resources",
       "kind": "implements",
@@ -813,56 +773,6 @@
       "source_file": "src/kgmaker/data_resources.py",
       "source_line": 28,
       "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::333",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 186,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 188,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -893,16 +803,6 @@
       "source_file": "tests/test_default_body_mapping.py",
       "source_line": 1,
       "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
-      "source_line": 114,
-      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
     },
     {
       "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
@@ -1035,26 +935,6 @@
       "evidence": "The adapter checks selected official tag/factory declarations and compiler-symbol binding writes before static handler evidence; members and dynamic bindings remain unknown."
     },
     {
-      "source": "file:src/kgmaker/inspection.py:inspection.py",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/inspection.py",
-      "source_line": 492,
-      "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
-    },
-    {
-      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/graph_provider.py",
-      "source_line": 98,
-      "evidence": "Offline React context validation rejects legacy rules; existing captured input replay verifies package/declaration contents."
-    },
-    {
       "source": "file:tests/test_ui_events.py:test_ui_events.py",
       "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
       "kind": "validates",
@@ -1175,16 +1055,6 @@
       "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
     },
     {
-      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/control_flow.py",
-      "source_line": 196,
-      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
-    },
-    {
       "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "kind": "validates",
@@ -1263,16 +1133,6 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 1190,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
@@ -1366,16 +1226,6 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1068,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "target": "file:src/kgmaker/feature.py:feature.py",
       "kind": "implements",
       "confidence": "EXTRACTED",
@@ -1405,8 +1255,158 @@
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
+      "source": "concept:docs/process-paths.md:bounded_local_technical_process_paths",
+      "target": "file:src/kgmaker/process_paths.py:process_paths.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-paths.md",
+      "source_line": 3,
+      "evidence": "The documented build_local_process function adapts selected supplied T024/compiler snapshots into a T023 ProcessView without rebuilding or executing a CFG."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
+      "target": "concept:docs/typescript-freshness.md:scoped_compiler_filesystem_discovery",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/graph_provider.py",
+      "source_line": 154,
+      "evidence": "Offline context validation dispatches the versioned TypeScript snapshot to filesystem-only replay."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::342",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 143,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 186,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 188,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 114,
+      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
+    },
+    {
+      "source": "file:src/kgmaker/inspection.py:inspection.py",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/inspection.py",
+      "source_line": 515,
+      "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
+    },
+    {
+      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/graph_provider.py",
+      "source_line": 104,
+      "evidence": "Offline React context validation rejects legacy rules; existing captured input replay verifies package/declaration contents."
+    },
+    {
+      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/control_flow.py",
+      "source_line": 192,
+      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1068,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
       "source": "concept:docs/process-paths.md:compiler_bound_local_operations",
-      "target": "function:src/kgmaker/local_operations.py:validate_operations::200",
+      "target": "function:src/kgmaker/local_operations.py:validate_operations::202",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1416,7 +1416,7 @@
     },
     {
       "source": "concept:docs/process-paths.md:compiler_bound_local_operations",
-      "target": "function:src/kgmaker/local_operations.py:materialize_operations::219",
+      "target": "function:src/kgmaker/local_operations.py:materialize_operations::221",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1426,7 +1426,7 @@
     },
     {
       "source": "concept:docs/process-paths.md:compiler_bound_local_operations",
-      "target": "function:src/kgmaker/local_operations.py:validated_cfg_operations::299",
+      "target": "function:src/kgmaker/local_operations.py:validated_cfg_operations::301",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
