@@ -388,3 +388,16 @@ build-aware/framework, T005/T008/T009/T015/T023 a mandatory gates: **198 PASS,
 2 actual compiler T015 deselected v4.73s**. XML `/workspace/factory-mainW02-pure.xml`.
 Nový full ani opakovaný compiler batch po této Python-only integraci neproběhl;
 root vyhodnotí potřebné další kontroly při nezávislém exact-head review.
+
+## Refresh po HTTP katalogu
+
+Finální integrační parent `c3825ee3341bdbbfc0f002a7eda161e5f437d85f` přidává
+T010 HTTP katalog a bounded raw-source capture. Domain/interfaces/scanner/workspace
+jsou přesně main; Framework/JVM Factory proof se nemění. Workflow zachovává
+HTTP API bootstrap, oba HTTP moduly i registrační acceptance modul.
+Post-refresh pure batch s HTTP katalogem, scanner/workspace a předchozími
+framework/projection kontrakty: **265 PASS,2 actual T015 deselected v13.29s**,
+XML `/workspace/factory-mainHttp-pure.xml`. Žádný nový full ani actual compiler
+batch se kvůli této nekolidující integraci neopakoval. Předchozí vlastní combined
+build má stále byte-identické worker source a lock inputs. Nezávislé final review
+musí zkontrolovat novou base/head dvojici před merge.
