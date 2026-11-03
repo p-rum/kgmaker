@@ -2,9 +2,9 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
-    "README.md": "2c5489878286dc54a4b1f19962d81bed1a4d14926d0dec5b1eebc28bcec06aa6",
-    "docs/acceptance-inventory.md": "12fe1dde060c310f621e623a7ef60de65a3332cb08df5cbcb27d653f50f56622",
-    "docs/architecture.md": "068597a88000b88727c56285222b01f99a77b3b63b8bb098b3433b698bb4476d",
+    "README.md": "b7c5bc4a61971be5c0c5d649024c3bce682ce1f00d8f028cd42630d39c77d259",
+    "docs/acceptance-inventory.md": "53f660eeebd6fbb209388457acc0fe70bd98498a4ef9ff42dba8fa61c5d5454b",
+    "docs/architecture.md": "6a45717183ce4f1bd529cd5a1f133322988d793a508a37bde36c6ebc3914ecce",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
     "docs/changes/10_specifyHighLevelProjectViews.md": "b3fec8d3326b61942a4db84c74b9d97db63de3f1a0c5520df360c50605534253",
@@ -63,6 +63,7 @@
     "docs/changes/79_certifyLocalOperations.md": "2879af3158e31273726a71e92f9d8b5eabfde298a888bef6d7f493852970cc2f",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/82_collapseBusinessSteps.md": "26164cddc735066f61b091db30898c6d107455f11bc30e7fdeb8645646f13587",
+    "docs/changes/88_preserveAmbiguousHttpProviders.md": "b4f14bc25c57d84a53f2a05c92fac0466acaf4503d59a310889568eb30ac3551",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "62af00ae69350ab313486db5b5eef53702f98b655def89b386067f32323324b2",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -72,7 +73,7 @@
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-paths.md": "345acc7248921457a8dc0749de80d247e0a7a8ba6af12a21c32715172c2e6df5",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "5b45302637974f01e4c4bafd62db905cf95456b9e4f07f77b9c0a1e1754b7564",
+    "docs/production-analysis-progress.md": "899a36e964991c67e4fd5306e9ba89f62dd74de00c6d858dd1627ec9f1ac3b8d",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
@@ -94,7 +95,7 @@
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
     "docs/tasks/T-008_project-service-inventory.md": "75182fe1f524c0355135f06a64a9f07d8a165448c2bf487c76e915900359bcd6",
     "docs/tasks/T-009_propagate-view-evidence.md": "1d9791ff00a0ab120fc7ed29c1d1cb57709da12d221eff9026a48924a1965309",
-    "docs/tasks/T-010_catalog-http-providers.md": "74032a172a8b0a9cf89b861ec63fb4fe184d21d43a861c90386a2132f10cc8ea",
+    "docs/tasks/T-010_catalog-http-providers.md": "541e93079a5aa2653229c5301a8e369db72b625a06587633e95b7d0b6675b62d",
     "docs/tasks/T-011_catalog-http-consumers.md": "1bf37c144366a24de7e451a2328736e59f9448a74e8edf59e9bc01e3805d6ea2",
     "docs/tasks/T-012_catalog-kafka-interfaces.md": "0d144fc72316947c1b3b20ee21efc162618971682022cff80f0e911c4ad2c463",
     "docs/tasks/T-013_attach-interface-contracts.md": "b0d1b0b8977f3b4df0dc5b0de8deb4658561ed9ce74b905241d1968bc5e7c752",
@@ -299,7 +300,7 @@
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "5eb8cb17e0649c363e709b7118f2ae63c1ac99c8d8f72139dc5ad2b333070868",
     "src/kgmaker/inspection_cli.py": "a17f05badfa124e20c58b4c4f9810cc8b417e7a2ae477620f20bf4d40f7f246f",
-    "src/kgmaker/interfaces.py": "3d9d3cdf38b35a68f5b7ede1e4e4984286171955520ca5ae158f4844a026f3c4",
+    "src/kgmaker/interfaces.py": "1f4208f9bb2dd618ab40aeff2ad76fe2c1e9150795c37d79c4eba80053d7c102",
     "src/kgmaker/kafka_bindings.py": "b6bcaf927f5f8554ea48c4967b1bdfca82867cea311cd74296611d87ca077bff",
     "src/kgmaker/local_operations.py": "4e08c774db8a609520872e4773678e95f4d8da95aa32ac1d463215e90fba1619",
     "src/kgmaker/memory.py": "3eb5b91b21959ab2dbdb76925dcb6cef96bb307bc7d5228477e5ff1438221f09",
@@ -361,6 +362,7 @@
     "tests/test_gradle_variants.py": "2607c4bbf9a980013dd5dc571c31a4f120c7fef2c572a33c4cc44d18943bee1a",
     "tests/test_graph_provider.py": "646b365e507b1eeb89cc2aa1c737feadaeb18810488df093b76472e18bffe98a",
     "tests/test_http_client_execution.py": "b1299fb227d5b8baabbdb285864969338ab79c3d032798cf9ccef7177602140c",
+    "tests/test_http_provider_ambiguity.py": "c53fac00c7609992d884d7b7b5b3e4438d052ae0d615bb8e27bed6ff89c9532e",
     "tests/test_http_provider_privacy_integration.py": "08757662e386097fb867ec3e26dc04c1cdef26bcea90c5989047c4c0ee9453ba",
     "tests/test_init.py": "f25404edf1cbde6f2d7f7f312a7b1e9e1d00b54b50d5a6f4f58d5dd310bdeaaf",
     "tests/test_inspection_contract.py": "4370d83b2f97caa74414dc489ae7c85eb6b392db00c7af86d58dd5ce9f519db5",
@@ -466,48 +468,6 @@
       "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
     },
     {
-      "id": "concept:docs/architecture.md:source_code_is_authoritative",
-      "name": "Source code is authoritative",
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "name": "Explicit workspace service ownership",
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "name": "Explicit service inventory projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
-    },
-    {
-      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "name": "View evidence and coverage",
-      "source_file": "docs/architecture.md",
-      "source_line": 138,
-      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:realm_bound_data_resources",
-      "name": "Realm-bound data resources",
-      "source_file": "docs/architecture.md",
-      "source_line": 211,
-      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
-    },
-    {
-      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "name": "Scoped HTTP provider projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 236,
-      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
@@ -592,13 +552,6 @@
       "summary": "Pure typed adaptation reuses existing source CFG traversal and trigger evidence; opposite branches, original call-sites and explicit root/depth/dispatch/body boundaries remain separate from runtime or business claims."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 186,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/process-paths.md:compiler_bound_local_operations",
       "name": "Compiler-bound local operations",
       "source_file": "docs/process-paths.md",
@@ -611,6 +564,55 @@
       "source_file": "docs/process-paths.md",
       "source_line": 129,
       "summary": "Pure versioned ProcessView grouping checks existing compiler operation certificate integrity, retains unresolved static adjacency and exactly restores ordered origins, topology and provenance without execution or semantic approval."
+    },
+    {
+      "id": "concept:docs/architecture.md:source_code_is_authoritative",
+      "name": "Source code is authoritative",
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "name": "Explicit workspace service ownership",
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "name": "Explicit service inventory projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
+    },
+    {
+      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "name": "View evidence and coverage",
+      "source_file": "docs/architecture.md",
+      "source_line": 138,
+      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:realm_bound_data_resources",
+      "name": "Realm-bound data resources",
+      "source_file": "docs/architecture.md",
+      "source_line": 211,
+      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
+    },
+    {
+      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "name": "Scoped HTTP provider projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 236,
+      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 186,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
   "edges": [
@@ -695,36 +697,6 @@
       "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
     },
     {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
-    },
-    {
-      "source": "concept:docs/architecture.md:source_code_is_authoritative",
-      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
-    },
-    {
       "source": "file:tests/test_typescript_callback_projects.py:test_typescript_callback_projects.py",
       "target": "concept:docs/typescript-callbacks.md:bounded_static_callback_evidence",
       "kind": "validates",
@@ -745,26 +717,6 @@
       "evidence": "Local callback limit tests retain explicit partial evidence and invalid candidate publication preserves the last store."
     },
     {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 136,
-      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t009_propagate_view_evidence.py",
-      "source_line": 70,
-      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
-    },
-    {
       "source": "file:workers/typescript/worker.cjs:worker.cjs",
       "target": "concept:docs/typescript-callbacks.md:bounded_static_callback_evidence",
       "kind": "implements",
@@ -773,16 +725,6 @@
       "source_file": "workers/typescript/worker.cjs",
       "source_line": 148,
       "evidence": "callbackProof bounds callable expression evidence and worker parameter invocations retain incomplete binding candidates."
-    },
-    {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -1265,36 +1207,6 @@
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 225,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
       "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
       "target": "concept:docs/typescript-freshness.md:scoped_compiler_filesystem_discovery",
       "kind": "uses",
@@ -1303,16 +1215,6 @@
       "source_file": "src/kgmaker/graph_provider.py",
       "source_line": 158,
       "evidence": "Offline context validation dispatches the versioned TypeScript snapshot to filesystem-only replay."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::342",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
       "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
@@ -1355,16 +1257,6 @@
       "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
     },
     {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
       "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "target": "file:src/kgmaker/workspace.py:workspace.py",
       "kind": "implements",
@@ -1383,46 +1275,6 @@
       "source_file": "docs/process-paths.md",
       "source_line": 3,
       "evidence": "The documented build_local_process function adapts selected supplied T024/compiler snapshots into a T023 ProcessView without rebuilding or executing a CFG."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 186,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 188,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source": "concept:docs/process-paths.md:compiler_bound_local_operations",
@@ -1473,6 +1325,156 @@
       "source_file": "tests/test_t026_collapse_business_steps.py",
       "source_line": 12,
       "evidence": "The actual Javac workspace/process test collapses six certified operations and checks exact expansion, determinism and unresolved syntax confidence; the remaining matrix covers boundaries, tampering and immutable inputs."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
+    },
+    {
+      "source": "concept:docs/architecture.md:source_code_is_authoritative",
+      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 136,
+      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t009_propagate_view_evidence.py",
+      "source_line": 70,
+      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+    },
+    {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 28,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 225,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::342",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 143,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 186,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 188,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     }
   ],
   "episodes": [

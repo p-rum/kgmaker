@@ -689,3 +689,10 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+
+### T010 rev2 — colliding normalized variants (candidate)
+
+AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
+two service realms, method/sibling separation, deterministic order and duplicate
+records, YAML distinct locators and immutable caller inputs.34pure/providerPASS;
+actual/compiler/full gates pending. Existing legacy fixtures remain covered.

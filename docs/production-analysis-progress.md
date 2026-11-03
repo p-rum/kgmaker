@@ -748,3 +748,12 @@ Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without 
 tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
+
+## T010 normalized variant correction (2026-11-03)
+
+Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
+DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
+candidate/provenance sets; exact duplicates and YAML distinct locators retain
+existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
+Actual compiler regression/full/final review remain pending; no execution or
+deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
