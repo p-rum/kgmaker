@@ -126,3 +126,25 @@ platform SKIP není mandatory compiler PASS. Žádný CI retry ani merge neprob�
 
 Nepublikovaný change note57 byl přejmenován na62 kvůli nově zjištěné kolizi
 s publikovaným T046; historické immutable memory episodes se nepřepisují.
+
+## Obnovení explicitního prerequisite stacku 2026-11-03
+
+Nový stack parent je přesný provisional Draft PR37 HEAD
+`5d582025ff90a855fa1cd04143e4d98b8fa19c24`, větev
+`feat/t003-s04-03-coroutine-source-mapping`. Obsahuje current mainc76 s JPA,
+HTTP a factory pravidly a samostatně ověřovaný coroutine/member-extension fix.
+PR52 zůstává explicitně závislé na merge PR37. Původní fe36/c886 stack a646/10
+full jsou historický audit, nikoli nová validace této parent kombinace.
+
+Všech deset vlastních corpus souborů (ručně anotované expected, osm fixture/doc
+souborů a test module) je byte-identických7bdb5cbc. Veškerý Python runtime a
+JVM source/build/lock soubory přesně odpovídají novému PR37 parentu; nevzniká
+nová implementace workeru. Společné acceptance/CI seznamy se zachovávají unionem.
+Generované views vznikají CLI a semantic historie zachovává parent prefix.
+
+Nové actual21 corpus/shared regression testy jsou PENDING. Neproběhl nový build,
+copy JAR ani implicitní bootstrap. Případný donor smí být použit až po dokončení
+skutečného current-parent vlastního buildu s receipt, source/lock a JAR hash
+porovnáním; samotná shoda checkout source nestačí. GH CI je volitelné podle
+uživatelské revize T045, ostatní acceptance, závislosti a nezávislé review zůstávají
+povinné. Nový full se kvůli této source-identické parent kompozici neplánuje.
