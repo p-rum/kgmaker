@@ -19,7 +19,7 @@ from .process_triggers import (_canonical_symbol, _annotations, VERSION as TRIGG
 from .workspace import qualified
 from .views import project, _summarize_view_evidence
 
-VERSION = 'local-process-path-1'
+VERSION = 'local-process-path-2-operations'
 
 
 class ProcessPathError(ValueError):
@@ -248,6 +248,12 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
         raise
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as error:
         raise ProcessPathError('INVALID_PROCESS_INPUT', 'Malformed graph or trigger inventory') from error
+    from .local_operations import validated_cfg_operations
+    try:
+        operation_proofs = validated_cfg_operations(replace(selected, cfgs=list(cfgs.values())), context)
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError) as error:
+        raise ProcessPathError('LOCAL_OPERATION_PROOF_MISMATCH', 'Invalid selected compiler operation evidence') from error
+    operation_by_id = {proof['id']: proof for proof in operation_proofs.values()}
     diagnostics = []; technical_nodes = []; technical_edges = []
     attrs = deepcopy(dict(trigger.attributes));attrs.update(scope=inventory.scope,context_ids=[context['id']])
     if max_nodes == 1:
@@ -279,10 +285,37 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
             attributes={'scope':inventory.scope,'context_ids':[context['id']], 'method':method,
                 'call_site_ids':list(block.get('call_site_ids',[]))}
             if reason or kind=='unresolved_boundary':attributes['boundary_reason']=reason or 'unsupported CFG block'
+            operation = None
+            if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+                operation_refs = block.get('local_operation_evidence_ids', [])
+                if len(operation_refs) != 1 or operation_refs[0] not in operation_by_id:
+                    _fail('LOCAL_OPERATION_PROOF_MISMATCH', 'Expanded operation lost its admitted CFG proof')
+                operation = operation_by_id[operation_refs[0]]
+                if (operation['cfg_block'] not in block.get('original_ids', []) or operation['method'] != method
+                        or operation['source_file'] != block.get('source_file')
+                        or operation['source_range'] != block.get('source_range')
+                        or operation['operation_ref'] != block.get('local_operation_ref')):
+                    _fail('LOCAL_OPERATION_PROOF_MISMATCH', 'Expanded operation borrows a different CFG occurrence')
+            resolution = 'UNRESOLVED'
+            if operation is not None and kind == 'basic_block' and not reason:
+                attributes['cfg_evidence_refs'] = list(refs)
+                identity = 'ev:process-operation:' + operation['id']
+                provenance[identity] = {'id': identity, 'original_id': operation['id'],
+                    'source_id': method, 'source_file': operation['source_file'],
+                    'source_range': deepcopy(operation['source_range']), 'content_hash': operation['sha256'],
+                    'context_ids': [context['id']], 'scope': inventory.scope,
+                    'evidence_kind': 'SYMBOL_RESOLVED', 'freshness': 'CURRENT', 'polarity': 'SUPPORTING',
+                    'original_relation': 'local_computation', 'local_operation_proof': deepcopy(operation)}
+                refs = (identity,)
+                summary = _summarize_view_evidence(refs, provenance)
+                attributes['local_operation'] = {'schema_version': 1, 'operation': operation['operation'],
+                    'target_type': operation['target_type'], 'original_proof_id': operation['id'],
+                    'cfg_block': operation['cfg_block'], 'operation_ref': operation['operation_ref']}
+                resolution = 'RESOLVED'
             technical_nodes.append(ViewNode(block['id'],kind,block.get('label',kind),
                 original_ids=tuple(sorted(set(block.get('original_ids',[])+[method]))),owner_id=trigger.owner_id,
                 evidence_refs=refs,attributes=attributes,evidence_kinds=tuple(summary['evidence_kinds']),
-                resolution_status='UNRESOLVED',freshness=summary['freshness'],
+                resolution_status=resolution,freshness=summary['freshness'],
                 supporting_refs=tuple(summary['supporting_refs']),contradicting_refs=tuple(summary['contradicting_refs']),
                 unknown_refs=tuple(summary['unknown_refs'])))
         by_id={n.id:n for n in technical_nodes}
@@ -297,7 +330,8 @@ def _build_local_process(graph, trigger_inventory, trigger_id, *, process_id, re
                     'context_ids':[context['id']],'scope':inventory.scope,'evidence_kind':original['kind'],
                     'freshness':'CURRENT','polarity':original.get('polarity','UNKNOWN'),
                     'original_relation':original['relation'],'original_target':original['target']}
-            refs=tuple(sorted(set(source.evidence_refs)|set(target.evidence_refs)|set(call_refs)))
+            refs=tuple(sorted(set(source.evidence_refs)|set(target.evidence_refs)|set(call_refs)
+                |set(source.attributes.get('cfg_evidence_refs', []))|set(target.attributes.get('cfg_evidence_refs', []))))
             summary=_summarize_view_evidence(refs,provenance);kind=e['kind'] if e['kind'] in TRANSITION_KINDS else 'unknown'
             attributes={'scope':inventory.scope,'context_ids':[context['id']], 'loop_back':e.get('loop_back',False)}
             if call_site is not None:attributes['call_site']=call_site

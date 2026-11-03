@@ -73,7 +73,8 @@ def _selection_key(context: dict) -> str:
         # legacy contexts remain readable with HTTP coverage UNKNOWN.
         payload["framework_rule_versions"] = {key: value for key, value in payload["framework_rule_versions"].items() if key != "http"}
     if context.get("language") == "jvm":
-        payload.update(kotlin_backend=context.get("kotlin_backend"),
+        payload.update(persistence_schema=context.get("persistence_schema"), flyway_target=context.get("flyway_target"),
+                       kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
     if isinstance(recorded, str):
         # K2 briefly added two irrelevant None fields to frontend selectors.
@@ -100,6 +101,10 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if context["return_flow_rule_version"] != RETURN_VERSION:
             raise WorkerError("STALE_INDEX: return/consumer rules changed; inspect again", "STALE")
 
+    if "local_operation_rule_version" in context:
+        from .local_operations import VERSION as LOCAL_OPERATION_VERSION
+        if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:
+            raise WorkerError("STALE_INDEX: local operation rules changed; inspect again", "STALE")
     if context.get("language") == "typescript" and context.get("ui_framework") == "react":
         from .inspection import UI_RULE_VERSION
         if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
@@ -120,6 +125,19 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             valid_conditions = False
         if not valid_conditions:
             raise WorkerError("STALE_INDEX: Spring condition configuration changed; inspect again", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "jpa" in rules:
+        from .framework import JPA_RULE_VERSION
+        from .schema_replay import persistence_selection
+        from .analysis_model import digest
+        if rules['jpa'] != JPA_RULE_VERSION:
+            raise WorkerError('STALE_INDEX: persistence realm rules changed; inspect again', 'STALE')
+        try:
+            valid_realm = context.get('persistence_selection_hash') == digest(persistence_selection(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_realm = False
+        if not valid_realm:
+            raise WorkerError('STALE_INDEX: persistence selection changed; inspect again', 'STALE')
+
     if context.get("language") == "jvm" and isinstance(rules, dict) and "http" in rules:
         from .http_execution import VERSION as HTTP_VERSION
         from .analysis_model import digest
@@ -264,6 +282,12 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     evidence_ids = {identity for edge in edges for identity in edge.evidence_ids}
     for item in [*fresh.call_sites, *old_sites, *fresh.cfgs, *old_cfgs]:
         evidence_ids.update(item.get("evidence_ids", []))
+    for cfg in [*fresh.cfgs, *old_cfgs]:
+        for block in cfg.get('blocks', []):
+            if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+                refs = block.get('local_operation_evidence_ids', [])
+                if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs):
+                    evidence_ids.update(refs)
     contexts = []
     seen_contexts = set()
     for context in [*fresh.contexts, *preserved_contexts]:

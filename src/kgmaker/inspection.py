@@ -248,6 +248,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if build_context:
         value.update(build_context)
     if language == "jvm":
+        from .schema_replay import persistence_selection
+        value["persistence_selection_hash"] = digest(persistence_selection(value))
         value["source_snapshot_version"] = "selected-source-set-2"
         value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
@@ -268,6 +270,9 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
         value["framework_rule_versions"] = {"react": UI_RULE_VERSION}
     from .return_flow import VERSION as RETURN_VERSION
     value["return_flow_rule_version"] = RETURN_VERSION
+    if language == "jvm":
+        from .local_operations import VERSION as LOCAL_OPERATION_VERSION
+        value["local_operation_rule_version"] = LOCAL_OPERATION_VERSION
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
@@ -339,8 +344,10 @@ def validate_response(response: dict, selected_context: dict):
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
 
     from .return_flow import validate_return_ir
+    from .local_operations import validate_operations
     try:
         validate_return_ir(response, selected_context)
+        validate_operations(response, selected_context)
     except ValueError as error:
         raise WorkerError(str(error), "INVALID_PROTOCOL") from error
 
@@ -461,7 +468,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         boundary = "boundary:" + digest({"diagnostic": diagnostic, "context": context_id})
         nodes[boundary] = Node(boundary, "unresolved_boundary", diagnostic["code"], path, scope=c.scope, role="unknown", origin=c.origin)
         relation(file_nodes[path], boundary, "unresolved_boundary", diagnostic, "UNRESOLVED")
-    cfgs = [from_body(body) for body in response["bodies"]]
+    from .local_operations import annotated_bodies, materialize_operations
+    verified_bodies, local_operations = annotated_bodies(response, selected_context)
+    cfgs = [from_body(body) for body in verified_bodies]
     cfgs.extend(response.get("bytecode_cfgs", []))
     body_metadata = {b["method"]: b for b in response["bodies"]}
     for cfg in cfgs:
@@ -477,6 +486,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
         base.contexts + [selected_context], base.diagnostics + selected_context.get("diagnostics", []) + classifier.diagnostics + ui_diagnostics + [d for cfg in cfgs for d in cfg.get("diagnostics", [])],
         [evidence[i] for i in sorted(evidence)], metadata, call_sites, cfgs)
     from .return_flow import augment_return_flow
+    graph = materialize_operations(graph, local_operations, selected_context)
     graph = augment_return_flow(graph, sanitize(response["bodies"]), selected_context)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
