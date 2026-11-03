@@ -1,6 +1,6 @@
 # Aktuální stav a zbývající práce
 
-## Merge politika po uživatelské změně 2026-10-27
+## Merge politika po uživatelské změně 2026-11-03
 
 [T045 revize 2](tasks/45_addCodeReviewAgent.md) dovoluje merge bez GH CI, pokud
 pro aktuální base/head projdou všechny ostatní povinné kontroly a nezávislé

@@ -117,7 +117,7 @@ task. Stav `SPECIFICATION` se nemění.
 
 ## GH CI a ostatní merge kontroly
 
-Podle výslovné uživatelské revize T045 z 2026-10-27 je GH CI nepovinné, pokud
+Podle výslovné uživatelské revize T045 z 2026-11-03 je GH CI nepovinné, pokud
 projde veškerá ostatní acceptance, skutečné lokální testy/toolchain a nezávislé
 review aktuálního base/head. Stav CI se uvede pravdivě; konkrétní chybu z CI,
 chybějící jiný důkaz, draft, konflikt či nesplněnou závislost nelze přehlédnout.
