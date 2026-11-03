@@ -707,3 +707,13 @@ Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 m
 Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
+
+## T011 — typed HTTP consumer catalogue
+
+Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
+explicit ownership/context selection and evidence buckets. Distinct request and
+Feign terminal callers remain distinct; static intent is not runtime execution.
+Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
+strict full at b1163fc passed1373 tests (10 optional skips); current9f6605 parent
+focus passed205 tests without skips. Final current-pair independent review is pending. Coverage remains PARTIAL,
+remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).

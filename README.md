@@ -736,3 +736,13 @@ topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+
+### HTTP consumer catalogue (T011)
+
+`kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
+source_coverage=coverage)` projects selected typed W06 requests into the shared
+interfaces view. Lazy definitions remain distinct from static terminal intent;
+Feign caller occurrences and same-path calls keep their original IDs. No client
+is run, and runtime/remote service binding stays unknown. See
+[HTTP consumers](docs/http-consumers.md) for the explicit snapshot example and
+proof/compatibility boundaries. No new CLI command is introduced.
