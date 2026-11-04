@@ -10,7 +10,7 @@ from .classification import Classifier
 from .model import Edge, Node
 from .spring_conditions import _profile
 
-VERSION = "kafka-binding-2"
+VERSION = "kafka-binding-3"
 MAX_BYTES = 1_000_000
 MAX_BINDINGS = 512
 TOPIC = re.compile(r"[A-Za-z0-9._-]{1,249}\Z")
@@ -40,7 +40,7 @@ def validate(workspace):
     if config is None:
         return
     if (not isinstance(config, dict) or set(config) != {"schema_version", "clusters", "bindings"}
-            or type(config["schema_version"]) is not int or config["schema_version"] != 1
+            or type(config["schema_version"]) is not int or config["schema_version"] not in {1, 2}
             or not isinstance(config["clusters"], list) or len(config["clusters"]) > 128
             or not isinstance(config["bindings"], list) or len(config["bindings"]) > MAX_BINDINGS):
         raise AnalysisError("Invalid Kafka binding schema/budget")
@@ -56,7 +56,8 @@ def validate(workspace):
     ids = set()
     from .workspace import resolve_service_ownership
     for binding in config["bindings"]:
-        if (not isinstance(binding, dict) or set(binding) != fields
+        if (not isinstance(binding, dict) or (set(binding) != fields
+                and not (config["schema_version"] == 2 and set(binding) == fields | {"code_ref"}))
                 or not _identifier(binding["id"]) or binding["id"] in ids
                 or not isinstance(binding["repo_id"], str) or binding["repo_id"] not in roots
                 or not isinstance(binding["service_id"], str) or binding["service_id"] not in services
@@ -67,6 +68,19 @@ def validate(workspace):
                 or binding["payload"] is not None and not _identifier(binding["payload"])):
             raise AnalysisError("Invalid Kafka binding declaration")
         ids.add(binding["id"])
+        code_ref = binding.get("code_ref")
+        if code_ref is not None:
+            if (config["schema_version"] != 2 or not isinstance(code_ref, dict)
+                    or set(code_ref) != {"kind", "id", "context_id", "source_file", "sha256"}
+                    or code_ref.get("kind") != ("listener" if binding["direction"] == "consumer" else "send")
+                    or not all(isinstance(code_ref.get(key), str) and 0 < len(code_ref[key]) <= 8192
+                               for key in ("id", "context_id", "source_file"))
+                    or not isinstance(code_ref.get("sha256"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", code_ref["sha256"])
+                    or binding["context_id"] is not None and code_ref["context_id"] != binding["context_id"]):
+                raise AnalysisError("Invalid Kafka schema2 code reference")
+            _path(roots[binding["repo_id"]], code_ref["source_file"])
+
         service = services[binding["service_id"]]
         if service.get("transport") != "kafka" or service["backend_repo"] != binding["repo_id"]:
             raise AnalysisError("Kafka binding service/repository mismatch")
@@ -103,6 +117,12 @@ def validate(workspace):
                 workspace.get("service_ownership"), context_id="kafka-declaration:" + binding["id"])
             if ownership["status"] != "RESOLVED" or ownership["owner_id"] != binding["service_id"]:
                 raise AnalysisError("Kafka binding requires unique explicit service ownership")
+        if code_ref is not None:
+            ownership = resolve_service_ownership({"repo_id": binding["repo_id"], "module": binding["module"],
+                "path": code_ref["source_file"], "context_id": code_ref["context_id"]},
+                workspace.get("service_ownership"), context_id=code_ref["context_id"])
+            if ownership["status"] != "RESOLVED" or ownership["owner_id"] != binding["service_id"]:
+                raise AnalysisError("Kafka code reference requires unique explicit service ownership")
 
 
 def _snapshot(root, path):
@@ -164,12 +184,14 @@ def project_captured_context(context):
     return result
 
 
-def _resolve(key, properties):
+def _resolve(key, properties, *, trace=None):
     seen = set()
     for _ in range(16):
         # Never fetch a sensitive value, including through a benign alias chain.
         if sensitive_property(key) or key in seen:
             return None
+        if trace is not None:
+            trace.append(key)
         seen.add(key)
         value = properties.get(key)
         if not isinstance(value, str) or len(value) > 4096:
@@ -185,7 +207,7 @@ def _resolve(key, properties):
 def _context(binding, graph, root):
     contexts = [c for c in graph.contexts if c.get("analyzer_version") and c.get("language") == "jvm"]
     matches = [c for c in contexts if all(c.get(k) == binding[k] for k in ("module", "source_set", "scope"))]
-    selected = binding["context_id"]
+    selected = binding["context_id"] or (binding.get("code_ref") or {}).get("context_id")
     if selected is not None:
         matches = [c for c in matches if c["id"] == selected]
         if len(matches) != 1:
@@ -208,6 +230,53 @@ def _context(binding, graph, root):
     return context, []
 
 
+def _group(prefix, properties, inputs, selected):
+    key, trace = prefix + '.group', []
+    value = _resolve(key, properties, trace=trace)
+    if not isinstance(value, str) or not TOPIC.fullmatch(value) or value in {'.', '..'}:
+        value = None
+    overrides = selected.get('spring_properties', {}) if selected else {}
+    overrides = overrides if isinstance(overrides, dict) else {}
+    captured = sorted(key for key in trace if key in overrides)
+    return {'value': value, 'status': 'RESOLVED' if value is not None else 'UNKNOWN',
+            'origin': 'CAPTURED_PROPERTY_OVERRIDE' if captured else 'DECLARED_PROPERTIES',
+            'key': key, 'property_keys': trace, 'captured_property_keys': captured,
+            'selected_properties_sha256': digest(overrides) if selected else None,
+            'input_files': dict(inputs), 'delivery': 'NOT_OBSERVED'}
+
+
+def _code_reference(binding, graph, selected, root, topic, group):
+    reference = binding.get('code_ref')
+    if reference is None:
+        return None, ['CODE_REFERENCE_UNAVAILABLE']
+    if selected is None or selected.get('id') != reference['context_id']:
+        return None, ['CODE_CONTEXT_UNAVAILABLE']
+    kind = 'kafka_code_listener' if reference['kind'] == 'listener' else 'kafka_code_producer'
+    candidates = [node for node in graph.nodes if node.kind == kind and isinstance(node.metadata, dict)
+                  and node.metadata.get('origin_id') == reference['id']
+                  and node.metadata.get('context_id') == selected['id']]
+    if len(candidates) != 1:
+        return None, ['CODE_FACT_NOT_UNIQUE_OR_UNAVAILABLE']
+    fact = candidates[0]
+    metadata = fact.metadata
+    if (fact.scope != binding['scope'] or fact.path != reference['source_file']
+            or metadata.get('source_file') != reference['source_file']
+            or metadata.get('source_sha256') != reference['sha256']):
+        return None, ['CODE_SOURCE_SCOPE_OR_HASH_MISMATCH']
+    from .kafka_code import validate_code_fact
+    if not validate_code_fact(root, graph, selected, fact):
+        return None, ['CODE_PROOF_UNPROVEN_OR_STALE']
+    if metadata.get('subscription_kind') == 'REGEX':
+        return None, ['REGEX_IS_NOT_EXACT_TOPIC_AGREEMENT']
+    if (metadata.get('status') != 'DECLARED' or metadata.get('subscription_kind') != 'TOPICS'
+            or not isinstance(topic, str) or topic not in metadata.get('topics', [])):
+        return None, ['CODE_SUBSCRIPTION_AGREEMENT_UNPROVEN']
+    if reference['kind'] == 'listener' and (group is None or group.get('status') != 'RESOLVED'
+            or group.get('value') != metadata.get('group_id')):
+        return None, ['CODE_GROUP_AGREEMENT_UNPROVEN']
+    return fact, []
+
+
 def build_links(workspace, graphs):
     """Compose static configured bindings in the existing workspace graph."""
     if workspace.get("kafka_bindings") is None:
@@ -217,6 +286,7 @@ def build_links(workspace, graphs):
     nodes, edges, evidence, contexts, diagnostics, rows, snapshots = {}, [], [], [], [], [], {}
     for binding in workspace["kafka_bindings"]["bindings"]:
         repo, reasons, properties = binding["repo_id"], [], {}
+        subscription = None
         if repo not in graphs:
             diagnostics.append({"code": "KAFKA_BINDING_UNKNOWN", "binding_id": binding["id"], "reasons": ["CHECKOUT_UNAVAILABLE"]})
             continue
@@ -266,6 +336,16 @@ def build_links(workspace, graphs):
         topic = _resolve(prefix + ".destination", properties)
         if topic is None or not TOPIC.fullmatch(topic) or topic in {".", ".."}:
             topic = None; reasons.append("TOPIC_UNRESOLVED")
+        group = _group(prefix, properties, inputs, selected) if binding["direction"] == "consumer" else None
+        if group is not None:
+            group["selected_compiler_context"] = qualified(repo, selected["id"]) if selected else None
+            group["active_profiles"] = list(binding["profiles"]) if binding["profiles"] is not None else None
+        reference = binding.get("code_ref")
+        if reference is not None:
+            _, source_checksum = _snapshot(roots[repo], reference["source_file"])
+            snapshots[(repo, reference["source_file"])] = source_checksum
+            inputs[source_key(repo, reference["source_file"])] = source_checksum
+        code_fact, code_reasons = _code_reference(binding, graphs[repo], selected, roots[repo], topic, group)
         binder = _resolve(prefix + ".binder", properties)
         cluster = binding["binders"].get(binder)
         if cluster is None:
@@ -284,6 +364,9 @@ def build_links(workspace, graphs):
         if binding["payload"] is None:
             reasons.append("PAYLOAD_DECLARATION_UNAVAILABLE")
         status = "UNKNOWN" if reasons else "RESOLVED"
+        if status != "RESOLVED" and code_fact is not None:
+            code_fact = None
+            code_reasons = [*code_reasons, "CONFIG_BINDING_UNPROVEN"]
         context_id = "workspace:kafka-context:" + digest({"workspace": workspace["workspace_id"], "binding": binding,
             "inputs": inputs, "version": VERSION, "selected": selected.get("id") if selected else None})
         contexts.append({"id": context_id, "mode": "SOURCE_ONLY", "scope": binding["scope"], "coverage": "PARTIAL",
@@ -297,19 +380,68 @@ def build_links(workspace, graphs):
             "status": status, "reasons": sorted(set(reasons)), "topic": topic, "cluster_id": cluster,
             "cluster_origin": "DECLARED", "contract_sha256": checksum, "release": contract["release"],
             "payload": binding["payload"], "payload_origin": "DECLARED", "delivery": "NOT_OBSERVED",
-            "code_binding": "UNPROVEN", "input_files": inputs, "context_id": context_id, "kafka_binding_version": VERSION}
+            "code_binding": "VERIFIED_STATIC" if code_fact is not None else "UNPROVEN",
+            "code_binding_reasons": code_reasons, "consumer_group": group,
+            "code_fact_id": qualified(repo, code_fact.id) if code_fact is not None else None,
+            "code_origin_id": qualified(repo, code_fact.metadata["origin_id"]) if code_fact is not None else None,
+            "input_files": inputs, "context_id": context_id, "kafka_binding_version": VERSION}
         nodes[identity] = Node(identity, "kafka_binding", binding["id"], "@workspace/manifest.json", scope=binding["scope"],
                                role="contract", origin="generated", metadata=metadata)
         row = {"id": identity, **metadata}; rows.append(row)
+        if code_fact is not None:
+            target = qualified(repo, code_fact.id)
+            proof = {"kind": "FRAMEWORK_DERIVED", "source": identity, "target": target,
+                "relation": "binds_kafka_code", "source_file": "@workspace/manifest.json",
+                "context_ids": [context_id, qualified(repo, selected["id"])],
+                "manifest_sha256": workspace["_manifest_hash"], "input_files": dict(inputs),
+                "code_origin_id": qualified(repo, code_fact.metadata["origin_id"]),
+                "detail": "Explicit current canonical code reference and exact topic/group agreement; no execution."}
+            proof["id"] = "evidence:" + digest(proof); evidence.append(proof)
+            edges.append(Edge(identity, target, "binds_kafka_code", proof["detail"], evidence_kind="FRAMEWORK_DERIVED",
+                context_ids=tuple(proof["context_ids"]), evidence_ids=(proof["id"],), source_file="@workspace/manifest.json"))
         if status == "UNKNOWN":
             diagnostics.append({"code": "KAFKA_BINDING_UNKNOWN", "binding_id": binding["id"], "reasons": metadata["reasons"]})
             continue
+        if code_fact is not None and binding["direction"] == "consumer":
+            logical = "workspace:kafka-subscription:" + digest({"workspace": workspace["workspace_id"],
+                "repo_id": repo, "service_id": binding["service_id"], "cluster": cluster,
+                "listener": code_fact.metadata["logical_id"], "group": group["value"],
+                "topic": topic, "contract": checksum, "release": contract["release"], "scope": binding["scope"]})
+            revision = digest({"logical_id": logical, "context_id": context_id,
+                "code_fact_id": code_fact.id, "inputs": inputs})
+            subscription = logical + ":capture:" + revision
+            nodes[subscription] = Node(subscription, "kafka_subscription", binding["id"], "@workspace/manifest.json",
+                scope=binding["scope"], role="contract", origin="generated", metadata={
+                    "logical_id": logical, "revision": revision, "repo_id": repo,
+                    "service_id": binding["service_id"], "cluster_id": cluster, "cluster_origin": "DECLARED",
+                    "group_id": group["value"], "subscription_kind": "TOPICS", "topics": [topic],
+                    "listener_logical_id": qualified(repo, code_fact.metadata["logical_id"]),
+                    "origin_id": qualified(repo, code_fact.metadata["origin_id"]),
+                    "code_fact_id": qualified(repo, code_fact.id), "context_id": context_id,
+                    "selected_compiler_context": qualified(repo, selected["id"]),
+                    "code_binding": "VERIFIED_STATIC", "delivery": "NOT_OBSERVED", "activation": "UNKNOWN",
+                    "consumer_group": group, "input_files": dict(inputs), "kafka_binding_version": VERSION})
+            row["subscription_id"] = subscription
+            metadata["subscription_id"] = subscription
         topic_id = "workspace:kafka-topic:" + digest({"workspace": workspace["workspace_id"], "cluster": cluster,
             "topic": topic, "contract": checksum, "release": contract["release"], "scope": binding["scope"]})
         row["topic_id"] = topic_id
         nodes.setdefault(topic_id, Node(topic_id, "kafka_topic", topic, "@workspace/manifest.json", scope=binding["scope"],
             role="contract", origin="generated", metadata={"cluster_id": cluster, "cluster_origin": "DECLARED",
                 "contract_sha256": checksum, "release": contract["release"], "delivery": "NOT_OBSERVED", "kafka_binding_version": VERSION}))
+        if subscription is not None:
+            for source, target, relation in [(identity, subscription, "declares_kafka_subscription"),
+                    (subscription, qualified(repo, code_fact.id), "uses_kafka_listener"),
+                    (subscription, topic_id, "subscribes_kafka_topic")]:
+                proof = {"kind": "FRAMEWORK_DERIVED", "source": source, "target": target,
+                    "relation": relation, "source_file": "@workspace/manifest.json",
+                    "context_ids": [context_id, qualified(repo, selected["id"])],
+                    "manifest_sha256": workspace["_manifest_hash"], "input_files": dict(inputs),
+                    "group_id": group["value"], "listener_origin_id": qualified(repo, code_fact.metadata["origin_id"]),
+                    "detail": "Explicit declared realm/group and verified listener code; delivery is not observed."}
+                proof["id"] = "evidence:" + digest(proof); evidence.append(proof)
+                edges.append(Edge(source, target, relation, proof["detail"], evidence_kind="FRAMEWORK_DERIVED",
+                    context_ids=tuple(proof["context_ids"]), evidence_ids=(proof["id"],), source_file="@workspace/manifest.json"))
         relation = "produces" if binding["direction"] == "producer" else "consumes"
         proof = {"kind": "FRAMEWORK_DERIVED", "source": identity, "target": topic_id, "relation": relation,
                  "source_file": "@workspace/manifest.json", "context_ids": [context_id], "input_files": inputs,

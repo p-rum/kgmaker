@@ -678,12 +678,16 @@ kgmaker query --root . --workspace fixtures/kafka-bindings/workspace.json orders
 See [the fixture](fixtures/kafka-bindings/README.md) and
 [the bounded contract](docs/compiler-inspection.md#t003-s07-w04--declared-kafka-binding-identity).
 Dynamic, missing, ambiguous or unsupported inputs remain UNKNOWN. Cluster, release
-and payload labels are declared; code binding, delivery, deployed schema and data
-availability remain unproven. Legacy name-only Kafka hints remain separate syntax
+and payload labels are declared; delivery, deployed schema and data availability
+remain unproven. Revision2 optionally verifies explicit schema2 code refs against
+current canonical listener/send facts and exact topic/group agreement. Config-only
+bindings retain code_binding UNPROVEN. Java listener/send support uses either
+worker backend; Kotlin listeners require K1 captured annotations. Regex selectors
+remain candidates; Kotlin producers and K2 Kotlin listeners remain UNKNOWN. Legacy name-only Kafka hints remain separate syntax
 evidence. Scan/query/feature/data checks never start a broker, application or build.
 
 
-Kafka privacy rules `kafka-binding-2` reject credential and broker-connection
+Kafka privacy rules (retained in `kafka-binding-3`) reject credential and broker-connection
 property keys before alias lookup, including nested references in captured
 properties. These bindings stay UNKNOWN. Public workspace contexts redact
 sensitive captured Spring property values and retain an explicit projection
