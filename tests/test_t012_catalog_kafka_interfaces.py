@@ -229,7 +229,8 @@ def two_context_capture(tmp_path_factory, request):
         classpath=actual_prerequisites(request.param)+extra_api_jars(),
         build_context={'spring_profiles':['green'],'spring_properties':{'orders.topic':'orders-blue'}})
     local=KnowledgeGraph.from_dict(result['graph'])
-    fact=next(n for n in local.nodes if n.kind=='kafka_code_listener' and n.metadata['method_name']=='two')
+    fact=next(n for n in local.nodes if n.kind=='kafka_code_listener'
+              and n.metadata['method_name']=='two' and n.metadata['context_id']==result['context']['id'])
     binding=next(b for b in document['kafka_bindings']['bindings'] if b['id']=='second-group')
     binding['profiles']=['green'];binding['context_id']=result['context']['id']
     binding['code_ref']={'kind':'listener','id':fact.metadata['origin_id'],
