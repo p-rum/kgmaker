@@ -60,3 +60,13 @@ POM s vyloučenými transitive dependencies a nový W05 test modul. Nevzniká no
 gate, instalace aplikace ani CI retry. Behaviorální mandatory-worker guard
 ověřuje optional SKIP/required FAIL při chybějícím pinovaném API před compilerem.
 Runtime source z checkpoint7c1b zůstává byte-exact; CI nebylo spuštěno.
+
+## Koherentní malformed input před actual startem
+
+Po CI-only checkpointf279 nalezen veřejný Graph input bez KafkaListener annotation,
+se vzájemně přepočítanými Node/symbol/annotation/proof/policy hash: Graph validace
+prošla, policy reader ale vyvolal IndexError. Oprava vyžaduje právě jednu skutečnou
+listener annotation i při čistém replay a chybějící tuple lokalizuje jako UNKNOWN.
+Vlastní čekající flock33797 byl ověřen bez potomka/pytest/logu a zrušen před startem;
+nejde o provedený ani přerušený pytest. Nová koherentní public-snapshot regrese
+pokrývá oba captured backend jazyky. Native workery zůstávají beze změny.

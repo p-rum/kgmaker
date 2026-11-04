@@ -135,7 +135,7 @@ def reidentify(graph,policy,metadata):
 CASES=['foreign-extra-edge','empty-evidence','edge-kind','edge-context','edge-file','edge-line','dlt-target',
        'proof-kind','proof-context','proof-source','proof-hash','proof-range','proof-extractor','proof-compiler-refs',
        'source-node','source-symbol','source-annotation','handler-scope','handler-symbol','handler-annotation',
-       'handler-own-proof','listener-fact','listener-proof','coherent-attempts','coherent-api-resource','classpath','version','source-api-shadow','code-stamp','freshness','context-scope','source-file-hash','compiler-realm','annotation-proof']
+       'handler-own-proof','listener-fact','listener-proof','coherent-attempts','coherent-missing-listener','coherent-api-resource','classpath','version','source-api-shadow','code-stamp','freshness','context-scope','source-file-hash','compiler-realm','annotation-proof']
 
 
 @pytest.mark.parametrize('case',CASES)
@@ -173,8 +173,24 @@ def test_public_snapshot_tamper_is_local_unknown_without_mutation(captured,case)
     elif case.startswith('coherent-'):
         new=copy.deepcopy(md)
         if case=='coherent-attempts':new['attempts']=9
+        elif case=='coherent-missing-listener':
+            symbol=next(s for s in graph.symbols if s['id']==origin)
+            symbol['annotations']=[a for a in symbol['annotations'] if a['name']!='org.springframework.kafka.annotation.KafkaListener']
+            graph.nodes=[replace(n,metadata={**n.metadata,'annotations':symbol['annotations']}) if n.id==origin else n for n in graph.nodes]
+            new['annotation_fingerprint']=digest(symbol['annotations'])
+            for p in graph.evidence:
+                if p.get('relation')=='contains' and p.get('target')==origin:p['compiler_annotation_fingerprint']=digest(symbol['annotations'])
+            for _ in range(3):
+                mapping={}
+                for p in graph.evidence:
+                    old=p['id'];p['id']='evidence:'+digest({k:v for k,v in p.items() if k!='id'})
+                    if old!=p['id']:mapping[old]=p['id']
+                for p in graph.evidence:
+                    if 'compiler_evidence_ids' in p:p['compiler_evidence_ids']=[mapping.get(i,i) for i in p['compiler_evidence_ids']]
+                graph.edges=[replace(e,evidence_ids=tuple(mapping.get(i,i) for i in e.evidence_ids)) for e in graph.edges]
         else:next(iter(new['api'].values()))['resource_sha256']='0'*64
         reidentify(graph,policy,new)
+        if case=='coherent-missing-listener':KnowledgeGraph.from_dict(graph.to_dict())
     elif case=='classpath':
         c=next(c for c in graph.contexts if c['id']==md['context_id']);c['classpath']=list(reversed(c['classpath']));c['kafka_retry_analysis']=analysis_stamp(c)
     elif case=='source-api-shadow':

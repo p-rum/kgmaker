@@ -105,7 +105,10 @@ def _policy_values(symbol, witness):
     for key,value in values.items():
         if key not in {'attempts','retryTopicSuffix','dltTopicSuffix'} and (key not in defaults or value!=defaults[key]):
             reasons.append('RETRY_CONFIGURATION_UNSUPPORTED')
-    listener_values=_annotations(symbol,LISTENER)[0].get('values',{})
+    listener_annotations=_annotations(symbol,LISTENER)
+    listener_values=listener_annotations[0].get('values') if len(listener_annotations)==1 else None
+    if not isinstance(listener_values,dict):
+        reasons.append('CANONICAL_LISTENER_UNPROVEN');listener_values={}
     controls={'errorHandler','containerFactory','containerGroup','containerPostProcessor','filter',
               'contentTypeConverter','concurrency','autoStartup','batch','properties'}
     if any(listener_values.get(k) not in (None,'',[]) for k in controls):reasons.append('CUSTOM_HANDLER_OR_CONTAINER_UNKNOWN')
@@ -296,6 +299,8 @@ def _declaration(graph,identity,context,repo):
 
 def _listener_anchor(graph,fact,method,context,repo,refs):
     from .workspace import split_id,qualified,source_key
+    listener_annotations=_annotations(method,LISTENER)
+    if len(listener_annotations)!=1 or not isinstance(listener_annotations[0].get('values'),dict):return False
     if fact is None or fact.kind!='kafka_code_listener' or fact.scope!=context['scope'] or fact.path!=method['path']:return False
     md=fact.metadata
     if not isinstance(md,dict):return False
