@@ -63,7 +63,7 @@
     "docs/changes/79_certifyLocalOperations.md": "2879af3158e31273726a71e92f9d8b5eabfde298a888bef6d7f493852970cc2f",
     "docs/changes/7_addTaskImplementationAgents.md": "0f6ebc390497277c67a6be6a93581ccdca05f763c11a95bd4942c8d261966a88",
     "docs/changes/82_collapseBusinessSteps.md": "26164cddc735066f61b091db30898c6d107455f11bc30e7fdeb8645646f13587",
-    "docs/changes/88_preserveAmbiguousHttpProviders.md": "b4f14bc25c57d84a53f2a05c92fac0466acaf4503d59a310889568eb30ac3551",
+    "docs/changes/83_classifyOptionalCompilerPrerequisites.md": "9e8fa706f5379444f07402bebed76037ed0d8ea035b306e5c08ebe7f2a6e603b",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "62af00ae69350ab313486db5b5eef53702f98b655def89b386067f32323324b2",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -348,7 +348,7 @@
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_control_flow.py": "47cef4aa22ca9bb557edd4872082dae27a103714d9d8aa94d534ced2c8a0cc5a",
-    "tests/test_coroutine_mapping.py": "def8ada1e61c2e02df0585376999a5e566b76efc20140bfecc133cec37ca7ac8",
+    "tests/test_coroutine_mapping.py": "4ddbd23084320611a2d15a32773629c43386619dd7d684917ff09ecaaf132404",
     "tests/test_cross_repo_artifacts.py": "2650d77f3f2f5a0a08b176f72b27bd859a2c9bf9fc8af2e3a878fe7c96345d8b",
     "tests/test_data_check.py": "156e1d9cd477887743201fb5ebc8b1774781587d1dcc427814fbcf174998160b",
     "tests/test_dataflow.py": "5dfb650ced21cade17b6ada4b71c53a19e9386af989beb4acbee7eb23d83b937",
@@ -362,7 +362,6 @@
     "tests/test_gradle_variants.py": "2607c4bbf9a980013dd5dc571c31a4f120c7fef2c572a33c4cc44d18943bee1a",
     "tests/test_graph_provider.py": "646b365e507b1eeb89cc2aa1c737feadaeb18810488df093b76472e18bffe98a",
     "tests/test_http_client_execution.py": "b1299fb227d5b8baabbdb285864969338ab79c3d032798cf9ccef7177602140c",
-    "tests/test_http_provider_ambiguity.py": "c53fac00c7609992d884d7b7b5b3e4438d052ae0d615bb8e27bed6ff89c9532e",
     "tests/test_http_provider_privacy_integration.py": "08757662e386097fb867ec3e26dc04c1cdef26bcea90c5989047c4c0ee9453ba",
     "tests/test_init.py": "f25404edf1cbde6f2d7f7f312a7b1e9e1d00b54b50d5a6f4f58d5dd310bdeaaf",
     "tests/test_inspection_contract.py": "4370d83b2f97caa74414dc489ae7c85eb6b392db00c7af86d58dd5ce9f519db5",
@@ -374,7 +373,8 @@
     "tests/test_mandatory_worker_ci.py": "fb462c8b22f4e3a64894ea9af17df137bcf130e1666f18f7c6e9cfc028ca4dee",
     "tests/test_memory.py": "2e8f6f8caf46916620a2cc32262d99dedda1182f796dc78bed4d3bff11ba9abf",
     "tests/test_methodology_conflicts.py": "e84cdd12916cbe1320c8835b3daf1a2a9f1f5c0167b4712f95b8ada81b8c9b73",
-    "tests/test_orm_xml_overrides.py": "ac7a999a086ec368bbc4419bef4f2a8dac5fefa1b2e0df679f8e7bbf2a5d0f22",
+    "tests/test_optional_compiler_prerequisites.py": "ca160706f9220cf5acf2ed6d150fab65861a90221a891539cae39139cd932229",
+    "tests/test_orm_xml_overrides.py": "92953c1b704cfbb779a76846f0d9aaaba3d40c8cb7366b881493d12da727da3f",
     "tests/test_persistence_realms.py": "fc4ef5a244e2f128fb72fadae7dfda062202568c53074229381b1374c1d2e09a",
     "tests/test_production_scope.py": "30f8be276a512c634379f78eb7105b8ef169b56830aad53fef53599bbfe6f43a",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
@@ -404,7 +404,7 @@
     "tests/test_ui_events.py": "33f55b3ea2960b76eb709d4346374dbddf1086ca56a5a2c55b73093261106eb1",
     "tests/test_windows_install.py": "8e6dafad019022a7b390d2b7c65381b6c36822b0064d5974bcdb602f694cdfa5",
     "tests/test_workbooks.py": "cf74c8dc08f8f6f46cb5d74f5ad95193f2ca6d5be089d7861ef78c2b99201c7c",
-    "tests/test_worker_install.py": "d2bcb6f8dfad47effb17b48ec90102a0769facfe3a9091048c794699400eef42",
+    "tests/test_worker_install.py": "21348ee66c9f1c2a04a54e5ac1260ef80512469d4ced695f37606ed6f4aaa9f9",
     "tests/test_worker_protocol.py": "cb390238b80aec905b927ea4c9930826dd062a25eda645a4babef39240164436",
     "tests/test_workflow.py": "53963fcf32b5a38d0f25a1fe71b77736bb9c62bf0d0ad3d4707f23885a551d65",
     "tests/test_workspace.py": "5cf9c65606d895dc7720fe10980fd17c88f4f46376319d57b0c80b9e98c8c301",
@@ -429,7 +429,9 @@
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "3ae75f1708d0f383a306dd65740413720b83375dbc61028597a4a183fa371341",
     "workers/typescript/ui_events.cjs": "29a5c8cb4dfd9f43061b41b33e4f0aa97190743185e0999f4ef07e91832f72ee",
-    "workers/typescript/worker.cjs": "02b43af017effd5810e9533db6282fa6e72bbdf9e68ad253710f726b3651af47"
+    "workers/typescript/worker.cjs": "02b43af017effd5810e9533db6282fa6e72bbdf9e68ad253710f726b3651af47",
+    "docs/changes/88_preserveAmbiguousHttpProviders.md": "b4f14bc25c57d84a53f2a05c92fac0466acaf4503d59a310889568eb30ac3551",
+    "tests/test_http_provider_ambiguity.py": "c53fac00c7609992d884d7b7b5b3e4438d052ae0d615bb8e27bed6ff89c9532e"
   },
   "nodes": [
     {
@@ -466,6 +468,48 @@
       "source_file": "docs/process-triggers.md",
       "source_line": 1,
       "summary": "Read-only inventory composes selected current Spring declaration facts into trigger candidates with canonical scope, source and exact proof binding; missing CFG and unsupported annotation ownership remain explicit unknown boundaries."
+    },
+    {
+      "id": "concept:docs/architecture.md:source_code_is_authoritative",
+      "name": "Source code is authoritative",
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "name": "Explicit workspace service ownership",
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "name": "Explicit service inventory projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
+    },
+    {
+      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "name": "View evidence and coverage",
+      "source_file": "docs/architecture.md",
+      "source_line": 138,
+      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:realm_bound_data_resources",
+      "name": "Realm-bound data resources",
+      "source_file": "docs/architecture.md",
+      "source_line": 211,
+      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
+    },
+    {
+      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "name": "Scoped HTTP provider projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 236,
+      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
@@ -552,6 +596,13 @@
       "summary": "Pure typed adaptation reuses existing source CFG traversal and trigger evidence; opposite branches, original call-sites and explicit root/depth/dispatch/body boundaries remain separate from runtime or business claims."
     },
     {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 186,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
       "id": "concept:docs/process-paths.md:compiler_bound_local_operations",
       "name": "Compiler-bound local operations",
       "source_file": "docs/process-paths.md",
@@ -564,55 +615,6 @@
       "source_file": "docs/process-paths.md",
       "source_line": 129,
       "summary": "Pure versioned ProcessView grouping checks existing compiler operation certificate integrity, retains unresolved static adjacency and exactly restores ordered origins, topology and provenance without execution or semantic approval."
-    },
-    {
-      "id": "concept:docs/architecture.md:source_code_is_authoritative",
-      "name": "Source code is authoritative",
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "name": "Explicit workspace service ownership",
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "name": "Explicit service inventory projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
-    },
-    {
-      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "name": "View evidence and coverage",
-      "source_file": "docs/architecture.md",
-      "source_line": 138,
-      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:realm_bound_data_resources",
-      "name": "Realm-bound data resources",
-      "source_file": "docs/architecture.md",
-      "source_line": 211,
-      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
-    },
-    {
-      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "name": "Scoped HTTP provider projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 236,
-      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
-    },
-    {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 186,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
   "edges": [
@@ -697,6 +699,36 @@
       "evidence": "The documented discover_process_triggers API projects existing selected-context declarations without process discovery or execution."
     },
     {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
+    },
+    {
+      "source": "concept:docs/architecture.md:source_code_is_authoritative",
+      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
       "source": "file:tests/test_typescript_callback_projects.py:test_typescript_callback_projects.py",
       "target": "concept:docs/typescript-callbacks.md:bounded_static_callback_evidence",
       "kind": "validates",
@@ -717,6 +749,26 @@
       "evidence": "Local callback limit tests retain explicit partial evidence and invalid candidate publication preserves the last store."
     },
     {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 136,
+      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t009_propagate_view_evidence.py",
+      "source_line": 70,
+      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+    },
+    {
       "source": "file:workers/typescript/worker.cjs:worker.cjs",
       "target": "concept:docs/typescript-callbacks.md:bounded_static_callback_evidence",
       "kind": "implements",
@@ -725,6 +777,16 @@
       "source_file": "workers/typescript/worker.cjs",
       "source_line": 148,
       "evidence": "callbackProof bounds callable expression evidence and worker parameter invocations retain incomplete binding candidates."
+    },
+    {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 28,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -967,16 +1029,6 @@
       "evidence": "The JVM framework projection parses the selected, root-confined ORM XML subset, applies mapping precedence, and records XML provenance while suppressing unsupported physical bindings."
     },
     {
-      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
-    },
-    {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "kind": "implements",
@@ -1005,16 +1057,6 @@
       "source_file": "workers/jvm/k2/KotlinFrontend.kt",
       "source_line": 313,
       "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
-    },
-    {
-      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_coroutine_mapping.py",
-      "source_line": 75,
-      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
     },
     {
       "source": "file:tests/test_jvm_golden_corpus.py:test_jvm_golden_corpus.py",
@@ -1207,6 +1249,36 @@
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 225,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
       "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
       "target": "concept:docs/typescript-freshness.md:scoped_compiler_filesystem_discovery",
       "kind": "uses",
@@ -1215,6 +1287,16 @@
       "source_file": "src/kgmaker/graph_provider.py",
       "source_line": 158,
       "evidence": "Offline context validation dispatches the versioned TypeScript snapshot to filesystem-only replay."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::342",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 143,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
       "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
@@ -1257,6 +1339,16 @@
       "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
     },
     {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
       "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "target": "file:src/kgmaker/workspace.py:workspace.py",
       "kind": "implements",
@@ -1275,6 +1367,46 @@
       "source_file": "docs/process-paths.md",
       "source_line": 3,
       "evidence": "The documented build_local_process function adapts selected supplied T024/compiler snapshots into a T023 ProcessView without rebuilding or executing a CFG."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 186,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::491",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_line": 188,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source": "concept:docs/process-paths.md:compiler_bound_local_operations",
@@ -1327,154 +1459,24 @@
       "evidence": "The actual Javac workspace/process test collapses six certified operations and checks exact expansion, determinism and unresolved syntax confidence; the remaining matrix covers boundaries, tampering and immutable inputs."
     },
     {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
-    },
-    {
-      "source": "concept:docs/architecture.md:source_code_is_authoritative",
-      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 136,
-      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "tests/test_t009_propagate_view_evidence.py",
-      "source_line": 70,
-      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
     },
     {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
-    },
-    {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 225,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::342",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 186,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "kind": "validates",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::491",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_line": 188,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+      "source_file": "tests/test_coroutine_mapping.py",
+      "source_line": 75,
+      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
     }
   ],
   "episodes": [
@@ -91764,6 +91766,149 @@
         }
       ],
       "id": "episode:b5216b78d51cd8f930fb6f231682d7d93d9e5dae41c354dcda850dcfab8a65b4"
+    },
+    {
+      "base_commit": "9442114d169b84e6c9f98dd097faafd80eff0d48",
+      "head_commit": "4c4be9656c27fad2bd6a7329794daa335e03c3b8",
+      "worktree_fingerprint": "8e0a683f7a90569ef03c7a129d8d56b582f89d22a16cc96fe33bc48bbd2855e4",
+      "title": "fix(t003): validate full JDK before installed worker smoke",
+      "changed_files": [
+        {
+          "path": "docs/changes/83_classifyOptionalCompilerPrerequisites.md",
+          "status": "A",
+          "sha256": "9e8fa706f5379444f07402bebed76037ed0d8ea035b306e5c08ebe7f2a6e603b"
+        },
+        {
+          "path": "tests/test_coroutine_mapping.py",
+          "status": "M",
+          "sha256": "4ddbd23084320611a2d15a32773629c43386619dd7d684917ff09ecaaf132404"
+        },
+        {
+          "path": "tests/test_optional_compiler_prerequisites.py",
+          "status": "A",
+          "sha256": "ca160706f9220cf5acf2ed6d150fab65861a90221a891539cae39139cd932229"
+        },
+        {
+          "path": "tests/test_orm_xml_overrides.py",
+          "status": "M",
+          "sha256": "92953c1b704cfbb779a76846f0d9aaaba3d40c8cb7366b881493d12da727da3f"
+        },
+        {
+          "path": "tests/test_worker_install.py",
+          "status": "M",
+          "sha256": "21348ee66c9f1c2a04a54e5ac1260ef80512469d4ced695f37606ed6f4aaa9f9"
+        }
+      ],
+      "affected_node_ids": [
+        "class:tests/test_orm_xml_overrides.py:ReadSpy::339",
+        "class:tests/test_worker_install.py:InstalledWorkerTests::49",
+        "class:tests/test_worker_install.py:WorkerSelectionTests::17",
+        "file:docs/changes/83_classifyOptionalCompilerPrerequisites.md:83_classifyOptionalCompilerPrerequisites.md",
+        "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
+        "file:tests/test_optional_compiler_prerequisites.py:test_optional_compiler_prerequisites.py",
+        "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
+        "file:tests/test_worker_install.py:test_worker_install.py",
+        "function:tests/test_coroutine_mapping.py:analyze::56",
+        "function:tests/test_coroutine_mapping.py:compiled::28",
+        "function:tests/test_coroutine_mapping.py:test_actual_k1_cfg_preserves_suspend_calls_and_resume_boundary::126",
+        "function:tests/test_coroutine_mapping.py:test_actual_suspend_source_sites_keep_boundaries::78",
+        "function:tests/test_coroutine_mapping.py:test_foreign_continuation_realm_never_claims_source::144",
+        "function:tests/test_coroutine_mapping.py:test_incomplete_or_malformed_debug_metadata_never_maps::173",
+        "function:tests/test_coroutine_mapping.py:test_member_extension_uses_dispatch_receiver_not_extension_receiver::211",
+        "function:tests/test_coroutine_mapping.py:test_mismatched_debug_metadata_file_stays_bytecode_only::150",
+        "function:tests/test_coroutine_mapping.py:test_missing_sources_never_map_continuation::123",
+        "function:tests/test_coroutine_mapping.py:test_ordinary_same_named_functions_do_not_claim_async_boundary::163",
+        "function:tests/test_coroutine_mapping.py:test_real_continuation_maps_declaration_without_mapping_state_instructions::103",
+        "function:tests/test_optional_compiler_prerequisites.py:broken::50",
+        "function:tests/test_optional_compiler_prerequisites.py:broken::91",
+        "function:tests/test_optional_compiler_prerequisites.py:forbidden::26",
+        "function:tests/test_optional_compiler_prerequisites.py:forbidden::69",
+        "function:tests/test_optional_compiler_prerequisites.py:test_coroutine_unavailable_pin_never_compiles_or_passes::16",
+        "function:tests/test_optional_compiler_prerequisites.py:test_orm_never_skips_product_or_protocol_errors::49",
+        "function:tests/test_optional_compiler_prerequisites.py:test_orm_unavailable_worker_respects_required_policy::38",
+        "function:tests/test_optional_compiler_prerequisites.py:test_packaged_k2_required_flag_rejects_missing_prerequisite::74",
+        "function:tests/test_optional_compiler_prerequisites.py:test_packaged_worker_checks_full_jdk_before_installed_analysis::62",
+        "function:tests/test_optional_compiler_prerequisites.py:test_packaged_worker_does_not_hide_other_errors::89",
+        "function:tests/test_optional_compiler_prerequisites.py:unavailable::39",
+        "function:tests/test_optional_compiler_prerequisites.py:unavailable::64",
+        "function:tests/test_optional_compiler_prerequisites.py:unavailable::78",
+        "function:tests/test_orm_xml_overrides.py:__enter__::341",
+        "function:tests/test_orm_xml_overrides.py:__exit__::342",
+        "function:tests/test_orm_xml_overrides.py:__init__::340",
+        "function:tests/test_orm_xml_overrides.py:_inspect_worker::51",
+        "function:tests/test_orm_xml_overrides.py:columns_for::75",
+        "function:tests/test_orm_xml_overrides.py:inspect::62",
+        "function:tests/test_orm_xml_overrides.py:project::21",
+        "function:tests/test_orm_xml_overrides.py:read::343",
+        "function:tests/test_orm_xml_overrides.py:spy_open::346",
+        "function:tests/test_orm_xml_overrides.py:table_for::69",
+        "function:tests/test_orm_xml_overrides.py:test_entity_override_does_not_delete_sibling_inherited_xml_column::541",
+        "function:tests/test_orm_xml_overrides.py:test_external_persistence_descriptor_symlink_is_captured_as_invalid::500",
+        "function:tests/test_orm_xml_overrides.py:test_invalid_encoding_and_utf16_dtd_strictly_preserve_previous_store::370",
+        "function:tests/test_orm_xml_overrides.py:test_invalid_xml_class_reference_is_diagnostic_and_strict_publication_preserves_graph::159",
+        "function:tests/test_orm_xml_overrides.py:test_legacy_jvm_context_is_readable_without_xml_and_stale_with_xml::474",
+        "function:tests/test_orm_xml_overrides.py:test_looped_persistence_descriptor_symlink_is_captured_without_exception::523",
+        "function:tests/test_orm_xml_overrides.py:test_metadata_complete_xml_can_define_attributes_without_jpa_annotations::234",
+        "function:tests/test_orm_xml_overrides.py:test_orm_xml_declared_mapping_file_order_is_preserved::177",
+        "function:tests/test_orm_xml_overrides.py:test_orm_xml_metadata_complete_isolated_by_canonical_entity_owner::130",
+        "function:tests/test_orm_xml_overrides.py:test_orm_xml_metadata_complete_suppresses_annotation_fallback::110",
+        "function:tests/test_orm_xml_overrides.py:test_orm_xml_missing_explicit_column_does_not_fall_back_to_annotation::99",
+        "function:tests/test_orm_xml_overrides.py:test_orm_xml_partial_overrides_take_precedence_and_record_hashed_source::81",
+        "function:tests/test_orm_xml_overrides.py:test_persistence_unit_exclude_unlisted_classes_controls_annotation_fallback::219",
+        "function:tests/test_orm_xml_overrides.py:test_selected_persistence_unit_ignores_other_units_mapping_files::198",
+        "function:tests/test_orm_xml_overrides.py:test_standard_nested_metadata_complete_and_access_are_honored::390",
+        "function:tests/test_orm_xml_overrides.py:test_unsupported_or_external_xml_never_claims_annotation_mapping::304",
+        "function:tests/test_orm_xml_overrides.py:test_unsupported_or_mismatched_jvm_snapshot_versions_fail_closed::491",
+        "function:tests/test_orm_xml_overrides.py:test_xml_capture_invalidates_same_length_edits_and_new_referenced_file::412",
+        "function:tests/test_orm_xml_overrides.py:test_xml_dtd_is_rejected_independent_of_encoding::316",
+        "function:tests/test_orm_xml_overrides.py:test_xml_inheritance_strategy_rebinds_inherited_attributes_to_final_table::276",
+        "function:tests/test_orm_xml_overrides.py:test_xml_input_capture_detects_default_appearance_deletion_and_symlink_retarget::449",
+        "function:tests/test_orm_xml_overrides.py:test_xml_mapped_superclass_column_updates_existing_inherited_projection::253",
+        "function:tests/test_orm_xml_overrides.py:test_xml_namespace_reset_strictly_preserves_previous_store::353",
+        "function:tests/test_orm_xml_overrides.py:test_xml_unknown_encoding_and_oversize_are_bounded_diagnostics::327",
+        "function:tests/test_worker_install.py:install_wheel::76",
+        "function:tests/test_worker_install.py:require_jvm::52",
+        "function:tests/test_worker_install.py:run_installed::114",
+        "function:tests/test_worker_install.py:setUpClass::66",
+        "function:tests/test_worker_install.py:test_ambiguous_jvm_distribution_is_rejected::32",
+        "function:tests/test_worker_install.py:test_environment_home_wins_over_packaged_resources::28",
+        "function:tests/test_worker_install.py:test_explicit_home_wins_and_never_falls_back::20",
+        "function:tests/test_worker_install.py:test_missing_installed_artifacts_do_not_mutate_last_graph::155",
+        "function:tests/test_worker_install.py:test_packaged_jvm_analyzes_outside_checkout::190",
+        "function:tests/test_worker_install.py:test_packaged_k2_analyzes_outside_checkout::220",
+        "function:tests/test_worker_install.py:test_packaged_kotlin_analyzes_in_user_space_with_spaces::204",
+        "function:tests/test_worker_install.py:test_packaged_typescript_analyzes_outside_checkout::172",
+        "function:tests/test_worker_install.py:test_source_only_without_node_or_jdk_or_child_processes::124",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Aktuální rodič před jediným opravným během::45",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Další skutečný prerequisite nález v instalovaném smoke testu::59",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Doplnění po skutečném Python3.12 full běhu::34",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Oprava rozlišení volitelného compiler toolchainu v test fixtures::1",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Ověřená finální matice 2026-11-04::75",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Ověření, příklad a omezení::22",
+        "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Problém a změna::6"
+      ],
+      "graph_delta": {
+        "added": [
+          "section:docs/changes/83_classifyOptionalCompilerPrerequisites.md:Ověřená finální matice 2026-11-04::75"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "optional-full-957",
+          "status": "passed"
+        },
+        {
+          "label": "strict-matrix-123-coverage",
+          "status": "passed"
+        },
+        {
+          "label": "optional-prerequisites-644",
+          "status": "skipped"
+        }
+      ],
+      "id": "episode:c895b441407f1e2be20c41a2fbae0b8805b6fbe52163f8c01c29c6cee302f873"
     }
   ]
 }
