@@ -52,6 +52,11 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_retry_metadata(repo: str, value: dict) -> dict:
+    from .kafka_retry import qualified_metadata
+    return qualified_metadata(repo,value)
+
+
 def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     """Qualify code identities; preserve the exact original capture IDs explicitly."""
     result = copy.deepcopy(value)
@@ -134,7 +139,7 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
     if isinstance(value.get('call_site'), str):
         result['call_site'] = qualified(repo, value['call_site'])
-    if str(value.get('extractor', '')).startswith('kafka-code-'):
+    if str(value.get('extractor', '')).startswith(('kafka-code-', 'kafka-retry-')):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])
@@ -667,7 +672,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         exclusions += [{'repo_id': identity, **item} for item in excluded]
         nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
                           metadata=(_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else
-                                    _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"} else n.metadata)) for n in local.nodes]
+                                    _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"} else _qualified_retry_metadata(identity, n.metadata or {}) if n.kind == "kafka_retry_policy" else n.metadata)) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),

@@ -748,3 +748,12 @@ Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without 
 tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
+
+## T003-S07-W05 — Kafka retry/DLT draft
+
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and current
+pure replay82PASS are distinct historical evidence; final actual/full/review
+remain pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.

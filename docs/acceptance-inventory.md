@@ -699,3 +699,11 @@ Schema2 public snapshot ověřuje explicitní původní code refs, group propert
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
 nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
 nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
+
+## T003-S07-W05 — retry/DLT policy draft
+
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Initial actual6PASS is historical; current source adds canonical edge/proof/API
+and compiler realm guards. Pure captured replay82PASS is not a compiler rerun.
+Final actual/full and independent review are pending. No runtime/delivery or
+whole-S07 completion follows.

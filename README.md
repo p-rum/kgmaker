@@ -763,3 +763,11 @@ The pure [T026 business-step API](docs/process-paths.md#reversible-business-step
 reversibly groups only adjacent certified local operations in an explicit process
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
+
+### Kafka retry/DLT declarations — T003-S07-W05 draft
+
+The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
+declarations as separate async boundaries, without executing listeners or brokers.
+Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+See [scope and pending validation](docs/kafka-retry-dlt.md); final actual/full
+acceptance and independent review remain pending.

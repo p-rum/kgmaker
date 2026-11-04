@@ -105,6 +105,12 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
                 or "ui_adapters" not in context.get("project", {})):
             raise WorkerError("STALE_INDEX: UI adapter rules changed; inspect frontend again", "STALE")
+    if context.get("language") == "jvm":
+        from .kafka_retry import VERSION as RETRY_VERSION, validate_analysis as validate_retry_analysis
+        validate_retry_analysis(context)
+        retry_rules = context.get("framework_rule_versions", {})
+        if isinstance(retry_rules, dict) and "kafka_retry" in retry_rules and retry_rules["kafka_retry"] != RETRY_VERSION:
+            raise WorkerError("STALE_INDEX: Kafka retry rule changed; inspect again", "STALE")
     if context.get("language") == "jvm" and "kafka_code_analysis" in context:
         from .kafka_code import validate_analysis
         validate_analysis(root, context)

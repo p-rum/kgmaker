@@ -1297,3 +1297,13 @@ Only this bounded join can yield `code_binding: VERIFIED_STATIC` and a
 capture revisions are separate, and original IDs survive workspace qualification.
 Public context privacy and freshness checks remain mandatory. This is static
 provenance, without delivery, broker, activation or data availability evidence.
+
+### T003-S07-W05 — bounded retry/DLT policy draft
+
+`kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
+Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
+positive path; unsupported3.2.0, custom handler, expressions, source shadows and
+ambiguous DLT associations remain UNKNOWN. Flow policy boundaries are separate
+from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
+[truthful run history](changes/87_captureKafkaRetryDlt.md). Required final runs
+and independent source review are pending; Kotlin K2 annotation gaps remain.
