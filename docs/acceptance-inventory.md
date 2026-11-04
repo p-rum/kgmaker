@@ -697,5 +697,8 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
