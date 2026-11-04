@@ -127,3 +127,19 @@ exact-topic join a producer wrappers/unsupported Kotlin arguments zůstávají U
 Finální follow-up mění jen tuto evidenci, acceptance, implementation memory a
 CLI-generated graph; runtime/tests/native bytes zůstávají stejné jako při19b full.
 Root provede finální exact-head review a publication/merge; tato větev nemerguje sama.
+
+## Refresh main8e81 bez opakování stejného actual/full
+
+Před publikací přijat main `8e81e635b605b2688df10a1e23b9bec27d5f448d` (PR67).
+Nový parent mění jen optional-prerequisite test guards,25unit případů a docs/
+semantic memory; src/workers/fixtures/workflow zůstávají byte-exact tested19b.
+AST srovnání ověřilo stejné25ORM test/helper bodies a9installed test bodies po
+normalizaci výhradně prerequisite wrapperu/prologu; coroutine fixture se liší jen
+checksum prerequisite guardem. Při dostupném ověřeném toolchain je actual cesta
+včetně původních assertions stejná. Required missing toolchain zůstává FAIL.
+
+Current-parent pure **43PASS/0SKIP v0.40s** =25nových prerequisite unit testů,
+15mandatory CI a3worker-selection checks. Full1576/10 skutečně běžel na19b,
+ne na tomto novém parent SHA. Další actual/build/full se neopakuje; source a
+available-case setup equivalence jsou doloženy samostatně. Main216 episode prefix
++všechny219původníKafka episode objekty jsou immutable union před novým capture.
