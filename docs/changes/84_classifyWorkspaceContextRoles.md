@@ -60,3 +60,10 @@ Dodatečný bounded canonical-hash negative (valid64hex změna input SHA bez zm�
 context ID) prošel **1PASS/0.19s**. Doplnil výslovnou hash/identity coverage po
 coalesced294; produktový runtime po něm zůstává byte-exact jako při294 a actual
 replay. Změnil se pouze seznam parametrů testu. Finální full stále pending.
+
+Před jediným full přijat main8e81 (PR67 optional prerequisites). Produktový runtime,
+workers/fixtures/workflow zůstávají byte-exact source-reviewed49d; změněny jsou jen
+available-tool setup guards a nový25unit modul. Current-parent guard/classifier/
+mandatory checks **43PASS/0SKIP v0.33s**; původní295pure a actual5projection evidence
+zůstávají source základem. Root source closure APPROVE49d platí pro shodný runtime;
+full je povolen až na tomto current-parent checkpointu, bez nového worker buildu.

@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 362
+- Scope: production; omitted files: 364
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `c6ee4b7454982653f40537238b0390abadd33619ad1f467c24d9d9b28ea668ea`; content: `f7af6ecc3083d9ba3c210b80e5044416e2224eb0be6c976b76507f0d952f9440`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 219
+- Implementation episodes: 221
 - Inferred/ambiguous relationships: 4766/0
 
 ## Architecture diagram
@@ -1630,6 +1630,7 @@ flowchart LR
 - **fix(T003-S09-W01): bound XLSX formula reference tokens** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/39_boundXlsxFormulaReferences.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: focused133=passed, full298=passed, toolchain23=skipped, semantic=passed, diff-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/69_versionReactUiEvents.md, docs/compiler-inspection.md; validation: renderer20=passed, preceding_guard_broad63=passed, final_ui_contract_guard6=passed, full_queued=unknown, remote_ci_paused=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest-on-07ad865=passed, full-suite-toolchain-gates=skipped, rebase-focused=passed
+- **fix(t003): validate full JDK before installed worker smoke** — current; files: docs/changes/83_classifyOptionalCompilerPrerequisites.md, tests/test_coroutine_mapping.py, tests/test_optional_compiler_prerequisites.py, tests/test_orm_xml_overrides.py, tests/test_worker_install.py; validation: optional-full-957=passed, strict-matrix-123-coverage=passed, optional-prerequisites-644=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s08-01-typescript-project-references** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: strict284=passed, ts-project-references=passed, fingerprint=passed, methodology12=passed
 - **merge W02 canonical owner indexes into ORM XML mapping** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/65_ormXmlOverrides.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: jpa-xml-focused=passed, w02-jpql-owner=passed, k2-mapped-superclass=passed, semantic=passed, scan-check=passed
@@ -1677,6 +1678,7 @@ flowchart LR
 - **merge: preserve argument and React evidence on current main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/52_bindArgumentParameterFlow.md, docs/compiler-inspection.md; validation: current_combined_actual=passed, template_parent_pure=passed
 - **fix(ci): isolate restricted Windows smoke desktop access** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: integration-focused=passed, actual-offline-k1-build=passed, actual-windows-startup=skipped
 - **merge: preserve HTTP intent and finally-safe process path boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/73_buildLocalProcessPath.md, docs/process-paths.md; validation: corrected_full_1104=passed, optional_10=skipped, frozen_246=passed, http_focus_127=passed, ui_parent_pure_130=passed
+- **Integrate current parent and validate shared context-role boundary** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/77_scopeKafkaCodeBindings.md; validation: pure295=passed, current-parent-pure43=passed, source-review49d=passed, strict-full=unknown
 
 ## Internal relationships
 
