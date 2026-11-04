@@ -371,6 +371,18 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     ui_diagnostics = []
     context_id = selected_context["id"]
 
+    from .kafka_code import declaration_witness, call_witness
+    kafka_symbols = {s["id"]: s for s in metadata}
+    # Preserve the original compiler realm only for prospective Kafka declarations.
+    kafka_sources = {s.get("id") for s in metadata
+                     if any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
+                            in {"KafkaListener", "KafkaListeners"}
+                            for a in (s.get("annotations") if isinstance(s.get("annotations"), list) else []))}
+    kafka_targets = {s.get("id") for s in metadata if s.get("name") == "send"
+                     and s.get("owner") in {"org.springframework.kafka.core.KafkaTemplate",
+                                            "org.springframework.kafka.core.KafkaOperations"}}
+    kafka_sources.update(s.get("caller") for s in call_sites if s.get("declared_target") in kafka_targets)
+
     def proof(fact: dict, kind: str, *, source: str, target: str, relation: str) -> str:
         record = {"kind": kind, "source": source, "target": target, "relation": relation,
                   "context_ids": [context_id], "extractor": response["worker"],
@@ -386,6 +398,16 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                   "dispatch_completeness_reason": fact.get("dispatch_completeness_reason"),
                   "dispatch_classpath": fact.get("dispatch_classpath"),
                   "origin_trust": selected_context["origin_trust"], "freshness": selected_context["freshness"]}
+        if (relation == "contains" and isinstance(fact.get("annotations"), list)
+                and any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
+                        in {"KafkaListener", "KafkaListeners"} for a in fact["annotations"])):
+            record["compiler_annotation_fingerprint"] = digest(fact["annotations"])
+        if relation == "contains" and fact.get("id") in kafka_sources:
+            record["compiler_realm"] = {key: selected_context.get(key)
+                                        for key in ("repo_id", "module", "source_set", "scope")}
+            record["compiler_declaration"] = declaration_witness(fact)
+        if relation == "declares_call" and fact.get("declared_target") in kafka_targets:
+            record["compiler_call"] = call_witness(fact, kafka_symbols[fact["declared_target"]])
         if fact.get("argument_mapping_version") == 1:
             record.update({key: fact.get(key) for key in ("argument_mapping_version", "call_site", "argument_index",
                           "parameter_index", "parameter_name", "transformation", "binding_kind")})
@@ -664,11 +686,17 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     graph = augment_framework_graph(root, graph, selected)
     from .http_execution import augment_http_graph
     graph = augment_http_graph(graph, sanitize(response["bodies"]), selected)
+    from .kafka_code import augment_kafka_graph
+    graph = augment_kafka_graph(root, graph, sanitize(response["bodies"]), selected)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
     if strict and result["status"] == "PARTIAL":
         return {**result, "exit_code": 4}
+    from .kafka_code import validate_analysis
+    for captured in graph.contexts:
+        if captured.get("id") == selected["id"]:
+            validate_analysis(root, captured)
     final = scan_repository(root, project_model=project_model)
     if (source_snapshot(root, final, selected) != selected["source_files"]
             or jpa_xml_input_snapshot(root, selected) != selected.get("jpa_xml_inputs")

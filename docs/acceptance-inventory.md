@@ -698,3 +698,16 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+### T003-S07-W04 revize2 — draft code/group acceptance
+
+`tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
+backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
+backend nemá method annotations). Replay mutation testy mění annotation mirrors,
+realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
+Schema2 public snapshot ověřuje explicitní původní code refs, group property
+provenance, subscription a private-property redakci; cizí ID/context/SHA se
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.

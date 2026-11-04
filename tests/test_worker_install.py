@@ -49,6 +49,19 @@ class WorkerSelectionTests(unittest.TestCase):
 
 
 class InstalledWorkerTests(unittest.TestCase):
+    def require_jvm(self, backend="k1"):
+        # Validate only host prerequisites here. Errors from the installed wheel
+        # remain failures in run_installed, including incomplete distributions.
+        try:
+            command("jvm", ROOT / "workers", kotlin_backend=backend)
+        except WorkerError as error:
+            if error.status != "TOOLCHAIN_UNAVAILABLE":
+                raise
+            if (os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1"
+                    or backend == "k2" and os.environ.get("KGMAKER_REQUIRE_K2") == "1"):
+                self.fail("blocked: " + str(error))
+            self.skipTest("blocked: " + str(error))
+
     @classmethod
     def setUpClass(cls):
         cls.temporary = tempfile.TemporaryDirectory(prefix='kgmaker user space ')
@@ -176,10 +189,7 @@ assert (root / ".kgmaker/graph.json").is_file()
 ''')
 
     def test_packaged_jvm_analyzes_outside_checkout(self):
-        if not shutil.which("java") or not (ROOT / "workers/jvm/target/kgmaker-jvm-worker.jar").is_file():
-            if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
-                self.fail("blocked: actual JVM worker and JDK required")
-            self.skipTest("blocked: actual JVM worker and JDK required")
+        self.require_jvm()
         self.run_installed('''
 from pathlib import Path
 from kgmaker.inspection import inspect_jvm
@@ -193,10 +203,7 @@ assert (worker_home() / "jvm/target/licenses/kotlin/LICENSE.txt").is_file()
 ''')
 
     def test_packaged_kotlin_analyzes_in_user_space_with_spaces(self):
-        if not shutil.which('java') or not (ROOT / 'workers/jvm/target/kgmaker-jvm-worker.jar').is_file():
-            if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
-                self.fail('blocked: actual JVM worker and JDK required')
-            self.skipTest('blocked: actual JVM worker and JDK required')
+        self.require_jvm()
         self.run_installed('''
 from pathlib import Path
 from kgmaker.inspection import inspect_jvm, worker_home
@@ -212,10 +219,7 @@ assert (root / '.kgmaker/graph.json').is_file()
 ''')
 
     def test_packaged_k2_analyzes_outside_checkout(self):
-        if not shutil.which("java") or not (ROOT / "workers/jvm/target-k2/kgmaker-jvm-worker.jar").is_file():
-            if os.environ.get("KGMAKER_REQUIRE_K2") == "1":
-                self.fail("blocked: actual K2 Analysis API worker and JDK required")
-            self.skipTest("blocked: actual K2 Analysis API worker and JDK required")
+        self.require_jvm("k2")
         self.run_installed('''
 from pathlib import Path
 from kgmaker.inspection import inspect_jvm, worker_home

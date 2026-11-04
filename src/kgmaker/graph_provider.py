@@ -110,6 +110,9 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
                 or "ui_adapters" not in context.get("project", {})):
             raise WorkerError("STALE_INDEX: UI adapter rules changed; inspect frontend again", "STALE")
+    if context.get("language") == "jvm" and "kafka_code_analysis" in context:
+        from .kafka_code import validate_analysis
+        validate_analysis(root, context)
     rules = context.get("framework_rule_versions")
     if context.get("language") == "jvm" and rules is not None and not isinstance(rules, dict):
         raise WorkerError("STALE_INDEX: malformed Spring rule snapshot", "STALE")

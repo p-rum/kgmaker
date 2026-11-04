@@ -299,3 +299,21 @@ tasku zůstává vyčerpaný/BLOCKED; samostatný explicitní scoped task
 další full není tvrzen PASS. Původní log/XML/manifests a malý failed T024
 specimen jsou zachované; pouze dokončené disposable pytest projekty byly
 s auditem odstraněny a uvolnily přibližně1.5GiB.
+
+## Ověřený full a finální parent 2026-11-04
+
+Test-only checkpoint `079ec21` dokončil strict full **1666 PASS,10 SKIP
+za1678.08s** (JUnit1676/0failure/0error/10skip);601tracked/30nativeJAR/
+1493tool-fixture vstupů zůstalo před/po shodných a bylo nezávisle znovu
+ověřeno. Předchozí full selhání zůstávají zachovaná. Opravená společná
+T024/Return/LocalOps/T025/T026/context/protocol sada předtím392PASS0SKIP195.20s.
+SKIP jsou výslovně nepřipravené Maven/Gradle/Windows gates, nikoli compiler PASS.
+
+Následná kompozice s aktuálním main `f6a6355` zachovává Kafka rev2 proof metadata
+vedle return qualification; LocalOps materializace předchází Return a pak Kafka
+augmentation. Všech27trackedworker souborů je byte-identických s ověřeným079,
+takže žádný nový native build není potřeba.221main memory episodes zůstává
+neměnným prefixem a oba vlastní captures jsou zachovány. Full1666/10 platí
+pro079, nikoli automaticky pro nový merge. Nad finálním parentem následuje
+nezávislé source review a jedna bounded Kafka/Return/T024/prerequisite matrix;
+nový full se bez konkrétního integračního důvodu automaticky neopakuje.

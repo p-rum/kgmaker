@@ -1299,3 +1299,35 @@ Use the existing inspection classpath options for the pinned API JARs listed in
 `fixtures/http-client-execution/dependencies.lock.json` (JAR/POM SHA and license).
 The actual API tests require the Maven cache and own worker home; mandatory CI
 prepares these APIs and runs `tests/test_http_client_execution.py`.
+
+### Explicit Kafka code declarations (`kafka-code-1`, revision2 draft)
+
+Explicit JVM inspection can attach canonical listener declarations from captured
+method annotations: Java in either worker backend and Kotlin K1. An explicit
+nonempty groupId is required. Topics are exact case-sensitive literals or captured
+whole-property references; topicPattern remains a regex candidate without topic
+expansion. Kotlin K2 omits method annotations in its current source model and
+remains UNKNOWN. Listener activation and execution are not observed.
+
+Java producer declarations require the dependency-owned KafkaTemplate or
+KafkaOperations `send(String,Object)` callsite, compiler-proven argument mapping,
+and a direct ASCII string literal topic. Both backends share this Javac support.
+Named constants, escaped literals, Kotlin bodies, wrappers, NewTopic,
+ProducerRecord and other overloads do not provide positive producer proof.
+
+Workspace schema2 optionally adds the following exact `code_ref` shape to a
+binding (schema1 remains supported):
+
+```json
+{"kind":"listener","id":"<original compiler method ID>","context_id":"<captured context ID>","source_file":"src/main/java/demo/Listener.java","sha256":"<64 lowercase hex characters>"}
+```
+
+Producer references use `kind: "send"` and the original compiler callsite ID.
+Selectors are checked against private current compiler capture, canonical source,
+realm, scope, ownership, original source SHA and exact topic agreement. Consumers
+also require exact agreement with the explicit `.group` configuration property.
+Only this bounded join can yield `code_binding: VERIFIED_STATIC` and a
+`kafka_subscription`; configuration alone remains UNPROVEN. Logical identities and
+capture revisions are separate, and original IDs survive workspace qualification.
+Public context privacy and freshness checks remain mandatory. This is static
+provenance, without delivery, broker, activation or data availability evidence.
