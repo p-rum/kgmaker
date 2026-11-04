@@ -99,3 +99,16 @@ lokalizovanou diagnostikou; strict CLI vrací4. Unrelated policy zůstává plat
 
 Aktuální čistá captured matice178PASS0.74s včetně direct flow, CLI selector a
 strict JSON cesty; nejde o compiler běh. Opravená actual fronta ještě nezačala.
+
+## Canonical producer envelope, nikoli samotný self-hash
+
+Normativní audit doložil, že přepočítaný policy logical alias/extra field/execution
+nebo změněná W04 base metadata scope/owner/logical/revision mohla zůstat DECLARED.
+Report nepřebíral falešné OBSERVED hodnoty, ale tuple nebyl přesný. Reader nyní
+vyžaduje známá policy v1 pole a pevné static-status hodnoty, logickou identitu
+od skutečného W04 listeneru, přesnou W04 base identitu/source/realm i uloženou
+logical/revision. Neřeší znovu skupiny podle názvů či private properties a nevytváří
+resolver. Legacy graph1/2 zůstává čitelný jako UNKNOWN policy, ne current proof.
+
+Čistá captured/CLI/control matice215PASS0.91s. Actual12 a full stále NOT_RUN.
+Zdroj je připraven k novému nezávislému closure; žádný autorův APPROVE se nevydává.

@@ -135,7 +135,7 @@ def reidentify(graph,policy,metadata):
 CASES=['foreign-extra-edge','empty-evidence','edge-kind','edge-context','edge-file','edge-line','dlt-target',
        'proof-kind','proof-context','proof-source','proof-hash','proof-range','proof-extractor','proof-compiler-refs',
        'source-node','source-symbol','source-annotation','handler-scope','handler-symbol','handler-annotation',
-       'handler-own-proof','listener-fact','listener-proof','coherent-attempts','coherent-missing-listener','coherent-api-resource','classpath','version','source-api-shadow','code-stamp','freshness','context-scope','source-file-hash','compiler-realm','annotation-proof']
+       'handler-own-proof','listener-fact','listener-proof','listener-scope','listener-owner','listener-name','listener-descriptor','listener-logical','listener-revision','listener-execution','listener-activation','listener-realm','coherent-attempts','coherent-policy-logical','coherent-policy-execution','coherent-policy-extra','coherent-missing-listener','coherent-api-resource','classpath','version','source-api-shadow','code-stamp','freshness','context-scope','source-file-hash','compiler-realm','annotation-proof']
 
 
 @pytest.mark.parametrize('case',CASES)
@@ -170,9 +170,20 @@ def test_public_snapshot_tamper_is_local_unknown_without_mutation(captured,case)
         graph.nodes=[replace(n,metadata={**n.metadata,'group_id':'forged'}) if n.id==md['listener_fact_id'] else n for n in graph.nodes]
     elif case=='listener-proof':
         graph.evidence=[p for p in graph.evidence if not(p.get('relation')=='declares_kafka_listener' and p.get('target')==md['listener_fact_id'])]
+    elif case in {'listener-scope','listener-owner','listener-name','listener-descriptor','listener-logical','listener-revision','listener-execution','listener-activation','listener-realm'}:
+        fact=next(n for n in graph.nodes if n.id==md['listener_fact_id'])
+        key,value={'listener-scope':('scope','test'),'listener-owner':('owner','foreign.Owner'),
+            'listener-name':('method_name','foreign'),'listener-descriptor':('descriptor','()V'),
+            'listener-logical':('logical_id','foreign-logical'),'listener-revision':('revision','foreign-revision'),
+            'listener-execution':('execution','OBSERVED'),'listener-activation':('activation','ACTIVE'),
+            'listener-realm':('source_realm',{'repo_id':'foreign','module':'root','source_set':'main','scope':'production'})}[case]
+        fact.metadata[key]=value
     elif case.startswith('coherent-'):
         new=copy.deepcopy(md)
         if case=='coherent-attempts':new['attempts']=9
+        elif case=='coherent-policy-logical':new['logical_id']='wrong-policy-logical'
+        elif case=='coherent-policy-execution':new['execution']='OBSERVED'
+        elif case=='coherent-policy-extra':new['unversioned_extra']='unknown'
         elif case=='coherent-missing-listener':
             symbol=next(s for s in graph.symbols if s['id']==origin)
             symbol['annotations']=[a for a in symbol['annotations'] if a['name']!='org.springframework.kafka.annotation.KafkaListener']
@@ -381,3 +392,11 @@ def test_cli_strict_process_does_not_hide_foreign_policy_proof(captured,tmp_path
         assert report['status']=='PARTIAL' and all(r['status']=='UNKNOWN' for r in report['kafka_policy_boundaries'])
         bad=SimpleNamespace(root=tmp_path,scope='production',context='foreign-context',command='flow',view='process')
         with pytest.raises(AnalysisError,match='Unknown analysis context'):indexed(bad)
+
+
+@pytest.mark.parametrize('version',[1,2])
+def test_legacy_graph_version_reads_policy_as_unknown(captured,version):
+    graph=replace(captured,schema_version=version);policy=policies(graph)[0]
+    KnowledgeGraph.from_dict(graph.to_dict())
+    rows=policy_boundaries(graph,{policy.metadata['origin_id']})
+    assert rows and all(r['status']=='UNKNOWN' for r in rows)

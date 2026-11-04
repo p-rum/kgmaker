@@ -7,7 +7,7 @@ import zipfile
 
 from .analysis_model import digest
 from .model import Node, Edge, KnowledgeGraph
-from .kafka_code import _Capture, validate_code_fact, _range
+from .kafka_code import _Capture, validate_code_fact, _range, VERSION as CODE_VERSION
 
 VERSION='kafka-retry-1'
 RETRY='org.springframework.kafka.annotation.RetryableTopic'
@@ -21,6 +21,14 @@ RESOURCE_HASHES={
     'org/springframework/kafka/annotation/RetryableTopic.class':'04cd9c6af6677d252a5f7adf05c5109a8f2882aab3b324c436ec1e354ecac58e',
     'org/springframework/kafka/annotation/DltHandler.class':'cec1f3864411c0f3190eaf6ebdd221221706f6a058c3e96b777edd7d8ceae310'}
 RESOURCES=set(RESOURCE_HASHES)
+POLICY_FIELDS=frozenset({'version','logical_id','origin_id','listener_fact_id','context_id','classpath_sha256',
+    'source_sha256','source_range','attempts','retry_suffix','dlt_suffix','handler_id','api','source_realm',
+    'handler_annotation_fingerprint','handler_sha256','handler_range','annotation_fingerprint','status','reasons',
+    'async_boundary','execution','delivery','activation','runtime_availability','data_availability','scheduling','destinations'})
+POLICY_FIXED={'async_boundary':'RETRY_POLICY','execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED',
+    'activation':'UNKNOWN','runtime_availability':'UNKNOWN','data_availability':'UNKNOWN','scheduling':'UNKNOWN','destinations':'UNKNOWN'}
+LISTENER_FIELDS=frozenset({'annotation','annotation_id','group_id','subscription_kind','topics','topic_pattern',
+    'status','reasons','property_provenance','broker_realm','code_origin'})
 
 
 def analysis_stamp(context):
@@ -297,7 +305,7 @@ def _declaration(graph,identity,context,repo):
     return (symbol,raw,sorted(set(refs))) if refs else None
 
 
-def _listener_anchor(graph,fact,method,context,repo,refs):
+def _listener_anchor(graph,fact,method,raw_method,context,repo,refs):
     from .workspace import split_id,qualified,source_key
     listener_annotations=_annotations(method,LISTENER)
     if len(listener_annotations)!=1 or not isinstance(listener_annotations[0].get('values'),dict):return False
@@ -317,15 +325,28 @@ def _listener_anchor(graph,fact,method,context,repo,refs):
         original['source_file']=value
     base={'version','logical_id','revision','origin_id','context_id','source_realm','source_file',
           'source_sha256','source_range','owner','method_name','descriptor','scope','execution','activation'}
+    expected_base={'version':CODE_VERSION,'origin_id':raw_method['id'],'context_id':raw_method['context_id'],
+        'source_realm':{k:context.get(k) for k in ('repo_id','module','source_set','scope')},
+        'source_file':raw_method['path'],'source_sha256':raw_method['sha256'],'source_range':raw_method['range'],
+        'owner':raw_method['owner'],'method_name':raw_method['name'],'descriptor':raw_method['descriptor'],
+        'scope':context['scope'],'execution':'NOT_OBSERVED','activation':'UNKNOWN'}
+    if set(original)!=base|LISTENER_FIELDS or any(original.get(k)!=v for k,v in expected_base.items()):return False
+    source_node=next((n for n in graph.nodes if n.id==method['id']),None)
+    if (source_node is None or fact.name!=method['name'] or fact.line!=method['range']['start_line']
+            or fact.role!='contract' or fact.origin!='generated' or fact.signature is not None or fact.summary is not None
+            or fact.build_membership!=source_node.build_membership or fact.classification_evidence!=source_node.classification_evidence):return False
     facts={k:v for k,v in original.items() if k not in base}
+    if (facts.get('annotation')!=LISTENER or facts.get('code_origin')!='COMPILER_ANNOTATION'
+            or facts.get('broker_realm') is not None or facts.get('status') not in {'DECLARED','REGEX_CANDIDATE','UNKNOWN'}):return False
     logical={**original.get('source_realm',{}),'owner':method['owner'],'name':method['name'],'descriptor':method['descriptor']}
     expected_logical='kafka_code_listener:'+digest(logical)
     expected_revision=digest({'logical_id':expected_logical,'context_id':original.get('context_id'),
         'path':original.get('source_file'),'sha256':method.get('sha256'),'range':method.get('range'),
-        'version':'kafka-code-1','facts':facts})
-    if (identity!=expected_logical+':capture:'+expected_revision or md.get('origin_id')!=method['id']
+        'version':CODE_VERSION,'facts':facts})
+    if (original.get('logical_id')!=expected_logical or original.get('revision')!=expected_revision
+            or identity!=expected_logical+':capture:'+expected_revision or md.get('origin_id')!=method['id']
             or md.get('context_id')!=context['id'] or md.get('source_sha256')!=method['sha256']
-            or md.get('source_range')!=method['range'] or original.get('version')!='kafka-code-1'):return False
+            or md.get('source_range')!=method['range'] or original.get('version')!=CODE_VERSION):return False
     proofs={p['id']:p for p in graph.evidence}
     for edge in graph.edges:
         if (edge.kind!='declares_kafka_listener' or edge.source!=method['id'] or edge.target!=fact.id
@@ -348,12 +369,16 @@ def _validated_edges(graph,n):
     repo=split_id(n.id)[0] if n.id.startswith('repo:') else None
     nodes={v.id:v for v in graph.nodes};contexts={c['id']:c for c in graph.contexts};proofs={p['id']:p for p in graph.evidence}
     c=contexts.get(md.get('context_id'),{})
-    if (raw is None or raw_id!=raw.get('logical_id','')+':capture:'+digest(raw)
+    if (graph.schema_version!=3 or raw is None or set(raw)!=POLICY_FIELDS
+            or any(raw.get(k)!=v for k,v in POLICY_FIXED.items())
+            or n.role!='contract' or n.origin!='generated' or n.signature is not None or n.summary is not None
+            or n.build_membership or n.classification_evidence
+            or raw_id!=raw.get('logical_id','')+':capture:'+digest(raw)
             or md.get('version')!=VERSION or c.get('scope')!=n.scope
             or c.get('mode') not in {'BUILD_IMPORT','BUILD_EXECUTE'}
             or c.get('origin_trust')!='LOCAL_COMPILER_INPUTS' or c.get('freshness')!='CONTENT_VERIFIED'
             or c.get('kafka_retry_analysis')!=analysis_stamp(c)
-            or c.get('kafka_code_analysis')!={'version':'kafka-code-1'}
+            or c.get('kafka_code_analysis')!={'version':CODE_VERSION}
             or not isinstance(c.get('framework_rule_versions'),dict) or c['framework_rule_versions'].get('kafka_retry')!=VERSION
             or md.get('classpath_sha256')!=digest(c.get('classpath',[]))):return None
     declaration=_declaration(graph,md.get('origin_id'),c,repo)
@@ -365,7 +390,10 @@ def _validated_edges(graph,n):
             or md.get('source_realm')!={k:c.get(k) for k in ('repo_id','module','source_set','scope')}
             or not isinstance(c.get('kafka_code_source_hashes'),dict)
             or c['kafka_code_source_hashes'].get(source.get('path'))!=symbol['sha256']
-            or not _listener_anchor(graph,nodes.get(md.get('listener_fact_id')),symbol,c,repo,refs)):return None
+            or not _listener_anchor(graph,nodes.get(md.get('listener_fact_id')),symbol,source,c,repo,refs)):return None
+    fact=nodes[md['listener_fact_id']]
+    listener_logical=fact.metadata['original_logical_id' if repo is not None else 'logical_id']
+    if raw['logical_id']!='kafka-retry-policy:'+digest({'listener':listener_logical,'version':VERSION}):return None
     api=md.get('api')
     if api is not None:
         if any(s.get('context_id')==c['id'] and s.get('owner') in {RETRY,DLT,LISTENER} and s.get('path') for s in graph.symbols):return None

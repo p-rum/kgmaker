@@ -52,3 +52,8 @@ to executable CFG selection without hiding contradictory policy edges. The
 existing CLI `--context` pin remains enforced; `flow.process` also accepts the
 optional `context_id` selector. Unproven relevant policy changes process coverage
 to PARTIAL, with `KAFKA_POLICY_UNRESOLVED`; strict rendering returns exit4.
+
+The current v1 policy envelope, logical identity and fixed static-status fields
+are validated exactly, as are the canonical W04 base identity/revision and source
+realm. A self-hash alone cannot authorize a changed scope, logical alias or
+runtime claim. Graph1/2 remain readable, but cannot certify current policy proof.
