@@ -45,3 +45,9 @@ workers a fixtures protiad8 zůstávají byte-exact. Aktuální coalescedpure
 nových25prerequisite+34provider případů **59PASS3.01s**. Full následuje
 na tomto current-parent source; dosud není PASS. Parent216immutableepisodes
 se zachovává; finalreview/merge zůstává samostatný krok.
+
+Před startem vlastního full integrován také mainf6a6355 (Kafka PR69).
+Původní vlastní unstarted/childless fronta byla auditovaně zrušena předpytest;
+žádný full se neopakoval. Provider runtime zůstává stejnýad8, ostatní runtime
+z rodičeKafka je již samostatně ověřený. Current-parentpure59PASS2.61s;
+currentfull zůstává pending, nové zahájení bude mít vlastní manifest/receipt.
