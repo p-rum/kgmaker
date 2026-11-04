@@ -306,6 +306,10 @@ def test_primitive_policy_fields_fail_closed_as_public_unknown(captured,field,va
         assert rows==policy_boundaries(captured,{origin})
     else:
         assert rows and all(r['status']=='UNKNOWN' and r['source']==origin for r in rows)
+    from kgmaker.flow import process
+    report=process(graph,origin)
+    if value==original:assert all(r['status']=='DECLARED' for r in report['kafka_policy_boundaries'])
+    else:assert report['status']=='PARTIAL' and all(r['status']=='UNKNOWN' for r in report['kafka_policy_boundaries'])
     assert graph.to_dict()==before
 
 
@@ -323,3 +327,57 @@ def test_bad_method_selection_is_controlled_and_read_only(captured):
     for bad in (None,'method-id',[{}]):
         with pytest.raises(ValueError,match='explicit method IDs'):policy_boundaries(captured,bad)
     assert captured.to_dict()==before
+
+
+def foreign_edge_graph(captured):
+    graph=KnowledgeGraph.from_dict(copy.deepcopy(captured.to_dict()));policy=policies(graph)[0]
+    graph.nodes.append(Node('foreign-method','method','foreign','foreign.kt',scope='test'))
+    graph.contexts.append({'id':'foreign-context','scope':'test','mode':'SOURCE_ONLY'})
+    graph.edges.append(Edge(policy.id,'foreign-method','declares_dlt_boundary',evidence_kind='SYNTAX_CANDIDATE',context_ids=('foreign-context',)))
+    KnowledgeGraph.from_dict(graph.to_dict())
+    return graph,policy
+
+
+def test_public_flow_validates_original_proofs_before_scope_filter(captured):
+    from kgmaker.flow import process
+    graph,policy=foreign_edge_graph(captured);origin=policy.metadata['origin_id']
+    before=copy.deepcopy(graph.to_dict());report=process(graph,origin)
+    rows=report['kafka_policy_boundaries']
+    assert rows and all(r['status']=='UNKNOWN' and r['target']!='foreign-method' for r in rows)
+    assert report['status']=='PARTIAL' and any(d['code']=='KAFKA_POLICY_UNRESOLVED' for d in report['diagnostics'])
+    other=[p for p in policies(graph) if p.metadata['origin_id']!=origin]
+    if other:assert all(r['status']=='DECLARED' for r in process(graph,other[0].metadata['origin_id'])['kafka_policy_boundaries'])
+    assert graph.to_dict()==before
+
+
+def test_cli_process_keeps_full_proof_input_and_exact_context_pin(captured,tmp_path):
+    from types import SimpleNamespace
+    from kgmaker.inspection_cli import indexed
+    from kgmaker.flow import process
+    from kgmaker.analysis_model import AnalysisError
+    graph,policy=foreign_edge_graph(captured);before=copy.deepcopy(graph.to_dict())
+    args=SimpleNamespace(root=tmp_path,scope='production',context=policy.metadata['context_id'],command='flow',view='process')
+    with patch('kgmaker.inspection_cli.load_graph',return_value=graph),patch('kgmaker.graph_provider.validate_compiler_snapshot') as validate:
+        loaded=indexed(args)
+        assert loaded is graph and args._flow_context_id==policy.metadata['context_id']
+        validate.assert_called_once_with(tmp_path.resolve(),graph)
+    rows=process(loaded,policy.metadata['origin_id'],context_id=args._flow_context_id)['kafka_policy_boundaries']
+    assert rows and all(r['status']=='UNKNOWN' for r in rows)
+    with pytest.raises(AnalysisError,match='Source CFG unavailable'):
+        process(loaded,policy.metadata['origin_id'],context_id='foreign-context')
+    assert graph.to_dict()==before
+
+
+def test_cli_strict_process_does_not_hide_foreign_policy_proof(captured,tmp_path,capsys):
+    from types import SimpleNamespace
+    from kgmaker.inspection_cli import run,indexed
+    from kgmaker.analysis_model import AnalysisError
+    graph,policy=foreign_edge_graph(captured)
+    args=SimpleNamespace(root=tmp_path,scope='production',context=policy.metadata['context_id'],command='flow',view='process',
+        entry=policy.metadata['origin_id'],max_depth=3,max_nodes=500,format='json',strict=True,flow_command='render')
+    with patch('kgmaker.inspection_cli.load_graph',return_value=graph),patch('kgmaker.graph_provider.validate_compiler_snapshot'):
+        assert run(args)==4
+        report=json.loads(capsys.readouterr().out)
+        assert report['status']=='PARTIAL' and all(r['status']=='UNKNOWN' for r in report['kafka_policy_boundaries'])
+        bad=SimpleNamespace(root=tmp_path,scope='production',context='foreign-context',command='flow',view='process')
+        with pytest.raises(AnalysisError,match='Unknown analysis context'):indexed(bad)

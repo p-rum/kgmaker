@@ -56,7 +56,7 @@ def control_flow(graph, entry, *, scope="production", max_nodes=500, representat
             "limitations": cfg.get("limitations", [])}
 
 
-def process(graph, entry, *, scope="production", max_depth=3, max_nodes=500):
+def process(graph, entry, *, scope="production", max_depth=3, max_nodes=500, context_id=None):
     """Expand CFG calls only when a unique body is a safe static representation.
 
 No ordering is derived from a call graph. Recursive, dispatch-uncertain and
@@ -64,7 +64,8 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
 """
     if type(max_depth) is not int or type(max_nodes) is not int or max_depth < 0 or max_nodes < 1:
         raise AnalysisError("Invalid traversal limits")
-    graph = project(graph, scope)
+    policy_input = graph
+    graph = project(graph, scope, context_id=context_id)
     bodies = [c for c in graph.cfgs if c.get("representation") == "SOURCE"]
     if len({c["method"] for c in bodies}) != len(bodies):
         raise AnalysisError("Explicit context required for process CFG variants")
@@ -158,10 +159,12 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
     from .dataflow import http_request_inventory
     http = http_request_inventory(graph, callers=expanded_methods)
     from .kafka_retry import policy_boundaries
-    kafka_policy = policy_boundaries(graph, expanded_methods)
+    kafka_policy = policy_boundaries(policy_input, expanded_methods)
+    policy_diagnostics=[{'code':'KAFKA_POLICY_UNRESOLVED','policy_id':row['policy_id'],
+                         'source':row['source'],'reasons':row['reasons']} for row in kafka_policy if row['status']=='UNKNOWN']
     return {"schema_version": 1, "view": "process", "entry": entry, "scope": scope, "contexts": graph.contexts,
-            "status": "PARTIAL" if omitted or any(cfgs[m].get("diagnostics") for m in expanded_methods) else "COMPLETE_WITHIN_SUPPORTED_SYNTAX",
-            "diagnostics": [d for m in sorted(expanded_methods) for d in cfgs[m].get("diagnostics", [])], "truncated": any(o["reason"].endswith("limit") for o in omitted),
+            "status": "PARTIAL" if omitted or policy_diagnostics or any(cfgs[m].get("diagnostics") for m in expanded_methods) else "COMPLETE_WITHIN_SUPPORTED_SYNTAX",
+            "diagnostics": [d for m in sorted(expanded_methods) for d in cfgs[m].get("diagnostics", [])]+policy_diagnostics, "truncated": any(o["reason"].endswith("limit") for o in omitted),
             "cfg": {"entry": first, "exit": last, "exceptional_exit": exceptional,
                     "blocks": sorted(blocks.values(), key=lambda b: b["id"]),
                     "edges": sorted(edges, key=lambda e: (e["source"], e["target"], e["kind"]))},

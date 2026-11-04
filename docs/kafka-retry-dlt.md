@@ -46,3 +46,9 @@ Validation is in `tests/test_kafka_retry_dlt.py`; current draft results and
 remaining mandatory runs are recorded in [note87](changes/87_captureKafkaRetryDlt.md).
 The Kafka revision2 parent is an explicit draft dependency. W05 is not ready until
 its required actual matrix, frozen full suite and independent source review pass.
+
+Proof validation consumes the original unprojected snapshot. Scope/context apply
+to executable CFG selection without hiding contradictory policy edges. The
+existing CLI `--context` pin remains enforced; `flow.process` also accepts the
+optional `context_id` selector. Unproven relevant policy changes process coverage
+to PARTIAL, with `KAFKA_POLICY_UNRESOLVED`; strict rendering returns exit4.

@@ -85,3 +85,17 @@ příliš přísné nové assertion: původní legální reasons=[] zůstalo ste
 nikoli korupcí. Opraven test, aby beze změny požadoval totožný validní výstup;
 nejde o další product failure. Oba log/XML zůstaly zachované. Current actual/full
 jsou stále NOT_RUN; předchozí schválení zdroje neznamená self-review této úpravy.
+
+## Proof integrity před scope/context projekcí veřejného flow
+
+Čistý public-flow audit odhalil pořadí filtrů: direct policy guard vracel UNKNOWN,
+ale flow.process scope projekce odstranila foreign test-scope edge a znovu
+reportovala DECLARED. Stejnou předprojekci prováděl CLI indexed. Oprava uchovává
+celý explicitní graph pro policy proof replay, zatímco CFG dále omezuje stejný
+scope a přesný context selector. Pouze CLI flow/process předává validovaný
+selector interně; ostatní navigační příkazy se nemění. Nevzniká nový resolver,
+store ani veřejný flag. Neplatná relevantní policy dává PARTIAL/UNKNOWN s
+lokalizovanou diagnostikou; strict CLI vrací4. Unrelated policy zůstává platná.
+
+Aktuální čistá captured matice178PASS0.74s včetně direct flow, CLI selector a
+strict JSON cesty; nejde o compiler běh. Opravená actual fronta ještě nezačala.
