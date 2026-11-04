@@ -769,5 +769,6 @@ business semantics or observe execution. PR65 is merged as `32a3bca`; this candi
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
 declarations as separate async boundaries, without executing listeners or brokers.
 Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
-See [scope and pending validation](docs/kafka-retry-dlt.md); final actual/full
-acceptance and independent review remain pending.
+See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
+361 PASS / 0 SKIP; required full remains NOT_RUN below the 5 GiB capacity gate.
+The feature is draft and is not ready for merge.

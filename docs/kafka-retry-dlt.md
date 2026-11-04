@@ -44,8 +44,10 @@ ordered-classpath stamps participate in context identity/freshness checks.
 
 Validation is in `tests/test_kafka_retry_dlt.py`; current draft results and
 remaining mandatory runs are recorded in [note87](changes/87_captureKafkaRetryDlt.md).
-The Kafka revision2 parent is an explicit draft dependency. W05 is not ready until
-its required actual matrix, frozen full suite and independent source review pass.
+The Kafka revision2 dependency is merged in current main. Current-source
+coalesced361PASS/0SKIP includes all12actual scenarios; source+focus has independent
+closure. W05 is not ready: the required frozen full is NOT_RUN because available
+disk is below5GiB, and final ready review remains pending.
 
 Proof validation consumes the original unprojected snapshot. Scope/context apply
 to executable CFG selection without hiding contradictory policy edges. The

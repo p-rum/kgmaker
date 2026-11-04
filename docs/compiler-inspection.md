@@ -1305,5 +1305,6 @@ Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
 positive path; unsupported3.2.0, custom handler, expressions, source shadows and
 ambiguous DLT associations remain UNKNOWN. Flow policy boundaries are separate
 from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
-[truthful run history](changes/87_captureKafkaRetryDlt.md). Required final runs
-and independent source review are pending; Kotlin K2 annotation gaps remain.
+[truthful run history](changes/87_captureKafkaRetryDlt.md). The current-source coalesced run passed361cases without SKIP; the required full
+is blocked by available disk below5GiB. Independent source+focus closure is
+recorded, but final ready review is pending; Kotlin K2 annotation gaps remain.

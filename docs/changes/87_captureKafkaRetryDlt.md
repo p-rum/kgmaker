@@ -112,3 +112,29 @@ resolver. Legacy graph1/2 zůstává čitelný jako UNKNOWN policy, ne current p
 
 Čistá captured/CLI/control matice215PASS0.91s. Actual12 a full stále NOT_RUN.
 Zdroj je připraven k novému nezávislému closure; žádný autorův APPROVE se nevydává.
+
+## Ověřený focused checkpoint a aktuální main — 2026-11-04
+
+Nezávislý source reviewer resume_return schválil exact43a646f pro jeden opravený
+coalesced focus. Běh skutečně proběhl FIFO s --maxfail=1: **361PASS/0SKIP102.17s**,
+exit0. Zahrnuje všech12current actual Java/K1 případů (dvě explicit groups v
+oddělených owner classes, supported3.3.2, custom handler, official3.2.0, source
+shadow, ambiguous DLT a expressions), public-snapshot tamper/CLI/flow a existující
+Kafka/trigger/control/mandatory regrese. HEAD před/po43a646f a všech1610source,
+native/TS distribution, fixture/API/Python/JDK/Kotlin vstupů beze změny.
+Receipts: `/workspace/kafka-retry-validation/guarded-focus-{pre,post,result}.json`
+a `guarded-focus.log/xml`. Žádný native rebuild, app ani broker.
+
+Mainf6a6355 (merged Kafka69 + prerequisite-only67) integrován do vlastní větve
+v28f748c. Runtime/workers/fixtures/W05test/mandatoryguard/workflow jsou byte-exact
+proti43a646f; pouze upstream prerequisite testy a metadata se změnily. Jejich
+čistá regrese43PASS0.18s. Parent221implementation episodes zůstávají neměnný prefix.
+Reviewer ověřil361JUnitIDs/0fail/error/skip a exact1610pre/post; schválil jeden
+budoucí strict full po capacity gate a fresh final freeze, nikoli fullPASS/ready.
+
+**Full NOT_RUN / BLOCKED:** preflight ověřil2.53GB free proti5368709120bytes
+(5GiB). Žádná full fronta/pytest nezačala; nevydává se to za přerušený či zelený
+full. Explicitní receipt `full-capacity-preflight.json` má tests0. Lokální focus
+nenahrazuje povinný full. GH CI NOT_RUN, bez retry/externího zápisu. Draft není
+ready ani dokončení celého W05/S07; zbývá připravený frozen full po uvolnění místa
+a finální nezávislé review/publikace rootem.
