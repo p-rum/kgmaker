@@ -317,3 +317,14 @@ neměnným prefixem a oba vlastní captures jsou zachovány. Full1666/10 platí
 pro079, nikoli automaticky pro nový merge. Nad finálním parentem následuje
 nezávislé source review a jedna bounded Kafka/Return/T024/prerequisite matrix;
 nový full se bez konkrétního integračního důvodu automaticky neopakuje.
+
+Finální parent `3532d2c` (base main `f6a6355`) prošel nezávislým source review
+APPROVE a jednou bounded společnou maticí **153 PASS,0 SKIP za136.23s**:
+celý KafkaCode a Return, skutečné T024 K1/K2,25optional-prerequisite,
+15mandatory-worker a3WorkerSelection.609tracked/30nativeJAR/1493tool-fixture
+hashes zůstalo před/po shodných a bylo znovu nezávisle ověřeno. Nový build ani
+full se neopakoval; producer worker zdroje jsou shodné s079. Strict full
+1666/10 zůstává explicitně důkazem079, tato153sada důkazem3532. Následující
+finální commit mění pouze tento záznam a generovaná semantic/memory metadata,
+nikoli runtime, testy, fixtures či workery. Finální exact base/head review a
+publikace/merge se ověřují samostatně; tento záznam je netvrdí hotové.
