@@ -71,3 +71,24 @@ obsah distribuce, skutečný compiler a store assertions zůstávají stejné.
 Žádná produktová či workflow změna. Pure RED9FAIL0.29s; po opravě
 celá rozhodovací matice **25PASS0.28s**. Nový opravený optional full a strict
 actualCoro/ORM/packaging jsou pending, oba starší FAIL logy/XML zachovány.
+
+## Ověřená finální matice 2026-11-04
+
+Na source4c4be965 prošla celá optionalPython3.12 sada **957PASS644SKIP50.43s**;
+všech599source+618tool/cache+132native vstupů zůstalo shodných. SKIP odpovídají
+nepřipravenému optionaltoolchain prostředí, nejde o compiler PASS.
+
+Strict actual skupina nejprve121PASS1FAIL243.22s: TypeScript packaging správně
+odmítl chybějící NPMruntime. To byl nedostatek přípravy testu, nikoli produktová
+oprava; žádný source se neměnil. Po ověření všechtrackedTSworker souborů bylo
+zkopírováno132runtimefiles z dříve ověřeného donor checkoutu, bez instalace či
+buildu. Celý worker_install modul pak prošel **9PASS33.37s** s povinným
+JVMK1/K2/TypeScript. Source-only a skutečné installed analyses zůstaly zachované.
+
+Nezávislý JUnit ID audit všech123aktuálně collected strict případů: původní
+54coroutine+35ORM+25decision=114PASS, nahrazená celá packaging skupina9PASS.
+Všech1487aktuálních vstupů a zvlášť předem zachycený Node executable beze změny.
+Jde o dvě doplňkové skutečné strict sady na stejném source/native, nikoli jeden
+nepřerušený123PASS příkaz. Historický strict121/1 zůstává FAIL. Receipts/XML a
+ID audit: /workspace/optional-toolchain-validation/packaging-runtime-corrected/
+combined-proof.json. Žádné zpětně vymyšlené prehashes. Finální review/merge zvlášť.
