@@ -32,3 +32,16 @@ Actual compiler regresní matice a jediný full dosud PENDING; tato čísla nejs
 jejich PASS. Main baseline9442114, vlastní note88 bez kolize ověřena přes57
 worktrees;84–87 jsou souběžné explicitní rezervace. T013 dependency nález zůstává
 dohledatelný, ale jeho contract attachment tato větev neimplementuje.
+
+## Skutečný compiler focus a aktuální rodič
+
+Sourcead8db56: **149PASS0SKIP50.92s**, všech2097source/native/tool/fixture
+vstupů aHEAD před/po beze změny. Běžel skutečný compiler provider/T011 a
+T006/T008/T009 i nové JSON/YAML případy. Původní worker/donor132licencovaných
+artefaktů zůstává byte-exact, žádný nový build.
+
+Integrován main8e81e63 (PR67), mění pouze prerequisite testy/metadata; src,
+workers a fixtures protiad8 zůstávají byte-exact. Aktuální coalescedpure
+nových25prerequisite+34provider případů **59PASS3.01s**. Full následuje
+na tomto current-parent source; dosud není PASS. Parent216immutableepisodes
+se zachovává; finalreview/merge zůstává samostatný krok.
