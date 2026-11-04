@@ -411,18 +411,30 @@ def _validated_edges(graph,n):
 
 def policy_boundaries(graph, methods):
     """Never expose a foreign or unproved policy edge as a declared boundary."""
-    result=[]
+    if not isinstance(methods,(set,frozenset,list,tuple)) or any(not isinstance(m,str) for m in methods):
+        raise ValueError('Policy selection requires explicit method IDs')
+    methods=frozenset(methods)
+    result=[];selected_targets={}
+    for edge in graph.edges:
+        if edge.kind=='declares_retry_boundary' and edge.source in methods:
+            selected_targets.setdefault(edge.target,set()).add(edge.source)
     for node in graph.nodes:
-        if node.kind!='kafka_retry_policy' or not isinstance(node.metadata,dict):continue
-        md=node.metadata
-        if md.get('origin_id') not in methods:continue
-        try:edges=_validated_edges(graph,node)
+        if node.kind!='kafka_retry_policy' and node.id not in selected_targets:continue
+        md=node.metadata if isinstance(node.metadata,dict) else {}
+        selected_origins=set(selected_targets.get(node.id,set()))
+        origin=md.get('origin_id')
+        if isinstance(origin,str) and origin in methods:selected_origins.add(origin)
+        if not selected_origins:continue
+        try:edges=_validated_edges(graph,node) if node.kind=='kafka_retry_policy' and isinstance(node.metadata,dict) else None
         except (ValueError,TypeError,KeyError,AttributeError,RecursionError):edges=None
         if edges is None:
-            result.append({'source':md.get('origin_id'),'target':node.id,'kind':'unresolved_policy_boundary',
-                'async_boundary':'UNKNOWN','policy_id':node.id,'status':'UNKNOWN',
-                'reasons':['KAFKA_POLICY_PROOF_UNPROVEN'],'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED',
-                'runtime_availability':'UNKNOWN','evidence_ids':[]})
+            # Existing selected edges locate UNKNOWN only; they never authorize
+            # a policy or choose a winner between competing source references.
+            for origin in sorted(selected_origins):
+                result.append({'source':origin,'target':node.id,'kind':'unresolved_policy_boundary',
+                    'async_boundary':'UNKNOWN','policy_id':node.id,'status':'UNKNOWN',
+                    'reasons':['KAFKA_POLICY_PROOF_UNPROVEN'],'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED',
+                    'runtime_availability':'UNKNOWN','evidence_ids':[]})
             continue
         for edge in edges:
             result.append({'source':edge.source,'target':edge.target,'kind':edge.kind,

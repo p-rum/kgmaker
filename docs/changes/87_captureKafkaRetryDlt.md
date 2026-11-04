@@ -70,3 +70,18 @@ listener annotation i při čistém replay a chybějící tuple lokalizuje jako 
 Vlastní čekající flock33797 byl ověřen bez potomka/pytest/logu a zrušen před startem;
 nejde o provedený ani přerušený pytest. Nová koherentní public-snapshot regrese
 pokrývá oba captured backend jazyky. Native workery zůstávají beze změny.
+
+## Skupinový primitive-shape audit před opravným compiler během
+
+Před novou actual frontou ověřeno20public Graph mutací (deset policy polí ×
+list/dict): pouze origin_id list/dict odhalily TypeError v nechráněné membership
+operaci. Oprava typuje selected method IDs a pouze pro UNKNOWN používá existující
+selected retry edge jako locator. Neověřená edge nikdy neautorizuje DECLARED ani
+nevybírá vítěze; zachovají se všechny relevantní neznámé alternativy. Neplatný
+policy kind/metadata rovněž nezmizí. Žádná nová actual fronta ještě nebyla spuštěna.
+
+Rozšířená čistá matice172PASS1.70s. První běh skončil58PASS1FAIL0.70s kvůli
+příliš přísné nové assertion: původní legální reasons=[] zůstalo stejnou hodnotou,
+nikoli korupcí. Opraven test, aby beze změny požadoval totožný validní výstup;
+nejde o další product failure. Oba log/XML zůstaly zachované. Current actual/full
+jsou stále NOT_RUN; předchozí schválení zdroje neznamená self-review této úpravy.

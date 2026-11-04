@@ -292,3 +292,34 @@ def test_policy_markdown_keeps_framework_intent_separate_from_cfg(captured):
     assert 'Kafka retry/DLT policy declarations (execution NOT_OBSERVED)' in text
     assert 'delivery NOT_OBSERVED; runtime/data availability UNKNOWN' in text
     assert captured.to_dict()==before
+
+
+@pytest.mark.parametrize('field',['origin_id','context_id','logical_id','handler_id','api','source_realm','source_range','reasons','status','version'])
+@pytest.mark.parametrize('value',[None,[],{}],ids=['null','array','object'])
+def test_primitive_policy_fields_fail_closed_as_public_unknown(captured,field,value):
+    graph=KnowledgeGraph.from_dict(copy.deepcopy(captured.to_dict()));policy=policies(graph)[0];origin=policy.metadata['origin_id']
+    original=copy.deepcopy(policy.metadata.get(field))
+    policy.metadata[field]=copy.deepcopy(value)
+    KnowledgeGraph.from_dict(graph.to_dict())
+    before=copy.deepcopy(graph.to_dict());rows=policy_boundaries(graph,{origin})
+    if value==original:
+        assert rows==policy_boundaries(captured,{origin})
+    else:
+        assert rows and all(r['status']=='UNKNOWN' and r['source']==origin for r in rows)
+    assert graph.to_dict()==before
+
+
+@pytest.mark.parametrize('change',['kind','metadata-array','metadata-null'])
+def test_selected_malformed_policy_remains_a_visible_unknown(captured,change):
+    graph=KnowledgeGraph.from_dict(copy.deepcopy(captured.to_dict()));policy=policies(graph)[0];origin=policy.metadata['origin_id']
+    values={'kind':{'kind':'file'},'metadata-array':{'metadata':[]},'metadata-null':{'metadata':None}}[change]
+    graph.nodes=[replace(n,**values) if n.id==policy.id else n for n in graph.nodes]
+    rows=policy_boundaries(graph,{origin})
+    assert rows and all(r['status']=='UNKNOWN' for r in rows)
+
+
+def test_bad_method_selection_is_controlled_and_read_only(captured):
+    before=copy.deepcopy(captured.to_dict())
+    for bad in (None,'method-id',[{}]):
+        with pytest.raises(ValueError,match='explicit method IDs'):policy_boundaries(captured,bad)
+    assert captured.to_dict()==before
