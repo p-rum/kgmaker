@@ -52,3 +52,11 @@ přesný bounded scope a historické/pending kontroly; žádné dokončení cel�
 Zbývá final source closure, actual grouped focus, jedna frozen FIFO full sada,
 sémantika/memory/scan/check a reviewed publication rootem. Autor tuto větev
 nereviewuje ani nemerguje. Nestartovala se žádná aplikace ani broker.
+
+## Udržitelnost připravené actual matice
+
+Stávající compiler-workers job dostává pouze explicitní API-only3.2.0 fixture
+POM s vyloučenými transitive dependencies a nový W05 test modul. Nevzniká nový
+gate, instalace aplikace ani CI retry. Behaviorální mandatory-worker guard
+ověřuje optional SKIP/required FAIL při chybějícím pinovaném API před compilerem.
+Runtime source z checkpoint7c1b zůstává byte-exact; CI nebylo spuštěno.
