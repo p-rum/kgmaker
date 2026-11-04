@@ -697,13 +697,16 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
 
 ## T003-S07-W05 — retry/DLT policy draft
 
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
-Initial actual6PASS is historical; current source adds canonical edge/proof/API
-and compiler realm guards. Pure captured replay82PASS is not a compiler rerun.
-Final actual/full and independent review are pending. No runtime/delivery or
-whole-S07 completion follows.
+Current-source coalesced actual/pure361PASS/0SKIP102.17s preserves1610input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent closure for focus only; fullNOT_RUN (disk below5GiBgate),
+final review/ready pending. No runtime/delivery or whole-S07 completion follows.
