@@ -116,7 +116,7 @@ vytvořené PR k review a po schválení současného HEAD je může mergeovat.
 | T003-S07-W01 | [T003-S07-01-argumentParameterFlow.md](T003-S07-01-argumentParameterFlow.md) | argument parameter flow | SPECIFICATION |
 | T003-S07-W02 | [T003-S07-02-returnConsumerFlow.md](T003-S07-02-returnConsumerFlow.md) | return consumer flow | SPECIFICATION |
 | T003-S07-W03 | [T003-S07-03-fieldAndMappingFlow.md](T003-S07-03-fieldAndMappingFlow.md) | field and mapping flow | SPECIFICATION |
-| T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity | SPECIFICATION |
+| T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity; revize2 canonical code/group proofs | SPECIFICATION |
 | T003-S07-W05 | [T003-S07-05-kafkaRetryDlt.md](T003-S07-05-kafkaRetryDlt.md) | kafka retry dlt | SPECIFICATION |
 | T003-S07-W06 | [T003-S07-06-httpClientExecution.md](T003-S07-06-httpClientExecution.md) | http client execution | SPECIFICATION |
 | T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | cross service contract mapping | SPECIFICATION |

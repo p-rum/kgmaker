@@ -52,6 +52,20 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
+    """Qualify code identities; preserve the exact original capture IDs explicitly."""
+    result = copy.deepcopy(value)
+    for key in ('origin_id', 'logical_id', 'context_id', 'call_site', 'caller', 'declared_target', 'argument_id', 'parameter_id'):
+        if isinstance(value.get(key), str):
+            result['original_' + key] = value[key]
+            result[key] = qualified(repo, value[key])
+    if isinstance(value.get('source_file'), str):
+        result['original_source_file'] = value['source_file']
+        result['source_file'] = source_key(repo, value['source_file'])
+    result['repo_id'] = repo
+    return result
+
+
 def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False) -> dict:
     if redact_kafka_properties:
         from .kafka_bindings import project_captured_context
@@ -120,6 +134,11 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
     if isinstance(value.get('call_site'), str):
         result['call_site'] = qualified(repo, value['call_site'])
+    if str(value.get('extractor', '')).startswith('kafka-code-'):
+        if isinstance(value.get('origin_id'), str):
+            result['original_origin_id'] = value['origin_id']
+            result['origin_id'] = qualified(repo, value['origin_id'])
+        result['compiler_evidence_ids'] = [qualified(repo, item) for item in value.get('compiler_evidence_ids', [])]
     if type(value.get('local_operation_version')) is int and value['local_operation_version'] == 1:
         for key in ('method', 'compiler_symbol_id', 'cfg_block', 'target_binding', 'context_id'):
             if isinstance(value.get(key), str):
@@ -651,7 +670,8 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             sources[source_key(identity, path)] = {**item, 'repo_id': identity, 'path': path}
         exclusions += [{'repo_id': identity, **item} for item in excluded]
         nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
-                          metadata=_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else n.metadata) for n in local.nodes]
+                          metadata=(_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else
+                                    _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"} else n.metadata)) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),

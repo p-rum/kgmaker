@@ -710,3 +710,16 @@ a29PASS/0SKIP86.52s relevantní P1/P2 guard matrix;385 immutable frozen inputs
 ověřeny. Actual positive type/null/decimal/PK/UK/FK + PROPERTY/inherited, current
 rename stableID/incarnation a unknown/malformed negatives jsou doloženy v note78.
 Full a nezávislé source/final review zůstávají pending; žádná availability promotion.
+### T003-S07-W04 revize2 — draft code/group acceptance
+
+`tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
+backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
+backend nemá method annotations). Replay mutation testy mění annotation mirrors,
+realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
+Schema2 public snapshot ověřuje explicitní původní code refs, group property
+provenance, subscription a private-property redakci; cizí ID/context/SHA se
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.

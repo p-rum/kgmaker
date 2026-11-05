@@ -1,11 +1,13 @@
 """Compiler-backed persistence XML precedence and fail-closed behavior."""
 from pathlib import Path
 import hashlib
+import os
 
 import pytest
 
 from kgmaker.inspection import inspect_jvm
 from kgmaker.model import KnowledgeGraph
+from kgmaker.worker_protocol import WorkerError
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "workers"
@@ -48,10 +50,21 @@ import jakarta.persistence.*;
     return root
 
 
+def _inspect_worker(*args, **kwargs):
+    try:
+        return inspect_jvm(*args, **kwargs)
+    except WorkerError as error:
+        if error.status != 'TOOLCHAIN_UNAVAILABLE':
+            raise
+        if os.environ.get('KGMAKER_REQUIRE_WORKERS') == '1':
+            pytest.fail(str(error))
+        pytest.skip(str(error))
+
+
 def inspect(root: Path, *, strict=False, persistence_unit="orders"):
-    result = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
-                         build_context={"persistence_unit": persistence_unit},
-                         publish=not strict, strict=strict)
+    result = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
+                             build_context={"persistence_unit": persistence_unit},
+                             publish=not strict, strict=strict)
     return KnowledgeGraph.from_dict(result["graph"]) if not strict else result
 
 
@@ -149,14 +162,14 @@ def test_invalid_xml_class_reference_is_diagnostic_and_strict_publication_preser
     valid = '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
   <entity class="demo.Order"><table name="valid_orders"/></entity></entity-mappings>'''
     root = project(tmp_path, mapping=valid)
-    first = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+    first = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                         build_context={"persistence_unit": "orders"})
     store = root / ".kgmaker/graph.json"
     before = store.read_bytes()
     (root / "META-INF/orders.xml").write_text(
         '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
         <entity class="missing.DoesNotExist"><table name="bad"/></entity></entity-mappings>''', encoding="utf-8")
-    rejected = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+    rejected = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                            build_context={"persistence_unit": "orders"}, strict=True)
     assert rejected["exit_code"] == 4
     assert store.read_bytes() == before
@@ -343,13 +356,13 @@ def test_xml_namespace_reset_strictly_preserves_previous_store(tmp_path):
     good = '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
       <entity class="demo.Order"><table name="good_orders"/></entity></entity-mappings>'''
     root = project(tmp_path, mapping=good)
-    inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[], build_context={"persistence_unit": "orders"})
+    _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[], build_context={"persistence_unit": "orders"})
     store = root / ".kgmaker/graph.json"
     before = store.read_bytes()
     reset = '''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
       <entity xmlns="" class="demo.Order"><table name="reset_orders"/></entity></entity-mappings>'''
     (root / "META-INF/orders.xml").write_text(reset, encoding="utf-8")
-    rejected = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+    rejected = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                            build_context={"persistence_unit": "orders"}, strict=True)
     assert rejected["exit_code"] == 4
     assert store.read_bytes() == before
@@ -359,7 +372,7 @@ def test_xml_namespace_reset_strictly_preserves_previous_store(tmp_path):
 def test_invalid_encoding_and_utf16_dtd_strictly_preserve_previous_store(tmp_path):
     root = project(tmp_path, mapping='''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
       <entity class="demo.Order"><table name="good_orders"/></entity></entity-mappings>''')
-    inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[], build_context={"persistence_unit": "orders"})
+    _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[], build_context={"persistence_unit": "orders"})
     store = root / ".kgmaker/graph.json"
     before = store.read_bytes()
     invalid_payloads = [
@@ -368,7 +381,7 @@ def test_invalid_encoding_and_utf16_dtd_strictly_preserve_previous_store(tmp_pat
     ]
     for payload in invalid_payloads:
         (root / "META-INF/orders.xml").write_bytes(payload)
-        rejected = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+        rejected = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                                build_context={"persistence_unit": "orders"}, strict=True)
         assert rejected["exit_code"] == 4
         assert store.read_bytes() == before
@@ -403,7 +416,7 @@ def test_xml_capture_invalidates_same_length_edits_and_new_referenced_file(tmp_p
     from kgmaker.worker_protocol import WorkerError
     root = project(tmp_path, mapping='''<entity-mappings xmlns="https://jakarta.ee/xml/ns/persistence/orm" version="3.1">
       <entity class="demo.Order"><table name="xml_orders"/></entity></entity-mappings>''')
-    inspected = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+    inspected = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                             build_context={"persistence_unit": "orders"})
     captured = next(item for item in KnowledgeGraph.from_dict(inspected["graph"]).contexts if item.get("language") == "jvm")
     assert captured["jpa_xml_inputs"]["version"] == "jpa-xml-input-capture-1"
@@ -423,7 +436,7 @@ def test_xml_capture_invalidates_same_length_edits_and_new_referenced_file(tmp_p
     with pytest.raises(WorkerError, match="persistence XML inputs changed"):
         validate_context_snapshot(root, captured)
     descriptor.write_text(descriptor_text.replace("META-INF/orders.xml", "META-INF/missing.xml"), encoding="utf-8")
-    refreshed = inspect_jvm(root, kotlin_backend="k1", home=HOME, classpath=[],
+    refreshed = _inspect_worker(root, kotlin_backend="k1", home=HOME, classpath=[],
                             build_context={"persistence_unit": "orders"})
     missing_context = next(item for item in KnowledgeGraph.from_dict(refreshed["graph"]).contexts
                            if item.get("language") == "jvm")

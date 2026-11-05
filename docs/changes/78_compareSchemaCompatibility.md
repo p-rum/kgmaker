@@ -161,3 +161,23 @@ EmbeddedId, fyzické ORM a association assertions zůstávají beze změn. Root
 přezkoumal a schválil přesný minimální diff. Workflow zaznamenal failed test
 artifact a legální návrat test→implement (iteration1); žádný runtime rollback.
 Nový coalesced focus ani opravný full nejsou dosud PASS.
+
+## Corrected full — ověřený PASS a current-parent refresh
+
+Korekční actual focus ced9717: **212PASS/0SKIP155.176s**, runner155.836s;
+1471 inputs beze změn. Následný jediný corrected strict full ced9717:
+**1591PASS/10optionalSKIP1646.65s** (XML1646.585s), runnerexit0/1647.322s.
+Všech1471 frozen inputs a HEAD beze změn, nezávisle ověřeno po obnovení
+prostředí. Starý75/2/1FAIL zůstává zvlášť v failed-full-6576.
+
+Completed full receipts jsou archivovány v completed-full-ced; kompletní
+inventory hashů basetemp i150 malých source/config reprodukcí uchováno.
+Po ověření absence vlastních procesů odstraněn pouze vlastní completed
+full-temp, uvolněno3272499200 bytes; cleanup-audit.json zaznamenává rozsah.
+
+Current mainf6 přidává Kafka code a opravy optional fixture/prerequisites.
+Žádný worker source/build/lock rozdíl proti944; všech132 původních native
+artifact hashes znovu ověřeno. Vlastní schema/framework/data_resources/test
+moduly byte-exact ced full. Workspace union zachovává parent Kafka
+qualification/privacy a W08 cache tokens. Bounded current-parent cross-focus
+a finální review zatím pending; žádný další full/rebuild pouze kvůli parentu.
