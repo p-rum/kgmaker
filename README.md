@@ -773,6 +773,20 @@ transitions, execution, business meaning and data availability are not promoted.
 Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
 the complete corrected integration matrix and full validation; own fresh workers built successfully. See
 [local process scope](docs/process-paths.md#compiler-bound-local-operations).
+### Kafka interface catalogue
+
+The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
+listener/send declarations and declared bindings into the shared interfaces view.
+Broker realms and consumer groups remain distinct; configuration-only and regex
+subscriptions retain their unresolved boundaries. Explicit workspace/private
+compiler indexes are required; the projection performs no inspection or transport.
+
+### Explicit interface contracts (T013 draft)
+
+[Contract attachments](docs/interface-contracts.md) preserve interface identities
+while adding explicit content-bound provider/client declaration references.
+Generated-client origin survives stale contract hashes. Payload compatibility and
+runtime/data availability remain unknown; no generator or schema fetch runs.
 
 The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
 reversibly groups only adjacent certified local operations in an explicit process

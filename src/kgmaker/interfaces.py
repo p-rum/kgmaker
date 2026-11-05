@@ -1140,3 +1140,420 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     ViewDocument.from_dict(document.to_dict())
     if before!=(workspace,graph.to_dict(),source_coverage):fail('Projection mutated input snapshot')
     return document
+
+
+def capture_interface_contracts(workspace, graph):
+    """Capture only explicitly declared bounded files; no registry or inspection."""
+    from pathlib import Path
+    from .contract_inputs import capture_file
+    if not isinstance(workspace,Mapping) or not isinstance(graph,KnowledgeGraph):
+        _fail('INVALID_CONTRACT_INPUT','Expected loaded explicit workspace/graph')
+    roots={r['id']:Path(r['_root']) for r in workspace['repositories']}
+    files={}
+    declarations=[]
+    def add(repo,path,json_document):
+        key=source_key(repo,path)
+        if key in files:return
+        if len(files)>=256:_fail('CONTRACT_CAPTURE_LIMIT','At most256 explicit files per capture')
+        try:
+            record=capture_file(roots[repo],path,json_document=json_document)
+            record.update(repo_id=repo,status='CAPTURED',indexed=graph.files.get(key) in {record['raw_sha256'],record['source_sha256']})
+        except (ValueError,OSError,UnicodeError,RecursionError):
+            record={'repo_id':repo,'path':path,'status':'UNKNOWN','reason':'INPUT_UNAVAILABLE_OR_UNSUPPORTED','indexed':False}
+        files[key]=record
+    for service in workspace.get('services',[]):
+        contract=service['contract']
+        add(contract['repo_id'],contract['path'],True)
+        declarations.append({'service_id':service['id'],'transport':service.get('transport','http'),
+            'contract':dict(contract),'release':None,'scope':None})
+        for client in service.get('generated_clients',[]):
+            if (not isinstance(client,dict) or set(client)!={'repo_id','path','metadata_path','consumers'}
+                    or client['repo_id'] not in roots or not isinstance(client['path'],str)
+                    or not isinstance(client['metadata_path'],str) or not isinstance(client['consumers'],list)
+                    or len(client['consumers'])>2048 or any(not isinstance(p,str) for p in client['consumers'])):
+                _fail('INVALID_GENERATED_DECLARATION','Expected explicit bounded generated-client declaration')
+            add(client['repo_id'],client['metadata_path'],True)
+            add(client['repo_id'],client['path'],False)
+    for binding in (workspace.get('kafka_bindings') or {}).get('bindings',[]):
+        contract=binding['contract'];add(contract['repo_id'],contract['path'],True)
+        declarations.append({'service_id':binding['service_id'],'transport':'kafka',
+            'contract':{'repo_id':contract['repo_id'],'path':contract['path']},
+            'release':contract['release'],'scope':binding['scope']})
+    result={'schema_version':1,'workspace_id':workspace['workspace_id'],
+        'manifest_sha256':workspace['_manifest_hash'],'files':files,'declarations':declarations}
+    result['capture_id']=digest(result)
+    return result
+
+
+def attach_interface_contracts(workspace, graph, interfaces, *, captured):
+    """Immutable declaration attachment; schema compatibility remains UNKNOWN.
+
+    Only explicit captured files are reread for freshness. No latest compiler
+    index, source parser, generator, schema fetch or inferred remote binding runs.
+    """
+    from dataclasses import replace
+    from pathlib import Path
+    from .contract_inputs import capture_file,generation_origin
+    from .test_analysis import normalized_path,_ref
+    from .workspace import qualified
+    if not isinstance(workspace,Mapping) or not isinstance(graph,KnowledgeGraph) or not isinstance(interfaces,ViewDocument):
+        _fail('INVALID_CONTRACT_INPUT','Expected loaded workspace, graph and interface catalogue')
+    if (not isinstance(captured,Mapping) or set(captured)!={'schema_version','workspace_id','manifest_sha256','files','declarations','capture_id'}
+            or type(captured.get('schema_version')) is not int or captured['schema_version']!=1
+            or captured.get('workspace_id')!=workspace['workspace_id'] or captured.get('manifest_sha256')!=workspace['_manifest_hash']
+            or captured.get('capture_id')!=digest({k:v for k,v in captured.items() if k!='capture_id'})
+            or not isinstance(captured.get('files'),dict) or not isinstance(captured.get('declarations'),list)):
+        _fail('INVALID_CONTRACT_CAPTURE','Unsupported or changed contract capture')
+    ViewDocument.from_dict(interfaces.to_dict())
+    KnowledgeGraph.from_dict(graph.to_dict())
+    if interfaces.kind!='interfaces':_fail('INVALID_CONTRACT_VIEW','Expected interfaces view')
+    if interfaces.rules_version.removesuffix('+interface-contracts-1') not in {'http-providers-1','http-providers-2-ambiguous-variants','http-consumers-1','kafka-interfaces-1'}:
+        _fail('UNSUPPORTED_CONTRACT_VIEW_VERSION','No contract attachment authority for this catalogue version')
+    before=deepcopy((workspace,graph.to_dict(),interfaces.to_dict(),captured))
+    roots={r['id']:Path(r['_root']) for r in workspace['repositories']}
+    services={s['id']:s for s in workspace.get('services',[])}
+    files=captured['files'];by_id={n.id:n for n in graph.nodes}
+    diagnostics=[dict(d) for d in interfaces.diagnostics]
+    provenance={p['id']:deepcopy(p) for p in interfaces.provenance}
+    selected=interfaces.context_selection.get('services',{})
+    freshness={}
+    def current(record):
+        key=source_key(record['repo_id'],record['path'])
+        if key not in freshness:
+            try:
+                now=capture_file(roots[record['repo_id']],record['path'],json_document='document' in record)
+                freshness[key]=(record.get('status')=='CAPTURED' and record.get('indexed') is True
+                    and all(record.get(k)==v for k,v in now.items())
+                    and graph.files.get(key) in {record.get('raw_sha256'),record.get('source_sha256')})
+            except (ValueError,OSError,UnicodeError,RecursionError):freshness[key]=False
+        return freshness[key]
+    def explicit_file(contract):
+        if not isinstance(contract,Mapping) or set(contract)!={'repo_id','path'} or contract['repo_id'] not in roots:
+            _fail('INVALID_CONTRACT_REFERENCE','Contract reference must be an explicit workspace repo/path')
+        return files.get(source_key(contract['repo_id'],contract['path']))
+    # Captured declarations cannot inject another service, revision or file.
+    expected_declarations=[]
+    for service in services.values():
+        expected_declarations.append({'service_id':service['id'],'transport':service.get('transport','http'),
+            'contract':dict(service['contract']),'release':None,'scope':None})
+    for binding in (workspace.get('kafka_bindings') or {}).get('bindings',[]):
+        expected_declarations.append({'service_id':binding['service_id'],'transport':'kafka',
+            'contract':{k:binding['contract'][k] for k in ('repo_id','path')},
+            'release':binding['contract']['release'],'scope':binding['scope']})
+    if captured['declarations']!=expected_declarations:
+        _fail('INVALID_CONTRACT_CAPTURE','Captured declarations differ from explicit manifest')
+    allowed_files={source_key(d['contract']['repo_id'],d['contract']['path']) for d in expected_declarations}
+    for service in services.values():
+        for client in service.get('generated_clients',[]):
+            allowed_files.update(source_key(client['repo_id'],client[k]) for k in ('path','metadata_path'))
+    if set(files)!=allowed_files:
+        _fail('INVALID_CONTRACT_CAPTURE','Capture must contain exactly the explicit declared files')
+    for key,record in files.items():
+        if (not isinstance(record,Mapping) or record.get('repo_id') not in roots
+                or not isinstance(record.get('path'),str) or source_key(record['repo_id'],record['path'])!=key
+                or 'document' in record and not isinstance(record['document'],dict)):
+            _fail('INVALID_CONTRACT_CAPTURE','Captured file identity is malformed')
+    generated=[]
+    for service in services.values():
+        contract=explicit_file(service['contract'])
+        for declaration in service.get('generated_clients',[]):
+            repo,path=declaration['repo_id'],declaration['path']
+            metadata=files.get(source_key(repo,declaration['metadata_path']))
+            source=files.get(source_key(repo,path))
+            status,origin,reason='UNKNOWN',None,'GENERATION_INPUT_UNAVAILABLE'
+            if contract and metadata and source and 'document' in metadata:
+                expected={**service['contract'],'sha256':contract.get('raw_sha256')}
+                status,origin,reason=generation_origin(metadata['document'],expected,path)
+                if not all(current(r) for r in (contract,metadata,source)):
+                    status,reason='STALE','GENERATED_INPUT_CHANGED'
+            file_nodes=[n for n in graph.nodes if n.kind=='file' and n.path==source_key(repo,path) and n.scope==interfaces.scope]
+            context_rows=selected.get(service['id'],{}).get('contexts',[])
+            context_ids=[r['context_id'] for r in context_rows if r.get('repo_id')==repo
+                and r.get('status')=='CURRENT' and r.get('context_id')]
+            # Explicit generated-file declaration can be SOURCE_ONLY even when
+            # module coverage is unknown. It is never compiler/generator proof.
+            source_candidates={identity for row in context_rows if row.get('repo_id')==repo
+                and row.get('evidence_kind')=='SOURCE_ONLY' for identity in row.get('candidate_context_ids',[])}
+            scoped_files={n.path[len('@'+repo+'/'):]:graph.files[n.path] for n in graph.nodes
+                if n.kind=='file' and n.scope==interfaces.scope and n.path.startswith('@'+repo+'/') and n.path in graph.files}
+            def source_context(c):
+                return (c.get('content_hash')==digest(scoped_files)
+                    and c.get('id')==qualified(repo,digest({'classifier':c.get('classification_fingerprint'),
+                        'scope':interfaces.scope,'files':scoped_files})))
+            context_ids += [c['id'] for c in graph.contexts if c.get('id') in source_candidates
+                and c.get('mode')=='SOURCE_ONLY' and c.get('origin_trust')=='LOCAL_SOURCE'
+                and c.get('freshness')=='CONTENT_VERIFIED' and c.get('scope')==interfaces.scope
+                and c.get('repo_id')==repo and source is not None and source_context(c)
+                and scoped_files.get(path)==source.get('source_sha256')]
+            if len(file_nodes)!=1 or not context_ids:
+                status,reason='UNKNOWN','GENERATED_SOURCE_SCOPE_OR_CONTEXT_UNKNOWN'
+            generated.append({'id':qualified(repo,'generated_client:'+path),'service_id':service['id'],
+                'repo_id':repo,'path':path,'source_file':source_key(repo,path),'metadata':metadata,'source':source,
+                'contract':contract,'status':status,'origin':origin,'reason':reason,'context_ids':context_ids})
+    def schemas(document,operation,pointer):
+        references=[];reasons=[]
+        bodies=[]
+        if 'requestBody' in operation:bodies.append(('REQUEST',operation['requestBody']))
+        responses=operation.get('responses',{})
+        if not isinstance(responses,dict):return [],['SCHEMA_SHAPE_UNKNOWN']
+        bodies += [('RESPONSE',body) for status,body in responses.items() if str(status).startswith('2')]
+        for role,body in bodies:
+            body=_ref(document,body)
+            if not isinstance(body,dict):reasons.append('SCHEMA_REFERENCE_UNKNOWN');continue
+            content=body.get('content')
+            media=content.get('application/json') if isinstance(content,dict) else None
+            schema=media.get('schema') if isinstance(media,dict) else None
+            if schema is None:continue
+            value=schema.get('$ref') if isinstance(schema,dict) else None
+            if not isinstance(value,str) or not value.startswith('#/') or re.search(r'~(?![01])',value) or _ref(document,{'$ref':value}) is None:
+                reasons.append('SCHEMA_REFERENCE_UNSUPPORTED');continue
+            references.append({'role':role,'pointer':value})
+        return references,sorted(set(reasons))
+    def binding(service,contract,role,*,method=None,route=None,release=None,generated_record=None,kafka=False):
+        record=explicit_file(contract)
+        status='BOUND_DECLARATION';reasons=[];operation_pointer=None;schema_refs=[];revision=release
+        if record is None or record.get('status')!='CAPTURED':status='UNKNOWN';reasons.append('CONTRACT_INPUT_UNAVAILABLE')
+        elif not current(record):status='STALE';reasons.append('CONTRACT_INPUT_CHANGED')
+        document=record.get('document',{}) if record else {}
+        if not kafka:
+            if (not isinstance(document.get('openapi'),str) or not document['openapi'].startswith(('3.0.','3.1.'))
+                    or not isinstance(document.get('paths'),dict)):
+                status='UNKNOWN' if status!='STALE' else status;reasons.append('OPENAPI_VERSION_OR_SHAPE_UNKNOWN')
+            revision=(document.get('info') or {}).get('version') if isinstance(document.get('info',{}),dict) else None
+            if method is not None and route is not None:
+                operations=[]
+                paths=document.get('paths')
+                for path,methods in (paths.items() if isinstance(paths,dict) else []):
+                    if not isinstance(path,str) or not isinstance(methods,dict):continue
+                    for verb,operation in methods.items():
+                        if isinstance(verb,str) and verb.upper()==method and normalized_path(path)==normalized_path(route) and isinstance(operation,dict):
+                            operations.append((path,verb,operation))
+                if len(operations)!=1:
+                    status='UNKNOWN' if status!='STALE' else status;reasons.append('CONTRACT_OPERATION_AMBIGUOUS_OR_MISSING')
+                else:
+                    path,verb,operation=operations[0]
+                    operation_pointer='#/paths/'+path.replace('~','~0').replace('/','~1')+'/'+verb
+                    schema_refs,unsupported=schemas(document,operation,operation_pointer);reasons+=unsupported
+            elif role!='CLIENT_EXPECTATION':
+                status='UNKNOWN' if status!='STALE' else status;reasons.append('EXACT_OPERATION_UNPROVEN')
+        elif not document:
+            status='UNKNOWN' if status!='STALE' else status;reasons.append('MESSAGE_SCHEMA_UNAVAILABLE')
+        if generated_record:
+            if generated_record['status']!='VALID':status=generated_record['status'];reasons.append(generated_record['reason'])
+        result={'version':1,'role':role,'status':status,'contract':dict(contract),
+            'raw_sha256':record.get('raw_sha256') if record else None,'revision':revision,
+            'operation_pointer':operation_pointer,'schema_references':schema_refs,
+            'payload_compatibility':'UNKNOWN','reasons':sorted(set(filter(None,reasons)))}
+        result['revision_fingerprint']=digest([dict(contract),result['raw_sha256'],revision,role,operation_pointer,schema_refs,
+            generated_record['source'].get('raw_sha256') if generated_record and generated_record['source'] else None,
+            generated_record['metadata'].get('raw_sha256') if generated_record and generated_record['metadata'] else None])
+        evidence_id='ev:interface-contract:'+result['revision_fingerprint']
+        result['evidence_ref']=evidence_id
+        provenance[evidence_id]={'id':evidence_id,'evidence_kind':'SOURCE_ONLY','freshness':'CURRENT' if status=='BOUND_DECLARATION' else 'STALE' if status=='STALE' else 'UNKNOWN',
+            'polarity':'UNKNOWN','source_file':source_key(contract['repo_id'],contract['path']),
+            'raw_sha256':result['raw_sha256'],'role':role,'detail':'Explicit contract declaration; compatibility and execution are not proved.'}
+        return result
+    symbols={s['id']:s for s in graph.symbols}
+    contexts={c['id']:c for c in graph.contexts}
+    def source_state(node,attrs,service):
+        if node.resolution_status=='AMBIGUOUS' or any(e.target==node.id and e.resolution_status=='AMBIGUOUS' for e in interfaces.edges):
+            return 'UNKNOWN'
+        path=attrs.get('source_path')
+        if not isinstance(path,str) or not path.startswith('@'):return 'UNKNOWN'
+        repo,separator,local=path[1:].partition('/')
+        if not separator or repo not in roots or source_key(repo,local)!=path:return 'UNKNOWN'
+        origins=[by_id[i] for i in node.original_ids if i in by_id and by_id[i].path==path and by_id[i].scope==interfaces.scope]
+        if not origins:return 'UNKNOWN'
+        try:
+            now=capture_file(roots[repo],local)
+            if graph.files.get(path) not in {now['raw_sha256'],now['source_sha256']}:return 'STALE'
+        except (ValueError,OSError,UnicodeError):return 'STALE'
+        if attrs.get('contract_fingerprint') is not None and attrs['contract_fingerprint']!=graph.files.get(path):return 'STALE'
+        context_id=attrs.get('context_id') or next(iter(attrs.get('context_ids',[])), 'contract-source')
+        owner=resolve_service_ownership({'repo_id':repo,'path':path,'context_id':context_id},
+            workspace.get('service_ownership'),context_id=context_id)
+        if owner.get('status')!='RESOLVED' or owner.get('owner_id')!=service['id']:return 'UNKNOWN'
+        declared_contexts=attrs.get('context_ids',[attrs.get('context_id')])
+        selected_rows=selected.get(service['id'],{}).get('contexts',[])
+        eligible={r.get('context_id') for r in selected_rows if r.get('status')=='CURRENT'}
+        eligible.update(i for r in selected_rows if r.get('evidence_kind')=='SOURCE_ONLY' for i in r.get('candidate_context_ids',[]))
+        if not any(i in eligible and i in contexts and contexts[i].get('scope')==interfaces.scope for i in declared_contexts):return 'UNKNOWN'
+        if attrs.get('direction')=='CONSUMER':
+            request=by_id.get(attrs.get('request_definition_id'))
+            caller=by_id.get(attrs.get('caller'))
+            md=request.metadata if request else {}
+            return 'CURRENT' if (request is not None and request.kind=='http_request_definition'
+                and caller is not None and caller.path==path and caller.scope==interfaces.scope
+                and md.get('method')==attrs.get('http_method') and md.get('path')==attrs.get('route_expression')
+                and md.get('context_id')==attrs.get('context_id')) else 'UNKNOWN'
+        for endpoint in origins:
+            for record in (endpoint.metadata or {}).get('http_registrations',[]):
+                if (record.get('http_method')==attrs.get('http_method') and record.get('normalized_route')==attrs.get('normalized_route')
+                        and record.get('variant_fingerprint')==attrs.get('registration_variant')):
+                    _registration(record,graph,path)
+                    if any(e.kind=='declares_endpoint' and e.target==endpoint.id
+                        and by_id.get(e.source) in origins for e in graph.edges):return 'CURRENT'
+        for identity in attrs.get('handler_ids',[]):
+            handler=by_id.get(identity)
+            if handler is None or handler.path!=path or handler.scope!=interfaces.scope:continue
+            for edge in graph.edges:
+                if edge.source!=identity or edge.kind!='exposes_endpoint' or edge.target not in by_id:continue
+                for context_id in edge.context_ids:
+                    context=contexts.get(context_id)
+                    if context_id not in eligible or context is None:continue
+                    if not _compiler_source_binding(symbols.get(identity),handler,context,graph):continue
+                    for record,_ in _compiler_registrations(handler,by_id[edge.target],symbols,graph,context,by_id):
+                        if (record['http_method']==attrs.get('http_method') and record['normalized_route']==attrs.get('normalized_route')
+                                and record['variant_fingerprint']==attrs.get('registration_variant')):return 'CURRENT'
+        return 'UNKNOWN'
+    def kafka_state(node,attrs,service):
+        originals=[by_id[i] for i in node.original_ids if i in by_id and by_id[i].kind=='kafka_binding']
+        if len(originals)!=1:return 'UNKNOWN'
+        md=originals[0].metadata or {}
+        declared=[d for d in (workspace.get('kafka_bindings') or {}).get('bindings',[])
+                  if d['id']==md.get('binding_id') and d['service_id']==service['id'] and d['scope']==interfaces.scope]
+        if len(declared)!=1:return 'UNKNOWN'
+        declaration=declared[0];reference=attrs.get('message_contract_ref')
+        if (md.get('service_id')!=service['id'] or md.get('direction','').upper()!=attrs.get('direction')
+                or attrs.get('broker_realm')!=md.get('cluster_id') or attrs.get('topics')!=([md['topic']] if md.get('topic') else [])
+                or attrs.get('consumer_group')!=(md.get('consumer_group') or {}).get('value')
+                or attrs.get('code_fact_id')!=md.get('code_fact_id')
+                or not isinstance(reference,Mapping) or reference!={'sha256':md.get('contract_sha256'),
+                    'release':md.get('release'),'source_file':source_key(declaration['contract']['repo_id'],declaration['contract']['path'])}):
+            return 'UNKNOWN'
+        if md.get('code_binding')=='VERIFIED_STATIC':
+            context=contexts.get(md.get('context_id'),{})
+            eligible={r.get('context_id') for r in selected.get(service['id'],{}).get('contexts',[]) if r.get('status')=='CURRENT'}
+            if context.get('selected_compiler_context') not in eligible:return 'UNKNOWN'
+        for key,checksum in md.get('input_files',{}).items():
+            if checksum is None:return 'UNKNOWN'
+            try:
+                if key=='@workspace/manifest.json':
+                    manifest=Path(workspace['_manifest_path']);now=capture_file(manifest.parent,manifest.name)
+                else:
+                    repo,separator,path=key[1:].partition('/')
+                    if not key.startswith('@') or not separator or repo not in roots:return 'UNKNOWN'
+                    now=capture_file(roots[repo],path)
+                if checksum not in {now['raw_sha256'],now['source_sha256']}:return 'STALE'
+            except (ValueError,OSError,UnicodeError):return 'STALE'
+        return 'CURRENT'
+    def payload_type_status(identity,attrs,service):
+        from .workspace import _qualified_symbol
+        type_kinds={'class','interface','enum','record','annotation','annotation_type','type_alias','typealias'}
+        if not isinstance(identity,str):return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        declaration=by_id.get(identity);symbol=symbols.get(identity)
+        if declaration is None or declaration.kind not in type_kinds or not isinstance(symbol,Mapping):
+            return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        context=contexts.get(symbol.get('context_id'))
+        rows=selected.get(service['id'],{}).get('contexts',[]) if service else []
+        eligible={r.get('context_id') for r in rows if r.get('status')=='CURRENT'}
+        if (not isinstance(context,Mapping) or context.get('id') not in eligible
+                or context.get('mode') not in {'BUILD_IMPORT','BUILD_EXECUTE'}
+                or context.get('origin_trust')!='LOCAL_COMPILER_INPUTS'
+                or context.get('freshness')!='CONTENT_VERIFIED'
+                or not _compiler_source_binding(symbol,declaration,context,graph)):
+            return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        try:metadata=_qualified_symbol(context['repo_id'],declaration.metadata)
+        except (KeyError,TypeError,ValueError):return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        if metadata!=symbol:return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        proof_index={p['id']:p for p in graph.evidence}
+        proved=False
+        for edge in graph.edges:
+            if (edge.target!=identity or edge.kind!='contains' or edge.evidence_kind!='SYMBOL_RESOLVED'
+                    or edge.context_ids!=(context['id'],)):continue
+            source=by_id.get(edge.source)
+            if source is None or source.kind!='file' or source.path!=declaration.path or source.scope!=interfaces.scope:continue
+            for ref in edge.evidence_ids:
+                proof=proof_index.get(ref,{})
+                if (proof.get('kind')=='SYMBOL_RESOLVED' and proof.get('source')==edge.source
+                        and proof.get('target')==identity and proof.get('relation')=='contains'
+                        and proof.get('context_ids')==[context['id']] and proof.get('source_file')==declaration.path
+                        and proof.get('sha256')==symbol.get('sha256') and proof.get('source_range')==symbol.get('range')
+                        and proof.get('origin_trust')=='LOCAL_COMPILER_INPUTS' and proof.get('freshness')=='CONTENT_VERIFIED'):
+                    proved=True
+        if not proved:return 'CANONICAL_TYPE_DECLARATION_UNPROVEN'
+        # Current versioned HTTP/Kafka facts contain no payload type-ID reference
+        # producer. A genuine class declaration alone is not a payload binding.
+        return 'PAYLOAD_TYPE_PROOF_UNAVAILABLE'
+    validated_sources=[]
+    output=[]
+    for node in interfaces.nodes:
+        if node.kind not in {'http_interface','kafka_interface'}:output.append(node);continue
+        attrs=deepcopy(dict(node.attributes));bindings=[]
+        service_id=attrs.get('service_id') or (node.owner_id.removeprefix('service:') if node.owner_id else None)
+        service=services.get(service_id)
+        if service is None:
+            diagnostics.append({'code':'CONTRACT_SERVICE_REALM_UNKNOWN','interface_id':node.id})
+        elif node.kind=='kafka_interface':
+            reference=attrs.get('message_contract_ref')
+            if isinstance(reference,Mapping):
+                choices=[d for d in captured['declarations'] if d['service_id']==service_id and d['transport']=='kafka'
+                    and d['scope'] in {None,interfaces.scope} and source_key(d['contract']['repo_id'],d['contract']['path'])==reference.get('source_file')
+                    and d['release']==reference.get('release')]
+                choices=[d for d in choices if (explicit_file(d['contract']) or {}).get('raw_sha256')==reference.get('sha256')]
+                unique={digest(d):d for d in choices}
+                if len(unique)==1:
+                    declaration=next(iter(unique.values()))
+                    bindings.append(binding(service_id,declaration['contract'],'PROVIDER_DECLARATION' if attrs.get('direction')=='PRODUCER' else 'CLIENT_EXPECTATION',release=declaration['release'],kafka=True))
+            if not bindings:diagnostics.append({'code':'MESSAGE_SCHEMA_BINDING_UNKNOWN','interface_id':node.id})
+            fact=by_id.get(attrs.get('code_fact_id'));md=fact.metadata if fact else {}
+            attrs.setdefault('logical_id','interface:kafka:'+digest([service_id,attrs.get('direction'),
+                md.get('original_logical_id'),attrs.get('broker_realm'),attrs.get('consumer_group'),
+                attrs.get('topics'),attrs.get('topic_pattern'),interfaces.scope]))
+        elif attrs.get('direction') in {'PROVIDED','PROVIDER'}:
+            bindings.append(binding(service_id,service['contract'],'PROVIDER_DECLARATION',method=attrs.get('http_method'),route=attrs.get('normalized_route')))
+        elif attrs.get('direction')=='CONSUMER':
+            candidates=[g for g in generated if g['source_file']==attrs.get('source_path') and g['repo_id'] in service.get('frontend_repos',[])+[service['backend_repo']]]
+            if len(candidates)==1:
+                client=candidates[0];provider=services[client['service_id']]
+                bindings.append(binding(provider['id'],provider['contract'],'CLIENT_EXPECTATION',
+                    method=attrs.get('http_method'),route=attrs.get('route_expression'),generated_record=client))
+            else:diagnostics.append({'code':'CLIENT_CONTRACT_EXPECTATION_UNKNOWN','interface_id':node.id})
+        if service is not None:
+            state=source_state(node,attrs,service) if node.kind=='http_interface' else kafka_state(node,attrs,service)
+            if state=='CURRENT':validated_sources.append((node,deepcopy(attrs),service))
+            if state!='CURRENT':
+                bindings=[{**item,'status':'STALE' if state=='STALE' else 'UNKNOWN',
+                    'reasons':sorted(set(item['reasons']+['INTERFACE_SOURCE_OR_OPERATION_UNPROVEN']))} for item in bindings]
+                diagnostics.append({'code':'INTERFACE_SOURCE_OR_OPERATION_UNPROVEN','interface_id':node.id})
+        for key in ('request_type_id','response_type_id','message_type_id'):
+            identity=attrs.get(key)
+            if identity is not None:
+                reason=payload_type_status(identity,attrs,service)
+                attrs[key]=None
+                diagnostics.append({'code':'TYPE_REFERENCE_UNKNOWN','interface_id':node.id,'field':key,
+                    'requested_id':identity if isinstance(identity,str) else None,'reason':reason})
+        attrs.update(contract_bindings=bindings,contract_binding_version=1,payload_compatibility='UNKNOWN')
+        output.append(replace(node,attributes=attrs))
+    present={n.id for n in output}
+    for client in generated:
+        service=services[client['service_id']]
+        reference=binding(service['id'],service['contract'],'CLIENT_EXPECTATION',generated_record=client)
+        attrs={'generation_origin':client['origin'],'generation_status':client['status'],
+            'metadata_raw_sha256':(client['metadata'] or {}).get('raw_sha256'),
+            'generated_raw_sha256':(client['source'] or {}).get('raw_sha256'),
+            'source_path':client['source_file'],'context_ids':client['context_ids'],
+            'contract_bindings':[reference],'contract_binding_version':1,'payload_compatibility':'UNKNOWN',
+            'generator_execution':'NOT_OBSERVED','runtime_availability':'UNKNOWN','data_availability':'UNKNOWN'}
+        if client['id'] in present:
+            output=[replace(n,attributes={**dict(n.attributes),**attrs}) if n.id==client['id'] and n.kind=='generated_client' else n for n in output]
+        else:
+            output.append(ViewNode(client['id'],'generated_client',client['path'],original_ids=(client['id'],),
+                owner_id='service:'+service['id'],attributes=attrs))
+        if client['reason']:diagnostics.append({'code':client['reason'],'client_id':client['id']})
+    # A later metadata/source replacement must not repair or authorize the capture.
+    previously_current=[key for key,value in freshness.items() if value]
+    freshness.clear()
+    if any(not current(files[key]) for key in previously_current):
+        _fail('CONTRACT_INPUT_CHANGED','Explicit input changed during attachment')
+    for node,attrs,service in validated_sources:
+        state=source_state(node,attrs,service) if node.kind=='http_interface' else kafka_state(node,attrs,service)
+        if state!='CURRENT':_fail('CONTRACT_SOURCE_CHANGED','Selected interface source changed during attachment')
+    result=replace(interfaces,nodes=tuple(output),diagnostics=tuple(diagnostics),provenance=tuple(provenance.values()),
+        baseline_fingerprint=digest([interfaces.baseline_fingerprint,captured['capture_id']]),
+        rules_version=interfaces.rules_version+'+interface-contracts-1',
+        limits=(*interfaces.limits,'Contract/generation declarations do not prove schema compatibility, serialization or execution.'))
+    ViewDocument.from_dict(result.to_dict())
+    if before!=(workspace,graph.to_dict(),interfaces.to_dict(),captured):
+        _fail('CONTRACT_INPUT_MUTATED','Contract attachment changed an input')
+    return result

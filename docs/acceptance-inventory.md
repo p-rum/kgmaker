@@ -765,3 +765,19 @@ all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selecti
 10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
 preserved failures/limits are in note81. Main/Common dependencies merged; exact
 finalpair review/merge separate. No standalone parent full or transport observation.
+
+
+## T013 — explicit versioned contract attachments (verified bounded scope)
+
+T013-AC01 content revisions/stable original IDs, AC02 no DTO-name compatibility,
+AC03 generated-origin binding preserved as stale after contract changes, AC04
+bounded read-only/immutable capture/attachment and AC05 selected scope/context,
+ambiguous operations and external/malformed pointers map to
+`tests/test_t013_attach_interface_contracts.py` (43 PASS) and actual K1/K2 captured
+Kafka revisions `tests/test_t013_captured_kafka_contracts.py` (2 PASS). All45 own IDs
+PASS in ONE combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116 parent IDs in that XML are2106PASS10SKIP, not a standalone parent full.
+Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retained.
+AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
+payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
+T012 dependency merged; independent finalpair review/ready/merge separate.

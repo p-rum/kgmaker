@@ -844,3 +844,17 @@ and five unchanged artifact member sets. Every Common-parent ID is included:
 1956 PASS / 10 optional SKIP from one descendant full, not a standalone run.
 T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
 See note84 for preserved setup failure/correction and final review limitations.
+
+
+## T013 — explicit interface contract attachments (verified bounded scope)
+
+Shared bounded declaration capture and immutable attachment preserve original IDs,
+technical status, evidence buckets, role-separated operation/schema/revision
+references and stale generated-client origin. Type IDs remain UNKNOWN without
+upstream payload-reference proof; DTO names never prove compatibility. All45 own
+tests PASS in ONEcombined2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116parentIDs=2106PASS10SKIP,4897hashes/five member sets unchanged. This is not a
+standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
+revision/type-reference cases passed. T012/Common dependencies merged, no native
+extension, network/schema fetch or generator execution. Final exactpairreview and
+merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
