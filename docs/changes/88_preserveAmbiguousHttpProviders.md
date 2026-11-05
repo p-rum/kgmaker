@@ -51,3 +51,31 @@ Původní vlastní unstarted/childless fronta byla auditovaně zrušena předpyt
 žádný full se neopakoval. Provider runtime zůstává stejnýad8, ostatní runtime
 z rodičeKafka je již samostatně ověřený. Current-parentpure59PASS2.61s;
 currentfull zůstává pending, nové zahájení bude mít vlastní manifest/receipt.
+
+## Dokončené ověření a Return parent — 2026-11-05
+
+Jediný strict full na `4930346` prošel **1605 PASS,10 SKIP za1683.18s**
+(JUnit1615,0failure,0error). Všech2105 zachycených source/native/tool/fixture
+vstupů zůstalo před/po shodných a bylo znovu nezávisle ověřeno.10SKIP jsou
+explicitně nepřipravené Maven/Gradle/Windows gates; nejsou compiler PASS.
+Kapacitní předchozí attempt ukončený předpytest nebyl testový běh.
+
+Aktuální main `deb3691` (Return PR70) je integrován v `e740dac`. Vlastní
+interfaces.py zůstává byte-identický s493; všechny ostatní runtime/worker/fixture
+zdroje jsou přesně parent. Matching Return079 prerequisites byly zkopírované po
+kontrole všech27trackedworker souborů, fixture vstupů a původních hashů871
+připravených souborů. Žádný nový native build se nespouštěl.
+
+Nezávislé source composition review Root+integrate8 APPROVE předcházelo jedné
+bounded current-parent sadě: **284 PASS,0 SKIP za219.41s** (runner221.22s).
+Obsahuje HTTP ambiguity/provider/compiler/T011/T006/T008/T009, celý Return a
+KafkaCode, skutečné T024 K1/K2 a optional-prerequisite kontroly. Všech2113
+zachycených vstupů před/po i při nezávislé kontrole zůstalo shodných. Full1605/10
+platí pro493, tato284sada proe740; nový full nad finální metadata-head se netvrdí.
+
+Všech224parent memory episodes je neměnný prefix, původní vlastní capture také
+zůstává. Z dokončeného vlastního full-temp bylo po XML/exit/hash/process auditu
+odstraněno pouze53748 dočasných souborů (~3.069GB), důkazy i kompletní SHA
+inventář zůstávají. Tento záznam a následné memory/semantic metadata nemění
+runtime/testy/native. Finální exact base/head review a guarded merge jsou
+samostatný následující krok, tento záznam je nepředstírá hotové.
