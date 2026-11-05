@@ -156,3 +156,29 @@ production authority; resolution/execution assertions ani runtime guards se
 nemění. Production source zůstává byte-exact92e96c5. Failed/unreached continuation
 ještě NOT_RUN a vyžaduje source closure. První dva PASS původního5b matrix byly
 public canonical capture a actual Kafka[k1], nikoli dva actual HTTP případy.
+
+## Finální source-specific a combined důkaz (2026-11-05)
+
+Exact source7d55ab032c519895f63dc54dbd94abad1659ae55 (production92e96c5)
+accepted source review následoval jeden failed/unreached FIFO continuation:
+301PASS/0SKIP229.608s,runner231.44s,1381pre/post/current vstupů beze změny.
+S33 explicitně nezměněnými předchozími PASS je to334jedinečných PASS, žádný
+překryv/chybějící případ; v2-combined-ledger.json uvádí každý test a zdroj.
+27worker sources/132distribution+license artifacts jsou exact, žádný build.
+Obě historické actual chyby zůstaly zachované, nejde o jejich přepsání naPASS.
+
+Jeden reviewed combined descendant2df55ff8d15d790808f6a81072144eeb408a05b8
+full-attempt-2 prošel2587PASS/10přesně schválených optionalSKIP2042.93s
+(runner2048.01s), všech2597IDs a kompletní14parent suites. W07 parent má1973IDs,
+z toho1963PASS/10SKIP; není tvrzen standalone full na7d55. Všech4897inputhashů
+a5recursive memberinventories beze změny, independent verificationPASS.
+
+První combined full zůstal78PASS/2SKIP/1FAIL54.96s: chybějící JavaBridge.class
+a Kotlin module v připravené fixture, nikoli důvod oslabit overload assertion.
+Původní raw null-site nebyl uložen; po exact-donor setup correction prošly oba
+nezměněné original tests2PASS/0SKIP12.62s s raw5resolved/0unresolved. Předchozích
+78PASS nebylo recyklováno; druhý full spustil všech2597 od začátku.
+
+Dependency Common/T012/T013 merge a current-main refresh jsou při tomto záznamu
+PENDING. Source ani native se kvůli metadata nemění; žádný nový full/build,
+publication/ready/merge ani self-review není tímto záznamem tvrzen.

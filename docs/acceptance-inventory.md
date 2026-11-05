@@ -749,10 +749,10 @@ pending; this is not T016 or runtime/data availability acceptance.
 
 | AC | Current evidence | Pending |
 |---|---|---|
-| AC01 | public trusted protocol exact/paired mappings and transport distinction | real current HTTP/Kafka positives after source closure |
-| AC02 | absent field, strict version/containers, existing workspace regressions | final full/legacy combined matrix |
-| AC03 | realm/operation/hash/release/pair/ambiguity/capture tamper/privacy/no-I/O/budget tests | actual grouped negative matrix |
-| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md) | independent source review + actual/full |
+| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Dependency/current-parent final pair |
+| AC02 | Strict optional manifest/capture version, existing workspace regressions; all1973 parent IDs covered in combined2df full | Exact refreshed composition review |
+| AC03 | Actual/public realm/operation/hash/release/ambiguity/privacy/no-I/O/transport/budget negatives;334 cohort PASS | No runtime/availability proof claimed |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review/dependency merges |
 
-Current118pure/upstreamPASS,8actualDESELECTED; initial actual2 expectedRED on
-missing API after successful native fixture is not current positive acceptance.
+The full ran on combined descendant2df55ff8, not standalone W07. Historical
+failures and partial runs remain separately attributed in note91.

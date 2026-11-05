@@ -57,11 +57,14 @@ publish/subscribe are different transition kinds; neither is a JVM `calls` edge.
 Runtime execution/delivery is NOT_OBSERVED and deployment, data availability and
 payload compatibility remain UNKNOWN, including with explicit compatibility pairs.
 
-Source checkpoint only: public pure/protocol/upstream regression118 PASS,10 actual
-DESELECTED. Initial actual RED2 expectedFAIL after successful canonical setups is
-historical. Current actual positives/matrix/full (10 prepared actual cases) are NOT_RUN pending independent
-source closure. Hand-labelled protocol specimens are not native acceptance proof.
-T014 rendering, process continuation and all remote service execution are pending.
+Accepted source7d55ab0 (production92e96c5): source-specific cohort334 unique PASS
+comprises33 unchanged prior passes and301 failed/unreached continuation passes,
+with explicit per-ID attribution and all1381 continuation inputs unchanged.
+Combined descendant2df55ff8 full2587PASS/10approvedoptionalSKIP covers all1973
+W07-parent cases (1963PASS/10SKIP); this is one combined-source run, not a
+standalone W07 full. All4897 inputs and five member inventories remained exact.
+Historical failures remain in note91. Current-parent/dependency refresh and final
+independent exact-pair review remain pending; no runtime claim follows.
 
 Kafka canonical interface summaries may retain UNKNOWN freshness even when their
 selected code/context/contract binding is verified. Rule 2 accepts only the exact

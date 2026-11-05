@@ -822,11 +822,13 @@ new worker execution. Final exact-source independent review/full remain pending;
 T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
 
 
-## T003-S07-W07 — source checkpoint before actual matrix
+## T003-S07-W07 — verified bounded source; dependency merge pending
 
 See [remote mapping contract](remote-contract-mapping.md)
 and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
-runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
-matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent
+refresh and final independent review remain pending T013/T012/common dependency merges.
