@@ -777,3 +777,14 @@ Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without 
 tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
+
+## T030 — process-label packet (candidate)
+
+Pure `prepare_process_label_packet` preserves complete ProcessView target/ref
+identity, actual content binding and captured evidence/uncertainty. Raw prose is
+hash-omitted; document provenance is explicit ref-only and conflicts are supplied
+review items, not NLP authority. Full serialized cost includes omissions/template
+and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
+inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
+Targeted tests pass; grouped regression, required full and independent review
+remain pending. T031/T032 apply/review and T034 CLI are not implemented here.

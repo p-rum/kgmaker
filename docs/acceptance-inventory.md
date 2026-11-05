@@ -711,3 +711,16 @@ a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů be
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
 a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
 metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+
+## T030 — pure process-label packet (candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | targeted PASS; grouped/full pending |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | targeted PASS; grouped/full pending |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | targeted PASS; grouped/full pending |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | targeted PASS; grouped/full pending |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | targeted PASS; grouped/full pending |
+| AC06 | spec Rev2, Python API/capability docs, note90, final source review/full | NOT_YET_COMPLETE |
+
+No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.

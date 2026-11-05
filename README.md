@@ -769,3 +769,13 @@ The pure [T026 business-step API](docs/process-paths.md#reversible-business-step
 reversibly groups only adjacent certified local operations in an explicit process
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
+
+### Pure process label packets (T030)
+
+`kgmaker.process_semantics.prepare_process_label_packet(process_view,
+token_budget=8000, char_budget=32000)` returns a content-bound packet and empty
+PROPOSED candidate template for existing targets. It preserves selected identity,
+provenance and uncertainty, reports complete serialized cost/mandatory overflow,
+and hash-omits raw labels, documentation and proof/configuration prose. It performs
+no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
+T031 proposal validation/application and T034 CLI remain separate pending work.
