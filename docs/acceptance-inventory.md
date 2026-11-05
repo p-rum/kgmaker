@@ -698,6 +698,12 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+
+### T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)
+
+AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
+two service realms, method/sibling separation, deterministic order and duplicate
+records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
 ### T003-S07-W04 revize2 — draft code/group acceptance
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou

@@ -126,7 +126,9 @@ interfaces = project_http_providers(
 ```
 
 This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
-and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md). Colliding normalized
+contract variants remain one explicit `AMBIGUOUS` boundary with every original
+route and candidate proof; see [change88](docs/changes/88_preserveAmbiguousHttpProviders.md).
 
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
