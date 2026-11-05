@@ -270,7 +270,7 @@ def load_workspace(path: Path) -> dict:
             or not isinstance(data.get('repositories'), list)):
         raise AnalysisError('Invalid workspace manifest version/identity/repositories')
     if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping',
-                    'service_ownership', 'kafka_bindings'}:
+                    'service_ownership', 'kafka_bindings', 'remote_mapping'}:
         raise AnalysisError('Unknown workspace fields')
     roots, ids = [], set()
     for repo in data['repositories']:
@@ -322,6 +322,8 @@ def load_workspace(path: Path) -> dict:
                 raise AnalysisError('HTTP prefix must be empty or start with /')
     _validate_service_ownership(data.get('service_ownership'), data['repositories'], service_ids)
     _validate_release_mapping(data, ids)
+    from .remote_mapping import validate_remote_declarations
+    validate_remote_declarations(data)
     from .kafka_bindings import validate as validate_kafka_bindings
     validate_kafka_bindings(data)
     data['_manifest_path'] = str(path)

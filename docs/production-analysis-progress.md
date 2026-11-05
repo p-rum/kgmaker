@@ -876,3 +876,13 @@ Current main2a (Common/T012/T013 merged) requires all2116current-main parent
 identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
 OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.
+
+## T003-S07-W07 — verified bounded source; dependency merge pending
+
+See [remote mapping contract](remote-contract-mapping.md)
+and [note91](changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.

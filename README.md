@@ -826,3 +826,13 @@ provenance and uncertainty, reports complete serialized cost/mandatory overflow,
 and hash-omits raw labels, documentation and proof/configuration prose. It performs
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
 T031 proposal validation/application and T034 CLI remain separate pending work.
+
+## T003-S07-W07 — explicit remote mapping draft
+
+See [remote mapping contract](docs/remote-contract-mapping.md)
+and [note91](docs/changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.

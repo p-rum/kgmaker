@@ -804,3 +804,15 @@ Current main2a (Common/T012/T013 merged) requires all2116current-main parent
 identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
 OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.
+
+## T003-S07-W07 — explicit remote mapping draft
+
+| AC | Current evidence | Pending |
+|---|---|---|
+| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Final current-parent pair |
+| AC02 | Strict optional manifest/capture version, existing workspace regressions; all1973 parent IDs covered in combined2df full | Exact refreshed composition review |
+| AC03 | Actual/public realm/operation/hash/release/ambiguity/privacy/no-I/O/transport/budget negatives;334 cohort PASS | No runtime/availability proof claimed |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review |
+
+The full ran on combined descendant2df55ff8, not standalone W07. Historical
+failures and partial runs remain separately attributed in note91.
