@@ -1,11 +1,12 @@
 # T033 — explicitní read-only katalog procesů
 
-T033-S01–S05/AC01–AC06. Stack T0324fea, source APPROVE, full závislostí pending.
+T033-S01–S05/AC01–AC06. Původní stack T0324fea měl source APPROVE a tehdy full závislostí pending.
+Historický vývoj je oddělen od finálního current-main/actual důkazu na konci.
 Rev2 upřesňuje current/history, stable ID, one-hop explicit alias a oddělené T032
 review status. Žádný archive/index ani implicitní discovery/zápis.
 
 Alokace96 ověřena přes všechny worktrees/main/registr a všech7 openPR file lists;
-maximum95 T016, integrate8 potvrdil žádnou96. Implementace/testy zatím NOT_RUN.
+maximum95 T016, integrate8 potvrdil žádnou96. V okamžiku alokace byly implementace/testy NOT_RUN.
 
 ## Skutečné změny a testy
 
