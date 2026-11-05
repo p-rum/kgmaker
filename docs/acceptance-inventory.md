@@ -781,3 +781,26 @@ Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retai
 AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
 payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
 T012 dependency merged; independent finalpair review/ready/merge separate.
+
+## T030 — pure process-label packet (candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
+
+No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
+standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
+PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
+[bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

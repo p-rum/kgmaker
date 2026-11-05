@@ -858,3 +858,21 @@ standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
 revision/type-reference cases passed. T012/Common dependencies merged, no native
 extension, network/schema fetch or generator execution. Final exactpairreview and
 merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
+
+## T030 — process-label packet (final review candidate)
+
+Pure Python API preserves bounded immutable process identity/evidence/context,
+structured conflict and privacy/budget contracts; no model/compiler/file I/O or
+apply. Source unchanged from reviewed070/6ae; current base main2a38706.
+ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
+4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
+T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
+and module byteprefix +whole testfile preserved; addedT031 bindings do not shadow.
+See note90 and validation/t030-descendant-proof.json. No standalone parent full or
+new native build. Exact final base/head review and publication remain separate;
+GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

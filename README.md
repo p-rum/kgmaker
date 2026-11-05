@@ -816,3 +816,13 @@ reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
 legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
 W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.
+
+### Pure process label packets (T030)
+
+`kgmaker.process_semantics.prepare_process_label_packet(process_view,
+token_budget=8000, char_budget=32000)` returns a content-bound packet and empty
+PROPOSED candidate template for existing targets. It preserves selected identity,
+provenance and uncertainty, reports complete serialized cost/mandatory overflow,
+and hash-omits raw labels, documentation and proof/configuration prose. It performs
+no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
+T031 proposal validation/application and T034 CLI remain separate pending work.
