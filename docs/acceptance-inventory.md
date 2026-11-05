@@ -721,3 +721,15 @@ a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů be
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
 a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
 metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+
+## T006/T008 revision2 — derived context role boundary
+
+T006-AC07–08 and T008-AC07–09: `tests/test_context_roles.py` covers full mixed and
+config-only public snapshots, T010/T011/T015/trigger consumers, historical captured
+hashes versus role freshness, malformed/unknown version/identity/input/realm,
+source/compiler pins, original strict foreign paths and immutable full inputs.
+The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
+(9actual deselected). A separate pure replay of the actual current-parent Kafka
+capture retained2CURRENT compiler contexts across5projections with no process,
+network or input/store mutation. Final full and independent source closure remain
+pending; this is not T016 or runtime/data availability acceptance.

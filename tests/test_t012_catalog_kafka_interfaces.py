@@ -274,3 +274,24 @@ def test_actual_unselected_virtual_filter_is_not_an_ownership_bypass(two_context
     damaged=KnowledgeGraph.from_dict(payload);before=damaged.to_dict()
     with pytest.raises(InterfaceProjectionError):project_kafka_interfaces(workspace,damaged,source_coverage=coverage,selected_contexts=selected)
     assert damaged.to_dict()==before
+
+
+@pytest.mark.parametrize('freshness',['STALE','UNKNOWN'])
+def test_actual_unselected_historical_role_does_not_become_current_code(two_context_capture,freshness):
+    from dataclasses import replace
+    from kgmaker.interfaces import project_kafka_interfaces
+    workspace,graph,coverage=two_context_capture
+    payload=copy.deepcopy(graph.to_dict())
+    binding=next(n for n in payload['nodes'] if n['kind']=='kafka_binding' and n['metadata']['binding_id']=='consumer-orders')
+    other=next(n for n in payload['nodes'] if n['kind']=='kafka_binding' and n['metadata']['binding_id']=='second-group')
+    selected_context=next(c for c in payload['contexts'] if c['id']==binding['metadata']['context_id'])['selected_compiler_context']
+    historical=next(c for c in payload['contexts'] if c['id']==other['metadata']['context_id'])
+    historical['freshness']=freshness
+    if freshness=='STALE':historical['stale_reason']='Historical capture is not current source proof'
+    damaged=KnowledgeGraph.from_dict(payload);before=damaged.to_dict()
+    view=project_kafka_interfaces(workspace,damaged,source_coverage=coverage,
+        selected_contexts={('consumer-svc','consumer','root'):selected_context}).to_dict()
+    subscriptions=[n for n in view['nodes'] if n['kind']=='kafka_interface' and n['attributes'].get('subscription_id')]
+    assert len(subscriptions)==1 and subscriptions[0]['attributes']['consumer_group']=='group-one'
+    assert not any(other['id'] in n['original_ids'] for n in subscriptions)
+    assert damaged.to_dict()==before

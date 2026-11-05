@@ -78,7 +78,8 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     """
     import copy
 
-    from .analysis_model import digest
+    from .analysis_model import digest, AnalysisError
+    from .context_roles import classify_context_role
     from .architecture_model import ViewDocument, ViewEdge, ViewNode
     from .model import KnowledgeGraph as Graph
     from .workspace import load_workspace, resolve_service_ownership
@@ -158,7 +159,16 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
     contexts_by_service: dict[str, dict[tuple[str, str], list[dict]]] = defaultdict(lambda: defaultdict(list))
     all_owner_scopes: dict[str, set[str]] = defaultdict(set)
     ambiguous_by_service: dict[str, list[dict]] = defaultdict(list)
+    context_records = {context['id']: context for context in graph.contexts}
     for context in graph.contexts:
+        role, reason = classify_context_role(context, workspace=verified_workspace, contexts=context_records)
+        if role in {'WORKSPACE_DERIVED', 'UNKNOWN'}:
+            if context.get('id') in pinned.values():
+                fail('INVALID_CONTEXT_SELECTION', 'A derived or unknown context cannot be pinned as service source')
+            if reason is not None:
+                diagnostics.append({'code': 'UNKNOWN_CONTEXT_ROLE', 'context_id': context.get('id'),
+                                    'reason': reason, 'message': 'Derived declaration is not service source authority'})
+            continue
         repo_id, context_id = context.get("repo_id"), context.get("id")
         if not isinstance(repo_id, str) or not repo_id or not isinstance(context_id, str) or not context_id:
             continue
@@ -195,12 +205,18 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                                     "message": "Compiler symbol identity disagrees with its exact provider context"})
                 continue
             enriched_symbol = {**symbol, "repo_id": repo_id, "module": module}
-            result = resolve_service_ownership(enriched_symbol, declaration, context_id=context_id)
+            try:
+                result = resolve_service_ownership(enriched_symbol, declaration, context_id=context_id)
+            except AnalysisError as error:
+                fail('INVALID_OWNERSHIP', str(error))
             owner_ids.update(result["candidate_owner_ids"])
         for source_path in paths:
-            result = resolve_service_ownership(
-                {"repo_id": repo_id, "path": source_path, "module": module or None,
-                 "context_id": context_id}, declaration, context_id=context_id)
+            try:
+                result = resolve_service_ownership(
+                    {"repo_id": repo_id, "path": source_path, "module": module or None,
+                     "context_id": context_id}, declaration, context_id=context_id)
+            except AnalysisError as error:
+                fail('INVALID_OWNERSHIP', str(error))
             owner_ids.update(result["candidate_owner_ids"])
         for service_id in owner_ids:
             context_scope = context.get("scope")
@@ -466,7 +482,7 @@ def project_service_inventory(workspace: Mapping[str, Any], graph: KnowledgeGrap
                                    "scope": scope, "context_selection": context_rows})
     result = ViewDocument(
         view_id=f"service-inventory:{workspace_id}:{scope}", kind="topology",
-        baseline_fingerprint=baseline_fingerprint, rules_version="t008-service-inventory-1",
+        baseline_fingerprint=baseline_fingerprint, rules_version="t008-service-inventory-2",
         scope=scope, context_selection=context_rows, nodes=tuple(nodes), edges=tuple(edges),
         diagnostics=tuple(diagnostics),
         coverage={"status": coverage_status,
@@ -611,6 +627,7 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
     only CONTENT_VERIFIED artifact mappings can establish a mapped build pair.
     """
     from .analysis_model import digest
+    from .context_roles import classify_context_role, derived_context_claim
 
     if scope not in {"production", "test", "test_fixture", "development", "unknown"}:
         raise ContextSelectionError({"code": "INVALID_SCOPE", "message": "Select one concrete supported scope"})
@@ -665,6 +682,14 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
             raise ContextSelectionError({"code": "INVALID_SELECTION", "path": f"requests[{index}]",
                                          "message": "Unique service_id, repo_id, module and matching scope are required"})
         seen_services.add(service)
+        chosen_id = request.get('context_id')
+        if "context_id" in request and (not isinstance(chosen_id, str) or not chosen_id):
+            raise ContextSelectionError({"code": "INVALID_CONTEXT_ID", "service_id": service,
+                                         "message": "context_id must be a non-empty string when supplied"})
+        if chosen_id is not None and any(context.get('id') == chosen_id and derived_context_claim(context)
+                                         for context in graph.contexts):
+            raise ContextSelectionError({'code': 'INVALID_CONTEXT_ROLE', 'service_id': service,
+                                         'message': 'A derived declaration is not a source/compiler context'})
         if mode == "SOURCE_ONLY":
             roots = set((source_coverage or {}).get("roots", []))
             artifacts = (source_coverage or {}).get("artifacts", [])
@@ -688,11 +713,8 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
                                          "message": "mode must be COMPILER or SOURCE_ONLY"})
         candidates = [context for context in graph.contexts
                       if context.get("analyzer_version") and context.get("repo_id") == repo
-                      and context.get("module") == module and context.get("scope") == scope]
-        chosen_id = request.get("context_id")
-        if "context_id" in request and (not isinstance(chosen_id, str) or not chosen_id):
-            raise ContextSelectionError({"code": "INVALID_CONTEXT_ID", "service_id": service,
-                                         "message": "context_id must be a non-empty string when supplied"})
+                      and context.get("module") == module and context.get("scope") == scope
+                      and classify_context_role(context)[0] == 'COMPILER']
         choices = sorted(item["id"] for item in candidates if isinstance(item.get("id"), str))
         if chosen_id is None and len(candidates) > 1:
             raise ContextSelectionError({"code": "AMBIGUOUS_CONTEXT", "service_id": service,
