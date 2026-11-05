@@ -250,6 +250,8 @@ def test_cycle_and_shared_input_budget_are_bounded_before_copy_or_digest():
 def _declare_real_pair(workspace,graph,coverage,transport,*,allow_unresolved_source=False):
     """Reuse successful native capture; declare exact user mapping in its manifest."""
     from kgmaker.workspace import load_workspace,snapshot_workspace
+    workspace=load_workspace(Path(workspace['_manifest_path']))
+    _,coverage,_,graph,_=snapshot_workspace(Path(workspace['_manifest_path']))
     first=api().capture_remote_mapping_inputs(workspace,graph,scope='production',source_coverage=coverage)
     nodes=[n for doc in first['canonical_interfaces'] for n in doc['nodes']
         if n['kind']==('http_interface' if transport=='HTTP' else 'kafka_interface')
@@ -262,8 +264,10 @@ def _declare_real_pair(workspace,graph,coverage,transport,*,allow_unresolved_sou
             and n['attributes'].get('topics')==source['attributes']['topics'] and n['attributes'].get('contract_bindings'))
     else:
         source=next(n for n in nodes if n['attributes'].get('direction')=='CONSUMER'
+            and n['attributes'].get('service_id')=='checkout'
             and (n['attributes'].get('route_expression')=='/orders' or allow_unresolved_source))
         target=next(n for n in nodes if n['attributes'].get('direction')=='PROVIDED'
+            and n['attributes'].get('service_id')=='orders'
             and n['attributes'].get('normalized_route')=='/orders')
     binding=next(b for b in target['attributes']['contract_bindings'] if b['status']=='BOUND_DECLARATION')
     by_id={n.id:n for n in graph.nodes}
@@ -333,10 +337,11 @@ def real_http_pair(tmp_path_factory,request):
     from kgmaker.workspace import load_workspace,snapshot_workspace
     from test_http_client_execution import api_jars
     root=tmp_path_factory.mktemp('remote-http-'+request.param)
-    client=root/'client';server=root/'server';contracts=root/'contracts'
+    client=root/'client';server=root/'server';other=root/'other';contracts=root/'contracts'
     contracts.mkdir()
-    (contracts/'orders.json').write_text(json.dumps({'openapi':'3.0.3','info':{'version':'v1'},
+    (contracts/'orders-v1.json').write_text(json.dumps({'openapi':'3.0.3','info':{'version':'v1'},
         'paths':{'/orders':{'post':{'responses':{'200':{'description':'OK'}}}}}}))
+    (contracts/'orders-v2.json').write_text((contracts/'orders-v1.json').read_text().replace('v1','v2'))
     if request.param=='java':
         source=client/'src/main/java/demo/Client.java';text='''package demo;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -354,16 +359,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 @RestController public class Server { @PostMapping("/orders") public String submit(){return "ok";} }
 ''')
+    replica=other/'src/main/java/demo/Server.java';replica.parent.mkdir(parents=True);replica.write_bytes(source.read_bytes())
     jars=_http_prerequisites()
-    for repo in [client,server]:
+    for repo in [client,server,other]:
         result=_inspect_http_repo(repo,jars)
         assert not any('.err.' in d.get('code','') for d in result['diagnostics']),result['diagnostics']
     manifest=root/'workspace.json'
     manifest.write_text(json.dumps({'schema_version':1,'workspace_id':'explicit-http-pair',
-        'repositories':[{'id':name,'path':name,'role':'shared' if name=='contracts' else 'backend'} for name in ['client','server','contracts']],
-        'services':[{'id':name,'backend_repo':repo,'contract':{'repo_id':'contracts','path':'orders.json'}} for name,repo in [('checkout','client'),('orders','server')]],
+        'repositories':[{'id':name,'path':name,'role':'shared' if name=='contracts' else 'backend'} for name in ['client','server','other','contracts']],
+        'services':[{'id':name,'backend_repo':repo,'contract':{'repo_id':'contracts','path':'orders-v2.json' if name=='unrelated' else 'orders-v1.json'}} for name,repo in [('checkout','client'),('orders','server'),('unrelated','other')]],
         'service_ownership':{'schema_version':1,'services':[{'id':name,'roots':[{'repo_id':repo,'path':'src'}],
-            'modules':[],'external_systems':[]} for name,repo in [('checkout','client'),('orders','server')]]}}))
+            'modules':[],'external_systems':[]} for name,repo in [('checkout','client'),('orders','server'),('unrelated','other')]]}}))
     workspace=load_workspace(manifest);_,coverage,_,graph,_=snapshot_workspace(manifest)
     return workspace,graph,coverage,request.param
 
@@ -560,3 +566,41 @@ def test_http_fixture_optional_prerequisites_never_mask_protocol_errors(monkeypa
         with pytest.raises(pytest.fail.Exception):call()
     else:
         with pytest.raises(pytest.skip.Exception):call()
+
+
+def test_actual_same_url_versions_require_explicit_pair_and_keep_candidate_set(real_http_pair):
+    from kgmaker.workspace import load_workspace,snapshot_workspace
+    workspace,graph,coverage,language=real_http_pair
+    workspace,graph,captured=_declare_real_pair(workspace,graph,coverage,'HTTP',allow_unresolved_source=language=='kotlin')
+    baseline=api().resolve_remote_mappings(workspace,graph,captured['canonical_interfaces'],captured=captured,scope='production')
+    if language=='java':
+        assert baseline['bindings'][0]['resolution_status']=='RESOLVED'
+        assert {c['target_service_id'] for c in baseline['bindings'][0]['candidates']}=={'orders'}
+    unrelated=next(n for d in captured['canonical_interfaces'] for n in d['nodes']
+        if n['kind']=='http_interface' and n['attributes'].get('service_id')=='unrelated'
+        and n['attributes'].get('direction')=='PROVIDED' and n['resolution_status']=='RESOLVED')
+    attrs=unrelated['attributes'];binding=next(b for b in attrs['contract_bindings'] if b['status']=='BOUND_DECLARATION')
+    manifest=Path(workspace['_manifest_path']);document=json.loads(manifest.read_text());remote=document['remote_mapping']
+    remote['releases'].append({'id':'other-version','service_id':'unrelated','interface_id':unrelated['id'],
+        'context_id':attrs['context_ids'][0],'scope':'production','release':'v2',
+        'contract':{**binding['contract'],'sha256':binding['raw_sha256'],'pointer':binding['operation_pointer']}})
+    remote['mappings'].append({'id':'other-pair','transport':'HTTP','source_release_id':'source-release',
+        'target_release_id':'other-version','compatibility_id':None})
+    def recapture():
+        manifest.write_text(json.dumps(document));ws=load_workspace(manifest)
+        _,coverage,_,g,_=snapshot_workspace(manifest)
+        capture=api().capture_remote_mapping_inputs(ws,g,scope='production',source_coverage=coverage)
+        return api().resolve_remote_mappings(ws,g,capture['canonical_interfaces'],captured=capture,scope='production')
+    incompatible=recapture()['bindings'][0]
+    assert incompatible['resolution_status']=='UNRESOLVED'
+    assert 'REMOTE_CONTRACT_OR_RELEASE_INCOMPATIBLE' in incompatible['reasons']
+    remote['compatibilities'].append({'id':'explicit-versions','source_release_id':'source-release',
+        'target_release_id':'other-version','assertion':'DECLARED_OPERATION_COMPATIBILITY'})
+    remote['mappings'][-1]['compatibility_id']='explicit-versions'
+    declared=recapture()['bindings'][0]
+    if language=='java':
+        assert declared['resolution_status']=='AMBIGUOUS'
+        assert {c['target_service_id'] for c in declared['candidates']}=={'orders','unrelated'}
+        assert len({c['target_contract']['sha256'] for c in declared['candidates']})==2
+    else:assert declared['resolution_status']=='UNRESOLVED' and declared['candidates']==[]
+    assert declared['payload_compatibility']=='UNKNOWN' and declared['runtime_execution']=='NOT_OBSERVED'

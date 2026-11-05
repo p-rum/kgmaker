@@ -96,3 +96,21 @@ code a ostatní chyby se vracejí nezměněné; validace runtime se neuvolňuje.
 INVALID_PROTOCOL exception identity. Current combined117PASS/8actualDESELECTED
 4.95s. Žádný actual/matrix/full ani native build. Runtime beze změny oproti
 userinfo checkpointu; tato úprava předchází final freeze.
+
+
+## Připravená skutečná AC matice před final freeze
+
+Stejný HTTP fixture obsahuje checkout +orders +unrelated provider jako tři
+explicitní repo/service realms. Oba providery deklarují stejný POST /orders,
+ale dva skutečné contract soubory v1/v2. Pozitivní mapping vybírá orders pouze
+explicitní authority; další wrong-version mapping nesmí vydávat unikátnost.
+Přesný paired declaration smí uchovat dva AMBIGUOUS candidates, nikoli winner.
+Kotlin HTTP source se stejným fixture zůstává upstream UNKNOWN. Každá repository
+se inspectuje jednou v module fixture; další verze/pair testy reuse snapshot, bez
+nové kompilace/worker buildu. Collection68cases/0.34s; všech10actual případů je
+stále NOT_RUN. Předchozí117purePASS zůstává platná pro nezměněný runtime/pure
+cohort; nové změny jsou actual fixture/matrix, ne nový product behavior.
+
+Nový modul je přidán do existujícího compiler-workers jobu s existujícími
+REQUIRE_WORKERS/K2 flags a již připravovanými pinned HTTP/Kafka API. Žádný nový
+gate, package dependency, actual GH run/retry nebo změna workflow oprávnění.

@@ -59,6 +59,6 @@ payload compatibility remain UNKNOWN, including with explicit compatibility pair
 
 Source checkpoint only: public pure/protocol/upstream regression117 PASS,8 actual
 DESELECTED. Initial actual RED2 expectedFAIL after successful canonical setups is
-historical. Current actual positives/matrix/full are NOT_RUN pending independent
+historical. Current actual positives/matrix/full (10 prepared actual cases) are NOT_RUN pending independent
 source closure. Hand-labelled protocol specimens are not native acceptance proof.
 T014 rendering, process continuation and all remote service execution are pending.
