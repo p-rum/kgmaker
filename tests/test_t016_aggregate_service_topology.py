@@ -358,3 +358,29 @@ def test_capture_rejects_remote_coverage_mismatch_before_projecting(explicit_con
     monkeypatch.setattr(kgmaker.remote_interfaces,'project_remote_interfaces',forbidden)
     with pytest.raises(ValueError) as error:api().capture_topology_inputs(manifest)
     assert str(error.value)=='TOPOLOGY_COVERAGE_MISMATCH'
+
+
+def test_canonical_kafka_plain_service_owners_map_via_exact_explicit_release_service():
+    captured=labelled_handoff('KAFKA')
+    for node in captured['remote_document']['nodes']:
+        if node['id']=='client':node['owner_id']='checkout'
+        elif node['id']=='provider':node['owner_id']='orders'
+    refresh_documents(captured);view=api().aggregate_service_topology(captured)
+    assert len([n for n in view.nodes if n.kind=='kafka_channel'])==1
+    assert {e.relation for e in view.edges}=={'publishes_to_channel','consumes_from_channel'}
+    assert not any(n.attributes.get('reason')=='TOPOLOGY_SERVICE_OWNER_UNPROVEN' for n in view.nodes)
+
+
+@pytest.mark.parametrize('owner',['foreign','service:foreign','prefix:orders','checkout'])
+def test_kafka_owner_must_match_exact_selected_release_service_without_parsing(owner):
+    captured=labelled_handoff('KAFKA')
+    node=next(n for n in captured['remote_document']['nodes'] if n['id']=='provider');node['owner_id']=owner
+    refresh_documents(captured);view=api().aggregate_service_topology(captured)
+    assert not any(n.kind=='kafka_channel' for n in view.nodes)
+    assert not view.edges
+    assert any(n.attributes.get('reason')=='TOPOLOGY_SERVICE_OWNER_UNPROVEN' for n in view.nodes)
+
+
+def test_qualified_http_owner_control_still_maps_to_exact_catalog_service():
+    view=api().aggregate_service_topology(labelled_handoff('HTTP'))
+    assert len(view.edges)==1 and view.edges[0].source=='service:checkout' and view.edges[0].target=='service:orders'

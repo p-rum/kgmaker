@@ -193,17 +193,24 @@ def _aggregate(captured):
         if edge.relation not in {'remote_http_request_response','remote_kafka_publish_subscribe'}:
             _fail('TOPOLOGY_UNSUPPORTED_REMOTE_RELATION')
         source=endpoints.get(edge.source);target=endpoints.get(edge.target)
-        source_owner=source.owner_id if source else None;target_owner=target.owner_id if target else None
-        if (source_owner not in nodes or target_owner not in nodes
-                or nodes[source_owner].kind!='service' or nodes[target_owner].kind!='service'
-                or nodes[source_owner].resolution_status!='RESOLVED' or nodes[target_owner].resolution_status!='RESOLVED'):
-            add_boundary(edge.id,[edge.id,edge.source,edge.target],{'reason':'TOPOLOGY_SERVICE_OWNER_UNPROVEN'})
-            continue
         contexts=list(_refs(edge.attributes.get('context_ids',[])))
         mapping=_ref(edge.attributes['mapping_id']);binding_id=_ref(edge.attributes['binding_id'])
         binding=endpoints.get(binding_id)
         if binding is None:_fail('TOPOLOGY_REMOTE_BINDING_MISSING')
         left=releases[binding.attributes['source_release_id']];right=releases[edge.attributes['target_release_id']]
+        def catalog_owner(endpoint, release):
+            # T012 uses plain service IDs; HTTP uses catalog IDs. The selected
+            # explicit release is authority, never parsing an endpoint label/ID.
+            service=release['service_id'];catalog='service:'+service
+            if (endpoint is None or endpoint.id!=release['interface_id']
+                    or endpoint.owner_id not in {service,catalog} or catalog not in nodes
+                    or nodes[catalog].kind!='service' or nodes[catalog].resolution_status!='RESOLVED'):
+                return None
+            return catalog
+        source_owner=catalog_owner(source,left);target_owner=catalog_owner(target,right)
+        if source_owner is None or target_owner is None:
+            add_boundary(edge.id,[edge.id,edge.source,edge.target],{'reason':'TOPOLOGY_SERVICE_OWNER_UNPROVEN'})
+            continue
         common={'scope':scope,'context_ids':contexts,'capture_freshness':'CAPTURE_TIME_ONLY',
             'runtime_execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED','deployment':'UNKNOWN',
             'runtime_availability':'UNKNOWN','payload_compatibility':'UNKNOWN',

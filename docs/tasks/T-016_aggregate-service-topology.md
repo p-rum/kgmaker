@@ -124,3 +124,8 @@ Shared input_binding.coverage_fingerprint musí být přesně stejný jako
 W07 remote_selection.source_coverage_fingerprint: oba jsou digest téhož objektu,
 nejde o porovnání různých baseline formátů. Capture odmítá rozdíl před T014
 projekcí a pure consumer před agregací, i po recomputed outer/shared hash.
+
+Endpoint owner není univerzálně catalog ID: canonical T012 Kafka má plain
+service_id, HTTP catalog form. Pro obě formy použij pouze explicitní selected
+release.service_id -> přesný catalog service ID a exact endpoint.interface_id/
+owner equality; cizí owner se neparsuje ani nehádá podle jména.
