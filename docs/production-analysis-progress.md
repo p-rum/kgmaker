@@ -844,3 +844,8 @@ and module byteprefix +whole testfile preserved; addedT031 bindings do not shado
 See note90 and validation/t030-descendant-proof.json. No standalone parent full or
 new native build. Exact final base/head review and publication remain separate;
 GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
+
+Current Common-main4b source-union closure additionally includes all1966Common
+parent cases: union with originalT0301990 gives2013required identities, all classified
+2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

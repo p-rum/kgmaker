@@ -112,3 +112,8 @@ Původní credential RED4FAIL a oprava153PASS, starý a359capacity gate0testů i
 integrační setup failure zůstávají historické receipts; nejsou přepsány ani
 vydávány za novýPASS. GHCI neověřeno/optional. Technická/statická evidence se
 nepovýšila na runtime či business approval; T031/T032/T033/T034 jsou jiné dodávky.
+
+Current Common-main4b source-union closure additionally includes all1966Common
+parent cases: union with originalT0301990 gives2013required identities, all classified
+2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

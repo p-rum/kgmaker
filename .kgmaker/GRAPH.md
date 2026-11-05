@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 380
+- Scope: production; omitted files: 384
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `3ae27c51cfe694d80980068314eae5070163f1dd09b9387a1d36dab3578d5dbb`; content: `848c7301669d722626329866b1361f59e293de6e30dd54ed63bdf833a3fdc8ff`; freshness: CONTENT_VERIFIED
-- Files indexed: 75
-- Symbols and sections: 1004
-- Internal imports: 290
-- Heuristic cross-file calls: 5191
+- Context: `74e17ff5695a18443d2069d1f31dcb8b18ec177f2aa096d77004e5ed1d930e4d`; content: `29b3d9f48102ad8a8e84b31383e64f47be5414c5b96443d0b6477c1ebb30a8fe`; freshness: CONTENT_VERIFIED
+- Files indexed: 76
+- Symbols and sections: 1020
+- Internal imports: 293
+- Heuristic cross-file calls: 5236
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 234
-- Inferred/ambiguous relationships: 5191/0
+- Implementation episodes: 237
+- Inferred/ambiguous relationships: 5236/0
 
 ## Architecture diagram
 
@@ -73,27 +73,28 @@ flowchart LR
   n43["src/kgmaker/model.py"]
   n44["src/kgmaker/process_model.py"]
   n45["src/kgmaker/process_paths.py"]
-  n46["src/kgmaker/process_triggers.py"]
-  n47["src/kgmaker/project_cli.py"]
-  n48["src/kgmaker/return_flow.py"]
-  n49["src/kgmaker/runtime_evidence.py"]
-  n50["src/kgmaker/scanner.py"]
-  n51["src/kgmaker/schema_replay.py"]
-  n52["src/kgmaker/semantic.py"]
-  n53["src/kgmaker/spring_beans.py"]
-  n54["src/kgmaker/spring_conditions.py"]
-  n55["src/kgmaker/spring_imports.py"]
-  n56["src/kgmaker/store.py"]
-  n57["src/kgmaker/templates.py"]
-  n58["src/kgmaker/typescript_snapshot.py"]
-  n59["src/kgmaker/views.py"]
-  n60["src/kgmaker/workbooks.py"]
-  n61["src/kgmaker/worker_protocol.py"]
-  n62["src/kgmaker/workflow.py"]
-  n63["src/kgmaker/workspace.py"]
-  n64["src/kgmaker/workspace_cli.py"]
-  n65{"technology: Kafka"}
-  n66{"technology: PostgreSQL"}
+  n46["src/kgmaker/process_semantics.py"]
+  n47["src/kgmaker/process_triggers.py"]
+  n48["src/kgmaker/project_cli.py"]
+  n49["src/kgmaker/return_flow.py"]
+  n50["src/kgmaker/runtime_evidence.py"]
+  n51["src/kgmaker/scanner.py"]
+  n52["src/kgmaker/schema_replay.py"]
+  n53["src/kgmaker/semantic.py"]
+  n54["src/kgmaker/spring_beans.py"]
+  n55["src/kgmaker/spring_conditions.py"]
+  n56["src/kgmaker/spring_imports.py"]
+  n57["src/kgmaker/store.py"]
+  n58["src/kgmaker/templates.py"]
+  n59["src/kgmaker/typescript_snapshot.py"]
+  n60["src/kgmaker/views.py"]
+  n61["src/kgmaker/workbooks.py"]
+  n62["src/kgmaker/worker_protocol.py"]
+  n63["src/kgmaker/workflow.py"]
+  n64["src/kgmaker/workspace.py"]
+  n65["src/kgmaker/workspace_cli.py"]
+  n66{"technology: Kafka"}
+  n67{"technology: PostgreSQL"}
   n0 -->|imports| n16
   n4 -->|imports| n2
   n6 -->|imports| n28
@@ -101,10 +102,10 @@ flowchart LR
   n7 -->|imports| n9
   n7 -->|imports| n26
   n7 -->|imports| n28
-  n7 -->|imports| n50
-  n7 -->|imports| n52
-  n7 -->|imports| n60
-  n7 -->|imports| n63
+  n7 -->|imports| n51
+  n7 -->|imports| n53
+  n7 -->|imports| n61
+  n7 -->|imports| n64
   n9 -->|imports| n5
   n9 -->|imports| n26
   n9 -->|imports| n28
@@ -113,16 +114,16 @@ flowchart LR
   n11 -->|imports| n12
   n11 -->|imports| n15
   n11 -->|imports| n35
-  n11 -->|imports| n51
+  n11 -->|imports| n52
   n12 -->|imports| n5
   n12 -->|imports| n35
   n13 -->|imports| n5
   n13 -->|imports| n41
   n13 -->|imports| n44
-  n13 -->|imports| n59
+  n13 -->|imports| n60
   n14 -->|imports| n5
   n14 -->|imports| n43
-  n14 -->|imports| n59
+  n14 -->|imports| n60
   n15 -->|imports| n5
   n16 -->|imports| n2
   n16 -->|imports| n3
@@ -135,47 +136,47 @@ flowchart LR
   n16 -->|imports| n36
   n16 -->|imports| n42
   n16 -->|imports| n43
-  n16 -->|imports| n47
-  n16 -->|imports| n50
-  n16 -->|imports| n52
-  n16 -->|imports| n56
-  n16 -->|imports| n59
-  n16 -->|imports| n62
-  n16 -->|imports| n64
+  n16 -->|imports| n48
+  n16 -->|imports| n51
+  n16 -->|imports| n53
+  n16 -->|imports| n57
+  n16 -->|imports| n60
+  n16 -->|imports| n63
+  n16 -->|imports| n65
   n17 -->|imports| n5
   n17 -->|imports| n43
   n18 -->|imports| n5
   n19 -->|imports| n5
   n20 -->|imports| n42
   n20 -->|imports| n43
-  n20 -->|imports| n50
-  n20 -->|imports| n52
-  n20 -->|imports| n56
-  n20 -->|imports| n62
+  n20 -->|imports| n51
+  n20 -->|imports| n53
+  n20 -->|imports| n57
+  n20 -->|imports| n63
   n21 -->|imports| n5
   n21 -->|imports| n38
-  n21 -->|imports| n63
+  n21 -->|imports| n64
   n22 -->|imports| n5
   n23 -->|imports| n2
   n24 -->|imports| n5
   n24 -->|imports| n6
   n24 -->|imports| n9
   n24 -->|imports| n26
-  n24 -->|imports| n56
-  n24 -->|imports| n63
+  n24 -->|imports| n57
+  n24 -->|imports| n64
   n25 -->|imports| n5
   n25 -->|imports| n8
   n25 -->|imports| n32
   n25 -->|imports| n43
-  n25 -->|imports| n51
-  n25 -->|imports| n59
-  n25 -->|imports| n63
+  n25 -->|imports| n52
+  n25 -->|imports| n60
+  n25 -->|imports| n64
   n26 -->|imports| n43
-  n26 -->|imports| n48
+  n26 -->|imports| n49
   n27 -->|imports| n34
   n27 -->|imports| n43
-  n27 -->|uses_messaging| n65
-  n27 -->|connects_to| n66
+  n27 -->|uses_messaging| n66
+  n27 -->|connects_to| n67
   n28 -->|imports| n5
   n28 -->|imports| n7
   n28 -->|imports| n9
@@ -184,36 +185,36 @@ flowchart LR
   n28 -->|imports| n31
   n28 -->|imports| n33
   n28 -->|imports| n43
-  n28 -->|imports| n50
   n28 -->|imports| n51
   n28 -->|imports| n52
-  n28 -->|imports| n57
-  n28 -->|imports| n59
+  n28 -->|imports| n53
+  n28 -->|imports| n58
   n28 -->|imports| n60
-  n28 -->|imports| n63
+  n28 -->|imports| n61
+  n28 -->|imports| n64
   n29 -->|imports| n5
   n29 -->|imports| n6
   n29 -->|imports| n7
   n29 -->|imports| n9
   n29 -->|imports| n24
   n29 -->|imports| n26
-  n29 -->|imports| n50
-  n29 -->|imports| n52
-  n29 -->|imports| n59
+  n29 -->|imports| n51
+  n29 -->|imports| n53
+  n29 -->|imports| n60
   n30 -->|imports| n5
   n30 -->|imports| n14
   n30 -->|imports| n26
   n30 -->|imports| n40
-  n30 -->|imports| n48
-  n30 -->|imports| n59
+  n30 -->|imports| n49
+  n30 -->|imports| n60
   n31 -->|imports| n5
   n32 -->|imports| n5
   n32 -->|imports| n43
-  n32 -->|imports| n51
-  n32 -->|imports| n53
+  n32 -->|imports| n52
   n32 -->|imports| n54
   n32 -->|imports| n55
-  n32 -->|uses_messaging| n65
+  n32 -->|imports| n56
+  n32 -->|uses_messaging| n66
   n33 -->|imports| n5
   n33 -->|imports| n11
   n33 -->|imports| n15
@@ -224,13 +225,13 @@ flowchart LR
   n33 -->|imports| n40
   n33 -->|imports| n41
   n33 -->|imports| n43
-  n33 -->|imports| n48
-  n33 -->|imports| n50
+  n33 -->|imports| n49
   n33 -->|imports| n51
-  n33 -->|imports| n54
-  n33 -->|imports| n56
-  n33 -->|imports| n58
-  n33 -->|imports| n61
+  n33 -->|imports| n52
+  n33 -->|imports| n55
+  n33 -->|imports| n57
+  n33 -->|imports| n59
+  n33 -->|imports| n62
   n34 -->|imports| n5
   n34 -->|imports| n43
   n35 -->|imports| n5
@@ -244,60 +245,60 @@ flowchart LR
   n35 -->|imports| n40
   n35 -->|imports| n41
   n35 -->|imports| n43
-  n35 -->|imports| n48
-  n35 -->|imports| n50
+  n35 -->|imports| n49
   n35 -->|imports| n51
-  n35 -->|imports| n54
-  n35 -->|imports| n56
-  n35 -->|imports| n58
-  n35 -->|imports| n61
-  n35 -->|uses_messaging| n65
+  n35 -->|imports| n52
+  n35 -->|imports| n55
+  n35 -->|imports| n57
+  n35 -->|imports| n59
+  n35 -->|imports| n62
+  n35 -->|uses_messaging| n66
   n36 -->|imports| n5
   n36 -->|imports| n11
   n36 -->|imports| n26
   n36 -->|imports| n33
   n36 -->|imports| n35
-  n36 -->|imports| n48
   n36 -->|imports| n49
-  n36 -->|imports| n56
-  n36 -->|imports| n59
-  n36 -->|imports| n61
-  n36 -->|uses_messaging| n65
+  n36 -->|imports| n50
+  n36 -->|imports| n57
+  n36 -->|imports| n60
+  n36 -->|imports| n62
+  n36 -->|uses_messaging| n66
   n37 -->|imports| n5
   n37 -->|imports| n8
   n37 -->|imports| n27
   n37 -->|imports| n32
   n37 -->|imports| n34
   n37 -->|imports| n43
-  n37 -->|imports| n59
-  n37 -->|imports| n63
+  n37 -->|imports| n60
+  n37 -->|imports| n64
   n38 -->|imports| n5
   n38 -->|imports| n15
   n38 -->|imports| n33
   n38 -->|imports| n35
   n38 -->|imports| n39
   n38 -->|imports| n43
-  n38 -->|imports| n50
-  n38 -->|imports| n54
-  n38 -->|imports| n61
-  n38 -->|imports| n63
+  n38 -->|imports| n51
+  n38 -->|imports| n55
+  n38 -->|imports| n62
+  n38 -->|imports| n64
   n39 -->|imports| n5
   n39 -->|imports| n33
   n39 -->|imports| n38
   n39 -->|imports| n43
-  n39 -->|imports| n50
-  n39 -->|imports| n61
-  n39 -->|uses_messaging| n65
+  n39 -->|imports| n51
+  n39 -->|imports| n62
+  n39 -->|uses_messaging| n66
   n40 -->|imports| n5
   n40 -->|imports| n39
   n40 -->|imports| n43
-  n40 -->|imports| n61
-  n40 -->|imports| n63
-  n40 -->|uses_messaging| n65
+  n40 -->|imports| n62
+  n40 -->|imports| n64
+  n40 -->|uses_messaging| n66
   n41 -->|imports| n5
   n41 -->|imports| n45
-  n41 -->|imports| n46
-  n41 -->|imports| n63
+  n41 -->|imports| n47
+  n41 -->|imports| n64
   n42 -->|imports| n43
   n43 -->|imports| n15
   n44 -->|imports| n8
@@ -308,90 +309,93 @@ flowchart LR
   n45 -->|imports| n41
   n45 -->|imports| n43
   n45 -->|imports| n44
-  n45 -->|imports| n46
-  n45 -->|imports| n59
-  n45 -->|imports| n63
+  n45 -->|imports| n47
+  n45 -->|imports| n60
+  n45 -->|imports| n64
   n46 -->|imports| n5
   n46 -->|imports| n8
-  n46 -->|imports| n22
-  n46 -->|imports| n59
-  n46 -->|imports| n63
-  n46 -->|uses_messaging| n65
+  n46 -->|imports| n44
   n47 -->|imports| n5
-  n47 -->|imports| n10
-  n47 -->|imports| n11
-  n47 -->|imports| n12
-  n47 -->|imports| n15
-  n47 -->|imports| n36
-  n47 -->|imports| n50
-  n47 -->|imports| n56
-  n47 -->|imports| n59
-  n47 -->|imports| n63
+  n47 -->|imports| n8
+  n47 -->|imports| n22
+  n47 -->|imports| n60
+  n47 -->|imports| n64
+  n47 -->|uses_messaging| n66
   n48 -->|imports| n5
-  n48 -->|imports| n14
-  n48 -->|imports| n43
+  n48 -->|imports| n10
+  n48 -->|imports| n11
+  n48 -->|imports| n12
+  n48 -->|imports| n15
+  n48 -->|imports| n36
+  n48 -->|imports| n51
+  n48 -->|imports| n57
+  n48 -->|imports| n60
+  n48 -->|imports| n64
   n49 -->|imports| n5
+  n49 -->|imports| n14
   n49 -->|imports| n43
-  n49 -->|imports| n56
   n50 -->|imports| n5
-  n50 -->|imports| n15
-  n50 -->|imports| n26
-  n50 -->|imports| n27
-  n50 -->|imports| n34
   n50 -->|imports| n43
+  n50 -->|imports| n57
   n51 -->|imports| n5
-  n51 -->|imports| n31
-  n51 -->|imports| n32
+  n51 -->|imports| n15
+  n51 -->|imports| n26
+  n51 -->|imports| n27
+  n51 -->|imports| n34
   n51 -->|imports| n43
-  n51 -->|imports| n46
-  n51 -->|imports| n63
-  n52 -->|imports| n42
+  n52 -->|imports| n5
+  n52 -->|imports| n31
+  n52 -->|imports| n32
   n52 -->|imports| n43
-  n53 -->|imports| n5
-  n55 -->|imports| n5
-  n55 -->|imports| n53
+  n52 -->|imports| n47
+  n52 -->|imports| n64
+  n53 -->|imports| n42
+  n53 -->|imports| n43
+  n54 -->|imports| n5
   n56 -->|imports| n5
-  n56 -->|imports| n43
-  n56 -->|imports| n59
+  n56 -->|imports| n54
   n57 -->|imports| n5
   n57 -->|imports| n43
+  n57 -->|imports| n60
   n58 -->|imports| n5
-  n58 -->|imports| n61
+  n58 -->|imports| n43
   n59 -->|imports| n5
-  n59 -->|imports| n8
-  n59 -->|imports| n11
-  n59 -->|imports| n21
-  n59 -->|imports| n33
-  n59 -->|imports| n35
-  n59 -->|imports| n43
-  n59 -->|imports| n63
+  n59 -->|imports| n62
   n60 -->|imports| n5
-  n60 -->|imports| n15
+  n60 -->|imports| n8
+  n60 -->|imports| n11
+  n60 -->|imports| n21
+  n60 -->|imports| n33
+  n60 -->|imports| n35
   n60 -->|imports| n43
-  n61 -->|imports| n1
+  n60 -->|imports| n64
   n61 -->|imports| n5
-  n62 -->|imports| n42
-  n63 -->|imports| n5
-  n63 -->|imports| n11
-  n63 -->|imports| n15
-  n63 -->|imports| n27
-  n63 -->|imports| n31
-  n63 -->|imports| n32
-  n63 -->|imports| n33
-  n63 -->|imports| n38
-  n63 -->|imports| n40
-  n63 -->|imports| n43
-  n63 -->|imports| n51
-  n63 -->|imports| n56
-  n63 -->|imports| n61
+  n61 -->|imports| n15
+  n61 -->|imports| n43
+  n62 -->|imports| n1
+  n62 -->|imports| n5
+  n63 -->|imports| n42
   n64 -->|imports| n5
-  n64 -->|imports| n26
-  n64 -->|imports| n28
+  n64 -->|imports| n11
+  n64 -->|imports| n15
+  n64 -->|imports| n27
+  n64 -->|imports| n31
   n64 -->|imports| n32
-  n64 -->|imports| n51
-  n64 -->|imports| n56
-  n64 -->|imports| n59
-  n64 -->|imports| n63
+  n64 -->|imports| n33
+  n64 -->|imports| n38
+  n64 -->|imports| n40
+  n64 -->|imports| n43
+  n64 -->|imports| n52
+  n64 -->|imports| n57
+  n64 -->|imports| n62
+  n65 -->|imports| n5
+  n65 -->|imports| n26
+  n65 -->|imports| n28
+  n65 -->|imports| n32
+  n65 -->|imports| n52
+  n65 -->|imports| n57
+  n65 -->|imports| n60
+  n65 -->|imports| n64
 ```
 
 ## Files and symbols
@@ -1068,6 +1072,24 @@ flowchart LR
 - **function** `proof` line 204 — `proof(p, source, target, relation)`
 - **function** `boundary` line 262 — `boundary(reason)`
 
+### `src/kgmaker/process_semantics.py`
+- **class** `ProcessLabelPacketError` line 29 — `ProcessLabelPacketError(ValueError)`
+- **function** `__init__` line 33 — `__init__(self, code)`
+- **function** `_fail` line 36 — `_fail(code)`
+- **function** `_bounded` line 40 — `_bounded(value)`
+- **function** `_identifier` line 75 — `_identifier(value)`
+- **function** `_identifiers` line 84 — `_identifiers(values)`
+- **function** `_context_selection` line 89 — `_context_selection(value, scope, contexts)`
+- **function** `row` line 102 — `row(item)`
+- **function** `service` line 126 — `service(item)`
+- **function** `_document_provenance` line 142 — `_document_provenance(value, ref, known_sources, contexts)`
+- **function** `_cost` line 156 — `_cost(result)`
+- **function** `_budget_status` line 160 — `_budget_status(budget, overflow)`
+- **function** `_settle` line 171 — `_settle(result, mandatory=None, *, enforce_hard=True)`
+- **function** `_omission` line 189 — `_omission(category, identity, field, value)`
+- **function** `_documents` line 194 — `_documents(documents, scope, context_ids, known_sources)`
+- **function** `prepare_process_label_packet` line 230 — `prepare_process_label_packet(process, *, documents=(), conflicts=(), token_budget=8000, char_budget=32000)`
+
 ### `src/kgmaker/process_triggers.py`
 - **class** `TriggerInventoryError` line 24 — `TriggerInventoryError(ValueError)`
 - **function** `__init__` line 28 — `__init__(self, code, message)`
@@ -1616,6 +1638,7 @@ flowchart LR
 - **Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002** — changed; files: docs/acceptance-inventory.md, docs/changes/64_propagateViewEvidence.md, src/kgmaker/architecture_model.py, tests/test_t009_propagate_view_evidence.py; validation: focused=passed, full_suite=passed, compiler_prerequisites=skipped, semantic_validate=passed
 - **Reject frontend compiler input membership changes before publication** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: strict-full=passed, actual-TS-closure-and-legacy-selection=passed, unavailable-build-fixtures=skipped
 - **feat(t007): define service ownership** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
+- **Change Acceptance a skutečné kontroly, Acceptance criteria, Aktualizace stavu** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md; validation: public_red=failed, coalesced_pure_149=passed, strict_full=unknown
 - **docs: record verified Kafka retry focus and blocked full gate** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/87_captureKafkaRetryDlt.md, docs/compiler-inspection.md; validation: coalesced361=passed, prerequisite43=passed, independent-source-focus=passed, frozen-full-capacity=unknown, github-ci=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003** — removed; files: .codex/agents/README.md, .codex/agents/t003-s03-w01-external-toolchain-selection.toml, .codex/agents/t003-s03-w02-gradle-custom-variants.toml, .codex/agents/t003-s03-w03-gradle-included-builds.toml, .codex/agents/t003-s03-w04-kotlin-compiler-options.toml; validation: agent-profiles=passed, toml=passed, codex-loader=passed, links=passed, pytest197=passed
 - **Merge remote-tracking branch 'origin/feat/t003-s05-03-spring-condition-matrix' into feat/t003-s09-03-template-dialect-expansion** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/55_expandThymeleafFragments.md, docs/compiler-inspection.md; validation: focused-regressions=passed, full-core=passed, optional-worker-matrix=skipped
@@ -1731,6 +1754,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: full_pytest=passed, focused_k2_javac=passed, actual_javac_compat=passed, semantic_validate=passed, graph_check=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, maven-effective-model=passed, bom-property-interpolation=passed
 - **Change Acceptance a ověření, Agent reads packet.json and candidate-template.json, writes candidate.json., Akceptační kritéria** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/38_configureDeferredConfluence.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: configuration28=passed, full281=passed, live=skipped
+- **merge: refresh T030 on verified Common main parent** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md; validation: descendant2df55_full=passed, own47_actual=passed, standalone_parent_full=unknown, final_pair_review=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/37_packageBuildExporters.md, docs/compiler-inspection.md; validation: installed-exporters=passed, strict-full=passed, schema=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s08-01-typescript-project-references** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: contexts-ownership-workspace52=passed, ts-runtime-byte-identical=passed, actual-citations=passed, prior-strict302=passed
 - **Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002** — changed; files: docs/acceptance-inventory.md, docs/changes/64_propagateViewEvidence.md, src/kgmaker/architecture_model.py, tests/test_t009_propagate_view_evidence.py; validation: focused=passed, full_suite=unknown, compiler_prerequisites=skipped, semantic_validate=passed
@@ -1742,12 +1766,13 @@ flowchart LR
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest195=passed, focused51=passed, spring-configuration-import=passed, framework-rule-invalidation=passed
 - **fix(T003-S09-W01): bound XLSX formula reference tokens** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/39_boundXlsxFormulaReferences.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: focused133=passed, full298=passed, toolchain23=skipped, semantic=passed, diff-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/69_versionReactUiEvents.md, docs/compiler-inspection.md; validation: renderer20=passed, preceding_guard_broad63=passed, final_ui_contract_guard6=passed, full_queued=unknown, remote_ci_paused=unknown
+- **Change Acceptance a skutečné kontroly, Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md, src/kgmaker/process_semantics.py; validation: credential_red=failed, coalesced_pure_153=passed, strict_full=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest-on-07ad865=passed, full-suite-toolchain-gates=skipped, rebase-focused=passed
 - **fix(t003): validate full JDK before installed worker smoke** — current; files: docs/changes/83_classifyOptionalCompilerPrerequisites.md, tests/test_coroutine_mapping.py, tests/test_optional_compiler_prerequisites.py, tests/test_orm_xml_overrides.py, tests/test_worker_install.py; validation: optional-full-957=passed, strict-matrix-123-coverage=passed, optional-prerequisites-644=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s08-01-typescript-project-references** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: strict284=passed, ts-project-references=passed, fingerprint=passed, methodology12=passed
 - **merge W02 canonical owner indexes into ORM XML mapping** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/65_ormXmlOverrides.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: jpa-xml-focused=passed, w02-jpql-owner=passed, k2-mapped-superclass=passed, semantic=passed, scan-check=passed
-- **refresh common context roles onto current schema and retry parent** — current; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/84_classifyWorkspaceContextRoles.md, docs/production-analysis-progress.md; validation: combined-descendant-2df55-full-2587pass10optional=passed, common-parent-1966ids-covered=passed, own-actual-focus-217pass=passed
+- **refresh common context roles onto current schema and retry parent** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/84_classifyWorkspaceContextRoles.md, docs/production-analysis-progress.md; validation: combined-descendant-2df55-full-2587pass10optional=passed, common-parent-1966ids-covered=passed, own-actual-focus-217pass=passed
 - **Merge HTTP catalog parent and preserve factory acceptance workflow** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: integration=passed
 - **Change 2 passed, 36 passed, 379 passed, 9 skipped in 144.12s (final suite after canonical JPA package guard)** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: Full pytest 379 pass 9 skip=passed, Actual Javac AC06 and K2 JPA=passed, Semantic validate=passed, kgmaker check=passed, review_registry=passed
 - **fix: redact credentials in unsupported URI inputs** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/56_classifyHttpClientExecution.md; validation: focused_113=passed, full_646_skip10=passed, k1_k2_build=passed, uri_privacy=passed, semantic=passed
@@ -2006,6 +2031,9 @@ flowchart LR
 - `src/kgmaker/process_paths.py` imports `src/kgmaker/process_triggers.py` (.process_triggers)
 - `src/kgmaker/process_paths.py` imports `src/kgmaker/views.py` (.views)
 - `src/kgmaker/process_paths.py` imports `src/kgmaker/workspace.py` (.workspace)
+- `src/kgmaker/process_semantics.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
+- `src/kgmaker/process_semantics.py` imports `src/kgmaker/architecture_model.py` (.architecture_model)
+- `src/kgmaker/process_semantics.py` imports `src/kgmaker/process_model.py` (.process_model)
 - `src/kgmaker/process_triggers.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/process_triggers.py` imports `src/kgmaker/architecture_model.py` (.architecture_model)
 - `src/kgmaker/process_triggers.py` imports `src/kgmaker/control_flow.py` (.control_flow)
@@ -5681,6 +5709,51 @@ flowchart LR
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 234; src/kgmaker/process_paths.py:234; INFERRED 0.85)
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 235; src/kgmaker/process_paths.py:235; INFERRED 0.85)
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 289; src/kgmaker/process_paths.py:289; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 124; src/kgmaker/process_semantics.py:124; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 193; src/kgmaker/process_semantics.py:193; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 221; src/kgmaker/process_semantics.py:221; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 227; src/kgmaker/process_semantics.py:227; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 258; src/kgmaker/process_semantics.py:258; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 335; src/kgmaker/process_semantics.py:335; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 339; src/kgmaker/process_semantics.py:339; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 363; src/kgmaker/process_semantics.py:363; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 263; src/kgmaker/process_semantics.py:263; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 279; src/kgmaker/process_semantics.py:279; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 284; src/kgmaker/process_semantics.py:284; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 285; src/kgmaker/process_semantics.py:285; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 295; src/kgmaker/process_semantics.py:295; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 297; src/kgmaker/process_semantics.py:297; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 302; src/kgmaker/process_semantics.py:302; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 103; src/kgmaker/process_semantics.py:103; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 113; src/kgmaker/process_semantics.py:113; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 117; src/kgmaker/process_semantics.py:117; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 127; src/kgmaker/process_semantics.py:127; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 131; src/kgmaker/process_semantics.py:131; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 134; src/kgmaker/process_semantics.py:134; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 139; src/kgmaker/process_semantics.py:139; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 145; src/kgmaker/process_semantics.py:145; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 197; src/kgmaker/process_semantics.py:197; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 202; src/kgmaker/process_semantics.py:202; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 210; src/kgmaker/process_semantics.py:210; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 213; src/kgmaker/process_semantics.py:213; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 216; src/kgmaker/process_semantics.py:216; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 239; src/kgmaker/process_semantics.py:239; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 240; src/kgmaker/process_semantics.py:240; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 242; src/kgmaker/process_semantics.py:242; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 302; src/kgmaker/process_semantics.py:302; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 309; src/kgmaker/process_semantics.py:309; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 312; src/kgmaker/process_semantics.py:312; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 315; src/kgmaker/process_semantics.py:315; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 56; src/kgmaker/process_semantics.py:56; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 58; src/kgmaker/process_semantics.py:58; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 60; src/kgmaker/process_semantics.py:60; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 62; src/kgmaker/process_semantics.py:62; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 64; src/kgmaker/process_semantics.py:64; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 67; src/kgmaker/process_semantics.py:67; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 69; src/kgmaker/process_semantics.py:69; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 78; src/kgmaker/process_semantics.py:78; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 87; src/kgmaker/process_semantics.py:87; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 93; src/kgmaker/process_semantics.py:93; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `326 in `src/kgmaker/architecture_model.py`` (name match at line 324; src/kgmaker/process_triggers.py:324; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 313; src/kgmaker/process_triggers.py:313; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 277; src/kgmaker/process_triggers.py:277; INFERRED 0.85)

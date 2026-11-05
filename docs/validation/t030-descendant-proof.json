@@ -131,5 +131,15 @@
   },
   "GH_CI": "optional/not asserted PASS",
   "remaining": "independent exact final base/head review and PR readiness/publication/merge by coordinator; T031+ separate successors",
-  "base_refresh": "Common PR72 merged; source composition already present in actual2df descendant; no source/test/native rerun"
+  "base_refresh": "Common PR72 merged; source composition already present in actual2df descendant; no source/test/native rerun",
+  "current_base_required_case_union": {
+    "case_count": 2013,
+    "result_counts": {
+      "PASS": 2003,
+      "SKIP": 10
+    },
+    "basis": "union of exact validated T0301990 and current Common1966 parent ledgers; not a newly executed or recollected parent run",
+    "sorted_ids_sha256": "48611cc55cfb2adaf3d6dd4ca50110d773db0231b9ac5b7deceadf5de9cfddbc",
+    "all_ids_present_in_actual_descendant": true
+  }
 }

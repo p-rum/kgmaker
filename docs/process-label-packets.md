@@ -92,3 +92,8 @@ exact; appended T031 helpers have disjoint bindings. This supplies parent suppor
 from a reviewed descendant, not a standalone T030 full command.
 See [bounded source/result proof](validation/t030-descendant-proof.json).
 Final exact base/head review remains separate; no new compiler build or full rerun.
+
+Current Common-main4b source-union closure additionally includes all1966Common
+parent cases: union with originalT0301990 gives2013required identities, all classified
+2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

@@ -770,3 +770,8 @@ T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
 standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
 PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
 [bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.
+
+Current Common-main4b source-union closure additionally includes all1966Common
+parent cases: union with originalT0301990 gives2013required identities, all classified
+2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
