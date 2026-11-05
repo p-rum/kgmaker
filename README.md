@@ -639,6 +639,12 @@ entity mappings and migrations contribute dependencies. Flyway is
 Missing datasource mappings remain unresolved; no database connection or new CLI
 command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
 
+Compiler inspection also records static return → assignment/argument/receiver
+bindings with branch guards and declared nullability. Java, K1 and TypeScript
+support the bounded [return-consumer matrix](docs/compiler-inspection.md#return--consumer-bindings);
+K2 Kotlin source CFG, opaque/recursive/async bodies and unsupported projections
+remain UNKNOWN. Process and impact reports carry the proof without runtime values.
+
 ## Explicit business-process documents
 
 `kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1

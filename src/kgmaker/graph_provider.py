@@ -96,6 +96,11 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if "return_flow_rule_version" in context:
+        from .return_flow import VERSION as RETURN_VERSION
+        if context["return_flow_rule_version"] != RETURN_VERSION:
+            raise WorkerError("STALE_INDEX: return/consumer rules changed; inspect again", "STALE")
+
     if "local_operation_rule_version" in context:
         from .local_operations import VERSION as LOCAL_OPERATION_VERSION
         if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:

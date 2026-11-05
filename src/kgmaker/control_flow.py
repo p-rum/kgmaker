@@ -186,8 +186,8 @@ class Builder:
             return self.emit(left, test, env, depth + 1)
         if kind in {"and", "or"}:
             return self.condition(ir, destination, destination, env, depth + 1)
-        if kind == "assign":
-            node = self.computation({**ir, "calls": []}, destination, env, label="assign")
+        if kind in {"assign", "destructure"}:
+            node = self.computation({**ir, "calls": []}, destination, env, label=kind)
             return self.emit(ir.get("value", {"kind": "empty"}), node, env, depth + 1)
         if kind in {"await", "suspend", "join"}:
             node = self.node("async_boundary", kind, ir, env)

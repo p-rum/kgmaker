@@ -123,9 +123,52 @@ import org.springframework.stereotype.Service; import org.springframework.beans.
     options = {"home": ROOT / "workers", "kotlin_backend": request.param, "publish": False,
                "classpath": [str(jar) for jar in jars], "build_context": {"spring_profiles": ["blue"],
                "spring_properties": {}, "spring_available_classes": [], "spring_component_packages": ["app", "other"]}}
-    result = inspection.inspect_jvm(root, **options)
+    captured = []
+    original_request = inspection.request_worker
+    def capture_response(*args, **kwargs):
+        response = original_request(*args, **kwargs)
+        captured.append(copy.deepcopy(response))
+        return response
+    with patch("kgmaker.inspection.request_worker", side_effect=capture_response):
+        result = inspection.inspect_jvm(root, **options)
+    result["_fixture_worker_response"] = captured[-1]
     assert not [d for d in result["diagnostics"] if d["code"].startswith("JAVAC_")]
     return root, options, result
+
+
+
+def test_return_parameter_binding_preserves_original_method_facts(registration_project):
+    _, _, result = registration_project
+    response = result["_fixture_worker_response"]
+    symbols = response["symbols"]
+    for owner in ("app.LiteralRegistrar", "app.RegistrarParent"):
+        method = next(s for s in symbols if s.get("owner") == owner
+                      and s.get("name") == "registerBeanDefinitions")
+        assert method["bean_registrations"] == {
+            "schema_version": 1, "status": "LITERAL",
+            "values": [{"name": "registered" if owner.endswith("LiteralRegistrar") else "inherited",
+                        "type": "app.Product"}], "reason": "LITERAL_REGISTRY_CALLS"}
+        body = next(b for b in response["bodies"] if b["method"] == method["id"])
+        def bindings(value):
+            if isinstance(value, dict):
+                if isinstance(value.get("value_binding"), dict):
+                    yield value["value_binding"]
+                for child in value.values():
+                    yield from bindings(child)
+            elif isinstance(value, list):
+                for child in value:
+                    yield from bindings(child)
+        receiver = next(b for b in bindings(body) if b["name"] == "r")
+        assert receiver["kind"] == "PARAMETER"
+        assert receiver["method"] == method["id"]
+        assert receiver["id"] == method["id"] + ":parameter:1"
+    for name in ("getObject", "getObjectType"):
+        method = next(s for s in symbols if s.get("owner") == "app.LiteralFactory" and s.get("name") == name)
+        assert method["factory_return"]["status"] == "LITERAL"
+        assert method["factory_return"]["type"] == "app.Product"
+    producer = next(s for s in symbols if s.get("owner") == "app.Main" and s.get("name") == "literalProducer")
+    assert producer["factory_producer"]["status"] == "LITERAL"
+    assert producer["factory_producer"]["type"] == "app.LiteralFactory"
 
 
 def test_literal_registrar_preserves_origin_and_import_condition(registration_project):

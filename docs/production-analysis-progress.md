@@ -186,7 +186,7 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering; W02 dodává bounded Java/Kotlin DefaultImpls a bridge declaration mapping s přesným owner/name/descriptor, realm/ABI guard a bytecode-only diagnostics (`tests/test_default_body_mapping.py`); bounded compiler suspend/async boundaries a DebugMetadata continuation declaration mapping v `test_coroutine_mapping` | K2 širší source call/CFG matice a obecné coroutine state-machine CFG/runtime scheduling, další generated shapes, default-argument masks, statement-level LOC, širší corpus, úplná acceptance banka |
 | T003-S05 Spring | PARTIAL | Spring rules v6 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici; typed conditions zachovávají OR profile expressions, všechny property/class members a config hash; bounded registrar/FactoryBean subset je doložen samostatně W02 | Selectors/registrars/factories mimo bounded literal subset, širší property/classpath varianty a runtime proxy/async execution |
 | T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: Entity/Embeddable/MappedSuperclass, Java/Kotlin FIELD/PROPERTY identity, EmbeddedId/AttributeOverride, mapped-superclass and entity inheritance table projections, associations, derived queries, compiler-owned JPQL/native `@Query`; W03 selected persistence-unit XML precedence, mapping-file order, metadata-complete suppression, source hashes and fail-closed unsupported/unsafe inputs in actual Javac fixtures; Flyway tests | Broader JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL, implicit Kotlin target policy and complete multi-datasource/provider matrix |
-| T003-S07 integrations/dataflow | PARTIAL | Literály, service mapping, lokální field edges; S07-W01 compiler-proven Javac/K1/TS argument→declared-parameter bindings s named/default/vararg proof (change52); S07-W04 bounded declared Kafka cluster/topic/contract SHA/release + profile/context precedence; privacy rules `kafka-binding-2` reject sensitive aliases/redact captured public properties; `tests/test_kafka_bindings.py`, fixture `fixtures/kafka-bindings`, [note54](changes/54_scopeKafkaBindingIdentity.md) | Revize2 je draft: bounded canonical listener/send + explicit schema2 code/group join v implementaci, finální acceptance/full/review dosud neuzavřeny; runtime delivery/retry/DLT a obecné Kafka/HTTP datové cesty UNKNOWN |
+| T003-S07 integrations/dataflow | PARTIAL | Literály, service mapping, lokální field edges; S07-W01 compiler-proven Javac/K1/TS argument→declared-parameter bindings s named/default/vararg proof (change52); bounded return→consumer proof s oddělenou caller/body identity a source guards (change66); S07-W04 bounded declared Kafka cluster/topic/contract SHA/release + profile/context precedence; privacy rules `kafka-binding-2` reject sensitive aliases/redact captured public properties; `tests/test_kafka_bindings.py`, fixture `fixtures/kafka-bindings`, [note54](changes/54_scopeKafkaBindingIdentity.md) | Revize2 je draft: bounded canonical listener/send + explicit schema2 code/group join v implementaci, finální acceptance/full/review dosud neuzavřeny; runtime delivery/retry/DLT a obecné Kafka/HTTP datové cesty UNKNOWN |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
 | T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings, static exact-arity fragment provenance, condition/unsupported diagnostics and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula/template evaluation zůstává non-goal |
 | T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
@@ -606,6 +606,35 @@ and broader pure focused115 PASS (6.79s); local strict full is queued under the
 shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
 Complete persistence/schema-compatibility S06/W08, T004 and production readiness
 remain PARTIAL; this does not implement a new parser or discover datasources.
+
+## Return → consumer bindings
+
+T003-S07-W02 adds optional compiler-owned return IR without changing protocol v1
+or graph/store v1/v2/v3. Explicit inspection records typed call-result, assignment,
+return-expression and receiver occurrences with `return_mapping_version=1` evidence.
+Branch guards remain alternatives; nullability is declared compiler information,
+never an observed value. Process JSON/Markdown and directional impact retain the
+bindings. Workspace export qualifies their original identities and context.
+
+| Backend | Supported static proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Declared returns, local assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
+| TypeScript5.7.3 | Typed results, local assignments, nullable receivers, exact unassigned FunctionDeclaration references / real #private member bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, import/alias/property-based references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
+| K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
+
+`returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control
+edge of the same name cannot establish value flow. Callee body joins require a
+supported direct source target, and recursion is bounded. No application executes,
+network request, store mutation during failed validation, runtime value observation,
+or implicit compiler refresh is introduced. Legacy indexes remain readable; an
+explicit obsolete return-rule version is STALE offline.
+
+Example after explicit compiler inspection: `kgmaker flow render --help` describes
+the existing process rendering commands; their JSON call blocks include
+`return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
+Actual coverage is in `tests/test_return_consumer_flow.py`; broader production
+interprocedural flow and complete S07 remain pending.
 
 ## T023 — ProcessDefinition / ProcessView (explicit model)
 

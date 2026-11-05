@@ -26,7 +26,7 @@ CAPABILITIES = {
 }
 # Direction of propagation of a changed value, not direction of its stored edge.
 FORWARD = {'maps_to', 'serialized_as', 'displayed_in', 'rendered_in', 'sent_to',
-           'tested_by', 'documented_by', 'writes_value', 'argument_to_parameter'}
+           'tested_by', 'documented_by', 'writes_value', 'argument_to_parameter', 'returns_to'}
 REVERSE = {'reads_value', 'derived_from', 'persisted_in', 'asserts_field', 'targets_ui',
            'tests_endpoint', 'uses_fixture', 'depends_on_contract'}
 
@@ -290,7 +290,10 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
     adjacency = defaultdict(list)
     binding_evidence = {value['id']: value for value in graph.evidence
                         if value.get('argument_mapping_version') == 1}
+    return_evidence = {value['id'] for value in graph.evidence if value.get('return_mapping_version') == 1}
     for edge in graph.edges:
+        if edge.kind == 'returns_to' and (edge.evidence_kind != 'SYMBOL_RESOLVED' or not (set(edge.evidence_ids) & return_evidence)):
+            continue
         if edge.kind == 'argument_to_parameter' and (edge.evidence_kind != 'SYMBOL_RESOLVED'
                 or not any(identity in binding_evidence for identity in edge.evidence_ids)):
             continue
@@ -328,6 +331,7 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
     bindings = [item for site in binding_sites for item in argument_parameter_bindings(graph, site)]
     return {'seed': entity, 'paths': paths, 'truncated': truncated,
             'argument_parameter_bindings': bindings,
+            'return_consumer_bindings': [p for p in return_consumer_bindings(graph) if p['source'] in used|{entity} or p['target'] in used|{entity}],
             'limitations': CAPABILITIES['unsupported'],
             'interpretation': 'static value dependency, not runtime availability or business equivalence'}
 
@@ -416,6 +420,9 @@ def argument_parameter_bindings(graph: KnowledgeGraph, call_site: str) -> list[d
                            'availability': 'UNKNOWN', 'execution': 'NOT_OBSERVED'})
     return sorted(result, key=lambda value: (value['argument_index'], value['parameter_index'], value['parameter']))
 
+
+# Public read projection; compilation/enrichment remains explicit inspection.
+from .return_flow import return_consumer_bindings
 
 def http_request_inventory(graph, *, callers=None):
     """Read existing typed HTTP facts; never infer terminals from call labels."""
