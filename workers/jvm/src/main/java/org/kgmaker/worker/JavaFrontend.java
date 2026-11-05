@@ -146,7 +146,7 @@ public final class JavaFrontend {
                 if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
                 state.symbols.get(caller).putAll(registrationFacts.method(executable,tree,getCurrentPath(),errorAt(tree)));
                 super.visitMethod(tree,unused);
-                if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"body",ir(tree.getBody())));
+                if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind",errorAt(tree)?"ERROR":executable.getKind()==ElementKind.CONSTRUCTOR?"CONSTRUCTOR":"DECLARED","return_type",valueInfo(executable.getReturnType()),"local_operation_version",1,"local_operation_status",executable.getKind()==ElementKind.METHOD&&!errorAt(tree)&&errors.stream().noneMatch(d->d.getSource()!=null&&d.getSource().toUri().equals(unit.getSourceFile().toUri()))?"AVAILABLE":"UNAVAILABLE","body",ir(tree.getBody())));
                 return null;
             }catch(IllegalArgumentException error){state.diagnostic("JAVA_UNSUPPORTED_METHOD_TYPE",error.getMessage(),loc(tree));return null;}
             finally{caller=old;}
@@ -158,7 +158,7 @@ public final class JavaFrontend {
             var value=map("id",lambda,"name","<lambda>","kind","function","identity_stability","SNAPSHOT","scope",state.context.get("scope"),"context_id",state.context.get("id"));
             value.putAll(location);state.symbols.put(lambda,value);caller=lambda;
             super.visitLambdaExpression(tree,unused);
-            state.bodies.add(map("method",lambda,"language","java","context_id",state.context.get("id"),"body",ir(tree.getBody())));
+            state.bodies.add(map("method",lambda,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind","CALLABLE","body",ir(tree.getBody())));
             caller=old;return null;
         }
         private void invocation(Tree tree,String kind) {
@@ -269,6 +269,47 @@ public final class JavaFrontend {
         }.scan(node,null);
         return values;
     }
+    private Map<String,Object> valueInfo(TypeMirror type) {
+        if(type==null || type.getKind()==TypeKind.ERROR || type.getKind()==TypeKind.NONE)
+            return map("version",1,"status","UNKNOWN","type_ref","unknown","nullability","UNKNOWN");
+        if(type.getKind()==TypeKind.VOID)
+            return map("version",1,"status","VOID","type_ref","V","nullability","UNKNOWN");
+        if(type.getKind()==TypeKind.NULL)
+            return map("version",1,"status","VALUE","type_ref","null","nullability","NULL_LITERAL");
+        try {
+            var element=types.asElement(type);
+            boolean callable=element instanceof TypeElement t && t.getKind()==ElementKind.INTERFACE && elements.isFunctionalInterface(t);
+            return map("version",1,"status",callable?"CALLABLE":"VALUE","type_ref",typeDescriptor(type),
+                "nullability",type.getKind().isPrimitive()?"DECLARED_NON_NULL":"UNKNOWN");
+        }catch(IllegalArgumentException error){return map("version",1,"status","UNKNOWN","type_ref","unknown","nullability","UNKNOWN");}
+    }
+    private Map<String,Object> valueInfo(Tree tree) {
+        var path=tree==null?null:TreePath.getPath(unit,tree);
+        return valueInfo(path==null || errorAt(tree)?null:trees.getTypeMirror(path));
+    }
+    private Map<String,Object> valueBinding(Tree tree) {
+        var path=tree==null?null:TreePath.getPath(unit,tree);
+        var element=path==null?null:trees.getElement(path);
+        if(!(element instanceof VariableElement variable))return null;
+        if(!Set.of(ElementKind.LOCAL_VARIABLE,ElementKind.PARAMETER,ElementKind.FIELD,ElementKind.ENUM_CONSTANT).contains(variable.getKind()))return null;
+        var location=declarationLocation(variable);
+        if(location==null || !(location.get("range") instanceof Map<?,?> range))return null;
+        String id="binding:"+state.context.get("id")+":"+location.get("path")+":"+location.get("sha256")+":"+range.get("start")+":"+range.get("end");
+        String methodId=null,symbol=null;
+        if(variable.getEnclosingElement() instanceof ExecutableElement method){
+            methodId=state.methodIdentity(owner(method),method.getKind()==ElementKind.CONSTRUCTOR?"<init>":method.getSimpleName().toString(),
+                descriptor(method),declarationLocation(method));
+            if(variable.getKind()==ElementKind.PARAMETER){int index=method.getParameters().indexOf(variable);if(index<0)return null;id=methodId+":parameter:"+index;}
+        }
+        if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {
+            var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+            if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
+            symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,metadata);
+        }
+        var record=map("version",1,"id",id,"name",variable.getSimpleName().toString(),"kind",variable.getKind().name(),
+            "method",methodId,"symbol",symbol,"type",valueInfo(variable.asType()));
+        record.putAll(location);return record;
+    }
     private Map<String,Object> binding(Tree node) {
         if(node==null)return null;
         var path=TreePath.getPath(unit,node);var element=path==null?null:trees.getElement(path);
@@ -284,7 +325,8 @@ public final class JavaFrontend {
         Object identity=null;
         if(location!=null && location.get("range") instanceof Map<?,?> range)
             identity="binding:"+state.context.get("id")+":"+location.get("path")+":"+location.get("sha256")+":"+range.get("start")+":"+range.get("end");
-        var result=map("id",identity,"kind",variable.getKind().name(),"symbol",symbol);
+        String bindingType=null;try{bindingType=typeDescriptor(variable.asType());}catch(IllegalArgumentException ignored){}
+        var result=map("id",identity,"kind",variable.getKind().name(),"symbol",symbol,"type",bindingType,"declaration",location);
         bindingCache.put(variable,result);return result;
     }
     private List<Map<String,Object>> referencedBindings(Tree node) {
@@ -297,11 +339,32 @@ public final class JavaFrontend {
         }.scan(node,null);
         return new ArrayList<>(result.values());
     }
+    private Map<String,Object> localOperation(Tree node) {
+        if(errorAt(node))return null;
+        if(node instanceof LiteralTree literal && literal.getValue()!=null) {
+            var path=TreePath.getPath(unit,node);var type=path==null?null:trees.getTypeMirror(path);
+            if(type==null || type.getKind()==TypeKind.ERROR)return null;
+            String descriptor=typeDescriptor(type);
+            if(!Set.of("Z","B","C","S","I","J","F","D","Ljava/lang/String;").contains(descriptor))return null;
+            return map("schema_version",1,"operation","LITERAL_EVALUATION","target_type",descriptor,"target_binding",null,"target_declaration",null);
+        }
+        Tree target=null,value=null;
+        if(node instanceof VariableTree variable){target=node;value=variable.getInitializer();}
+        else if(node instanceof AssignmentTree assignment){target=assignment.getVariable();value=assignment.getExpression();}
+        if(!(value instanceof LiteralTree literal) || literal.getValue()==null || localOperation(value)==null)return null;
+        var proof=binding(target);
+        if(proof==null || !"LOCAL_VARIABLE".equals(proof.get("kind")) || proof.get("id")==null
+                || !(proof.get("type") instanceof String descriptor) || !Set.of("Z","B","C","S","I","J","F","D","Ljava/lang/String;").contains(descriptor))return null;
+        return map("schema_version",1,"operation","LOCAL_LITERAL_ASSIGNMENT","target_type",proof.get("type"),"target_binding",proof.get("id"),"target_declaration",proof.get("declaration"));
+    }
     public Map<String,Object> ir(Tree node) {
         if(node==null)return map("kind","empty");
         var base=map("kind","statement","label",label(node),"calls",callsIn(node));base.putAll(loc(node));
+        if(node instanceof ExpressionTree)base.put("value_info",valueInfo(node));
+        var operation=localOperation(node);if(operation!=null)base.put("local_operation",operation);
         switch(node.getKind()) {
             case IDENTIFIER,MEMBER_SELECT->{
+                base.put("value_binding",valueBinding(node));
                 var p=TreePath.getPath(unit,node);var e=p==null?null:trees.getElement(p);
                 if(e instanceof TypeElement || e instanceof PackageElement)base.putAll(map("kind","reference","calls",List.of()));
                 if(e instanceof VariableElement variable) {
@@ -315,8 +378,8 @@ public final class JavaFrontend {
             }
             case METHOD_INVOCATION->{var t=(MethodInvocationTree)node;Tree receiver=t.getMethodSelect() instanceof MemberSelectTree s?s.getExpression():null;base.putAll(map("kind","call","call_site",calls.get(node),"arguments",t.getArguments().stream().map(this::ir).toList(),"receiver",ir(receiver)));}
             case NEW_CLASS->{var t=(NewClassTree)node;base.putAll(map("kind","call","call_site",calls.get(node),"arguments",t.getArguments().stream().map(this::ir).toList(),"receiver",ir(t.getEnclosingExpression())));if(t.getClassBody()!=null){var refs=referencedBindings(t.getClassBody());base.put("captured_bindings",refs);base.put("binding_references_complete",refs.size()<128);}}
-            case VARIABLE->{base.putAll(map("kind","assign","binding",binding(node),"value",ir(((VariableTree)node).getInitializer())));}
-            case ASSIGNMENT->{base.putAll(map("kind","assign","binding",binding(((AssignmentTree)node).getVariable()),"value",ir(((AssignmentTree)node).getExpression())));}
+            case VARIABLE->{base.putAll(map("kind","assign","value_binding",valueBinding(node),"binding",binding(node),"value",ir(((VariableTree)node).getInitializer())));}
+            case ASSIGNMENT->{base.putAll(map("kind","assign","value_binding",valueBinding(((AssignmentTree)node).getVariable()),"binding",binding(((AssignmentTree)node).getVariable()),"value",ir(((AssignmentTree)node).getExpression())));}
             case LAMBDA_EXPRESSION,MEMBER_REFERENCE->{
                 var refs=referencedBindings(node);
                 base.putAll(map("kind","reference","calls",List.of(),"captured_bindings",refs,"binding_references_complete",refs.size()<128));

@@ -639,6 +639,12 @@ entity mappings and migrations contribute dependencies. Flyway is
 Missing datasource mappings remain unresolved; no database connection or new CLI
 command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
 
+Compiler inspection also records static return → assignment/argument/receiver
+bindings with branch guards and declared nullability. Java, K1 and TypeScript
+support the bounded [return-consumer matrix](docs/compiler-inspection.md#return--consumer-bindings);
+K2 Kotlin source CFG, opaque/recursive/async bodies and unsupported projections
+remain UNKNOWN. Process and impact reports carry the proof without runtime values.
+
 ## Explicit business-process documents
 
 `kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
@@ -702,6 +708,23 @@ an explicit body gap; unsupported K2 annotation capture remains UNKNOWN. No
 process paths, business identities, worker execution or runtime availability are
 inferred. See [API and boundaries](docs/process-triggers.md).
 
+### Explicit persistence realm selection (T003-S06-W04, bounded subset)
+
+For physical schema links, provide database_id and schema_stream_id explicitly
+in the JVM build context and database_id/stream_id in each workspace repo.flyway
+configuration. Distinct databases may reuse a stream name. Optional
+persistence_schema and flyway_target selectors constrain the supported offline
+replay target; ambiguous or missing realm evidence remains UNKNOWN. Python
+inspect_jvm(..., build_context={...}) and existing imported build-manifest
+inspection carry these fields; the CLI remains kgmaker inspect jvm --root app
+--build-id BUILD_ID. Offline snapshot_workspace then joins existing fresh compiler
+facts to its explicit replay schemas; it never runs a worker, app or database.
+Legacy source-only @Table/@Column fields do not create new strong persisted_in
+links without a proven realm. Supported physical replay binding currently covers
+non-renamed table/column identities; creation-stable IDs after a rename remain
+UNKNOWN pending S06-W08 lifecycle proof. See docs/changes/74_isolatePersistenceRealms.md for
+actual validation and incomplete scope.
+
 HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
 integrations --format json` includes `http.requests`; process JSON/Markdown shows
 request definitions separately from terminal intent. Real Spring 6.2.2 / Reactor
@@ -731,3 +754,25 @@ listener/send declarations and declared bindings into the shared interfaces view
 Broker realms and consumer groups remain distinct; configuration-only and regex
 subscriptions retain their unresolved boundaries. Explicit workspace/private
 compiler indexes are required; the projection performs no inspection or transport.
+### HTTP consumer catalogue (T011)
+
+`kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
+source_coverage=coverage)` projects selected typed W06 requests into the shared
+interfaces view. Lazy definitions remain distinct from static terminal intent;
+Feign caller occurrences and same-path calls keep their original IDs. No client
+is run, and runtime/remote service binding stays unknown. See
+[HTTP consumers](docs/http-consumers.md) for the explicit snapshot example and
+proof/compatibility boundaries. No new CLI command is introduced.
+
+T025 revision2 adds optional `java-local-operations-1` compiler evidence for a
+bounded Java literal/local-variable subset. It keeps source CFG ordering as
+SYNTAX_CANDIDATE and resolves only independently certified operation nodes;
+transitions, execution, business meaning and data availability are not promoted.
+Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
+the complete corrected integration matrix and full validation; own fresh workers built successfully. See
+[local process scope](docs/process-paths.md#compiler-bound-local-operations).
+
+The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
+reversibly groups only adjacent certified local operations in an explicit process
+view. It preserves unresolved CFG adjacency and all origins; it does not approve
+business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.

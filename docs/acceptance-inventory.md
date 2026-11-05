@@ -538,6 +538,15 @@ Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`
 | AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
 | AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
 
+## T003-S07-W02 — Return → consumer binding
+
+| AC | Bounded delivered proof | Evidence |
+|---|---|---|
+| AC01 | Compiler-owned ranges/direction, branch alternatives, distinct assignments, nullable/chained consumers | `tests/test_return_consumer_flow.py`, `fixtures/return-consumer` actual Javac/K1/TS |
+| AC02 | Additive protocol1/graph1/2/3; stale explicit rule stays offline | Legacy and stale-rule tests in the same module |
+| AC03 | Opaque/open/recursive/callable/void/any/async/custom-projection bodies remain UNKNOWN; malformed input does not mutate store | Actual worker negatives and malformed-IR/zero-store tests |
+| AC04 | `return-consumer-1` matrix; K2 Kotlin missing source CFG remains UNKNOWN; S07/T003 PARTIAL | [change66](changes/66_bindReturnConsumerFlow.md), [compiler matrix](compiler-inspection.md#return--consumer-bindings); full result pending |
+
 ## T023 — explicit process model
 
 | Acceptance | Stav | Konkrétní důkaz | Hranice |
@@ -611,6 +620,28 @@ and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in not
 integration236PASS is recorded; final independent review/merge remain pending (PR59).
 Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
 
+## T003-S06-W04 — Explicit persistence realms (VERIFIED_IN_SCOPE)
+
+`tests/test_persistence_realms.py` covers two databases sharing stream main with
+different actual offline migrations/targets, exact duplicate-pair rejection,
+shared migration-path isolation, delimiter/percent IDs, quoted-dot SQL component
+collisions and metadata tamper. Actual K1/K2 contexts over the same entity retain
+separate native/JPQL scope, idempotent local reprojection and selected T015 access.
+Two actual persistence units bind the same entity to their own DB/schema/table
+with XML provenance; ambiguous PU produces no physical claim and preserves store.
+The new current-JPA layer rejects missing/partial/foreign realm proof. Legacy
+source-only regex fields remain readable, with no new strong physical link.
+
+Final strict full: **1348 PASS, 10 SKIP in1583.75s**, mandatory workers/K2/Spring/
+HTTP flags, XML1358 tests/0failures/0errors. Exact HEADb75370d and all623 frozen
+input hashes remained unchanged. Earlier182PASS+setupERROR is a partial result,
+not the final full. See change note74 and persistent validation receipts.
+
+Supported physical bindings are non-renamed replay tables/columns. Valid renamed
+objects with stable creation IDs currently remain UNKNOWN; S06-W08 supplies the
+creation-identity lifecycle follow-up. Broader provider, grammar, schema lifecycle,
+deployment and populated-data availability are not proved. S06 remains PARTIAL.
+
 ## T003-S07-W06 — HTTP client intent, omezený compiler subset
 
 | ID | Stav | Přímá evidence |
@@ -636,6 +667,37 @@ S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource neg
 | AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
 | AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
 
+## T011 — typed HTTP consumer inventory
+
+AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
+WebClient occurrences, AC04 offline/input preservation, AC05 malformed source/
+edge/scope/owner/SHA and selected stale siblings are in
+`tests/test_t011_catalog_http_consumers.py`. AC06 documentation and actual outcome
+are in [change76](changes/76_catalogHttpConsumers.md). Strict full1373PASS/10optionalSKIP; current-pair review pending; runtime NOT_RUN.
+
+## T025 revision2 — compiler local operation evidence (candidate)
+
+T025-AC07–09 require the actual typed local-literal chain in both JVM backends,
+unsupported/error/legacy cases, exact IR/source/context/CFG proof mutation guards,
+finally-clone and workspace preservation, and unresolved control transitions.
+`tests/test_local_operation_proofs.py` contains these candidate checks. Executed:
+pre-feature actual RED1FAIL0.73s, explicit protocol11PASS and legacy/model/protocol
+120PASS2actualDESELECTED4.44s. JavaFrontend source-only javac compilation passed;
+both fresh workers built successfully; initial matrix36PASS1ERROR is preserved.
+After origin and proof-retention corrections,39purePASS and bounded actual K1
+workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
+T026 or whole T025/T003/T004 completion is implied by this row.
+
+## T026 — lossless business-step projection (candidate)
+
+| AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
+|---|---|---|
+| AC01 | actual Javac literal-local collapse; ordered roundtrip; parallel edges; finally clones and unused exit | Actual K1/K2; final full 1566PASS/10SKIP v 1532.43s |
+| AC02 | disconnected equal DTO; diamond remains separate | 95 T026 cases in strict full |
+| AC03 | field/call/finally actual boundaries; decisions/loops/exception/unknown boundary matrix | Strict full includes actual and pure cases |
+| AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
+| AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
+| AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 ### T003-S07-W04 revize2 — draft code/group acceptance
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
@@ -654,3 +716,8 @@ canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tupl
 regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
 AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
 Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.

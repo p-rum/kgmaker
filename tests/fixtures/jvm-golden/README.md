@@ -60,3 +60,12 @@ order or production-project precision. S04 and T003 remain bounded/PARTIAL.
 
 K1 default-argument declaration metadata is supported while its CFG evaluation
 remains explicitly unsupported; the corresponding source diagnostic is inventoried.
+
+Return-consumer v1 adds two hand-reviewed K1 unsupported rows: `Work.kt:6`
+(`absent(4)`, no declared target) and `Work.kt:9` (`pick(null)`, no unique overload
+identity). These remain UNKNOWN; compiler recovery does not prove a return value.
+K2 has no Kotlin source return-body IR and gains no invented return diagnostic.
+Other mixed/Java/features/dispatch scenario expectations stay unchanged: Java error
+bodies, constructors, callable/reference and suspend bodies do not become supported
+DECLARED return-body joins. The exact unsupported Counter and all call-site counts,
+targets and multiplicities remain checked; no diagnostic category is filtered out.

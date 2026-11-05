@@ -1005,6 +1005,40 @@ is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
 physical naming/schema compatibility, live databases and data population remain
 outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.
 
+## Return → consumer bindings
+
+T003-S07-W02 adds optional compiler-owned return IR without changing protocol v1
+or graph/store v1/v2/v3. Explicit inspection records typed call-result, assignment,
+return-expression and receiver occurrences with `return_mapping_version=1` evidence.
+Branch guards remain alternatives; nullability is declared compiler information,
+never an observed value. Process JSON/Markdown and directional impact retain the
+bindings. Workspace export qualifies their original identities and context.
+
+| Backend | Supported static proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Declared returns, local assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
+| TypeScript5.7.3 | Typed results, local assignments, nullable receivers, exact unassigned FunctionDeclaration references / real #private member bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, import/alias/property-based references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
+| K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
+
+`returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control
+edge of the same name cannot establish value flow. Callee body joins require a
+supported direct source target, and recursion is bounded. No application executes,
+network request, store mutation during failed validation, runtime value observation,
+or implicit compiler refresh is introduced. Legacy indexes remain readable; an
+explicit obsolete return-rule version is STALE offline.
+
+Both JVM and TypeScript captures include the optional `return_flow_rule_version`
+field. For unchanged capture inputs this updates the full context ID while the
+logical selection key and other legacy fields remain unchanged. Historical
+contexts remain readable without newly certified return-body evidence.
+
+Example after explicit compiler inspection: `kgmaker flow render --help` describes
+the existing process rendering commands; their JSON call blocks include
+`return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
+Actual coverage is in `tests/test_return_consumer_flow.py`; broader production
+interprocedural flow and complete S07 remain pending.
+
 ## T003-S05-W03 — typed condition matrix
 
 The JVM v6 evaluator preserves compiler member types alongside legacy annotation
@@ -1064,6 +1098,30 @@ hashes/licenses; preparation is an explicit Maven command. Required CI uses
 missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
+
+## Explicit persistence realms (T003-S06-W04, verified bounded subset)
+
+Current physical schema binding requires an explicit database_id/schema_stream_id
+pair in the compiler selection and replay configuration. Optional
+persistence_schema/flyway_target context selectors are shape validated and hashed;
+a declared table schema or one supported replay schema may supply an unambiguous
+schema, while multiple choices remain UNKNOWN. W03 still owns persistence-unit
+selection and XML input replay. A globally unique table name cannot fill a
+missing realm. Legacy contexts remain readable but require reinspection under
+JPA rule annotation-source-v6-persistence-realms.
+
+An explicit workspace repo.flyway replay joins already captured fresh compiler
+facts locally before workspace qualification, without running a worker or build.
+Source-only @Table/@Column fields no longer create strong persisted_in or schema
+mismatch claims without compiler-owned realm proof. Migration-derived schema,
+framework interpretation and runtime/deployed data availability remain separate.
+Physical binding supports non-renamed replay table/column identities. A valid
+Replay rename retains its creation ID, so the current strict current-name/ID guard
+returns UNKNOWN after rename; it never guesses from previous/display names.
+S06-W08 owns the creation-identity metadata/parser-cache follow-up, not this PR.
+See change note74 for actual validation and remaining acceptance; no complete
+production/provider/schema-lifecycle support is claimed.
+
 
 
 ## T003-S07-W04 — declared Kafka binding identity

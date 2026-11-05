@@ -84,3 +84,86 @@ process claim. Current supplied SOURCE CFG must match the imported builder VERSI
 unsupported body stays opaque until provider reinspection. No schema/store
 migration is required. T026+ grouping, cross-service
 projection, business labels, catalog, CLI and rendering remain separate tasks.
+
+## Compiler-bound local operations
+
+T025 revision2 (`local-process-path-2-operations`) introduces a separate optional
+`java-local-operations-1` proof for named Java methods without source-file compiler
+errors. Supported operations are literal evaluation and assignment of a literal
+to a compiler-attributed LOCAL_VARIABLE with a primitive or canonical
+java.lang.String type. Field/parameter/boxed/array/call/cast/arithmetic assignments,
+Kotlin/bytecode/initializer/lambda and legacy bodies are not certified. Literal
+evaluation inside an otherwise unsupported assignment does not certify the
+assignment itself. No method body or application is executed by this projection.
+
+The producer retains existing Arg and HTTP IR. The materializer validates the
+selected source/caller/context/hash, typed IR path and escaped canonical JSON
+IR/body digest, then binds each occurrence to its precise CFG block. Finally
+clones receive distinct proof IDs. Graph schema3 remains unchanged; optional
+worker/body versions absent in old inputs yield no operation proof.
+
+A certified operation node carries only its admitted SYMBOL_RESOLVED operation
+proof as resolution evidence. Its original CFG refs remain in
+`attributes.cfg_evidence_refs`; transitions include these original syntax refs
+and remain UNRESOLVED. Entry/exit, call and boundary nodes are not upgraded.
+Workspace wrapping qualifies the new references without rewriting their original
+content hash. Missing, stale, foreign, borrowed or tampered operation evidence
+cannot authorize a resolved node or mutate the last valid store.
+
+Existing read-only usage is unchanged:
+
+```bash
+kgmaker inspect code --root /repo --kotlin-backend k1 --kotlin-version 2.1.10
+kgmaker flow render --root /repo --entry METHOD_ID --view process --format json
+```
+
+The T025 ProcessView adapter consumes the existing selected trigger inventory and
+provider graph; no new implicit inspection or CLI apply path is added. This is an
+upstream prerequisite for T026, whose business-step grouping remains a separate
+task. Corrected actual focus passed341 tests. A descendant superset full passed1566
+tests (10 explicit skips), including all1471 passing parent cases; change79
+records exact source hashes, pre/post closure and remaining limitations.
+
+## Reversible business-step projection (T026 candidate)
+
+`kgmaker.business_process.collapse_business_steps(process)` groups maximal
+acyclic chains of at least two adjacent certified local-operation basic blocks.
+It consumes the explicit T025 `ProcessView`, checks the embedded existing
+certificate's content identity and exact method/context/scope/CFG tuple, and
+reuses the shared process/view validators. It does not re-attest the physical
+checkout or issue new compiler certificates. Missing legacy certificates remain
+ungrouped. PR65 (runtime `a6170c18`) is merged as main `32a3bca` and integrated here.
+
+```python
+from kgmaker.business_process import collapse_business_steps, expand_business_steps
+
+business = collapse_business_steps(process)
+assert expand_business_steps(business).to_json() == process.to_json()
+print([(node.id, node.kind) for node in business.steps])
+```
+
+Only same-method/owner/context/scope single-entry/single-exit normal adjacency
+is eligible. Decisions, calls, side effects, unknown/service/transaction/async
+boundaries, cycles and finally continuations stay visible. Equal DTO names,
+labels and semantic approvals do not supply eligibility. Annotated and explicit
+entry/exit/outcome targets are retained. A group has a neutral `action` label,
+versioned `attributes.business_group` records containing ordered complete origin
+nodes/internal edges and original external transitions. Its ID hashes those
+records. Expansion verifies the supported deterministic projection, including
+digest-consistent tampering; all external parallel edges and the unused
+exceptional exit survive. Canonical `ProcessView` order is restored exactly;
+member order follows CFG adjacency, not lexical sorting of node IDs.
+
+Normal CFG edges still carry UNRESOLVED/SYNTAX_CANDIDATE evidence. Aggregation
+preserves all operation and internal-edge evidence, polarity and freshness and
+keeps the action UNRESOLVED and the process PARTIAL. This proves static grouping,
+not execution, feasibility, business equivalence or semantic approval.
+
+Both APIs are pure, do not execute workers or perform I/O, and leave inputs
+unchanged on invalid/stale/foreign/tampered evidence. Invalid input raises
+`BusinessProcessError` with `diagnostic`. Bounds reject cyclic/deep metadata,
+more than 500,000 structural occurrences, depth above80, text above32 million
+characters, collections above50,000, or topology above10,000 nodes/30,000 edges.
+Expanded/grouped outputs obey the same structure limits. There is no new CLI,
+persistence format migration or runtime observation. Older documents without
+group metadata remain readable and expand unchanged.

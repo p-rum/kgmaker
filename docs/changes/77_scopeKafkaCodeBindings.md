@@ -69,3 +69,77 @@ React18.3.1 fixture, byte-exact27 worker inputs a30JAR/lib closure z dříve
 ověřeného argument donor buildu. Source-only preflight nespouští build/install.
 Nový API-only Maven fixture má samostatný explicitní offline bootstrap ve FIFO
 frontě. Povinný strict full se teprve zařazuje; žádný full PASS ani DONE se netvrdí.
+
+## Integrace current main před finálními kontrolami
+
+Main `9442114d169b84e6c9f98dd097faafd80eff0d48` (T011, PR65 local operations,
+T026) je integrován před novým current-parent full. Kafka Python adapter/binding
+runtime a `tests/test_kafka_code_bindings.py` zůstávají byte-exact8af/f2f3.
+Main215 implementation episode prefix i oba původní Kafka capture objekty jsou
+zachovány beze změny. Workspace qualification a compiler CI drží obě vrstvy;
+připravený Kafka API-only Maven krok zůstává explicitní.
+
+Historické full pokusy nejsou PASS: první **1151PASS/9SKIP/1ERROR** skončil na
+ENOSPC při UI fixture copy, všech1364 input hashů beze změny. Následující full
+**1235PASS/10SKIP/1FAIL v1529.28s** doběhl k packaging license assertion; vlastní
+JVM analyze/store již prošel, chyběl `target/licenses/kotlin/LICENSE.txt`.
+Obě původní XML/log/receipt jsou zachovány. Env recovery matrix191PASS/0SKIP
+v251.61s a celý packaging/exporter/Windows/Kafka/CI focus45PASS/3SKIP v79.21s
+ověřily předchozí exact-source distribuci; skips jsou explicitní Maven/Gradle
+PATH a skutečný non-admin Windows gate, nikoli PASS těchto prostředí.
+
+Complete102 Kotlin license files byly ověřeny proti původnímu exact27 native /
+30JAR donor buildu a official Kotlin license tree. Následný license-full nebyl
+spuštěn: capacity gate2.70GB <5GiB jej zastavil před pytest. Requeued FIFO runner
+byl na pokyn root zastaven ještě childless/unstarted před current-main merge;
+nejde o další full výsledek. Temporary fixture copies dokončených vlastních běhů
+byly před cleanup SHA-manifestovány; receipts/log/XML se nemažou.
+
+Current-parent worker distribuce je převzata z ověřeného PR65 donor
+`/workspace/local-operation-proofs` teprve po shodě všech27 tracked worker
+source/build/lock/config inputs a132 distribution JAR/license hashů z jeho
+původního build receipt. No nový build: K1 `5dd96f7c6cd6a5d7317b98cd81953a37d2bf4f914dbeee73b3d8983106ab170d`.
+Current-parent coalesced actual focus, full, finální exact-pair review a ready
+zůstávají pending; předchozí bounded PASS se za ně nevydává.
+
+## Finální current-parent lokální evidence
+
+Výše uvedené pending/FAIL odstavce jsou historické checkpointy. Frozen source
+`19b0594795ac1f9167916178907b77bb0f070f51` nad main944 má current-parent focus
+**102PASS/0SKIP v99.74s**, včetně Kafka code guards, celého T011 consumer katalogu,
+installed-worker checks, mandatory CI a actual K1/K2 local-operation producer /
+workspace kontraktu. Všech1477 source/distribution/fixture/tool input hashů bylo
+před/po beze změny. Root nezávisle potvrdilo source composition APPROVE nad19b;
+implementační agent si source approval neuděluje.
+
+Jediný skutečně spuštěný current-parent strict full poté prošel
+**1576PASS/10SKIP v1536.69s** (XML1586cases,0FAIL,0ERROR). Required worker/K2/
+Spring imports/conditions/HTTP-provider flags byly1, prerequisite preflight PASS,
+HEAD19b i všech1477 hashů zůstaly beze změny. Receipt/XML/log:
+`/workspace/kafka-code-validation/main944/`. Skip10 přesně odděluje explicitní
+Maven/trusted-exporter PATH případy, Gradle8.13/Kotlin-cache gate, druhý JDK a
+skutečný non-admin Windows smoke; tyto prostředí nejsou PASS. GitHub CI nebylo
+znovu spuštěno a není tímto tvrzeno zelené.
+
+Full dokládá integrovaný statický kontrakt, nikoli broker/app/data availability.
+Kotlin K2 listener metadata zůstávají výslovně PARTIAL bez promotion, regex není
+exact-topic join a producer wrappers/unsupported Kotlin arguments zůstávají UNKNOWN.
+Finální follow-up mění jen tuto evidenci, acceptance, implementation memory a
+CLI-generated graph; runtime/tests/native bytes zůstávají stejné jako při19b full.
+Root provede finální exact-head review a publication/merge; tato větev nemerguje sama.
+
+## Refresh main8e81 bez opakování stejného actual/full
+
+Před publikací přijat main `8e81e635b605b2688df10a1e23b9bec27d5f448d` (PR67).
+Nový parent mění jen optional-prerequisite test guards,25unit případů a docs/
+semantic memory; src/workers/fixtures/workflow zůstávají byte-exact tested19b.
+AST srovnání ověřilo stejné25ORM test/helper bodies a9installed test bodies po
+normalizaci výhradně prerequisite wrapperu/prologu; coroutine fixture se liší jen
+checksum prerequisite guardem. Při dostupném ověřeném toolchain je actual cesta
+včetně původních assertions stejná. Required missing toolchain zůstává FAIL.
+
+Current-parent pure **43PASS/0SKIP v0.40s** =25nových prerequisite unit testů,
+15mandatory CI a3worker-selection checks. Full1576/10 skutečně běžel na19b,
+ne na tomto novém parent SHA. Další actual/build/full se neopakuje; source a
+available-case setup equivalence jsou doloženy samostatně. Main216 episode prefix
++všechny219původníKafka episode objekty jsou immutable union před novým capture.

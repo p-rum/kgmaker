@@ -125,6 +125,13 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
             blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
+            from .return_flow import return_consumer_bindings
+            blocks[source_id]["return_consumer_bindings"] = return_consumer_bindings(graph, site["id"])
+            blocks[source_id]["return_binding_status"] = {
+                "status": site.get("return_mapping_status", "UNKNOWN"),
+                "reason": site.get("return_mapping_reason", "LEGACY_RETURN_BINDINGS_UNAVAILABLE"),
+                "body": site.get("return_body_status", "UNKNOWN"),
+                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
             blocks[source_id]["argument_binding_status"] = {
                 "status": site.get("argument_mapping_status", "UNKNOWN"),
                 "reason": site.get("argument_mapping_reason", "LEGACY_ARGUMENT_BINDINGS_UNAVAILABLE"),
@@ -201,6 +208,11 @@ def markdown(report):
         source = block.get("source_file")
         location = f"{source}:{position.get('start_line', '?')}" if source else "synthetic control node"
         lines.append(f"- `{block['id']}`: {location}; original IDs: " + ", ".join("`" + i + "`" for i in block.get("original_ids", [])))
+    bindings = {p["id"]: p for block in report["cfg"]["blocks"] for p in block.get("return_consumer_bindings", [])}
+    if bindings:
+        lines.extend(["", "## Static return/consumer bindings (availability UNKNOWN)", ""])
+        for p in sorted(bindings.values(), key=lambda item: item["id"]):
+            lines.append("- `" + p["source"] + "` → `" + p["target"] + "`: " + p["transformation"])
     lines.extend(["", "## Coverage/limits", "", *["- " + x for x in report.get("limitations", [])]])
     if report.get("http"):
         lines.extend(["", "## HTTP request intent (runtime availability UNKNOWN)", ""])

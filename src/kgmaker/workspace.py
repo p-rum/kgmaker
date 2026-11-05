@@ -66,6 +66,16 @@ def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+
+def _qualified_node(repo: str, node):
+    """The exact public Node projection shared by snapshots and validation."""
+    metadata=node.metadata
+    if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
+    elif (metadata or {}).get('return_mapping_version')==1:metadata=_qualified_symbol(repo,metadata)
+    elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
+    return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
+
+
 def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False) -> dict:
     if redact_kafka_properties:
         from .kafka_bindings import project_captured_context
@@ -117,12 +127,14 @@ def validate_projected_context(root: Path, repo: str, public_context: dict) -> N
 def _qualified_symbol(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
-    for key in ('method', 'owner_method', 'call_site'):
+    for key in ('method', 'owner_method', 'call_site', 'declared_target', 'binding_id'):
         if isinstance(value.get(key), str):
             result[key] = qualified(repo, value[key])
     result['context_id'] = qualified(repo, value['context_id'])
     if isinstance(value.get('path'), str):
         result['path'] = source_key(repo, value['path'])
+    if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
+        result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
     return result
 
 
@@ -132,13 +144,22 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   source=qualified(repo, value['source']), target=qualified(repo, value['target']),
                   source_file=source_key(repo, value['source_file']) if value.get('source_file') else None,
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
-    if isinstance(value.get('call_site'), str):
-        result['call_site'] = qualified(repo, value['call_site'])
+    for key in ('call_site', 'producer_call_site', 'consumer_call_site', 'declared_target'):
+        if isinstance(value.get(key), str):
+            result[key] = qualified(repo, value[key])
+    if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
+        result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
     if str(value.get('extractor', '')).startswith('kafka-code-'):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])
         result['compiler_evidence_ids'] = [qualified(repo, item) for item in value.get('compiler_evidence_ids', [])]
+    if type(value.get('local_operation_version')) is int and value['local_operation_version'] == 1:
+        for key in ('method', 'compiler_symbol_id', 'cfg_block', 'target_binding', 'context_id'):
+            if isinstance(value.get(key), str):
+                result[key] = qualified(repo, value[key])
+        if isinstance(result.get('target_declaration'), dict):
+            result['target_declaration']['path'] = source_key(repo, result['target_declaration']['path'])
     return result
 
 
@@ -173,6 +194,9 @@ def _qualified_cfg(repo: str, value: dict) -> dict:
                                  for identity in block.get('call_site_ids', [])]
         item['original_ids'] = [qualified(repo, identity)
                                 for identity in block.get('original_ids', [])]
+        if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+            item['local_operation_evidence_ids'] = [qualified(repo, identity)
+                for identity in block.get('local_operation_evidence_ids', [])]
         if isinstance(block.get('source_file'), str):
             item['source_file'] = source_key(repo, block['source_file'])
         result['blocks'].append(item)
@@ -572,7 +596,7 @@ def source_path(packet: dict, key: str) -> Path:
 
 def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persist_cache: bool = False) -> tuple[dict, dict, dict, KnowledgeGraph, dict]:
     from . import feature
-    from .schema_replay import reconstruct
+    from .schema_replay import reconstruct, PARSER_VERSION as SCHEMA_PARSER_VERSION
     from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
     from .kafka_bindings import VERSION as kafka_binding_version
@@ -594,7 +618,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', 'postgres-ddl-1', 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
+                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -624,14 +648,24 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             local_schema = None
             if repo.get('flyway'):
                 configs = repo['flyway'] if isinstance(repo['flyway'], list) else [repo['flyway']]
+                from .flyway import configuration
+                from .schema_replay import persistence_pair
+                pairs = [persistence_pair(c['database_id'], c['stream_id']) for c in
+                         (configuration(root, cfg) for cfg in configs)]
+                if None in pairs or len(set(pairs)) != len(pairs):
+                    raise AnalysisError('Duplicate migration-stream ID or invalid persistence realm: ' + identity)
                 local_schema = [reconstruct(root, cfg) for cfg in configs]
-                if len({s['config']['stream_id'] for s in local_schema}) != len(local_schema):
-                    raise AnalysisError('Duplicate migration-stream ID: ' + identity)
                 for schema in local_schema:
                     local = feature.attach_schema(local, schema, root)
                     from .schema_replay import schema_mappings
                     _, schema['mapping_diagnostics'] = schema_mappings(root, schema, local)
                     schema.pop('checkpoints', None)  # execution/cache statistics are not baseline identity
+                # Explicit offline replay can join existing fresh compiler facts;
+                # this does not inspect, build, install or execute a repository.
+                from .framework import augment_framework_graph
+                for selected in list(local.contexts):
+                    if selected.get('language') == 'jvm' and selected.get('freshness') != 'STALE':
+                        local = augment_framework_graph(root, local, selected)
             if error:
                 diagnostics.append(identity + ': ' + error)
             pending_cache[key] = copy.deepcopy((local, local_schema)); parsed.append(identity)
@@ -646,9 +680,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         for path, item in inventory.items():
             sources[source_key(identity, path)] = {**item, 'repo_id': identity, 'path': path}
         exclusions += [{'repo_id': identity, **item} for item in excluded]
-        nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
-                          metadata=(_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else
-                                    _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"} else n.metadata)) for n in local.nodes]
+        nodes += [_qualified_node(identity,n) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),

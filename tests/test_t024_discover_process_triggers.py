@@ -244,9 +244,37 @@ import org.springframework.scheduling.annotation.Scheduled
         'service_ownership': {'schema_version': 1, 'services': [{'id': 'orders',
             'roots': [{'repo_id': 'backend', 'path': 'src'}], 'modules': [{'repo_id': 'backend', 'id': 'app'}],
             'external_systems': []}]}})
+    from kgmaker import inspection
+    captured = {}
+    original_request = inspection.request_worker
     for scope, source_set in [('production', 'main'), ('test', 'test')]:
-        result = inspect_jvm(root, home=HOME, repo_id='local', module='app', source_set=source_set, scope=scope,
-            kotlin_backend=backend, classpath=jars, build_context={'spring_component_packages': ['demo']})
+        def capture_response(*args, **kwargs):
+            response = original_request(*args, **kwargs)
+            captured[scope] = deepcopy(response)
+            return response
+        with patch('kgmaker.inspection.request_worker', side_effect=capture_response):
+            result = inspect_jvm(root, home=HOME, repo_id='local', module='app', source_set=source_set, scope=scope,
+                kotlin_backend=backend, classpath=jars, build_context={'spring_component_packages': ['demo']})
+        raw = captured[scope]
+        raw_http = next(symbol for symbol in raw['symbols'] if symbol.get('name') == 'http')
+        assert raw_http['scope'] == scope and raw_http['path'] == f'src/{source_set}/kotlin/demo/{"Production" if scope == "production" else "TestOnly"}.kt'
+        raw_bodies = [body for body in raw['bodies'] if body['method'] == raw_http['id']]
+        if backend == 'k1':
+            assert len(raw_bodies) == 1
+            body = raw_bodies[0]
+            assert body['context_id'] == result['context']['id'] == raw_http['context_id']
+            assert body['return_flow_version'] == 1 and body['return_body_kind'] == 'DECLARED'
+            returned = body['body']
+            assert returned['kind'] == 'return'
+            source_bytes = (root / raw_http['path']).read_bytes()
+            start = source_bytes.index(b'"static"')
+            for expression in (returned, returned['value']):
+                assert expression['path'] == raw_http['path']
+                assert expression['sha256'] == hashlib.sha256(source_bytes).hexdigest()
+                assert expression['range']['start'] == start and expression['range']['end'] == start + len(b'"static"')
+                assert expression['range']['start_line'] == expression['range']['end_line'] == 7
+        else:
+            assert not raw_bodies
         assert not any('.err.' in d.get('code', '') or d.get('reason', '').startswith('ERROR:') for d in result['diagnostics'])
     workspace = load_workspace(manifest); _, coverage, _, graph, _ = snapshot_workspace(manifest)
     saved = {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / '.kgmaker').rglob('*') if p.is_file()}
@@ -268,13 +296,11 @@ import org.springframework.scheduling.annotation.Scheduled
         return
     assert {n.attributes['trigger_kind'] for n in view.nodes} == {'HTTP', 'KAFKA', 'SCHEDULER'}
     assert len(view.nodes) == 3 and all('/src/main/' in p['source_file'] for p in view.provenance)
-    # K1 expression bodies contain a synthetic return block without a captured
-    # source locator. Candidate presence remains proved, body availability does
-    # not get promoted by guessing ownership of that synthetic block.
+    # W02 K1 expression returns now carry the compiler's exact expression locator.
+    # Their SOURCE CFG is available as syntax evidence, never runtime execution.
     assert {n.attributes['trigger_kind']: n.attributes['body_status'] for n in view.nodes} == {
-        'HTTP': 'UNAVAILABLE', 'KAFKA': 'AVAILABLE', 'SCHEDULER': 'AVAILABLE'}
-    assert all(n.attributes['body_evidence_kinds'] == ([] if n.attributes['trigger_kind'] == 'HTTP'
-        else ['SYNTAX_CANDIDATE']) for n in view.nodes)
+        'HTTP': 'AVAILABLE', 'KAFKA': 'AVAILABLE', 'SCHEDULER': 'AVAILABLE'}
+    assert all(n.attributes['body_evidence_kinds'] == ['SYNTAX_CANDIDATE'] for n in view.nodes)
     assert all(n.evidence_kinds == ('FRAMEWORK_DERIVED',) for n in view.nodes)
     assert not view.edges and view.coverage['status'] == 'PARTIAL'
     assert (workspace, graph.to_dict(), coverage) == before
@@ -285,6 +311,20 @@ import org.springframework.scheduling.annotation.Scheduled
     handler = http.attributes['entry_symbol_id']; context_id = http.attributes['context_ids'][0]
     original_symbol = next(s for s in graph.symbols if s['id'] == handler)
     assert original_symbol.get('owner') and original_symbol.get('descriptor') and original_symbol.get('sha256')
+    cfg = next(c for c in graph.cfgs if c['method'] == handler and c['context_id'] == context_id)
+    assert cfg['representation'] == 'SOURCE' and cfg['status'] == 'COMPLETE_WITHIN_SUPPORTED_SYNTAX'
+    assert not cfg['diagnostics'] and set(http.attributes['body_evidence_refs']) == set(cfg['evidence_ids'])
+    returned = next(block for block in cfg['blocks'] if block['kind'] == 'return')
+    source_bytes = (root / 'src/main/kotlin/demo/Production.kt').read_bytes()
+    assert returned['source_file'] == '@backend/src/main/kotlin/demo/Production.kt'
+    assert returned['sha256'] == original_symbol['sha256'] == hashlib.sha256(source_bytes).hexdigest()
+    assert source_bytes[returned['source_range']['start']:returned['source_range']['end']] == b'"static"'
+    for ref in cfg['evidence_ids']:
+        proof = next(item for item in graph.evidence if item['id'] == ref)
+        assert proof['source'] == proof['target'] == handler and proof['relation'] == 'control_flow'
+        assert proof['kind'] == 'SYNTAX_CANDIDATE' and proof['representation'] == 'SOURCE'
+        assert proof['context_ids'] == [context_id] and proof['source_file'] == returned['source_file']
+        assert proof['sha256'] == returned['sha256']
     for mutation in ['symbol_hash', 'symbol_scope', 'symbol_name', 'symbol_descriptor', 'symbol_owner',
                      'symbol_range', 'edge_file', 'edge_line', 'edge_evidence_tuple', 'edge_duplicate_proof', 'proof_line']:
         altered = deepcopy(graph)

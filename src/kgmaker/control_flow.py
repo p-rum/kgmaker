@@ -42,6 +42,8 @@ class Builder:
                                 "source_file": ir.get("path"), "source_range": ir.get("range"),
                                 "sha256": ir.get("sha256"), "original_ids": [original],
                                 "call_site_ids": [ir["call_site"]] if ir.get("call_site") else ir.get("calls", [])}
+        if isinstance(ir.get("_verified_local_operation"), str):
+            self.blocks[identity]["_verified_local_operation"] = ir["_verified_local_operation"]
         if ir.get("async_boundary") in {"SUSPEND", "LAUNCH", "ASYNC"}:
             self.blocks[identity].update(async_boundary=ir["async_boundary"], scheduling="UNKNOWN")
         return identity
@@ -184,8 +186,8 @@ class Builder:
             return self.emit(left, test, env, depth + 1)
         if kind in {"and", "or"}:
             return self.condition(ir, destination, destination, env, depth + 1)
-        if kind == "assign":
-            node = self.computation({**ir, "calls": []}, destination, env, label="assign")
+        if kind in {"assign", "destructure"}:
+            node = self.computation({**ir, "calls": []}, destination, env, label=kind)
             return self.emit(ir.get("value", {"kind": "empty"}), node, env, depth + 1)
         if kind in {"await", "suspend", "join"}:
             node = self.node("async_boundary", kind, ir, env)

@@ -524,6 +524,283 @@ def project_http_providers(workspace, graph, *, scope='production', selected_con
     return document
 
 
+CONSUMER_RULES_VERSION = 'http-consumers-1'
+_CLIENT_STATES = {'UNKNOWN', 'DEFINITION_ONLY', 'UNSUBSCRIBED_WITHIN_SCOPE',
+                  'STATIC_TRIGGER', 'CONDITIONAL_STATIC_TRIGGER', 'DECLARATION_ONLY',
+                  'FEIGN_INVOCATION_INTENT'}
+
+
+def project_http_consumers(workspace, graph, *, scope='production', selected_contexts=None, source_coverage=None):
+    """Project existing typed client facts; no client or resolver is executed.
+
+    A terminal proves static invocation intent, never observed network traffic.
+    Feign declarations and individual consuming call sites retain separate IDs.
+    """
+    from .http_execution import VERSION, redact_uri_text
+    from .workspace import qualified
+    from .views import ServiceInventoryError, ContextSelectionError, _summarize_view_evidence, _canonical_polarity
+
+    if not isinstance(workspace, Mapping) or not isinstance(graph, KnowledgeGraph):
+        _fail('INVALID_HTTP_SNAPSHOT', 'Expected a loaded workspace and provider graph')
+    before = deepcopy((workspace, graph.to_dict(), source_coverage))
+    try:
+        inventory = project_service_inventory(workspace, graph, scope=scope,
+            selected_contexts=selected_contexts, source_coverage=source_coverage)
+    except (ServiceInventoryError, ContextSelectionError) as error:
+        _fail('INVALID_HTTP_SNAPSHOT', str(error))
+    nodes = [node for node in inventory.nodes if node.kind == 'service']
+    services = {node.id for node in nodes}
+    contexts = {c['id']: c for c in graph.contexts if isinstance(c.get('id'), str)}
+    by_id = {n.id: n for n in graph.nodes}
+    symbols = {s['id']: s for s in graph.symbols if isinstance(s.get('id'), str)}
+    sites = {s['id']: s for s in graph.call_sites if isinstance(s.get('id'), str)}
+    proofs = {e['id']: e for e in graph.evidence if isinstance(e.get('id'), str)}
+    selected = inventory.context_selection.get('services', {})
+    eligible = {row.get('context_id') for service in selected.values()
+                for row in service.get('contexts', []) if row.get('status') == 'CURRENT'}
+    requested = set((selected_contexts or {}).values())
+    provenance = {p['id']: deepcopy(p) for p in inventory.provenance}
+    diagnostics = [dict(d) for d in inventory.diagnostics]
+    edges, found = [], 0
+    request_edges = {}
+    for edge in graph.edges:
+        if edge.kind in {'defines_http_request','may_execute_http_request'}:
+            request_edges.setdefault((edge.target,edge.kind,edge.source),[]).append(edge)
+
+    def fail(message):
+        _fail('INVALID_HTTP_CONSUMER_BINDING', message)
+
+    def local(identity, repo):
+        try:
+            owner, raw = split_id(identity)
+        except (AnalysisError, AttributeError, TypeError, ValueError):
+            fail('Identity must be canonical and repository-qualified')
+        if owner != repo:
+            fail('Identity belongs to a different repository')
+        return raw
+
+    def text(value):
+        return isinstance(value, str) and bool(value) and len(value) <= 8192
+
+    def strings(value):
+        return (isinstance(value, list) and len(value) <= 1000
+                and all(text(item) for item in value) and len(set(value)) == len(value))
+
+    def position(value):
+        return (isinstance(value, Mapping)
+                and set(value).issubset({'start','end','start_line','end_line','start_column','end_column'})
+                and all(type(value.get(k)) is int for k in ('start','end','start_line','end_line'))
+                and 0 <= value['start'] <= value['end']
+                and 1 <= value['start_line'] <= value['end_line']
+                and all(k not in value or type(value[k]) is int and value[k] >= 1 for k in ('start_column','end_column')))
+
+    def declaration(identity, context):
+        node = by_id.get(identity)
+        if not _compiler_source_binding(symbols.get(identity), node, context, graph) or node.scope != scope:
+            fail('Caller declaration does not match the selected canonical source tuple')
+        return node
+
+    def site(identity, context, expected_caller=None):
+        value = sites.get(identity)
+        if not isinstance(value, Mapping) or not text(value.get('caller')):
+            fail('Missing original compiler call site')
+        caller = declaration(value['caller'], context)
+        sha = graph.files.get(caller.path)
+        span, parent = value.get('range'), symbols[caller.id].get('range')
+        if (value.get('context_id') != context['id'] or value.get('path') != caller.path
+                or value.get('sha256') != sha or not position(span) or not position(parent)
+                or not parent['start'] <= span['start'] <= span['end'] <= parent['end']
+                or not parent['start_line'] <= span['start_line'] <= span['end_line'] <= parent['end_line']
+                or value.get('scope', scope) != scope
+                or expected_caller is not None and caller.id != expected_caller):
+            fail('Call site source, range, caller or selected context is inconsistent')
+        local_caller = local(caller.id, context['repo_id'])
+        expected = qualified(context['repo_id'], 'call:' + local_caller + ':' + sha
+                             + ':' + str(span['start']) + ':' + str(span['end']))
+        if value.get('id') != expected:
+            fail('Call site identity is not its canonical source occurrence')
+        return value, caller
+
+    def binding(request, source, locator, call_id, relation, context):
+        matches = request_edges.get((request.id,relation,source),[])
+        if len(matches) != 1:
+            fail('Missing or ambiguous original request evidence edge')
+        edge = matches[0]
+        path, span, sha = locator['path'], locator['range'], locator['sha256']
+        if (edge.evidence_kind != 'FRAMEWORK_DERIVED' or tuple(edge.context_ids) != (context['id'],)
+                or edge.source_file != path or type(edge.source_line) is not int
+                or edge.source_line != span['start_line'] or not edge.evidence_ids):
+            fail('Request edge does not match its canonical source tuple')
+        for identity in edge.evidence_ids:
+            proof = proofs.get(identity)
+            if (not isinstance(proof, Mapping) or proof.get('kind') != 'FRAMEWORK_DERIVED'
+                    or proof.get('source') != source or proof.get('target') != request.id
+                    or proof.get('relation') != relation or proof.get('call_site') != call_id
+                    or proof.get('context_ids') != [context['id']] or proof.get('rule') != VERSION
+                    or proof.get('source_file') != path or proof.get('source_range') != span
+                    or proof.get('sha256') != sha or proof.get('runtime_execution') != 'NOT_OBSERVED'
+                    or proof.get('runtime_availability') != 'UNKNOWN'):
+                fail('Original request proof tuple is inconsistent')
+        return edge
+
+    for request in graph.nodes:
+        if request.kind != 'http_request_definition' or request.scope != scope:
+            continue
+        md = request.metadata
+        if not isinstance(md, Mapping):
+            fail('Typed request metadata must be an object')
+        cid = md.get('context_id')
+        if not isinstance(cid, str):
+            fail('Typed request needs a primitive context identity')
+        if cid not in eligible and cid not in requested:
+            diagnostics.append({'code':'HTTP_CONSUMER_CONTEXT_NOT_SELECTED','source_id':request.id,'context_id':cid})
+            continue
+        context = contexts.get(cid)
+        if not context or context.get('scope') != scope or context.get('language') != 'jvm':
+            fail('Request context is not the selected JVM scope')
+        rules = context.get('framework_rule_versions')
+        if not isinstance(rules, Mapping):
+            fail('Malformed framework rule snapshot')
+        if md.get('rule_version') != VERSION or rules.get('http') != VERSION:
+            diagnostics.append({'code':'HTTP_CONSUMER_RULE_UNKNOWN','source_id':request.id})
+            continue
+        family, state = md.get('family'), md.get('execution_status')
+        if (not isinstance(family, str) or family not in {'WEBCLIENT','RESTCLIENT','FEIGN'}
+                or not isinstance(state, str) or state not in _CLIENT_STATES
+                or type(md.get('publisher')) is not bool or type(md.get('conditional')) is not bool
+                or not strings(md.get('chain_call_site_ids')) or not strings(md.get('terminal_call_site_ids'))
+                or not strings(md.get('unknown_reasons'))
+                or not all(re.fullmatch(r'[A-Z0-9_]{1,128}', x) for x in md['unknown_reasons'])
+                or md.get('runtime_execution') != 'NOT_OBSERVED' or md.get('runtime_availability') != 'UNKNOWN'
+                or md.get('method') is not None and (not isinstance(md['method'], str) or md['method'] not in METHODS)
+                or not text(md.get('uri_status')) or not text(md.get('caller'))
+                or md.get('repo_id') != context.get('repo_id') or md.get('module') != context.get('module')
+                or md.get('source_set') != context.get('source_set')):
+            fail('Malformed typed request fields')
+        repo = context['repo_id']
+        caller = declaration(md['caller'], context)
+        local(request.id, repo)
+        if (request.path != caller.path or request.scope != caller.scope
+                or type(request.line) is not int):
+            fail('Request node does not match the canonical declaring source')
+        origin = md.get('origin_call_site')
+        if family == 'FEIGN':
+            if origin is not None or md.get('declaration') != caller.id or not text(md.get('client_type')):
+                fail('Feign declaration metadata is inconsistent')
+            declaration(md['client_type'], context)
+            expected_id = qualified(repo, 'http-request:' + digest({'context':local(cid,repo),
+                'client':local(md['client_type'],repo), 'method':local(caller.id,repo)}))
+            locator = symbols[caller.id]
+        else:
+            if not text(origin) or origin not in md['chain_call_site_ids']:
+                fail('Request origin must belong to its compiler call chain')
+            locator, _ = site(origin, context, caller.id)
+            expected_id = qualified(repo, 'http-request:' + digest({'context':local(cid,repo), ('publisher' if md['publisher'] else 'origin'):local(origin,repo)}))
+        if request.id != expected_id or request.line != locator['range']['start_line']:
+            fail('Request identity or source line does not bind its original declaration')
+        defining = binding(request, caller.id, locator, origin, 'defines_http_request', context)
+        for identity in md['chain_call_site_ids']:
+            site(identity, context, caller.id)
+        terminals = []
+        for identity in md['terminal_call_site_ids']:
+            terminal, consumer = site(identity, context, None if family == 'FEIGN' else caller.id)
+            if family == 'FEIGN' and terminal.get('declared_target') != caller.id:
+                fail('Feign terminal does not invoke the declared method')
+            terminals.append((identity, consumer, binding(request, identity, terminal, identity,
+                'may_execute_http_request', context)))
+        if bool(terminals) != (state in {'STATIC_TRIGGER','CONDITIONAL_STATIC_TRIGGER','FEIGN_INVOCATION_INTENT'}):
+            fail('Execution state contradicts original terminal facts')
+        if family == 'FEIGN' and (state not in {'DECLARATION_ONLY','FEIGN_INVOCATION_INTENT'} or md['chain_call_site_ids']):
+            fail('Feign declaration cannot be a WebClient request chain')
+        if family != 'FEIGN' and state in {'DECLARATION_ONLY','FEIGN_INVOCATION_INTENT'}:
+            fail('Non-Feign request cannot claim Feign invocation')
+        route = md.get('path')
+        if route is not None and (not text(route) or not route.startswith('/') or redact_uri_text(route) != route
+                                  or any(x in route for x in ['?', '#', '\0', '\r', '\n']) or route.startswith('//')):
+            fail('Route must be a safe captured path or unknown')
+        if request.name != str(md.get('method') or 'UNKNOWN') + ' ' + (route or '(URI unknown)'):
+            fail('Request label disagrees with its captured method and route')
+        uri_provenance = md.get('uri_provenance')
+        if not isinstance(uri_provenance, list) or len(uri_provenance) > 1000:
+            fail('URI provenance must be bounded captured records')
+        for item in uri_provenance:
+            if (not isinstance(item, Mapping) or not text(item.get('source_file'))
+                    or not isinstance(item.get('sha256'), str) or len(item['sha256']) != 64
+                    or any(c not in '0123456789abcdef' for c in item['sha256'])
+                    or context.get('source_files', {}).get(item['source_file']) != item['sha256']
+                    or graph.files.get(item['source_file']) != item['sha256']):
+                fail('URI provenance is outside its captured source inputs')
+            literal = (set(item) == {'source_file','sha256','source_range','kind'}
+                       and isinstance(item['kind'], str) and item['kind'] in {'COMPILER_LITERAL','COMPILER_CONSTANT'} and position(item['source_range']))
+            configured = (set(item) == {'source_file','sha256','status','profiles','key'}
+                          and item['status'] == 'MATCHED' and isinstance(item['key'], str)
+                          and re.fullmatch(r'[A-Za-z0-9_.-]{1,128}',item['key'])
+                          and isinstance(item['profiles'], list) and len(item['profiles']) <= 128
+                          and all(isinstance(v,str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,128}',v) for v in item['profiles']))
+            if not literal and not configured:
+                fail('Unsupported or private URI provenance payload')
+            if configured:
+                config = context.get('http_config_provenance')
+                records = config.get(item['key']) if isinstance(config, Mapping) else None
+                if (not isinstance(records, list) or len(records) != 1 or not isinstance(records[0], Mapping)
+                        or not isinstance(records[0].get('source_file'), str)):
+                    fail('Configured URI provenance has no unique canonical context record')
+                canonical = {**records[0], 'source_file': source_key(repo, records[0]['source_file'])}
+                if dict(item) != canonical:
+                    fail('Configured URI provenance does not match its captured context tuple')
+        for terminal_id, consumer, terminal_edge in terminals or [(None,caller,None)]:
+            owner = resolve_service_ownership({'id':consumer.id,'path':consumer.path,'repo_id':repo,
+                'module':context.get('module'),'context_id':cid},workspace.get('service_ownership'),context_id=cid)
+            service = owner.get('owner_id') if owner.get('status') == 'RESOLVED' else None
+            rows = selected.get(service, {}).get('contexts', [])
+            if (service is None or 'service:'+service not in services
+                    or not any(row.get('context_id') == cid and row.get('status') == 'CURRENT' for row in rows)):
+                diagnostics.append({'code':'HTTP_CONSUMER_OWNERSHIP_UNKNOWN','source_id':request.id,'caller':consumer.id})
+                continue
+            identity = 'interface:http-consumer:' + digest([service, request.id, terminal_id])
+            refs = tuple(sorted(set(defining.evidence_ids) | set(terminal_edge.evidence_ids if terminal_edge else ())))
+            for ref in refs:
+                proof = proofs[ref]
+                provenance[ref] = {'id':ref,'evidence_kind':'FRAMEWORK_DERIVED','freshness':'CURRENT',
+                    'polarity':_canonical_polarity(proof.get('polarity')),'source_refs':[ref],
+                    'attributes':{'context_ids':[cid],'source_path':proof['source_file'],
+                                  'source_sha256':proof['sha256'],'original_evidence_id':ref}}
+            summary = _summarize_view_evidence(refs, provenance)
+            reasons = list(md['unknown_reasons'])
+            if route is None or md['uri_status'] != 'DECLARED_LITERAL': reasons.append('HTTP_CONSUMER_URI_UNKNOWN')
+            resolution = 'RESOLVED' if not reasons and route is not None and md.get('method') else 'UNRESOLVED'
+            attrs = {'direction':'CONSUMER','family':family,'execution_status':state,
+                'caller':consumer.id,'origin_call_site':origin,'terminal_call_site':terminal_id,
+                'request_definition_id':request.id,'declaration_id':md.get('declaration') if family == 'FEIGN' else None,
+                'http_method':md.get('method'),'route_expression':route,'uri_status':md['uri_status'],
+                'uri_provenance':deepcopy(uri_provenance),'service_binding':None,
+                'request_contract_ref':None,'response_contract_ref':None,
+                'runtime_execution':'NOT_OBSERVED','runtime_availability':'UNKNOWN',
+                'deployment_status':'UNKNOWN','unresolved_reasons':sorted(set(reasons)),'context_id':cid,
+                'source_path':consumer.path}
+            nodes.append(ViewNode(identity,'http_interface',(md.get('method') or 'HTTP')+' '+(route or 'UNKNOWN'),
+                original_ids=tuple(sorted({request.id,consumer.id,caller.id,*md['chain_call_site_ids'],
+                    *([terminal_id] if terminal_id else [])})),owner_id='service:'+service,
+                evidence_refs=refs,attributes=attrs,resolution_status=resolution,**summary))
+            edges.append(ViewEdge('edge:'+identity,'service:'+service,identity,'uses_http_interface',
+                evidence_refs=refs,attributes={'scope':scope,'context_ids':[cid]},resolution_status=resolution,**summary))
+            found += 1
+    if not found:
+        diagnostics.append({'code':'HTTP_CONSUMER_FACTS_UNAVAILABLE','message':'No selected typed client occurrences; legacy names are not execution proof.'})
+    result = aggregate_view_edges(edges,tuple(provenance.values()),scope=scope,diagnostics=diagnostics)
+    document = ViewDocument('view:http-consumers:'+workspace['workspace_id']+':'+scope,'interfaces',
+        digest([inventory.baseline_fingerprint,graph.files,CONSUMER_RULES_VERSION]),CONSUMER_RULES_VERSION,
+        scope,inventory.context_selection,nodes=tuple(nodes),edges=result['edges'],provenance=result['provenance'],
+        diagnostics=result['diagnostics'],coverage={'status':'PARTIAL' if found else 'UNKNOWN','counts':{'found':found,
+            'resolved':sum(n.kind=='http_interface' and n.resolution_status=='RESOLVED' for n in nodes),
+            'unresolved':sum(n.kind=='http_interface' and n.resolution_status!='RESOLVED' for n in nodes),'excluded':0}},
+        limits=('Static definitions and invocation intent do not prove network execution or runtime/data availability.',))
+    ViewDocument.from_dict(document.to_dict())
+    if before != (workspace,graph.to_dict(),source_coverage):
+        _fail('HTTP_INPUT_MUTATED','Consumer projection changed a caller snapshot')
+    return document
+
+
 def project_kafka_interfaces(workspace, graph, *, scope='production', selected_contexts=None, source_coverage=None):
     """Read-only catalogue of upstream declarations, never transport execution.
 
@@ -537,7 +814,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     from .kafka_bindings import VERSION as BINDING_VERSION, build_links
     from .store import load_graph
     from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
-    from .workspace import (qualified, _qualified_kafka_metadata, _qualified_evidence,
+    from .workspace import (qualified, _qualified_node, _qualified_kafka_metadata, _qualified_evidence,
                             _qualified_symbol, _qualified_call_site)
 
     def fail(message):
@@ -732,8 +1009,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         authority, context = matches[0], selected[0]
         if not validate_code_fact(roots[repo],local,context,authority):
             fail('Canonical compiler code proof is not valid')
-        expected = replace(authority,id=qualified(repo,authority.id),path=source_key(repo,authority.path),
-                           metadata=_qualified_kafka_metadata(repo,authority.metadata))
+        expected = _qualified_node(repo,authority)
         if expected != fact or graph.files.get(fact.path)!=local.files.get(authority.path):
             fail('Public code fact differs from canonical captured authority')
         # Public Nodes are independent mirrors too: validating symbol/site records
@@ -743,7 +1019,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
             original=local_nodes.get(identity)
             if original is None:
                 fail('Original compiler Node is missing from saved authority')
-            expected_node=replace(original,id=qualified(repo,original.id),path=source_key(repo,original.path))
+            expected_node=_qualified_node(repo,original)
             if by_id.get(expected_node.id)!=expected_node:
                 fail('Original public compiler Node is missing or changed')
         check_original_node(authority.metadata['origin_id'])
