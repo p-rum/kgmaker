@@ -92,7 +92,7 @@ source review a required full stále PENDING; žádný full nebyl zařazen.
 
 ## Aktuální merge kandidát a společný descendant důkaz
 
-Base main `4b0b07ce6e0ddd9d9f71c04f05ca4cbcb00ab49f`; původní T030 zdroj
+Base main `2a387066ced5e4bcc8ab3d7c2bbdfbdfff2bb1ef`; původní T030 zdroj
 `6ae8f52e3d7f211933e27ce7560762ad02484b33` zůstává beze změny. Jediný dokončený
 strict full proběhl na integračním descendant `2df55ff8d15d790808f6a81072144eeb408a05b8`:
 **2587PASS/10povolených optionalSKIP,2042.93sJUnit** (runner2048.01s),2597/2597IDs,
@@ -113,7 +113,7 @@ integrační setup failure zůstávají historické receipts; nejsou přepsány 
 vydávány za novýPASS. GHCI neověřeno/optional. Technická/statická evidence se
 nepovýšila na runtime či business approval; T031/T032/T033/T034 jsou jiné dodávky.
 
-Current Common-main4b source-union closure additionally includes all1966Common
-parent cases: union with originalT0301990 gives2013required identities, all classified
-2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.

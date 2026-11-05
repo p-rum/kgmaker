@@ -737,6 +737,19 @@ Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou loká
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
+binding validation, T008 ownership/context and T009 evidence. Explicit workspace
+checkouts/private captures are required. Groups/realms and original listener/send
+IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
+Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
+annotations UNKNOWN, delivery NOT_OBSERVED. Kafka rev2 and Common dependencies
+merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
+10exactoptionalSKIP2042.93s,4897hashes/five member sets unchanged. All2071 parent
+IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
+actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
+review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
@@ -832,11 +845,25 @@ and five unchanged artifact member sets. Every Common-parent ID is included:
 T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
 See note84 for preserved setup failure/correction and final review limitations.
 
+
+## T013 — explicit interface contract attachments (verified bounded scope)
+
+Shared bounded declaration capture and immutable attachment preserve original IDs,
+technical status, evidence buckets, role-separated operation/schema/revision
+references and stale generated-client origin. Type IDs remain UNKNOWN without
+upstream payload-reference proof; DTO names never prove compatibility. All45 own
+tests PASS in ONEcombined2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116parentIDs=2106PASS10SKIP,4897hashes/five member sets unchanged. This is not a
+standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
+revision/type-reference cases passed. T012/Common dependencies merged, no native
+extension, network/schema fetch or generator execution. Final exactpairreview and
+merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
+
 ## T030 — process-label packet (final review candidate)
 
 Pure Python API preserves bounded immutable process identity/evidence/context,
 structured conflict and privacy/budget contracts; no model/compiler/file I/O or
-apply. Source unchanged from reviewed070/6ae; current base main4b0b07.
+apply. Source unchanged from reviewed070/6ae; current base main2a38706.
 ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
 4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
 T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
@@ -845,7 +872,7 @@ See note90 and validation/t030-descendant-proof.json. No standalone parent full 
 new native build. Exact final base/head review and publication remain separate;
 GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
 
-Current Common-main4b source-union closure additionally includes all1966Common
-parent cases: union with originalT0301990 gives2013required identities, all classified
-2003PASS10sameallowedSKIP in actual2df. This is an exact source/ID-union proof,
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scope": "T030 parent support by one strict descendant run; NOT a standalone parent full",
-  "base": "4b0b07ce6e0ddd9d9f71c04f05ca4cbcb00ab49f",
+  "base": "2a387066ced5e4bcc8ab3d7c2bbdfbdfff2bb1ef",
   "reviewed_source_head": "6ae8f52e3d7f211933e27ce7560762ad02484b33",
   "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
   "actual_full": {
@@ -131,15 +131,15 @@
   },
   "GH_CI": "optional/not asserted PASS",
   "remaining": "independent exact final base/head review and PR readiness/publication/merge by coordinator; T031+ separate successors",
-  "base_refresh": "Common PR72 merged; source composition already present in actual2df descendant; no source/test/native rerun",
+  "base_refresh": "Common PR72 +T012PR73 +T013PR74 merged; all current-main source already in actual2df; no source/test/native rerun",
   "current_base_required_case_union": {
-    "case_count": 2013,
+    "case_count": 2163,
     "result_counts": {
-      "PASS": 2003,
+      "PASS": 2153,
       "SKIP": 10
     },
-    "basis": "union of exact validated T0301990 and current Common1966 parent ledgers; not a newly executed or recollected parent run",
-    "sorted_ids_sha256": "48611cc55cfb2adaf3d6dd4ca50110d773db0231b9ac5b7deceadf5de9cfddbc",
+    "basis": "current-main T0132116 parent IDs +47T030 IDs; originalT0301990 also contained; source/ID union, not new test execution or collection",
+    "sorted_ids_sha256": "b2f7ea88c6f11daa2172f0ba032f494914f2ffa831d507de97e8702a24538b9e",
     "all_ids_present_in_actual_descendant": true
   }
 }
