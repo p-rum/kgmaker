@@ -863,3 +863,15 @@ all original members without approval/availability borrowing. Missing triggers
 remain inactive historical within the partial current selection. See
 [Python contract and limitations](docs/process-catalog.md); source review/full
 validation remain pending. No discovery, archive reconstruction, store write or CLI.
+
+
+### T014 static remote topology
+
+`kgmaker.remote_interfaces.project_remote_interfaces(workspace, graph, interfaces,
+captured=captured, scope="production")` projects the explicit W07 capture handoff
+into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
+HTTP/Kafka declaration edges are not JVM calls or observed execution. See
+[contract and limits](docs/remote-interfaces.md). Source/test bytes are exact accepted
+2df55; current509 base plus24 own cases derives2425 cases (2415 PASS/10 allowed
+SKIP on that accepted descendant). Final exact-pair review remains pending; no new
+full, CLI or remote execution is claimed.

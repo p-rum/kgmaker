@@ -872,3 +872,17 @@ All37owncases XMLPASS in ONEactual2df55 full2587PASS10allowedSKIP; wholemodule/
 testfile+5processdependencies exactactual. Original2139parent2129PASS10SKIP;
 currentmain2364+37source/IDunion2401=2391PASS10sameSKIP. No new run/collection.
 See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
+
+
+## T014 — current-parent descendant-result transfer
+
+- AC01–03: public hand-labelled HTTP/Kafka mapping, same URL/no mapping, wrong
+  release/hash/pointer, ambiguous/incomplete candidates and original refs.
+- AC04–05: input equality, changed capture/selection/graph/interface, no-I/O,
+  credential IDs, hard bounds, source-proof polarity and UNKNOWN capture freshness.
+- AC06: Root SOURCE_APPROVE09d plus accepted2df full2587PASS10allowedSKIP; owned
+  source/tests exact, all24own cases XMLPASS. Current509+24own union2425 maps to
+  2415PASS10sameSKIP on that accepted descendant; no new run. Exact-pair independent
+  review/Root merge remain pending. See note93 and validation/t014-descendant-proof.json.
+
+Hand-labelled protocol positives are not compiler/native acceptance proof.

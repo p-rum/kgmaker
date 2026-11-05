@@ -954,3 +954,16 @@ combined2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Origina
 test/collection/build/fullrepeat. Main242episodeprefix/alloldcaptures preserved.
 Finalexactpairreview/Rootmerge pending; GHCIoptional/unverified. See note96 and
 validation/t033-descendant-proof.json. Runtime/data availability remain UNKNOWN.
+
+
+## T014 — remote topology current-parent review candidate
+
+Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
+unknown target and capture-time uncertainty. No resolver duplication, source I/O,
+JVM/process edges or runtime/payload promotion. Public pure validation is recorded
+in note93. Current509 retains merged Common/T012/T013/W07/process source. Owned
+module/test bytes and all present runtime/test/worker/fixture files match accepted
+2df55, except pending T019 CLI dispatch is correctly absent. Accepted descendant
+full2587PASS10allowedSKIP covers all2425 current-parent IDs (2415PASS10SKIP);24own
+PASS. No new actual/full/build. Final exact-pair review/merge remain pending;
+see docs/validation/t014-descendant-proof.json.
