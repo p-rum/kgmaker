@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 from itertools import islice, product
 from pathlib import PurePosixPath
 import re
@@ -15,7 +16,7 @@ from .architecture_model import ViewDocument, ViewNode, ViewEdge, aggregate_view
 from .views import project_service_inventory
 from .workspace import resolve_service_ownership, split_id, source_key
 
-RULES_VERSION = 'http-providers-1'
+RULES_VERSION = 'http-providers-2-ambiguous-variants'
 METHODS = {'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'}
 SOURCE_PROVIDERS = {'spring-source', 'ktor-source', 'openapi-json', 'openapi-yaml'}
 # Shape validation only: no class lookup, ID parsing or signature rewriting.
@@ -264,6 +265,47 @@ def _compiler_registrations(handler, endpoint, symbols, graph, context, by_id):
                'unresolved_reasons': sorted(set(reasons))}, class_symbol
 
 
+def _coalesce_provider_variants(nodes, edges, diagnostics):
+    """Keep every candidate when normalized registration identities coincide."""
+    grouped = {}
+    for node in nodes:
+        grouped.setdefault(node.id, []).append(node)
+    result, ambiguous = [], set()
+    for identity, candidates in grouped.items():
+        if len(candidates) == 1:
+            result.append(candidates[0])
+            continue
+        ordered = sorted(candidates, key=lambda node: digest(node.to_dict()))
+        first = ordered[0]
+        if first.kind != 'http_interface' or any(
+                node.kind != first.kind or node.owner_id != first.owner_id for node in ordered):
+            _fail('HTTP_VARIANT_REALM_COLLISION', 'Registration identity crosses object kinds or service owners')
+        attrs = deepcopy(dict(first.attributes))
+        for key in set().union(*(node.attributes.keys() for node in ordered)):
+            values = [node.attributes.get(key) for node in ordered]
+            if key in {'context_ids', 'handler_ids'}:
+                attrs[key] = sorted({item for value in values for item in value})
+            elif key != 'unresolved_reasons' and any(value != values[0] for value in values[1:]):
+                attrs[key] = None
+        attrs['original_routes'] = sorted({node.attributes['original_route'] for node in ordered
+                                           if node.attributes['original_route'] is not None})
+        attrs['registration_candidates'] = [node.to_dict() for node in ordered]
+        attrs['unresolved_reasons'] = sorted({'HTTP_NORMALIZED_ROUTE_AMBIGUOUS',
+            *(reason for node in ordered for reason in node.attributes['unresolved_reasons'])})
+        refs = tuple(sorted({ref for node in ordered for ref in node.evidence_refs}))
+        freshness = ('STALE' if any(node.freshness == 'STALE' for node in ordered) else
+                     'CURRENT' if all(node.freshness == 'CURRENT' for node in ordered) else 'UNKNOWN')
+        result.append(replace(first, attributes=attrs, resolution_status='AMBIGUOUS', freshness=freshness,
+            original_ids=tuple(sorted({ref for node in ordered for ref in node.original_ids})),
+            evidence_refs=refs, evidence_kinds=tuple(sorted({kind for node in ordered for kind in node.evidence_kinds})),
+            supporting_refs=(), contradicting_refs=(), unknown_refs=refs))
+        ambiguous.add(identity)
+        diagnostics.append({'code': 'HTTP_NORMALIZED_ROUTE_AMBIGUOUS', 'interface_id': identity,
+                            'original_routes': attrs['original_routes'],
+                            'message': 'Distinct captured registrations share this normalized variant; no candidate was selected.'})
+    return result, [replace(edge, resolution_status='AMBIGUOUS') if edge.target in ambiguous else edge for edge in edges]
+
+
 def project_http_providers(workspace, graph, *, scope='production', selected_contexts=None, source_coverage=None):
     """Project provider registrations; contracts never imply implementation/runtime.
 
@@ -507,16 +549,17 @@ def project_http_providers(workspace, graph, *, scope='production', selected_con
             'source_id': edge.source, 'target_id': edge.target,
             'context_ids': list(edge.context_ids), 'original_evidence_ids': list(edge.evidence_ids),
             'message': 'Runtime-to-interface lifecycle/variant binding is not supported; imported edge is not an availability claim.'})
+    nodes, edges = _coalesce_provider_variants(nodes, edges, diagnostics)
     result = aggregate_view_edges(edges, tuple(provenance.values()), scope=scope, diagnostics=diagnostics)
     document = ViewDocument('view:http-providers:' + workspace['workspace_id'] + ':' + scope,
         'interfaces', digest([inventory.baseline_fingerprint, graph.files, RULES_VERSION]), RULES_VERSION,
         scope, inventory.context_selection, nodes=tuple(nodes), edges=result['edges'],
         diagnostics=result['diagnostics'], coverage={'status': 'PARTIAL' if found else 'UNKNOWN',
-            'counts': {'found': found,
+            'counts': {'found': sum(node.kind == 'http_interface' for node in nodes),
                        'resolved': sum(node.kind == 'http_interface' and node.resolution_status == 'RESOLVED' for node in nodes),
                        'unresolved': sum(node.kind == 'http_interface' and node.resolution_status != 'RESOLVED' for node in nodes),
                        'excluded': excluded},
-            'reasons': ['Found counts emitted HTTP variants; excluded counts declaration edges outside the selected scope.']},
+            'reasons': ['Found counts projected HTTP objects; ambiguous objects retain every captured variant. Excluded counts declaration edges outside the selected scope.']},
         provenance=result['provenance'], limits=('Static registrations and contracts do not prove deployment or data availability.',))
     ViewDocument.from_dict(document.to_dict())
     if before != (workspace, graph.to_dict(), source_coverage):
