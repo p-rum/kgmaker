@@ -737,16 +737,19 @@ Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou loká
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
-## T012 — Kafka interface catalogue (revision2 draft stack)
+## T012 — Kafka interface catalogue (verified bounded scope)
 
 Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
 binding validation, T008 ownership/context and T009 evidence. Explicit workspace
 checkouts/private captures are required. Groups/realms and original listener/send
 IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
 Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
-annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
-implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
-[change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
+annotations UNKNOWN, delivery NOT_OBSERVED. Kafka rev2 and Common dependencies
+merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
+10exactoptionalSKIP2042.93s,4897hashes/five member sets unchanged. All2071 parent
+IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
+actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
+review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
@@ -771,26 +774,6 @@ full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
 parent runtime/distributions and unchanged input closure. This is descendant
 evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
 Independent final review/merge remain separate. T026 remains separate.
-## T012 — Kafka interface catalogue (revision2 draft stack)
-
-Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
-binding validation, T008 ownership/context and T009 evidence. Explicit workspace
-checkouts/private captures are required. Groups/realms and original listener/send
-IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
-Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
-annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
-implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
-[change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
-
-## T013 — interface contract attachments (explicit draft stack)
-
-Shared bounded contract/generation capture and immutable interface attachment add
-role-separated declaration references and content revision fingerprints. Generated
-client origin stays visible when stale; DTO names do not prove compatibility.
-Pure fixtures/workspace regressions35PASS3.23s including final guards; actual Kafka
-revision matrix, full, current integration and review pending. No native extension,
-network/schema fetch or generator execution. [Capability](interface-contracts.md),
-[change85](changes/85_attachInterfaceContracts.md). Depends on pending T012 merge.
 
 ## T026 — reversible certified local-operation groups (candidate)
 
@@ -820,7 +803,79 @@ of the fresh actual current-parent Kafka capture passed T008/T010/T011/T015/T024
 with2CURRENT real compiler contexts, full graph/input/store unchanged and no
 new worker execution. Final exact-source independent review/full remain pending;
 T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
+## T003-S07-W05 — Kafka retry/DLT draft
 
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+Strict full on647:1908PASS/10SKIP1920.61s; current-parent pure23PASS; final exact-pair ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Same Replay + compiler-owned FIELD/PROPERTY/inherited witnesses support explicit
+scalar type/null/decimal/PK/UK and single FIELD ManyToOne FK tuple/key comparison.
+Current-name rename/drop identity and malformed/version/source/realm negatives
+are covered. W04 PR62 merged; current main c193748 integrated. Strict full
+ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return composition
+67b8341:174PASS/0SKIP248.87s,1487 hashes unchanged. Final pure parent ambiguity
+4PASS/0SKIP0.56s; worker sources/core unchanged by that parent. Final independent
+review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
+constraints/naming/converters/composite FK remain UNKNOWN. No availability,
+deployment/population promotion or whole-milestone completion inferred.
+
+## T010 normalized variant correction (2026-11-03)
+
+Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
+DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
+candidate/provenance sets; exact duplicates and YAML distinct locators retain
+existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
+Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
+
+
+## T006/T008 revize 2 — verified shared context roles (2026-11-05)
+
+Current main 3e5ef0f; shared producer identity, classifier and inventory boundary
+retain the original full graph, strict source ownership and historical role versus
+freshness distinction. Actual focus 217 PASS / 0 SKIP; combined descendant2df55ff
+strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, 4897 unchanged hashes
+and five unchanged artifact member sets. Every Common-parent ID is included:
+1956 PASS / 10 optional SKIP from one descendant full, not a standalone run.
+T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
+See note84 for preserved setup failure/correction and final review limitations.
+
+
+## T013 — explicit interface contract attachments (verified bounded scope)
+
+Shared bounded declaration capture and immutable attachment preserve original IDs,
+technical status, evidence buckets, role-separated operation/schema/revision
+references and stale generated-client origin. Type IDs remain UNKNOWN without
+upstream payload-reference proof; DTO names never prove compatibility. All45 own
+tests PASS in ONEcombined2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116parentIDs=2106PASS10SKIP,4897hashes/five member sets unchanged. This is not a
+standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
+revision/type-reference cases passed. T012/Common dependencies merged, no native
+extension, network/schema fetch or generator execution. Final exactpairreview and
+merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
+
+## T030 — process-label packet (final review candidate)
+
+Pure Python API preserves bounded immutable process identity/evidence/context,
+structured conflict and privacy/budget contracts; no model/compiler/file I/O or
+apply. Source unchanged from reviewed070/6ae; current base main2a38706.
+ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
+4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
+T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
+and module byteprefix +whole testfile preserved; addedT031 bindings do not shadow.
+See note90 and validation/t030-descendant-proof.json. No standalone parent full or
+new native build. Exact final base/head review and publication remain separate;
+GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
 
 ## T003-S07-W07 — verified bounded source; dependency merge pending
 
@@ -830,5 +885,4 @@ Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific cohort334 unique PASS;
 combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
-cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent
-refresh and final independent review remain pending T013/T012/common dependency merges.
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.

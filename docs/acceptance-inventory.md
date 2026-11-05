@@ -698,6 +698,29 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)
+is integrated; final independent exact-pair review/ready/merge remain separate.
+
+| Acceptance | Supported proof / tests | Actual evidence |
+|---|---|---|
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
+| W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
+| W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
+
+Full1591PASS/10optionalSKIP1646.65s is attributed only to ced9717; current
+Return174PASS/0SKIP248.87s only to67b8341. No runtime/data/deployment proof.
+Unsupported XML effective constraints, naming/converters/composite/defaulted FK
+remain UNKNOWN; no whole S06/T003/T004 completion claim.
+
+### T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)
+
+AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
+two service realms, method/sibling separation, deterministic order and duplicate
+records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
 ### T003-S07-W04 revize2 — draft code/group acceptance
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
@@ -706,26 +729,6 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
-
-## T012 — Kafka interface catalogue
-
-AC01 two realms, AC02 distinct consumer groups, AC03 NewTopic/config-only vs
-canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tuples,
-regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
-AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
-Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.
-
-## T013 — explicit versioned contract attachments (draft stack)
-
-AC01 content revision/stable logical interface, AC02 same DTO name is not payload
-compatibility, AC03 generated origin survives stale contract SHA, AC04 bounded
-immutable/offline/error paths and AC05 scope/context/ambiguous/external schema
-boundaries are in `tests/test_t013_attach_interface_contracts.py`; captured actual
-Kafka revisions are in `tests/test_t013_captured_kafka_contracts.py` (pending run).
-AC06 [change85](changes/85_attachInterfaceContracts.md) records exact outcomes.
-Full/review/current dependency integration pending, runtime transport NOT_RUN.
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
@@ -741,18 +744,75 @@ source/compiler pins, original strict foreign paths and immutable full inputs.
 The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
 (9actual deselected). A separate pure replay of the actual current-parent Kafka
 capture retained2CURRENT compiler contexts across5projections with no process,
-network or input/store mutation. Final full and independent source closure remain
-pending; this is not T016 or runtime/data availability acceptance.
+network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
+## T003-S07-W05 — retry/DLT policy draft
 
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
+
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+T012-AC01–AC05 map to `tests/test_t012_catalog_kafka_interfaces.py`: separate realms
+and consumer groups, canonical send versus config-only/NewTopic, immutable public
+and private proof inputs, exact qualified Node/source/edge tuple guards, selected
+and historical contexts, regex and Kotlin K2 annotation UNKNOWN. All105 own IDs
+PASS in combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selection
+10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
+preserved failures/limits are in note81. Main/Common dependencies merged; exact
+finalpair review/merge separate. No standalone parent full or transport observation.
+
+
+## T013 — explicit versioned contract attachments (verified bounded scope)
+
+T013-AC01 content revisions/stable original IDs, AC02 no DTO-name compatibility,
+AC03 generated-origin binding preserved as stale after contract changes, AC04
+bounded read-only/immutable capture/attachment and AC05 selected scope/context,
+ambiguous operations and external/malformed pointers map to
+`tests/test_t013_attach_interface_contracts.py` (43 PASS) and actual K1/K2 captured
+Kafka revisions `tests/test_t013_captured_kafka_contracts.py` (2 PASS). All45 own IDs
+PASS in ONE combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116 parent IDs in that XML are2106PASS10SKIP, not a standalone parent full.
+Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retained.
+AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
+payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
+T012 dependency merged; independent finalpair review/ready/merge separate.
+
+## T030 — pure process-label packet (candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
+
+No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
+standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
+PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
+[bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
 
 ## T003-S07-W07 — explicit remote mapping draft
 
 | AC | Current evidence | Pending |
 |---|---|---|
-| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Dependency/current-parent final pair |
+| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Final current-parent pair |
 | AC02 | Strict optional manifest/capture version, existing workspace regressions; all1973 parent IDs covered in combined2df full | Exact refreshed composition review |
 | AC03 | Actual/public realm/operation/hash/release/ambiguity/privacy/no-I/O/transport/budget negatives;334 cohort PASS | No runtime/availability proof claimed |
-| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review/dependency merges |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review |
 
 The full ran on combined descendant2df55ff8, not standalone W07. Historical
 failures and partial runs remain separately attributed in note91.

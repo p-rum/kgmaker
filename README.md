@@ -126,7 +126,9 @@ interfaces = project_http_providers(
 ```
 
 This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
-and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md). Colliding normalized
+contract variants remain one explicit `AMBIGUOUS` boundary with every original
+route and candidate proof; see [change88](docs/changes/88_preserveAmbiguousHttpProviders.md).
 
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
@@ -797,7 +799,33 @@ repository's schema without becoming service-owned code or compiler candidates.
 `t008-service-inventory-2` retains the original full graph for downstream views;
 unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
 its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
+### Kafka retry/DLT declarations — T003-S07-W05 draft
 
+The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
+declarations as separate async boundaries, without executing listeners or brokers.
+Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
+Focus470 PASS / 0 SKIP; strict full on647:1908 PASS / 10 SKIP; current-parent pure23 PASS.
+The feature is draft and is not ready for merge.
+
+### Schema compatibility (T003-S06-W08 bounded scope)
+
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
+uses existing offline replay and an explicitly inspected compiler context. It
+reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
+legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
+W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
+populated-data availability. No implicit worker/build/migration/DB operation.
+
+### Pure process label packets (T030)
+
+`kgmaker.process_semantics.prepare_process_label_packet(process_view,
+token_budget=8000, char_budget=32000)` returns a content-bound packet and empty
+PROPOSED candidate template for existing targets. It preserves selected identity,
+provenance and uncertainty, reports complete serialized cost/mandatory overflow,
+and hash-omits raw labels, documentation and proof/configuration prose. It performs
+no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
+T031 proposal validation/application and T034 CLI remain separate pending work.
 
 ## T003-S07-W07 — explicit remote mapping draft
 
@@ -807,5 +835,4 @@ Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific cohort334 unique PASS;
 combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
-cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent
-refresh and final independent review remain pending T013/T012/common dependency merges.
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.

@@ -182,3 +182,14 @@ nezměněné original tests2PASS/0SKIP12.62s s raw5resolved/0unresolved. Předch
 Dependency Common/T012/T013 merge a current-main refresh jsou při tomto záznamu
 PENDING. Source ani native se kvůli metadata nemění; žádný nový full/build,
 publication/ready/merge ani self-review není tímto záznamem tvrzen.
+
+## Finální current-main integrace (2026-11-05)
+
+CommonPR72/T012PR73/T013PR74 aT030PR75 jsou merged; aktuální base
+9eec41a403b4e6601fe3addac168bf39d37f31b6. Vlastní remote_mapping/dataflow/test
+a celý workspace jsou byte-exact skutečně testovanému2df55ff. Aktuální CI
+retry/schema coverage zachována, přidán pouze W07 test token. Current-main
+2163IDs +89own =2252IDs, ve stejném actual2df XML2242PASS/10optionalSKIP;
+fresh final collection/proof připravuje nezávislý koordinátor, není nový test run.
+No runtime/test/native edit, build nebo full repeat. Finální nezávislé exact-pair
+review/PR readiness a merge patří koordinátorovi, nikoli autorovi.
