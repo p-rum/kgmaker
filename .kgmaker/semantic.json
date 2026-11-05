@@ -572,6 +572,27 @@
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
+      "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "name": "Pure process label packets",
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 1,
+      "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
+    },
+    {
+      "id": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
+      "name": "Read-only process annotation validation",
+      "source_file": "docs/process-annotations.md",
+      "source_line": 1,
+      "summary": "Content-bound read-only proposal validation rederives the current packet and leaves proposed labels pending or conflicting for review."
+    },
+    {
+      "id": "concept:docs/process-review-store.md:explicit_local_semantic_review",
+      "name": "Explicit local semantic review",
+      "source_file": "docs/process-review-store.md",
+      "source_line": 3,
+      "summary": "A bounded semantic decision envelope remains separate from the technical ProcessView and documentary evidence."
+    },
+    {
       "id": "concept:docs/schema-compatibility.md:offline_orm_schema_compatibility",
       "name": "Offline ORM schema compatibility",
       "source_file": "docs/schema-compatibility.md",
@@ -661,27 +682,6 @@
       "source_file": "docs/kafka-retry-dlt.md",
       "source_line": 1,
       "summary": "Pinned static annotation policy and exact canonical proof replay preserve async intent without execution or delivery claims; strict full on647 passed1908/10; current schema-parent composition preserves tested policy/native source and passes bounded pure checks."
-    },
-    {
-      "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "name": "Pure process label packets",
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 1,
-      "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
-    },
-    {
-      "id": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
-      "name": "Read-only process annotation validation",
-      "source_file": "docs/process-annotations.md",
-      "source_line": 1,
-      "summary": "Content-bound read-only proposal validation rederives the current packet and leaves proposed labels pending or conflicting for review."
-    },
-    {
-      "id": "concept:docs/process-review-store.md:explicit_local_semantic_review",
-      "name": "Explicit local semantic review",
-      "source_file": "docs/process-review-store.md",
-      "source_line": 3,
-      "summary": "A bounded semantic decision envelope remains separate from the technical ProcessView and documentary evidence."
     }
   ],
   "edges": [
@@ -934,6 +934,66 @@
       "source_file": "docs/architecture.md",
       "source_line": 145,
       "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "target": "function:src/kgmaker/process_semantics.py:prepare_process_label_packet::230",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 10,
+      "evidence": "The documented Python API prepares a packet and candidate template from an existing explicit ProcessView."
+    },
+    {
+      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "target": "class:src/kgmaker/process_model.py:ProcessView::342",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 3,
+      "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
+    },
+    {
+      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
+      "target": "function:src/kgmaker/process_semantics.py:validate_process_annotations::463",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-annotations.md",
+      "source_line": 3,
+      "evidence": "The documented validation API consumes current ProcessView, T030 packet and semantic candidate without applying annotations."
+    },
+    {
+      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
+      "target": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "kind": "depends_on",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-annotations.md",
+      "source_line": 3,
+      "evidence": "Validation extends T030 and rederives its complete packet before accepting proposal structure."
+    },
+    {
+      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
+      "target": "function:src/kgmaker/process_store.py:prepare_process_review::54",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_store.py",
+      "source_line": 54,
+      "evidence": "prepare_process_review revalidates current explicit inputs through T031 before returning an independent semantic envelope."
+    },
+    {
+      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
+      "target": "function:src/kgmaker/process_store.py:read_process_reviews::302",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_store.py",
+      "source_line": 302,
+      "evidence": "read_process_reviews rederives current packet binding and exposes historical decisions separately from active annotations."
     },
     {
       "source": "file:src/kgmaker/data_resources.py:data_resources.py",
@@ -1594,96 +1654,6 @@
       "source_file": "tests/test_kafka_retry_dlt.py",
       "source_line": 352,
       "evidence": "Captured compiler snapshots and public flow/CLI mutations verify localized UNKNOWN boundaries, preserving unrelated policies and all input records."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1802",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 5,
-      "evidence": "The change note ties FIELD or PROPERTY projection to compiler identity and explicit access."
-    },
-    {
-      "source": "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::460",
-      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 80,
-      "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::366",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "target": "function:src/kgmaker/process_semantics.py:prepare_process_label_packet::230",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 10,
-      "evidence": "The documented Python API prepares a packet and candidate template from an existing explicit ProcessView."
-    },
-    {
-      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "target": "class:src/kgmaker/process_model.py:ProcessView::342",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 3,
-      "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
-    },
-    {
-      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
-      "target": "function:src/kgmaker/process_semantics.py:validate_process_annotations::463",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-annotations.md",
-      "source_line": 3,
-      "evidence": "The documented validation API consumes current ProcessView, T030 packet and semantic candidate without applying annotations."
-    },
-    {
-      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
-      "target": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "kind": "depends_on",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-annotations.md",
-      "source_line": 3,
-      "evidence": "Validation extends T030 and rederives its complete packet before accepting proposal structure."
-    },
-    {
-      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
-      "target": "function:src/kgmaker/process_store.py:prepare_process_review::54",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_store.py",
-      "source_line": 54,
-      "evidence": "prepare_process_review revalidates current explicit inputs through T031 before returning an independent semantic envelope."
-    },
-    {
-      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
-      "target": "function:src/kgmaker/process_store.py:read_process_reviews::302",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_store.py",
-      "source_line": 302,
-      "evidence": "read_process_reviews rederives current packet binding and exposes historical decisions separately from active annotations."
     }
   ],
   "episodes": [
