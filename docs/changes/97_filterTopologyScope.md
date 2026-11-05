@@ -34,3 +34,12 @@ Rozhraní je aditivní čistá projekce existujícího ViewDocument; graph/store
 v1/v2/v3 a upstream IDs se nemění. Technické důkazy a runtime/data availability
 zůstávají oddělené. Zbývá doložený required full,
 finální dependency/main integrace, semantic/memory a nezávislé review aktuálního SHA.
+
+## Nezávislé source review a parent correction
+
+Policy reviewer dal SOURCE APPROVE přesnému `d2d7ec6`/T016f05 po přečtení celého
+modulu a 33 cases; nejde o final/full/merge approval. Následný merge source-approved
+T016 `806ccf1` opravil skutečný rozdíl plain Kafka owner ID proti catalog ID přes
+explicitní release mapping. Vlastní T017 runtime/test bytes zůstaly stejné.
+Dokumentace capu upřesňuje skutečné znaky serializovaného JSON (4194304), nikoli
+počet UTF-8 bytů. Aktuální parent-composition pure běh je evidován odděleně.

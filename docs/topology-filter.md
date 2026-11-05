@@ -55,8 +55,8 @@ Hop/node cutoffs preserve truncation, relation/context/disconnected omissions lo
 coverage, and upstream UNKNOWN remains UNKNOWN. Unknown upstream omission identities
 are never invented: `omission_inventory_complete=False` and a global upstream frontier
 retain that limitation. Display budget does not silently truncate metadata; inputs
-have the reused bounded per-occurrence/cycle guard, 20000 graph objects and a 4 MiB
-serialized result cap. Exceeding the cap rejects the whole result with a fixed code.
+have the reused bounded per-occurrence/cycle guard, 20000 graph objects and a
+4194304-character serialized result cap. Exceeding the cap rejects the whole result with a fixed code.
 Recognized credential/userinfo IDs are rejected even on retained expansions; valid
 Unicode and spaces remain unchanged. Inputs and existing artifacts are never written.
 
