@@ -907,3 +907,13 @@ only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT
 See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable.
 Current4e4fcd6 base2504+59own IDs maps2553PASS10allowedSKIP on accepted2df, not
 a new full; source is exactapproved299. Independent final-pair review remains pending.
+
+### T019 architecture JSON CLI
+
+`kgmaker architecture topology --capture-snapshot topology-inputs.json` replays
+explicit snapshots and preserves the full filtering envelope. Interfaces and explain
+commands share fixed safe JSON diagnostics; local capture/source checks require
+explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
+Current1005b9f preserves merged dependencies; all2597 IDs and all302runtime/test/
+fixture/workflow files match accepted2df (2587PASS10allowedSKIP there). No new
+full; independent final-pair review remains pending. T020/T021 rendering is separate.

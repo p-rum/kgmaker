@@ -1007,3 +1007,16 @@ owned source/tests exact299/accepted2df, all59own XMLPASS. Collection-only2504pa
 +59own=2563 IDs maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP
 full. No actual/full/build/tool mutation; current exact-pair independent review
 remains pending. See validation/t018-descendant-proof.json.
+
+## T019 — current-parent architecture JSON review candidate
+
+Snapshot-only default wraps existing T014/T016/T017/T018 APIs without reselection.
+Explicit capture-local preflights all original indexes before parser work, never
+publishes indexes/caches; explicit check-source remains separate. Coalesced pure
+CLI/dependency checks: 307 PASS, 10 actual cases deselected, 5.29s. No worker/native
+build or full was run at that historical source checkpoint. Current1005b9f+34own
+union exactly equals accepted2df2597 IDs:2587PASS10same optionalSKIP. ALL302present
+runtime/test/worker/fixture/CI bodies match acceptedfull, including exact5-line CLI
+registration/dispatch. No new actual/full/build/tool mutation. Current independent
+final-pair review remains pending; T020/21not included. See note99,
+[proof](validation/t019-descendant-proof.json) and [CLI contract](architecture-json-cli.md).

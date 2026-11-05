@@ -933,3 +933,15 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP descendant;
   collection-only, no new actual/full/build. Current exact-pair independent review
   remains pending; see validation/t018-descendant-proof.json.
+
+## T019 — current-parent exact descendant-result transfer
+
+- AC01–AC02: public JSON interfaces/topology/explain; exact full filter envelope, selectors and fixed diagnostics.
+- AC03: missing/corrupt original indexes fail before capture; temporary-file explicit capture leaves source/index bytes unchanged.
+- AC04: invalid JSON, privacy, cancellation, pipe, conflict, bounded output, strict partial and source-status replay controls.
+- AC05: legacy CLI smoke and documentation; coalesced 307 PASS / 10 actual deselected in 5.29s.
+- Accepted2df own34 XMLPASS, owned architecture_cli/global5CLI lines/tests exactabad.
+  Current1005b9f2563+34own union2597 is the EXACT acceptedfull ID set,2587PASS10same
+  optionalSKIP; all302present runtime/test/fixture/CI files exact. Collection-only,
+  no new actual/full/build/tool mutation. Independent current final-pair review
+  remains pending; see validation/t019-descendant-proof.json.

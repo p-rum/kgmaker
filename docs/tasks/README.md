@@ -44,7 +44,7 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | Rev2; currentec6/accepted2df transfer; final pair review pending |
 | T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | Rev2; current1307/accepted2df transfer; two independent final reviews pending |
 | T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Rev2; current4e4/accepted2df transfer; final pair review pending |
-| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | SPECIFICATION |
+| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | Rev2; current1005/accepted2df exact union; final pair review pending |
 | T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION |
 | T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |
 | T022 | [Markdown report topologie a detailů](T-022_render-topology-markdown.md) | T018, T021 | SPECIFICATION |
