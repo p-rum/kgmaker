@@ -31,9 +31,9 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | Task | Soubor a cíl | Závislosti | Stav |
 |---|---|---|---|
 | T005 | [Verzovaný společný model pohledu](T-005_add-view-model.md) | T004 kontrakt | SPECIFICATION |
-| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION |
+| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T007 | [Explicitní vlastnictví služeb](T-007_define-service-ownership.md) | T005 | SPECIFICATION |
-| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION |
+| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T009 | [Evidence a pokrytí agregovaných objektů](T-009_propagate-view-evidence.md) | T005, T006; T003-S07-W08 | SPECIFICATION |
 | T010 | [Katalog poskytovaných HTTP rozhraní](T-010_catalog-http-providers.md) | T008, T009 | SPECIFICATION |
 | T011 | [Katalog používaných HTTP rozhraní](T-011_catalog-http-consumers.md) | T008, T009; T003-S07-W06 | SPECIFICATION |
@@ -119,7 +119,7 @@ vytvořené PR k review a po schválení současného HEAD je může mergeovat.
 | T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity; revize2 canonical code/group proofs | SPECIFICATION |
 | T003-S07-W05 | [T003-S07-05-kafkaRetryDlt.md](T003-S07-05-kafkaRetryDlt.md) | kafka retry dlt | SPECIFICATION |
 | T003-S07-W06 | [T003-S07-06-httpClientExecution.md](T003-S07-06-httpClientExecution.md) | http client execution | SPECIFICATION |
-| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | cross service contract mapping | SPECIFICATION |
+| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | revision2: explicit service/contract/release mapping; planned T013/T012 stack | SPECIFICATION |
 | T003-S07-W08 | [T003-S07-08-evidenceRanking.md](T003-S07-08-evidenceRanking.md) | evidence ranking | SPECIFICATION |
 | T003-S07-W09 | [T003-S07-09-unifiedFlowViews.md](T003-S07-09-unifiedFlowViews.md) | unified flow views | SPECIFICATION |
 | T003-S08-W01 | [T003-S08-01-typescriptProjectReferences.md](T003-S08-01-typescriptProjectReferences.md) | typescript project references | SPECIFICATION |

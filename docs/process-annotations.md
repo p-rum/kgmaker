@@ -80,3 +80,14 @@ label as approval nor invents a doc/code NLP contradiction detector. Known techn
 status, fingerprints and unresolved/truncated coverage are carried unchanged.
 T032 review/apply and T034 CLI remain separate pending tasks. Existing process and
 graph readers are unchanged; the separate versioned report creates no new store.
+
+## Validation attribution
+
+All76T031feature cases PASS in ONEcompleted combined strict full on actual
+`2df55ff8d15d790808f6a81072144eeb408a05b8` (2587PASS10allowedoptionalSKIP,
+2042.93sJUnit). Whole module/testfile are exact; originalT03032AST/35globalbindings
+and byteprefix are preserved with6disjoint additions. Main5ffe contains T030 and
+other merged prerequisites;2252mainIDs+76own form2328required source/IDunion,
+all2318PASS10sameSKIP in thatXML. No standalone parent run or new collection.
+See [proof/statuses/hashes](validation/t031-descendant-proof.json). Final exact-pair
+review remains separate; no repeated nativebuild/tests/full.

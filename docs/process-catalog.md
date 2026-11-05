@@ -68,5 +68,14 @@ catalog, not evidence of universal absence. Corrupt T032 storage fails closed.
 
 Evidence: public absent-API RED6FAIL0.49s; current37ownPASS1.62s. Coalesced pure
 regression306PASS94SKIP9.48s. All intermediate failures retained; skipped compiler
-cases are unverified. Independent source review, full/dependencies/current-main
-closure and publication remain pending.
+cases are unverified. Those pure checks were historical; completed descendant source validation follows below.
+
+## Completed descendant validation
+
+Base7e6c83 contains merged T030/T031/T032. Whole catalog module, testfile and five
+process dependencies are exactactual2df55. All37owncases XMLPASS in ONEcombined
+strict full2587PASS10allowedoptionalSKIP2042.93sJUnit,4897hashes/five member sets
+unchanged. Original2139parentIDs2129PASS10SKIP; currentmain2364+37source/IDunion
+2401 has2391PASS10sameSKIP in thatXML. No standalone parent run/new collection.
+See [bounded proof](validation/t033-descendant-proof.json). Finalexactpairreview/
+merge separate; no new tests/build/fullrepeat.

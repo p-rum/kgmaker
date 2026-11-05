@@ -277,6 +277,18 @@ def _code_reference(binding, graph, selected, root, topic, group):
     return fact, []
 
 
+def _workspace_context(workspace, binding, inputs, selected_id):
+    """Exact captured declaration identity; independent of source freshness."""
+    from .workspace import qualified
+    identity = "workspace:kafka-context:" + digest({"workspace": workspace["workspace_id"], "binding": binding,
+        "inputs": inputs, "version": VERSION, "selected": selected_id})
+    return {"id": identity, "mode": "SOURCE_ONLY", "scope": binding["scope"], "coverage": "PARTIAL",
+        "freshness": "CONTENT_VERIFIED", "origin_trust": "WORKSPACE_DECLARATION", "repo_id": binding["repo_id"],
+        "module": binding["module"], "source_set": binding["source_set"], "source_files": dict(inputs),
+        "selected_compiler_context": qualified(binding["repo_id"], selected_id) if selected_id else None,
+        "kafka_binding_version": VERSION}
+
+
 def build_links(workspace, graphs):
     """Compose static configured bindings in the existing workspace graph."""
     if workspace.get("kafka_bindings") is None:
@@ -367,13 +379,9 @@ def build_links(workspace, graphs):
         if status != "RESOLVED" and code_fact is not None:
             code_fact = None
             code_reasons = [*code_reasons, "CONFIG_BINDING_UNPROVEN"]
-        context_id = "workspace:kafka-context:" + digest({"workspace": workspace["workspace_id"], "binding": binding,
-            "inputs": inputs, "version": VERSION, "selected": selected.get("id") if selected else None})
-        contexts.append({"id": context_id, "mode": "SOURCE_ONLY", "scope": binding["scope"], "coverage": "PARTIAL",
-            "freshness": "CONTENT_VERIFIED", "origin_trust": "WORKSPACE_DECLARATION", "repo_id": repo,
-            "module": binding["module"], "source_set": binding["source_set"], "source_files": inputs,
-            "selected_compiler_context": qualified(repo, selected["id"]) if selected else None,
-            "kafka_binding_version": VERSION})
+        declaration_context = _workspace_context(workspace, binding, inputs, selected.get("id") if selected else None)
+        context_id = declaration_context["id"]
+        contexts.append(declaration_context)
         identity = "workspace:kafka-binding:" + digest({"context": context_id, "declaration": binding["id"]})
         metadata = {"binding_id": binding["id"], "repo_id": repo, "service_id": binding["service_id"],
             "module": binding["module"], "source_set": binding["source_set"], "direction": binding["direction"],

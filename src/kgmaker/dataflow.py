@@ -443,3 +443,10 @@ def http_request_inventory(graph, *, callers=None):
     return {'coverage': 'INDEXED_WITH_BOUNDARIES' if covered else 'UNKNOWN_LEGACY_OR_SOURCE_ONLY',
             'requests': sorted(values, key=lambda item: item['id']),
             'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'}
+
+
+def remote_contract_bindings(workspace, graph, interfaces, *, captured, scope="production", selected_contexts=None):
+    """Pure explicit remote declarations; never synchronous JVM calls or delivery."""
+    from .remote_mapping import resolve_remote_mappings
+    return resolve_remote_mappings(workspace, graph, interfaces, captured=captured,
+                                   scope=scope, selected_contexts=selected_contexts)
