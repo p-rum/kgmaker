@@ -43,6 +43,11 @@ with `--strict`, 2 invalid input/original index, 3 typed baseline/capture confli
 Inputs/output are bounded; unsafe output fails without partial stdout or ID rewriting.
 Legacy `graph view`, `flow render`, and global version behavior remain available.
 
-This source checkpoint has pure/subprocess CLI and temporary-file capture tests.
-Current dependency composition, saved actual-capture replay, final ALL-ID/native
-closure and required descendant full remain pending. See [note99](changes/99_addArchitectureJsonCli.md).
+Current1005b9f includes merged T014/T016/T017/T018/Common/T012/T013/W07/process
+dependencies and exact CI. Owned architecture_cli, five CLI registration/dispatch
+lines and34tests are exactabad/accepted2df. Current2597-case union equals the whole
+acceptedfull set (2587PASS10allowedSKIP there); all302present runtime/test/fixture/
+workflow files match that descendant, with no CLI exception remaining. This is
+source/per-ID transfer, not a new full on this head. Independent current-pair
+review remains a gate. T020/21formats are NOT in this JSON-only implementation
+or acceptedfull. See [note99](changes/99_addArchitectureJsonCli.md).

@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "base": "ec6a127857cc47704316e6a1d5a088be9e4b16e7",
+  "owned_source_approved": "806ccf1debe751b671f9bf5898eefbe5c0215b19",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE completed strict descendant, not a new full on this integrated head",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.878,
+    "runner_seconds": 2048.01,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_sets": true
+  },
+  "own46_actual_statuses": {
+    "tests/test_t016_aggregate_service_topology.py::test_bounded_privacy_errors_leave_input_unpublished[cycle]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_bounded_privacy_errors_leave_input_unpublished[deep]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_bounded_privacy_errors_leave_input_unpublished[limit]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_bounded_privacy_errors_leave_input_unpublished[shared]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_bounded_privacy_errors_leave_input_unpublished[unsafe_id]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_canonical_kafka_plain_service_owners_map_via_exact_explicit_release_service": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_capture_rejects_remote_coverage_mismatch_before_projecting": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_common_capture_rejects_mutation_between_phases[coverage]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_common_capture_rejects_mutation_between_phases[manifest]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_common_capture_rejects_mutation_between_phases[selection]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_common_capture_rejects_mutation_between_phases[source]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_enum_noise_changes_binding_hash_but_not_topology_or_origin_expansion": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_exact_same_coverage_fingerprint_is_valid_without_equating_upstream_baselines": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_explicit_common_capture_uses_one_snapshot_objects_then_rechecks_same_closure": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_foreign_scope_claim_cannot_be_rewritten_into_selected_scope[data]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_foreign_scope_claim_cannot_be_rewritten_into_selected_scope[remote]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_http_endpoints_group_with_exact_reversible_interface_mapping_release_inventory": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[data_baseline]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[origin]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[remote_document]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[remote_selection]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[selection]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[version]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_inconsistent_handoff_is_rejected_without_mutation[workspace]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_groups_and_realms_remain_distinct_channel_consumer_alternatives[alpha]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_groups_and_realms_remain_distinct_channel_consumer_alternatives[beta]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_owner_must_match_exact_selected_release_service_without_parsing[checkout]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_owner_must_match_exact_selected_release_service_without_parsing[foreign]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_owner_must_match_exact_selected_release_service_without_parsing[prefix:orders]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_kafka_owner_must_match_exact_selected_release_service_without_parsing[service:foreign]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_missing_service_owner_stays_boundary_and_never_name_matches": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_public_http_summary_retains_exact_origin_expansion_and_independent_baselines": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_public_kafka_uses_channel_and_distinct_publish_consume_group_edges": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_pure_aggregate_never_loads_snapshots_projects_or_executes": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_qualified_http_owner_control_still_maps_to_exact_catalog_service": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_real_capture_detects_files_changed_after_remote_phase[manifest]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_real_capture_detects_files_changed_after_remote_phase[schema]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_real_capture_detects_files_changed_after_remote_phase[source]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_real_public_common_capture_preserves_distinct_baselines_and_offline_replay": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_recognizable_secret_in_exported_reference_or_untyped_contract_is_rejected[contract-extra]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_recognizable_secret_in_exported_reference_or_untyped_contract_is_rejected[contract-pointer]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_recognizable_secret_in_exported_reference_or_untyped_contract_is_rejected[original-resource-ref]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_recognizable_secret_in_exported_reference_or_untyped_contract_is_rejected[selector]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_resource_contradicting_refs_and_original_status_survive_separately_from_remote_proof": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_shared_and_remote_coverage_fingerprints_must_match_even_with_recomputed_handoff_hash": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t016_aggregate_service_topology.py::test_unknown_and_truncated_upstream_coverage_never_becomes_complete_unique_topology": {
+      "status": "PASS",
+      "details": []
+    }
+  },
+  "currentec6_main2425_plus46_union": {
+    "count": 2471,
+    "PASS": 2461,
+    "SKIP": 10,
+    "all_contained_in_accepted2597": true,
+    "remaining2425IDs_exact_T014_merged_parent_collection": true,
+    "actual_execution": false,
+    "collection_only": true,
+    "main_existing_tests_unchanged": true
+  },
+  "global_runtime_test_fixture_workflow_paths_checked": 296,
+  "global_exact_to_accepted_full_count": 295,
+  "own_module_test_exact_sha256": {
+    "src/kgmaker/service_topology.py": "99f1dd53e07e3d8e00c05856d69fd75b07f9d13b3b62d41c9aa4e78baeecf782",
+    "tests/test_t016_aggregate_service_topology.py": "016163a9147d0fa6e95f752bab5daccc9150d2d9c7bd3e40d10e7b659dcd94f8"
+  },
+  "only_expected_present_file_difference": {
+    "src/kgmaker/cli.py": {
+      "exact_current_main": true,
+      "difference": "Only not-yet-merged T019 registration and early safe architecture dispatch absent."
+    }
+  },
+  "current_main_CI_exact": true,
+  "native_worker_source_inputs_exact": 27,
+  "prepared_fixture_source_inputs_exact": 9,
+  "native_actual_build_origin": "079ec21f9a7d1ce5ab9de900dc8e708316495442",
+  "native_build": "NOT_RUN",
+  "required_sorted_IDs_sha256": "d60b5be09e2f5287731b3e591fcb627f986d2f9788e6d298d36f0ffedcf9d017",
+  "per_ID_status_file_sha256": "85a73862bd4147b54a9c4955dec0a52eb5333b3b90ee93c05619147cdfcf3b61",
+  "global_source_manifest_sha256": "e55db97e1fc2e330a97155b5910af9912d6dd3fe1f5915bec790083a39c4aebe",
+  "receipt_SHA256": {
+    "/workspace/pure-integration-proof/full-attempt-2/status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "/workspace/pure-integration-proof/full-attempt-2/full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "/workspace/pure-integration-proof/full-attempt-2/all-result-classification.json": "b264b9b0721a16e4bc228b337a476d8c0b3c76acbe9550c3dc9f18ffd42fb368",
+    "/workspace/pure-integration-proof/staged-artifact-copy.json": "080f60c8fea2c75975f0a0d454ddff41fd2f377a8c8eed78bc01e404192bd3a6",
+    "/workspace/t016-validation/root-source-approval-806.json": "ed1fa83c55a9366c2364eb641be4f698219ce1ba1e29c2368e7d599f5d33f150",
+    "/workspace/t014-t021-transfer-proof/transfer-ledger.json": "da425d64d2de2faba4b46df6391249e512a400191c24daf1dc3dab1e5769b298",
+    "/workspace/t014-validation/main509/final-local-head-proof.json": "8d1c7d60c2be7cda19b45f6ea0e9086a33e7daf21ddba5fd440fe5a01dfd49f8"
+  },
+  "preserved_history": {
+    "current_main_episode_prefix": 244,
+    "all_old230_child_episode_objects_preserved": true,
+    "expected_total_episodes": 245,
+    "new_capture": "ONE scoped T016 memory CLI capture",
+    "main_semantic_fact_keys_preserved": true,
+    "old_role_boundary_concept_and_four_current_code_edges_preserved": true,
+    "three_obsolete_workspace_JPA_codeIDs": "Already represented by current main reanchored facts, no stale duplicate aliases"
+  },
+  "remaining": [
+    "Independent current exact base/head source/pair review",
+    "Root publication/merge decision"
+  ],
+  "limits": [
+    "MIGRATION_DERIVED is derivation, remote claims remain capture-time SOURCE_ONLY UNKNOWN",
+    "No JVM/process continuation, runtime/delivery/deployment/payload/population promotion",
+    "No new actual/full/build/tool/cache mutation",
+    "T020/T021 outside acceptedfull require later joint validation"
+  ],
+  "GHCI": "billing/cascade optional/unverified; not PASS"
+}

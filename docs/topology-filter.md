@@ -60,6 +60,10 @@ have the reused bounded per-occurrence/cycle guard, 20000 graph objects and a
 Recognized credential/userinfo IDs are rejected even on retained expansions; valid
 Unicode and spaces remain unchanged. Inputs and existing artifacts are never written.
 
-Source checkpoint: 33 new tests and coalesced T017/T016/T014/View/T009 **149 PASS**,
-no native build or full. Final dependency/main integration, required descendant full
-and independent review remain pending. See change note97 for historical RED results.
+Historical source checkpoint:33new tests and coalesced149PASS. Current130720f
+contains merged T014/T016/Common/T012/T013/W07/process dependencies and exact CI.
+Owned source/tests match accepted2df; all33own XMLPASS in that one2587PASS10SKIP
+full. Current2504-ID union maps2494PASS10same optionalSKIP, not a new full on this
+head. Root is original author: architect plus another independent reviewer must
+approve the final pair; Root performs only integration/merge guard. No new native
+build. See note97/validation/t017-descendant-proof.json for attribution and RED history.

@@ -14,7 +14,7 @@ from .analysis_model import digest as _shared_digest
 from .architecture_model import ViewDocument
 from .model import KnowledgeGraph
 
-VERSION = 'remote-contract-mapping-1'
+VERSION = 'remote-contract-mapping-2'
 SCOPES = {'production', 'test', 'test_fixture', 'development', 'unknown'}
 _LIMIT = 2000
 _HASH = re.compile(r'[0-9a-f]{64}\Z')
@@ -118,6 +118,7 @@ def validate_remote_declarations(workspace):
                 or value['source_release_id'] not in releases or value['target_release_id'] not in releases
                 or value['assertion']!='DECLARED_OPERATION_COMPATIBILITY'):_fail('REMOTE_INVALID_COMPATIBILITY')
         compatibilities[value['id']]=value
+    release_transports={}
     for value in declaration['mappings']:
         _object(value,{'id','transport','source_release_id','target_release_id','compatibility_id'})
         if (not isinstance(value['transport'],str) or value['transport'] not in {'HTTP','KAFKA'}
@@ -125,6 +126,8 @@ def validate_remote_declarations(workspace):
                 or value['source_release_id'] not in releases or value['target_release_id'] not in releases
                 or value['compatibility_id'] is not None and (not _text(value['compatibility_id']) or value['compatibility_id'] not in compatibilities)):_fail('REMOTE_INVALID_MAPPING')
         source,target=releases[value['source_release_id']],releases[value['target_release_id']]
+        for release_id in (value['source_release_id'],value['target_release_id']):
+            if release_transports.setdefault(release_id,value['transport'])!=value['transport']:_fail('REMOTE_TRANSPORT_CONFLICT')
         if source['service_id']==target['service_id'] or source['scope']!=target['scope']:_fail('REMOTE_INVALID_SERVICE_PAIR')
         if value['compatibility_id'] is not None:
             pair=compatibilities[value['compatibility_id']]
@@ -266,8 +269,24 @@ def resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected
                 or service!=release['service_id'] or _context(node,by_id)!=release['context_id']):return None,'REMOTE_REALM_OR_DIRECTION_UNPROVEN'
         context=contexts.get(release['context_id'])
         if context is None or context.get('scope')!=scope or context.get('freshness') not in {'CURRENT','CONTENT_VERIFIED','EXECUTION_BOUND'}:return None,'REMOTE_CONTEXT_UNAVAILABLE'
-        if node['resolution_status']!='RESOLVED' or node['freshness']!='CURRENT':return None,'REMOTE_INTERFACE_UNRESOLVED'
-        if any(e['target']==node['id'] and e['resolution_status']!='RESOLVED' for e in doc['edges']):return None,'REMOTE_INTERFACE_UNRESOLVED'
+        if (node['resolution_status']!='RESOLVED' or node['freshness']=='STALE'
+                or node['freshness']!='CURRENT' and transport!='KAFKA'):return None,'REMOTE_INTERFACE_UNRESOLVED'
+        # Kafka's canonical catalog can retain UNKNOWN mixed-evidence freshness.
+        # Eligibility still requires all current-context/code/contract guards
+        # below; a declared mapping never upgrades that original summary.
+        incoming=[edge for edge in doc['edges'] if edge['target']==node['id']]
+        unknown_kafka=transport=='KAFKA' and node['freshness']=='UNKNOWN'
+        catalog_service='service:'+release['service_id']
+        declared=[edge for edge in incoming if edge['source']==catalog_service
+            and edge['relation']=='declares_kafka_interface']
+        if unknown_kafka:
+            if (len(declared)!=1 or not any(n['id']==catalog_service and n['kind']=='service' for n in doc['nodes'])
+                    or any(e['freshness']=='STALE' or e['resolution_status']=='AMBIGUOUS' or e['contradicting_refs'] for e in incoming)):
+                return None,'REMOTE_INTERFACE_UNRESOLVED'
+        for edge in incoming:
+            if edge['resolution_status']=='RESOLVED':continue
+            if not (unknown_kafka and edge in declared and edge['resolution_status']=='UNRESOLVED'
+                    and edge['freshness']=='UNKNOWN' and not edge['contradicting_refs']):return None,'REMOTE_INTERFACE_UNRESOLVED'
         contract=release['contract'];record=contract_capture['files'].get('@'+contract['repo_id']+'/'+contract['path'],{})
         pointer='#' if contract['pointer']=='' else contract['pointer']
         if (record.get('status')!='CAPTURED' or record.get('indexed') is not True
@@ -290,6 +309,7 @@ def resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected
         if transport=='KAFKA':
             ref=attrs.get('message_contract_ref')
             if (attrs.get('code_binding')!='VERIFIED_STATIC' or not attrs.get('broker_realm') or attrs.get('topic_pattern')
+                    or not source and not _text(attrs.get('consumer_group'))
                     or attrs.get('subscription_kind')!='TOPICS' or not attrs.get('topics')
                     or not isinstance(ref,dict) or ref.get('release')!=release['release']):return None,'REMOTE_MESSAGE_BINDING_UNPROVEN'
         return (node,doc),'CURRENT_CAPTURE'
@@ -300,6 +320,8 @@ def resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected
             'transport':mapping['transport'],'resolution_status':'UNRESOLVED','candidates':[],'mapping_ids':[],
             'unresolved_mapping_ids':[],'reasons':[],'runtime_execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED',
             'runtime_availability':'UNKNOWN','deployment':'UNKNOWN','payload_compatibility':'UNKNOWN'})
+        entries=interfaces_by_id.get(source['interface_id'],[])
+        row['source_interface_freshness']=entries[0][0]['freshness'] if len(entries)==1 else 'UNKNOWN'
         row['mapping_ids'].append(mapping['id'])
         left,reason=authority(source,mapping['transport'],True)
         right,target_reason=authority(target,mapping['transport'],False)
@@ -324,7 +346,8 @@ def resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected
             'source_contract':deepcopy(a),'target_contract':deepcopy(b),
             'evidence_refs':sorted(set(source_node['evidence_refs'])|set(target_node['evidence_refs'])),
             'evidence_kinds':sorted(set(source_node['evidence_kinds'])|set(target_node['evidence_kinds'])),
-            'freshness':'CAPTURE_TIME_ONLY','consumer_group':target_node['attributes'].get('consumer_group')})
+            'freshness':'CAPTURE_TIME_ONLY','source_interface_freshness':source_node['freshness'],
+            'target_interface_freshness':target_node['freshness'],'consumer_group':target_node['attributes'].get('consumer_group')})
     for row in rows.values():
         candidates=sorted(row['candidates'],key=lambda c:(c['target_interface_id'],c['target_release_id'],c['mapping_id']))
         row['candidates']=candidates;row['mapping_ids'].sort();row['unresolved_mapping_ids'].sort();row['reasons']=sorted(set(row['reasons']))

@@ -737,16 +737,19 @@ Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou loká
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
-## T012 — Kafka interface catalogue (revision2 draft stack)
+## T012 — Kafka interface catalogue (verified bounded scope)
 
 Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
 binding validation, T008 ownership/context and T009 evidence. Explicit workspace
 checkouts/private captures are required. Groups/realms and original listener/send
 IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
 Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
-annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
-implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
-[change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
+annotations UNKNOWN, delivery NOT_OBSERVED. Kafka rev2 and Common dependencies
+merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
+10exactoptionalSKIP2042.93s,4897hashes/five member sets unchanged. All2071 parent
+IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
+actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
+review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
@@ -771,26 +774,6 @@ full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
 parent runtime/distributions and unchanged input closure. This is descendant
 evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
 Independent final review/merge remain separate. T026 remains separate.
-## T012 — Kafka interface catalogue (revision2 draft stack)
-
-Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
-binding validation, T008 ownership/context and T009 evidence. Explicit workspace
-checkouts/private captures are required. Groups/realms and original listener/send
-IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
-Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
-annotations UNKNOWN, delivery NOT_OBSERVED. Actual RED reproduced missing API;
-implementation/focus/full/review remain pending. [Capability](kafka-interfaces.md),
-[change81](changes/81_catalogKafkaInterfaces.md). Parent Kafka rev2 is still draft.
-
-## T013 — interface contract attachments (explicit draft stack)
-
-Shared bounded contract/generation capture and immutable interface attachment add
-role-separated declaration references and content revision fingerprints. Generated
-client origin stays visible when stale; DTO names do not prove compatibility.
-Pure fixtures/workspace regressions35PASS3.23s including final guards; actual Kafka
-revision matrix, full, current integration and review pending. No native extension,
-network/schema fetch or generator execution. [Capability](interface-contracts.md),
-[change85](changes/85_attachInterfaceContracts.md). Depends on pending T012 merge.
 
 ## T026 — reversible certified local-operation groups (candidate)
 
@@ -820,23 +803,14 @@ of the fresh actual current-parent Kafka capture passed T008/T010/T011/T015/T024
 with2CURRENT real compiler contexts, full graph/input/store unchanged and no
 new worker execution. Final exact-source independent review/full remain pending;
 T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
+## T003-S07-W05 — Kafka retry/DLT draft
 
-
-## T003-S07-W07 — source checkpoint before actual matrix
-
-See [remote mapping contract](remote-contract-mapping.md)
-and [note91](changes/91_planRemoteContractMapping.md).
-Explicit capture and pure resolution preserve service/context/contract/release
-authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
-runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
-matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
-
-## T014 draft — explicit remote topology
-
-Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
-unknown target and capture-time uncertainty. No resolver duplication, source I/O,
-JVM/process edges or runtime/payload promotion. Public pure validation is recorded
-in note93. T013/W07 actual/full and final integration/review remain pending.
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+Strict full on647:1908PASS/10SKIP1920.61s; current-parent pure23PASS; final exact-pair ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
 
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
@@ -859,15 +833,153 @@ candidate/provenance sets; exact duplicates and YAML distinct locators retain
 existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
 Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
 
-## T016 draft — explicit common-capture service topology
+
+## T006/T008 revize 2 — verified shared context roles (2026-11-05)
+
+Current main 3e5ef0f; shared producer identity, classifier and inventory boundary
+retain the original full graph, strict source ownership and historical role versus
+freshness distinction. Actual focus 217 PASS / 0 SKIP; combined descendant2df55ff
+strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, 4897 unchanged hashes
+and five unchanged artifact member sets. Every Common-parent ID is included:
+1956 PASS / 10 optional SKIP from one descendant full, not a standalone run.
+T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
+See note84 for preserved setup failure/correction and final review limitations.
+
+
+## T013 — explicit interface contract attachments (verified bounded scope)
+
+Shared bounded declaration capture and immutable attachment preserve original IDs,
+technical status, evidence buckets, role-separated operation/schema/revision
+references and stale generated-client origin. Type IDs remain UNKNOWN without
+upstream payload-reference proof; DTO names never prove compatibility. All45 own
+tests PASS in ONEcombined2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116parentIDs=2106PASS10SKIP,4897hashes/five member sets unchanged. This is not a
+standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
+revision/type-reference cases passed. T012/Common dependencies merged, no native
+extension, network/schema fetch or generator execution. Final exactpairreview and
+merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
+
+## T030 — process-label packet (final review candidate)
+
+Pure Python API preserves bounded immutable process identity/evidence/context,
+structured conflict and privacy/budget contracts; no model/compiler/file I/O or
+apply. Source unchanged from reviewed070/6ae; current base main2a38706.
+ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
+4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
+T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
+and module byteprefix +whole testfile preserved; addedT031 bindings do not shadow.
+See note90 and validation/t030-descendant-proof.json. No standalone parent full or
+new native build. Exact final base/head review and publication remain separate;
+GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
+
+## T003-S07-W07 — verified bounded source; dependency merge pending
+
+See [remote mapping contract](remote-contract-mapping.md)
+and [note91](changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
+
+Pure `prepare_process_label_packet` preserves complete ProcessView target/ref
+identity, actual content binding and captured evidence/uncertainty. Raw prose is
+hash-omitted; document provenance is explicit ref-only and conflicts are supplied
+review items, not NLP authority. Full serialized cost includes omissions/template
+and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
+inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
+Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
+exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+
+## T031 — read-only process annotations (final review candidate)
+
+Pure API rederives the whole current T030 packet before accepting semantic-only
+PROPOSED text/refs/groups; conflicting fields and structured documentary conflicts
+remain PENDING/CONFLICT for review. No technical apply or approval. Currentmain
+5ffe099 has merged T030/Common/T012/T013/W07 prerequisites.
+Whole module/testfile exactactual2df55; originalT03032AST/35globals/byteprefix
+preserved,6added bindings disjoint. All76ownXMLPASS in ONEcombined descendant
+2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original2066parent
+cases2056PASS10SKIP; currentmain2252+76 source/IDunion2328=2318PASS10sameSKIP.
+Not standalone parent full, new collection or test/build/fullrepeat. Main240episode
+prefix and every old capture preserved. Exact finalreview/publication separate;
+GHCI optional/unverified. See note92 and validation/t031-descendant-proof.json.
+
+Pure same-module validation rederives the whole current T030 packet and accepts
+only bounded semantic PROPOSED records. Invalid/stale/forged/unsafe inputs return
+fixed-code REJECTED validation reports; valid input remains PENDING/CONFLICT with
+all differing proposals and captured documentary review items. No approval/apply,
+new outcomes, technical mutation, NLP comparison, runtime or physical freshness.
+Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
+PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
+full, independent exact source review and root publication remain pending.
+
+## T032 — explicit local review (final review candidate)
+
+Currentbase2c7b38 has mergedT030/T031 prerequisites. Separate bounded immutable
+semantic envelope, POSIX cooperating process/thread CAS, exact operation identity,
+baseline revalidation and honest postreplaceINDETERMINATE recovery. No technical
+ProcessView/evidence mutation, document citation promotion or reviewer authentication.
+APPROVE blocks both proposal/captured conflicts; REJECT publishes no new labels.
+Whole store module/testfile/currentprocess_semantics exactactual2df55. All36own
+XMLPASS in ONEcombined2587PASS10allowedSKIP2042.93s;4897hashes+five sets unchanged.
+Original2102IDs2092PASS10SKIP; currentmain2328+36union2364=2354PASS10sameSKIP.
+No standalone parent full or new test/build/fullrepeat. Main241episodeprefix/all
+oldcaptures preserved. Final independentexactpairreview/Rootmerge pending; GHCI
+optional/unverified. See note94 and validation/t032-descendant-proof.json.
+
+Explicit stack on reviewed T031a359. Separate version1 envelope,128history/2MiB caps,
+POSIX cooperating thread/process CAS, exact idempotent operation identity and current
+explicit-baseline revalidation. APPROVE blocks captured and proposal conflicts;
+REJECT publishes no new labels. Technical model/evidence remains unchanged.
+Current feature36PASS1.93s; coalesced269PASS94SKIP8.74s (compiler SKIPs not PASS).
+Independent source review and strict full NOT_RUN. No native build, CLI, external
+publication, authenticated reviewer identity or hostile-root race guarantee.
+
+## T033 — explicit process catalog (final review candidate)
+
+Currentbase7e6c83 has mergedT030/T031/T032. Read-only explicit current/historical
+ProcessViews+T024 inventory and direct validated T032 reads, stable process+scope
+selection IDs, exact collisions/one-hop aliases preserving all original members/
+revisions/triggers/review states. No label identity/approval borrowing/archive/
+discovery/store writes. Partial absence NOT_IN_CURRENT_INVENTORY stays qualified.
+Wholecatalog/test+5process dependencies exactactual2df55. All37ownXMLPASS in ONE
+combined2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original
+2139parent2129PASS10SKIP; currentmain2364+37union2401=2391PASS10sameSKIP. No new
+test/collection/build/fullrepeat. Main242episodeprefix/alloldcaptures preserved.
+Finalexactpairreview/Rootmerge pending; GHCIoptional/unverified. See note96 and
+validation/t033-descendant-proof.json. Runtime/data availability remain UNKNOWN.
+
+
+## T014 — remote topology current-parent review candidate
+
+Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
+unknown target and capture-time uncertainty. No resolver duplication, source I/O,
+JVM/process edges or runtime/payload promotion. Public pure validation is recorded
+in note93. Current509 retains merged Common/T012/T013/W07/process source. Owned
+module/test bytes and all present runtime/test/worker/fixture files match accepted
+2df55, except pending T019 CLI dispatch is correctly absent. Accepted descendant
+full2587PASS10allowedSKIP covers all2425 current-parent IDs (2415PASS10SKIP);24own
+PASS. No new actual/full/build. Final exact-pair review/merge remain pending;
+see docs/validation/t014-descendant-proof.json.
+
+## T016 — current-parent common-capture review candidate
 
 One explicit snapshot closure composes T015/W07/T014 and verifies it again before
 returning a handoff. Pure aggregation uses catalog services/resources and reversible
 remote origin inventories, Kafka channels/groups, original proof buckets and UNKNOWN
-remote runtime/freshness. Initial public/pure evidence is in note95. Final newer
-T013/T012 parent refresh, dependency actual/full and independent review remain pending.
+remote runtime/freshness. Currentec6a127 retains merged T014/T015/Common/T012/T013/
+W07v2 and process bodies/CI. Owned module/tests are exact accepted2df; all46own
+cases XMLPASS. Collection-only2425main+46own union2471 maps2461PASS10same optional
+SKIP on accepted2587PASS10SKIP full. No actual/full/build/tool mutation; independent
+current-pair review remains pending. See note95 and validation/t016-descendant-proof.json.
 
-## T017 — source checkpoint of bounded topology filtering
+## T017 — current-parent bounded filtering review candidate
 
 Pure API over an existing T016 view: exact service focus, deterministic real-edge
 hops and node budget, context/relation restriction and complete known omission
@@ -875,25 +987,36 @@ inventories. New frontier entries are metadata rather than graph nodes. No short
 runtime/availability claim or ambiguity/freshness/evidence upgrade occurs. Public
 absent-API RED2FAIL; corrective retained-expansion privacy RED1FAIL29PASS; final
 33 own tests plus coalesced T016/T014/View/T009: 149 PASS in1.58s. No heavy queue,
-native build or full. Explicit dependency source is T016f05; final newer T013/T012
-and main composition, required full, graph/memory and independent review remain
-pending. See [note97](changes/97_filterTopologyScope.md) and [API](topology-filter.md).
+native build or full at that historical source checkpoint. Current130720f preserves
+merged T014/T016/Common/T012/T013/W07/process/CI. Owned source/tests exactaccepted2df;
+all33own cases XMLPASS. Collection-only2471parent+33own=2504 maps2494PASS10sameSKIP
+on the oneaccepted2587PASS10SKIP descendant. Root is author, not independent reviewer;
+architect plus another independent final-pair review remain mandatory. No new full/
+build/tool mutation. See [note97](changes/97_filterTopologyScope.md),
+[proof](validation/t017-descendant-proof.json) and [API](topology-filter.md).
 
-## T018 draft — original snapshot explanation and explicit source status
+## T018 — current-parent snapshot explanation review candidate
 
 Pure explanation rederives T016/T017 and expands exact original identities and
 proof buckets. Original PUBLIC graph is required for canonical source locators;
 missing graph/range is unavailable. Separate explicit confined source-status
 capture checks current file hashes without replacing original snapshot fingerprints
 or upgrading remote/context freshness. Public pure/file-backed tests are recorded
-in note98; current dependency integration, source review and full remain pending.
+in note98. Current4e4fcd6 preserves T014/T016/T017/Common/T012/T013/W07/process/CI;
+owned source/tests exact299/accepted2df, all59own XMLPASS. Collection-only2504parent
++59own=2563 IDs maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP
+full. No actual/full/build/tool mutation; current exact-pair independent review
+remains pending. See validation/t018-descendant-proof.json.
 
-## T019 source checkpoint — architecture JSON adapter
+## T019 — current-parent architecture JSON review candidate
 
 Snapshot-only default wraps existing T014/T016/T017/T018 APIs without reselection.
 Explicit capture-local preflights all original indexes before parser work, never
 publishes indexes/caches; explicit check-source remains separate. Coalesced pure
 CLI/dependency checks: 307 PASS, 10 actual cases deselected, 5.29s. No worker/native
-build or full was run. Current parent refresh, actual saved-capture replay, independent
-source approval and required descendant full remain pending. See note99 and
-[CLI contract](architecture-json-cli.md).
+build or full was run at that historical source checkpoint. Current1005b9f+34own
+union exactly equals accepted2df2597 IDs:2587PASS10same optionalSKIP. ALL302present
+runtime/test/worker/fixture/CI bodies match acceptedfull, including exact5-line CLI
+registration/dispatch. No new actual/full/build/tool mutation. Current independent
+final-pair review remains pending; T020/21not included. See note99,
+[proof](validation/t019-descendant-proof.json) and [CLI contract](architecture-json-cli.md).

@@ -43,3 +43,25 @@ T016 `806ccf1` opravil skutečný rozdíl plain Kafka owner ID proti catalog ID 
 explicitní release mapping. Vlastní T017 runtime/test bytes zůstaly stejné.
 Dokumentace capu upřesňuje skutečné znaky serializovaného JSON (4194304), nikoli
 počet UTF-8 bytů. Aktuální parent-composition pure běh je evidován odděleně.
+
+## Current130720f refresh a accepted-descendant evidence
+
+T017f22a698 runtime/tests zůstávají byte-exact accepted2df55ff8d15d790808f6a81072144eeb408a05b8.
+Refresh na main130720f7714634430a2255486ce9c4c130003f2b zachovává T014/T016/
+Common/T012/T013/W07/process a current CI. Accepted ONEfull2df2587PASS10allowedSKIP,
+XML2042.878s/runner2048.01s,4897hashes+recursive member sets unchanged; všech33own
+XMLPASS. Collection-only2471mergedparent+33own=2504 ID, všechny vacceptedfull:
+2494PASS10stejných optionalSKIP. Není to nový full na tomto head.
+
+Všech298present src/test/worker/fixture/CI files porovnáno:297exact2df, jediný rozdíl
+main cli.py správně bez budoucího T0195line dispatch. 27worker a9preparedfixture
+source inputs exactReturn079. Žádný actual/full/build/tool/cache mutation. Main245
+immutableepisode prefix+all230oldchild objects zachováno,+1scopedcapture=246; current
+semanticfactkeys beze ztrát. Scoped CLIsemantic/memory/scan/check regenerují graph.
+Viz docs/validation/t017-descendant-proof.json.
+
+Root je PŮVODNÍ AUTOR T017 a nemůže final self-review. Před merge jsou povinné dvě
+nezávislá currentbase/head review (architect +jiný reviewer); Root provádí jen
+integration/merge guard. Autor/integrátor zde approval nevydává. Historické policy
+SOURCE_APPROVE není finalpair approval. Draftpublication po metadatové finalizaci,
+GHCIbilling/cascade optional/unverified; žádný blanket reuseT020/T021.

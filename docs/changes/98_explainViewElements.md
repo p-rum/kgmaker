@@ -90,3 +90,26 @@ Grouped privacy+range corrective coalesced **273PASS0SKIP10actualDESELECTED3.31s
 corrections-green.xml. Obsahuje oba původní public repros, valid typed-field
 positive,4owner/descriptor negatives a4range controls. Žádný nový actual/native/
 full job; required final parent/full/source re-review dál pending.
+
+## Current4e4fcd6 refresh a accepted-descendant evidence
+
+Vlastní source29921886481539771089ca9e8ef780269621c809 po Root nezávislém privacy/range
+re-review zůstává byte-exact accepted2df55ff8d15d790808f6a81072144eeb408a05b8.
+Refresh na main4e4fcd65e94b855ac4aee2e76fa4a25084940da7 zachovává T014/T016/T017/
+Common/T012/T013/W07/process moduly a current CI. Accepted ONEfull2df2587PASS10
+allowedSKIP, XML2042.878s/runner2048.01s;4897hashes+recursive member sets unchanged.
+Všech59own XMLPASS včetně původních privacy/range negatives a file-backed controls.
+
+Collection-only currentmain2504+59own=2563 přesných ID,2553PASS10stejných optional
+SKIP na acceptedfull. Žádný nový actual/full/build/tool/cache mutation; aktivníW03
+full a frozen globaltools se nemění. Všech300present src/test/worker/fixture/CI
+files porovnáno:299exact2df a jenmain cli.py bez pozdějšího T0195line dispatch.
+27worker a9preparedfixture source inputs exactReturn079, bezfreshbuildclaim.
+Main246immutableepisode prefix+allold230child objects,+1scopedcapture=247; main
+semanticfacts zachovány. Scoped CLIsemantic/memory/scan/check regenerují graph.
+
+Původní source checkpoint NOT_RUN výše je historie, nikoli current proof. Source
+Root299approval je samostatný; currentbase/head nezávislé review a Root merge nadále
+gate. GHCIbilling/cascade optional/unverified, nePASS. Viz
+docs/validation/t018-descendant-proof.json. Pure explanation defaultNOT_CHECKED
+se nikdy nevydává za actualcurrent source observation. T020/21nejsou vacceptedfull.
