@@ -1340,6 +1340,16 @@ capture revisions are separate, and original IDs survive workspace qualification
 Public context privacy and freshness checks remain mandatory. This is static
 provenance, without delivery, broker, activation or data availability evidence.
 
+### T003-S07-W05 — bounded retry/DLT policy draft
+
+`kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
+Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
+positive path; unsupported3.2.0, custom handler, expressions, source shadows and
+ambiguous DLT associations remain UNKNOWN. Flow policy boundaries are separate
+from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
+[truthful run history](changes/87_captureKafkaRetryDlt.md). The current-parent coalesced run passed470cases without SKIP; the required full
+is NOT_RUN pending the final frozen integration gate. Independent source+focus closure is
+recorded, but final ready review is pending; Kotlin K2 annotation gaps remain.
 
 ## Remote service/contract declarations (W07 draft)
 
@@ -1347,5 +1357,4 @@ See [remote mapping contract](remote-contract-mapping.md)
 and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
-runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
-matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
+runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.

@@ -799,25 +799,14 @@ repository's schema without becoming service-owned code or compiler candidates.
 `t008-service-inventory-2` retains the original full graph for downstream views;
 unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
 its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
+### Kafka retry/DLT declarations — T003-S07-W05 draft
 
-
-## T003-S07-W07 — explicit remote mapping draft
-
-See [remote mapping contract](docs/remote-contract-mapping.md)
-and [note91](docs/changes/91_planRemoteContractMapping.md).
-Explicit capture and pure resolution preserve service/context/contract/release
-authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
-runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
-matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
-
-### T014 static remote topology (draft)
-
-`kgmaker.remote_interfaces.project_remote_interfaces(workspace, graph, interfaces,
-captured=captured, scope="production")` projects the explicit W07 capture handoff
-into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
-HTTP/Kafka declaration edges are not JVM calls or observed execution. See
-[contract and limits](docs/remote-interfaces.md). Dependency actual/full and final
-source review remain pending; no CLI or remote execution is provided.
+The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
+declarations as separate async boundaries, without executing listeners or brokers.
+Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
+Focus470 PASS / 0 SKIP; strict full on647:1908 PASS / 10 SKIP; current-parent pure23 PASS.
+The feature is draft and is not ready for merge.
 
 ### Schema compatibility (T003-S06-W08 bounded scope)
 
@@ -828,22 +817,83 @@ legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](
 W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.
 
-### T016 common-capture topology (draft)
+### Pure process label packets (T030)
+
+`kgmaker.process_semantics.prepare_process_label_packet(process_view,
+token_budget=8000, char_budget=32000)` returns a content-bound packet and empty
+PROPOSED candidate template for existing targets. It preserves selected identity,
+provenance and uncertainty, reports complete serialized cost/mandatory overflow,
+and hash-omits raw labels, documentation and proof/configuration prose. It performs
+no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
+T031 adds explicit validation below; approval/apply and T034 CLI remain separate work.
+
+## T003-S07-W07 — explicit remote mapping draft
+
+See [remote mapping contract](docs/remote-contract-mapping.md)
+and [note91](docs/changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
+
+### Read-only process annotation validation (T031)
+
+`kgmaker.process_semantics.validate_process_annotations(process_view, packet,
+candidate, documents=(), conflicts=())` rederives the complete current T030 packet
+before checking proposed labels, descriptions, references and grouping. Invalid
+input returns fixed-code diagnostics; valid proposals remain PROPOSED and
+PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
+See [the Python contract](docs/process-annotations.md). T034 CLI remains pending.
+
+### Explicit local process review (T032 candidate)
+
+`kgmaker.process_store` adds prepare/persist/read APIs for bounded immutable semantic
+review history and explicit APPROVE/REJECT, with cooperating POSIX process/thread
+CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
+See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
+
+### Explicit process catalog (T033 candidate)
+
+`kgmaker.process_catalog.catalog_business_processes` combines explicit current and
+historical ProcessViews with a supplied T024 inventory and validated T032 reads.
+It preserves process identities/revisions and separate per-member review states;
+labels/shared helpers never deduplicate operations. Optional one-hop aliases retain
+all original members without approval/availability borrowing. Missing triggers
+remain inactive historical within the partial current selection. See
+[Python contract and limitations](docs/process-catalog.md); source review/full
+validation remain pending. No discovery, archive reconstruction, store write or CLI.
+
+
+### T014 static remote topology
+
+`kgmaker.remote_interfaces.project_remote_interfaces(workspace, graph, interfaces,
+captured=captured, scope="production")` projects the explicit W07 capture handoff
+into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
+HTTP/Kafka declaration edges are not JVM calls or observed execution. See
+[contract and limits](docs/remote-interfaces.md). Source/test bytes are exact accepted
+2df55; current509 base plus24 own cases derives2425 cases (2415 PASS/10 allowed
+SKIP on that accepted descendant). Final exact-pair review remains pending; no new
+full, CLI or remote execution is claimed.
+
+### T016 common-capture topology
 
 `kgmaker.service_topology.capture_topology_inputs(manifest, scope="production")`
 uses one explicit closure for T015/W07/T014, then rereads it.
 `aggregate_service_topology(captured)` is a pure ViewDocument projection with
 reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
 No JVM/process/runtime or payload claim is added. See
-[handoff and limits](docs/service-topology.md); final dependency refresh/full/review
-remain pending.
+[handoff and limits](docs/service-topology.md). Owned source/tests match accepted
+2df; currentec6a127 base2425+46own IDs maps to2461PASS10allowedSKIP on that one
+descendant full. No new full/build; exact-pair independent review remains pending.
 
-### T017 bounded topology filtering (source checkpoint)
+### T017 bounded topology filtering
 
 `kgmaker.topology_filter.filter_topology(topology, focus_service="service:checkout",
 direction="outgoing", max_hops=2, max_nodes=25)` filters a captured T016 view
 without I/O. Its `{document, filtering}` result preserves original edges and
 uncertainty and reports complete known omission IDs plus separate frontier metadata.
 Kafka channels count as real hops; omitted nodes never create shortcut edges.
-See [API and limits](docs/topology-filter.md). Dependency integration, required full
-and independent source/final review remain pending; this is not a new CLI command.
+See [API and limits](docs/topology-filter.md). Current130720f2471+33own IDs maps
+to2494PASS10allowedSKIP on accepted2df, not a new full. Root is original author;
+architect plus another independent reviewer must approve the final pair. No CLI.

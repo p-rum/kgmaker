@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "base": "2c7b38ea2dc7b5ad08009eefa276c4dc41a5b1a9",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE actual strict combined descendant, not standalone T032 parent run",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.93,
+    "all2597results": true,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_inventories": 5
+  },
+  "wholefiles_exact_actual_sha256": {
+    "src/kgmaker/process_store.py": "b9eba7d3e9651f6eaf5d6750511436773de1fd18d58097edda6b1f3ab20092c0",
+    "tests/test_t032_persist_process_review.py": "64b127e201abb883340eb92e05b500a9305c2d313407a2db489d935ac212ace1",
+    "src/kgmaker/process_semantics.py": "4e9646dc4a392e9bab46e12f09521f3e28916caeeb8ad883a19bfdba21ef2f0e"
+  },
+  "current_T031_process_semantics_wholefile_unchanged": true,
+  "own36_actual_statuses": {
+    "tests/test_t032_persist_process_review.py::test_public_approve_is_explicit_separate_and_immutable": "PASS",
+    "tests/test_t032_persist_process_review.py::test_public_same_operation_retry_does_not_rewrite": "PASS",
+    "tests/test_t032_persist_process_review.py::test_public_stale_cas_cannot_overwrite": "PASS",
+    "tests/test_t032_persist_process_review.py::test_public_cancel_before_publication_preserves_empty_semantic_store": "PASS",
+    "tests/test_t032_persist_process_review.py::test_public_changed_explicit_baseline_needs_revalidation": "PASS",
+    "tests/test_t032_persist_process_review.py::test_public_reject_records_decision_without_active_labels": "PASS",
+    "tests/test_t032_persist_process_review.py::test_real_processes_cas_exactly_one_publishes": "PASS",
+    "tests/test_t032_persist_process_review.py::test_real_threads_cas_exactly_one_publishes": "PASS",
+    "tests/test_t032_persist_process_review.py::test_historical_idempotent_retry_never_rewinds_head": "PASS",
+    "tests/test_t032_persist_process_review.py::test_operation_id_reuse_with_different_action_is_conflict": "PASS",
+    "tests/test_t032_persist_process_review.py::test_approval_cannot_acknowledge_conflicts_but_reject_can_record[proposal]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_approval_cannot_acknowledge_conflicts_but_reject_can_record[document]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_documentary_citation_is_separate_not_fake_technical_provenance": "PASS",
+    "tests/test_t032_persist_process_review.py::test_publication_failure_is_old_or_complete_new_with_honest_status[write]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_publication_failure_is_old_or_complete_new_with_honest_status[replace]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_publication_failure_is_old_or_complete_new_with_honest_status[directory_fsync]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_cancellation_after_temp_write_cleans_temp_and_retains_previous": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[duplicate]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[unknown]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[head]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[number]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[huge]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_corrupt_store_generic_failclosed_without_rewrite[secret_key]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_unsafe_explicit_metadata_never_echoes_or_publishes[reviewer-//alice:PRIVATE_CREDENTIAL@example.org/path]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_unsafe_explicit_metadata_never_echoes_or_publishes[operation_id-Basic UFJJVkFURQ==]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_unsafe_explicit_metadata_never_echoes_or_publishes[expected_payload_hash-PRIVATE_TOKEN]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_no_subprocess_network_or_other_apply_and_no_input_mutation": "PASS",
+    "tests/test_t032_persist_process_review.py::test_symlink_store_refused_without_touching_target": "PASS",
+    "tests/test_t032_persist_process_review.py::test_versioned_cap_hard_fails_without_pruning_or_rewrite[history]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_versioned_cap_hard_fails_without_pruning_or_rewrite[bytes]": "PASS",
+    "tests/test_t032_persist_process_review.py::test_unsupported_platform_controlled_before_store_creation": "PASS",
+    "tests/test_t032_persist_process_review.py::test_cancel_racing_after_replace_returns_committed_not_false_rollback": "PASS",
+    "tests/test_t032_persist_process_review.py::test_valid_unicode_space_identity_and_local_reviewer_preserved": "PASS",
+    "tests/test_t032_persist_process_review.py::test_invalid_secret_key_never_appears_in_exception_or_store": "PASS",
+    "tests/test_t032_persist_process_review.py::test_cyclic_and_nonfinite_inputs_fail_before_writes": "PASS",
+    "tests/test_t032_persist_process_review.py::test_same_visible_process_in_other_scope_has_no_approval": "PASS"
+  },
+  "original_parent2102_results": {
+    "PASS": 2092,
+    "SKIP": 10
+  },
+  "currentmain2328_plus36_source_ID_union2364": {
+    "PASS": 2354,
+    "SKIP": 10
+  },
+  "union_not_new_test_collection_or_run": true,
+  "required_sorted_ids_sha256": "456cb4573b9d678d529e162cb75f058a5a4cfa1c2c34b99371569ad170c478cf",
+  "full_receipt_SHA256": {
+    "full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "parent-result-classification.json": "26337d6de8ef19e4e13744443034c89b3aab2bd94fc4e22cbe7b57fcc949cefc"
+  },
+  "scope": "POSIX cooperating process+thread CAS; separate bounded semantic review envelope; local declaration identity not cryptographic auth/technical evidence",
+  "limits": "Windows write UNSUPPORTED; no hostile same-privilege filesystem race guarantee;128entry/2MiB hard cap/no prune; atomic visibility distinct from durability; postreplace INDETERMINATE recover byoperation ID",
+  "history": "absentAPI RED6FAIL and intermediate fixture failures retained; oldcapacity0 and firstcombinedsetupfailure not relabelled",
+  "remaining": "independent exactpair review/PRready/Rootmerge; no T034CLI or technical apply",
+  "GHCI": "optional/unverified"
+}

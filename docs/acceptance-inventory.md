@@ -729,26 +729,6 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
-
-## T012 — Kafka interface catalogue
-
-AC01 two realms, AC02 distinct consumer groups, AC03 NewTopic/config-only vs
-canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tuples,
-regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
-AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
-Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.
-
-## T013 — explicit versioned contract attachments (draft stack)
-
-AC01 content revision/stable logical interface, AC02 same DTO name is not payload
-compatibility, AC03 generated origin survives stale contract SHA, AC04 bounded
-immutable/offline/error paths and AC05 scope/context/ambiguous/external schema
-boundaries are in `tests/test_t013_attach_interface_contracts.py`; captured actual
-Kafka revisions are in `tests/test_t013_captured_kafka_contracts.py` (pending run).
-AC06 [change85](changes/85_attachInterfaceContracts.md) records exact outcomes.
-Full/review/current dependency integration pending, runtime transport NOT_RUN.
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
@@ -764,34 +744,150 @@ source/compiler pins, original strict foreign paths and immutable full inputs.
 The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
 (9actual deselected). A separate pure replay of the actual current-parent Kafka
 capture retained2CURRENT compiler contexts across5projections with no process,
-network or input/store mutation. Final full and independent source closure remain
-pending; this is not T016 or runtime/data availability acceptance.
+network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
+## T003-S07-W05 — retry/DLT policy draft
 
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
+
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+T012-AC01–AC05 map to `tests/test_t012_catalog_kafka_interfaces.py`: separate realms
+and consumer groups, canonical send versus config-only/NewTopic, immutable public
+and private proof inputs, exact qualified Node/source/edge tuple guards, selected
+and historical contexts, regex and Kotlin K2 annotation UNKNOWN. All105 own IDs
+PASS in combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selection
+10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
+preserved failures/limits are in note81. Main/Common dependencies merged; exact
+finalpair review/merge separate. No standalone parent full or transport observation.
+
+
+## T013 — explicit versioned contract attachments (verified bounded scope)
+
+T013-AC01 content revisions/stable original IDs, AC02 no DTO-name compatibility,
+AC03 generated-origin binding preserved as stale after contract changes, AC04
+bounded read-only/immutable capture/attachment and AC05 selected scope/context,
+ambiguous operations and external/malformed pointers map to
+`tests/test_t013_attach_interface_contracts.py` (43 PASS) and actual K1/K2 captured
+Kafka revisions `tests/test_t013_captured_kafka_contracts.py` (2 PASS). All45 own IDs
+PASS in ONE combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116 parent IDs in that XML are2106PASS10SKIP, not a standalone parent full.
+Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retained.
+AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
+payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
+T012 dependency merged; independent finalpair review/ready/merge separate.
+
+## T030 — pure process-label packet (candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
+
+No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
+standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
+PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
+[bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
 
 ## T003-S07-W07 — explicit remote mapping draft
 
 | AC | Current evidence | Pending |
 |---|---|---|
-| AC01 | public trusted protocol exact/paired mappings and transport distinction | real current HTTP/Kafka positives after source closure |
-| AC02 | absent field, strict version/containers, existing workspace regressions | final full/legacy combined matrix |
-| AC03 | realm/operation/hash/release/pair/ambiguity/capture tamper/privacy/no-I/O/budget tests | actual grouped negative matrix |
-| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md) | independent source review + actual/full |
+| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Final current-parent pair |
+| AC02 | Strict optional manifest/capture version, existing workspace regressions; all1973 parent IDs covered in combined2df full | Exact refreshed composition review |
+| AC03 | Actual/public realm/operation/hash/release/ambiguity/privacy/no-I/O/transport/budget negatives;334 cohort PASS | No runtime/availability proof claimed |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review |
 
-Current118pure/upstreamPASS,8actualDESELECTED; initial actual2 expectedRED on
-missing API after successful native fixture is not current positive acceptance.
+The full ran on combined descendant2df55ff8, not standalone W07. Historical
+failures and partial runs remain separately attributed in note91.
 
-## T014 — source checkpoint, readiness pending
+## T031 — read-only annotation validation (final review candidate)
+
+| AC | Concrete public proof | Actual result |
+|---|---|---|
+| AC01 | Self-rehashed allowlist, stale current-process/docs/context/budgets rejection | PASS |
+| AC02 | Czech group/outcome proposals, unchanged technical subtree and fingerprints | PASS |
+| AC03 | All overlapping-field and captured documentary conflicts retained for review | PASS |
+| AC04 | NoIO/immutability/error privacy/no partial proposals/bounded structures | PASS |
+| AC05 | Forged refs/status/technical fields rejected; unsupported coverage unchanged | PASS |
+| AC06 | SpecRev2/API/docs/note92 + bounded actual proof | Final exactpair review/PR pending |
+
+ALL76owncases PASS in ONEactual descendant2df55 full2587PASS10allowedSKIP, not
+standaloneT031. Original2066parentIDs2056PASS10SKIP. Currentmain5ffe2252 +own76
+source/IDunion2328 gives2318PASS10sameSKIP fromthatXML; no new test/collection.
+Whole module/testfile exactactual; T03032AST/35globals prefix+6disjointbindings.
+See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unverified.
+
+Explicit stack T030070. Its47tests and complete original module AST/byte prefix
+are unchanged; full proof is pending, not inferred from these pure results.
+
+## T032 — explicit local semantic review (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same operation/no rewrite; historical retry cannot rewind head | PASS |
+| AC02 | Real processes+threads CAS; stale/different operation conflict | PASS |
+| AC03 | Changed explicit baseline/capture revalidation; scope isolation | PASS |
+| AC04 | Pre/postpublication failure/cancel; unchanged inputs and lastvalidJSON | PASS |
+| AC05 | Documentary namespace; conflict blocks; safe error/bounds/unsupported paths | PASS |
+| AC06 | Spec/API/docs/note94 + actual descendant proof | Final exactpairreview/PRpending |
+
+All36owncases PASS in ONEactual2df55 full2587PASS10allowedSKIP; whole module/testfile
+and currentT031 dependency exactactual. Original2102parent2092PASS10SKIP; current
+2328main+36union2364=2354PASS10sameSKIP. Derived source/IDunion, not newexecution
+orcollection. See [proof](validation/t032-descendant-proof.json). GHCIoptional/unverified.
+
+Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherited
+pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
+The separately frozen T030/T031 full is not evidence of T032 full validation.
+
+## T033 — read-only process catalog (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same label distinct trigger identity; explicit multiple triggers | PASS |
+| AC02 | Candidate never approved; alias preserves every member review/label state | PASS |
+| AC03 | Missing/stale/context trigger remains inactive historical, partial absence qualified | PASS |
+| AC04 | No writes/network/process execution; immutable valid/invalid snapshots/store | PASS |
+| AC05 | Scope/context/collision/alias/caps/privacy negatives; outcomes/owner/uncertainty retained | PASS |
+| AC06 | SpecRev2/API/docs/note96 + actual proof | Finalexactpairreview/PRpending |
+
+All37owncases XMLPASS in ONEactual2df55 full2587PASS10allowedSKIP; wholemodule/
+testfile+5processdependencies exactactual. Original2139parent2129PASS10SKIP;
+currentmain2364+37source/IDunion2401=2391PASS10sameSKIP. No new run/collection.
+See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
+
+
+## T014 — current-parent descendant-result transfer
 
 - AC01–03: public hand-labelled HTTP/Kafka mapping, same URL/no mapping, wrong
   release/hash/pointer, ambiguous/incomplete candidates and original refs.
 - AC04–05: input equality, changed capture/selection/graph/interface, no-I/O,
   credential IDs, hard bounds, source-proof polarity and UNKNOWN capture freshness.
-- AC06: pure tests/documentation recorded in note93; actual capture reprojection,
-  dependency full/current-main integration and independent source review PENDING.
+- AC06: Root SOURCE_APPROVE09d plus accepted2df full2587PASS10allowedSKIP; owned
+  source/tests exact, all24own cases XMLPASS. Current509+24own union2425 maps to
+  2415PASS10sameSKIP on that accepted descendant; no new run. Exact-pair independent
+  review/Root merge remain pending. See note93 and validation/t014-descendant-proof.json.
 
 Hand-labelled protocol positives are not compiler/native acceptance proof.
 
-## T016 source checkpoint — final validation pending
+## T016 — current-parent descendant-result transfer
 
 - AC01: public HTTP origin interface/mapping/release/operation/edge expansions.
 - AC02: Kafka publishes/consumes through realm/topic channels, distinct groups.
@@ -800,10 +896,12 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   malformed/version/hash/selection and credential negative cases.
 - AC05: separate resource polarity, UNKNOWN/truncated coverage, foreign scope,
   unresolved owner boundaries and independent upstream selection/baseline forms.
-- AC06: note95 and public pure receipts; actual dependency/full/current-main and
-  independent exact-source review PENDING. No native build or heavy queue.
+- AC06: Root SOURCE_APPROVE806 plus accepted2df source/test and all46own XMLPASS.
+  Currentec6a1272425+46own union2471 is2461PASS10same optionalSKIP on the one
+  accepted2587PASS10SKIP descendant; collection-only, no new full/build. Independent
+  current exact-pair review pending. See note95/validation/t016-descendant-proof.json.
 
-## T017 source checkpoint — readiness pending
+## T017 — current-parent descendant-result transfer
 
 - AC01: shuffled star input/selector sets, directions, cycle and timestamp controls
   in `tests/test_t017_filter_topology_scope.py` prove stable selection and fingerprints.
@@ -814,6 +912,8 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   credential references and Unicode identity controls.
 - AC05: full cross-context tuples, original context selection/baseline, AMBIGUOUS,
   STALE and contradicting/unknown provenance buckets remain unchanged.
-- AC06: note97/capability/API examples, 33 own cases; coalesced T017/T016/T014/View/T009
-  149 PASS, no worker/build/full. Dependency refresh, required full, semantic/memory
-  finalization and independent source/final review remain PENDING.
+- AC06: note97 preserves historical149pure/source evidence. All33own cases PASS
+  on accepted2df, source/tests exact. Current130720f2471+33own=2504 IDs maps
+  2494PASS10same optionalSKIP, collection-only/no new full/build. Root is original
+  author; architect plus another independent final-pair approval mandatory.
+  See validation/t017-descendant-proof.json.
