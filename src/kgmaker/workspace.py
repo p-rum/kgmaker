@@ -71,6 +71,17 @@ def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+
+def _qualified_node(repo: str, node):
+    """The exact public Node projection shared by snapshots and validation."""
+    metadata=node.metadata
+    if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
+    elif (metadata or {}).get('return_mapping_version')==1:metadata=_qualified_symbol(repo,metadata)
+    elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
+    elif node.kind=='kafka_retry_policy':metadata=_qualified_retry_metadata(repo,metadata or {})
+    return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
+
+
 def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False) -> dict:
     if redact_kafka_properties:
         from .kafka_bindings import project_captured_context
@@ -259,7 +270,7 @@ def load_workspace(path: Path) -> dict:
             or not isinstance(data.get('repositories'), list)):
         raise AnalysisError('Invalid workspace manifest version/identity/repositories')
     if set(data) - {'schema_version', 'workspace_id', 'repositories', 'services', 'release_mapping',
-                    'service_ownership', 'kafka_bindings'}:
+                    'service_ownership', 'kafka_bindings', 'remote_mapping'}:
         raise AnalysisError('Unknown workspace fields')
     roots, ids = [], set()
     for repo in data['repositories']:
@@ -311,6 +322,8 @@ def load_workspace(path: Path) -> dict:
                 raise AnalysisError('HTTP prefix must be empty or start with /')
     _validate_service_ownership(data.get('service_ownership'), data['repositories'], service_ids)
     _validate_release_mapping(data, ids)
+    from .remote_mapping import validate_remote_declarations
+    validate_remote_declarations(data)
     from .kafka_bindings import validate as validate_kafka_bindings
     validate_kafka_bindings(data)
     data['_manifest_path'] = str(path)
@@ -679,12 +692,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         for path, item in inventory.items():
             sources[source_key(identity, path)] = {**item, 'repo_id': identity, 'path': path}
         exclusions += [{'repo_id': identity, **item} for item in excluded]
-        nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
-                          metadata=_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition"
-                          else _qualified_symbol(identity, n.metadata) if (n.metadata or {}).get("return_mapping_version") == 1
-                          else _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"}
-                          else _qualified_retry_metadata(identity, n.metadata or {}) if n.kind == "kafka_retry_policy"
-                          else n.metadata) for n in local.nodes]
+        nodes += [_qualified_node(identity,n) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),

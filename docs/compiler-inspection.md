@@ -1350,3 +1350,11 @@ from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
 [truthful run history](changes/87_captureKafkaRetryDlt.md). The current-parent coalesced run passed470cases without SKIP; the required full
 is NOT_RUN pending the final frozen integration gate. Independent source+focus closure is
 recorded, but final ready review is pending; Kotlin K2 annotation gaps remain.
+
+## Remote service/contract declarations (W07 draft)
+
+See [remote mapping contract](remote-contract-mapping.md)
+and [note91](changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.

@@ -63,5 +63,14 @@ network, model, compiler/build, unrelated feature apply or implicit discovery ru
 
 Current evidence: initial absent API6FAIL0.50s; current36feature tests PASS1.93s,
 including real process/thread CAS. Coalesced pure regression269PASS94SKIP8.74s;
-skipped compiler cases were not executed. Independent source review/full remain
-pending; T030/T031's separately frozen full is not a T032 full result.
+skipped compiler cases were not executed. Those pure checks were historical; completed descendant validation follows below.
+
+## Completed descendant validation
+
+Base2c7b38 contains merged T030/T031. Whole store module, testfile and current
+process_semantics are exactactual2df55. All36own cases XMLPASS in ONEcompleted
+combined strict descendant full2587PASS10allowedoptionalSKIP2042.93sJUnit, with
+4897hashes/five recursive member sets unchanged. Original2102parentIDs2092PASS10SKIP;
+currentmain2328+36 source/IDunion2364 classified2354PASS10sameSKIP. This is not a
+standalone parent run or a new collection. See [proof](validation/t032-descendant-proof.json).
+Final exactpairreview/merge remains separate; no new tests/build/fullrepeat.
