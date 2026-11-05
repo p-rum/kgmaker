@@ -50,3 +50,8 @@ T019 register/early dispatch. 27worker inputs +9preparedfixture source exactRetu
 scoped semantic/memory capture a CLI graph regenerace. Finální base/head nezávislé
 review a Root merge zůstává gate. Proof: docs/validation/t014-descendant-proof.json.
 GH CI optional/unverified. T020/T021 nejsou v acceptedfull a nemají blanket reuse.
+
+Metadata finalizace je source-only: semantic scoped apply/validate, memory capture
+a scan/check probíhají přes CLI. Main243prefix +1 vlastní capture=244, původní
+semantic facts a immutable objecty se zachovávají. Tyto kontroly nejsou test/full
+repeat; výše uvedený PASS patří výhradně actual2df descendant.

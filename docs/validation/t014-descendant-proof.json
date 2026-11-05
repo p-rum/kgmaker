@@ -149,7 +149,8 @@
   "preserved_history": {
     "current_main_episode_prefix": 243,
     "all_old_child_objects_preserved": true,
-    "new_capture": "pending scoped memory CLI"
+    "new_capture": "ONE scoped T014 capture; CLI generated",
+    "expected_total_episodes": 244
   },
   "remaining": [
     "Independent current exact base/head source/pair review",
