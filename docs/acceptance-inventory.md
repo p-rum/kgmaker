@@ -798,3 +798,11 @@ The separately frozen T030/T031 full is not evidence of T032 full validation.
 
 Own37PASS1.62s, coalesced306PASS94SKIP9.48s. Compiler SKIPs are not native PASS.
 Explicit historical snapshots are required; partial inventory absence is qualified.
+
+### Current-parent T030–T033 bounded proof
+
+Main3e5ef0f / sourceT033708:315PASS94SKIP6.19s, source/own test/native exact oldheads.
+All parent collection ledgers1990/2066/2102/2139 are nested, no missing case; old
+1758/1762/1838 ledgers retained as subsets. These are collection/source/pure proofs,
+not a full result. Originala359 capacity gate executed0tests. Current exact-pair
+review, dependency/full proof and publication stay PENDING.

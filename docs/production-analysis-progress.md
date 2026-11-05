@@ -849,3 +849,15 @@ triggers are NOT_IN_CURRENT_INVENTORY, inactive within the PARTIAL/UNKNOWN inven
 selection, not universally proven deleted. Raw technical prose is omitted/hashbound.
 37ownPASS1.62s; combined306PASS94SKIP9.48s. No current full/compiler evidence; source
 review/dependency/current-main closure pending. No archive/index/discovery/writes/CLI.
+
+### T030–T033 current-parent integration checkpoint
+
+Authoritative main3e5ef0f is composed into the explicit four-task stack (source
+T033708685e). All original process APIs/test bytes and27workers are unchanged;
+main230episode prefix and every old own capture are retained. One ALL-suite
+collection per refreshed parent1990⊆2066⊆2102⊆2139 (exact+76/+36/+37), not execution.
+Current bounded pure315PASS94SKIP6.19s. T0323652/T0333b24 independent SOURCE APPROVE
+does not imply full/readiness. OldT031a359 full stopped before any test at5GiB
+capacity gate;0executed, receipt retained, no retry. No current full/build/tool/M2
+write or publication. Exact current composition and future combined-full closure
+remain coordinator-owned PENDING.
