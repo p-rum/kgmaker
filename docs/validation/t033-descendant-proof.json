@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "base": "7e6c838342ba9e59609d420f3387a05625290fcf",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE completed strict combined descendant; not standalone T033 parent full",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.93,
+    "all2597results": true,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_inventories": 5
+  },
+  "wholefiles_exact_actual_sha256": {
+    "src/kgmaker/process_catalog.py": "587dd30d5bad630dc54c2ad82491d714b471c12c27cc2c057cfaa268f4fba31d",
+    "tests/test_t033_catalog_business_processes.py": "1b3b738a0020544b25b126a6a959b3af9199f4c383856c2f6df1f58ffaf95866",
+    "src/kgmaker/process_semantics.py": "4e9646dc4a392e9bab46e12f09521f3e28916caeeb8ad883a19bfdba21ef2f0e",
+    "src/kgmaker/process_store.py": "b9eba7d3e9651f6eaf5d6750511436773de1fd18d58097edda6b1f3ab20092c0",
+    "src/kgmaker/business_process.py": "5d3cf41b1d6dffdc8bac63ad2e9c4507e08c81ec55b412179c2fef404babafb7",
+    "src/kgmaker/process_model.py": "242da79ec34e82c2f7a168c8c2d3b4d5078daf9dff896eb2717bea1f2e489165",
+    "src/kgmaker/process_triggers.py": "d6d21b787fa2519d43d78a8a79dcfe758c437dcfa2fd4b0e72b9ae043b3eeb16"
+  },
+  "all5_current_process_dependencies_unchanged": true,
+  "own37_actual_statuses": {
+    "tests/test_t033_catalog_business_processes.py::test_same_business_label_distinct_trigger_identity_stays_two": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_candidate_never_becomes_approved_or_runtime_available": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_removed_trigger_keeps_inactive_historical_record_qualified_by_inventory": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_explicit_alias_keeps_original_members_and_does_not_borrow_approval": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_stale_review_remains_readable_but_not_current_approval": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_ambiguous_current_identity_rejected_without_any_write": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_exact_duplicates_deduplicate_and_selection_survives_order_and_revision": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_one_process_declares_multiple_exact_triggers_without_implicit_merge": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_some_missing_triggers_keep_per_reference_status_and_no_active_labels": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_unknown_self_chain_cycle_and_multiple_winners_rejected[aliases0]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_unknown_self_chain_cycle_and_multiple_winners_rejected[aliases1]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_unknown_self_chain_cycle_and_multiple_winners_rejected[aliases2]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_unknown_self_chain_cycle_and_multiple_winners_rejected[aliases3]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_unknown_self_chain_cycle_and_multiple_winners_rejected[aliases4]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_aliases_cannot_borrow_context_selection_or_cross_scope": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_alias_keeps_all_explicit_revisions_without_arbitrary_payload_winner": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_conflicting_same_revision_in_current_history_rejected": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_two_different_current_revisions_are_not_chosen_by_max_or_input_order": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_plain_and_typed_inventory_process_snapshots_are_equivalent": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_stale_foreign_context_or_scope_trigger_never_borrows_active_review[stale]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_stale_foreign_context_or_scope_trigger_never_borrows_active_review[context]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_stale_foreign_context_or_scope_trigger_never_borrows_active_review[scope]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_technical_coverage_outcomes_owner_and_uncertainty_are_not_reviewed_into_runtime": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_raw_technical_prose_and_config_never_exported_but_bound": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_secret_malformed_keys_are_not_reflected_in_errors[process]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_secret_malformed_keys_are_not_reflected_in_errors[inventory]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_secret_malformed_keys_are_not_reflected_in_errors[alias]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_secret_malformed_keys_are_not_reflected_in_errors[review_input]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_forged_approved_bundle_is_not_an_api_input": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_direct_reader_honors_doc_bindings_and_changed_capture_requires_revalidation": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_empty_store_catalog_performs_no_writes_process_execution_or_network": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_resource_caps_fail_before_implicit_store_changes[snapshots]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_resource_caps_fail_before_implicit_store_changes[output]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_resource_caps_fail_before_implicit_store_changes[cyclic]": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_boundary_and_truncation_survive_without_raw_diagnostic_prose": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_duplicate_inventory_trigger_ids_rejected_instead_of_arbitrary_last": "PASS",
+    "tests/test_t033_catalog_business_processes.py::test_valid_unicode_space_process_identity_keeps_original_and_stable_selection": "PASS"
+  },
+  "original_parent2139_results": {
+    "PASS": 2129,
+    "SKIP": 10
+  },
+  "current2364main_plus37_source_ID_union2401": {
+    "PASS": 2391,
+    "SKIP": 10
+  },
+  "union_not_new_test_collection_or_run": true,
+  "required_sorted_IDs_sha256": "b812726cb09ce378a32a252863c5a3ec7d72e47f8c9cf94455bdf7382c3f8081",
+  "receipt_SHA256": {
+    "full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "parent-result-classification.json": "26337d6de8ef19e4e13744443034c89b3aab2bd94fc4e22cbe7b57fcc949cefc"
+  },
+  "scope": "Explicit current/historical ProcessViews and selected T024 inventory; direct T032 reads, no forged review bundle, archive/discovery/store write or label identity",
+  "limits": "Partial absence NOT_IN_CURRENT_INVENTORY; one-hop same-context aliases preserve all members/revisions/review states; no approval/availability borrowing; hard resource caps; opaque ID privacy limits",
+  "preserved_history": "initialRED6FAIL; typed-input compatibility+fixture failure receipts; priorcapacity0 and firstcombinedsetupfailure retained separately",
+  "remaining": "independent exactpairreview/PRready/Rootmerge; no T034CLI",
+  "GHCI": "optional/unverified"
+}

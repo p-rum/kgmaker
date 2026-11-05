@@ -264,7 +264,7 @@ def _declare_real_pair(workspace,graph,coverage,transport,*,allow_unresolved_sou
             and n['attributes'].get('topics')==source['attributes']['topics'] and n['attributes'].get('contract_bindings'))
     else:
         source=next(n for n in nodes if n['attributes'].get('direction')=='CONSUMER'
-            and n['attributes'].get('service_id')=='checkout'
+            and (n['attributes'].get('service_id') or n['owner_id'].removeprefix('service:'))=='checkout'
             and (n['attributes'].get('route_expression')=='/orders' or allow_unresolved_source))
         target=next(n for n in nodes if n['attributes'].get('direction')=='PROVIDED'
             and n['attributes'].get('service_id')=='orders'
@@ -610,3 +610,98 @@ def test_non_json_capture_keys_have_fixed_error_not_raw_digest_exception():
     specimen=trusted_protocol_specimen();specimen[3]['contract_capture']['files'][('malformed','PRIVATE_KEY_SENTINEL')]={}
     with pytest.raises(ValueError) as raised:solve(specimen)
     assert 'PRIVATE_KEY_SENTINEL' not in str(raised.value)
+
+
+def unknown_kafka_summary_specimen():
+    from kgmaker.architecture_model import ViewNode,ViewEdge
+    specimen=trusted_protocol_specimen('KAFKA')
+    document=next(d for d in specimen[2] if d['rules_version']=='kafka-interfaces-1')
+    for node in list(document['nodes']):
+        node['freshness']='UNKNOWN'
+        owner='service:'+node['attributes']['service_id']
+        document['nodes'].append(ViewNode(owner,'service',owner).to_dict())
+        ref='ev:'+node['id']
+        document['provenance'].append({'id':ref,'evidence_kind':'FRAMEWORK_DERIVED',
+            'freshness':'UNKNOWN','polarity':'SUPPORTING'})
+        document['edges'].append(ViewEdge('decl:'+node['id'],owner,node['id'],'declares_kafka_interface',
+            evidence_refs=(ref,),evidence_kinds=('FRAMEWORK_DERIVED',),supporting_refs=(ref,),
+            resolution_status='UNRESOLVED',freshness='UNKNOWN').to_dict())
+    refresh_handoff(*specimen)
+    return specimen
+
+
+def test_canonical_kafka_unknown_summary_can_bind_without_freshness_upgrade():
+    workspace,graph,docs,captured=specimen=unknown_kafka_summary_specimen()
+    row=solve(specimen)['bindings'][0]
+    assert row['resolution_status']=='RESOLVED'
+    assert row['source_interface_freshness']=='UNKNOWN'
+    assert row['candidates'][0]['source_interface_freshness']=='UNKNOWN'
+    assert row['candidates'][0]['target_interface_freshness']=='UNKNOWN'
+    assert row['runtime_execution']=='NOT_OBSERVED' and row['runtime_availability']=='UNKNOWN'
+
+
+@pytest.mark.parametrize('damage',['source_stale','target_stale','context_stale','weak_code','weak_contract','realm_missing','topic_pattern','group_missing'])
+def test_unknown_kafka_summary_never_overrides_other_authority_guards(damage):
+    workspace,graph,docs,captured=specimen=unknown_kafka_summary_specimen()
+    source=next(n for d in docs for n in d['nodes'] if n['id']=='client')
+    target=next(n for d in docs for n in d['nodes'] if n['id']=='provider')
+    source['freshness']=target['freshness']='UNKNOWN'
+    if damage=='source_stale':source['freshness']='STALE'
+    elif damage=='target_stale':target['freshness']='STALE'
+    elif damage=='context_stale':graph.contexts[1]['freshness']='STALE'
+    elif damage=='weak_code':target['attributes']['code_binding']='UNPROVEN'
+    elif damage=='weak_contract':target['attributes']['contract_bindings'][0]['status']='UNKNOWN'
+    elif damage=='realm_missing':target['attributes']['broker_realm']=None
+    elif damage=='topic_pattern':target['attributes']['topic_pattern']='orders.*'
+    else:target['attributes']['consumer_group']=None
+    refresh_handoff(*specimen)
+    row=solve(specimen)['bindings'][0]
+    assert row['resolution_status']=='UNRESOLVED' and row['candidates']==[]
+
+
+def test_unknown_http_summary_is_not_given_the_kafka_exception():
+    workspace,graph,docs,captured=specimen=trusted_protocol_specimen('HTTP')
+    for document in docs:
+        for node in document['nodes']:node['freshness']='UNKNOWN'
+    refresh_handoff(*specimen)
+    assert solve(specimen)['bindings'][0]['candidates']==[]
+
+
+def test_previous_capture_rule_is_rejected_without_implicit_repair():
+    from kgmaker.analysis_model import digest
+    specimen=trusted_protocol_specimen();captured=specimen[3]
+    captured['rule_version']='remote-contract-mapping-1'
+    captured['capture_id']=digest({k:v for k,v in captured.items() if k!='capture_id'})
+    before=copy.deepcopy(captured)
+    with pytest.raises(ValueError,match='REMOTE_CAPTURE_MISMATCH'):solve(specimen)
+    assert captured==before
+
+
+def test_one_interface_release_cannot_mix_http_and_kafka_transport_groups():
+    from kgmaker.remote_mapping import validate_remote_declarations
+    workspace,*_=trusted_protocol_specimen('HTTP')
+    mixed=copy.deepcopy(workspace['remote_mapping']['mappings'][0]);mixed.update(id='aaa-kafka',transport='KAFKA')
+    workspace['remote_mapping']['mappings'].append(mixed)
+    with pytest.raises(ValueError,match='REMOTE_TRANSPORT_CONFLICT'):validate_remote_declarations(workspace)
+
+
+@pytest.mark.parametrize('damage',['missing','wrong_service','wrong_target','wrong_relation','ambiguous','stale','contradiction','current_unresolved'])
+def test_kafka_unknown_exception_requires_exact_canonical_nonconflicting_declaration(damage):
+    workspace,graph,docs,captured=specimen=unknown_kafka_summary_specimen()
+    document=next(d for d in docs if d['rules_version']=='kafka-interfaces-1')
+    edge=next(e for e in document['edges'] if e['target']=='client')
+    if damage=='missing':document['edges'].remove(edge)
+    elif damage=='wrong_service':edge['source']='service:orders'
+    elif damage=='wrong_target':edge['target']='service:checkout'
+    elif damage=='wrong_relation':edge['relation']='declares_http_interface'
+    elif damage=='ambiguous':edge['resolution_status']='AMBIGUOUS'
+    elif damage=='stale':edge['freshness']='STALE'
+    elif damage=='contradiction':
+        edge['supporting_refs']=[];edge['contradicting_refs']=edge['evidence_refs']
+    else:edge['freshness']='CURRENT'
+    if damage in {'contradiction','current_unresolved'}:
+        with pytest.raises(api().RemoteMappingError,match='REMOTE_INVALID_INTERFACES'):
+            refresh_handoff(*specimen)
+        return
+    refresh_handoff(*specimen)
+    assert solve(specimen)['bindings'][0]['candidates']==[]
