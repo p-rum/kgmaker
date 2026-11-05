@@ -830,3 +830,11 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   filtered ambiguity/omitted alternatives preserved; no new availability proof.
 - AC06: note98 records public RED/pure results; actual saved-capture replay, final
   parent composition, independent review and required full PENDING. No native build.
+
+## T019 source checkpoint — final gates pending
+
+- AC01–AC02: public JSON interfaces/topology/explain; exact full filter envelope, selectors and fixed diagnostics.
+- AC03: missing/corrupt original indexes fail before capture; temporary-file explicit capture leaves source/index bytes unchanged.
+- AC04: invalid JSON, privacy, cancellation, pipe, conflict, bounded output, strict partial and source-status replay controls.
+- AC05: legacy CLI smoke and documentation; coalesced 307 PASS / 10 actual deselected in 5.29s.
+- Current dependency actual replay, independent review, semantic/memory finalization and required full are PENDING.

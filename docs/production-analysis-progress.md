@@ -887,3 +887,13 @@ missing graph/range is unavailable. Separate explicit confined source-status
 capture checks current file hashes without replacing original snapshot fingerprints
 or upgrading remote/context freshness. Public pure/file-backed tests are recorded
 in note98; current dependency integration, source review and full remain pending.
+
+## T019 source checkpoint — architecture JSON adapter
+
+Snapshot-only default wraps existing T014/T016/T017/T018 APIs without reselection.
+Explicit capture-local preflights all original indexes before parser work, never
+publishes indexes/caches; explicit check-source remains separate. Coalesced pure
+CLI/dependency checks: 307 PASS, 10 actual cases deselected, 5.29s. No worker/native
+build or full was run. Current parent refresh, actual saved-capture replay, independent
+source approval and required descendant full remain pending. See note99 and
+[CLI contract](architecture-json-cli.md).

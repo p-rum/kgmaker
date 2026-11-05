@@ -856,3 +856,11 @@ T016/T017 snapshot. Optional `capture_explanation_source_status` separately read
 only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT.
 See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable;
 final source/dependency/full validation is pending.
+
+### T019 architecture JSON CLI (source checkpoint)
+
+`kgmaker architecture topology --capture-snapshot topology-inputs.json` replays
+explicit snapshots and preserves the full filtering envelope. Interfaces and explain
+commands share fixed safe JSON diagnostics; local capture/source checks require
+explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
+Dependency integration, independent source review and required full remain pending.
