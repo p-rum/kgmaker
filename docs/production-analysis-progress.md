@@ -837,3 +837,24 @@ Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
 unknown target and capture-time uncertainty. No resolver duplication, source I/O,
 JVM/process edges or runtime/payload promotion. Public pure validation is recorded
 in note93. T013/W07 actual/full and final integration/review remain pending.
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Same Replay + compiler-owned FIELD/PROPERTY/inherited witnesses support explicit
+scalar type/null/decimal/PK/UK and single FIELD ManyToOne FK tuple/key comparison.
+Current-name rename/drop identity and malformed/version/source/realm negatives
+are covered. W04 PR62 merged; current main c193748 integrated. Strict full
+ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return composition
+67b8341:174PASS/0SKIP248.87s,1487 hashes unchanged. Final pure parent ambiguity
+4PASS/0SKIP0.56s; worker sources/core unchanged by that parent. Final independent
+review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
+constraints/naming/converters/composite FK remain UNKNOWN. No availability,
+deployment/population promotion or whole-milestone completion inferred.
+
+## T010 normalized variant correction (2026-11-03)
+
+Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
+DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
+candidate/provenance sets; exact duplicates and YAML distinct locators retain
+existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
+Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).

@@ -72,7 +72,8 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
             for name, obj in sorted(schema['objects'].items()):
                 lines += ['| ' + ' | '.join(cell(v) for v in (name, obj.get('data_type'), obj.get('nullable'), obj['origin'], obj['last_change'])) + ' |']
             lines += ['', 'Schema diagnostics: ' + cell(schema['diagnostics']), '',
-                      'Mapping diagnostics: ' + cell(schema.get('mapping_diagnostics', [])), '']
+                      'Mapping diagnostics: ' + cell(schema.get('mapping_diagnostics', [])), '',
+                      'Static schema compatibility (no availability/deployment proof): ' + cell(schema.get('compatibility', {})), '']
     for reason in stale:
         lines += [f"- STALE: {cell(reason)}"]
     section(2)
