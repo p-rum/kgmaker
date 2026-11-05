@@ -2,8 +2,8 @@
 
 - Task ID: `T016`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T014](T-014_bind-remote-interfaces.md); [T015](T-015_project-data-resources.md).
@@ -61,3 +61,61 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T016** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize 2 — jeden explicitní capture a pure aggregate
+
+Root schválil brief `/workspace/t016-architecture-brief.md` včetně nezávislého
+architect návrhu B. Explicitní stack T01409d1a93/W075b39 a ověřený main3bef
+(T015/W08) je integrován před capture. Dependency actual/full/final review nejsou
+nahrazeny source approval. Produktové upstream API se kvůli T016 nemění.
+
+`capture_topology_inputs(manifest, *, scope='production', selected_contexts=None)`
+je jediná I/O fáze. load_workspace + snapshot_workspace(persist_cache=False)
+zachytí jeden workspace/graph/source_coverage closure. T015, W07 capture a T014
+obdrží přesně stejné objekty a výběr. W07 canonical_interfaces a captured object
+jdou přímo do T014. Poté load/snapshot closure znovu ověří manifest/source/schema/
+graph/coverage; nestabilní čtení selže, neopravuji původní hash. Žádný inspect/build,
+DB/model ani publikace souboru. Existující migration replay není runtime proof.
+
+Versioned handoff váže workspace ID/raw manifest SHA, společný input binding
+(declarativní workspace, graph, complete coverage, requested selectors/scope),
+actual inventory context_selection, W07 capture ID/selection a oddělené původní
+T014/T015 baseline/content fingerprints plus canonical dokumenty. T014 selection
+musí přesně odpovídat W07.capture.selection; všechny tři W07 canonical interfaces
+musí mít stejné actual inventory selection a T015 musí odpovídat právě jemu.
+Nesrovnávají se neekvivalentní baseline/selection formáty. Envelope digest je
+consistency handoff, nikoli autentizace libovolného koherentního replacementJSON.
+
+`aggregate_service_topology(captured) -> ViewDocument` je pure, bez load/projector/
+snapshot/private proof/FS/network/process/model. Bounds před kopiemi/JSON/modely;
+strict version/schema, safe IDs, exact complete input document fingerprints a
+scope/selection/baseline bindings. Optional očekávaný input ID není live freshness.
+Malformed input má fixed nonsecret diagnostics, všechny inputs zůstávají stejné.
+
+ViewDocument topology agreguje jen existující services/resources a typedremote
+claims, ne DTO/enum/type centralitu. HTTP summary key zahrnuje service pair,
+relation/direction, scope/context a contract/release boundary; expansion zachová
+přesné origin interface/mapping/release/input-edge IDs. Kafka channel ID váže
+workspace+explicit broker realm+exact topic, publish a consume jsou oddělené,
+consumer groups a origin inventories zůstávají oddělené. Unknownrealm/pattern se
+neslévá s reálným channel. Missing/ambiguous ownership či mapping zůstává boundary,
+ne name/URL fallback; AMBIGUOUS/incomplete/truncated se nesmí stát unikátníRESOLVED.
+
+Původní evidence/buckets/scope/context jsou oddělené od mappingdeclarations;
+SOURCE_ONLY nevytváří SYMBOL_RESOLVED/runtime proof. Remote UNKNOWNfreshness a
+CAPTURE_TIME_ONLY zůstávají; runtime/deployment/payload/delivery UNKNOWN či
+NOT_OBSERVED. Celková coverage nepřesáhne upstream. Safe typed summaries/refs,
+žádné raw SQL/schema/config/proof prose. Credential/userinfo requiredID se odmítne,
+nenahradí; Unicode/pathspaces zůstávají. Hard bound selže před vrácením view,
+než aby skryl kandidáty nebo prohlásil neúplný výběr za unikátní.
+
+Public RED a pure matrix: reversible HTTP expansion, Kafka fanout/groups/realms,
+paralleltransport, enum noise bez identity/expansiondelta (inputhash se smí změnit),
+missing/ambiguous/contradicting/stale boundaries; crossworkspace/selection/baseline/
+viewtamper, unknownversion/unsafeIDs/depth/cycle/shared, noI/O pureaggregate a
+input/storeimmutatibility. Capture actualpublicnegative zahrne manifest/source/
+schema změnu mezi fázemi, rozdílnévalidníupstreambaselines positive. Actual W07
+savedcaptures se jenreprojektují po vlastnísource review a jejich dokončení;
+nejde o novýnative run. Heavy/full až po Root source closure. Naturaldescendantfull
+potřebuje ALLparenttestIDs a exactruntime/test/global/native/receipts closure.

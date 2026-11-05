@@ -790,3 +790,15 @@ missing API after successful native fixture is not current positive acceptance.
   dependency full/current-main integration and independent source review PENDING.
 
 Hand-labelled protocol positives are not compiler/native acceptance proof.
+
+## T016 source checkpoint — final validation pending
+
+- AC01: public HTTP origin interface/mapping/release/operation/edge expansions.
+- AC02: Kafka publishes/consumes through realm/topic channels, distinct groups.
+- AC03: graph enum noise changes input binding, not topology identities/expansions.
+- AC04: pure denied I/O, input equality, capture file changes after remote phase,
+  malformed/version/hash/selection and credential negative cases.
+- AC05: separate resource polarity, UNKNOWN/truncated coverage, foreign scope,
+  unresolved owner boundaries and independent upstream selection/baseline forms.
+- AC06: note95 and public pure receipts; actual dependency/full/current-main and
+  independent exact-source review PENDING. No native build or heavy queue.

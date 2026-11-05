@@ -858,3 +858,11 @@ DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
 candidate/provenance sets; exact duplicates and YAML distinct locators retain
 existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
 Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
+
+## T016 draft — explicit common-capture service topology
+
+One explicit snapshot closure composes T015/W07/T014 and verifies it again before
+returning a handoff. Pure aggregation uses catalog services/resources and reversible
+remote origin inventories, Kafka channels/groups, original proof buckets and UNKNOWN
+remote runtime/freshness. Initial public/pure evidence is in note95. Final newer
+T013/T012 parent refresh, dependency actual/full and independent review remain pending.

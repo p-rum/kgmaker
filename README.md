@@ -827,3 +827,13 @@ reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
 legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
 W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.
+
+### T016 common-capture topology (draft)
+
+`kgmaker.service_topology.capture_topology_inputs(manifest, scope="production")`
+uses one explicit closure for T015/W07/T014, then rereads it.
+`aggregate_service_topology(captured)` is a pure ViewDocument projection with
+reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
+No JVM/process/runtime or payload claim is added. See
+[handoff and limits](docs/service-topology.md); final dependency refresh/full/review
+remain pending.
