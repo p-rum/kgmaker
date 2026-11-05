@@ -778,6 +778,28 @@ tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
 
+## T003-S07-W05 — Kafka retry/DLT draft
+
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+Strict full on647:1908PASS/10SKIP1920.61s; current-parent pure23PASS; final exact-pair ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Same Replay + compiler-owned FIELD/PROPERTY/inherited witnesses support explicit
+scalar type/null/decimal/PK/UK and single FIELD ManyToOne FK tuple/key comparison.
+Current-name rename/drop identity and malformed/version/source/realm negatives
+are covered. W04 PR62 merged; current main c193748 integrated. Strict full
+ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return composition
+67b8341:174PASS/0SKIP248.87s,1487 hashes unchanged. Final pure parent ambiguity
+4PASS/0SKIP0.56s; worker sources/core unchanged by that parent. Final independent
+review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
+constraints/naming/converters/composite FK remain UNKNOWN. No availability,
+deployment/population promotion or whole-milestone completion inferred.
+
 ## T010 normalized variant correction (2026-11-03)
 
 Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
