@@ -138,3 +138,35 @@ full. Explicitní receipt `full-capacity-preflight.json` má tests0. Lokální f
 nenahrazuje povinný full. GH CI NOT_RUN, bez retry/externího zápisu. Draft není
 ready ani dokončení celého W05/S07; zbývá připravený frozen full po uvolnění místa
 a finální nezávislé review/publikace rootem.
+
+
+## Current Return parent a nový coalesced focus — 2026-11-05
+
+Po uvolnění kapacity původní full zůstal childless ve FIFO frontě. Před
+jakoukoli preflight/test marker byl pouze vlastní čekající flock83895 zastaven,
+ověřen bez potomků a ukončen. Receipt obsolete-queue-cancel-20261105.json má
+tests0; tento full nebyl spuštěn ani přerušen jako pytest. Historická disková
+blokace výše platila v daný čas, není současným výsledkem celého full.
+
+Current main deb3691 (Return) integrován v463f662. Conflict union zachoval
+Return block/component/evidence qualifiers a retry origin/compiler refs;
+LocalOps→Return pořadí a full-graph policy validation před CFG scope/context
+projekcí zůstaly. Workflow obsahuje return i retry modul. All27tracked worker
+sources byly byte-exact proti explicitnímu Return donorovi4a4eaef;132JVM
+JAR/lib/license souborů zkopírováno s donor pre/post a destination SHA, bez buildu.
+Receipt current-return-donor-copy.json. Parent224episodes zůstaly neměnný prefix,
+předchozí vlastní episode zachován; nová memory může přidat další vlastní historii.
+
+Root nezávisle source-composition APPROVE exact463f662/base deb3691 pro JEDEN
+current-parent focus. FIFO běh skutečně **470PASS/0SKIP186.44s** (runner187.34s),
+exit0, XML0fail/0error, všech12actual Java/K1 scenarios. Zahrnuje Retry/Return/
+Kafka/code/binding/trigger/CFG/protocol/mandatory matrix;1620source/distribution/
+fixture/API/toolchain pre/post hashes beze změny, po běhu znovu ověřeny aktuální.
+Receipts integrated-focus-{pre,post,result}.json, integrated-focus.log/xml
+a12integrated-captures JSON. Runtime/native source checkpoint463f662 je pro
+následující docs/semantic/memory finalization neměnný.
+
+**Required full NOT_RUN**: po green focus čeká finální current-parent/source
+closure a nový5GiB acquisition preflight + fresh all-input freeze. Žádný nový
+full nebyl zařazen; předchozí361green zůstává historickým43a důkazem. GH CI
+NOT_RUN, bez retry, externího zápisu, publication nebo merge. Není ready.

@@ -776,5 +776,5 @@ The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
 declarations as separate async boundaries, without executing listeners or brokers.
 Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
 See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
-361 PASS / 0 SKIP; required full remains NOT_RUN below the 5 GiB capacity gate.
+Current-parent focus: 470 PASS / 0 SKIP; required full remains NOT_RUN pending the final frozen integration gate.
 The feature is draft and is not ready for merge.

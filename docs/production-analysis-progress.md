@@ -783,6 +783,6 @@ review/publication remain separate; see change82.
 IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
 parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
 boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
-Current-source coalesced361PASS/0SKIP plus current-main prerequisite43PASS are
-verified; fullNOT_RUN below5GiB disk gate, final ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+fullNOT_RUN pending the final frozen integration gate, final ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
 delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
