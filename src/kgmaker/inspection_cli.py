@@ -178,6 +178,10 @@ def run(args):
                 selected = project(graph, args.scope, view=args.view)
                 result = {"status": "PARTIAL", "view": args.view, "scope": args.scope, "contexts": selected.contexts,
                           "entry": args.entry, "nodes": [n.id for n in selected.nodes], "edges": [e.__dict__ for e in selected.edges]}
+                if args.view == "data-flow":
+                    from .return_flow import return_consumer_bindings
+                    result["return_consumer_bindings"] = return_consumer_bindings(selected)
+
                 from .dataflow import http_request_inventory
                 result["http"] = http_request_inventory(selected)
                 if args.format != "json":

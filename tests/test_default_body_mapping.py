@@ -158,7 +158,9 @@ def test_real_default_and_bridge_mapping(worker, compiled):
     root = compiled[0]
     graph = graph_from_response(root, scan_repository(root), result,
             {'id': 'mapping-fixture', 'scope': 'production', 'origin_trust': 'LOCAL_COMPILER_INPUTS',
-             'freshness': 'CONTENT_VERIFIED'})
+             'freshness': 'CONTENT_VERIFIED',
+             'source_files': {name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+                              for name in ('Bridge.java', 'Defaults.kt', 'Modern.kt')}})
     restored = KnowledgeGraph.from_dict(graph.to_dict())
     mapping = next(e for e in restored.edges if e.kind == 'maps_to_source' and e.source == default['id'])
     proof = next(e for e in restored.evidence if e['id'] in mapping.evidence_ids)

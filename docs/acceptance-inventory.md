@@ -538,6 +538,15 @@ Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`
 | AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
 | AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
 
+## T003-S07-W02 — Return → consumer binding
+
+| AC | Bounded delivered proof | Evidence |
+|---|---|---|
+| AC01 | Compiler-owned ranges/direction, branch alternatives, distinct assignments, nullable/chained consumers | `tests/test_return_consumer_flow.py`, `fixtures/return-consumer` actual Javac/K1/TS |
+| AC02 | Additive protocol1/graph1/2/3; stale explicit rule stays offline | Legacy and stale-rule tests in the same module |
+| AC03 | Opaque/open/recursive/callable/void/any/async/custom-projection bodies remain UNKNOWN; malformed input does not mutate store | Actual worker negatives and malformed-IR/zero-store tests |
+| AC04 | `return-consumer-1` matrix; K2 Kotlin missing source CFG remains UNKNOWN; S07/T003 PARTIAL | [change66](changes/66_bindReturnConsumerFlow.md), [compiler matrix](compiler-inspection.md#return--consumer-bindings); full result pending |
+
 ## T023 — explicit process model
 
 | Acceptance | Stav | Konkrétní důkaz | Hranice |
@@ -697,8 +706,11 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
 
 ## T006/T008 revision2 — derived context role boundary
 

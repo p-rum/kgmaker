@@ -1,4 +1,5 @@
 """Actual compiler binding proofs, independent from runtime execution."""
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -37,6 +38,14 @@ def analyze(root, sources, *, language='jvm', backend='k1'):
         pytest.skip(str(error))
     assert not (root / '.kgmaker').exists()
     return result
+
+
+def captured_context(root, response):
+    """Bind protocol replay to actual fixture bytes, as production capture does."""
+    return {'id': response['context_id'],
+            'source_files': {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                             for path in root.rglob('*') if path.is_file()
+                             and path.suffix in {'.java', '.kt', '.ts', '.tsx'}}}
 
 
 def proofs(response, callee):
@@ -148,7 +157,7 @@ def test_graph_evidence_roundtrip_and_process_preserve_call_binding(tmp_path):
     response = analyze(tmp_path, {'src/main/java/Calls.java': '''class Calls {
  static int take(int n){return n;} static int entry(int n){return take(n+1);}}
 '''})
-    selected = {'id': response['context_id'], 'scope': 'production', 'freshness': 'CURRENT',
+    selected = {**captured_context(tmp_path, response), 'scope': 'production', 'freshness': 'CURRENT',
                 'origin_trust': 'LOCAL_SOURCE', 'mode': 'BUILD_AWARE', 'worker': {}}
     graph = graph_from_response(tmp_path, scan_repository(tmp_path), response, selected)
     restored = KnowledgeGraph.from_dict(graph.to_dict())
@@ -185,7 +194,7 @@ def test_actual_argument_proof_rejects_enum_and_occurrence_contradictions(tmp_pa
                if language == 'jvm' else
                {'src/main.ts': 'function value(n:number){return n;} export function use(){return value(1);} '})
     response = analyze(tmp_path, sources, language=language)
-    validate_response(response, {'id': response['context_id']})
+    validate_response(response, captured_context(tmp_path, response))
     original = next(f for f in response['facts'] if f.get('argument_mapping_version') == 1)
     store = tmp_path / '.kgmaker' / 'graph.json'
     store.parent.mkdir(); store.write_bytes(b'last valid generation')
@@ -210,7 +219,7 @@ def test_actual_argument_proof_rejects_enum_and_occurrence_contradictions(tmp_pa
             argument['id'] += ':foreign-occurrence'
             fact['source'] = argument['id']
         try:
-            validate_response(changed, {'id': changed['context_id']})
+            validate_response(changed, captured_context(tmp_path, changed))
         except WorkerError as error:
             assert error.status == 'INVALID_PROTOCOL'
         except Exception as error:
@@ -368,7 +377,7 @@ def test_mixed_java_kotlin_formal_binding_uses_identity_not_display_name(tmp_pat
         'src/main/java/JavaCalls.java': 'class JavaCalls {static int parse(String x){return Integer.parseInt(x);}}',
         'src/main/kotlin/KotlinCalls.kt': 'fun parseOther(x:String):Int = java.lang.Integer.parseInt(x)',
     })
-    validate_response(response, {'id': response['context_id']})
+    validate_response(response, captured_context(tmp_path, response))
     bindings = proofs(response, 'java.lang.Integer.parseInt(')
     assert len(bindings) == 2 and len({f['target'] for f in bindings}) == 1
 

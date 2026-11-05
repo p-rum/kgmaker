@@ -67,3 +67,19 @@ available-tool setup guards a nový25unit modul. Current-parent guard/classifier
 mandatory checks **43PASS/0SKIP v0.33s**; původní295pure a actual5projection evidence
 zůstávají source základem. Root source closure APPROVE49d platí pro shodný runtime;
 full je povolen až na tomto current-parent checkpointu, bez nového worker buildu.
+
+## Current Return parent before the single actual full
+
+Dřívější10d full nebyl spuštěn: capacity gate2.55GB<5GiB skončil předpytest,
+bez started marker/XML/full receipt. Capacity-only audit zůstává zachován a není
+FAIL/PASS testů. Po ověřeném PR70 přijat main
+`deb3691c23de19064a9e9c0484cf6a62ab295592`; Return freshness/qualification a
+LocalOps→Return→Kafka augmentation zůstávají přesným parent runtime. Vlastní
+83line roleclassifier, views boundary a producer tuple helper zůstávají přesně
+stejné jako source-approved49d. Main224episodeprefix a oba vlastní captures se
+zachovávají. Native27 inputs jsou přesně source-testedReturn079; jeho30JAR a102
+licencí jsou ověřeny a explicitně převzaty, žádný nový build.
+
+Následuje current-parent bounded common/Return/Kafka projection focus, nezávislá
+composition closure a jediný actual full; žádný full10d ani fullnovéhoSHA zatím
+není tvrzen PASS. Předchozí295/43/pureactualreplay proof zůstává historicky přesný.
