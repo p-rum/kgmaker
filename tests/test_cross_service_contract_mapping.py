@@ -264,7 +264,7 @@ def _declare_real_pair(workspace,graph,coverage,transport,*,allow_unresolved_sou
             and n['attributes'].get('topics')==source['attributes']['topics'] and n['attributes'].get('contract_bindings'))
     else:
         source=next(n for n in nodes if n['attributes'].get('direction')=='CONSUMER'
-            and n['attributes'].get('service_id')=='checkout'
+            and (n['attributes'].get('service_id') or n['owner_id'].removeprefix('service:'))=='checkout'
             and (n['attributes'].get('route_expression')=='/orders' or allow_unresolved_source))
         target=next(n for n in nodes if n['attributes'].get('direction')=='PROVIDED'
             and n['attributes'].get('service_id')=='orders'

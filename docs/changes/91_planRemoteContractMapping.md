@@ -143,3 +143,16 @@ freshness UNKNOWN zachovány. Nový W07 pure cohort: 79 PASS / 10 actual DESELEC
 negatives, které správně skončily REMOTE_INVALID_INTERFACES již při handoff;
 test nyní ověřuje tento dřívější controlled rejection. Žádný nový actual
 continuation/full/build neproběhl; nezávislá source closure je stále nutná.
+
+## Actual v2 continuation: test-only HTTP owner correction (2026-11-05)
+
+Rule2 matrix na92e96c5:33PASS/1FAIL45.71s (runner47.27s),1379 vstupů
+beze změny. Java HTTP setup/canonical capture uspěl; fixture selector následně
+vyhodil StopIteration, protože T011 consumer má owner_id=service:checkout,
+RESOLVED/CURRENT, POST /orders, ale nemá redundantní attributes.service_id.
+Saved public offline capture tento tuple potvrzuje bez compileru. Pouze testový
+selector nyní používá stejný existující owner fallback jako release fixture a
+production authority; resolution/execution assertions ani runtime guards se
+nemění. Production source zůstává byte-exact92e96c5. Failed/unreached continuation
+ještě NOT_RUN a vyžaduje source closure. První dva PASS původního5b matrix byly
+public canonical capture a actual Kafka[k1], nikoli dva actual HTTP případy.
