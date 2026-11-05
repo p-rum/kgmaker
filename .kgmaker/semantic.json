@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
     "README.md": "659e630e9455cd0959a7e9904b74405e8975354e4d3b91121057c9ba1cad1a7f",
-    "docs/acceptance-inventory.md": "1f93e83ab61459bbfb565133180ae994207d4622d76b0f2ed0155fdfbcc671a0",
+    "docs/acceptance-inventory.md": "44ac0b0ee95362ede4d0cf847a5e25d3b663b105f107f9cbbe9f98c825f8d039",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -72,7 +72,7 @@
     "docs/changes/85_attachInterfaceContracts.md": "b9a354e48ce7f4a6c8f83318d6be962412cd789880d67b5c35b2e077fc7fe8c3",
     "docs/changes/87_captureKafkaRetryDlt.md": "28f2f5f26747b56b08632e94beca479a9d5acb115a545e77b2be29bca2d840d9",
     "docs/changes/88_preserveAmbiguousHttpProviders.md": "e57e8d1105f8a49e1c907367ac88ece0f59b560d8171f09ad30519cc1f8854b4",
-    "docs/changes/90_prepareProcessLabelPacket.md": "8e2a870d20d80b70952994d2d7716446784367a4bf08beb1fa284b78c2f473a3",
+    "docs/changes/90_prepareProcessLabelPacket.md": "0da9433c8cb7c1e5f54c0b4c7408333e885a24922c1969dab28e83c03d141d8e",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "70e6be171672339932c1f251fc693db14683382c20aef508d4db13f688cf7ee7",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -82,11 +82,11 @@
     "docs/interface-contracts.md": "ac4e2a9c0506d9c4fc0ffda2d2e0734586ef3d89ef23867c9e8dcde4706a7c87",
     "docs/kafka-interfaces.md": "48923af2e957c7f5ecaca5736bd87aee2e4adb11ad380e3b12a6d7b25628ea71",
     "docs/kafka-retry-dlt.md": "110db73bfc99a7d6e88ad6c24f19916942784a1f159347f2c665754e571c7c58",
-    "docs/process-label-packets.md": "fd7bb341be8f4277a2676d0ce9407bedebcf337f6e5fe3f2285eccdfe2bac553",
+    "docs/process-label-packets.md": "6f2993bfbb90df7c3911242e700b19327c46eec6e566a3a7c2d5f6627fdada6a",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-paths.md": "345acc7248921457a8dc0749de80d247e0a7a8ba6af12a21c32715172c2e6df5",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "130ccddfada9b3eb79029d6fb1fa60ab40077c96714854ebfc88e94aeb77acc3",
+    "docs/production-analysis-progress.md": "96eea9d9517f158a8805544d3f3f2863d529caa766dcc82823bc70fd0bf66431",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schema-compatibility.md": "d656d99fbd0cf608ac0de6aaaff7334d2dc6cc0eba98f6ed8145d9a67f95b5e8",
@@ -206,7 +206,7 @@
     "docs/tasks/T003-S13-04-runtimeAsyncReflection.md": "e368150234cf6ef7157840841957210d7afdf5758d55e426010c0a688a9540d2",
     "docs/typescript-callbacks.md": "71f9acd0e06d37619048ed61b5c610d9f387d19a1a1cea5087dead5a065acdcf",
     "docs/typescript-freshness.md": "ee683d326939744e05facb56f67520a185e293a91cad821676b7d2eb6498b43a",
-    "docs/validation/t030-descendant-proof.json": "1f353259453424216770c97ebe5cdb1031f7b32dd91a5de59ee9f3b57120e0eb",
+    "docs/validation/t030-descendant-proof.json": "17f1eabea21dcf3b05be9ab4b6d459e46b7ac1da39e1ff837e3202e36d114417",
     "docs/windows-install.md": "b706cd4404956348440b377fac7771f97e7dd405bc34c75ff4aefb97a2352a59",
     "fixtures/build-inspection/frontend/checker.cjs": "c63200f117a543b42b8facc045fa9a1c7ea8519926607fb1945a592d60e90e4a",
     "fixtures/build-inspection/frontend/package-lock.json": "99f866cc68d76842292e4699184d1f948202396855fcc0422717d5b34b75b7a3",
@@ -1497,6 +1497,16 @@
       "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t009_propagate_view_evidence.py",
+      "source_line": 70,
+      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+    },
+    {
       "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "target": "file:src/kgmaker/workspace.py:workspace.py",
       "kind": "implements",
@@ -1575,26 +1585,6 @@
       "source_file": "README.md",
       "source_line": 188,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::371",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t009_propagate_view_evidence.py",
-      "source_line": 70,
-      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
     },
     {
       "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
