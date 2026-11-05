@@ -1,5 +1,6 @@
 """W07 public acceptance RED; no producer implementation or implicit discovery."""
 import copy
+import hashlib
 import importlib
 import importlib.util
 import json
@@ -436,3 +437,73 @@ def test_declared_fanout_over_hard_bound_is_rejected_not_silently_unique():
     workspace,*_=trusted_protocol_specimen()
     workspace['remote_mapping']['mappings']=[{**workspace['remote_mapping']['mappings'][0],'id':str(i)} for i in range(2001)]
     with pytest.raises(ValueError,match='REMOTE_DECLARATION_LIMIT'):validate_remote_declarations(workspace)
+
+
+@pytest.mark.parametrize('field',['release_id','release_selector','mapping_id'])
+@pytest.mark.parametrize('value',['//alice:PRIVATE_SENTINEL@host/path',
+                                'prefix //alice:PRIVATE_SENTINEL@host/path suffix'])
+def test_scheme_relative_userinfo_rejected_without_echo_or_immutable_rewrite(field,value,explicit_contract_fixture):
+    from kgmaker.remote_mapping import validate_remote_declarations
+    from kgmaker.workspace import load_workspace
+    workspace,graph,docs,captured=specimen=trusted_protocol_specimen()
+    declaration=workspace['remote_mapping']
+    if field=='release_id':declaration['releases'][0]['id']=value
+    elif field=='release_selector':declaration['releases'][0]['release']=value
+    else:declaration['mappings'][0]['id']=value
+    before=copy.deepcopy(workspace),graph.to_dict(),copy.deepcopy(docs),copy.deepcopy(captured)
+    for action in (lambda:validate_remote_declarations(workspace),
+                   lambda:api().capture_remote_mapping_inputs(workspace,graph,scope='production'),
+                   lambda:solve(specimen)):
+        with pytest.raises(ValueError) as error:action()
+        assert 'PRIVATE_SENTINEL' not in str(error.value)
+        assert 'alice' not in str(error.value)
+        assert getattr(error.value,'diagnostic',{})=={'code':str(error.value)}
+    assert (workspace,graph.to_dict(),docs,captured)==before
+    manifest,contract,_,_=explicit_contract_fixture
+    document=json.loads(manifest.read_text())
+    document['services'].append({**copy.deepcopy(document['services'][0]),'id':'checkout',
+                                 'frontend_repos':[],'generated_clients':[]})
+    remote=trusted_protocol_specimen()[0]['remote_mapping']
+    for release in remote['releases']:
+        release['contract'].update(repo_id='backend',path='src/main/resources/openapi.json',
+                                   sha256=hashlib.sha256(contract.read_bytes()).hexdigest())
+    document['remote_mapping']=remote;manifest.write_text(json.dumps(document))
+    assert load_workspace(manifest)['remote_mapping']==remote  # otherwise valid manifest
+    if field=='release_id':
+        remote['releases'][0]['id']=value;remote['mappings'][0]['source_release_id']=value
+    elif field=='release_selector':remote['releases'][0]['release']=value
+    else:remote['mappings'][0]['id']=value
+    manifest.write_text(json.dumps(document));raw=manifest.read_bytes()
+    with pytest.raises(ValueError) as error:load_workspace(manifest)
+    assert 'PRIVATE_SENTINEL' not in str(error.value) and manifest.read_bytes()==raw
+
+
+
+def test_unicode_and_space_contract_references_are_preserved_not_blanket_rejected():
+    workspace,graph,docs,captured=specimen=trusted_protocol_specimen()
+    path='návrhy objednávek.json'
+    for service in workspace['services']:service['contract']['path']=path
+    for release in workspace['remote_mapping']['releases']:
+        release['contract']['path']=path;release['release']='vydání jedna'
+    workspace['remote_mapping']['mappings'][0]['id']='mapování objednávek'
+    for document in docs:
+        for node in document['nodes']:node['attributes']['contract_bindings'][0]['contract']['path']=path
+    files=captured['contract_capture']['files'];files['@contract/'+path]=files.pop('@contract/orders.json')
+    refresh_handoff(*specimen)
+    result=solve(specimen)['bindings'][0]
+    assert result['resolution_status']=='RESOLVED'
+    assert result['mapping_ids']==['mapování objednávek']
+    assert result['candidates'][0]['source_contract']['path']==path
+
+
+def test_capture_accepts_explicit_unicode_contract_path_with_spaces(explicit_contract_fixture):
+    manifest,contract,_,metadata=explicit_contract_fixture
+    moved=contract.with_name('objednávky nové.json');contract.rename(moved)
+    relative='src/main/resources/'+moved.name
+    document=json.loads(manifest.read_text());document['services'][0]['contract']['path']=relative
+    manifest.write_text(json.dumps(document))
+    origin=json.loads(metadata.read_text());origin['source_contract']['path']=relative
+    metadata.write_text(json.dumps(origin))
+    workspace,graph,_=inputs(explicit_contract_fixture)
+    captured=api().capture_remote_mapping_inputs(workspace,graph,scope='production')
+    assert '@backend/'+relative in captured['contract_capture']['files']

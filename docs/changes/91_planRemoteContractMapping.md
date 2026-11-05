@@ -68,3 +68,20 @@ pravidla, není důkazem compiler producerů či autentizace libovolného JSON.
 Aktuální actual positive HTTP/Kafka a negative matrix jsou připravené, NOT_RUN
 před nezávislou source closure. Kotlin HTTP upstream typed proof je UNKNOWN a
 actual test to musí zachovat. Full NOT_RUN, žádný nový native build/remote write.
+
+
+## Nezávislý pre-actual privacy review a úzká oprava
+
+Reviewer integrate8 nad36a8541 doložil P1: scheme-relative URI userinfo, např.
+`//user:credential@host/path`, i embedded forma prošla release.id/release.release/
+mapping.id a mohla uniknout do capture/report. Doplněn známý URI-userinfo guard
+vedle existující scheme/header ochrany; netajné immutable IDs se nepřepisují,
+nebezpečný vstup končí pevným code bez echo/exception chain. Nejde o univerzální
+klasifikaci libovolného opaque ID jako secret. Žádný native/T013/common zásah.
+
+Public manifest/validate/capture/resolve privacy matice plus validní Unicode a
+contract path s mezerami: combined109PASS/8actualDESELECTED5.41s. Poté test loaderu
+zesílen tak, aby před vložením userinfo prokázal otherwise-valid manifest; všech
+8dotčených public privacy/Unicode případů PASS0.27s. Runtime je mezi běhy stejný.
+Actual matrix/full stále NOT_RUN; čeká exact-diff closure opravy před jediným
+coalesced actual během. Žádný nový build nebo remote write.

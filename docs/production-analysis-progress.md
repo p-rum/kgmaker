@@ -828,5 +828,5 @@ See [remote mapping contract](remote-contract-mapping.md)
 and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
-runtime/payload availability promotion. Current101pure/upstreamPASS; current actual
+runtime/payload availability promotion. Current109pure/upstreamPASS; current actual
 matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.

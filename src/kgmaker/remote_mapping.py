@@ -19,6 +19,7 @@ SCOPES = {'production', 'test', 'test_fixture', 'development', 'unknown'}
 _LIMIT = 2000
 _HASH = re.compile(r'[0-9a-f]{64}\Z')
 _SECRET = re.compile(r'(?i)(://|\b(?:Basic|Bearer)\s+\S+|(?:password|secret|api[_-]?key|access[_-]?token)\s*[=:])')
+_URI_USERINFO = re.compile(r'//[^/\s]*@')
 _FIELDS = {'schema_version','rule_version','workspace_id','workspace_manifest_sha256',
            'workspace_fingerprint','graph_fingerprint','selection','remote_declarations',
            'contract_capture','canonical_interfaces','diagnostics','capture_id'}
@@ -62,6 +63,7 @@ def _bounded(value):
 
 def _text(value):
     return (isinstance(value,str) and 0<len(value)<=4096 and not _SECRET.search(value)
+            and not _URI_USERINFO.search(value)
             and not any(ord(c)<32 or ord(c)==127 for c in value))
 
 
