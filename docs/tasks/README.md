@@ -119,7 +119,7 @@ vytvořené PR k review a po schválení současného HEAD je může mergeovat.
 | T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity; revize2 canonical code/group proofs | SPECIFICATION |
 | T003-S07-W05 | [T003-S07-05-kafkaRetryDlt.md](T003-S07-05-kafkaRetryDlt.md) | kafka retry dlt | SPECIFICATION |
 | T003-S07-W06 | [T003-S07-06-httpClientExecution.md](T003-S07-06-httpClientExecution.md) | http client execution | SPECIFICATION |
-| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | cross service contract mapping | SPECIFICATION |
+| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | revision2: explicit service/contract/release mapping; planned T013/T012 stack | SPECIFICATION |
 | T003-S07-W08 | [T003-S07-08-evidenceRanking.md](T003-S07-08-evidenceRanking.md) | evidence ranking | SPECIFICATION |
 | T003-S07-W09 | [T003-S07-09-unifiedFlowViews.md](T003-S07-09-unifiedFlowViews.md) | unified flow views | SPECIFICATION |
 | T003-S08-W01 | [T003-S08-01-typescriptProjectReferences.md](T003-S08-01-typescriptProjectReferences.md) | typescript project references | SPECIFICATION |
