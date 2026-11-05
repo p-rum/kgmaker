@@ -15,7 +15,7 @@ from .schema_replay import realm_prefix, persistence_pair, schema_realm
 from .views import project_service_inventory, _summarize_view_evidence, ServiceInventoryError
 from .workspace import load_workspace, qualified, resolve_service_ownership
 
-VERSION = 't015-data-resources-1'
+VERSION = 't015-data-resources-2-realm-rule-guards'
 ACCESS = {'query_reads': 'reads', 'query_writes': 'writes', 'query_deletes': 'deletes'}
 RELATIONS = {**ACCESS, 'maps_to_table': 'depends_on'}
 
@@ -336,7 +336,20 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         if repo != record['repo_id'] or not owner_ids or context.get('repo_id') != repo:
             valid = False
         pending_proofs = []
-        if valid and edge.kind in ACCESS and (context.get('framework_rule_versions') or {}).get('jpa') == 'annotation-source-v6-persistence-realms':
+        rules = context.get('framework_rule_versions')
+        jpa_stamp = rules.get('jpa') if isinstance(rules, Mapping) else None
+        has_stamp = isinstance(rules, Mapping) and 'jpa' in rules
+        from .framework import JPA_RULE_VERSION
+        realm_aware_rules = {'annotation-source-v6-persistence-realms',
+                            'annotation-source-v7-persistence-realms-jpql',
+                            'annotation-source-v7-schema-compatibility', JPA_RULE_VERSION}
+        if valid and edge.kind in ACCESS and (
+                rules is not None and not isinstance(rules, Mapping)
+                or has_stamp and (not isinstance(jpa_stamp, str) or jpa_stamp not in realm_aware_rules)):
+            valid = False
+            issue('DATA_RESOURCE_JPA_RULE_VERSION_UNSUPPORTED', source_id=edge.source,
+                  reason='Explicit JPA rule stamp is unsupported; no resolved access is inferred.')
+        if valid and edge.kind in ACCESS and has_stamp and jpa_stamp in realm_aware_rules:
             # Current realm-aware facts require the exact replay target/config,
             # not merely an ORM node that happens to name the same datasource.
             links = [m for m in graph.edges if m.source == target.id and m.kind == 'resolves_to_schema_table'

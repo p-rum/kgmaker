@@ -183,3 +183,22 @@ název test_t010_provider_ambiguity.py:0tests/exit4; skutečný soubor je
 Required full zůstává NOT_RUN do nezávislého composition closure a fresh5GiB
 preflight/freeze; žádný další470focus ani compiler matrix se neopakuje kvůli
 nesouvisející pure provider změně.
+
+## Strict full a current schema parent — 2026-11-05
+
+Jediný strict FIFO full skutečně běžel na647095201eb6efa4d6a7ead9e7147c3f2dc6f676,
+basec193748: **1908 PASS / 10 SKIP, 1920.61s** JUnit, runner1921.9s,
+1622 vstupů pre/post beze změny, exit0. Všech470 dříve focused test IDs je
+obsaženo ve full. Nejde o tvrzení, že full běžel na následujícím merge commitu.
+Log/XML a pre/post/result jsou v /workspace/kafka-retry-validation/strict-full*.
+
+Po terminal/process/input auditu byl odstraněn pouze vlastní dokončený full temp;
+SHA inventory a archiv7347 bounded repro/config souborů zůstaly zachovány,
+stejně jako všechny logs/XML/manifests/raw captures/native vstupy. Žádný aktivní
+běh, cizí temp, API cache nebo worker nebyl změněn.
+
+Následná čistá kompozice main3bef611 přidává schema compatibility upstream;
+vlastní retry/flow/CLI/inspection/graph-provider a workers jsou beze změny proti
+full647. Malý pure schema/HTTP composition cohort: **23 PASS / 6 DESELECTED,
+1.35s**. Žádný další full, build ani470 matrix. GH CI zde NOT_RUN; publication,
+nezávislý exact-pair review a finální readiness nejsou tímto lokálním záznamem uděleny.

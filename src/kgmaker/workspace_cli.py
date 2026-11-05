@@ -8,13 +8,16 @@ from .analysis_model import AnalysisError, read_json, safe_path
 def register_schema(subparsers):
     parser = subparsers.add_parser('schema', help='offline Flyway schema reconstruction')
     sub = parser.add_subparsers(dest='schema_command', required=True)
-    for action in ('inspect', 'diff'):
+    for action in ('inspect', 'diff', 'compatibility'):
         child = sub.add_parser(action)
         child.add_argument('--root', type=Path, default=Path.cwd())
         child.add_argument('--workspace', type=Path)
         child.add_argument('--repo')
         child.add_argument('--stream', default='main')
         child.add_argument('--target')
+        child.add_argument('--database', help='explicit database realm selector')
+        if action == 'compatibility':
+            child.add_argument('--context', help='explicit compiler context ID')
         child.add_argument('--config', help='explicit root-relative JSON Flyway configuration')
         child.add_argument('--format', choices=('json', 'text'), default='json')
         if action == 'diff':
@@ -35,7 +38,8 @@ def schema_command(args):
             repo = repos[0]; root = Path(repo['_root'])
             configs = repo.get('flyway', {})
             configs = configs if isinstance(configs, list) else [configs]
-            matches = [c for c in configs if c.get('stream_id', 'main') == args.stream]
+            matches = [c for c in configs if c.get('stream_id', 'main') == args.stream
+                       and (not getattr(args, 'database', None) or c.get('database_id') == args.database)]
             if len(matches) != 1:
                 raise AnalysisError('Schema stream must identify exactly one declared configuration')
             config = matches[0]
@@ -43,10 +47,26 @@ def schema_command(args):
             raise AnalysisError('--repo requires --workspace')
         if args.config:
             config = {**config, **read_json(safe_path(root, args.config))}
+        if getattr(args, 'database', None):
+            config = {**config, 'database_id': args.database}
         config = {**config, 'target': args.target or config.get('target', 'latest'), 'stream_id': args.stream}
-        result = reconstruct(root, config) if args.schema_command == 'inspect' else schema_diff(root, config, args.from_target, args.to_target)
+        if args.schema_command == 'compatibility':
+            from .feature import current_graph
+            from .schema_replay import schema_compatibility
+            from .feature import attach_schema
+            from .framework import augment_framework_graph
+            schema = reconstruct(root, config)
+            graph = current_graph(root, args.workspace)[0]
+            if args.workspace is None:
+                graph = attach_schema(graph, schema, root)
+                for context in list(graph.contexts):
+                    if context.get('language') == 'jvm' and context.get('freshness') != 'STALE':
+                        graph = augment_framework_graph(root, graph, context)
+            result = schema_compatibility(schema, graph, context_id=args.context)
+        else:
+            result = reconstruct(root, config) if args.schema_command == 'inspect' else schema_diff(root, config, args.from_target, args.to_target)
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-        return 2 if result.get('status') == 'INVALID' else 0
+        return 2 if result.get('status') == 'INVALID' or result.get('replay_status') == 'INVALID' else 0
     except AnalysisError as exc:
         print(json.dumps({'error': str(exc), 'exit_code': exc.code})); return exc.code
     except (OSError, ValueError, TypeError) as exc:

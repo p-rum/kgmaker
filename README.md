@@ -780,3 +780,12 @@ Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
 See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
 Current-parent focus: 470 PASS / 0 SKIP; required full remains NOT_RUN pending the final frozen integration gate.
 The feature is draft and is not ready for merge.
+
+### Schema compatibility (T003-S06-W08 bounded scope)
+
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
+uses existing offline replay and an explicitly inspected compiler context. It
+reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
+legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
+W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
+populated-data availability. No implicit worker/build/migration/DB operation.
