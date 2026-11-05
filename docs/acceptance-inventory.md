@@ -729,26 +729,6 @@ backend nemá method annotations). Replay mutation testy mění annotation mirro
 realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
 Schema2 public snapshot ověřuje explicitní původní code refs, group property
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
-nepovýší. Regex nikdy není exact-topic join. Přesná finální matrix, full a
-nezávislé review jsou zatím pending; historická revize1 není důkaz nové revize2.
-
-## T012 — Kafka interface catalogue
-
-AC01 two realms, AC02 distinct consumer groups, AC03 NewTopic/config-only vs
-canonical send, AC04 immutable/offline and AC05 malformed canonical/virtual tuples,
-regex and Kotlin backend boundary are in `tests/test_t012_catalog_kafka_interfaces.py`.
-AC06 docs and exact outcomes are in [change81](changes/81_catalogKafkaInterfaces.md).
-Actual RED1FAIL6.22s; final validation pending. Runtime transport NOT_RUN.
-
-## T013 — explicit versioned contract attachments (draft stack)
-
-AC01 content revision/stable logical interface, AC02 same DTO name is not payload
-compatibility, AC03 generated origin survives stale contract SHA, AC04 bounded
-immutable/offline/error paths and AC05 scope/context/ambiguous/external schema
-boundaries are in `tests/test_t013_attach_interface_contracts.py`; captured actual
-Kafka revisions are in `tests/test_t013_captured_kafka_contracts.py` (pending run).
-AC06 [change85](changes/85_attachInterfaceContracts.md) records exact outcomes.
-Full/review/current dependency integration pending, runtime transport NOT_RUN.
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
@@ -764,8 +744,7 @@ source/compiler pins, original strict foreign paths and immutable full inputs.
 The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
 (9actual deselected). A separate pure replay of the actual current-parent Kafka
 capture retained2CURRENT compiler contexts across5projections with no process,
-network or input/store mutation. Final full and independent source closure remain
-pending; this is not T016 or runtime/data availability acceptance.
+network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
 ## T003-S07-W05 — retry/DLT policy draft
 
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
@@ -773,3 +752,32 @@ Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hash
 Historical initial6PASS and pure-only replays remain distinct in note87. Current
 source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
 final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
+
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+T012-AC01–AC05 map to `tests/test_t012_catalog_kafka_interfaces.py`: separate realms
+and consumer groups, canonical send versus config-only/NewTopic, immutable public
+and private proof inputs, exact qualified Node/source/edge tuple guards, selected
+and historical contexts, regex and Kotlin K2 annotation UNKNOWN. All105 own IDs
+PASS in combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selection
+10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
+preserved failures/limits are in note81. Main/Common dependencies merged; exact
+finalpair review/merge separate. No standalone parent full or transport observation.
+
+
+## T013 — explicit versioned contract attachments (verified bounded scope)
+
+T013-AC01 content revisions/stable original IDs, AC02 no DTO-name compatibility,
+AC03 generated-origin binding preserved as stale after contract changes, AC04
+bounded read-only/immutable capture/attachment and AC05 selected scope/context,
+ambiguous operations and external/malformed pointers map to
+`tests/test_t013_attach_interface_contracts.py` (43 PASS) and actual K1/K2 captured
+Kafka revisions `tests/test_t013_captured_kafka_contracts.py` (2 PASS). All45 own IDs
+PASS in ONE combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116 parent IDs in that XML are2106PASS10SKIP, not a standalone parent full.
+Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retained.
+AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
+payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
+T012 dependency merged; independent finalpair review/ready/merge separate.
