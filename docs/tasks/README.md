@@ -31,9 +31,9 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | Task | Soubor a cíl | Závislosti | Stav |
 |---|---|---|---|
 | T005 | [Verzovaný společný model pohledu](T-005_add-view-model.md) | T004 kontrakt | SPECIFICATION |
-| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION |
+| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T007 | [Explicitní vlastnictví služeb](T-007_define-service-ownership.md) | T005 | SPECIFICATION |
-| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION |
+| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T009 | [Evidence a pokrytí agregovaných objektů](T-009_propagate-view-evidence.md) | T005, T006; T003-S07-W08 | SPECIFICATION |
 | T010 | [Katalog poskytovaných HTTP rozhraní](T-010_catalog-http-providers.md) | T008, T009 | SPECIFICATION |
 | T011 | [Katalog používaných HTTP rozhraní](T-011_catalog-http-consumers.md) | T008, T009; T003-S07-W06 | SPECIFICATION |

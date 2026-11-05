@@ -807,3 +807,16 @@ Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without 
 tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
+
+### T006/T008 revize2 — shared context-role boundary (review pending)
+
+Bounded source separates exact canonical workspace-derived Kafka declarations
+from service-owned source and compiler selection, preserving the original full
+graph/proofs, legacy SOURCE_ONLY and strict foreign-path/scope/hash guards.
+Unknown producer/version/identity is diagnostic; role validity does not require
+current private compiler replay. Pure coalesced matrix: **294PASS/0SKIP**,9actual
+cases explicitly deselected,15.04s,606 frozen inputs unchanged. Read-only replay
+of the fresh actual current-parent Kafka capture passed T008/T010/T011/T015/T024
+with2CURRENT real compiler contexts, full graph/input/store unchanged and no
+new worker execution. Final exact-source independent review/full remain pending;
+T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
