@@ -967,3 +967,14 @@ module/test bytes and all present runtime/test/worker/fixture files match accept
 full2587PASS10allowedSKIP covers all2425 current-parent IDs (2415PASS10SKIP);24own
 PASS. No new actual/full/build. Final exact-pair review/merge remain pending;
 see docs/validation/t014-descendant-proof.json.
+
+## T016 — current-parent common-capture review candidate
+
+One explicit snapshot closure composes T015/W07/T014 and verifies it again before
+returning a handoff. Pure aggregation uses catalog services/resources and reversible
+remote origin inventories, Kafka channels/groups, original proof buckets and UNKNOWN
+remote runtime/freshness. Currentec6a127 retains merged T014/T015/Common/T012/T013/
+W07v2 and process bodies/CI. Owned module/tests are exact accepted2df; all46own
+cases XMLPASS. Collection-only2425main+46own union2471 maps2461PASS10same optional
+SKIP on accepted2587PASS10SKIP full. No actual/full/build/tool mutation; independent
+current-pair review remains pending. See note95 and validation/t016-descendant-proof.json.

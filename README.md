@@ -875,3 +875,14 @@ HTTP/Kafka declaration edges are not JVM calls or observed execution. See
 2df55; current509 base plus24 own cases derives2425 cases (2415 PASS/10 allowed
 SKIP on that accepted descendant). Final exact-pair review remains pending; no new
 full, CLI or remote execution is claimed.
+
+### T016 common-capture topology
+
+`kgmaker.service_topology.capture_topology_inputs(manifest, scope="production")`
+uses one explicit closure for T015/W07/T014, then rereads it.
+`aggregate_service_topology(captured)` is a pure ViewDocument projection with
+reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
+No JVM/process/runtime or payload claim is added. See
+[handoff and limits](docs/service-topology.md). Owned source/tests match accepted
+2df; currentec6a127 base2425+46own IDs maps to2461PASS10allowedSKIP on that one
+descendant full. No new full/build; exact-pair independent review remains pending.

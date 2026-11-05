@@ -886,3 +886,17 @@ See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
   review/Root merge remain pending. See note93 and validation/t014-descendant-proof.json.
 
 Hand-labelled protocol positives are not compiler/native acceptance proof.
+
+## T016 — current-parent descendant-result transfer
+
+- AC01: public HTTP origin interface/mapping/release/operation/edge expansions.
+- AC02: Kafka publishes/consumes through realm/topic channels, distinct groups.
+- AC03: graph enum noise changes input binding, not topology identities/expansions.
+- AC04: pure denied I/O, input equality, capture file changes after remote phase,
+  malformed/version/hash/selection and credential negative cases.
+- AC05: separate resource polarity, UNKNOWN/truncated coverage, foreign scope,
+  unresolved owner boundaries and independent upstream selection/baseline forms.
+- AC06: Root SOURCE_APPROVE806 plus accepted2df source/test and all46own XMLPASS.
+  Currentec6a1272425+46own union2471 is2461PASS10same optionalSKIP on the one
+  accepted2587PASS10SKIP descendant; collection-only, no new full/build. Independent
+  current exact-pair review pending. See note95/validation/t016-descendant-proof.json.
