@@ -125,3 +125,21 @@ encoder exceptions na REMOTE_INVALID_JSON bez raw key/value/exception chain.
 Nevzniká druhý encoder ani authority claim. Current combined118PASS a všech
 10actualDESELECTED4.48s, final-pure-guard.log/xml. Žádný actual matrix/full/native
 build proběhl; exact-diff source closure musí potvrdit finální checkpoint.
+
+## Actual matrix a oprava Kafka summary boundary (2026-11-05)
+
+První actual matrix na 5b39ec4: 2 PASS / 1 FAIL, maxfail1, 18.77s JUnit
+(20.13s runner), 1379 vstupů pre/post beze změny. Nešlo o setup ERROR.
+Kafka canonical RESOLVED/VERIFIED_STATIC rozhraní má UNKNOWN freshness a
+UNRESOLVED generic service declaration summary; původní blanket CURRENT guard
+zamítal platnou explicitní statickou vazbu. Rule 2 zachovává UNKNOWN a povoluje
+pouze přesnou canonical service→interface deklaraci se všemi dosavadními
+context/code/contract/realm/group guards. HTTP CURRENT ani explicitní STALE se
+nemění. Konfliktní transporty jednoho release končí REMOTE_TRANSPORT_CONFLICT.
+
+Saved native fixture offline replay bez compileru nyní RESOLVED, obě původní
+freshness UNKNOWN zachovány. Nový W07 pure cohort: 79 PASS / 10 actual DESELECTED
+0.91s. Předchozí combined136PASS2FAIL obsahoval dva malformed ViewDocument
+negatives, které správně skončily REMOTE_INVALID_INTERFACES již při handoff;
+test nyní ověřuje tento dřívější controlled rejection. Žádný nový actual
+continuation/full/build neproběhl; nezávislá source closure je stále nutná.

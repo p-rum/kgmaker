@@ -1,6 +1,6 @@
 # Explicit remote contract/release declarations (W07 draft)
 
-`remote-contract-mapping-1` adds a separate optional workspace `remote_mapping`
+`remote-contract-mapping-2` adds a separate optional workspace `remote_mapping`
 manifest field. It does not change the existing artifact `release_mapping`, which
 proves selected build-output/classpath content rather than API deployment.
 
@@ -62,3 +62,11 @@ DESELECTED. Initial actual RED2 expectedFAIL after successful canonical setups i
 historical. Current actual positives/matrix/full (10 prepared actual cases) are NOT_RUN pending independent
 source closure. Hand-labelled protocol specimens are not native acceptance proof.
 T014 rendering, process continuation and all remote service execution are pending.
+
+Kafka canonical interface summaries may retain UNKNOWN freshness even when their
+selected code/context/contract binding is verified. Rule 2 accepts only the exact
+canonical service declaration edge under those existing guards; STALE, ambiguous
+or contradictory evidence remains ineligible. Original source and target interface
+freshness is retained separately from static mapping resolution. HTTP still
+requires CURRENT. One release cannot be referenced with conflicting transports
+(`REMOTE_TRANSPORT_CONFLICT`). Rule 1 captures require explicit recapture.
