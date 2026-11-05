@@ -737,6 +737,19 @@ Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou loká
 důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
 [note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
 
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
+binding validation, T008 ownership/context and T009 evidence. Explicit workspace
+checkouts/private captures are required. Groups/realms and original listener/send
+IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
+Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
+annotations UNKNOWN, delivery NOT_OBSERVED. Kafka rev2 and Common dependencies
+merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
+10exactoptionalSKIP2042.93s,4897hashes/five member sets unchanged. All2071 parent
+IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
+actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
+review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,

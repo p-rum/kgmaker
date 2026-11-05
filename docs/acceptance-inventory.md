@@ -752,3 +752,16 @@ Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hash
 Historical initial6PASS and pure-only replays remain distinct in note87. Current
 source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
 final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
+
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+T012-AC01–AC05 map to `tests/test_t012_catalog_kafka_interfaces.py`: separate realms
+and consumer groups, canonical send versus config-only/NewTopic, immutable public
+and private proof inputs, exact qualified Node/source/edge tuple guards, selected
+and historical contexts, regex and Kotlin K2 annotation UNKNOWN. All105 own IDs
+PASS in combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selection
+10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
+preserved failures/limits are in note81. Main/Common dependencies merged; exact
+finalpair review/merge separate. No standalone parent full or transport observation.
