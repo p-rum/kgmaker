@@ -45,7 +45,7 @@ model copy/JSON a chrání cykly, shared aliases, depth a velikost.
 - T030-AC05: explicit structured conflicts, scope/context/content/reference
   mismatch, unsupported/unresolved/truncated proces bez evidence promotion.
 - T030-AC06: spec revize2, README/Python příklad, capability/acceptance/progress,
-  tento note; independent source review + required full zatím PENDING.
+  tento note; exact final base/head review a publikace zůstávají pending; required full má níže doložený descendant proof.
 
 Public RED: **4 FAIL,25 deselected,0.21s** — veřejná API dosud neexistovala.
 První targeted po implementaci35PASS0.70s; následné privacy/budget/identity
@@ -55,9 +55,8 @@ inspection sanitizer a worker protocol. Testy se nespouštěly jako compiler
 acceptance. Žádný nový native build není potřeba, workery se nemění.
 
 Receipts: /workspace/process-label-packet-validation/public-red.{log,xml},
-pure-focus.{log,xml}. Required full, nový actual worker/toolchain běh a GH CI
-jsou NOT_RUN. Local full čeká na source review/preflight; GH CI je volitelné dle
-uživatelské revize pravidel, nikoli nahrazené tvrzením PASS.
+pure-focus.{log,xml}. Samostatný parent full nebyl spuštěn; pozdější společný descendant full a source
+closure jsou doloženy níže. GH CI je volitelné dle uživatelské revize, nikoli PASS.
 
 ## Kompatibilita a příklad
 
@@ -74,7 +73,7 @@ result = prepare_process_label_packet(existing_process_view, token_budget=8000, 
 Note90 ověřen přes main/registr a všechny worktrees (max89), otevřené PR současně
 ověřil root2026-11-05. Baseline deb3691; upstream T024/T026 jsou přítomné. Root
 před implementací přijal architecture brief /workspace/t030-architecture-brief.md.
-Zbývá full, finální nezávislé review a root-authorized publikace; tento note
+Zbývá finální exact-pair review a root-authorized publikace; tento note
 netvrdí dokončení celého T004 ani T031/T034. Nevolaly se aplikace či model API.
 
 
@@ -90,3 +89,31 @@ kódem. Positive Unicode/path-space IDs i malformed-error privacy zůstávají.
 Opravená stejná společná pure sada **153PASS,0SKIP za4.07s**. Retry budget se
 legálně posunul na implement iteration1/3, beze změny limitů. Corrected exact
 source review a required full stále PENDING; žádný full nebyl zařazen.
+
+## Aktuální merge kandidát a společný descendant důkaz
+
+Base main `2a387066ced5e4bcc8ab3d7c2bbdfbdfff2bb1ef`; původní T030 zdroj
+`6ae8f52e3d7f211933e27ce7560762ad02484b33` zůstává beze změny. Jediný dokončený
+strict full proběhl na integračním descendant `2df55ff8d15d790808f6a81072144eeb408a05b8`:
+**2587PASS/10povolených optionalSKIP,2042.93sJUnit** (runner2048.01s),2597/2597IDs,
+4897hashů a5recursive directory inventories pre/post beze změny. Root i architect
+nezávisle ověřili celý výsledek a14parent ledgers. Není to samostatný full T030.
+
+T030 podmnožina zahrnuje VŠECH1990kolektovaných parent cases:1980PASS10stejných
+povolenýchSKIP. Všech47vlastních T030 cases je PASS. Actual descendant zachovává
+byte-prefix modulu,32AST uzlů a35původních global bindings; šest přidaných T031
+helper/konstant/API bindings je disjunktních, nic nepřepisuje. Celý T030 testfile je
+byte-exact;27worker sources jsou beze změny. Stávající prepared natives a tool pins
+byly content-ověřeny, žádný nový native build ani další full/retry není požadován.
+
+Bounded commitnutelný důkaz a47actual statuses:
+[docs/validation/t030-descendant-proof.json](../validation/t030-descendant-proof.json).
+Původní credential RED4FAIL a oprava153PASS, starý a359capacity gate0testů i první
+integrační setup failure zůstávají historické receipts; nejsou přepsány ani
+vydávány za novýPASS. GHCI neověřeno/optional. Technická/statická evidence se
+nepovýšila na runtime či business approval; T031/T032/T033/T034 jsou jiné dodávky.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

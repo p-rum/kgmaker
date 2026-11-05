@@ -749,6 +749,13 @@ are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
+### Kafka interface catalogue
+
+The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
+listener/send declarations and declared bindings into the shared interfaces view.
+Broker realms and consumer groups remain distinct; configuration-only and regex
+subscriptions retain their unresolved boundaries. Explicit workspace/private
+compiler indexes are required; the projection performs no inspection or transport.
 ### HTTP consumer catalogue (T011)
 
 `kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
@@ -766,12 +773,32 @@ transitions, execution, business meaning and data availability are not promoted.
 Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
 the complete corrected integration matrix and full validation; own fresh workers built successfully. See
 [local process scope](docs/process-paths.md#compiler-bound-local-operations).
+### Kafka interface catalogue
+
+The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
+listener/send declarations and declared bindings into the shared interfaces view.
+Broker realms and consumer groups remain distinct; configuration-only and regex
+subscriptions retain their unresolved boundaries. Explicit workspace/private
+compiler indexes are required; the projection performs no inspection or transport.
+
+### Explicit interface contracts (T013 draft)
+
+[Contract attachments](docs/interface-contracts.md) preserve interface identities
+while adding explicit content-bound provider/client declaration references.
+Generated-client origin survives stale contract hashes. Payload compatibility and
+runtime/data availability remain unknown; no generator or schema fetch runs.
 
 The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
 reversibly groups only adjacent certified local operations in an explicit process
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
 
+Service inventories distinguish compiler/source ownership from canonical
+workspace-derived declarations. Kafka binding inputs may reference another
+repository's schema without becoming service-owned code or compiler candidates.
+`t008-service-inventory-2` retains the original full graph for downstream views;
+unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
+its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
 ### Kafka retry/DLT declarations — T003-S07-W05 draft
 
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
@@ -798,7 +825,17 @@ PROPOSED candidate template for existing targets. It preserves selected identity
 provenance and uncertainty, reports complete serialized cost/mandatory overflow,
 and hash-omits raw labels, documentation and proof/configuration prose. It performs
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
-T031 proposal validation/application and T034 CLI remain separate pending work.
+T031 adds explicit validation below; approval/apply and T034 CLI remain separate work.
+
+## T003-S07-W07 — explicit remote mapping draft
+
+See [remote mapping contract](docs/remote-contract-mapping.md)
+and [note91](docs/changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
 
 ### Read-only process annotation validation (T031)
 

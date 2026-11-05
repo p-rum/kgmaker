@@ -19,8 +19,8 @@ Captured documentary CONFLICT/UNKNOWN jsou review items, NLP NOT_EVALUATED.
 
 Root předem přijal /workspace/t031-architecture-brief.md; specRev2 před publicRED
 stanovila přesný invalidreport/exception, text/ref limits a konfliktní kontrakt.
-Explicitní stack je T030070e709 nad main deb3691, nikoli skrytě dokončená dependency.
-T030má schválený source, ale requiredfull zatím PENDING. Žádná T030function/import/
+Původní explicitní stack byl T030070e709 nad main deb3691; v té době
+T030mělo schválený source a fullPENDING. Aktuální merged dependency je níže. Žádná T030function/import/
 constant se nemění: complete original byte prefix a všech32ASTnodes zůstávají,
 stejně jako všech47T030testů a27workerinputů. Změna je append-only124řádků, žádný
 buildnative/store/provider/feature validator, Git či I/O. T032/T034 zůstávají mimo.
@@ -39,7 +39,7 @@ buildnative/store/provider/feature validator, Git či I/O. T032/T034 zůstávaj�
   rejected, tiny-budget omissions neberou autoritu, unsupported/truncated input
   zůstává PARTIAL/PENDING. Label slovo 'approved' není human approval.
 - T031-AC06: specRev2, README/API/capability/AC/progress + note92; source review,
-  required full a root publication ještě PENDING.
+  přesná finální review/PR publikace pending; actual descendant full doložen níže.
 
 Public RED **6FAIL,56deselected,0.40s** zachytil absenci veřejné validate API.
 První targeted62PASS0.86s; final společná pure sada **229PASS,0SKIP za6.22s**
@@ -65,7 +65,30 @@ report = validate_process_annotations(current_process_view, packet, candidate)
 # report['valid'] nenahrazuje report['review_status'] ani lidské review/apply.
 ```
 
-Note92 rezervoval root po91W07/90T030 a otevřených PR; všechny worktrees znovu
+Note92 historicky rezervoval root po91W07/90T030 a otevřených PR; všechny worktrees znovu
 zkontrolovány (max91,92absent) před editací. Required full/GH CI NOT_RUN; GH CI
 volitelné dle uživatele, ostatní gates zůstávají. T030worktree070 se neměnilo.
 Publikace/merge pouze po root finalreview; nedokončuje se celé T004.
+
+## Finální aktuální pár a actual descendant proof
+
+Base main `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d` obsahuje merged T030PR75,
+Common/T012/T013 a W07PR76. Modul process_semantics.py i celý T031testfile jsou
+byte-exact s actual `2df55ff8d15d790808f6a81072144eeb408a05b8`. T030byteprefix,
+32AST a35globalbindings jsou přesné;6T031constant/helper/API bindings je disjunktních,
+bez shadowingu/přepisu. Žádný nový runtime/test/native kód při refreshi.
+
+Jeden dokončený combined strict full na2df:2587PASS10přesněpovolených optionalSKIP,
+2042.93sJUnit; všech2597výsledků,4897hashů a5recursive inventářů beze změny,
+Root+architect nezávisle ověřili. Není to standalone full T031. Všech76vlastních
+T031tests je XMLPASS. Původní2066parentIDs:2056PASS10SKIP; aktuální2252mainIDs
+plus76nových identit tvoří2328source/IDunion:2318PASS10stejnýchSKIP v témže2df.
+Union je odvozený a ověřený přes existující ledgers, ne nový test run/collection.
+
+[Bounded proof +76actualstatusů](../validation/t031-descendant-proof.json) nese
+SHA fullXML/status/parent mapy, source SHA a disjunktní bindingseznamy. Původní
+RED6FAIL, kapacitní a359gate0testů i první společný setupfailure zůstávají
+historické; žádný nový build/test/fullrepeat. Main240episodeprefix a všechny
+původní captureobjekty jsou zachovány. GHCI optional/neověřeno; final exact-pair
+independent review a Rootready/merge jsou oddělené. T032/T034 a business approval
+zůstávají mimo tento PR.
