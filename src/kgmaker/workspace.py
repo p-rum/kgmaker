@@ -52,6 +52,11 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_retry_metadata(repo: str, value: dict) -> dict:
+    from .kafka_retry import qualified_metadata
+    return qualified_metadata(repo,value)
+
+
 def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     """Qualify code identities; preserve the exact original capture IDs explicitly."""
     result = copy.deepcopy(value)
@@ -73,6 +78,7 @@ def _qualified_node(repo: str, node):
     if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
     elif (metadata or {}).get('return_mapping_version')==1:metadata=_qualified_symbol(repo,metadata)
     elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
+    elif node.kind=='kafka_retry_policy':metadata=_qualified_retry_metadata(repo,metadata or {})
     return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
 
 
@@ -149,7 +155,7 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
             result[key] = qualified(repo, value[key])
     if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
         result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
-    if str(value.get('extractor', '')).startswith('kafka-code-'):
+    if str(value.get('extractor', '')).startswith(('kafka-code-', 'kafka-retry-')):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])
@@ -596,7 +602,8 @@ def source_path(packet: dict, key: str) -> Path:
 
 def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persist_cache: bool = False) -> tuple[dict, dict, dict, KnowledgeGraph, dict]:
     from . import feature
-    from .schema_replay import reconstruct, PARSER_VERSION as SCHEMA_PARSER_VERSION
+    from .schema_replay import reconstruct, PARSER_VERSION as SCHEMA_PARSER_VERSION, COMPATIBILITY_VERSION
+    from .framework import JPA_RULE_VERSION
     from .domain import HTTP_CAPTURE_VERSION
     from .test_analysis import federated_links
     from .kafka_bindings import VERSION as kafka_binding_version
@@ -618,7 +625,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         classification = Classifier(root).fingerprint
         key = digest({'root': str(root), 'sources': inventory, 'classification': classification, 'flyway': repo.get('flyway'),
                       'parser_versions': ['workspace-1', feature.PARSER_VERSION, feature.WORKBOOK_VERSION,
-                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
+                                          'flyway-offline-1', SCHEMA_PARSER_VERSION, COMPATIBILITY_VERSION, JPA_RULE_VERSION, 'dataflow-1', HTTP_CAPTURE_VERSION, kafka_binding_version],
                       'compiler_index': file_hash(root / '.kgmaker/graph.json') if (root / '.kgmaker/graph.json').is_file() else None,
                       'semantic': file_hash(semantic) if semantic.is_file() else None})
         try:
@@ -666,6 +673,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                 for selected in list(local.contexts):
                     if selected.get('language') == 'jvm' and selected.get('freshness') != 'STALE':
                         local = augment_framework_graph(root, local, selected)
+                from .schema_replay import schema_compatibility
+                for schema in local_schema:
+                    schema['compatibility'] = schema_compatibility(schema, local)
             if error:
                 diagnostics.append(identity + ': ' + error)
             pending_cache[key] = copy.deepcopy((local, local_schema)); parsed.append(identity)

@@ -799,3 +799,20 @@ repository's schema without becoming service-owned code or compiler candidates.
 `t008-service-inventory-2` retains the original full graph for downstream views;
 unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
 its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
+### Kafka retry/DLT declarations — T003-S07-W05 draft
+
+The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
+declarations as separate async boundaries, without executing listeners or brokers.
+Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
+Focus470 PASS / 0 SKIP; strict full on647:1908 PASS / 10 SKIP; current-parent pure23 PASS.
+The feature is draft and is not ready for merge.
+
+### Schema compatibility (T003-S06-W08 bounded scope)
+
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
+uses existing offline replay and an explicitly inspected compiler context. It
+reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
+legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
+W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
+populated-data availability. No implicit worker/build/migration/DB operation.
