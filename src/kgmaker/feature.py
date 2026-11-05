@@ -239,9 +239,10 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
     from .flyway import configuration, DEFAULT_LOCATION
     config = configuration(root)
     if (root / DEFAULT_LOCATION).is_dir() or any('path' in p for p in config['provenance']):
-        from .schema_replay import reconstruct, schema_mappings
+        from .schema_replay import reconstruct, schema_mappings, schema_compatibility
         schema = reconstruct(root); schema.pop('checkpoints', None)
         _, schema['mapping_diagnostics'] = schema_mappings(root, schema, graph)
+        schema['compatibility'] = schema_compatibility(schema, graph)
         coverage['schemas'] = {'.': [schema]}
         coverage['parser_capabilities']['flyway'] = schema['schema_parser_version']
         coverage['pending'] = schema['diagnostics'] + [d['reason'] for d in schema['mapping_diagnostics']]

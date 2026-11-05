@@ -1300,6 +1300,14 @@ Use the existing inspection classpath options for the pinned API JARs listed in
 The actual API tests require the Maven cache and own worker home; mandatory CI
 prepares these APIs and runs `tests/test_http_client_execution.py`.
 
+### W08 bounded schema compatibility
+
+An already explicitly inspected compiler context can be compared with the same
+realm/target's offline replay using
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`.
+See [schema compatibility scope](schema-compatibility.md). W04 dependency PR62 is merged and current main is integrated; it does not run an inspection/build or DB implicitly. Missing,
+stale, legacy or unsupported proof is UNKNOWN, not compatible by omission.
+Schema COMPATIBLE is separate from populated data and deployment evidence.
 ### Explicit Kafka code declarations (`kafka-code-1`, revision2 draft)
 
 Explicit JVM inspection can attach canonical listener declarations from captured
@@ -1331,3 +1339,14 @@ Only this bounded join can yield `code_binding: VERIFIED_STATIC` and a
 capture revisions are separate, and original IDs survive workspace qualification.
 Public context privacy and freshness checks remain mandatory. This is static
 provenance, without delivery, broker, activation or data availability evidence.
+
+### T003-S07-W05 — bounded retry/DLT policy draft
+
+`kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
+Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
+positive path; unsupported3.2.0, custom handler, expressions, source shadows and
+ambiguous DLT associations remain UNKNOWN. Flow policy boundaries are separate
+from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
+[truthful run history](changes/87_captureKafkaRetryDlt.md). The current-parent coalesced run passed470cases without SKIP; the required full
+is NOT_RUN pending the final frozen integration gate. Independent source+focus closure is
+recorded, but final ready review is pending; Kotlin K2 annotation gaps remain.
