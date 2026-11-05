@@ -759,3 +759,17 @@ are unchanged; full proof is pending, not inferred from these pure results.
 Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherited
 pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
 The separately frozen T030/T031 full is not evidence of T032 full validation.
+
+## T033 — read-only process catalog (candidate)
+
+| AC | Concrete tests in test_t033_catalog_business_processes.py | Evidence |
+|---|---|---|
+| AC01 | same_business_label_distinct_trigger_identity; multiple_exact_triggers | PASS |
+| AC02 | candidate_never_becomes_approved; alias_does_not_borrow_approval | PASS |
+| AC03 | removed_trigger_keeps_inactive_historical; stale_review; missing refs | PASS |
+| AC04 | ambiguous_current_rejected; no_writes_process_execution_or_network | PASS |
+| AC05 | scope/context/stale negatives; coverage/outcomes/owner; caps/privacy | PASS |
+| AC06 | docs/change note/source review/full/publication | PENDING |
+
+Own37PASS1.62s, coalesced306PASS94SKIP9.48s. Compiler SKIPs are not native PASS.
+Explicit historical snapshots are required; partial inventory absence is qualified.

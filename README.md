@@ -798,3 +798,14 @@ review history and explicit APPROVE/REJECT, with cooperating POSIX process/threa
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
 See [API, limits and recovery](docs/process-review-store.md). Independent review and
 full validation are pending; there is no T034 CLI or authenticated reviewer identity.
+
+### Explicit process catalog (T033 candidate)
+
+`kgmaker.process_catalog.catalog_business_processes` combines explicit current and
+historical ProcessViews with a supplied T024 inventory and validated T032 reads.
+It preserves process identities/revisions and separate per-member review states;
+labels/shared helpers never deduplicate operations. Optional one-hop aliases retain
+all original members without approval/availability borrowing. Missing triggers
+remain inactive historical within the partial current selection. See
+[Python contract and limitations](docs/process-catalog.md); source review/full
+validation remain pending. No discovery, archive reconstruction, store write or CLI.

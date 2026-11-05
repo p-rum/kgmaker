@@ -817,3 +817,13 @@ REJECT publishes no new labels. Technical model/evidence remains unchanged.
 Current feature36PASS1.93s; coalesced269PASS94SKIP8.74s (compiler SKIPs not PASS).
 Independent source review and strict full NOT_RUN. No native build, CLI, external
 publication, authenticated reviewer identity or hostile-root race guarantee.
+
+## T033 — explicit process catalog (stacked candidate)
+
+Read-only stackT0324fea. Exact current/historical snapshots, stable process+scope
+selection IDs, one-hop explicit alias groups preserving all original member
+revision/trigger/review states, and direct validated T032 reads. Missing exact
+triggers are NOT_IN_CURRENT_INVENTORY, inactive within the PARTIAL/UNKNOWN inventory
+selection, not universally proven deleted. Raw technical prose is omitted/hashbound.
+37ownPASS1.62s; combined306PASS94SKIP9.48s. No current full/compiler evidence; source
+review/dependency/current-main closure pending. No archive/index/discovery/writes/CLI.
