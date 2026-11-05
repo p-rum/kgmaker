@@ -52,6 +52,11 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_retry_metadata(repo: str, value: dict) -> dict:
+    from .kafka_retry import qualified_metadata
+    return qualified_metadata(repo,value)
+
+
 def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     """Qualify code identities; preserve the exact original capture IDs explicitly."""
     result = copy.deepcopy(value)
@@ -139,7 +144,7 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
             result[key] = qualified(repo, value[key])
     if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
         result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
-    if str(value.get('extractor', '')).startswith('kafka-code-'):
+    if str(value.get('extractor', '')).startswith(('kafka-code-', 'kafka-retry-')):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])
@@ -678,6 +683,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                           metadata=_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition"
                           else _qualified_symbol(identity, n.metadata) if (n.metadata or {}).get("return_mapping_version") == 1
                           else _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"}
+                          else _qualified_retry_metadata(identity, n.metadata or {}) if n.kind == "kafka_retry_policy"
                           else n.metadata) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),

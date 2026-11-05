@@ -778,6 +778,15 @@ tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
 
+## T003-S07-W05 — Kafka retry/DLT draft
+
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+Strict full on647:1908PASS/10SKIP1920.61s; current-parent pure23PASS; final exact-pair ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
+
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
 Same Replay + compiler-owned FIELD/PROPERTY/inherited witnesses support explicit

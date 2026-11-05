@@ -734,3 +734,11 @@ a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů be
 změny; source composition má nezávislé root APPROVE. Finální metadata-head review
 a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
 metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+
+## T003-S07-W05 — retry/DLT policy draft
+
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.

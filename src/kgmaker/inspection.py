@@ -261,6 +261,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     value["framework_rule_versions"] = {"spring": SPRING_RULE_VERSION if language == "jvm" else "annotation-source-v3",
                                         "jpa": JPA_RULE_VERSION if language == "jvm" else "annotation-source-v4"}
     if language == "jvm":
+        from .kafka_retry import VERSION as KAFKA_RETRY_VERSION
+        value["framework_rule_versions"]["kafka_retry"] = KAFKA_RETRY_VERSION
         from .http_execution import prepare_context
         value = prepare_context(root, value)
         from .spring_conditions import condition_inputs
@@ -376,7 +378,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     # Preserve the original compiler realm only for prospective Kafka declarations.
     kafka_sources = {s.get("id") for s in metadata
                      if any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
-                            in {"KafkaListener", "KafkaListeners"}
+                            in {"KafkaListener", "KafkaListeners", "RetryableTopic", "DltHandler"}
                             for a in (s.get("annotations") if isinstance(s.get("annotations"), list) else []))}
     kafka_targets = {s.get("id") for s in metadata if s.get("name") == "send"
                      and s.get("owner") in {"org.springframework.kafka.core.KafkaTemplate",
@@ -400,7 +402,7 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                   "origin_trust": selected_context["origin_trust"], "freshness": selected_context["freshness"]}
         if (relation == "contains" and isinstance(fact.get("annotations"), list)
                 and any(isinstance(a, dict) and str(a.get("name", "")).rsplit(".", 1)[-1]
-                        in {"KafkaListener", "KafkaListeners"} for a in fact["annotations"])):
+                        in {"KafkaListener", "KafkaListeners", "RetryableTopic", "DltHandler"} for a in fact["annotations"])):
             record["compiler_annotation_fingerprint"] = digest(fact["annotations"])
         if relation == "contains" and fact.get("id") in kafka_sources:
             record["compiler_realm"] = {key: selected_context.get(key)
@@ -688,6 +690,9 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     graph = augment_http_graph(graph, sanitize(response["bodies"]), selected)
     from .kafka_code import augment_kafka_graph
     graph = augment_kafka_graph(root, graph, sanitize(response["bodies"]), selected)
+    from .kafka_retry import augment_retry_graph
+    selected_retry = next(c for c in graph.contexts if c.get("id") == selected["id"])
+    graph = augment_retry_graph(root, graph, selected_retry)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
