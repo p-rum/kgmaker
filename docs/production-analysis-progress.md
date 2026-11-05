@@ -778,6 +778,18 @@ tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
 
+### T006/T008 revize2 — shared context-role boundary (review pending)
+
+Bounded source separates exact canonical workspace-derived Kafka declarations
+from service-owned source and compiler selection, preserving the original full
+graph/proofs, legacy SOURCE_ONLY and strict foreign-path/scope/hash guards.
+Unknown producer/version/identity is diagnostic; role validity does not require
+current private compiler replay. Pure coalesced matrix: **294PASS/0SKIP**,9actual
+cases explicitly deselected,15.04s,606 frozen inputs unchanged. Read-only replay
+of the fresh actual current-parent Kafka capture passed T008/T010/T011/T015/T024
+with2CURRENT real compiler contexts, full graph/input/store unchanged and no
+new worker execution. Final exact-source independent review/full remain pending;
+T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
 ## T003-S07-W05 — Kafka retry/DLT draft
 
 IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
@@ -807,3 +819,15 @@ DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
 candidate/provenance sets; exact duplicates and YAML distinct locators retain
 existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
 Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
+
+
+## T006/T008 revize 2 — verified shared context roles (2026-11-05)
+
+Current main 3e5ef0f; shared producer identity, classifier and inventory boundary
+retain the original full graph, strict source ownership and historical role versus
+freshness distinction. Actual focus 217 PASS / 0 SKIP; combined descendant2df55ff
+strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, 4897 unchanged hashes
+and five unchanged artifact member sets. Every Common-parent ID is included:
+1956 PASS / 10 optional SKIP from one descendant full, not a standalone run.
+T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
+See note84 for preserved setup failure/correction and final review limitations.

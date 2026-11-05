@@ -735,6 +735,16 @@ změny; source composition má nezávislé root APPROVE. Finální metadata-head
 a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
 metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
 
+## T006/T008 revision2 — derived context role boundary
+
+T006-AC07–08 and T008-AC07–09: `tests/test_context_roles.py` covers full mixed and
+config-only public snapshots, T010/T011/T015/trigger consumers, historical captured
+hashes versus role freshness, malformed/unknown version/identity/input/realm,
+source/compiler pins, original strict foreign paths and immutable full inputs.
+The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
+(9actual deselected). A separate pure replay of the actual current-parent Kafka
+capture retained2CURRENT compiler contexts across5projections with no process,
+network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
 ## T003-S07-W05 — retry/DLT policy draft
 
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
