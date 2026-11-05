@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
     "README.md": "373c5b4fac499408baf3e53f0303cd5adb641c00e4745e1ef90cfc6abf4a9e1e",
-    "docs/acceptance-inventory.md": "65eb46f0174b34d9026a66ea77dd488ec05fc0e980bb5f9ac8ae521157e7f2fb",
+    "docs/acceptance-inventory.md": "ea9bf08e2359c69b7d9e5db112d7a2d274471c8939ee04774650cb6c738e2153",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -75,7 +75,7 @@
     "docs/changes/90_prepareProcessLabelPacket.md": "0da9433c8cb7c1e5f54c0b4c7408333e885a24922c1969dab28e83c03d141d8e",
     "docs/changes/91_planRemoteContractMapping.md": "7fe763e63f9597e7a7446bfad225b18f4707014e269776cc98fae4e48f01d12f",
     "docs/changes/92_validateProcessAnnotations.md": "97fdb9a78b8510cacf33e5d2ec33d6acd1404789213597af07b919ebb27a0364",
-    "docs/changes/94_persistProcessReview.md": "df4da3fd54cb7ee54947e6dcb110745989d95d12e6b13d8ac0c3c9a67edcece4",
+    "docs/changes/94_persistProcessReview.md": "494044c5f9374a57181e998a35b148ccc43330880f6ca1f7fc1d44dd440b36ba",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "f1d4bd6d1f8c7eb43437d805d15f032f25ec662c3c2709998928f4627bec2c83",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -89,9 +89,9 @@
     "docs/process-label-packets.md": "6f2993bfbb90df7c3911242e700b19327c46eec6e566a3a7c2d5f6627fdada6a",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-paths.md": "345acc7248921457a8dc0749de80d247e0a7a8ba6af12a21c32715172c2e6df5",
-    "docs/process-review-store.md": "4c09196fcca391969ee7b0cb99aa36a440efaf03d3bb0aa371e61932b72a610a",
+    "docs/process-review-store.md": "6f3a436b9e18430d2fb277a3c29bad38ffc4f2aa0e64a2fd104f3c93a45aea8a",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "b0eeb2855d4d5b64e3a60c757987682541fdecc35a27a36608b0fa70bc88ab23",
+    "docs/production-analysis-progress.md": "8851ffc75feecc7446f68c376d605d35a1cf132ec98f814bbad2bb7c34275abd",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/remote-contract-mapping.md": "df8c0e2150b5e226f77eb1dd2ecf660d33ada1300ae1d01804dcd52eff1d1934",
@@ -214,6 +214,7 @@
     "docs/typescript-freshness.md": "ee683d326939744e05facb56f67520a185e293a91cad821676b7d2eb6498b43a",
     "docs/validation/t030-descendant-proof.json": "17f1eabea21dcf3b05be9ab4b6d459e46b7ac1da39e1ff837e3202e36d114417",
     "docs/validation/t031-descendant-proof.json": "cfeb1b6943ee57e09e11994b1545d2e97df049e36aadc1a90f1cc7afdcd65529",
+    "docs/validation/t032-descendant-proof.json": "6a6fb0bb92c2861146b556fbee0fd6780d3c662bd58afe7e01c3a65cbf06ecaa",
     "docs/windows-install.md": "b706cd4404956348440b377fac7771f97e7dd405bc34c75ff4aefb97a2352a59",
     "fixtures/build-inspection/frontend/checker.cjs": "c63200f117a543b42b8facc045fa9a1c7ea8519926607fb1945a592d60e90e4a",
     "fixtures/build-inspection/frontend/package-lock.json": "99f866cc68d76842292e4699184d1f948202396855fcc0422717d5b34b75b7a3",
@@ -1708,16 +1709,6 @@
       "source_file": "src/kgmaker/process_store.py",
       "source_line": 302,
       "evidence": "read_process_reviews rederives current packet binding and exposes historical decisions separately from active annotations."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::371",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     }
   ],
   "episodes": [
