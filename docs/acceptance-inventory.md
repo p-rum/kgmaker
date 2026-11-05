@@ -699,26 +699,28 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
-## T003-S06-W08 — schema compatibility (draft stack, pending full/review)
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
-Original stack base was W04 checkpoint7dc1016. Dependency PR62 is now merged; current-main refresh and W08 gates remain pending, with no milestone completion.
+Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)
+is integrated; final independent exact-pair review/ready/merge remain separate.
 
-| AC | Contract/test | Observed result |
+| Acceptance | Supported proof / tests | Actual evidence |
 |---|---|---|
-| W08-AC01 | `test_actual_compiler_type_null_decimal_keys_and_later_target_conflict`: canonical Javac FIELD descriptor, explicit nullability, decimal12/2, single-column PK/UK; separate selected target | Earlier grouped6PASS/0SKIP9.22s verifies positive subset, custom type and foreign-target negative. Expanded same-current-target rename/drop/type and CLI/XML focus pending. |
-| W08-AC02 | `test_source_only_legacy_mapping_is_unknown_never_available`; missing snapshot fingerprint | Pure PASS; graph v1/v2/v3 explicit migration regression still NOT_RUN. |
-| W08-AC03 | Actual compiler customdemo.BigDecimal and mutated replay nullable/type/key without migration-SHA change; existing availability gate tests | Earlier grouped actual PASS; availability/feature/Flyway/W04 pure54PASS/30actual deselected. Extended customLong/String, SQLdomain and forged-edge cases pending. |
-| W08-AC04 | `docs/schema-compatibility.md`, note78 and this bounded matrix | Current draft documentation only; no full/ready/merge claim. |
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
+| W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
+| W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
 
-No data availability, deployment, live DB or unsupported FK association/typed XML
-constraint positive is inferred from compatibility. PROPERTY/inherited positive
-coverage must be established by actual fixtures before claiming that subset.
+Full1591PASS/10optionalSKIP1646.65s is attributed only to ced9717; current
+Return174PASS/0SKIP248.87s only to67b8341. No runtime/data/deployment proof.
+Unsupported XML effective constraints, naming/converters/composite/defaulted FK
+remain UNKNOWN; no whole S06/T003/T004 completion claim.
 
-W08 current-main + guard evidence update:23PASS/0SKIP91.73s current composition
-a29PASS/0SKIP86.52s relevantní P1/P2 guard matrix;385 immutable frozen inputs
-ověřeny. Actual positive type/null/decimal/PK/UK/FK + PROPERTY/inherited, current
-rename stableID/incarnation a unknown/malformed negatives jsou doloženy v note78.
-Full a nezávislé source/final review zůstávají pending; žádná availability promotion.
+### T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)
+
+AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
+two service realms, method/sibling separation, deterministic order and duplicate
+records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
 ### T003-S07-W04 revize2 — draft code/group acceptance
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou

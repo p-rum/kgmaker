@@ -196,3 +196,15 @@ licenses) odpovídá ověřenému broad receipt, kopie následně SHA ověřena;
 LICENSE soubory shodné s official Kotlin license. Receipt return-native-copy.
 Žádný rebuild, původní W08 full zůstává přesně ced.224 main episodes prefix
 se zachovává; bounded Return/schema/realm/Kafka matrix zatím pending.
+
+## Final current-main composition and exact evidence
+
+Return matrix67b8341: **174PASS/0SKIP248.87s** (XML248.859s), runnerexit0
+249.578s; všech1487inputs+HEAD nezávisle ověřeno po dokončení. Source composition
+APPROVE root67/deb zachováno. Parent c193748 je pouze HTTP provider coalescer,
+4pure tests a docs; nedotýká se worker/schema/framework/data_resource core.
+Final parent pure: **4PASS/0SKIP0.56s**, final-parent-pure.xml. Žádný nový build,
+full ani opakování174matrix pouze kvůli tomuto parentu. Own core stále byte-exact
+ced full, Return/Kafka workspace qualifiers zachovány. Main226episode prefix
+musí zůstat immutable před vlastním validated memory capture. Finální independent
+exact-pair review/ready/merge se netvrdí za hotové před jeho výsledkem.

@@ -1,7 +1,7 @@
-# Offline ORM/schema compatibility — W08 draft stack
+# Offline ORM/schema compatibility — W08 bounded scope
 
 This work began as a draft stack on W04 checkpoint7dc1016. Dependency PR62 is
-now merged; current-main refresh and this work's independent review/full gate remain pending. It does not establish T003-S06
+now merged. The bounded implementation has strict full1591PASS/10optionalSKIP on ced9717 and current Return-parent174PASS/0SKIP on67b8341; final independent exact-pair review remains separate. It does not establish T003-S06
 completion or deployed/populated data.
 
 `kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
@@ -35,7 +35,7 @@ against a COMPLETE selected-table replay with current explicit mapping proof.
 
 PROPERTY/inherited declaration witnesses are exact compiler-backed graph relations;
 physical columns are linked by the same selected-realm matcher as declared FIELD mappings.
-Fresh grouped validation of the expanded subset is pending. Unsupported
+The expanded subset passed the actual grouped matrix and strict full; see note78 for exact source attribution. Unsupported
 or missing canonical bindings remain UNKNOWN. XML effective constraints without
 typed proof, naming strategies, inferred mapping, converters and unsupported FK
 association tuples remain UNKNOWN. The narrow FIELD ManyToOne FK dimension reuses compiler→association and

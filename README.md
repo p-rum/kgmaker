@@ -126,7 +126,9 @@ interfaces = project_http_providers(
 ```
 
 This library projection adds no CLI command. See [HTTP provider boundaries](docs/architecture.md#http-provider-projection)
-and [T010 evidence](docs/changes/67_catalogHttpProviders.md).
+and [T010 evidence](docs/changes/67_catalogHttpProviders.md). Colliding normalized
+contract variants remain one explicit `AMBIGUOUS` boundary with every original
+route and candidate proof; see [change88](docs/changes/88_preserveAmbiguousHttpProviders.md).
 
 Workspace v1 can optionally carry `service_ownership` v1 with explicit service
 roots, repo-qualified module IDs and external system IDs. `kgmaker.workspace.resolve_service_ownership`
@@ -770,11 +772,11 @@ reversibly groups only adjacent certified local operations in an explicit proces
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
 
-### Schema compatibility (T003-S06-W08 draft)
+### Schema compatibility (T003-S06-W08 bounded scope)
 
 `kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
 uses existing offline replay and an explicitly inspected compiler context. It
 reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
 legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
-W04 dependency PR62 is merged; current-main refresh and W08 full/review remain pending; compatibility never proves deployment or
+W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.

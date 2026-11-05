@@ -1300,12 +1300,12 @@ Use the existing inspection classpath options for the pinned API JARs listed in
 The actual API tests require the Maven cache and own worker home; mandatory CI
 prepares these APIs and runs `tests/test_http_client_execution.py`.
 
-### W08 schema compatibility draft
+### W08 bounded schema compatibility
 
 An already explicitly inspected compiler context can be compared with the same
 realm/target's offline replay using
 `kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`.
-See [schema compatibility scope](schema-compatibility.md). W04 dependency PR62 is merged; this draft still awaits current-main integration; it does not run an inspection/build or DB implicitly. Missing,
+See [schema compatibility scope](schema-compatibility.md). W04 dependency PR62 is merged and current main is integrated; it does not run an inspection/build or DB implicitly. Missing,
 stale, legacy or unsupported proof is UNKNOWN, not compatible by omission.
 Schema COMPATIBLE is separate from populated data and deployment evidence.
 ### Explicit Kafka code declarations (`kafka-code-1`, revision2 draft)
