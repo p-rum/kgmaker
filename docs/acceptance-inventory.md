@@ -743,3 +743,16 @@ The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKI
 capture retained2CURRENT compiler contexts across5projections with no process,
 network or input/store mutation. Final full and independent source closure remain
 pending; this is not T016 or runtime/data availability acceptance.
+
+
+## T003-S07-W07 — explicit remote mapping draft
+
+| AC | Current evidence | Pending |
+|---|---|---|
+| AC01 | public trusted protocol exact/paired mappings and transport distinction | real current HTTP/Kafka positives after source closure |
+| AC02 | absent field, strict version/containers, existing workspace regressions | final full/legacy combined matrix |
+| AC03 | realm/operation/hash/release/pair/ambiguity/capture tamper/privacy/no-I/O/budget tests | actual grouped negative matrix |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md) | independent source review + actual/full |
+
+Current101pure/upstreamPASS,8actualDESELECTED; initial actual2 expectedRED on
+missing API after successful native fixture is not current positive acceptance.

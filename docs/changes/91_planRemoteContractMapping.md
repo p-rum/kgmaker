@@ -41,3 +41,30 @@ stejného version labelu. Více oprávněných targets zachová candidate set.
 Zbývá review plánu, skutečné public/actual failing acceptance, implementace,
 nezávislé source review, focus/full a final docs/semantic/memory. Nic zde nezvyšuje
 availability ani prokázaný jazykový/backend rozsah.
+
+
+## První runtime source checkpoint (před actual matrix)
+
+Root schválil refined capture schema/plan. Ověřené FIFO actual RED na4c7bc98:
+**2 očekávané FAIL,3DESELECTED10.30s**, runner11.02s; obě real Kafka/HTTP setup
+proběhla a uložila public graph před missingAPI assertion.1374pre/post hashů
+beze změny, žádný ERROR/native build. Receipts /workspace/remote-contract-proof/
+actual-red.{log,xml},actual-red-receipt.json a actual-captures/{kafka,http}.json.
+
+Přidán remote_mapping.py a jediný aditivní manifest loader hook + dataflow pure
+API wrapper. Capture provádí upstream I/O/replay, resolver výhradně porovnává
+explicitní in-memory canonical handoff. Summary vynechá raw schema payloady a váže
+původní capture hash; canonical source validace zůstávají upstream. HTTP client
+expectation je explicitní deklarace, ne odvozený payload type. Známý method/path
+se nesmí přepsat očekáváním. Žádný T013/common/native source změněn.
+
+První pure run26PASS1FAIL0.30s odhalil chybu nového testu: test předpokládal
+index0 canonical docs jako provider, ale stabilně se řadí consumer před provider.
+Opraven test na explicitní node selector; žádná runtime chyba maskována.
+Následující combined86PASS/4DESELECTED4.41s; current101PASS/8actualDESELECTED5.69s
+(T013/workspace+W07 pure). Hand-labelled trusted protocol handoff testuje matching
+pravidla, není důkazem compiler producerů či autentizace libovolného JSON.
+
+Aktuální actual positive HTTP/Kafka a negative matrix jsou připravené, NOT_RUN
+před nezávislou source closure. Kotlin HTTP upstream typed proof je UNKNOWN a
+actual test to musí zachovat. Full NOT_RUN, žádný nový native build/remote write.

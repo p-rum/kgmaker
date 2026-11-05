@@ -124,7 +124,10 @@ normalizovaným explicitním výběrem. Workspace fingerprint váže deklarativn
 workspace bez privátních/absolutních repo roots, graph fingerprint celý dodaný graf
 bez nezávislých generation timestamps. Canonical_interfaces jsou serialized
 upstream ViewDocuments v pořadí HTTP provider, HTTP consumer, Kafka s contract
-attachments. Contract_capture je nezměněná původní T013 capture, nikoli další store.
+attachments. Contract_capture je ref-only summary původní T013 capture: source_capture_id,
+file repo/path/raw/source hashes/status/indexed, bounded pointer inventory a
+declarations; raw JSON examples/descriptions se po attachment neexportují. Není to
+další store ani druhý contract parser.
 Capture_id je digest celého envelope bez sebe sama. Výstup neobsahuje private index,
 raw secret properties ani source bodies; graph/workspace fingerprints pouze vážou
 externě dodané inputs. Cesty/timestamps nejsou autentizace. Očekávaný canonical
@@ -179,3 +182,10 @@ Kafka producer/consumer. Pokud typed kontrakty postačí, žádný native produc
 Final full až po nezávislé source closure a green actual focus nad frozen vstupy,
 FIFO lock a připraveným toolchain. GH CI doplňující dle AGENTS/T045 user revize,
 ne náhrada chybějícího jiného povinného důkazu.
+
+
+Implementační upřesnění prvního source checkpointu: běžný HTTP client bez T013
+generated-client vazby získává pouze explicitní manifest contract EXPECTATION.
+Známý HTTP method/path musí odpovídat vybrané operation pointer; target nadále
+vyžaduje skutečný current T013 binding. K1/K2 Kotlin HTTP typed-body je upstream
+UNKNOWN, nikoli pozitivní W07 execution proof. Původní T013/common source se nemění.

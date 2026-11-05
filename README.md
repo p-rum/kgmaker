@@ -797,3 +797,13 @@ repository's schema without becoming service-owned code or compiler candidates.
 `t008-service-inventory-2` retains the original full graph for downstream views;
 unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
 its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
+
+
+## T003-S07-W07 — explicit remote mapping draft
+
+See [remote mapping contract](docs/remote-contract-mapping.md)
+and [note91](docs/changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Current101pure/upstreamPASS; current actual
+matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
