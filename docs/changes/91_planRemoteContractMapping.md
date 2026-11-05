@@ -114,3 +114,14 @@ cohort; nové změny jsou actual fixture/matrix, ne nový product behavior.
 Nový modul je přidán do existujícího compiler-workers jobu s existujícími
 REQUIRE_WORKERS/K2 flags a již připravovanými pinned HTTP/Kafka API. Žádný nový
 gate, package dependency, actual GH run/retry nebo změna workflow oprávnění.
+
+
+## Controlled malformed capture encoder guard před actual freeze
+
+Přímý public tuple-key capture input reprodukoval raw JSON sort TypeError místo
+fixed-code ValueError: nový negative RED1FAIL0.40s v nonjson-red.log/xml. Úzký
+wrapper používá původní analysis_model.digest a převádí pouze malformed JSON
+encoder exceptions na REMOTE_INVALID_JSON bez raw key/value/exception chain.
+Nevzniká druhý encoder ani authority claim. Current combined118PASS a všech
+10actualDESELECTED4.48s, final-pure-guard.log/xml. Žádný actual matrix/full/native
+build proběhl; exact-diff source closure musí potvrdit finální checkpoint.

@@ -604,3 +604,9 @@ def test_actual_same_url_versions_require_explicit_pair_and_keep_candidate_set(r
         assert len({c['target_contract']['sha256'] for c in declared['candidates']})==2
     else:assert declared['resolution_status']=='UNRESOLVED' and declared['candidates']==[]
     assert declared['payload_compatibility']=='UNKNOWN' and declared['runtime_execution']=='NOT_OBSERVED'
+
+
+def test_non_json_capture_keys_have_fixed_error_not_raw_digest_exception():
+    specimen=trusted_protocol_specimen();specimen[3]['contract_capture']['files'][('malformed','PRIVATE_KEY_SENTINEL')]={}
+    with pytest.raises(ValueError) as raised:solve(specimen)
+    assert 'PRIVATE_KEY_SENTINEL' not in str(raised.value)

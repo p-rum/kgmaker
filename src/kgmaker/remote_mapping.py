@@ -10,7 +10,7 @@ import math
 from pathlib import PurePosixPath, Path
 import re
 
-from .analysis_model import digest
+from .analysis_model import digest as _shared_digest
 from .architecture_model import ViewDocument
 from .model import KnowledgeGraph
 
@@ -33,6 +33,15 @@ class RemoteMappingError(ValueError):
 
 def _fail(code):
     raise RemoteMappingError(code) from None
+
+
+def digest(value):
+    # Reuse the canonical shared encoder, but never expose malformed-key values
+    # or low-level exceptions from an untrusted handoff.
+    try:
+        return _shared_digest(value)
+    except (TypeError, ValueError, RecursionError, OverflowError):
+        _fail('REMOTE_INVALID_JSON')
 
 
 def _bounded(value):
