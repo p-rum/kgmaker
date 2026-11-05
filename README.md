@@ -771,3 +771,12 @@ The pure [T026 business-step API](docs/process-paths.md#reversible-business-step
 reversibly groups only adjacent certified local operations in an explicit process
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
+
+### Schema compatibility (T003-S06-W08 bounded scope)
+
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`
+uses existing offline replay and an explicitly inspected compiler context. It
+reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
+legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
+W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
+populated-data availability. No implicit worker/build/migration/DB operation.
