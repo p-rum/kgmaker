@@ -240,6 +240,12 @@ selected_contexts=None, source_coverage=None)` composes the T008 inventory with
 T007 explicit ownership and the shared T005/T009 view model. Its `interfaces`
 ViewDocument preserves source/context hashes, upstream IDs, service identity,
 case-preserving routes, contract fingerprints and separate registration variants.
+`http-providers-2-ambiguous-variants` coalesces distinct registrations sharing the
+exact same generated identity into one `AMBIGUOUS` boundary. It retains sorted
+`original_routes`, complete `registration_candidates`, original IDs and evidence,
+and clears conflicting scalar fields. The service edge preserves every proof
+and remains ambiguous. Existing noncolliding IDs stay unchanged; different
+source locators keep their variants. This is no OpenAPI validity or runtime proof.
 Canonical compiler variants use the existing declaration owner/name/JVM descriptor
 and mapping values, so same-line overloads remain distinct. Unrelated source edits,
 comment/line movement and relocation within the same explicitly owned module do
