@@ -299,6 +299,34 @@ def test_actual_explicit_kafka_mapping_retains_broker_group_and_no_delivery(kafk
     assert (workspace,graph.to_dict(),captured)==before
 
 
+def _http_toolchain_error(error):
+    if error.status!='TOOLCHAIN_UNAVAILABLE':raise error
+    if os.environ.get('KGMAKER_REQUIRE_WORKERS')=='1':pytest.fail('Required HTTP fixture toolchain unavailable')
+    pytest.skip('Optional pinned HTTP fixture toolchain unavailable')
+
+
+def _http_prerequisites():
+    from kgmaker.inspection import command
+    from kgmaker.worker_protocol import WorkerError
+    from test_http_client_execution import api_jars
+    home=Path(__file__).resolve().parents[1]/'workers'
+    try:
+        command('jvm',home,kotlin_backend='k1')
+        jars=api_jars();stdlib=home/'jvm/target/lib/kotlin-stdlib.jar'
+        if not stdlib.is_file():raise WorkerError('Kotlin fixture API unavailable','TOOLCHAIN_UNAVAILABLE')
+        return jars+[str(stdlib)]
+    except WorkerError as error:_http_toolchain_error(error)
+
+
+def _inspect_http_repo(repo,jars):
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.worker_protocol import WorkerError
+    try:
+        return inspect_jvm(repo,home=Path(__file__).resolve().parents[1]/'workers',classpath=jars,
+            kotlin_backend='k1',repo_id='local',module=repo.name)
+    except WorkerError as error:_http_toolchain_error(error)
+
+
 @pytest.fixture(scope='module',params=['java','kotlin'])
 def real_http_pair(tmp_path_factory,request):
     from kgmaker.inspection import inspect_jvm
@@ -326,10 +354,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 @RestController public class Server { @PostMapping("/orders") public String submit(){return "ok";} }
 ''')
-    jars=api_jars()+[str(Path(__file__).resolve().parents[1]/'workers/jvm/target/lib/kotlin-stdlib.jar')]
+    jars=_http_prerequisites()
     for repo in [client,server]:
-        result=inspect_jvm(repo,home=Path(__file__).resolve().parents[1]/'workers',classpath=jars,
-            kotlin_backend='k1',repo_id='local',module=repo.name)
+        result=_inspect_http_repo(repo,jars)
         assert not any('.err.' in d.get('code','') for d in result['diagnostics']),result['diagnostics']
     manifest=root/'workspace.json'
     manifest.write_text(json.dumps({'schema_version':1,'workspace_id':'explicit-http-pair',
@@ -507,3 +534,29 @@ def test_capture_accepts_explicit_unicode_contract_path_with_spaces(explicit_con
     workspace,graph,_=inputs(explicit_contract_fixture)
     captured=api().capture_remote_mapping_inputs(workspace,graph,scope='production')
     assert '@backend/'+relative in captured['contract_capture']['files']
+
+
+@pytest.mark.parametrize('entry',['prerequisites','inspection'])
+@pytest.mark.parametrize('required',[False,True])
+@pytest.mark.parametrize('status',['TOOLCHAIN_UNAVAILABLE','INVALID_PROTOCOL'])
+def test_http_fixture_optional_prerequisites_never_mask_protocol_errors(monkeypatch,entry,required,status,tmp_path):
+    from kgmaker.worker_protocol import WorkerError
+    import kgmaker.inspection
+    import test_http_client_execution
+    error=WorkerError('fixture diagnostic',status)
+    def fail(*args,**kwargs):raise error
+    monkeypatch.setenv('KGMAKER_REQUIRE_WORKERS','1' if required else '0')
+    if entry=='prerequisites':
+        monkeypatch.setattr(kgmaker.inspection,'command',lambda *a,**k:['not-executed'])
+        monkeypatch.setattr(test_http_client_execution,'api_jars',fail)
+        call=_http_prerequisites
+    else:
+        monkeypatch.setattr(kgmaker.inspection,'inspect_jvm',fail)
+        call=lambda:_inspect_http_repo(tmp_path,[])
+    if status!='TOOLCHAIN_UNAVAILABLE':
+        with pytest.raises(WorkerError) as raised:call()
+        assert raised.value is error
+    elif required:
+        with pytest.raises(pytest.fail.Exception):call()
+    else:
+        with pytest.raises(pytest.skip.Exception):call()

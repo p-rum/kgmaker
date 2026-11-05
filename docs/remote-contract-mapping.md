@@ -57,7 +57,7 @@ publish/subscribe are different transition kinds; neither is a JVM `calls` edge.
 Runtime execution/delivery is NOT_OBSERVED and deployment, data availability and
 payload compatibility remain UNKNOWN, including with explicit compatibility pairs.
 
-Source checkpoint only: public pure/protocol/upstream regression109 PASS,8 actual
+Source checkpoint only: public pure/protocol/upstream regression117 PASS,8 actual
 DESELECTED. Initial actual RED2 expectedFAIL after successful canonical setups is
 historical. Current actual positives/matrix/full are NOT_RUN pending independent
 source closure. Hand-labelled protocol specimens are not native acceptance proof.

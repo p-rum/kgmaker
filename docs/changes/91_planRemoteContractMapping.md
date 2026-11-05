@@ -85,3 +85,14 @@ zesílen tak, aby před vložením userinfo prokázal otherwise-valid manifest; 
 8dotčených public privacy/Unicode případů PASS0.27s. Runtime je mezi běhy stejný.
 Actual matrix/full stále NOT_RUN; čeká exact-diff closure opravy před jediným
 coalesced actual během. Žádný nový build nebo remote write.
+
+
+## Test-only prerequisite boundary před prvním actual matrix
+
+Vlastní nový HTTP fixture helper nyní zachytí POUZE WorkerError status
+TOOLCHAIN_UNAVAILABLE: optional SKIP, KGMAKER_REQUIRE_WORKERS=1 FAIL. Protocol,
+code a ostatní chyby se vracejí nezměněné; validace runtime se neuvolňuje.
+Čistá matice ověřuje oba discovery/inspection vstupy, optional/required a původní
+INVALID_PROTOCOL exception identity. Current combined117PASS/8actualDESELECTED
+4.95s. Žádný actual/matrix/full ani native build. Runtime beze změny oproti
+userinfo checkpointu; tato úprava předchází final freeze.
