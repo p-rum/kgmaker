@@ -51,3 +51,21 @@ Coalesced correction **174PASS10actualDESELECTED1.58s**; následný nový explic
 capture-before-projector regression spolu s oběma coverage cases **3PASS37DESELECTED**
 (coverage-capture-green.xml). Žádný native/heavy/full run. Root independent
 re-review nad opraveným SHA zůstává samostatný gate.
+
+## Root actual upstream owner contract feedback
+
+Root REQUEST_CHANGES P1 nadf05: T012 Kafka emit používá plain service owner_id,
+ale catalog service IDs mají prefix service:. Původní qualified hand-labelled
+fixtures chybu zakrývaly a canonical Kafka skončila bez channelu jako ownerUNKNOWN.
+Public realistický plain-owner RED **1FAIL1PASS44DESELECTED0.31s**, HTTP qualified
+control zůstal green. Upstream API se nemění.
+
+Oprava bere source/target release před owner kontrolou. Catalog ID vzniká jen
+z explicitního selected release.service_id; origin endpoint musí mít přesně
+release.interface_id a owner přesně plain service_id nebo jeho catalog ID.
+Cizí/částečně podobná/prefixová či opačná service nezíská fallback; žádné parsing
+ID/label/name inference. Public plain Kafka pozitivní, qualified HTTP kontrola
+a4foreign owner negatives jsou zahrnuté. Coalesced **181PASS0SKIP10actualDESELECTED
+1.36s**, plain-owner-green.xml. Saved actual W07 capture replay počká na opravený
+upstream terminal/source receipt; tento pure běh se za něj nevydává.
+Root independent re-review a finaldependency/current-main/full dál pending.
