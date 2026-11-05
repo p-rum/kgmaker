@@ -639,6 +639,12 @@ entity mappings and migrations contribute dependencies. Flyway is
 Missing datasource mappings remain unresolved; no database connection or new CLI
 command is introduced. See [data-resource boundaries](docs/compiler-inspection.md#data-resource-projection-t015).
 
+Compiler inspection also records static return → assignment/argument/receiver
+bindings with branch guards and declared nullability. Java, K1 and TypeScript
+support the bounded [return-consumer matrix](docs/compiler-inspection.md#return--consumer-bindings);
+K2 Kotlin source CFG, opaque/recursive/async bodies and unsupported projections
+remain UNKNOWN. Process and impact reports carry the proof without runtime values.
+
 ## Explicit business-process documents
 
 `kgmaker.process_model.ProcessDefinition` and `ProcessView` validate version1
@@ -741,6 +747,13 @@ are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
 inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
+### Kafka interface catalogue
+
+The pure [Kafka catalogue](docs/kafka-interfaces.md) projects explicit upstream
+listener/send declarations and declared bindings into the shared interfaces view.
+Broker realms and consumer groups remain distinct; configuration-only and regex
+subscriptions retain their unresolved boundaries. Explicit workspace/private
+compiler indexes are required; the projection performs no inspection or transport.
 ### HTTP consumer catalogue (T011)
 
 `kgmaker.interfaces.project_http_consumers(workspace, graph, scope="production",
@@ -772,3 +785,8 @@ compiler indexes are required; the projection performs no inspection or transpor
 while adding explicit content-bound provider/client declaration references.
 Generated-client origin survives stale contract hashes. Payload compatibility and
 runtime/data availability remain unknown; no generator or schema fetch runs.
+
+The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
+reversibly groups only adjacent certified local operations in an explicit process
+view. It preserves unresolved CFG adjacency and all origins; it does not approve
+business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.

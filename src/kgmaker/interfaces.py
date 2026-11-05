@@ -814,7 +814,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
     from .kafka_bindings import VERSION as BINDING_VERSION, build_links
     from .store import load_graph
     from .views import _summarize_view_evidence, ContextSelectionError, ServiceInventoryError
-    from .workspace import (qualified, _qualified_kafka_metadata, _qualified_evidence,
+    from .workspace import (qualified, _qualified_node, _qualified_kafka_metadata, _qualified_evidence,
                             _qualified_symbol, _qualified_call_site)
 
     def fail(message):
@@ -1009,8 +1009,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         authority, context = matches[0], selected[0]
         if not validate_code_fact(roots[repo],local,context,authority):
             fail('Canonical compiler code proof is not valid')
-        expected = replace(authority,id=qualified(repo,authority.id),path=source_key(repo,authority.path),
-                           metadata=_qualified_kafka_metadata(repo,authority.metadata))
+        expected = _qualified_node(repo,authority)
         if expected != fact or graph.files.get(fact.path)!=local.files.get(authority.path):
             fail('Public code fact differs from canonical captured authority')
         # Public Nodes are independent mirrors too: validating symbol/site records
@@ -1020,7 +1019,7 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
             original=local_nodes.get(identity)
             if original is None:
                 fail('Original compiler Node is missing from saved authority')
-            expected_node=replace(original,id=qualified(repo,original.id),path=source_key(repo,original.path))
+            expected_node=_qualified_node(repo,original)
             if by_id.get(expected_node.id)!=expected_node:
                 fail('Original public compiler Node is missing or changed')
         check_original_node(authority.metadata['origin_id'])
