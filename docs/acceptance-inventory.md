@@ -816,3 +816,20 @@ not a new parent collection/full/test execution. Original47own cases remain PASS
 
 The full ran on combined descendant2df55ff8, not standalone W07. Historical
 failures and partial runs remain separately attributed in note91.
+
+## T031 — read-only annotation validation (final review candidate)
+
+| AC | Concrete public proof | Actual result |
+|---|---|---|
+| AC01 | Self-rehashed allowlist, stale current-process/docs/context/budgets rejection | PASS |
+| AC02 | Czech group/outcome proposals, unchanged technical subtree and fingerprints | PASS |
+| AC03 | All overlapping-field and captured documentary conflicts retained for review | PASS |
+| AC04 | NoIO/immutability/error privacy/no partial proposals/bounded structures | PASS |
+| AC05 | Forged refs/status/technical fields rejected; unsupported coverage unchanged | PASS |
+| AC06 | SpecRev2/API/docs/note92 + bounded actual proof | Final exactpair review/PR pending |
+
+ALL76owncases PASS in ONEactual descendant2df55 full2587PASS10allowedSKIP, not
+standaloneT031. Original2066parentIDs2056PASS10SKIP. Currentmain5ffe2252 +own76
+source/IDunion2328 gives2318PASS10sameSKIP fromthatXML; no new test/collection.
+Whole module/testfile exactactual; T03032AST/35globals prefix+6disjointbindings.
+See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unverified.

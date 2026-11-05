@@ -886,3 +886,26 @@ authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific cohort334 unique PASS;
 combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
 cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
+
+Pure `prepare_process_label_packet` preserves complete ProcessView target/ref
+identity, actual content binding and captured evidence/uncertainty. Raw prose is
+hash-omitted; document provenance is explicit ref-only and conflicts are supplied
+review items, not NLP authority. Full serialized cost includes omissions/template
+and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
+inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
+Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
+exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+
+## T031 — read-only process annotations (final review candidate)
+
+Pure API rederives the whole current T030 packet before accepting semantic-only
+PROPOSED text/refs/groups; conflicting fields and structured documentary conflicts
+remain PENDING/CONFLICT for review. No technical apply or approval. Currentmain
+5ffe099 has merged T030/Common/T012/T013/W07 prerequisites.
+Whole module/testfile exactactual2df55; originalT03032AST/35globals/byteprefix
+preserved,6added bindings disjoint. All76ownXMLPASS in ONEcombined descendant
+2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original2066parent
+cases2056PASS10SKIP; currentmain2252+76 source/IDunion2328=2318PASS10sameSKIP.
+Not standalone parent full, new collection or test/build/fullrepeat. Main240episode
+prefix and every old capture preserved. Exact finalreview/publication separate;
+GHCI optional/unverified. See note92 and validation/t031-descendant-proof.json.
