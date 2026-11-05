@@ -744,3 +744,18 @@ No model call, semantic approval, T031 apply or T034 CLI is supplied by this row
 
 Explicit stack T030070. Its47tests and complete original module AST/byte prefix
 are unchanged; full proof is pending, not inferred from these pure results.
+
+## T032 — explicit local semantic review (candidate)
+
+| AC | Concrete public evidence | Actual result |
+|---|---|---|
+| AC01 | same_operation_retry, historical_idempotent_retry | PASS |
+| AC02 | real_processes_cas, real_threads_cas, stale_cas | PASS |
+| AC03 | changed_explicit_baseline, other_scope_has_no_approval | PASS |
+| AC04 | pre-publication cancellation, fsync/replace faults, input immutability | PASS |
+| AC05 | document namespace, both conflict kinds, unsafe metadata and malformed store | PASS |
+| AC06 | docs/change note/source review/full | PENDING |
+
+Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherited
+pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
+The separately frozen T030/T031 full is not evidence of T032 full validation.

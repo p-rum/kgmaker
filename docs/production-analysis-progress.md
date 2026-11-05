@@ -807,3 +807,13 @@ new outcomes, technical mutation, NLP comparison, runtime or physical freshness.
 Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
 PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
 full, independent exact source review and root publication remain pending.
+
+## T032 — semantic review persistence (stacked candidate)
+
+Explicit stack on reviewed T031a359. Separate version1 envelope,128history/2MiB caps,
+POSIX cooperating thread/process CAS, exact idempotent operation identity and current
+explicit-baseline revalidation. APPROVE blocks captured and proposal conflicts;
+REJECT publishes no new labels. Technical model/evidence remains unchanged.
+Current feature36PASS1.93s; coalesced269PASS94SKIP8.74s (compiler SKIPs not PASS).
+Independent source review and strict full NOT_RUN. No native build, CLI, external
+publication, authenticated reviewer identity or hostile-root race guarantee.
