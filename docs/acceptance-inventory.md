@@ -900,3 +900,20 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   Currentec6a1272425+46own union2471 is2461PASS10same optionalSKIP on the one
   accepted2587PASS10SKIP descendant; collection-only, no new full/build. Independent
   current exact-pair review pending. See note95/validation/t016-descendant-proof.json.
+
+## T017 — current-parent descendant-result transfer
+
+- AC01: shuffled star input/selector sets, directions, cycle and timestamp controls
+  in `tests/test_t017_filter_topology_scope.py` prove stable selection and fingerprints.
+- AC02: max-nodes=1, zero hops and upstream truncation preserve exact known omission
+  IDs/counts/frontier and PARTIAL/UNKNOWN; metadata overflow rejects the result.
+- AC03: middle-node and Kafka-channel removal never creates a shortcut.
+- AC04: input equality, explicit no-I/O sentinels, invalid selectors, cycles/depth,
+  credential references and Unicode identity controls.
+- AC05: full cross-context tuples, original context selection/baseline, AMBIGUOUS,
+  STALE and contradicting/unknown provenance buckets remain unchanged.
+- AC06: note97 preserves historical149pure/source evidence. All33own cases PASS
+  on accepted2df, source/tests exact. Current130720f2471+33own=2504 IDs maps
+  2494PASS10same optionalSKIP, collection-only/no new full/build. Root is original
+  author; architect plus another independent final-pair approval mandatory.
+  See validation/t017-descendant-proof.json.

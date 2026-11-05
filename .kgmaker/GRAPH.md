@@ -3,14 +3,14 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 414
+- Scope: production; omitted files: 418
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `cf5cae2102f6e369a771f0e9b2f7ae3ea25672538cce5b9c6ec87f17a1562370`; content: `7a048b0a9f6cdb4351d68f4dd9673eb5b66dfbc630383b070f2b8a2d67aa9b79`; freshness: CONTENT_VERIFIED
-- Files indexed: 82
-- Symbols and sections: 1115
-- Internal imports: 323
-- Heuristic cross-file calls: 6495
+- Context: `50a3f00f5379ea941862ee52313398842651ac87baa2d8923eaac805cce0d34f`; content: `1510f3eec54c51effb07e9f7a0c4fd2fdc9e0ea74a4517354c9f61e683a190d4`; freshness: CONTENT_VERIFIED
+- Files indexed: 83
+- Symbols and sections: 1122
+- Internal imports: 328
+- Heuristic cross-file calls: 6532
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 245
-- Inferred/ambiguous relationships: 6495/0
+- Implementation episodes: 246
+- Inferred/ambiguous relationships: 6532/0
 
 ## Architecture diagram
 
@@ -92,15 +92,16 @@ flowchart LR
   n62["src/kgmaker/spring_imports.py"]
   n63["src/kgmaker/store.py"]
   n64["src/kgmaker/templates.py"]
-  n65["src/kgmaker/typescript_snapshot.py"]
-  n66["src/kgmaker/views.py"]
-  n67["src/kgmaker/workbooks.py"]
-  n68["src/kgmaker/worker_protocol.py"]
-  n69["src/kgmaker/workflow.py"]
-  n70["src/kgmaker/workspace.py"]
-  n71["src/kgmaker/workspace_cli.py"]
-  n72{"technology: Kafka"}
-  n73{"technology: PostgreSQL"}
+  n65["src/kgmaker/topology_filter.py"]
+  n66["src/kgmaker/typescript_snapshot.py"]
+  n67["src/kgmaker/views.py"]
+  n68["src/kgmaker/workbooks.py"]
+  n69["src/kgmaker/worker_protocol.py"]
+  n70["src/kgmaker/workflow.py"]
+  n71["src/kgmaker/workspace.py"]
+  n72["src/kgmaker/workspace_cli.py"]
+  n73{"technology: Kafka"}
+  n74{"technology: PostgreSQL"}
   n0 -->|imports| n16
   n4 -->|imports| n2
   n6 -->|imports| n29
@@ -110,8 +111,8 @@ flowchart LR
   n7 -->|imports| n29
   n7 -->|imports| n56
   n7 -->|imports| n58
-  n7 -->|imports| n67
-  n7 -->|imports| n70
+  n7 -->|imports| n68
+  n7 -->|imports| n71
   n9 -->|imports| n5
   n9 -->|imports| n27
   n9 -->|imports| n29
@@ -126,10 +127,10 @@ flowchart LR
   n13 -->|imports| n5
   n13 -->|imports| n42
   n13 -->|imports| n46
-  n13 -->|imports| n66
+  n13 -->|imports| n67
   n14 -->|imports| n5
   n14 -->|imports| n44
-  n14 -->|imports| n66
+  n14 -->|imports| n67
   n15 -->|imports| n5
   n16 -->|imports| n2
   n16 -->|imports| n3
@@ -146,9 +147,9 @@ flowchart LR
   n16 -->|imports| n56
   n16 -->|imports| n58
   n16 -->|imports| n63
-  n16 -->|imports| n66
-  n16 -->|imports| n69
-  n16 -->|imports| n71
+  n16 -->|imports| n67
+  n16 -->|imports| n70
+  n16 -->|imports| n72
   n17 -->|imports| n5
   n17 -->|imports| n44
   n18 -->|imports| n5
@@ -158,10 +159,10 @@ flowchart LR
   n20 -->|imports| n56
   n20 -->|imports| n58
   n20 -->|imports| n63
-  n20 -->|imports| n69
+  n20 -->|imports| n70
   n21 -->|imports| n5
   n21 -->|imports| n39
-  n21 -->|imports| n70
+  n21 -->|imports| n71
   n22 -->|imports| n5
   n22 -->|imports| n56
   n23 -->|imports| n5
@@ -171,21 +172,21 @@ flowchart LR
   n25 -->|imports| n9
   n25 -->|imports| n27
   n25 -->|imports| n63
-  n25 -->|imports| n70
+  n25 -->|imports| n71
   n26 -->|imports| n5
   n26 -->|imports| n8
   n26 -->|imports| n33
   n26 -->|imports| n44
   n26 -->|imports| n57
-  n26 -->|imports| n66
-  n26 -->|imports| n70
+  n26 -->|imports| n67
+  n26 -->|imports| n71
   n27 -->|imports| n44
   n27 -->|imports| n53
   n27 -->|imports| n54
   n28 -->|imports| n35
   n28 -->|imports| n44
-  n28 -->|uses_messaging| n72
-  n28 -->|connects_to| n73
+  n28 -->|uses_messaging| n73
+  n28 -->|connects_to| n74
   n29 -->|imports| n5
   n29 -->|imports| n7
   n29 -->|imports| n9
@@ -198,9 +199,9 @@ flowchart LR
   n29 -->|imports| n57
   n29 -->|imports| n58
   n29 -->|imports| n64
-  n29 -->|imports| n66
   n29 -->|imports| n67
-  n29 -->|imports| n70
+  n29 -->|imports| n68
+  n29 -->|imports| n71
   n30 -->|imports| n5
   n30 -->|imports| n6
   n30 -->|imports| n7
@@ -209,13 +210,13 @@ flowchart LR
   n30 -->|imports| n27
   n30 -->|imports| n56
   n30 -->|imports| n58
-  n30 -->|imports| n66
+  n30 -->|imports| n67
   n31 -->|imports| n5
   n31 -->|imports| n14
   n31 -->|imports| n27
   n31 -->|imports| n41
   n31 -->|imports| n54
-  n31 -->|imports| n66
+  n31 -->|imports| n67
   n32 -->|imports| n5
   n33 -->|imports| n5
   n33 -->|imports| n44
@@ -223,7 +224,7 @@ flowchart LR
   n33 -->|imports| n60
   n33 -->|imports| n61
   n33 -->|imports| n62
-  n33 -->|uses_messaging| n72
+  n33 -->|uses_messaging| n73
   n34 -->|imports| n5
   n34 -->|imports| n11
   n34 -->|imports| n15
@@ -239,8 +240,8 @@ flowchart LR
   n34 -->|imports| n57
   n34 -->|imports| n61
   n34 -->|imports| n63
-  n34 -->|imports| n65
-  n34 -->|imports| n68
+  n34 -->|imports| n66
+  n34 -->|imports| n69
   n35 -->|imports| n5
   n35 -->|imports| n44
   n36 -->|imports| n5
@@ -259,9 +260,9 @@ flowchart LR
   n36 -->|imports| n57
   n36 -->|imports| n61
   n36 -->|imports| n63
-  n36 -->|imports| n65
-  n36 -->|imports| n68
-  n36 -->|uses_messaging| n72
+  n36 -->|imports| n66
+  n36 -->|imports| n69
+  n36 -->|uses_messaging| n73
   n37 -->|imports| n5
   n37 -->|imports| n11
   n37 -->|imports| n27
@@ -270,9 +271,9 @@ flowchart LR
   n37 -->|imports| n54
   n37 -->|imports| n55
   n37 -->|imports| n63
-  n37 -->|imports| n66
-  n37 -->|imports| n68
-  n37 -->|uses_messaging| n72
+  n37 -->|imports| n67
+  n37 -->|imports| n69
+  n37 -->|uses_messaging| n73
   n38 -->|imports| n5
   n38 -->|imports| n8
   n38 -->|imports| n21
@@ -284,8 +285,8 @@ flowchart LR
   n38 -->|imports| n40
   n38 -->|imports| n44
   n38 -->|imports| n63
-  n38 -->|imports| n66
-  n38 -->|imports| n70
+  n38 -->|imports| n67
+  n38 -->|imports| n71
   n39 -->|imports| n5
   n39 -->|imports| n15
   n39 -->|imports| n34
@@ -294,25 +295,25 @@ flowchart LR
   n39 -->|imports| n44
   n39 -->|imports| n56
   n39 -->|imports| n61
-  n39 -->|imports| n68
-  n39 -->|imports| n70
+  n39 -->|imports| n69
+  n39 -->|imports| n71
   n40 -->|imports| n5
   n40 -->|imports| n34
   n40 -->|imports| n39
   n40 -->|imports| n44
   n40 -->|imports| n56
-  n40 -->|imports| n68
-  n40 -->|uses_messaging| n72
+  n40 -->|imports| n69
+  n40 -->|uses_messaging| n73
   n41 -->|imports| n5
   n41 -->|imports| n40
   n41 -->|imports| n44
-  n41 -->|imports| n68
-  n41 -->|imports| n70
-  n41 -->|uses_messaging| n72
+  n41 -->|imports| n69
+  n41 -->|imports| n71
+  n41 -->|uses_messaging| n73
   n42 -->|imports| n5
   n42 -->|imports| n47
   n42 -->|imports| n50
-  n42 -->|imports| n70
+  n42 -->|imports| n71
   n43 -->|imports| n44
   n44 -->|imports| n15
   n45 -->|imports| n5
@@ -330,8 +331,8 @@ flowchart LR
   n47 -->|imports| n44
   n47 -->|imports| n46
   n47 -->|imports| n50
-  n47 -->|imports| n66
-  n47 -->|imports| n70
+  n47 -->|imports| n67
+  n47 -->|imports| n71
   n48 -->|imports| n5
   n48 -->|imports| n8
   n48 -->|imports| n46
@@ -340,9 +341,9 @@ flowchart LR
   n50 -->|imports| n5
   n50 -->|imports| n8
   n50 -->|imports| n23
-  n50 -->|imports| n66
-  n50 -->|imports| n70
-  n50 -->|uses_messaging| n72
+  n50 -->|imports| n67
+  n50 -->|imports| n71
+  n50 -->|uses_messaging| n73
   n51 -->|imports| n5
   n51 -->|imports| n10
   n51 -->|imports| n11
@@ -351,8 +352,8 @@ flowchart LR
   n51 -->|imports| n37
   n51 -->|imports| n56
   n51 -->|imports| n63
-  n51 -->|imports| n66
-  n51 -->|imports| n70
+  n51 -->|imports| n67
+  n51 -->|imports| n71
   n52 -->|imports| n5
   n52 -->|imports| n8
   n52 -->|imports| n53
@@ -378,60 +379,65 @@ flowchart LR
   n57 -->|imports| n33
   n57 -->|imports| n44
   n57 -->|imports| n50
-  n57 -->|imports| n70
+  n57 -->|imports| n71
   n58 -->|imports| n43
   n58 -->|imports| n44
   n59 -->|imports| n8
   n59 -->|imports| n26
   n59 -->|imports| n52
   n59 -->|imports| n53
-  n59 -->|imports| n70
+  n59 -->|imports| n71
   n60 -->|imports| n5
   n62 -->|imports| n5
   n62 -->|imports| n60
   n63 -->|imports| n5
   n63 -->|imports| n44
-  n63 -->|imports| n66
+  n63 -->|imports| n67
   n64 -->|imports| n5
   n64 -->|imports| n44
   n65 -->|imports| n5
-  n65 -->|imports| n68
+  n65 -->|imports| n8
+  n65 -->|imports| n52
+  n65 -->|imports| n53
+  n65 -->|imports| n59
   n66 -->|imports| n5
-  n66 -->|imports| n8
-  n66 -->|imports| n11
-  n66 -->|imports| n21
-  n66 -->|imports| n34
-  n66 -->|imports| n36
-  n66 -->|imports| n44
-  n66 -->|imports| n70
+  n66 -->|imports| n69
   n67 -->|imports| n5
-  n67 -->|imports| n15
+  n67 -->|imports| n8
+  n67 -->|imports| n11
+  n67 -->|imports| n21
+  n67 -->|imports| n34
+  n67 -->|imports| n36
   n67 -->|imports| n44
-  n68 -->|imports| n1
+  n67 -->|imports| n71
   n68 -->|imports| n5
-  n69 -->|imports| n43
-  n70 -->|imports| n5
-  n70 -->|imports| n11
-  n70 -->|imports| n15
-  n70 -->|imports| n28
-  n70 -->|imports| n32
-  n70 -->|imports| n33
-  n70 -->|imports| n34
-  n70 -->|imports| n39
-  n70 -->|imports| n41
-  n70 -->|imports| n44
-  n70 -->|imports| n53
-  n70 -->|imports| n57
-  n70 -->|imports| n63
-  n70 -->|imports| n68
+  n68 -->|imports| n15
+  n68 -->|imports| n44
+  n69 -->|imports| n1
+  n69 -->|imports| n5
+  n70 -->|imports| n43
   n71 -->|imports| n5
-  n71 -->|imports| n27
-  n71 -->|imports| n29
+  n71 -->|imports| n11
+  n71 -->|imports| n15
+  n71 -->|imports| n28
+  n71 -->|imports| n32
   n71 -->|imports| n33
+  n71 -->|imports| n34
+  n71 -->|imports| n39
+  n71 -->|imports| n41
+  n71 -->|imports| n44
+  n71 -->|imports| n53
   n71 -->|imports| n57
   n71 -->|imports| n63
-  n71 -->|imports| n66
-  n71 -->|imports| n70
+  n71 -->|imports| n69
+  n72 -->|imports| n5
+  n72 -->|imports| n27
+  n72 -->|imports| n29
+  n72 -->|imports| n33
+  n72 -->|imports| n57
+  n72 -->|imports| n63
+  n72 -->|imports| n67
+  n72 -->|imports| n71
 ```
 
 ## Files and symbols
@@ -1413,6 +1419,15 @@ flowchart LR
 - **function** `handle_data` line 370 — `handle_data(self, data)`
 - **function** `attach_templates` line 384 — `attach_templates(root: Path, graph: KnowledgeGraph)`
 
+### `src/kgmaker/topology_filter.py`
+- **class** `TopologyFilterError` line 15 — `TopologyFilterError(ValueError)`
+- **function** `__init__` line 18 — `__init__(self, code)`
+- **function** `_fail` line 21 — `_fail(code)`
+- **function** `_contexts` line 25 — `_contexts(item)`
+- **function** `_inventory` line 29 — `_inventory(items)`
+- **function** `_filter` line 63 — `_filter(topology, focus, direction, hops, budget, relations, scope, contexts)`
+- **function** `context_matches` line 116 — `context_matches(item)`
+
 ### `src/kgmaker/typescript_snapshot.py`
 - **function** `_invalid` line 13 — `_invalid`
 - **function** `_absolute` line 17 — `_absolute(value)`
@@ -1728,6 +1743,7 @@ flowchart LR
 - **feat(t033): catalog explicit current and historical process snapshots** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/96_catalogBusinessProcesses.md, docs/process-catalog.md, docs/production-analysis-progress.md; validation: pure306=passed, compiler94=unknown, source_review=unknown, strict_full=unknown
 - **Integrate Windows main with bounded Spring imports** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/42_resolveBoundedSpringImports.md, docs/compiler-inspection.md; validation: integration38=passed, actualSpring24=passed, sourceIdentity=passed, semantic=passed, graphCheck=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest193=passed, kotlin-operator-cfg=passed, jvm-construction-matrix=passed
+- **merge verified T016 main into T017 bounded topology filtering** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/97_filterTopologyScope.md, docs/production-analysis-progress.md, docs/tasks/README.md; validation: accepted2dfOwn33=passed, current2504IDSourceTransfer=passed, newCurrentHeadFull=unknown, architectFinalPairReview=unknown, secondIndependentFinalReview=unknown
 - **Integrate current TypeScript selectors with bounded Spring imports** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/42_resolveBoundedSpringImports.md, docs/compiler-inspection.md; validation: combinedIntegration54=passed, currentMainTsContext2=passed, sourceIdentity=passed, semantic=passed, graphCheck=passed
 - **feat(t010): catalog scoped HTTP provider declarations** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/67_catalogHttpProviders.md; validation: strict-source-full=passed, integrated=passed, compiler=passed, source-closure=passed, remote-ci=unknown
 - **merge current W01 and dependency dispatch into corrected inherited JPA projection** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: actual-compiler=passed, pure-integration=passed
@@ -1759,7 +1775,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
 - **fix(t007): validate repo-qualified ownership context** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=unknown, toolchain-gates=skipped, semantic-validation=passed, binary-integration=passed
 - **fix(worker): retain descendant lifetime during bounded pipe cleanup** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: harness-python-yaml-powershell-syntax=passed, linux-focused=passed, actual-windows-smoke=skipped
-- **merge verified T014 main into T016 common-capture topology** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/95_aggregateServiceTopology.md, docs/production-analysis-progress.md, docs/service-topology.md; validation: accepted2dfOwn46=passed, current2471IDSourceTransfer=passed, original806RootSourceReview=passed, newCurrentHeadFull=unknown, independentCurrentPairReview=unknown
+- **merge verified T014 main into T016 common-capture topology** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/95_aggregateServiceTopology.md, docs/production-analysis-progress.md, docs/service-topology.md; validation: accepted2dfOwn46=passed, current2471IDSourceTransfer=passed, original806RootSourceReview=passed, newCurrentHeadFull=unknown, independentCurrentPairReview=unknown
 - **Change AC a kompatibilita, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: linux-strict=passed, linux-installed-workers=passed, powershell-parser-linux=passed, windows-actual-smoke=skipped
 - **merge mandatory worker CI main into S06 JPA** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: K1-worker-build=passed, K2-worker-build=passed, actual-K2-JPA=passed, same-realm-static-ABI-K1K2-debug-nondebug=passed, mandatory-worker-CI-15=passed
 - **merge: preserve return proofs alongside verified Kafka capture** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/66_bindReturnConsumerFlow.md, docs/compiler-inspection.md; validation: strict_full_079=passed, current_parent_3532_cross153=passed, gh_ci=unknown
@@ -2257,6 +2273,11 @@ flowchart LR
 - `src/kgmaker/store.py` imports `src/kgmaker/views.py` (.views)
 - `src/kgmaker/templates.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/templates.py` imports `src/kgmaker/model.py` (.model)
+- `src/kgmaker/topology_filter.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
+- `src/kgmaker/topology_filter.py` imports `src/kgmaker/architecture_model.py` (.architecture_model)
+- `src/kgmaker/topology_filter.py` imports `src/kgmaker/remote_interfaces.py` (.remote_interfaces)
+- `src/kgmaker/topology_filter.py` imports `src/kgmaker/remote_mapping.py` (.remote_mapping)
+- `src/kgmaker/topology_filter.py` imports `src/kgmaker/service_topology.py` (.service_topology)
 - `src/kgmaker/typescript_snapshot.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
 - `src/kgmaker/typescript_snapshot.py` imports `src/kgmaker/worker_protocol.py` (.worker_protocol)
 - `src/kgmaker/views.py` imports `src/kgmaker/analysis_model.py` (.analysis_model)
@@ -7816,6 +7837,43 @@ flowchart LR
 - `src/kgmaker/templates.py` may call `119 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 128; src/kgmaker/templates.py:128; INFERRED 0.85)
 - `src/kgmaker/templates.py` may call `119 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 129; src/kgmaker/templates.py:129; INFERRED 0.85)
 - `src/kgmaker/templates.py` may call `119 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 130; src/kgmaker/templates.py:130; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 103; src/kgmaker/topology_filter.py:103; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 106; src/kgmaker/topology_filter.py:106; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 178; src/kgmaker/topology_filter.py:178; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 184; src/kgmaker/topology_filter.py:184; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 49; src/kgmaker/topology_filter.py:49; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 74; src/kgmaker/topology_filter.py:74; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 81; src/kgmaker/topology_filter.py:81; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 83; src/kgmaker/topology_filter.py:83; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 93; src/kgmaker/topology_filter.py:93; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 94; src/kgmaker/topology_filter.py:94; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `15 in `src/kgmaker/remote_interfaces.py`` (name match at line 96; src/kgmaker/topology_filter.py:96; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 109; src/kgmaker/topology_filter.py:109; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 110; src/kgmaker/topology_filter.py:110; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 180; src/kgmaker/topology_filter.py:180; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 28; src/kgmaker/topology_filter.py:28; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 34; src/kgmaker/topology_filter.py:34; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 37; src/kgmaker/topology_filter.py:37; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 75; src/kgmaker/topology_filter.py:75; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 76; src/kgmaker/topology_filter.py:76; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 97; src/kgmaker/topology_filter.py:97; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `21 in `src/kgmaker/remote_interfaces.py`` (name match at line 98; src/kgmaker/topology_filter.py:98; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 105; src/kgmaker/topology_filter.py:105; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 110; src/kgmaker/topology_filter.py:110; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 122; src/kgmaker/topology_filter.py:122; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 178; src/kgmaker/topology_filter.py:178; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 183; src/kgmaker/topology_filter.py:183; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 187; src/kgmaker/topology_filter.py:187; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 28; src/kgmaker/topology_filter.py:28; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 37; src/kgmaker/topology_filter.py:37; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 38; src/kgmaker/topology_filter.py:38; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 99; src/kgmaker/topology_filter.py:99; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 148; src/kgmaker/topology_filter.py:148; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 161; src/kgmaker/topology_filter.py:161; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 186; src/kgmaker/topology_filter.py:186; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 189; src/kgmaker/topology_filter.py:189; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 69; src/kgmaker/topology_filter.py:69; INFERRED 0.85)
+- `src/kgmaker/topology_filter.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 71; src/kgmaker/topology_filter.py:71; INFERRED 0.85)
 - `src/kgmaker/typescript_snapshot.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 142; src/kgmaker/typescript_snapshot.py:142; INFERRED 0.85)
 - `src/kgmaker/typescript_snapshot.py` may call `20 in `src/kgmaker/worker_protocol.py`` (name match at line 16; src/kgmaker/typescript_snapshot.py:16; INFERRED 0.85)
 - `src/kgmaker/typescript_snapshot.py` may call `45 in `src/kgmaker/analysis_model.py`` (name match at line 120; src/kgmaker/typescript_snapshot.py:120; INFERRED 0.85)

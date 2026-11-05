@@ -978,3 +978,19 @@ W07v2 and process bodies/CI. Owned module/tests are exact accepted2df; all46own
 cases XMLPASS. Collection-only2425main+46own union2471 maps2461PASS10same optional
 SKIP on accepted2587PASS10SKIP full. No actual/full/build/tool mutation; independent
 current-pair review remains pending. See note95 and validation/t016-descendant-proof.json.
+
+## T017 — current-parent bounded filtering review candidate
+
+Pure API over an existing T016 view: exact service focus, deterministic real-edge
+hops and node budget, context/relation restriction and complete known omission
+inventories. New frontier entries are metadata rather than graph nodes. No shortcut,
+runtime/availability claim or ambiguity/freshness/evidence upgrade occurs. Public
+absent-API RED2FAIL; corrective retained-expansion privacy RED1FAIL29PASS; final
+33 own tests plus coalesced T016/T014/View/T009: 149 PASS in1.58s. No heavy queue,
+native build or full at that historical source checkpoint. Current130720f preserves
+merged T014/T016/Common/T012/T013/W07/process/CI. Owned source/tests exactaccepted2df;
+all33own cases XMLPASS. Collection-only2471parent+33own=2504 maps2494PASS10sameSKIP
+on the oneaccepted2587PASS10SKIP descendant. Root is author, not independent reviewer;
+architect plus another independent final-pair review remain mandatory. No new full/
+build/tool mutation. See [note97](changes/97_filterTopologyScope.md),
+[proof](validation/t017-descendant-proof.json) and [API](topology-filter.md).

@@ -886,3 +886,14 @@ No JVM/process/runtime or payload claim is added. See
 [handoff and limits](docs/service-topology.md). Owned source/tests match accepted
 2df; currentec6a127 base2425+46own IDs maps to2461PASS10allowedSKIP on that one
 descendant full. No new full/build; exact-pair independent review remains pending.
+
+### T017 bounded topology filtering
+
+`kgmaker.topology_filter.filter_topology(topology, focus_service="service:checkout",
+direction="outgoing", max_hops=2, max_nodes=25)` filters a captured T016 view
+without I/O. Its `{document, filtering}` result preserves original edges and
+uncertainty and reports complete known omission IDs plus separate frontier metadata.
+Kafka channels count as real hops; omitted nodes never create shortcut edges.
+See [API and limits](docs/topology-filter.md). Current130720f2471+33own IDs maps
+to2494PASS10allowedSKIP on accepted2df, not a new full. Root is original author;
+architect plus another independent reviewer must approve the final pair. No CLI.
