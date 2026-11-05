@@ -170,3 +170,16 @@ následující docs/semantic/memory finalization neměnný.
 closure a nový5GiB acquisition preflight + fresh all-input freeze. Žádný nový
 full nebyl zařazen; předchozí361green zůstává historickým43a důkazem. GH CI
 NOT_RUN, bez retry, externího zápisu, publication nebo merge. Není ready.
+
+## Provider ambiguity parent před jediným full — 2026-11-05
+
+Current main c193748 integrován před full. Proti841e8b4 mění runtime pouze cizí
+schválený interfaces.py rule2 a jeho nový provider test; vlastní retry/flow/CLI/
+inspection/workspace/native soubory zůstávají byte-exact470focus checkpointu.
+Main226episodes je neměnný prefix +obě vlastníhistorické episodes=228. Žádný build.
+Malý pure provider test:4PASS0.70s. První invocation omylem uvedla neexistující
+název test_t010_provider_ambiguity.py:0tests/exit4; skutečný soubor je
+ test_http_provider_ambiguity.py, opravený command/proof je uložen odděleně.
+Required full zůstává NOT_RUN do nezávislého composition closure a fresh5GiB
+preflight/freeze; žádný další470focus ani compiler matrix se neopakuje kvůli
+nesouvisející pure provider změně.

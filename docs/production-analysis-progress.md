@@ -786,3 +786,11 @@ boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only
 Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
 fullNOT_RUN pending the final frozen integration gate, final ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
 delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
+
+## T010 normalized variant correction (2026-11-03)
+
+Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
+DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
+candidate/provenance sets; exact duplicates and YAML distinct locators retain
+existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
+Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
