@@ -36,6 +36,9 @@ nonsecret errors, no input mutation. Hard bounds reject before returning a view;
 there is no silently truncated candidate set.
 
 T014 public pure/protocol tests are distinct from actual compiler acceptance.
-T013/W07 actual/full/current-main and independent source review remain readiness
-gates. No new native build is required solely for this pure projection. T027/T028
+Merged T013/W07/Common and process bodies are preserved on current509. Owned
+source/tests are exact accepted2df; all24own cases PASS in that one2587PASS10SKIP
+full. Current2425-case parent union reuses2415PASS10allowedSKIP with explicit source
+and per-ID proof, not a new full on this head. Exact-pair independent review remains
+a gate. No new native build is required solely for this pure projection. T027/T028
 process continuation and remote runtime observations are separate future tasks.

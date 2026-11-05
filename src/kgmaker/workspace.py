@@ -52,6 +52,11 @@ def _qualified_http_metadata(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_retry_metadata(repo: str, value: dict) -> dict:
+    from .kafka_retry import qualified_metadata
+    return qualified_metadata(repo,value)
+
+
 def _qualified_kafka_metadata(repo: str, value: dict) -> dict:
     """Qualify code identities; preserve the exact original capture IDs explicitly."""
     result = copy.deepcopy(value)
@@ -73,6 +78,7 @@ def _qualified_node(repo: str, node):
     if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
     elif (metadata or {}).get('return_mapping_version')==1:metadata=_qualified_symbol(repo,metadata)
     elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
+    elif node.kind=='kafka_retry_policy':metadata=_qualified_retry_metadata(repo,metadata or {})
     return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
 
 
@@ -149,7 +155,7 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
             result[key] = qualified(repo, value[key])
     if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
         result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
-    if str(value.get('extractor', '')).startswith('kafka-code-'):
+    if str(value.get('extractor', '')).startswith(('kafka-code-', 'kafka-retry-')):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
             result['origin_id'] = qualified(repo, value['origin_id'])

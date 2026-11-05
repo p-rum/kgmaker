@@ -69,3 +69,27 @@ a4foreign owner negatives jsou zahrnuté. Coalesced **181PASS0SKIP10actualDESELE
 1.36s**, plain-owner-green.xml. Saved actual W07 capture replay počká na opravený
 upstream terminal/source receipt; tento pure běh se za něj nevydává.
 Root independent re-review a finaldependency/current-main/full dál pending.
+
+## Currentec6a127 parent a accepted-descendant evidence
+
+T016806ccf1 source approved Root po obou coverage/plain-owner opravách. Refresh
+na verified main ec6a127857cc47704316e6a1d5a088be9e4b16e7 zachovává T014/T015/
+Common/T012/T013/W07v2/process moduly a current CI. Vlastní service_topology.py
+a test jsou byte-exact accepted2df55ff8d15d790808f6a81072144eeb408a05b8.
+Accepted ONEfull:2587PASS10allowedSKIP, XML2042.878s/runner2048.01s;4897 hashes
+a recursive member sets unchanged. Všech46own cases XMLPASS. Historické pending
+source-only stavy výše se netvrdí jako aktuální acceptance.
+
+Collection-only currentmain2425+46own=2471 ID, všechny v acceptedfull;
+2461PASS10stejných optionalSKIP. Žádný nový actual/full/build ani cache/tool mutation.
+Všech296 present src/test/worker/fixture/CI souborů porovnáno:295exact2df a jen
+currentMain cli.py bez budoucího T0195line dispatch, správně zachovaný. 27native
+worker a9preparedfixture source hashes exact původní Return079; není freshbuildclaim.
+
+Main244episode prefix +allold230child objects zachovány;1owncapture=245. Currentmain
+semantic fact keys zachovány.1starý doložený Common role concept+4facts se zachová
+s aktuální doc298citací;3obsolete workspace/JPA codeIDs jsou již zastoupené správně
+rebound currentmain edges, nevytvářejí se stalealiases. Scoped semantic apply/validate,
+memory a scan/check CLI regenerují graph. Finální nezávislé currentbase/head review
+a Root merge zůstává gate. GHCIbilling/cascade optional/unverified, nePASS.
+Viz docs/validation/t016-descendant-proof.json. T020/21 nejsou v acceptedfull.

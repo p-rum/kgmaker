@@ -62,8 +62,11 @@ unsafe recognized credential/userinfo IDs fail with fixed nonsecret errors.
 Arbitrary labels/config/SQL/schema/source/proof payloads are omitted or hashed.
 All inputs remain unchanged on success/error. Current source checkpoint uses
 hand-labelled graph protocol fixtures plus real temporary filesystem observations,
-not a new compiler or service run. Final current dependency integration, independent
-source review, saved terminal actual-capture replay and required full remain pending.
+not a new compiler or service run. Current4e4fcd6 preserves merged T014/T016/T017/
+Common/T012/T013/W07/process source and CI. Owned source/tests are exactapproved299
+and accepted2df; all59own PASS in the one2587PASS10SKIP full. Current2563-case union
+maps2553PASS10sameSKIP via exact source/per-ID/native transfer, not a new full on
+this head. Current independent final-pair review remains a gate.
 
 Canonical repository namespaces are decoded once for known unsafe URI/auth or
 credential syntax; existing typed field name:descriptor IDs remain IDs and gain

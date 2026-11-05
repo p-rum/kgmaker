@@ -2,8 +2,8 @@
 
 - Task ID: `T031`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T023](T-023_define-business-process-model.md); [T030](T-030_prepare-process-label-packet.md).
@@ -61,3 +61,61 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T031** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize 2 — explicitní T030 stack a řízené validační reporty
+
+Baseline tohoto samostatného stacku je T030 `070e709` nad main `deb3691`.
+T030 source je schválen pro validaci, required full zatím nepřebírá tvrzení PASS.
+API se připojí na konec stejného process_semantics.py; původní T030 functions,
+imports/constants a všech47testů zůstane byte/AST exact. Žádný nový worker/build.
+
+`validate_process_annotations(process, packet, candidate, *, documents=(),
+conflicts=()) -> report` je čistá funkce bez I/O/provider/Git/model/apply/store.
+Normální invalidní data (včetně cyklu/oversize/unsafeID, malformed process/docs,
+stale/forgedpacket, unknownfield nebo špatného návrhu) vrací report
+`valid=False, validation_status=REJECTED, annotations=[]` s pevnými nonsecret
+code diagnostics; nevyhazují input-bearing exception. Neočekávané programové
+chyby mimo podporovanou validaci se nemaskují jako business výsledek.
+Valid proposal má `valid=True, validation_status=VALID`, ale semantic review
+zůstává PENDING/CONFLICT a každá normalizovaná anotace pouze PROPOSED. Žádný
+report není approval, změněný ProcessView ani publikovaný návrh.
+
+Před kopií/JSON se použijí existující per-occurrence/depth/text/JSON bounds nad
+všemi explicitními vstupy. Rebuild úplného očekávaného T030 packetu z aktuálního
+process/docs/conflicts používá ověřené původní packet budgets; musí souhlasit
+celý canonical packet, version/rule/hash/schema/allowed IDs/coverage/input binding.
+Samotný caller self-hash nestačí. Připouští se pouze packet schema1 a T030rule1;
+žádná tichá migrace. Dodané current inputs nejsou fyzicky fresh/autentizované
+proti útočníkovi, který může nahradit všechny vstupy; jde o content consistency.
+
+Candidate top-level má přesně template keys schema_version(int1),packet_hash,
+annotations(list). Max256anotací; unique nonempty safe IDs nesmějí kolidovat
+s technical/process targets. Records smějí pouze rederived annotation_schema
+fields a fixed PROPOSED. Label max512Unicode znaků, description max4096,
+neprázdné; známé credential/URI/control payloady se odmítnou bez echo. Description
+smí běžný newline/tab, nikoli jiné controls. Arbitrary unlabeled secret nelze
+univerzálně rozpoznat; semantic prose není technická ani approval authority.
+
+source_refs jsou unique existing allowed refs (i explicit doc refs), grouping
+unique nonempty existing step IDs, nikoli transitions/proof/source IDs. Prázdné
+citace jsou strukturálně přípustné stejně jako v process_model, ale zůstávají
+explicitní PENDING review item. Vyžaduje se label/description/grouping. Existing
+outcomes lze pojmenovat pouze přes jejich existující target_id; žádný nový
+outcome/node/edge/condition/availability/context/scope/confidence field.
+
+Normalizace řadí anotace podle ID a reference/group members jako množiny; text
+nemění. Různé hodnoty stejného label/description/grouping pole u stejného targetu
+se zachovají všechny a vytvářejí strukturální CONFLICT review item, nikdy first/
+last winner. Komplementární pole se nedeklarují jako NLP contradiction. Duplicate
+annotation IDs jsou rejected i při stejném obsahu. Grouping je návrh, nikoli T026
+SESE certifikát či změna topology/order.
+
+Captured doc/code CONFLICT/UNKNOWN z rederived packetu zůstává ve review_items,
+comparison vždy NOT_EVALUATED; neprovádí se NLP ani inference NO_CONFLICT.
+Report obsahuje pouze ověřený packet binding/current technical hashes/status/
+uncertainty, normalized PROPOSED annotations a pevné diagnostics/review items.
+Při chybném bindingu není untrusted packet hash reflektován; při následné chybě
+candidate může report uvést pouze již ověřený current binding. Všechny inputs,
+source ProcessView a technical subtree/fingerprint zůstávají beze změny.
+T032 review/apply a T034 CLI jsou samostatně pending.

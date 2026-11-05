@@ -45,8 +45,9 @@ fail instead of dropping candidates silently. Unsafe required credential/userinf
 IDs or malformed data have fixed nonsecret errors, no mutation/publication.
 Output uses safe typed summaries and hashes of omitted prose/payloads.
 
-This is a source checkpoint on an explicit T014/W07 stack with main3bef's T015/W08
-integrated. Final current T013/T012 refresh, dependency actual/full, independent
-source review and required full remain pending. Pure protocol and file-backed
-snapshot tests do not claim new compiler/runtime acceptance. Heavy validation waits
-source closure and follows the shared FIFO; no new native build solely for T016.
+Current parent is verified main ec6a127 with T014/T015/Common/T012/T013/W07v2
+and process stack merged. Owned source/tests exactly match accepted2df; all46own
+cases PASS in that one2587PASS10allowedSKIP full. Current2471-case union transfers
+2461PASS10sameSKIP with explicit source/per-ID/native proof, not a new full on
+this head. Independent current-pair review remains a gate. Pure protocol and file-
+backed capture do not become new compiler/runtime observations. No new native build.
