@@ -410,3 +410,53 @@ def test_typed_field_privacy_exception_does_not_bypass_identifier_length_limit()
     captured=labelled_handoff();view=aggregate_service_topology(captured)
     identity='symbol:field:demo.Config.password:L'+'A'*5000+';'
     with pytest.raises(ValueError):api().explain_view_element(view,identity,captured=captured)
+
+
+@pytest.mark.parametrize('identity',[
+    'password=PRIVATE_SENTINEL:field:demo.X.id:I',
+    qualified('backend','secret:PRIVATE_SENTINEL:field:demo.X.id:I'),
+])
+def test_typed_field_exception_never_bypasses_credential_prefix(identity):
+    captured=labelled_handoff();view=aggregate_service_topology(captured)
+    with pytest.raises(ValueError) as error:api().explain_view_element(view,identity,captured=captured)
+    assert 'PRIVATE_SENTINEL' not in str(error.value) and identity not in repr(error.value)
+
+
+def test_typed_field_exception_accepts_only_legitimate_field_name_delimiter():
+    captured=labelled_handoff();view=aggregate_service_topology(captured)
+    identity='jvm:context:field:demo.X.password:Ljava/lang/String;'
+    report=api().explain_view_element(view,identity,captured=captured)
+    assert report['status']=='UNKNOWN_ELEMENT' and report['element_id']==identity
+
+
+@pytest.mark.parametrize('identity',[
+    'jvm:ctx:field:password=PRIVATE_SENTINEL.X.id:I',
+    'jvm:ctx:field:demo.X.password:Lpassword=PRIVATE_SENTINEL;',
+    qualified('backend','jvm:ctx:field:secret:PRIVATE_SENTINEL.X.password:I'),
+    'jvm:ctx:field:demo.X.password=PRIVATE_SENTINEL:I',
+])
+def test_typed_field_privacy_probe_still_checks_owner_descriptor_and_field_syntax(identity):
+    captured=labelled_handoff();view=aggregate_service_topology(captured)
+    with pytest.raises(ValueError) as error:api().explain_view_element(view,identity,captured=captured)
+    assert 'PRIVATE_SENTINEL' not in str(error.value) and identity not in repr(error.value)
+
+
+@pytest.mark.parametrize('case,span',[
+    ('backwards',{'start':0,'end':2,'start_line':1,'end_line':1,'start_column':10,'end_column':1}),
+    ('multiline',{'start':0,'end':2,'start_line':1,'end_line':2,'start_column':10,'end_column':1}),
+    ('partial_column',{'start':0,'end':2,'start_line':1,'end_line':1,'start_column':10}),
+    ('partial_line',{'start':0,'end':2,'start_line':1,'start_column':10}),
+])
+def test_captured_range_rejects_backward_same_line_columns_without_inventing_unknown_positions(tmp_path,case,span):
+    workspace,graph,captured,source,ref=bound_source(tmp_path)
+    graph.symbols[0]['range']=deepcopy(span);graph.nodes[0].metadata['range']=deepcopy(span)
+    captured['input_binding']['graph_fingerprint']=digest(_graph(graph));captured['shared_input_hash']=digest(captured['input_binding']);rehash(captured)
+    view=aggregate_service_topology(captured)
+    report=api().explain_view_element(view,view.edges[0].id,captured=captured,graph=graph)
+    locator=report['source_locators'][0]
+    if case in {'backwards','partial_line'}:
+        assert locator['range'] is None and locator['range_status']=='RANGE_UNAVAILABLE'
+    else:
+        assert locator['range']==span and locator['range_status']=='CAPTURED_RANGE'
+        if case=='partial_column':assert 'end_column' not in locator['range']
+    assert locator['status']=='NOT_CHECKED'

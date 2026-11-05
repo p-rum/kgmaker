@@ -60,3 +60,33 @@ Finální independent source review PENDING. Source-status capability je bounded
 local reader s NOFOLLOW/directory descriptor guards; unsupported safe-read
 capability je unavailable/controlled failure, ne nový CURRENT proof. Lokální
 pure/file tests nejsou Windows/native/compiler/full acceptance.
+
+## Root/policy review P2 — field privacy exception
+
+Root/policy REQUEST_CHANGES nad6830cb1 prokázal, že původní .*:field: fallback
+mohl akceptovat credential v celém prefixu plain i decoded qualified ID a vrátit
+jej jako UNKNOWN_ELEMENT. Public RED **2FAIL1PASS48DESELECTED0.32s** zachován
+v prefix-red.xml. Valid typed password-field control zůstal pozitivní.
+
+Oprava rozpoznává owner.validJavaFieldName:descriptor a pro privacy probe nahrazuje
+pouze fieldname jedním neutrálním znakem; celý původní prefix/owner/descriptor
+znovu projde shared privacy check. Výstupní ID se nemění. Credential mimo field
+delimiter ani malformed fieldname nemá výjimku; locator/evidence authority se nemění.
+Corrective coalesced **265PASS0SKIP10actualDESELECTED3.71s**, prefix-green.xml.
+Následné4owner/descriptor/fieldsyntax negatives **4PASS** samostatně v
+owner-descriptor-green.xml, stejný runtime. Žádný actual/native/full job.
+Root independent narrow re-review je pending, final dependency/full gates také.
+
+## Root review P2 — internally contradictory captured columns
+
+Root public repro nad6830cb1 ukázal same-line start_column10/end_column1, které
+původní _range vracelo jako CAPTURED_RANGE i při shodné symbol/canonicalmetadata.
+Public RED **1FAIL3PASS55DESELECTED0.32s** je zachován v range-red.xml.
+Oprava při stejné start/end line odmítá endcolumn<startcolumn jako rangeNone/
+RANGE_UNAVAILABLE. Multiline s nižším endcolumn zůstává validní; partialcolumn
+nevymýšlí druhý column a chybějící endline zůstává unavailable.
+
+Grouped privacy+range corrective coalesced **273PASS0SKIP10actualDESELECTED3.31s**,
+corrections-green.xml. Obsahuje oba původní public repros, valid typed-field
+positive,4owner/descriptor negatives a4range controls. Žádný nový actual/native/
+full job; required final parent/full/source re-review dál pending.

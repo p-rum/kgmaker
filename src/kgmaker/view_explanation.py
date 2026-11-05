@@ -54,8 +54,14 @@ def _ref(value):
             # An existing JVM field ID contains name:descriptor. A field named
             # password is a typed identifier, not a password assignment/value.
             # This lexical exception grants no locator or evidence authority.
-            if re.fullmatch(r'.*:field:[^:\s]+:(?:\[*[ZBCSIJFD]|\[*L[^;:\s]+;)',part) is None:
-                _fail('EXPLAIN_UNSAFE_REFERENCE')
+            field=re.fullmatch(r'(?P<prefix>.*:field:)(?P<owner>[^:\s]+)\.'
+                r'(?P<name>(?:[^\W\d]|[$_])[\w$]*):(?P<descriptor>\[*(?:[ZBCSIJFD]|L[^;:\s]+;))',part)
+            if field is None:_fail('EXPLAIN_UNSAFE_REFERENCE')
+            # Clear only the valid field-name delimiter for the privacy probe.
+            # Prefix, owner and descriptor retain the ordinary shared policy.
+            probe=field['prefix']+field['owner']+'._:'+field['descriptor']
+            try:_base_ref(probe)
+            except ValueError:_fail('EXPLAIN_UNSAFE_REFERENCE')
     return value
 
 
@@ -123,6 +129,8 @@ def _range(value):
     if any(type(v) is not int or v<0 for k,v in value.items() if k in keys):return None,'RANGE_UNAVAILABLE'
     if (type(value.get('start_line')) is not int or value['start_line']<1
             or type(value.get('end_line')) is not int or value['end_line']<value['start_line']):return None,'RANGE_UNAVAILABLE'
+    if (value['start_line']==value['end_line'] and 'start_column' in value and 'end_column' in value
+            and value['end_column']<value['start_column']):return None,'RANGE_UNAVAILABLE'
     if ('start' in value)!=('end' in value):return None,'RANGE_UNAVAILABLE'
     if 'start' in value and value['start']>value['end']:return None,'RANGE_UNAVAILABLE'
     return {k:value[k] for k in keys if k in value},'CAPTURED_RANGE'
