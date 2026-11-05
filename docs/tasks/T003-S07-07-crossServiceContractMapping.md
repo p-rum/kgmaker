@@ -91,16 +91,19 @@ pro stejnou source je dovolený candidate set, nikoli arbitrary winner.
 
 ### Dvě fáze / navržená veřejná API
 
-- `capture_remote_mapping_inputs(workspace, graph)` je výslovná bounded I/O capture
-  fáze, reuse T013 `capture_interface_contracts` a confined raw file hashes. Váže
-  workspace manifest hash, normalized remote declarations a přesně deklarované
-  inputs. Žádný glob/live discovery, nové context/store/cache, worker/build/model.
-  Změna během capture nebo escaped/oversized input je controlled error.
+- `capture_remote_mapping_inputs(workspace, graph, *, scope="production",
+  selected_contexts=None, source_coverage=None)` je explicitní bounded I/O fáze.
+  ZDE běží existující HTTP provider/consumer a Kafka canonical projekce, jejich
+  saved-source/private-index replay a T013 capture/contract attachment. Tyto funkce
+  mohou číst filesystem a čistý resolver je NEVOLÁ. Žádný worker/build/model ani
+  nová graph context/store/cache; source_coverage nesmí nahradit canonical proof.
 - `resolve_remote_mappings(workspace, graph, interfaces, *, captured, scope,
-  selected_contexts=None)` je pure funkce. Interfaces jsou existující transportově
-  rozlišené ViewDocuments. Reuse upstream canonical projection/proof validation a
-  T013 contract attachment, bez druhého resolveru nebo skrytého I/O. Full graph je
-  zachován pro integritu; selected inventory určuje eligibility.
+  selected_contexts=None)` je pure funkce nad explicitně dodanými transportově
+  rozlišenými ViewDocuments. Porovnává je s canonical captured projekcemi a ověřuje
+  pouze in-memory tuple/content consistency. Nesmí volat upstream projectors,
+  contract attachment/capture, saved-source validators ani filesystem. Full graph
+  je pro integritu; selected inventory pro eligibility. Freshness je evidence
+  capture-time, nikoli nové ověření fyzického checkoutu v pure resolveru.
 - Pure resolver kontroluje manifest/capture binding, skutečný canonical Node/raw
   symbol/site/edge+proof tuple, context/scope/path/SHA/range, source freshness,
   contract authority/pointer/revision a explicitní release pair. Public self-hash
@@ -112,6 +115,29 @@ pro stejnou source je dovolený candidate set, nikoli arbitrary winner.
   Reuse resolution statuses RESOLVED (jediný oprávněný deklarovaný kandidát),
   AMBIGUOUS (více), UNRESOLVED (žádný). Žádná nová `calls`/JVM dispatch hrana ani
   automatické pokračování process CFG. T014 je samostatná následná view projekce.
+
+Capture v1 má přesně `{schema_version,rule_version,workspace_id,
+workspace_manifest_sha256,workspace_fingerprint,graph_fingerprint,selection,
+remote_declarations,contract_capture,canonical_interfaces,diagnostics,capture_id}`.
+Selection má `{scope,selected_contexts,source_coverage_fingerprint}` s přesně
+normalizovaným explicitním výběrem. Workspace fingerprint váže deklarativní
+workspace bez privátních/absolutních repo roots, graph fingerprint celý dodaný graf
+bez nezávislých generation timestamps. Canonical_interfaces jsou serialized
+upstream ViewDocuments v pořadí HTTP provider, HTTP consumer, Kafka s contract
+attachments. Contract_capture je nezměněná původní T013 capture, nikoli další store.
+Capture_id je digest celého envelope bez sebe sama. Výstup neobsahuje private index,
+raw secret properties ani source bodies; graph/workspace fingerprints pouze vážou
+externě dodané inputs. Cesty/timestamps nejsou autentizace. Očekávaný canonical
+ViewDocument musí přesně odpovídat dodanému interfaces včetně provenance/selection.
+Reordered semantically unordered collections se canonicalizují existujícím modelem;
+ordered occurrences/candidate varianty se nezahazují.
+
+Tato capture je explicitní handoff mezi důvěryhodnou lokální capture fází a pure
+consumerem, NENÍ kryptografické potvrzení původu libovolného neověřeného JSON. Při
+neexistenci takové capture authority není positive remote claim dovolený; self-hash
+nesmí být vydáván za autentizaci. Tamper testy mění graph/workspace/selection/
+interfaces samostatně při původní capture a musí selhat. Koherentní útočník schopný
+přepsat všechny vstupy včetně capture není touto lokální datovou smlouvou ověřen.
 
 RESOLVED znamená pouze statický declared remote mapping. HTTP request/response a
 Kafka async publish/subscribe zůstávají oddělené významy. HTTP request definition,

@@ -33,6 +33,8 @@ stejného version labelu. Více oprávněných targets zachová candidate set.
   evidence a 5 vztahů. Žádné immutable fakta ani generated grafy se neupravují ručně.
   Scoped semantic oprava bude součástí následné implementace, ne zdejšího plánu.
 - Durable workflow analyze/plan, konkrétní proposed schema/API a RED matice.
+- Public pure acceptance RED: 1 FAIL / 0.46s po validním T013 contract attachment setup,
+  chybějící W07 API; nejde o setup ERROR. Actual capture RED je připraven a NOT_RUN.
 - Runtime implementace, actual RED, focused/full, native build, remote publikace,
   model API a merge: **NOT_RUN**. Tento checkpoint není completion ani ready.
 
