@@ -994,3 +994,16 @@ on the oneaccepted2587PASS10SKIP descendant. Root is author, not independent rev
 architect plus another independent final-pair review remain mandatory. No new full/
 build/tool mutation. See [note97](changes/97_filterTopologyScope.md),
 [proof](validation/t017-descendant-proof.json) and [API](topology-filter.md).
+
+## T018 — current-parent snapshot explanation review candidate
+
+Pure explanation rederives T016/T017 and expands exact original identities and
+proof buckets. Original PUBLIC graph is required for canonical source locators;
+missing graph/range is unavailable. Separate explicit confined source-status
+capture checks current file hashes without replacing original snapshot fingerprints
+or upgrading remote/context freshness. Public pure/file-backed tests are recorded
+in note98. Current4e4fcd6 preserves T014/T016/T017/Common/T012/T013/W07/process/CI;
+owned source/tests exact299/accepted2df, all59own XMLPASS. Collection-only2504parent
++59own=2563 IDs maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP
+full. No actual/full/build/tool mutation; current exact-pair independent review
+remains pending. See validation/t018-descendant-proof.json.

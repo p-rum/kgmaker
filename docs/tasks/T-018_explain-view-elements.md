@@ -2,8 +2,8 @@
 
 - Task ID: `T018`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T009](T-009_propagate-view-evidence.md); [T016](T-016_aggregate-service-topology.md).
@@ -61,3 +61,68 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T018** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize 2 — explicitní snapshot explanation a confined source status
+
+Root schválil `/workspace/t018-architecture-brief.md` a zvolil implementaci
+optional explicit source-status capture pro skutečné deleted/stale AC.
+Výslovný stack T017f22a698 (T016806/T01409), T009/T016 a optional T017filtering;
+final current T012/T013/W07 integration/actual/full zůstává dependencygate.
+Žádná readiness ani nový compiler/runtime proof z této revize neplyne.
+
+`explain_view_element(view, element_id, *, captured, graph=None,
+filtering=None, source_status=None) -> report` je pure. Reuse pure T016 aggregate
+pro přesnou rederivaci origin topology; optional T017 celý filtering envelope
+se přes jeho canonical criteria rederivuje původní filter API a musí přesně
+odpovídat view+filtering. View ID i element ID patří tomuto snapshotu, nikdy
+fallback novějšího graphu/LATEST. Unknown element má UNKNOWN_ELEMENT bez
+hledání stejného jména jinde. Frontier není rendered element a nemá implicitní
+nový technický target.
+
+Přes origin interface/mapping/release/input-edge/binding inventories a evidence_refs
+expanduj přesné immutable IDs. Původní SUPPORTING/CONTRADICTING/UNKNOWN partitions,
+evidence kind/freshness, scope/context tuple, realm/group a aggregation/filter
+versions zůstávají. Omitted candidates, incomplete/truncated boundaries ani
+conflicts se nesmějí stát unikátním/current/observed proof. Raw source/config/
+SQL/schema/proof text se neexportuje, jen safe refs/typedmetadata/hash omission.
+
+Optional PUBLIC KnowledgeGraph musí přesně odpovídat captured.input_binding.graph_fingerprint.
+Sanitizované topology payload hashes nemají zpětně path/range: bez původního grafu
+nebo podpory exact canonical locator contract je explicit SOURCE_LOCATOR_UNAVAILABLE.
+Nečti private stores ani současný graph pro opravu chybějících originů. Přímý
+compiler locator musí mít exact canonical node+symbol/site, selected context,
+scope, repo/path a graph.files==context.source_files==captured SHA. Graph1/2/legacy
+bez této vazby zůstávají ref-onlyUNKNOWN. Source-only declaration není novýcompilerproof.
+Chybějící range/start/end/column zůstává null, nevymýšlej line1/end z jiné informace.
+
+`capture_explanation_source_status(workspace, graph, *, captured, reference_ids)`
+je oddělená explicitní I/O fáze. Každé requested reference ID se nejdříve odvodí
+z bound public graphu/selected context/source hash; caller neposílá volné path/range.
+Loaded declared workspace/rawmanifest a fingerprint musí odpovídat capture,
+repo musí patřit deklarovaným roots. Teprve potom bounded confined reads přes
+shared safe_path; symlink/traversal/absolute/foreign refs odmítnout bez echo.
+Žádné externí URL/model/build/worker/sourceexcerpt. Capture vrací jen původní
+locator inventory/hash a current hash/status, bound na original graph/capture.
+
+Pure explanation bez source-status má NOT_CHECKED, nikdy CURRENT. Status capture
+CONTENT_MATCH platí jen pro přesně přečtený soubor, nepovýší stale compilercontext
+ani remote mapping UNKNOWN/CAPTURE_TIME_ONLY. SOURCE_STALE obsahuje captured a
+currenthash odděleně; SOURCE_MISSING/UNAVAILABLE neznamená codeabsence/žádnýservice.
+Původní view/graph/baseline/content fingerprints zůstávají původní. Invalidní
+inputs/failure nic nemění a source-status se nepublikuje automaticky.
+
+Strict version/schema, cycle/depth/shared/per-occurrence/string/fanout limits
+před copies/JSON a hard reportinventory limit; žádná tichá truncation reference
+chain. Fixednonsecret diagnostics, unsafe credential/control/userinfo requiredIDs
+odmítnout, nikoli přejmenovat. ValidUnicode/pathspaces se zachovají. Optional
+source adapter načte jen bezpečné deklarované soubory, nikdy application/network/DB.
+
+Public RED před API: multi-repo aggregateedge expansion, missingrange, unknown
+ID, unsupported/missinggraph, actualfile match/change/delete a originalfingerprint.
+Negatives poisonedgraph/filter/view/source-status, foreignpath/repo/context/
+realm, stalecompiler/proofbuckets, symlinks/traversal, bounds/secret/noI/O pure
+část + deepinput/sentinel equality. Source-backed captures jsou read-onlyreprojection,
+ne nový compiler run. Relevantní T016/T017/T014/W07/View/T009 pure potom independent
+source closure; heavy/full až Rootapproval, případný descendantfull jen s ALLparent
+collected IDs a exactruntime/global/test/native/receipt proof.

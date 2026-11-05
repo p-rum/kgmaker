@@ -917,3 +917,19 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   2494PASS10same optionalSKIP, collection-only/no new full/build. Root is original
   author; architect plus another independent final-pair approval mandatory.
   See validation/t017-descendant-proof.json.
+
+## T018 — current-parent descendant-result transfer
+
+- AC01: exact summary/candidate/filter-origin inventories; missing graph/ref boundary.
+- AC02: missing range null, canonical range tamper rejected without invented lines.
+- AC03: actual temporary files match/edit/delete across two repos, original hash/
+  fingerprint preserved; stale context does not become CURRENT after file match.
+- AC04: input equality, source-status tamper, denied pure I/O/projectors/process/
+  network, confined symlink/traversal/foreign refs, bounds and credential controls.
+- AC05: original evidence buckets/type/freshness, UNKNOWN remote realm/group and
+  filtered ambiguity/omitted alternatives preserved; no new availability proof.
+- AC06: note98 retains historical RED/pure/source evidence. Owned source/tests
+  exact299/accepted2df; all59own XMLPASS. Current4e4fcd6 base2504+59own=2563 IDs
+  maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP descendant;
+  collection-only, no new actual/full/build. Current exact-pair independent review
+  remains pending; see validation/t018-descendant-proof.json.

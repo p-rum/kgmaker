@@ -897,3 +897,13 @@ Kafka channels count as real hops; omitted nodes never create shortcut edges.
 See [API and limits](docs/topology-filter.md). Current130720f2471+33own IDs maps
 to2494PASS10allowedSKIP on accepted2df, not a new full. Root is original author;
 architect plus another independent reviewer must approve the final pair. No CLI.
+
+### T018 snapshot explanation
+
+`kgmaker.view_explanation.explain_view_element(view, element_id, captured=captured,
+graph=original_public_graph)` expands exact origins and evidence from the bound
+T016/T017 snapshot. Optional `capture_explanation_source_status` separately reads
+only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT.
+See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable.
+Current4e4fcd6 base2504+59own IDs maps2553PASS10allowedSKIP on accepted2df, not
+a new full; source is exactapproved299. Independent final-pair review remains pending.
