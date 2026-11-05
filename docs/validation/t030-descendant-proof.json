@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scope": "T030 parent support by one strict descendant run; NOT a standalone parent full",
-  "base": "3e5ef0f0c56c406a5428e826120ca525774b373f",
+  "base": "4b0b07ce6e0ddd9d9f71c04f05ca4cbcb00ab49f",
   "reviewed_source_head": "6ae8f52e3d7f211933e27ce7560762ad02484b33",
   "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
   "actual_full": {
@@ -130,5 +130,6 @@
     "combined_attempt2": "completed actual result above"
   },
   "GH_CI": "optional/not asserted PASS",
-  "remaining": "independent exact final base/head review and PR readiness/publication/merge by coordinator; T031+ separate successors"
+  "remaining": "independent exact final base/head review and PR readiness/publication/merge by coordinator; T031+ separate successors",
+  "base_refresh": "Common PR72 merged; source composition already present in actual2df descendant; no source/test/native rerun"
 }

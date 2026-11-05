@@ -772,6 +772,12 @@ reversibly groups only adjacent certified local operations in an explicit proces
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
 
+Service inventories distinguish compiler/source ownership from canonical
+workspace-derived declarations. Kafka binding inputs may reference another
+repository's schema without becoming service-owned code or compiler candidates.
+`t008-service-inventory-2` retains the original full graph for downstream views;
+unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
+its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
 ### Kafka retry/DLT declarations — T003-S07-W05 draft
 
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy

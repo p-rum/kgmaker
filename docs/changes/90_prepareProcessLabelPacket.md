@@ -92,7 +92,7 @@ source review a required full stále PENDING; žádný full nebyl zařazen.
 
 ## Aktuální merge kandidát a společný descendant důkaz
 
-Base main `3e5ef0f0c56c406a5428e826120ca525774b373f`; původní T030 zdroj
+Base main `4b0b07ce6e0ddd9d9f71c04f05ca4cbcb00ab49f`; původní T030 zdroj
 `6ae8f52e3d7f211933e27ce7560762ad02484b33` zůstává beze změny. Jediný dokončený
 strict full proběhl na integračním descendant `2df55ff8d15d790808f6a81072144eeb408a05b8`:
 **2587PASS/10povolených optionalSKIP,2042.93sJUnit** (runner2048.01s),2597/2597IDs,
