@@ -1020,3 +1020,13 @@ runtime/test/worker/fixture/CI bodies match acceptedfull, including exact5-line 
 registration/dispatch. No new actual/full/build/tool mutation. Current independent
 final-pair review remains pending; T020/21not included. See note99,
 [proof](validation/t019-descendant-proof.json) and [CLI contract](architecture-json-cli.md).
+
+## W07/T014 — first-call purity correction (note108)
+
+The preserved renderer005 cold invocation exposed a lazy normalizer import under
+pure-call I/O guards. Only dependency binding moves to module initialization;
+normalization, remote-contract-mapping-2 and capture/evidence semantics remain.
+Fresh-Python public audit regression RED1FAIL→GREEN, original Path guard GREEN,
+T014 module25PASS0SKIP0.69s. Pure protocol scope only; affected-case/current-source
+coverage, actual15+4SVG, two independent author-excluding reviews and publication
+remain pending. Old failed attempts and source-attributed complete cases remain.

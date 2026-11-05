@@ -945,3 +945,13 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   optionalSKIP; all302present runtime/test/fixture/CI files exact. Collection-only,
   no new actual/full/build/tool mutation. Independent current final-pair review
   remains pending; see validation/t019-descendant-proof.json.
+
+## W07/T014 cold invocation correction (note108)
+
+Fresh-process public T014 projection with pre-read protocol input and audit denial
+of file/process/network I/O: RED1FAIL on original304, then GREEN2PASS with the
+original Path-denial case. Full T014 module25PASS0SKIP0.69s on the corrective
+worktree; normalization semantics/rule2 are unchanged. These are protocol tests,
+not compiler/native/runtime proof. Affected W0789 and priorT01413 will be rerun;
+source-corrected remaining-suite coverage, actual15+4SVG and exact-pair review are
+PENDING. Failed renderer004/005 artifacts remain preserved, never standalone PASS.

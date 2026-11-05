@@ -31,7 +31,12 @@ file hash/status and bounded pointer inventory; raw JSON examples/descriptions/
 credentials are omitted. The original private T013 capture is used during local
 validation; its hash is retained, without copying raw schema payloads.
 
-Resolution performs no I/O or upstream projection/attachment. Its hashes check
+Resolution performs no I/O or upstream projection/attachment, including its first
+invocation after importing the public API. Dependency initialization happens at
+module import; route normalization and rule version remain unchanged. A fresh
+Python-process audit regression checks file, process and network denial without
+preloading the normalizer. This protocol test is not native or runtime evidence.
+Its hashes check
 consistency with the supplied **trusted local capture handoff**, not authenticity
 of arbitrary untrusted JSON. Replacing every input and capture coherently is not
 an authenticated origin proof. Freshness remains capture-time only. Stale or
