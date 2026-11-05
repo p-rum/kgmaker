@@ -808,13 +808,15 @@ candidate/provenance sets; exact duplicates and YAML distinct locators retain
 existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
 Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
 
-## T030 — process-label packet (candidate)
+## T030 — process-label packet (final review candidate)
 
-Pure `prepare_process_label_packet` preserves complete ProcessView target/ref
-identity, actual content binding and captured evidence/uncertainty. Raw prose is
-hash-omitted; document provenance is explicit ref-only and conflicts are supplied
-review items, not NLP authority. Full serialized cost includes omissions/template
-and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
-inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
-Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
-exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+Pure Python API preserves bounded immutable process identity/evidence/context,
+structured conflict and privacy/budget contracts; no model/compiler/file I/O or
+apply. Source unchanged from reviewed070/6ae; current base main3e5ef0f.
+ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
+4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
+T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
+and module byteprefix +whole testfile preserved; addedT031 bindings do not shadow.
+See note90 and validation/t030-descendant-proof.json. No standalone parent full or
+new native build. Exact final base/head review and publication remain separate;
+GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.

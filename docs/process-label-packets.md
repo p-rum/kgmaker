@@ -81,3 +81,14 @@ Unsupported/source-only process snapshots retain PARTIAL/UNKNOWN, truncated flag
 and every unresolved target; packet preparation does not fill unsupported syntax
 or turn a static path into observed execution. Invalid input is immutable, errors
 never echo source keys/values, and there is no last-artifact write to corrupt.
+
+## Validation attribution
+
+All47feature cases PASS in one completed strict combined descendant run
+`2df55ff8d15d790808f6a81072144eeb408a05b8` (2587PASS10allowedoptionalSKIP,
+2042.93sJUnit). ALL1990T030parent cases are classified1980PASS10allowedSKIP.
+Original module byteprefix/32AST/35global bindings and complete T030 testfile are
+exact; appended T031 helpers have disjoint bindings. This supplies parent support
+from a reviewed descendant, not a standalone T030 full command.
+See [bounded source/result proof](validation/t030-descendant-proof.json).
+Final exact base/head review remains separate; no new compiler build or full rerun.

@@ -747,11 +747,16 @@ final exact-pair review/ready pending. No runtime/delivery or whole-S07 completi
 
 | AC | Concrete public proof | Current result |
 |---|---|---|
-| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | coalesced153PASS; full pending |
-| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | coalesced153PASS; full pending |
-| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | coalesced153PASS; full pending |
-| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | coalesced153PASS; full pending |
-| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | coalesced153PASS; full pending |
-| AC06 | spec Rev2, Python API/capability docs, note90, final source review/full | NOT_YET_COMPLETE |
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
 
 No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
+standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
+PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
+[bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.

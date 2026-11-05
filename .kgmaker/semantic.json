@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "54250e271e1fad646cfd01bf5a17cb4e4e80a9f1e36d7c10eb11699c9acf21c2",
     "README.md": "ff08a77dcaedcf6c371acde4b7831300ac6ce78cc4fb8d194ee003dabfec9183",
-    "docs/acceptance-inventory.md": "9b76aeaab7e8a2f9e7b45f16eb62d38dbb8d1e2137d3cba0d67dff0d3f97d34f",
+    "docs/acceptance-inventory.md": "6cfc84f966c644007fe849aa6a5c7e8173f34203d782fe5928be2f3a45eaeea3",
     "docs/architecture.md": "6a45717183ce4f1bd529cd5a1f133322988d793a508a37bde36c6ebc3914ecce",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/10_selectExternalToolchain.md": "2b7eca94f4b13999e5873f4cad8d1ff058b3cd7618f74284502de564d573357f",
@@ -69,7 +69,7 @@
     "docs/changes/83_classifyOptionalCompilerPrerequisites.md": "9e8fa706f5379444f07402bebed76037ed0d8ea035b306e5c08ebe7f2a6e603b",
     "docs/changes/87_captureKafkaRetryDlt.md": "28f2f5f26747b56b08632e94beca479a9d5acb115a545e77b2be29bca2d840d9",
     "docs/changes/88_preserveAmbiguousHttpProviders.md": "e57e8d1105f8a49e1c907367ac88ece0f59b560d8171f09ad30519cc1f8854b4",
-    "docs/changes/90_prepareProcessLabelPacket.md": "f30db2a4499400380f8d69734f90395abfb6924c5375e820cde77cde91328d99",
+    "docs/changes/90_prepareProcessLabelPacket.md": "1dd38ee3873a2581081422d53475fddf36ec21d6a66164328895ea31d20f5765",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "70e6be171672339932c1f251fc693db14683382c20aef508d4db13f688cf7ee7",
     "docs/feature-analysis.md": "b78669b0b74a8ec04bbb84e859ac772a046ae496ba9ab6c09da101e7ecbe561f",
@@ -77,11 +77,11 @@
     "docs/http-consumers.md": "f27598f4245200073a443af131ecdb2d27da54993ed481286b0ed1538934d556",
     "docs/implementation-feature-analysis.md": "591e6deea13d8f346d42251cd99ca99dee77443ddfd353282981f3f3be3dd542",
     "docs/kafka-retry-dlt.md": "110db73bfc99a7d6e88ad6c24f19916942784a1f159347f2c665754e571c7c58",
-    "docs/process-label-packets.md": "952e937c579b4be51b4dab86d65d05d11ada64ec0f80997679f8e162ece815c2",
+    "docs/process-label-packets.md": "1378c75fcca4a13d32991b356567ea0b150ac9a2cbe4d7b2cb147a00fec95c0a",
     "docs/process-model.md": "b36b6897ff0547251a120abe6e3b51bc3165ef6d811e45d6048509ede13e0abb",
     "docs/process-paths.md": "345acc7248921457a8dc0749de80d247e0a7a8ba6af12a21c32715172c2e6df5",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "f451d12e645326244f767765e2a6b746eafd0f96370d15b8645238f72dbba595",
+    "docs/production-analysis-progress.md": "712f2ddcc108dc95f56d5dd83b6a183581333d1e80302dfcb748fef60abc281f",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/schema-compatibility.md": "d656d99fbd0cf608ac0de6aaaff7334d2dc6cc0eba98f6ed8145d9a67f95b5e8",
@@ -201,6 +201,7 @@
     "docs/tasks/T003-S13-04-runtimeAsyncReflection.md": "e368150234cf6ef7157840841957210d7afdf5758d55e426010c0a688a9540d2",
     "docs/typescript-callbacks.md": "71f9acd0e06d37619048ed61b5c610d9f387d19a1a1cea5087dead5a065acdcf",
     "docs/typescript-freshness.md": "ee683d326939744e05facb56f67520a185e293a91cad821676b7d2eb6498b43a",
+    "docs/validation/t030-descendant-proof.json": "1d866e99e8c680fe90cb68af62e53a5810d5d56f80f498e50ebbb43e2111b940",
     "docs/windows-install.md": "b706cd4404956348440b377fac7771f97e7dd405bc34c75ff4aefb97a2352a59",
     "fixtures/build-inspection/frontend/checker.cjs": "c63200f117a543b42b8facc045fa9a1c7ea8519926607fb1945a592d60e90e4a",
     "fixtures/build-inspection/frontend/package-lock.json": "99f866cc68d76842292e4699184d1f948202396855fcc0422717d5b34b75b7a3",
@@ -565,13 +566,6 @@
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
-      "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "name": "Pure process label packets",
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 1,
-      "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
-    },
-    {
       "id": "concept:docs/schema-compatibility.md:offline_orm_schema_compatibility",
       "name": "Offline ORM schema compatibility",
       "source_file": "docs/schema-compatibility.md",
@@ -661,6 +655,13 @@
       "source_file": "docs/kafka-retry-dlt.md",
       "source_line": 1,
       "summary": "Pinned static annotation policy and exact canonical proof replay preserve async intent without execution or delivery claims; strict full on647 passed1908/10; current schema-parent composition preserves tested policy/native source and passes bounded pure checks."
+    },
+    {
+      "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "name": "Pure process label packets",
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 1,
+      "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
     }
   ],
   "edges": [
@@ -913,26 +914,6 @@
       "source_file": "docs/architecture.md",
       "source_line": 145,
       "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "target": "function:src/kgmaker/process_semantics.py:prepare_process_label_packet::230",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 10,
-      "evidence": "The documented Python API prepares a packet and candidate template from an existing explicit ProcessView."
-    },
-    {
-      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "target": "class:src/kgmaker/process_model.py:ProcessView::342",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-label-packets.md",
-      "source_line": 3,
-      "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
     },
     {
       "source": "file:src/kgmaker/data_resources.py:data_resources.py",
@@ -1593,6 +1574,26 @@
       "source_file": "tests/test_kafka_retry_dlt.py",
       "source_line": 352,
       "evidence": "Captured compiler snapshots and public flow/CLI mutations verify localized UNKNOWN boundaries, preserving unrelated policies and all input records."
+    },
+    {
+      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "target": "function:src/kgmaker/process_semantics.py:prepare_process_label_packet::230",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 10,
+      "evidence": "The documented Python API prepares a packet and candidate template from an existing explicit ProcessView."
+    },
+    {
+      "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "target": "class:src/kgmaker/process_model.py:ProcessView::342",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-label-packets.md",
+      "source_line": 3,
+      "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
     }
   ],
   "episodes": [
