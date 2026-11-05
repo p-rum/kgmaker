@@ -833,3 +833,22 @@ standaloneT031. Original2066parentIDs2056PASS10SKIP. Currentmain5ffe2252 +own76
 source/IDunion2328 gives2318PASS10sameSKIP fromthatXML; no new test/collection.
 Whole module/testfile exactactual; T03032AST/35globals prefix+6disjointbindings.
 See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unverified.
+
+Explicit stack T030070. Its47tests and complete original module AST/byte prefix
+are unchanged; full proof is pending, not inferred from these pure results.
+
+## T032 — explicit local semantic review (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same operation/no rewrite; historical retry cannot rewind head | PASS |
+| AC02 | Real processes+threads CAS; stale/different operation conflict | PASS |
+| AC03 | Changed explicit baseline/capture revalidation; scope isolation | PASS |
+| AC04 | Pre/postpublication failure/cancel; unchanged inputs and lastvalidJSON | PASS |
+| AC05 | Documentary namespace; conflict blocks; safe error/bounds/unsupported paths | PASS |
+| AC06 | Spec/API/docs/note94 + actual descendant proof | Final exactpairreview/PRpending |
+
+All36owncases PASS in ONEactual2df55 full2587PASS10allowedSKIP; whole module/testfile
+and currentT031 dependency exactactual. Original2102parent2092PASS10SKIP; current
+2328main+36union2364=2354PASS10sameSKIP. Derived source/IDunion, not newexecution
+orcollection. See [proof](validation/t032-descendant-proof.json). GHCIoptional/unverified.

@@ -909,3 +909,26 @@ cases2056PASS10SKIP; currentmain2252+76 source/IDunion2328=2318PASS10sameSKIP.
 Not standalone parent full, new collection or test/build/fullrepeat. Main240episode
 prefix and every old capture preserved. Exact finalreview/publication separate;
 GHCI optional/unverified. See note92 and validation/t031-descendant-proof.json.
+
+Pure same-module validation rederives the whole current T030 packet and accepts
+only bounded semantic PROPOSED records. Invalid/stale/forged/unsafe inputs return
+fixed-code REJECTED validation reports; valid input remains PENDING/CONFLICT with
+all differing proposals and captured documentary review items. No approval/apply,
+new outcomes, technical mutation, NLP comparison, runtime or physical freshness.
+Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
+PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
+full, independent exact source review and root publication remain pending.
+
+## T032 — explicit local review (final review candidate)
+
+Currentbase2c7b38 has mergedT030/T031 prerequisites. Separate bounded immutable
+semantic envelope, POSIX cooperating process/thread CAS, exact operation identity,
+baseline revalidation and honest postreplaceINDETERMINATE recovery. No technical
+ProcessView/evidence mutation, document citation promotion or reviewer authentication.
+APPROVE blocks both proposal/captured conflicts; REJECT publishes no new labels.
+Whole store module/testfile/currentprocess_semantics exactactual2df55. All36own
+XMLPASS in ONEcombined2587PASS10allowedSKIP2042.93s;4897hashes+five sets unchanged.
+Original2102IDs2092PASS10SKIP; currentmain2328+36union2364=2354PASS10sameSKIP.
+No standalone parent full or new test/build/fullrepeat. Main241episodeprefix/all
+oldcaptures preserved. Final independentexactpairreview/Rootmerge pending; GHCI
+optional/unverified. See note94 and validation/t032-descendant-proof.json.

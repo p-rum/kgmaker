@@ -844,4 +844,12 @@ candidate, documents=(), conflicts=())` rederives the complete current T030 pack
 before checking proposed labels, descriptions, references and grouping. Invalid
 input returns fixed-code diagnostics; valid proposals remain PROPOSED and
 PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
-See [the Python contract](docs/process-annotations.md); T032/T034 remain pending.
+See [the Python contract](docs/process-annotations.md). T034 CLI remains pending.
+
+### Explicit local process review (T032 candidate)
+
+`kgmaker.process_store` adds prepare/persist/read APIs for bounded immutable semantic
+review history and explicit APPROVE/REJECT, with cooperating POSIX process/thread
+CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
+See [API, limits and recovery](docs/process-review-store.md). Independent review and
+full validation are pending; there is no T034 CLI or authenticated reviewer identity.
