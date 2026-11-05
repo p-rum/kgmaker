@@ -852,3 +852,23 @@ All36owncases PASS in ONEactual2df55 full2587PASS10allowedSKIP; whole module/tes
 and currentT031 dependency exactactual. Original2102parent2092PASS10SKIP; current
 2328main+36union2364=2354PASS10sameSKIP. Derived source/IDunion, not newexecution
 orcollection. See [proof](validation/t032-descendant-proof.json). GHCIoptional/unverified.
+
+Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherited
+pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
+The separately frozen T030/T031 full is not evidence of T032 full validation.
+
+## T033 — read-only process catalog (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same label distinct trigger identity; explicit multiple triggers | PASS |
+| AC02 | Candidate never approved; alias preserves every member review/label state | PASS |
+| AC03 | Missing/stale/context trigger remains inactive historical, partial absence qualified | PASS |
+| AC04 | No writes/network/process execution; immutable valid/invalid snapshots/store | PASS |
+| AC05 | Scope/context/collision/alias/caps/privacy negatives; outcomes/owner/uncertainty retained | PASS |
+| AC06 | SpecRev2/API/docs/note96 + actual proof | Finalexactpairreview/PRpending |
+
+All37owncases XMLPASS in ONEactual2df55 full2587PASS10allowedSKIP; wholemodule/
+testfile+5processdependencies exactactual. Original2139parent2129PASS10SKIP;
+currentmain2364+37source/IDunion2401=2391PASS10sameSKIP. No new run/collection.
+See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.

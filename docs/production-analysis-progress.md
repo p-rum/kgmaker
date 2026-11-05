@@ -932,3 +932,25 @@ Original2102IDs2092PASS10SKIP; currentmain2328+36union2364=2354PASS10sameSKIP.
 No standalone parent full or new test/build/fullrepeat. Main241episodeprefix/all
 oldcaptures preserved. Final independentexactpairreview/Rootmerge pending; GHCI
 optional/unverified. See note94 and validation/t032-descendant-proof.json.
+
+Explicit stack on reviewed T031a359. Separate version1 envelope,128history/2MiB caps,
+POSIX cooperating thread/process CAS, exact idempotent operation identity and current
+explicit-baseline revalidation. APPROVE blocks captured and proposal conflicts;
+REJECT publishes no new labels. Technical model/evidence remains unchanged.
+Current feature36PASS1.93s; coalesced269PASS94SKIP8.74s (compiler SKIPs not PASS).
+Independent source review and strict full NOT_RUN. No native build, CLI, external
+publication, authenticated reviewer identity or hostile-root race guarantee.
+
+## T033 — explicit process catalog (final review candidate)
+
+Currentbase7e6c83 has mergedT030/T031/T032. Read-only explicit current/historical
+ProcessViews+T024 inventory and direct validated T032 reads, stable process+scope
+selection IDs, exact collisions/one-hop aliases preserving all original members/
+revisions/triggers/review states. No label identity/approval borrowing/archive/
+discovery/store writes. Partial absence NOT_IN_CURRENT_INVENTORY stays qualified.
+Wholecatalog/test+5process dependencies exactactual2df55. All37ownXMLPASS in ONE
+combined2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original
+2139parent2129PASS10SKIP; currentmain2364+37union2401=2391PASS10sameSKIP. No new
+test/collection/build/fullrepeat. Main242episodeprefix/alloldcaptures preserved.
+Finalexactpairreview/Rootmerge pending; GHCIoptional/unverified. See note96 and
+validation/t033-descendant-proof.json. Runtime/data availability remain UNKNOWN.
