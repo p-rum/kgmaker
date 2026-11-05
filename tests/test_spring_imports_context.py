@@ -9,9 +9,9 @@ from kgmaker.model import KnowledgeGraph
 
 
 @pytest.mark.parametrize("variant", ["ordinary", "react"])
-def test_spring_rule_bump_preserves_exact_legacy_typescript_context(tmp_path, variant):
+def test_spring_rule_bump_preserves_exact_typescript_context_with_return_extension(tmp_path, variant):
     baseline = json.loads((Path(__file__).resolve().parents[1] /
-                          "fixtures/spring-imports/typescript-contexts-v1.json").read_text())[variant]
+                          "fixtures/spring-imports/typescript-contexts-return-v1.json").read_text())[variant]
     graph = KnowledgeGraph(3, str(tmp_path), "", [], [], {})
     metadata = {"protocol_version": 1, "worker": "typescript-worker-1",
                 "compiler_version": "typescript-5.7.3", "distribution": []}

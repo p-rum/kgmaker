@@ -181,3 +181,18 @@ artifact hashes znovu ověřeno. Vlastní schema/framework/data_resources/test
 moduly byte-exact ced full. Workspace union zachovává parent Kafka
 qualification/privacy a W08 cache tokens. Bounded current-parent cross-focus
 a finální review zatím pending; žádný další full/rebuild pouze kvůli parentu.
+
+## Current Return parent — composition checkpoint
+
+Currentf6 cross-focus dokončen **149PASS/0SKIP354.17s** (XML354.158s),
+runnerexit0/355.12s. Všech1479 inputs a3957ef0 HEAD znovu ověřeno beze změn.
+Nezávislé root source APPROVE395/basef6 zachováno jako historický pair.
+
+Integrace main deb3691 přidává Return proof/IR a workspace kvalifikaci;
+vlastní schema_replay/framework/data_resources/test_schema moduly byte-exact
+ced full. Všech27 tracked worker sources/build/locks odpovídá Return donor
+a final-current-parent/source.json. Všech132 native artifacts (30JAR+102
+licenses) odpovídá ověřenému broad receipt, kopie následně SHA ověřena; oba
+LICENSE soubory shodné s official Kotlin license. Receipt return-native-copy.
+Žádný rebuild, původní W08 full zůstává přesně ced.224 main episodes prefix
+se zachovává; bounded Return/schema/realm/Kafka matrix zatím pending.
