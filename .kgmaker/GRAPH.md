@@ -6,7 +6,7 @@
 - Scope: production; omitted files: 372
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `2601504fba497006a2e5651970843b842bf9de688d3ca1ff23869963df97a65b`; content: `5eae4cdeeaa18abf2cc732573ffb1bae3f3ea091a3021186cd11eed7108bae73`; freshness: CONTENT_VERIFIED
+- Context: `7f4efa0e325999e2d5466892f933cf1ea5c98894124ff90cfc9efb0cedef7efd`; content: `efad3a1f4fc26ed7c23cc08dff50130179181d54d6602f7ae8fe618672ffb19f`; freshness: CONTENT_VERIFIED
 - Files indexed: 74
 - Symbols and sections: 974
 - Internal imports: 274
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 225
+- Implementation episodes: 226
 - Inferred/ambiguous relationships: 4983/0
 
 ## Architecture diagram
@@ -1024,22 +1024,22 @@ flowchart LR
 - **function** `boundary` line 262 — `boundary(reason)`
 
 ### `src/kgmaker/process_semantics.py`
-- **class** `ProcessLabelPacketError` line 25 — `ProcessLabelPacketError(ValueError)`
-- **function** `__init__` line 29 — `__init__(self, code)`
-- **function** `_fail` line 32 — `_fail(code)`
-- **function** `_bounded` line 36 — `_bounded(value)`
-- **function** `_identifier` line 71 — `_identifier(value)`
-- **function** `_identifiers` line 79 — `_identifiers(values)`
-- **function** `_context_selection` line 84 — `_context_selection(value, scope, contexts)`
-- **function** `row` line 97 — `row(item)`
-- **function** `service` line 121 — `service(item)`
-- **function** `_document_provenance` line 137 — `_document_provenance(value, ref, known_sources, contexts)`
-- **function** `_cost` line 151 — `_cost(result)`
-- **function** `_budget_status` line 155 — `_budget_status(budget, overflow)`
-- **function** `_settle` line 166 — `_settle(result, mandatory=None, *, enforce_hard=True)`
-- **function** `_omission` line 184 — `_omission(category, identity, field, value)`
-- **function** `_documents` line 189 — `_documents(documents, scope, context_ids, known_sources)`
-- **function** `prepare_process_label_packet` line 225 — `prepare_process_label_packet(process, *, documents=(), conflicts=(), token_budget=8000, char_budget=32000)`
+- **class** `ProcessLabelPacketError` line 29 — `ProcessLabelPacketError(ValueError)`
+- **function** `__init__` line 33 — `__init__(self, code)`
+- **function** `_fail` line 36 — `_fail(code)`
+- **function** `_bounded` line 40 — `_bounded(value)`
+- **function** `_identifier` line 75 — `_identifier(value)`
+- **function** `_identifiers` line 84 — `_identifiers(values)`
+- **function** `_context_selection` line 89 — `_context_selection(value, scope, contexts)`
+- **function** `row` line 102 — `row(item)`
+- **function** `service` line 126 — `service(item)`
+- **function** `_document_provenance` line 142 — `_document_provenance(value, ref, known_sources, contexts)`
+- **function** `_cost` line 156 — `_cost(result)`
+- **function** `_budget_status` line 160 — `_budget_status(budget, overflow)`
+- **function** `_settle` line 171 — `_settle(result, mandatory=None, *, enforce_hard=True)`
+- **function** `_omission` line 189 — `_omission(category, identity, field, value)`
+- **function** `_documents` line 194 — `_documents(documents, scope, context_ids, known_sources)`
+- **function** `prepare_process_label_packet` line 230 — `prepare_process_label_packet(process, *, documents=(), conflicts=(), token_budget=8000, char_budget=32000)`
 
 ### `src/kgmaker/process_triggers.py`
 - **class** `TriggerInventoryError` line 24 — `TriggerInventoryError(ValueError)`
@@ -1565,7 +1565,7 @@ flowchart LR
 - **Change Acceptance a ověření, Doplnění T003-S11-W01 (2026-10-26), Inventář acceptance T001 a T002** — changed; files: docs/acceptance-inventory.md, docs/changes/64_propagateViewEvidence.md, src/kgmaker/architecture_model.py, tests/test_t009_propagate_view_evidence.py; validation: focused=passed, full_suite=passed, compiler_prerequisites=skipped, semantic_validate=passed
 - **Reject frontend compiler input membership changes before publication** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: strict-full=passed, actual-TS-closure-and-legacy-selection=passed, unavailable-build-fixtures=skipped
 - **feat(t007): define service ownership** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
-- **Change Acceptance a skutečné kontroly, Acceptance criteria, Aktualizace stavu** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md; validation: public_red=failed, coalesced_pure_149=passed, strict_full=unknown
+- **Change Acceptance a skutečné kontroly, Acceptance criteria, Aktualizace stavu** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md; validation: public_red=failed, coalesced_pure_149=passed, strict_full=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Atomické work packages pro dokončení T003** — removed; files: .codex/agents/README.md, .codex/agents/t003-s03-w01-external-toolchain-selection.toml, .codex/agents/t003-s03-w02-gradle-custom-variants.toml, .codex/agents/t003-s03-w03-gradle-included-builds.toml, .codex/agents/t003-s03-w04-kotlin-compiler-options.toml; validation: agent-profiles=passed, toml=passed, codex-loader=passed, links=passed, pytest197=passed
 - **Merge remote-tracking branch 'origin/feat/t003-s05-03-spring-condition-matrix' into feat/t003-s09-03-template-dialect-expansion** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/55_expandThymeleafFragments.md, docs/compiler-inspection.md; validation: focused-regressions=passed, full-core=passed, optional-worker-matrix=skipped
 - **Change Akceptace a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/26_addCodeReviewAgent.md; validation: profile197=passed, conflict=passed
@@ -1685,6 +1685,7 @@ flowchart LR
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest195=passed, focused51=passed, spring-configuration-import=passed, framework-rule-invalidation=passed
 - **fix(T003-S09-W01): bound XLSX formula reference tokens** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/39_boundXlsxFormulaReferences.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: focused133=passed, full298=passed, toolchain23=skipped, semantic=passed, diff-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/69_versionReactUiEvents.md, docs/compiler-inspection.md; validation: renderer20=passed, preceding_guard_broad63=passed, final_ui_contract_guard6=passed, full_queued=unknown, remote_ci_paused=unknown
+- **Change Acceptance a skutečné kontroly, Aktualizace stavu, Aktuální stav a zbývající práce** — current; files: docs/acceptance-inventory.md, docs/changes/90_prepareProcessLabelPacket.md, docs/process-label-packets.md, docs/production-analysis-progress.md, src/kgmaker/process_semantics.py; validation: credential_red=failed, coalesced_pure_153=passed, strict_full=unknown
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest-on-07ad865=passed, full-suite-toolchain-gates=skipped, rebase-focused=passed
 - **fix(t003): validate full JDK before installed worker smoke** — current; files: docs/changes/83_classifyOptionalCompilerPrerequisites.md, tests/test_coroutine_mapping.py, tests/test_optional_compiler_prerequisites.py, tests/test_orm_xml_overrides.py, tests/test_worker_install.py; validation: optional-full-957=passed, strict-matrix-123-coverage=passed, optional-prerequisites-644=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-focused=passed, t005-workspace-regressions=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
@@ -5407,51 +5408,51 @@ flowchart LR
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 234; src/kgmaker/process_paths.py:234; INFERRED 0.85)
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 235; src/kgmaker/process_paths.py:235; INFERRED 0.85)
 - `src/kgmaker/process_paths.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 289; src/kgmaker/process_paths.py:289; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 119; src/kgmaker/process_semantics.py:119; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 188; src/kgmaker/process_semantics.py:188; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 216; src/kgmaker/process_semantics.py:216; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 222; src/kgmaker/process_semantics.py:222; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 253; src/kgmaker/process_semantics.py:253; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 330; src/kgmaker/process_semantics.py:330; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 334; src/kgmaker/process_semantics.py:334; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 358; src/kgmaker/process_semantics.py:358; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 258; src/kgmaker/process_semantics.py:258; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 274; src/kgmaker/process_semantics.py:274; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 124; src/kgmaker/process_semantics.py:124; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 193; src/kgmaker/process_semantics.py:193; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 221; src/kgmaker/process_semantics.py:221; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 227; src/kgmaker/process_semantics.py:227; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 258; src/kgmaker/process_semantics.py:258; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 335; src/kgmaker/process_semantics.py:335; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 339; src/kgmaker/process_semantics.py:339; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 363; src/kgmaker/process_semantics.py:363; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 263; src/kgmaker/process_semantics.py:263; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 279; src/kgmaker/process_semantics.py:279; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 280; src/kgmaker/process_semantics.py:280; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 290; src/kgmaker/process_semantics.py:290; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 292; src/kgmaker/process_semantics.py:292; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 284; src/kgmaker/process_semantics.py:284; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 285; src/kgmaker/process_semantics.py:285; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 295; src/kgmaker/process_semantics.py:295; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 297; src/kgmaker/process_semantics.py:297; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 108; src/kgmaker/process_semantics.py:108; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 112; src/kgmaker/process_semantics.py:112; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 122; src/kgmaker/process_semantics.py:122; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 126; src/kgmaker/process_semantics.py:126; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 129; src/kgmaker/process_semantics.py:129; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `211 in `src/kgmaker/schema_replay.py`` (name match at line 302; src/kgmaker/process_semantics.py:302; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 103; src/kgmaker/process_semantics.py:103; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 113; src/kgmaker/process_semantics.py:113; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 117; src/kgmaker/process_semantics.py:117; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 127; src/kgmaker/process_semantics.py:127; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 131; src/kgmaker/process_semantics.py:131; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 134; src/kgmaker/process_semantics.py:134; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 140; src/kgmaker/process_semantics.py:140; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 192; src/kgmaker/process_semantics.py:192; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 139; src/kgmaker/process_semantics.py:139; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 145; src/kgmaker/process_semantics.py:145; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 197; src/kgmaker/process_semantics.py:197; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 205; src/kgmaker/process_semantics.py:205; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 208; src/kgmaker/process_semantics.py:208; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 211; src/kgmaker/process_semantics.py:211; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 234; src/kgmaker/process_semantics.py:234; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 235; src/kgmaker/process_semantics.py:235; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 237; src/kgmaker/process_semantics.py:237; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 297; src/kgmaker/process_semantics.py:297; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 304; src/kgmaker/process_semantics.py:304; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 307; src/kgmaker/process_semantics.py:307; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 310; src/kgmaker/process_semantics.py:310; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 52; src/kgmaker/process_semantics.py:52; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 54; src/kgmaker/process_semantics.py:54; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 202; src/kgmaker/process_semantics.py:202; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 210; src/kgmaker/process_semantics.py:210; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 213; src/kgmaker/process_semantics.py:213; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 216; src/kgmaker/process_semantics.py:216; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 239; src/kgmaker/process_semantics.py:239; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 240; src/kgmaker/process_semantics.py:240; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 242; src/kgmaker/process_semantics.py:242; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 302; src/kgmaker/process_semantics.py:302; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 309; src/kgmaker/process_semantics.py:309; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 312; src/kgmaker/process_semantics.py:312; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 315; src/kgmaker/process_semantics.py:315; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 56; src/kgmaker/process_semantics.py:56; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 58; src/kgmaker/process_semantics.py:58; INFERRED 0.85)
 - `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 60; src/kgmaker/process_semantics.py:60; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 63; src/kgmaker/process_semantics.py:63; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 65; src/kgmaker/process_semantics.py:65; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 74; src/kgmaker/process_semantics.py:74; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 82; src/kgmaker/process_semantics.py:82; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 88; src/kgmaker/process_semantics.py:88; INFERRED 0.85)
-- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 98; src/kgmaker/process_semantics.py:98; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 62; src/kgmaker/process_semantics.py:62; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 64; src/kgmaker/process_semantics.py:64; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 67; src/kgmaker/process_semantics.py:67; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 69; src/kgmaker/process_semantics.py:69; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 78; src/kgmaker/process_semantics.py:78; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 87; src/kgmaker/process_semantics.py:87; INFERRED 0.85)
+- `src/kgmaker/process_semantics.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 93; src/kgmaker/process_semantics.py:93; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `326 in `src/kgmaker/architecture_model.py`` (name match at line 324; src/kgmaker/process_triggers.py:324; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 313; src/kgmaker/process_triggers.py:313; INFERRED 0.85)
 - `src/kgmaker/process_triggers.py` may call `41 in `src/kgmaker/analysis_model.py`` (name match at line 277; src/kgmaker/process_triggers.py:277; INFERRED 0.85)

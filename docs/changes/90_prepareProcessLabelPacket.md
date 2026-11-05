@@ -76,3 +76,17 @@ ověřil root2026-11-05. Baseline deb3691; upstream T024/T026 jsou přítomné. 
 před implementací přijal architecture brief /workspace/t030-architecture-brief.md.
 Zbývá full, finální nezávislé review a root-authorized publikace; tento note
 netvrdí dokončení celého T004 ani T031/T034. Nevolaly se aplikace či model API.
+
+
+## Nezávislé review a konkrétní oprava credential ID
+
+Root source review f7a82f1 našlo REQUEST_CHANGES: scheme-relative userinfo a
+Basic auth v mandatory ID nebyly odmítnuty. Čtyři veřejné reproduktory skutečně
+selhaly **4FAIL,43deselected,0.20s**, původní149PASS je historický výsledek.
+Minimální oprava přidává rozpoznání `//...@` (i vložené do existujícího ID) a
+stejný Bearer/Basic token formát jako existing inspection sanitizer. ID se
+neredaktuje/nepřejmenuje: známý credential payload selže generickým nonsecret
+kódem. Positive Unicode/path-space IDs i malformed-error privacy zůstávají.
+Opravená stejná společná pure sada **153PASS,0SKIP za4.07s**. Retry budget se
+legálně posunul na implement iteration1/3, beze změny limitů. Corrected exact
+source review a required full stále PENDING; žádný full nebyl zařazen.

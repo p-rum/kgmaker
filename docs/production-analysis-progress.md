@@ -786,5 +786,5 @@ hash-omitted; document provenance is explicit ref-only and conflicts are supplie
 review items, not NLP authority. Full serialized cost includes omissions/template
 and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
 inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
-Targeted tests pass; grouped regression, required full and independent review
-remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
+exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.

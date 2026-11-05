@@ -297,3 +297,19 @@ def test_process_step_service_owner_and_original_proof_id_are_preserved():
     assert 'service:objednávky' not in packet['allowed_target_ids']
     assert 'evidence:original-input' in packet['original_reference_ids']
     assert next(p for p in packet['evidence_summaries'] if p['id']=='ev:request')['original_id']=='evidence:original-input'
+
+
+@pytest.mark.parametrize('identity',[
+    '//alice:'+SENTINEL+'@example.org/path',
+    'process:entry //alice:'+SENTINEL+'@example.org/path',
+    'Basic '+__import__('base64').b64encode(('alice:'+SENTINEL).encode()).decode(),
+    'process:entry Basic '+__import__('base64').b64encode(('alice:'+SENTINEL).encode()).decode(),
+])
+def test_required_id_uri_userinfo_and_basic_auth_never_leave_artifacts_or_errors(identity):
+    source=sample_process()
+    source['process_id']=source['definition']['process_id']=source['technical_view']['view_id']=identity
+    source['definition_fingerprint']=ProcessDefinition.from_dict(source['definition']).content_fingerprint
+    before=deepcopy(source)
+    with pytest.raises(ValueError) as error:prepare(source)
+    assert SENTINEL not in str(error.value) and identity not in repr(error.value)
+    assert error.value.__suppress_context__ and source==before

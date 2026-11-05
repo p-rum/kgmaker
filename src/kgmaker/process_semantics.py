@@ -19,6 +19,10 @@ _INPUT_CHAR_LIMIT = 4_000_000
 _INPUT_ITEM_LIMIT = 100_000
 _INPUT_DEPTH_LIMIT = 40
 _CREDENTIAL = re.compile(r'(?i)(authorization\s*:\s*|bearer\s+\S+|(?:password|passwd|secret|credential|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[=:]\s*\S+|-----BEGIN|://|\bsk-[A-Za-z0-9_-]{20,}|\bAKIA[0-9A-Z]{16}\b)')
+# Same recognized auth token syntax as inspection.sanitize; reject immutable
+# identifiers instead of redacting or returning the material in an exception.
+_AUTH_TOKEN = re.compile(r"\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/-]+=*", re.I)
+_URI_USERINFO = re.compile(r"//[^/\s]*@")
 _FORMATS = frozenset({'HTML', 'MARKDOWN', 'TEXT', 'STRUCTURED'})
 _BOUNDARIES = frozenset({'unresolved_boundary', 'service_boundary', 'transaction_boundary',
     'async_boundary', 'retry', 'exception_dispatch', 'exceptional_exit'})
@@ -73,7 +77,8 @@ def _bounded(value):
 def _identifier(value):
     if (type(value) is not str or not value or len(value) > 4096
             or any(unicodedata.category(char) in {'Cc', 'Cf', 'Cs', 'Zl', 'Zp'} for char in value)
-            or _CREDENTIAL.search(value) is not None):
+            or _CREDENTIAL.search(value) is not None or _AUTH_TOKEN.search(value) is not None
+            or _URI_USERINFO.search(value) is not None):
         _fail('UNSAFE_REQUIRED_IDENTIFIER')
     return value
 

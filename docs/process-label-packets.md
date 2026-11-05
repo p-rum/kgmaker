@@ -36,7 +36,8 @@ proof prose or document text is exported. Fixed-reason omissions retain their
 existing safe IDs and content hashes. Only allowlisted typed structure, enums,
 numeric confidence and reference fields leave the function. Unicode IDs and code
 paths containing spaces remain unchanged. Control/format characters, recognizable
-credential/URI payloads in required IDs are rejected with fixed non-secret error
+credential/URI payloads (including embedded scheme-relative userinfo and
+recognized Bearer/Basic auth tokens) in required IDs are rejected with fixed non-secret error
 codes; IDs are never renamed. This is not authentication or universal secret
 recognition for opaque caller-declared identifiers. Mandatory selection supports
 existing service context-list, explicit-row and service-inventory shapes. Raw
