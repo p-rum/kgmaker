@@ -35,3 +35,19 @@ jejich validního frozen full. Source checkpoint je přípravný, nikoli final f
 freeze. ALLparent collected-ID/runtime/test/native/superset ledger se musí na
 finálním descendantSHA znovu ověřit. Žádný heavy/actual/full/native job se zde
 nespustil; W07 actual capture replay počká na jeho terminal receipt/source review.
+
+## Root source review feedback — explicit coverage equality
+
+Root REQUEST_CHANGES nad262640f prokázal P2: validní hash format sám neověřoval
+rovnost input_binding.coverage_fingerprint a remote_selection.source_coverage_fingerprint,
+ačkoli oba vznikají digestem téhož coverage objektu. Recomputed outer/shared
+hashes mohly zachovat vnitřní rozpor. Nešlo o autentizaci koherentně cizího vstupu.
+
+Public RED **1FAIL1PASS37DESELECTED0.19s** přesně zopakoval rozdílné explicitní
+coverage hashes. Hand-labelled specimen nyní používá actual W07 coverageNone hash;
+mock capture používající schemas={} váže právě tento objekt i ve W07 handoffu.
+Guard se neoslabuje: capture i pure consumer vyžadují exact equality před projekcí.
+Coalesced correction **174PASS10actualDESELECTED1.58s**; následný nový explicitní
+capture-before-projector regression spolu s oběma coverage cases **3PASS37DESELECTED**
+(coverage-capture-green.xml). Žádný native/heavy/full run. Root independent
+re-review nad opraveným SHA zůstává samostatný gate.

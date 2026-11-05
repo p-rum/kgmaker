@@ -119,3 +119,8 @@ schema změnu mezi fázemi, rozdílnévalidníupstreambaselines positive. Actual
 savedcaptures se jenreprojektují po vlastnísource review a jejich dokončení;
 nejde o novýnative run. Heavy/full až po Root source closure. Naturaldescendantfull
 potřebuje ALLparenttestIDs a exactruntime/test/global/native/receipts closure.
+
+Shared input_binding.coverage_fingerprint musí být přesně stejný jako
+W07 remote_selection.source_coverage_fingerprint: oba jsou digest téhož objektu,
+nejde o porovnání různých baseline formátů. Capture odmítá rozdíl před T014
+projekcí a pure consumer před agregací, i po recomputed outer/shared hash.

@@ -50,6 +50,8 @@ def capture_topology_inputs(manifest, *, scope='production', selected_contexts=N
                                    scope=scope,selected_contexts=selected_contexts)
         remote_capture=capture_remote_mapping_inputs(workspace,graph,scope=scope,
             selected_contexts=selected_contexts,source_coverage=coverage)
+        if remote_capture['selection']['source_coverage_fingerprint']!=binding['coverage_fingerprint']:
+            _fail('TOPOLOGY_COVERAGE_MISMATCH')
         remote=project_remote_interfaces(workspace,graph,remote_capture['canonical_interfaces'],
             captured=remote_capture,scope=scope,selected_contexts=selected_contexts)
         selections=[d['context_selection'] for d in remote_capture['canonical_interfaces']]
@@ -111,6 +113,7 @@ def _validated(captured):
         requested[key]=_ref(row['context_id'])
     if _selection(binding['scope'],requested)['selected_contexts']!=selection['selected_contexts']:_fail('TOPOLOGY_SELECTION_MISMATCH')
     if type(selection['source_coverage_fingerprint']) is not str or re.fullmatch('[0-9a-f]{64}',selection['source_coverage_fingerprint']) is None:_fail('TOPOLOGY_INVALID_HASH')
+    if selection['source_coverage_fingerprint']!=binding['coverage_fingerprint']:_fail('TOPOLOGY_COVERAGE_MISMATCH')
     documents=[]
     for name in ('data','remote'):
         document=ViewDocument.from_dict(captured[name+'_document'])

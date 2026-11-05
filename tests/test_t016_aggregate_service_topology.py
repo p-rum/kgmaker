@@ -27,7 +27,7 @@ def labelled_handoff(transport='HTTP'):
             attributes={'scope':'production','context_ids':['client-context' if s=='checkout' else 'server-context']})
             for s in ['checkout','orders']),coverage={'status':'PARTIAL'})
     binding={'workspace_fingerprint':capture['workspace_fingerprint'],
-        'graph_fingerprint':capture['graph_fingerprint'],'coverage_fingerprint':digest({}),
+        'graph_fingerprint':capture['graph_fingerprint'],'coverage_fingerprint':capture['selection']['source_coverage_fingerprint'],
         'scope':'production','requested_selection':capture['selection']['selected_contexts']}
     value={'schema_version':1,'rules_version':'service-topology-capture-1','authority':'LOCAL_COMMON_CAPTURE',
         'workspace_id':workspace['workspace_id'],'manifest_sha256':workspace['_manifest_hash'],
@@ -134,6 +134,8 @@ def test_missing_service_owner_stays_boundary_and_never_name_matches():
 def test_explicit_common_capture_uses_one_snapshot_objects_then_rechecks_same_closure(monkeypatch):
     import kgmaker.workspace,kgmaker.data_resources,kgmaker.remote_mapping,kgmaker.remote_interfaces
     workspace,graph,docs,remote_capture=trusted_protocol_specimen();coverage={'schemas':{}}
+    remote_capture['selection']['source_coverage_fingerprint']=digest(coverage)
+    remote_capture['capture_id']=digest({k:v for k,v in remote_capture.items() if k!='capture_id'})
     labelled=labelled_handoff();data=ViewDocument.from_dict(labelled['data_document'])
     calls=[]
     monkeypatch.setattr(kgmaker.workspace,'load_workspace',lambda p:workspace)
@@ -164,6 +166,8 @@ def test_explicit_common_capture_uses_one_snapshot_objects_then_rechecks_same_cl
 def test_common_capture_rejects_mutation_between_phases(monkeypatch,mutation):
     import kgmaker.workspace,kgmaker.data_resources,kgmaker.remote_mapping
     workspace,graph,docs,remote_capture=trusted_protocol_specimen();coverage={'schemas':{}}
+    remote_capture['selection']['source_coverage_fingerprint']=digest(coverage)
+    remote_capture['capture_id']=digest({k:v for k,v in remote_capture.items() if k!='capture_id'})
     data=ViewDocument.from_dict(labelled_handoff()['data_document'])
     snapshots=[]
     monkeypatch.setattr(kgmaker.workspace,'load_workspace',lambda p:workspace)
@@ -322,3 +326,35 @@ def test_foreign_scope_claim_cannot_be_rewritten_into_selected_scope(kind):
     else:captured['data_document']['edges']=[ViewEdge('foreign','service:checkout','service:orders','reads',attributes={'scope':'test'}).to_dict()]
     refresh_documents(captured)
     with pytest.raises(ValueError):api().aggregate_service_topology(captured)
+
+
+def test_shared_and_remote_coverage_fingerprints_must_match_even_with_recomputed_handoff_hash():
+    captured=labelled_handoff()
+    captured['input_binding']['coverage_fingerprint']=digest({'different':'coverage'})
+    captured['shared_input_hash']=digest(captured['input_binding']);rehash(captured)
+    before=deepcopy(captured)
+    with pytest.raises(ValueError) as error:api().aggregate_service_topology(captured)
+    assert str(error.value)=='TOPOLOGY_COVERAGE_MISMATCH' and captured==before
+
+
+def test_exact_same_coverage_fingerprint_is_valid_without_equating_upstream_baselines():
+    captured=labelled_handoff()
+    assert captured['input_binding']['coverage_fingerprint']==captured['remote_selection']['source_coverage_fingerprint']==digest(None)
+    assert captured['data_baseline']!=captured['remote_baseline']
+    assert len(api().aggregate_service_topology(captured).edges)==1
+
+
+def test_capture_rejects_remote_coverage_mismatch_before_projecting(explicit_contract_fixture,monkeypatch):
+    import kgmaker.remote_mapping,kgmaker.remote_interfaces
+    manifest,*_=explicit_contract_fixture
+    original=kgmaker.remote_mapping.capture_remote_mapping_inputs
+    def inconsistent(*args,**kwargs):
+        captured=original(*args,**kwargs)
+        captured['selection']['source_coverage_fingerprint']=digest({'different':'coverage'})
+        captured['capture_id']=digest({k:v for k,v in captured.items() if k!='capture_id'})
+        return captured
+    def forbidden(*args,**kwargs):raise AssertionError('mismatched coverage reached projection')
+    monkeypatch.setattr(kgmaker.remote_mapping,'capture_remote_mapping_inputs',inconsistent)
+    monkeypatch.setattr(kgmaker.remote_interfaces,'project_remote_interfaces',forbidden)
+    with pytest.raises(ValueError) as error:api().capture_topology_inputs(manifest)
+    assert str(error.value)=='TOPOLOGY_COVERAGE_MISMATCH'
