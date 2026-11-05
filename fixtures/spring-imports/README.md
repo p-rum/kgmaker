@@ -23,3 +23,8 @@ Spring JARs are external test inputs and are not redistributed in the kgmaker
 worker wheel. No Spring runtime, selector result or application build is inferred
 from their presence. The temporary test projects exercise the static import,
 literal/direct/inherited/deferred selector, filter/group and unsupported paths.
+
+The historical `typescript-contexts-v1.json` stays unchanged. The reviewed
+`typescript-contexts-return-v1.json` adds only the independent return-rule version
+and its canonical full context IDs for ordinary and legacy React captures. The
+Spring-only compatibility test still compares every current context field.

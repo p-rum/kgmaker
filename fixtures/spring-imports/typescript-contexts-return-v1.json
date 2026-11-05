@@ -1,0 +1,59 @@
+{
+  "ordinary": {
+    "mode": "BUILD_IMPORT",
+    "repo_id": "local",
+    "module": "root",
+    "source_set": "main",
+    "scope": "production",
+    "language": "typescript",
+    "origin_trust": "LOCAL_COMPILER_INPUTS",
+    "coverage": "PARTIAL",
+    "freshness": "CONTENT_VERIFIED",
+    "classification_override_hash": "0348436b6fbfe40ba53002e22bcd6f7f7b56dc3456bd3f58bdf265eea298572f",
+    "classifier_contexts": [],
+    "worker": {
+      "protocol_version": 1,
+      "worker": "typescript-worker-1",
+      "compiler_version": "typescript-5.7.3",
+      "distribution": []
+    },
+    "analyzer_version": "inspection-1",
+    "source_files": {},
+    "framework_rule_versions": {
+      "spring": "annotation-source-v3",
+      "jpa": "annotation-source-v4"
+    },
+    "selection_key": "c34cdedd8013aee6d49088e88e09deca9a77feaddc999839a363940144db09f6",
+    "return_flow_rule_version": "return-consumer-1",
+    "id": "0e931a0d6540fa9a8ea7528f43428b15641fbc7982ae588be868dcba691e6dd4"
+  },
+  "react": {
+    "mode": "BUILD_IMPORT",
+    "repo_id": "local",
+    "module": "root",
+    "source_set": "main",
+    "scope": "production",
+    "language": "typescript",
+    "origin_trust": "LOCAL_COMPILER_INPUTS",
+    "coverage": "PARTIAL",
+    "freshness": "CONTENT_VERIFIED",
+    "classification_override_hash": "0348436b6fbfe40ba53002e22bcd6f7f7b56dc3456bd3f58bdf265eea298572f",
+    "classifier_contexts": [],
+    "worker": {
+      "protocol_version": 1,
+      "worker": "typescript-worker-1",
+      "compiler_version": "typescript-5.7.3",
+      "distribution": []
+    },
+    "analyzer_version": "inspection-1",
+    "ui_framework": "react",
+    "framework_rule_versions": {
+      "spring": "annotation-source-v3",
+      "jpa": "annotation-source-v4"
+    },
+    "source_files": {},
+    "selection_key": "62655e21ed8d3eec92f4de39fd4da589991ba7b34cd8f441f9c525d57191e94c",
+    "return_flow_rule_version": "return-consumer-1",
+    "id": "21e82b6c71d61c2d7353c49a3602df117b19d97c5d5cefb4b2bd06a897b07788"
+  }
+}

@@ -117,12 +117,14 @@ def validate_projected_context(root: Path, repo: str, public_context: dict) -> N
 def _qualified_symbol(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
-    for key in ('method', 'owner_method', 'call_site'):
+    for key in ('method', 'owner_method', 'call_site', 'declared_target', 'binding_id'):
         if isinstance(value.get(key), str):
             result[key] = qualified(repo, value[key])
     result['context_id'] = qualified(repo, value['context_id'])
     if isinstance(value.get('path'), str):
         result['path'] = source_key(repo, value['path'])
+    if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
+        result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
     return result
 
 
@@ -132,8 +134,11 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   source=qualified(repo, value['source']), target=qualified(repo, value['target']),
                   source_file=source_key(repo, value['source_file']) if value.get('source_file') else None,
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
-    if isinstance(value.get('call_site'), str):
-        result['call_site'] = qualified(repo, value['call_site'])
+    for key in ('call_site', 'producer_call_site', 'consumer_call_site', 'declared_target'):
+        if isinstance(value.get(key), str):
+            result[key] = qualified(repo, value[key])
+    if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
+        result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
     if str(value.get('extractor', '')).startswith('kafka-code-'):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']
@@ -666,8 +671,10 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             sources[source_key(identity, path)] = {**item, 'repo_id': identity, 'path': path}
         exclusions += [{'repo_id': identity, **item} for item in excluded]
         nodes += [replace(n, id=qualified(identity, n.id), path=source_key(identity, n.path),
-                          metadata=(_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition" else
-                                    _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"} else n.metadata)) for n in local.nodes]
+                          metadata=_qualified_http_metadata(identity, n.metadata or {}) if n.kind == "http_request_definition"
+                          else _qualified_symbol(identity, n.metadata) if (n.metadata or {}).get("return_mapping_version") == 1
+                          else _qualified_kafka_metadata(identity, n.metadata or {}) if n.kind in {"kafka_code_listener", "kafka_code_producer"}
+                          else n.metadata) for n in local.nodes]
         edges += [replace(e, source=qualified(identity, e.source), target=qualified(identity, e.target),
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
