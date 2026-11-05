@@ -756,3 +756,14 @@ pending; this is not T016 or runtime/data availability acceptance.
 
 Current118pure/upstreamPASS,8actualDESELECTED; initial actual2 expectedRED on
 missing API after successful native fixture is not current positive acceptance.
+
+## T014 — source checkpoint, readiness pending
+
+- AC01–03: public hand-labelled HTTP/Kafka mapping, same URL/no mapping, wrong
+  release/hash/pointer, ambiguous/incomplete candidates and original refs.
+- AC04–05: input equality, changed capture/selection/graph/interface, no-I/O,
+  credential IDs, hard bounds, source-proof polarity and UNKNOWN capture freshness.
+- AC06: pure tests/documentation recorded in note93; actual capture reprojection,
+  dependency full/current-main integration and independent source review PENDING.
+
+Hand-labelled protocol positives are not compiler/native acceptance proof.

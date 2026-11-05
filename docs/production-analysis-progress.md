@@ -830,3 +830,10 @@ Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
 matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
+
+## T014 draft — explicit remote topology
+
+Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
+unknown target and capture-time uncertainty. No resolver duplication, source I/O,
+JVM/process edges or runtime/payload promotion. Public pure validation is recorded
+in note93. T013/W07 actual/full and final integration/review remain pending.

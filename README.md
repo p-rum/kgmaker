@@ -807,3 +807,12 @@ Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Current118pure/upstreamPASS; current actual
 matrix/full NOT_RUN. T013/T012/common are explicit unmerged stack dependencies.
+
+### T014 static remote topology (draft)
+
+`kgmaker.remote_interfaces.project_remote_interfaces(workspace, graph, interfaces,
+captured=captured, scope="production")` projects the explicit W07 capture handoff
+into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
+HTTP/Kafka declaration edges are not JVM calls or observed execution. See
+[contract and limits](docs/remote-interfaces.md). Dependency actual/full and final
+source review remain pending; no CLI or remote execution is provided.
