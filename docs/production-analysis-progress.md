@@ -866,3 +866,15 @@ returning a handoff. Pure aggregation uses catalog services/resources and revers
 remote origin inventories, Kafka channels/groups, original proof buckets and UNKNOWN
 remote runtime/freshness. Initial public/pure evidence is in note95. Final newer
 T013/T012 parent refresh, dependency actual/full and independent review remain pending.
+
+## T017 — source checkpoint of bounded topology filtering
+
+Pure API over an existing T016 view: exact service focus, deterministic real-edge
+hops and node budget, context/relation restriction and complete known omission
+inventories. New frontier entries are metadata rather than graph nodes. No shortcut,
+runtime/availability claim or ambiguity/freshness/evidence upgrade occurs. Public
+absent-API RED2FAIL; corrective retained-expansion privacy RED1FAIL29PASS; final
+33 own tests plus coalesced T016/T014/View/T009: 149 PASS in1.58s. No heavy queue,
+native build or full. Explicit dependency source is T016f05; final newer T013/T012
+and main composition, required full, graph/memory and independent review remain
+pending. See [note97](changes/97_filterTopologyScope.md) and [API](topology-filter.md).

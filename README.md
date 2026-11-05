@@ -837,3 +837,13 @@ reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
 No JVM/process/runtime or payload claim is added. See
 [handoff and limits](docs/service-topology.md); final dependency refresh/full/review
 remain pending.
+
+### T017 bounded topology filtering (source checkpoint)
+
+`kgmaker.topology_filter.filter_topology(topology, focus_service="service:checkout",
+direction="outgoing", max_hops=2, max_nodes=25)` filters a captured T016 view
+without I/O. Its `{document, filtering}` result preserves original edges and
+uncertainty and reports complete known omission IDs plus separate frontier metadata.
+Kafka channels count as real hops; omitted nodes never create shortcut edges.
+See [API and limits](docs/topology-filter.md). Dependency integration, required full
+and independent source/final review remain pending; this is not a new CLI command.

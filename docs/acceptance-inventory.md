@@ -802,3 +802,18 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   unresolved owner boundaries and independent upstream selection/baseline forms.
 - AC06: note95 and public pure receipts; actual dependency/full/current-main and
   independent exact-source review PENDING. No native build or heavy queue.
+
+## T017 source checkpoint — readiness pending
+
+- AC01: shuffled star input/selector sets, directions, cycle and timestamp controls
+  in `tests/test_t017_filter_topology_scope.py` prove stable selection and fingerprints.
+- AC02: max-nodes=1, zero hops and upstream truncation preserve exact known omission
+  IDs/counts/frontier and PARTIAL/UNKNOWN; metadata overflow rejects the result.
+- AC03: middle-node and Kafka-channel removal never creates a shortcut.
+- AC04: input equality, explicit no-I/O sentinels, invalid selectors, cycles/depth,
+  credential references and Unicode identity controls.
+- AC05: full cross-context tuples, original context selection/baseline, AMBIGUOUS,
+  STALE and contradicting/unknown provenance buckets remain unchanged.
+- AC06: note97/capability/API examples, 33 own cases; coalesced T017/T016/T014/View/T009
+  149 PASS, no worker/build/full. Dependency refresh, required full, semantic/memory
+  finalization and independent source/final review remain PENDING.
