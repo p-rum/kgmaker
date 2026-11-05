@@ -779,3 +779,12 @@ provenance and uncertainty, reports complete serialized cost/mandatory overflow,
 and hash-omits raw labels, documentation and proof/configuration prose. It performs
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
 T031 proposal validation/application and T034 CLI remain separate pending work.
+
+### Read-only process annotation validation (T031)
+
+`kgmaker.process_semantics.validate_process_annotations(process_view, packet,
+candidate, documents=(), conflicts=())` rederives the complete current T030 packet
+before checking proposed labels, descriptions, references and grouping. Invalid
+input returns fixed-code diagnostics; valid proposals remain PROPOSED and
+PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
+See [the Python contract](docs/process-annotations.md); T032/T034 remain pending.

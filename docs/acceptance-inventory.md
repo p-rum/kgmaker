@@ -724,3 +724,17 @@ metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77
 | AC06 | spec Rev2, Python API/capability docs, note90, final source review/full | NOT_YET_COMPLETE |
 
 No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+## T031 — read-only annotation validation (stacked candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | forged/self-rehashed allowlists; wrong packet/rules; current label/condition/ordered-collapse/revision/baseline/scope/context/doc changes | coalesced pure229PASS; full pending |
+| AC02 | Czech label/group/existing outcome; exact technical subtree/fingerprint and deep input equality | coalesced pure229PASS; full pending |
+| AC03 | captured doc/code conflict + conflicting target fields retain all proposals, no winner; NOT_EVALUATED | coalesced pure229PASS; full pending |
+| AC04 | no I/O/process/network/feature/collapse; malformed/secret/cycle/depth/shared inputs return nonsecret report; no partial acceptance | coalesced pure229PASS; full pending |
+| AC05 | tiny packet budget, unknown refs/scope/extra technical fields/approval rejected; unsupported/truncated process stays pending/partial | coalesced pure229PASS; full pending |
+| AC06 | specRev2, API/examples/note92, independent source review, required full | NOT_YET_COMPLETE |
+
+Explicit stack T030070. Its47tests and complete original module AST/byte prefix
+are unchanged; full proof is pending, not inferred from these pure results.

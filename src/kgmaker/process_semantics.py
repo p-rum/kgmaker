@@ -363,3 +363,127 @@ def prepare_process_label_packet(process, *, documents=(), conflicts=(), token_b
     packet = result['packet']; packet['packet_hash'] = digest({k: v for k, v in packet.items() if k != 'packet_hash'})
     result['candidate_template']['packet_hash'] = packet['packet_hash']
     return result
+
+
+ANNOTATION_VALIDATION_VERSION = 'process-annotation-validation-1'
+
+
+def _proposal_text(value, limit, *, description=False):
+    if type(value) is not str or not value.strip() or len(value) > limit:
+        _fail('INVALID_ANNOTATION_TEXT')
+    if (any(unicodedata.category(char) in {'Cc', 'Cf', 'Cs', 'Zl', 'Zp'}
+            and not (description and char in '\n\t') for char in value)
+            or _CREDENTIAL.search(value) is not None or _AUTH_TOKEN.search(value) is not None
+            or _URI_USERINFO.search(value) is not None):
+        _fail('UNSAFE_ANNOTATION_TEXT')
+    return value
+
+
+def _proposal_refs(value, allowed, *, grouping=False):
+    if type(value) is not list: _fail('INVALID_ANNOTATION_REFERENCES')
+    refs = [_identifier(ref) for ref in value]
+    if len(set(refs)) != len(refs): _fail('DUPLICATE_ANNOTATION_REFERENCE')
+    if grouping and not refs: _fail('EMPTY_GROUPING_PROPOSAL')
+    if not set(refs) <= allowed:
+        _fail('INVALID_GROUPING_REFERENCE' if grouping else 'INVALID_ANNOTATION_SOURCE')
+    return sorted(refs)
+
+
+def _proposed_annotations(packet, candidate):
+    if type(candidate) is not dict or set(candidate) != {'schema_version', 'packet_hash', 'annotations'}:
+        _fail('INVALID_CANDIDATE_SCHEMA')
+    if type(candidate['schema_version']) is not int or candidate['schema_version'] != 1:
+        _fail('UNSUPPORTED_CANDIDATE_VERSION')
+    if (type(candidate['packet_hash']) is not str
+            or re.fullmatch('[0-9a-f]{64}', candidate['packet_hash']) is None
+            or candidate['packet_hash'] != packet['packet_hash']):
+        _fail('CANDIDATE_PACKET_MISMATCH')
+    annotations = candidate['annotations']
+    if type(annotations) is not list or len(annotations) > 256: _fail('INVALID_ANNOTATION_COLLECTION')
+    schema = packet['annotation_schema']; targets = set(packet['allowed_target_ids'])
+    sources = set(packet['allowed_source_refs']); groups = set(schema['grouping_target_ids'])
+    seen = set(); result = []
+    for annotation in annotations:
+        if (type(annotation) is not dict or set(annotation) - set(schema['allowed_fields'])
+                or not set(schema['required_fields']) <= set(annotation)):
+            _fail('INVALID_ANNOTATION_SCHEMA')
+        identity = _identifier(annotation['id']); target = _identifier(annotation['target_id'])
+        if identity in seen or identity in targets: _fail('ANNOTATION_ID_COLLISION')
+        if target not in targets: _fail('INVALID_ANNOTATION_TARGET')
+        seen.add(identity)
+        if annotation['semantic_review_status'] != 'PROPOSED': _fail('INVALID_PROPOSAL_STATUS')
+        if not {'label', 'description', 'grouping_proposal'} & set(annotation): _fail('EMPTY_ANNOTATION')
+        item = {'id': identity, 'target_id': target,
+                'semantic_review_status': 'PROPOSED',
+                'source_refs': _proposal_refs(annotation['source_refs'], sources)}
+        if 'label' in annotation: item['label'] = _proposal_text(annotation['label'], 512)
+        if 'description' in annotation:
+            item['description'] = _proposal_text(annotation['description'], 4096, description=True)
+        if 'grouping_proposal' in annotation:
+            item['grouping_proposal'] = _proposal_refs(annotation['grouping_proposal'], groups, grouping=True)
+        result.append(item)
+    return sorted(result, key=lambda item: item['id'])
+
+
+def _annotation_validation_report(packet=None, annotations=(), code=None):
+    # Only a completely rederived packet and fully validated proposals reach here.
+    # Invalid input never returns partially normalized annotations or raw errors.
+    items = []
+    if packet is not None:
+        for conflict in packet['captured_conflicts']:
+            items.append({'kind': 'CAPTURED_DOCUMENT_CONFLICT' if conflict['status'] == 'CONFLICT'
+                          else 'CAPTURED_DOCUMENT_UNKNOWN', **deepcopy(conflict)})
+    if code is None:
+        by_target = {}
+        for annotation in annotations:
+            by_target.setdefault(annotation['target_id'], []).append(annotation)
+            base = {'annotation_ids': [annotation['id']], 'target_id': annotation['target_id'],
+                    'source_refs': list(annotation['source_refs'])}
+            items.append({'kind': 'PROPOSAL_REQUIRES_REVIEW', **base})
+            if not annotation['source_refs']: items.append({'kind': 'PROPOSAL_HAS_NO_CITATIONS', **base})
+            if 'grouping_proposal' in annotation: items.append({'kind': 'GROUPING_REQUIRES_REVIEW', **base})
+        for target, proposals in by_target.items():
+            fields = [field for field in ('description', 'grouping_proposal', 'label')
+                      if len({canonical(a[field]) for a in proposals if field in a}) > 1]
+            if fields:
+                items.append({'kind': 'CONFLICTING_TARGET_PROPOSALS', 'target_id': target,
+                    'annotation_ids': sorted(a['id'] for a in proposals), 'fields': fields})
+    conflict = any(item['kind'] in {'CAPTURED_DOCUMENT_CONFLICT', 'CONFLICTING_TARGET_PROPOSALS'} for item in items)
+    return {'schema_version': 1, 'rules_version': ANNOTATION_VALIDATION_VERSION,
+        'valid': code is None, 'validation_status': 'VALID' if code is None else 'REJECTED',
+        'review_status': 'CONFLICT' if conflict else 'PENDING', 'requires_review': True,
+        'packet_hash': packet['packet_hash'] if packet is not None else None,
+        'technical_binding': deepcopy(packet['identity']) if packet is not None else None,
+        'technical_status': packet['technical_status'] if packet is not None else None,
+        'uncertainty': deepcopy(packet['uncertainty']) if packet is not None else None,
+        'documentation_comparison': 'NOT_EVALUATED',
+        'annotations': deepcopy(list(annotations)) if code is None else [],
+        'diagnostics': [] if code is None else [{'code': code}],
+        'review_items': sorted(items, key=canonical)}
+
+
+def validate_process_annotations(process, packet, candidate, *, documents=(), conflicts=()):
+    """Pure T031 validation; valid never means approved, applied or observed.
+
+    Expected malformed/stale/unsafe inputs return a fixed-code REJECTED report.
+    No input values or shared-validator errors are reflected in diagnostics.
+    Programmer/infrastructure exceptions outside this validation are not masked.
+    """
+    trusted = None
+    try:
+        raw = process._document if type(process) is ProcessView else process
+        _bounded([raw, packet, candidate, documents, conflicts])
+        if type(packet) is not dict: _fail('INVALID_PACKET_SCHEMA')
+        if (type(packet.get('schema_version')) is not int or packet['schema_version'] != 1
+                or packet.get('rules_version') != VERSION): _fail('UNSUPPORTED_PACKET_VERSION')
+        if type(packet.get('budget')) is not dict: _fail('INVALID_PACKET_BUDGET')
+        expected = prepare_process_label_packet(process, documents=documents, conflicts=conflicts,
+            token_budget=packet['budget'].get('token_budget'), char_budget=packet['budget'].get('char_budget'))['packet']
+        if canonical(packet) != canonical(expected): _fail('PACKET_REDERIVATION_MISMATCH')
+        trusted = expected
+        return _annotation_validation_report(trusted, _proposed_annotations(trusted, candidate))
+    except ProcessLabelPacketError as error:
+        return _annotation_validation_report(trusted, code=error.diagnostic['code'])
+    except UnicodeError:
+        # Invalid UTF-8 content is malformed data; do not expose codec details.
+        return _annotation_validation_report(trusted, code='INVALID_UNICODE_INPUT')

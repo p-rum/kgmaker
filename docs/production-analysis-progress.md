@@ -788,3 +788,14 @@ and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
 inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
 Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
 exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+
+## T031 — validate process annotations (stacked candidate)
+
+Pure same-module validation rederives the whole current T030 packet and accepts
+only bounded semantic PROPOSED records. Invalid/stale/forged/unsafe inputs return
+fixed-code REJECTED validation reports; valid input remains PENDING/CONFLICT with
+all differing proposals and captured documentary review items. No approval/apply,
+new outcomes, technical mutation, NLP comparison, runtime or physical freshness.
+Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
+PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
+full, independent exact source review and root publication remain pending.
