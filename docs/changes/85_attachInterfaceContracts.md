@@ -1,7 +1,7 @@
 # Připojení explicitních verzovaných integračních kontraktů
 
 T013-S01–S05 a AC01–AC06, explicitní draft stack currentmain32a3bca + reviewed
-T0127de7f6e; dependency T012 není tímto dokumentem prohlášena za merged/ready.
+T0127de7f6e (historická baseline); aktuální merged dependency a evidence jsou uvedeny na konci.
 Izolovaný /workspace/interface-contracts, branch feat/t013-attach-interface-contracts.
 Root schválil architektonický brief /workspace/t013-architecture-brief.md.
 
@@ -76,3 +76,48 @@ nebo incident edge se nepovýší na BOUND ani při jedné odpovídající opera
 Původní kandidáti/reasons/technický status se zachovávají. Unknown catalogue version
 fail-closed. Finální type-corrected T013+workspace sada **59PASS3.03s**; source closure a
 actual canonical-class/Kafka matrix stále PENDING. Starý35PASS receipt zůstává.
+
+
+## Finální current-main, skutečné kompilátory a společný strict full (2026-11-05)
+
+Common i T012 jsou merged; finální base je
+`b0ef9e2ed93202154bf5bfb49aecd74d2b3dfdd6` (main po PR73).
+Runtime/test/native source se vůči source-reviewed `9698828` nemění. Celý
+interfaces module, contract_inputs, test_analysis i oba vlastní testové soubory
+jsou byte-exact s actual společným potomkem
+`2df55ff8d15d790808f6a81072144eeb408a05b8`. T012 prefix/constants/imports/globals
+zůstávají zachované, žádná appended binding je nepřepisuje. Current main
+workspace qualifier i Common role guards zůstávají zachovány.
+
+P1 oprava type-reference byla nezávisle schválena na `df70c888`; původní source
+s existence-only guardem není důkazem finálního chování. Skutečné K1/K2 Kafka
+capture/contract revision případy i canonical-class-without-payload-proof negative
+prošly. Historická matice **136 PASS / 1 setup ERROR** sdílela opravený T012
+fixture-context výběr; oba vlastní actual Kafka případy v ní již PASS. Následný
+corrected remainder **171 PASS / 0 SKIP, 85.94 s** a current-composition
+**444 PASS / 0 SKIP, 370.90 s**, 2074 hashů beze změny, zůstávají oddělené receipts.
+
+Jeden společný strict full běžel na `2df55ff`: **2587 PASS / 10 přesně povolených
+optional SKIP, 2042.93 s**; všech 2597 výsledků, 4897 vstupních hashů a pět úplných
+inventářů artefaktových adresářů beze změny. Všech 2116 ID tohoto rodiče je v témže
+XML: **2106 PASS / 10 optional SKIP**. Vlastní testové moduly mají **45 PASS**
+(43 pure/public + 2 skutečné K1/K2 captured fixtures). Nejde o samostatný full této
+větve. Původní společný pokus **78 PASS / 2 SKIP / 1 FAIL, 2516 NOT_RUN** je zachován:
+transfer fixture classpath postrádal JavaBridge.class a Kotlin module metadata.
+Po explicitní SHA-ověřené obnově přesných donor souborů a **2 PASS** obou původních
+golden/branch testů byl nový celý full autorizován. Runtime/assertion nebyly
+oslabeny a native build nebyl opakován. Původní raw null-site není tvrzen jako
+zachycený; corrected raw setup má 5/5 resolved calls.
+
+Sdílený capture helper zachovává ověřené bounded UTF-8 JSON/list-origin pozitivní
+případy starého test_analysis. Duplicate keys, oversized/changing files, non-object
+metadata a chybné generation tuples nyní zůstávají fail-closed; není tvrzena
+univerzální byte-ekvivalence původního permissive parseru. Staré test IDs jsou ve
+společném fullu zachovány a nové malformed/immutability negativy tento rozsah
+pokrývají. Nepřidává se resolver, persistent formát ani inferred type/schema join.
+
+AC01–AC06 jsou ověřeny v dokumentovaném rozsahu. Payload compatibility a type-ID
+reference bez explicitního upstream producer zůstávají UNKNOWN; ambiguous provider
+Rule2 se nepovýší na BOUND ani při jedné matching operation. Data/runtime/deployment,
+generator execution a schema compatibility nejsou dokázány. Finální nezávislé
+base/head review, ready a merge jsou samostatné; GH CI není prohlášeno za PASS.

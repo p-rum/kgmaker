@@ -189,3 +189,31 @@ generated-client vazby získává pouze explicitní manifest contract EXPECTATIO
 Známý HTTP method/path musí odpovídat vybrané operation pointer; target nadále
 vyžaduje skutečný current T013 binding. K1/K2 Kotlin HTTP typed-body je upstream
 UNKNOWN, nikoli pozitivní W07 execution proof. Původní T013/common source se nemění.
+
+### Actual-matrix freshness clarification — rule v2
+
+Actual5b Kafka catalog nodes mají resolution RESOLVED a canonical VERIFIED_STATIC
+code/current selected context/BOUND contract, ale jejich agregovaná interface
+freshness zůstává UNKNOWN. Freshness summary není totéž co statický declared
+mapping resolution. Rule `remote-contract-mapping-2` smí přijmout UNKNOWN summary
+POUZE pro Kafka, pokud existující trusted capture canonical replay a všechny
+původní context/code/contract/broker/topic/group guards uspějí. Explicitní STALE
+je vždy odmítnuto, stejně jako unproven source či contract. HTTP nadále vyžaduje
+CURRENT summary; žádný zdejší nový actual důkaz jeho změnu nepovoluje.
+
+Output uchová source_interface_freshness a target_interface_freshness přesně,
+UNKNOWN se nezmění na CURRENT ani runtime proof. Manifest/capture schema v1 je
+aditivní; rule_version v2 vyžaduje novou explicitní capture, starý v1 self-hash
+se neopravuje ani nepovýší. T014/T016 downstream musí tuto nejistotu zachovat.
+
+Stejný Kafka-only exception se vztahuje také na canonical
+`declares_kafka_interface` aggregate edge: musí mířit ze skutečného katalogového
+`service:<release.service_id>` na přesný interface variant, mít UNKNOWN freshness,
+bez AMBIGUOUS/STALE/contradicting stavu a projít všemi ostatními code/context/
+contract/realm/topic/group guardy. Původní UNRESOLVED edge summary se nepovýší ani
+nepřepíše. Chybějící či jiná declaration edge tuto výjimku nezíská.
+
+Jedna release reference označuje jeden konkrétní interface variant a smí být
+použita pouze s jediným transportem. Reuse stejného release ID zároveň pro HTTP
+ a KAFKA je logicky neplatná deklarace: REMOTE_TRANSPORT_CONFLICT před capture či
+materializací, bez smíchání protokolových rows/candidates.

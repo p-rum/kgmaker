@@ -31,3 +31,22 @@ Finální scope-hardening source:135PASS10actualDESELECTED1.08s, pure-final.xml.
 Independent source review, actual capture reprojection, strict full a GH CI jsou
 NOT_RUN; žádný heavy job se nequeueoval. Final readiness závisí i na upstream
 T013/W07 actual/full a current-main source closure.
+
+## Current509 refresh a accepted-descendant evidence
+
+T01409d + verified main5095343a6796229bf40bf32d62404c709ddd51e5. Currentmain
+Common/T012/T013/W07v2, processT030–33, CI a source se zachovávají; vlastní
+remote_interfaces.py/test jsou byte-exact accepted2df55ff8d15d790808f6a81072144eeb408a05b8.
+Historické NOT_RUN výše platí k původnímu source checkpointu. Root SOURCE_APPROVE09d
+a accepted ONEfull2df:2587PASS10allowedSKIP/XML2042.878s, runner2048.01s, všech4897
+input hashů + recursive member sets unchanged. T01424own cases všechny XMLPASS.
+Žádný nový actual/full/build ani tool/cache mutation se neprovádí.
+
+Collection-only aktuální union: main2401 +24own =2425, všechny ID v accepted full;
+2415PASS10stejných optionalSKIP. Všechny294 present source/test/worker/fixture/CI
+soubory odpovídají2df, jediná odlišnost global cli.py je správně nepřítomný pozdější
+T019 register/early dispatch. 27worker inputs +9preparedfixture source exactReturn079;
+žádný freshbuild claim. Main243immutableepisode prefix+allold objects zachován,
+scoped semantic/memory capture a CLI graph regenerace. Finální base/head nezávislé
+review a Root merge zůstává gate. Proof: docs/validation/t014-descendant-proof.json.
+GH CI optional/unverified. T020/T021 nejsou v acceptedfull a nemají blanket reuse.

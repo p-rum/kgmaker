@@ -125,3 +125,71 @@ encoder exceptions na REMOTE_INVALID_JSON bez raw key/value/exception chain.
 Nevzniká druhý encoder ani authority claim. Current combined118PASS a všech
 10actualDESELECTED4.48s, final-pure-guard.log/xml. Žádný actual matrix/full/native
 build proběhl; exact-diff source closure musí potvrdit finální checkpoint.
+
+## Actual matrix a oprava Kafka summary boundary (2026-11-05)
+
+První actual matrix na 5b39ec4: 2 PASS / 1 FAIL, maxfail1, 18.77s JUnit
+(20.13s runner), 1379 vstupů pre/post beze změny. Nešlo o setup ERROR.
+Kafka canonical RESOLVED/VERIFIED_STATIC rozhraní má UNKNOWN freshness a
+UNRESOLVED generic service declaration summary; původní blanket CURRENT guard
+zamítal platnou explicitní statickou vazbu. Rule 2 zachovává UNKNOWN a povoluje
+pouze přesnou canonical service→interface deklaraci se všemi dosavadními
+context/code/contract/realm/group guards. HTTP CURRENT ani explicitní STALE se
+nemění. Konfliktní transporty jednoho release končí REMOTE_TRANSPORT_CONFLICT.
+
+Saved native fixture offline replay bez compileru nyní RESOLVED, obě původní
+freshness UNKNOWN zachovány. Nový W07 pure cohort: 79 PASS / 10 actual DESELECTED
+0.91s. Předchozí combined136PASS2FAIL obsahoval dva malformed ViewDocument
+negatives, které správně skončily REMOTE_INVALID_INTERFACES již při handoff;
+test nyní ověřuje tento dřívější controlled rejection. Žádný nový actual
+continuation/full/build neproběhl; nezávislá source closure je stále nutná.
+
+## Actual v2 continuation: test-only HTTP owner correction (2026-11-05)
+
+Rule2 matrix na92e96c5:33PASS/1FAIL45.71s (runner47.27s),1379 vstupů
+beze změny. Java HTTP setup/canonical capture uspěl; fixture selector následně
+vyhodil StopIteration, protože T011 consumer má owner_id=service:checkout,
+RESOLVED/CURRENT, POST /orders, ale nemá redundantní attributes.service_id.
+Saved public offline capture tento tuple potvrzuje bez compileru. Pouze testový
+selector nyní používá stejný existující owner fallback jako release fixture a
+production authority; resolution/execution assertions ani runtime guards se
+nemění. Production source zůstává byte-exact92e96c5. Failed/unreached continuation
+ještě NOT_RUN a vyžaduje source closure. První dva PASS původního5b matrix byly
+public canonical capture a actual Kafka[k1], nikoli dva actual HTTP případy.
+
+## Finální source-specific a combined důkaz (2026-11-05)
+
+Exact source7d55ab032c519895f63dc54dbd94abad1659ae55 (production92e96c5)
+accepted source review následoval jeden failed/unreached FIFO continuation:
+301PASS/0SKIP229.608s,runner231.44s,1381pre/post/current vstupů beze změny.
+S33 explicitně nezměněnými předchozími PASS je to334jedinečných PASS, žádný
+překryv/chybějící případ; v2-combined-ledger.json uvádí každý test a zdroj.
+27worker sources/132distribution+license artifacts jsou exact, žádný build.
+Obě historické actual chyby zůstaly zachované, nejde o jejich přepsání naPASS.
+
+Jeden reviewed combined descendant2df55ff8d15d790808f6a81072144eeb408a05b8
+full-attempt-2 prošel2587PASS/10přesně schválených optionalSKIP2042.93s
+(runner2048.01s), všech2597IDs a kompletní14parent suites. W07 parent má1973IDs,
+z toho1963PASS/10SKIP; není tvrzen standalone full na7d55. Všech4897inputhashů
+a5recursive memberinventories beze změny, independent verificationPASS.
+
+První combined full zůstal78PASS/2SKIP/1FAIL54.96s: chybějící JavaBridge.class
+a Kotlin module v připravené fixture, nikoli důvod oslabit overload assertion.
+Původní raw null-site nebyl uložen; po exact-donor setup correction prošly oba
+nezměněné original tests2PASS/0SKIP12.62s s raw5resolved/0unresolved. Předchozích
+78PASS nebylo recyklováno; druhý full spustil všech2597 od začátku.
+
+Dependency Common/T012/T013 merge a current-main refresh jsou při tomto záznamu
+PENDING. Source ani native se kvůli metadata nemění; žádný nový full/build,
+publication/ready/merge ani self-review není tímto záznamem tvrzen.
+
+## Finální current-main integrace (2026-11-05)
+
+CommonPR72/T012PR73/T013PR74 aT030PR75 jsou merged; aktuální base
+9eec41a403b4e6601fe3addac168bf39d37f31b6. Vlastní remote_mapping/dataflow/test
+a celý workspace jsou byte-exact skutečně testovanému2df55ff. Aktuální CI
+retry/schema coverage zachována, přidán pouze W07 test token. Current-main
+2163IDs +89own =2252IDs, ve stejném actual2df XML2242PASS/10optionalSKIP;
+fresh final collection/proof připravuje nezávislý koordinátor, není nový test run.
+No runtime/test/native edit, build nebo full repeat. Finální nezávislé exact-pair
+review/PR readiness a merge patří koordinátorovi, nikoli autorovi.

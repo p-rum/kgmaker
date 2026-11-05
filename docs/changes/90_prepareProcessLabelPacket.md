@@ -1,0 +1,119 @@
+# T030 — bezpečný packet pro návrhy business popisů
+
+## Problém a změna
+
+T024/T026 poskytují technický ProcessView, nikoli bounded vstup pro návrhy
+business popisů. T030 přidává čistou Python API `prepare_process_label_packet`:
+content-bound packet a prázdný PROPOSED template pouze pro existující targets.
+Nevykonává discovery, model/compiler/build, feature.prepare, I/O ani semantic
+apply. T031 validace/apply a T034 CLI zůstávají samostatně pending.
+
+Zachovává process/revision, původní baseline i skutečné definition/technical/
+content hashes, scope a typed context selection, úplné target/source/proof refs,
+owner/original IDs, entry/exit/outcomes, evidence/status a unresolved/truncated
+hranice. Ordered collapse content je hash-bound, neexpanduje se. Žádné raw
+labels/doc/config/condition/proof prose se neexportují; omission má pevný důvod
++hash. Unicode IDs a paths s mezerami zůstávají; rozpoznatelně unsafe credential/
+URI/control ID se odmítne bez echo. Opaque ID není autentizováno ani univerzálně
+klasifikováno jako secret; privacy slib nespočívá na libovolné password regex.
+
+Explicit document capture má ověřený či výslovně supplied content hash, vybraný
+scope/context a malý ref-only provenance schema. Unknown note/config pole není
+reference. Captured structured CONFLICT/UNKNOWN jsou review items; žádný NLP
+conflict detector ani nová technical authority. Existing selection diagnostics/
+coverage payload jsou hash-bound místo raw textu. Selection shape mimo konkrétní
+existující service-list/row/inventory kontrakty je řízená chyba.
+
+Účtování finálního canonical `{packet,candidate_template}` zahrnuje schema,
+omissions, hashes i cost fields. Token estimate je ceil(UTF8_bytes/4), char count
+Unicode. Započítané status_padding drží stejnou šířku false/null a true/reason,
+aby přesná hranice neoscilovala. Mandatory overflow neodstraní ID; hard input/
+packet limit selže bez artefaktu. Per-occurrence iterativní bounds předcházejí
+model copy/JSON a chrání cykly, shared aliases, depth a velikost.
+
+## Acceptance a skutečné kontroly
+
+- T030-AC01: `test_identity_template_and_original_proofs_are_complete_without_new_targets`,
+  `test_hash_ignores_order_and_generation_but_binds_actual_content_and_documents`,
+  `test_collapsed_step_order_is_bound_but_expansion_and_existing_approval_never_export`.
+- T030-AC02: tiny budget, UTF8, hard-envelope, invalid-budget a parametrizované
+  `test_adjacent_exact_budget_has_consistent_final_cost_and_flag` (char/token).
+- T030-AC03: no-I/O secret sentinel + malformed secret validation key, Unicode
+  ID/path, ref-only doc provenance a inventory-diagnostic privacy.
+- T030-AC04: deep input equality při success/chybě, stored sentinel soubor se
+  nemění, preflight cycle/deep/shared/nonjson před ProcessView.from_dict.
+- T030-AC05: explicit structured conflicts, scope/context/content/reference
+  mismatch, unsupported/unresolved/truncated proces bez evidence promotion.
+- T030-AC06: spec revize2, README/Python příklad, capability/acceptance/progress,
+  tento note; exact final base/head review a publikace zůstávají pending; required full má níže doložený descendant proof.
+
+Public RED: **4 FAIL,25 deselected,0.21s** — veřejná API dosud neexistovala.
+První targeted po implementaci35PASS0.70s; následné privacy/budget/identity
+hardening přidalo explicitní testy. Finální společná pure sada **149 PASS,0 SKIP
+za4.18s**: T030, celý T023, pure T026 diamond/field-write boundary, feature,
+inspection sanitizer a worker protocol. Testy se nespouštěly jako compiler
+acceptance. Žádný nový native build není potřeba, workery se nemění.
+
+Receipts: /workspace/process-label-packet-validation/public-red.{log,xml},
+pure-focus.{log,xml}. Samostatný parent full nebyl spuštěn; pozdější společný descendant full a source
+closure jsou doloženy níže. GH CI je volitelné dle uživatelské revize, nikoli PASS.
+
+## Kompatibilita a příklad
+
+Nevzniká nový store, přepis ProcessView ani persistent migrace. Existing process/
+view model, opaque original IDs a absence runtime důkazu zůstávají. Candidate
+není aplikovaný ProcessView ani approval a nevytváří outcomes/edges/conditions.
+
+```python
+from kgmaker.process_semantics import prepare_process_label_packet
+result = prepare_process_label_packet(existing_process_view, token_budget=8000, char_budget=32000)
+# result['candidate_template']['annotations'] == []; caller navrhuje význam zvlášť.
+```
+
+Note90 ověřen přes main/registr a všechny worktrees (max89), otevřené PR současně
+ověřil root2026-11-05. Baseline deb3691; upstream T024/T026 jsou přítomné. Root
+před implementací přijal architecture brief /workspace/t030-architecture-brief.md.
+Zbývá finální exact-pair review a root-authorized publikace; tento note
+netvrdí dokončení celého T004 ani T031/T034. Nevolaly se aplikace či model API.
+
+
+## Nezávislé review a konkrétní oprava credential ID
+
+Root source review f7a82f1 našlo REQUEST_CHANGES: scheme-relative userinfo a
+Basic auth v mandatory ID nebyly odmítnuty. Čtyři veřejné reproduktory skutečně
+selhaly **4FAIL,43deselected,0.20s**, původní149PASS je historický výsledek.
+Minimální oprava přidává rozpoznání `//...@` (i vložené do existujícího ID) a
+stejný Bearer/Basic token formát jako existing inspection sanitizer. ID se
+neredaktuje/nepřejmenuje: známý credential payload selže generickým nonsecret
+kódem. Positive Unicode/path-space IDs i malformed-error privacy zůstávají.
+Opravená stejná společná pure sada **153PASS,0SKIP za4.07s**. Retry budget se
+legálně posunul na implement iteration1/3, beze změny limitů. Corrected exact
+source review a required full stále PENDING; žádný full nebyl zařazen.
+
+## Aktuální merge kandidát a společný descendant důkaz
+
+Base main `2a387066ced5e4bcc8ab3d7c2bbdfbdfff2bb1ef`; původní T030 zdroj
+`6ae8f52e3d7f211933e27ce7560762ad02484b33` zůstává beze změny. Jediný dokončený
+strict full proběhl na integračním descendant `2df55ff8d15d790808f6a81072144eeb408a05b8`:
+**2587PASS/10povolených optionalSKIP,2042.93sJUnit** (runner2048.01s),2597/2597IDs,
+4897hashů a5recursive directory inventories pre/post beze změny. Root i architect
+nezávisle ověřili celý výsledek a14parent ledgers. Není to samostatný full T030.
+
+T030 podmnožina zahrnuje VŠECH1990kolektovaných parent cases:1980PASS10stejných
+povolenýchSKIP. Všech47vlastních T030 cases je PASS. Actual descendant zachovává
+byte-prefix modulu,32AST uzlů a35původních global bindings; šest přidaných T031
+helper/konstant/API bindings je disjunktních, nic nepřepisuje. Celý T030 testfile je
+byte-exact;27worker sources jsou beze změny. Stávající prepared natives a tool pins
+byly content-ověřeny, žádný nový native build ani další full/retry není požadován.
+
+Bounded commitnutelný důkaz a47actual statuses:
+[docs/validation/t030-descendant-proof.json](../validation/t030-descendant-proof.json).
+Původní credential RED4FAIL a oprava153PASS, starý a359capacity gate0testů i první
+integrační setup failure zůstávají historické receipts; nejsou přepsány ani
+vydávány za novýPASS. GHCI neověřeno/optional. Technická/statická evidence se
+nepovýšila na runtime či business approval; T031/T032/T033/T034 jsou jiné dodávky.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.

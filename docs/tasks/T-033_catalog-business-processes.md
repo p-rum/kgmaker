@@ -2,14 +2,73 @@
 
 - Task ID: `T033`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T024](T-024_discover-process-triggers.md); [T032](T-032_persist-process-review.md).
 - Větev: `feat/t033-catalog-business-processes`
 - PR title: `feat(t033): catalog business processes`
 - Primární moduly: `nový business_process.py`, `process_store.py`. Názvy nových modulů jsou návrh; při existujícím ekvivalentu jej rozšiř a odůvodni umístění v PR.
+
+## Revize 2 — explicitní read-only katalog
+
+Baseline je výslovně schválený stack T032 `4fea8eea83395599da4fc994079676856ac87b0c`
+(source3652 APPROVE, full/dependency/current-main dosud PENDING). Architektura
+`/workspace/t033-architecture-brief.md` přijata koordinátorem2026-11-05.
+
+Nový `process_catalog.py` rozšiřuje existující model/T024/T032 projekcí; již existující
+`business_process.py` je T026 collapse a zůstane byte-exact. Veřejné API:
+`catalog_business_processes(root, trigger_inventory, *, current_processes=(),
+historical_processes=(), review_inputs=(), aliases=())`. Jde o explicitní read-only
+adapter: žádný build/discovery/network/model/graph scan ani zápis. Čte pouze T032
+store pro explicitně dodané snapshots přes `read_process_reviews`, ne callerem
+podvržený APPROVED bundle. Root je již existující schválený adresář. Pevné chyby
+`ProcessCatalogError` neobsahují raw input/path/exception chain.
+
+Vstupy: aktuální validovaný T024 ViewDocument (exact kind/rule, selected scope),
+explicitní validované aktuální a historické ProcessViews. Chybějící historický
+ProcessView nelze rekonstruovat z T032 semantic metadata. Žádný nový archive/index.
+Právě jeden explicitní current snapshot pro process_id+scope; canonical byte-exact
+(normalizované modelové) duplikáty se deduplikují, kolize obsahu/revision odmítají.
+Historical snapshots mají explicitní revision/content/technical hashes; stejná
+identity+revision s rozdílným obsahem je chyba i napříč current/history. Kontext/scope
+se nesmí přimíchat. Jiné revision stejné identity jsou samostatné immutable záznamy.
+
+`review_inputs` je bounded list záznamů exact `process_id`, `documents`, `conflicts`;
+nejvýše jeden pro dodanou identitu. Bez záznamu prázdné explicitní captures. Žádné
+skryté načtení dokumentů; changed captures znamenají T032 NEEDS_REVALIDATION.
+Výstup zachová per-member T032 effective status, current/historical designation,
+originální proces/trigger/outcome/owner IDs, revisions/fingerprints, static technical
+coverage/status/limits a evidence refs. U historického snapshotu se žádné aktivní
+labels ani available path nepublikují; původní rozhodnutí/hashes zůstanou čitelné.
+Candidate není APPROVED; reviewed může být technicky PARTIAL/UNKNOWN.
+
+Trigger se připojuje pouze exact ID v supplied T024 inventory a same scope/context.
+Absence se jmenuje NOT_IN_CURRENT_INVENTORY a kvalifikuje se inventory coverage;
+není univerzální důkaz odstranění, protože discovery je PARTIAL. Chybějící trigger
+má inactive-in-current-selection historical záznam, nikoli dostupnou cestu. Některé
+chybějící refs zachovají per-trigger status a partial agregaci. Current presence
+není proof registration/execution/runtime/data availability; ty zůstávají UNKNOWN.
+Nevzniká implicitní T025 expansion nebo name/symbol fallback.
+
+Stable `selection_id` váže exact canonical process_id+scope a nezávisí na label,
+owner/revision/order. Canonical original IDs jsou vždy také ve výstupu. Dva různé
+triggery/procesy se stejným label/helper zůstávají samostatné. Explicit `aliases`
+obsahuje pouze one-hop `{alias_process_id, canonical_process_id}` pro existující
+supplied identity ve stejném scope a exact context selection+context IDs. Canonical
+target je supplied; unknown/self/chains/cycles/multiple winners odmítají. Alias group
+ponechá VŠECHNY původní členy/revisions/triggers a review states; nikdy nepřenese
+approved label nebo availability z jednoho člena na jiného, nemá group-level active
+labels/availability ani libovolného payload winnera. Bez aliasu žádný fuzzy merge.
+
+Formát1 limity před copy: T030 bounded plain-input guard; nejvýše256 supplied
+snapshots (current+history před dedup),256 alias/review-input rows, T024 nejvýše4096
+trigger nodes; maximálně2MiB finálního canonical JSON, hard fail bez tichého truncation.
+Raw technické label/doc/proof/config prose se neexportují. Zobrazené semantic texty
+jen přes validované T032 current APPROVE; IDs se zachovají Unicode/path-space,
+známé credentials/control se odmítají genericky se stejnými privacy limity jako T030.
+Technická fakta/source IDs nejsou prohlášena runtime observation nebo auth.
 
 ## Cíl a hranice samostatné dodávky
 
