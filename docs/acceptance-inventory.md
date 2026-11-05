@@ -699,6 +699,23 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)
+is integrated; final independent exact-pair review/ready/merge remain separate.
+
+| Acceptance | Supported proof / tests | Actual evidence |
+|---|---|---|
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
+| W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
+| W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
+
+Full1591PASS/10optionalSKIP1646.65s is attributed only to ced9717; current
+Return174PASS/0SKIP248.87s only to67b8341. No runtime/data/deployment proof.
+Unsupported XML effective constraints, naming/converters/composite/defaulted FK
+remain UNKNOWN; no whole S06/T003/T004 completion claim.
+
 ### T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)
 
 AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
@@ -739,3 +756,10 @@ The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKI
 capture retained2CURRENT compiler contexts across5projections with no process,
 network or input/store mutation. Final full and independent source closure remain
 pending; this is not T016 or runtime/data availability acceptance.
+## T003-S07-W05 — retry/DLT policy draft
+
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
