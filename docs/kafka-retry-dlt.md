@@ -46,8 +46,8 @@ Validation is in `tests/test_kafka_retry_dlt.py`; current draft results and
 remaining mandatory runs are recorded in [note87](changes/87_captureKafkaRetryDlt.md).
 The Kafka revision2 dependency is merged in current main. Current-source
 current-parent coalesced470PASS/0SKIP includes all12actual scenarios; source+focus has independent
-closure. W05 is not ready: the required frozen full is NOT_RUN because available
-the final frozen integration gate is pending, and final ready review remains pending.
+closure. Strict full on647 passed1908 tests with10 skips in1920.61s; current
+schema-parent pure23PASS preserves policy/native source; final exact-pair review is pending.
 
 Proof validation consumes the original unprojected snapshot. Scope/context apply
 to executable CFG selection without hiding contradictory policy edges. The

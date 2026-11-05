@@ -740,5 +740,5 @@ metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
 Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
 Historical initial6PASS and pure-only replays remain distinct in note87. Current
-source has independent closure for focus only; fullNOT_RUN (final frozen integration pending),
-final review/ready pending. No runtime/delivery or whole-S07 completion follows.
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
