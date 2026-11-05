@@ -1,4 +1,4 @@
-# T006/T008 revize2 — role workspace-derived kontextů (rozpracováno)
+# T006/T008 revize 2 — role workspace-derived kontextů
 
 Baseline `8afabe7c5056b9ec45e04f1f8fcf3470d18f4c98`, izolovaný stack
 `fix/t006-t008-derived-context-roles`. Note84 rechecked local worktrees,
@@ -83,3 +83,36 @@ licencí jsou ověřeny a explicitně převzaty, žádný nový build.
 Následuje current-parent bounded common/Return/Kafka projection focus, nezávislá
 composition closure a jediný actual full; žádný full10d ani fullnovéhoSHA zatím
 není tvrzen PASS. Předchozí295/43/pureactualreplay proof zůstává historicky přesný.
+
+
+## Finální current-main a společný strict full (2026-11-05)
+
+Finální source baseline je main `3e5ef0f0c56c406a5428e826120ca525774b373f`.
+Vlastní tři runtime soubory a test jsou byte-exact se source-approved `a65c195`
+a s validovaným společným potomkem `2df55ff8d15d790808f6a81072144eeb408a05b8`.
+Current-Return actual focus: **217 PASS / 0 SKIP, 170.849 s**, 1490 vstupů
+beze změny. Pure current-main focus: **100 PASS / 0 SKIP, 3.06 s** společně
+s T012/T013; nenahrazuje skutečnou kompilátorovou evidenci.
+
+Jediný společný strict full běžel na `2df55ff`: **2587 PASS / 10 přesně
+povolených optional SKIP, 2042.93 s**, všech 2597 výsledků, 4897 hashů a pět
+úplných inventářů artefaktových adresářů beze změny. Celá kolekce tohoto Common
+rodiče obsahuje 1966 ID; ve společném XML mají **1956 PASS / 10 optional SKIP**.
+Jde o podmnožinu jednoho běhu potomka, nikoli samostatný full této větve.
+Povolené SKIP se týkají neaktivovaných Maven/Gradle exporterů, druhého JDK a
+Windows smoke; žádný compiler/feature SKIP navíc nebyl přijat. Evidence:
+`full-attempt-2/full.xml`, `parent-result-classification.json` a samostatné
+ověření `final-green-verification.json` ve validačním workspace.
+
+První společný full skončil **78 PASS / 2 optional SKIP / 1 FAIL**, zbytek
+2516 NOT_RUN: classpath fixture postrádala `JavaBridge.class` a Kotlin module
+metadata, která původní transfer manifest nepokrýval. Původní log/XML a vstupy
+zůstaly zachovány. Po explicitním doplnění přesných donor artefaktů prošly oba
+nezměněné původní golden/branch testy **2 PASS**; teprve potom byl autorizován
+nový celý strict full. Runtime ani assertion nebyly oslabeny, nový native build
+neproběhl. Native zdroje odpovídají původnímu skutečnému buildu Return079.
+
+T006-AC07–08 a T008-AC07–09 jsou ověřeny v uvedeném rozsahu. Role nadále není
+freshness ani runtime availability; unknown/malformed claims nemají source
+fallback. Nezávislé finální review aktuálního base/head, ready a merge jsou
+samostatné kroky; GH CI není tímto lokálním výsledkem prohlášeno za PASS.
