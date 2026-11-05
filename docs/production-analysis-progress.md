@@ -878,3 +878,12 @@ absent-API RED2FAIL; corrective retained-expansion privacy RED1FAIL29PASS; final
 native build or full. Explicit dependency source is T016f05; final newer T013/T012
 and main composition, required full, graph/memory and independent review remain
 pending. See [note97](changes/97_filterTopologyScope.md) and [API](topology-filter.md).
+
+## T018 draft — original snapshot explanation and explicit source status
+
+Pure explanation rederives T016/T017 and expands exact original identities and
+proof buckets. Original PUBLIC graph is required for canonical source locators;
+missing graph/range is unavailable. Separate explicit confined source-status
+capture checks current file hashes without replacing original snapshot fingerprints
+or upgrading remote/context freshness. Public pure/file-backed tests are recorded
+in note98; current dependency integration, source review and full remain pending.

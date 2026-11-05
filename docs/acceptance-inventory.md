@@ -817,3 +817,16 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
 - AC06: note97/capability/API examples, 33 own cases; coalesced T017/T016/T014/View/T009
   149 PASS, no worker/build/full. Dependency refresh, required full, semantic/memory
   finalization and independent source/final review remain PENDING.
+
+## T018 source checkpoint — final gates pending
+
+- AC01: exact summary/candidate/filter-origin inventories; missing graph/ref boundary.
+- AC02: missing range null, canonical range tamper rejected without invented lines.
+- AC03: actual temporary files match/edit/delete across two repos, original hash/
+  fingerprint preserved; stale context does not become CURRENT after file match.
+- AC04: input equality, source-status tamper, denied pure I/O/projectors/process/
+  network, confined symlink/traversal/foreign refs, bounds and credential controls.
+- AC05: original evidence buckets/type/freshness, UNKNOWN remote realm/group and
+  filtered ambiguity/omitted alternatives preserved; no new availability proof.
+- AC06: note98 records public RED/pure results; actual saved-capture replay, final
+  parent composition, independent review and required full PENDING. No native build.

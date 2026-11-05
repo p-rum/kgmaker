@@ -43,7 +43,7 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T015 | [Databáze a jiné datové závislosti](T-015_project-data-resources.md) | T008, T009; T003-S06 | SPECIFICATION |
 | T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | Rev2 explicit capture/pure source draft; final gates pending |
 | T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | SPECIFICATION revize 2; source checkpoint, full pending |
-| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016 | SPECIFICATION |
+| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Rev2 pure explanation/explicit source-status draft; final gates pending |
 | T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | SPECIFICATION |
 | T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION |
 | T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |

@@ -847,3 +847,12 @@ uncertainty and reports complete known omission IDs plus separate frontier metad
 Kafka channels count as real hops; omitted nodes never create shortcut edges.
 See [API and limits](docs/topology-filter.md). Dependency integration, required full
 and independent source/final review remain pending; this is not a new CLI command.
+
+### T018 snapshot explanation (draft)
+
+`kgmaker.view_explanation.explain_view_element(view, element_id, captured=captured,
+graph=original_public_graph)` expands exact origins and evidence from the bound
+T016/T017 snapshot. Optional `capture_explanation_source_status` separately reads
+only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT.
+See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable;
+final source/dependency/full validation is pending.
