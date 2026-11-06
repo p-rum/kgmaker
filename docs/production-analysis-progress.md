@@ -1,5 +1,22 @@
 # Aktuální stav a zbývající práce
 
+## Předání dokončovacího programu — 2026-11-06
+
+[T048](tasks/48_completeImplementationHandoff.md) koordinuje původní zadání nad
+main `250e7c16250a97b9f8df5256b9894c8119dc64d9` po T020/PR #87. T003 má 37/60
+balíčků se sloučenou prací (u S12-W01 pouze konfigurace, live DEFERRED); T004 má
+24/40 dodaných úkolů: T005–T020, T023–T026, T030–T033. Zbývá 23 T003 balíčků a
+16 T004 úkolů bez sloučené dodávky, otevřená integrace T046 a 13 kroků T047 se
+sdílenými upstream kontrakty. Jde o delivery přehled, nikoli nové ověření acceptance.
+T048-S01 má sjednotit jednotlivé aktuální stavy; starší řádky níže obsahují historické
+checkpointy a místy již neaktuální draft/review status. Jejich testové výsledky
+nejsou novým během nad touto baseline.
+
+Každý další implementační krok povinně aktualizuje vlastní change note, dotčenou
+aktuální dokumentaci a acceptance. Povinnost je v AGENTS i instalovaných host
+instrukcích; chybějící nebo rozporná dokumentace blokuje dokončení kroku.
+
+
 ## T003-S06-W03 — JPA ORM XML overrides (2026-10-26)
 
 VERIFIED_IN_SCOPE pro vybraný persistence unit a omezené ORM XML mapování:
@@ -1155,3 +1172,11 @@ PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou slouče
 T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
 current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
 AC06 čeká na finální review a samostatnou publikaci.
+
+
+### T046 — integrační evidence f115 (2026-11-06)
+
+- T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S04: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/59_verifySyntheticTestData.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.

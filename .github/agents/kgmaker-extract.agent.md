@@ -79,6 +79,20 @@ Preserve this naming format when adding every new feature; task number, change-n
 number and GitHub PR number are not interchangeable. Include task/acceptance IDs,
 actual changes, compatibility, real validation results and unfinished scope.
 
+Every implementation step, including fixes, refactors and integrations, must
+have its own traceable entry in the PR's Czech change note: Task/Step/AC IDs,
+baseline SHA, actual changes/paths, compatibility, limitations, exact checks and
+PASS/FAIL/SKIP/NOT_RUN results, unperformed checks and remaining work.
+In the same PR reconcile README, applicable capability/API/CLI docs and examples,
+production-analysis-progress and affected acceptance-inventory rows with the code.
+Record a changed-document link or a specific no-impact reason for each surface.
+Update the task registry when identity, revision, dependencies or links change.
+Keep delivery status separate from verification and date historical evidence.
+A change note alone does not replace current user documentation. Each step remains
+incomplete until documentation matches implementation; reviewers must request
+changes for missing step records or contradictory docs. Keep generated host
+instructions and Python templates consistent, preserving user edits on init.
+
 Specifications must separate target behavior from implemented capabilities and
 include revision, baseline, dependencies, concrete steps, acceptance and DoD.
 Update current documentation when code changes; retain historical notes and map
