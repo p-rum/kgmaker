@@ -201,3 +201,50 @@ def test_unresolved_declared_target_selector_stays_visible_without_endpoint_inve
     binding=next(n for n in view.nodes if n.kind=='remote_binding')
     assert binding.attributes['unresolved_selectors'][0]['interface_id']=='missing-provider'
     assert binding.resolution_status=='UNRESOLVED' and view.coverage['status']=='PARTIAL'
+
+
+def test_first_public_projection_is_io_free_in_a_fresh_python_process(tmp_path):
+    """Code imports belong to API initialization, never the pure invocation."""
+    import json,os,subprocess,sys,textwrap
+    from pathlib import Path
+    workspace,graph,documents,captured=trusted_protocol_specimen()
+    payload={'workspace':workspace,'graph':graph.to_dict(),'documents':documents,'captured':captured}
+    original=json.dumps(payload,sort_keys=True)
+    input_file=tmp_path/'explicit-protocol.json'
+    input_file.write_text(original,encoding='utf-8')
+    script=textwrap.dedent('''
+        import json,sys
+        from pathlib import Path
+        import kgmaker
+        from kgmaker.model import KnowledgeGraph
+        from kgmaker.remote_interfaces import project_remote_interfaces
+        assert Path(kgmaker.__file__).resolve().is_relative_to(Path(sys.argv[2]).resolve())
+        with open(sys.argv[1],encoding='utf-8') as stream: payload=json.load(stream)
+        graph=KnowledgeGraph.from_dict(payload['graph'])
+        before=json.dumps(payload,sort_keys=True)
+        active=False
+        def deny_io(event,args):
+            if active and (event=='open' or event.startswith(('socket.','subprocess.'))
+                    or event in {'os.system','os.posix_spawn','os.exec','os.listdir','os.scandir','os.mkdir','os.remove','os.rename'}):
+                raise AssertionError('PURE_PROJECTION_IO:'+event)
+        sys.addaudithook(deny_io)
+        active=True
+        try:
+            result=project_remote_interfaces(payload['workspace'],graph,payload['documents'],
+                captured=payload['captured'],scope='production')
+        finally: active=False
+        assert json.dumps(payload,sort_keys=True)==before
+        edges=[edge for edge in result.edges if edge.relation=='remote_http_request_response']
+        assert len(edges)==1 and edges[0].source=='client' and edges[0].target=='provider'
+        assert edges[0].freshness=='UNKNOWN' and edges[0].evidence_kinds==('SOURCE_ONLY',)
+        assert edges[0].attributes['runtime_execution']=='NOT_OBSERVED'
+        print(json.dumps({'kind':result.kind,'scope':result.scope,'remote_edges':len(edges)}))
+    ''')
+    source=Path(__file__).resolve().parents[1]/'src'
+    env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1',
+         'PYTHONPATH':str(source)+os.pathsep+os.environ.get('PYTHONPATH','')}
+    result=subprocess.run([sys.executable,'-c',script,str(input_file),str(source)],
+        env=env,capture_output=True,text=True,timeout=30)
+    assert result.returncode==0,result.stdout+result.stderr
+    assert json.loads(result.stdout)=={'kind':'topology','scope':'production','remote_edges':1}
+    assert input_file.read_text(encoding='utf-8')==original

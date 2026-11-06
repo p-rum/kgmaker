@@ -945,3 +945,19 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
   optionalSKIP; all302present runtime/test/fixture/CI files exact. Collection-only,
   no new actual/full/build/tool mutation. Independent current final-pair review
   remains pending; see validation/t019-descendant-proof.json.
+
+## W07/T014 cold invocation correction (note108)
+
+Runtime869ab/metadata91ca retains normalization/VERSION2 and adds the fresh-process
+public T014 I/O audit regression. Pure25PASS is source-specific protocol evidence.
+Continuation006 is terminal1176PASS/1typedWindowsSKIP, with source304 historical
+1561PASS/9typedSKIP yielding source-corrected2747:2737PASS/10optionalSKIP.
+This is not a fresh single full. All102 affected prior W07/T014 IDs were rerun.
+The exact current-main publication subset2598 is2588PASS/10SKIP, with every ID's
+actual source/origin/XML/phases retained. Runtime/test source is exact91ca;
+main CLI three formatter bindings and main workflow remain main-owned instead of
+renderer additions. External SVG15+4 proof is complete in the larger aggregate;
+those149renderer IDs/features are outside this publication. Source/native/pins
+and1364kindroots/94333entries are unchanged; old failures remain preserved.
+Final architect+resume_t010 exact-pair reviews are PENDING. Root authored this fix
+and acts only as execution/merge guard. See note108 and the per-ID terminal ledger.

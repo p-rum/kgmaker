@@ -13,6 +13,7 @@ import re
 from .analysis_model import digest as _shared_digest
 from .architecture_model import ViewDocument
 from .model import KnowledgeGraph
+from .test_analysis import normalized_path
 
 VERSION = 'remote-contract-mapping-2'
 SCOPES = {'production', 'test', 'test_fixture', 'development', 'unknown'}
@@ -295,7 +296,6 @@ def resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected
             parts=contract['pointer'].split('/')
             if (len(parts)!=4 or parts[:2]!=['#','paths'] or re.search(r'~(?![01])',parts[2])
                     or parts[3].upper() not in {'GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'}):return None,'REMOTE_OPERATION_POINTER_UNSUPPORTED'
-            from .test_analysis import normalized_path
             declared_route=parts[2].replace('~1','/').replace('~0','~')
             route=attrs.get('route_expression') if source else attrs.get('normalized_route')
             if (attrs.get('http_method')!=parts[3].upper() or not isinstance(route,str)

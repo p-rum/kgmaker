@@ -1020,3 +1020,22 @@ runtime/test/worker/fixture/CI bodies match acceptedfull, including exact5-line 
 registration/dispatch. No new actual/full/build/tool mutation. Current independent
 final-pair review remains pending; T020/21not included. See note99,
 [proof](validation/t019-descendant-proof.json) and [CLI contract](architecture-json-cli.md).
+
+## W07/T014 — first-call purity correction (note108)
+
+Root's import relocation preserves helper algorithm/VERSION2 and pure first-call
+behavior (historical25T014PASS on869ab). Source91ca continuation006 is terminal:
+1176PASS/1typedoptionalSKIP, XML575.90s/runner618.34s. The verified source-corrected
+aggregate is2737PASS/10typedoptionalSKIP across2747IDs, combining1561PASS/9SKIP
+on304 with current1177 and rerunning all102 explicitly affected cases. Never
+label this a fresh single full or an original failed-attempt wholesale PASS.
+Main-only cold publication2598 derives2588PASS/10SKIP with exact per-ID source,
+origin XML, complete phases and typed skip policy. Its302source paths keep main
+CLI/workflow and exclude renderer additions; common corrected source/test bytes
+and helper globals are preserved. Actual SVG15+4 passed in the external aggregate,
+which also verified1364kindroots/94333entries and80637fresh hashes unchanged.
+Main248immutableepisodes plus one historical Rootcold capsule are retained. The
+old capsule's unknown validation fields remain historical and unchanged. Runtime,
+tests and native bytes were not changed or rerun for terminal metadata recording.
+Architect and resume_t010 FINAL reviews on the new base/head remain PENDING;
+Root is the original author and merge guard only. See note108/per-ID ledger.

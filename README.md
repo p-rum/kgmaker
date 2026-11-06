@@ -917,3 +917,7 @@ explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
 Current1005b9f preserves merged dependencies; all2597 IDs and all302runtime/test/
 fixture/workflow files match accepted2df (2587PASS10allowedSKIP there). No new
 full; independent final-pair review remains pending. T020/T021 rendering is separate.
+
+The W07 resolver and T014 projection also preserve the no-I/O contract on their
+first call after normal API import. The cold-process regression is protocol-only;
+see [the correction and remaining validation](docs/changes/108_fixColdRemoteProjection.md).

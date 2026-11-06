@@ -3,10 +3,10 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 426
+- Scope: production; omitted files: 427
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `08505d57210b29f5916264927cd1d82c65fcdab7cb37ad877a32066fbb665a05`; content: `ca93e4d9e1dfb495d1ac8fbe560417b471cf27cc6e85078ea9b6e0675810722b`; freshness: CONTENT_VERIFIED
+- Context: `800e52730602947a7a271e9b91e5033e6083ab4c4f348a9d416ef6be3e0c0c76`; content: `055e838866715e3892fe66e9241105eb53aac73e879c7465158f2341ac2bd2c0`; freshness: CONTENT_VERIFIED
 - Files indexed: 85
 - Symbols and sections: 1165
 - Internal imports: 348
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 248
+- Implementation episodes: 249
 - Inferred/ambiguous relationships: 6604/0
 
 ## Architecture diagram
@@ -1272,23 +1272,23 @@ flowchart LR
 - **function** `declaration` line 96 — `declaration(identity, contexts, mapping_ids)`
 
 ### `src/kgmaker/remote_mapping.py`
-- **class** `RemoteMappingError` line 26 — `RemoteMappingError(ValueError)`
-- **function** `__init__` line 29 — `__init__(self, code)`
-- **function** `_fail` line 32 — `_fail(code)`
-- **function** `digest` line 36 — `digest(value)`
-- **function** `_bounded` line 45 — `_bounded(value)`
-- **function** `_text` line 71 — `_text(value)`
-- **function** `_object` line 77 — `_object(value, fields)`
-- **function** `validate_remote_declarations` line 81 — `validate_remote_declarations(workspace)`
-- **function** `_workspace` line 136 — `_workspace(workspace)`
-- **function** `_graph` line 142 — `_graph(graph)`
-- **function** `_selection` line 147 — `_selection(scope, selected_contexts)`
-- **function** `_views` line 158 — `_views(values)`
-- **function** `_pointer_inventory` line 170 — `_pointer_inventory(document)`
-- **function** `capture_remote_mapping_inputs` line 183 — `capture_remote_mapping_inputs(workspace,graph,*,scope='production',selected_contexts=None,source_coverage=None)`
-- **function** `_context` line 222 — `_context(node,by_id)`
-- **function** `resolve_remote_mappings` line 232 — `resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected_contexts=None)`
-- **function** `authority` line 261 — `authority(release,transport,source)`
+- **class** `RemoteMappingError` line 27 — `RemoteMappingError(ValueError)`
+- **function** `__init__` line 30 — `__init__(self, code)`
+- **function** `_fail` line 33 — `_fail(code)`
+- **function** `digest` line 37 — `digest(value)`
+- **function** `_bounded` line 46 — `_bounded(value)`
+- **function** `_text` line 72 — `_text(value)`
+- **function** `_object` line 78 — `_object(value, fields)`
+- **function** `validate_remote_declarations` line 82 — `validate_remote_declarations(workspace)`
+- **function** `_workspace` line 137 — `_workspace(workspace)`
+- **function** `_graph` line 143 — `_graph(graph)`
+- **function** `_selection` line 148 — `_selection(scope, selected_contexts)`
+- **function** `_views` line 159 — `_views(values)`
+- **function** `_pointer_inventory` line 171 — `_pointer_inventory(document)`
+- **function** `capture_remote_mapping_inputs` line 184 — `capture_remote_mapping_inputs(workspace,graph,*,scope='production',selected_contexts=None,source_coverage=None)`
+- **function** `_context` line 223 — `_context(node,by_id)`
+- **function** `resolve_remote_mappings` line 233 — `resolve_remote_mappings(workspace,graph,interfaces,*,captured,scope,selected_contexts=None)`
+- **function** `authority` line 262 — `authority(release,transport,source)`
 
 ### `src/kgmaker/return_flow.py`
 - **function** `_range` line 17 — `_range(value)`
@@ -1942,6 +1942,7 @@ flowchart LR
 - **merge T008 main and guard optional K2 JPA CI fixture** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: mandatory-worker-ci-15=passed, t008-inventory-workspace=passed, spring-typescript-context=passed, pure-integration-29=passed, semantic-validate=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, semantic=passed, prerequisites=passed
 - **merge: integrate source-only views and validate final W02 composition** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/46_mapDefaultBodySources.md, docs/compiler-inspection.md; validation: mandatory_core_36_pass=passed, semantic=passed
+- **fix(remote): keep the first pure projection free of lazy import I/O** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/108_fixColdRemoteProjection.md, docs/production-analysis-progress.md, docs/remote-contract-mapping.md; validation: cold_process_regression=passed, original_path_guard=passed, t014_pure25=passed, independent_source_reviews=passed, affected_w07_cases=unknown
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, ac02-real-worker=passed
 - **Merge current UI parent and record verified T025 full gate** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/73_buildLocalProcessPath.md, docs/process-paths.md; validation: corrected_full_1104=passed, optional_10=skipped, argument_parent_actual_125=passed, current_frozen_272=passed
 - **Record mandatory Kafka binding full validation** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/54_scopeKafkaBindingIdentity.md, docs/compiler-inspection.md; validation: strict-full-613=passed, actual-focused-51=passed, default-profile-54=passed, optional-10=skipped
@@ -1955,7 +1956,7 @@ flowchart LR
 - **Integrate dependency dispatch with Spring registration hooks** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: pure=passed
 - **Integrate deferred connection settings with verified exporter distribution** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/38_configureDeferredConfluence.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: configuration28=passed, full331=passed, live=skipped
 - **Change Akceptační kritéria, Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/10_selectExternalToolchain.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: toolchain-acceptance=passed
-- **merge verified T018 main into T019 read-only architecture JSON CLI** — current; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/99_addArchitectureJsonCli.md, docs/production-analysis-progress.md; validation: accepted2df2587PASS10SKIP=passed, all2597IDExactSet=passed, all302SourceBytesExact=passed, originalAbadRootSourceReview=passed, newCurrentHeadFull=unknown
+- **merge verified T018 main into T019 read-only architecture JSON CLI** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/99_addArchitectureJsonCli.md, docs/production-analysis-progress.md; validation: accepted2df2587PASS10SKIP=passed, all2597IDExactSet=passed, all302SourceBytesExact=passed, originalAbadRootSourceReview=passed, newCurrentHeadFull=unknown
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: pytest=passed, methodology=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest195=passed, ac05-spring-matrix=passed, spring-short-name-guard=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/55_expandThymeleafFragments.md, docs/compiler-inspection.md, docs/feature-analysis.md; validation: templates=passed, focused-core=passed, full-core=passed, optional-prerequisites=skipped, semantic=passed
@@ -2599,11 +2600,11 @@ flowchart LR
 - `src/kgmaker/architecture_cli.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 286; src/kgmaker/architecture_cli.py:286; INFERRED 0.85)
 - `src/kgmaker/architecture_cli.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 297; src/kgmaker/architecture_cli.py:297; INFERRED 0.85)
 - `src/kgmaker/architecture_cli.py` may call `140 in `src/kgmaker/inspection.py`` (name match at line 264; src/kgmaker/architecture_cli.py:264; INFERRED 0.85)
-- `src/kgmaker/architecture_cli.py` may call `147 in `src/kgmaker/remote_mapping.py`` (name match at line 129; src/kgmaker/architecture_cli.py:129; INFERRED 0.85)
-- `src/kgmaker/architecture_cli.py` may call `147 in `src/kgmaker/remote_mapping.py`` (name match at line 135; src/kgmaker/architecture_cli.py:135; INFERRED 0.85)
-- `src/kgmaker/architecture_cli.py` may call `136 in `src/kgmaker/remote_mapping.py`` (name match at line 177; src/kgmaker/architecture_cli.py:177; INFERRED 0.85)
-- `src/kgmaker/architecture_cli.py` may call `183 in `src/kgmaker/remote_mapping.py`` (name match at line 175; src/kgmaker/architecture_cli.py:175; INFERRED 0.85)
-- `src/kgmaker/architecture_cli.py` may call `232 in `src/kgmaker/remote_mapping.py`` (name match at line 195; src/kgmaker/architecture_cli.py:195; INFERRED 0.85)
+- `src/kgmaker/architecture_cli.py` may call `148 in `src/kgmaker/remote_mapping.py`` (name match at line 129; src/kgmaker/architecture_cli.py:129; INFERRED 0.85)
+- `src/kgmaker/architecture_cli.py` may call `148 in `src/kgmaker/remote_mapping.py`` (name match at line 135; src/kgmaker/architecture_cli.py:135; INFERRED 0.85)
+- `src/kgmaker/architecture_cli.py` may call `137 in `src/kgmaker/remote_mapping.py`` (name match at line 177; src/kgmaker/architecture_cli.py:177; INFERRED 0.85)
+- `src/kgmaker/architecture_cli.py` may call `184 in `src/kgmaker/remote_mapping.py`` (name match at line 175; src/kgmaker/architecture_cli.py:175; INFERRED 0.85)
+- `src/kgmaker/architecture_cli.py` may call `233 in `src/kgmaker/remote_mapping.py`` (name match at line 195; src/kgmaker/architecture_cli.py:195; INFERRED 0.85)
 - `src/kgmaker/architecture_cli.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 145; src/kgmaker/architecture_cli.py:145; INFERRED 0.85)
 - `src/kgmaker/architecture_cli.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 187; src/kgmaker/architecture_cli.py:187; INFERRED 0.85)
 - `src/kgmaker/architecture_cli.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 238; src/kgmaker/architecture_cli.py:238; INFERRED 0.85)
@@ -3765,7 +3766,7 @@ flowchart LR
 - `src/kgmaker/data_resources.py` may call `384 in `src/kgmaker/workspace.py`` (name match at line 94; src/kgmaker/data_resources.py:94; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `27 in `src/kgmaker/model.py`` (name match at line 83; src/kgmaker/dataflow.py:83; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `10 in `src/kgmaker/model.py`` (name match at line 71; src/kgmaker/dataflow.py:71; INFERRED 0.85)
-- `src/kgmaker/dataflow.py` may call `232 in `src/kgmaker/remote_mapping.py`` (name match at line 451; src/kgmaker/dataflow.py:451; INFERRED 0.85)
+- `src/kgmaker/dataflow.py` may call `233 in `src/kgmaker/remote_mapping.py`` (name match at line 451; src/kgmaker/dataflow.py:451; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `81 in `src/kgmaker/return_flow.py`` (name match at line 114; src/kgmaker/dataflow.py:114; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `81 in `src/kgmaker/return_flow.py`` (name match at line 170; src/kgmaker/dataflow.py:170; INFERRED 0.85)
 - `src/kgmaker/dataflow.py` may call `81 in `src/kgmaker/return_flow.py`` (name match at line 92; src/kgmaker/dataflow.py:92; INFERRED 0.85)
@@ -7093,8 +7094,8 @@ flowchart LR
 - `src/kgmaker/remote_interfaces.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 143; src/kgmaker/remote_interfaces.py:143; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 170; src/kgmaker/remote_interfaces.py:170; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 42; src/kgmaker/remote_interfaces.py:42; INFERRED 0.85)
-- `src/kgmaker/remote_interfaces.py` may call `26 in `src/kgmaker/remote_mapping.py`` (name match at line 14; src/kgmaker/remote_interfaces.py:14; INFERRED 0.85)
-- `src/kgmaker/remote_interfaces.py` may call `232 in `src/kgmaker/remote_mapping.py`` (name match at line 72; src/kgmaker/remote_interfaces.py:72; INFERRED 0.85)
+- `src/kgmaker/remote_interfaces.py` may call `27 in `src/kgmaker/remote_mapping.py`` (name match at line 14; src/kgmaker/remote_interfaces.py:14; INFERRED 0.85)
+- `src/kgmaker/remote_interfaces.py` may call `233 in `src/kgmaker/remote_mapping.py`` (name match at line 72; src/kgmaker/remote_interfaces.py:72; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 157; src/kgmaker/remote_interfaces.py:157; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 165; src/kgmaker/remote_interfaces.py:165; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 171; src/kgmaker/remote_interfaces.py:171; INFERRED 0.85)
@@ -7106,16 +7107,15 @@ flowchart LR
 - `src/kgmaker/remote_interfaces.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 119; src/kgmaker/remote_interfaces.py:119; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 158; src/kgmaker/remote_interfaces.py:158; INFERRED 0.85)
 - `src/kgmaker/remote_interfaces.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 87; src/kgmaker/remote_interfaces.py:87; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `10 in `src/kgmaker/contract_inputs.py`` (name match at line 195; src/kgmaker/remote_mapping.py:195; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `10 in `src/kgmaker/contract_inputs.py`` (name match at line 212; src/kgmaker/remote_mapping.py:212; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `1186 in `src/kgmaker/interfaces.py`` (name match at line 203; src/kgmaker/remote_mapping.py:203; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `1143 in `src/kgmaker/interfaces.py`` (name match at line 199; src/kgmaker/remote_mapping.py:199; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 208; src/kgmaker/remote_mapping.py:208; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 226; src/kgmaker/remote_mapping.py:226; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 228; src/kgmaker/remote_mapping.py:228; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 230; src/kgmaker/remote_mapping.py:230; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `10 in `src/kgmaker/contract_inputs.py`` (name match at line 196; src/kgmaker/remote_mapping.py:196; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `10 in `src/kgmaker/contract_inputs.py`` (name match at line 213; src/kgmaker/remote_mapping.py:213; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `1186 in `src/kgmaker/interfaces.py`` (name match at line 204; src/kgmaker/remote_mapping.py:204; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `1143 in `src/kgmaker/interfaces.py`` (name match at line 200; src/kgmaker/remote_mapping.py:200; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 209; src/kgmaker/remote_mapping.py:209; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 227; src/kgmaker/remote_mapping.py:227; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 229; src/kgmaker/remote_mapping.py:229; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 231; src/kgmaker/remote_mapping.py:231; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 240; src/kgmaker/remote_mapping.py:240; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 232; src/kgmaker/remote_mapping.py:232; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 241; src/kgmaker/remote_mapping.py:241; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 242; src/kgmaker/remote_mapping.py:242; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 243; src/kgmaker/remote_mapping.py:243; INFERRED 0.85)
@@ -7123,15 +7123,16 @@ flowchart LR
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 245; src/kgmaker/remote_mapping.py:245; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 246; src/kgmaker/remote_mapping.py:246; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 247; src/kgmaker/remote_mapping.py:247; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 254; src/kgmaker/remote_mapping.py:254; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 263; src/kgmaker/remote_mapping.py:263; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 267; src/kgmaker/remote_mapping.py:267; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 248; src/kgmaker/remote_mapping.py:248; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 255; src/kgmaker/remote_mapping.py:255; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 264; src/kgmaker/remote_mapping.py:264; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 268; src/kgmaker/remote_mapping.py:268; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 270; src/kgmaker/remote_mapping.py:270; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 269; src/kgmaker/remote_mapping.py:269; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 271; src/kgmaker/remote_mapping.py:271; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 290; src/kgmaker/remote_mapping.py:290; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 292; src/kgmaker/remote_mapping.py:292; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 272; src/kgmaker/remote_mapping.py:272; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 291; src/kgmaker/remote_mapping.py:291; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 293; src/kgmaker/remote_mapping.py:293; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 294; src/kgmaker/remote_mapping.py:294; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 300; src/kgmaker/remote_mapping.py:300; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 301; src/kgmaker/remote_mapping.py:301; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 303; src/kgmaker/remote_mapping.py:303; INFERRED 0.85)
@@ -7145,14 +7146,14 @@ flowchart LR
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 323; src/kgmaker/remote_mapping.py:323; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 340; src/kgmaker/remote_mapping.py:340; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 350; src/kgmaker/remote_mapping.py:350; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 85; src/kgmaker/remote_mapping.py:85; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 95; src/kgmaker/remote_mapping.py:95; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 97; src/kgmaker/remote_mapping.py:97; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 156; src/kgmaker/remote_mapping.py:156; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 167; src/kgmaker/remote_mapping.py:167; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 178; src/kgmaker/remote_mapping.py:178; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 203; src/kgmaker/remote_mapping.py:203; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 259; src/kgmaker/remote_mapping.py:259; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 86; src/kgmaker/remote_mapping.py:86; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 96; src/kgmaker/remote_mapping.py:96; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 98; src/kgmaker/remote_mapping.py:98; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 157; src/kgmaker/remote_mapping.py:157; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 168; src/kgmaker/remote_mapping.py:168; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 179; src/kgmaker/remote_mapping.py:179; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 204; src/kgmaker/remote_mapping.py:204; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 260; src/kgmaker/remote_mapping.py:260; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 325; src/kgmaker/remote_mapping.py:325; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 329; src/kgmaker/remote_mapping.py:329; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 330; src/kgmaker/remote_mapping.py:330; INFERRED 0.85)
@@ -7161,11 +7162,11 @@ flowchart LR
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 337; src/kgmaker/remote_mapping.py:337; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 341; src/kgmaker/remote_mapping.py:341; INFERRED 0.85)
 - `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 356; src/kgmaker/remote_mapping.py:356; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 61; src/kgmaker/remote_mapping.py:61; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `873 in `src/kgmaker/views.py`` (name match at line 202; src/kgmaker/remote_mapping.py:202; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 240; src/kgmaker/remote_mapping.py:240; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 57; src/kgmaker/remote_mapping.py:57; INFERRED 0.85)
-- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 89; src/kgmaker/remote_mapping.py:89; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 62; src/kgmaker/remote_mapping.py:62; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `873 in `src/kgmaker/views.py`` (name match at line 203; src/kgmaker/remote_mapping.py:203; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 241; src/kgmaker/remote_mapping.py:241; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 58; src/kgmaker/remote_mapping.py:58; INFERRED 0.85)
+- `src/kgmaker/remote_mapping.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 90; src/kgmaker/remote_mapping.py:90; INFERRED 0.85)
 - `src/kgmaker/return_flow.py` may call `27 in `src/kgmaker/model.py`` (name match at line 251; src/kgmaker/return_flow.py:251; INFERRED 0.85)
 - `src/kgmaker/return_flow.py` may call `10 in `src/kgmaker/model.py`` (name match at line 232; src/kgmaker/return_flow.py:232; INFERRED 0.85)
 - `src/kgmaker/return_flow.py` may call `89 in `src/kgmaker/callgraph.py`` (name match at line 214; src/kgmaker/return_flow.py:214; INFERRED 0.85)
@@ -7668,12 +7669,12 @@ flowchart LR
 - `src/kgmaker/service_topology.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 246; src/kgmaker/service_topology.py:246; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `26 in `src/kgmaker/remote_interfaces.py`` (name match at line 166; src/kgmaker/service_topology.py:166; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `48 in `src/kgmaker/remote_interfaces.py`` (name match at line 158; src/kgmaker/service_topology.py:158; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `142 in `src/kgmaker/remote_mapping.py`` (name match at line 32; src/kgmaker/service_topology.py:32; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `147 in `src/kgmaker/remote_mapping.py`` (name match at line 114; src/kgmaker/service_topology.py:114; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `147 in `src/kgmaker/remote_mapping.py`` (name match at line 30; src/kgmaker/service_topology.py:30; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `147 in `src/kgmaker/remote_mapping.py`` (name match at line 43; src/kgmaker/service_topology.py:43; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `136 in `src/kgmaker/remote_mapping.py`` (name match at line 31; src/kgmaker/service_topology.py:31; INFERRED 0.85)
-- `src/kgmaker/service_topology.py` may call `183 in `src/kgmaker/remote_mapping.py`` (name match at line 51; src/kgmaker/service_topology.py:51; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `143 in `src/kgmaker/remote_mapping.py`` (name match at line 32; src/kgmaker/service_topology.py:32; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `148 in `src/kgmaker/remote_mapping.py`` (name match at line 114; src/kgmaker/service_topology.py:114; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `148 in `src/kgmaker/remote_mapping.py`` (name match at line 30; src/kgmaker/service_topology.py:30; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `148 in `src/kgmaker/remote_mapping.py`` (name match at line 43; src/kgmaker/service_topology.py:43; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `137 in `src/kgmaker/remote_mapping.py`` (name match at line 31; src/kgmaker/service_topology.py:31; INFERRED 0.85)
+- `src/kgmaker/service_topology.py` may call `184 in `src/kgmaker/remote_mapping.py`` (name match at line 51; src/kgmaker/service_topology.py:51; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 153; src/kgmaker/service_topology.py:153; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 166; src/kgmaker/service_topology.py:166; INFERRED 0.85)
 - `src/kgmaker/service_topology.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 169; src/kgmaker/service_topology.py:169; INFERRED 0.85)
@@ -7962,8 +7963,8 @@ flowchart LR
 - `src/kgmaker/view_explanation.py` may call `89 in `src/kgmaker/_windows_job.py`` (name match at line 411; src/kgmaker/view_explanation.py:411; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `40 in `src/kgmaker/process_triggers.py`` (name match at line 177; src/kgmaker/view_explanation.py:177; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `40 in `src/kgmaker/process_triggers.py`` (name match at line 201; src/kgmaker/view_explanation.py:201; INFERRED 0.85)
-- `src/kgmaker/view_explanation.py` may call `142 in `src/kgmaker/remote_mapping.py`` (name match at line 82; src/kgmaker/view_explanation.py:82; INFERRED 0.85)
-- `src/kgmaker/view_explanation.py` may call `136 in `src/kgmaker/remote_mapping.py`` (name match at line 429; src/kgmaker/view_explanation.py:429; INFERRED 0.85)
+- `src/kgmaker/view_explanation.py` may call `143 in `src/kgmaker/remote_mapping.py`` (name match at line 82; src/kgmaker/view_explanation.py:82; INFERRED 0.85)
+- `src/kgmaker/view_explanation.py` may call `137 in `src/kgmaker/remote_mapping.py`` (name match at line 429; src/kgmaker/view_explanation.py:429; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 108; src/kgmaker/view_explanation.py:108; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 109; src/kgmaker/view_explanation.py:109; INFERRED 0.85)
 - `src/kgmaker/view_explanation.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 110; src/kgmaker/view_explanation.py:110; INFERRED 0.85)
@@ -8492,7 +8493,7 @@ flowchart LR
 - `src/kgmaker/workspace.py` may call `86 in `src/kgmaker/graph_provider.py`` (name match at line 128; src/kgmaker/workspace.py:128; INFERRED 0.85)
 - `src/kgmaker/workspace.py` may call `168 in `src/kgmaker/kafka_bindings.py`` (name match at line 88; src/kgmaker/workspace.py:88; INFERRED 0.85)
 - `src/kgmaker/workspace.py` may call `204 in `src/kgmaker/kafka_retry.py`` (name match at line 57; src/kgmaker/workspace.py:57; INFERRED 0.85)
-- `src/kgmaker/workspace.py` may call `81 in `src/kgmaker/remote_mapping.py`` (name match at line 326; src/kgmaker/workspace.py:326; INFERRED 0.85)
+- `src/kgmaker/workspace.py` may call `82 in `src/kgmaker/remote_mapping.py`` (name match at line 326; src/kgmaker/workspace.py:326; INFERRED 0.85)
 - `src/kgmaker/workspace.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 107; src/kgmaker/workspace.py:107; INFERRED 0.85)
 - `src/kgmaker/workspace.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 115; src/kgmaker/workspace.py:115; INFERRED 0.85)
 - `src/kgmaker/workspace.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 116; src/kgmaker/workspace.py:116; INFERRED 0.85)
