@@ -83,22 +83,39 @@ MD_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$", re.M)
 CALL_TOKEN = re.compile(r"\b([A-Za-z_][\w]*)\s*\(")
 
 
-def _safe_text(path: Path) -> str | None:
+def _safe_source(path: Path) -> tuple[str | None, str | None]:
+    """Capture one bounded byte snapshot, preserving legacy normalized text."""
     try:
         if path.stat().st_size > MAX_FILE_BYTES:
-            return None
-        return path.read_text(encoding="utf-8")
+            return None, None
+        with path.open('rb') as stream:
+            raw = stream.read(MAX_FILE_BYTES + 1)
+        if len(raw) > MAX_FILE_BYTES:
+            return None, None
+        text = raw.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
+        return text, hashlib.sha256(raw).hexdigest()
     except (OSError, UnicodeError):
-        return None
+        return None, None
+
+
+def _safe_text(path: Path) -> str | None:
+    return _safe_source(path)[0]
 
 
 def _file_digest(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _public_source_text(value: str) -> str:
+    # Source signatures and documentation are persisted too. This privacy
+    # transform never supplies semantic values to compiler/framework analysis.
+    from .http_execution import redact_uri_text
+    return redact_uri_text(value, relative=False)
+
+
 def _stable_id(kind: str, path: str, name: str, line: int | None = None) -> str:
     suffix = f"::{line}" if line is not None else ""
-    return f"{kind}:{path}:{name}{suffix}"
+    return f"{kind}:{path}:{_public_source_text(name)}{suffix}"
 
 
 def _line_for(text: str, offset: int) -> int:
@@ -109,7 +126,7 @@ def _doc_for_line(lines: list[str], index: int) -> str | None:
     if index + 1 < len(lines):
         candidate = lines[index + 1].strip()
         if candidate.startswith(('"""', "'''", "//", "*", "#")):
-            return candidate.strip('"\'/*# ').strip()[:240] or None
+            return _public_source_text(candidate.strip('"\'/*# ').strip())[:240] or None
     return None
 
 
@@ -130,7 +147,7 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
             Node(
                 id=_stable_id("section", path, match.group(2), _line_for(text, match.start())),
                 kind="section",
-                name=match.group(2).strip(),
+                name=_public_source_text(match.group(2).strip()),
                 path=path,
                 line=_line_for(text, match.start()),
             )
@@ -162,7 +179,7 @@ def _extract_symbols(text: str, path: str, language: str) -> list[Node]:
                     name=name,
                     path=path,
                     line=line,
-                    signature=signature[:300],
+                    signature=_public_source_text(signature)[:300],
                     summary=_doc_for_line(lines, line - 1),
                 )
             )
@@ -263,14 +280,16 @@ def scan_repository(root: Path, *, project_model: dict | None = None, strict: bo
     file_hashes: dict[str, str] = {}
     edges: set[Edge] = set()
     attempted_reads = {}
+    raw_source_hashes = {}
 
     for relative, absolute in zip(relative_files, sorted(candidates, key=lambda p: p.relative_to(root).as_posix())):
-        text = _safe_text(absolute)
-        attempted_reads[relative] = text
+        text, raw_sha256 = _safe_source(absolute)
+        attempted_reads[relative] = (text, raw_sha256)
         if text is None:
             classifier.diagnostics.append({"path": relative, "code": "SOURCE_NOT_ANALYZED",
                                            "reason": "Unreadable, non-UTF8 or exceeds source size limit"})
             continue
+        raw_source_hashes[relative] = raw_sha256
         language = EXTENSIONS[absolute.suffix.lower()]
         file_hashes[relative] = _file_digest(text)
         content_by_file[relative] = text
@@ -336,10 +355,10 @@ def scan_repository(root: Path, *, project_model: dict | None = None, strict: bo
                 continue
             file_id = file_nodes[relative].id
             language = EXTENSIONS[Path(relative).suffix.lower()]
-            found_nodes, found_edges = extract_domain(relative, text, language, file_id, symbols[relative])
+            found_nodes, found_edges = extract_domain(relative, text, language, file_id, symbols[relative], source_sha256=raw_source_hashes[relative])
             local_nodes.extend(found_nodes)
             local_edges.update(found_edges)
-            found_nodes, found_edges = extract_openapi(relative, text, file_id)
+            found_nodes, found_edges = extract_openapi(relative, text, file_id, source_sha256=raw_source_hashes[relative])
             local_nodes.extend(found_nodes)
             local_edges.update(found_edges)
         dataflow = extract_dataflow({p: t for p, t in sources.items() if file_nodes[p].role == "executable_code"})
@@ -359,7 +378,7 @@ def scan_repository(root: Path, *, project_model: dict | None = None, strict: bo
     nodes.extend(symbol for symbols in symbols_by_file.values() for symbol in symbols)
     nodes.extend(domain_nodes)
     nodes.sort(key=lambda node: (node.path, node.line or 0, node.kind, node.name))
-    if _candidate_files(root, project_model) != candidates or any(_safe_text(root / path) != text for path, text in attempted_reads.items()):
+    if _candidate_files(root, project_model) != candidates or any(_safe_source(root / path) != capture for path, capture in attempted_reads.items()):
         raise AnalysisError("Source snapshot changed during analysis", 3)
     if Classifier(root, project_model, strict).fingerprint != classifier.fingerprint:
         raise AnalysisError("Classification configuration changed during analysis", 3)

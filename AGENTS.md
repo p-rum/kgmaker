@@ -30,3 +30,19 @@ Před významnou implementací proveď architektonickou rekognoskaci dle instruk
 - Ověř relevantní existující testy, nulovou mutaci při chybě a čistotu diffu. Worker testy hlásí chybějící toolchain jako SKIP/blocked, ne PASS. Dokumentační změna nepotřebuje nové testy kopírující text pravidel.
 - Generované grafy obnov příkazem, neupravuj je ručně. Sémantický patch vytvářej pouze s doloženými vazbami pro aktuální packet; pokud takové změny nejsou, nic nevymýšlej.
 - Předej reviewovatelný PR s odkazem na zadání a dokument změn. Implementační agent PR nemerguje. Uživatelský pokyn pro [T045](docs/tasks/45_addCodeReviewAgent.md) výslovně pověřuje projektového `code_review` agenta mergováním po jeho review APPROVE nad aktuálním HEAD a splnění kontrol; pro ostatní PR platí zákaz merge bez explicitního pokynu.
+
+## Merge kontroly — uživatelská revize 2026-11-03
+
+GitHub Actions/CI není povinnou podmínkou merge, pokud pro aktuální base/head
+projdou všechny ostatní povinné kontroly: acceptance zadání, relevantní lokální
+testy a skutečný vyžadovaný toolchain, čistota diffu, nezávislé review APPROVE,
+závislosti, ready stav a mergeability. Nepřítomné, neprovedené nebo fakturací
+zablokované GH CI se uvede pravdivě jako neověřené; nenahrazuje se tvrzením PASS.
+Konkrétní chyba kódu či testů z CI se musí vyřešit jako každý blokující nález.
+Chybějící jiný povinný důkaz nebo platný REQUEST_CHANGES nadále blokuje merge.
+
+Tato výslovná změna uživatele má přednost před staršími formulacemi vyžadujícími
+zelené GH CI v zadáních a profilech. Workflow a jejich testy zůstávají zachovány.
+Respektuj skutečná serverová pravidla GitHubu; nepoužívej force/admin bypass.
+Před merge znovu ověř obě SHA, použij expected_head_sha a potom ověř merged=true,
+merge commit i cílovou větev. Viz T045 revize 2.

@@ -12,7 +12,10 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T002 | [2_buildAwareInspection.md](2_buildAwareInspection.md) | JVM build, call graph, Spring a Hibernate | Normativní; částečně implementováno |
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
 | T004 | [4_addHighLevelProjectViews.md](4_addHighLevelProjectViews.md) | Integrační katalog, topologie služeb a business procesy; T005–T044 níže | SPECIFICATION |
-| T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION; profil není důkazem provedeného merge |
+| T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION, revize 2; GH CI je doplňující, ostatní kontroly zůstávají povinné; profil není důkazem merge |
+| T047 | [47_addReliableIncrementalContext.md](47_addReliableIncrementalContext.md) | Inkrementální integrita, bezpečnostní kontext, hranice dopadu a platnost ověření; 13 kroků | SPECIFICATION, revize 1 |
+
+T046 je již přiděleno v otevřeném [PR #41](https://github.com/p-rum/kgmaker/pull/41) a navazujícím balíku #42–45/#40; není v této baseline main. T047 jeho číslo nerecykluje a execution evidence navazuje na jeho obsahové reference a workflow. Registraci T046 při merge zachovej.
 
 | T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION; implementace viz stavová matice |
 
@@ -33,21 +36,21 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | Task | Soubor a cíl | Závislosti | Stav |
 |---|---|---|---|
 | T005 | [Verzovaný společný model pohledu](T-005_add-view-model.md) | T004 kontrakt | SPECIFICATION |
-| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION |
+| T006 | [Výběr kontextů pro více služeb](T-006_select-service-contexts.md) | T005; T003-S02 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T007 | [Explicitní vlastnictví služeb](T-007_define-service-ownership.md) | T005 | SPECIFICATION |
-| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION |
+| T008 | [Inventář služeb a externích systémů](T-008_project-service-inventory.md) | T006, T007 | SPECIFICATION, revize 2 (shared context-role boundary) |
 | T009 | [Evidence a pokrytí agregovaných objektů](T-009_propagate-view-evidence.md) | T005, T006; T003-S07-W08 | SPECIFICATION |
 | T010 | [Katalog poskytovaných HTTP rozhraní](T-010_catalog-http-providers.md) | T008, T009 | SPECIFICATION |
 | T011 | [Katalog používaných HTTP rozhraní](T-011_catalog-http-consumers.md) | T008, T009; T003-S07-W06 | SPECIFICATION |
 | T012 | [Katalog Kafka producerů a consumerů](T-012_catalog-kafka-interfaces.md) | T008, T009; T003-S07-W04 | SPECIFICATION |
 | T013 | [Připojení verzovaných integračních kontraktů](T-013_attach-interface-contracts.md) | T010, T011, T012 | SPECIFICATION |
-| T014 | [Projekce ověřených vzdálených bindingů](T-014_bind-remote-interfaces.md) | T013; T003-S07-W07 | SPECIFICATION |
+| T014 | [Projekce ověřených vzdálených bindingů](T-014_bind-remote-interfaces.md) | T013; T003-S07-W07 | Merged PR80; bounded source/result evidence retained as history; cold correction PR85 merged in mainfbb |
 | T015 | [Databáze a jiné datové závislosti](T-015_project-data-resources.md) | T008, T009; T003-S06 | SPECIFICATION |
-| T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | SPECIFICATION |
-| T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | SPECIFICATION |
-| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016 | SPECIFICATION |
-| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | SPECIFICATION |
-| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION |
+| T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | Merged PR81; bounded source/result evidence retained as history |
+| T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | Merged PR82; bounded source/result evidence retained as history |
+| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Merged PR83; bounded source/result evidence retained as history |
+| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | Merged PR84; bounded source/result evidence retained as history |
+| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | Rev2; current-stage85PASS, exact2648 source-qualified IDs; independent final review pending |
 | T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |
 | T022 | [Markdown report topologie a detailů](T-022_render-topology-markdown.md) | T018, T021 | SPECIFICATION |
 | T023 | [Model business procesu a jeho revizí](T-023_define-business-process-model.md) | T005, T009 | SPECIFICATION |
@@ -59,8 +62,8 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T029 | [Chybové větve, retry a kompenzace](T-029_project-process-failures.md) | T025, T028; T003-S07-W05 | SPECIFICATION |
 | T030 | [Packet pro business pojmenování agentem](T-030_prepare-process-label-packet.md) | T024, T026 | SPECIFICATION |
 | T031 | [Validace agentových návrhů](T-031_validate-process-annotations.md) | T023, T030 | SPECIFICATION |
-| T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION |
-| T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | SPECIFICATION |
+| T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION Rev2; bounded POSIX CAS, explicitní review |
+| T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | Merged PR79; bounded source/result evidence retained as history |
 | T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033 | SPECIFICATION |
 | T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
 | T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
@@ -118,10 +121,10 @@ vytvořené PR k review a po schválení současného HEAD je může mergeovat.
 | T003-S07-W01 | [T003-S07-01-argumentParameterFlow.md](T003-S07-01-argumentParameterFlow.md) | argument parameter flow | SPECIFICATION |
 | T003-S07-W02 | [T003-S07-02-returnConsumerFlow.md](T003-S07-02-returnConsumerFlow.md) | return consumer flow | SPECIFICATION |
 | T003-S07-W03 | [T003-S07-03-fieldAndMappingFlow.md](T003-S07-03-fieldAndMappingFlow.md) | field and mapping flow | SPECIFICATION |
-| T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity | SPECIFICATION |
+| T003-S07-W04 | [T003-S07-04-kafkaBindingIdentity.md](T003-S07-04-kafkaBindingIdentity.md) | kafka binding identity; revize2 canonical code/group proofs | SPECIFICATION |
 | T003-S07-W05 | [T003-S07-05-kafkaRetryDlt.md](T003-S07-05-kafkaRetryDlt.md) | kafka retry dlt | SPECIFICATION |
 | T003-S07-W06 | [T003-S07-06-httpClientExecution.md](T003-S07-06-httpClientExecution.md) | http client execution | SPECIFICATION |
-| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | cross service contract mapping | SPECIFICATION |
+| T003-S07-W07 | [T003-S07-07-crossServiceContractMapping.md](T003-S07-07-crossServiceContractMapping.md) | revision2: explicit service/contract/release mapping; planned T013/T012 stack | SPECIFICATION |
 | T003-S07-W08 | [T003-S07-08-evidenceRanking.md](T003-S07-08-evidenceRanking.md) | evidence ranking | SPECIFICATION |
 | T003-S07-W09 | [T003-S07-09-unifiedFlowViews.md](T003-S07-09-unifiedFlowViews.md) | unified flow views | SPECIFICATION |
 | T003-S08-W01 | [T003-S08-01-typescriptProjectReferences.md](T003-S08-01-typescriptProjectReferences.md) | typescript project references | SPECIFICATION |

@@ -5,11 +5,12 @@ import pytest
 
 import test_compiler_workers as compiler
 import test_k2_backend as k2
+import test_kafka_retry_dlt as retry
 from kgmaker.inspection import command
 
 
 @pytest.mark.parametrize("required", [None, "0", "1"])
-@pytest.mark.parametrize("missing", ["jvm", "jdk", "typescript", "mixed-fixture", "k2"])
+@pytest.mark.parametrize("missing", ["jvm", "jdk", "typescript", "mixed-fixture", "k2", "retry-api"])
 def test_missing_prerequisite_fails_required_but_skips_optional(tmp_path, monkeypatch, required, missing):
     """Call the actual integration setup, using an empty distribution/fixture.
 
@@ -37,7 +38,20 @@ def test_missing_prerequisite_fails_required_but_skips_optional(tmp_path, monkey
         raise AssertionError("prerequisite discovery must not start a process")
 
     monkeypatch.setattr("subprocess.Popen", forbidden_process)
-    if missing == "k2":
+    if missing == "retry-api":
+        # The real API discovery helper must fail required runs before a compiler
+        # sees unpinned inputs; a different required backend flag is independent.
+        lock = retry.ROOT / "fixtures/kafka-retry-dlt/dependencies.lock.json"
+        fixture = tmp_path / "fixtures/kafka-retry-dlt"
+        fixture.mkdir(parents=True)
+        (fixture / "dependencies.lock.json").write_bytes(lock.read_bytes())
+        monkeypatch.setattr(retry, "ROOT", tmp_path)
+        monkeypatch.setenv("KGMAKER_TEST_MAVEN_REPOSITORY", str(tmp_path / "missing-api"))
+        monkeypatch.delenv("KGMAKER_REQUIRE_K2", raising=False)
+        expected = pytest.fail.Exception if required == "1" else pytest.skip.Exception
+        with pytest.raises(expected, match="Pinned retry API input unavailable"):
+            retry.api_inputs()
+    elif missing == "k2":
         monkeypatch.setattr(k2, "command", lambda *args, **kwargs:
                             command("jvm", empty_home, kotlin_backend="k2"))
         expected = pytest.fail.Exception if required == "1" else pytest.skip.Exception

@@ -114,3 +114,12 @@ o změně jsou v [change note](../../docs/changes/14_configureLunaAgents.md).
 Tato konfigurace pouze zpřístupňuje profily v nové Codex session. Sama agenty
 nespouští a přítomnost profilu neznamená běžící implementační job ani dokončený
 task. Stav `SPECIFICATION` se nemění.
+
+## GH CI a ostatní merge kontroly
+
+Podle výslovné uživatelské revize T045 z 2026-11-03 je GH CI nepovinné, pokud
+projde veškerá ostatní acceptance, skutečné lokální testy/toolchain a nezávislé
+review aktuálního base/head. Stav CI se uvede pravdivě; konkrétní chybu z CI,
+chybějící jiný důkaz, draft, konflikt či nesplněnou závislost nelze přehlédnout.
+Serverovou branch protection agent neobchází; zachovává expected_head_sha a
+pomergové ověření. Starší CI-only blokace v historických poznámkách nejsou gate.

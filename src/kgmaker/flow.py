@@ -7,6 +7,7 @@ from collections import defaultdict
 from .analysis_model import AnalysisError, digest
 from .callgraph import strongly_connected
 from .views import project
+from .dataflow import argument_parameter_bindings
 
 
 def _label(value):
@@ -55,15 +56,16 @@ def control_flow(graph, entry, *, scope="production", max_nodes=500, representat
             "limitations": cfg.get("limitations", [])}
 
 
-def process(graph, entry, *, scope="production", max_depth=3, max_nodes=500):
+def process(graph, entry, *, scope="production", max_depth=3, max_nodes=500, context_id=None):
     """Expand CFG calls only when a unique body is a safe static representation.
 
 No ordering is derived from a call graph. Recursive, dispatch-uncertain and
 size/depth-limited calls remain explicit boundaries with original call-site IDs.
 """
-    if max_depth < 0 or max_nodes < 1:
+    if type(max_depth) is not int or type(max_nodes) is not int or max_depth < 0 or max_nodes < 1:
         raise AnalysisError("Invalid traversal limits")
-    graph = project(graph, scope)
+    policy_input = graph
+    graph = project(graph, scope, context_id=context_id)
     bodies = [c for c in graph.cfgs if c.get("representation") == "SOURCE"]
     if len({c["method"] for c in bodies}) != len(bodies):
         raise AnalysisError("Explicit context required for process CFG variants")
@@ -71,8 +73,29 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
     sites = {s["id"]: s for s in graph.call_sites}
     if entry not in cfgs:
         raise AnalysisError("Source CFG unavailable for process entry")
+    if len(cfgs[entry]["blocks"]) > max_nodes:
+        # An oversized root has no safe expansion within the requested budget.
+        # Preserve a single explicit entry boundary instead of silently copying
+        # its entire CFG or inventing edges between an arbitrary retained prefix.
+        cfg = cfgs[entry]
+        identity = "process:" + digest({"entry": entry, "boundary": "node limit"})[:24]
+        boundary = {"id": identity, "kind": "unresolved_boundary", "label": "node limit",
+                    "method": entry, "boundary_reason": "node limit",
+                    "original_ids": sorted({entry, cfg["entry"], cfg["exit"], cfg["exceptional_exit"]}),
+                    "omitted_blocks": len(cfg["blocks"])}
+        return {"schema_version": 1, "view": "process", "entry": entry, "scope": scope,
+                "contexts": graph.contexts, "status": "PARTIAL", "truncated": True,
+                "diagnostics": [{"code": "PROCESS_ROOT_NODE_LIMIT", "method": entry,
+                                 "omitted_blocks": len(cfg["blocks"])}],
+                "cfg": {"entry": identity, "exit": identity, "exceptional_exit": identity,
+                        "blocks": [boundary], "edges": []},
+                "boundaries": [{"target": entry, "reason": "node limit"}],
+                "strongly_connected_components": [],
+                "limits": {"max_depth": max_depth, "max_nodes": max_nodes},
+                "limitations": ["Root CFG omitted; static expansion is not observed execution."]}
     blocks, edges, omitted = {}, [], []
     expanded_methods = set()
+    symbols = {symbol["id"]: symbol for symbol in graph.symbols}
 
     def expand(method, depth, ancestry, prefix):
         cfg = cfgs[method]
@@ -88,35 +111,71 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
                 continue
             site = sites.get(call_ids[0])
             if not site:
+                blocks[ids[block["id"]]]["boundary_reason"] = "call-site proof unavailable"
+                blocks[ids[block["id"]]]["original_ids"].append(call_ids[0])
+                omitted.append({"call_site": call_ids[0], "target": None, "reason": "call-site proof unavailable"})
                 continue
             target = site.get("declared_target")
             candidates = set(site.get("dispatch_candidates", []))
             uncertain = len(candidates) > 1 or (candidates and candidates != {target}) or ((site.get("invocation_kind") in {"VIRTUAL", "INTERFACE", "INVOKEVIRTUAL", "INVOKEINTERFACE"} or (site.get("invocation_kind") == "CALL" and site.get("receiver_type"))) and not site.get("dispatch_complete"))
-            reason = "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
+            target_symbol = symbols.get(target, {})
+            async_hint = target_symbol.get("suspend") is True or any(
+                isinstance(annotation, dict) and annotation.get("name") == "org.springframework.scheduling.annotation.Async"
+                for annotation in (target_symbol.get("annotations") if isinstance(target_symbol.get("annotations"), list) else []))
+            reason = "async/coroutine unsupported" if async_hint else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
+            blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
+            from .return_flow import return_consumer_bindings
+            blocks[source_id]["return_consumer_bindings"] = return_consumer_bindings(graph, site["id"])
+            blocks[source_id]["return_binding_status"] = {
+                "status": site.get("return_mapping_status", "UNKNOWN"),
+                "reason": site.get("return_mapping_reason", "LEGACY_RETURN_BINDINGS_UNAVAILABLE"),
+                "body": site.get("return_body_status", "UNKNOWN"),
+                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
+            blocks[source_id]["argument_binding_status"] = {
+                "status": site.get("argument_mapping_status", "UNKNOWN"),
+                "reason": site.get("argument_mapping_reason", "LEGACY_ARGUMENT_BINDINGS_UNAVAILABLE"),
+                "omitted_parameters": site.get("argument_omissions", []),
+                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
             if reason:
                 blocks[source_id]["boundary_reason"] = reason
                 omitted.append({"call_site": site["id"], "target": target, "reason": reason})
                 continue
-            child_entry, child_exit, child_exception = expand(target, depth + 1, ancestry + (target,), prefix + (site["id"],))
+            # A single lexical call-site can have several structural CFG clones
+            # (for example finally continuations for return and throw). Keep
+            # those caller contexts separate without changing the original site.
+            child_entry, child_exit, child_exception = expand(
+                target, depth + 1, ancestry + (target,), prefix + (site["id"], block["id"]))
             normal = [e for e in local_edges if e["source"] == source_id and e["kind"] == "normal"]
             exceptional = [e for e in local_edges if e["source"] == source_id and e["kind"] == "exception"]
             local_edges = [e for e in local_edges if e not in normal and e not in exceptional]
-            local_edges.append({"source": source_id, "target": child_entry, "kind": "call", "original_ids": [site["id"]]})
-            local_edges.extend({**e, "source": child_exit, "kind": "returns_to"} for e in normal)
-            local_edges.extend({**e, "source": child_exception, "kind": "exception"} for e in exceptional)
+            local_edges.append({"source": source_id, "target": child_entry, "kind": "call",
+                                "call_site": site["id"], "caller_block": block["id"],
+                                "original_ids": [site["id"], block["id"]]})
+            local_edges.extend({**e, "source": child_exit, "kind": "returns_to", "call_site": site["id"],
+                                "caller_block": block["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"], block["id"]]))} for e in normal)
+            local_edges.extend({**e, "source": child_exception, "kind": "exception", "call_site": site["id"],
+                                "caller_block": block["id"],
+                                "original_ids": sorted(set(e.get("original_ids", []) + [site["id"], block["id"]]))} for e in exceptional)
         edges.extend(local_edges)
         return ids[cfg["entry"]], ids[cfg["exit"]], ids[cfg["exceptional_exit"]]
 
     first, last, exceptional = expand(entry, 0, (entry,), (entry,))
+    from .dataflow import http_request_inventory
+    http = http_request_inventory(graph, callers=expanded_methods)
+    from .kafka_retry import policy_boundaries
+    kafka_policy = policy_boundaries(policy_input, expanded_methods)
+    policy_diagnostics=[{'code':'KAFKA_POLICY_UNRESOLVED','policy_id':row['policy_id'],
+                         'source':row['source'],'reasons':row['reasons']} for row in kafka_policy if row['status']=='UNKNOWN']
     return {"schema_version": 1, "view": "process", "entry": entry, "scope": scope, "contexts": graph.contexts,
-            "status": "PARTIAL" if omitted or any(cfgs[m].get("diagnostics") for m in expanded_methods) else "COMPLETE_WITHIN_SUPPORTED_SYNTAX",
-            "diagnostics": [d for m in sorted(expanded_methods) for d in cfgs[m].get("diagnostics", [])], "truncated": any(o["reason"].endswith("limit") for o in omitted),
+            "status": "PARTIAL" if omitted or policy_diagnostics or any(cfgs[m].get("diagnostics") for m in expanded_methods) else "COMPLETE_WITHIN_SUPPORTED_SYNTAX",
+            "diagnostics": [d for m in sorted(expanded_methods) for d in cfgs[m].get("diagnostics", [])]+policy_diagnostics, "truncated": any(o["reason"].endswith("limit") for o in omitted),
             "cfg": {"entry": first, "exit": last, "exceptional_exit": exceptional,
                     "blocks": sorted(blocks.values(), key=lambda b: b["id"]),
                     "edges": sorted(edges, key=lambda e: (e["source"], e["target"], e["kind"]))},
-            "boundaries": omitted, "strongly_connected_components": strongly_connected(graph),
+            "http": http, "kafka_policy_boundaries": kafka_policy, "boundaries": omitted, "strongly_connected_components": strongly_connected(graph),
             "limits": {"max_depth": max_depth, "max_nodes": max_nodes},
             "limitations": ["Static expansion is not proof of runtime dispatch, input feasibility or global async order."]}
 
@@ -154,7 +213,21 @@ def markdown(report):
         source = block.get("source_file")
         location = f"{source}:{position.get('start_line', '?')}" if source else "synthetic control node"
         lines.append(f"- `{block['id']}`: {location}; original IDs: " + ", ".join("`" + i + "`" for i in block.get("original_ids", [])))
+    bindings = {p["id"]: p for block in report["cfg"]["blocks"] for p in block.get("return_consumer_bindings", [])}
+    if bindings:
+        lines.extend(["", "## Static return/consumer bindings (availability UNKNOWN)", ""])
+        for p in sorted(bindings.values(), key=lambda item: item["id"]):
+            lines.append("- `" + p["source"] + "` → `" + p["target"] + "`: " + p["transformation"])
     lines.extend(["", "## Coverage/limits", "", *["- " + x for x in report.get("limitations", [])]])
+    if report.get("http"):
+        lines.extend(["", "## HTTP request intent (runtime availability UNKNOWN)", ""])
+        for item in report['http']['requests']:
+            lines.append("- `" + item['id'] + "`: " + item['execution_status'])
+    if report.get("kafka_policy_boundaries"):
+        lines.extend(["", "## Kafka retry/DLT policy declarations (execution NOT_OBSERVED)", ""])
+        for item in report['kafka_policy_boundaries']:
+            lines.append("- `" + item['policy_id'] + "`: " + item['kind'] + "; " + item['status']
+                         + "; delivery NOT_OBSERVED; runtime/data availability UNKNOWN")
     if report.get("truncated"):
         lines.append("- PARTIAL: diagram is truncated; omitted detail is explicitly bounded.")
     return "\n".join(lines) + "\n"

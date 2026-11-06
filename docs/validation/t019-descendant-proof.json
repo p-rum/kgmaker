@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "base": "1005b9f950102d2d5fd0e74735bc0577c2e30c0b",
+  "owned_source_approved": "abad2e30c1a1e422392585e6073995568b82a564",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE completed strict accepted descendant, not a new run on this integrated head",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.878,
+    "runner_seconds": 2048.01,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_sets": true
+  },
+  "own34_actual_statuses": {
+    "tests/test_t019_add_architecture_json_cli.py::test_bounded_input_errors_leave_stdout_empty_and_last_artifact_unchanged[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_bounded_input_errors_leave_stdout_empty_and_last_artifact_unchanged[not-json]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_bounded_input_errors_leave_stdout_empty_and_last_artifact_unchanged[{\"schema_version\":1,\"schema_version\":2}]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_bounded_input_errors_leave_stdout_empty_and_last_artifact_unchanged[{\"x\":NaN}]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_broken_pipe_is_controlled_without_traceback_or_second_json": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_cancel_file_is_read_only_exit130_before_input_capture": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_capture_local_interfaces_uses_existing_canonical_catalog_without_writes": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_capture_local_is_explicit_real_parser_replay_without_any_index_or_store_write": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_capture_local_missing_or_corrupt_original_index_never_runs_parser[False]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_capture_local_missing_or_corrupt_original_index_never_runs_parser[True]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_complete_model_exit_policy_does_not_depend_on_runtime_observation": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_expected_fingerprint_is_explicit_conflict_not_snapshot_repair": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_explain_preserves_filtered_snapshot_frontiers_and_unknown_element": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_explicit_check_source_uses_original_graph_and_preserves_snapshot_hash": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_interface_capture_graph_and_private_workspace_tamper_fail_consistency": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_keyboard_interrupt_in_command_boundary_has_no_partial_output": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_legacy_version_and_graph_flow_help_remain_available": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_node_cutoff_keeps_entire_filter_omission_frontier": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_public_explain_uses_original_handoff_without_current_source_observation": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_public_interfaces_snapshot_returns_exact_canonical_requested_catalog": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_public_topology_snapshot_emits_whole_filter_envelope_and_strict_partial_exit": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_safe_parser_never_reflects_invalid_credential_arguments[args0]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_safe_parser_never_reflects_invalid_credential_arguments[args1]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_safe_parser_never_reflects_invalid_credential_arguments[args2]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_safe_parser_never_reflects_invalid_credential_arguments[args3]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_snapshot_empty_pins_preserve_captured_selection_and_scope_is_assertion": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_snapshot_replay_never_calls_live_source_or_projector": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_snapshot_selection_asserts_original_pins_and_never_reselects[selection0]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_snapshot_selection_asserts_original_pins_and_never_reselects[selection1]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_snapshot_selection_asserts_original_pins_and_never_reselects[selection2]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_source_status_sidecar_is_pure_and_does_not_reopen_checkout": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_unexpected_internal_error_is_fixed_exit1_without_input_echo": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_unsafe_interface_output_is_rejected_without_redacting_bound_ids": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t019_add_architecture_json_cli.py::test_unsupported_output_and_input_bounds_never_publish_partial_document": {
+      "status": "PASS",
+      "details": []
+    }
+  },
+  "current1005_main2563_plus34_union": {
+    "count": 2597,
+    "PASS": 2587,
+    "SKIP": 10,
+    "EXACT_ENTIRE_accepted2597_set": true,
+    "missing_ids": [],
+    "unexpected_ids": [],
+    "remaining2563IDs_exact_merged_T018_parent_collection": true,
+    "actual_execution": false,
+    "collection_only": true,
+    "existing_main_test_bodies_unchanged": true
+  },
+  "global_runtime_test_fixture_workflow_paths_checked": 302,
+  "global_path_set_EXACT_accepted_full": true,
+  "global_ALL302_bytes_exact_accepted_full": true,
+  "CLI_exception_remaining": false,
+  "own_architecture_cli_global_cli_tests_exact_sha256": {
+    "src/kgmaker/architecture_cli.py": "8be728c87c955d1a95d52241d3c1825d4c63efef8075e1e68490c781a4e70684",
+    "src/kgmaker/cli.py": "6f35c6610a2d272334a771f50daf1b4ed718705a05511a4479721db7c9087492",
+    "tests/test_t019_add_architecture_json_cli.py": "3b6649b083f93071cdf1f8b1ed66f46c178ee2bdc4bd1018afcd57733bc116c4"
+  },
+  "only_change_in_existing_cli": "Exactly two registration +three early dispatch lines, no other byte change vs main",
+  "current_main_CI_exact": true,
+  "native_worker_source_inputs_exact": 27,
+  "prepared_fixture_source_inputs_exact": 9,
+  "native_actual_build_origin": "079ec21f9a7d1ce5ab9de900dc8e708316495442",
+  "native_build": "NOT_RUN",
+  "required_sorted_IDs_sha256": "116ff130bb632cc1a471f2918fded81bf11a099a5d7fa558afc3aaf2de7eaa86",
+  "per_ID_status_file_sha256": "db6cae402fcc38bb2b3e0461ad95cbea1d5e10ef6fe9c3cea0312f40335bf106",
+  "global_source_manifest_sha256": "79d72a393f862982d5d65332a8aa9f40ee2751d3d1b065f5d3a871a7549d551a",
+  "receipt_SHA256": {
+    "/workspace/pure-integration-proof/full-attempt-2/status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "/workspace/pure-integration-proof/full-attempt-2/full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "/workspace/pure-integration-proof/full-attempt-2/all-result-classification.json": "b264b9b0721a16e4bc228b337a476d8c0b3c76acbe9550c3dc9f18ffd42fb368",
+    "/workspace/pure-integration-proof/staged-artifact-copy.json": "080f60c8fea2c75975f0a0d454ddff41fd2f377a8c8eed78bc01e404192bd3a6",
+    "/workspace/t019-validation/root-source-review.json": "c6a3c9e9927be1e1f2067531ef2b44c0c84ae1331562387ece97e1fee71ff39a",
+    "/workspace/t014-t021-transfer-proof/transfer-ledger.json": "da425d64d2de2faba4b46df6391249e512a400191c24daf1dc3dab1e5769b298",
+    "/workspace/t018-validation/main4e4/final-local-head-proof.json": "f254d00221fb049b73e3dbfdb6b10d544ce357fa70047c8f1066077bce9b8bd4"
+  },
+  "preserved_history": {
+    "current_main_episode_prefix": 247,
+    "all_old230_child_episode_objects_preserved": true,
+    "expected_total_episodes": 248,
+    "new_capture": "ONE scoped T019 memory CLI capture",
+    "main_semantic_fact_keys_preserved": true
+  },
+  "remaining": [
+    "Independent current exact base/head final review",
+    "Root merge guard/publication decision"
+  ],
+  "limits": [
+    "Snapshot-only default, explicit capture-local parser replay preflights original indexes; no implicit compiler/index/store publication",
+    "Source check is separate explicit T018 bound hash observation; no runtime/data proof",
+    "No new actual/full/build/tool/cache mutation; active W03 and frozen global tools untouched",
+    "T020/T021/T022 absent; later joint staging/full separate, NO blanket acceptance"
+  ],
+  "GHCI": "all14 billing/cascade only optional/unverified; not PASS"
+}

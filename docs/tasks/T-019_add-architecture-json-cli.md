@@ -2,8 +2,8 @@
 
 - Task ID: `T019`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T010](T-010_catalog-http-providers.md); [T011](T-011_catalog-http-consumers.md); [T012](T-012_catalog-kafka-interfaces.md); [T013](T-013_attach-interface-contracts.md); [T017](T-017_filter-topology-scope.md); [T018](T-018_explain-view-elements.md).
@@ -61,3 +61,82 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T019** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize 2 — explicitní capture a snapshot-only JSON CLI
+
+Root schválil `/workspace/t019-architecture-brief.md` a konkrétní hranici:
+DEFAULT snapshot-only pure replay; optional --capture-local je explicitní local
+source/parser replay přes existing API, nikdy index/cache/store publication.
+Required original public indexes se preflightují PŘED parser/capture; missing/
+corrupt je fixed actionable error2, žádný scan/build/inspect fallback. Snapshot
+mode nevolá žádný scanner/projector/current-source loader. Explicitní stack je
+T0182992188 nad T017f22/T016806, finalcurrent dependency/full closure pending.
+
+Příkazy mají jen --format json; Mermaid/Markdown/export/diff se nepřidávají.
+Root je coordinator/input path context, bez explicit workspace se service world
+nevymýšlí z folderu. Root-only snapshot replay je validní. CLI main směruje
+architecture před generic workspace handler, legacy graph view/flow render a
+ostatní argumenty zůstávají. Safe architecture parser errors neechojí rawtokens.
+
+interfaces --catalog http-providers|http-consumers|kafka použije buď
+--interface-capture FILE nebo --workspace FILE --capture-local. W07 input bundle
+má PŘESNĚ {schema_version:1,rules_version:'architecture-interface-inputs-1',
+workspace,graph,captured}. Workspace je původní DECLARATIVNÍ/public manifest
+bez top-level/repository private '_' polí, graph je původní veřejný graph JSON,
+captured je existing W07 capture. Je to pouze transport explicitního tuple,
+ne nový store/katalog ani autentizace arbitrary replacementJSON. Pure W07 resolver
+ověří bindingGraph/workspace/selection/canonical docs před výběrem přesného role
+ViewDocument podle published view_id, ne arrayindex/labelguess. CLI jej nemění.
+Capture-local vezme jeden explicit workspace/snapshot/coverage tuple a W07
+canonical capture/T013attachments, no write; původní graph/manifestroot se nikdy
+nevyexportuje do stdout. Missing index brání parser replay i v tomto opt-in módu.
+
+Topology přijímá --capture-snapshot FILE (existingT016envelope) nebo explicit
+--workspace FILE --capture-local. Reuse aggregate_service_topology a potom
+filter_topology. Výstup je CELÝ existingversioned T017 envelope {schema_version,
+rules_version,document,filtering}, nikoli bareViewDoc bez frontier/omittedIDs.
+AC01 proto připouští tento existující envelope vedle ViewDocument/ExplainDocument.
+--focus je exactserviceNODEID; --direction/--max-hops/--max-nodes/--relations a
+--filter-contexts používají původní T017semantics. Žádné CLI nové agregace či
+reconnect hrany; omitted sibling se nestává unikátníRESOLVED.
+
+Explain vyžaduje --snapshot FILE + --capture-snapshot FILE + --element ID.
+Snapshot je původníT016ViewDoc nebo celýT017envelope. Reuse T018canonicalrederive;
+optional --graph-snapshot FILE musí být původní boundPUBLICgraph. Chybějícígraph
+zůstává locatorUNAVAILABLE, žádný privateLATEST/newerrepair. --source-status FILE
+je explicitní existující statuscapture; --check-source je samostatný opt-in přes
+T018 s --workspace a --graph-snapshot. Paths se neberou odcallerflags, referenceIDs
+se odvodí z původního reportu. DefaultNOT_CHECKED, nikdyCURRENT. --check-source
+neznamená novýsnapshot anileruntime/context freshnessupgrade.
+
+--scope a --context-selection FILE v snapshotmódu pouze ASSERTují zachycenývýběr,
+nevybírají jinýkontext ani nerewriteují doc. Scope default capture-local production,
+snapshot bezassertion zachová ownscope. Selectionfile má přesně {schema_version:1,
+contexts:[{service_id,repo_id,module,context_id}]}; duplicate tuple/unknownfield/type
+je error2. Převod na existingtuple-keydict je přesný. Empty contexts znamená žádné
+explicitpins, není to prázdnýT017displaycontextfilter. --contextshortcut se zatím
+nezavádí; více repo/module se nikdy nehádá. Context-selection musí souhlasit s
+W07/T016 requestedselection, actualinventoryselection zůstává independent.
+
+BoundedJSONread předdecode, duplicatekeys/NaN/Unicode/depth/cycle/sharedlimits před
+modelcopy. Safe symlink/nonregular/URL inputfiles odmítnout; errors fixednonsecret,
+žádné rawpaths/credentialargs/traceback. Data se validují a serializují před prvním
+stdoutwrite, právě jeden JSON +newline, žádný progress/errorJSON na stdout.
+0 validní výsledek (i PARTIAL bezstrict),2invalid/schema/missingindex,
+3explicit expectedfingerprint/currentcapture conflict,4validní incomplete při
+strict (dataJSON se vrátí),130cancel; BrokenPipe controlledexit bez dalšíhoJSON.
+--expected-fingerprint je explicitní assert finálního view contentfingerprintu
+(vexplain původního requestedview), ne aktuálního filesystemu. Stalehistorical
+explanation je validnímetadata; strict může vrátit4, nepřepisuje původníbaseline.
+Cancellation předemissionstdoutempty; přerušenýstdoutwrite může zanechatpartial
+stream, žádný outputfile/tempfile se kvůli tomu nevytváří. --output/cache/export
+jsou mimoT019. Read-only Git v explicitproviderfázi s optional locksdisabled je
+povolen; app/package/network/model/worker/build se nespustí. No persistentwrites.
+
+PublicRED a subprocessharness: interfaces/topology/explain JSON, strictpartial4/
+non-strict0/invalid2/expectedconflict3, safeparsercredentialerror, missing/corrupt
+index bezfallbacku, snapshotselectorsassert, explicitsourcecheck, cancellation/
+BrokenPipe, input/store/sentinelimmutability a legacyCLI. RelevantníT010–T018pure,
+poté independent sourceclosure a requiredfull na přesném finalcombinedSHA s ALL
+parentIDs/runtime/global/test/nativeclosure. Žádný novýnativebuild kvůliCLI.

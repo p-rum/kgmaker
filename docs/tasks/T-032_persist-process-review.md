@@ -2,14 +2,75 @@
 
 - Task ID: `T032`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T031](T-031_validate-process-annotations.md).
 - Větev: `feat/t032-persist-process-review`
 - PR title: `feat(t032): persist process review`
 - Primární moduly: `nový process_store.py`, `process_semantics.py`. Názvy nových modulů jsou návrh; při existujícím ekvivalentu jej rozšiř a odůvodni umístění v PR.
+
+## Revize 2 — závazný bounded kontrakt
+
+Implementační baseline je explicitně schválený stack T031
+`a3590aaca15a8caa53fb73671ce57f6970e2c6af` / T030 `3ae82b4` / main `c193748`.
+Upstream full je samostatný probíhající důkaz, nikoli hotová závislost.
+Architektura: `/workspace/t032-architecture-brief.md`, přijata koordinátorem.
+
+Veřejné API nového `kgmaker.process_store`:
+
+- `prepare_process_review(process, packet, candidate, *, documents=(), conflicts=())`
+  je čisté. Znovu volá T031 nad aktuálními explicitními vstupy; invalidní návrh
+  vyvolá `ProcessReviewError` s pevným kódem bez hodnot/cest vstupu. Vrací verzi1,
+  normalizované návrhy (seřazené podle ID), payload hash, úplný baseline binding,
+  baseline hash, oddělené dokumentové bindings, technické nejistoty a review status.
+- `persist_process_review(root, process, packet, candidate, *, action, reviewer,
+  operation_id, expected_head, expected_payload_hash, expected_baseline_hash,
+  documents=(), conflicts=(), cancelled=None)` explicitně zapíše rozhodnutí
+  `APPROVE` nebo `REJECT`. `expected_head=None` znamená prázdnou historii.
+  Tokeny musí přesně souhlasit s novou lokální rederivací; operace není automaticky
+  rebased. Identifikátory zachovává přesně, známé credential formy odmítá genericky.
+  Reviewer je lokální deklarace, nikoli autentizovaná nebo technická evidence.
+- `read_process_reviews(root, process, *, documents=(), conflicts=())` vrací historii,
+  head a oddělené aktivní schválené návrhy; aktuální baseline přepočítá s uloženými
+  validovanými budgets. Při změně je effective status `NEEDS_REVALIDATION`, historie
+  původního APPROVE se nemění a aktivní návrhy se nepřenášejí do nové baseline.
+  Neexistující store vrací explicitní EMPTY. Poškozený/neschválený formát hard fail.
+
+APPROVE blokuje jak T031 field CONFLICT, tak captured doc/code CONFLICT; není
+acknowledgement bypass. REJECT smí zaznamenat strukturálně validní konfliktní návrh,
+ale nepublikuje nové aktivní labels a nevymaže starší schválenou revizi. Prázdný
+návrh je odmítnut (`EMPTY_PROPOSAL`). Každé nové rozhodnutí vytvoří monotónní
+semantic revision; `ProcessDefinition.revision`, technický ProcessView a graph
+zůstávají beze změny. Dokumentové citace jsou vlastní namespace bindings, nikdy
+falešná technical provenance nebo nové `known_sources`.
+
+Jeden verzovaný JSON envelope pod `.kgmaker/process-reviews/<hash>.json` obsahuje
+úplnou immutable historii, hash chain a head; hash názvu váže exact process ID+scope.
+Žádný samostatně publikovaný receipt/head/history. Limity formátu1: nejvýše128
+rozhodnutí a 2MiB serializovaného envelope; před čtením/copy/serializací bounded
+vstupy, překročení hard fail bez pruning. Uložený JSON odmítá duplicate keys,
+nonfinite čísla, neznámá pole, neplatné typy/hash chain a symlinky.
+
+Podpora zápisu je POSIX stdlib `fcntl.flock` plus společný thread lock pro všechny
+spolupracující volající. Windows vrací řízené UNSUPPORTED, dokud není skutečně
+ověřen. Lock pokrývá read/CAS/write/fsync/replace. Persistent lock inode se nemaže;
+inicializace lock infrastruktury není semantic publication. Podpora není obranou
+proti hostile same-privilege změnám adresářů/symlinků během operace. Předem známé
+symlinky/confinement chyby jsou odmítnuty. Nepoužívá subprocess/network/model/Git.
+
+Linearizační bod je jediný atomic replace sibling temp. Před replace cancellation
+nebo chyba zachová poslední JSON a uklidí temp. Po replace je výsledek COMMITTED
+nebo INDETERMINATE (např. directory fsync selže); nikdy nepravdivý rollback.
+Operation ID umožní recovery. Stejný operation ID + přesné akční/payload/baseline/
+reviewer/predecessor binding vrací původní receipt bez zápisu/změny mtime; po novějším
+head explicitně `is_current=false`. Jiný obsah stejného operation ID je konflikt.
+Atomic visibility a CAS nejsou slib power-loss durability libovolného filesystemu.
+
+Explicitní snapshots nejsou důkaz fyzické freshness nezávisle mutujícího checkoutu.
+Bounded immutable historie nenahrazuje graph catalog, autentizaci ani archivaci.
+T034 CLI, export/apply do technického modelu a implicitní discovery jsou non-goals.
 
 ## Cíl a hranice samostatné dodávky
 

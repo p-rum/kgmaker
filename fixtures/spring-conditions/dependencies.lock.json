@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "spring_version": "6.2.2",
+  "worker_protocol": 1,
+  "artifacts": [
+    {
+      "coordinate": "org.springframework:spring-context:6.2.2",
+      "path": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.jar",
+      "sha256": "50ca16d01f939abe26496161585756dac0f61b18f0b9fb706d869a47fdb28a9c",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework:spring-core:6.2.2",
+      "path": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.jar",
+      "sha256": "bdb5370f08156ca32be8ed1aa9b879b66d7125a55bc8659c1a60193037b700a3",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework:spring-beans:6.2.2",
+      "path": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.jar",
+      "sha256": "be9ecf9b0dc6b88a869c9079b9076121e4d658d7e12856cc60598f1fe2d70d8a",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework:spring-aop:6.2.2",
+      "path": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.jar",
+      "sha256": "359c8ada456a181bbd87be42c53b381feba1f3f2b5820eb6ca713e5dc793a3e2",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework:spring-expression:6.2.2",
+      "path": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.jar",
+      "sha256": "27d5db562dc47196699819ae9b970b90ea47829a6b4216500eb4844f24fbc4b4",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework:spring-jcl:6.2.2",
+      "path": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.jar",
+      "sha256": "36b4666730c80e6599359ca8c81adead8b52b15fefe8cc25e061717fe87d93ed",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/license.txt"
+    },
+    {
+      "coordinate": "org.springframework.boot:spring-boot-autoconfigure:3.4.2",
+      "path": "org/springframework/boot/spring-boot-autoconfigure/3.4.2/spring-boot-autoconfigure-3.4.2.jar",
+      "sha256": "2a285264758f3059da30e330ec727985f73cd04df438f7d504cd17e65ab0cec7",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/LICENSE.txt"
+    },
+    {
+      "coordinate": "org.springframework.boot:spring-boot:3.4.2",
+      "path": "org/springframework/boot/spring-boot/3.4.2/spring-boot-3.4.2.jar",
+      "sha256": "ffa5c7ce566a29ef592fda63c45f2d2dd5bcd90234dd4d43ecdc27be305c3e38",
+      "license": "Apache-2.0",
+      "license_entry": "META-INF/LICENSE.txt"
+    }
+  ],
+  "spring_boot_version": "3.4.2"
+}

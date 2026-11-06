@@ -166,15 +166,15 @@ class ProductionScopeTests(unittest.TestCase):
 
     def test_ev04_mixed_source_snapshot_is_rejected(self):
         self.write("src/main.py", "def run(): pass\n")
-        from kgmaker.scanner import _safe_text
+        from kgmaker.scanner import _safe_source
         reads = []
         def changing(path):
-            text = _safe_text(path)
+            text = _safe_source(path)
             reads.append(path)
             if len(reads) == 1:
                 path.write_text("def changed(): pass\n")
             return text
-        with patch("kgmaker.scanner._safe_text", side_effect=changing):
+        with patch("kgmaker.scanner._safe_source", side_effect=changing):
             with self.assertRaisesRegex(AnalysisError, "snapshot changed"):
                 scan_repository(self.root)
 

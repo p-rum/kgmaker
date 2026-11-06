@@ -8,6 +8,7 @@ from pathlib import Path
 from .analysis_model import safe_path
 from .model import Edge, Node
 from .dataflow import masked
+from .contract_inputs import capture_file, generation_origin
 
 
 def normalized_path(path: str) -> str:
@@ -51,6 +52,8 @@ def federated_links(workspace, graphs, sources):
                        source_key(repo, path), line))
 
     for service in workspace.get('services', []):
+        if service.get('transport') == 'kafka':
+            continue
         declared = service['contract']; repo, path = declared['repo_id'], declared['path']
         if repo not in graphs:
             diagnostics.append('Contract checkout missing: ' + service['id']); continue
@@ -58,7 +61,7 @@ def federated_links(workspace, graphs, sources):
         if key not in sources:
             diagnostics.append('Contract not inventoried: ' + service['id']); continue
         try:
-            document = json.loads(safe_path(Path(repo_map[repo]['_root']), path).read_text())
+            document = capture_file(Path(repo_map[repo]['_root']), path, json_document=True)['document']
         except (ValueError, OSError):
             diagnostics.append('Unsupported contract: ' + key); continue
         if not isinstance(document, dict) or not isinstance(document.get('paths'), dict):
@@ -76,9 +79,9 @@ def federated_links(workspace, graphs, sources):
             if metadata_key not in sources:
                 diagnostics.append('Generation metadata not inventoried: ' + metadata_key); continue
             try:
-                metadata = json.loads(safe_path(Path(repo_map[consumer]['_root']), declaration['metadata_path']).read_text())
+                metadata = capture_file(Path(repo_map[consumer]['_root']), declaration['metadata_path'], json_document=True)['document']
                 expected_origin = {'repo_id': repo, 'path': path, 'sha256': sources[key]['sha256']}
-                if metadata.get('source_contract') != expected_origin or declaration['path'] not in metadata.get('generated_files', []):
+                if generation_origin(metadata, expected_origin, declaration['path'])[0] != 'VALID':
                     diagnostics.append('Generated-client contract version mismatch: ' + consumer + '/' + declaration['path']); continue
                 safe_path(Path(repo_map[consumer]['_root']), declaration['path'])
             except (ValueError, OSError, TypeError):
