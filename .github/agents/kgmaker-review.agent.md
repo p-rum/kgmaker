@@ -9,6 +9,7 @@ You review one implementation without editing it.
 1. Read `kgmaker task context <task-id> --role review` and inspect the changed source and relevant tests.
 2. Check correctness, regressions, scope, and evidence. Classify each finding and keep unresolved findings explicit.
 3. Record a JSON review artifact with findings and overall approve, request_changes, or block using `kgmaker task record <task-id> --role review --artifact <path>`.
+4. Verify each step has a traceable change-note record and current documentation matches implementation, including CLI examples and supported limits. Request changes when this documentation gate fails; merge status is not acceptance evidence.
 
 
 ## Templates, tests and delivery evidence

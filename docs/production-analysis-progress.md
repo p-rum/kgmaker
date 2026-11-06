@@ -1,5 +1,22 @@
 # Aktuální stav a zbývající práce
 
+## Předání dokončovacího programu — 2026-11-06
+
+[T048](tasks/48_completeImplementationHandoff.md) koordinuje původní zadání nad
+main `250e7c16250a97b9f8df5256b9894c8119dc64d9` po T020/PR #87. T003 má 37/60
+balíčků se sloučenou prací (u S12-W01 pouze konfigurace, live DEFERRED); T004 má
+24/40 dodaných úkolů: T005–T020, T023–T026, T030–T033. Zbývá 23 T003 balíčků a
+16 T004 úkolů bez sloučené dodávky, otevřená integrace T046 a 13 kroků T047 se
+sdílenými upstream kontrakty. Jde o delivery přehled, nikoli nové ověření acceptance.
+T048-S01 má sjednotit jednotlivé aktuální stavy; starší řádky níže obsahují historické
+checkpointy a místy již neaktuální draft/review status. Jejich testové výsledky
+nejsou novým během nad touto baseline.
+
+Každý další implementační krok povinně aktualizuje vlastní change note, dotčenou
+aktuální dokumentaci a acceptance. Povinnost je v AGENTS i instalovaných host
+instrukcích; chybějící nebo rozporná dokumentace blokuje dokončení kroku.
+
+
 ## T003-S06-W03 — JPA ORM XML overrides (2026-10-26)
 
 VERIFIED_IN_SCOPE pro vybraný persistence unit a omezené ORM XML mapování:
@@ -1176,3 +1193,13 @@ Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b777
 
 
 T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.
+
+
+### T046 — integrační evidence f115 (2026-11-06)
+
+- T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S04: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/59_verifySyntheticTestData.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S05: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/60_enforceOptionalLocalApprovals.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S06: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/61_integrateDeliveryWorkflow.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
