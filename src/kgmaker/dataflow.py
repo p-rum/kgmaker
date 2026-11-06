@@ -21,12 +21,12 @@ CAPABILITIES = {
                'TypeScript interface/type properties', 'JSON Schema/OpenAPI JSON properties'],
     'value_flow': ['Kotlin expression functions with explicit parameter/return types',
                    'local numeric/property expressions', 'unambiguous Kotlin constructor mapping'],
-    'unsupported': ['overloaded/interprocedural calls', 'control-flow-dependent mappings', 'dynamic SQL',
+    'unsupported': ['SOURCE_ONLY overloaded/interprocedural calls', 'control-flow-dependent mappings', 'dynamic SQL',
                     'OpenAPI YAML fields', 'Kafka payload resolution', 'frontend binding', 'template binding'],
 }
 # Direction of propagation of a changed value, not direction of its stored edge.
 FORWARD = {'maps_to', 'serialized_as', 'displayed_in', 'rendered_in', 'sent_to',
-           'tested_by', 'documented_by', 'writes_value'}
+           'tested_by', 'documented_by', 'writes_value', 'argument_to_parameter', 'returns_to'}
 REVERSE = {'reads_value', 'derived_from', 'persisted_in', 'asserts_field', 'targets_ui',
            'tests_endpoint', 'uses_fixture', 'depends_on_contract'}
 
@@ -288,7 +288,15 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
     if entity not in nodes:
         raise ValueError('Entity is not in the current graph: ' + entity)
     adjacency = defaultdict(list)
+    binding_evidence = {value['id']: value for value in graph.evidence
+                        if value.get('argument_mapping_version') == 1}
+    return_evidence = {value['id'] for value in graph.evidence if value.get('return_mapping_version') == 1}
     for edge in graph.edges:
+        if edge.kind == 'returns_to' and (edge.evidence_kind != 'SYMBOL_RESOLVED' or not (set(edge.evidence_ids) & return_evidence)):
+            continue
+        if edge.kind == 'argument_to_parameter' and (edge.evidence_kind != 'SYMBOL_RESOLVED'
+                or not any(identity in binding_evidence for identity in edge.evidence_ids)):
+            continue
         if edge.kind in FORWARD:
             adjacency[edge.source].append((edge.target, edge))
         elif edge.kind in REVERSE:
@@ -317,6 +325,128 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
                           'weakest_confidence': weakest, 'unresolved_boundary': boundary})
             if boundary != 'external system; internals not inspected':
                 queue.append((target, next_steps, chain + [target]))
+    used = {value for path in paths for value in path['entity_ids']}
+    binding_sites = sorted({value['call_site'] for value in binding_evidence.values()
+                            if value.get('source') in used or value.get('target') in used})
+    bindings = [item for site in binding_sites for item in argument_parameter_bindings(graph, site)]
     return {'seed': entity, 'paths': paths, 'truncated': truncated,
+            'argument_parameter_bindings': bindings,
+            'return_consumer_bindings': [p for p in return_consumer_bindings(graph) if p['source'] in used|{entity} or p['target'] in used|{entity}],
             'limitations': CAPABILITIES['unsupported'],
             'interpretation': 'static value dependency, not runtime availability or business equivalence'}
+
+
+def validate_argument_bindings(response: dict) -> None:
+    """Validate additive compiler bindings before publishing any graph generation.
+
+    Legacy unversioned compiler facts remain readable. Version1 means declared
+    formal binding only; it never claims a runtime implementation or evaluation.
+    """
+    symbols = {value['id']: value for value in response['symbols']}
+    sites = {value['id']: value for value in response['call_sites']}
+    seen = set()
+    for site in response['call_sites']:
+        if 'argument_mapping_version' in site and (type(site['argument_mapping_version']) is not int
+                or site['argument_mapping_version'] != 1
+                or not isinstance(site.get('argument_mapping_status'), str)
+                or site.get('argument_mapping_status') not in {'PROVEN', 'UNKNOWN', 'NOT_EXECUTION'}
+                or not isinstance(site.get('argument_mapping_reason'), str)):
+            raise ValueError('Invalid call-site argument mapping status')
+        if 'argument_omissions' not in site:
+            continue
+        omissions = site['argument_omissions']
+        if not isinstance(omissions, list) or len(omissions) > 10000:
+            raise ValueError('Invalid omitted argument mapping')
+        omitted_indices = set()
+        for omission in omissions:
+            if (not isinstance(omission, dict) or type(omission.get('parameter_index')) is not int
+                    or omission['parameter_index'] < 0 or omission['parameter_index'] in omitted_indices
+                    or not isinstance(omission.get('parameter_name'), str)
+                    or omission.get('reason') != 'DEFAULT_VALUE_NOT_EVALUATED'):
+                raise ValueError('Invalid omitted argument mapping')
+            omitted_indices.add(omission['parameter_index'])
+    for fact in response['facts']:
+        if fact.get('kind') != 'argument_to_parameter' or 'argument_mapping_version' not in fact:
+            continue
+        if type(fact['argument_mapping_version']) is not int or fact['argument_mapping_version'] != 1:
+            raise ValueError('Unsupported argument mapping version')
+        if not isinstance(fact.get('call_site'), str):
+            raise ValueError('Invalid compiler argument binding call site')
+        site = sites.get(fact.get('call_site'))
+        parameter, argument = symbols.get(fact.get('target'), {}), symbols.get(fact.get('source'), {})
+        indices = (fact.get('argument_index'), fact.get('parameter_index'))
+        if (site is None or not site.get('declared_target') or site.get('invocation_kind') == 'METHOD_REFERENCE'
+                or site.get('argument_mapping_version') != 1 or site.get('argument_mapping_status') == 'NOT_EXECUTION'
+                or fact.get('context_id') != response['context_id']
+                or site.get('context_id') != response['context_id']
+                or parameter.get('context_id') != response['context_id']
+                or argument.get('context_id') != response['context_id']
+                or not isinstance(fact.get('parameter_name'), str) or not fact['parameter_name']
+                or any(type(index) is not int or index < 0 for index in indices)
+                or fact.get('binding_kind') != 'DECLARED_PARAMETER'
+                or fact.get('evidence_kind') != 'SYMBOL_RESOLVED'
+                or parameter.get('kind') != 'parameter' or parameter.get('method') != site['declared_target']
+                or type(parameter.get('parameter_index')) is not int or parameter['parameter_index'] != indices[1]
+                or argument.get('kind') != 'value' or argument.get('call_site') != site['id']
+                or argument.get('owner_method') != site['caller']
+                or argument.get('id') != site['id'] + ':argument:' + str(indices[0])
+                or ('argument_index' in argument and (type(argument['argument_index']) is not int
+                                                      or argument['argument_index'] != indices[0]))
+                or not isinstance(fact.get('transformation'), str)
+                or fact.get('transformation') not in {'DIRECT', 'VARARG_ELEMENT', 'VARARG_ARRAY', 'VARARG_SPREAD'}):
+            raise ValueError('Invalid compiler argument binding proof')
+        identity = (site['id'], indices[0])
+        if identity in seen:
+            raise ValueError('Ambiguous compiler argument binding')
+        seen.add(identity)
+
+
+def argument_parameter_bindings(graph: KnowledgeGraph, call_site: str) -> list[dict]:
+    """Read preserved static declared-parameter proofs for one original call site."""
+    proofs = {value['id']: value for value in graph.evidence}
+    result = []
+    for edge in graph.edges:
+        if edge.kind != 'argument_to_parameter':
+            continue
+        for identity in edge.evidence_ids:
+            proof = proofs.get(identity, {})
+            if proof.get('argument_mapping_version') != 1 or proof.get('call_site') != call_site:
+                continue
+            result.append({'argument': edge.source, 'parameter': edge.target,
+                           'call_site': call_site, 'context_ids': list(edge.context_ids),
+                           'argument_index': proof['argument_index'], 'parameter_index': proof['parameter_index'],
+                           'transformation': proof['transformation'], 'binding_kind': proof['binding_kind'],
+                           'evidence_kind': edge.evidence_kind, 'evidence_ids': [identity],
+                           'availability': 'UNKNOWN', 'execution': 'NOT_OBSERVED'})
+    return sorted(result, key=lambda value: (value['argument_index'], value['parameter_index'], value['parameter']))
+
+
+# Public read projection; compilation/enrichment remains explicit inspection.
+from .return_flow import return_consumer_bindings
+
+def http_request_inventory(graph, *, callers=None):
+    """Read existing typed HTTP facts; never infer terminals from call labels."""
+    values = []
+    sites = {site['id']: site for site in graph.call_sites} if callers is not None else {}
+    for node in graph.nodes:
+        if node.kind != 'http_request_definition':
+            continue
+        metadata = node.metadata or {}
+        if callers is not None and metadata.get('caller') not in callers:
+            # Feign definitions belong to the abstract contract, while static
+            # invocation intent belongs to the consuming call site's caller.
+            if not any(sites.get(identity, {}).get('caller') in callers
+                       for identity in metadata.get('terminal_call_site_ids', [])):
+                continue
+        values.append({'id': node.id, 'source_file': node.path, **metadata})
+    covered = any(c.get('framework_rule_versions', {}).get('http') for c in graph.contexts)
+    return {'coverage': 'INDEXED_WITH_BOUNDARIES' if covered else 'UNKNOWN_LEGACY_OR_SOURCE_ONLY',
+            'requests': sorted(values, key=lambda item: item['id']),
+            'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'}
+
+
+def remote_contract_bindings(workspace, graph, interfaces, *, captured, scope="production", selected_contexts=None):
+    """Pure explicit remote declarations; never synchronous JVM calls or delivery."""
+    from .remote_mapping import resolve_remote_mappings
+    return resolve_remote_mappings(workspace, graph, interfaces, captured=captured,
+                                   scope=scope, selected_contexts=selected_contexts)

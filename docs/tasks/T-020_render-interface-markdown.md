@@ -2,10 +2,10 @@
 
 - Task ID: `T020`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
-- Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
+- Baseline: explicitní schválený draft stack nad T019 `abad2e30c1a1e422392585e6073995568b82a564`; ready/merge čeká na T019 a jeho prerequisites.
 - Depends on: [T013](T-013_attach-interface-contracts.md); [T019](T-019_add-architecture-json-cli.md).
 - Větev: `feat/t020-render-interface-markdown`
 - PR title: `feat(t020): render interface markdown`
@@ -61,3 +61,62 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T020** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize2 — schválený konkrétní renderer/CLI kontrakt
+
+Tato revize zaznamenává Root APPROVE architektonického briefu a explicitního stacku,
+neprohlašuje implementaci nebo finální upstream validation. Veřejná čistá funkce
+`architecture_render.render_interface_markdown(document)` přijímá jediný přesný
+`interfaces` ViewDocument nebo jeho schema1 JSON mapping a vrací celý Markdown
+řetězec. Nečte zdroje ani soubory, nevolá provider/projector/scan/model/network/DB,
+nevytváří nové identity nebo autoritativní store. Bounded shape/occurrence/depth/
+scalar checks předcházejí modelové normalizaci, deepcopy a serializaci.
+
+CLI přidává `--format markdown` pouze k T019 `architecture interfaces`. JSON je
+nadále default; topology/explain/flow se nemění. Zpracuje tentýž upstream validated
+snapshot a původní fingerprint, nikoli další capture nebo selection. T019 explicit
+capture hranice, safe errors, strict/exit/cancel/BrokenPipe a nulová store mutace
+platí beze změny. Render string je připraven před prvním stdout zápisem; export
+nebo output file není součástí T020. Nesoulad expected fingerprint zůstává exit3,
+validní partial0, strict incomplete4; invalid/schema/unsupported format2.
+
+Fixní headings/tabulky obsahují scope/context/baseline/rules/coverage, poskytovaná
+rozhraní, použitá rozhraní, povinnou generated/unclassified sekci se všemi ID,
+contract bindings, unresolved, evidence/origins a diagnostics/limits. Řazení je
+service/direction/protocol/ID s explicitním UNKNOWN, deterministicky i při různém
+pořadí vstupů. Owner se neodhaduje z názvu ani neparsuje z ID. Logical interface ID,
+contract revision fingerprint, release/context a Kafka realm/group zůstávají
+odlišné. Cold HTTP definition není execution; regex topic není exact topic; stale
+contract nezmizí, DTO jméno není compatibility. Evidence kind, polarity buckets,
+resolution/freshness/coverage a runtime/data/deployment stav se nepovyšují.
+
+Každý řádek uvádí původní ID a odkazuje na vygenerovaný interní SHA256 anchor
+v evidence sekci. Chybějící evidence má explicitní UNKNOWN sekci. Cizí paths/URLs
+nejsou automatické odkazy; T018 topology explain není interface resolver. Žádný
+raw attribute/schema/prose dump: pouze bounded známá public scalar/ref pole,
+případná opaque pole zůstávají explicitně mimo display kontrakt. Diagnostics a
+coverage důvody včetně prázdného katalogu se neztratí. Render limit odmítne vstup
+před outputem, nevrací potichu zkrácenou COMPLETE tabulku.
+
+Použije se existující T019 public privacy guard; unsafe identity se odmítá fixní
+bezpečnou chybou, nikdy nepřejmenuje. Escaped text v cells nesmí tvořit další
+řádky/bloky/HTML/linky/images/fences; pipes/backticks/backslashes/HTML a Unicode
+line separators mají konkrétní bezpečné inline kódování. Původní ID se ověřuje
+z dekódovaného skutečného Markdown AST, nikoli jen substringem escapovaného textu.
+
+Povinná testovací závislost je dev-only `markdown-it-py==3.0.0` a `mdurl==0.1.2`,
+published wheel SHA256 v `tests/requirements-markdown.txt`. Parser má výslovně
+enabled table rule. Příprava je explicitní mimo renderer/shared frozen inputs;
+žádná runtime dependency/installace. T020 testy ověřují AST table/heading/link
+strukturu i hand-labelled expected ID/status/refs. Real upstream source/contract
+captures jsou oddělené od jasně označených model/protocol fixtures.
+
+Veřejné RED před rendererem: golden provided/consumer+generated IDs/statusy,
+adversarial label parsed AST, empty diagnostics/coverage a nepodporovaný formát
+na actual CLI snapshot cestě. Následují unresolved/stale/buckets, realm/group/
+context/revision identity, malformed/huge/cyclic/shared inputs, fixed privacy errors
+na valid/invalid cestě a byte-identical input/store sentinel. Relevant pure upstream
+regressions a CLI JSON default zůstávají zachovány. Před stagingem vyžadováno
+nezávislé exact-source review; native/build/heavy/full zde zatím NOT_RUN a není
+kvůli samotnému rendereru autorizováno.

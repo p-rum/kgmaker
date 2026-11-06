@@ -103,6 +103,8 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
         if not isinstance(context, dict) or not isinstance(context.get("id"), str) or context["id"] in ids:
             raise AnalysisError("Duplicate/invalid build context")
         ids.add(context["id"])
+        from .schema_replay import persistence_selection
+        persistence_selection(context)
         if context.get("scope") not in SCOPES or not all(isinstance(context.get(k), str) and context[k] for k in ("module", "source_set", "repo_id")):
             raise AnalysisError("Build context requires repo/module/source-set/scope")
         build_root = context.get("build_root")
@@ -319,4 +321,5 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
                 "dependency_model": dependency_model, "dependency_model_hash": digest(dependency_model),
                 "database_id": selected.get("database_id"), "schema_stream_id": selected.get("schema_stream_id"),
                 "persistence_unit": selected.get("persistence_unit"), "naming_strategy": selected.get("naming_strategy"),
+                "persistence_schema": selected.get("persistence_schema"), "flyway_target": selected.get("flyway_target"),
                 "manifest_hash": digest(manifest)}}

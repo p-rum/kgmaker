@@ -2,8 +2,8 @@
 
 - Task ID: `T006`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-03
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T005](T-005_add-view-model.md); `T003-S02` (upstream; ověř konkrétní podporovaný kontrakt a acceptance, samotná existence zadání nestačí).
@@ -61,3 +61,32 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T006** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+## Revize 2 — role kontextu před výběrem (T006-S06–S08)
+
+Výslovný stack baseline `8afabe7c5056b9ec45e04f1f8fcf3470d18f4c98`, navazující na
+Kafka rev2; tato revize je SPECIFICATION, nikoli tvrzení hotové opravy. Sdílený
+klasifikátor rozlišuje skutečný source/compiler kontext od kanonického
+producer-owned workspace-derived kontextu před ownership a compiler selection.
+Samotný prefix ID, SOURCE_ONLY ani přítomnost analyzer_version není authority.
+
+- **T006-S06:** Reuse přesného producer kontraktu (známá verze, explicitní
+  manifest binding, repo/module/source_set/scope, captured input identity, digest
+  kontextu a původní selected compiler realm). Role validity není current source
+  freshness; historický nevybraný derived kontext nesmí vyžadovat private compiler
+  replay ani build jen pro určení role.
+- **T006-S07:** Derived/unknown role není kandidát compiler výběru. Explicitní
+  selector na derived nebo malformed/unknown claim vrací řízenou diagnostiku
+  nebo strukturovanou selection chybu; nikdy source ownership fallback.
+  Obyčejný legacy SOURCE_ONLY bez nového markeru zachovává dosavadní coverage.
+- **T006-S08:** Zachovat celý původní graph/context/node/edge/proof snapshot,
+  T006 freshness/variant a T007 foreign-path/hash/scope kontroly; čistá projekce
+  nezapisuje ani nespouští worker/build.
+- **T006-AC07:** Ve veřejném mixed Kafka snapshotu zůstane vybrán skutečný
+  source/compiler kontext; derived declaration nemůže být compiler pin.
+- **T006-AC08:** Unknown/malformed derived verze/realm/hash/identity má konkrétní
+  diagnostiku bez mutace vstupů/store; genuine foreign source zůstává odmítnut.
+
+Ověřit společně T006/T008, config-only/mixed/legacy SOURCE_ONLY, explicitní i cizí
+selectory a relevantní katalogy T010/T011/T015/T016. Žádný nový catalog/store,
+resolver, parser, worker contract nebo runtime availability proof.

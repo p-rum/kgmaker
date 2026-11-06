@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.isFunctionOrKFunctionTypeWithAnySuspendability
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -33,7 +37,7 @@ class KotlinFrontend(private val state: State) {
     companion object {
         const val backend = "k1-compat-1"
         const val compiler = "kotlin-2.1.10-k1"
-        val capabilities = listOf("kotlin-1.9-compatible-attribution")
+        val capabilities = listOf("return-consumer-ir-v1","k1-argument-parameter-bindings-v1","kotlin-1.9-compatible-attribution")
         val limitations = listOf("Kotlin frontend is the verified K1 language-1.9 compatibility subset, not full K2 Analysis API.")
     }
     private lateinit var binding: BindingContext
@@ -88,7 +92,11 @@ class KotlinFrontend(private val state: State) {
         val meta=State.map("jvm_static",staticAbi(descriptor),"annotations",annotations(descriptor),"parameter_types",descriptor.valueParameters.map { it.type.toString() },
             "parameter_names",descriptor.valueParameters.map { it.name.asString() },"return_type",descriptor.returnType?.toString(),
             "extension_receiver_type",descriptor.extensionReceiverParameter?.type?.toString(),"suspend",descriptor.isSuspend,"inline",descriptor.isInline,
-            "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString())
+            "default_arguments",descriptor.valueParameters.map { it.declaresDefaultValue() },"visibility",descriptor.visibility.toString(),
+            "modifiers",listOfNotNull(descriptor.visibility.toString(),
+                if(descriptor.modality==Modality.FINAL)"final" else null,
+                if(descriptor.modality==Modality.ABSTRACT)"abstract" else null,
+                if(descriptor.dispatchReceiverParameter==null && descriptor !is ConstructorDescriptor)"static" else null))
         return state.method(owner(descriptor),name,signature.descriptor,element?.let(::loc),meta)
     }
     private fun property(descriptor: PropertyDescriptor, element: PsiElement?=null): String {
@@ -154,7 +162,11 @@ class KotlinFrontend(private val state: State) {
             if(descriptor!=null) {
                 val name=mapper.mapClass(descriptor).internalName.replace('/','.')
                 state.type(name,loc(declaration),State.map("annotations",annotations(descriptor),"kind",descriptor.kind.toString().lowercase(),
-                    "supertypes",descriptor.typeConstructor.supertypes.map { it.toString() }))
+                    "supertypes",descriptor.typeConstructor.supertypes.map { it.toString() },
+                    "jvm_superclass",descriptor.typeConstructor.supertypes.firstOrNull { (it.constructor.declarationDescriptor as? ClassDescriptor)?.kind != ClassKind.INTERFACE }?.let { mapper.mapType(it).internalName },
+                    "jvm_interfaces",descriptor.typeConstructor.supertypes.filter { (it.constructor.declarationDescriptor as? ClassDescriptor)?.kind == ClassKind.INTERFACE }.map { mapper.mapType(it).internalName },
+                    "modifiers",listOfNotNull(descriptor.visibility.toString(),if(descriptor.modality==Modality.FINAL)"final" else null,
+                        if(descriptor.modality==Modality.ABSTRACT)"abstract" else null)))
                 descriptor.unsubstitutedPrimaryConstructor?.let {constructor->
                     val old=caller
                     try {
@@ -190,8 +202,9 @@ class KotlinFrontend(private val state: State) {
             try {
                 caller=method(descriptor,function)
                 super.visitNamedFunction(function)
-                function.bodyExpression?.let { state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],
-                    "body",if(function.hasBlockBody())ir(it) else State.map("kind","return","value",ir(it)))) }
+                function.bodyExpression?.let { state.bodies.add(State.map("method",caller,"language","kotlin","context_id",state.context["id"],"return_flow_version",1,
+                    "return_body_kind",if(descriptor.isSuspend)"ASYNC" else if(function.parent !is KtFile && function.parent !is KtClassBody)"CALLABLE" else "DECLARED","return_type",valueInfo(descriptor.returnType),
+                    "body",if(function.hasBlockBody())ir(it) else State.map("kind","return","value",ir(it)).apply {putAll(loc(it))})) }
             }catch(error: Exception) {state.diagnostic("KOTLIN_UNSUPPORTED_MAPPING",error.message?:error.javaClass.name,loc(function))}
             finally{caller=old}
         }
@@ -261,6 +274,60 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
+            if(target!=null && descriptor!=null && resolved!=null && resolved.status.isSuccess) {
+                val arguments=expression.valueArguments+expression.lambdaArguments
+                var completeBinding=true
+                for((parameter,value) in resolved.valueArguments) {
+                    if(value is org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument) {
+                        state.omittedArgument(identity,parameter.index,parameter.name.asString(),"DEFAULT_VALUE_NOT_EVALUATED")
+                    }
+                    for(argument in value.arguments) {
+                        val index=arguments.indexOf(argument)
+                        val argumentExpression=argument.getArgumentExpression()
+                        if(index<0 || argumentExpression==null) {
+                            state.diagnostic("K1_ARGUMENT_MAPPING_UNAVAILABLE","Compiler argument has no source expression",loc(expression))
+                            completeBinding=false
+                            continue
+                        }
+                        val transformation=if(parameter.varargElementType!=null) {
+                            if(argument.getSpreadElement()!=null)"VARARG_SPREAD" else "VARARG_ELEMENT"
+                        } else "DIRECT"
+                        if(!state.argumentBinding(identity,target,index,parameter.index,parameter.name.asString(),transformation,loc(argumentExpression))) {
+                            completeBinding=false
+                            state.diagnostic("K1_ARGUMENT_MAPPING_UNAVAILABLE","Argument expression locator is unavailable",loc(expression))
+                        }
+                    }
+                }
+                state.bindingStatus(identity,completeBinding,if(completeBinding)"K1_RESOLVED_ARGUMENT_MAPPING" else "K1_ARGUMENT_MAPPING_UNAVAILABLE")
+            }
+            if(target!=null && descriptor!=null) {
+                val fqName=DescriptorUtils.getFqName(descriptor).asString()
+                val dependencyApi=state.symbols[target]?.get("path")==null
+                val boundary=if(descriptor.isSuspend) "SUSPEND" else if(!dependencyApi) null else when(fqName) {
+                    "kotlinx.coroutines.launch" -> "LAUNCH"
+                    "kotlinx.coroutines.async" -> "ASYNC"
+                    else -> null
+                }
+                if(boundary!=null)state.sites.last {it["id"]==identity}.putAll(State.map(
+                    "async_boundary",boundary,"async_boundary_evidence",if(descriptor.isSuspend) "COMPILER_SUSPEND_CALL" else "COMPILER_COROUTINES_API",
+                    "async_callable",fqName,"scheduling","UNKNOWN"))
+            }
+            if(target!=null && descriptor !is ConstructorDescriptor && descriptor?.visibility!=DescriptorVisibilities.PRIVATE && descriptor?.modality!=Modality.FINAL &&
+                resolved?.dispatchReceiver!=null && (expression.parent as? KtDotQualifiedExpression)?.receiverExpression !is KtSuperExpression) {
+                val expressionReceiver=(expression.parent as? KtQualifiedExpression)?.receiverExpression
+                // A member extension has two receivers: the dot expression is not virtual dispatch.
+                val actualType=if(descriptor?.extensionReceiverParameter!=null) resolved.dispatchReceiver!!.type
+                    else expressionReceiver?.let {binding[BindingContext.EXPRESSION_TYPE_INFO,it]?.type} ?: resolved.dispatchReceiver!!.type
+                if(actualType.constructor.declarationDescriptor !is ClassDescriptor) {
+                    val boundary="K1_GENERIC_RECEIVER_DISPATCH_UNSUPPORTED"
+                    state.sites.last()["dispatch_completeness_reason"]=boundary
+                    state.diagnostic(boundary,"Full generic/intersection receiver constraints are not represented; declared target retained without candidates",loc(expression))
+                } else {
+                    val type=mapper.mapType(actualType)
+                    if(type.sort==org.jetbrains.org.objectweb.asm.Type.OBJECT)state.sites.last().putAll(State.map(
+                        "dispatch_kind","VIRTUAL","dispatch_receiver",type.internalName))
+                }
+            }
             if(target==null)state.diagnostic("KOTLIN_UNRESOLVED_CALL",reason,loc(expression))
             super.visitCallExpression(expression)
         }
@@ -317,11 +384,53 @@ class KotlinFrontend(private val state: State) {
         return result
     }
     private fun label(element: PsiElement)=element.text.replace(Regex("\"(?:\\\\.|[^\"\\\\])*\""),"\"…\"").take(300)
+    private fun valueInfo(type: KotlinType?): Map<String,Any?> {
+        if(type==null)return State.map("version",1,"status","UNKNOWN","type_ref","unknown","nullability","UNKNOWN")
+        if(KotlinBuiltIns.isUnit(type) || (KotlinBuiltIns.isNothingOrNullableNothing(type) && !type.isMarkedNullable))
+            return State.map("version",1,"status","VOID","type_ref","V","nullability","UNKNOWN")
+        if(KotlinBuiltIns.isNothingOrNullableNothing(type) && type.isMarkedNullable)
+            return State.map("version",1,"status","VALUE","type_ref","null","nullability","NULL_LITERAL")
+        return runCatching {State.map("version",1,"status",if(type.isFunctionOrKFunctionTypeWithAnySuspendability)"CALLABLE" else "VALUE",
+            "type_ref",mapper.mapType(type).descriptor,"nullability",if(type.unwrap() is FlexibleType)"UNKNOWN" else if(type.isMarkedNullable)"MAY_BE_NULL" else "DECLARED_NON_NULL")}
+            .getOrElse {State.map("version",1,"status","UNKNOWN","type_ref","unknown","nullability","UNKNOWN")}
+    }
+    private fun expressionInfo(expression: KtExpression): Map<String,Any?> = valueInfo(binding[BindingContext.EXPRESSION_TYPE_INFO,expression]?.type)
+    private fun valueBinding(element: KtElement?): Map<String,Any?>? {
+        if(element==null)return null
+        val descriptor=when(element) {
+            is KtNameReferenceExpression -> binding[BindingContext.REFERENCE_TARGET,element]
+            is KtDeclaration -> binding[BindingContext.DECLARATION_TO_DESCRIPTOR,element]
+            else -> null
+        } as? VariableDescriptor ?: return null
+        val declaration=DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as? KtElement ?: return null
+        val location=loc(declaration);val range=location["range"] as? Map<*,*> ?: return null
+        val function=descriptor.containingDeclaration as? FunctionDescriptor
+        val functionPsi=function?.let {DescriptorToSourceUtils.descriptorToDeclaration(it)}
+        val methodId=if(function!=null && (functionPsi is KtNamedFunction || functionPsi is KtConstructor<*>))method(function,functionPsi) else null
+        val identity=if(descriptor is ValueParameterDescriptor && methodId!=null)methodId+":parameter:"+descriptor.index
+            else "binding:"+state.context["id"]+":"+location["path"]+":"+location["sha256"]+":"+range["start"]+":"+range["end"]
+        val value=State.map("version",1,"id",identity,"name",descriptor.name.asString(),
+            "kind",if(descriptor is ValueParameterDescriptor)"PARAMETER" else if(descriptor is PropertyDescriptor)"FIELD" else "LOCAL_VARIABLE",
+            "method",methodId,"symbol",if(descriptor is PropertyDescriptor)property(descriptor,declaration) else null,"type",valueInfo(descriptor.type))
+        value.putAll(location);return value
+    }
+    private fun destructure(expression: KtDestructuringDeclaration): List<Map<String,Any?>> = expression.entries.mapIndexedNotNull {index,entry->
+        if(entry.name=="_")return@mapIndexedNotNull null
+        val target=valueBinding(entry) ?: return@mapIndexedNotNull null
+        val component=binding[BindingContext.COMPONENT_RESOLVED_CALL,entry]?.resultingDescriptor
+        val owner=component?.containingDeclaration as? ClassDescriptor
+        val parameter=owner?.unsubstitutedPrimaryConstructor?.valueParameters?.getOrNull(index)
+        val proven=owner?.isData==true && component?.kind==CallableMemberDescriptor.Kind.SYNTHESIZED && parameter!=null
+        State.map("binding",target,"projection",State.map("kind","DATA_COMPONENT","index",index,
+            "status",if(proven)"PROVEN" else "UNKNOWN","property",if(proven)parameter!!.name.asString() else null,
+            "component_target",if(proven)runCatching {method(component!!)}.getOrNull() else null))
+    }
     fun ir(expression: KtExpression?): Map<String,Any?> {
         if(expression==null)return mapOf("kind" to "empty")
-        val base=loc(expression).apply {put("kind","statement");put("label",label(expression));put("calls",callsIn(expression))}
+        val base=loc(expression).apply {put("kind","statement");put("label",label(expression));put("calls",callsIn(expression));put("value_info",expressionInfo(expression))}
         when(expression) {
             is KtNameReferenceExpression -> {
+                base["value_binding"]=valueBinding(expression)
                 val target=binding[BindingContext.REFERENCE_TARGET,expression]
                 if(calls.containsKey(expression))base.putAll(mapOf("kind" to "call","call_site" to calls[expression],
                     "arguments" to emptyList<Map<String,Any?>>(),"receiver" to mapOf("kind" to "empty")))
@@ -335,7 +444,8 @@ class KotlinFrontend(private val state: State) {
                 if(selector["kind"]=="call") {selector["receiver"]=ir(expression.receiverExpression);return selector}
                 base.putAll(mapOf("kind" to "sequence","expressions" to listOf(ir(expression.receiverExpression),selector)))
             }
-            is KtProperty -> base.putAll(mapOf("kind" to "assign","value" to ir(expression.initializer)))
+            is KtProperty -> base.putAll(mapOf("kind" to "assign","value_binding" to valueBinding(expression),"value" to ir(expression.initializer)))
+            is KtDestructuringDeclaration -> base.putAll(mapOf("kind" to "destructure","value" to ir(expression.initializer),"value_targets" to destructure(expression)))
             is KtLambdaExpression -> base.putAll(mapOf("kind" to "reference","calls" to emptyList<String>()))
             is KtBlockExpression -> {base["kind"]="block";base["statements"]=expression.statements.map(::ir)}
             is KtIfExpression -> base.putAll(mapOf("kind" to "if","condition" to ir(expression.condition),"then" to ir(expression.then),"else" to ir(expression.`else`)))
@@ -354,13 +464,15 @@ class KotlinFrontend(private val state: State) {
                 org.jetbrains.kotlin.lexer.KtTokens.ANDAND -> base.putAll(mapOf("kind" to "and","left" to ir(expression.left),"right" to ir(expression.right)))
                 org.jetbrains.kotlin.lexer.KtTokens.OROR -> base.putAll(mapOf("kind" to "or","left" to ir(expression.left),"right" to ir(expression.right)))
                 org.jetbrains.kotlin.lexer.KtTokens.ELVIS -> base.putAll(mapOf("kind" to "elvis","left" to ir(expression.left),"right" to ir(expression.right)))
-                org.jetbrains.kotlin.lexer.KtTokens.EQ -> base.putAll(mapOf("kind" to "assign","value" to ir(expression.right),
+                org.jetbrains.kotlin.lexer.KtTokens.EQ -> base.putAll(mapOf("kind" to "assign","value_binding" to valueBinding(expression.left),"value" to ir(expression.right),
                     "call_site" to ((expression.left as? KtNameReferenceExpression)?.let {calls[it]})))
                 else -> base.putAll(mapOf("kind" to "sequence","expressions" to listOf(ir(expression.left),ir(expression.right))))
             }
             is KtSafeQualifiedExpression -> base.putAll(mapOf("kind" to "safe_call","receiver" to ir(expression.receiverExpression),"then" to ir(expression.selectorExpression)))
             is KtLabeledExpression -> {base["kind"]="unsupported";base["reason"]="LABELLED_CONTROL_FLOW";state.diagnostic("LABELLED_CONTROL_FLOW","No guessed labelled target",loc(expression))}
         }
+        val site=calls[expression]?.let {identity->state.sites.lastOrNull {it["id"]==identity}}
+        site?.get("async_boundary")?.let {base["async_boundary"]=it}
         return base
     }
 }

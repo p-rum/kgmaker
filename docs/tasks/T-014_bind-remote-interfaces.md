@@ -2,8 +2,8 @@
 
 - Task ID: `T014`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T013](T-013_attach-interface-contracts.md); `T003-S07-W07` (upstream; ověř konkrétní podporovaný kontrakt a acceptance, samotná existence zadání nestačí).
@@ -61,3 +61,54 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T014** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+
+## Revize 2 — explicitní W07 stack a čistá projekce
+
+Výslovně schválený stack je W07 `5b39ec4` nad T013 `f43c9e0`.
+T013/W07 actual/full a current-main integration zůstávají readiness gates;
+source approval ani existence upstream API je nenahrazuje. Root schválil
+architecture brief `/workspace/t014-architecture-brief.md` před implementací.
+
+`project_remote_interfaces(workspace, graph, interfaces, *, captured,
+scope='production', selected_contexts=None) -> ViewDocument` je pure API.
+Volá existující W07 resolve_remote_mappings se stejným explicitním capture,
+grafem, interfaces a výběrem. Nepřijímá caller report jako novou autoritu,
+nevytváří druhý resolver, nevolá capture/upstream projectors/source I/O,
+compiler/model/store/apply. Převádí static declared bindings na topology view.
+
+Původní endpoint variant/service/evidence IDs zůstávají. Nové binding/boundary
+IDs jsou namespaced obsahové identity workspace/source-release/rule; candidate
+edge rozlišuje mapping, target variant/release, transport a context tuple.
+HTTP remote request/response declaration a Kafka async publish/subscribe mají
+odlišné relations, nikdy calls/dispatch/CFG. Původní endpoint proofs nezískají
+silnější význam: nové remote declaration provenance je SOURCE_ONLY,
+polarity UNKNOWN, bez runtime/payload/delivery proof. Ordinary HTTP client má
+jen manifest EXPECTATION; provider contract BOUND_DECLARATION zůstává oddělený.
+
+Celá kandidátní množina, unresolved_mapping_ids/reasons a scope/context se
+zachová. AMBIGUOUS se nerozhodne, částečná kandidátní množina není unikátní
+RESOLVED. Unmapped source i unresolved source selector mají explicitní boundary;
+absence endpointu v partial catalog není negativní existence proof.
+Capture-time freshness W07 není CURRENT: derived view objekty mají UNKNOWN,
+metadata CAPTURE_TIME_ONLY a captured fingerprints. Endpoint freshness zůstává
+původní. Overall coverage PARTIAL/UNKNOWN, runtime/delivery NOT_OBSERVED,
+payload/deployment/availability UNKNOWN; unsupported KotlinHTTP zůstává UNKNOWN.
+
+Input bounds před kopiemi/model validation; unsafe credential/control/URI IDs,
+cykly/depth/shared/fanout a malformed inputs mají fixed nonsecret diagnostics.
+Žádné raw source/config/schema/proof prose ani credential exporty. Hard limit
+selže před publikací celé view; žádná tichá truncation či zvolený vítěz.
+Deep input equality platí pro success i error, API nic neukládá.
+
+Public RED a hand-labelled pure matrix ověří duplicate URL, explicit/missing/
+incompatible pair, HTTP/Kafka semantics, ambiguity+incomplete candidates,
+foreign/stale/tampered capture, no-I/O, privacy, bounds, immutability a původní
+proof polarity. Actual W07 capture lze read-only reprojektovat jen se shodnou
+source/native/selection provenance; není to nový compiler run. Nový native build
+není potřeba pouze kvůli T014. Heavy actual/full až po nezávislém source review;
+full případně na descendantu potřebuje ALL parent collected IDs superset,
+byte/AST/global preservation a original native/artifact/broad hash receipts.
+README/capability/acceptance/progress a note93 uvedou přesné skutečné důkazy,
+nikoli tvrzení full/ready před jejich dokončením. T014 neimplementuje T027 ani
+process continuation/živé remote volání.

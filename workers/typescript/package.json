@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
-  "dependencies": {"typescript": "5.7.3"},
-  "scripts": {"worker": "node worker.cjs"}
+  "dependencies": {
+    "typescript": "5.7.3"
+  },
+  "scripts": {
+    "worker": "node worker.cjs"
+  },
+  "kgmaker_input_snapshot": 1,
+  "kgmaker_ui_adapter": 1
 }

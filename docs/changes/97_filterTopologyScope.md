@@ -1,0 +1,67 @@
+# T017 — Omezený výběr již sestavené topologie
+
+## Problém a plánovaný kontrakt
+
+Velká topologie potřebuje deterministický focus, směr, hops a node budget s úplným
+seznamem odříznutých vazeb. Odstranění prostředního uzlu nesmí vytvořit novou vazbu
+a vynechání alternativy nesmí změnit AMBIGUOUS na RESOLVED.
+
+T017 revize 2 a nezávislý architektonický brief byly připraveny před kódem.
+Explicitní pracovní base je source-approved T016 `f05b13b`; jeho vlastní dependency,
+current-main a full acceptance zůstávají povinné. Číslo 97 bylo přiděleno po kontrole
+66 worktrees, main, registru a všech 7 otevřených PR; 93/95 patří T014/T016,
+94/96 T032/T033. Identita procesů ani názvy existujících funkcí se nepřejmenovávají.
+
+## Stav a skutečné kontroly
+
+- Public absent-API RED: 2 FAIL, 0.09s. První dvě behavior kontroly po implementaci PASS.
+- Rozšířená sada zachytila privacy chybu: retained origin-interface credential ID
+  nebylo odmítnuto (1 FAIL /29 PASS,0.31s). Oprava validuje expansion inventory
+  všech vstupních claimů, nikoli pouze vynechaných. Původní neúspěšné XML zůstává.
+- Finální vlastní sada má 33 cases; společně T017/T016/T014/View/T009 **149 PASS**
+  za1.58s, 0 SKIP/FAIL/ERROR. Cykly, star/channel, scope/context, provenance,
+  metadata bounds, Unicode, immutability a no-I/O mají veřejné behavioral testy.
+- Baseline scan proběhl přes CLI; zděděné stale semantic citations jsou výslovně
+  hlášené a budou opraveny scoped semantic update, bez ručních úprav GRAPH.
+- Memory recall a durable analyze/plan proběhly před implementací. Žádný worker, build, instalace,
+  full ani GH CI nebyly tímto úkolem spuštěny.
+- T017-AC01–06 jsou namapované v acceptance inventory; API/příklad je v
+  `docs/topology-filter.md` a README. Source checkpoint není final acceptance T004.
+
+## Kompatibilita a zbývající práce
+
+Rozhraní je aditivní čistá projekce existujícího ViewDocument; graph/store
+v1/v2/v3 a upstream IDs se nemění. Technické důkazy a runtime/data availability
+zůstávají oddělené. Zbývá doložený required full,
+finální dependency/main integrace, semantic/memory a nezávislé review aktuálního SHA.
+
+## Nezávislé source review a parent correction
+
+Policy reviewer dal SOURCE APPROVE přesnému `d2d7ec6`/T016f05 po přečtení celého
+modulu a 33 cases; nejde o final/full/merge approval. Následný merge source-approved
+T016 `806ccf1` opravil skutečný rozdíl plain Kafka owner ID proti catalog ID přes
+explicitní release mapping. Vlastní T017 runtime/test bytes zůstaly stejné.
+Dokumentace capu upřesňuje skutečné znaky serializovaného JSON (4194304), nikoli
+počet UTF-8 bytů. Aktuální parent-composition pure běh je evidován odděleně.
+
+## Current130720f refresh a accepted-descendant evidence
+
+T017f22a698 runtime/tests zůstávají byte-exact accepted2df55ff8d15d790808f6a81072144eeb408a05b8.
+Refresh na main130720f7714634430a2255486ce9c4c130003f2b zachovává T014/T016/
+Common/T012/T013/W07/process a current CI. Accepted ONEfull2df2587PASS10allowedSKIP,
+XML2042.878s/runner2048.01s,4897hashes+recursive member sets unchanged; všech33own
+XMLPASS. Collection-only2471mergedparent+33own=2504 ID, všechny vacceptedfull:
+2494PASS10stejných optionalSKIP. Není to nový full na tomto head.
+
+Všech298present src/test/worker/fixture/CI files porovnáno:297exact2df, jediný rozdíl
+main cli.py správně bez budoucího T0195line dispatch. 27worker a9preparedfixture
+source inputs exactReturn079. Žádný actual/full/build/tool/cache mutation. Main245
+immutableepisode prefix+all230oldchild objects zachováno,+1scopedcapture=246; current
+semanticfactkeys beze ztrát. Scoped CLIsemantic/memory/scan/check regenerují graph.
+Viz docs/validation/t017-descendant-proof.json.
+
+Root je PŮVODNÍ AUTOR T017 a nemůže final self-review. Před merge jsou povinné dvě
+nezávislá currentbase/head review (architect +jiný reviewer); Root provádí jen
+integration/merge guard. Autor/integrátor zde approval nevydává. Historické policy
+SOURCE_APPROVE není finalpair approval. Draftpublication po metadatové finalizaci,
+GHCIbilling/cascade optional/unverified; žádný blanket reuseT020/T021.

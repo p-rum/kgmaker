@@ -137,12 +137,11 @@ data class Client(
 ''')
         graph = current_graph(self.root)[0]
         edges, diagnostics = schema_mappings(self.root, reconstruct(self.root), graph)
-        self.assertTrue(any(e.kind == 'persisted_in' for e in edges))
-        reasons = ' '.join(d['reason'] for d in diagnostics)
-        self.assertIn('precision mismatch', reasons)
-        self.assertIn('scale mismatch', reasons)
-        self.assertIn('nullability mismatch', reasons)
-        self.assertIn('absent from selected schema', reasons)
+        self.assertFalse(any(e.kind == 'persisted_in' for e in edges))
+        self.assertTrue(diagnostics)
+        self.assertTrue(all(d['code'] == 'PERSISTENCE_REALM_UNPROVEN' for d in diagnostics))
+        # Legacy regex annotations cannot choose a physical datasource or
+        # manufacture type/nullability claims without explicit realm proof.
 
 
 if __name__ == '__main__':

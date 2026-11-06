@@ -1,13 +1,46 @@
 {
-  "schema_version":1,
-  "basis":"Hand-labelled direct source call expressions in the small supported fixture; not runtime dispatch or bank-project precision",
-  "jvm_calls":[
-    {"caller":"fixture.JavaBridge.call(Z)Ljava/lang/String;","target":"fixture.Worker.<init>()V"},
-    {"caller":"fixture.JavaBridge.call(Z)Ljava/lang/String;","target":"fixture.Worker.choose(Z)Ljava/lang/String;"},
-    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.Worker.process(I)Ljava/lang/String;"},
-    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.Worker.process(Ljava/lang/String;)Ljava/lang/String;"},
-    {"caller":"fixture.Worker.choose(Z)Ljava/lang/String;","target":"fixture.JavaBridge.text()Ljava/lang/String;"}
+  "schema_version": 1,
+  "basis": "Hand-labelled direct source call expressions in the small supported fixture; not runtime dispatch or bank-project precision",
+  "jvm_calls": [
+    {
+      "caller": "fixture.JavaBridge.call(Z)Ljava/lang/String;",
+      "target": "fixture.Worker.<init>()V",
+      "path": "src/main/java/fixture/JavaBridge.java",
+      "line": 5,
+      "text": "new Worker()"
+    },
+    {
+      "caller": "fixture.JavaBridge.call(Z)Ljava/lang/String;",
+      "target": "fixture.Worker.choose(Z)Ljava/lang/String;",
+      "path": "src/main/java/fixture/JavaBridge.java",
+      "line": 5,
+      "text": "new Worker().choose(flag)"
+    },
+    {
+      "caller": "fixture.Worker.choose(Z)Ljava/lang/String;",
+      "target": "fixture.Worker.process(I)Ljava/lang/String;",
+      "path": "src/main/kotlin/fixture/Worker.kt",
+      "line": 7,
+      "text": "process(7)"
+    },
+    {
+      "caller": "fixture.Worker.choose(Z)Ljava/lang/String;",
+      "target": "fixture.Worker.process(Ljava/lang/String;)Ljava/lang/String;",
+      "path": "src/main/kotlin/fixture/Worker.kt",
+      "line": 8,
+      "text": "process(JavaBridge.text())"
+    },
+    {
+      "caller": "fixture.Worker.choose(Z)Ljava/lang/String;",
+      "target": "fixture.JavaBridge.text()Ljava/lang/String;",
+      "path": "src/main/kotlin/fixture/Worker.kt",
+      "line": 8,
+      "text": "text()"
+    }
   ],
-  "typescript_overloads":["(value: number): string","(value: string): string"],
-  "cfg_invariant":"process(Int) and process(String) are opposite branches; neither is sequenced after the other"
+  "typescript_overloads": [
+    "(value: number): string",
+    "(value: string): string"
+  ],
+  "cfg_invariant": "process(Int) and process(String) are opposite branches; neither is sequenced after the other"
 }
