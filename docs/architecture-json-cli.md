@@ -35,7 +35,10 @@ observes confined original source hashes through T018. Default pure explanation 
 NOT_CHECKED. A supplied `--source-status` replays that explicit sidecar rather than
 checking files now. Neither changes original view fingerprints or context freshness.
 
-Successful stdout is one JSON document. Diagnostics use fixed JSON on stderr and
+Successful default stdout is one JSON document. T020 adds interfaces-only
+`--format markdown` over that same validated catalog; JSON stays the default, and
+[the Markdown contract](interface-markdown.md) preserves the same evidence/exit
+semantics without another capture. Topology/explain remain JSON-only. Diagnostics use fixed JSON on stderr and
 never echo raw argument values. Exits: 0 valid (including partial), 4 valid partial
 with `--strict`, 2 invalid input/original index, 3 typed baseline/capture conflict,
 130 cancellation, 141 broken pipe, 1 controlled unexpected internal error.

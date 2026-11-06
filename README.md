@@ -921,3 +921,14 @@ full; independent final-pair review remains pending. T020/T021 rendering is sepa
 The W07 resolver and T014 projection also preserve the no-I/O contract on their
 first call after normal API import. The cold-process regression is protocol-only;
 see [the correction and remaining validation](docs/changes/108_fixColdRemoteProjection.md).
+
+### T020 interface Markdown (current-main publication candidate)
+
+`kgmaker architecture interfaces --catalog http-providers --interface-capture interfaces.json --format markdown`
+renders the same T019 snapshot as a bounded escaped catalog with original IDs,
+contract revisions and internal evidence links. Generated/unclassified rows,
+unknowns and diagnostics stay visible; no current source or runtime proof is added.
+JSON stays default. See [contract and parser checks](docs/interface-markdown.md);
+Current parent dependencies are merged through PR85. Source-corrected result transfer
+preserves the original interface-only49-case contract; T020 final pair review
+remains pending. Earlier checkpoint descriptions are historical.

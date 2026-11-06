@@ -57,6 +57,8 @@ jobs:
 
   unittest:
     runs-on: ubuntu-latest
+    env:
+      KGMAKER_REQUIRE_MARKDOWN_PARSER: "1"
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
@@ -66,6 +68,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e . pytest==8.3.4 jsonschema==4.23.0 setuptools==84.2.1 wheel==0.48.0
+      - run: python -m pip install --require-hashes -r tests/requirements-markdown.txt
       - run: python -m pytest -q
       - run: kgmaker check
 

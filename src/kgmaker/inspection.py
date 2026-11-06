@@ -19,6 +19,7 @@ from .model import Edge, KnowledgeGraph, Node
 from .scanner import scan_repository
 from .store import save_graph
 from .worker_protocol import WorkerError, handshake, request_worker
+from .http_execution import redact_uri_text
 
 VERSION = "inspection-1"
 UI_RULE_VERSION = "react-jsx-events-4"
@@ -154,7 +155,6 @@ def sanitize(value, *, key="", semantic=False):
         value = re.sub(r"(\$\{[^}:]*(?:password|secret|token|api[_-]?key)[^}:]*:)[^}]*\}", r"\1[redacted]}", value, flags=re.I)
         value = re.sub(r"(https?://)[^/@\s]+:[^/@\s]+@", r"\1[redacted]@", value)
         value = re.sub(r"([?&](?:token|password|secret|api[_-]?key|authorization)=)[^&\s]*", r"\1[redacted]", value, flags=re.I)
-        from .http_execution import redact_uri_text
         return redact_uri_text(value, relative=semantic)
     return value
 

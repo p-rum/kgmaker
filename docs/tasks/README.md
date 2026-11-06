@@ -39,13 +39,13 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T011 | [Katalog používaných HTTP rozhraní](T-011_catalog-http-consumers.md) | T008, T009; T003-S07-W06 | SPECIFICATION |
 | T012 | [Katalog Kafka producerů a consumerů](T-012_catalog-kafka-interfaces.md) | T008, T009; T003-S07-W04 | SPECIFICATION |
 | T013 | [Připojení verzovaných integračních kontraktů](T-013_attach-interface-contracts.md) | T010, T011, T012 | SPECIFICATION |
-| T014 | [Projekce ověřených vzdálených bindingů](T-014_bind-remote-interfaces.md) | T013; T003-S07-W07 | Rev2; current509/accepted2df result-transfer; final pair review pending |
+| T014 | [Projekce ověřených vzdálených bindingů](T-014_bind-remote-interfaces.md) | T013; T003-S07-W07 | Merged PR80; bounded source/result evidence retained as history; cold correction PR85 merged in mainfbb |
 | T015 | [Databáze a jiné datové závislosti](T-015_project-data-resources.md) | T008, T009; T003-S06 | SPECIFICATION |
-| T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | Rev2; currentec6/accepted2df transfer; final pair review pending |
-| T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | Rev2; current1307/accepted2df transfer; two independent final reviews pending |
-| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Rev2; current4e4/accepted2df transfer; final pair review pending |
-| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | Rev2; current1005/accepted2df exact union; final pair review pending |
-| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION |
+| T016 | [Agregace topologie služeb](T-016_aggregate-service-topology.md) | T014, T015 | Merged PR81; bounded source/result evidence retained as history |
+| T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | Merged PR82; bounded source/result evidence retained as history |
+| T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Merged PR83; bounded source/result evidence retained as history |
+| T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | Merged PR84; bounded source/result evidence retained as history |
+| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | Rev2; currentfbb/source-corrected transfer; original49 negative preserved; final pair review pending |
 | T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |
 | T022 | [Markdown report topologie a detailů](T-022_render-topology-markdown.md) | T018, T021 | SPECIFICATION |
 | T023 | [Model business procesu a jeho revizí](T-023_define-business-process-model.md) | T005, T009 | SPECIFICATION |
@@ -58,7 +58,7 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T030 | [Packet pro business pojmenování agentem](T-030_prepare-process-label-packet.md) | T024, T026 | SPECIFICATION |
 | T031 | [Validace agentových návrhů](T-031_validate-process-annotations.md) | T023, T030 | SPECIFICATION |
 | T032 | [Schválení a revizní historie procesů](T-032_persist-process-review.md) | T031 | SPECIFICATION Rev2; bounded POSIX CAS, explicitní review |
-| T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | SPECIFICATION Rev2; explicitní read-only snapshots a aliasy |
+| T033 | [Katalog identifikovaných procesů](T-033_catalog-business-processes.md) | T024, T032 | Merged PR79; bounded source/result evidence retained as history |
 | T034 | [CLI životního cyklu procesů](T-034_add-process-cli.md) | T027, T028, T029, T030, T031, T032, T033 | SPECIFICATION |
 | T035 | [Mermaid business průběhu](T-035_render-business-process-mermaid.md) | T026, T027, T028, T029, T034 | SPECIFICATION |
 | T036 | [Markdown business report](T-036_render-business-process-report.md) | T033, T035 | SPECIFICATION |
