@@ -11,6 +11,10 @@ Start with the [current status](docs/production-analysis-progress.md),
 Agents must follow [AGENTS.md](AGENTS.md), including stable task IDs and mandatory
 `docs/tasks/<N>_<lowerCamelCase>.md` / `docs/changes/<N>_<lowerCamelCase>.md` names.
 These two number sequences are independent of each other and GitHub PR numbers.
+For the agent handoff and dependency-aware completion order, see
+[T048 completion plan](docs/tasks/48_completeImplementationHandoff.md). Each
+implementation step includes a traceable change-note entry and updates to all
+affected current documentation; see the documentation gate in AGENTS.md.
 
 ## Planned high-level project views
 
@@ -18,7 +22,10 @@ These two number sequences are independent of each other and GitHub PR numbers.
 catalogue, service topology and evidence-backed business-process views.
 [Tasks T005–T044](docs/tasks/README.md#high-level-zobrazení-projektu--t004) each have
 their own implementation specification, acceptance criteria, tests, branch and PR.
-These are **SPECIFICATION**, not implemented commands or completed capabilities.
+The files are specifications of target behavior. Delivery must be checked against
+code and the current status: T005–T020, T023–T026 and T030–T033 have merged
+implementations in the 2026-11-06 baseline. This does not certify every acceptance
+criterion or every production variant. The remaining delivery order is in T048.
 
 ## Requirements
 
@@ -63,9 +70,12 @@ counts describe the supplied selected inventory, not the unobserved system.
 service/repository/module context selection from an existing graph; it requires a
 context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
 limits. `project_service_inventory` provides a read-only service-only topology
-projection using that selection and explicit ownership. The CLI still does not
-expose architecture view commands, and evidence ranking remains a separate,
-unfinished upstream capability. See [architecture](docs/architecture.md), the
+projection using that selection and explicit ownership. The CLI exposes `architecture interfaces`, `architecture topology` and
+`architecture explain` over explicit captured inputs. Interfaces also support
+`--format markdown`; topology and explain remain JSON-only. See
+[the CLI contract](docs/architecture-json-cli.md) and
+[interface Markdown](docs/interface-markdown.md). Evidence ranking remains a
+separate, unfinished upstream capability. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 

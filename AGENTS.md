@@ -24,7 +24,7 @@ Před významnou implementací proveď architektonickou rekognoskaci dle instruk
 - Reuse existující model/store/Flyway/workspace/availability; nevytvářej paralelní katalog.
 - SOURCE_ONLY, compiler resolution, framework inference, build/test a runtime/data availability jsou odlišné důkazy. Nezvyšuj confidence nebo dostupnost pouhým přejmenováním.
 - Scan, hook, feature a data-check nespouštějí projekt, package installation, migrace ani DB. Build musí být explicitní, content-bound workflow.
-- Dokud není T003-S02 implementováno, scan/hook přepisují compiler index; nevydávej jejich výsledek za zachovaný compiler kontext. Při inspekci nejprve ověř existující index a zdroje, neobnovuj jej automaticky jen kvůli čtení compiler dat.
+- Scan/hook zachovávají obsahově validované compiler kontexty a zastaralé označují STALE. Při inspekci nejprve ověř existující index a zdroje; neobnovuj jej automaticky jen kvůli čtení compiler dat. Podporovaný rozsah dolož aktuálními testy a stavovou maticí.
 - Každá změna veřejného chování současně upraví README, příslušnou capability dokumentaci, CLI příklady a stavovou matici. Specifikace musí být označena jako cíl, nikoli hotová funkce.
 - Instrukce dodávané `kgmaker init` musí zůstat konzistentní s jejich Python templates. Zachovej ochranu upravených uživatelských souborů; nepoužívej automaticky `--force`.
 - Ověř relevantní existující testy, nulovou mutaci při chybě a čistotu diffu. Worker testy hlásí chybějící toolchain jako SKIP/blocked, ne PASS. Dokumentační změna nepotřebuje nové testy kopírující text pravidel.
@@ -46,3 +46,33 @@ zelené GH CI v zadáních a profilech. Workflow a jejich testy zůstávají zac
 Respektuj skutečná serverová pravidla GitHubu; nepoužívej force/admin bypass.
 Před merge znovu ověř obě SHA, použij expected_head_sha a potom ověř merged=true,
 merge commit i cílovou větev. Viz T045 revize 2.
+
+## Povinná dokumentace každého implementačního kroku
+
+Každý implementační krok (včetně opravy, refaktoringu, integrace a dílčího work
+package) musí mít před předáním vlastní dohledatelný záznam. Dokumentace je součást
+kroku, ne následná volitelná práce. Krok není dokončený, pokud dokumentace popisuje
+jiné chování než dodaný kód.
+
+- V českém `docs/changes/<N>_<shortPrName>.md` uveď pro každý krok zvlášť
+  Task/Step/AC ID, výchozí SHA, problém, skutečné změny a dotčené soubory,
+  kompatibilitu, omezení, přesné kontroly a výsledky PASS/FAIL/SKIP/NOT_RUN,
+  neprovedené kontroly a zbývající práci. Jeden PR může mít jeden change note,
+  ale jednotlivé kroky v něm nesmějí být sloučeny do neurčitého shrnutí.
+- Ve stejném PR aktualizuj relevantní README, capability/API/CLI dokumentaci,
+  příklady, `docs/production-analysis-progress.md` a dotčené řádky
+  `docs/acceptance-inventory.md`. Registr zadání aktualizuj při změně identity,
+  revize, závislostí či odkazů; SPECIFICATION je stav dokumentu, ne stav dodání.
+- U každé relevantní dokumentační plochy uveď odkaz na změnu, nebo konkrétní
+  zdůvodnění „bez dopadu“. Pouhá existence change note nenahrazuje aktualizaci
+  uživatelského návodu. Odstraň aktuálně nepravdivé věty „není implementováno“,
+  „draft“ a „review pending“; historické výsledky zachovej s datem a SHA.
+- Odděluj dodání (PLANNED/IN_PROGRESS/PR_OPEN/MERGED/DEFERRED/BLOCKED)
+  od ověření (VERIFIED_IN_SCOPE/PARTIAL/NOT_RUN/FAIL). Merge ani starý PASS
+  neprokazuje všechny acceptance nad aktuálním kódem.
+- Při změně instalovaných instrukcí uprav také jejich Python template a
+  odpovídající spravované kopie; zachovej ochranu uživatelských úprav při init.
+- Před ready/review porovnej dokumentované příkazy, parametry, schémata,
+  podporované varianty a limity se zdrojem a relevantními testy. Reviewer
+  odmítne dokončení při chybějícím záznamu kroku nebo rozporu dokumentace s kódem.
+  Výjimka „doplníme dokumentaci později“ není splněním Definition of Done.
