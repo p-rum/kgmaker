@@ -72,19 +72,22 @@ interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
                               scope="production", role="migration", origin="handwritten")
             symbols = [
                 {"id": "class-payment", "name": "Payment", "kind": "class", "path": "src/Payment.java",
-                 "range": {"start_line": 5}, "context_id": "ctx",
+                 "range": {"start_line": 5}, "context_id": "ctx", "owner": "example.Payment",
                  "annotations": [{"name": "org.springframework.stereotype.Service", "values": {}}]},
                 {"id": "method-list", "name": "list", "kind": "method", "path": "src/Payment.java",
-                 "range": {"start_line": 6}, "context_id": "ctx",
+                 "range": {"start_line": 6}, "context_id": "ctx", "owner": "example.Payment",
                  "annotations": [{"name": "org.springframework.web.bind.annotation.GetMapping", "values": {"value": ["/payments"]}}]},
                 {"id": "class-entity", "name": "PaymentEntity", "kind": "class", "path": "src/Payment.java",
-                 "range": {"start_line": 9}, "context_id": "ctx",
+                 "range": {"start_line": 9}, "context_id": "ctx", "owner": "example.PaymentEntity",
                  "annotations": [{"name": "jakarta.persistence.Entity", "values": {}},
                  {"name": "jakarta.persistence.Table", "values": {"name": "payments"}}]},
                 {"id": "repo-payment", "name": "PaymentRepository", "kind": "interface", "path": "src/Payment.java",
-                 "range": {"start_line": 10}, "context_id": "ctx", "annotations": []},
+                 "range": {"start_line": 10}, "context_id": "ctx", "owner": "example.PaymentRepository",
+                 "supertypes": ["java.lang.Object", "org.springframework.data.jpa.repository.JpaRepository<example.PaymentEntity,java.lang.Long>"],
+                 "annotations": []},
                 {"id": "method-find", "name": "findById", "kind": "method", "path": "src/Payment.java",
-                 "range": {"start_line": 11}, "context_id": "ctx", "annotations": []},
+                 "range": {"start_line": 11}, "context_id": "ctx", "owner": "example.PaymentRepository",
+                 "annotations": []},
             ]
             graph = KnowledgeGraph(3, ".", "now",
                                    [class_node, method_node, entity_node, repository_node, query_method_node, table_node], [],
@@ -99,7 +102,8 @@ interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
             self.assertTrue(query.metadata["validated"])
             self.assertTrue(any(e.kind == "query_reads" and e.source == query.id for e in result.edges))
             self.assertTrue(any(e.kind == "filters_by" and e.source == query.id for e in result.edges))
-            self.assertTrue(any(e.kind == "resolves_to_schema_table" and e.evidence_kind == "FRAMEWORK_DERIVED" for e in result.edges))
+            self.assertFalse(any(e.kind == "resolves_to_schema_table" for e in result.edges))
+            self.assertTrue(any(d.get("code") == "PERSISTENCE_REALM_UNPROVEN" for d in result.diagnostics))
 
     def test_runtime_import_is_bound_to_context_and_rejects_stale_source(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -141,15 +145,20 @@ import jakarta.persistence.Table;
             context = {"id": "ctx", "scope": "production", "framework_rule_versions": {},
                        "database_id": "primary", "schema_stream_id": "main",
                        "persistence_unit": "payments", "naming_strategy": "custom.Unverified"}
+            from kgmaker.analysis_model import digest
+            from kgmaker.schema_replay import persistence_selection
+            context['persistence_selection_hash'] = digest(persistence_selection(context))
             payment = Node("payment", "class", "Payment", "src/Entity.java", line=3,
                            scope="production", role="executable_code", origin="handwritten")
             audit = Node("audit", "class", "AuditLog", "src/Entity.java", line=4,
                          scope="production", role="executable_code", origin="handwritten")
-            tables = [
-                Node("schema:primary:main:table:public.payments", "db_table", "public.payments", "db/primary.sql", 1),
-                Node("schema:audit:main:table:public.payments", "db_table", "public.payments", "db/audit.sql", 1),
-                Node("schema:primary:main:table:public.audit_log", "db_table", "public.audit_log", "db/primary.sql", 2),
-            ]
+            from kgmaker.schema_replay import reconstruct, graph_entities
+            tables = []
+            for database in ('primary', 'audit'):
+                migration = root / database / 'V1__payments.sql'; migration.parent.mkdir()
+                migration.write_text('CREATE TABLE public.payments (id bigint); CREATE TABLE public.audit_log (id bigint);')
+                schema = reconstruct(root, {'database_id': database, 'stream_id': 'main', 'locations': [database]})
+                tables.extend(n for n in graph_entities(schema)[0] if n.kind == 'db_table')
             symbols = [
                 {"id": "payment", "name": "Payment", "kind": "class", "path": "src/Entity.java",
                  "range": {"start_line": 3}, "context_id": "ctx",

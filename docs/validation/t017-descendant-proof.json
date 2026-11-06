@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "base": "130720f7714634430a2255486ce9c4c130003f2b",
+  "owned_source": "f22a6981dcd2eee925dd2c03d0c067de1f89fafd",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE completed strict accepted descendant, not a new run on this integrated head",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.878,
+    "runner_seconds": 2048.01,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_sets": true
+  },
+  "own33_actual_statuses": {
+    "tests/test_t017_filter_topology_scope.py::test_contradicting_unknown_buckets_and_stale_freshness_are_preserved_exactly": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_credential_expansion_id_is_rejected_even_when_retained[False]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_credential_expansion_id_is_rejected_even_when_retained[True]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_cross_context_tuple_is_not_shrunk_to_fit": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_cycles_terminate_and_do_not_change_original_edges_or_evidence": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_direction_selects_real_neighborhood[both-expected2]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_direction_selects_real_neighborhood[incoming-expected0]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_direction_selects_real_neighborhood[outgoing-expected1]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_generation_timestamp_does_not_change_selection_fingerprint": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs0]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs1]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs2]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs3]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs4]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs5]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs6]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs7]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs8]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_invalid_selector_has_fixed_error_and_preserves_input[kwargs9]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_kafka_channel_counts_two_hops_and_is_never_reconnected_as_service_call": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_middle_node_context_exclusion_never_creates_shortcut": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_no_file_process_network_or_upstream_capture_is_called": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_public_budget_is_stable_and_retains_ambiguity_and_full_omission_inventory": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_public_single_node_budget_does_not_overflow_with_synthetic_boundaries": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_resource_bounds_fail_controlled_without_partial_result[budget]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_resource_bounds_fail_controlled_without_partial_result[cycle]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_resource_bounds_fail_controlled_without_partial_result[deep]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_shared_acyclic_input_is_counted_without_becoming_a_cycle": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_shuffled_input_and_reordered_filter_sets_have_identical_output": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_unicode_spaces_preserve_original_identity": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_unknown_focus_is_distinct_from_empty_relation_filter_and_unfocused_selection": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_upstream_truncation_is_not_erased_by_unrestricted_filter": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t017_filter_topology_scope.py::test_zero_hops_has_visible_hop_frontier_and_no_edge": {
+      "status": "PASS",
+      "details": []
+    }
+  },
+  "current1307_main2471_plus33_union": {
+    "count": 2504,
+    "PASS": 2494,
+    "SKIP": 10,
+    "all_contained_in_accepted2597": true,
+    "remaining2471IDs_exact_merged_T016_parent_collection": true,
+    "actual_execution": false,
+    "collection_only": true,
+    "existing_main_test_bodies_unchanged": true
+  },
+  "global_runtime_test_fixture_workflow_paths_checked": 298,
+  "global_exact_to_accepted_full_count": 297,
+  "own_module_test_exact_sha256": {
+    "src/kgmaker/topology_filter.py": "2a0816b27564811331ce03d49cd9c8ca59eb9a290d9a8334d03d39b0051461f3",
+    "tests/test_t017_filter_topology_scope.py": "2519c16fbe6cd41896a2abddb0890c6fd5cc3c6a596a098e75fc92d450b967fb"
+  },
+  "only_expected_present_file_difference": {
+    "src/kgmaker/cli.py": {
+      "exact_current_main": true,
+      "difference": "Only not-yet-merged T019 registration and early architecture dispatch absent."
+    }
+  },
+  "current_main_CI_exact": true,
+  "native_worker_source_inputs_exact": 27,
+  "prepared_fixture_source_inputs_exact": 9,
+  "native_actual_build_origin": "079ec21f9a7d1ce5ab9de900dc8e708316495442",
+  "native_build": "NOT_RUN",
+  "required_sorted_IDs_sha256": "97b90abc7dd37a02a6b110d91c3bc5ef4b602be84e5435cfd35ea12202e7b583",
+  "per_ID_status_file_sha256": "919e763e325647c5cc18fb76f76cceb87aa0377c90f1813394adf5f69dfd89a2",
+  "global_source_manifest_sha256": "838a5f559fafb1b31e0d079de3af80e16e0e9eb8b327434a973a9e4b4ca8a345",
+  "receipt_SHA256": {
+    "/workspace/pure-integration-proof/full-attempt-2/status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "/workspace/pure-integration-proof/full-attempt-2/full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "/workspace/pure-integration-proof/full-attempt-2/all-result-classification.json": "b264b9b0721a16e4bc228b337a476d8c0b3c76acbe9550c3dc9f18ffd42fb368",
+    "/workspace/pure-integration-proof/staged-artifact-copy.json": "080f60c8fea2c75975f0a0d454ddff41fd2f377a8c8eed78bc01e404192bd3a6",
+    "/workspace/t014-t021-transfer-proof/transfer-ledger.json": "da425d64d2de2faba4b46df6391249e512a400191c24daf1dc3dab1e5769b298",
+    "/workspace/t016-validation/mainEc6/final-local-head-proof.json": "d8f6d108543bbda75bb7292beea19eccd15feff1d3923878afa53a52f23ba4f6"
+  },
+  "preserved_history": {
+    "current_main_episode_prefix": 245,
+    "all_old230_child_episode_objects_preserved": true,
+    "expected_total_episodes": 246,
+    "new_capture": "ONE scoped T017 memory CLI capture",
+    "main_semantic_fact_keys_preserved": true
+  },
+  "review_authority": {
+    "original_author": "Root",
+    "Root_may_self_review": false,
+    "required_independent_final_reviewers": [
+      "architect",
+      "another independent reviewer"
+    ],
+    "Root_role": "integration and merge guard only",
+    "integrator_does_not_self_approve": true,
+    "historical_policy_source_review": "Not final exact-pair approval"
+  },
+  "remaining": [
+    "Two independent exact-base/head final reviews",
+    "Root merge guard/publication decision"
+  ],
+  "limits": [
+    "Pure filtering preserves original IDs/real edges and all known omission identities",
+    "No invented shortcuts, context/baseline/evidence promotion or runtime/data claims",
+    "No new actual/full/build/tool/cache mutation",
+    "T020/T021 outside accepted full require later joint validation"
+  ],
+  "GHCI": "billing/cascade optional/unverified; not PASS"
+}

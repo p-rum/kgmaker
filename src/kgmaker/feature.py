@@ -103,26 +103,34 @@ def attach_schema(graph, schema, root: Path | None = None):
     """Replace migration-union SQL entities with the effective target schema."""
     from .schema_replay import graph_entities
     from .model import KnowledgeGraph
+    from .schema_replay import persistence_pair
     migration_paths = {m['path'] for m in schema['inventory']}
-    removed = {n.id for n in graph.nodes if n.path in migration_paths and
-               (n.kind.startswith('db_') or n.kind in {'migration', 'migration_operation'})}
+    pair = persistence_pair(schema['config']['database_id'], schema['config']['stream_id'])
+    def same_or_unqualified(node):
+        realm = (node.metadata or {}).get('persistence_realm')
+        return realm is None or (isinstance(realm, dict) and
+            persistence_pair(realm.get('database_id'), realm.get('stream_id')) == pair)
+    removed = {n.id for n in graph.nodes if n.path in migration_paths and same_or_unqualified(n)
+               and (n.kind.startswith('db_') or n.kind in {'database', 'migration', 'migration_operation'})}
     nodes, edges = graph_entities(schema)
+    new_nodes = {n.id: n for n in nodes}
+    old_nodes = {n.id: n for n in graph.nodes}
     remaining = {n.id: n for n in graph.nodes if n.id not in removed}
-    remaining.update({n.id: n for n in nodes})
+    remaining.update(new_nodes)
     all_edges = [e for e in graph.edges if e.source not in removed and e.target not in removed] + edges
-    # Exact declared ORM table/column identity, not fuzzy field-name matching.
-    from .model import Edge
-    for old_edge in graph.edges:
-        if old_edge.target not in removed or old_edge.kind not in {'maps_to', 'persisted_in', 'maps_to_column'}:
+    # A legacy source-name match cannot retarget an ORM proof. Keep an already
+    # qualified link only when its exact object AND captured configuration agree.
+    for edge in graph.edges:
+        if edge.target not in removed or edge.source in removed:
             continue
-        old = next(n for n in graph.nodes if n.id == old_edge.target)
-        owners = [n for n in graph.nodes if n.kind == 'db_table' and any(
-            e.source == n.id and e.target == old.id and e.kind == 'contains_column' for e in graph.edges)]
-        targets = [n for n in nodes if n.kind == old.kind and any(
-            n.name.endswith('.' + owner.name + '.' + old.name) for owner in owners)]
-        if len(targets) == 1:
-            all_edges.append(Edge(old_edge.source, targets[0].id, 'persisted_in', old_edge.evidence,
-                                  old_edge.confidence, old_edge.confidence_score, old_edge.source_file, old_edge.source_line))
+        old, new = old_nodes.get(edge.target), new_nodes.get(edge.target)
+        if old is None or new is None:
+            continue
+        previous = (old.metadata or {}).get('persistence_realm')
+        current = (new.metadata or {}).get('persistence_realm')
+        if (isinstance(previous, dict) and previous == current
+                and {'database_id', 'stream_id'} <= set(previous.get('explicit_keys', []))):
+            all_edges.append(edge)
     from .schema_replay import schema_mappings
     mappings, _ = schema_mappings(root, schema, graph) if root is not None else ([], [])
     all_edges += mappings
@@ -199,7 +207,7 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
             _details["graph_selection"] = {"scope": scope, "context_id": context_id}
     limitations = ["Static paths do not prove runtime availability; scoped supplied observations require approved mappings.",
                    "XLSX formulas are dependency evidence only; cached values have unknown freshness and are not evaluated.",
-                   "Thymeleaf support is limited to literal model keys/template returns; no arbitrary expression evaluation.",
+                   "Thymeleaf support is limited to literal model keys/template returns and unique static fragments; conditions are PARTIAL, unsupported expressions UNKNOWN, and nothing is evaluated.",
                    "No complete interprocedural parser in this milestone.",
                    "Only the supplied repository root is covered; external systems are not inspected."]
     if semantic_error:
@@ -209,7 +217,7 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
                 "excluded_directories": sorted(SKIP_DIRS) + ["hidden directories", GENERATED_PREFIX],
                 "parser_capabilities": {"structural": PARSER_VERSION, "data_flow": CAPABILITIES,
                                         "workbooks": WORKBOOK_VERSION, "binary_xls": BINARY_DIAGNOSTICS_VERSION,
-                                        "templates": "thymeleaf-bindings-1"},
+                                        "templates": "thymeleaf-bindings-2"},
                 "artifact_diagnostics": artifact_diagnostics,
                 "dataflow_diagnostics": flow.diagnostics,
                 "limitations": limitations,
@@ -231,9 +239,10 @@ def snapshot(root: Path, *, workspace: Path | None = None, scope: str = "all",
     from .flyway import configuration, DEFAULT_LOCATION
     config = configuration(root)
     if (root / DEFAULT_LOCATION).is_dir() or any('path' in p for p in config['provenance']):
-        from .schema_replay import reconstruct, schema_mappings
+        from .schema_replay import reconstruct, schema_mappings, schema_compatibility
         schema = reconstruct(root); schema.pop('checkpoints', None)
         _, schema['mapping_diagnostics'] = schema_mappings(root, schema, graph)
+        schema['compatibility'] = schema_compatibility(schema, graph)
         coverage['schemas'] = {'.': [schema]}
         coverage['parser_capabilities']['flyway'] = schema['schema_parser_version']
         coverage['pending'] = schema['diagnostics'] + [d['reason'] for d in schema['mapping_diagnostics']]

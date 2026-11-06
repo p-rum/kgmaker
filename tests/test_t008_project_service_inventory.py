@@ -214,7 +214,7 @@ def test_ac05_context_and_provenance_are_preserved_and_not_upgraded(tmp_path):
     assert result.context_selection["services"]["orders"]["contexts"][0]["context_id"] == selected_context
     assert result.context_selection["services"]["orders"]["contexts"][0]["scope"] == "production"
     assert service.attributes["scope"] == "production"
-    assert service.attributes["evidence_kinds"] == ["SYMBOL_RESOLVED"]
+    assert service.attributes["evidence_kinds"] == ["SOURCE_ONLY", "SYMBOL_RESOLVED"]
     assert result.coverage["status"] == "PARTIAL"
     assert any(item.get("evidence_kind") == "SOURCE_ONLY" for item in result.provenance)
     assert any(item["code"] == "TRUNCATED_PROVIDER_CONTEXT" for item in result.diagnostics)

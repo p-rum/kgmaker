@@ -2,8 +2,8 @@
 
 - Task ID: `T017`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-05
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T016](T-016_aggregate-service-topology.md).
@@ -12,6 +12,13 @@
 - Primární moduly: `views.py`, `nový architecture.py`. Názvy nových modulů jsou návrh; při existujícím ekvivalentu jej rozšiř a odůvodni umístění v PR.
 
 ## Cíl a hranice samostatné dodávky
+
+Revize 2 upřesňuje čistý kontrakt nad explicitní pracovní závislostí T016
+`f05b13b87b2b3255c4a67fde7e5279223cef4144`. Source review T016 není dokončením
+jeho dependency/full gate. T017 zůstává samostatná větev a PR; před ready musí
+převzít finální schválené dependency a aktuální main. Implementační místo je nový
+`src/kgmaker/topology_filter.py`, který reuseuje `ViewDocument` a T016; nevytváří
+další store, resolver ani katalog.
 
 Filtrování a omezení velikosti topologie. Výstupem tohoto úkolu je jediný otestovatelný kontrakt popsaný níže. Lze jej sloučit samostatně po splnění deklarovaných závislostí; není nutné dokončit celý T004. Závislosti neimplementuj skrytě v tomto PR. Při chybějícím upstream kontraktu zapiš BLOCKED a odkaz na konkrétní chybějící AC; fallback je povolen pouze jako přiznaný PARTIAL/UNKNOWN, pokud splní všechna zdejší kritéria.
 
@@ -61,3 +68,52 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T017** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+## Přesný kontrakt revize 2 před implementací
+
+`filter_topology(topology, *, focus_service=None, direction='both', max_hops=None,
+max_nodes=200, relations=None, scope=None, context_ids=None)` přijímá již sestavený
+T016 `ViewDocument` nebo jeho JSON dokument. Vrací `{schema_version, rules_version,
+document, filtering}`. Funkce nečte soubory ani zdroje, nespouští capture, projektory,
+procesy, model, síť ani store. Jde o důvěryhodný lokální snapshot; hash neověřuje
+autenticitu libovolně nahrazeného vstupu ani fyzickou freshness checkoutu.
+
+Focus je přesné ID existujícího uzlu `service`; `None` znamená bez focus omezení,
+prázdný řetězec je chyba, neznámé platné ID vrací prázdný `UNKNOWN_FOCUS` výsledek.
+Směr je incoming/outgoing/both. Hops počítají skutečné hrany, tedy Kafka
+service→channel→service jsou dva hops. Nula hops je platná; node budget musí být
+celé číslo alespoň 1, bool/float/záporná hodnota jsou chyby. Nezaměňuj neznámý focus,
+prázdnou množinu relations a kapacitní ořez.
+
+`relations=None` zachová všechny zachycené relation; explicitní prázdný seznam
+nezachová žádnou. Scope může pouze potvrdit scope snapshotu; jiný je řízená chyba.
+Kontextový filtr pouze omezuje původní celé context tuples; nikdy je nezkracuje
+ani nepředstírá nový T006 výběr. Neprokázaný prázdný tuple není wildcard.
+Původní `context_selection` a baseline zůstanou zachované, filtr se zapíše odděleně.
+
+Deterministický BFS volí uzly podle vzdálenosti a ID, nikoli pořadí vstupu nebo
+centrality. Bez focus se použije kanonické pořadí ID. Zachovají se jen původní
+způsobilé hrany s oběma ponechanými endpointy; nevznikne shortcut přes vynechaný uzel.
+Resolution, freshness, evidence a jejich polarity se nezlepší odebráním alternativ.
+
+`max_nodes` počítá všechny skutečně vrácené uzly včetně existujících boundaries.
+Nové cutoff boundaries jsou pouze `filtering.frontier` metadata a nezvětšují graph.
+Metadata obsahují přesná vynechaná node/edge IDs, důvody, referenční original
+interface/mapping/release IDs a oddělené unikátní počty. Zachované summary edges
+ponechají celý původní expansion inventory. Detached exclusions se nespojí s focus.
+Žádné vynechání nehlásí COMPLETE; upstream truncation a nejistota se zachovají.
+
+Před normalizací se kontrolují cykly, hloubka a per-occurrence počet/velikost vstupu;
+sdílené acyklické hodnoty se započítají opakovaně. Samostatný hard limit úplného
+výstupního metadata inventáře při překročení odmítne výsledek, nikdy nezamlčí IDs.
+Chyby mají pevné kódy bez vstupních tajných hodnot. Unicode a mezery v platných
+immutable IDs se zachovají; rozpoznané credential/userinfo identity se odmítnou.
+Technický vstup, zdrojový checkout i poslední artefakt zůstanou beze změny.
+
+Po public RED následuje star/cycle/channel fixture, shuffled-input determinismus,
+incoming/outgoing/both, budget=1/0/bool, hops=0, unknown focus, prázdné relations,
+foreign scope/context tuples, žádné shortcut, ambiguity po ořezu, přesné omissions,
+provenance/polarity a upstream truncation, privacy/bounds a zákaz I/O. Required full
+může dodat jen doložený descendant s úplným parent collected-ID supersetem a přesnou
+source/native/test closure; collection či pure sada nejsou full PASS. GH CI je
+doplňující podle uživatelské merge politiky v AGENTS, nikoli náhrada lokálních gate.

@@ -57,6 +57,8 @@ jobs:
 
   unittest:
     runs-on: ubuntu-latest
+    env:
+      KGMAKER_REQUIRE_MARKDOWN_PARSER: "1"
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
@@ -65,7 +67,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e . pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
+      - run: python -m pip install -e . pytest==8.3.4 jsonschema==4.23.0 setuptools==84.2.1 wheel==0.48.0
+      - run: python -m pip install --require-hashes -r tests/requirements-markdown.txt
       - run: python -m pytest -q
       - run: kgmaker check
 
@@ -75,6 +78,8 @@ jobs:
       KGMAKER_REQUIRE_WORKERS: "1"
       KGMAKER_REQUIRE_K2: "1"
       KGMAKER_REQUIRE_SPRING_IMPORTS: "1"
+      KGMAKER_REQUIRE_HTTP_PROVIDERS: "1"
+      KGMAKER_REQUIRE_SPRING_CONDITIONS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -105,11 +110,18 @@ jobs:
         run: |
           mvn -B -ntp -f fixtures/build-inspection/maven/pom.xml test
           mvn -B -ntp -f fixtures/spring-imports/pom.xml compile
+          mvn -B -ntp -f fixtures/data-resources/pom.xml compile
+          mvn -B -ntp -f fixtures/http-provider-projection/pom.xml compile
+          mvn -B -ntp -f fixtures/spring-conditions/pom.xml compile
+          mvn -B -ntp -f fixtures/process-triggers/pom.xml compile
+          mvn -B -ntp -f fixtures/kafka-code-bindings/pom.xml compile
+          mvn -B -ntp -f fixtures/kafka-retry-dlt/pom.xml compile
+          mvn -B -ntp -f fixtures/http-client-execution/pom.xml compile
           python workers/jvm/build.py --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/jvm/fetch_k2.py --output "$RUNNER_TEMP/kgmaker-tools/k2"
           python workers/jvm/build.py --backend k2 --analysis-api-home "$RUNNER_TEMP/kgmaker-tools/k2" --kotlin-home "$RUNNER_TEMP/kgmaker-tools/kotlinc" --maven-repository "$HOME/.m2/repository" --java-home "$JAVA_HOME"
           python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
-      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_default_body_mapping.py
+      - run: python -m pytest -q tests/test_mandatory_worker_ci.py tests/test_compiler_workers.py tests/test_worker_protocol.py tests/test_control_flow.py tests/test_build_runner.py tests/test_worker_install.py tests/test_k2_backend.py tests/test_typescript_project_references.py tests/test_spring_imports.py tests/test_spring_imports_context.py tests/test_default_body_mapping.py tests/test_t015_project_data_resources.py tests/test_tsconfig_freshness.py tests/test_typescript_callbacks.py tests/test_typescript_callback_projects.py tests/test_typescript_callback_limits.py tests/test_dependency_dispatch.py tests/test_t010_catalog_http_providers.py tests/test_t010_compiler_providers.py tests/test_spring_registrations.py tests/test_spring_conditions.py tests/test_coroutine_mapping.py tests/test_t024_discover_process_triggers.py tests/test_jvm_golden_corpus.py tests/test_http_client_execution.py tests/test_http_provider_privacy_integration.py tests/test_argument_parameter_flow.py tests/test_ui_events.py tests/test_t025_build_local_process_path.py tests/test_kafka_bindings.py tests/test_orm_xml_overrides.py tests/test_persistence_realms.py tests/test_t011_catalog_http_consumers.py tests/test_local_operation_proofs.py tests/test_kafka_code_bindings.py tests/test_return_consumer_flow.py tests/test_schema_compatibility.py tests/test_kafka_retry_dlt.py tests/test_cross_service_contract_mapping.py
       - name: Explicit Maven plan/runner/export
         run: |
           kgmaker project build-plan --root fixtures/build-inspection/maven --phase test --output "$RUNNER_TEMP/kgmaker-plan.json"
@@ -160,6 +172,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/kgmaker-tools/maven.tar.gz" -C "$RUNNER_TEMP/kgmaker-tools"
           python workers/build/build.py --maven-home "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9" --java-home "$JAVA_HOME"
           echo "$RUNNER_TEMP/kgmaker-tools/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/kgmaker-tools/kotlinc/bin" >> "$GITHUB_PATH"
       - name: Actual Maven and Gradle exports from an offline-installed wheel
         env:
           KGMAKER_REQUIRE_EXPORTERS: "1"

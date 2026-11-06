@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "supported_version": "3.3.2",
+  "preparation": "Explicit official Maven Central API JAR/POM only; inherited proxy/TLS. No app/broker or package install. Version3.2.0 is deliberately unsupported.",
+  "artifacts": [
+    {
+      "version": "3.3.2",
+      "path": "org/springframework/kafka/spring-kafka/3.3.2/spring-kafka-3.3.2.jar",
+      "sha256": "39aedad4ed809a5d0a81c00c543afc2d931201e02d5b3f0e8bc9d36591993282",
+      "artifact_pom": "org/springframework/kafka/spring-kafka/3.3.2/spring-kafka-3.3.2.pom",
+      "artifact_pom_sha256": "15277237cb309081f4d7d76e9772855c89da471ff949ade827a7f5f1a20e44f5",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "version": "3.2.0",
+      "path": "org/springframework/kafka/spring-kafka/3.2.0/spring-kafka-3.2.0.jar",
+      "sha256": "570e3a0c769dccaad4888b3540e7b3f7484b4f86091e07dd1b8ad39f8c076a5d",
+      "artifact_pom": "org/springframework/kafka/spring-kafka/3.2.0/spring-kafka-3.2.0.pom",
+      "artifact_pom_sha256": "b9c789f109e4cd497e99e4e9f325d74675e2633b56c7073a47859ea8d44374d4",
+      "license_name": "Apache License, Version 2.0"
+    }
+  ]
+}

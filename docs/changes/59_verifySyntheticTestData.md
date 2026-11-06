@@ -57,3 +57,16 @@ CI dodatečně odhalilo zastaralé generované snapshoty v dílčích PR. Každ�
 inkrement nyní zvlášť obnovuje semantic metadata a GRAPH.md/GRAPH.mmd příkazy
 semantic update/apply/validate a scan/check. Neoslabuje se CI ani validátor;
 chybný snapshot se nahrazuje výstupem nad přesným zdrojem daného inkrementu.
+
+
+## Integrace aktuálního main (2026-11-05)
+
+Zachovává main `9eec41a403b4e6601fe3addac168bf39d37f31b6`, jeho nové capabilities, pravidla T045 revize 2 a sémantickou historii. Zdrojové změny T046 sloučeny bez konfliktů; společné dokumenty zachovávají obě rozšíření. Výsledky kontrol této nové revize následují po jejich skutečném provedení.
+
+
+Aktualizovaný integrační baseline: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d` (zahrnuje remote contract mapping). Vlastní dostupná Python sada tohoto inkrementu: 47 passed, 1 warning, 29 subtests passed in 1.59s. Žádné nové worker/toolchain tvrzení. Semantic/grafy se znovu obnovují pro tento zdrojový snapshot.
+
+
+## Integrace 2026-11-06 přes GitHub plugin
+
+Baseline `250e7c16250a97b9f8df5256b9894c8119dc64d9`. Zachovává nové main capabilities včetně architecture CLI; vlastní cílené pytest ověření tohoto inkrementu: 81 passed, 1 warning, 29 subtests passed in 8.26s. Semantic a grafy se obnovují pro tento snapshot. Historické výsledky výše nejsou vydávány za nová head review.

@@ -96,6 +96,11 @@ def indexed(args):
             raise AnalysisError("Explicit --context required; available: " + ", ".join(c["id"] for c in selected))
     if len(selected) != 1:
         raise AnalysisError("No matching compiler analysis context")
+    if getattr(args,"command",None)=="flow" and getattr(args,"view",None)=="process":
+        # Preserve original proof tuples until process applies its selected CFG
+        # scope. Otherwise projection could hide a malformed cross-scope edge.
+        args._flow_context_id=selected[0]["id"]
+        return graph
     from .views import project
     return project(graph, args.scope, context_id=selected[0]["id"])
 
@@ -172,12 +177,18 @@ def run(args):
             if args.view == "control-flow":
                 result = flow.control_flow(graph, args.entry, scope=args.scope, max_nodes=args.max_nodes)
             elif args.view == "process":
-                result = flow.process(graph, args.entry, scope=args.scope, max_depth=args.max_depth, max_nodes=args.max_nodes)
+                result = flow.process(graph, args.entry, scope=args.scope, max_depth=args.max_depth, max_nodes=args.max_nodes, context_id=getattr(args,"_flow_context_id",None))
             else:
                 from .views import project
                 selected = project(graph, args.scope, view=args.view)
                 result = {"status": "PARTIAL", "view": args.view, "scope": args.scope, "contexts": selected.contexts,
                           "entry": args.entry, "nodes": [n.id for n in selected.nodes], "edges": [e.__dict__ for e in selected.edges]}
+                if args.view == "data-flow":
+                    from .return_flow import return_consumer_bindings
+                    result["return_consumer_bindings"] = return_consumer_bindings(selected)
+
+                from .dataflow import http_request_inventory
+                result["http"] = http_request_inventory(selected)
                 if args.format != "json":
                     raise AnalysisError("Integration/data views require --format json until the framework view renderer is available")
             if args.format == "mermaid":
