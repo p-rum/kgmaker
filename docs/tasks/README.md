@@ -13,6 +13,9 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T003 | [3_finishProductionAnalysis.md](3_finishProductionAnalysis.md) | Integrovaný plán dokončení T001/T002 a produkční analýzy | Normativní plán; není tvrzením dokončení |
 | T004 | [4_addHighLevelProjectViews.md](4_addHighLevelProjectViews.md) | Integrační katalog, topologie služeb a business procesy; T005–T044 níže | SPECIFICATION |
 | T045 | [45_addCodeReviewAgent.md](45_addCodeReviewAgent.md) | Projektový code-review agent pro vytvořené PR a schválený merge | SPECIFICATION, revize 2; GH CI je doplňující, ostatní kontroly zůstávají povinné; profil není důkazem merge |
+| T047 | [47_addReliableIncrementalContext.md](47_addReliableIncrementalContext.md) | Inkrementální integrita, bezpečnostní kontext, hranice dopadu a platnost ověření; 13 kroků | SPECIFICATION, revize 1 |
+
+T046 je již přiděleno v otevřeném [PR #41](https://github.com/p-rum/kgmaker/pull/41) a navazujícím balíku #42–45/#40; není v této baseline main. T047 jeho číslo nerecykluje a execution evidence navazuje na jeho obsahové reference a workflow. Registraci T046 při merge zachovej.
 
 ## High-level zobrazení projektu — T004
 
