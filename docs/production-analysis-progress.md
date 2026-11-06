@@ -1039,3 +1039,102 @@ old capsule's unknown validation fields remain historical and unchanged. Runtime
 tests and native bytes were not changed or rerun for terminal metadata recording.
 Architect and resume_t010 FINAL reviews on the new base/head remain PENDING;
 Root is the original author and merge guard only. See note108/per-ID ledger.
+
+## T020 — interface Markdown source candidate
+
+Explicit stack T019 abad2e3; Rev2/root architecture approved before code. Pure
+ViewDocument renderer and interfaces-only CLI format preserve IDs/context/evidence,
+contract revisions, Kafka realm/group and generated/unclassified rows. Public
+RED4FAIL1.08s → initial GREEN4; expanded safe/shape/parser/source-contract matrix
+43PASS0.94s; T019 compatibility plus renderer77PASS4.37s; expanded pure closure
+176PASS6.59s covers model/T010/T013 and the final namespace-collision regression.
+Dev-only hash-pinned GFM parser isolated from shared venv/cache, table AST validated.
+Native/heavy/full NOT_RUN; current source checkpoint awaits independent review
+before staging. No whole T004, runtime, payload compatibility or deployment claim.
+
+T020 current corrected renderer checkpoint446ddbe:49PASS1.24s, including explicit
+validated content fingerprint checked against independent supplied-JSON SHA256.
+Root independent SOURCE_APPROVE covers complete renderer/CLI/test source; final
+metadata descendant preserves exact runtime/tests. Earlier176/48 are historical
+source-attributed checks. Dependency/current-main/full/merge gates remain pending.
+
+
+## T020 current-main publication transfer (2026-11-06)
+
+Current parentfbb includes merged PR79–85; older checkpoint/review-pending entries
+above are historical. T020 adds only interface Markdown: topology/explain stay
+JSON-only, original286-line renderer and original49test source are preserved.
+The source-corrected006 aggregate is2737PASS/10typedoptionalSKIP across2747IDs,
+not a fresh single full. The T020 stage2647-ID subset is2637PASS/10typedSKIP.
+Its49feature cases use48 assertion-equivalent aggregate cases and the original
+unsupported topology-Markdown negative PASS on source446ddbe/metadataaa539.
+The aggregate's same-ID topology-Markdown positive is T022 evidence, never the
+T020 negative. Parser rejection route/entrypoint/helpers and original test body
+are source-verified against that original execution; no new test was run here.
+Current-main cold fix and all other APIs/CI jobs stay intact. Original249parent
+capsules +three exactT020capsules=252; historical validation fields are unchanged.
+Fresh scoped semantic CLI, source/global/ID proof and two-stage attribution are
+recorded in /workspace/t020-publication-proof. Current T020 exact-pair independent
+review/publication are pending; no T021/T022 code/capsules or wholeW09 claim.
+
+
+### Current blocker — first-call renderer purity
+
+Root's fresh ordinary CPython public-module invocation confirmed file-open I/O
+inside `architecture_render._render`'s lazy `_safe_output` import (original
+renderer SHAed93abfb9e4052ceef9a2aaf0b7ff2ecbed6be96db48a0948343aff97a00c8b7).
+The original49 test result and2647 per-ID ledger remain source-attributed case
+results, not closure of this newly uncovered first-call contract. Root RED receipt:
+`/workspace/t020-cold-purity-proof/receipt.json`. The initial payload-preparation
+missing parser path is separate from the corrected confirmed importlib-open RED.
+This checkpoint is HOLD/REQUEST_CHANGES pending separately reviewed corrective
+source/regression/affected-result transfer. No corrective code or new execution
+was performed here; no final readiness or pure first-call support is claimed.
+
+
+## Aktuální oddělený T020 checkpoint — 2026-11-06
+
+Base je ověřený cold main `fbb0957`; pouze interface Markdown, nikoli Mermaid
+ani topology Markdown. Původní 49 test bodies z aa539 zůstává beze změn; přidána
+jedna přijatá first-call cold regrese. Schválená korekce109 extrahuje pouze původní
+helpery do architecture_render_common a přesouvá existující importy do module scope
+v rendereru/CLI/inspection; algoritmy, limity, veřejná exception a JSON zůstávají.
+Historický HOLD výše je uzavřen korekcí, nikoli zpětným přepsáním starých důkazů.
+
+Přijatý pokračovací běh007v2 na `41b9a454`: 152 PASS / 0 SKIP a 19 actual SVG.
+Celková SOURCE_CORRECTED evidence je 2740 PASS + 10 typed optional SKIP / 2750;
+nejde o nový jediný full běh. Oddělený T020 ledger má přesně 2648 IDs =
+2638 PASS + 10 typed optional SKIP: 2598 parent + 50 T020. Původní unsupported
+[topology] negative čerpá výhradně skutečný původní446/aa 49PASS receipt;
+pozdější combined same-ID positive jej nedokládá. Ostatní47 původních případů
+a specialized [explain]/path-error odpovídají přijatým cestám; nový cold případ
+má exact41b9 AST. Source/global/per-ID proof je externě v
+`/workspace/t020-corrected-publication-proof`. Native630 artefakty ani tools se
+nemění; žádný nový test, collection, parser/SVG, preflight, build či full nebyl
+pro tento isolated head spuštěn. Nezávislé finální review a publication PENDING.
+T021 následně přidá Mermaid; T022 topology Markdown až ve vlastním odděleném PR.
+
+
+## Aktuální stage ověření — 2026-11-06
+
+Testovaný runtime/source checkpoint `fc6f58f997281e9dee871ae9ab61a90ddaea4578`:
+jediná current-stage collect-only kontrola přesně 2648 unique IDs, bez module
+skip/missing/extra; následný autorizovaný narrow běh **85 PASS / 0 SKIP, 14.05s**
+(50 T020, 34 T019, jedna T014 first-call cold public regrese). Původní unsupported
+topology-Markdown negative i explain/path-error nyní skutečně prošly na current
+stage; původní446/aa receipt i pozdější combined positive historie zůstávají.
+Před/po všech306 source/build/test inputs a čistý HEAD přesné; read-only parser
+162regular-file/184total-member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
+Markdown parser, maxfail1, vlastní tmp; žádný nový native/browser/SVG/build/full.
+
+Aktuální per-ID SOURCE_CORRECTED union **2638 PASS + 10 typed optional SKIP /2648**
+obsahuje85 skutečných current-stage řádků a2563 dříve přijatých source-qualified
+řádků. Není to fresh2648 full. Raw XML, commands, collect a před/po guards i přesné
+source-attribution řádky jsou v `/workspace/t020-corrected-stage-validation`;
+receipt SHA256 `4256910e7b59ac67c396fa20751ed88235b4b2d7c779c1503bb95e41a1f72696`.
+Finální metadata head je následník téhož testovaného runtime; nezávislé FINAL
+review Root+resume10 před publikací čeká. GH CI neověřené/doplňující; žádný push,
+PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou sloučené;
+T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
+current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
+AC06 čeká na finální review a samostatnou publikaci.

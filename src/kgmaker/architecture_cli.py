@@ -1,4 +1,4 @@
-"""T019 JSON adapter: pure snapshot replay or explicit index-preflighted capture."""
+"""Architecture adapter: snapshot JSON or interface Markdown; explicit capture only."""
 import argparse
 from contextlib import contextmanager
 import json
@@ -13,6 +13,7 @@ from .architecture_model import ViewDocument
 from .model import KnowledgeGraph
 from .remote_mapping import _bounded, _selection, _workspace, resolve_remote_mappings
 from .view_explanation import _ref
+from .inspection import sanitize
 
 BUNDLE_VERSION='architecture-interface-inputs-1'
 _MAX_INPUT_BYTES=32_000_000
@@ -44,7 +45,7 @@ def _configure(parser):
         child.add_argument('--scope',choices=('production','test','test_fixture','development','unknown'),help='assert snapshot scope; local capture defaults to production')
         child.add_argument('--context-selection',type=Path,help='versioned capture pins; exact assertion in snapshot replay')
         child.add_argument('--strict',action='store_true')
-        child.add_argument('--format',choices=('json',),default='json')
+        child.add_argument('--format',choices=('json','markdown') if name=='interfaces' else ('json',),default='json')
         child.add_argument('--expected-fingerprint')
         child.add_argument('--cancel-file',type=Path)
         if name=='interfaces':
@@ -74,7 +75,7 @@ def _configure(parser):
 
 
 def register(subparsers):
-    _configure(subparsers.add_parser('architecture',help='read-only snapshot architecture JSON'))
+    _configure(subparsers.add_parser('architecture',help='read-only architecture snapshots; interface JSON or Markdown'))
 
 
 def _path(args,value):
@@ -260,7 +261,6 @@ def _incomplete(value):
 
 
 def _safe_output(value):
-    from .inspection import sanitize
     if sanitize(value)!=value:_fail('UNSAFE_OUTPUT')
     pending=[value]
     while pending:
@@ -291,7 +291,10 @@ def run(argv):
         result,fingerprint={'interfaces':_interfaces,'topology':_topology,'explain':_explain}[args.architecture_command](args,selected)
         if args.expected_fingerprint is not None and args.expected_fingerprint!=fingerprint:_fail('EXPECTED_FINGERPRINT_MISMATCH',3)
         _cancel(args);_bounded(result);_safe_output(result)
-        payload=canonical(result)+'\n'
+        if args.format=='markdown':
+            from .architecture_render import render_interface_markdown
+            payload=render_interface_markdown(result)
+        else:payload=canonical(result)+'\n'
         if len(payload)>_MAX_OUTPUT_CHARS:_fail('OUTPUT_LIMIT')
         code=4 if args.strict and _incomplete(result) else 0
         sys.stdout.write(payload);sys.stdout.flush()
