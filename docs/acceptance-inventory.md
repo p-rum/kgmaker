@@ -1053,3 +1053,10 @@ PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou slouče
 T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
 current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
 AC06 čeká na finální review a samostatnou publikaci.
+
+
+### T046 — integrační evidence f115 (2026-11-06)
+
+- T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
