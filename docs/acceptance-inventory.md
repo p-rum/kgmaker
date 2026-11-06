@@ -948,10 +948,16 @@ Hand-labelled protocol positives are not compiler/native acceptance proof.
 
 ## W07/T014 cold invocation correction (note108)
 
-Fresh-process public T014 projection with pre-read protocol input and audit denial
-of file/process/network I/O: RED1FAIL on original304, then GREEN2PASS with the
-original Path-denial case. Full T014 module25PASS0SKIP0.69s on the corrective
-worktree; normalization semantics/rule2 are unchanged. These are protocol tests,
-not compiler/native/runtime proof. Affected W0789 and priorT01413 will be rerun;
-source-corrected remaining-suite coverage, actual15+4SVG and exact-pair review are
-PENDING. Failed renderer004/005 artifacts remain preserved, never standalone PASS.
+Runtime869ab/metadata91ca retains normalization/VERSION2 and adds the fresh-process
+public T014 I/O audit regression. Pure25PASS is source-specific protocol evidence.
+Continuation006 is terminal1176PASS/1typedWindowsSKIP, with source304 historical
+1561PASS/9typedSKIP yielding source-corrected2747:2737PASS/10optionalSKIP.
+This is not a fresh single full. All102 affected prior W07/T014 IDs were rerun.
+The exact current-main publication subset2598 is2588PASS/10SKIP, with every ID's
+actual source/origin/XML/phases retained. Runtime/test source is exact91ca;
+main CLI three formatter bindings and main workflow remain main-owned instead of
+renderer additions. External SVG15+4 proof is complete in the larger aggregate;
+those149renderer IDs/features are outside this publication. Source/native/pins
+and1364kindroots/94333entries are unchanged; old failures remain preserved.
+Final architect+resume_t010 exact-pair reviews are PENDING. Root authored this fix
+and acts only as execution/merge guard. See note108 and the per-ID terminal ledger.
