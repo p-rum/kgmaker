@@ -1113,3 +1113,28 @@ má exact41b9 AST. Source/global/per-ID proof je externě v
 nemění; žádný nový test, collection, parser/SVG, preflight, build či full nebyl
 pro tento isolated head spuštěn. Nezávislé finální review a publication PENDING.
 T021 následně přidá Mermaid; T022 topology Markdown až ve vlastním odděleném PR.
+
+
+## Aktuální stage ověření — 2026-11-06
+
+Testovaný runtime/source checkpoint `fc6f58f997281e9dee871ae9ab61a90ddaea4578`:
+jediná current-stage collect-only kontrola přesně 2648 unique IDs, bez module
+skip/missing/extra; následný autorizovaný narrow běh **85 PASS / 0 SKIP, 14.05s**
+(50 T020, 34 T019, jedna T014 first-call cold public regrese). Původní unsupported
+topology-Markdown negative i explain/path-error nyní skutečně prošly na current
+stage; původní446/aa receipt i pozdější combined positive historie zůstávají.
+Před/po všech306 source/build/test inputs a čistý HEAD přesné; read-only parser
+162member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
+Markdown parser, maxfail1, vlastní tmp; žádný nový native/browser/SVG/build/full.
+
+Aktuální per-ID SOURCE_CORRECTED union **2638 PASS + 10 typed optional SKIP /2648**
+obsahuje85 skutečných current-stage řádků a2563 dříve přijatých source-qualified
+řádků. Není to fresh2648 full. Raw XML, commands, collect a před/po guards i přesné
+source-attribution řádky jsou v `/workspace/t020-corrected-stage-validation`;
+receipt SHA256 `4256910e7b59ac67c396fa20751ed88235b4b2d7c779c1503bb95e41a1f72696`.
+Finální metadata head je následník téhož testovaného runtime; nezávislé FINAL
+review Root+resume10 před publikací čeká. GH CI neověřené/doplňující; žádný push,
+PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou sloučené;
+T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
+current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
+AC06 čeká na finální review a samostatnou publikaci.
