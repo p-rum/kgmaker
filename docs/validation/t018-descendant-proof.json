@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "base": "4e4fcd65e94b855ac4aee2e76fa4a25084940da7",
+  "owned_source_approved": "29921886481539771089ca9e8ef780269621c809",
+  "actual_full_head": "2df55ff8d15d790808f6a81072144eeb408a05b8",
+  "attribution": "ONE completed strict accepted descendant, not a new run on this integrated head",
+  "actual_full": {
+    "PASS": 2587,
+    "allowed_optional_SKIP": 10,
+    "JUnit_seconds": 2042.878,
+    "runner_seconds": 2048.01,
+    "unchanged_hashes": 4897,
+    "unchanged_recursive_member_sets": true
+  },
+  "own59_actual_statuses": {
+    "tests/test_t018_explain_view_elements.py::test_bound_fact_origin_chain_reaches_existing_code_without_parsing_fact_id": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_bounded_and_privacy_errors_leave_inputs_unchanged[cycle]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_bounded_and_privacy_errors_leave_inputs_unchanged[deep]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_bounded_and_privacy_errors_leave_inputs_unchanged[shared]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_bounded_and_privacy_errors_leave_inputs_unchanged[unsafe_id]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_bounded_and_privacy_errors_leave_inputs_unchanged[version]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_canonical_repo_namespace_does_not_hide_recognizable_userinfo_credentials": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_captured_range_rejects_backward_same_line_columns_without_inventing_unknown_positions[backwards-span0]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_captured_range_rejects_backward_same_line_columns_without_inventing_unknown_positions[multiline-span1]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_captured_range_rejects_backward_same_line_columns_without_inventing_unknown_positions[partial_column-span2]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_captured_range_rejects_backward_same_line_columns_without_inventing_unknown_positions[partial_line-span3]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_current_file_match_does_not_upgrade_stale_captured_compiler_context": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_every_requested_locator_is_validated_before_any_file_read": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_exact_framework_local_compiler_alias_keeps_existing_qualified_field_reference": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_explicit_real_file_status_keeps_original_fingerprint_and_only_current_hash_separate[delete]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_explicit_real_file_status_keeps_original_fingerprint_and_only_current_hash_separate[edit]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_explicit_real_file_status_keeps_original_fingerprint_and_only_current_hash_separate[same]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_filtered_single_candidate_explains_all_original_compatible_alternatives": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_filtered_view_rederivation_preserves_original_fingerprint_and_omitted_alternatives": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_foreign_or_unselected_graph_records_never_borrow_source_locations[wrong_context]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_foreign_or_unselected_graph_records_never_borrow_source_locations[wrong_graph]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_foreign_or_unselected_graph_records_never_borrow_source_locations[wrong_hash]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_foreign_or_unselected_graph_records_never_borrow_source_locations[wrong_node]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_foreign_or_unselected_graph_records_never_borrow_source_locations[wrong_scope]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_kafka_explanation_preserves_channel_realm_group_and_capture_time_unknown": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_missing_range_stays_null_without_fabricated_node_line_or_current_read": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_namespace_decoding_rejects_credential_assignments_without_rewriting_ids[password=PRIVATE_SENTINEL]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_namespace_decoding_rejects_credential_assignments_without_rewriting_ids[secret:PRIVATE_SENTINEL]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_original_proof_buckets_and_secret_payload_omissions_are_not_promoted": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_public_summary_expands_exact_origins_and_missing_graph_is_explicit_unavailable": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_public_unknown_element_does_not_search_or_invent_graph_identity": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_pure_explain_denies_all_io_projectors_and_reselection": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_qualified_code_field_name_is_not_mistaken_for_credential_value": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_record_range_cannot_override_canonical_node_range": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_report_hard_limit_also_applies_to_unknown_element[False]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_report_hard_limit_also_applies_to_unknown_element[True]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_same_relative_file_in_two_repos_preserves_each_exact_context_and_hash": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_byte_limit_is_unavailable_not_false_content_match": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_capture_uses_loaded_manifest_roots_not_forged_private_root": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_status_refuses_unsafe_or_foreign_requested_locators_before_reads[absolute]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_status_refuses_unsafe_or_foreign_requested_locators_before_reads[foreign_repo]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_status_refuses_unsafe_or_foreign_requested_locators_before_reads[symlink]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_status_refuses_unsafe_or_foreign_requested_locators_before_reads[traversal]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_source_status_refuses_unsafe_or_foreign_requested_locators_before_reads[unselected_ref]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_status_capture_rejects_symlinked_manifest_even_with_identical_bytes": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_tampered_source_status_cannot_rebind_reference_with_recomputed_status_hash[status_context]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_tampered_source_status_cannot_rebind_reference_with_recomputed_status_hash[status_hash]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_tampered_source_status_cannot_rebind_reference_with_recomputed_status_hash[status_label]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_tampered_source_status_cannot_rebind_reference_with_recomputed_status_hash[status_path]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_tampered_source_status_cannot_rebind_reference_with_recomputed_status_hash[unknown_version]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_exception_accepts_only_legitimate_field_name_delimiter": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_exception_never_bypasses_credential_prefix[password=PRIVATE_SENTINEL:field:demo.X.id:I]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_exception_never_bypasses_credential_prefix[repo:backend:secret%3APRIVATE_SENTINEL%3Afield%3Ademo.X.id%3AI]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_privacy_exception_does_not_bypass_identifier_length_limit": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_privacy_probe_still_checks_owner_descriptor_and_field_syntax[jvm:ctx:field:demo.X.password:Lpassword=PRIVATE_SENTINEL;]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_privacy_probe_still_checks_owner_descriptor_and_field_syntax[jvm:ctx:field:demo.X.password=PRIVATE_SENTINEL:I]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_privacy_probe_still_checks_owner_descriptor_and_field_syntax[jvm:ctx:field:password=PRIVATE_SENTINEL.X.id:I]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_typed_field_privacy_probe_still_checks_owner_descriptor_and_field_syntax[repo:backend:jvm%3Actx%3Afield%3Asecret%3APRIVATE_SENTINEL.X.password%3AI]": {
+      "status": "PASS",
+      "details": []
+    },
+    "tests/test_t018_explain_view_elements.py::test_unicode_source_path_with_spaces_remains_exact_during_confined_read": {
+      "status": "PASS",
+      "details": []
+    }
+  },
+  "current4e4_main2504_plus59_union": {
+    "count": 2563,
+    "PASS": 2553,
+    "SKIP": 10,
+    "all_contained_in_accepted2597": true,
+    "remaining2504IDs_exact_merged_T017_parent_collection": true,
+    "actual_execution": false,
+    "collection_only": true,
+    "existing_main_test_bodies_unchanged": true
+  },
+  "global_runtime_test_fixture_workflow_paths_checked": 300,
+  "global_exact_to_accepted_full_count": 299,
+  "own_module_test_exact_sha256": {
+    "src/kgmaker/view_explanation.py": "3be4dd4169065ed054b9cd9162c479020631e30962c2eb31443e638e00aa1563",
+    "tests/test_t018_explain_view_elements.py": "953031acb06c449e4dd2d16d8751c711d1af4128fdde5c597315b4c28976f6e7"
+  },
+  "only_expected_present_file_difference": {
+    "src/kgmaker/cli.py": {
+      "exact_current_main": true,
+      "difference": "Only not-yet-merged T019 registration and early architecture dispatch absent."
+    }
+  },
+  "current_main_CI_exact": true,
+  "native_worker_source_inputs_exact": 27,
+  "prepared_fixture_source_inputs_exact": 9,
+  "native_actual_build_origin": "079ec21f9a7d1ce5ab9de900dc8e708316495442",
+  "native_build": "NOT_RUN",
+  "required_sorted_IDs_sha256": "03eb97cd3b4edf9dd99ac9fbc6b43b625296636a510401412065df880aa9c61e",
+  "per_ID_status_file_sha256": "b1c3e6c079174daa0e72fbabde629b5acc6d9a6604c6b1366eac8188709ead06",
+  "global_source_manifest_sha256": "704889405b9d32b4b5981b047da6e2f2a10b6e8cecc74d1a1a9e3416b011bfbd",
+  "receipt_SHA256": {
+    "/workspace/pure-integration-proof/full-attempt-2/status.json": "074a34661ba36dcb7d6b38672f3eb8615496859182c52a5c56c56516ca5c47bc",
+    "/workspace/pure-integration-proof/full-attempt-2/full.xml": "f6a3d31dee5888836131f85caff47f3bf6d6c5860e71d9ef73eb216be4cbff80",
+    "/workspace/pure-integration-proof/full-attempt-2/all-result-classification.json": "b264b9b0721a16e4bc228b337a476d8c0b3c76acbe9550c3dc9f18ffd42fb368",
+    "/workspace/pure-integration-proof/staged-artifact-copy.json": "080f60c8fea2c75975f0a0d454ddff41fd2f377a8c8eed78bc01e404192bd3a6",
+    "/workspace/t018-validation/root-corrections-review.json": "79374bc2af91070efd6a5133b52ebf6f23bce7767cdbcb2b353ccf0e3c878a7e",
+    "/workspace/t014-t021-transfer-proof/transfer-ledger.json": "da425d64d2de2faba4b46df6391249e512a400191c24daf1dc3dab1e5769b298",
+    "/workspace/t017-validation/main1307/final-local-head-proof.json": "10f0d3a5058771c40175ddacec82fe3fdb07e2aa975889454c43953b489fc246"
+  },
+  "preserved_history": {
+    "current_main_episode_prefix": 246,
+    "all_old230_child_episode_objects_preserved": true,
+    "expected_total_episodes": 247,
+    "new_capture": "ONE scoped T018 memory CLI capture",
+    "main_semantic_fact_keys_preserved": true
+  },
+  "remaining": [
+    "Independent current exact base/head final review",
+    "Root merge guard/publication decision"
+  ],
+  "limits": [
+    "Pure explanation current-source status is NOT_CHECKED unless explicit supplied observation",
+    "Missing graph/locator/range stays unavailable; no source repair or newer index substitution",
+    "No evidence/context/freshness/scope promotion, runtime/data guarantee or secret reflection",
+    "No new actual/full/build/tool/cache mutation; active W03 full and frozen global tools untouched",
+    "T020/T021 outside accepted full require later joint validation"
+  ],
+  "GHCI": "billing/cascade optional/unverified; not PASS"
+}

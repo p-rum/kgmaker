@@ -66,8 +66,15 @@ def _selection_key(context: dict) -> str:
         "ui_framework", "tsconfig", "database_id", "schema_stream_id",
         "persistence_unit", "naming_strategy",
     )}
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react" and "ui_adapters" in context.get("project", {}):
+        payload["ui_adapters"] = context["project"]["ui_adapters"]
+    if isinstance(payload.get("framework_rule_versions"), dict):
+        # An additive HTTP capture layer replaces the same logical selection;
+        # legacy contexts remain readable with HTTP coverage UNKNOWN.
+        payload["framework_rule_versions"] = {key: value for key, value in payload["framework_rule_versions"].items() if key != "http"}
     if context.get("language") == "jvm":
-        payload.update(kotlin_backend=context.get("kotlin_backend"),
+        payload.update(persistence_schema=context.get("persistence_schema"), flyway_target=context.get("flyway_target"),
+                       kotlin_backend=context.get("kotlin_backend"),
                        kotlin_version=context.get("kotlin_version"))
     if isinstance(recorded, str):
         # K2 briefly added two irrelevant None fields to frontend selectors.
@@ -89,6 +96,64 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    if "return_flow_rule_version" in context:
+        from .return_flow import VERSION as RETURN_VERSION
+        if context["return_flow_rule_version"] != RETURN_VERSION:
+            raise WorkerError("STALE_INDEX: return/consumer rules changed; inspect again", "STALE")
+
+    if "local_operation_rule_version" in context:
+        from .local_operations import VERSION as LOCAL_OPERATION_VERSION
+        if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:
+            raise WorkerError("STALE_INDEX: local operation rules changed; inspect again", "STALE")
+    if context.get("language") == "typescript" and context.get("ui_framework") == "react":
+        from .inspection import UI_RULE_VERSION
+        if (context.get("framework_rule_versions", {}).get("react") != UI_RULE_VERSION
+                or "ui_adapters" not in context.get("project", {})):
+            raise WorkerError("STALE_INDEX: UI adapter rules changed; inspect frontend again", "STALE")
+    if context.get("language") == "jvm":
+        from .kafka_retry import VERSION as RETRY_VERSION, validate_analysis as validate_retry_analysis
+        validate_retry_analysis(context)
+        retry_rules = context.get("framework_rule_versions", {})
+        if isinstance(retry_rules, dict) and "kafka_retry" in retry_rules and retry_rules["kafka_retry"] != RETRY_VERSION:
+            raise WorkerError("STALE_INDEX: Kafka retry rule changed; inspect again", "STALE")
+    if context.get("language") == "jvm" and "kafka_code_analysis" in context:
+        from .kafka_code import validate_analysis
+        validate_analysis(root, context)
+    rules = context.get("framework_rule_versions")
+    if context.get("language") == "jvm" and rules is not None and not isinstance(rules, dict):
+        raise WorkerError("STALE_INDEX: malformed Spring rule snapshot", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "spring" in rules:
+        from .framework import SPRING_RULE_VERSION
+        from .spring_conditions import condition_inputs
+        from .analysis_model import digest
+        if context["framework_rule_versions"]["spring"] != SPRING_RULE_VERSION:
+            raise WorkerError("STALE_INDEX: Spring condition rules changed; inspect again", "STALE")
+        try:
+            valid_conditions = context.get("spring_condition_inputs_hash") == digest(condition_inputs(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_conditions = False
+        if not valid_conditions:
+            raise WorkerError("STALE_INDEX: Spring condition configuration changed; inspect again", "STALE")
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "jpa" in rules:
+        from .framework import JPA_RULE_VERSION
+        from .schema_replay import persistence_selection
+        from .analysis_model import digest
+        if rules['jpa'] != JPA_RULE_VERSION:
+            raise WorkerError('STALE_INDEX: persistence realm rules changed; inspect again', 'STALE')
+        try:
+            valid_realm = context.get('persistence_selection_hash') == digest(persistence_selection(context))
+        except (ValueError, TypeError, RecursionError):
+            valid_realm = False
+        if not valid_realm:
+            raise WorkerError('STALE_INDEX: persistence selection changed; inspect again', 'STALE')
+
+    if context.get("language") == "jvm" and isinstance(rules, dict) and "http" in rules:
+        from .http_execution import VERSION as HTTP_VERSION
+        from .analysis_model import digest
+        expected_http = digest({'sources': context.get('http_config_provenance', {}),
+                                'redacted': context.get('http_redacted_input_hash')})
+        if rules['http'] != HTTP_VERSION or context.get('http_inputs_hash') != expected_http:
+            raise WorkerError("STALE_INDEX: HTTP rule/configuration proof changed; inspect again", "STALE")
     options = (context.get("compiler_options") or {}).get("kotlin")
     if options is not None:
         from .analysis_model import AnalysisError
@@ -100,7 +165,40 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if context.get("selection_key") and context["selection_key"] != _selection_key(
                 {key: value for key, value in context.items() if key != "selection_key"}):
             raise WorkerError("STALE_INDEX: Kotlin compiler context configuration changed", "STALE")
-    for item in (context.get("project") or {}).get("input_files", []) + context.get("worker", {}).get("distribution", []):
+    scoped_typescript = context.get("source_snapshot_version") == "typescript-input-discovery-1"
+    snapshot_version = context.get("source_snapshot_version")
+    if context.get("language") == "jvm" and snapshot_version is not None \
+            and (not isinstance(snapshot_version, str)
+                 or snapshot_version not in {"selected-source-set-1", "selected-source-set-2"}):
+        raise WorkerError("STALE_INDEX: unsupported JVM source snapshot version", "STALE")
+    if isinstance(snapshot_version, str) and snapshot_version in {"selected-source-set-1", "selected-source-set-2"} \
+            and context.get("language") != "jvm":
+        raise WorkerError("STALE_INDEX: JVM source snapshot on a non-JVM context", "STALE")
+    if context.get("source_snapshot_version") == "selected-source-set-2":
+        from .inspection import jpa_xml_input_snapshot
+        if context.get("jpa_xml_inputs") != jpa_xml_input_snapshot(root, context):
+            raise WorkerError("STALE_INDEX: selected persistence XML inputs changed; inspect again", "STALE")
+    elif context.get("language") == "jvm" and context.get("source_snapshot_version") == "selected-source-set-1":
+        # Older JVM contexts did not capture mapping XML. Keep XML-free legacy
+        # snapshots readable, but never trust one when a mapping input exists.
+        from .inspection import jpa_xml_input_snapshot
+        legacy_xml = jpa_xml_input_snapshot(root, context)
+        if any(item.get("status") != "missing" for item in legacy_xml["inputs"]):
+            raise WorkerError("STALE_INDEX: legacy JVM context has uncaptured persistence XML; inspect again", "STALE")
+    elif context.get("language") == "jvm" and context.get("source_snapshot_version") is None:
+        from .inspection import jpa_xml_input_snapshot
+        legacy_xml = jpa_xml_input_snapshot(root, context)
+        if any(item.get("status") != "missing" for item in legacy_xml["inputs"]):
+            raise WorkerError("STALE_INDEX: legacy JVM context has uncaptured persistence XML; inspect again", "STALE")
+    if scoped_typescript:
+        if context.get("language") != "typescript":
+            raise WorkerError("STALE_INDEX: TypeScript snapshot on a non-TypeScript context", "STALE")
+        from .typescript_snapshot import replay
+        replay(root, context.get("project"))
+    elif str(context.get("source_snapshot_version", "")).startswith("typescript-"):
+        raise WorkerError("STALE_INDEX: unsupported TypeScript snapshot version", "STALE")
+    project_inputs = [] if scoped_typescript else (context.get("project") or {}).get("input_files", [])
+    for item in project_inputs + context.get("worker", {}).get("distribution", []):
         if not Path(item["path"]).is_file() or file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("STALE_INDEX: project input or worker distribution changed", "STALE")
     if context.get("classification_override_hash"):
@@ -108,7 +206,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         from .analysis_model import digest
         if digest(Classifier(root).config) != context["classification_override_hash"]:
             raise WorkerError("STALE_INDEX: classifier override changed", "STALE")
-    if context.get("analyzer_version"):
+    if context.get("analyzer_version") and not scoped_typescript:
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
         from .inspection import source_snapshot
@@ -193,6 +291,12 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     evidence_ids = {identity for edge in edges for identity in edge.evidence_ids}
     for item in [*fresh.call_sites, *old_sites, *fresh.cfgs, *old_cfgs]:
         evidence_ids.update(item.get("evidence_ids", []))
+    for cfg in [*fresh.cfgs, *old_cfgs]:
+        for block in cfg.get('blocks', []):
+            if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1:
+                refs = block.get('local_operation_evidence_ids', [])
+                if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs):
+                    evidence_ids.update(refs)
     contexts = []
     seen_contexts = set()
     for context in [*fresh.contexts, *preserved_contexts]:

@@ -3,7 +3,6 @@ package org.kgmaker.worker;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import java.io.*;
-import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -14,23 +13,38 @@ import static org.kgmaker.worker.State.map;
  */
 public final class Bytecode implements AutoCloseable {
     private final State state;
-    private final URLClassLoader loader;
+    private final DependencyHierarchy hierarchy;
     private final Map<String,ClassNode> classes=new HashMap<>();
+    private final Map<String,ClassNode> platformClasses=new HashMap<>();
     private final Map<String,ClassNode> application=new TreeMap<>();
     private final Set<String> ambiguousOwners=new HashSet<>();
+    private final Map<String,ClassNode> sourceClasses=new TreeMap<>();
+    private boolean sourceHierarchyView;
+    private String targetFailureReason;
+    private String sourceConflictReason;
+    private final Set<String> reportedAbiConflicts=new HashSet<>();
+    private final Set<String> missingTypes=new HashSet<>();
+    private final Set<String> sourceHierarchyUnavailable=new HashSet<>();
+    private final Map<List<String>,Map<String,Object>> dispatchCache=new HashMap<>();
+    private final Map<List<String>,Map<String,Object>> sourceDispatchCache=new HashMap<>();
     public final List<Map<String,Object>> cfgs=new ArrayList<>();
     public Bytecode(State state) throws Exception {
         this.state=state;
-        URL[] urls=state.classpath.stream().map(e->{try{return Path.of((String)e.get("path")).toUri().toURL();}catch(Exception ex){throw new IllegalArgumentException(ex);}}).toArray(URL[]::new);
-        loader=new URLClassLoader(urls,ClassLoader.getPlatformClassLoader());
+        hierarchy=new DependencyHierarchy(state);
+        classes.putAll(hierarchy.lookup);
     }
     private ClassNode read(String owner) {
+        var platform=state.platformResource(owner);
+        if(platform!=null) {
+            if(platformClasses.containsKey(owner))return platformClasses.get(owner);
+            try(var stream=platform.openStream()) {
+                var node=new ClassNode();new ClassReader(stream.readAllBytes()).accept(node,ClassReader.SKIP_CODE|ClassReader.SKIP_DEBUG|ClassReader.SKIP_FRAMES);
+                platformClasses.put(owner,node);return node;
+            }catch(IOException|IllegalArgumentException error){state.diagnostic("BYTECODE_PLATFORM_CLASS_UNAVAILABLE",owner+": "+error.getMessage(),null);platformClasses.put(owner,null);return null;}
+        }
+        if(sourceHierarchyView && sourceClasses.containsKey(owner))return sourceClasses.get(owner);
         if(classes.containsKey(owner))return classes.get(owner);
-        try(var stream=loader.getResourceAsStream(owner+".class")) {
-            if(stream==null){classes.put(owner,null);return null;}
-            var node=new ClassNode();new ClassReader(stream.readAllBytes()).accept(node,ClassReader.SKIP_CODE|ClassReader.SKIP_DEBUG|ClassReader.SKIP_FRAMES);
-            classes.put(owner,node);return node;
-        }catch(IOException|IllegalArgumentException error){state.diagnostic("BYTECODE_CLASS_UNAVAILABLE",owner+": "+error.getMessage(),null);classes.put(owner,null);return null;}
+        classes.put(owner,null);return null;
     }
     /** Class-file membership check only; never loads/initializes project code. */
     public boolean hasDeclaredMethod(String owner,String name,String descriptor) {
@@ -38,6 +52,7 @@ public final class Bytecode implements AutoCloseable {
         return node!=null && node.methods.stream().anyMatch(method->method.name.equals(name)&&method.desc.equals(descriptor));
     }
     private String classMethod(String owner,String name,String descriptor,Set<String> visited) {
+        if(visited.size()>=256){hierarchyDepth();return null;}
         if(!visited.add(owner))return null;
         var c=read(owner);if(c==null)return null;
         if(c.methods.stream().anyMatch(m->m.name.equals(name)&&m.desc.equals(descriptor)))return owner;
@@ -60,12 +75,14 @@ public final class Bytecode implements AutoCloseable {
         return mostSpecific.size()==1?mostSpecific.get(0):null;
     }
     private void interfaceMethods(String owner,String name,String descriptor,Set<String> visited,Set<String> result) {
+        if(visited.size()>=256){hierarchyDepth();return;}
         if(!visited.add(owner))return;
         var c=read(owner);if(c==null)return;
         if(c.methods.stream().anyMatch(m->m.name.equals(name)&&m.desc.equals(descriptor)&&(m.access&(Opcodes.ACC_STATIC|Opcodes.ACC_PRIVATE))==0))result.add(owner);
         for(String parent:c.interfaces)interfaceMethods(parent,name,descriptor,visited,result);
     }
     private String definingField(String owner,String name,String descriptor,Set<String> visited) {
+        if(visited.size()>=256){hierarchyDepth();return null;}
         if(!visited.add(owner))return null;
         var c=read(owner);if(c==null)return null;
         if(c.fields.stream().anyMatch(f->f.name.equals(name)&&f.desc.equals(descriptor)))return owner;
@@ -74,6 +91,7 @@ public final class Bytecode implements AutoCloseable {
     }
     private boolean subtype(String child,String parent,Set<String> visited) {
         if(child.equals(parent))return true;
+        if(visited.size()>=256){hierarchyDepth();return false;}
         if(!visited.add(child))return false;
         var c=read(child);if(c==null)return false;
         if(c.superName!=null&&subtype(c.superName,parent,visited))return true;
@@ -81,6 +99,26 @@ public final class Bytecode implements AutoCloseable {
     }
     @SuppressWarnings("unchecked")
     public void analyze(List<?> roots) throws Exception {
+        // A source backend without a type-hierarchy proof must not reuse stale
+        // selected output hierarchy for the same owner.
+        var sourceOwners=new TreeSet<String>();var attributedTypes=new HashSet<String>();
+        for(var symbol:state.symbols.values())if(symbol.get("path")!=null && symbol.get("owner") instanceof String owner) {
+            sourceOwners.add(owner.replace('.','/'));
+            if(symbol.containsKey("jvm_interfaces"))attributedTypes.add(owner.replace('.','/'));
+        }
+        for(String owner:sourceOwners)if(!attributedTypes.contains(owner))sourceHierarchyUnavailable.add(owner);
+        // Compiler-attributed source types own their identities even when a
+        // selected output/JAR also contains an older class with the same name.
+        for(var symbol:new ArrayList<>(state.symbols.values()))if(symbol.get("path")!=null && symbol.containsKey("jvm_interfaces")) {
+            var node=new ClassNode();node.name=((String)symbol.get("owner")).replace('.','/');
+            if(state.platformResource(node.name)!=null){state.diagnostic("SOURCE_PLATFORM_CLASS_SHADOWED",node.name,null);continue;}
+            node.superName=(String)symbol.get("jvm_superclass");node.interfaces=new ArrayList<>((List<String>)symbol.get("jvm_interfaces"));
+            node.access=sourceFlags(symbol);
+            if("interface".equals(symbol.get("kind")))node.access|=Opcodes.ACC_INTERFACE|Opcodes.ACC_ABSTRACT;
+            for(var method:state.symbols.values())if(method.get("path")!=null && symbol.get("owner").equals(method.get("owner")) && method.get("descriptor") instanceof String descriptor && descriptor.startsWith("("))
+                node.methods.add(new MethodNode(sourceFlags(method),(String)method.get("name"),descriptor,null,null));
+            sourceClasses.put(node.name,node);
+        }
         for(Object item:roots) {
             Path path=Path.of(item instanceof String?(String)item:(String)((Map<?,?>)item).get("path"));
             Map<String,Object> realm=item instanceof Map<?,?> && ((Map<?,?>)item).get("realm") instanceof Map<?,?>?
@@ -92,17 +130,44 @@ public final class Bytecode implements AutoCloseable {
                     try(var stream=jar.getInputStream(entry)){load(stream.readAllBytes(),realm);}
             }else state.diagnostic("UNSUPPORTED_BYTECODE_ROOT",path.toString(),null);
         }
+        for(String owner:sourceHierarchyUnavailable)if(hierarchy.selected(owner)||application.containsKey(owner))
+            state.diagnostic("SOURCE_HIERARCHY_UNAVAILABLE",owner+": compiled copy cannot replace compiler source hierarchy",null);
         for(var entry:application.entrySet())for(MethodNode method:entry.getValue().methods)inspect(entry.getValue(),method);
+        sourceHierarchyView=true;
+        try {
+            for(var site:state.sites)if(site.get("dispatch_receiver") instanceof String receiver &&
+                Set.of("VIRTUAL","INTERFACE").contains(site.get("dispatch_kind"))) {
+                var symbol=state.symbols.get(site.get("declared_target"));
+                if(symbol!=null)dispatch(site,receiver,(String)symbol.get("name"),(String)symbol.get("descriptor"));
+            }
+        } finally {sourceHierarchyView=false;}
     }
     private void load(byte[] data,Map<String,Object> realm) {
         if(application.size()>=10000)throw new IllegalStateException("bytecode class limit exceeded");
         var c=new ClassNode();new ClassReader(data).accept(c,ClassReader.SKIP_FRAMES);
+        if(c.name.equals("module-info"))return;
+        if(state.platformResource(c.name)!=null){state.diagnostic("BYTECODE_PLATFORM_CLASS_SHADOWED",c.name,null);return;}
         if(application.putIfAbsent(c.name,c)!=null){ambiguousOwners.add(c.name);state.diagnostic("DUPLICATE_BYTECODE_CLASS",c.name,null);return;}
-        classes.put(c.name,c);state.bindRealm(c.name.replace('/','.'),realm);
+        if(!hierarchy.selected(c.name)){classes.put(c.name,c);state.bindRealm(c.name.replace('/','.'),realm);}
+    }
+    private boolean sourceAbiConflict(String owner,String name,String descriptor,boolean physicalStatic) {
+        String identity=state.methodIdentity(owner.replace('/','.'),name,descriptor,null);
+        var source=state.symbols.get(identity);
+        boolean isSource=source!=null && source.get("path")!=null;
+        var physicalRealm=state.realm(owner.replace('/','.'),null);
+        boolean realmConflict=isSource && List.of("repo_id","module","source_set","scope").stream()
+            .anyMatch(key->!Objects.equals(physicalRealm.get(key),state.context.get(key)));
+        boolean abiConflict=isSource && source.get("jvm_static") instanceof Boolean sourceStatic && sourceStatic!=physicalStatic;
+        sourceConflictReason=realmConflict?"SOURCE_BINARY_REALM_CONFLICT":abiConflict?"SOURCE_BINARY_ABI_CONFLICT":null;
+        if(sourceConflictReason!=null && reportedAbiConflicts.add(identity+sourceConflictReason))state.diagnostic(sourceConflictReason,
+            owner+"."+name+descriptor+": physical realm/ABI conflicts with source canonical",map("path",source.get("path"),"range",source.get("range")));
+        return sourceConflictReason!=null;
     }
     private String method(ClassNode owner,MethodNode method) {
+        boolean physicalStatic=(method.access&Opcodes.ACC_STATIC)!=0;
+        sourceAbiConflict(owner.name,method.name,method.desc,physicalStatic);
         String canonical=state.method(owner.name.replace('/','.'),method.name,method.desc,null,
-            map("modifiers",flags(method.access),"annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations)));
+            map("jvm_static",physicalStatic,"modifiers",flags(method.access),"annotations",annotations(method.visibleAnnotations,method.invisibleAnnotations)));
         String identity="bytecode:"+canonical;
         var mapping=new SourceMapping(state,application,ambiguousOwners).mapMethod(owner,method,identity);
         var value=((List<?>)mapping.get("source_mapping_ids")).isEmpty()?new LinkedHashMap<String,Object>():new LinkedHashMap<>(state.symbols.get(canonical));
@@ -115,8 +180,12 @@ public final class Bytecode implements AutoCloseable {
         state.symbols.put(identity,value);return identity;
     }
     private String target(String owner,String name,String descriptor) {
+        targetFailureReason=null;
         String definition=definingOwner(owner,name,descriptor,new HashSet<>());
-        return definition==null?null:state.method(definition.replace('/','.'),name,descriptor,null,null);
+        if(definition==null)return null;
+        String result=authoritativeMethod(definition,name,descriptor);
+        if(result==null)targetFailureReason=sourceConflictReason;
+        return result;
     }
     @SuppressWarnings("unchecked")
     private void inspect(ClassNode owner,MethodNode method) {
@@ -131,21 +200,15 @@ public final class Bytecode implements AutoCloseable {
             if(instruction instanceof LineNumberNode number)line=number.line;
             if(instruction instanceof MethodInsnNode invoke) {
                 String resolved=target(invoke.owner,invoke.name,invoke.desc);
+                String resolution=resolved!=null?"JVM_METHOD_LOOKUP":targetFailureReason!=null?targetFailureReason:"MISSING_CLASS_OR_METHOD";
                 String identity="bytecode-call:"+caller+":"+i;
                 var site=map("id",identity,"caller",caller,"declared_target",resolved,"invocation_kind",opcode(invoke.getOpcode()),
                     "receiver_type",invoke.owner.replace('/','.'),"dispatch_candidates",new ArrayList<String>(),"dispatch_complete",false,
-                    "resolution_reason",resolved!=null?"JVM_METHOD_LOOKUP":"MISSING_CLASS_OR_METHOD","evidence_kind",resolved!=null?"SYMBOL_RESOLVED":"UNRESOLVED",
+                    "resolution_reason",resolution,"evidence_kind",resolved!=null?"SYMBOL_RESOLVED":"UNRESOLVED",
                     "context_id",state.context.get("id"),"bytecode_offset",null,"instruction_index",i,"source_line",line<0?null:line,
                     "source_file_attribute",owner.sourceFile,"path",null,"range",null,"origin","generated");
                 if(invoke.getOpcode()==Opcodes.INVOKEVIRTUAL||invoke.getOpcode()==Opcodes.INVOKEINTERFACE) {
-                    var candidates=(List<String>)site.get("dispatch_candidates");
-                    for(var candidate:application.values())if((candidate.access&(Opcodes.ACC_INTERFACE|Opcodes.ACC_ABSTRACT))==0 && subtype(candidate.name,invoke.owner,new HashSet<>())) {
-                        String definition=definingOwner(candidate.name,invoke.name,invoke.desc,new HashSet<>());
-                        if(definition!=null){String symbol=target(definition,invoke.name,invoke.desc);if(symbol!=null&&!candidates.contains(symbol))candidates.add(symbol);}
-                    }
-                    Collections.sort(candidates);
-                    site.put("dispatch_algorithm","CHA_APPLICATION_CLASSES");
-                    site.put("dispatch_completeness_reason","Dependency instantiations, reflection and runtime classes are not closed-world");
+                    dispatch(site,invoke.owner,invoke.name,invoke.desc);
                 }
                 state.sites.add(site);
                 if(resolved==null)state.diagnostic("BYTECODE_UNRESOLVED_TARGET",invoke.owner+"."+invoke.name+invoke.desc,null);
@@ -167,6 +230,94 @@ public final class Bytecode implements AutoCloseable {
         }
         for(int index=firstSite;index<state.sites.size();index++)copySourceMapping(caller,state.sites.get(index));
         if(instructions.length>0)cfgs.add(cfg(caller,method,positions));
+    }
+    private int sourceFlags(Map<String,Object> symbol) {
+        int flags=0;
+        if(symbol.get("modifiers") instanceof List<?> modifiers)for(Object modifier:modifiers)flags|=switch(modifier.toString()) {
+            case "public"->Opcodes.ACC_PUBLIC;case "protected"->Opcodes.ACC_PROTECTED;case "private"->Opcodes.ACC_PRIVATE;
+            case "static"->Opcodes.ACC_STATIC;case "final"->Opcodes.ACC_FINAL;case "abstract"->Opcodes.ACC_ABSTRACT;default->0;};
+        if(symbol.get("jvm_static") instanceof Boolean isStatic)flags=isStatic?flags|Opcodes.ACC_STATIC:flags&~Opcodes.ACC_STATIC;
+        return flags;
+    }
+    private String authoritativeMethod(String owner,String name,String descriptor) {
+        if(sourceHierarchyView && state.platformResource(owner)==null)for(var symbol:state.symbols.values())if(symbol.get("path")!=null && !"bytecode_method".equals(symbol.get("kind")) && owner.replace('/','.').equals(symbol.get("owner")) &&
+            name.equals(symbol.get("name")) && descriptor.equals(symbol.get("descriptor")))return (String)symbol.get("id");
+        var node=read(owner);
+        var physical=node==null?null:node.methods.stream().filter(m->m.name.equals(name)&&m.desc.equals(descriptor)).findFirst().orElse(null);
+        if(!sourceHierarchyView && physical!=null && sourceAbiConflict(owner,name,descriptor,(physical.access&Opcodes.ACC_STATIC)!=0))return null;
+        return state.method(owner.replace('/','.'),name,descriptor,null,physical==null?null:map("jvm_static",(physical.access&Opcodes.ACC_STATIC)!=0));
+    }
+    private void hierarchyDepth() {
+        if(!hierarchy.problems.contains("DEPENDENCY_HIERARCHY_DEPTH_LIMIT")) {
+            hierarchy.problems.add("DEPENDENCY_HIERARCHY_DEPTH_LIMIT");
+            state.diagnostic("DEPENDENCY_HIERARCHY_DEPTH_LIMIT","Hierarchy lookup exceeded 256 visited types",null);
+        }
+    }
+    private boolean completeHierarchy(String owner,Set<String> visited) {
+        if(sourceHierarchyView && sourceHierarchyUnavailable.contains(owner))return false;
+        if(visited.size()>=256){hierarchyDepth();return false;}
+        if(!visited.add(owner))return true;
+        var node=read(owner);
+        if(node==null){if(missingTypes.add(owner))state.diagnostic("DEPENDENCY_HIERARCHY_MISSING_TYPE",owner,null);return false;}
+        boolean complete=node.superName==null||completeHierarchy(node.superName,visited);
+        for(String parent:node.interfaces)complete=completeHierarchy(parent,visited)&&complete;
+        return complete;
+    }
+    private void dispatch(Map<String,Object> site,String receiver,String name,String descriptor) {
+        if(!(site.get("declared_target") instanceof String declaredId))return;
+        var declared=state.symbols.get(declaredId);
+        if(declared==null || !(declared.get("owner") instanceof String ownerName))return;
+        String contract=ownerName.replace('.','/');
+        var key=List.of(receiver,contract,name,descriptor);
+        var cache=sourceHierarchyView?sourceDispatchCache:dispatchCache;
+        if(cache.containsKey(key)){site.putAll(cache.get(key));return;}
+        var candidates=new TreeSet<String>();
+        String declaration=definingOwner(contract,name,descriptor,new HashSet<>());
+        var declarationClass=declaration==null?null:read(declaration);
+        var declarationMethod=declarationClass==null?null:declarationClass.methods.stream().filter(m->m.name.equals(name)&&m.desc.equals(descriptor)).findFirst().orElse(null);
+        if(declarationClass!=null && declarationMethod!=null &&
+            ((declarationClass.access&Opcodes.ACC_FINAL)!=0 || (declarationMethod.access&(Opcodes.ACC_FINAL|Opcodes.ACC_STATIC|Opcodes.ACC_PRIVATE))!=0))return;
+        if(declarationMethod!=null && (declarationMethod.access&(Opcodes.ACC_PUBLIC|Opcodes.ACC_PROTECTED))==0) {
+            state.diagnostic("DEPENDENCY_DISPATCH_ACCESS_UNSUPPORTED",declaration+"."+name+descriptor,null);
+            site.put("dispatch_algorithm","CHA_ORDERED_SELECTED_CLASSPATH");
+            site.put("dispatch_completeness_reason","PACKAGE_PRIVATE_OVERRIDE_ACCESS_UNSUPPORTED;OPEN_WORLD_RUNTIME_TYPES");
+            site.put("dispatch_classpath",state.classpath);return;
+        }
+        var available=new TreeMap<String,ClassNode>(hierarchy.nodes);
+        application.forEach((owner,node)->{if(!hierarchy.candidateUnsupported(owner))available.putIfAbsent(owner,node);});
+        boolean sourceConflict=sourceHierarchyView && (sourceHierarchyUnavailable.contains(receiver)||sourceHierarchyUnavailable.contains(contract)||
+            sourceHierarchyUnavailable.stream().anyMatch(available::containsKey));
+        if(sourceHierarchyView) {
+            sourceHierarchyUnavailable.forEach(available::remove);
+            available.putAll(sourceClasses);
+        }
+        var symbolConflicts=new TreeSet<String>();
+        boolean missing=!completeHierarchy(receiver,new HashSet<>());
+        missing=!completeHierarchy(contract,new HashSet<>())||missing;
+        for(var candidate:available.values())if(!completeHierarchy(candidate.name,new HashSet<>()))missing=true;
+        for(var candidate:available.values())if(!hierarchy.problems.contains("DEPENDENCY_HIERARCHY_TRUNCATED") && !hierarchy.problems.contains("DEPENDENCY_HIERARCHY_UNAVAILABLE") && (candidate.access&(Opcodes.ACC_INTERFACE|Opcodes.ACC_ABSTRACT))==0 &&
+            subtype(candidate.name,receiver,new HashSet<>()) && subtype(candidate.name,contract,new HashSet<>())) {
+            if(!completeHierarchy(candidate.name,new HashSet<>())){missing=true;continue;}
+            String definition=definingOwner(candidate.name,name,descriptor,new HashSet<>());
+            var owner=definition==null?null:read(definition);
+            if(owner==null)continue;
+            var implementation=owner.methods.stream().filter(m->m.name.equals(name)&&m.desc.equals(descriptor)).findFirst().orElse(null);
+            if(implementation==null||(implementation.access&(Opcodes.ACC_STATIC|Opcodes.ACC_PRIVATE|Opcodes.ACC_ABSTRACT))!=0)continue;
+            // Package-private overriding across package boundaries needs additional access proof.
+            if((implementation.access&(Opcodes.ACC_PUBLIC|Opcodes.ACC_PROTECTED))==0) {
+                state.diagnostic("DEPENDENCY_DISPATCH_ACCESS_UNSUPPORTED",definition+"."+name+descriptor,null);continue;
+            }
+            String symbol=authoritativeMethod(definition,name,descriptor);
+            if(symbol==null){symbolConflicts.add(sourceConflictReason);continue;}
+            candidates.add(symbol);
+        }
+        var result=new LinkedHashMap<String,Object>();
+        result.put("dispatch_candidates",new ArrayList<>(candidates));
+        result.put("dispatch_algorithm","CHA_ORDERED_SELECTED_CLASSPATH");result.put("dispatch_complete",false);
+        var reasons=new ArrayList<>(hierarchy.problems);reasons.addAll(symbolConflicts);if(sourceConflict)reasons.add("SOURCE_HIERARCHY_UNAVAILABLE");if(missing)reasons.add("MISSING_HIERARCHY_TYPE");reasons.add("OPEN_WORLD_RUNTIME_TYPES");
+        result.put("dispatch_completeness_reason",String.join(";",reasons));
+        result.put("dispatch_classpath",state.classpath);
+        cache.put(key,result);site.putAll(result);
     }
     private void copySourceMapping(String caller,Map<String,Object> site) {
         var declaration=state.symbols.get(caller);
@@ -220,5 +371,5 @@ public final class Bytecode implements AutoCloseable {
     }
     private Object annotationValue(Object v){if(v instanceof Type t)return t.getClassName();if(v instanceof String[] a)return Type.getType(a[0]).getClassName()+"."+a[1];if(v instanceof List<?> l)return l.stream().map(this::annotationValue).toList();if(v instanceof AnnotationNode a)return annotations(List.of(a)).getFirst();return v;}
     private String opcode(int op){return switch(op){case Opcodes.INVOKEVIRTUAL->"VIRTUAL";case Opcodes.INVOKEINTERFACE->"INTERFACE";case Opcodes.INVOKESTATIC->"STATIC";case Opcodes.INVOKESPECIAL->"SPECIAL";case Opcodes.GOTO->"GOTO";case Opcodes.IFEQ->"IFEQ";case Opcodes.ATHROW->"ATHROW";default->"opcode "+op;};}
-    @Override public void close() throws IOException{loader.close();}
+    @Override public void close() {}
 }
