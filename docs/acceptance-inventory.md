@@ -1039,7 +1039,7 @@ skip/missing/extra; následný autorizovaný narrow běh **85 PASS / 0 SKIP, 14.
 topology-Markdown negative i explain/path-error nyní skutečně prošly na current
 stage; původní446/aa receipt i pozdější combined positive historie zůstávají.
 Před/po všech306 source/build/test inputs a čistý HEAD přesné; read-only parser
-162member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
+162regular-file/184total-member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
 Markdown parser, maxfail1, vlastní tmp; žádný nový native/browser/SVG/build/full.
 
 Aktuální per-ID SOURCE_CORRECTED union **2638 PASS + 10 typed optional SKIP /2648**
