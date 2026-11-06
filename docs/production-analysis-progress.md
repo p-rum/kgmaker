@@ -1,5 +1,87 @@
 # Aktuální stav a zbývající práce
 
+## T003-S06-W03 — JPA ORM XML overrides (2026-10-26)
+
+VERIFIED_IN_SCOPE pro vybraný persistence unit a omezené ORM XML mapování:
+deklarované `mapping-file` pořadí, výchozí `META-INF/orm.xml`, přesná
+compiler-resolved class identity, tabulka a scalar ID/basic/version columns.
+XML precedence přepisuje annotation mapping; `metadata-complete` potlačuje
+annotation-only fyzické vazby. Evidence zachovává XML SHA-256, cestu, unit,
+pořadí a precedence. Neznámý namespace/verze, unsupported constructs,
+nevyřešené reference, DTD/entities a soubory mimo root zůstávají UNKNOWN bez
+annotation fallbacku. Strict diagnostika nemění poslední uložený graph;
+schema/store v3 zůstává beze změny. UTF-8/UTF-16 DTD/entity vstupy jsou
+encoding-independently rejected, XML read je limitovaný, namespace reset je
+UNKNOWN a nested standard metadata/default access se zpracují fail-closed.
+Selected XML closure (including missing defaults/references, hashes and resolved
+targets) is replayed offline; same-length edits and add/delete/retarget stale the
+context. JPA context rule v2 marks legacy XML-bearing contexts stale while
+XML-free legacy contexts remain readable. Shared inherited XML columns survive
+an override in only one entity; the final strict full suite passed 652 tests and
+skipped 10 explicit Maven/Gradle/Windows gates.
+Viz [acceptance inventář](acceptance-inventory.md) a
+[change note 65](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
+
+## T003-S06-W02 — zděděné JPA persistence atributy (2026-10-26)
+
+VERIFIED_IN_SCOPE pro actual K2 2.1.10 a actual Javac21: JPA
+`@MappedSuperclass` field/getter ID určuje zděděný FIELD/PROPERTY access; atributy
+jsou projektovány na entity s odděleným `declaring_owner` a `effective_owner`.
+Entity attribute indexes and Spring Data repository generic resolution use exact
+compiler-qualified owners; a repository for `right.Thing` cannot resolve a
+derived predicate against same-simple-name `left.Thing`. An unproven generic
+owner remains unbound.
+Explicit JPQL entity names and query return declarations also use exact compiler
+identities; a simple source return name needs a matching canonical JVM method
+descriptor. Missing qualified owners and erased generic variables do not receive
+a repository-model or first-match fallback.
+Řetězené mapped superclasses, compiler-qualified parent identity, entity-level
+override precedence, kolize, unresolved override a SingleTable/Joined/Table-per-class
+root/subclass table selection mají fixture v `tests/test_k2_backend.py`.
+Původní `orm_attribute`/`orm_table`, graph/store v3 a kontextové evidence se
+zachovávají; schema migrace není potřeba. Entity field collision a unresolved
+override nevytvoří vybraný `maps_to_column` edge. Mapped-superclass relationship
+targets, embedded-attribute overrides, deployment/naming-strategy compatibility
+a širší provider matice zůstávají PARTIAL/UNKNOWN; T003-S06 zůstává PARTIAL.
+Přesné testy a konečné výsledky jsou v [acceptance inventáři](acceptance-inventory.md)
+a [change note49](changes/49_projectJpaInheritedAttributes.md).
+## Merge politika po uživatelské změně 2026-11-03
+
+[T045 revize 2](tasks/45_addCodeReviewAgent.md) dovoluje merge bez GH CI, pokud
+pro aktuální base/head projdou všechny ostatní povinné kontroly a nezávislé
+review. Historické CI_PENDING/billing-only BLOCKED řádky níže zachovávají stav
+skutečných běhů; samy již merge neblokují. Chybějící acceptance/toolchain,
+konkrétní chyba, konflikt, draft a nesplněná závislost nadále blokují. GH workflow
+zůstávají beze změny a serverová pravidla se neobcházejí.
+
+## T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
+
+Explicit stacked dependency [Draft PR36](https://github.com/p-rum/kgmaker/pull/36),
+W02 head8e83937 (metadata integration; runtime identical to d416e2a); dependency CI/merge is not claimed. Actual TS5.7.3/Node24.19.0 red
+6FAIL1PASS and first7PASS, owner/strict/repo2PASS; wider callback/W01/provider34PASS.
+Source-final expanded13PASS includes local64-bound PARTIAL, dependency65 map calls
+and invalid-candidate store preservation. Further conditional-binding proof corrected
+candidate evidence; final protected15PASS61.69s; source-final full582PASS10SKIP641.43s, CI billing BLOCKED.
+[Note53](changes/53_resolveBoundedTypeScriptCallbacks.md), [guide](typescript-callbacks.md)
+separate declared signatures, candidate bindings and runtime unknowns.
+Overload signature→implementation-body navigation remains UNKNOWN/PARTIAL. No whole S08,
+UI/BE–FE flow or persistent compiler cache completion is claimed.
+
+
+## T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)
+
+Implementována versioned positive/discovery evidence přes skutečné TS5.7.3 API;
+Změna nemění resolver ani runtime/data availability. Původní tři skutečné
+failure případy nyní prošly; širší snapshot/reference/provider sada46PASS a
+snapshot/installed-wheel sada41PASS jsou zaznamenány v
+[note45](changes/45_scopeTypeScriptConfigFreshness.md). Finální source-protected focus **70 PASS**,193.26s; source-final full **567 PASS /10 SKIP**,787.45s. CI je PENDING kvůli
+GitHub Actions billing/quota; lokální výsledek není CI/merge acceptance. Explicitní legacy fallback, stable
+selectors, package-helper hash a fail-closed negative/mixed metadata zachovány.
+[Freshness guide](typescript-freshness.md) uvádí directory conservatism a limity.
+Celý T003-S08 zůstává PARTIAL; W03 callbacks/generics a navazující UI/BE–FE nejsou
+z tohoto kontraktu odvozovány.
+
+
 ## T003-S08-W01 — TypeScript project references (2026-10-26)
 
 VERIFIED_IN_SCOPE pro TypeScript 5.7.3 / Node 24.19.0: solution-style config
@@ -16,7 +98,7 @@ mezi preflight/analyze a zachovává původní TS selection slot; skutečné reg
 a aktuální strict evidence jsou v change note 36: **394 PASS / 9 SKIP**
 nad main `eff0d3d` s vlastním workerem a povinným K2. Maven/Gradle/druhé JDK
 mimo připravenou matici zůstávají výslovně SKIP.
-T003-S08/T003-AC08 zůstávají PARTIAL; W02/W03,
+T003-S08/T003-AC08 zůstávají PARTIAL; W02 stav je samostatně výše; W03,
 UI/BE–FE flow, cross-repo sources ani persistent compilation cache nejsou hotové.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)
@@ -101,15 +183,12 @@ Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kand
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
 | T003-S02 lifecycle/provider | VERIFIED_IN_SCOPE | v1/v2/v3 store, provenance, atomický zápis; scan/hook/feature selektivně vyřadí stale compiler layer s důvodem/next command a zachovají ostatní; status/check/hook rozlišují source a compiler freshness bez spuštění procesu; module/profile contexts se akumulují; query/impact/feature/validate/report používají uložený explicitní scope/context a zachovávají společnou source/dataflow vrstvu; workspace schema v3 přenáší repo-qualified symbols/call sites/CFG/evidence/annotations; reálný `test_ac02_real_end_to_end_context_profile_and_classpath_lifecycle` plus provider/workspace regrese | Rozšíření podporované matice patří do navazujících S03–S10; není tvrzena úplnost mimo zdokumentovaný scope |
 | T003-S03 build a scope | PARTIAL | Maven reactor/EventSpy a content-bound `--java-home`; skutečný reactor/generated-source test. Gradle W02 validuje explicitní SourceSet scope a freshness, W03 exportuje snapshot-bound included builds s jednoznačným output realm a ordered classpath. W04 přenáší validované task/execution-level Kotlin compiler/language/API/JVM options, flags a plugin provenance do manifestu a context identity; `test_kotlin_build_options.py` ověřuje Maven 2.1.10, Gradle 8.13, selektivní invalidaci a fail-closed tamper. Workspace `release_mapping` v1 propojí validní regular-file BuildManifest output s regular-file fresh compiler classpath podle SHA-256; `test_cross_repo_artifacts.py` dokládá tento omezený scope; konflikt či adresář zůstávají PARTIAL. | Další Gradle variant API a úplná produkční matice; zachycená konfigurace nerozšiřuje K1 analyzér |
-| T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body/coroutine source mapping, širší corpus, dependency dispatch a úplná acceptance banka |
-| T003-S05 Spring | PARTIAL | Spring rules v4 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Selectors mimo bounded literal subset, registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
-
-| T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering | K2 širší source call/CFG matice, default-body source mapping mimo W02 a coroutine mapping, širší corpus, dependency dispatch a úplná acceptance banka |
-| T003-S05 Spring | PARTIAL | Spring rules v3 přidávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici | Dynamic ImportSelector/registrars/factories, širší property/classpath varianty a runtime proxy/async execution |
-| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: oddělené Entity/Embeddable/MappedSuperclass, FIELD/PROPERTY identity placement, EmbeddedId/AttributeOverride, association target a OWNING/INVERSE `mappedBy`, explicitní join bez falešného scalar column, entity/table/column realm binding; bounded derived query validace; compiler-owned JPQL/native `@Query` s parametry, entity/projection return a named-query reference; reálný javac `test_ac06_real_javac_embedded_id_and_association_roles`, kontraktní `test_hb01_embedded_id_and_bidirectional_association_preserve_roles`, `test_flyway` | Kotlin use-site/access varianty, XML overrides, inheritance attributes, širší JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL a úplná multi-datasource matice |
-| T003-S07 integrations/dataflow | PARTIAL | Literály, explicitní workspace service mapping, lokální field edges; test_dataflow/test_workspace | Framework-aware Kafka/HTTP a úplné validované datové cesty |
+| T003-S04 JVM/Kotlin | PARTIAL | Opt-in K2 Analysis API 2.1.10 named-function call subset (`tests/test_k2_backend.py`, change35); JavacTask, K1 compatibility, ASM, 5 ground-truth direct calls with overloads/CFG; izolované testy ověřují konstruktor, primary-constructor property/init pořadí, file-facade `<clinit>`, oddělený object constructor realm, lambda caller, callable reference, source-defined operator v CFG, custom getter/setter method+CFG+ACCESSOR a extension/default/inline/suspend metadata; when/Elvis/short-circuit/try/finally/break/continue mají strukturovaný IR/CFG; `test_compiler_workers`, `test_control_flow` a JVM rendering; W02 dodává bounded Java/Kotlin DefaultImpls a bridge declaration mapping s přesným owner/name/descriptor, realm/ABI guard a bytecode-only diagnostics (`tests/test_default_body_mapping.py`); bounded compiler suspend/async boundaries a DebugMetadata continuation declaration mapping v `test_coroutine_mapping` | K2 širší source call/CFG matice a obecné coroutine state-machine CFG/runtime scheduling, další generated shapes, default-argument masks, statement-level LOC, širší corpus, úplná acceptance banka |
+| T003-S05 Spring | PARTIAL | Spring rules v6 zachovávají context-bound `FRAMEWORK_DERIVED` bean/injection, qualifier/primary, ACTIVE/INACTIVE/UNKNOWN pro Profile/ConditionalOnProperty/ConditionalOnClass/custom Conditional, `injects_bean` jen pro unikátní ACTIVE a `may_inject_bean` pro ambiguity/UNKNOWN; bounded compiler-symbol meta-stereotype chain, explicitní package/subpackage component-scan scope, statický `@Import` konfigurační graf s děděním conditions, validaci `@Bean` owneru a collection/map/optional/provider injection; entrypoint, advice a self-invocation proxy boundary; reálný `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` dokládá AC05 v podporované matici; typed conditions zachovávají OR profile expressions, všechny property/class members a config hash; bounded registrar/FactoryBean subset je doložen samostatně W02 | Selectors/registrars/factories mimo bounded literal subset, širší property/classpath varianty a runtime proxy/async execution |
+| T003-S06 persistence | PARTIAL | Flyway replay plus JPA rules v4: Entity/Embeddable/MappedSuperclass, Java/Kotlin FIELD/PROPERTY identity, EmbeddedId/AttributeOverride, mapped-superclass and entity inheritance table projections, associations, derived queries, compiler-owned JPQL/native `@Query`; W03 selected persistence-unit XML precedence, mapping-file order, metadata-complete suppression, source hashes and fail-closed unsupported/unsafe inputs in actual Javac fixtures; Flyway tests | Broader JPQL/HQL/native grammar, NamedQueries containers, Criteria/Specification/QueryDSL, implicit Kotlin target policy and complete multi-datasource/provider matrix |
+| T003-S07 integrations/dataflow | PARTIAL | Literály, service mapping, lokální field edges; S07-W01 compiler-proven Javac/K1/TS argument→declared-parameter bindings s named/default/vararg proof (change52); bounded return→consumer proof s oddělenou caller/body identity a source guards (change66); S07-W04 bounded declared Kafka cluster/topic/contract SHA/release + profile/context precedence; privacy rules `kafka-binding-2` reject sensitive aliases/redact captured public properties; `tests/test_kafka_bindings.py`, fixture `fixtures/kafka-bindings`, [note54](changes/54_scopeKafkaBindingIdentity.md) | Revize2 je draft: bounded canonical listener/send + explicit schema2 code/group join v implementaci, finální acceptance/full/review dosud neuzavřeny; runtime delivery/retry/DLT a obecné Kafka/HTTP datové cesty UNKNOWN |
 | T003-S08 TS/UI | PARTIAL | Program/TypeChecker, overloads a React event binding | Multi-project/re-export, callback a BE–FE value flow acceptance |
-| T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula evaluation zůstává non-goal |
+| T003-S09 artifacts/report | PARTIAL | Feature lifecycle/report, offline HTML docs; bounded XLSX sheets/cells/named ranges/formula dependencies and hash-bound locators; literal Thymeleaf model bindings, static exact-arity fragment provenance, condition/unsupported diagnostics and explicit PDF boundary; `test_feature`, `test_data_check`, `test_workbooks`, `test_templates` | Širší template mapping, schválená metodika a plný scénář; formula/template evaluation zůstává non-goal |
 | T003-S10 incremental | PARTIAL | Semantic diff, workspace cache, Flyway checkpoints | Selektivní compiler/feature invalidace a negativní lookup dependencies |
 | T003-S11 release/acceptance | PARTIAL | Sedm CI jobů; worker/exporter clean install na Linuxu a skutečný Windows non-admin core/Java/K1/TS smoke (43 PASS / 2 scoped SKIP) | K2 Windows, Windows BUILD_EXECUTE, immutable publikace, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
@@ -253,8 +332,12 @@ kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný whee
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
-K2 source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer call sites, local/lambda
-execution a default-body mapping mimo W02 a coroutine mapping nejsou dodány; konkrétní diagnostiky zachovávají PARTIAL.
+K2 source CFG, constructor ABI, širší Kotlin annotation/framework metadata,
+property/operator/reference/initializer call sites a local/lambda execution nejsou
+dodány; konkrétní diagnostiky zachovávají PARTIAL. Kotlin JPA use-site annotation
+facts jsou pouze omezenou projekcí T003-S06-W01. T003-S04-W02 mapuje jen doložené
+DefaultImpls a simple bridge declarations; další default-body/coroutine tvary
+zůstávají mimo podporovanou matici.
 Jiné compiler/language/API/JVM verze a captured flags/plugins se odmítají bez
 implicitního fallbacku či publikace. T003-S04 a T003 zůstávají PARTIAL.
 
@@ -324,6 +407,26 @@ Skips jsou chybějící skutečný Maven/JDK, Gradle 8.13, Kotlin cache, JVM/TS 
 Maven fixtures; jsou uvedeny jako SKIP/BLOCKED. T008 nepřidává CLI, parser, worker,
 store ani runtime pozorování. Viz [change note 41](changes/41_projectServiceInventory.md).
 
+## T009 — evidence a coverage agregovaných pohledů (omezený fallback)
+
+View v1 nyní zachovává samostatně evidence kind, resolution status, freshness a
+reference s explicitní supporting/contradicting polarity. Neoznačené nebo
+nepodporované polarity zůstávají UNKNOWN a vytvářejí diagnostiku; agregace
+neslučuje odlišné scope ani context ID. Coverage počítá nalezené, vyřešené,
+nevyřešené a vyloučené objekty pouze v dodaném výběru; prázdný vstup je UNKNOWN.
+Legacy view data se při načtení doplní pouze konzervativními unresolved/unknown
+výchozími hodnotami.
+
+T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
+není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
+konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
+zbývající omezení jsou v [change note 64](changes/64_propagateViewEvidence.md).
+Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
+check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
+kompletní pytest **445 PASS / 109 SKIP** (19.07 s); finální zdrojový strom čeká na
+kompletní `pytest -q -rs` ve frontě sdíleného JVM locku. Individuální důvody SKIP
+z předchozího běhu nebyly vypisovány, proto jej nepovažuji za finální test evidence.
+
 ## T003-S09-W02 — bezpečná diagnostika legacy XLS
 
 VERIFIED_IN_SCOPE pro `xls-unsupported-1` / `feature-inventory-5`: deklarované
@@ -341,6 +444,18 @@ store. Přímý extractor kontroluje archive limit před hashováním. Finální
 Formula evaluation zůstává non-goal; celý S09/AC09 nadále PARTIAL.
 Přesné běhy a zbývající omezení: [change note 34](changes/34_diagnoseBinaryXls.md).
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+Ordered selected JAR/directory hierarchy rozšiřuje compiler-proven Javac/K1/K2
+call expressions a ASM virtual/interface sites o oddělené DISPATCH_CANDIDATE
+targety. Real JDK21 fixture `tests/test_dependency_dispatch.py` pokrývá API/base
+JAR, dva implementation realms, first-match shadow, derived artifact realms,
+missing/corrupt/truncated negatives, generic/intersection fail-closed boundary,
+oddělený physical/source hierarchy, static ABI conflicts, JDK parent-first shadow
+a runtime-effective MR physical lookup. Source canonical identity a reference/nonvirtual
+boundaries zůstávají zachované. Všechny dispatch výsledky zůstávají open-world incomplete; S04/T003
+zůstávají PARTIAL. Přesné kontroly a zbývající hranice uvádí
+[change44](changes/44_addDependencyDispatchHierarchy.md).
 ## T003-S09-W01 — hranice formula tokenů a dynamických referencí
 
 VERIFIED_IN_SCOPE pro `xlsx-offline-3`: existující bounded offline XLSX extrakce
@@ -355,6 +470,10 @@ literal sheet names s INDIRECT/OFFSET textem, explicitní boundary při neznám�
 qualifieru a spaced row/column/A1 range tvary; nevznikne falešný local fallback.
 Jde o opravu existujících AC01–AC04, ne plnou Excel grammar či dokončení S09/AC09.
 Přesné ověření a omezení: [change note39](changes/39_boundXlsxFormulaReferences.md).
+
+## T003-S09-W03 — statické Thymeleaf fragmenty
+
+VERIFIED_IN_SCOPE pro `thymeleaf-bindings-2`: stávající literal model binding/template return IDs a PDF hranice zůstávají zachované. Unikátní same-scope fragment reference s přesnou aritou propojuje přesný caller model path s fragment-scoped parametrem a jeho literal property use, včetně vnořeného fragmentu. Dynamic/duplicate/ambiguous/wrong-arity reference vytváří diagnózu bez resolved include; conditions jsou PARTIAL/UNKNOWN a nepodporované expression selector forms UNKNOWN. `th:each`/`th:with` i data aliasy zůstávají fail-closed: lokální jména a vnořené fragmentové argumenty se nevážou na globální model. Nic se nevykonává a veškeré vztahy zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`; MVC handler ani renderovaný výsledek se netvrdí. Cílená sada: **65 PASS**; full core: **475 PASS / 114 SKIP** (JDK/JVM, Maven/exporter, Gradle, TypeScript/Node worker a Windows CI prerequisites jsou blokované/SKIP). [Change note55](changes/55_expandThymeleafFragments.md); celý T003-S09/AC09 zůstává PARTIAL.
 
 ## T003-S05-W01 — deklarace import selectorů bez execution
 
@@ -407,6 +526,356 @@ all36 actual mapping cases; focused8 PASS. Static/instance proof comes from the
 compiler, and unavailable proof is explicitly bytecode-only. Remote Windows smoke
 remains a separate mandatory gate, not a local PASS.
 
+## T003-S07-W01 — Argument → parameter binding
+
+Explicit compiler inspection records declared-contract argument bindings using
+Javac attribution, K1 resolved argument maps and TypeScript signatures. Named and
+omitted/default arguments, vararg aggregates, original call-site/context and
+transformation are preserved. K2 Kotlin/ASM unavailable proofs and erroneous or
+ambiguous mappings remain UNKNOWN/PARTIAL; candidate dispatch never becomes
+execution or data availability. Existing SOURCE_ONLY local parsing is separate.
+Actual fixtures and remaining boundaries are scoped in
+[change52](changes/52_bindArgumentParameterFlow.md); final results are reported
+only after validation. S07/T003 are not complete.
+
+## T003-S08-W04 — versioned React event subset
+
+Opt-in react-jsx-events-4 binds official pinned React18.3.1/@types18.3.18 declaration
+and package metadata to static handles_event evidence and frontend freshness.
+Intrinsic events and sole-return source forwarding wrappers are supported;
+unknown versions/fake modules/spreads/mutable bindings stay UNKNOWN. No runtime
+click, data availability or full UI framework support is claimed. Explicit base is
+PR46 head1e21140; its approved callback parent is now merged. Current composition
+is main75d448ee plus the UI feature. Actual validation and pending gates are in change69.
+
+S08-W04 historical pre-binding validation:624 PASS/10 SKIP762.95s and43-case focus.
+Historical rule3 frozen validation:727 PASS/10 SKIP791.26s, all66 UI cases, and
+36 PASS/30 DESELECTED266.43s focused binding/factory/event-control checks.
+The three advertised event types include actual standard input/select/textarea/
+form controls; unsupported renderer controls remain UNKNOWN. No browser/app ran,
+no runtime click or data availability is inferred. Remote Actions were resumed by
+root after the user upgrade. Current rule4 full785 PASS10 SKIP and parent focus189 PASS0 SKIP
+are documented in change69; final exact-pair independent review remains required. GH CI is optional.
+
+## T003-S04-W03 — coroutine boundaries
+
+Bounded compiler source suspend/API markers and named ContinuationImpl declaration
+mapping are implemented for the actual Kotlin2.1.10 fixture. K1 CFG carries source
+resume/failure boundaries; K2 source CFG and unresolved dependency ABI remain
+explicit UNKNOWN/PARTIAL. Generated state instructions do not become user source
+calls. Validation status and exact supported matrix are recorded in change51;
+runtime scheduler order and general coroutine state-machine CFG remain unsupported.
+
+## T003-S04-W05 — JVM golden acceptance corpus
+
+A hand-labelled, versioned compiler corpus compares exact source-call counts and
+identities with explicit K1/K2 unsupported boundaries, CFG branches, non-executing
+references and unresolved reflection targets. It reuses existing actual fixtures
+and the application model/provider pipeline, with no production runtime change.
+The local prerequisite stack is explicit; it does not imply those upstream PRs
+are already merged. Current validation and remaining limits are in change62;
+S04/T003 remain PARTIAL outside this bounded static matrix.
+
+Golden corpus prepared full (2026-10-27): 646 PASS, 10 SKIP /991.96s; all21 corpus checks ran, no failures/setup errors. Source unchanged; remote gates remain paused.
+
+## T003-S05-W02 — bounded registrar/factory deklarace
+
+VERIFIED_IN_SCOPE pro Java/Javac21, Spring6.2.2 a obě vlastní K1/K2 distribuce,
+Spring rules `annotation-source-v5`: přesná/transitivní registrar identita a
+straight-line literal registry calls na skutečném registry parametru, source
+method/hash/context provenance a importující configuration condition. FactoryBean
+objekt `&name` a produkt `name` jsou oddělené; produkt má ACTIVE statickou
+declaration condition pouze pro indexovaný konkrétní generic typ a shodné
+literal constructor/class returns. Custom bodies/overload/conditions, abstract
+factories, neznámé nebo neshodné typy a překročený budget zůstávají UNKNOWN.
+`tests/test_spring_registrations.py` ověřuje skutečné APIs, fake namespace/receiver,
+inherited generics, profiles, malformed facts, strict/timeout nulovou publikaci,
+offline refresh, legacy schemas a UNKNOWN data audit. Mandatory CI APIs se
+připravují explicitně, nikoli core/test fetch. Kotlin registration facts, obecné
+builders, XML/factories metadata, runtime a production availability nejsou dodány.
+S05/AC05 a celý T003 zůstávají PARTIAL. Přesné běhy, externě blokované Actions a
+Draft stav: [change note47](changes/47_declareSpringRegistrations.md).
+## T015 — explicit datasource resource projection
+
+Bounded implementation over T008/T009: explicit workspace/repository/database/stream
+resources, table drill-down references, existing selected-context read/write/delete
+facts and dependency-only entity/migration declarations. Flyway derivation is
+MIGRATION_DERIVED, deployment/populated-data availability remain UNKNOWN.
+Default/unmapped/conflicting/stale/foreign scope is not promoted. Public36 cases
+and broader pure focused115 PASS (6.79s); local strict full is queued under the
+shared worker lock. [Evidence and exact current status](changes/68_projectDataResources.md).
+Complete persistence/schema-compatibility S06/W08, T004 and production readiness
+remain PARTIAL; this does not implement a new parser or discover datasources.
+
+## Return → consumer bindings
+
+T003-S07-W02 adds optional compiler-owned return IR without changing protocol v1
+or graph/store v1/v2/v3. Explicit inspection records typed call-result, assignment,
+return-expression and receiver occurrences with `return_mapping_version=1` evidence.
+Branch guards remain alternatives; nullability is declared compiler information,
+never an observed value. Process JSON/Markdown and directional impact retain the
+bindings. Workspace export qualifies their original identities and context.
+
+| Backend | Supported static proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Declared returns, local assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
+| TypeScript5.7.3 | Typed results, local assignments, nullable receivers, exact unassigned FunctionDeclaration references / real #private member bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, import/alias/property-based references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
+| K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
+
+`returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control
+edge of the same name cannot establish value flow. Callee body joins require a
+supported direct source target, and recursion is bounded. No application executes,
+network request, store mutation during failed validation, runtime value observation,
+or implicit compiler refresh is introduced. Legacy indexes remain readable; an
+explicit obsolete return-rule version is STALE offline.
+
+Example after explicit compiler inspection: `kgmaker flow render --help` describes
+the existing process rendering commands; their JSON call blocks include
+`return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
+Actual coverage is in `tests/test_return_consumer_flow.py`; broader production
+interprocedural flow and complete S07 remain pending.
+
+## T023 — ProcessDefinition / ProcessView (explicit model)
+
+T023 přidává čisté version1 Python API pro explicitní definici/revizi a process
+view nad T005/T009. Scope/context a origin/evidence refs jsou validovány;
+alternativy, exception, loop/retry i async nepřecházejí na lineární pořadí.
+Semantic annotations mají strict allowlist; APPROVED label nezvyšuje technical
+status, druh evidence, freshness ani data availability. Missing/foreign/stale
+proof je explicitní boundary nebo invalidní input.
+
+[Capability a příklad](process-model.md), [change note70](changes/70_defineBusinessProcessModel.md).
+Modelové AC mají konkrétní pozitivní/negativní testy: focused130 PASS1.00s;
+required frozen full729 PASS/10 optional SKIP546.19s,0 errors/failures a515
+nezměněných hashes na source95c3ed3. Nejde o discovery/projection, process
+review/catalog/store ani nové CLI/render. Exact-pair review/publikace/fresh CI
+zůstávají samostatnými release gates. T024–T040 a celý T004 zůstávají samostatným nedodaným rozsahem.
+
+## T010 — scoped HTTP provider projection
+
+`interfaces.project_http_providers` provides a pure `interfaces` ViewDocument on
+explicit T008/T007 ownership and T009 evidence. Service/method/case-preserving
+route identity is distinct from registration/contract variant identity. Existing
+API IDs remain unchanged; additive versioned source/hash-bound declaration
+metadata preserves otherwise lost route case and variants. Typed Spring mirrors
+support bounded exact class/method composition; source Spring/Ktor candidates,
+contract-only OpenAPI and unresolved dynamic prefixes remain distinguishable.
+
+Final combined focused **145 PASS**,87.81s and strict full **596 PASS /10 optional
+prerequisite SKIP**,479.68s passed. Mandatory WORKERS/K2/SPRING_IMPORTS/HTTP_PROVIDERS=1
+cases ran with own prepared JDK21/K1/K2/TS/Spring6.2.2 worker/API fixtures; ten frozen
+source/test/CI/fixture hashes matched before/after. The grouped actual fixture
+covers same-line overloads/owners, mapping/method/class-prefix variants, inherited/
+custom UNKNOWN and direct override, truncation, metadata and context isolation,
+and actual reinspection after unrelated files, same-file comment/line shifts and
+within-module relocation. Canonical compiler IDs stay stable and provenance updates.
+
+Historical pre-owner590/10 and interrupted pre-selection257/7/pre-overload148/2
+runs are not final acceptance. Root and independent architect source closure
+approved the final manifest; current main ec333 integration199 PASS167.32s (own runtime/tests unchanged,
+matching prepared current-main workers). Exact Git-pair review and remote CI
+remain pending. Actions are billing-blocked again; no retry/bypass or
+remote PASS claim. Broader production/toolchain/runtime acceptance is separate.
+
+Bounded PARTIAL: imported runtime-to-interface binding is unsupported and retains
+original references in `HTTP_RUNTIME_BINDING_UNKNOWN`; deployment/runtime/data
+availability are UNKNOWN. Real application runtime test NOT_RUN. No endpoint
+consumer projection, inferred contract implementation, new resolver/store or
+T004 completion. Required CI and independent review are pending.
+See [change67](changes/67_catalogHttpProviders.md).
+
+## T003-S05-W03 — typed profile/property/class conditions
+
+Implemented bounded JVM Spring v6 typed conditions: profile arrays/expressions,
+property alias/prefix/multiple-name semantics and genuine boolean missing policy,
+exact declared class inventories and conservative unsupported/custom boundaries.
+Injection uses the computed condition state. Explicit variant inputs/classpath
+are checked per context and the snapshot is tamper-bound; prior-rule contexts
+require reinspection without changing graph schema. Actual pinned API results
+and final full-suite evidence are recorded in
+[change note50](changes/50_expandSpringConditions.md). Runtime condition execution,
+custom defaults, Unicode case equivalence and unsupported dynamic expressions
+remain outside this bounded proof; T003-S05 stays PARTIAL.
+
+## T024 — proved trigger inventory, local bounded implementation
+
+Pure API zachovává doložené selected-context HTTP/Kafka/scheduler deklarace,
+owner/source/proof a oddělenou body availability. K1 genuine fixture dodává3
+trigger kinds; expression-body CFG zůstává UNAVAILABLE. K2 nemá authoritative
+annotation ownership ani SOURCE CFG: legacy hints se odmítají, UNKNOWN bez
+trigger claims. Žádná cesta procesu ani runtime registration/execution se nehádá.
+Bounded41PASS a current-base199PASS zahrnují actual K1/K2 a canonical mutations;
+strict frozen full812PASS/10optionalSKIP,206hashů shodných. Main8b1eec integrace
+236PASS včetně actualK1/K2 a pure conditions/inventory/query replay,221hashů shodných.
+PR59 čeká na finální nezávislé review; merge zatím neproveden. [Capability](process-triggers.md), [note71](changes/71_discoverProcessTriggers.md).
+
+## T003-S06-W04 — explicit persistence realms LOCAL_VERIFIED_IN_SCOPE
+
+Explicit workspace replay reuses current compiler facts before qualification.
+Structured DB/stream pair plus schema/target and PU/context provenance prevents
+cross-realm name fallback; same stream across different databases works and exact
+duplicate pair is rejected. New unqualified source-only physical mappings remain
+UNKNOWN. Actual K1/K2 cases cover shared SQL paths, same entities across contexts,
+quoted-dot collisions, strict malformed boundaries and two-PU physical joins.
+One strict repository full passed **1348/10** with unchanged HEAD and623 inputs;
+actual/source closure and all evidence are in changes/74_isolatePersistenceRealms.md.
+Final remote review/merge is pending; this is not completion of T003/S06 or T004.
+Physical replay support is non-renamed tables/columns; creation-stable renamed IDs
+remain UNKNOWN pending S06-W08's explicit creation-identity lifecycle proof.
+
+## T025 — local technical process path, explicit T024 stack
+
+Python adapter reuse flow.process/T023 zachovává sourceCFG branch/call/return/
+exception origin IDs. Root CFG větší než budget je explicitní opaque boundary,
+ne neomezená kopie; trigger se započítává do typed output budgetu. Missing body,
+recursion, dispatch/async/coroutine nejistota zůstávají PARTIAL boundaries.
+Source/context/scope/hash a obě call-site edge/proof vazby se kontrolují; žádná
+physical freshness ani observed execution se z dodaného JSON neodvozuje.
+Explicit dependency Draft PR59 (T024 head3b24cc6) musí být merged před T025 merge.
+Actual Javac/K1 bounded fixture a pure proof/legacy/nomutation matice jsou lokální
+důkazy; full/review/release zůstávají pending. [Capability](process-paths.md),
+[note73](changes/73_buildLocalProcessPath.md). Celý T004/T003 není dokončen.
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+Pure `interfaces.project_kafka_interfaces` reuses canonical upstream code and
+binding validation, T008 ownership/context and T009 evidence. Explicit workspace
+checkouts/private captures are required. Groups/realms and original listener/send
+IDs stay distinct; config-only, unknown brokers and regex remain unresolved.
+Java listeners/send and Kotlin K1 listener are bounded static support; Kotlin K2
+annotations UNKNOWN, delivery NOT_OBSERVED. Kafka rev2 and Common dependencies
+merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
+10exactoptionalSKIP2042.93s,4897hashes/five member sets unchanged. All2071 parent
+IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
+actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
+review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
+## T011 — typed HTTP consumer catalogue
+
+Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
+explicit ownership/context selection and evidence buckets. Distinct request and
+Feign terminal callers remain distinct; static intent is not runtime execution.
+Current implementation/focus status is in [change76](changes/76_catalogHttpConsumers.md);
+strict full at b1163fc passed1373 tests (10 optional skips); current9f6605 parent
+focus passed205 tests without skips. Final current-pair independent review is pending. Coverage remains PARTIAL,
+remote binding/runtime/data availability UNKNOWN. See [capability](http-consumers.md).
+
+## T025 revision2 — local operation proof prerequisite (in progress)
+
+Separate candidate over merged T025 c695/main ef3 adds a bounded Javac typed
+literal/local-assignment witness, exact IR/CFG/source/context proof binding and
+independent operation resolution. CFG ordering and transitions remain syntax /
+UNRESOLVED. Legacy/Kotlin/unsupported operations gain no confidence or data claim.
+Architecture independently reviewed; initial actual RED,11 protocol tests and120
+legacy tests executed. Own fresh K1/K2 builds passed; the initial actual matrix
+failed on declaration origin, then proof-retention bugs were corrected. Current
+Corrected actual integration341PASS/0SKIP on a617. Descendant cff803c superset
+full1566PASS/10SKIP includes every parent test (1471PASS/10SKIP), with exact
+parent runtime/distributions and unchanged input closure. This is descendant
+evidence, not a separate full on a617; see [change79](changes/79_certifyLocalOperations.md).
+Independent final review/merge remain separate. T026 remains separate.
+
+## T026 — reversible certified local-operation groups (candidate)
+
+The pure `business_process.collapse_business_steps` / `expand_business_steps`
+API reuses the T025 ProcessView and embedded certificates. It groups only maximal
+acyclic same-owner/method/context/scope normal chains, preserves ordered origin
+records and parallel external edges, and exactly restores canonical input.
+Decisions, calls, fields/side effects, loops, unknown boundaries and finally
+clones remain visible. Syntax adjacency keeps groups UNRESOLVED/PARTIAL; no
+runtime/business approval follows. PR65 runtime a6170c18 is merged as main32a3bca and integrated; dependency gate
+is satisfied. Actual Javac RED1FAIL4.78s preceded source; historical focus265PASS43.62s ran
+without FIFO/prehash receipt. Source cff803c received independent APPROVE.
+Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without skip, immutable
+tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
+only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
+review/publication remain separate; see change82.
+
+### T006/T008 revize2 — shared context-role boundary (review pending)
+
+Bounded source separates exact canonical workspace-derived Kafka declarations
+from service-owned source and compiler selection, preserving the original full
+graph/proofs, legacy SOURCE_ONLY and strict foreign-path/scope/hash guards.
+Unknown producer/version/identity is diagnostic; role validity does not require
+current private compiler replay. Pure coalesced matrix: **294PASS/0SKIP**,9actual
+cases explicitly deselected,15.04s,606 frozen inputs unchanged. Read-only replay
+of the fresh actual current-parent Kafka capture passed T008/T010/T011/T015/T024
+with2CURRENT real compiler contexts, full graph/input/store unchanged and no
+new worker execution. Final exact-source independent review/full remain pending;
+T016 is not implemented by this change. [Note84](changes/84_classifyWorkspaceContextRoles.md).
+## T003-S07-W05 — Kafka retry/DLT draft
+
+IN_PROGRESS bounded static policy adapter `kafka-retry-1` on explicit Kafka rev2
+parent19b0594. Exact3.3.2 API+canonical Java/K1 annotation/proof and separate async
+boundaries; custom/unsupported policy UNKNOWN. Initial actual6PASS and pure-only replays remain distinct historical evidence.
+Current-parent coalesced470PASS/0SKIP186.44s is verified with1620unchanged inputs;
+Strict full on647:1908PASS/10SKIP1920.61s; current-parent pure23PASS; final exact-pair ready review remains pending. See [note87](changes/87_captureKafkaRetryDlt.md). Execution and
+delivery NOT_OBSERVED; runtime/data availability UNKNOWN.
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Same Replay + compiler-owned FIELD/PROPERTY/inherited witnesses support explicit
+scalar type/null/decimal/PK/UK and single FIELD ManyToOne FK tuple/key comparison.
+Current-name rename/drop identity and malformed/version/source/realm negatives
+are covered. W04 PR62 merged; current main c193748 integrated. Strict full
+ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return composition
+67b8341:174PASS/0SKIP248.87s,1487 hashes unchanged. Final pure parent ambiguity
+4PASS/0SKIP0.56s; worker sources/core unchanged by that parent. Final independent
+review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
+constraints/naming/converters/composite FK remain UNKNOWN. No availability,
+deployment/population promotion or whole-milestone completion inferred.
+
+## T010 normalized variant correction (2026-11-03)
+
+Actual JSON declarations /orders/{id} and /orders/{name} with one method caused
+DUPLICATE_NODE_ID. Rule2 preserves one explicit ambiguous boundary and both
+candidate/provenance sets; exact duplicates and YAML distinct locators retain
+existing behavior. Public RED3FAIL1PASS1.88s; corrected pure/provider34PASS2.12s.
+Actual compiler focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s with2105 unchanged inputs. Return-parent e740 composition284PASS/0SKIP219.41s with2113 unchanged inputs. Final metadata-head review/merge remain separate; no execution or deployment claim. [change88](changes/88_preserveAmbiguousHttpProviders.md).
+
+
+## T006/T008 revize 2 — verified shared context roles (2026-11-05)
+
+Current main 3e5ef0f; shared producer identity, classifier and inventory boundary
+retain the original full graph, strict source ownership and historical role versus
+freshness distinction. Actual focus 217 PASS / 0 SKIP; combined descendant2df55ff
+strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, 4897 unchanged hashes
+and five unchanged artifact member sets. Every Common-parent ID is included:
+1956 PASS / 10 optional SKIP from one descendant full, not a standalone run.
+T006-AC07–08 / T008-AC07–09 verified in scope; no availability promotion.
+See note84 for preserved setup failure/correction and final review limitations.
+
+
+## T013 — explicit interface contract attachments (verified bounded scope)
+
+Shared bounded declaration capture and immutable attachment preserve original IDs,
+technical status, evidence buckets, role-separated operation/schema/revision
+references and stale generated-client origin. Type IDs remain UNKNOWN without
+upstream payload-reference proof; DTO names never prove compatibility. All45 own
+tests PASS in ONEcombined2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116parentIDs=2106PASS10SKIP,4897hashes/five member sets unchanged. This is not a
+standalone full. Current-parent focus444PASS/0SKIP; actual captured Kafka K1/K2
+revision/type-reference cases passed. T012/Common dependencies merged, no native
+extension, network/schema fetch or generator execution. Final exactpairreview and
+merge separate. [API/limits](interface-contracts.md), [change85](changes/85_attachInterfaceContracts.md).
+
+## T030 — process-label packet (final review candidate)
+
+Pure Python API preserves bounded immutable process identity/evidence/context,
+structured conflict and privacy/budget contracts; no model/compiler/file I/O or
+apply. Source unchanged from reviewed070/6ae; current base main2a38706.
+ONE actual combined descendant2df55 strict full2587PASS10allowedSKIP2042.93sJUnit,
+4897hashes+5recursive inventories unchanged, Root+architect verified all2597 IDs.
+T030 ALL1990parent IDs1980PASS10allowedSKIP; all47ownPASS. Original32AST/35globals
+and module byteprefix +whole testfile preserved; addedT031 bindings do not shadow.
+See note90 and validation/t030-descendant-proof.json. No standalone parent full or
+new native build. Exact final base/head review and publication remain separate;
+GHCI optional/unverified. T031+ is outside this PR; no runtime/business approval.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
 ## T046 — Šablony, testovací návrhy a dohledatelnost
 
 T046-S01–S06: implementováno v omezeném offline kontraktu popsaném v
@@ -432,8 +901,278 @@ přes nekanonické cesty, JSON enum, chybějící FK target, implement gate pře
 record/save a ignorovaná journal CAS volba. Regresní sady navíc chrání historii
 a review bindings. Původní 198-testový výsledek není důkazem těchto oprav; nové
 výsledky a přesné revidované SHA jsou doplněny v change notes 56–61 a v PR.
-Merge zůstává podmíněný novým review a CI pro nové revize.
+Merge zůstává podmíněný novým review a ostatními povinnými kontrolami pro nové revize; GH CI je podle T045 revize 2 doplňující evidence.
 
 CI revizí T046 samostatně kontroluje i generované grafy každého inkrementu.
 S01–S05 mají vlastní aktualizované semantic/GRAPH snapshoty; jejich správnost
 není odvozena pouze z integračního S06.
+
+
+T046 integrace 2026-11-05 nad main9eec41a: 52 cílených pytest PASS; dostupná celá sada 1152 PASS /1045 SKIP, bez failures. Skips nedokládají nepřipravené toolchainy. Přesné limity jsou v change61; GH CI je podle T045 revize 2 doplňující evidence. Nové exact-pair review není nahrazeno historickým review.
+
+## T003-S07-W07 — verified bounded source; dependency merge pending
+
+See [remote mapping contract](remote-contract-mapping.md)
+and [note91](changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
+
+Pure `prepare_process_label_packet` preserves complete ProcessView target/ref
+identity, actual content binding and captured evidence/uncertainty. Raw prose is
+hash-omitted; document provenance is explicit ref-only and conflicts are supplied
+review items, not NLP authority. Full serialized cost includes omissions/template
+and a stable-width overflow flag. Tiny budgets keep validation IDs; invalid/hard
+inputs fail without mutation or I/O. Unicode/code-path IDs are retained.
+Corrected coalesced pure153PASS/0SKIP4.07s; required full and independent
+exact-source review remain pending. T031/T032 apply/review and T034 CLI are not implemented here.
+
+## T031 — read-only process annotations (final review candidate)
+
+Pure API rederives the whole current T030 packet before accepting semantic-only
+PROPOSED text/refs/groups; conflicting fields and structured documentary conflicts
+remain PENDING/CONFLICT for review. No technical apply or approval. Currentmain
+5ffe099 has merged T030/Common/T012/T013/W07 prerequisites.
+Whole module/testfile exactactual2df55; originalT03032AST/35globals/byteprefix
+preserved,6added bindings disjoint. All76ownXMLPASS in ONEcombined descendant
+2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original2066parent
+cases2056PASS10SKIP; currentmain2252+76 source/IDunion2328=2318PASS10sameSKIP.
+Not standalone parent full, new collection or test/build/fullrepeat. Main240episode
+prefix and every old capture preserved. Exact finalreview/publication separate;
+GHCI optional/unverified. See note92 and validation/t031-descendant-proof.json.
+
+Pure same-module validation rederives the whole current T030 packet and accepts
+only bounded semantic PROPOSED records. Invalid/stale/forged/unsafe inputs return
+fixed-code REJECTED validation reports; valid input remains PENDING/CONFLICT with
+all differing proposals and captured documentary review items. No approval/apply,
+new outcomes, technical mutation, NLP comparison, runtime or physical freshness.
+Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
+PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
+full, independent exact source review and root publication remain pending.
+
+## T032 — explicit local review (final review candidate)
+
+Currentbase2c7b38 has mergedT030/T031 prerequisites. Separate bounded immutable
+semantic envelope, POSIX cooperating process/thread CAS, exact operation identity,
+baseline revalidation and honest postreplaceINDETERMINATE recovery. No technical
+ProcessView/evidence mutation, document citation promotion or reviewer authentication.
+APPROVE blocks both proposal/captured conflicts; REJECT publishes no new labels.
+Whole store module/testfile/currentprocess_semantics exactactual2df55. All36own
+XMLPASS in ONEcombined2587PASS10allowedSKIP2042.93s;4897hashes+five sets unchanged.
+Original2102IDs2092PASS10SKIP; currentmain2328+36union2364=2354PASS10sameSKIP.
+No standalone parent full or new test/build/fullrepeat. Main241episodeprefix/all
+oldcaptures preserved. Final independentexactpairreview/Rootmerge pending; GHCI
+optional/unverified. See note94 and validation/t032-descendant-proof.json.
+
+Explicit stack on reviewed T031a359. Separate version1 envelope,128history/2MiB caps,
+POSIX cooperating thread/process CAS, exact idempotent operation identity and current
+explicit-baseline revalidation. APPROVE blocks captured and proposal conflicts;
+REJECT publishes no new labels. Technical model/evidence remains unchanged.
+Current feature36PASS1.93s; coalesced269PASS94SKIP8.74s (compiler SKIPs not PASS).
+Independent source review and strict full NOT_RUN. No native build, CLI, external
+publication, authenticated reviewer identity or hostile-root race guarantee.
+
+## T033 — explicit process catalog (final review candidate)
+
+Currentbase7e6c83 has mergedT030/T031/T032. Read-only explicit current/historical
+ProcessViews+T024 inventory and direct validated T032 reads, stable process+scope
+selection IDs, exact collisions/one-hop aliases preserving all original members/
+revisions/triggers/review states. No label identity/approval borrowing/archive/
+discovery/store writes. Partial absence NOT_IN_CURRENT_INVENTORY stays qualified.
+Wholecatalog/test+5process dependencies exactactual2df55. All37ownXMLPASS in ONE
+combined2587PASS10allowedSKIP2042.93s;4897hashes+5inventories unchanged. Original
+2139parent2129PASS10SKIP; currentmain2364+37union2401=2391PASS10sameSKIP. No new
+test/collection/build/fullrepeat. Main242episodeprefix/alloldcaptures preserved.
+Finalexactpairreview/Rootmerge pending; GHCIoptional/unverified. See note96 and
+validation/t033-descendant-proof.json. Runtime/data availability remain UNKNOWN.
+
+
+## T014 — remote topology current-parent review candidate
+
+Pure ViewDocument adapter on reviewed W07/T013 stack; retains every candidate,
+unknown target and capture-time uncertainty. No resolver duplication, source I/O,
+JVM/process edges or runtime/payload promotion. Public pure validation is recorded
+in note93. Current509 retains merged Common/T012/T013/W07/process source. Owned
+module/test bytes and all present runtime/test/worker/fixture files match accepted
+2df55, except pending T019 CLI dispatch is correctly absent. Accepted descendant
+full2587PASS10allowedSKIP covers all2425 current-parent IDs (2415PASS10SKIP);24own
+PASS. No new actual/full/build. Final exact-pair review/merge remain pending;
+see docs/validation/t014-descendant-proof.json.
+
+## T016 — current-parent common-capture review candidate
+
+One explicit snapshot closure composes T015/W07/T014 and verifies it again before
+returning a handoff. Pure aggregation uses catalog services/resources and reversible
+remote origin inventories, Kafka channels/groups, original proof buckets and UNKNOWN
+remote runtime/freshness. Currentec6a127 retains merged T014/T015/Common/T012/T013/
+W07v2 and process bodies/CI. Owned module/tests are exact accepted2df; all46own
+cases XMLPASS. Collection-only2425main+46own union2471 maps2461PASS10same optional
+SKIP on accepted2587PASS10SKIP full. No actual/full/build/tool mutation; independent
+current-pair review remains pending. See note95 and validation/t016-descendant-proof.json.
+
+## T017 — current-parent bounded filtering review candidate
+
+Pure API over an existing T016 view: exact service focus, deterministic real-edge
+hops and node budget, context/relation restriction and complete known omission
+inventories. New frontier entries are metadata rather than graph nodes. No shortcut,
+runtime/availability claim or ambiguity/freshness/evidence upgrade occurs. Public
+absent-API RED2FAIL; corrective retained-expansion privacy RED1FAIL29PASS; final
+33 own tests plus coalesced T016/T014/View/T009: 149 PASS in1.58s. No heavy queue,
+native build or full at that historical source checkpoint. Current130720f preserves
+merged T014/T016/Common/T012/T013/W07/process/CI. Owned source/tests exactaccepted2df;
+all33own cases XMLPASS. Collection-only2471parent+33own=2504 maps2494PASS10sameSKIP
+on the oneaccepted2587PASS10SKIP descendant. Root is author, not independent reviewer;
+architect plus another independent final-pair review remain mandatory. No new full/
+build/tool mutation. See [note97](changes/97_filterTopologyScope.md),
+[proof](validation/t017-descendant-proof.json) and [API](topology-filter.md).
+
+## T018 — current-parent snapshot explanation review candidate
+
+Pure explanation rederives T016/T017 and expands exact original identities and
+proof buckets. Original PUBLIC graph is required for canonical source locators;
+missing graph/range is unavailable. Separate explicit confined source-status
+capture checks current file hashes without replacing original snapshot fingerprints
+or upgrading remote/context freshness. Public pure/file-backed tests are recorded
+in note98. Current4e4fcd6 preserves T014/T016/T017/Common/T012/T013/W07/process/CI;
+owned source/tests exact299/accepted2df, all59own XMLPASS. Collection-only2504parent
++59own=2563 IDs maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP
+full. No actual/full/build/tool mutation; current exact-pair independent review
+remains pending. See validation/t018-descendant-proof.json.
+
+## T019 — current-parent architecture JSON review candidate
+
+Snapshot-only default wraps existing T014/T016/T017/T018 APIs without reselection.
+Explicit capture-local preflights all original indexes before parser work, never
+publishes indexes/caches; explicit check-source remains separate. Coalesced pure
+CLI/dependency checks: 307 PASS, 10 actual cases deselected, 5.29s. No worker/native
+build or full was run at that historical source checkpoint. Current1005b9f+34own
+union exactly equals accepted2df2597 IDs:2587PASS10same optionalSKIP. ALL302present
+runtime/test/worker/fixture/CI bodies match acceptedfull, including exact5-line CLI
+registration/dispatch. No new actual/full/build/tool mutation. Current independent
+final-pair review remains pending; T020/21not included. See note99,
+[proof](validation/t019-descendant-proof.json) and [CLI contract](architecture-json-cli.md).
+
+## W07/T014 — first-call purity correction (note108)
+
+Root's import relocation preserves helper algorithm/VERSION2 and pure first-call
+behavior (historical25T014PASS on869ab). Source91ca continuation006 is terminal:
+1176PASS/1typedoptionalSKIP, XML575.90s/runner618.34s. The verified source-corrected
+aggregate is2737PASS/10typedoptionalSKIP across2747IDs, combining1561PASS/9SKIP
+on304 with current1177 and rerunning all102 explicitly affected cases. Never
+label this a fresh single full or an original failed-attempt wholesale PASS.
+Main-only cold publication2598 derives2588PASS/10SKIP with exact per-ID source,
+origin XML, complete phases and typed skip policy. Its302source paths keep main
+CLI/workflow and exclude renderer additions; common corrected source/test bytes
+and helper globals are preserved. Actual SVG15+4 passed in the external aggregate,
+which also verified1364kindroots/94333entries and80637fresh hashes unchanged.
+Main248immutableepisodes plus one historical Rootcold capsule are retained. The
+old capsule's unknown validation fields remain historical and unchanged. Runtime,
+tests and native bytes were not changed or rerun for terminal metadata recording.
+Architect and resume_t010 FINAL reviews on the new base/head remain PENDING;
+Root is the original author and merge guard only. See note108/per-ID ledger.
+
+## T020 — interface Markdown source candidate
+
+Explicit stack T019 abad2e3; Rev2/root architecture approved before code. Pure
+ViewDocument renderer and interfaces-only CLI format preserve IDs/context/evidence,
+contract revisions, Kafka realm/group and generated/unclassified rows. Public
+RED4FAIL1.08s → initial GREEN4; expanded safe/shape/parser/source-contract matrix
+43PASS0.94s; T019 compatibility plus renderer77PASS4.37s; expanded pure closure
+176PASS6.59s covers model/T010/T013 and the final namespace-collision regression.
+Dev-only hash-pinned GFM parser isolated from shared venv/cache, table AST validated.
+Native/heavy/full NOT_RUN; current source checkpoint awaits independent review
+before staging. No whole T004, runtime, payload compatibility or deployment claim.
+
+T020 current corrected renderer checkpoint446ddbe:49PASS1.24s, including explicit
+validated content fingerprint checked against independent supplied-JSON SHA256.
+Root independent SOURCE_APPROVE covers complete renderer/CLI/test source; final
+metadata descendant preserves exact runtime/tests. Earlier176/48 are historical
+source-attributed checks. Dependency/current-main/full/merge gates remain pending.
+
+
+## T020 current-main publication transfer (2026-11-06)
+
+Current parentfbb includes merged PR79–85; older checkpoint/review-pending entries
+above are historical. T020 adds only interface Markdown: topology/explain stay
+JSON-only, original286-line renderer and original49test source are preserved.
+The source-corrected006 aggregate is2737PASS/10typedoptionalSKIP across2747IDs,
+not a fresh single full. The T020 stage2647-ID subset is2637PASS/10typedSKIP.
+Its49feature cases use48 assertion-equivalent aggregate cases and the original
+unsupported topology-Markdown negative PASS on source446ddbe/metadataaa539.
+The aggregate's same-ID topology-Markdown positive is T022 evidence, never the
+T020 negative. Parser rejection route/entrypoint/helpers and original test body
+are source-verified against that original execution; no new test was run here.
+Current-main cold fix and all other APIs/CI jobs stay intact. Original249parent
+capsules +three exactT020capsules=252; historical validation fields are unchanged.
+Fresh scoped semantic CLI, source/global/ID proof and two-stage attribution are
+recorded in /workspace/t020-publication-proof. Current T020 exact-pair independent
+review/publication are pending; no T021/T022 code/capsules or wholeW09 claim.
+
+
+### Current blocker — first-call renderer purity
+
+Root's fresh ordinary CPython public-module invocation confirmed file-open I/O
+inside `architecture_render._render`'s lazy `_safe_output` import (original
+renderer SHAed93abfb9e4052ceef9a2aaf0b7ff2ecbed6be96db48a0948343aff97a00c8b7).
+The original49 test result and2647 per-ID ledger remain source-attributed case
+results, not closure of this newly uncovered first-call contract. Root RED receipt:
+`/workspace/t020-cold-purity-proof/receipt.json`. The initial payload-preparation
+missing parser path is separate from the corrected confirmed importlib-open RED.
+This checkpoint is HOLD/REQUEST_CHANGES pending separately reviewed corrective
+source/regression/affected-result transfer. No corrective code or new execution
+was performed here; no final readiness or pure first-call support is claimed.
+
+
+## Aktuální oddělený T020 checkpoint — 2026-11-06
+
+Base je ověřený cold main `fbb0957`; pouze interface Markdown, nikoli Mermaid
+ani topology Markdown. Původní 49 test bodies z aa539 zůstává beze změn; přidána
+jedna přijatá first-call cold regrese. Schválená korekce109 extrahuje pouze původní
+helpery do architecture_render_common a přesouvá existující importy do module scope
+v rendereru/CLI/inspection; algoritmy, limity, veřejná exception a JSON zůstávají.
+Historický HOLD výše je uzavřen korekcí, nikoli zpětným přepsáním starých důkazů.
+
+Přijatý pokračovací běh007v2 na `41b9a454`: 152 PASS / 0 SKIP a 19 actual SVG.
+Celková SOURCE_CORRECTED evidence je 2740 PASS + 10 typed optional SKIP / 2750;
+nejde o nový jediný full běh. Oddělený T020 ledger má přesně 2648 IDs =
+2638 PASS + 10 typed optional SKIP: 2598 parent + 50 T020. Původní unsupported
+[topology] negative čerpá výhradně skutečný původní446/aa 49PASS receipt;
+pozdější combined same-ID positive jej nedokládá. Ostatní47 původních případů
+a specialized [explain]/path-error odpovídají přijatým cestám; nový cold případ
+má exact41b9 AST. Source/global/per-ID proof je externě v
+`/workspace/t020-corrected-publication-proof`. Native630 artefakty ani tools se
+nemění; žádný nový test, collection, parser/SVG, preflight, build či full nebyl
+pro tento isolated head spuštěn. Nezávislé finální review a publication PENDING.
+T021 následně přidá Mermaid; T022 topology Markdown až ve vlastním odděleném PR.
+
+
+## Aktuální stage ověření — 2026-11-06
+
+Testovaný runtime/source checkpoint `fc6f58f997281e9dee871ae9ab61a90ddaea4578`:
+jediná current-stage collect-only kontrola přesně 2648 unique IDs, bez module
+skip/missing/extra; následný autorizovaný narrow běh **85 PASS / 0 SKIP, 14.05s**
+(50 T020, 34 T019, jedna T014 first-call cold public regrese). Původní unsupported
+topology-Markdown negative i explain/path-error nyní skutečně prošly na current
+stage; původní446/aa receipt i pozdější combined positive historie zůstávají.
+Před/po všech306 source/build/test inputs a čistý HEAD přesné; read-only parser
+162regular-file/184total-member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
+Markdown parser, maxfail1, vlastní tmp; žádný nový native/browser/SVG/build/full.
+
+Aktuální per-ID SOURCE_CORRECTED union **2638 PASS + 10 typed optional SKIP /2648**
+obsahuje85 skutečných current-stage řádků a2563 dříve přijatých source-qualified
+řádků. Není to fresh2648 full. Raw XML, commands, collect a před/po guards i přesné
+source-attribution řádky jsou v `/workspace/t020-corrected-stage-validation`;
+receipt SHA256 `4256910e7b59ac67c396fa20751ed88235b4b2d7c779c1503bb95e41a1f72696`.
+Finální metadata head je následník téhož testovaného runtime; nezávislé FINAL
+review Root+resume10 před publikací čeká. GH CI neověřené/doplňující; žádný push,
+PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou sloučené;
+T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
+current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
+AC06 čeká na finální review a samostatnou publikaci.
+
+Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d`, včetně nového remote contract mapping. Skutečný nový plný dostupný pytest běh: **1231 PASS /1055 SKIP**, 60 subtests PASS, bez selhání (42,98 s). Cílená sada T046/context/feature/Thymeleaf/remote mapping: **179 PASS /10 SKIP**, 51 subtests PASS (5,23 s). Toolchain SKIP nejsou PASS; worker/package data zůstávají identická s tímto main. Historické výsledky nad9eec zůstávají oddělenou evidencí. Nezávislé review a publikace se ověřují nad novými přesnými SHA.
+
+
+T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.

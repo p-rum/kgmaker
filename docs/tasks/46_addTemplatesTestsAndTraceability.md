@@ -1,8 +1,8 @@
 # T046 — Šablony, testovací návrhy a dohledatelnost změn
 
 - Task ID: T046
-- Revision: 2
-- Datum: 2026-10-27
+- Revision: 4
+- Datum: 2026-11-06
 - Stav zadání: SPECIFICATION; skutečná implementace a kontroly jsou v change notes a stavové matici.
 - Baseline: `33dc239a6d2eca2f42364a7b314aeb377e4b441a`.
 - Zadavatel: uživatel této relace; osobní identita nebyla poskytnuta. Schvalovatel implementace: UNKNOWN.
@@ -98,3 +98,14 @@ kontroluje fázi každého nového artefaktu i při přímém save; historie a b
 jsou neměnné. T046-AC07 zahrnuje atomické create-or-load a CAS pro všechny
 mutující trace příkazy včetně sync-analysis/sync-testgen/capture-change.
 Regresní důkazy jsou v test_provenance, test_delivery a test_synthetic_data.
+
+## Revize 3 — integrace aktuálního main
+
+Integrační baseline je `250e7c16250a97b9f8df5256b9894c8119dc64d9`. Zachovává
+nové main capabilities, worker/package data a instrukce T045 revize 2; GH CI
+je doplňující evidence, nikoli povinná brána. T046 acceptance se nemění.
+Přesné aktuální výsledky a omezení jsou v change notes 56–61 a PR review.
+
+## Revize 4 — aktuální CLI integrace
+
+Zachovává architecture registration/early dispatch a delivery CLI současně. Runtime ID, acceptance a historie se nemění. Nové baseline/head review a výsledky jsou v change61 a PR.

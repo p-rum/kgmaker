@@ -1,0 +1,155 @@
+# Katalog používaných HTTP rozhraní
+
+T011, S01–S05, AC01–AC06. Baseline75d448ee7791cffb3dc9f4cceff5136402a8f5e0:
+T008/T009 a W06 PR49 jsou sloučené. Root schválil nezávislý architektonický brief;
+implementace je samostatně v feat/t011-catalog-http-consumers.
+
+## Problém a skutečná změna
+
+Chyběla čistá consumer projekce nad skutečnými W06 request/execution fakty.
+Append-only project_http_consumers v existujícím interfaces.py reuse společný
+ViewDocument/http_interface, ownership/context inventory a T009 evidence buckets.
+Provider function a jeho IDs se nemění. Nepřidává se resolver, store ani CLI.
+
+Consumer zachovává caller/origin/terminal a method/path/provenance. Dvě volání
+stejné route ani dva terminály jednoho publisheru se neslévají. Feign declaration
+nenahrazuje skutečného consuming caller. Lazy request a statický trigger nejsou
+pozorované síťové volání. Dynamická route zůstává None s důvodem/source reference.
+Request/response contract refs a remote service binding zůstávají None, protože
+W06 takový důkaz neposkytuje. Runtime/data/deployment jsou UNKNOWN/NOT_OBSERVED.
+
+Validace kontroluje canonical source/caller/node, request/call-site identity,
+range, scope/context/SHA, chain/terminal vlastníka a původní edge/proof tuple.
+Selected kontexty se vybírají před validací historických siblingů. Invalidní vstup
+nemění caller snapshot ani zdroje; URI provenance má allowlist, bez privátních
+volných payloadů. Evidence polarity se přenáší společnými T009 buckety.
+
+## Ověření a hranice evidence
+
+- Durable task94fa8375cfcfc9cb3589649226833ad9ec15dda4e27976e5f7f2cfb219d9fbc7:
+  analyze/plan z approved brief a bounded packets, memory recall proveden.
+- Existující actual-built W06/JPA/coroutine JVM source/builders/locks a dependency
+  receipts byly porovnány před kopií workerů. K1SHA50cf8376/K2SHA2eb240a5 jsou
+  skutečné fresh PR49 builds, nikoli domněnka ze shody nově mergnutých zdrojů.
+  Záznam /workspace/t011-worker-copy.json; žádný implicitní install/build.
+- RED po skutečném pinned W06 K1 compiler/snapshot capture:1FAIL2.73s na chybějícím
+  public API. Následná shape oprava sladila Graph.symbols, publisher ID contract a
+  existující coverage counts schéma; nejde o rozšíření upstream resolveru.
+- Captured route-mirror negative reprodukoval přijetí cizí route metadata; guard
+  srovnává canonical Node.name. Primitivní URI/path a provenance shapes mají
+  fail-closed kontrolu.22 actual-capture K1 public/negative replay checks PASS;
+  čerstvá společná K1/K2 suite následně prošla, viz finální výsledky níže.
+- Přesné finální source/focus/full výsledky jsou uvedeny níže. GH CI je podle
+  uživatelské revize T045 volitelné, ostatní lokální acceptance/review zůstávají.
+
+AC01 pokrývá lazy/static intent test; AC02 dynamický URI a zachované origin IDs;
+AC03 actual Feign dva callers, dva same-path requests a dva shared terminals;
+AC04 offline/no-mutation; AC05 source/edge/owner/scope/hash malformed matrix a
+stale sibling, podporované polarity; AC06 README/capability/status/AC a tento note.
+
+Příklad a hranice: [HTTP consumers](../http-consumers.md). SOURCE_ONLY/legacy hints
+se nepovyšují na typed execution, nepodporovaný rule version je boundary. Skutečný
+aplikační/runtime HTTP test NOT_RUN; statický compiler fixture není runtime PASS.
+T012, remote bindings, architecture CLI/rendering a celý T004 zůstávají mimo scope.
+
+## První skutečný grouped proof a current UI parent
+
+K1/K2 captured public suite je **52PASS,0SKIP,11.78s**, včetně16 malformed
+variant/back end, evidence polarity, CONFIG provenance, same-path/Feign
+callers a shared publisher terminals. Oba source/test hashes před/po jsou shodné;
+persistent grouped.log/XML a source manifest jsou v /workspace/t011-validation.
+Root earlysourceclosure APPROVE nad2acee91 nezjistilo blocker.
+
+Před jediným full je integrován UI-only main081d69ca69d14b4d131cc305e4e5c873960e71a3.
+Own interfaces.py a test file zůstávají přesné approved/focus source;17 JVM
+source/artifact hashes stále odpovídá actual-built50cf/2eb receipt, žádný rebuild.
+TypeScript package/lock porovnány s actual-tested UI checkoutem a dependencies
+explicitně zkopírovány; tracked worker/UI adapter pochází přímo z parenta.
+URI status behavior se nerozšiřuje: jen DECLARED_LITERAL může resolve; ostatní
+budoucí/neznámé nonempty statusy jsou dokumentované UNKNOWN. Relevantní current
+focus následně prošel146PASS/0SKIP/99.48s; první full byl přerušen níže.
+
+## Skutečné provenance nálezy po early closure
+
+Captured read-only replay odhalil2defekty: non-Feign metadata declaration se
+neověřeně kopírovalo do declaration_id; a CONFIG provenance dovolila cizí key
+při správném fileSHA, bez vazby na canonical context record. Root je potvrdil.
+První ownfull nad82dd790 byl proto šetrně přerušen pouze SIGINT vlastníhopytest
+(159843) a jeho worker strom byl ověřen pryč před editací. Zachovaný partial je
+**340PASS,7SKIP,634.79s,exit2**, XML347tests/0errors/0failures; není to fullPASS.
+Log/XML/process snapshot jsou interrupted-82dd790.* a všech242frozenhashů bylo
+po ukončení totožných. Cizí queues ani procesy nebyly zasaženy.
+
+Oprava emituje declaration_id jen pro ověřený FEIGN; extra pole jiných families
+se ignoruje. CONFIG key/status/profiles/source_file/SHA musí přesně odpovídat
+jedinému existujícímu hash-bound context.http_config_provenance recordu. Žádný
+parser ani resolver se nepřidává. Captured negatives pokrývají neověřený ref
+(str/object/list) i cizí key/profiles a input immutability; původní CONFIG/Feign
+pozitivní případy zůstávají. Výsledky corrected proof jsou uvedeny níže.
+
+## Jednorázový current parent refresh pro corrected source
+
+Po zastavení neplatného sourcefull je integrován1915/aktuální mainc6950e9
+(T025 je navíc čistý process-path/flow adapter). Žádný runtime konflikt vlastní
+projekce; zachované jsou Arg, Template i UI parent moduly a všechny CI gates.
+Všech27 tracked worker inputs bylo ověřeno přímo proti actual-built source
+receipt63d3dbb970933751ac74e093f8aac0073de27a94. Všech30 JAR/dependency hashů
+z built-jars.json odpovídá donor bytes před kopií; nové K1 2bf6cbde/K2 24461c43
+jsou skutečné aktuální Arg buildy, ne staré artefakty přeznačené podle HEAD.
+Persistent doklad /workspace/t011-validation/argument-worker-copy.json.
+Corrected grouped/full výsledky následují.
+
+## Corrected source a Kafka parent seam
+
+Corrected grouped focus nad6104e7c je **172PASS,0SKIP,51.15s** a245 source/test/
+fixture/JAR hashes zůstalo shodných. Obsahuje původní positives i6 nových
+negativních variant/back end a Arg/T025 current-parent kontrakty. Root přečetl
+přesný11řádkový delta a schválil sourceclosure obou oprav.
+
+Před corrected full je navíc integrován explicitně určený Kafka main
+ef3ab4050289aafd557caa5414c594698da006ea, beze změny interfaces/JVM source.
+Own source/test byteově6104; všech27 worker inputs odpovídá actual63d.
+Krátká Kafka/T006/provider/workspace sada **115PASS,2actualdeselected,7.67s**.
+Dva nové skutečné snapshot/offline consumer seam cases prošly2PASS/0SKIP/5.95s.
+Partial340/7exit2 se nikdy nezapočítává jako wholePASS.
+
+## Finální strict full a instalační prostředí
+
+Nad čistým b1163fc5d4394ad248b1cd346e038d25158ff914 / main ef3ab405 prošel
+strict full **1373 PASS, 10 SKIP, 1449.59s, exit 0**. JUnit uvádí1383 testů,
+0 chyb a0 selhání. Všech **356 frozen source/test/fixture/JAR/license hashů** je
+shodných před/po i po obnovení prostředí. Doklad není založen na zmizení procesu:
+runner uložil PASSED receipt až po pytest exit0 a úspěšném posthash check.
+Persistent log/XML/status jsou /workspace/t011-validation/license-corrected-full.*.
+
+Předcházející corrected full skončil **1289 PASS, 10 SKIP, 1 FAIL, 1470.61s,
+exit1**: instalační test správně odmítl wheel bez Kotlin LICENSE.txt. Kopie
+ignored build artefaktů původně zahrnula JAR/lib, ale vynechala licenses tree.
+Po opětovném ověření27 source/build/lock a30 JAR/lib hashů proti actual-built
+Arg receipt byly explicitně doplněny102 licenční soubory z obou target stromů
+se SHA auditem. Produkční source ani assertion se neměnily. Celá instalační/
+distribuční skupina poté prošla **20 PASS, 3 SKIP, 50.56s**. Původní failed log,
+XML a254-file manifest jsou zachovány odděleně; nejsou vydávány za PASS.
+
+Deset full SKIP jsou explicitní nedostupné volitelné Maven/Gradle, druhý JDK a
+native Windows kontroly. Povinné skutečné K1/K2/TypeScript/compiler fixture
+kontroly proběhly. GH CI není lokálně vykazováno jako PASS. Finální nezávislé
+review nad aktuální dvojicí base/head zůstává před ready povinné.
+
+## Finální current-parent integrace
+
+Po W04 merge je jednou integrován main9f6605db0258d1b27bf233e25c7737bf0b675f5b
+v checkpointu93e95bd. Runtime konflikty nenastaly; CI seznam zachovává W04 i T011.
+interfaces.py a vlastní test zůstávají byteově6104, tedy opravený source ověřený
+full během b1163fc. Všech27 worker inputs a30 JAR/lib hashů odpovídá původnímu
+actual-built Arg receipt; nebyl proveden další build ani full.
+
+Root schválil source composition před jedinou coalesced sadou persistence realms,
+T011, T010 provider pure/compiler, T006 selected contexts, workspace a data resources.
+Výsledek je **205 PASS, 0 SKIP, 98.45s, exit0**, včetně skutečných K1/K2 captures.
+JUnit205 tests/0errors/0failures; všech355 frozen source/test/fixture/JAR/license
+hashů je shodných před/po i při závěrečném opětovném ověření. Persistent doklady:
+/workspace/t011-validation/final-parent.log, .xml, final-parent-passed a manifest.
+Semantic metadata zachovávají přesný210-episode main prefix a jedinou vlastní
+unikátní episode (celkem211). Finální nezávislé review/merge provádí root nad
+publikovanou aktuální dvojicí; tento dokument nepředjímá výsledek review.

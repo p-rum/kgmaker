@@ -1,0 +1,666 @@
+{
+  "schema_version": 1,
+  "process_id": "process:checkout",
+  "revision": 3,
+  "definition": {
+    "schema_version": 1,
+    "process_id": "process:checkout",
+    "revision": 3,
+    "baseline_fingerprint": "snapshot:checkout-v3",
+    "scope": "production",
+    "context_selection": {
+      "orders": [
+        "ctx-prod"
+      ]
+    },
+    "context_ids": [
+      "ctx-prod"
+    ],
+    "trigger_ids": [
+      "request"
+    ],
+    "semantic_review_status": "PROPOSED"
+  },
+  "definition_fingerprint": "3158b6a500015c2647ab1028149c1d136574c514503cc34abb60252b32ee1c70",
+  "technical_status": "COMPLETE_WITHIN_SELECTED_SCOPE",
+  "technical_view": {
+    "schema_version": 1,
+    "view_id": "process:checkout",
+    "kind": "process",
+    "baseline_fingerprint": "snapshot:checkout-v3",
+    "rules_version": "test-contract-1",
+    "scope": "production",
+    "context_selection": {
+      "orders": [
+        "ctx-prod"
+      ]
+    },
+    "nodes": [
+      {
+        "id": "request",
+        "original_ids": [
+          "origin:request"
+        ],
+        "evidence_refs": [
+          "ev:request"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:request"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "trigger",
+        "label": "request",
+        "owner_id": null
+      },
+      {
+        "id": "choose",
+        "original_ids": [
+          "origin:choose"
+        ],
+        "evidence_refs": [
+          "ev:choose"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:choose"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "decision",
+        "label": "choose",
+        "owner_id": null
+      },
+      {
+        "id": "card",
+        "original_ids": [
+          "origin:card"
+        ],
+        "evidence_refs": [
+          "ev:card"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:card"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "action",
+        "label": "card",
+        "owner_id": null
+      },
+      {
+        "id": "cash",
+        "original_ids": [
+          "origin:cash"
+        ],
+        "evidence_refs": [
+          "ev:cash"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:cash"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "action",
+        "label": "cash",
+        "owner_id": null
+      },
+      {
+        "id": "retry",
+        "original_ids": [
+          "origin:retry"
+        ],
+        "evidence_refs": [
+          "ev:retry"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:retry"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "action",
+        "label": "retry",
+        "owner_id": null
+      },
+      {
+        "id": "send",
+        "original_ids": [
+          "origin:send"
+        ],
+        "evidence_refs": [
+          "ev:send"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:send"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "async_boundary",
+        "label": "send",
+        "owner_id": null
+      },
+      {
+        "id": "done",
+        "original_ids": [
+          "origin:done"
+        ],
+        "evidence_refs": [
+          "ev:done"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:done"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "kind": "outcome",
+        "label": "done",
+        "owner_id": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "start",
+        "original_ids": [
+          "origin:start"
+        ],
+        "evidence_refs": [
+          "ev:start"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:start"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "source": "request",
+        "target": "choose",
+        "relation": "normal"
+      },
+      {
+        "id": "pay-card",
+        "original_ids": [
+          "origin:pay-card"
+        ],
+        "evidence_refs": [
+          "ev:pay-card"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:pay-card"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ],
+          "condition": "payment == CARD"
+        },
+        "source": "choose",
+        "target": "card",
+        "relation": "true"
+      },
+      {
+        "id": "pay-cash",
+        "original_ids": [
+          "origin:pay-cash"
+        ],
+        "evidence_refs": [
+          "ev:pay-cash"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:pay-cash"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ],
+          "condition": "payment != CARD"
+        },
+        "source": "choose",
+        "target": "cash",
+        "relation": "false"
+      },
+      {
+        "id": "card-retry",
+        "original_ids": [
+          "origin:card-retry"
+        ],
+        "evidence_refs": [
+          "ev:card-retry"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:card-retry"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ],
+          "condition": "payment failed"
+        },
+        "source": "card",
+        "target": "retry",
+        "relation": "exception"
+      },
+      {
+        "id": "try-again",
+        "original_ids": [
+          "origin:try-again"
+        ],
+        "evidence_refs": [
+          "ev:try-again"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:try-again"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ],
+          "condition": "retry budget remains"
+        },
+        "source": "retry",
+        "target": "choose",
+        "relation": "retry"
+      },
+      {
+        "id": "card-send",
+        "original_ids": [
+          "origin:card-send"
+        ],
+        "evidence_refs": [
+          "ev:card-send"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:card-send"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "source": "card",
+        "target": "send",
+        "relation": "normal"
+      },
+      {
+        "id": "cash-send",
+        "original_ids": [
+          "origin:cash-send"
+        ],
+        "evidence_refs": [
+          "ev:cash-send"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:cash-send"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "source": "cash",
+        "target": "send",
+        "relation": "normal"
+      },
+      {
+        "id": "dispatch",
+        "original_ids": [
+          "origin:dispatch"
+        ],
+        "evidence_refs": [
+          "ev:dispatch"
+        ],
+        "evidence_kinds": [
+          "SYMBOL_RESOLVED"
+        ],
+        "resolution_status": "RESOLVED",
+        "freshness": "CURRENT",
+        "supporting_refs": [
+          "ev:dispatch"
+        ],
+        "contradicting_refs": [],
+        "unknown_refs": [],
+        "attributes": {
+          "scope": "production",
+          "context_ids": [
+            "ctx-prod"
+          ]
+        },
+        "source": "send",
+        "target": "done",
+        "relation": "async"
+      }
+    ],
+    "diagnostics": [],
+    "coverage": {
+      "status": "COMPLETE_WITHIN_SELECTED_SCOPE"
+    },
+    "limits": [
+      "Static structure; scheduling unknown."
+    ],
+    "provenance": [
+      {
+        "id": "ev:request",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:request",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:choose",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:choose",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:card",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:card",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:cash",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:cash",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:retry",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:retry",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:send",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:send",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:done",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:done",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:start",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:start",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:pay-card",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:pay-card",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:pay-cash",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:pay-cash",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:card-retry",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:card-retry",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:try-again",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:try-again",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:card-send",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:card-send",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:cash-send",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:cash-send",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "id": "ev:dispatch",
+        "evidence_kind": "SYMBOL_RESOLVED",
+        "freshness": "CURRENT",
+        "polarity": "SUPPORTING",
+        "scope": "production",
+        "context_ids": [
+          "ctx-prod"
+        ],
+        "source_id": "origin:dispatch",
+        "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  "entry_ids": [
+    "request"
+  ],
+  "exit_ids": [
+    "done"
+  ],
+  "outcome_ids": [
+    "done"
+  ],
+  "semantic_annotations": []
+}

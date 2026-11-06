@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "worker_protocol": 1,
+  "spring_kafka_version": "3.3.2",
+  "preparation": "Explicit API-only Maven compile of this POM after process-triggers API POM. No application, Spring context or broker. Hashes are actual published cached artifacts, not a network-origin assertion.",
+  "artifacts": [
+    {
+      "coordinate": "org.apache.kafka:kafka-clients:3.8.1",
+      "path": "org/apache/kafka/kafka-clients/3.8.1/kafka-clients-3.8.1.jar",
+      "sha256": "d6d8c4ad7ab00c6adb03ad9ad7188af32fa7c5de62ca1d8625e086512987a584",
+      "artifact_pom": "org/apache/kafka/kafka-clients/3.8.1/kafka-clients-3.8.1.pom",
+      "artifact_pom_sha256": "dc602235eb5a40e7050be1f3ac9fdb9ad9d72e193a179e1ed1386b85fe9ed039",
+      "license_pom": "org/apache/kafka/kafka-clients/3.8.1/kafka-clients-3.8.1.pom",
+      "license_pom_sha256": "dc602235eb5a40e7050be1f3ac9fdb9ad9d72e193a179e1ed1386b85fe9ed039",
+      "license_name": "The Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework.retry:spring-retry:2.0.11",
+      "path": "org/springframework/retry/spring-retry/2.0.11/spring-retry-2.0.11.jar",
+      "sha256": "1be1d42bb1ae33813f84557b0e419d3471e35850269c749dab8610e521a82567",
+      "artifact_pom": "org/springframework/retry/spring-retry/2.0.11/spring-retry-2.0.11.pom",
+      "artifact_pom_sha256": "95e6fc4511d8c86c97218c0b3dfaa998748a4fa85fa539bff1a0c066b3cfb481",
+      "license_pom": "org/springframework/retry/spring-retry/2.0.11/spring-retry-2.0.11.pom",
+      "license_pom_sha256": "95e6fc4511d8c86c97218c0b3dfaa998748a4fa85fa539bff1a0c066b3cfb481",
+      "license_name": "Apache 2.0"
+    }
+  ]
+}

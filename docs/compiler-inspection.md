@@ -19,7 +19,7 @@ proces. Workspace JSON status navíc vrací oddělené `source_graph_current`,
 | JDK / javac | Temurin 21.0.6+7 | JavacTask/Trees, overload a mixed Java/Kotlin |
 | Kotlin compiler | 2.1.10 distribuce, K1 frontend v language 1.9 compatibility; Gradle export ověřen i s pluginem 2.2.20 | BindingContext, KotlinTypeMapper, overload, constructors, lambda callers, callable references, source-defined operators, extension/default/inline/suspend metadata a volání do Java; build konfigurace zůstává oddělená provenance |
 | Kotlin K2 (opt-in) | Standalone Analysis API / FIR 2.1.10, backend `k2-analysis-api-2.1.10-v1` | Mixed Java/Kotlin named-function calls, compiler PSI light-method JVM descriptors, explicit unresolved/ambiguous boundaries; source CFG/property/lambda semantics remain PARTIAL |
-| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, application-only CHA |
+| Bytecode | ASM přibalené v Kotlin 2.1.10 | Deskriptory, invokes, základní CFG, ordered selected-classpath CHA (open world) |
 | Maven | 3.9.9 | EventSpy effective session export v2, parent/BOM, effective dependencies, profily, generated roots, toolchain, ordered classpath, explicitní test build |
 | Gradle | 8.12.1 a lokálně 8.13 | Skutečný source-set export/test build PASS v GitHub Actions run 38703831737; lokální explicitní Gradle 8.13 build ověřuje Kotlin task options a čerstvý class output |
 | TypeScript / Node | 5.7.3 / 24.19.0 | Program/TypeChecker, call signatures, overloads, React JSX event binding |
@@ -40,7 +40,7 @@ context má `PARTIAL` a konkrétní diagnostiku. Pro explicitní ověření pou�
 `kgmaker project build-plan --root . --build-system maven --offline --output /tmp/kotlin-plan.json`,
 pak `kgmaker project build-run --plan /tmp/kotlin-plan.json` a
 `kgmaker project build-import --root . --manifest /path/from/build-run/manifest.json`.
-TypeScript worker v2 podporuje solution-style project references uvnitř zvoleného
+TypeScript worker v3 (project references od v2) podporuje solution-style project references uvnitř zvoleného
 repo rootu. `kgmaker inspect frontend --root /repo --tsconfig tsconfig.json`
 rekurzivně načte nejvýše 128 configů, vytvoří skutečné Program/TypeChecker pro
 projekty a použije compiler source redirects bez `emit`, `tsc -b` či instalace.
@@ -82,6 +82,33 @@ Kotlin ZIP byl obsahově připnut, jeho publisher checksum nebyl v pilotu ověř
 obsahová kontrola není důkaz autenticity.
 
 ## Reprodukovatelné explicitní kroky
+
+### Selected tsconfig freshness (T003-S08-W02)
+
+Worker3 přidává `project.input_discovery` v1 a context marker
+`typescript-input-discovery-1`. TypeScript sám respektuje extends/baseUrl/paths/
+include/exclude; Python replayuje zachycené content hashes, existence/realpath
+pozorování a directory membership. Root/project package metadata a lockfiles
+jsou obsahově svázané. Změna nepoužitého sibling configu nebo excluded-unused
+obsahu nestaluje selected context; relevantní input či dříve missing dependency
+ano. Negativní/mixed snapshot nepublikuje graf, offline status/hook nespustí Node.
+Legacy snapshot, TS selector sloty a JVM politika zůstávají beze změny.
+Discovery membership je konzervativní a má explicitní limity; nejde o persistent
+incremental compilation cache. [Freshness guide](typescript-freshness.md) a
+[note45](changes/45_scopeTypeScriptConfigFreshness.md) uvádějí přesnou matici.
+
+### Bounded TypeScript callbacks (T003-S08-W03)
+
+Worker4 keeps compiler-selected generic/overload signatures and canonical owner
+parameter IDs through barrel aliases. Named and inline callback arguments bind to
+local higher-order parameters. Parameter invocations and unions use incomplete
+`dispatch_candidates`; mutable/any values never promote an arbitrary initializer
+or signature to a concrete target. Ambient declared callable contracts remain
+compiler evidence, separate from runtime implementation proof. Protocol1/model
+schemas are unchanged; existing candidate navigation is reused.
+[Callback guide](typescript-callbacks.md) documents limits, non-goals and CLI examples;
+[note53](changes/53_resolveBoundedTypeScriptCallbacks.md) records exact local proof,
+remaining full validation and blocked CI. This does not complete all of T003-S08.
 
 ### Windows user-space ověření (T003-S11-W03)
 
@@ -268,7 +295,7 @@ zůstávají nevyřešené do explicitního build exportu. Po JVM inspection se 
 compiler symboly provádí deterministická frameworková projekce. Spring
 stereotype/`@Bean`, injection podle typu s `@Qualifier`/`@Primary`, profile
 boundary, HTTP/listener/scheduler entrypoint, advice a self-invocation proxy
-boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v4 vyhodnocují dodané profiles,
+boundary jsou `FRAMEWORK_DERIVED`. Spring pravidla v6 vyhodnocují dodané profiles,
 properties a available-class scope jako ACTIVE/INACTIVE/UNKNOWN. Jen unikátní ACTIVE
 bean dostane `injects_bean`; UNKNOWN/ambiguous kandidáti mají `may_inject_bean` a
 diagnostiku. Custom Condition se nespouští. Meta-stereotype chain se rozvíjí pouze
@@ -294,6 +321,56 @@ volí FIELD nebo PROPERTY access; embedded atributy a explicitní override mají
 vlastní uzly. Asociace nesou cílovou entitu a roli OWNING/INVERSE, přičemž
 `mappedBy` se váže na konkrétní protistranu. JoinColumn/JoinTable se nemíchá se
 scalar `@Column` a neověřený target či `mappedBy` zůstává diagnostikou.
+Při explicitním `--kotlin-backend k2` se pro constructor properties zachová
+K2 annotation identity a use-site target. `@field:Id`/`@field:EmbeddedId`
+vybere FIELD a `@get:Id` vybere PROPERTY; `@Access` má přednost, ale jeho
+nesoulad s identity targetem je diagnostikován a nevytvoří silnější atribut.
+Kotlin `@Id` bez explicitního FIELD/GET targetu zůstává nejednoznačný. Embedded
+Kotlin ID reuseuje stávající entity/embeddable uzly a nevyžaduje nový graph typ.
+Compiler values zachovají nested `@AttributeOverride` column a class literals;
+nevyřešená explicitní table/column/override hodnota zůstává UNKNOWN a nevytváří
+náhradní fyzické jméno. Testovací JPA API deklaruje skutečné FIELD/METHOD cíle,
+takže implicitní FIELD default i dual-use-site nejednoznačnost odpovídají API.
+Kotlin embeddable member annotations se filtrují podle Jakarta/Javax identity.
+Bez vlastního embeddable `@Access` se column metadata zachová jen pro
+jednoznačné FIELD inheritance; PROPERTY, mixed nebo neznámý container access
+zůstává UNKNOWN bez fyzického defaultu. JPA annotation identity se omezuje na
+známé názvy přímo v `jakarta.persistence`/`javax.persistence`; odpovídající
+subpackage se nepovažuje za compiler-resolved JPA API.
+Mapped-superclass atributy dostanou deklarující `orm_attribute` a zvláštní
+effective projekci pro každou ověřenou entitu. `declaring_owner` a
+`effective_owner` jsou exact compiler class identities; `inherits_attribute`
+váže projection na zdrojový uzel. Zděděné FIELD/PROPERTY access určuje ID v celé
+mapped-superclass hierarchii. K2 property annotations a Java field/getter facts
+zůstávají v jejich skutečném use-site/access scope. Entity-level
+`@AttributeOverride` přebije mapped-superclass hodnotu podle nejbližší deklarace;
+stejně pojmenované fieldy ani unresolved override nevytvoří vybraný column edge.
+Při entity inheritance se SINGLE_TABLE/JOINED projekce váže na root table a
+TABLE_PER_CLASS na konkrétní entity table. Tento výsledek je statická projekce,
+ne deployment/schema compatibility proof; nevyřešený access, type identity,
+inheritance strategy nebo class override zůstává UNKNOWN.
+Vybraný `persistence-unit` z `META-INF/persistence.xml` určuje mapping files v
+deklarovaném pořadí; bez explicitního seznamu se hledá `META-INF/orm.xml`.
+Podporovaný ORM XML subset používá přesné compiler-resolved class identity,
+tabulku a scalar ID/basic/version sloupce. XML mapping má přednost před
+annotations a `metadata-complete` skutečně potlačí annotation-only bindings.
+Hrany a uzly nesou cestu a SHA-256 mappingu, persistence unit a pořadí zdroje.
+Neznámý namespace/verze, neúplný nebo nepodporovaný construct, nevyřešená
+class/attribute reference a nebezpečný nebo root-escaping XML soubor zůstávají
+UNKNOWN bez odvození fyzického názvu z annotation fallbacku. Parser odmítá
+DOCTYPE/external entities a nic nestahuje ani nespouští; graph schema zůstává v3.
+
+Spring Data repository model se vybírá z compiler-resolved generic supertype a
+přesného entity owneru. Entity atributy se indexují podle canonical owner
+identity, nikoli podle prostého class name; derived predicate zůstane unresolved,
+když compiler facts neprokáží jediného ownera.
+Explicit JPQL uses the declared `@Entity(name)` (or its default class name) and
+requires exactly one compiler-owned entity; the repository domain type never
+substitutes for an ambiguous query entity. Compiler return type identity likewise
+selects an exact entity/projection node. A source-level simple return name is
+accepted only when the JVM method descriptor proves its canonical owner; a
+missing qualified owner, erased generic type variable, or duplicate simple name
+without that proof remains unresolved.
 Derived query parser pokrývá podporované find/read/get/query/search/stream/count/
 exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
@@ -496,12 +573,70 @@ missing/ambiguous call, oddělení test scope, backend/version evidence,
 strict no-publication, offline refresh a instalace mimo checkout jsou v
 `tests/test_k2_backend.py` a `tests/test_worker_install.py`.
 
-K2 nyní nedodává source CFG, constructor ABI, Kotlin annotation/framework metadata, property/operator/reference/initializer
-call sites, local/lambda execution ani default-body mapping mimo W02 a coroutine mapping. Tyto hranice mají diagnostiky a stav PARTIAL;
+K2 nyní dodává omezená Kotlin type/property annotation fakta pro JPA use-site
+projection a bounded Spring conditions, ale nedodává obecný source CFG, constructor ABI, runtime Spring activation, property/operator/reference/initializer call sites ani local/lambda
+execution. Omezené default-body source mapping popisuje W02 a bounded coroutine
+source/async boundaries W03 níže. Širší default-body coverage a obecné coroutine
+state-machine CFG/runtime scheduling zůstávají mimo podporovanou matici.
+Tyto hranice mají diagnostiky a stav PARTIAL;
 nepodporovaná či nejednoznačná signatura nemá resolved target. Výchozí K1
 compatibility cesta zachovává svou dřívější podporu. T003-S04 zůstává PARTIAL;
 konkrétní běhy a AC mapování uvádí [change note35](changes/35_addK2AnalysisBackend.md).
 
+V tomto omezeném JPA subsetu K2 zachovává compiler-resolved annotation identity,
+use-site placement a konstantní či vnořené hodnoty. Explicitní nevyřešený
+`@Table`, `@Column`, override nebo access nevytvoří náhradní fyzické mapování;
+neznámý annotation subpackage není Jakarta/Javax JPA evidence. FIELD/PROPERTY
+výběr vyžaduje doložený identity target nebo `@Access`, včetně ověření přístupu
+pro embedded atributy.
+
+## T003-S04-W04 — Ordered dependency dispatch
+
+Javac a K1/K2 2.1.10 předávají u podporovaných virtuálních/interface call expressions
+compiler-proven erased receiver. ASM používá stejný hierarchy index pro bytecode
+`invokevirtual`/`invokeinterface`. Metadata selected JARů a adresářů se čtou bez
+class loadingu, inicializace, buildů či aplikace. První classpath entry pro daný
+binary class name vyhrává; pozdější kopie se nesjednocují. Explicitní artifact realm
+zůstává zachovaný, bez mapování se používá stávající SHA-256 dependency realm.
+
+`declared_target` je compiler/JVM declaration; `dispatch_candidates` jsou oddělené
+`DISPATCH_CANDIDATE` důkazy. `dispatch_algorithm=CHA_ORDERED_SELECTED_CLASSPATH`,
+`dispatch_classpath` a `dispatch_completeness_reason` jsou součástí provenance.
+Candidate class musí být subtype compiler-erased receiveru **i** owneru skutečného
+`declared_target`. Source type-variable/intersection receiver je konzervativně
+unsupported: úplné upper bounds se zde nereprezentují, proto se kandidáti nevydají
+a declared target i konkrétní compiler diagnostic zůstanou zachované.
+Defining owner zděděného implementation body sám tyto dva vztahy splňovat nemusí.
+Cache klíč obsahuje receiver, declared contract, method name a descriptor.
+`dispatch_complete` zůstává false kvůli otevřenému runtime světu. Výsledek není
+runtime observation, call-path feasibility ani dostupnost dat. Reference a
+invokedynamic creation nejsou provedení; static/private/final/super targety
+nedostávají virtuální enrichment.
+
+Index má limity 10000 classes, 100000 archive/filesystem entries, 16 MiB/class a
+128 MiB souhrnně čtených class bytes; hierarchy lookup nejvýše 256 visited types. Chybějící parent, corrupt archive/class,
+shadow, duplicate entry či truncation mají lokalizovanou diagnostiku. Multi-release
+JAR candidate enumeration je explicitně unsupported; physical declared lookup
+používá bounded runtime-effective JarFile metadata včetně version-only classes,
+aby je nenahradila pozdější plain kopie. Chybějící hierarchy nepřidává domnělou
+implementaci. Package-private override access zůstává konzervativní hranicí.
+K2 property/operator/local/lambda semantics zůstávají v dosavadním PARTIAL subsetu.
+K2 source owner bez type-hierarchy proof nepřebírá subtype vazby ze staré compiled kopie.
+Source overlay a physical hierarchy mají oddělené lookup/cache. Skutečné JDK
+platform resources mají parent-first přednost a toolchain realm; metadata
+`module-info.class` nejsou candidate classes. Compiler-proven `jvm_static`
+kontradikce source/physical canonical vrací `SOURCE_BINARY_ABI_CONFLICT`, unresolved
+site/PARTIAL a generated body bez nekompatibilního source locator/mapping.
+Před physical canonical bindingem se ověřuje také úplný realm tuple
+repo_id/module/source_set/scope: mismatch dává `SOURCE_BINARY_REALM_CONFLICT`,
+source declaration zůstává zachovaná.
+
+Příklad: po explicitním získání a importu content-bound ordered classpath spusť
+`kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10`;
+`kgmaker callgraph callees --help` popisuje přepnutí dispatch kandidátů při navigaci.
+Fixture `tests/test_dependency_dispatch.py` skutečně sestaví JDK21 API/base JAR a
+dva implementation JARy v odlišných realms. Protocol v1 ani graph/store v1/v2/v3
+se nemění; nová provenance pole jsou aditivní a staré vstupy zůstávají čitelné.
 ## T003-S05-W01 — bounded Spring import selectors
 
 `annotation-source-v4` zachovává statický `@Import` a rozlišuje běžný importovaný
@@ -619,3 +754,607 @@ provide this flag; absence means UNKNOWN, not an inferred method-name convention
 Bridge delegates must remain instance-compatible. DefaultImpls retains its explicit
 static-helper/interface-instance signature transform. Stale source static/instance
 changes never yield a source mapping even inside an identical repository realm.
+
+## Argument to parameter bindings
+
+T003-S07-W01 uses the existing canonical method and parameter IDs plus call-site
+argument value occurrences. Worker protocol v1 and graph/store v1/v2/v3 are
+unchanged; `argument_mapping_version=1` is additive. Formal IDs use the existing
+`METHOD_ID:parameter:INDEX` convention, independently from parameter names.
+
+| Compiler | Supported static binding proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Attributed overloads, ordinary method/constructor arguments, vararg element/array binding; generic methods use instantiated executable formal types | Erroneous/unresolved calls; generic constructor vararg packing without instantiated formal; unavailable expression locator |
+| K1/Kotlin2.1.10 | Successful resolved call argument map, named order, omitted defaults, vararg elements and spread aggregates | Implicit operator/accessor bindings outside ordinary call expressions and unsupported argument locators |
+| K2/Kotlin2.1.10 | Java part uses Javac binding | Kotlin call bindings remain UNKNOWN with `K2_ARGUMENT_BINDINGS_UNAVAILABLE`; no K1 fallback or guessed positions |
+| TypeScript5.7.3 | Resolved signature/overload, positional arguments, rest elements/spread aggregate, omitted explicit initializer | Compiler-error recovery signatures; spread before fixed formals without tuple proof; unresolved callbacks/any |
+| ASM | Declared target/candidates preserved | Operand-stack argument values are not inferred: `NO_SOURCE_ARGUMENT_BINDING_PROOF` |
+
+`DIRECT` binds a source expression **result** to a declared formal; it does not
+claim that the expression is an identity transformation or that implicit language
+conversions never occur. `VARARG_ELEMENT`, `VARARG_ARRAY` and `VARARG_SPREAD`
+retain packing semantics without inventing array contents or evaluation order.
+Omitted defaults have `DEFAULT_VALUE_NOT_EVALUATED` and no invented value edge.
+Callable references are `NOT_EXECUTION` and do not receive invocation arguments.
+
+The `argument_to_parameter` proof carries original call-site ID, argument/formal
+indices, context, declared-contract binding kind and transformation. It never
+binds a dispatch candidate implementation as an observed callee. The process JSON
+preserves original binding proofs even when dispatch prevents body expansion;
+`argument_binding_status` distinguishes PROVEN, UNKNOWN and legacy unavailable
+proof. Availability remains UNKNOWN and execution NOT_OBSERVED.
+
+Explicit examples after content-bound inspection:
+
+```bash
+kgmaker inspect code --root project --kotlin-backend k1 --kotlin-version 2.1.10
+kgmaker flow render --root project --entry METHOD_ID --view process --format json
+kgmaker impact --root project --entity ARGUMENT_ID --include-data-flow --format json
+```
+
+Use the existing explicit `--context`/`--scope` selection when variants exist.
+Directional impact traverses only versioned proven argument edges; legacy and
+candidate edges do not gain new strong paths. Its existing v1 path shape remains
+unchanged and supplemental `argument_parameter_bindings` retains typed provenance.
+Workspace federation qualifies argument/formal/call-site/context references;
+malformed or ambiguous bindings fail before replacing the last valid generation.
+No scan/hook/projection starts workers, builds or application code implicitly.
+
+### T003-S08-W04: bounded versioned React event evidence
+
+`--ui-framework react` uses `react-jsx-events-4`, pinned React18.3.1 and
+@types/react18.3.18 (official index.d.ts SHA256 recorded in change69). The compiler
+must select that external declaration's DOMAttributes or pinned input/select/textarea event member. Evidence keeps
+package versions/hashes, declaration/forwarder ranges and `execution=NOT_OBSERVED`.
+The existing protocol1 `handles_event` fact and graph/store model are reused.
+
+Supported: onClick/onChange/onSubmit on intrinsic tags; a checkout function with
+one props parameter and sole intrinsic JSX return forwarding the same official
+prop. Arbitrary wrappers, spreads, mutable/ambiguous callbacks, redirected fake
+React modules, unknown versions and missing packages are explicit unresolved
+boundaries. Existing S08-W03 callback candidates remain open-world. No JSX/React JS
+or application executes. This rule does not prove a click, scheduling or availability.
+
+Adapter package/declaration inputs use the existing TypeScript discovery closure,
+are compared between preflight/analyze and revalidated offline. UI context and
+selector bind the adapter snapshot; old UI rules require reinspection. Non-UI and
+legacy context construction keep their existing identity. The helper is included
+in worker distribution hashes and wheel; incomplete marked distributions fail
+before starting a worker. No package installation or network is implicit.
+
+The JSX renderer is part of that proof: classic React factory lookup must resolve
+the lexical value to the official React namespace/createElement, including actual
+import aliases; a locally shadowed object annotated as typeof React is insufficient.
+Automatic default react-jsx/react-jsxdev modes require the pinned external runtime
+declaration. Custom importSource/per-file JSX directives remain UNKNOWN. Uppercase
+component names and checkout-added custom IntrinsicElements cannot bypass wrapper
+proof just because their props reuse React's event types.
+
+The supported renderer-control whitelist is explicit: classic default or an actual
+official createElement import alias via jsxFactory; automatic default react-jsx/
+react-jsxdev with pinned runtime declaration. Explicit reactNamespace,
+jsxFragmentFactory, jsxImportSource and per-file JSX pragmas are UNKNOWN, including
+empty controls rather than truthy fallback. The official event declaration families
+are DOMAttributes plus Input/Select/TextareaHTMLAttributes for onChange; onSubmit
+on form is covered too. Same-named checkout declarations do not qualify. Full
+historical frozen v3 validation:727 PASS/10 SKIP, all66 UI cases; focused binding,
+factory and event-control matrix36 PASS. Change69 preserves the earlier v2 and
+pre-fix results, interrupted runs and current remote status.
+
+UI binding proof excludes ordinary member callable references and their aliases.
+Lexical function/const bindings use a compiler-symbol syntactic write catalog
+(assignments, compound/unary targets and destructuring/loop targets), with direct
+or ambiguous eval and duplicate binding diagnostics as UNKNOWN boundaries.
+Classic renderer namespace/createElement declarations must pass the same write
+check. This bounded catalog does not infer heap identity or runtime execution.
+Direct imported handlers/wrappers require explicit ESM compiler modes in caller and owner,
+and the exact exported value declaration; CommonJS, interop and re-export aliases stay UNKNOWN.
+Whole React namespace values escaping through aliases/casts/containers cannot prove an immutable
+renderer. Handler/wrapper materialization also requires canonical selected classified scope.
+Previous v1/v2/v3 UI captures require reinspection; offline freshness validation
+preserves the saved cache/store.
+
+## Coroutine source boundaries (T003-S04-W03)
+
+The explicit JVM inspection preserves compiler-proven suspend call sites and
+recognized `kotlinx.coroutines.launch`/`async` boundaries. K1 source CFG retains
+calls with resume/failure boundaries; scheduling remains UNKNOWN. K2 preserves
+source boundaries even when dependency JVM signatures remain unresolved, and
+continues to report unavailable source CFG explicitly.
+
+```bash
+kgmaker inspect code --root project --build-id BUILD_ID --context CONTEXT_ID
+# Source/compiler inspection does not execute coroutine code or a scheduler.
+```
+
+Named ContinuationImpl `invokeSuspend` declarations can map through bounded
+Kotlin/DebugMetadata, enclosing-method signature, delegate and exact realm proof.
+Metadata suspension lines never become source call-expression locations.
+Generated state-machine instructions retain BYTECODE_ONLY locators and generated
+identities; missing/malformed metadata, foreign realm or absent source remains
+unmapped. Suspend lambdas, arbitrary state machines and runtime async ordering
+remain outside this mapping contract. Store/protocol formats remain readable;
+metadata is additive and worker content identities invalidate older cached facts.
+
+## Hand-labelled JVM acceptance corpus
+
+T003-S04-W05 adds a versioned test inventory for T002-CG-01–05. It reuses the
+existing mixed five-call golden and actual ordered dependency fixture, with
+explicit Java owner/overload/reference/lambda/recursion/reflection and Kotlin
+extension/default/inline/suspend/Java-call supplements. Original inline source
+fixtures are shared files with byte-identical contents.
+
+```bash
+PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -q tests/test_jvm_golden_corpus.py
+```
+
+Source-call RESOLVED/UNRESOLVED counts and exact caller/target/range identities
+are compared separately from unsupported model/CFG diagnostic identities. K2
+SOURCE CFG remains unavailable; K1 default-argument CFG and collapsed Java
+expression order retain explicit boundaries. Source-level inline callable
+attribution does not prove a physical public facade invocation. Reflection APIs
+may resolve while their runtime targets stay unknown; method references remain
+non-executing, and opposite branches never become a sequence.
+
+The corpus and its mutation checks reject missing/extra/retargeted/stronger
+observations. Store/protocol formats remain unchanged; source/class/store bytes
+and offline retention use the existing model/provider pipeline. The prerequisite
+stack is explicitly documented in change62; this is bounded static acceptance,
+not a complete JVM program, runtime scheduling or availability proof.
+
+## T003-S05-W02 — registrar a FactoryBean declaration facts
+
+Spring `annotation-source-v5` přidává bounded Java/Javac compiler facts pro
+`ImportBeanDefinitionRegistrar` a `FactoryBean<T>`; metadata sdílejí oba JVM
+backends. Není to Kotlin metadata rozšíření, execution ani Spring bootstrap.
+
+| Podporovaný vstup | Výsledek |
+|---|---|
+| Exact/transitive registrar a2-parameter API method, přímé `registry.registerBeanDefinition("name", new RootBeanDefinition(Type.class))` statements | `spring_registrar`/`registers_bean`, source symbol/hash/context evidence; bean condition z importující konfigurace |
+| Custom3-parameter overload, branches/alias/helper/fake receiver, více než128 statements, chybějící/nepodporovaný target | Explicitní UNKNOWN boundary; žádný odhadnutý ACTIVE bean |
+| Concrete indexed FactoryBean<T>, sole zero-argument `return new T()` a `return T.class`, typy souhlasí | Samostatný `&name` factory object a `name` product, `produces_bean`, static condition z bean declaration |
+| Raw/inherited unresolved/custom/mismatched factory body, abstract factory, @Bean bez prokázané konkrétní literal implementation | UNKNOWN product; žádné volání getObject/getObjectType, žádný falešný product availability |
+
+Product type je kompilátorový typ včetně inherited generic substitution; fake
+FactoryBean nebo Registry stejného simple name nepředstavují Spring API. Literal
+bean name je nejvýše512 znaků, registry body128 statements. Aditivní symbol fields
+`bean_registrar`, `bean_registrations`, `factory_bean`, `factory_bean_return` a
+`factory_return` mají schema1; worker protocol1 a graph/store v1/v2/v3 zůstávají
+čitelné. Aditivní `factory_producer` fact určuje skutečný literal constructor
+vrácený @Bean metodou; anonymous/complex producer nepřebírá proof base class.
+Producer i getter method hashes jsou součástí evidence. Factory object type je
+přesný component owner nebo validovaná skutečná literal producer implementation;
+custom method object assignability zůstává UNKNOWN. Nové product/registrar
+selection používá compiler-qualified field assignability a známé supertypes;
+foreign short-name shoda není resolved injection. Chybějící legacy evidence
+nepromuje registrace. Invalid facts/context
+se odmítnou před store publikací. Rule v5 je JVM-only a vstupuje do context
+fingerprintu, TypeScript/React selection key se nemění. Evidence zůstává
+FRAMEWORK_DERIVED, nezvyšuje compiler-call confidence ani availability.
+
+```bash
+kgmaker inspect code --root project --manifest /approved/build-manifest.json \
+  --context BUILD_CONTEXT_ID --kotlin-backend k2 --worker-home /approved/workers
+kgmaker query --root project --context ANALYSIS_CONTEXT_ID registeredProduct
+```
+
+Skutečné Spring6.2.2 API se explicitně připravuje existujícím pinned fixture POM;
+SHA/license lock a mandatory CI guard z W01 zůstávají. Fixture nic nestahuje a
+source/app code se nespouští. XML, BeanDefinition builders/properties/suppliers,
+post-processors a Spring/Boot factories metadata nejsou tímto scope interpretovány.
+Viz [change note47](changes/47_declareSpringRegistrations.md) pro testy a aktuální
+externě blokované Actions; lokální zelené testy nenahrazují nové CI ani review.
+
+
+S05-W02 injection fixture používá imported simple field types a samostatné
+annotated declaration lines. Existující bounded textual injection projection
+nepokrývá více deklarací na jednom řádku ani obecnou lowercase-leading FQN
+source grammar. Nové qualified hierarchy guards jsou compiler-backed v tomto
+podporovaném subsetu; nejde o nový úplný Java annotation parser.
+## Data resource projection (T015)
+
+The public pure Python API consumes an already captured workspace:
+
+```python
+from pathlib import Path
+from kgmaker.workspace import load_workspace, snapshot_workspace
+from kgmaker.data_resources import project_data_resources
+
+manifest = Path("workspace.json")
+workspace = load_workspace(manifest)
+_, coverage, _, graph, _ = snapshot_workspace(manifest)
+view = project_data_resources(workspace, graph, source_coverage=coverage,
+                              scope="production")
+print(view.to_json())
+```
+
+Capture is separate from projection; the latter reads only explicit local source
+snapshots and never starts a process or connects to a database. It reuses T008
+service ownership and selected contexts, including `selected_contexts` pins.
+
+- Two explicit database/stream realms with an `orders` table stay two resources.
+  Table IDs are references, not database identities; JDBC URLs and class names do
+  not identify a resource.
+- Existing `query_reads`, `query_writes`, and `query_deletes` project as scoped
+  `reads`, `writes`, and `deletes` only with matching explicit context/target realms,
+  exact evidence references, selected service ownership and current source hashes. Both endpoint files must have the selected scope and matching hashes in that same context snapshot; a shared migration resource cannot mask a foreign ORM target.
+  Missing optional per-fact SHA uses only the validated selected-context source
+  hash, recorded as `VALIDATED_CONTEXT_SOURCE`; supplied stale hashes are rejected.
+  Entity targets may compose exactly one existing `maps_to_table` edge with its
+  own matching context/scope/realm/evidence. Both original composite edge identities
+  survive; ambiguous mappings produce no access. Mapping and migration declarations
+  alone establish only dependencies.
+- `coverage.schemas` inventories/configuration must match the workspace declaration,
+  graph table inventory, realm IDs and actual local hashes. Stale or malformed
+  snapshots fail without mutation. Unmapped default Flyway database IDs remain
+  unresolved; a default is accepted only when explicitly declared as a datasource.
+- Flyway resources carry `derivation=["MIGRATION_DERIVED"]`, while evidence keeps
+  its original T009 kind. Deployment and data availability remain `UNKNOWN`.
+  An ORM node tag alone supplies no new FRAMEWORK_DERIVED proof. Unknown polarity
+  is not promoted; explicit conflicts retain both buckets and AMBIGUOUS status.
+- Known foreign test scopes are excluded. Unknown file scope is not converted to
+  production because its repository belongs to a production service.
+
+`tests/test_t015_project_data_resources.py` exercises actual offline SQL replay and
+workspace capture plus independently supplied bounded upstream edge contracts.
+An additional K1/K2 fixture captures real Javac-backed Spring Data native read/write
+and JPQL entity facts with hash-locked published APIs before pure projection.
+It does not claim a new compiler/ORM adapter or complete S06/W08 support. Coverage
+is PARTIAL (or UNKNOWN with no resource inventory); multi-datasource adapters,
+physical naming/schema compatibility, live databases and data population remain
+outside this projection. Graph/store v1/v2/v3 and CLI behavior are unchanged.
+
+## Return → consumer bindings
+
+T003-S07-W02 adds optional compiler-owned return IR without changing protocol v1
+or graph/store v1/v2/v3. Explicit inspection records typed call-result, assignment,
+return-expression and receiver occurrences with `return_mapping_version=1` evidence.
+Branch guards remain alternatives; nullability is declared compiler information,
+never an observed value. Process JSON/Markdown and directional impact retain the
+bindings. Workspace export qualifies their original identities and context.
+
+| Backend | Supported static proof | Explicit boundary |
+|---|---|---|
+| Javac/JDK21 | Declared returns, local assignment versions, branch alternatives, nested receivers | Open dispatch, recursion, callable/void/opaque bodies, unsupported control flow |
+| K1/Kotlin2.1.10 | Declared/nullable returns, safe receivers, generated data-class destructuring | Custom component bodies, suspend/callable bodies, unsupported control flow |
+| TypeScript5.7.3 | Typed results, local assignments, nullable receivers, exact unassigned FunctionDeclaration references / real #private member bodies and direct-body tuple/object destructuring | any, async/generator, mutable static/soft-private/namespace/script-global members, import/alias/property-based references, reassigned lexical functions (including loop/destructuring writes), direct/ambiguous eval, uncaptured source bodies, open dispatch, computed/rest/default projections |
+| K2 Kotlin / ASM | Existing declared targets remain readable | Missing source return/CFG proof stays UNKNOWN |
+
+`returns_to` value facts require versioned SYMBOL_RESOLVED evidence; a CFG control
+edge of the same name cannot establish value flow. Callee body joins require a
+supported direct source target, and recursion is bounded. No application executes,
+network request, store mutation during failed validation, runtime value observation,
+or implicit compiler refresh is introduced. Legacy indexes remain readable; an
+explicit obsolete return-rule version is STALE offline.
+
+Both JVM and TypeScript captures include the optional `return_flow_rule_version`
+field. For unchanged capture inputs this updates the full context ID while the
+logical selection key and other legacy fields remain unchanged. Historical
+contexts remain readable without newly certified return-body evidence.
+
+Example after explicit compiler inspection: `kgmaker flow render --help` describes
+the existing process rendering commands; their JSON call blocks include
+`return_consumer_bindings`, and data-flow JSON includes the same supplemental proof.
+Actual coverage is in `tests/test_return_consumer_flow.py`; broader production
+interprocedural flow and complete S07 remain pending.
+
+## T003-S05-W03 — typed condition matrix
+
+The JVM v6 evaluator preserves compiler member types alongside legacy annotation
+display strings. `@Profile` accepts a nonempty string array (OR); expressions
+support `!`, `&`, `|`, parentheses, at most256 tokens/64 nesting levels. Mixed
+`&`/`|` require parentheses, as in Spring. Explicit empty active profiles use
+Spring's ordinary `default` profile; custom default-profile configuration is
+outside this subset. Missing or malformed active-profile snapshots are UNKNOWN.
+
+`ConditionalOnProperty` accepts agreeing `value`/`name` aliases, an optional
+trimmed dot-delimited prefix, all property names (AND), a string `havingValue`
+and a genuine boolean `matchIfMissing`. Context property values must be literal
+strings: default matching accepts any string except case-insensitive false,
+including empty/other text. Case comparison supports ASCII and exact literal
+equality; unsupported non-ASCII case equivalence remains UNKNOWN rather than
+using Python's expanding casefold. Unresolved placeholders, collections and
+malformed members remain UNKNOWN.
+
+`ConditionalOnClass` requires all explicit `value` class literals and `name`
+strings to occur in `spring_available_classes`; `ConditionalOnMissingClass`
+requires all to be absent. An explicit empty inventory means absent; omitted
+inventory means UNKNOWN. Matching uses complete identities without simple-name
+inference. Unresolved compiler class literals stay UNKNOWN in both directions.
+This inventory is a declared selected-context snapshot, not a runtime probe.
+Custom/unsupported Boot conditions stay UNKNOWN and are never executed.
+
+Class, method, imported-configuration and component-scan reachability remain in
+the existing framework projection. INACTIVE dominates UNKNOWN across conditions;
+UNKNOWN dominates ACTIVE. A second raw-profile injection filter is removed, so
+proven negated/OR profiles retain their computed state. Evidence stays
+FRAMEWORK_DERIVED and retains source/compiler/context provenance; no bean runs.
+
+An explicit Python API example (the existing inspection CLI is unchanged):
+
+```python
+from pathlib import Path
+from kgmaker.inspection import inspect_jvm
+result = inspect_jvm(Path("app"), classpath=["/prepared/api.jar"], publish=False,
+    build_context={"spring_profiles": ["qa"],
+        "spring_properties": {"feature.enabled": "true"},
+        "spring_available_classes": ["java.lang.String"],
+        "spring_component_packages": ["example"]})
+```
+
+Context IDs bind the input snapshot; offline validation detects tampering and
+requires reinspection for older Spring rule versions. Graph v1/v2/v3 remains
+readable; old framework facts are not silently promoted to current rules.
+Explicit variant-specific `project.input_files` and captured classpath hashes
+are checked per context, without narrowing shared build/source inputs. A change
+to one variant's external config/JAR leaves another untouched context fresh and
+the stored graph unchanged. No configuration loader, installation or build is
+implicit in the evaluator or offline freshness path.
+
+Actual API inputs: `fixtures/spring-conditions`, Spring6.2.2/Boot3.4.2, pinned
+hashes/licenses; preparation is an explicit Maven command. Required CI uses
+`KGMAKER_REQUIRE_SPRING_CONDITIONS=1` and runs the real K1/K2 fixture. Local
+missing tools/APIs are SKIP unless required. See
+[change note50](changes/50_expandSpringConditions.md) for final test results and
+remaining unsupported cases; this does not complete all of T003-S05.
+
+## Explicit persistence realms (T003-S06-W04, verified bounded subset)
+
+Current physical schema binding requires an explicit database_id/schema_stream_id
+pair in the compiler selection and replay configuration. Optional
+persistence_schema/flyway_target context selectors are shape validated and hashed;
+a declared table schema or one supported replay schema may supply an unambiguous
+schema, while multiple choices remain UNKNOWN. W03 still owns persistence-unit
+selection and XML input replay. A globally unique table name cannot fill a
+missing realm. Legacy contexts remain readable but require reinspection under
+JPA rule annotation-source-v6-persistence-realms.
+
+An explicit workspace repo.flyway replay joins already captured fresh compiler
+facts locally before workspace qualification, without running a worker or build.
+Source-only @Table/@Column fields no longer create strong persisted_in or schema
+mismatch claims without compiler-owned realm proof. Migration-derived schema,
+framework interpretation and runtime/deployed data availability remain separate.
+Physical binding supports non-renamed replay table/column identities. A valid
+Replay rename retains its creation ID, so the current strict current-name/ID guard
+returns UNKNOWN after rename; it never guesses from previous/display names.
+S06-W08 owns the creation-identity metadata/parser-cache follow-up, not this PR.
+See change note74 for actual validation and remaining acceptance; no complete
+production/provider/schema-lifecycle support is claimed.
+
+
+
+## T003-S07-W04 — declared Kafka binding identity
+
+Optional workspace `kafka_bindings` schema1 reuses repositories, services
+(`transport: kafka`), service_ownership and graph/store v1/v2/v3. The executable
+example is `fixtures/kafka-bindings/workspace.json`; no broker API is called.
+`clusters` declares unique logical IDs only. Each bounded binding declares its
+repo/service/module/source_set/scope, optional selected context ID, direction,
+active profiles, ordered config_files (path/profile expression), binder-alias to
+cluster map, and contract repo/path/release plus payload label. Unknown fields,
+duplicate identities, invalid ownership, out-of-root/symlink/hidden/sensitive or
+>1MB artifacts fail before source processing/publication. There is no new approval
+flow: labels are explicit declarations, never runtime observations.
+
+Supported configuration is literal UTF-8 `.properties` (at most10000 lines),
+Cloud Stream `spring.cloud.stream.bindings.<binding>.destination` and `.binder`,
+and bounded whole-property `${key}` references (depth16, cycles unresolved). An
+explicit empty active-profile list uses Spring `default`; an absent list is UNKNOWN. Base
+files precede profile files; explicit profile expressions reuse S05-W03 grammar.
+Captured properties of exactly one fresh matching JVM context take precedence.
+Multiple contexts require an explicit compatible context ID. Source-only scope
+requires conventional root/main or root/test resource paths; nonstandard layouts
+need matching compiler source-set membership. Unsupported/duplicate properties,
+missing files/profiles, partial placeholders/SpEL, YAML, multi-destination topics,
+missing release/payload, stale context or invalid JSON contract stay UNKNOWN.
+Configuration and contract files are content-hashed and checked again before
+cache publication; selected compiler snapshots are validated without execution.
+
+`kafka_binding` metadata records declared service realm, logical cluster, topic,
+contract SHA, release/payload, input hashes and exact selected context. Resolved
+static configuration produces FRAMEWORK_DERIVED `produces`/`consumes` and
+`kafka_binding_match` only for identical workspace cluster/topic/contract SHA/
+release/scope. JSON contract bytes identify an artifact; no schema compatibility
+or payload class mapping is inferred. `code_binding=UNPROVEN` and
+`delivery=NOT_OBSERVED` remain explicit. Raw properties, broker endpoints and
+credentials are never copied into new nodes/evidence. There is no implicit
+Kafka/AdminClient, network, build, package installation, registry or application
+execution. Existing Git baseline reads are unchanged.
+
+Legacy pattern topic nodes stay separate SYNTAX_CANDIDATE hints. Literal prefixes
+of concatenated/placeholder expressions no longer create guessed topics;
+`kafka_binding_boundary` records UNKNOWN. No source hint is promoted by matching a
+declared configuration label. Retry/DLT, binder auto-discovery, environment/default
+placeholder expansion, arbitrary YAML, Avro/protobuf/remote schema registries,
+serialization compatibility and runtime delivery are outside this bounded scope.
+
+Evidence: `tests/test_kafka_bindings.py` uses actual local repository/properties/
+JSON fixtures, two clusters with the same topic, profile/context precedence,
+dynamic/invalid/ambiguous cases, exact hash invalidation, source/store/cache
+atomicity, secret exclusion and no-process offline checks. Actual K1/K2 contexts
+verify property provenance and stale-source refusal; no Kafka toolchain is needed.
+See change note54 for exact commands/results.
+
+
+### Kafka property privacy (`kafka-binding-2`)
+
+Every destination/binder lookup checks its property key before fetching the
+value, including all whole-property alias hops within the existing16-step/cycle
+budget. Key matching ignores separators/case and covers password/passwd, secret,
+credential, authorization, API key, token, username, JAAS and bootstrap-server
+families, consistent with existing configuration/inspection redaction. Sensitive
+references yield generic TOPIC_UNRESOLVED/CLUSTER_UNRESOLVED, UNKNOWN and no match;
+diagnostics never contain the referenced value. Benign topic/binder aliases retain
+their supported literal behavior.
+
+With `kafka_bindings` enabled, context selection/freshness checks consume the
+original captured context. Only the subsequent public workspace projection
+deep-copies and redacts captured `spring_properties` values using `<redacted>`
+and existing inspection sanitization. This also protects a captured Spring
+property map attached to another language without changing its selection key or
+framework metadata. Other workspaces preserve their prior serialization.
+
+`spring_properties_projection` explicitly records `redacted: true`, SHA256 of
+the original property map and `original_context_id`. Existing selection key,
+condition-input hash, source hashes and original identity remain content-bound
+to the private input. The redacted property map is a display projection and
+cannot validate/replay those original inputs. The persisted compiler index and
+in-memory input cache remain unchanged; validation still uses the original
+context, and no worker is launched to repair or sanitize it. Derived identity and
+workspace cache version change to `kafka-binding-2`; graph/store schemas remain
+v1/v2/v3-readable.
+
+Public fixture regressions cover direct/transitive application and captured
+properties, binder-alias privacy, benign references, complete graph/coverage
+absence of the synthetic secret, source/index/cache immutability, original
+context validation and unchanged non-JVM selection identity. See note54 for the
+independently reproduced prior defect and current validation evidence.
+
+
+Redacted public contexts remain selectable by T006 with an explicit repository
+checkout. `workspace.validate_projected_context` reads the existing private
+graph store, requires exactly one matching original context, and compares the
+entire rederived qualified/redacted projection (including repository alias) to
+the supplied context. It recomputes the raw selector and uses the existing
+validator on the original input for condition/source/classpath/worker freshness.
+The marker/hash alone establishes no authority. Missing store/root, duplicate or
+forged identity/marker/body/hash, and changed original bytes fail closed. Only
+the unchanged public redacted context continues through selection; private
+properties are never returned or substituted into the public graph/cache.
+Unprojected context validation retains its previous path.
+## T003-S09-W03 — statické Thymeleaf fragmenty
+
+`thymeleaf-bindings-2` zachovává dosavadní literal model-key/template-return vazby a
+přidává pouze statické `th:fragment`, `th:replace` a `th:insert`. Cíl musí být
+jedinečný ve stejném source scope a počet argumentů se musí přesně shodovat s
+parametry deklarace. Literal `${model.path}` se vede přes scoped parametr fragmentu;
+stejně pojmenované proměnné mimo fragment se proto nesloučí. Nejednoznačné,
+dynamické a špatně aritní odkazy mají lokalizovanou diagnostiku bez resolved
+include edge. Podmínky jsou PARTIAL a nepodporované výrazy UNKNOWN; nic se
+nevyhodnocuje ani nevykonává. `th:each`, `th:with` a jejich `data-th-*` aliasy
+zavádějí lokální jména, která tato verze nemodeluje; obsah těchto scope ani
+vnořené fragmentové argumenty se nevážou na globální model a dostávají UNKNOWN
+diagnostiku. Hrany zůstávají SOURCE_ONLY `SYNTAX_CANDIDATE`.
+
+To nedokazuje Spring MVC handler resolution, renderovaný výstup ani runtime
+availability. Jiné template dialecty, podmínková logika a PDF rendering nejsou
+implementovány; explicitní PDF service zůstává externí boundary. Viz
+[change note55](changes/55_expandThymeleafFragments.md) a
+[acceptance inventory](acceptance-inventory.md#t003-s09-w03--thymeleaf-fragment-provenance).
+
+## HTTP client intent
+
+T003-S07-W06 reuses graph/store schema3 and existing compiler IR. The JVM protocol
+adds optional `typed-java-literals-bindings-v1` facts; old workers/indexes and
+schema1/2 graphs remain readable with HTTP coverage UNKNOWN. Fresh captures bind
+HTTP rule/config fingerprints; replay validates them without running a worker.
+Rule `http-client-execution-2` invalidates prior version1 HTTP proof as STALE;
+explicit reinspection is required, with no implicit process/store mutation.
+No source label, callee spelling alone, confidence score or runtime availability
+is used to resolve a request. No client is instantiated and no request is sent.
+
+| Supported proof | Result | Actual fixture/test |
+| --- | --- | --- |
+| Java WebClient cold `retrieve`/`bodyToMono`/`bodyToFlux`/`exchangeToMono` | Definition; closed unused local publisher UNSUBSCRIBED_WITHIN_SCOPE | Spring6.2.2/Reactor3.7.2; `test_cold_request_and_same_origin_block_are_separate` K1/K2 |
+| Exact same publisher Mono block/blockOptional/subscribe/toFuture; Flux blockFirst/blockLast/subscribe | STATIC_TRIGGER or CONDITIONAL_STATIC_TRIGGER, runtime NOT_OBSERVED | `test_same_request_spec_does_not_mix_distinct_publishers`, branch boundary |
+| RestClient retrieve versus body/toEntity/toBodilessEntity/exchange | retrieve DEFINITION_ONLY; imperative terminal STATIC_TRIGGER | `test_imperative_retrieve_is_not_a_terminal` |
+| Source Feign interface abstract annotated method and attributed call | DECLARATION_ONLY / FEIGN_INVOCATION_INTENT; proxy registration UNKNOWN | OpenFeign4.2.0; `test_feign_declaration_only_and_abstract_invocation_intent` |
+| Literal URI; simple `@Value`/PropertyResolver/Feign placeholder + explicit matching properties/profile/source SHA | Separate method/base/path and config provenance | `test_bound_property_source_provenance_and_plain_literal_placeholder` |
+| Escaped, stored, returned, captured, unknown helper/operator/merged origin | UNKNOWN, no invented terminal | escape/capture/reference/branch tests |
+| Kotlin K1/K2 missing required typed binding IR | HTTP_TYPED_IR_UNAVAILABLE / UNKNOWN | `test_kotlin_unavailable_bindings_are_explicit_unknown` |
+| Throw/ternary operands; loop updates and try resources | Escapes UNKNOWN; loop/try control boundaries UNKNOWN with no invented terminal order | `test_abrupt_conditional_loop_and_resource_operands_do_not_claim_unused` K1/K2 |
+| URI callback/extra-argument overload | URI/base/path UNKNOWN even if same-origin terminal intent exists | `test_uri_callback_cannot_keep_original_literal_route` K1/K2 |
+| Feign nonempty client path prefix | Separate client_path/method_path; composed route UNKNOWN, no guessed concatenation | `test_feign_client_prefix_is_not_an_exact_unprefixed_route` |
+| Unsupported/escaped/whitespace properties syntax | Selected file cannot establish exact config value provenance | `test_unsupported_properties_override_cannot_prove_first_literal` |
+
+Custom clients/operators, cross-method publisher flow, dynamic URI construction,
+multiple/unknown routes, YAML/SpEL/default/nested placeholders and proxy registration
+are outside this matrix. Explicit Java method references/lambda capture never
+activate an HTTP request. Unrelated Mono terminals do not activate another origin.
+All runtime execution/availability remain NOT_OBSERVED/UNKNOWN. Fresh scans/captures redact URI userinfo,
+query values and fragments before graph/context persistence, including SOURCE_ONLY
+signatures, documentation summaries and heading identities. Privacy also covers
+unsupported URI schemes and scheme-relative authorities; HTTP recognition stays
+limited to HTTP/HTTPS, so redaction never makes an unsupported URI executable. Opaque
+input hashes preserve freshness without retaining credentials. Configuration
+mapping requires a selected `application.properties` or explicit active profile
+file containing only the supported literal property syntax, matching property and SHA.
+Unsupported meaningful lines, escaped/continuation syntax or unreadable/oversized
+selected files invalidate that file's property provenance rather than hiding an
+overriding definition. Loop/try boundaries visit resources/updates/operands but
+remain UNKNOWN, including a break that makes the loop update unreachable. Explicit values without source provenance
+remain unknown. Workspace identities/source locators are repo-qualified, URI path
+strings stay paths, and no cross-service endpoint match is invented.
+
+Explicit API preparation (never triggered by scan/inspection):
+
+```sh
+mvn -B -ntp -f fixtures/http-client-execution/pom.xml compile
+kgmaker inspect jvm --help
+kgmaker flow render --view integrations --entry '<canonical-method-id>' --format json
+```
+
+Use the existing inspection classpath options for the pinned API JARs listed in
+`fixtures/http-client-execution/dependencies.lock.json` (JAR/POM SHA and license).
+The actual API tests require the Maven cache and own worker home; mandatory CI
+prepares these APIs and runs `tests/test_http_client_execution.py`.
+
+### W08 bounded schema compatibility
+
+An already explicitly inspected compiler context can be compared with the same
+realm/target's offline replay using
+`kgmaker schema compatibility --root /path/to/repo --config flyway.json --database money --stream main --target 1 --context CONTEXT_ID`.
+See [schema compatibility scope](schema-compatibility.md). W04 dependency PR62 is merged and current main is integrated; it does not run an inspection/build or DB implicitly. Missing,
+stale, legacy or unsupported proof is UNKNOWN, not compatible by omission.
+Schema COMPATIBLE is separate from populated data and deployment evidence.
+### Explicit Kafka code declarations (`kafka-code-1`, revision2 draft)
+
+Explicit JVM inspection can attach canonical listener declarations from captured
+method annotations: Java in either worker backend and Kotlin K1. An explicit
+nonempty groupId is required. Topics are exact case-sensitive literals or captured
+whole-property references; topicPattern remains a regex candidate without topic
+expansion. Kotlin K2 omits method annotations in its current source model and
+remains UNKNOWN. Listener activation and execution are not observed.
+
+Java producer declarations require the dependency-owned KafkaTemplate or
+KafkaOperations `send(String,Object)` callsite, compiler-proven argument mapping,
+and a direct ASCII string literal topic. Both backends share this Javac support.
+Named constants, escaped literals, Kotlin bodies, wrappers, NewTopic,
+ProducerRecord and other overloads do not provide positive producer proof.
+
+Workspace schema2 optionally adds the following exact `code_ref` shape to a
+binding (schema1 remains supported):
+
+```json
+{"kind":"listener","id":"<original compiler method ID>","context_id":"<captured context ID>","source_file":"src/main/java/demo/Listener.java","sha256":"<64 lowercase hex characters>"}
+```
+
+Producer references use `kind: "send"` and the original compiler callsite ID.
+Selectors are checked against private current compiler capture, canonical source,
+realm, scope, ownership, original source SHA and exact topic agreement. Consumers
+also require exact agreement with the explicit `.group` configuration property.
+Only this bounded join can yield `code_binding: VERIFIED_STATIC` and a
+`kafka_subscription`; configuration alone remains UNPROVEN. Logical identities and
+capture revisions are separate, and original IDs survive workspace qualification.
+Public context privacy and freshness checks remain mandatory. This is static
+provenance, without delivery, broker, activation or data availability evidence.
+
+### T003-S07-W05 — bounded retry/DLT policy draft
+
+`kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
+Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
+positive path; unsupported3.2.0, custom handler, expressions, source shadows and
+ambiguous DLT associations remain UNKNOWN. Flow policy boundaries are separate
+from executable CFG transitions. See [contract](kafka-retry-dlt.md) and
+[truthful run history](changes/87_captureKafkaRetryDlt.md). The current-parent coalesced run passed470cases without SKIP; the required full
+is NOT_RUN pending the final frozen integration gate. Independent source+focus closure is
+recorded, but final ready review is pending; Kotlin K2 annotation gaps remain.
+
+## Remote service/contract declarations (W07 draft)
+
+See [remote mapping contract](remote-contract-mapping.md)
+and [note91](changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.

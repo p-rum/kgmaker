@@ -5,13 +5,13 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const PROTOCOL = 1;
-const VERSION = 'typescript-worker-2';
+const VERSION = 'typescript-worker-5';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 
 function handshake() {
   return {protocol_version:PROTOCOL,worker:VERSION,compiler_version:ts.version,
-    capabilities:['typescript-program','typechecker','overloads','aliases','project-references','source-ir','react-events'],
+    capabilities:['return-consumer-ir-v1','argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','bounded-callback-candidates','source-ir','react-events'],
     limitations:['No Angular/Vue template semantics.','Dynamic callbacks/any remain unresolved.','Source IR is not runtime ordering.']};
 }
 
@@ -24,6 +24,8 @@ function analyze(request) {
   const symbols = new Map(), sites = [], bodies = [], facts = [], diagnostics = [], inputs = new Map();
   const identityCache = new WeakMap();
   const functionNodes = [];
+  const callbackBindings = new Map(), parameterCalls = [], limitedParameters = new Set();
+  const CALLBACK_LIMIT = 64;
   const rootFileSet = new Set();
   const sourceOwners = new Map();
   const ownerDeclarationIndexes = new WeakMap();
@@ -125,6 +127,7 @@ function analyze(request) {
       symbols.set(identity,{id:identity,name:name(node),owner:owner(node),kind:kind || (callable(node)?'function':ts.SyntaxKind[node.kind]),
         type:owned.checker.typeToString(type,node,ts.TypeFormatFlags.NoTruncation),...loc,
         identity_stability:identity.includes(':snapshot:')?'SNAPSHOT':'DECLARATION',
+        async:callable(node)&&!!(ts.getCombinedModifierFlags(node)&ts.ModifierFlags.Async),generator:callable(node)&&!!node.asteriskToken,
         project_id:projectFor(node.getSourceFile().fileName)?.id || null,
         scope:context.scope,context_id:context.id});
     }
@@ -141,6 +144,51 @@ function analyze(request) {
     if (declaration && ts.isVariableDeclaration(declaration) && declaration.initializer && callable(declaration.initializer))
       return declaration.initializer;
     return declaration && callable(declaration) ? declaration : null;
+  }
+  // These are possible source callables, never a closed-world dispatch proof.
+  function callbackProof(expression, activeChecker=checker, seen=new Set()) {
+    if (!expression) return {targets:[],complete:false};
+    if (seen.has(expression) || seen.size>=16)
+      return {targets:[],complete:false,reason:'CALLBACK_TARGET_LIMIT'};
+    seen=new Set(seen);seen.add(expression);
+    if (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression) ||
+        ts.isTypeAssertionExpression(expression) || ts.isNonNullExpression(expression) || ts.isSatisfiesExpression(expression))
+      return callbackProof(expression.expression,activeChecker,seen);
+    if (ts.isConditionalExpression(expression)) {
+      const left=callbackProof(expression.whenTrue,activeChecker,seen);
+      const right=callbackProof(expression.whenFalse,activeChecker,seen);
+      const targets=[...new Set([...left.targets,...right.targets])];
+      return {targets:targets.slice(0,CALLBACK_LIMIT),complete:left.complete && right.complete && targets.length<=CALLBACK_LIMIT,
+        reason:targets.length>CALLBACK_LIMIT?'CALLBACK_TARGET_LIMIT':left.reason || right.reason};
+    }
+    if (callable(expression)) return {targets:[declarationContext(expression).node],complete:true};
+    let symbol=activeChecker.getSymbolAtLocation(expression);
+    if (symbol?.flags & ts.SymbolFlags.Alias) symbol=activeChecker.getAliasedSymbol(symbol);
+    const declaration=symbol?.valueDeclaration || symbol?.declarations?.[0];
+    if (!declaration) return {targets:[],complete:false};
+    const owned=declarationContext(declaration), node=owned.node;
+    if (ts.isParameter(node)) return {targets:[],complete:false,parameter:node};
+    if (ts.isVariableDeclaration(node)) {
+      if (!(node.parent.flags & ts.NodeFlags.Const))
+        return {targets:[],complete:false,reason:'MUTABLE_CALLBACK'};
+      return callbackProof(node.initializer,owned.checker,seen);
+    }
+    if (ts.isPropertyAssignment(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isBindingElement(node))
+      return {targets:[],complete:false,reason:'MUTABLE_CALLBACK'};
+    if (callable(node) || ts.isMethodSignature(node) || ts.isCallSignatureDeclaration(node))
+      return {targets:[node],complete:true};
+    return {targets:[],complete:false};
+  }
+  function implementationParameter(signature,index) {
+    const declaration=signature.parameters[index]?.valueDeclaration || signature.parameters[index]?.declarations?.[0];
+    if (!declaration || !ts.isParameter(declaration)) return declaration;
+    const owned=declarationContext(declaration), parent=owned.node.parent;
+    if (parent.body || !parent.name || owned.node.dotDotDotToken) return owned.node;
+    const symbol=owned.checker.getSymbolAtLocation(parent.name);
+    const implementations=(symbol?.declarations || []).filter(d=>callable(d) && d.body);
+    // The compiler symbol joins overload declarations to exactly one body.
+    if (implementations.length!==1 || implementations[0].parameters.some(p=>p.dotDotDotToken)) return owned.node;
+    return implementations[0].parameters[index] || owned.node;
   }
   function safeText(node) {
     if (!node) return null;
@@ -183,6 +231,7 @@ function analyze(request) {
     } else if (before!==null) throw Error('MIXED_CONFIG_SNAPSHOT:'+path.resolve(file));
     return text;
   };
+  const discovery=require('./input_snapshot.cjs').inputSnapshot(ts,root,readFile);
   const projects = new Map(), orderedProjects = [], activeProjects = new Set();
   const relative = file => path.relative(root,file).split(path.sep).join('/');
   function loadProject(config, parent=null) {
@@ -196,7 +245,7 @@ function analyze(request) {
     if (projects.has(config)) return projects.get(config);
     if (projects.size >= 128) throw Error(`TS_PROJECT_REFERENCE_LIMIT:${located}: maximum 128 projects`);
     activeProjects.add(config);
-    const parsed = ts.getParsedCommandLineOfConfigFile(config,{}, {...ts.sys,readFile,
+    const parsed = ts.getParsedCommandLineOfConfigFile(config,{}, {...ts.sys,...discovery.host,
       onUnRecoverableConfigFileDiagnostic:d=>{throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.flattenDiagnosticMessageText(d.messageText,'\n'));}});
     if (!parsed) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: unable to parse tsconfig`);
     if (parsed.errors.length) throw Error(`TS_PROJECT_CONFIG:${relative(config)}: `+ts.formatDiagnostics(parsed.errors,{getCanonicalFileName:p=>p,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));
@@ -222,7 +271,7 @@ function analyze(request) {
   tsconfig=fs.realpathSync(tsconfig);
   const parsed=rootProject.parsed;
   const programs=orderedProjects.map(project=>{
-    const host=ts.createCompilerHost(project.parsed.options); host.readFile=readFile;
+    const host=Object.assign(ts.createCompilerHost(project.parsed.options),discovery.host);
     // Analysis follows the compiler's source redirects, never stale emitted .d.ts
     // and never invokes a solution builder or emit.
     host.useSourceOfProjectReferenceRedirect=()=>true;
@@ -244,13 +293,22 @@ function analyze(request) {
     return {id:project.id,repo_id:context.repo_id,config:project.config,references,fingerprint,
       root_files:sourceFiles.map(file=>file.path),source_files:sourceFiles,compiler_options:project.parsed.options};
   })};
+  discovery.lockfiles([...projects.keys()]);
+  const compilerDiagnostics=programs.map(({project,program})=>({project,diagnostics:ts.getPreEmitDiagnostics(program)}));
+  const uiAdapter=require('./ui_events.cjs');
+  const uiAdapters=uiAdapter.adapters(ts,programs,discovery,hash,request.ui_framework==='react');
+  const uiProject=request.ui_framework==='react'?{ui_adapters:uiAdapters.snapshots}:{};
+  discovery.validate();
   if (request.operation === 'project') {
     return {...handshake(),status:'COMPLETE',context_id:context.id,project:{
-      input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),
+      ...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),
       compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph}};
   }
-  for (const {project,program} of programs) {
-    for (const diagnostic of ts.getPreEmitDiagnostics(program)) {
+  const bindingErrors=[];
+  for (const {project,diagnostics:capturedDiagnostics} of compilerDiagnostics) {
+    for (const diagnostic of capturedDiagnostics) {
+      if(diagnostic.category===ts.DiagnosticCategory.Error && diagnostic.file && diagnostic.start!=null)
+        bindingErrors.push({file:diagnostic.file.fileName,start:diagnostic.start,end:diagnostic.start+Math.max(1,diagnostic.length||0)});
       diagnostics.push({code:'TS'+diagnostic.code,reason:ts.flattenDiagnosticMessageText(diagnostic.messageText,'\n'),
         project_id:project.id,path:diagnostic.file?fileInfo(diagnostic.file).path:project.config,start:diagnostic.start??null});
     }
@@ -273,25 +331,95 @@ function analyze(request) {
       const signature=checker.getResolvedSignature(node);
       const declaration=signature?.getDeclaration();
       let target=null, reason=null;
-      if (expressionType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)) reason='DYNAMIC_ANY';
-      else if (!declaration) reason='MISSING_CALL_SIGNATURE_DECLARATION';
-      else if (!callable(declaration) && !ts.isMethodSignature(declaration) && !ts.isConstructSignatureDeclaration(declaration) && !ts.isCallSignatureDeclaration(declaration)) reason='DYNAMIC_CALLBACK';
-      else target=register(declaration);
+      const signatureContract=declaration && (ts.isMethodSignature(declaration) || ts.isCallSignatureDeclaration(declaration) || ts.isConstructSignatureDeclaration(declaration));
       const symbol=checker.getSymbolAtLocation(node.expression);
-      const site={id:identity,caller,...loc,declared_target:target,dispatch_candidates:[],dispatch_complete:false,
+      const proof=ts.isCallExpression(node)?callbackProof(node.expression):{targets:[],complete:false};
+      if (expressionType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)) reason='DYNAMIC_ANY';
+      else if (proof.reason && !signatureContract) reason=proof.reason;
+      else if (ts.isCallExpression(node) && expressionType.flags & ts.TypeFlags.Union) reason='AMBIGUOUS_CALLBACK';
+      else if (proof.parameter) reason='CALLBACK_PARAMETER_OPEN_WORLD';
+      else if (!declaration) reason='MISSING_CALL_SIGNATURE_DECLARATION';
+      else if (!callable(declaration) && !ts.isMethodSignature(declaration) && !ts.isConstructSignatureDeclaration(declaration) && !ts.isCallSignatureDeclaration(declaration)) {
+        if (signature && proof.complete && proof.targets.length===1) target=register(proof.targets[0]);
+        else reason='DYNAMIC_CALLBACK';
+      } else if (ts.isCallExpression(node) && symbolDeclaration(symbol) && ts.isVariableDeclaration(symbolDeclaration(symbol)) && !proof.complete && !signatureContract)
+        reason='DYNAMIC_CALLBACK';
+      else target=register(declaration);
+      const lexicalReference=ts.isIdentifier(node.expression)&&symbol&&!(symbol.flags&ts.SymbolFlags.Alias)&&symbol.valueDeclaration&&
+        ts.isFunctionDeclaration(symbol.valueDeclaration)&&declaration&&id(symbol.valueDeclaration)===id(declaration);
+      const memberSymbol=ts.isPropertyAccessExpression(node.expression)?checker.getSymbolAtLocation(node.expression.name):null;
+      const privateReference=ts.isPropertyAccessExpression(node.expression)&&ts.isPrivateIdentifier(node.expression.name)&&
+        declaration&&ts.isMethodDeclaration(declaration)&&declaration.name&&ts.isPrivateIdentifier(declaration.name)&&
+        memberSymbol&&memberSymbol.valueDeclaration&&id(memberSymbol.valueDeclaration)===id(declaration);
+      const site={id:identity,caller,...loc,declared_target:target,argument_mapping_version:1,argument_mapping_status:'UNKNOWN',argument_mapping_reason:'NO_SOURCE_ARGUMENT_BINDING_PROOF',dispatch_candidates:[],dispatch_complete:false,
         invocation_kind:ts.isNewExpression(node)?'CONSTRUCTOR':'CALL',receiver_type:ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression) ? checker.typeToString(checker.getTypeAtLocation(node.expression.expression)) : null,
-        callable_type:checker.typeToString(expressionType),
+        callable_type:checker.typeToString(expressionType),return_reference_kind:lexicalReference?'LEXICAL_IDENTIFIER':privateReference?'HARD_PRIVATE_MEMBER':'PROPERTY_OR_OTHER',
         signature:signature?checker.signatureToString(signature):null,
         resolution_reason:reason || 'TYPESCRIPT_RESOLVED_SIGNATURE',evidence_kind:target?'SYMBOL_RESOLVED':'UNRESOLVED',
         context_id:context.id};
+      if (reason==='AMBIGUOUS_CALLBACK') site.dispatch_candidates=proof.targets.map(n=>register(n)).sort();
+      if (proof.parameter && reason!=='DYNAMIC_ANY') parameterCalls.push({site,parameter:register(proof.parameter)});
       if (symbol) site.expression_symbol=checker.getFullyQualifiedName(symbol);
       sites.push(site); siteByNode.set(node,identity);
       if (reason) diagnostics.push({code:reason,path:loc.path,range:loc.range,call_site:identity});
+      const bindingError=bindingErrors.some(error=>error.file===node.getSourceFile().fileName && error.start<node.end && error.end>node.getStart());
+      if(target && signature && bindingError) {site.argument_mapping_reason='TS_ARGUMENT_MAPPING_UNAVAILABLE';diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'Call overlaps compiler error; recovery signature is not mapping proof',...loc,call_site:identity});}
+      if (target && signature && !bindingError) {
+        const args=node.arguments||[], parameters=signature.parameters;
+        const formal=index=>parameters[index]?.valueDeclaration || parameters[index]?.declarations?.[0];
+        const rest=parameters.length>0 && !!formal(parameters.length-1)?.dotDotDotToken;
+        const unsupportedSpread=args.some((argument,index)=>ts.isSpreadElement(argument) && (!rest || index<parameters.length-1));
+        let completeBinding=!unsupportedSpread;
+        if(unsupportedSpread) diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'Spread before fixed formals needs tuple binding proof',...loc,call_site:identity});
+        else for(let i=0;i<args.length;i++) {
+          const pi=rest?Math.min(i,parameters.length-1):i,d=formal(pi);
+          if(!d) { completeBinding=false;diagnostics.push({code:'TS_ARGUMENT_MAPPING_UNAVAILABLE',reason:'No attributed formal for argument',...loc,call_site:identity});continue; }
+          const parameterId=register(d,'parameter');
+          Object.assign(symbols.get(parameterId),{kind:'parameter',method:target,parameter_index:pi});
+          const argumentId=identity+':argument:'+i,argument=ts.isSpreadElement(args[i])?args[i].expression:args[i];
+          const argumentLocation=location(argument);
+          if(symbols.size>=limits.symbols)throw Error('symbol output limit exceeded');
+          symbols.set(argumentId,{id:argumentId,name:'argument '+i,kind:'value',call_site:identity,owner_method:caller,
+            scope:context.scope,context_id:context.id,...argumentLocation});
+          const origin=symbolDeclaration(checker.getSymbolAtLocation(argument));
+          if(origin)facts.push({kind:'derived_from',source:argumentId,target:register(origin),...argumentLocation,evidence_kind:'SYMBOL_RESOLVED',resolution_reason:'TYPESCRIPT_ARGUMENT_SYMBOL_REFERENCE'});
+          const transformation=rest && pi===parameters.length-1?(ts.isSpreadElement(args[i])?'VARARG_SPREAD':'VARARG_ELEMENT'):'DIRECT';
+          facts.push({kind:'argument_to_parameter',source:argumentId,target:parameterId,call_site:identity,
+            argument_index:i,parameter_index:pi,parameter_name:symbols.get(parameterId).name,transformation,binding_kind:'DECLARED_PARAMETER',
+            argument_mapping_version:1,context_id:context.id,...argumentLocation,evidence_kind:'SYMBOL_RESOLVED',resolution_reason:'TYPESCRIPT_RESOLVED_SIGNATURE_ARGUMENT_MAPPING'});
+        }
+        site.argument_mapping_status=completeBinding?'PROVEN':'UNKNOWN';
+        site.argument_mapping_reason=completeBinding?'TYPESCRIPT_RESOLVED_SIGNATURE_ARGUMENT_MAPPING':'TS_ARGUMENT_MAPPING_UNAVAILABLE';
+        for(let pi=args.length;pi<parameters.length;pi++) {
+          const d=formal(pi);
+          if(d?.initializer)(site.argument_omissions ||= []).push({parameter_index:pi,parameter_name:parameters[pi].name,reason:'DEFAULT_VALUE_NOT_EVALUATED'});
+        }
+      }
       if (target && signature) {
         for (let i=0; i<(node.arguments||[]).length && i<signature.parameters.length; i++) {
-          const d=signature.parameters[i].valueDeclaration || signature.parameters[i].declarations?.[0];
-          const a=symbolDeclaration(checker.getSymbolAtLocation(node.arguments[i]));
-          if (a && d) facts.push({kind:'argument_to_parameter',source:register(a),target:register(d),...loc,evidence_kind:'SYMBOL_RESOLVED'});
+          const parameterType=checker.getTypeOfSymbolAtLocation(signature.parameters[i],node);
+          const callback=!(parameterType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)) && checker.getSignaturesOfType(parameterType,ts.SignatureKind.Call).length>0;
+          if (!callback) continue; // ordinary argument occurrences use the versioned declared-formal proof above
+          const d=implementationParameter(signature,i);
+          if (!d) continue;
+          const argument=node.arguments[i], argumentType=checker.getTypeAtLocation(argument);
+          const bound=callback && !(argumentType.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown))?callbackProof(argument):{targets:[],complete:false};
+          const fallback=symbolDeclaration(checker.getSymbolAtLocation(argument));
+          const sources=bound.targets.length?bound.targets:fallback?[fallback]:[];
+          const parameter=register(d);
+          if (callback && bound.reason==='CALLBACK_TARGET_LIMIT' && projectFor(d.getSourceFile().fileName) && !d.getSourceFile().isDeclarationFile)
+            limitedParameters.add(parameter);
+          for (const source of sources) {
+            const identity=register(source);
+            facts.push({kind:'argument_to_parameter',source:identity,target:parameter,...loc,
+              evidence_kind:bound.targets.length && (!bound.complete || bound.targets.length!==1)?'DISPATCH_CANDIDATE':'SYMBOL_RESOLVED'});
+            if (callback && bound.targets.includes(source) && projectFor(d.getSourceFile().fileName) && !d.getSourceFile().isDeclarationFile) {
+              if (!callbackBindings.has(parameter)) callbackBindings.set(parameter,new Set());
+              const candidates=callbackBindings.get(parameter);
+              if (candidates.size>=CALLBACK_LIMIT && !candidates.has(identity)) limitedParameters.add(parameter);
+              else candidates.add(identity);
+            }
+          }
         }
       }
       const targetLoc=declaration?location(declaration):null;
@@ -321,21 +449,10 @@ function analyze(request) {
       }
     }
     if (request.ui_framework==='react' && ts.isJsxAttribute(node) && ['onClick','onChange','onSubmit'].includes(node.name.text)) {
-      let attributeSymbol=checker.getSymbolAtLocation(node.name);
-      {
-        const opening=node.parent.parent;
-        const tag=opening.tagName?.getText();
-        const intrinsic=checker.getJsxIntrinsicTagNamesAt(node).find(s=>s.name===tag);
-        if (intrinsic) attributeSymbol=checker.getPropertyOfType(checker.getTypeOfSymbolAtLocation(intrinsic,node),node.name.text);
-      }
-      const attributeDeclaration=symbolDeclaration(attributeSymbol);
-      const attrLoc=attributeDeclaration?location(attributeDeclaration):null;
-      const expression=node.initializer && ts.isJsxExpression(node.initializer)?node.initializer.expression:null;
-      const handler=expression?targetForExpression(expression):null;
-      if (handler && attrLoc && /@types\/react/.test(attrLoc.path)) {
-        facts.push({kind:'handles_event',source:caller,target:register(handler),event:node.name.text,
-          ...location(node),evidence_kind:'FRAMEWORK_DERIVED',rule:'react-18.3.1/jsx-event-1'});
-      } else diagnostics.push({code:'UNRESOLVED_UI_HANDLER',...location(node)});
+      const result=uiAdapter.event(ts,checker,node,uiAdapters.byFile.get(path.resolve(node.getSourceFile().fileName)),uiAdapters.byFile,symbolDeclaration,callbackProof,location);
+      if(result.handler) facts.push({kind:'handles_event',source:caller,target:register(result.handler),event:node.name.text,
+        ...location(node),evidence_kind:'FRAMEWORK_DERIVED',...result.proof});
+      else diagnostics.push({code:result.reason,...location(node)});
     }
     if (ts.isImportSpecifier(node) || ts.isExportSpecifier(node)) {
       const alias=checker.getSymbolAtLocation(node.name);
@@ -358,6 +475,14 @@ function analyze(request) {
     }
   }
 
+  for (const {site,parameter} of parameterCalls) {
+    site.dispatch_candidates=[...new Set([...site.dispatch_candidates,...(callbackBindings.get(parameter) || [])])].sort();
+    if (limitedParameters.has(parameter)) {
+      site.resolution_reason='CALLBACK_TARGET_LIMIT';
+      diagnostics.push({code:'CALLBACK_TARGET_LIMIT',call_site:site.id,path:site.path,range:site.range,candidate_limit:CALLBACK_LIMIT});
+    }
+  }
+
   function calls(node) {
     const result=[];
     function v(n) {
@@ -368,9 +493,76 @@ function analyze(request) {
     if(node) v(node);
     return result;
   }
+  function valueInfo(node,declaredReturn=false) {
+    try {
+      const owned=declarationContext(node), c=owned.checker,n=owned.node;
+      if(bindingErrors.some(e=>e.file===n.getSourceFile().fileName && e.start<n.getEnd() && e.end>n.getStart()))
+        return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      if(!declaredReturn && n.kind===ts.SyntaxKind.NullKeyword)return {version:1,status:'VALUE',type_ref:'null',nullability:'NULL_LITERAL'};
+      const options=projectFor(n.getSourceFile().fileName)?.parsed?.options || parsed.options;
+      const strictNull=options.strictNullChecks ?? options.strict ?? false;
+      const signature=declaredReturn?c.getSignatureFromDeclaration(n):null;
+      const type=declaredReturn?(signature?c.getReturnTypeOfSignature(signature):null):c.getTypeAtLocation(n);
+      if(!type)return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      const parts=type.isUnion()?type.types:[type];
+      if(parts.some(t=>t.flags & (ts.TypeFlags.Any|ts.TypeFlags.Unknown)))
+        return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};
+      if(parts.every(t=>t.flags & (ts.TypeFlags.Void|ts.TypeFlags.Never)))
+        return {version:1,status:'VOID',type_ref:'void',nullability:'UNKNOWN'};
+      const callable=parts.some(t=>t.getCallSignatures().length || t.getConstructSignatures().length);
+      const primitive=t=>t.flags&ts.TypeFlags.StringLike?'string':t.flags&ts.TypeFlags.NumberLike?'number':t.flags&ts.TypeFlags.BooleanLike?'boolean':t.flags&ts.TypeFlags.BigIntLike?'bigint':t.flags&ts.TypeFlags.Null?'null':t.flags&ts.TypeFlags.Undefined?'undefined':t.flags&ts.TypeFlags.TypeParameter?'type_parameter':c.isTupleType(t)?'tuple':'object';
+      const kinds=[...new Set(parts.map(primitive))].sort();
+      const nullable=parts.some(t=>t.flags&(ts.TypeFlags.Null|ts.TypeFlags.Undefined));
+      return {version:1,status:callable?'CALLABLE':'VALUE',type_ref:kinds.join('|'),
+        nullability:parts.every(t=>t.flags&ts.TypeFlags.Null)?'NULL_LITERAL':!strictNull?'UNKNOWN':nullable?'MAY_BE_NULL':'DECLARED_NON_NULL'};
+    }catch(error){return {version:1,status:'UNKNOWN',type_ref:'unknown',nullability:'UNKNOWN'};}
+  }
+  function valueBinding(node) {
+    if(!node)return null;
+    const owned=declarationContext(node),c=owned.checker,n=owned.node;
+    let declaration=n;
+    if(ts.isIdentifier(n)) {
+      let symbol=c.getSymbolAtLocation(n);if(symbol?.flags&ts.SymbolFlags.Alias)symbol=c.getAliasedSymbol(symbol);
+      declaration=symbol?.valueDeclaration || symbol?.declarations?.[0];
+    }
+    if(!declaration || !(ts.isVariableDeclaration(declaration)||ts.isBindingElement(declaration)||ts.isParameter(declaration)) || !ts.isIdentifier(declaration.name))return null;
+    const loc=location(declaration);
+    // External/global declaration locators are not captured source binding proof.
+    if (!context.source_files || context.source_files[loc.path]!==loc.sha256)return null;
+    let parent=declaration.parent;while(parent && !callable(parent))parent=parent.parent;
+    const identity=ts.isParameter(declaration)?id(declaration):`${symbolPrefix(declaration.getSourceFile().fileName)}:binding:${loc.path}:${loc.sha256}:${loc.range.start}:${loc.range.end}`;
+    return {version:1,id:identity,name:declaration.name.text,kind:ts.isParameter(declaration)?'PARAMETER':'LOCAL_VARIABLE',method:parent?id(parent):null,symbol:null,type:valueInfo(declaration),...loc};
+  }
+  function valueTargets(node) {
+    const pattern=node.name;if(!pattern || !(ts.isArrayBindingPattern(pattern)||ts.isObjectBindingPattern(pattern)))return [];
+    const c=declarationContext(node).checker;const type=c.getTypeAtLocation(node.initializer);
+    return pattern.elements.flatMap((entry,index)=>{
+      if(ts.isOmittedExpression(entry))return [];
+      const binding=valueBinding(entry);if(!binding)return [];
+      let status='PROVEN',kind=ts.isArrayBindingPattern(pattern)?'TUPLE_ELEMENT':'OBJECT_PROPERTY',key=null;
+      if(entry.dotDotDotToken || entry.initializer || !ts.isIdentifier(entry.name))status='UNKNOWN';
+      if(kind==='TUPLE_ELEMENT') {if(!c.isTupleType(type))status='UNKNOWN';}
+      else {
+        const property=entry.propertyName || entry.name;
+        key=ts.isIdentifier(property)?property.text:ts.isStringLiteral(property)?property.text:null;
+        if(key==null || !ts.isIdentifierText(key,ts.ScriptTarget.Latest))status='UNKNOWN';
+        const symbol=key==null?null:c.getPropertyOfType(type,key);
+        if(!symbol || symbol.declarations?.some(d=>ts.isGetAccessorDeclaration(d)||ts.isSetAccessorDeclaration(d)))status='UNKNOWN';
+      }
+      return [{binding,projection:{kind,index,key,status}}];
+    });
+  }
+  function literalShape(node) {
+    if(ts.isArrayLiteralExpression(node) && !node.elements.some(ts.isSpreadElement))return {kind:'TUPLE_ELEMENT',size:node.elements.length};
+    if(ts.isObjectLiteralExpression(node) && node.properties.every(p=>ts.isPropertyAssignment(p) && ts.isIdentifier(p.name)))
+      return {kind:'OBJECT_PROPERTY',keys:node.properties.map(p=>p.name.text)};
+    return null;
+  }
   function ir(node) {
     if (!node) return {kind:'empty'};
-    const base={...location(node),label:safeText(node),calls:calls(node)};
+    const base={...location(node),label:safeText(node),calls:calls(node),value_info:valueInfo(node)};
+    if(ts.isIdentifier(node))base.value_binding=valueBinding(node);
+    const shape=literalShape(node);if(shape)base.value_shape=shape;
     if (callable(node)) return {...base,kind:'reference',calls:[]};
     if (ts.isJsxExpression(node)) return ir(node.expression);
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
@@ -389,9 +581,9 @@ function analyze(request) {
       return value;
     }
     if(ts.isVariableStatement(node))return {...base,kind:'block',statements:node.declarationList.declarations.map(ir)};
-    if(ts.isVariableDeclaration(node))return {...base,kind:'assign',value:ir(node.initializer)};
+    if(ts.isVariableDeclaration(node))return ts.isIdentifier(node.name)?{...base,kind:'assign',value_binding:valueBinding(node),value:ir(node.initializer)}:{...base,kind:'destructure',value:ir(node.initializer),value_targets:valueTargets(node)};
     if(ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
-      return {...base,kind:'assign',value:ir(node.right)};
+      return {...base,kind:'assign',value_binding:valueBinding(node.left),value:ir(node.right)};
     if (ts.isBlock(node)) return {...base,kind:'block',statements:node.statements.map(ir)};
     if (ts.isIfStatement(node)) return {...base,kind:'if',condition:ir(node.expression),then:ir(node.thenStatement),else:ir(node.elseStatement)};
     if (ts.isWhileStatement(node) || ts.isDoStatement(node)) return {...base,kind:ts.isDoStatement(node)?'do':'while',condition:ir(node.expression),body:ir(node.statement)};
@@ -409,14 +601,61 @@ function analyze(request) {
     if (ts.isExpressionStatement(node)) return ir(node.expression);
     return {...base,kind:'statement'};
   }
-  for (const node of functionNodes) bodies.push({method:id(node),body:ir(node.body),language:'typescript',context_id:context.id});
+  // Lexical declarations may be assigned too. Refuse their original body when
+  // the compiler binds an assignment target to that declaration; members are
+  // mutable regardless of static/TypeScript-private modifiers.
+  const reassignedFunctions=new Set(), directEvalCalls=[], dynamicScopeFiles=new Map();
+  function assignedFunctions(node) {
+    if (ts.isIdentifier(node)||ts.isShorthandPropertyAssignment(node)) {
+      const owned=declarationContext(node);
+      const symbol=ts.isShorthandPropertyAssignment(owned.node)
+        ? owned.checker.getShorthandAssignmentValueSymbol(owned.node)
+        : owned.checker.getSymbolAtLocation(owned.node);
+      for (const declaration of symbol&&symbol.declarations||[])
+        if (ts.isFunctionDeclaration(declaration)) reassignedFunctions.add(id(declaration));
+    } else ts.forEachChild(node,assignedFunctions);
+  }
+  function inspectAssignments(node) {
+    if (ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='eval') directEvalCalls.push(node.expression);
+    if (ts.isForOfStatement(node)||ts.isForInStatement(node)) assignedFunctions(node.initializer);
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind>=ts.SyntaxKind.FirstAssignment && node.operatorToken.kind<=ts.SyntaxKind.LastAssignment)
+      assignedFunctions(node.left);
+    if ((ts.isPrefixUnaryExpression(node)||ts.isPostfixUnaryExpression(node)) && [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator))
+      assignedFunctions(node.operand);
+    ts.forEachChild(node,inspectAssignments);
+  }
+  for (const source of projectFiles) inspectAssignments(source);
+  const builtinEvalFile=fs.realpathSync(path.join(path.dirname(require.resolve('typescript')),'lib.es5.d.ts'));
+  for (const expression of directEvalCalls) {
+    const owned=declarationContext(expression);
+    let symbol=owned.checker.getSymbolAtLocation(owned.node);
+    if (symbol&&(symbol.flags&ts.SymbolFlags.Alias)) symbol=owned.checker.getAliasedSymbol(symbol);
+    const declarations=symbol&&symbol.declarations||[];
+    const builtin=declarations.some(d=>d.getSourceFile().isDeclarationFile&&fs.realpathSync(d.getSourceFile().fileName)===builtinEvalFile&&ts.isFunctionDeclaration(d)&&d.name&&d.name.text==='eval');
+    const knownLocal=declarations.length>0&&declarations.every(d=>
+      ts.isFunctionDeclaration(d)&&d.body&&!d.getSourceFile().isDeclarationFile&&
+        ((ts.isSourceFile(d.parent)&&ts.isExternalModule(d.parent))||ts.isBlock(d.parent))&&!reassignedFunctions.has(id(d))||
+      ts.isVariableDeclaration(d)&&d.initializer&&ts.isVariableDeclarationList(d.parent)&&(d.parent.flags&ts.NodeFlags.Const)&&
+        (ts.isArrowFunction(d.initializer)||ts.isFunctionExpression(d.initializer)));
+    if (!knownLocal||builtin) {
+      const file=path.resolve(expression.getSourceFile().fileName);
+      if (builtin||!dynamicScopeFiles.has(file)) dynamicScopeFiles.set(file,builtin?'TS_DIRECT_BUILTIN_EVAL':'TS_DIRECT_EVAL_IDENTITY_UNKNOWN');
+    }
+  }
+  for (const node of functionNodes) {
+    const flags=ts.getCombinedModifierFlags(node);
+    const kind=ts.isConstructorDeclaration(node)?'CONSTRUCTOR':flags&ts.ModifierFlags.Async?'ASYNC':node.asteriskToken?'GENERATOR':ts.isArrowFunction(node)||ts.isFunctionExpression(node)?'CALLABLE':ts.isGetAccessorDeclaration(node)||ts.isSetAccessorDeclaration(node)?'ACCESSOR':'DECLARED';
+    const source=location(node),captured=context.source_files&&context.source_files[source.path]===source.sha256;
+    bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:captured?1:undefined,return_ir_reason:captured?null:'RETURN_SOURCE_NOT_CAPTURED',return_body_kind:kind,return_type:valueInfo(node,true),return_binding_boundary:dynamicScopeFiles.get(path.resolve(node.getSourceFile().fileName))||null,return_dispatch:ts.isFunctionDeclaration(node)&&!dynamicScopeFiles.has(path.resolve(node.getSourceFile().fileName))&&((ts.isSourceFile(node.parent)&&ts.isExternalModule(node.parent))||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
+  }
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
+  discovery.validate();
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');
   for (const [file,before] of inputs) if(hash(fs.readFileSync(file))!==before.sha256) throw Error('MIXED_SNAPSHOT:'+before.path);
   if (request.ui_framework && request.ui_framework!=='react') diagnostics.push({code:'UNSUPPORTED_UI_FRAMEWORK',framework:request.ui_framework});
   return {...handshake(),status:diagnostics.length?'PARTIAL':'COMPLETE',context_id:context.id,
     symbols:[...symbols.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),call_sites:sites,bodies,facts,diagnostics,
-    project:{input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
+    project:{...uiProject,input_files:[...transportInputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),input_discovery:discovery.snapshot(),compiler_options:parsed.options,project_references:(parsed.projectReferences||[]).map(r=>r.path),project_graph:projectGraph,
       root_files:parsed.fileNames.map(f=>path.relative(root,f)),program_files:projectFiles.map(s=>({...fileInfo(s),root_input:rootFileSet.has(s.fileName)})),
       dependencies:[...inputs.values()].filter(i=>i.origin==='dependency')},
     coverage:{files_found:projectFiles.length,files_analyzed:projectFiles.length,methods_analyzed:bodies.length,

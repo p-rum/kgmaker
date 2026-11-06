@@ -890,6 +890,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"kgmaker {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    from .architecture_cli import register as register_architecture
+    register_architecture(sub)
     feature_cli.register(sub)
     from . import delivery_cli
     delivery_cli.register(sub)
@@ -1023,6 +1025,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    if len(sys.argv)>1 and sys.argv[1]=="architecture":
+        from .architecture_cli import run as run_architecture
+        raise SystemExit(run_architecture(sys.argv[2:]))
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()

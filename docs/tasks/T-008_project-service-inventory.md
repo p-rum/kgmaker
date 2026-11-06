@@ -2,8 +2,8 @@
 
 - Task ID: `T008`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-03
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T006](T-006_select-service-contexts.md); [T007](T-007_define-service-ownership.md).
@@ -61,3 +61,33 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T008** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+## Revize 2 — workspace-derived declaration není service source (T008-S06–S08)
+
+Výslovný stack baseline `8afabe7c5056b9ec45e04f1f8fcf3470d18f4c98`; současná
+revize je SPECIFICATION. Skutečný mixed Kafka snapshot obsahuje cross-repo
+contract soubor v derived context.source_files a dosavadní source ownership walk
+končí foreign-qualified-path chybou. T007 strict foreign-source pravidlo zůstává.
+
+- **T008-S06:** Před ownership použít společnou T006/T008 role klasifikaci
+  opřenou o přesný existující producer-owned derived kontrakt, nikoli prefix
+  či samotný SOURCE_ONLY. Původní source/compiler kontexty se nemění.
+- **T008-S07:** Kanonické derived declarations zůstanou v plném graphu/proofs
+  pro další katalogy, ale nejsou owned service source ani compiler kandidáti.
+  Unknown/malformed explicitní claim má lokalizovanou diagnostiku, ne fallback.
+  Klasifikace nevyžaduje private compiler replay; validity role je oddělená od
+  current freshness historických nevybraných captured inputs.
+- **T008-S08:** Zachovat source coverage a obyčejný legacy SOURCE_ONLY,
+  repo-qualified ownership/scope/hash kontroly, explicitní pin pravidla a nulovou
+  mutaci full graphu, workspace a posledního validního artefaktu při chybě.
+- **T008-AC07:** Veřejný full mixed/config-only Kafka snapshot projde inventory
+  bez foreign-path chyby a bez promotion derived inputů na source/compiler proof.
+- **T008-AC08:** Legacy SOURCE_ONLY a production/test roots zachovají dosavadní
+  PARTIAL/UNKNOWN i stabilní service IDs; skutečný foreign source zůstane odmítnut.
+- **T008-AC09:** Prefix/mode-only, neznámá verze/role, malformed identity, manifest
+  binding, repo/module/scope, captured hash/path a foreign selector mají konkrétní
+  fail-closed výsledek bez mutace vstupů, cache nebo store.
+
+Regrese zahrnuje T006/T008 a katalogy T010/T011/T015/T016 nad původním full
+graphem; bounded actual captured mixed snapshot je oddělen od hand-built fixture
+a config-only testů. Žádný nový compiler build, parser ani availability promotion.

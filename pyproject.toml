@@ -22,7 +22,7 @@ include-package-data = false
 
 [tool.setuptools.package-data]
 kgmaker_workers = [
-  "typescript/worker.cjs", "typescript/package.json", "typescript/package-lock.json",
+  "typescript/worker.cjs", "typescript/input_snapshot.cjs", "typescript/ui_events.cjs", "typescript/package.json", "typescript/package-lock.json",
   "typescript/node_modules/typescript/package.json",
   "typescript/node_modules/typescript/LICENSE.txt",
   "typescript/node_modules/typescript/ThirdPartyNoticeText.txt",

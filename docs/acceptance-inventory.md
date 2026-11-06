@@ -1,5 +1,50 @@
 # Inventář acceptance T001 a T002
 
+## T003-S06-W01 — Kotlin JPA use-site a access
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W01-AC01 | VERIFIED_IN_SCOPE | `tests/test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed`: actual K2 `@field:EmbeddedId`, `@get:Id`, explicit PROPERTY and implicit FIELD, actual dual-site ambiguity, mismatched explicit FIELD, aliased canonical-package/subpackage namespace negatives, nested `@AttributeOverride`, class literal, and embeddable access across unique FIELD, explicit PROPERTY and mixed containers |
+| T003-S06-W01-AC02 | VERIFIED_IN_SCOPE | Additive annotation metadata reuses graph schema v3, existing `orm_attribute`/`orm_embeddable` IDs and JPA rules `annotation-source-v4`; existing Java JPA fixture remains unchanged |
+| T003-S06-W01-AC03 | VERIFIED_IN_SCOPE | Same K2 fixture proves unknown/mismatched placement creates no persistent attribute; unresolved explicit `@Table`/`@Column` does not emit physical defaults even with matching schema; unresolved `@Access` and unproven/mixed embeddable inheritance remain UNKNOWN; `tests/test_k2_backend.py::test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph` covers strict failure without replacing the last graph |
+| T003-S06-W01-AC04 | VERIFIED_IN_SCOPE | `docs/production-analysis-progress.md`, README, `docs/compiler-inspection.md`, this matrix, and [change note 43](changes/43_kotlinJpaUseSiteAccess.md); T003-S06 remains PARTIAL |
+## T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W03-AC01 | LOCAL_VERIFIED_IN_SCOPE | Actual `test_typescript_callbacks.py`: nested barrel generic API, overloads, named/inline binding, mutable/union/any distinctions |
+| T003-S08-W03-AC02 | LOCAL_VERIFIED_IN_SCOPE | Existing protocol1/schema model reused; v3 candidate roundtrip/offline navigation, W01/provider34PASS, canonical owner/repo variants |
+| T003-S08-W03-AC03 | LOCAL_VERIFIED_IN_SCOPE | Candidate-only open-world dispatch and union bindings, explicit local limit PARTIAL, corrupted candidate preserves store |
+| T003-S08-W03-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note53](changes/53_resolveBoundedTypeScriptCallbacks.md) and [guide](typescript-callbacks.md) uvádějí actual15PASS/full582PASS10SKIP, overload navigation PARTIAL a pending CI billing |
+
+
+## T003-S06-W02 — zděděné persistence atributy
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W02-AC01 | VERIFIED_IN_SCOPE | K2 and Javac fixtures prove chain ownership, FIELD/PROPERTY IDs, overrides, and inheritance table selection; `CompilerWorkerTests.test_repository_generic_uses_exact_entity_owner_for_same_simple_names` proves derived and explicit JPQL entity/return bindings retain exact owners and do not guess missing or generic return types |
+| T003-S06-W02-AC02 | VERIFIED_IN_SCOPE | Additive `orm_attribute` metadata and `inherits_attribute` reuse graph schema v3; `test_existing_graph_loader_is_unchanged` accepts store schemas v1/v2/v3; no migration is needed |
+| T003-S06-W02-AC03 | VERIFIED_IN_SCOPE | K2 fixture rejects a foreign same-simple-name base and unresolved override without fallback; actual Javac repository regression leaves foreign derived predicates, ambiguous JPQL, missing indexed qualified returns, and generic `T` returns unresolved, while descriptor-proven return types bind only to exact owners; W01 strict-refresh fixture proves last-valid graph preservation |
+| T003-S06-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note49](changes/49_projectJpaInheritedAttributes.md) document exact K2/Javac fixtures and partial boundaries; T003-S06 remains PARTIAL |
+
+## T003-S06-W03 — ORM XML overrides
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, annotation fallback for untouched partial mappings, and owner-isolated shared mapped-superclass columns |
+| T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves standard nested `xml-mapping-metadata-complete` and `persistence-unit-defaults/access`, annotation suppression, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes`; XML freshness replay binds selected paths, content and target identities |
+| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, namespace reset, unsupported encoding, bounded input, UTF-8/UTF-16 DTD/entity rejection, unsupported mapping constructs and offline stale replay for changed/appeared/deleted/retargeted inputs; unsupported targets remain UNKNOWN without annotation physical fallback |
+| T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note65](changes/65_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
+## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
+
+| ID | Stav | Evidence |
+|---|---|---|
+| T003-S08-W02-AC01 | LOCAL_VERIFIED_IN_SCOPE | `test_tsconfig_freshness.py`: actual effective extends/paths/exclude, selected A/B freshness, positive/negative/discovery/lockfile changes |
+| T003-S08-W02-AC02 | LOCAL_VERIFIED_IN_SCOPE | Graph v1/v2/v3 capture roundtrip, conservative legacy fallback a stable selector replacement; protocol1 |
+| T003-S08-W02-AC03 | LOCAL_VERIFIED_IN_SCOPE | Mixed preflight/analysis, malformed/future capture před IO, unavailable helper před procesem, hash-bound helper a zachování store |
+| T003-S08-W02-AC04 | LOCAL_VERIFIED_IN_SCOPE / CI_PENDING | [Note45](changes/45_scopeTypeScriptConfigFreshness.md) a [freshness guide](typescript-freshness.md) uvádějí final70PASS focus a567PASS/10SKIP full; CI billing/quota stále blokuje merge acceptance |
+
+
 ## T003-S08-W01 — project references
 
 | ID | Stav | Přímý test / podporovaná matice |
@@ -19,8 +64,8 @@ Další W01 integration regrese: `test_new_alias_dependency_after_preflight_cann
 odmítá změnu úplného compiler input setu mezi fázemi bez store mutace;
 `test_legacy_typescript_selection_is_replaced_without_duplicate_contexts`
 ověřuje skutečné worker snapshoty pro původní klíč, chybějící klíč a dočasný
-K2-era TS digest. W02 config-scoped freshness a W03 callback/generic rozsah
-zůstávají samostatné, nedokončené úkoly.
+K2-era TS digest. W02 config-scoped freshness má samostatný stav výše; W03
+callback/generic rozsah zůstává samostatný nedokončený úkol.
 
 ## T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE
 
@@ -85,6 +130,17 @@ test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly sk
 | T008-AC04 invalid snapshot leaves inputs and checkout unchanged | PASS | `test_ac04_invalid_snapshot_fails_without_mutating_workspace_or_graph` | compares manifest, source file, workspace and graph bytes/state |
 | T008-AC05 scope, selected context, evidence and unresolved boundaries are preserved | PASS | `test_ac05_context_and_provenance_are_preserved_and_not_upgraded`; `test_source_only_context_remains_partial_and_reports_unknown_module_coverage`; `test_actual_workspace_source_only_snapshot_projects_declared_root_without_module`; `test_actual_source_only_snapshot_separates_production_and_test_within_repo`; `test_ambiguous_compiler_variants_remain_unknown_until_explicitly_selected`; `test_workspace_alias_requalifies_default_local_compiler_context` | actual snapshot root ownership and same-repository scope separation, T006 selection, SOURCE_ONLY partial status and repo alias behavior retained |
 | T008-AC06 implementation, tests, documentation and Czech change note | PASS | README, architecture, this inventory and `docs/changes/41_projectServiceInventory.md` | focused and integrated results are recorded in the change note |
+
+## T009 — propagace evidence a coverage
+
+| Acceptance | Stav | Přímý test / kontrakt |
+|---|---|---|
+| T009-AC01 evidence kind is not upgraded; legacy defaults remain unresolved/unknown | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac01_syntax_candidate_stays_syntax_candidate_and_legacy_defaults_do_not_upgrade`; `tests/test_t005_add_view_model.py::test_t009_additive_fields_validate_against_public_view_schema` |
+| T009-AC02 mixed support, contradiction and unknown refs remain visible; incomplete work stays PARTIAL | PASS | `test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics`; `test_explicit_unknown_polarity_cannot_be_relabelled_by_view_or_aggregation` |
+| T009-AC03 empty unanalysed input is UNKNOWN with zero counts | PASS | `tests/test_t009_propagate_view_evidence.py::test_ac03_empty_unanalyzed_input_is_unknown_with_zero_counts` |
+| T009-AC04 invalid inputs leave caller data unchanged | PASS | `test_ac04_invalid_claim_does_not_mutate_inputs`; `test_ac04_malformed_scope_inputs_return_structured_errors_without_mutation` |
+| T009-AC05 selected scope/context remains isolated and unsupported polarity UNKNOWN | PASS | `test_ac05_scope_context_exclusions_and_invalid_polarity_stay_unknown`; T008 production/test workspace regressions |
+| T009-AC06 implementation, test results, docs and bounded upstream limitation are recorded | PARTIAL | README, `docs/architecture.md`, this matrix, status matrix, and [change note 64](changes/64_propagateViewEvidence.md); current targeted72 PASS; final full466 PASS/109 prerequisite SKIP after all independent review guards; earlier455/109 is intermediate |
 
 ## T006 — výběr kontextů pro více služeb
 
@@ -234,12 +290,12 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-MV-02 | VERIFIED_IN_SCOPE | `test_build_runner.py::test_mv02_real_reactor_output_precedes_stale_repository_jar` — skutečný Maven/JDK/exporter | Širší packaging/variant/toolchain matrix patří do S03/S11 |
 | T002-MV-01 / T003-S03-W01 / T003-S03-W04 | VERIFIED_IN_SCOPE | Testy explicitního Java home ověřují content-bound JDK selection/fingerprint, skutečné `JAVA_HOME`, změnu/chybění a mismatch bez fresh outputs. `test_kotlin_build_options.py` ověřuje reálný Maven 2.1.10 a Gradle 8.13 export task/execution-level Kotlin language/API/JVM targetu a flags; implicitní nevyřešené defaults dávají PARTIAL, skutečný Maven `all-open` plugin je SHA-256-bound a jeho výměna se odmítá před store zápisem. Změna flagu mění pouze dotčenou context identity; malformed options jsou odmítnuty bez implicitního procesu. Reactor fixture dále ověřuje `maven-session-2`, inherited profil, parent/BOM, dependency model a generated source až po JVM symbol `origin=generated` | Gradle custom varianty/included builds a cross-repo artefakty zůstávají v T003-S03; zachycené options nerozšiřují K1 podporu |
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body/coroutine mapping a širší ručně anotovaný corpus |
-| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v4`; bounded selector testy níže | Selectors mimo bounded literal subset, registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
+| T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v5`; bounded selector/registration testy níže | Selectors mimo bounded literal subset, registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access, EmbeddedId, AttributeOverride, owning/inverse association, derived paths, compiler-owned JPQL/native query, parameter/projection a named-query reference; JPA rules `annotation-source-v4` | Kotlin use-site/access, XML override priorita, inheritance attributes, dvě datasource se stejnou tabulkou, širší query grammar/dynamic builders a úplná schema matice |
+| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access and JPA bindings; `test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed` — actual K2 `@field:`/`@get:`, explicit/mismatched `@Access`, Kotlin `EmbeddedId`, unqualified ambiguity and embeddable column; rules `annotation-source-v4` | XML override priority, inheritance attributes, two data sources with same table, broader query grammar/dynamic builders, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc
@@ -318,6 +374,17 @@ After actual Maven fixture preparation, final strict integrated run **246 PASS, 
 | AC04–AC05 | VERIFIED_IN_SCOPE | `test_confluence_configuration.py`, capability dokumentace a change note 38; focused 28 PASS, full 281 PASS / 23 toolchain SKIP |
 
 
+## T003-S09-W03 — Thymeleaf fragment provenance
+
+| Acceptance | Stav | Konkrétní evidence | Výsledek |
+|---|---|---|---|
+| T003-S09-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_templates.py::test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions`, `test_nested_fragment_arguments_follow_exact_scoped_variables`; existing `test_thymeleaf_literal_binding_and_pdf_boundary`; SOURCE_ONLY `SYNTAX_CANDIDATE` edges | full core: 475 PASS / 114 SKIP; focused: 65 PASS; no expression/render execution |
+| T003-S09-W03-AC02 | VERIFIED_IN_SCOPE | Existing literal template variable IDs and PDF boundary remain covered; graph/store schema unchanged; `thymeleaf-bindings-2` capability marker | existing tests plus focused template suite |
+| T003-S09-W03-AC03 | VERIFIED_IN_SCOPE | `test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges`, `test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges`, `test_conditional_and_unsupported_expressions_remain_partial_unknown`, and `test_loop_and_local_alias_scopes_do_not_bind_model_variables`; input graph immutability | full core: 475 PASS / 114 SKIP |
+| T003-S09-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler-inspection capability, this matrix, progress status, and [change note55](changes/55_expandThymeleafFragments.md) bound the subset; T003-S09/AC09 remain PARTIAL | `kgmaker check` and `git diff --check` after final scan; full-suite skips and boundaries in change note55 |
+
+Only unique same-scope static fragment targets with exact arity are linked. Conditions are not evaluated, unsupported expressions remain UNKNOWN, and no MVC-handler/runtime claim is made.
+
 ## T003-S09-W02 — diagnostika binárních XLS
 
 Rozsah `xls-unsupported-1`, `feature-inventory-5`, Python 3.12, bez externího
@@ -330,6 +397,14 @@ parseru nebo runtime. [Change note 34](changes/34_diagnoseBinaryXls.md).
 | T003-S09-W02-AC03 | VERIFIED_IN_SCOPE | malformed/compound-container/direct-extractor testy; UNKNOWN audit, nulová mutace store, scope a repo-qualified workspace gaps; oversized hash/freshness/cache regressions v `test_binary_xls.py` | finální focused 100 PASS |
 | T003-S09-W02-AC04 | VERIFIED_IN_SCOPE | README, capability docs, tato tabulka, stavová matice a change note 34 vymezují přesný rozsah | S09/AC09 zůstávají PARTIAL |
 
+## T003-S04-W04 — Dependency dispatch hierarchy
+
+| Acceptance | Evidence within scope | Test/fixture |
+|---|---|---|
+| AC01 | Declared API target separate from realm-specific candidate implementations; missing hierarchy explains incomplete result | `test_source_interface_call_finds_two_dependency_implementation_realms`, `test_missing_parent_excludes_unprovable_implementation`, actual JDK21 JARs |
+| AC02 | Additive protocol-v1 provenance; existing graph/store schema v1/v2/v3 retained | existing model/store/protocol suites, compiler integration |
+| AC03 | Ordered shadow, generic/intersection fail-closed, physical/source realm separation, exact static ABI conflict, JDK parent-first shadow, runtime-effective MR physical lookup, unresolved declared API PARTIAL, missing/corrupt/bounded negatives, static/private/final/reference boundaries, zero store mutation | `tests/test_dependency_dispatch.py`, actual K1/K2 2.1.10 |
+| AC04 | Scoped production matrix and truthful checks | [change44](changes/44_addDependencyDispatchHierarchy.md), S04 remains PARTIAL |
 ## T003-S09-W01 — přesné tokeny a XLSX reference boundaries
 
 `xlsx-offline-3`; oprava již existujícího offline adaptéru z change note5,
@@ -392,6 +467,343 @@ matrix has 36 actual cases; historical410/9 is superseded for final ABI validati
 Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 36 actual mapping cases, focused8 PASS; actual Windows smoke is a remote CI gate.
 
+## T003-S07-W01 — Argument → parameter binding
+
+| Acceptance | Implemented scope | Concrete evidence |
+|---|---|---|
+| AC01 | Attributed call-site argument → declared formal mapping with context/transformation; candidate execution not inferred | `tests/test_argument_parameter_flow.py`: actual Javac/K1/TS overload, named/default and vararg fixtures; virtual contract negative |
+| AC02 | Additive mapping version1; existing worker protocol v1 and graph/store v1/v2/v3 retained; legacy unversioned facts readable | graph/process roundtrip, legacy tests and existing model/store suites |
+| AC03 | Unknown K2/ASM bindings, compiler-error recovery, unresolved/reference boundaries, malformed/ambiguous and zero store mutation | actual negative compiler fixtures, atomic last-valid-store fixture, workspace qualification and candidate/legacy impact tests |
+| AC04 | Bounded versioned matrix; S07/T003 remain PARTIAL | [change52](changes/52_bindArgumentParameterFlow.md), [compiler matrix](compiler-inspection.md#argument-to-parameter-bindings); final checks recorded after execution |
+
+## T003-S08-W04 — versioned bounded React events
+
+| AC | Actual check | Scope |
+|---|---|---|
+| AC01 | `test_ui_events.py::test_intrinsic_and_verified_wrapper_have_library_bound_event_evidence` | pinned versions/declaration/package hashes, direct and sole-return forwarder |
+| AC02 | existing graph v1/v2/v3 and worker installation tests; legacy context equality | additive evidence, same protocol/store |
+| AC03 | changed library, lexical writes/member aliases/eval/factory overwrite/duplicate bindings and conditional/spread/fake/missing-package negatives; offline old-rule/store snapshots | no stronger handler/runtime/data claims |
+| AC04 | change69 and supported adapter matrix | S08 broader wrappers/versions remain PARTIAL |
+
+Current rule4 results are recorded in change69; GH CI is optional under T045 revision2, while publication and independent exact-pair review remain required.
+
+T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;
+full624 PASS/10 SKIP762.95s. Historical rule3 proof: final focus36 PASS/30 DESELECTED
+266.43s; prepared strict full727 PASS/10 SKIP791.26s, all66 UI cases, zero failures/errors. onChange input/select/textarea and form onSubmit are actual positives;
+source/runtime availability remains UNKNOWN. Current rule4: full785 PASS10 SKIP and current-parent focused189 PASS0 SKIP; exact manifests and limits are in change69.
+
+## T003-S04-W03 — bounded coroutine source mapping
+
+| AC | Evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_suspend_source_sites_keep_boundaries`, `test_actual_k1_cfg_preserves_suspend_calls_and_resume_boundary`, `test_real_continuation_maps_declaration_without_mapping_state_instructions` | actual suspend/launch/async/await, multiple suspension points, K1/K2 debug/no-debug; K2 CFG remains unavailable |
+| AC02 | Existing v1/v2/v3 graph/store loader suite; additive worker metadata | unchanged identities and persistence formats |
+| AC03 | `test_missing_sources_never_map_continuation`, `test_foreign_continuation_realm_never_claims_source`, metadata-negative and ordinary-name tests | no inferred scheduler/target/source instruction locator; byte snapshots unchanged |
+| AC04 | change51, pinned Kotlin2.1.10/coroutines SHA fixture | bounded static evidence; whole S04/T003 remains PARTIAL |
+
+## T003-S04-W05 — exact hand-labelled JVM corpus
+
+| AC | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_actual_inventory_and_unsupported_identity_match_hand_annotations`, `tests/fixtures/jvm-golden/expected.json` | five scenarios × pinned K1/K2; counts, exact owner/descriptor/source locators and unsupported identities |
+| AC02 | Existing graph v1/v2/v3 loader tests + corpus graph roundtrip | no model/store/protocol change |
+| AC03 | `test_inventory_rejects_missing_extra_retargeted_and_stronger_observations`, reflection/reference/CFG and offline/store snapshots | no fabricated target, source line, runtime execution or availability |
+| AC04 | change62 and corpus README version/support matrix | explicit PR35+37 stack; whole S04/T003 remains PARTIAL |
+
+Validation is recorded in change62. Resolved source declarations, unsupported CFG
+results and runtime UNKNOWN are distinct; these counts are not production precision.
+
+Prepared strict golden full on ed5ed7c: **646 PASS, 10 SKIP /991.96s**, including21 corpus cases; no failures/setup errors. Historical environment-failed run remains in change62.
+
+## T003-S05-W02 — registrars a FactoryBean produkty
+
+Podporovaný Java/compiler subset, Spring6.2.2, rules `annotation-source-v5`.
+Skutečná pinned fixture a kontroly jsou v `tests/test_spring_registrations.py`;
+[change note47](changes/47_declareSpringRegistrations.md).
+
+| ID | Stav | Konkrétní evidence a hranice |
+|---|---|---|
+| T003-S05-W02-AC01 | VERIFIED_IN_SCOPE | `test_literal_registrar_preserves_origin_and_import_condition`, `test_factory_object_and_literal_product_are_distinct`: actual registry/FactoryBean APIs, inherited owner/generic, literal source facts, import conditions, distinct &object/product; custom body/overload/condition a abstract factory UNKNOWN |
+| T003-S05-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_registration_facts_remain_readable_without_promotion`: graph/store v1/v2/v3 a additive protocol1; TS ordinary/React context snapshots zůstávají současnému main stejné |
+| T003-S05-W02-AC03 | VERIFIED_IN_SCOPE | namespace/decoy receiver a129-call budget, `test_registration_profiles_do_not_cross_context`, malformed schema/owner/context/return, strict/timeout nulová store mutace a offline refresh; `test_registrar_and_factory_static_beans_are_not_data_availability` zachovává UNKNOWN/bez business missing verdictu |
+| T003-S05-W02-AC04 | VERIFIED_IN_SCOPE | README, compiler capability, tato matice, production progress a note47 vymezují bounded literal scope a actual toolchain evidence; celý S05/AC05 zůstává PARTIAL |
+## T015 — database resource projection
+
+| Acceptance | Concrete evidence | Scope |
+|---|---|---|
+| AC01 | `test_two_actual_datasources_keep_distinct_resources_and_table_drilldown`, `test_identity_ignores_table_details_and_input_order` | Actual workspace/Flyway replay; two explicit realms, stable IDs and deterministic serialization |
+| AC02 | `test_only_existing_context_bound_read_write_is_projected`, `test_entity_mapping_is_only_a_dependency_not_read_or_write`, `test_plain_connection_configuration_never_creates_database_access` | Existing source/context/evidence-bound facts only; no query inference |
+| AC03 | Migration-only/default-DB/DTO cases | MIGRATION_DERIVED attribute; deployment/data availability UNKNOWN |
+| AC04 | `test_stale_migration_fails_without_mutating_last_valid_artifact`, invalid schema and malformed-evidence regressions | Pure reads; unchanged workspace, graph, coverage and last artifact; subprocess forbidden |
+| AC05 | Foreign/test/stale/missing/conflicting realm and evidence cases; explicit conflict buckets; unknown file scope; upstream truncation | No confidence, freshness, polarity or scope upgrade; full S06 remains PARTIAL |
+| AC06 | [Change note68](changes/68_projectDataResources.md) | Public36 cases; broader focused115 PASS/6.79s; final full tracked there |
+
+## T003-S07-W02 — Return → consumer binding
+
+| AC | Bounded delivered proof | Evidence |
+|---|---|---|
+| AC01 | Compiler-owned ranges/direction, branch alternatives, distinct assignments, nullable/chained consumers | `tests/test_return_consumer_flow.py`, `fixtures/return-consumer` actual Javac/K1/TS |
+| AC02 | Additive protocol1/graph1/2/3; stale explicit rule stays offline | Legacy and stale-rule tests in the same module |
+| AC03 | Opaque/open/recursive/callable/void/any/async/custom-projection bodies remain UNKNOWN; malformed input does not mutate store | Actual worker negatives and malformed-IR/zero-store tests |
+| AC04 | `return-consumer-1` matrix; K2 Kotlin missing source CFG remains UNKNOWN; S07/T003 PARTIAL | [change66](changes/66_bindReturnConsumerFlow.md), [compiler matrix](compiler-inspection.md#return--consumer-bindings); full result pending |
+
+## T023 — explicit process model
+
+| Acceptance | Stav | Konkrétní důkaz | Hranice |
+|---|---|---|---|
+| T023-AC01 | VERIFIED_IN_SCOPE | `test_ac01_diamond_loop_exception_and_async_roundtrip_preserve_exact_ids`, `test_documented_fixture_loads_on_public_api_with_loop_and_no_guessed_branch_join` | Explicitní JSON struktura, nikoli discovery/observed execution |
+| T023-AC02 | VERIFIED_IN_SCOPE | `test_ac02_approved_czech_label_never_changes_technical_truth` | Review stav je dodané metadata, ne nové approval rozhodnutí |
+| T023-AC03 | VERIFIED_IN_SCOPE | `test_ac03_annotation_technical_injection_is_rejected` | Pouze allowlisted semantic overlay |
+| T023-AC04 | VERIFIED_IN_SCOPE | invalidní revision/target/evidence input před/po; `test_pure_parse_and_serialization_perform_no_file_network_or_process_io` | Žádný model apply/store API |
+| T023-AC05 | VERIFIED_IN_SCOPE | missing/stale/foreign/unused proof, truncation a kind/status negatives v `test_t023_define_business_process_model.py` | PARTIAL/UNKNOWN a no evidence upgrade |
+| T023-AC06 | VERIFIED_IN_SCOPE | [note70](changes/70_defineBusinessProcessModel.md), [capability](process-model.md), schema/fixture; focused130 PASS; frozen full729 PASS/10 SKIP,515 hashes beze změny | Lokální model proof; publikace, exact-pair review a fresh CI jsou samostatné release gates |
+
+## T010 — HTTP provider inventory (bounded PARTIAL)
+
+| AC | Local evidence | Boundary |
+|---|---|---|
+| T010-AC01 | `test_two_services_in_same_repository_do_not_share_global_endpoint_identity` and two-repository `/orders` test | explicit service ownership; no inferred service realm |
+| T010-AC02 | `test_contract_revisions_stay_separate_without_automatic_handler_binding` and contract-only test | contracts never prove handler, deployment or runtime |
+| T010-AC03 | `test_actual_spring_class_method_mirrors_preserve_handlers_and_route_case` actual JDK21/K1/Spring6.2.2; dynamic-prefix test | exact annotation mirrors; unresolved/custom/inherited mappings remain UNKNOWN |
+| T010-AC04 | malformed metadata/hash/edge tests and no-process/network/file/store mutation checks | pure projection only; source/declaration mismatches fail closed |
+| T010-AC05 | explicit test scope, foreign context, missing ownership, legacy metadata and runtime-label/unbound-edge negatives | source evidence stays candidate; imported runtime binding unsupported UNKNOWN |
+| T010-AC06 | README, architecture guide, status matrix and [change67](changes/67_catalogHttpProviders.md) |145 focused +strict596 PASS/10optional SKIP; main integration199 PASS; exact review/remote CI pending (billing blocked) |
+
+Actual compiler is a static compiler fixture, not a real application runtime test.
+Runtime acceptance NOT_RUN; no data availability or overall T004 completion claim.
+
+## T003-S05-W03 — condition matrix
+
+| AC | Test and supported proof |
+|---|---|
+| AC01 | `test_actual_pinned_conditions_and_negated_profile_injection`; `test_actual_variant_input_and_classpath_freshness_are_isolated`: labelled real annotations, explicit variant inputs, independently stale config/JAR with unchanged second context/store |
+| AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; existing graph v1/v2/v3 tests, unchanged schema |
+| AC03 | `test_unresolved_compiler_class_literal_never_proves_presence_or_absence`, typed malformed/unknown cases and `test_required_pinned_apis_missing_or_changed_fail_before_process`; no fabricated class absence/activation |
+| AC04 | Actual pinned Spring6.2.2/Boot3.4.2 fixture and declared grammar/property/class scope; [change note50](changes/50_expandSpringConditions.md) records exact outcomes |
+
+
+### T003-S07-W04 — bounded Kafka configuration identity
+
+- AC01: `test_exact_cluster_topic_contract_release_and_profile_identity` uses
+  actual base/blue properties and JSON contract: two same-topic clusters never
+  match; distinct release never matches. Dynamic/cyclic/partial values and
+  unsupported profile/config/contract remain UNKNOWN. No transport proof.
+- AC02: optional workspace schema1 block; old HTTP services default unchanged;
+  `test_config_and_contract_hash_changes_invalidate_bindings_without_source_mutation`
+  reads graph/store v1/v2/v3. Legacy syntax nodes remain distinct.
+- AC03: structural/path/ownership and context ambiguity fail closed; missing
+  evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
+  publish no cache/source/store changes. Actual K1/K2 captured context test verifies
+  precedence/freshness without implicit repair. Password sentinel is absent from
+  graph; offline source-only checks allow only existing Git baseline reads.
+- AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
+  compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
+
+
+S07-W04 AC03 privacy correction: `test_sensitive_property_reference_never_exports_topic`,
+`test_public_workspace_captured_property_privacy_and_freshness` and
+`test_binding_cluster_alias_reference_privacy` exercise the public snapshot API
+for direct/transitive property references. `kafka-binding-2` returns UNKNOWN and
+no match before reading sensitive aliases; the full public graph redacts captured
+sensitive values while original input bytes/cache/context hashes remain valid.
+`test_public_kafka_projection_preserves_non_jvm_selection_identity` guards the
+postvalidation projection boundary. Prior613 full PASS does not cover this later
+review regression; note54 records separate current evidence.
+## T024 — bounded trigger inventory
+
+AC01/02: explicit and actual K1 HTTP/Kafka/scheduler candidates with production/test
+separation. AC03/05: unsupported scheduler/K2 annotation capture, missing CFG,
+canonical source/symbol/edge/proof/hash/scope negatives stay PARTIAL/UNKNOWN.
+AC04: actual offline projection forbids subprocess and compares inputs/captured
+checkout bytes; malformed inputs preserve last-valid artifact. AC06: capability
+and note71 supplied; strict frozen full812PASS/10optionalSKIP is recorded in note71. Current-main
+integration236PASS is recorded; final independent review/merge remain pending (PR59).
+Focused41PASS and current-base199PASS (actual K1/K2 included), no runtime observation.
+
+## T003-S06-W04 — Explicit persistence realms (VERIFIED_IN_SCOPE)
+
+`tests/test_persistence_realms.py` covers two databases sharing stream main with
+different actual offline migrations/targets, exact duplicate-pair rejection,
+shared migration-path isolation, delimiter/percent IDs, quoted-dot SQL component
+collisions and metadata tamper. Actual K1/K2 contexts over the same entity retain
+separate native/JPQL scope, idempotent local reprojection and selected T015 access.
+Two actual persistence units bind the same entity to their own DB/schema/table
+with XML provenance; ambiguous PU produces no physical claim and preserves store.
+The new current-JPA layer rejects missing/partial/foreign realm proof. Legacy
+source-only regex fields remain readable, with no new strong physical link.
+
+Final strict full: **1348 PASS, 10 SKIP in1583.75s**, mandatory workers/K2/Spring/
+HTTP flags, XML1358 tests/0failures/0errors. Exact HEADb75370d and all623 frozen
+input hashes remained unchanged. Earlier182PASS+setupERROR is a partial result,
+not the final full. See change note74 and persistent validation receipts.
+
+Supported physical bindings are non-renamed replay tables/columns. Valid renamed
+objects with stable creation IDs currently remain UNKNOWN; S06-W08 supplies the
+creation-identity lifecycle follow-up. Broader provider, grammar, schema lifecycle,
+deployment and populated-data availability are not proved. S06 remains PARTIAL.
+
+## T003-S07-W06 — HTTP client intent, omezený compiler subset
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| AC01 | VERIFIED_IN_SCOPE | `test_http_client_execution.py`: actual Spring6.2.2/Reactor3.7.2 Java v K1/K2; cold publisher vs same-origin terminal, RestClient retrieve/body/exchange; explicit property source/profile/SHA provenance |
+| AC02 | VERIFIED_IN_SCOPE | `test_old_graph_store_versions_remain_readable` schema1/2/3; legacy coverage UNKNOWN; additive IR optional, fresh HTTP version/input fingerprint validated |
+| AC03 | VERIFIED_IN_SCOPE | Escaped/captured/stored/returned/unknown operators, unrelated terminals, reference and local fake negatives; URI credentials removed; malformed IR/config snapshot reject before store write |
+| AC04 | PARTIAL_MILESTONE | [Supported matrix](compiler-inspection.md#http-client-intent), [note63](changes/63_classifyHttpClientExecution.md); Kotlin missing bindings UNKNOWN, no runtime HTTP/availability or complete S07/T003 claim |
+
+Lokální přesné výsledky a explicitní neprovedené remote gates jsou v note56.
+Remote Actions billing je BLOCKED; lokální evidence nenahrazuje povinné CI.
+
+S07-W06 review follow-up (rule2): actual K1/K2 throw/ternary/update/resource negatives, URI callback and Feign path-prefix boundaries, unsupported properties override, embedded scheme-relative URI privacy, and stale-v1/no-process/no-mutation proof are covered by `tests/test_http_client_execution.py`. Exact final checks are in change63; runtime HTTP/data availability remains UNKNOWN.
+
+## T025 — local technical process path
+
+| Acceptance | Bounded evidence | Remaining gate |
+|---|---|---|
+| AC01 | Public diamond and actual Javac/K1: no left↔right path, nested bodies and returns_to | Source closure/full/final review |
+| AC02 | Recursion/dispatch/depth/async boundaries retain original call-site; actual target/complete/receiver mutations cannot expand another body | Bounded source CFG only; no runtime claim |
+| AC03 | Existing flow.process root overflow + typed output budgets1/2/3 preserve explicit node-limit boundary | No unbounded root copy |
+| AC04 | Input bytes and last-valid artifact unchanged for malformed/foreign proof; actual offline path forbids subprocess/network | Pure API writes nothing |
+| AC05 | Canonical declaration, source file scope/hash, selected context and both call-site edges/proofs; missing CFG/unsupported legacy remains UNKNOWN/PARTIAL | Current physical snapshots are caller responsibility |
+| AC06 | [Capability](process-paths.md), [note73](changes/73_buildLocalProcessPath.md), README/status updates | T024 PR59 dependency, required full and release pending |
+
+## T011 — typed HTTP consumer inventory
+
+AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
+WebClient occurrences, AC04 offline/input preservation, AC05 malformed source/
+edge/scope/owner/SHA and selected stale siblings are in
+`tests/test_t011_catalog_http_consumers.py`. AC06 documentation and actual outcome
+are in [change76](changes/76_catalogHttpConsumers.md). Strict full1373PASS/10optionalSKIP; current-pair review pending; runtime NOT_RUN.
+
+## T025 revision2 — compiler local operation evidence (candidate)
+
+T025-AC07–09 require the actual typed local-literal chain in both JVM backends,
+unsupported/error/legacy cases, exact IR/source/context/CFG proof mutation guards,
+finally-clone and workspace preservation, and unresolved control transitions.
+`tests/test_local_operation_proofs.py` contains these candidate checks. Executed:
+pre-feature actual RED1FAIL0.73s, explicit protocol11PASS and legacy/model/protocol
+120PASS2actualDESELECTED4.44s. JavaFrontend source-only javac compilation passed;
+both fresh workers built successfully; initial matrix36PASS1ERROR is preserved.
+After origin and proof-retention corrections,39purePASS and bounded actual K1
+workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
+T026 or whole T025/T003/T004 completion is implied by this row.
+
+## T026 — lossless business-step projection (candidate)
+
+| AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
+|---|---|---|
+| AC01 | actual Javac literal-local collapse; ordered roundtrip; parallel edges; finally clones and unused exit | Actual K1/K2; final full 1566PASS/10SKIP v 1532.43s |
+| AC02 | disconnected equal DTO; diamond remains separate | 95 T026 cases in strict full |
+| AC03 | field/call/finally actual boundaries; decisions/loops/exception/unknown boundary matrix | Strict full includes actual and pure cases |
+| AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
+| AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
+| AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+
+## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
+
+Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)
+is integrated; final independent exact-pair review/ready/merge remain separate.
+
+| Acceptance | Supported proof / tests | Actual evidence |
+|---|---|---|
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
+| W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
+| W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
+
+Full1591PASS/10optionalSKIP1646.65s is attributed only to ced9717; current
+Return174PASS/0SKIP248.87s only to67b8341. No runtime/data/deployment proof.
+Unsupported XML effective constraints, naming/converters/composite/defaulted FK
+remain UNKNOWN; no whole S06/T003/T004 completion claim.
+
+### T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)
+
+AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
+two service realms, method/sibling separation, deterministic order and duplicate
+records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
+### T003-S07-W04 revize2 — draft code/group acceptance
+
+`tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
+backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
+backend nemá method annotations). Replay mutation testy mění annotation mirrors,
+realm, range a compiler witness; config-only/SOURCE_ONLY nejsou code proof.
+Schema2 public snapshot ověřuje explicitní původní code refs, group property
+provenance, subscription a private-property redakci; cizí ID/context/SHA se
+nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
+a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
+změny; source composition má nezávislé root APPROVE. Finální metadata-head review
+a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
+metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+
+## T006/T008 revision2 — derived context role boundary
+
+T006-AC07–08 and T008-AC07–09: `tests/test_context_roles.py` covers full mixed and
+config-only public snapshots, T010/T011/T015/trigger consumers, historical captured
+hashes versus role freshness, malformed/unknown version/identity/input/realm,
+source/compiler pins, original strict foreign paths and immutable full inputs.
+The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKIP
+(9actual deselected). A separate pure replay of the actual current-parent Kafka
+capture retained2CURRENT compiler contexts across5projections with no process,
+network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
+## T003-S07-W05 — retry/DLT policy draft
+
+AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
+Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.
+Historical initial6PASS and pure-only replays remain distinct in note87. Current
+source has independent focus closure; strict full647 passed1908/10; current-parent pure23PASS,
+final exact-pair review/ready pending. No runtime/delivery or whole-S07 completion follows.
+
+
+## T012 — Kafka interface catalogue (verified bounded scope)
+
+T012-AC01–AC05 map to `tests/test_t012_catalog_kafka_interfaces.py`: separate realms
+and consumer groups, canonical send versus config-only/NewTopic, immutable public
+and private proof inputs, exact qualified Node/source/edge tuple guards, selected
+and historical contexts, regex and Kotlin K2 annotation UNKNOWN. All105 own IDs
+PASS in combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selection
+10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
+preserved failures/limits are in note81. Main/Common dependencies merged; exact
+finalpair review/merge separate. No standalone parent full or transport observation.
+
+
+## T013 — explicit versioned contract attachments (verified bounded scope)
+
+T013-AC01 content revisions/stable original IDs, AC02 no DTO-name compatibility,
+AC03 generated-origin binding preserved as stale after contract changes, AC04
+bounded read-only/immutable capture/attachment and AC05 selected scope/context,
+ambiguous operations and external/malformed pointers map to
+`tests/test_t013_attach_interface_contracts.py` (43 PASS) and actual K1/K2 captured
+Kafka revisions `tests/test_t013_captured_kafka_contracts.py` (2 PASS). All45 own IDs
+PASS in ONE combined descendant2df55 strict full2587PASS10exactoptionalSKIP2042.93s;
+ALL2116 parent IDs in that XML are2106PASS10SKIP, not a standalone parent full.
+Corrected current-composition focus444PASS0SKIP370.90s and pure59PASS3.03s retained.
+AC06 [change85](changes/85_attachInterfaceContracts.md) explains actual capture,
+payload-type UNKNOWN, stricter invalid-input helper limits and preserved failures.
+T012 dependency merged; independent finalpair review/ready/merge separate.
+
+## T030 — pure process-label packet (candidate)
+
+| AC | Concrete public proof | Current result |
+|---|---|---|
+| AC01 | exact existing targets/origins/proofs, order/generation invariance, changed content/doc/ordered collapse hash | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC02 | tiny mandatory overflow, complete omissions, UTF8, exact adjacent char/token cost and hard-envelope failure | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC03 | no I/O/process/network/feature.prepare; raw label/config/proof/doc/error sentinel and ref-only provenance | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC04 | success/error deep equality; cyclic/shared/huge preflight before model copy; no last-artifact write | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC05 | captured structured conflicts, selection scope/context rejection, unsupported/unresolved/truncated preservation | 153purePASS; all47T030 actualPASS in descendant2df55 |
+| AC06 | spec Rev2, Python API/capability docs, note90, descendant proof | exact final review/PR pending |
+
+No model call, semantic approval, T031 apply or T034 CLI is supplied by this row.
+
+T030 full support is ONE actual descendant2df55 run2587PASS10allowedSKIP, not a
+standalone parent full. ALL1990parent IDs classified1980PASS10allowedSKIP; all47own
+PASS. Original32AST/35globalbindings+byteprefix and whole testfile exact; see
+[bounded proof](validation/t030-descendant-proof.json). GHCI optional/unverified.
+
+Current main2a (Common/T012/T013 merged) requires all2116current-main parent
+identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
+OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
+not a new parent collection/full/test execution. Original47own cases remain PASS.
 ## T046 — Offline delivery workflow
 
 | Požadavek / acceptance | Implementace | Ověření / scénář |
@@ -412,3 +824,260 @@ T046 revize 2 doplňuje protipříklady review: delayed creator + immutable hist
 record/direct-save gate + all trace CAS routes (test_delivery) a recursive typed
 enum equality (test_synthetic_data). Každý scénář před opravou reprodukoval chybu;
 nové běhy nejsou zaměňovány s původními 198 testy.
+
+
+T046 integrace 2026-11-05 nad main9eec41a: 52 cílených pytest PASS; dostupná celá sada 1152 PASS /1045 SKIP, bez failures. Skips nedokládají nepřipravené toolchainy. Přesné limity jsou v change61; GH CI je podle T045 revize 2 doplňující evidence. Nové exact-pair review není nahrazeno historickým review.
+
+## T003-S07-W07 — explicit remote mapping draft
+
+| AC | Current evidence | Pending |
+|---|---|---|
+| AC01 | Actual HTTP Java/Kafka K1/K2 mapping, explicit v1/v2 pairing, ambiguity and Kotlin HTTP UNKNOWN;334 unique source-specific cohort PASS | Final current-parent pair |
+| AC02 | Strict optional manifest/capture version, existing workspace regressions; all1973 parent IDs covered in combined2df full | Exact refreshed composition review |
+| AC03 | Actual/public realm/operation/hash/release/ambiguity/privacy/no-I/O/transport/budget negatives;334 cohort PASS | No runtime/availability proof claimed |
+| AC04 | [contract](remote-contract-mapping.md), [note91](changes/91_planRemoteContractMapping.md); combined2df2587PASS/10approvedSKIP, W07-parent1963PASS/10SKIP | Final independent review |
+
+The full ran on combined descendant2df55ff8, not standalone W07. Historical
+failures and partial runs remain separately attributed in note91.
+
+## T031 — read-only annotation validation (final review candidate)
+
+| AC | Concrete public proof | Actual result |
+|---|---|---|
+| AC01 | Self-rehashed allowlist, stale current-process/docs/context/budgets rejection | PASS |
+| AC02 | Czech group/outcome proposals, unchanged technical subtree and fingerprints | PASS |
+| AC03 | All overlapping-field and captured documentary conflicts retained for review | PASS |
+| AC04 | NoIO/immutability/error privacy/no partial proposals/bounded structures | PASS |
+| AC05 | Forged refs/status/technical fields rejected; unsupported coverage unchanged | PASS |
+| AC06 | SpecRev2/API/docs/note92 + bounded actual proof | Final exactpair review/PR pending |
+
+ALL76owncases PASS in ONEactual descendant2df55 full2587PASS10allowedSKIP, not
+standaloneT031. Original2066parentIDs2056PASS10SKIP. Currentmain5ffe2252 +own76
+source/IDunion2328 gives2318PASS10sameSKIP fromthatXML; no new test/collection.
+Whole module/testfile exactactual; T03032AST/35globals prefix+6disjointbindings.
+See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unverified.
+
+Explicit stack T030070. Its47tests and complete original module AST/byte prefix
+are unchanged; full proof is pending, not inferred from these pure results.
+
+## T032 — explicit local semantic review (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same operation/no rewrite; historical retry cannot rewind head | PASS |
+| AC02 | Real processes+threads CAS; stale/different operation conflict | PASS |
+| AC03 | Changed explicit baseline/capture revalidation; scope isolation | PASS |
+| AC04 | Pre/postpublication failure/cancel; unchanged inputs and lastvalidJSON | PASS |
+| AC05 | Documentary namespace; conflict blocks; safe error/bounds/unsupported paths | PASS |
+| AC06 | Spec/API/docs/note94 + actual descendant proof | Final exactpairreview/PRpending |
+
+All36owncases PASS in ONEactual2df55 full2587PASS10allowedSKIP; whole module/testfile
+and currentT031 dependency exactactual. Original2102parent2092PASS10SKIP; current
+2328main+36union2364=2354PASS10sameSKIP. Derived source/IDunion, not newexecution
+orcollection. See [proof](validation/t032-descendant-proof.json). GHCIoptional/unverified.
+
+Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherited
+pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
+The separately frozen T030/T031 full is not evidence of T032 full validation.
+
+## T033 — read-only process catalog (final review candidate)
+
+| AC | Concrete public evidence | Result |
+|---|---|---|
+| AC01 | Same label distinct trigger identity; explicit multiple triggers | PASS |
+| AC02 | Candidate never approved; alias preserves every member review/label state | PASS |
+| AC03 | Missing/stale/context trigger remains inactive historical, partial absence qualified | PASS |
+| AC04 | No writes/network/process execution; immutable valid/invalid snapshots/store | PASS |
+| AC05 | Scope/context/collision/alias/caps/privacy negatives; outcomes/owner/uncertainty retained | PASS |
+| AC06 | SpecRev2/API/docs/note96 + actual proof | Finalexactpairreview/PRpending |
+
+All37owncases XMLPASS in ONEactual2df55 full2587PASS10allowedSKIP; wholemodule/
+testfile+5processdependencies exactactual. Original2139parent2129PASS10SKIP;
+currentmain2364+37source/IDunion2401=2391PASS10sameSKIP. No new run/collection.
+See [proof](validation/t033-descendant-proof.json). GHCIoptional/unverified.
+
+
+## T014 — current-parent descendant-result transfer
+
+- AC01–03: public hand-labelled HTTP/Kafka mapping, same URL/no mapping, wrong
+  release/hash/pointer, ambiguous/incomplete candidates and original refs.
+- AC04–05: input equality, changed capture/selection/graph/interface, no-I/O,
+  credential IDs, hard bounds, source-proof polarity and UNKNOWN capture freshness.
+- AC06: Root SOURCE_APPROVE09d plus accepted2df full2587PASS10allowedSKIP; owned
+  source/tests exact, all24own cases XMLPASS. Current509+24own union2425 maps to
+  2415PASS10sameSKIP on that accepted descendant; no new run. Exact-pair independent
+  review/Root merge remain pending. See note93 and validation/t014-descendant-proof.json.
+
+Hand-labelled protocol positives are not compiler/native acceptance proof.
+
+## T016 — current-parent descendant-result transfer
+
+- AC01: public HTTP origin interface/mapping/release/operation/edge expansions.
+- AC02: Kafka publishes/consumes through realm/topic channels, distinct groups.
+- AC03: graph enum noise changes input binding, not topology identities/expansions.
+- AC04: pure denied I/O, input equality, capture file changes after remote phase,
+  malformed/version/hash/selection and credential negative cases.
+- AC05: separate resource polarity, UNKNOWN/truncated coverage, foreign scope,
+  unresolved owner boundaries and independent upstream selection/baseline forms.
+- AC06: Root SOURCE_APPROVE806 plus accepted2df source/test and all46own XMLPASS.
+  Currentec6a1272425+46own union2471 is2461PASS10same optionalSKIP on the one
+  accepted2587PASS10SKIP descendant; collection-only, no new full/build. Independent
+  current exact-pair review pending. See note95/validation/t016-descendant-proof.json.
+
+## T017 — current-parent descendant-result transfer
+
+- AC01: shuffled star input/selector sets, directions, cycle and timestamp controls
+  in `tests/test_t017_filter_topology_scope.py` prove stable selection and fingerprints.
+- AC02: max-nodes=1, zero hops and upstream truncation preserve exact known omission
+  IDs/counts/frontier and PARTIAL/UNKNOWN; metadata overflow rejects the result.
+- AC03: middle-node and Kafka-channel removal never creates a shortcut.
+- AC04: input equality, explicit no-I/O sentinels, invalid selectors, cycles/depth,
+  credential references and Unicode identity controls.
+- AC05: full cross-context tuples, original context selection/baseline, AMBIGUOUS,
+  STALE and contradicting/unknown provenance buckets remain unchanged.
+- AC06: note97 preserves historical149pure/source evidence. All33own cases PASS
+  on accepted2df, source/tests exact. Current130720f2471+33own=2504 IDs maps
+  2494PASS10same optionalSKIP, collection-only/no new full/build. Root is original
+  author; architect plus another independent final-pair approval mandatory.
+  See validation/t017-descendant-proof.json.
+
+## T018 — current-parent descendant-result transfer
+
+- AC01: exact summary/candidate/filter-origin inventories; missing graph/ref boundary.
+- AC02: missing range null, canonical range tamper rejected without invented lines.
+- AC03: actual temporary files match/edit/delete across two repos, original hash/
+  fingerprint preserved; stale context does not become CURRENT after file match.
+- AC04: input equality, source-status tamper, denied pure I/O/projectors/process/
+  network, confined symlink/traversal/foreign refs, bounds and credential controls.
+- AC05: original evidence buckets/type/freshness, UNKNOWN remote realm/group and
+  filtered ambiguity/omitted alternatives preserved; no new availability proof.
+- AC06: note98 retains historical RED/pure/source evidence. Owned source/tests
+  exact299/accepted2df; all59own XMLPASS. Current4e4fcd6 base2504+59own=2563 IDs
+  maps2553PASS10same optionalSKIP on the oneaccepted2587PASS10SKIP descendant;
+  collection-only, no new actual/full/build. Current exact-pair independent review
+  remains pending; see validation/t018-descendant-proof.json.
+
+## T019 — current-parent exact descendant-result transfer
+
+- AC01–AC02: public JSON interfaces/topology/explain; exact full filter envelope, selectors and fixed diagnostics.
+- AC03: missing/corrupt original indexes fail before capture; temporary-file explicit capture leaves source/index bytes unchanged.
+- AC04: invalid JSON, privacy, cancellation, pipe, conflict, bounded output, strict partial and source-status replay controls.
+- AC05: legacy CLI smoke and documentation; coalesced 307 PASS / 10 actual deselected in 5.29s.
+- Accepted2df own34 XMLPASS, owned architecture_cli/global5CLI lines/tests exactabad.
+  Current1005b9f2563+34own union2597 is the EXACT acceptedfull ID set,2587PASS10same
+  optionalSKIP; all302present runtime/test/fixture/CI files exact. Collection-only,
+  no new actual/full/build/tool mutation. Independent current final-pair review
+  remains pending; see validation/t019-descendant-proof.json.
+
+## W07/T014 cold invocation correction (note108)
+
+Runtime869ab/metadata91ca retains normalization/VERSION2 and adds the fresh-process
+public T014 I/O audit regression. Pure25PASS is source-specific protocol evidence.
+Continuation006 is terminal1176PASS/1typedWindowsSKIP, with source304 historical
+1561PASS/9typedSKIP yielding source-corrected2747:2737PASS/10optionalSKIP.
+This is not a fresh single full. All102 affected prior W07/T014 IDs were rerun.
+The exact current-main publication subset2598 is2588PASS/10SKIP, with every ID's
+actual source/origin/XML/phases retained. Runtime/test source is exact91ca;
+main CLI three formatter bindings and main workflow remain main-owned instead of
+renderer additions. External SVG15+4 proof is complete in the larger aggregate;
+those149renderer IDs/features are outside this publication. Source/native/pins
+and1364kindroots/94333entries are unchanged; old failures remain preserved.
+Final architect+resume_t010 exact-pair reviews are PENDING. Root authored this fix
+and acts only as execution/merge guard. See note108 and the per-ID terminal ledger.
+
+## T020 — Markdown renderer, pre-staging source candidate
+
+| AC | Concrete public check | Evidence status |
+|---|---|---|
+| AC01 | Golden decoded IDs/status/context, internal anchors and explicit generated/contract file capture | Historical compatibility176PASS6.59s; corrected renderer49PASS1.24s |
+| AC02 | Real GFM AST hostile label/escaped ID tests, fixed headings/table shapes/internal links | Focused GREEN |
+| AC03 | Empty scope retains UNKNOWN coverage reason and diagnostics | Focused GREEN |
+| AC04 | Deep-input/sentinel equality, no renderer provider/I/O/process/network/store, CLI invalid/no-write/fingerprint | Expanded pure matrix GREEN |
+| AC05 | Contradictory/stale evidence, contract revisions and Kafka realms/groups remain distinct; malformed/privacy/budget negatives | Focused GREEN |
+| AC06 | Rev2/spec, note100, docs and dev parser lock | Source checkpoint review/full/upstream closure pending |
+
+
+## T020 current-main publication transfer (2026-11-06)
+
+Current parentfbb includes merged PR79–85; older checkpoint/review-pending entries
+above are historical. T020 adds only interface Markdown: topology/explain stay
+JSON-only, original286-line renderer and original49test source are preserved.
+The source-corrected006 aggregate is2737PASS/10typedoptionalSKIP across2747IDs,
+not a fresh single full. The T020 stage2647-ID subset is2637PASS/10typedSKIP.
+Its49feature cases use48 assertion-equivalent aggregate cases and the original
+unsupported topology-Markdown negative PASS on source446ddbe/metadataaa539.
+The aggregate's same-ID topology-Markdown positive is T022 evidence, never the
+T020 negative. Parser rejection route/entrypoint/helpers and original test body
+are source-verified against that original execution; no new test was run here.
+Current-main cold fix and all other APIs/CI jobs stay intact. Original249parent
+capsules +three exactT020capsules=252; historical validation fields are unchanged.
+Fresh scoped semantic CLI, source/global/ID proof and two-stage attribution are
+recorded in /workspace/t020-publication-proof. Current T020 exact-pair independent
+review/publication are pending; no T021/T022 code/capsules or wholeW09 claim.
+
+
+### Current blocker — first-call renderer purity
+
+Root's fresh ordinary CPython public-module invocation confirmed file-open I/O
+inside `architecture_render._render`'s lazy `_safe_output` import (original
+renderer SHAed93abfb9e4052ceef9a2aaf0b7ff2ecbed6be96db48a0948343aff97a00c8b7).
+The original49 test result and2647 per-ID ledger remain source-attributed case
+results, not closure of this newly uncovered first-call contract. Root RED receipt:
+`/workspace/t020-cold-purity-proof/receipt.json`. The initial payload-preparation
+missing parser path is separate from the corrected confirmed importlib-open RED.
+This checkpoint is HOLD/REQUEST_CHANGES pending separately reviewed corrective
+source/regression/affected-result transfer. No corrective code or new execution
+was performed here; no final readiness or pure first-call support is claimed.
+
+
+## Aktuální oddělený T020 checkpoint — 2026-11-06
+
+Base je ověřený cold main `fbb0957`; pouze interface Markdown, nikoli Mermaid
+ani topology Markdown. Původní 49 test bodies z aa539 zůstává beze změn; přidána
+jedna přijatá first-call cold regrese. Schválená korekce109 extrahuje pouze původní
+helpery do architecture_render_common a přesouvá existující importy do module scope
+v rendereru/CLI/inspection; algoritmy, limity, veřejná exception a JSON zůstávají.
+Historický HOLD výše je uzavřen korekcí, nikoli zpětným přepsáním starých důkazů.
+
+Přijatý pokračovací běh007v2 na `41b9a454`: 152 PASS / 0 SKIP a 19 actual SVG.
+Celková SOURCE_CORRECTED evidence je 2740 PASS + 10 typed optional SKIP / 2750;
+nejde o nový jediný full běh. Oddělený T020 ledger má přesně 2648 IDs =
+2638 PASS + 10 typed optional SKIP: 2598 parent + 50 T020. Původní unsupported
+[topology] negative čerpá výhradně skutečný původní446/aa 49PASS receipt;
+pozdější combined same-ID positive jej nedokládá. Ostatní47 původních případů
+a specialized [explain]/path-error odpovídají přijatým cestám; nový cold případ
+má exact41b9 AST. Source/global/per-ID proof je externě v
+`/workspace/t020-corrected-publication-proof`. Native630 artefakty ani tools se
+nemění; žádný nový test, collection, parser/SVG, preflight, build či full nebyl
+pro tento isolated head spuštěn. Nezávislé finální review a publication PENDING.
+T021 následně přidá Mermaid; T022 topology Markdown až ve vlastním odděleném PR.
+
+
+## Aktuální stage ověření — 2026-11-06
+
+Testovaný runtime/source checkpoint `fc6f58f997281e9dee871ae9ab61a90ddaea4578`:
+jediná current-stage collect-only kontrola přesně 2648 unique IDs, bez module
+skip/missing/extra; následný autorizovaný narrow běh **85 PASS / 0 SKIP, 14.05s**
+(50 T020, 34 T019, jedna T014 first-call cold public regrese). Původní unsupported
+topology-Markdown negative i explain/path-error nyní skutečně prošly na current
+stage; původní446/aa receipt i pozdější combined positive historie zůstávají.
+Před/po všech306 source/build/test inputs a čistý HEAD přesné; read-only parser
+162regular-file/184total-member kind/hash/membership přesný proti accepted007v2. Cacheoff/PND1, mandatory
+Markdown parser, maxfail1, vlastní tmp; žádný nový native/browser/SVG/build/full.
+
+Aktuální per-ID SOURCE_CORRECTED union **2638 PASS + 10 typed optional SKIP /2648**
+obsahuje85 skutečných current-stage řádků a2563 dříve přijatých source-qualified
+řádků. Není to fresh2648 full. Raw XML, commands, collect a před/po guards i přesné
+source-attribution řádky jsou v `/workspace/t020-corrected-stage-validation`;
+receipt SHA256 `4256910e7b59ac67c396fa20751ed88235b4b2d7c779c1503bb95e41a1f72696`.
+Finální metadata head je následník téhož testovaného runtime; nezávislé FINAL
+review Root+resume10 před publikací čeká. GH CI neověřené/doplňující; žádný push,
+PR ani merge nebyl proveden. Závislosti T013/T019 a cold main PR85 jsou sloučené;
+T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+novýcold
+current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
+AC06 čeká na finální review a samostatnou publikaci.
+
+Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d`, včetně nového remote contract mapping. Skutečný nový plný dostupný pytest běh: **1231 PASS /1055 SKIP**, 60 subtests PASS, bez selhání (42,98 s). Cílená sada T046/context/feature/Thymeleaf/remote mapping: **179 PASS /10 SKIP**, 51 subtests PASS (5,23 s). Toolchain SKIP nejsou PASS; worker/package data zůstávají identická s tímto main. Historické výsledky nad9eec zůstávají oddělenou evidencí. Nezávislé review a publikace se ověřují nad novými přesnými SHA.
+
+
+T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.

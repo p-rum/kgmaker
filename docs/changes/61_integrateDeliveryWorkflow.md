@@ -57,3 +57,16 @@ CI dodatečně odhalilo zastaralé generované snapshoty v dílčích PR. Každ�
 inkrement nyní zvlášť obnovuje semantic metadata a GRAPH.md/GRAPH.mmd příkazy
 semantic update/apply/validate a scan/check. Neoslabuje se CI ani validátor;
 chybný snapshot se nahrazuje výstupem nad přesným zdrojem daného inkrementu.
+
+
+## Integrace main a nové ověření (2026-11-05)
+
+Baseline `9eec41a403b4e6601fe3addac168bf39d37f31b6`; T046 opravy byly integrovány bez zdrojových konfliktů. Nové main funkce (včetně Thymeleaf v2, data realms a compiler capability) zůstávají zachované; tři souběžná rozšíření dokumentace byla spojena. Sémantická historie obsahuje všech 239 main epizod a 3 původní T046 epizody.
+
+Skutečné lokální ověření nad touto integrací: 52 cílených pytest testů PASS (38 subtests); celá dostupná pytest sada 1152 PASS, 1045 SKIP, 60 subtests PASS (42,36 s), bez selhání. Skips nejsou PASS a tento běh nedokládá compiler/build/Windows toolchain acceptance. Změna T046 upravuje offline Python kontrakty; žádný worker ani nová main capability nebyly přepsány. Nezávislé review aktuálních base/head a GitHub publikace jsou samostatné následující kroky, nikoli tímto dokumentem potvrzený výsledek. GH CI se podle T045 revize 2 uvádí odděleně.
+
+
+Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d`, včetně nového remote contract mapping. Skutečný nový plný dostupný pytest běh: **1231 PASS /1055 SKIP**, 60 subtests PASS, bez selhání (42,98 s). Cílená sada T046/context/feature/Thymeleaf/remote mapping: **179 PASS /10 SKIP**, 51 subtests PASS (5,23 s). Toolchain SKIP nejsou PASS; worker/package data zůstávají identická s tímto main. Historické výsledky nad9eec zůstávají oddělenou evidencí. Nezávislé review a publikace se ověřují nad novými přesnými SHA.
+
+
+T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.
