@@ -2,8 +2,8 @@
 
 - Task ID: `T010`
 - Parent: [T004 — High-level zobrazení projektu](4_addHighLevelProjectViews.md)
-- Revision: 1
-- Datum: 2026-10-20
+- Revision: 2
+- Datum: 2026-11-03
 - Stav: SPECIFICATION — cílové chování, žádná implementace se tímto dokumentem neprohlašuje za hotovou.
 - Baseline návrhu: `c39f8adf2e3004d201960a18575bc7659808ae94` na `main`; před implementací ověř aktuální HEAD a související otevřené PR.
 - Depends on: [T008](T-008_project-service-inventory.md); [T009](T-009_propagate-view-evidence.md).
@@ -61,3 +61,17 @@ Zachovej čtení graph v1/v2/v3, původní IDs, existující `graph view` a `flo
 4. Podle projektových pravidel aktualizuj memory/semantic vrstvu pouze doloženými změnami; generované grafy obnov příkazem. Nevytvářej smyšlený semantic patch. Zaznamenej případný blocker.
 5. Commitni a pushni tuto větev, otevři **jeden samostatný PR pro T010** do aktuálního main (nebo deklarované dependency base). Použij výše uvedený PR title. Body obsahuje problém, řešení, odkazy na zadání/change note, tabulku AC → test → výsledek, dependencies a zbývající omezení.
 6. Ověř remote PR diff a povinné CI. DoD = všechna AC splněna v deklarovaném scope, reviewovatelný PR s doloženými výsledky, žádné cizí změny. PR **nemerguj** bez explicitního pokynu. V závěru předej URL PR; pouhý lokální commit nestačí.
+
+## Revize2 — kolize normalizovaných variant
+
+AC03–05 zahrnují různé skutečné registrace se stejnou normalizovanou route,
+contract SHA a lokátorem (OpenAPI JSON bez source line). Projektuj jeden
+AMBIGUOUS objekt na původním logical/variant ID se všemi candidate attrs,
+original routes/IDs a provenance; konfliktní scalar route/variant fields jsou
+None. Nikdy nevybírej první operaci ani netvrď absenci endpointu. Zachovej
+samostatné service/method/context varianty, nekolidující IDs i slabší evidence.
+Odpovídající service edge má také AMBIGUOUS status a union proof refs.
+Legacy graph/model se nemění; rule identity se aktualizuje pro nový výsledek.
+Čisté JSON/YAML, přesné duplicity, pořadí vstupů a nezměněné sourozenecké objekty
+mají samostatné regrese. Jiný YAML lokátor nadále zachovává své původní variant ID;
+nejde o validátor celé OpenAPI specifikace ani runtime route resolver.

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kgmaker.dev/schemas/process-v1.schema.json",
+  "title": "KGMAKER explicit process view v1",
+  "description": "Structural schema. Python validation additionally checks revision hashes, target references, scope/context and evidence bindings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "process_id", "revision", "definition", "definition_fingerprint", "technical_status", "technical_view", "entry_ids", "exit_ids", "outcome_ids", "semantic_annotations"],
+  "properties": {
+    "schema_version": {"const": 1, "type": "integer"},
+    "process_id": {"$ref": "#/$defs/text"},
+    "revision": {"type": "integer", "minimum": 1},
+    "definition": {"$ref": "#/$defs/definition"},
+    "definition_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "technical_status": {"enum": ["COMPLETE_WITHIN_SELECTED_SCOPE", "PARTIAL", "UNKNOWN"]},
+    "technical_view": {
+      "allOf": [
+        {"$ref": "view-v1.schema.json"},
+        {"type": "object", "properties": {"kind": {"const": "process"}}}
+      ]
+    },
+    "entry_ids": {"$ref": "#/$defs/refs"},
+    "exit_ids": {"$ref": "#/$defs/refs"},
+    "outcome_ids": {"$ref": "#/$defs/refs"},
+    "semantic_annotations": {"type": "array", "items": {"$ref": "#/$defs/annotation"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "review": {"enum": ["PROPOSED", "APPROVED", "REJECTED", "NEEDS_REVALIDATION"]},
+    "definition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "process_id", "revision", "baseline_fingerprint", "scope", "context_selection", "context_ids", "trigger_ids", "semantic_review_status"],
+      "properties": {
+        "schema_version": {"type": "integer", "const": 1},
+        "process_id": {"$ref": "#/$defs/text"},
+        "revision": {"type": "integer", "minimum": 1},
+        "baseline_fingerprint": {"$ref": "#/$defs/text"},
+        "scope": {"$ref": "#/$defs/text"},
+        "context_selection": {"type": "object"},
+        "context_ids": {"$ref": "#/$defs/refs"},
+        "trigger_ids": {"$ref": "#/$defs/refs"},
+        "semantic_review_status": {"$ref": "#/$defs/review"}
+      }
+    },
+    "annotation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "target_id", "source_refs", "semantic_review_status"],
+      "anyOf": [{"required": ["label"]}, {"required": ["description"]}, {"required": ["grouping_proposal"]}],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "target_id": {"$ref": "#/$defs/text"},
+        "label": {"$ref": "#/$defs/text"},
+        "description": {"$ref": "#/$defs/text"},
+        "source_refs": {"$ref": "#/$defs/refs"},
+        "semantic_review_status": {"$ref": "#/$defs/review"},
+        "grouping_proposal": {"allOf": [{"$ref": "#/$defs/refs"}, {"minItems": 1}]}
+      }
+    }
+  }
+}

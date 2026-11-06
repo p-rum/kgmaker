@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "worker_protocol": 1,
+  "spring_version": "6.2.2",
+  "spring_kafka_version": "3.3.2",
+  "preparation": "Explicit mvn -B -ntp -f fixtures/process-triggers/pom.xml compile. API-only inputs; no application, Spring context or broker execution. Hashes describe actual local published artifacts; no network-origin assertion.",
+  "artifacts": [
+    {
+      "coordinate": "org.springframework:spring-context:6.2.2",
+      "path": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.jar",
+      "sha256": "50ca16d01f939abe26496161585756dac0f61b18f0b9fb706d869a47fdb28a9c",
+      "artifact_pom": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.pom",
+      "artifact_pom_sha256": "7c5f873d32e314709b2b855950a1a84f85b46b66b3afba4986b5c0882904970e",
+      "license_pom": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.pom",
+      "license_pom_sha256": "7c5f873d32e314709b2b855950a1a84f85b46b66b3afba4986b5c0882904970e",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-core:6.2.2",
+      "path": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.jar",
+      "sha256": "bdb5370f08156ca32be8ed1aa9b879b66d7125a55bc8659c1a60193037b700a3",
+      "artifact_pom": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.pom",
+      "artifact_pom_sha256": "18ebd6d3292e219392e8b7ce3531a92eabaaf254740b94dbfd31b292a190d525",
+      "license_pom": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.pom",
+      "license_pom_sha256": "18ebd6d3292e219392e8b7ce3531a92eabaaf254740b94dbfd31b292a190d525",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-beans:6.2.2",
+      "path": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.jar",
+      "sha256": "be9ecf9b0dc6b88a869c9079b9076121e4d658d7e12856cc60598f1fe2d70d8a",
+      "artifact_pom": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.pom",
+      "artifact_pom_sha256": "6d93008a4d434021394ac01ffa3129b069cad5e2e7c33992f0c8e5c4f123d575",
+      "license_pom": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.pom",
+      "license_pom_sha256": "6d93008a4d434021394ac01ffa3129b069cad5e2e7c33992f0c8e5c4f123d575",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-aop:6.2.2",
+      "path": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.jar",
+      "sha256": "359c8ada456a181bbd87be42c53b381feba1f3f2b5820eb6ca713e5dc793a3e2",
+      "artifact_pom": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.pom",
+      "artifact_pom_sha256": "85ceb2c7e6332f6c389b7c60082956030874273532716adefd64f33236575d3f",
+      "license_pom": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.pom",
+      "license_pom_sha256": "85ceb2c7e6332f6c389b7c60082956030874273532716adefd64f33236575d3f",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-expression:6.2.2",
+      "path": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.jar",
+      "sha256": "27d5db562dc47196699819ae9b970b90ea47829a6b4216500eb4844f24fbc4b4",
+      "artifact_pom": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.pom",
+      "artifact_pom_sha256": "1c65ca2bd239ec20fc4bb1fac798a15d661bb84c76d66a5e98a19356152bf97b",
+      "license_pom": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.pom",
+      "license_pom_sha256": "1c65ca2bd239ec20fc4bb1fac798a15d661bb84c76d66a5e98a19356152bf97b",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-jcl:6.2.2",
+      "path": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.jar",
+      "sha256": "36b4666730c80e6599359ca8c81adead8b52b15fefe8cc25e061717fe87d93ed",
+      "artifact_pom": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.pom",
+      "artifact_pom_sha256": "df1cf7fe47c8c91d1c9517f9d3aa7c9a9d53135a255cda051f30ce173c1a4a5a",
+      "license_pom": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.pom",
+      "license_pom_sha256": "df1cf7fe47c8c91d1c9517f9d3aa7c9a9d53135a255cda051f30ce173c1a4a5a",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-web:6.2.2",
+      "path": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.jar",
+      "sha256": "cebf79393931ccbbfb4b06a17cfff3bf151cb1f704761f762047f3c1182fe00c",
+      "artifact_pom": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.pom",
+      "artifact_pom_sha256": "d213c710faaf81892a39fbcd411c37e146d0ee1a8c03d82746abc4e6ea10006c",
+      "license_pom": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.pom",
+      "license_pom_sha256": "d213c710faaf81892a39fbcd411c37e146d0ee1a8c03d82746abc4e6ea10006c",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-messaging:6.2.2",
+      "path": "org/springframework/spring-messaging/6.2.2/spring-messaging-6.2.2.jar",
+      "sha256": "b20b63571ed93ee0edde214070c8c7e48cc9d7a3bd6cdaa4752fa082a1fae2a8",
+      "artifact_pom": "org/springframework/spring-messaging/6.2.2/spring-messaging-6.2.2.pom",
+      "artifact_pom_sha256": "c7b8fb3e1a3b86d74bb51ca2d61d01a40bbe31c74487795c6134efa4fc0a0701",
+      "license_pom": "org/springframework/spring-messaging/6.2.2/spring-messaging-6.2.2.pom",
+      "license_pom_sha256": "c7b8fb3e1a3b86d74bb51ca2d61d01a40bbe31c74487795c6134efa4fc0a0701",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework:spring-tx:6.2.2",
+      "path": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.jar",
+      "sha256": "9e745d6c4d375fc661e39ab1af73f488d565b7a6960f867a9f8b13398bfe2f85",
+      "artifact_pom": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.pom",
+      "artifact_pom_sha256": "95bb7cdd69324e1e715b8b3a673d0593a638377daf69025d89ba30b71ebcb5d9",
+      "license_pom": "org/springframework/spring-tx/6.2.2/spring-tx-6.2.2.pom",
+      "license_pom_sha256": "95bb7cdd69324e1e715b8b3a673d0593a638377daf69025d89ba30b71ebcb5d9",
+      "license_name": "Apache License, Version 2.0"
+    },
+    {
+      "coordinate": "org.springframework.kafka:spring-kafka:3.3.2",
+      "path": "org/springframework/kafka/spring-kafka/3.3.2/spring-kafka-3.3.2.jar",
+      "sha256": "39aedad4ed809a5d0a81c00c543afc2d931201e02d5b3f0e8bc9d36591993282",
+      "artifact_pom": "org/springframework/kafka/spring-kafka/3.3.2/spring-kafka-3.3.2.pom",
+      "artifact_pom_sha256": "15277237cb309081f4d7d76e9772855c89da471ff949ade827a7f5f1a20e44f5",
+      "license_pom": "org/springframework/kafka/spring-kafka/3.3.2/spring-kafka-3.3.2.pom",
+      "license_pom_sha256": "15277237cb309081f4d7d76e9772855c89da471ff949ade827a7f5f1a20e44f5",
+      "license_name": "Apache License, Version 2.0"
+    }
+  ]
+}

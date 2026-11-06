@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "spring_version": "6.2.2",
+  "artifacts": [
+    {
+      "path": "org/springframework/spring-context/6.2.2/spring-context-6.2.2.jar",
+      "sha256": "50ca16d01f939abe26496161585756dac0f61b18f0b9fb706d869a47fdb28a9c"
+    },
+    {
+      "path": "org/springframework/spring-core/6.2.2/spring-core-6.2.2.jar",
+      "sha256": "bdb5370f08156ca32be8ed1aa9b879b66d7125a55bc8659c1a60193037b700a3"
+    },
+    {
+      "path": "org/springframework/spring-beans/6.2.2/spring-beans-6.2.2.jar",
+      "sha256": "be9ecf9b0dc6b88a869c9079b9076121e4d658d7e12856cc60598f1fe2d70d8a"
+    },
+    {
+      "path": "org/springframework/spring-aop/6.2.2/spring-aop-6.2.2.jar",
+      "sha256": "359c8ada456a181bbd87be42c53b381feba1f3f2b5820eb6ca713e5dc793a3e2"
+    },
+    {
+      "path": "org/springframework/spring-expression/6.2.2/spring-expression-6.2.2.jar",
+      "sha256": "27d5db562dc47196699819ae9b970b90ea47829a6b4216500eb4844f24fbc4b4"
+    },
+    {
+      "path": "org/springframework/spring-jcl/6.2.2/spring-jcl-6.2.2.jar",
+      "sha256": "36b4666730c80e6599359ca8c81adead8b52b15fefe8cc25e061717fe87d93ed"
+    },
+    {
+      "path": "org/springframework/spring-web/6.2.2/spring-web-6.2.2.jar",
+      "sha256": "cebf79393931ccbbfb4b06a17cfff3bf151cb1f704761f762047f3c1182fe00c"
+    }
+  ]
+}
