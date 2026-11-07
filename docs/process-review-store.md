@@ -1,4 +1,10 @@
-# Explicit local process review (T032 candidate)
+# Explicit local process review (T032)
+
+Delivery status (2026-11-07): T032 is MERGED in [PR78](https://github.com/p-rum/kgmaker/pull/78) (`7e6c838`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 The Python API in `kgmaker.process_store` persists a semantic review envelope;
 it never changes the technical `ProcessView`, graph, source checkout, evidence or
@@ -60,6 +66,8 @@ linearization point: later cancellation returns COMMITTED; directory-fsync failu
 returns INDETERMINATE with operation identity for recovery by retry/read. Atomic
 visibility/CAS do not promise power-loss durability on every filesystem. No CLI,
 network, model, compiler/build, unrelated feature apply or implicit discovery runs.
+
+## Historical validation checkpoint
 
 Current evidence: initial absent API6FAIL0.50s; current36feature tests PASS1.93s,
 including real process/thread CAS. Coalesced pure regression269PASS94SKIP8.74s;

@@ -1,4 +1,10 @@
-# Interface Markdown (T020 source candidate)
+# Interface Markdown (T020)
+
+Delivery status (2026-11-07): T020 is MERGED in [PR87](https://github.com/p-rum/kgmaker/pull/87) (`250e7c1`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 The pure `architecture_render.render_interface_markdown(document)` returns a bounded
 Markdown string for one existing interfaces ViewDocument. It does not load sources,

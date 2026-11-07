@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 438
+- Scope: production; omitted files: 439
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `6e267eabbfa35606e54ba8145754df0903308741e015d8f00434960d20c42729`; content: `f5b71a86f4b35d95422d6f8c929a0a7e083127b932ac3bee63e4893d2f88d5ac`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 252
+- Implementation episodes: 254
 - Inferred/ambiguous relationships: 6827/0
 
 ## Architecture diagram
@@ -2097,6 +2097,7 @@ flowchart LR
 - **feat(t006): select service contexts** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/32_selectServiceContexts.md, docs/production-analysis-progress.md; validation: t006-workspace-integration=passed, t006-negative-mappings=passed, full-pytest=passed, full-suite-toolchain-gates=skipped, semantic-validate=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed, full_suite=passed, semantic_validate=passed, kgmaker_check=passed, diff_check=passed
 - **Merge reviewed TypeScript callbacks main into Spring factories** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: parent_T015_integration124=passed, unchanged_Factory_source_actual38=passed, current_remote_ci=unknown
+- **Integrate current governance and preserve T046 step history (S01)** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/delivery-workflow.md, docs/production-analysis-progress.md; validation: targeted-tests=passed
 - **fix: preserve compiler dispatch proof and physical ABI boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/44_addDependencyDispatchHierarchy.md, docs/compiler-inspection.md; validation: composition=passed, dispatch-proof=passed, jvm-k1=passed, jvm-k2=passed, semantic=passed
 - **Record integrated TypeScript reference acceptance and preserved semantic history** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: strict284=passed, ts-project-references=passed, fingerprint=passed, methodology12=passed
 - **Change 1 expected setup error: mandatory K2/JDK is unavailable, 1 skipped: blocked: explicit K2 worker build and JDK required, 2 passed** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/changes/49_projectJpaInheritedAttributes.md; validation: jpa-focused=passed, semantic-scan-check=passed, full-suite=skipped
@@ -2106,6 +2107,7 @@ flowchart LR
 - **merge: refresh TypeScript references against bounded XLSX main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: protocol=passed, semantic=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s06-01-kotlin-jpa-access** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: K2-JPA-actual=passed, K2-missing-toolchain-optional-skip=passed, K2-missing-toolchain-mandatory-fail=passed, JPA-Spring-T008-focused-38=passed, semantic-validate=passed
 - **merge verified current main into T014 remote interface projection** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/93_projectRemoteInterfaceBindings.md, docs/production-analysis-progress.md, docs/remote-interfaces.md; validation: accepted2dfOwn24=passed, current2425IDSourceTransfer=passed, original09dRootSourceReview=passed, newCurrentHeadFull=unknown, independentCurrentPairReview=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/changes/111_reconcileDeliveryStatus.md, docs/interface-contracts.md; validation: delivery-inventory=passed, cli-help=passed, diff-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/41_projectServiceInventory.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, toolchain_skips=skipped, semantic=passed, scan=passed
 - **stack authoritative schema Retry and JPQL parent into contracts** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/85_attachInterfaceContracts.md, docs/interface-contracts.md, docs/production-analysis-progress.md; validation: combined-descendant2df-full2587pass10optional=passed, t013-parent2116-and-own45pass=passed, actual-currentcomposition444pass=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed
