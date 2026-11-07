@@ -1,4 +1,10 @@
-# Service/resource/channel topology (T016 draft)
+# Service/resource/channel topology (T016)
+
+Delivery status (2026-11-07): T016 is MERGED in [PR81](https://github.com/p-rum/kgmaker/pull/81) (`130720f`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 ```python
 from kgmaker.service_topology import capture_topology_inputs, aggregate_service_topology
@@ -44,6 +50,8 @@ is visible and prevents unique RESOLVED remote summaries. Hard input/object limi
 fail instead of dropping candidates silently. Unsafe required credential/userinfo
 IDs or malformed data have fixed nonsecret errors, no mutation/publication.
 Output uses safe typed summaries and hashes of omitted prose/payloads.
+
+## Historical validation checkpoint
 
 Current parent is verified main ec6a127 with T014/T015/Common/T012/T013/W07v2
 and process stack merged. Owned source/tests exactly match accepted2df; all46own

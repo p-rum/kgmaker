@@ -6,7 +6,7 @@ kgmaker is designed for one host: GitHub Copilot CLI. Repository hooks handle au
 
 ## Documentation and implementation tasks
 
-Start with the [current status](docs/production-analysis-progress.md),
+Start with the [current per-task delivery inventory](docs/production-analysis-progress.md),
 [task registry](docs/tasks/README.md) and [completion specification T003](docs/tasks/3_finishProductionAnalysis.md).
 Agents must follow [AGENTS.md](AGENTS.md), including stable task IDs and mandatory
 `docs/tasks/<N>_<lowerCamelCase>.md` / `docs/changes/<N>_<lowerCamelCase>.md` names.
@@ -780,8 +780,8 @@ T025 revision2 adds optional `java-local-operations-1` compiler evidence for a
 bounded Java literal/local-variable subset. It keeps source CFG ordering as
 SYNTAX_CANDIDATE and resolves only independently certified operation nodes;
 transitions, execution, business meaning and data availability are not promoted.
-Legacy/Kotlin/unsupported operations remain unresolved. This candidate is pending
-the complete corrected integration matrix and full validation; own fresh workers built successfully. See
+Legacy/Kotlin/unsupported operations remain unresolved. The bounded implementation
+merged in PR65 (`32a3bca`); current full acceptance has not been rerun. See
 [local process scope](docs/process-paths.md#compiler-bound-local-operations).
 ### Kafka interface catalogue
 
@@ -791,7 +791,7 @@ Broker realms and consumer groups remain distinct; configuration-only and regex
 subscriptions retain their unresolved boundaries. Explicit workspace/private
 compiler indexes are required; the projection performs no inspection or transport.
 
-### Explicit interface contracts (T013 draft)
+### Explicit interface contracts (T013; merged PR74)
 
 [Contract attachments](docs/interface-contracts.md) preserve interface identities
 while adding explicit content-bound provider/client declaration references.
@@ -801,7 +801,7 @@ runtime/data availability remain unknown; no generator or schema fetch runs.
 The pure [T026 business-step API](docs/process-paths.md#reversible-business-step-projection-t026-candidate)
 reversibly groups only adjacent certified local operations in an explicit process
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
-business semantics or observe execution. PR65 is merged as `32a3bca`; this candidate integrates that prerequisite.
+business semantics or observe execution. T026 merged in PR66 (`9442114`) after the PR65 prerequisite.
 
 Service inventories distinguish compiler/source ownership from canonical
 workspace-derived declarations. Kafka binding inputs may reference another
@@ -809,14 +809,13 @@ repository's schema without becoming service-owned code or compiler candidates.
 `t008-service-inventory-2` retains the original full graph for downstream views;
 unknown derived contracts get diagnostics, and legacy SOURCE_ONLY coverage keeps
 its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md#workspace-derived-context-roles).
-### Kafka retry/DLT declarations — T003-S07-W05 draft
+### Kafka retry/DLT declarations — T003-S07-W05 (merged PR71)
 
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
 declarations as separate async boundaries, without executing listeners or brokers.
 Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
-See [scope and validation](docs/kafka-retry-dlt.md): current-source coalesced
-Focus470 PASS / 0 SKIP; strict full on647:1908 PASS / 10 SKIP; current-parent pure23 PASS.
-The feature is draft and is not ready for merge.
+See [scope and historical validation](docs/kafka-retry-dlt.md). The bounded
+implementation merged as `3e5ef0f`; broader production acceptance remains PARTIAL.
 
 ### Schema compatibility (T003-S06-W08 bounded scope)
 
@@ -824,7 +823,8 @@ The feature is draft and is not ready for merge.
 uses existing offline replay and an explicitly inspected compiler context. It
 reports COMPATIBLE/CONFLICT/UNKNOWN per type/nullability/decimal/key dimension;
 legacy or unsupported mapping stays UNKNOWN. See [supported scope and evidence](docs/schema-compatibility.md).
-W04 dependency PR62 is merged; validated full and current-parent composition are recorded in note78; final independent review remains separate; compatibility never proves deployment or
+W04 dependency PR62 and compatibility PR64 (`3bef611`) are merged. Historical
+validation is recorded in note78; compatibility never proves deployment or
 populated-data availability. No implicit worker/build/migration/DB operation.
 
 ### Pure process label packets (T030)
@@ -835,9 +835,9 @@ PROPOSED candidate template for existing targets. It preserves selected identity
 provenance and uncertainty, reports complete serialized cost/mandatory overflow,
 and hash-omits raw labels, documentation and proof/configuration prose. It performs
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
-T031 adds explicit validation below; approval/apply and T034 CLI remain separate work.
+T031 adds explicit validation and T032 adds local review below; T034 CLI remains planned.
 
-## T003-S07-W07 — explicit remote mapping draft
+## T003-S07-W07 — explicit remote mapping (merged PR76)
 
 See [remote mapping contract](docs/remote-contract-mapping.md)
 and [note91](docs/changes/91_planRemoteContractMapping.md).
@@ -845,7 +845,8 @@ Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific cohort334 unique PASS;
 combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
-cases (1963PASS/10SKIP). This full did not run standalone on W07. Current-parent refresh preserves exact tested source; dependency merges are complete, final independent review remains pending.
+cases (1963PASS/10SKIP). This historical full did not run standalone on W07. The implementation merged
+as `5ffe099`; it does not certify the entire current production matrix.
 
 ### Read-only process annotation validation (T031)
 
@@ -856,14 +857,14 @@ input returns fixed-code diagnostics; valid proposals remain PROPOSED and
 PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
 See [the Python contract](docs/process-annotations.md). T034 CLI remains pending.
 
-### Explicit local process review (T032 candidate)
+### Explicit local process review (T032; merged PR78)
 
 `kgmaker.process_store` adds prepare/persist/read APIs for bounded immutable semantic
 review history and explicit APPROVE/REJECT, with cooperating POSIX process/thread
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
 See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
 
-### Explicit process catalog (T033 candidate)
+### Explicit process catalog (T033; merged PR79)
 
 `kgmaker.process_catalog.catalog_business_processes` combines explicit current and
 historical ProcessViews with a supplied T024 inventory and validated T032 reads.
@@ -871,8 +872,8 @@ It preserves process identities/revisions and separate per-member review states;
 labels/shared helpers never deduplicate operations. Optional one-hop aliases retain
 all original members without approval/availability borrowing. Missing triggers
 remain inactive historical within the partial current selection. See
-[Python contract and limitations](docs/process-catalog.md); source review/full
-validation remain pending. No discovery, archive reconstruction, store write or CLI.
+[Python contract and limitations](docs/process-catalog.md). The bounded catalog
+merged as `5095343`; current full acceptance has not been rerun. No discovery, archive reconstruction, store write or CLI.
 
 
 ### T014 static remote topology
@@ -881,10 +882,8 @@ validation remain pending. No discovery, archive reconstruction, store write or 
 captured=captured, scope="production")` projects the explicit W07 capture handoff
 into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
 HTTP/Kafka declaration edges are not JVM calls or observed execution. See
-[contract and limits](docs/remote-interfaces.md). Source/test bytes are exact accepted
-2df55; current509 base plus24 own cases derives2425 cases (2415 PASS/10 allowed
-SKIP on that accepted descendant). Final exact-pair review remains pending; no new
-full, CLI or remote execution is claimed.
+[contract and limits](docs/remote-interfaces.md). Merged in PR80 (`ec6a127`); historical source-qualified validation remains in
+the capability document. No current full or remote execution is claimed.
 
 ### T016 common-capture topology
 
@@ -893,9 +892,8 @@ uses one explicit closure for T015/W07/T014, then rereads it.
 `aggregate_service_topology(captured)` is a pure ViewDocument projection with
 reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
 No JVM/process/runtime or payload claim is added. See
-[handoff and limits](docs/service-topology.md). Owned source/tests match accepted
-2df; currentec6a127 base2425+46own IDs maps to2461PASS10allowedSKIP on that one
-descendant full. No new full/build; exact-pair independent review remains pending.
+[handoff and limits](docs/service-topology.md). Merged in PR81 (`130720f`); historical source-qualified results remain in
+the capability document. Current full acceptance has not been rerun.
 
 ### T017 bounded topology filtering
 
@@ -904,9 +902,8 @@ direction="outgoing", max_hops=2, max_nodes=25)` filters a captured T016 view
 without I/O. Its `{document, filtering}` result preserves original edges and
 uncertainty and reports complete known omission IDs plus separate frontier metadata.
 Kafka channels count as real hops; omitted nodes never create shortcut edges.
-See [API and limits](docs/topology-filter.md). Current130720f2471+33own IDs maps
-to2494PASS10allowedSKIP on accepted2df, not a new full. Root is original author;
-architect plus another independent reviewer must approve the final pair. No CLI.
+See [API and limits](docs/topology-filter.md). Merged in PR82 (`4e4fcd6`). T019 exposes filtering through architecture
+JSON CLI; standalone filtering remains a pure Python API.
 
 ### T018 snapshot explanation
 
@@ -915,8 +912,8 @@ graph=original_public_graph)` expands exact origins and evidence from the bound
 T016/T017 snapshot. Optional `capture_explanation_source_status` separately reads
 only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT.
 See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable.
-Current4e4fcd6 base2504+59own IDs maps2553PASS10allowedSKIP on accepted2df, not
-a new full; source is exactapproved299. Independent final-pair review remains pending.
+Merged in PR83 (`1005b9f`). Historical source-qualified validation is retained
+in the capability document; current full acceptance has not been rerun.
 
 ### T019 architecture JSON CLI
 
@@ -924,21 +921,20 @@ a new full; source is exactapproved299. Independent final-pair review remains pe
 explicit snapshots and preserves the full filtering envelope. Interfaces and explain
 commands share fixed safe JSON diagnostics; local capture/source checks require
 explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
-Current1005b9f preserves merged dependencies; all2597 IDs and all302runtime/test/
-fixture/workflow files match accepted2df (2587PASS10allowedSKIP there). No new
-full; independent final-pair review remains pending. T020/T021 rendering is separate.
+Merged in PR84 (`a60f02d`). T020 interface Markdown is also merged;
+T021 topology Mermaid remains planned.
 
 The W07 resolver and T014 projection also preserve the no-I/O contract on their
 first call after normal API import. The cold-process regression is protocol-only;
 see [the correction and remaining validation](docs/changes/108_fixColdRemoteProjection.md).
 
-### T020 interface Markdown (current-main publication candidate)
+### T020 interface Markdown (merged PR87)
 
 `kgmaker architecture interfaces --catalog http-providers --interface-capture interfaces.json --format markdown`
 renders the same T019 snapshot as a bounded escaped catalog with original IDs,
 contract revisions and internal evidence links. Generated/unclassified rows,
 unknowns and diagnostics stay visible; no current source or runtime proof is added.
 JSON stays default. See [contract and parser checks](docs/interface-markdown.md);
-Current parent dependencies are merged through PR85. Source-corrected result transfer
-preserves the original interface-only49-case contract; T020 final pair review
-remains pending. Earlier checkpoint descriptions are historical.
+Merged in PR87 (`250e7c1`) with the first-call purity correction.
+Topology/explain remain JSON-only; T021/T022 are planned. Historical checks and
+current verification limits are in the delivery inventory.
