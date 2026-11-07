@@ -1,5 +1,11 @@
 # Local technical process paths (T025)
 
+Delivery status (2026-11-07): T025/T026 is MERGED in [PR66](https://github.com/p-rum/kgmaker/pull/66) (`9442114`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 `kgmaker.process_paths.build_local_process` adapts a selected T024 trigger and
 existing compiler SOURCE CFGs into the T023 `ProcessView`. It reuses
 `flow.process`, including original branch/call/return/exception topology. It does

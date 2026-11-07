@@ -1,5 +1,11 @@
 # Registr implementačních zadání
 
+Delivery status (2026-11-07) is tracked per atomic task in the
+[current inventory](../production-analysis-progress.md). SPECIFICATION is a
+document state. T046 is PR_OPEN in PR41→42→43→44→45→40; its revision2 spec
+currently lives on [the S01 branch](https://github.com/p-rum/kgmaker/blob/e780e32d38ccd748a80fd8b8691214be2f332b1e/docs/tasks/46_addTemplatesTestsAndTraceability.md),
+not main. T048-S01 audit: [change111](../changes/111_reconcileDeliveryStatus.md).
+
 Tento registr je autoritou pro identitu zadání. Implementační stav patří do
 [stavové matice](../production-analysis-progress.md), technické požadavky do
 níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.md).
@@ -52,7 +58,7 @@ lowerCamelCase, včetně historických kopií v agent templates.
 | T017 | [Filtrování a omezení velikosti topologie](T-017_filter-topology-scope.md) | T016 | Merged PR82; bounded source/result evidence retained as history |
 | T018 | [Dohledání zdrojů high-level objektů](T-018_explain-view-elements.md) | T009, T016; optional T017 | Merged PR83; bounded source/result evidence retained as history |
 | T019 | [Read-only CLI pro architektonické pohledy](T-019_add-architecture-json-cli.md) | T010, T011, T012, T013, T017, T018 | Merged PR84; bounded source/result evidence retained as history |
-| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | Rev2; current-stage85PASS, exact2648 source-qualified IDs; independent final review pending |
+| T020 | [Markdown katalog integračních rozhraní](T-020_render-interface-markdown.md) | T013, T019 | SPECIFICATION Rev2; delivery MERGED PR87 (`250e7c1`); historical checks retained; current verification see status inventory |
 | T021 | [Mermaid schéma služeb](T-021_render-topology-mermaid.md) | T017, T019; T003-S07-W09 | SPECIFICATION |
 | T022 | [Markdown report topologie a detailů](T-022_render-topology-markdown.md) | T018, T021 | SPECIFICATION |
 | T023 | [Model business procesu a jeho revizí](T-023_define-business-process-model.md) | T005, T009 | SPECIFICATION |

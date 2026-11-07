@@ -1,4 +1,10 @@
-# Kafka retry/DLT policy declarations — W05 draft
+# Kafka retry/DLT policy declarations — W05
+
+Delivery status (2026-11-07): T003-S07-W05 is MERGED in [PR71](https://github.com/p-rum/kgmaker/pull/71) (`3e5ef0f`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 T003-S07-W05 adds a bounded Python adapter `kafka-retry-1` to the existing JVM
 inspection pipeline. It consumes captured canonical Kafka listener methods and
@@ -41,6 +47,8 @@ DLT's own declaration proof, and exact policy edge/proof tuples. A relevant forg
 edge produces a local unresolved policy boundary; unrelated policies remain valid.
 Legacy graphs without policy facts gain no inferred retry policy. Version and
 ordered-classpath stamps participate in context identity/freshness checks.
+
+## Historical validation checkpoint
 
 Validation is in `tests/test_kafka_retry_dlt.py`; current draft results and
 remaining mandatory runs are recorded in [note87](changes/87_captureKafkaRetryDlt.md).
