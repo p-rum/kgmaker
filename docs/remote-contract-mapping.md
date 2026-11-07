@@ -1,4 +1,10 @@
-# Explicit remote contract/release declarations (W07 draft)
+# Explicit remote contract/release declarations (W07)
+
+Delivery status (2026-11-07): T003-S07-W07 is MERGED in [PR76](https://github.com/p-rum/kgmaker/pull/76) (`5ffe099`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 `remote-contract-mapping-2` adds a separate optional workspace `remote_mapping`
 manifest field. It does not change the existing artifact `release_mapping`, which

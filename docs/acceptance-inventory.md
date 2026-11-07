@@ -1,5 +1,32 @@
 # Inventář acceptance T001 a T002
 
+## Aktuální audit dodání — 2026-11-07
+
+T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
+odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
+krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
+T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046 je PR_OPEN,
+T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
+Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
+původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
+T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,
+W07 PR76 a W08 PR64 jsou MERGED. Nepřenáší se tím PASS na nový kód.
+T045 revize2 dovoluje merge bez GH CI při splnění ostatních povinných kontrol;
+staré billing-only blokace níže jsou historické, konkrétní chyba zůstává blokující.
+
+T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` — 80 passed, 5 subtests; [záznam 56](changes/56_addDeliveryReferences.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+
+T048-S02 / T046-S02, 2026-11-07: integrace main `766c08f` — 85 passed, 8 subtests passed; [záznam](changes/57_addArtifactTemplates.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+
+T048-S02 / T046-S03, 2026-11-07: integrace main `766c08f` — 99 passed, 21 subtests passed; [záznam](changes/58_addExistingFunctionTests.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+
+T048-S02 / T046-S04, 2026-11-07: integrace main `766c08f` — 103 passed, 29 subtests passed; [záznam](changes/59_verifySyntheticTestData.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+
+T048-S02 / T046-S05, 2026-11-07: integrace main `766c08f` — 106 passed, 33 subtests passed; [záznam](changes/60_enforceOptionalLocalApprovals.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+
+## Historická acceptance podle uvedených checkpointů
+
+
 ## T003-S06-W01 — Kotlin JPA use-site a access
 
 | ID | Stav | Přímá evidence |

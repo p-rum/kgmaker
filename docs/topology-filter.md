@@ -1,5 +1,11 @@
 # T017 — Pure bounded topology filtering
 
+Delivery status (2026-11-07): T017 is MERGED in [PR82](https://github.com/p-rum/kgmaker/pull/82) (`4e4fcd6`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 The additive Python API consumes an already built T016 ViewDocument or its JSON
 document. It never captures sources, reads a checkout, runs a worker, invokes a
 model/network, writes a store or reselects contexts. Inputs are a trusted local
