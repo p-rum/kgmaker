@@ -118,3 +118,7 @@ PASS: `/workspace/venv/bin/python -m pytest -q tests/test_provenance.py tests/te
 README upraven při řešení konfliktu; capability/API/CLI příklady v delivery-workflow beze změny, protože knihovní kontrakt a argumenty jsou stejné. Stavový i acceptance inventář doplněn aktuálním výsledkem; registr/zadání beze změny identity, revize a dependencies. Delivery PR_OPEN, ověření cíleného Python kontraktu VERIFIED_IN_SCOPE. Zbývá nezávislé review a následná integrace etap S02–S06; žádný merge do main.
 
 Dokončené integrační kontroly: semantic apply/validate, scan/check a oba `git diff --check` (working tree i index) PASS. Potvrzeno 253 zachovaných historických epizod z obou větví, 40 konceptů /122 sémantických vazeb; aktualizovány pouze zdrojové snapshots a generované pohledy.
+
+### Oprava evidence inventáře T048-S02
+
+Opravena hromadně přenesená věta o 80 testech v řádcích S02–S06. Výsledek patří pouze S01; pozdější etapy v této větvi zůstávají NOT_RUN. Runtime a jeho ověřený tree beze změny; jde výhradně o opravu stavového dokumentu, bez dopadu na README/API/CLI. Kontrola šesti řádků proti skutečným výsledkům, semantic/scan/check a diff check se provedou před commitem. Původní SHA a historické běhy zachovány.
