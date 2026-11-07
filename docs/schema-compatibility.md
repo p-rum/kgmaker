@@ -1,5 +1,11 @@
 # Offline ORM/schema compatibility — W08 bounded scope
 
+Delivery status (2026-11-07): T003-S06-W08 is MERGED in [PR64](https://github.com/p-rum/kgmaker/pull/64) (`3bef611`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 This work began as a draft stack on W04 checkpoint7dc1016. Dependency PR62 is
 now merged. The bounded implementation has strict full1591PASS/10optionalSKIP on ced9717 and current Return-parent174PASS/0SKIP on67b8341; final independent exact-pair review remains separate. It does not establish T003-S06
 completion or deployed/populated data.

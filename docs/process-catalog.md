@@ -1,4 +1,10 @@
-# Explicit process catalog (T033 candidate)
+# Explicit process catalog (T033)
+
+Delivery status (2026-11-07): T033 is MERGED in [PR79](https://github.com/p-rum/kgmaker/pull/79) (`5095343`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 `kgmaker.process_catalog.catalog_business_processes` projects current T024 trigger
 inventory and explicitly supplied current/historical ProcessViews, reading validated

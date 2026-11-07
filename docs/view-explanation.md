@@ -1,4 +1,10 @@
-# Snapshot-bound view explanation (T018 draft)
+# Snapshot-bound view explanation (T018)
+
+Delivery status (2026-11-07): T018 is MERGED in [PR83](https://github.com/p-rum/kgmaker/pull/83) (`1005b9f`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 ```python
 from kgmaker.view_explanation import explain_view_element, capture_explanation_source_status

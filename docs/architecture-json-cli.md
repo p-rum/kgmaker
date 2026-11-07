@@ -1,5 +1,11 @@
 # Architecture JSON CLI (T019 source checkpoint)
 
+Delivery status (2026-11-07): T019 is MERGED in [PR84](https://github.com/p-rum/kgmaker/pull/84) (`a60f02d`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 Default commands replay explicit captured JSON. They do not read a live workspace,
 run workers, build indexes, publish caches, or execute applications.
 
@@ -45,6 +51,8 @@ with `--strict`, 2 invalid input/original index, 3 typed baseline/capture confli
 `--cancel-file` checks an explicit cancellation marker before/after computation.
 Inputs/output are bounded; unsafe output fails without partial stdout or ID rewriting.
 Legacy `graph view`, `flow render`, and global version behavior remain available.
+
+## Historical validation checkpoint
 
 Current1005b9f includes merged T014/T016/T017/T018/Common/T012/T013/W07/process
 dependencies and exact CI. Owned architecture_cli, five CLI registration/dispatch
