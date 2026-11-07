@@ -122,3 +122,9 @@ README řeší současnou dokumentaci; `docs/delivery-workflow.md`, API/CLI př�
 - NOT_RUN: nové nezávislé review a GitHub CI. Žádný PR není automaticky merged. T048-S02 je připraven k review v rozsahu existujícího T046 stacku; T048-AC02 včetně finálního merge a širšího toolchain ověření není prohlášeno za splněné. T003/T004/T047 a další kroky T048 zůstávají podle atomického inventáře nedokončené.
 
 Sémantická integrace navíc opravuje odkazy na stejné ověřené CLI deklarace po posunu řádků: scanner ID `main::1016` → `main::1025`, `semantic_update::491` → `semantic_update::498`. Kontrolován dispatch a tvorba packetu ve zdroji; duplicitní staré hrany sloučeny podle source/target/kind. První scoped apply správně odmítl staré ID bez zápisu. Nový packet a patch zachovávají význam a všechny nesouvisející koncepty, vazby i historické epizody.
+
+### Kumulativní oprava inventáře — finální S06
+
+T048-S02 / T046-S01–S06, AC02 a AC05/AC07: převzaty korekce původních pěti větví a jejich samostatné české záznamy. Každý řádek uvádí jen vlastní skutečný cílený běh. V předchozích inkrementech jsou další etapy NOT_RUN. Potvrzeno zachování všech dřívějších záznamů a nezměněných src/tests/workers; není důvod opakovat stejnou plnou regresi při čisté dokumentační opravě.
+
+PASS nad každou integrační revizí S01–S06: semantic apply/validate, scan/check, `git diff --check`; poslední dokumentační merge tyto kontroly opakuje. Přesné úspěšné pytest běhy jednotlivých etap: S01 80/5 subtests, S02 85/8, S03 99/21, S04 103/29, S05 106/33, S06 158/38. Full S06 1627 PASS /1055 SKIP /60 subtests PASS zůstává současným skutečným výsledkem nad stejnými runtime/test/worker bajty. Všech šest PR je předáno odděleně, bez merge. K uzavření první integrační dependency T048 chybí nové nezávislé review a oprávněné sloučení; historické review nad e780e32 není aktuální APPROVE. Zbývající plánované funkční tasky nejsou tímto záznamem dokončené.
