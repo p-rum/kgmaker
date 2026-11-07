@@ -48,6 +48,26 @@ class ProvenanceTests(unittest.TestCase):
         path.write_text(json.dumps(value))
         with self.assertRaises(AnalysisError):p.load(self.root)
 
+    def test_transaction_preserves_append_only_event_history(self):
+        key = p.register_file(self.root, 'requirement', 'REQ-1', '1', 'calculator.py')
+        with p.transaction(self.root) as data:
+            data['identity'] = {'id': 'alice', 'kind': 'human'}
+            p.event(data, key, 'approved', 'Approved current content')
+            p.event(data, key, 'revoked', 'Approval withdrawn')
+        before = self.tree()
+        self.assertFalse(p.trace(self.root, key)['references'][0]['approved'])
+
+        for mutation in ('remove', 'rewrite'):
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(
+                    AnalysisError, 'history is immutable'):
+                with p.transaction(self.root) as data:
+                    if mutation == 'remove':
+                        data['events'].pop()
+                    else:
+                        data['events'][0]['reason'] = 'Rewritten decision'
+            self.assertEqual(before, self.tree())
+            self.assertFalse(p.trace(self.root, key)['references'][0]['approved'])
+
     def test_task_compare_and_swap_and_historical_reference_stability(self):
         task=w.add_task(self.root,'Concurrent calculator')
         old=digest(task)

@@ -39,16 +39,13 @@ def reference(kind, identifier, revision, payload, *, repo_id='local', locator=N
     return record
 
 
-def _load(root):
-    path = safe_path(root, JOURNAL)
-    if not path.exists():
-        return empty()
-    envelope = read_json(path)
-    if not isinstance(envelope, dict) or set(envelope) != {'data', 'sha256'} or envelope['sha256'] != digest(envelope['data']):
-        raise AnalysisError('Lineage journal integrity mismatch')
-    data = envelope['data']
+def _validate_data(data):
+    """Validate an in-memory journal before it can become persisted history."""
     if (not isinstance(data, dict) or set(data) != set(empty()) or data['schema_version'] != 1
             or type(data['revision']) is not int or data['revision'] < 0):
+        raise AnalysisError('Unsupported lineage journal contract')
+    if not isinstance(data['references'], dict) or not isinstance(data['links'], list) \
+            or not isinstance(data['events'], list):
         raise AnalysisError('Unsupported lineage journal contract')
     for key, item in data['references'].items():
         expected = reference(item['kind'], item['id'], item['revision'], item['payload'],
@@ -79,6 +76,16 @@ def _load(root):
     return data
 
 
+def _load(root):
+    path = safe_path(root, JOURNAL)
+    if not path.exists():
+        return empty()
+    envelope = read_json(path)
+    if not isinstance(envelope, dict) or set(envelope) != {'data', 'sha256'} or envelope['sha256'] != digest(envelope['data']):
+        raise AnalysisError('Lineage journal integrity mismatch')
+    return _validate_data(envelope['data'])
+
+
 @contextmanager
 def transaction(root: Path, expected_revision=None):
     """Serialize writers and replace one journal atomically; errors leave it intact."""
@@ -99,6 +106,15 @@ def transaction(root: Path, expected_revision=None):
         before = copy.deepcopy(data)
         yield data
         if data != before:
+            try:
+                events = data.get('events') if isinstance(data, dict) else None
+                if isinstance(events, list) and events[:len(before['events'])] != before['events']:
+                    raise AnalysisError('Audit event history is immutable')
+                _validate_data(data)
+            except AnalysisError:
+                raise
+            except (KeyError, TypeError, ValueError, AttributeError, RecursionError) as exc:
+                raise AnalysisError('Malformed lineage journal: '+str(exc)) from exc
             data['revision'] += 1
             write_json(path, {'data': data, 'sha256': digest(data)})
     finally:

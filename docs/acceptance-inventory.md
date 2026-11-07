@@ -14,7 +14,9 @@ W07 PR76 a W08 PR64 jsou MERGED. Nepřenáší se tím PASS na nový kód.
 T045 revize2 dovoluje merge bez GH CI při splnění ostatních povinných kontrol;
 staré billing-only blokace níže jsou historické, konkrétní chyba zůstává blokující.
 
-T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` — 80 passed, 5 subtests; [záznam 56](changes/56_addDeliveryReferences.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` a oprava neměnné
+auditní historie — 81 passed, 7 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
+PR_OPEN, Python VERIFIED_IN_SCOPE; nové review opraveného headu a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů
 
