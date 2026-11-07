@@ -1,5 +1,11 @@
 # Read-only process annotation validation (T031)
 
+Delivery status (2026-11-07): T031 is MERGED in [PR77](https://github.com/p-rum/kgmaker/pull/77) (`2c7b38e`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 `validate_process_annotations` extends the same pure `process_semantics` module as
 T030. It accepts an explicit current ProcessView, its T030 packet and a semantic
 candidate. It never loads a source/provider, calls a model/compiler/build/Git,
@@ -78,7 +84,7 @@ Captured documentary CONFLICT/UNKNOWN remains cited separately. Natural-language
 comparison is always NOT_EVALUATED; the validator neither interprets an 'approved'
 label as approval nor invents a doc/code NLP contradiction detector. Known technical
 status, fingerprints and unresolved/truncated coverage are carried unchanged.
-T032 review/apply and T034 CLI remain separate pending tasks. Existing process and
+T032 local review is merged; T034 CLI remains planned. Existing process and
 graph readers are unchanged; the separate versioned report creates no new store.
 
 ## Validation attribution
