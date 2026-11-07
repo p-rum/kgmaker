@@ -1,4 +1,10 @@
-# Static remote interface topology (T014 draft)
+# Static remote interface topology (T014)
+
+Delivery status (2026-11-07): T014 is MERGED in [PR80](https://github.com/p-rum/kgmaker/pull/80) (`ec6a127`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 ```python
 from kgmaker.remote_interfaces import project_remote_interfaces
@@ -34,6 +40,8 @@ labels/proof/config/schema payloads are omitted; safe IDs and explicit fields ar
 preserved with payload hashes. Invalid identities/malformed inputs have fixed
 nonsecret errors, no input mutation. Hard bounds reject before returning a view;
 there is no silently truncated candidate set.
+
+## Historical validation checkpoint
 
 T014 public pure/protocol tests are distinct from actual compiler acceptance.
 Merged T013/W07/Common and process bodies are preserved on current509. Owned

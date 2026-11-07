@@ -1,9 +1,15 @@
 # Pure process-label packets (T030)
 
+Delivery status (2026-11-07): T030 is MERGED in [PR75](https://github.com/p-rum/kgmaker/pull/75) (`9eec41a`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 The Python API prepares review input from an explicit existing `ProcessView` (or
 its validated document). It never discovers a process, invokes a model/compiler,
 loads a checkout, calls `feature.prepare`, persists a packet or applies semantics.
-T031 validation/apply and T034 CLI are separate pending tasks.
+T031 read-only validation and T032 local review are merged. T034 CLI remains planned.
 
 ```python
 from kgmaker.process_semantics import prepare_process_label_packet

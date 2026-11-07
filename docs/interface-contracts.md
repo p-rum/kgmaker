@@ -1,5 +1,11 @@
 # Explicit interface contract attachments
 
+Delivery status (2026-11-07): T013 is MERGED in [PR74](https://github.com/p-rum/kgmaker/pull/74) (`2a38706`).
+Current full acceptance is NOT_RUN in this documentation audit. Historical
+checkpoint results and pre-merge review gates below describe their stated SHA.
+Use the [current delivery inventory](production-analysis-progress.md) and
+[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+
 `capture_interface_contracts(workspace, graph)` reads only manifest-declared
 OpenAPI JSON, Kafka JSON message contracts, generated-client metadata and generated
 source files. Each bounded capture retains raw byte SHA, normalized source SHA and

@@ -108,3 +108,13 @@ Stav při předání této revize: **PR_OPEN**; ověření Python kontraktu **VE
 ### Dokončené kontroly této integrační revize
 
 `python -m pytest -q tests/test_provenance.py tests/test_workflow.py tests/test_templates.py tests/test_t019_add_architecture_json_cli.py tests/test_init.py tests/test_scanner.py` → **80 passed, 1 warning, 5 subtests passed in 6.82s**. Použito `PYTHONPATH=/workspace/test-deps:src`; prostředí s pytest9.2/jsonschema4.26, vlastní projekt bez runtime dependencies. `semantic update --base HEAD`, scoped apply, validate, scan, check a `git diff --check` jsou samostatné požadované kontroly; přesné nové výsledky se vážou k níže ověřovanému tree v PR review. Čerstvý init a ochrana uživatelských změn jsou součástí skutečně provedených test_init/test_scanner, nikoli textového testu nových pravidel.
+
+## T048-S02 / T046-S01 — integrace main 766c08f, 2026-11-07
+
+Baseline main `766c08f`, head před integrací `e780e32`. T048-AC02, T046-AC05/AC07/AC08. Merge zachovává dokumentační audit PR89 i knihovní provenance/workflow. Konflikt README řešen zachováním reference kontraktu a opraveného merged statusu remote mapping; sémantické koncepty/vazby a epizody obou větví zachovány bez duplicit. Runtime algoritmy ani v1/v2 ID se nemění.
+
+PASS: `/workspace/venv/bin/python -m pytest -q tests/test_provenance.py tests/test_workflow.py tests/test_templates.py tests/test_t019_add_architecture_json_cli.py tests/test_init.py tests/test_scanner.py`: **80 passed, 5 subtests passed**. Python 3.12, pytest 9.2.0. Graph/semantic/diff kontrola se zaznamená po dokončení. GH CI, nové nezávislé review a skutečný JVM/K2/TypeScript/Windows toolchain NOT_RUN.
+
+README upraven při řešení konfliktu; capability/API/CLI příklady v delivery-workflow beze změny, protože knihovní kontrakt a argumenty jsou stejné. Stavový i acceptance inventář doplněn aktuálním výsledkem; registr/zadání beze změny identity, revize a dependencies. Delivery PR_OPEN, ověření cíleného Python kontraktu VERIFIED_IN_SCOPE. Zbývá nezávislé review a následná integrace etap S02–S06; žádný merge do main.
+
+Dokončené integrační kontroly: semantic apply/validate, scan/check a oba `git diff --check` (working tree i index) PASS. Potvrzeno 253 zachovaných historických epizod z obou větví, 40 konceptů /122 sémantických vazeb; aktualizovány pouze zdrojové snapshots a generované pohledy.
