@@ -107,6 +107,8 @@ def transaction(root: Path, expected_revision=None):
         yield data
         if data != before:
             try:
+                if data.get('revision') != before['revision']:
+                    raise AnalysisError('Journal revision is managed by transaction')
                 events = data.get('events') if isinstance(data, dict) else None
                 if isinstance(events, list) and events[:len(before['events'])] != before['events']:
                     raise AnalysisError('Audit event history is immutable')
@@ -115,7 +117,7 @@ def transaction(root: Path, expected_revision=None):
                 raise
             except (KeyError, TypeError, ValueError, AttributeError, RecursionError) as exc:
                 raise AnalysisError('Malformed lineage journal: '+str(exc)) from exc
-            data['revision'] += 1
+            data['revision'] = before['revision'] + 1
             write_json(path, {'data': data, 'sha256': digest(data)})
     finally:
         lock.unlink(missing_ok=True)

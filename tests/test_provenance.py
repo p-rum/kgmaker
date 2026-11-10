@@ -137,3 +137,21 @@ class ProvenanceTests(unittest.TestCase):
                 with p.transaction(self.root, value):
                     pass
             self.assertEqual(before, self.tree())
+
+    def test_transaction_owns_revision_and_preserves_cas_progress(self):
+        p.register_file(self.root, 'requirement', 'REQ', '1', 'calculator.py')
+        observed = p.load(self.root)['revision']
+        before = self.tree()
+        with self.assertRaisesRegex(AnalysisError, 'revision is managed'):
+            with p.transaction(self.root, observed) as data:
+                data['policy']['before_done'] = True
+                data['revision'] = observed - 1
+        self.assertEqual(before, self.tree())
+        self.assertFalse(p.load(self.root)['policy']['before_done'])
+
+        with p.transaction(self.root, observed) as data:
+            data['policy']['before_done'] = True
+        self.assertEqual(observed + 1, p.load(self.root)['revision'])
+        with self.assertRaisesRegex(AnalysisError, 'Stale journal revision'):
+            with p.transaction(self.root, observed):
+                pass

@@ -15,8 +15,8 @@ T045 revize2 dovoluje merge bez GH CI při splnění ostatních povinných kontr
 staré billing-only blokace níže jsou historické, konkrétní chyba zůstává blokující.
 
 T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` a oprava neměnné
-auditní historie — 81 passed, 7 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
-PR_OPEN, Python VERIFIED_IN_SCOPE; nové review opraveného headu a širší toolchain NOT_RUN.
+auditní historie a CAS revize — 82 passed, 7 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
+PR_OPEN, Python VERIFIED_IN_SCOPE; nové review posledního opraveného headu a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů
 

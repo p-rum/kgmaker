@@ -158,3 +158,35 @@ historii, takže jejich veřejný kontrakt se nemění. Stavový a acceptance in
 odkazují na tuto opravu a nový cílený výsledek. Registr/zadání, CLI syntaxe,
 příklady a init templates jsou bez dopadu. PR zůstává PR_OPEN do nového review
 aktuální base/head dvojice; žádný starý review verdikt se nepřenáší.
+
+## Oprava nezávislého review: transakční vlastnictví CAS revize — 2026-11-10
+
+- Task/Step/Acceptance: T046 / T046-S01 / T046-AC07; reviewovaný head před
+  opravou `a712bc6ac125e46c5b5d23c2a280e4fb34158a06`.
+- Nález: volající mohl spolu se skutečnou změnou snížit `data['revision']`.
+  Transakce pak inkrementovala podvrženou hodnotu a uložila změnu pod již
+  pozorovanou revizí, takže následný zápis se starým `expected_revision`
+  nesprávně prošel.
+- Skutečná změna: `transaction()` odmítne každou přímou změnu revize a novou
+  hodnotu vždy odvodí jako `before['revision'] + 1`. Test ověřuje odmítnutí bez
+  mutace, úspěšný následující zápis a odmítnutí původní stale revize.
+- Kompatibilita: veřejný CAS kontrakt se opravuje, formát journalu a platné
+  hodnoty revizí se nemění. Volající nadále předává `expected_revision`; nikdy
+  nesmí zapisovat interní `data['revision']`.
+- PASS: stejná cílená sada jako výše — **82 passed, 7 subtests passed in 3.53 s**;
+  compileall a `git diff --check` PASS.
+- PASS: `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src
+  /workspace/venv/bin/python -m pytest -q` — **1601 passed, 1055 skipped,
+  29 subtests passed in 38.17 s**. SKIP není PASS nepřipravených toolchainů.
+- PASS: semantic apply/validate, memory capture
+  `episode:ddc31d29b84608686bad2fae9a82ec7fa6a1aebbe95c5af984f480f3793e5eab`,
+  scan/check a `git diff --check`; finální graf obsahuje 527 souborů, 5911 uzlů
+  a 42103 vztahů.
+- NOT_RUN po této opravě: GitHub CI, exact-pair review nového headu a širší
+  skutečná compiler/build/Windows matice. Full 1600 PASS předchozího headu se
+  nepřenáší jako výsledek opravy.
+
+README, capability/API/CLI dokumentace, příklady, init templates, registr a
+zadání jsou bez dopadu: jejich deklarovaný monotónní CAS kontrakt se nemění.
+Stavový a acceptance inventář zaznamenávají druhou review opravu a nový cílený
+výsledek.
