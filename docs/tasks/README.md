@@ -22,6 +22,7 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T047 | [47_addReliableIncrementalContext.md](47_addReliableIncrementalContext.md) | Inkrementální integrita, bezpečnostní kontext, hranice dopadu a platnost ověření; 13 kroků | SPECIFICATION, revize 1 |
 
 | T048 | [48_completeImplementationHandoff.md](48_completeImplementationHandoff.md) | Předávací plán dokončení, závislosti T003/T004/T046/T047 a dokumentační gate každého kroku | SPECIFICATION, revize 1 |
+| T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 1 |
 
 T046 je již přiděleno v otevřeném [PR #41](https://github.com/p-rum/kgmaker/pull/41) a navazujícím balíku #42–45/#40; není v této baseline main. T047 jeho číslo nerecykluje a execution evidence navazuje na jeho obsahové reference a workflow. Registraci T046 při merge zachovej.
 
