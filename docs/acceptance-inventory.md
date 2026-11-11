@@ -22,8 +22,9 @@ subtests; full 1602 passed, 1055 skipped a 29 subtests; [záznam 56](changes/56_
 Stav MERGED, Python VERIFIED_IN_SCOPE; nepřipravené toolchainy NOT_RUN/SKIP.
 
 T048-S02 / T046-S02, aktualizováno 2026-11-11: integrace merge commitu
-S01 `25176ad8f63e3666a051dab9c9216f50adfd6ed3` — cíleně 88 passed a 10
-subtests; full 1607 passed, 1055 skipped a 32 subtests; [záznam](changes/57_addArtifactTemplates.md).
+S01 `25176ad8f63e3666a051dab9c9216f50adfd6ed3` — po opravách review cíleně
+91 passed a 23 subtests; full 1610 passed, 1055 skipped a 45 subtests;
+[záznam](changes/57_addArtifactTemplates.md).
 PR_OPEN, Python VERIFIED_IN_SCOPE; nové exact-pair review a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů

@@ -129,8 +129,8 @@ nad integrovaným tree indexoval 530 souborů, 5414 deklarací/sekcí a 42150 vz
 
 Cílená sada
 `tests/test_provenance.py tests/test_artifact_templates.py tests/test_workflow.py tests/test_templates.py tests/test_t019_add_architecture_json_cli.py tests/test_init.py tests/test_scanner.py`
-prošla jako **88 passed, 10 subtests passed in 4.26s**. Úplná dostupná Python
-sada prošla jako **1607 passed, 1055 skipped, 32 subtests passed in 43.01s**.
+prošla jako **91 passed, 23 subtests passed in 4.13s**. Úplná dostupná Python
+sada prošla jako **1610 passed, 1055 skipped, 45 subtests passed in 41.04s**.
 SKIP není důkaz compiler/build/Windows matice. Vlastní runtime šablon se při
 integraci nezměnil; S02 přebírá opravy append-only historie, CAS revize a
 samostatné trace dostupnosti ze sloučeného S01.
@@ -138,3 +138,23 @@ samostatné trace dostupnosti ze sloučeného S01.
 Stav je **PR_OPEN / VERIFIED_IN_SCOPE**. Nové GitHub CI a nezávislé exact-pair
 review jsou před jejich skutečným provedením **NOT_RUN**. Merge, zbývající etapy
 T046 ani širší T003/T004/T047 acceptance se tímto výsledkem nepředjímají.
+
+### Opravy nezávislého review PR #42
+
+- Task/Step/Acceptance: T046 / T046-S02 / T046-AC01, T046-AC07.
+- Reviewovaný baseline: `ebd9f7334140ec4bb1ea27572013649e563ac33b`.
+- `generate` nyní před jakýmkoli exportem vyžaduje kanonickou přenosnou relativní
+  cestu. Odmítá aliasy `./`, prázdné či normalizované segmenty a segmenty
+  `.git`, `.github`, `.kgmaker` bez ohledu na velikost písmen. Stejná validace
+  odmítá rezervované názvy souborů včetně Windows aliasu `CON .txt`.
+- `install` nejprve ověří všechny cílové dvojice. Soubory vytváří exkluzivně a
+  při pozdější chybě odstraní vše, co daný pokus vytvořil; existující upravené
+  nebo poloviční dvojice dál zachovává.
+- Regrese přímo ověřují zakázané cesty bez artefaktu či journalu a pozdní
+  symlink manifestu bez dříve nainstalovaných dvojic. Kompatibilní kanonické
+  exporty a výchozí šablony zůstávají beze změny.
+- Skutečné výsledky po opravě: cíleně **91 passed, 23 subtests passed in 4.13s**;
+  full **1610 passed, 1055 skipped, 45 subtests passed in 41.04s**. GitHub CI a
+  nové exact-pair review nového headu jsou do jejich provedení **NOT_RUN**.
+- Finální memory capture `episode:4773891609ec8c01216cff994b491d4c7a69802581441f83b594b025b16e483a`
+  a scan: 530 souborů, 5422 deklarací/sekcí a 42534 vztahů.

@@ -6,11 +6,11 @@
 - Scope: production; omitted files: 441
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `0df76df4ca69ca42e481d8abed8322f2a19c8526f3326c7bd7026620f77d7901`; content: `fd6f628aed17abb15fd81260e6969f0a5babb982d3c7521a8d87a39b45c48a81`; freshness: CONTENT_VERIFIED
+- Context: `18aaecd49fa2a0a2f964770100922debc8a04438f71754e09e6a1c9698044d81`; content: `0c21f7270a131a3d82003e5c3bfb8e3d30c9dccadbbd6512f9fbc12db49a50e4`; freshness: CONTENT_VERIFIED
 - Files indexed: 89
-- Symbols and sections: 1211
+- Symbols and sections: 1212
 - Internal imports: 364
-- Heuristic cross-file calls: 6863
+- Heuristic cross-file calls: 6869
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 258
-- Inferred/ambiguous relationships: 6863/0
+- Implementation episodes: 260
+- Inferred/ambiguous relationships: 6869/0
 
 ## Architecture diagram
 
@@ -614,11 +614,12 @@ flowchart LR
 - **function** `_identity` line 55 — `_identity(value)`
 
 ### `src/kgmaker/artifact_templates.py`
-- **function** `render` line 13 — `render(root: Path, kind: str, variables: dict[str, str], template_id: str | None = None)`
-- **function** `defaults` line 68 — `defaults(kind)`
-- **function** `install` line 77 — `install(root)`
-- **function** `_validate_filename` line 137 — `_validate_filename(value)`
-- **function** `render_snapshot` line 146 — `render_snapshot(snapshot, variables)`
+- **function** `render` line 21 — `render(root: Path, kind: str, variables: dict[str, str], template_id: str | None = None)`
+- **function** `defaults` line 76 — `defaults(kind)`
+- **function** `install` line 85 — `install(root)`
+- **function** `_validate_filename` line 174 — `_validate_filename(value)`
+- **function** `_validate_export_path` line 183 — `_validate_export_path(value)`
+- **function** `render_snapshot` line 199 — `render_snapshot(snapshot, variables)`
 
 ### `src/kgmaker/availability.py`
 - **function** `observation_staleness` line 14 — `observation_staleness(candidate: dict)`
@@ -1950,6 +1951,7 @@ flowchart LR
 - **merge verified T009 main into S06 JPA W01** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: k2-jpa=passed, javac-ac06=passed, tsconfig-freshness=passed, semantic=passed
 - **fix(ci): use native-verified user default ACL for restricted Windows smoke** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: actual-windows-installed-space=passed, actual-windows-nonadmin-protocol-cleanup=passed, all-seven-ci-on-d311=passed
 - **Integrate T045 code-review agent with feat/impl** — removed; files: .codex/agents/README.md, .codex/agents/code-review.toml, AGENTS.md, README.md, docs/changes/26_addCodeReviewAgent.md; validation: full221=passed, graph=passed, toml=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/57_addArtifactTemplates.md, docs/production-analysis-progress.md, src/kgmaker/artifact_templates.py, tests/test_artifact_templates.py; validation: targeted-tests=passed, full-tests=passed, adversarial-paths=passed, transactional-install=passed, rollback-injection=passed
 - **merge: compose argument binding with factory and HTTP main** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/52_bindArgumentParameterFlow.md, docs/compiler-inspection.md; validation: parent-pure=passed, current-worker=unknown
 - **Integrate verified Return parent with immutable episode prefix** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/88_preserveAmbiguousHttpProviders.md, docs/production-analysis-progress.md; validation: strict_full493_1605PASS_10SKIP=passed, current_e740_284PASS_0SKIP=passed, actual149_0SKIP=passed, semantic_validation=passed, optional_prerequisite_gates=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/49_projectJpaInheritedAttributes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, semantic=passed
@@ -1986,6 +1988,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Audit-boundary repair (2026-10-27)** — changed; files: docs/acceptance-inventory.md, docs/changes/65_ormXmlOverrides.md, docs/production-analysis-progress.md, src/kgmaker/framework.py, src/kgmaker/graph_provider.py; validation: strict-full=passed, immutable-source=passed
 - **Integrate prerequisite-only main before frozen context-role full** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/84_classifyWorkspaceContextRoles.md, docs/production-analysis-progress.md; validation: native-source-artifacts=passed, composition-focus=unknown, strict-full=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-07, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/57_addArtifactTemplates.md, docs/production-analysis-progress.md, src/kgmaker/artifact_templates.py, tests/test_artifact_templates.py; validation: targeted-tests=passed, full-tests=passed, adversarial-paths=passed, transactional-install=passed
 - **Draft shared context-role boundary after public mixed snapshot RED** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/84_classifyWorkspaceContextRoles.md, docs/production-analysis-progress.md; validation: pure294=passed, actual-captured-projection=passed, source-review=unknown, full=unknown
 - **feat(t023): define revision-bound business process documents** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/70_defineBusinessProcessModel.md, docs/process-model.md; validation: focused130=passed, full729=passed, optional10=skipped, source-freeze=passed, semantic=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest194=passed, file-facade-clinit=passed, object-constructor-realm=passed
@@ -2886,36 +2889,42 @@ flowchart LR
 - `src/kgmaker/architecture_render_common.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 34; src/kgmaker/architecture_render_common.py:34; INFERRED 0.85)
 - `src/kgmaker/architecture_render_common.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 49; src/kgmaker/architecture_render_common.py:49; INFERRED 0.85)
 - `src/kgmaker/architecture_render_common.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 51; src/kgmaker/architecture_render_common.py:51; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 104; src/kgmaker/artifact_templates.py:104; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 110; src/kgmaker/artifact_templates.py:110; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 145; src/kgmaker/artifact_templates.py:145; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 153; src/kgmaker/artifact_templates.py:153; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 156; src/kgmaker/artifact_templates.py:156; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 18; src/kgmaker/artifact_templates.py:18; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 24; src/kgmaker/artifact_templates.py:24; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 27; src/kgmaker/artifact_templates.py:27; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 29; src/kgmaker/artifact_templates.py:29; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 36; src/kgmaker/artifact_templates.py:36; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 40; src/kgmaker/artifact_templates.py:40; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 140; src/kgmaker/artifact_templates.py:140; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 147; src/kgmaker/artifact_templates.py:147; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 182; src/kgmaker/artifact_templates.py:182; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 188; src/kgmaker/artifact_templates.py:188; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 193; src/kgmaker/artifact_templates.py:193; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 197; src/kgmaker/artifact_templates.py:197; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 206; src/kgmaker/artifact_templates.py:206; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 209; src/kgmaker/artifact_templates.py:209; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 26; src/kgmaker/artifact_templates.py:26; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 32; src/kgmaker/artifact_templates.py:32; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 35; src/kgmaker/artifact_templates.py:35; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 37; src/kgmaker/artifact_templates.py:37; INFERRED 0.85)
 - `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 44; src/kgmaker/artifact_templates.py:44; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 47; src/kgmaker/artifact_templates.py:47; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 50; src/kgmaker/artifact_templates.py:50; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 48; src/kgmaker/artifact_templates.py:48; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 52; src/kgmaker/artifact_templates.py:52; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 55; src/kgmaker/artifact_templates.py:55; INFERRED 0.85)
 - `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 58; src/kgmaker/artifact_templates.py:58; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 60; src/kgmaker/artifact_templates.py:60; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 72; src/kgmaker/artifact_templates.py:72; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `89 in `src/kgmaker/analysis_model.py`` (name match at line 90; src/kgmaker/artifact_templates.py:90; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `45 in `src/kgmaker/analysis_model.py`` (name match at line 121; src/kgmaker/artifact_templates.py:121; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `45 in `src/kgmaker/analysis_model.py`` (name match at line 126; src/kgmaker/artifact_templates.py:126; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `73 in `src/kgmaker/analysis_model.py`` (name match at line 22; src/kgmaker/artifact_templates.py:22; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `73 in `src/kgmaker/analysis_model.py`` (name match at line 33; src/kgmaker/artifact_templates.py:33; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `103 in `src/kgmaker/analysis_model.py`` (name match at line 91; src/kgmaker/artifact_templates.py:91; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `124 in `src/kgmaker/provenance.py`` (name match at line 127; src/kgmaker/artifact_templates.py:127; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `90 in `src/kgmaker/provenance.py`` (name match at line 116; src/kgmaker/artifact_templates.py:116; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 155; src/kgmaker/artifact_templates.py:155; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 25; src/kgmaker/artifact_templates.py:25; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 59; src/kgmaker/artifact_templates.py:59; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 120; src/kgmaker/artifact_templates.py:120; INFERRED 0.85)
-- `src/kgmaker/artifact_templates.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 38; src/kgmaker/artifact_templates.py:38; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 66; src/kgmaker/artifact_templates.py:66; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 68; src/kgmaker/artifact_templates.py:68; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 80; src/kgmaker/artifact_templates.py:80; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `45 in `src/kgmaker/analysis_model.py`` (name match at line 158; src/kgmaker/artifact_templates.py:158; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `45 in `src/kgmaker/analysis_model.py`` (name match at line 163; src/kgmaker/artifact_templates.py:163; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `73 in `src/kgmaker/analysis_model.py`` (name match at line 30; src/kgmaker/artifact_templates.py:30; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `73 in `src/kgmaker/analysis_model.py`` (name match at line 41; src/kgmaker/artifact_templates.py:41; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `207 in `src/kgmaker/dataflow.py`` (name match at line 106; src/kgmaker/artifact_templates.py:106; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `372 in `src/kgmaker/domain.py`` (name match at line 118; src/kgmaker/artifact_templates.py:118; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `124 in `src/kgmaker/provenance.py`` (name match at line 164; src/kgmaker/artifact_templates.py:164; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `90 in `src/kgmaker/provenance.py`` (name match at line 153; src/kgmaker/artifact_templates.py:153; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 208; src/kgmaker/artifact_templates.py:208; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 33; src/kgmaker/artifact_templates.py:33; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 67; src/kgmaker/artifact_templates.py:67; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 108; src/kgmaker/artifact_templates.py:108; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `183 in `src/kgmaker/service_topology.py`` (name match at line 115; src/kgmaker/artifact_templates.py:115; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 117; src/kgmaker/artifact_templates.py:117; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `85 in `src/kgmaker/worker_protocol.py`` (name match at line 157; src/kgmaker/artifact_templates.py:157; INFERRED 0.85)
+- `src/kgmaker/artifact_templates.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 46; src/kgmaker/artifact_templates.py:46; INFERRED 0.85)
 - `src/kgmaker/availability.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 102; src/kgmaker/availability.py:102; INFERRED 0.85)
 - `src/kgmaker/availability.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 105; src/kgmaker/availability.py:105; INFERRED 0.85)
 - `src/kgmaker/availability.py` may call `31 in `src/kgmaker/analysis_model.py`` (name match at line 109; src/kgmaker/availability.py:109; INFERRED 0.85)
