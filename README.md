@@ -837,6 +837,13 @@ and hash-omits raw labels, documentation and proof/configuration prose. It perfo
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
 T031 adds explicit validation and T032 adds local review below; T034 CLI remains planned.
 
+### T046-S01 — reference contracts and v1/v2 metadata
+
+Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
+CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+
+
+T046 review corrections S01–S01: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
 ## T003-S07-W07 — explicit remote mapping (merged PR76)
 
 See [remote mapping contract](docs/remote-contract-mapping.md)

@@ -25,6 +25,8 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 
 T046 je již přiděleno v otevřeném [PR #41](https://github.com/p-rum/kgmaker/pull/41) a navazujícím balíku #42–45/#40; není v této baseline main. T047 jeho číslo nerecykluje a execution evidence navazuje na jeho obsahové reference a workflow. Registraci T046 při merge zachovej.
 
+| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION; implementace viz stavová matice |
+
 ## High-level zobrazení projektu — T004
 
 [T004 — hlavní zadání](4_addHighLevelProjectViews.md) obsahuje společné kontrakty,

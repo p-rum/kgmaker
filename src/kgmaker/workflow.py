@@ -274,10 +274,21 @@ def validate_task(record: Any) -> dict[str, Any]:
     """Validate a persisted task document, including append-only artifacts."""
     if not isinstance(record, dict):
         raise WorkflowError("task must be an object")
-    if set(record) != TASK_FIELDS:
+    version = record.get('schema_version')
+    fields = TASK_FIELDS | ({'delivery'} if version == 2 else set())
+    if set(record) != fields:
         raise WorkflowError("task must contain exactly the workflow contract fields")
-    if record["schema_version"] != SCHEMA_VERSION:
-        raise WorkflowError(f"task must use schema_version {SCHEMA_VERSION}")
+    if type(version) is not int or version not in {1, 2}:
+        raise WorkflowError('task must use schema_version 1 or 2')
+    if version == 2:
+        delivery = record['delivery']
+        if not isinstance(delivery, dict) or set(delivery) != {'schema_version','bindings'} or delivery['schema_version'] != 1 or not isinstance(delivery['bindings'], dict):
+            raise WorkflowError('Invalid task delivery metadata')
+        for identifier, binding in delivery['bindings'].items():
+            if identifier not in record['artifact_ids'] or not isinstance(binding,dict) or set(binding) != {'head_commit','source_fingerprint'} or not isinstance(binding['source_fingerprint'],str) or not _HEX_64.fullmatch(binding['source_fingerprint']):
+                raise WorkflowError('Invalid artifact content binding')
+            if binding['head_commit'] is not None and not _HEX_40.fullmatch(str(binding['head_commit'])):
+                raise WorkflowError('Invalid artifact head binding')
     title = _bounded_text(record["title"], "title", MAX_TITLE)
     request = _bounded_text(record["request"], "request", MAX_REQUEST)
     if record["status"] not in STATUSES:
@@ -422,12 +433,88 @@ def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
-def save_task(root: Path, task: dict[str, Any]) -> Path:
-    """Atomically persist a validated task document."""
-    validated = validate_task(task)
-    path = task_path(root, validated["id"])
+def _persist_task_locked(root, validated, path, existing, expected_revision):
+    """Persist under the shared workflow lock, preserving immutable history."""
+    from .analysis_model import digest
+    from .provenance import enforce_gate
+    if existing is None:
+        if expected_revision is not None:
+            raise WorkflowError('Task changed concurrently; reload before writing')
+        if (validated['status'] != 'intake' or validated['artifacts'] or
+                validated['head_commit'] is not None or validated['worktree_fingerprint'] is not None):
+            raise WorkflowError('A new task must start at intake without artifacts')
+        added = []
+    else:
+        if expected_revision is not None and digest(existing) != expected_revision:
+            raise WorkflowError('Task changed concurrently; reload before writing')
+        if validated == existing:
+            return path
+        if expected_revision is None:
+            raise WorkflowError('Existing task updates require expected_revision')
+        count = len(existing['artifacts'])
+        if validated['artifacts'][:count] != existing['artifacts']:
+            raise WorkflowError('Task artifact history is immutable')
+        old_bindings = existing.get('delivery', {}).get('bindings', {})
+        new_bindings = validated.get('delivery', {}).get('bindings', {})
+        if any(new_bindings.get(key) != value for key, value in old_bindings.items()):
+            raise WorkflowError('Recorded artifact bindings are immutable')
+        if validated['schema_version'] < existing['schema_version']:
+            raise WorkflowError('Task schema downgrade is not supported')
+        changed_phase = validated['status'] != existing['status']
+        if changed_phase and validated['status'] not in legal_transitions(existing):
+            # stop_task is allowed to fail any non-terminal task with a reason.
+            stopped = (validated['status'] == 'failed' and
+                       existing['status'] in ACTIVE_STATUSES and validated['stop_reason'])
+            if not stopped:
+                raise WorkflowError('Cannot skip workflow phases')
+        expected_iteration = existing['iteration']
+        if changed_phase and validated['status'] == 'implement' and existing['status'] in {'test', 'review'}:
+            expected_iteration += 1
+        if validated['iteration'] != expected_iteration:
+            raise WorkflowError('Task iteration must follow its phase transition')
+        added = validated['artifacts'][count:]
+        captured_ids = {a['id'] for a in added if a['phase'] in {'implement', 'review'}}
+        if any(key not in old_bindings and key not in captured_ids for key in new_bindings):
+            raise WorkflowError('Cannot invent bindings for historical artifacts')
+    for artifact in added:
+        if artifact['phase'] != validated['status'] or artifact['iteration'] != validated['iteration']:
+            raise WorkflowError('New artifact phase and iteration must match the current task')
+    captured = [a for a in added if a['phase'] in {'implement', 'review'}]
+    if captured:
+        from .feature import source_inventory
+        binding = {'head_commit': _git_head(root),
+                   'source_fingerprint': digest(source_inventory(root)[0])}
+        bindings = validated.get('delivery', {}).get('bindings', {})
+        for artifact in captured:
+            if artifact['id'] in bindings and bindings[artifact['id']] != binding:
+                raise WorkflowError('New artifact binding differs from current source/HEAD')
+        validated['schema_version'] = 2
+        validated.setdefault('delivery', {'schema_version': 1, 'bindings': {}})
+        for artifact in captured:
+            validated['delivery']['bindings'][artifact['id']] = dict(binding)
+        validated['head_commit'] = binding['head_commit']
+        validated['worktree_fingerprint'] = binding['source_fingerprint']
+        validate_task(validated)
+    elif existing is not None and any(validated[k] != existing[k]
+                                     for k in ('head_commit', 'worktree_fingerprint')):
+        raise WorkflowError('Source observations require a new implementation/review artifact')
     _atomic_write(path, validated)
     return path
+
+
+def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None = None) -> Path:
+    """Atomically persist a validated task with optimistic concurrency checks."""
+    import copy
+    from .provenance import transaction
+    from .analysis_model import AnalysisError
+    validated = validate_task(copy.deepcopy(task))
+    path = task_path(root, validated['id'])
+    try:
+        with transaction(root):
+            existing = load_task(root, validated['id']) if path.exists() else None
+            return _persist_task_locked(root, validated, path, existing, expected_revision)
+    except AnalysisError as exc:
+        raise WorkflowError(str(exc)) from exc
 
 
 def load_task(root: Path, task_id_value: str) -> dict[str, Any]:
@@ -465,16 +552,24 @@ def add_task(
 ) -> dict[str, Any]:
     """Create or return the existing intake task for the same creation contract."""
     task = create_task(root, request, title=title, max_iterations=max_iterations)
-    path = task_path(root, task["id"])
-    if path.exists():
-        return load_task(root, task["id"])
-    save_task(root, task)
+    path = task_path(root, task['id'])
+    from .provenance import transaction
+    from .analysis_model import AnalysisError
+    try:
+        with transaction(root):
+            if path.exists():
+                return load_task(root, task['id'])
+            _persist_task_locked(root, task, path, None, None)
+    except AnalysisError as exc:
+        raise WorkflowError(str(exc)) from exc
     return task
 
 
 def advance_task(root: Path, task_id_value: str, target: str) -> dict[str, Any]:
     """Move a task to a legally reachable status and persist the result."""
     task = load_task(root, task_id_value)
+    from .analysis_model import digest
+    expected_revision = digest(task)
     if target not in STATUSES:
         raise WorkflowError("status is unsupported")
     allowed = legal_transitions(task)
@@ -489,18 +584,20 @@ def advance_task(root: Path, task_id_value: str, target: str) -> dict[str, Any]:
         task["stop_reason"] = task["stop_reason"] or "advanced to blocked"
     elif target == "done":
         task["stop_reason"] = None
-    save_task(root, task)
+    save_task(root, task, expected_revision=expected_revision)
     return task
 
 
 def stop_task(root: Path, task_id_value: str, reason: str) -> dict[str, Any]:
     """Mark a non-terminal task failed with a bounded stop reason."""
     task = load_task(root, task_id_value)
+    from .analysis_model import digest
+    expected_revision = digest(task)
     if task["status"] in TERMINAL_STATUSES:
         raise WorkflowError("cannot stop a terminal task")
     task["status"] = "failed"
     task["stop_reason"] = _bounded_text(reason, "stop_reason", MAX_STOP_REASON)
-    save_task(root, task)
+    save_task(root, task, expected_revision=expected_revision)
     return task
 
 
@@ -523,6 +620,8 @@ def packet_path(root: Path, task: dict[str, Any], role: str, iteration: int) -> 
 def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Append a validated role artifact and persist the parent task."""
     task = load_task(root, task_id_value)
+    from .analysis_model import digest
+    expected_revision = digest(task)
     if task["status"] in TERMINAL_STATUSES:
         raise WorkflowError("cannot record artifacts on a terminal task")
     if role not in ROLES:
@@ -543,6 +642,8 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
     artifact = validate_artifact(record)
     if artifact["id"] in task["artifact_ids"]:
         return task
+    if artifact['phase'] != task['status']:
+        raise WorkflowError('Artifact phase must match the current task phase')
     if artifact["packet_id"] is not None:
         prepared = packet_path(root, task, artifact["role"], artifact["iteration"])
         try:
@@ -555,6 +656,15 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
             raise WorkflowError("artifact packet does not belong to this task role")
         if packet.get("iteration") != artifact["iteration"]:
             raise WorkflowError("artifact packet iteration does not match the artifact")
+    if artifact['phase'] in {'implement', 'review'}:
+        from .feature import source_inventory
+        from .analysis_model import digest
+        task['head_commit'] = _git_head(root)
+        task['worktree_fingerprint'] = digest(source_inventory(root)[0])
+        task['schema_version'] = 2
+        task.setdefault('delivery', {'schema_version':1, 'bindings':{}})
+        task['delivery']['bindings'][artifact['id']] = {
+            'head_commit':task['head_commit'], 'source_fingerprint':task['worktree_fingerprint']}
     task["artifacts"] = [*task["artifacts"], artifact]
     task["artifact_ids"] = [*task["artifact_ids"], artifact["id"]]
     if artifact["role"] == "architect" and artifact["phase"] == "plan":
@@ -563,5 +673,5 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
         task["accepted_paths"] = _merge_paths(task["accepted_paths"], step_paths)
     elif artifact["role"] == "implementation":
         task["accepted_paths"] = _merge_paths(task["accepted_paths"], artifact["changed_paths"])
-    save_task(root, task)
+    save_task(root, task, expected_revision=expected_revision)
     return task
