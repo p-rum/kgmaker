@@ -1,10 +1,13 @@
 # Registr implementačních zadání
 
-Delivery status (2026-11-07) is tracked per atomic task in the
-[current inventory](../production-analysis-progress.md). SPECIFICATION is a
-document state. T046 is PR_OPEN in PR41→42→43→44→45→40; its revision2 spec
-currently lives on [the S01 branch](https://github.com/p-rum/kgmaker/blob/e780e32d38ccd748a80fd8b8691214be2f332b1e/docs/tasks/46_addTemplatesTestsAndTraceability.md),
-not main. T048-S01 audit: [change111](../changes/111_reconcileDeliveryStatus.md).
+Stav dodání je veden po jednotlivých krocích v
+[aktuální stavové matici](../production-analysis-progress.md); SPECIFICATION
+označuje stav zadání, nikoli dodání. K 2026-11-11 jsou T046-S01
+([PR #41](https://github.com/p-rum/kgmaker/pull/41)) a T046-S02
+([PR #42](https://github.com/p-rum/kgmaker/pull/42)) sloučené do `main`.
+T046-S03 až S06 zůstávají v otevřeném balíku PR #43, #44, #45 a #40.
+Zadání [T046](46_addTemplatesTestsAndTraceability.md) již existuje v `main`.
+Historický audit T048-S01: [change111](../changes/111_reconcileDeliveryStatus.md).
 
 Tento registr je autoritou pro identitu zadání. Implementační stav patří do
 [stavové matice](../production-analysis-progress.md), technické požadavky do
@@ -24,7 +27,10 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T048 | [48_completeImplementationHandoff.md](48_completeImplementationHandoff.md) | Předávací plán dokončení, závislosti T003/T004/T046/T047 a dokumentační gate každého kroku | SPECIFICATION, revize 1 |
 | T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 1 |
 
-T046 je již přiděleno v otevřeném [PR #41](https://github.com/p-rum/kgmaker/pull/41) a navazujícím balíku #42–45/#40; není v této baseline main. T047 jeho číslo nerecykluje a execution evidence navazuje na jeho obsahové reference a workflow. Registraci T046 při merge zachovej.
+T046 je již registrováno v `main`: kroky S01/S02 byly sloučeny v PR #41/#42;
+k 2026-11-11 zbývají otevřené S03–S06 v PR #43/#44/#45/#40.
+T047 číslo T046 nerecykluje a execution evidence navazuje na obsahové
+reference a workflow T046. Aktuální stav dodání ověřuj ve stavové matici.
 
 | T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION; implementace viz stavová matice |
 
