@@ -5,7 +5,8 @@
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046 je PR_OPEN,
+T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 je MERGED,
+T046-S02 až S06 jsou PR_OPEN,
 T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
@@ -14,10 +15,17 @@ W07 PR76 a W08 PR64 jsou MERGED. Nepřenáší se tím PASS na nový kód.
 T045 revize2 dovoluje merge bez GH CI při splnění ostatních povinných kontrol;
 staré billing-only blokace níže jsou historické, konkrétní chyba zůstává blokující.
 
-T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` a oprava neměnné
-auditní historie, CAS revize a samostatná dostupnost trace — 83 passed,
-7 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
-PR_OPEN, Python VERIFIED_IN_SCOPE; nové review posledního opraveného headu a širší toolchain NOT_RUN.
+T048-S02 / T046-S01, aktualizováno 2026-11-11: head
+`3083215800515e81425d4824c7db5cef0fe1ef10` byl po exact-pair review sloučen
+jako `25176ad8f63e3666a051dab9c9216f50adfd6ed3`. Cíleně 83 passed a 7
+subtests; full 1602 passed, 1055 skipped a 29 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
+Stav MERGED, Python VERIFIED_IN_SCOPE; nepřipravené toolchainy NOT_RUN/SKIP.
+
+T048-S02 / T046-S02, aktualizováno 2026-11-11: integrace merge commitu
+S01 `25176ad8f63e3666a051dab9c9216f50adfd6ed3` — po opravách review cíleně
+91 passed a 23 subtests; full 1610 passed, 1055 skipped a 45 subtests;
+[záznam](changes/57_addArtifactTemplates.md).
+PR_OPEN, Python VERIFIED_IN_SCOPE; nové exact-pair review a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů
 
@@ -1080,3 +1088,4 @@ AC06 čeká na finální review a samostatnou publikaci.
 ### T046 — integrační evidence f115 (2026-11-06)
 
 - T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
