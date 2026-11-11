@@ -115,3 +115,26 @@ README řeší současnou dokumentaci; `docs/delivery-workflow.md`, API/CLI př�
 ### Oprava evidence inventáře T048-S02, S02
 
 Řádky etap mají nyní každý svůj skutečný cílený výsledek; výsledky dalších etap v této větvi zůstávají NOT_RUN. Opravena nesprávně přenesená věta o 80 testech ze S01. Převzata odpovídající oprava předchůdce a jeho change note. Bez změny runtime, testů, README/API/CLI či acceptance; jde o přesné přiřazení evidence v existujícím stavovém inventáři. Ověření dokumentu, semantic apply/validate, scan/check a diff check se provádí před předáním; původní testové běhy zůstávají platné pouze pro nezměněný runtime tree.
+
+## T048-S02 / T046-S02 — integrace sloučeného S01, 2026-11-11
+
+PR #42 byl retargetován na `main` po sloučení S01. Integrovaný baseline je
+`25176ad8f63e3666a051dab9c9216f50adfd6ed3`; vlastní šablonový inkrement vychází
+z headu `ff99ad7194cd52065857669ee6fe12082c88a9ac`. Konflikty byly omezené na
+generované sémantické snapshoty a stavovou matici. Kontrola výsledného diffu navíc
+odhalila, že starší větev přepisovala novější capability v README; výsledná verze
+proto vychází z aktuálního `main` a přidává jen sekci S02. Výsledná sémantická vrstva
+zachovává shodných 40 konceptů, 122 vztahů a všech 258 epizod. Příkazový scan
+nad integrovaným tree indexoval 530 souborů, 5414 deklarací/sekcí a 42150 vztahů.
+
+Cílená sada
+`tests/test_provenance.py tests/test_artifact_templates.py tests/test_workflow.py tests/test_templates.py tests/test_t019_add_architecture_json_cli.py tests/test_init.py tests/test_scanner.py`
+prošla jako **88 passed, 10 subtests passed in 4.26s**. Úplná dostupná Python
+sada prošla jako **1607 passed, 1055 skipped, 32 subtests passed in 43.01s**.
+SKIP není důkaz compiler/build/Windows matice. Vlastní runtime šablon se při
+integraci nezměnil; S02 přebírá opravy append-only historie, CAS revize a
+samostatné trace dostupnosti ze sloučeného S01.
+
+Stav je **PR_OPEN / VERIFIED_IN_SCOPE**. Nové GitHub CI a nezávislé exact-pair
+review jsou před jejich skutečným provedením **NOT_RUN**. Merge, zbývající etapy
+T046 ani širší T003/T004/T047 acceptance se tímto výsledkem nepředjímají.
