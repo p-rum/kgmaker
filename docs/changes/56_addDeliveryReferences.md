@@ -190,3 +190,35 @@ README, capability/API/CLI dokumentace, příklady, init templates, registr a
 zadání jsou bez dopadu: jejich deklarovaný monotónní CAS kontrakt se nemění.
 Stavový a acceptance inventář zaznamenávají druhou review opravu a nový cílený
 výsledek.
+
+## Oprava nezávislého review: trace bez pozdější etapy testgen — 2026-11-11
+
+- Task/Step/Acceptance: T046 / T046-S01 / T046-AC05/AC08; reviewovaný head před
+  opravou `83098c1e99f4f3e3c8ccc81a45ee56eb89adebdc`.
+- Nález: S01 veřejně přijímá obsahově vázanou referenci druhu `test_suite`, ale
+  `trace()` bezpodmínečně importovala `kgmaker.testgen`, který vzniká až v S03.
+  Samostatný S01 proto pro platnou referenci padal `ImportError` místo vrácení
+  konzervativního stavu.
+- Skutečná změna: freshness větve `test_suite` zachytí chybějící pozdější modul
+  i nekompatibilní/neúplný packet a označí referenci `STALE`. Pokud S03 existuje
+  a packet je platný, nadále se používá jeho přesná `freshness()` kontrola.
+  Test registruje platný `test_suite` soubor nad samotným S01 a ověřuje `STALE`,
+  `approved=False` a nulový pád.
+- Kompatibilita: schema druhů, ID, payload, linky a report zůstávají stejné.
+  Nedostupný S03 není považován za CURRENT ani APPROVED; neznámá evidence se
+  konzervativně neskrývá.
+- PASS: cílená sada — **83 passed, 7 subtests passed in 4.61 s**; compileall a
+  `git diff --check` PASS.
+- PASS: `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src
+  /workspace/venv/bin/python -m pytest -q` — **1602 passed, 1055 skipped,
+  29 subtests passed in 41.35 s**. SKIP není PASS nepřipravených toolchainů.
+- PASS: semantic apply/validate, memory capture
+  `episode:4fbbc028a2512113bca9fd7b0d82cbb652374a12dda280dba8112248a3e091b3`,
+  scan/check a `git diff --check`; finální graf obsahuje 527 souborů, 5914 uzlů
+  a 42202 vztahů.
+- NOT_RUN po této opravě: GitHub CI a exact-pair review nového headu. Full 1601
+  PASS předchozího headu se nepřenáší jako výsledek této opravy.
+
+README, delivery workflow, CLI příklady, init templates, registr a zadání jsou
+bez dopadu: jejich deklarovaný konzervativní UNKNOWN/STALE kontrakt se nemění.
+Stavový a acceptance inventář zaznamenávají třetí review opravu.

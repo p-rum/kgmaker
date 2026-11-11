@@ -155,3 +155,14 @@ class ProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(AnalysisError, 'Stale journal revision'):
             with p.transaction(self.root, observed):
                 pass
+
+    def test_trace_marks_test_suite_stale_without_later_testgen_stage(self):
+        (self.root / 'test_calculator.py').write_text('def test_double():\n    pass\n')
+        key = p.register_file(
+            self.root, 'test_suite', 'calculator-tests', '1', 'test_calculator.py')
+
+        report = p.trace(self.root, key)
+
+        self.assertEqual(1, len(report['references']))
+        self.assertTrue(report['references'][0]['stale'])
+        self.assertFalse(report['references'][0]['approved'])

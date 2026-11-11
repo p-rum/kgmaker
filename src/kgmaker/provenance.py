@@ -267,12 +267,12 @@ def trace(root, selector=None):
             binding = ref['payload']['binding']
             stale = stale or digest(source_inventory(root)[0]) != binding['source_fingerprint'] or binding['head_commit'] != _git_head(root)
         if ref['kind'] == 'test_suite':
-            from . import testgen
             try:
+                from . import testgen
                 state = testgen._state(root,ref['id'])
                 packet = next(p for p in state['packets'] if p['packet_id']==ref['payload']['packet_id'])
                 stale = stale or bool(testgen.freshness(root,packet))
-            except (AnalysisError,OSError,StopIteration):
+            except (ImportError, AnalysisError, OSError, StopIteration, KeyError, TypeError):
                 stale = True
         events = [e for e in data['events'] if e['subject'] == key]
         result.append({**ref, 'stale': stale, 'approved': approved(data,key) and not stale,
