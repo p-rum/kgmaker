@@ -21,22 +21,23 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 |---|---:|---:|---:|---:|
 | T003 work packages | 37 | 23 | 0 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
-| T046 etapy | 0 | 0 | 6 | 6 |
+| T046 etapy | 5 | 0 | 1 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 61 | 52 | 6 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 66 | 52 | 1 | 119 |
 
 T003/T004 mají 39 položek bez sloučené dodávky. T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
-`NOT_RUN` nikdy nepřebírá PASS z popisu PR. U T046 zdroje/testy odkazují na jeho
-větev (v main dosud nejsou). U plánovaných položek jsou uvedeny existující body
-rozšíření, nikoli důkaz dodaného chování. SHA označuje merge/integrační checkpoint,
-u nedodaných položek auditovanou baseline; nenahrazuje testový receipt.
+`NOT_RUN` nikdy nepřebírá PASS z popisu PR. T046-S01 až S05 jsou v `main`; zdroje
+a testy S06 odkazují do PR #40 do jeho případného merge. U plánovaných položek
+jsou uvedeny existující body rozšíření, nikoli důkaz dodaného chování. SHA označuje
+merge/integrační checkpoint, u nedodaných položek auditovanou baseline; nenahrazuje
+testový receipt.
 
-Po baseline T048 `250e7c1` přibylo pouze zadání T048 a dokumentační instrukce
-(PR88, `f115aa4`); žádný další funkční kontrakt nebyl v main dodán. T020 je MERGED
-v PR87 (`250e7c1`); topology/explain nadále přijímají jen JSON. T021 je blokován
-upstream T003-S07-W09, nikoli chybějícím T019. T031 a T032 jsou sloučené;
+Po baseline T048 `250e7c1` byly kromě dokumentačních instrukcí sloučeny také
+T046-S01 až S05 a přibylo zadání T049; jejich přesné SHA jsou v atomických řádcích.
+T020 zůstává MERGED v PR87; topology/explain nadále přijímají jen JSON. T021 je
+blokován upstream T003-S07-W09, nikoli chybějícím T019. T031 a T032 jsou sloučené;
 T034 procesní CLI zůstává PLANNED.
 
 ### Atomické položky

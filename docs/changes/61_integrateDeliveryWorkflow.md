@@ -139,8 +139,8 @@ zbývající T003/T004/T047 tím nejsou dokončené.
 Baseline je merge S05 `6dffe5e39fb847e5552f38e67b957e4b51b20bed`; PR #40 byl
 retargetován na `main`. Konflikty byly omezené na generované grafy a společné
 T046 dokumenty. Finální S06 CLI/instrukce zůstaly zachované, stejně jako aktuální
-statusy S01–S05, T049 plán a sjednocených 278 implementačních epizod včetně
-aktuálního integračního capture. Dvě
+statusy S01–S05, T049 plán a sjednocených 279 implementačních epizod včetně
+integračního a review-fix capture. Dvě
 sémantické hrany používají S06 deklarace po posunu řádků; nesouvisející koncepty
 a vazby jsou shodné.
 
@@ -152,7 +152,17 @@ subtests in 44.83s**. SKIP není compiler/build/Windows PASS. Runtime S06 se př
 integraci neměnil; nové exact-pair review a GH CI jsou NOT_RUN. Delivery zůstává
 PR_OPEN a širší T003/T004/T047 acceptance se tím neprohlašuje.
 
-PASS: semantic validate **318 concepts /31 415 relationships**; scan/check **541
-files /6123 nodes /44 684 relationships**; Python compileall a `git diff --check`.
+PASS: semantic validate **319 concepts /31 436 relationships**; scan/check **541
+files /6125 nodes /44 706 relationships**; Python compileall a `git diff --check`.
 Generované grafy byly obnovené příkazem, ne ručně. Exact-pair review se musí
 vázat na nový commit po této integraci.
+
+### Oprava souhrnu po exact-pair review
+
+Review base `6dffe5e39fb847e5552f38e67b957e4b51b20bed` / head
+`65e6a3bbe7246ef7d3caac4d0f956cd6d3f81de5` našlo jediný P1 rozpor v horním
+souhrnu stavové matice. Souhrn nyní stejně jako atomické řádky uvádí T046 jako
+**5 MERGED /1 PR_OPEN** a celkem **66 MERGED /52 PLANNED /1 PR_OPEN**. Text už
+netvrdí, že S01–S05 nejsou v `main`; pouze S06 zůstává v PR #40. Změna je čistě
+dokumentační, runtime/test strom a výše uvedené výsledky se nemění. Nový head
+vyžaduje exact-pair re-review.
