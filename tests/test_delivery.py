@@ -120,6 +120,8 @@ class GeneratedTest(unittest.TestCase):
 
     def test_ambiguous_target_and_idempotent_prepare(self):
         packet=self.prepare();self.assertEqual(packet,self.prepare())
+        with self.assertRaises(AnalysisError):
+            t.prepare(self.root,'double','calculator.py',scope='all',expected_revision=True)
         (self.root/'other.py').write_text('def double(value):\n    return value * 2\n')
         with self.assertRaises(AnalysisError):t.prepare(self.root,'double','double',scope='all')
         with self.assertRaises(AnalysisError):t.prepare(self.root,'double','calculator.py',scope='all',expected_revision=0)
@@ -207,10 +209,26 @@ class GeneratedTest(unittest.TestCase):
             t.validate(self.root, 'double', candidate)
         t.apply(self.root, 'double', self.candidate(packet))
         before = self.tree()
-        for data_dir in ('./.github', '.github', './.git', '.kgmaker', 'tests/.git'):
+        for data_dir in ('./.github', '.github', './.git', '.kgmaker', 'tests/.git',
+                         'tests/fixtures/kgmaker/'):
             with self.subTest(data_dir=data_dir), self.assertRaises(AnalysisError):
                 t.export(self.root, 'double', data_dir=data_dir)
             self.assertEqual(before, self.tree())
+
+    def test_export_rolls_back_new_directories_after_late_write_failure(self):
+        packet=self.prepare();candidate=self.candidate(packet);t.apply(self.root,'double',candidate)
+        original_open=Path.open
+        def fail_dataset(path,*args,**kwargs):
+            if path.name=='double_numbers.json' and args and args[0]=='x':
+                raise OSError('injected dataset write failure')
+            return original_open(path,*args,**kwargs)
+        before_tree=self.tree()
+        before_dirs={str(path.relative_to(self.root)) for path in self.root.rglob('*') if path.is_dir()}
+        with patch.object(Path,'open',fail_dataset):
+            with self.assertRaisesRegex(OSError,'injected dataset write failure'):
+                t.export(self.root,'double')
+        self.assertEqual(before_tree,self.tree())
+        self.assertEqual(before_dirs,{str(path.relative_to(self.root)) for path in self.root.rglob('*') if path.is_dir()})
 
     def test_foreign_key_requires_present_json_equal_target(self):
         packet = self.prepare()

@@ -72,3 +72,55 @@ class ArtifactTemplateTests(unittest.TestCase):
             try:(folder/'analysis.txt').symlink_to(root/'outside.txt')
             except OSError:self.skipTest('symlinks unavailable')
             with self.assertRaises(AnalysisError):render(root,'analysis',{'title':'T','body':'B'})
+
+    def test_generate_rejects_noncanonical_and_reserved_exports_without_mutation(self):
+        from kgmaker.artifact_templates import generate
+        invalid_directories = (
+            '.git', '.Git', '.github', '.kgmaker', './out', 'out/', 'out//nested',
+            'out/.Git/nested', 'CON .txt',
+        )
+        invalid_filenames = ('.git', '.Github', '.kgmaker', 'CON .txt')
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for output_dir in invalid_directories:
+                with self.subTest(output_dir=output_dir), self.assertRaises(AnalysisError):
+                    generate(root, 'requirement', {'title': 'T', 'body': 'B'},
+                             output_dir=output_dir, filename='safe.md')
+            for filename in invalid_filenames:
+                with self.subTest(filename=filename), self.assertRaises(AnalysisError):
+                    generate(root, 'requirement', {'title': 'T', 'body': 'B'},
+                             output_dir='out', filename=filename)
+            self.assertEqual([], list(root.iterdir()))
+
+    def test_install_preflights_all_pairs_before_writing(self):
+        from kgmaker.artifact_templates import install
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            folder = root / '.kgmaker/templates'
+            folder.mkdir(parents=True)
+            blocked = folder / 'requirement.json'
+            try:
+                blocked.symlink_to(root / 'outside.json')
+            except OSError:
+                self.skipTest('symlinks unavailable')
+            with self.assertRaises(AnalysisError):
+                install(root)
+            self.assertEqual({'requirement.json'}, {path.name for path in folder.iterdir()})
+            self.assertFalse((root / 'outside.json').exists())
+
+    def test_install_rolls_back_a_late_write_failure(self):
+        from unittest import mock
+        from kgmaker.artifact_templates import install
+        original_open = Path.open
+
+        def fail_on_requirement(path, *args, **kwargs):
+            if path.name == 'requirement.json' and args and args[0] == 'x':
+                raise OSError('injected late write failure')
+            return original_open(path, *args, **kwargs)
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            with mock.patch.object(Path, 'open', fail_on_requirement):
+                with self.assertRaisesRegex(OSError, 'injected late write failure'):
+                    install(root)
+            self.assertEqual([], list(root.iterdir()))
