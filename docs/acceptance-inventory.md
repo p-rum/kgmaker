@@ -37,7 +37,7 @@ review sloučen jako `f000e3d5eb898031af15785bd1b80427c149ec4c`. Stav MERGED;
 širší toolchain NOT_RUN/SKIP.
 
 T048-S02 / T046-S04, aktualizováno 2026-11-12: integrace sloučeného S03 —
-110 passed, 45 subtests; full 1629 passed, 1055 skipped a 67 subtests;
+111 passed, 45 subtests; full 1630 passed, 1055 skipped a 67 subtests;
 [záznam](changes/59_verifySyntheticTestData.md). PR_OPEN, Python
 VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN.
 

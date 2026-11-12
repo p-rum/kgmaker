@@ -121,6 +121,13 @@ README řeší současnou dokumentaci; `docs/delivery-workflow.md`, API/CLI př�
 Baseline je merge S03 `f000e3d5eb898031af15785bd1b80427c149ec4c` včetně oprav
 kanonického exportu, CAS a rollbacku a dokumentační specifikace T049. Vlastní
 S04 přidává pouze acceptance testy syntetických constraints; runtime se při
-integraci nemění. Cíleně **110 passed, 45 subtests in 5.71s**; full **1629
-passed, 1055 skipped, 67 subtests in 44.27s**. Nové exact-pair review a GitHub
+integraci nemění. Po opravě review cíleně **111 passed, 45 subtests in 5.54s**;
+full **1630 passed, 1055 skipped, 67 subtests in 42.85s**. Nové exact-pair review a GitHub
 CI jsou do skutečného provedení NOT_RUN; SKIP není toolchain PASS.
+
+### Opravy nezávislého review PR #44
+
+Review baseline `2a35ffcfc7db488a7da6a99c87f6eeb18d334e49` odhalil, že CSV
+větev nebyla veřejným API testem spuštěna a maximum/maxLength neměly negativní
+assertion. Nové testy ověřují validní CSV, existující `.csv` kolizi s nulovou
+mutací a konkrétní `maximum`/`maxLength` diagnostiky. Produkční runtime se nemění.
