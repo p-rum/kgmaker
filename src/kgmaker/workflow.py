@@ -498,6 +498,10 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
     elif existing is not None and any(validated[k] != existing[k]
                                      for k in ('head_commit', 'worktree_fingerprint')):
         raise WorkflowError('Source observations require a new implementation/review artifact')
+    if validated['status'] in {'implement', 'done'}:
+        enforce_gate(root, validated, validated['status'])
+    elif any(artifact['phase'] == 'implement' for artifact in added):
+        enforce_gate(root, validated, 'implement')
     _atomic_write(path, validated)
     return path
 
