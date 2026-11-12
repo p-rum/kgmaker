@@ -32,6 +32,13 @@ Python VERIFIED_IN_SCOPE, nepřipravené toolchainy NOT_RUN/SKIP.
 T048-S02 / T046-S03, aktualizováno 2026-11-11: integrace sloučeného S02 —
 106 passed, 37 subtests; full 1625 passed, 1055 skipped a 59 subtests;
 [záznam](changes/58_addExistingFunctionTests.md). PR_OPEN, Python
+VERIFIED_IN_SCOPE; head `1b7ce435c53a2dca0168997549f0dd587b331d6c` byl po exact-pair
+review sloučen jako `f000e3d5eb898031af15785bd1b80427c149ec4c`. Stav MERGED;
+širší toolchain NOT_RUN/SKIP.
+
+T048-S02 / T046-S04, aktualizováno 2026-11-12: integrace sloučeného S03 —
+111 passed, 45 subtests; full 1630 passed, 1055 skipped a 67 subtests;
+[záznam](changes/59_verifySyntheticTestData.md). PR_OPEN, Python
 VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů

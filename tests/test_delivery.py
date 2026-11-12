@@ -107,6 +107,21 @@ class GeneratedTest(unittest.TestCase):
         self.assertEqual(before,self.tree())
         self.assertFalse((self.root/'tests/fixtures').exists())
 
+    def test_csv_export_preflights_collision_and_writes_valid_rows(self):
+        packet=self.prepare();candidate=self.candidate(packet);t.apply(self.root,'double',candidate)
+        collision=self.root/'tests/fixtures/kgmaker/double_numbers.csv'
+        collision.parent.mkdir(parents=True);collision.write_text('keep\n')
+        before=self.tree()
+        with self.assertRaises(AnalysisError):t.export(self.root,'double',data_format='csv')
+        self.assertEqual(before,self.tree())
+        self.assertFalse((self.root/'tests/test_generated.py').exists())
+        collision.unlink()
+        receipt=t.export(self.root,'double',data_format='csv')
+        self.assertIn('tests/fixtures/kgmaker/double_numbers.csv',receipt['files'])
+        text=collision.read_text()
+        self.assertEqual('expected,input',text.splitlines()[0])
+        self.assertIn('4,2',text.splitlines()[1:])
+
     def test_framework_unknown_and_ambiguous(self):
         (self.root/'tests/test_existing.py').unlink()
         packet=self.prepare();self.assertIsNone(packet['framework'])
