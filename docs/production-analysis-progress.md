@@ -1362,3 +1362,7 @@ AC06 čeká na finální review a samostatnou publikaci.
 ### T046 — integrační evidence f115 (2026-11-06)
 
 - T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+
+## T049 — oddělení cílových agentů (2026-11-11)
+
+[T049](tasks/49_separateTargetAgents.md) · S01–S07 PLANNED · ověření NOT_RUN. Návrh pokrývá init, projektové profily, souhlas pro commit/push a migraci. Implementační evidence zatím chybí.
