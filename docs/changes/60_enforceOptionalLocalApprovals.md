@@ -6,7 +6,7 @@ Uživatel požaduje projektové šablony, generování testů/dat pro existujíc
 funkcionalitu a dohledatelný řetězec požadavek–analýza–task–změna–test s osobami.
 Aktivuje policy kontroly v knihovním save_task i advance_task. Vyžaduje přesnou request/plan referenci a před done source-bound review. Vypnuté brány zachovávají dosavadní postup; agent nemůže uložit lidské schválení.
 
-Zadání: [T046](../tasks/46_addTemplatesTestsAndTraceability.md), Revision 1.
+Zadání: [T046](../tasks/46_addTemplatesTestsAndTraceability.md), Revision 2.
 Krok: T046-S05; požadavky T046-R01–R05; acceptance T046-AC06, AC07.
 Baseline balíku: `33dc239a6d2eca2f42364a7b314aeb377e4b441a`.
 Závislé PR výslovně používají předchozí větev balíku jako base; po merge se
@@ -122,5 +122,16 @@ Baseline je merge S04 `306cb83105751a7848b9efb4ba8c801e551353df`; zachovává
 CSV/constraint acceptance, S03 exportní opravy, S02 templates a S01 journal.
 S05 přidává optional local approval gates s default-off policy; runtime S05 se při
 integraci nemění. Cíleně **114 passed, 49 subtests in 5.11s**; full **1633
-passed, 1055 skipped, 71 subtests in 44.35s**. Exact-pair review a GH CI jsou
-do provedení NOT_RUN.
+passed, 1055 skipped, 71 subtests in 44.35s**. První exact-pair review následně
+našlo níže opravený dokumentační rozpor. GH CI run skončil administrativně před
+spuštěním kroků; podle T045 zůstává NOT_RUN, nikoli PASS ani konkrétní chyba kódu.
+
+### Oprava dokumentačního nálezu exact-pair review
+
+Review nad base `306cb83105751a7848b9efb4ba8c801e551353df` a head
+`a35e82d30c2998b908521e37bafb957ce9eb9f90` našlo rozpor v aktuálním shrnutí
+acceptance: již sloučené S03/S04 byly současně označené `PR_OPEN` a tento záznam
+odkazoval na starou Revision 1. Shrnutí nyní uvádí S01–S04 jako `MERGED`, pouze
+S05/S06 jako `PR_OPEN`, řádky S03/S04 už nemají dvojí stav a odkaz míří na
+Revision 2. Jde pouze o opravu evidence; runtime, testy a jejich výsledky se
+nemění. Re-review nového exact-pair head je před merge povinné.
