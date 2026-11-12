@@ -115,6 +115,8 @@ def _frameworks(root, sources, workspace):
 def prepare(root: Path, suite: str, selector: str, *, scope='production', context=None,
             workspace: Path | None = None, framework=None, analysis=None, token_budget=8000,
             templates=None, expected_revision=None):
+    if expected_revision is not None and (type(expected_revision) is not int or expected_revision < 0):
+        raise AnalysisError('Expected test suite revision must be a non-negative integer')
     if type(token_budget) is not int or not 1000 <= token_budget <= 100000:
         raise AnalysisError('Token budget must be an integer from 1000 to 100000')
     directory(root,suite)
@@ -479,6 +481,7 @@ def report(root,suite):
 def export(root,suite,*,data_dir='tests/fixtures/kgmaker',data_format='json'):
     if data_format not in {'json','csv'}:
         raise AnalysisError('Unsupported dataset export format')
+    _output_path(root, data_dir)
     with locked(root,suite) as folder:
         state=_state(root,suite)
         if not state['candidates']: raise AnalysisError('No applied test design')
@@ -488,7 +491,7 @@ def export(root,suite,*,data_dir='tests/fixtures/kgmaker',data_format='json'):
         files={f['path']:f['content'] for f in candidate['files']}
         for dataset in candidate['datasets']:
             name_result=render_snapshot(packet['templates']['filename'],{'id':suite,'slug':dataset['id'],'extension':data_format})
-            name=data_dir.rstrip('/')+'/'+name_result['text']
+            name=data_dir+'/'+name_result['text']
             if name in files: raise AnalysisError('Dataset/test output collision')
             if data_format=='json':
                 content=json.dumps(dataset['data'],ensure_ascii=False,indent=2)+'\n'
@@ -508,6 +511,11 @@ def export(root,suite,*,data_dir='tests/fixtures/kgmaker',data_format='json'):
         for path in paths.values():
             if any(p.exists() and not p.is_dir() for p in path.parents if p.is_relative_to(root)):
                 raise AnalysisError('Export parent is not a directory')
+        root_resolved = root.resolve()
+        missing_directories = {
+            parent for path in paths.values() for parent in path.parents
+            if parent != root_resolved and parent.is_relative_to(root_resolved) and not parent.exists()
+        }
         written=[]
         try:
             for name,path in paths.items():
@@ -520,6 +528,9 @@ def export(root,suite,*,data_dir='tests/fixtures/kgmaker',data_format='json'):
             state['exports'].append(receipt);_save(folder,state)
         except BaseException:
             for path in written: path.unlink(missing_ok=True)
+            for path in sorted(missing_directories, key=lambda item: len(item.parts), reverse=True):
+                try: path.rmdir()
+                except OSError: pass
             raise
     return receipt
 

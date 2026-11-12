@@ -1,20 +1,12 @@
 # Inventář acceptance T001 a T002
 
-## Integrační ověření T048-S02 / T046 — 2026-11-07
-
-Šest původních PR zachovává staged historii a aktuální main `766c08f`. Dostupná
-regrese integrovaného S06: **1627 PASS /1055 SKIP**, 60 subtests PASS; cíleně
-158 PASS, 38 subtests PASS. [Přesné příkazy, opravy prostředí a omezení](changes/61_integrateDeliveryWorkflow.md).
-Delivery zůstává PR_OPEN, Python VERIFIED_IN_SCOPE; GH CI, nové nezávislé review
-a úplná compiler/build/Windows matice NOT_RUN. Nejde o dokončení T003/T004/T047.
-
-
-## Aktuální audit dodání — 2026-11-07
+## Aktuální audit dodání — 2026-11-12
 
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046 je PR_OPEN,
+T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S05 jsou
+MERGED, T046-S06 je PR_OPEN,
 T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
@@ -23,17 +15,46 @@ W07 PR76 a W08 PR64 jsou MERGED. Nepřenáší se tím PASS na nový kód.
 T045 revize2 dovoluje merge bez GH CI při splnění ostatních povinných kontrol;
 staré billing-only blokace níže jsou historické, konkrétní chyba zůstává blokující.
 
-T048-S02 / T046-S01, 2026-11-07: integrace main `766c08f` — 80 passed, 5 subtests; [záznam 56](changes/56_addDeliveryReferences.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S01, aktualizováno 2026-11-11: head
+`3083215800515e81425d4824c7db5cef0fe1ef10` byl po exact-pair review sloučen
+jako `25176ad8f63e3666a051dab9c9216f50adfd6ed3`. Cíleně 83 passed a 7
+subtests; full 1602 passed, 1055 skipped a 29 subtests; [záznam 56](changes/56_addDeliveryReferences.md).
+Stav MERGED, Python VERIFIED_IN_SCOPE; nepřipravené toolchainy NOT_RUN/SKIP.
 
-T048-S02 / T046-S02, 2026-11-07: integrace main `766c08f` — 85 passed, 8 subtests passed; [záznam](changes/57_addArtifactTemplates.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S02, aktualizováno 2026-11-11: integrace merge commitu
+S01 `25176ad8f63e3666a051dab9c9216f50adfd6ed3` — po opravách review cíleně
+91 passed a 23 subtests; full 1610 passed, 1055 skipped a 45 subtests;
+[záznam](changes/57_addArtifactTemplates.md).
+Head `351a661641b8a8f619b389c20a7cf32641c23f5a` byl po exact-pair review
+sloučen jako `8aae58c0ca280c13ce19ccb6a7c4e3cd46005f10`. Stav MERGED;
+Python VERIFIED_IN_SCOPE, nepřipravené toolchainy NOT_RUN/SKIP.
 
-T048-S02 / T046-S03, 2026-11-07: integrace main `766c08f` — 99 passed, 21 subtests passed; [záznam](changes/58_addExistingFunctionTests.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S03, aktualizováno 2026-11-11: integrace sloučeného S02 —
+106 passed, 37 subtests; full 1625 passed, 1055 skipped a 59 subtests;
+[záznam](changes/58_addExistingFunctionTests.md). Python VERIFIED_IN_SCOPE;
+head `1b7ce435c53a2dca0168997549f0dd587b331d6c` byl po exact-pair
+review sloučen jako `f000e3d5eb898031af15785bd1b80427c149ec4c`. Stav MERGED;
+širší toolchain NOT_RUN/SKIP.
 
-T048-S02 / T046-S04, 2026-11-07: integrace main `766c08f` — 103 passed, 29 subtests passed; [záznam](changes/59_verifySyntheticTestData.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S04, aktualizováno 2026-11-12: integrace sloučeného S03 —
+111 passed, 45 subtests; full 1630 passed, 1055 skipped a 67 subtests;
+[záznam](changes/59_verifySyntheticTestData.md). Python VERIFIED_IN_SCOPE;
+head `301bfb9f514c45176f119533303a5c1b1a435d05` byl po exact-pair
+review sloučen jako `306cb83105751a7848b9efb4ba8c801e551353df`. Stav MERGED;
+širší toolchain NOT_RUN/SKIP.
 
-T048-S02 / T046-S05, 2026-11-07: integrace main `766c08f` — 106 passed, 33 subtests passed; [záznam](changes/60_enforceOptionalLocalApprovals.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S05, aktualizováno 2026-11-12: integrace sloučeného S04 —
+114 passed, 49 subtests; full 1633 passed, 1055 skipped a 71 subtests;
+[záznam](changes/60_enforceOptionalLocalApprovals.md). Python VERIFIED_IN_SCOPE;
+head `bdedb6cc0e4f48a4e19357458a375fe3e04a72d9`
+byl po opravě dokumentačního nálezu a exact-pair re-review sloučen jako
+`6dffe5e39fb847e5552f38e67b957e4b51b20bed`. Stav MERGED; širší
+toolchain NOT_RUN/SKIP.
 
-T048-S02 / T046-S06, 2026-11-07: integrace main `766c08f` — 158 passed, 38 subtests passed; [záznam](changes/61_integrateDeliveryWorkflow.md). PR_OPEN, Python VERIFIED_IN_SCOPE; review a širší toolchain NOT_RUN.
+T048-S02 / T046-S06, aktualizováno 2026-11-12: integrace sloučeného S05 —
+309 passed, 10 skipped a 67 subtests; full 1635 passed, 1055 skipped a 76
+subtests; [záznam](changes/61_integrateDeliveryWorkflow.md). PR_OPEN, Python
+VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN/SKIP.
 
 ## Historická acceptance podle uvedených checkpointů
 
@@ -1129,3 +1150,7 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 - T046-S04: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/59_verifySyntheticTestData.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 - T046-S05: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/60_enforceOptionalLocalApprovals.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 - T046-S06: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/61_integrateDeliveryWorkflow.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+
+## T049 — oddělení cílových agentů (2026-11-11)
+
+[Scénáře AC01–AC12 a jejich ověření](tasks/49_separateTargetAgents.md) jsou PLANNED / NOT_RUN. Při implementaci přidej ke každému dodanému AC důkaz, SHA, verzi hostitele a skutečný výsledek.

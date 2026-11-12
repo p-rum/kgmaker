@@ -6,7 +6,7 @@ Uživatel požaduje projektové šablony, generování testů/dat pro existujíc
 funkcionalitu a dohledatelný řetězec požadavek–analýza–task–změna–test s osobami.
 Propojuje template/testgen/trace CLI, init defaults, omezený role context, agent templates a profily. Přidává kompletní české schema/příklady/limity, stavovou matici a acceptance inventář. Udržuje původní sémantickou historii a obnovuje generované grafy příkazem.
 
-Zadání: [T046](../tasks/46_addTemplatesTestsAndTraceability.md), Revision 1.
+Zadání: [T046](../tasks/46_addTemplatesTestsAndTraceability.md), Revision 5.
 Krok: T046-S06; požadavky T046-R01–R05; acceptance T046-AC01–AC08.
 Baseline balíku: `33dc239a6d2eca2f42364a7b314aeb377e4b441a`.
 Závislé PR výslovně používají předchozí větev balíku jako base; po merge se
@@ -127,4 +127,32 @@ Sémantická integrace navíc opravuje odkazy na stejné ověřené CLI deklarac
 
 T048-S02 / T046-S01–S06, AC02 a AC05/AC07: převzaty korekce původních pěti větví a jejich samostatné české záznamy. Každý řádek uvádí jen vlastní skutečný cílený běh. V předchozích inkrementech jsou další etapy NOT_RUN. Potvrzeno zachování všech dřívějších záznamů a nezměněných src/tests/workers; není důvod opakovat stejnou plnou regresi při čisté dokumentační opravě.
 
-PASS nad každou integrační revizí S01–S06: semantic apply/validate, scan/check, `git diff --check`; poslední dokumentační merge tyto kontroly opakuje. Přesné úspěšné pytest běhy jednotlivých etap: S01 80/5 subtests, S02 85/8, S03 99/21, S04 103/29, S05 106/33, S06 158/38. Full S06 1627 PASS /1055 SKIP /60 subtests PASS zůstává současným skutečným výsledkem nad stejnými runtime/test/worker bajty. Všech šest PR je předáno odděleně, bez merge. K uzavření první integrační dependency T048 chybí nové nezávislé review a oprávněné sloučení; historické review nad e780e32 není aktuální APPROVE. Zbývající plánované funkční tasky nejsou tímto záznamem dokončené.
+PASS nad každou tehdejší integrační revizí S01–S06: semantic apply/validate,
+scan/check a `git diff --check`. Historické pytest běhy jednotlivých etap byly
+S01 80/5 subtests, S02 85/8, S03 99/21, S04 103/29, S05 106/33 a S06 158/38;
+historický full S06 byl 1627 PASS /1055 SKIP /60 subtests. V té době byly všechny
+PR předané bez merge. Aktuální stav a novější ověření jsou v následující sekci;
+zbývající T003/T004/T047 tím nejsou dokončené.
+
+## T048-S02 / T046-S06 — integrace sloučeného S05, 2026-11-12
+
+Baseline je merge S05 `6dffe5e39fb847e5552f38e67b957e4b51b20bed`; PR #40 byl
+retargetován na `main`. Konflikty byly omezené na generované grafy a společné
+T046 dokumenty. Finální S06 CLI/instrukce zůstaly zachované, stejně jako aktuální
+statusy S01–S05, T049 plán a sjednocených 278 implementačních epizod včetně
+aktuálního integračního capture. Dvě
+sémantické hrany používají S06 deklarace po posunu řádků; nesouvisející koncepty
+a vazby jsou shodné.
+
+PASS: cílený příkaz s provenance/delivery/data/templates/workflow/context/feature/
+workspace/architecture/init/scanner testy → **309 passed, 10 skipped, 67 subtests
+in 11.85s**. PASS: `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src
+/workspace/venv/bin/python -m pytest -q` → **1635 passed, 1055 skipped, 76
+subtests in 44.83s**. SKIP není compiler/build/Windows PASS. Runtime S06 se při
+integraci neměnil; nové exact-pair review a GH CI jsou NOT_RUN. Delivery zůstává
+PR_OPEN a širší T003/T004/T047 acceptance se tím neprohlašuje.
+
+PASS: semantic validate **318 concepts /31 415 relationships**; scan/check **541
+files /6123 nodes /44 684 relationships**; Python compileall a `git diff --check`.
+Generované grafy byly obnovené příkazem, ne ručně. Exact-pair review se musí
+vázat na nový commit po této integraci.
