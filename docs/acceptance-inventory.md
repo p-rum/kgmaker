@@ -25,7 +25,14 @@ T048-S02 / T046-S02, aktualizováno 2026-11-11: integrace merge commitu
 S01 `25176ad8f63e3666a051dab9c9216f50adfd6ed3` — po opravách review cíleně
 91 passed a 23 subtests; full 1610 passed, 1055 skipped a 45 subtests;
 [záznam](changes/57_addArtifactTemplates.md).
-PR_OPEN, Python VERIFIED_IN_SCOPE; nové exact-pair review a širší toolchain NOT_RUN.
+Head `351a661641b8a8f619b389c20a7cf32641c23f5a` byl po exact-pair review
+sloučen jako `8aae58c0ca280c13ce19ccb6a7c4e3cd46005f10`. Stav MERGED;
+Python VERIFIED_IN_SCOPE, nepřipravené toolchainy NOT_RUN/SKIP.
+
+T048-S02 / T046-S03, aktualizováno 2026-11-11: integrace sloučeného S02 —
+106 passed, 37 subtests; full 1625 passed, 1055 skipped a 59 subtests;
+[záznam](changes/58_addExistingFunctionTests.md). PR_OPEN, Python
+VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN.
 
 ## Historická acceptance podle uvedených checkpointů
 
@@ -1089,3 +1096,4 @@ AC06 čeká na finální review a samostatnou publikaci.
 
 - T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 - T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
