@@ -48,6 +48,26 @@ class ProvenanceTests(unittest.TestCase):
         path.write_text(json.dumps(value))
         with self.assertRaises(AnalysisError):p.load(self.root)
 
+    def test_transaction_preserves_append_only_event_history(self):
+        key = p.register_file(self.root, 'requirement', 'REQ-1', '1', 'calculator.py')
+        with p.transaction(self.root) as data:
+            data['identity'] = {'id': 'alice', 'kind': 'human'}
+            p.event(data, key, 'approved', 'Approved current content')
+            p.event(data, key, 'revoked', 'Approval withdrawn')
+        before = self.tree()
+        self.assertFalse(p.trace(self.root, key)['references'][0]['approved'])
+
+        for mutation in ('remove', 'rewrite'):
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(
+                    AnalysisError, 'history is immutable'):
+                with p.transaction(self.root) as data:
+                    if mutation == 'remove':
+                        data['events'].pop()
+                    else:
+                        data['events'][0]['reason'] = 'Rewritten decision'
+            self.assertEqual(before, self.tree())
+            self.assertFalse(p.trace(self.root, key)['references'][0]['approved'])
+
     def test_task_compare_and_swap_and_historical_reference_stability(self):
         task=w.add_task(self.root,'Concurrent calculator')
         old=digest(task)
@@ -117,3 +137,32 @@ class ProvenanceTests(unittest.TestCase):
                 with p.transaction(self.root, value):
                     pass
             self.assertEqual(before, self.tree())
+
+    def test_transaction_owns_revision_and_preserves_cas_progress(self):
+        p.register_file(self.root, 'requirement', 'REQ', '1', 'calculator.py')
+        observed = p.load(self.root)['revision']
+        before = self.tree()
+        with self.assertRaisesRegex(AnalysisError, 'revision is managed'):
+            with p.transaction(self.root, observed) as data:
+                data['policy']['before_done'] = True
+                data['revision'] = observed - 1
+        self.assertEqual(before, self.tree())
+        self.assertFalse(p.load(self.root)['policy']['before_done'])
+
+        with p.transaction(self.root, observed) as data:
+            data['policy']['before_done'] = True
+        self.assertEqual(observed + 1, p.load(self.root)['revision'])
+        with self.assertRaisesRegex(AnalysisError, 'Stale journal revision'):
+            with p.transaction(self.root, observed):
+                pass
+
+    def test_trace_marks_test_suite_stale_without_later_testgen_stage(self):
+        (self.root / 'test_calculator.py').write_text('def test_double():\n    pass\n')
+        key = p.register_file(
+            self.root, 'test_suite', 'calculator-tests', '1', 'test_calculator.py')
+
+        report = p.trace(self.root, key)
+
+        self.assertEqual(1, len(report['references']))
+        self.assertTrue(report['references'][0]['stale'])
+        self.assertFalse(report['references'][0]['approved'])

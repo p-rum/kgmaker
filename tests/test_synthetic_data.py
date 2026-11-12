@@ -19,6 +19,8 @@ class SyntheticDataTests(unittest.TestCase):
         self.assertEqual([],schema_errors(None,{'type':'integer','nullable':True})[0])
         self.assertEqual(['$:type'],schema_errors(None,{'type':'integer'})[0])
         self.assertEqual(['$:enum'],schema_errors('c',{'type':'string','enum':['a','b']})[0])
+        self.assertEqual(['$:maximum'],schema_errors(11,{'type':'integer','maximum':10})[0])
+        self.assertEqual(['$:maxLength'],schema_errors('long',{'type':'string','maxLength':3})[0])
 
     def test_missing_required_field_is_different_from_null(self):
         schema={'type':'object','required':['value'],'properties':{'value':{'type':'null'}}}

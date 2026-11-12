@@ -115,3 +115,12 @@ README řeší současnou dokumentaci; `docs/delivery-workflow.md`, API/CLI př�
 ### Oprava evidence inventáře T048-S02, S05
 
 Řádky etap mají nyní každý svůj skutečný cílený výsledek; výsledky dalších etap v této větvi zůstávají NOT_RUN. Opravena nesprávně přenesená věta o 80 testech ze S01. Převzata odpovídající oprava předchůdce a jeho change note. Bez změny runtime, testů, README/API/CLI či acceptance; jde o přesné přiřazení evidence v existujícím stavovém inventáři. Ověření dokumentu, semantic apply/validate, scan/check a diff check se provádí před předáním; původní testové běhy zůstávají platné pouze pro nezměněný runtime tree.
+
+## T048-S02 / T046-S05 — integrace sloučeného S04, 2026-11-12
+
+Baseline je merge S04 `306cb83105751a7848b9efb4ba8c801e551353df`; zachovává
+CSV/constraint acceptance, S03 exportní opravy, S02 templates a S01 journal.
+S05 přidává optional local approval gates s default-off policy; runtime S05 se při
+integraci nemění. Cíleně **114 passed, 49 subtests in 5.11s**; full **1633
+passed, 1055 skipped, 71 subtests in 44.35s**. Exact-pair review a GH CI jsou
+do provedení NOT_RUN.

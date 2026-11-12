@@ -1,8 +1,10 @@
 """Data-only, content-bound project artifact templates (T046)."""
 from __future__ import annotations
 
+import json
+import os
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from string import Template
 
 from .analysis_model import AnalysisError, read_json, safe_path
@@ -10,6 +12,12 @@ from .analysis_model import AnalysisError, read_json, safe_path
 KINDS = frozenset(('requirement', 'analysis', 'test_case', 'test_data',
                    'test_code', 'implementation_task', 'filename'))
 _ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}\Z')
+_RESERVED_SEGMENTS = frozenset(('.git', '.github', '.kgmaker'))
+_WINDOWS_RESERVED = frozenset({
+    'CON', 'PRN', 'AUX', 'NUL',
+    *(f'COM{i}' for i in range(1, 10)),
+    *(f'LPT{i}' for i in range(1, 10)),
+})
 
 
 def render(root: Path, kind: str, variables: dict[str, str], template_id: str | None = None) -> dict:
@@ -78,19 +86,47 @@ def defaults(kind):
 
 def install(root):
     """Install editable defaults, preserving both modified and half-installed pairs."""
-    from .analysis_model import write_json, atomic_write
     directory = safe_path(root, '.kgmaker/templates')
-    written = []
+    planned = []
     for kind in sorted(KINDS):
         manifest, content = defaults(kind)
         paths = [safe_path(directory, kind + '.json'), safe_path(directory, kind + '.txt')]
         if any(p.exists() for p in paths):
             continue
+        planned.extend(((paths[0], json.dumps(manifest, ensure_ascii=False, indent=2,
+                                               sort_keys=True, allow_nan=False) + '\n'),
+                        (paths[1], content)))
+    if not planned:
+        return []
+
+    # Validate every destination before creating anything. Exclusive writes plus
+    # rollback keep a later symlink/race/I/O error from leaving a partial install.
+    missing_directories = []
+    cursor = directory
+    root_resolved = root.resolve()
+    while cursor != root_resolved and not cursor.exists():
+        missing_directories.append(cursor)
+        cursor = cursor.parent
+    created = []
+    try:
         directory.mkdir(parents=True, exist_ok=True)
-        atomic_write(paths[1], content)
-        write_json(paths[0], manifest)
-        written.extend(p.relative_to(root).as_posix() for p in paths)
-    return written
+        for path, text in planned:
+            stream = path.open('x', encoding='utf-8', newline='\n')
+            created.append(path)
+            with stream:
+                stream.write(text)
+                stream.flush()
+                os.fsync(stream.fileno())
+    except BaseException:
+        for path in reversed(created):
+            path.unlink(missing_ok=True)
+        for path in missing_directories:
+            try:
+                path.rmdir()
+            except OSError:
+                pass
+        raise
+    return [path.relative_to(root).as_posix() for path, _ in planned]
 
 
 def generate(root, kind, variables, *, template_id=None, filename_template=None,
@@ -104,8 +140,9 @@ def generate(root, kind, variables, *, template_id=None, filename_template=None,
             raise AnalysisError('Output filename must be a basename')
         # Validate even a caller-supplied filename through the same portable rules.
         _validate_filename(value)
-        directory = safe_path(root, output_dir)
-        target = safe_path(root, output_dir.rstrip('/') + '/' + value)
+        canonical_directory = _validate_export_path(output_dir)
+        directory = safe_path(root, canonical_directory)
+        target = safe_path(root, canonical_directory + '/' + value)
         if target.exists():
             raise AnalysisError('Output collision; existing artefact preserved')
         directory.mkdir(parents=True, exist_ok=True)
@@ -140,9 +177,25 @@ def _validate_filename(value):
     if (not isinstance(value,str) or not value or len(value)>240 or value in ('.','..')
             or any(c in value for c in '/\\:<>"|?*') or value.endswith((' ','.'))
             or any(ord(c)<32 for c in value)
-            or value.split('.')[0].upper() in {'CON','PRN','AUX','NUL',
-                *('COM'+str(i) for i in range(1,10)), *('LPT'+str(i) for i in range(1,10))}):
+            or value.casefold() in _RESERVED_SEGMENTS
+            or value.split('.')[0].rstrip(' .').upper() in _WINDOWS_RESERVED):
         raise AnalysisError('Unsafe generated filename')
+
+
+def _validate_export_path(value):
+    """Require one canonical, portable, non-internal repository directory."""
+    if not isinstance(value, str) or not value:
+        raise AnalysisError('Output directory must be a canonical relative path')
+    path = PurePosixPath(value)
+    parts = value.split('/')
+    if (path.is_absolute() or path.as_posix() != value
+            or any(not part or part in {'.', '..'} for part in parts)):
+        raise AnalysisError('Output directory must be a canonical relative path')
+    for part in parts:
+        _validate_filename(part)
+        if part.casefold() in _RESERVED_SEGMENTS:
+            raise AnalysisError('Output directory uses a reserved repository segment')
+    return value
 
 
 def render_snapshot(snapshot, variables):

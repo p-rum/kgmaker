@@ -122,3 +122,103 @@ Dokončené integrační kontroly: semantic apply/validate, scan/check a oba `gi
 ### Oprava evidence inventáře T048-S02
 
 Opravena hromadně přenesená věta o 80 testech v řádcích S02–S06. Výsledek patří pouze S01; pozdější etapy v této větvi zůstávají NOT_RUN. Runtime a jeho ověřený tree beze změny; jde výhradně o opravu stavového dokumentu, bez dopadu na README/API/CLI. Kontrola šesti řádků proti skutečným výsledkům, semantic/scan/check a diff check se provedou před commitem. Původní SHA a historické běhy zachovány.
+
+## Oprava nezávislého review: neměnná auditní historie — 2026-11-07
+
+- Task/Step/Acceptance: T046 / T046-S01 / T046-AC07; integrační baseline
+  `766c08fb47458220fb037c2ee278607247b721e1`, reviewovaný head před opravou
+  `cd8dcc2c44037b105176b48b5c883f9259dd92c5`.
+- Nález: veřejná `provenance.transaction()` po načtení ověřila journal, ale před
+  zápisem neověřila změněnou in-memory hodnotu ani neměnný prefix událostí. Přímé
+  odstranění poslední `revoked` události proto vytvořilo nový platný envelope a
+  obnovilo staré schválení, v rozporu s append-only kontraktem.
+- Skutečná změna: `src/kgmaker/provenance.py` sdílí validaci načtených a nově
+  zapisovaných dat a před zápisem odmítne odstranění, přepis či přeskládání
+  existujícího prefixu `events`. Odmítnutí proběhne před atomickým zápisem a lock
+  se uvolní původní cestou. `tests/test_provenance.py` ověřuje odstranění i přepis,
+  nulovou mutaci souborů a zachování odvolaného schválení.
+- Kompatibilita: platné append-only zápisy, CAS, runtime ID, v1/v2 bindings,
+  LOCAL_DECLARED identita i default-off policy zůstávají stejné. Dříve přijímaná
+  destruktivní změna historie je nyní odmítnuta `AnalysisError`.
+- PASS: `/workspace/venv/bin/python -m pytest -q tests/test_provenance.py
+  tests/test_workflow.py tests/test_templates.py
+  tests/test_t019_add_architecture_json_cli.py tests/test_init.py
+  tests/test_scanner.py` — **81 passed, 7 subtests passed in 3.88 s**.
+- PASS: semantic apply/validate, memory capture
+  `episode:522de97549f69a3a5d8ebca9721dae9f5a29e9cb3eaf28100b0f19d481e52879`,
+  scan/check a `git diff --check`; generovaný graf obsahuje 527 souborů, 5908
+  uzlů a 41812 vztahů. První memory capture před vytvořením lokálního machine
+  graphu skončil očekávaně bez zápisu; po příkazovém scan následoval úspěšný
+  capture a finální scan.
+- NOT_RUN: nový GitHub CI, nové exact-pair review opraveného headu a širší
+  compiler/build/Windows toolchain.
+
+Dokumentační dopad: README a `docs/delivery-workflow.md` již slibují append-only
+historii, takže jejich veřejný kontrakt se nemění. Stavový a acceptance inventář
+odkazují na tuto opravu a nový cílený výsledek. Registr/zadání, CLI syntaxe,
+příklady a init templates jsou bez dopadu. PR zůstává PR_OPEN do nového review
+aktuální base/head dvojice; žádný starý review verdikt se nepřenáší.
+
+## Oprava nezávislého review: transakční vlastnictví CAS revize — 2026-11-10
+
+- Task/Step/Acceptance: T046 / T046-S01 / T046-AC07; reviewovaný head před
+  opravou `a712bc6ac125e46c5b5d23c2a280e4fb34158a06`.
+- Nález: volající mohl spolu se skutečnou změnou snížit `data['revision']`.
+  Transakce pak inkrementovala podvrženou hodnotu a uložila změnu pod již
+  pozorovanou revizí, takže následný zápis se starým `expected_revision`
+  nesprávně prošel.
+- Skutečná změna: `transaction()` odmítne každou přímou změnu revize a novou
+  hodnotu vždy odvodí jako `before['revision'] + 1`. Test ověřuje odmítnutí bez
+  mutace, úspěšný následující zápis a odmítnutí původní stale revize.
+- Kompatibilita: veřejný CAS kontrakt se opravuje, formát journalu a platné
+  hodnoty revizí se nemění. Volající nadále předává `expected_revision`; nikdy
+  nesmí zapisovat interní `data['revision']`.
+- PASS: stejná cílená sada jako výše — **82 passed, 7 subtests passed in 3.53 s**;
+  compileall a `git diff --check` PASS.
+- PASS: `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src
+  /workspace/venv/bin/python -m pytest -q` — **1601 passed, 1055 skipped,
+  29 subtests passed in 38.17 s**. SKIP není PASS nepřipravených toolchainů.
+- PASS: semantic apply/validate, memory capture
+  `episode:ddc31d29b84608686bad2fae9a82ec7fa6a1aebbe95c5af984f480f3793e5eab`,
+  scan/check a `git diff --check`; finální graf obsahuje 527 souborů, 5911 uzlů
+  a 42103 vztahů.
+- NOT_RUN po této opravě: GitHub CI, exact-pair review nového headu a širší
+  skutečná compiler/build/Windows matice. Full 1600 PASS předchozího headu se
+  nepřenáší jako výsledek opravy.
+
+README, capability/API/CLI dokumentace, příklady, init templates, registr a
+zadání jsou bez dopadu: jejich deklarovaný monotónní CAS kontrakt se nemění.
+Stavový a acceptance inventář zaznamenávají druhou review opravu a nový cílený
+výsledek.
+
+## Oprava nezávislého review: trace bez pozdější etapy testgen — 2026-11-11
+
+- Task/Step/Acceptance: T046 / T046-S01 / T046-AC05/AC08; reviewovaný head před
+  opravou `83098c1e99f4f3e3c8ccc81a45ee56eb89adebdc`.
+- Nález: S01 veřejně přijímá obsahově vázanou referenci druhu `test_suite`, ale
+  `trace()` bezpodmínečně importovala `kgmaker.testgen`, který vzniká až v S03.
+  Samostatný S01 proto pro platnou referenci padal `ImportError` místo vrácení
+  konzervativního stavu.
+- Skutečná změna: freshness větve `test_suite` zachytí chybějící pozdější modul
+  i nekompatibilní/neúplný packet a označí referenci `STALE`. Pokud S03 existuje
+  a packet je platný, nadále se používá jeho přesná `freshness()` kontrola.
+  Test registruje platný `test_suite` soubor nad samotným S01 a ověřuje `STALE`,
+  `approved=False` a nulový pád.
+- Kompatibilita: schema druhů, ID, payload, linky a report zůstávají stejné.
+  Nedostupný S03 není považován za CURRENT ani APPROVED; neznámá evidence se
+  konzervativně neskrývá.
+- PASS: cílená sada — **83 passed, 7 subtests passed in 4.61 s**; compileall a
+  `git diff --check` PASS.
+- PASS: `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src
+  /workspace/venv/bin/python -m pytest -q` — **1602 passed, 1055 skipped,
+  29 subtests passed in 41.35 s**. SKIP není PASS nepřipravených toolchainů.
+- PASS: semantic apply/validate, memory capture
+  `episode:4fbbc028a2512113bca9fd7b0d82cbb652374a12dda280dba8112248a3e091b3`,
+  scan/check a `git diff --check`; finální graf obsahuje 527 souborů, 5914 uzlů
+  a 42202 vztahů.
+- NOT_RUN po této opravě: GitHub CI a exact-pair review nového headu. Full 1601
+  PASS předchozího headu se nepřenáší jako výsledek této opravy.
+
+README, delivery workflow, CLI příklady, init templates, registr a zadání jsou
+bez dopadu: jejich deklarovaný konzervativní UNKNOWN/STALE kontrakt se nemění.
+Stavový a acceptance inventář zaznamenávají třetí review opravu.

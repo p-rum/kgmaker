@@ -842,30 +842,127 @@ T031 adds explicit validation and T032 adds local review below; T034 CLI remains
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
 
-
 ### T046-S02 — project template library
 
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
+Knihovní inkrement přidává bezpečné projektové šablony podle
+[T046](docs/tasks/46_addTemplatesTestsAndTraceability.md). CLI zpřístupní až
+integrační S06; knihovní kontrakt a omezení popisuje
+[delivery workflow](docs/delivery-workflow.md).
 
 ### T046-S03 — existing-function test design library
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
 
-
 ### T046-S04 — synthetic data acceptance
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
 
 ### T046-S05 — optional local approval gates
 
 Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
 
-
 T046 review corrections S01–S05: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
 ## T003-S07-W07 — explicit remote mapping (merged PR76)
+
+See [remote mapping contract](docs/remote-contract-mapping.md)
+and [note91](docs/changes/91_planRemoteContractMapping.md).
+Explicit capture and pure resolution preserve service/context/contract/release
+authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
+runtime/payload availability promotion. Source-specific cohort334 unique PASS;
+combined descendant2df full2587PASS/10optionalSKIP includes all1973 W07-parent
+cases (1963PASS/10SKIP). This historical full did not run standalone on W07. The implementation merged
+as `5ffe099`; it does not certify the entire current production matrix.
+
+### Read-only process annotation validation (T031)
+
+`kgmaker.process_semantics.validate_process_annotations(process_view, packet,
+candidate, documents=(), conflicts=())` rederives the complete current T030 packet
+before checking proposed labels, descriptions, references and grouping. Invalid
+input returns fixed-code diagnostics; valid proposals remain PROPOSED and
+PENDING/CONFLICT for review. No apply, model/API, file I/O or technical changes.
+See [the Python contract](docs/process-annotations.md). T034 CLI remains pending.
+
+### Explicit local process review (T032; merged PR78)
+
+`kgmaker.process_store` adds prepare/persist/read APIs for bounded immutable semantic
+review history and explicit APPROVE/REJECT, with cooperating POSIX process/thread
+CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
+See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
+
+### Explicit process catalog (T033; merged PR79)
+
+`kgmaker.process_catalog.catalog_business_processes` combines explicit current and
+historical ProcessViews with a supplied T024 inventory and validated T032 reads.
+It preserves process identities/revisions and separate per-member review states;
+labels/shared helpers never deduplicate operations. Optional one-hop aliases retain
+all original members without approval/availability borrowing. Missing triggers
+remain inactive historical within the partial current selection. See
+[Python contract and limitations](docs/process-catalog.md). The bounded catalog
+merged as `5095343`; current full acceptance has not been rerun. No discovery, archive reconstruction, store write or CLI.
+
+
+### T014 static remote topology
+
+`kgmaker.remote_interfaces.project_remote_interfaces(workspace, graph, interfaces,
+captured=captured, scope="production")` projects the explicit W07 capture handoff
+into a ViewDocument. Candidate ambiguity and unresolved boundaries remain visible;
+HTTP/Kafka declaration edges are not JVM calls or observed execution. See
+[contract and limits](docs/remote-interfaces.md). Merged in PR80 (`ec6a127`); historical source-qualified validation remains in
+the capability document. No current full or remote execution is claimed.
+
+### T016 common-capture topology
+
+`kgmaker.service_topology.capture_topology_inputs(manifest, scope="production")`
+uses one explicit closure for T015/W07/T014, then rereads it.
+`aggregate_service_topology(captured)` is a pure ViewDocument projection with
+reversible HTTP summaries and Kafka realm/topic channels plus separate groups.
+No JVM/process/runtime or payload claim is added. See
+[handoff and limits](docs/service-topology.md). Merged in PR81 (`130720f`); historical source-qualified results remain in
+the capability document. Current full acceptance has not been rerun.
+
+### T017 bounded topology filtering
+
+`kgmaker.topology_filter.filter_topology(topology, focus_service="service:checkout",
+direction="outgoing", max_hops=2, max_nodes=25)` filters a captured T016 view
+without I/O. Its `{document, filtering}` result preserves original edges and
+uncertainty and reports complete known omission IDs plus separate frontier metadata.
+Kafka channels count as real hops; omitted nodes never create shortcut edges.
+See [API and limits](docs/topology-filter.md). Merged in PR82 (`4e4fcd6`). T019 exposes filtering through architecture
+JSON CLI; standalone filtering remains a pure Python API.
+
+### T018 snapshot explanation
+
+`kgmaker.view_explanation.explain_view_element(view, element_id, captured=captured,
+graph=original_public_graph)` expands exact origins and evidence from the bound
+T016/T017 snapshot. Optional `capture_explanation_source_status` separately reads
+only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT.
+See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable.
+Merged in PR83 (`1005b9f`). Historical source-qualified validation is retained
+in the capability document; current full acceptance has not been rerun.
+
+### T019 architecture JSON CLI
+
+`kgmaker architecture topology --capture-snapshot topology-inputs.json` replays
+explicit snapshots and preserves the full filtering envelope. Interfaces and explain
+commands share fixed safe JSON diagnostics; local capture/source checks require
+explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
+Merged in PR84 (`a60f02d`). T020 interface Markdown is also merged;
+T021 topology Mermaid remains planned.
+
+The W07 resolver and T014 projection also preserve the no-I/O contract on their
+first call after normal API import. The cold-process regression is protocol-only;
+see [the correction and remaining validation](docs/changes/108_fixColdRemoteProjection.md).
+
+### T020 interface Markdown (merged PR87)
+
+`kgmaker architecture interfaces --catalog http-providers --interface-capture interfaces.json --format markdown`
+renders the same T019 snapshot as a bounded escaped catalog with original IDs,
+contract revisions and internal evidence links. Generated/unclassified rows,
+unknowns and diagnostics stay visible; no current source or runtime proof is added.
+JSON stays default. See [contract and parser checks](docs/interface-markdown.md);
+Merged in PR87 (`250e7c1`) with the first-call purity correction.
+Topology/explain remain JSON-only; T021/T022 are planned. Historical checks and
+current verification limits are in the delivery inventory.
