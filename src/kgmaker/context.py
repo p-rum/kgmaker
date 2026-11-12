@@ -256,7 +256,7 @@ def _token_estimate(payload: dict[str, Any]) -> int:
 def _truncate(packet: dict[str, Any], token_budget: int) -> dict[str, Any]:
     drop_order = (
         "neighbors", "episodes", "semantic_hits", "impact", "nodes",
-        "prior_artifacts", "query_terms", "warnings",
+        "prior_artifacts", "query_terms", "lineage", "warnings",
     )
     while _token_estimate(packet) > token_budget:
         trimmed = False
@@ -379,6 +379,20 @@ def prepare_packet(
             unique_warnings.append(warning)
             seen_warnings.add(warning)
 
+    from .provenance import trace, load as load_lineage
+    from .analysis_model import AnalysisError
+    lineage = []
+    approval_policy = {'before_implement': False, 'before_done': False}
+    try:
+        approval_policy = load_lineage(root)['policy']
+        try:
+            report = trace(root, task['id'])
+            lineage = [{k:r[k] for k in ('key','kind','id','revision','approved','stale','requested_by')}
+                       for r in report['references'][:12]]
+        except AnalysisError:
+            pass  # A legacy task may have no registered lineage.
+    except (AnalysisError, OSError) as exc:
+        unique_warnings.append('Lineage unavailable: ' + str(exc))
     packet = {
         "schema_version": SCHEMA_VERSION,
         "packet_id": "",
@@ -398,6 +412,10 @@ def prepare_packet(
         "warnings": unique_warnings[:16],
         "legal_next": legal_next,
     }
+    if lineage:
+        packet['lineage'] = lineage
+    if any(approval_policy.values()):
+        packet['approval_policy'] = approval_policy
     packet["packet_id"] = "packet:" + ("0" * 64)
     packet = _truncate(packet, token_budget)
     packet["packet_id"] = packet_id(packet)

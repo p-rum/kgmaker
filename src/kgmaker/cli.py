@@ -242,6 +242,10 @@ ARCHITECT_AGENT_CONTENT += PROJECT_RULES
 EXTRACT_AGENT_CONTENT += PROJECT_RULES
 
 
+from .delivery_instructions import DELIVERY_INSTRUCTIONS
+INSTRUCTIONS_CONTENT += DELIVERY_INSTRUCTIONS
+
+
 def _write_if_missing(path: Path, text: str, force: bool = False) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not force:
@@ -270,6 +274,9 @@ def init(root: Path, force: bool = False) -> int:
     ):
         if _write_if_missing(path, text, force=force):
             written.append(path.relative_to(root).as_posix())
+
+    from .artifact_templates import install
+    written.extend(install(root))
 
     ignore_entries = [
         ".kgmaker/analyses/", ".kgmaker/graph.json", ".kgmaker/semantic-input.json",
@@ -886,6 +893,8 @@ def build_parser() -> argparse.ArgumentParser:
     from .architecture_cli import register as register_architecture
     register_architecture(sub)
     feature_cli.register(sub)
+    from . import delivery_cli
+    delivery_cli.register(sub)
     from .project_cli import register
     register(sub)
     from .inspection_cli import register as register_inspection
@@ -1022,7 +1031,10 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.command in {"inspect", "callgraph", "entrypoints", "flow", "runtime"}:
+    if args.command in {"template", "testgen", "trace"}:
+        from .delivery_cli import run
+        code = run(args)
+    elif args.command in {"inspect", "callgraph", "entrypoints", "flow", "runtime"}:
         from .inspection_cli import run
         code = run(args)
     elif args.command in {"project", "graph", "coverage"}:

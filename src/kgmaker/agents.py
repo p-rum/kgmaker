@@ -120,3 +120,10 @@ You validate one implementation without changing product behavior.
 
 Do not place raw output, credentials, or source contents in the artifact, and do not convert missing coverage into a passing result.
 """
+
+from .delivery_instructions import DELIVERY_INSTRUCTIONS
+
+ORCHESTRATOR_AGENT_CONTENT += DELIVERY_INSTRUCTIONS
+IMPLEMENTATION_AGENT_CONTENT += DELIVERY_INSTRUCTIONS
+TEST_EXPERT_AGENT_CONTENT += DELIVERY_INSTRUCTIONS
+REVIEW_AGENT_CONTENT += DELIVERY_INSTRUCTIONS

@@ -5,8 +5,8 @@
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S04 jsou
-MERGED, T046-S05 a S06 jsou PR_OPEN,
+T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S05 jsou
+MERGED, T046-S06 je PR_OPEN,
 T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
@@ -45,9 +45,16 @@ review sloučen jako `306cb83105751a7848b9efb4ba8c801e551353df`. Stav MERGED;
 
 T048-S02 / T046-S05, aktualizováno 2026-11-12: integrace sloučeného S04 —
 114 passed, 49 subtests; full 1633 passed, 1055 skipped a 71 subtests;
-[záznam](changes/60_enforceOptionalLocalApprovals.md). PR_OPEN, Python
-VERIFIED_IN_SCOPE; první exact-pair review našlo pouze dokumentační rozpor,
-který je v novém head opraven; re-review čeká. Širší toolchain NOT_RUN/SKIP.
+[záznam](changes/60_enforceOptionalLocalApprovals.md). Python VERIFIED_IN_SCOPE;
+head `bdedb6cc0e4f48a4e19357458a375fe3e04a72d9`
+byl po opravě dokumentačního nálezu a exact-pair re-review sloučen jako
+`6dffe5e39fb847e5552f38e67b957e4b51b20bed`. Stav MERGED; širší
+toolchain NOT_RUN/SKIP.
+
+T048-S02 / T046-S06, aktualizováno 2026-11-12: integrace sloučeného S05 —
+309 passed, 10 skipped a 67 subtests; full 1635 passed, 1055 skipped a 76
+subtests; [záznam](changes/61_integrateDeliveryWorkflow.md). PR_OPEN, Python
+VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN/SKIP.
 
 ## Historická acceptance podle uvedených checkpointů
 
@@ -856,6 +863,29 @@ Current main2a (Common/T012/T013 merged) requires all2116current-main parent
 identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
 OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.
+## T046 — Offline delivery workflow
+
+| Požadavek / acceptance | Implementace | Ověření / scénář |
+|---|---|---|
+| T046-R01 / AC01 | artifact_templates, template CLI, init | test_artifact_templates: defaults, custom content, hash, preserved edits, collision and symlink guards |
+| T046-R02 / AC02–03 | testgen prepare/validate/apply/export | test_delivery: existing-function E2E, actual PASS then deliberate behaviour FAIL, framework/target ambiguity |
+| T046-R05 / AC04 | schema_errors, JSON/CSV export | test_synthetic_data + delivery negative dataset, foreign-key and preflight tests |
+| T046-R03 / AC05 | provenance journal, trace sync/show/check | delivery forward/backward traversal, requirement/test/data refs, staleness and missing actors |
+| T046-R04 / AC06 | policy, decisions, workflow save gate | delivery optional gate, direct-save bypass rejection, review source binding and agent rejection |
+| T046-R05 / AC07–08 | workflow v1/v2, CAS, atomic state | delivery ID preservation, journal tampering, writer conflict, invalid-input zero mutation and Git-only metadata process guard |
+
+Výsledky skutečných běhů a limity prostředí jsou v change notes 56–61. Testovací
+návrh má NOT_RUN; výsledek unittest E2E je oddělená validační evidence. Tato tabulka
+nenahrazuje review ani chybějící pytest/compiler/GitHub CI běhy.
+
+T046 revize 2 doplňuje protipříklady review: delayed creator + immutable history
+(test_provenance), canonical protected code/data paths + FK missing-vs-null +
+record/direct-save gate + all trace CAS routes (test_delivery) a recursive typed
+enum equality (test_synthetic_data). Každý scénář před opravou reprodukoval chybu;
+nové běhy nejsou zaměňovány s původními 198 testy.
+
+
+T046 integrace 2026-11-05 nad main9eec41a: 52 cílených pytest PASS; dostupná celá sada 1152 PASS /1045 SKIP, bez failures. Skips nedokládají nepřipravené toolchainy. Přesné limity jsou v change61; GH CI je podle T045 revize 2 doplňující evidence. Nové exact-pair review není nahrazeno historickým review.
 
 ## T003-S07-W07 — explicit remote mapping draft
 
@@ -1106,12 +1136,20 @@ T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+nov
 current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
 AC06 čeká na finální review a samostatnou publikaci.
 
+Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d`, včetně nového remote contract mapping. Skutečný nový plný dostupný pytest běh: **1231 PASS /1055 SKIP**, 60 subtests PASS, bez selhání (42,98 s). Cílená sada T046/context/feature/Thymeleaf/remote mapping: **179 PASS /10 SKIP**, 51 subtests PASS (5,23 s). Toolchain SKIP nejsou PASS; worker/package data zůstávají identická s tímto main. Historické výsledky nad9eec zůstávají oddělenou evidencí. Nezávislé review a publikace se ověřují nad novými přesnými SHA.
+
+
+T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.
+
 
 ### T046 — integrační evidence f115 (2026-11-06)
 
 - T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 - T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 - T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S04: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/59_verifySyntheticTestData.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S05: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/60_enforceOptionalLocalApprovals.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S06: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/61_integrateDeliveryWorkflow.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 
 ## T049 — oddělení cílových agentů (2026-11-11)
 

@@ -424,3 +424,14 @@ are skipped and an explicit disabled connection remains authoritative. YAML
 export configuration continues to work for the existing offline export path;
 this new connection configuration supports JSON only. A live adapter and sandbox
 contract run remain deferred work, separate from existing fake boundary tests.
+
+## Test cases pro existující funkcionalitu a dohledatelnost
+
+`kgmaker testgen prepare --id regression --target <existing-id-or-file>` připravuje
+samostatný testovací packet bez implementačního diffu. `--analysis <id>` připojí
+pouze aktuální aplikovanou feature analýzu s platnou receipt. Návrh cases,
+syntetických dat a kódu vytváří host agent; validate/apply/export zůstávají offline.
+`trace sync-analysis --id <id>` zachová konkrétní revision/hash a propojí její
+požadavky. `trace link` přidává další explicitní vazby na tasky a změny. Nejde o
+semantic patch ani o nové runtime availability proof. Kontrakty, příklady a
+volitelné lokální schvalování: [delivery workflow](delivery-workflow.md).

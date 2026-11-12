@@ -1,5 +1,3 @@
-> CLI příklady jsou cílem S06; tento knihovní inkrement zatím nepřidává veřejné příkazy.
-
 # Šablony, testovací návrhy a dohledatelnost (T046)
 
 Python standard-library rozšíření nabízí příkazy `template`, `testgen` a `trace`.

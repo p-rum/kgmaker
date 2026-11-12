@@ -1,5 +1,15 @@
 # Aktuální stav a zbývající práce
 
+## Integrační ověření T048-S02 / T046 — 2026-11-12
+
+S01–S05 jsou sloučené; S06 zachovává jejich historii a integruje main
+`6dffe5e39fb847e5552f38e67b957e4b51b20bed`. Dostupná regrese S06:
+**1635 PASS /1055 SKIP**, 76 subtests PASS; cíleně **309 PASS /10 SKIP**,
+67 subtests PASS. [Přesné příkazy a omezení](changes/61_integrateDeliveryWorkflow.md).
+Delivery S06 zůstává PR_OPEN, Python VERIFIED_IN_SCOPE; GH CI, nové exact-pair
+review a úplná compiler/build/Windows matice NOT_RUN. Nejde o dokončení T003/T004/T047.
+
+
 ## Aktuální pracovní inventář T048-S01 — 2026-11-07
 
 Baseline: `f115aa4a1c37683f3be9e4607111d51d9c1301c1`. Audit zdrojů, git historie a GitHub PR; změna [111](changes/111_reconcileDeliveryStatus.md).
@@ -137,8 +147,8 @@ T034 procesní CLI zůstává PLANNED.
 | [T046-S02](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `351a661641b8a8f619b389c20a7cf32641c23f5a`; merge `8aae58c0ca280c13ce19ccb6a7c4e3cd46005f10` | [src/kgmaker/artifact_templates.py](../src/kgmaker/artifact_templates.py), [tests/test_artifact_templates.py](../tests/test_artifact_templates.py) | [#42](https://github.com/p-rum/kgmaker/pull/42) | Exact-pair review schválilo kanonické exportní cesty a transakční instalaci. Cíleně 91 passed + 23 subtests; full 1610 passed, 1055 skipped + 45 subtests. [Záznam](changes/57_addArtifactTemplates.md). |
 | [T046-S03](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `1b7ce435c53a2dca0168997549f0dd587b331d6c`; merge `f000e3d5eb898031af15785bd1b80427c149ec4c` | [src/kgmaker/testgen.py](../src/kgmaker/testgen.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#43](https://github.com/p-rum/kgmaker/pull/43) | Exact-pair review schválilo striktní CAS revizi, kanonický data_dir a úplný rollback. Cíleně 106 passed + 37 subtests; full 1625 passed, 1055 skipped + 59 subtests. [Záznam](changes/58_addExistingFunctionTests.md). |
 | [T046-S04](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `301bfb9f514c45176f119533303a5c1b1a435d05`; merge `306cb83105751a7848b9efb4ba8c801e551353df` | [tests/test_synthetic_data.py](../tests/test_synthetic_data.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#44](https://github.com/p-rum/kgmaker/pull/44) | Exact-pair review schválilo CSV happy-path/kolizní rollback a maximum/maxLength acceptance. Cíleně 111 passed + 45 subtests; full 1630 passed, 1055 skipped + 67 subtests. [Záznam](changes/59_verifySyntheticTestData.md). |
-| [T046-S05](tasks/46_addTemplatesTestsAndTraceability.md) | PR_OPEN | VERIFIED_IN_SCOPE | původní head `7a9c849b82f72ee8cc1d2d42cf01069f2fb2047d` + integrace main `306cb83105751a7848b9efb4ba8c801e551353df` | [src/kgmaker/workflow.py](../src/kgmaker/workflow.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#45](https://github.com/p-rum/kgmaker/pull/45) | Cíleně 114 passed + 49 subtests; full 1633 passed, 1055 skipped + 71 subtests. Exact-pair review čeká. [Záznam](changes/60_enforceOptionalLocalApprovals.md). |
-| [T046-S06](https://github.com/p-rum/kgmaker/blob/1b8b2f8d2cd09c5da95c919f84b96427a30299ad/docs/tasks/46_addTemplatesTestsAndTraceability.md) | PR_OPEN | NOT_RUN | `1b8b2f8d2cd09c5da95c919f84b96427a30299ad` | [src/kgmaker/agents.py](https://github.com/p-rum/kgmaker/blob/1b8b2f8d2cd09c5da95c919f84b96427a30299ad/src/kgmaker/agents.py), [src/kgmaker/analysis_agent.py](https://github.com/p-rum/kgmaker/blob/1b8b2f8d2cd09c5da95c919f84b96427a30299ad/src/kgmaker/analysis_agent.py), [tests/test_delivery.py](https://github.com/p-rum/kgmaker/blob/1b8b2f8d2cd09c5da95c919f84b96427a30299ad/tests/test_delivery.py) | [#40](https://github.com/p-rum/kgmaker/pull/40) | Současný lokální běh této etapy NOT_RUN; výsledky v PR jsou historické. Nezávislé exact-pair review; pořadí 41→42→43→44→45→40. |
+| [T046-S05](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `bdedb6cc0e4f48a4e19357458a375fe3e04a72d9`; merge `6dffe5e39fb847e5552f38e67b957e4b51b20bed` | [src/kgmaker/workflow.py](../src/kgmaker/workflow.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#45](https://github.com/p-rum/kgmaker/pull/45) | Exact-pair review po opravě statusů schválilo default-off approval gates. Cíleně 114 passed + 49 subtests; full 1633 passed, 1055 skipped + 71 subtests. [Záznam](changes/60_enforceOptionalLocalApprovals.md). |
+| [T046-S06](tasks/46_addTemplatesTestsAndTraceability.md) | PR_OPEN | VERIFIED_IN_SCOPE | původní head `2a672de85de71a2d1ec5c9977184498da6b37a56` + integrace main `6dffe5e39fb847e5552f38e67b957e4b51b20bed` | [src/kgmaker/delivery_cli.py](../src/kgmaker/delivery_cli.py), [src/kgmaker/delivery_instructions.py](../src/kgmaker/delivery_instructions.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#40](https://github.com/p-rum/kgmaker/pull/40) | Cíleně 309 passed, 10 skipped + 67 subtests; full 1635 passed, 1055 skipped + 76 subtests. Exact-pair review čeká. [Záznam](changes/61_integrateDeliveryWorkflow.md). |
 | [T047-S01](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S01; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S02](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/model.py](../src/kgmaker/model.py) | — | Upstream owner: T047-S02; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S03](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/model.py](../src/kgmaker/model.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Upstream owner: T003-S10-W02; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
@@ -1090,12 +1100,42 @@ Current main2a (Common/T012/T013 merged) requires all2116current-main parent
 identities plus47T030 cases:2163total,2153PASS10sameallowedSKIP in actual2df.
 OriginalT0301990 is also fully contained. This is an exact source/ID-union proof,
 not a new parent collection/full/test execution. Original47own cases remain PASS.
+## T046 — Šablony, testovací návrhy a dohledatelnost
 
-T046-S01: knihovní inkrement reference contracts and v1/v2 metadata; ověření viz change note 56.
-Veřejné CLI a kompletní end-to-end release dodává až S06.
+T046-S01–S06: implementováno v omezeném offline kontraktu popsaném v
+[delivery workflow](delivery-workflow.md). Projektové šablony, konzervativní výběr
+funkcionality/frameworku, host-agent proposals, citace, syntetické JSON/CSV data,
+content-bound revize, export bez přepisu, explicitní obousměrné vazby a lokální
+rozhodnutí jsou dostupné. Brány jsou volitelné, default off; review binding
+používá skutečný source fingerprint. V1 se čte, implementace/review doplní v2 bez
+změny ID. Tím se nemění stav ostatních T003/T004 acceptance.
+
+Ověření: `tests/test_artifact_templates.py`, `tests/test_delivery.py` a
+`tests/test_synthetic_data.py`; doplněné výsledky v change notes 56–61. Lokální
+unittest E2E prokáže citlivost exportovaného testu na změnu chování. Pytest,
+nezávislé review a GitHub CI nejsou tímto zápisem označeny za úspěšné. Širší
+frameworky mají návrhový kontrakt, nikoli univerzálně ověřené execution adaptéry.
+Očekávání z kódu není business oracle, syntetická data nejsou runtime proof a
+LOCAL_DECLARED není autentizace. Freshness je konzervativní přes celý snapshot.
+
+### T046 — opravy review z 2026-10-27
+
+Šest nezávisle reprodukovaných nálezů je opraveno: create-or-load race, export
+přes nekanonické cesty, JSON enum, chybějící FK target, implement gate přes
+record/save a ignorovaná journal CAS volba. Regresní sady navíc chrání historii
+a review bindings. Původní 198-testový výsledek není důkazem těchto oprav; nové
+výsledky a přesné revidované SHA jsou doplněny v change notes 56–61 a v PR.
+Merge zůstává podmíněný novým review a ostatními povinnými kontrolami pro nové revize; GH CI je podle T045 revize 2 doplňující evidence.
+
+CI revizí T046 samostatně kontroluje i generované grafy každého inkrementu.
+S01–S05 mají vlastní aktualizované semantic/GRAPH snapshoty; jejich správnost
+není odvozena pouze z integračního S06.
 
 
-T046 review corrections S01–S01: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
+T046-S01 až S05 jsou po exact-pair review sloučené. S06 integruje jejich
+opravený create/CAS, immutable-history, template/testgen/data a approval základ
+do CLI a instalovaných instrukcí. Přesné aktuální výsledky budou doplněny po
+ověření nového páru PR #40; historické běhy jsou v change notes 56–61.
 ## T003-S07-W07 — verified bounded source; dependency merge pending
 
 See [remote mapping contract](remote-contract-mapping.md)
@@ -1358,10 +1398,20 @@ T021/T022 nejsou součástí tohoto stage. AC01–05 dokládá původních49+nov
 current-stage případ, CLI JSON/Markdown/fixed-error kontrakty dalších34T019;
 AC06 čeká na finální review a samostatnou publikaci.
 
+Finální integrační baseline 2026-11-05: `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d`, včetně nového remote contract mapping. Skutečný nový plný dostupný pytest běh: **1231 PASS /1055 SKIP**, 60 subtests PASS, bez selhání (42,98 s). Cílená sada T046/context/feature/Thymeleaf/remote mapping: **179 PASS /10 SKIP**, 51 subtests PASS (5,23 s). Toolchain SKIP nejsou PASS; worker/package data zůstávají identická s tímto main. Historické výsledky nad9eec zůstávají oddělenou evidencí. Nezávislé review a publikace se ověřují nad novými přesnými SHA.
+
+
+T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná dostupná pytest sada **1577 PASS /1056 SKIP**, 60 subtests PASS, bez selhání (60,33 s). Cílená sada včetně architecture CLI: **229 PASS /10 SKIP**, 51 subtests PASS (16,01 s). Oba CLI dispatchery zůstávají aktivní. Skips nedokládají nepřipravené compiler/build/Windows toolchainy. Předčasný běh před dokončením snapshotu byl přerušen a nezapočítává se; uvedený výsledek pochází z následného dokončeného běhu. GitHub publikace/review/merge se ověřují odděleně.
+
 
 ### T046 — integrační evidence f115 (2026-11-06)
 
 - T046-S01: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/56_addDeliveryReferences.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S02: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/57_addArtifactTemplates.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S03: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/58_addExistingFunctionTests.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S04: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/59_verifySyntheticTestData.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S05: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/60_enforceOptionalLocalApprovals.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
+- T046-S06: [konkrétní změny, dokumentační dopad a skutečné kontroly](changes/61_integrateDeliveryWorkflow.md). Při předání PR_OPEN; Python VERIFIED_IN_SCOPE, volitelné toolchainy SKIP/NOT_RUN.
 
 ## T049 — oddělení cílových agentů (2026-11-11)
 

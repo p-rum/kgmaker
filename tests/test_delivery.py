@@ -181,7 +181,8 @@ class GeneratedTest(unittest.TestCase):
         self.assertEqual({r['key'] for r in forward['references']},{r['key'] for r in backward['references']})
         self.assertIn('uses_dataset',{l['relation'] for l in forward['links']})
         self.assertIn('REQ',p.markdown(forward))
-
+        args=build_parser().parse_args(['testgen','prepare','--id','x','--target','calculator.py','--workspace','workspace.json'])
+        self.assertEqual('testgen',args.command)
 
     def test_completion_gate_binds_review_to_source_and_preserves_v1_identity(self):
         task=w.add_task(self.root,'Review calculator')
@@ -369,7 +370,43 @@ class GeneratedTest(unittest.TestCase):
             w.save_task(self.root, injected, expected_revision=digest(legacy))
         self.assertEqual(before, self.tree())
 
+    def test_trace_sync_commands_enforce_expected_revision_atomically(self):
+        from kgmaker import feature, delivery_cli
+        from kgmaker.analysis_model import inventory_candidate
+        (self.root / 'requirement.md').write_text('Double the calculator input.')
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True)
+        for key, value in [('user.name', 'Test'), ('user.email', 'test@local.invalid')]:
+            subprocess.run(['git', '-C', str(self.root), 'config', key, value], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'add', '.'], check=True)
+        subprocess.run(['git', '-C', str(self.root), 'commit', '-qm', 'Baseline'], check=True)
+        (self.root / 'calculator.py').write_text('def double(value):\n    return value * 2\n# change\n')
+        analysis_packet = feature.prepare(self.root, 'requirement.md', 'analysis')
+        self.assertTrue(feature.apply(self.root, 'analysis', inventory_candidate(analysis_packet))['valid'])
+        packet = self.prepare()
+        t.apply(self.root, 'double', self.candidate(packet))
+        task = w.add_task(self.root, 'Trace change')
+        p.register_file(self.root, 'requirement', 'REQ', '1', 'requirement.md')
+        commands = [('sync-analysis', '--id', 'analysis'), ('sync-testgen', '--id', 'double'),
+                    ('capture-change', '--task', task['id'], '--base', 'HEAD')]
+        for command in commands:
+            revision = p.load(self.root)['revision']
+            before = self.tree()
+            argv = ['trace', *command, '--root', str(self.root), '--expected-revision', '0']
+            with self.subTest(command=command), redirect_stdout(io.StringIO()):
+                self.assertEqual(2, delivery_cli.run(build_parser().parse_args(argv)))
+            self.assertEqual(before, self.tree())
+            argv[-1] = str(revision)
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(0, delivery_cli.run(build_parser().parse_args(argv)))
+            self.assertEqual(revision + 1, p.load(self.root)['revision'])
 
+    def test_read_only_trace_commands_reject_revision_preconditions(self):
+        for command in ('show', 'check'):
+            with self.subTest(command=command), redirect_stdout(io.StringIO()), \
+                    redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as error:
+                    build_parser().parse_args(['trace', command, '--expected-revision', '0'])
+                self.assertEqual(2, error.exception.code)
 
     def test_direct_save_verifies_or_captures_new_source_bindings(self):
         from kgmaker.feature import source_inventory

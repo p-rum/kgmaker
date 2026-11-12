@@ -837,34 +837,50 @@ and hash-omits raw labels, documentation and proof/configuration prose. It perfo
 no model/compiler/file I/O or apply. See [contract and privacy limits](docs/process-label-packets.md).
 T031 adds explicit validation and T032 adds local review below; T034 CLI remains planned.
 
-### T046-S01 — reference contracts and v1/v2 metadata
+## Project templates, test proposals and delivery traceability
 
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+`kgmaker template` manages project-local, versioned artifact templates for requirements,
+analyses, implementation tasks, test cases/data/code and filenames. `kgmaker init`
+installs editable defaults while preserving user files. `kgmaker testgen` prepares
+bounded evidence for **existing functionality without a diff**; the host Copilot
+agent proposes cases, synthetic data and code, then kgmaker validates citations,
+constraints and freshness before an explicit export. It never calls a model API
+or runs the proposed tests. Code-derived expectations are characterizations,
+not independent business correctness proofs.
 
-### T046-S02 — project template library
+```bash
+kgmaker template list
+kgmaker testgen prepare --id regression --target src/calculator.py --scope all
+kgmaker testgen validate --id regression --candidate candidate.json
+kgmaker testgen apply --id regression --candidate candidate.json
+kgmaker testgen export --id regression
+kgmaker trace sync-task --id <runtime-task-id>
+kgmaker trace sync-analysis --id <analysis-id>
+kgmaker trace sync-testgen --id regression
+kgmaker trace show <reference> --format markdown
+```
 
-Knihovní inkrement přidává bezpečné projektové šablony podle
-[T046](docs/tasks/46_addTemplatesTestsAndTraceability.md). CLI zpřístupní až
-integrační S06; knihovní kontrakt a omezení popisuje
-[delivery workflow](docs/delivery-workflow.md).
+`trace` records explicit, revision-bound links from requirements through analyses,
+tasks and changes to tests. Local requested/approved/rejected/revoked decisions
+show who recorded them and when, with `LOCAL_DECLARED` identity trust. Optional
+approval gates are disabled by default. They can require approval of the current
+request/plan before implementation and a source-bound review before completion.
+Generated tests remain `NOT_RUN` until separately executed by the project runner.
+See [workflow, schemas, examples and limitations](docs/delivery-workflow.md) and
+[specification T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
 
-### T046-S03 — existing-function test design library
+Test/code/data exports require canonical repository-relative paths; aliases such
+as `./.github/...` and reserved metadata segments are rejected. Workflow writes
+preserve artifact history and require the current task revision for updates;
+concurrent task creation returns the existing state. All mutating trace commands
+support `--expected-revision`; a stale value fails without changing the journal.
+Dataset enum and foreign-key comparison uses JSON types, distinguishing booleans
+from numbers and absent target keys from explicit null values.
 
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
+Etapy T046-S01 až S05 jsou sloučené; tento S06 inkrement zpřístupňuje jejich
+knihovní kontrakty přes CLI a instalované instrukce. Přesné výsledky a omezení
+jsou v change notes 56–61 a v aktuálním PR #40.
 
-### T046-S04 — synthetic data acceptance
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
-### T046-S05 — optional local approval gates
-
-Knihovní inkrement podle [T046](docs/tasks/46_addTemplatesTestsAndTraceability.md).
-CLI příklady v [delivery workflow](docs/delivery-workflow.md) jsou cílem integračního S06.
-
-T046 review corrections S01–S05: inkrement zahrnuje opravený create/CAS a immutable-history základ; další opravy jsou v navazujících PR. Přesné nové výsledky viz change notes 56–61 a aktuální PR CI. CLI zpřístupní až S06.
 ## T003-S07-W07 — explicit remote mapping (merged PR76)
 
 See [remote mapping contract](docs/remote-contract-mapping.md)
