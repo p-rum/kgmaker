@@ -5,8 +5,8 @@
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S05 jsou
-MERGED, T046-S06 je PR_OPEN,
+T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S06 jsou
+MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
@@ -53,8 +53,11 @@ toolchain NOT_RUN/SKIP.
 
 T048-S02 / T046-S06, aktualizováno 2026-11-12: integrace sloučeného S05 —
 309 passed, 10 skipped a 67 subtests; full 1635 passed, 1055 skipped a 76
-subtests; [záznam](changes/61_integrateDeliveryWorkflow.md). PR_OPEN, Python
-VERIFIED_IN_SCOPE; exact-pair review a širší toolchain NOT_RUN/SKIP.
+subtests; [záznam](changes/61_integrateDeliveryWorkflow.md). Python
+VERIFIED_IN_SCOPE; head `65e6a3bbe7246ef7d3caac4d0f956cd6d3f81de5` byl po
+exact-pair review sloučen jako `9bcf91db1d1349241f7e1f7114f74c0331c25802`.
+Stav MERGED; širší toolchain NOT_RUN/SKIP. [Post-merge
+srovnání](changes/113_reconcileT046DeliverySummary.md).
 
 ## Historická acceptance podle uvedených checkpointů
 

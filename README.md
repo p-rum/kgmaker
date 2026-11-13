@@ -877,9 +877,9 @@ support `--expected-revision`; a stale value fails without changing the journal.
 Dataset enum and foreign-key comparison uses JSON types, distinguishing booleans
 from numbers and absent target keys from explicit null values.
 
-Etapy T046-S01 až S05 jsou sloučené; tento S06 inkrement zpřístupňuje jejich
-knihovní kontrakty přes CLI a instalované instrukce. Přesné výsledky a omezení
-jsou v change notes 56–61 a v aktuálním PR #40.
+Etapy T046-S01 až S06 jsou sloučené; S06 zpřístupňuje jejich knihovní kontrakty
+přes CLI a instalované instrukce. Přesné výsledky a omezení jsou v change notes
+56–61; post-merge srovnání stavů je v [change113](docs/changes/113_reconcileT046DeliverySummary.md).
 
 ## T003-S07-W07 — explicit remote mapping (merged PR76)
 

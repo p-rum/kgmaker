@@ -2,12 +2,13 @@
 
 ## Integrační ověření T048-S02 / T046 — 2026-11-12
 
-S01–S05 jsou sloučené; S06 zachovává jejich historii a integruje main
-`6dffe5e39fb847e5552f38e67b957e4b51b20bed`. Dostupná regrese S06:
+S01–S06 jsou sloučené; S06 zachovává historii a integrovalo main
+`6dffe5e39fb847e5552f38e67b957e4b51b20bed` jako merge
+`9bcf91db1d1349241f7e1f7114f74c0331c25802`. Dostupná regrese S06:
 **1635 PASS /1055 SKIP**, 76 subtests PASS; cíleně **309 PASS /10 SKIP**,
 67 subtests PASS. [Přesné příkazy a omezení](changes/61_integrateDeliveryWorkflow.md).
-Delivery S06 zůstává PR_OPEN, Python VERIFIED_IN_SCOPE; GH CI, nové exact-pair
-review a úplná compiler/build/Windows matice NOT_RUN. Nejde o dokončení T003/T004/T047.
+Delivery S06 je MERGED, Python VERIFIED_IN_SCOPE; GH CI bez kroků a úplná
+compiler/build/Windows matice zůstávají NOT_RUN/SKIP. Nejde o dokončení T003/T004/T047.
 
 
 ## Aktuální pracovní inventář T048-S01 — 2026-11-07
@@ -21,22 +22,23 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 |---|---:|---:|---:|---:|
 | T003 work packages | 37 | 23 | 0 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
-| T046 etapy | 0 | 0 | 6 | 6 |
+| T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 61 | 52 | 6 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 67 | 52 | 0 | 119 |
 
 T003/T004 mají 39 položek bez sloučené dodávky. T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
-`NOT_RUN` nikdy nepřebírá PASS z popisu PR. U T046 zdroje/testy odkazují na jeho
-větev (v main dosud nejsou). U plánovaných položek jsou uvedeny existující body
-rozšíření, nikoli důkaz dodaného chování. SHA označuje merge/integrační checkpoint,
-u nedodaných položek auditovanou baseline; nenahrazuje testový receipt.
+`NOT_RUN` nikdy nepřebírá PASS z popisu PR. T046-S01 až S06 jsou v `main`; jejich
+řádky uvádějí přesné reviewované head a merge SHA. U plánovaných položek jsou
+uvedeny existující body rozšíření, nikoli důkaz dodaného chování. SHA označuje
+merge/integrační checkpoint, u nedodaných položek auditovanou baseline; nenahrazuje
+testový receipt.
 
-Po baseline T048 `250e7c1` přibylo pouze zadání T048 a dokumentační instrukce
-(PR88, `f115aa4`); žádný další funkční kontrakt nebyl v main dodán. T020 je MERGED
-v PR87 (`250e7c1`); topology/explain nadále přijímají jen JSON. T021 je blokován
-upstream T003-S07-W09, nikoli chybějícím T019. T031 a T032 jsou sloučené;
+Po baseline T048 `250e7c1` byly kromě dokumentačních instrukcí sloučeny také
+T046-S01 až S06 a přibylo zadání T049; jejich přesné SHA jsou v atomických řádcích.
+T020 zůstává MERGED v PR87; topology/explain nadále přijímají jen JSON. T021 je
+blokován upstream T003-S07-W09, nikoli chybějícím T019. T031 a T032 jsou sloučené;
 T034 procesní CLI zůstává PLANNED.
 
 ### Atomické položky
@@ -148,7 +150,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T046-S03](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `1b7ce435c53a2dca0168997549f0dd587b331d6c`; merge `f000e3d5eb898031af15785bd1b80427c149ec4c` | [src/kgmaker/testgen.py](../src/kgmaker/testgen.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#43](https://github.com/p-rum/kgmaker/pull/43) | Exact-pair review schválilo striktní CAS revizi, kanonický data_dir a úplný rollback. Cíleně 106 passed + 37 subtests; full 1625 passed, 1055 skipped + 59 subtests. [Záznam](changes/58_addExistingFunctionTests.md). |
 | [T046-S04](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `301bfb9f514c45176f119533303a5c1b1a435d05`; merge `306cb83105751a7848b9efb4ba8c801e551353df` | [tests/test_synthetic_data.py](../tests/test_synthetic_data.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#44](https://github.com/p-rum/kgmaker/pull/44) | Exact-pair review schválilo CSV happy-path/kolizní rollback a maximum/maxLength acceptance. Cíleně 111 passed + 45 subtests; full 1630 passed, 1055 skipped + 67 subtests. [Záznam](changes/59_verifySyntheticTestData.md). |
 | [T046-S05](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `bdedb6cc0e4f48a4e19357458a375fe3e04a72d9`; merge `6dffe5e39fb847e5552f38e67b957e4b51b20bed` | [src/kgmaker/workflow.py](../src/kgmaker/workflow.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#45](https://github.com/p-rum/kgmaker/pull/45) | Exact-pair review po opravě statusů schválilo default-off approval gates. Cíleně 114 passed + 49 subtests; full 1633 passed, 1055 skipped + 71 subtests. [Záznam](changes/60_enforceOptionalLocalApprovals.md). |
-| [T046-S06](tasks/46_addTemplatesTestsAndTraceability.md) | PR_OPEN | VERIFIED_IN_SCOPE | původní head `2a672de85de71a2d1ec5c9977184498da6b37a56` + integrace main `6dffe5e39fb847e5552f38e67b957e4b51b20bed` | [src/kgmaker/delivery_cli.py](../src/kgmaker/delivery_cli.py), [src/kgmaker/delivery_instructions.py](../src/kgmaker/delivery_instructions.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#40](https://github.com/p-rum/kgmaker/pull/40) | Cíleně 309 passed, 10 skipped + 67 subtests; full 1635 passed, 1055 skipped + 76 subtests. Exact-pair review čeká. [Záznam](changes/61_integrateDeliveryWorkflow.md). |
+| [T046-S06](tasks/46_addTemplatesTestsAndTraceability.md) | MERGED | VERIFIED_IN_SCOPE | head `65e6a3bbe7246ef7d3caac4d0f956cd6d3f81de5`; merge `9bcf91db1d1349241f7e1f7114f74c0331c25802` | [src/kgmaker/delivery_cli.py](../src/kgmaker/delivery_cli.py), [src/kgmaker/delivery_instructions.py](../src/kgmaker/delivery_instructions.py), [tests/test_delivery.py](../tests/test_delivery.py) | [#40](https://github.com/p-rum/kgmaker/pull/40) | Exact-pair review schválilo CLI/instrukce/CAS integraci. Cíleně 309 passed, 10 skipped + 67 subtests; full 1635 passed, 1055 skipped + 76 subtests. [Záznam](changes/61_integrateDeliveryWorkflow.md); [post-merge srovnání](changes/113_reconcileT046DeliverySummary.md). |
 | [T047-S01](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S01; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S02](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/model.py](../src/kgmaker/model.py) | — | Upstream owner: T047-S02; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S03](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/model.py](../src/kgmaker/model.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Upstream owner: T003-S10-W02; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
@@ -1128,14 +1130,14 @@ výsledky a přesné revidované SHA jsou doplněny v change notes 56–61 a v P
 Merge zůstává podmíněný novým review a ostatními povinnými kontrolami pro nové revize; GH CI je podle T045 revize 2 doplňující evidence.
 
 CI revizí T046 samostatně kontroluje i generované grafy každého inkrementu.
-S01–S05 mají vlastní aktualizované semantic/GRAPH snapshoty; jejich správnost
+S01–S06 mají vlastní aktualizované semantic/GRAPH snapshoty; jejich správnost
 není odvozena pouze z integračního S06.
 
 
-T046-S01 až S05 jsou po exact-pair review sloučené. S06 integruje jejich
-opravený create/CAS, immutable-history, template/testgen/data a approval základ
-do CLI a instalovaných instrukcí. Přesné aktuální výsledky budou doplněny po
-ověření nového páru PR #40; historické běhy jsou v change notes 56–61.
+T046-S01 až S06 jsou po exact-pair review sloučené. S06 integrovalo opravený
+create/CAS, immutable-history, template/testgen/data a approval základ do CLI
+a instalovaných instrukcí. Přesné aktuální výsledky jsou v atomickém řádku,
+change notes 56–61 a post-merge change113.
 ## T003-S07-W07 — verified bounded source; dependency merge pending
 
 See [remote mapping contract](remote-contract-mapping.md)
