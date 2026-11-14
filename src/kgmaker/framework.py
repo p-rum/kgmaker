@@ -23,7 +23,7 @@ from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v7-proxy-async"
+SPRING_RULE_VERSION = "annotation-source-v8-proxy-receiver"
 JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
@@ -1522,7 +1522,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             injection = add_node("spring_injection", f"{owner.name}.{match.group('name')}", path, line, owner,
                                  type=type_name, declared_type=declared_type,
                                  injection_kind=injection_kind, qualifier=qualifier,
-                                 owner=str(owner_symbol.get("owner", "")), field=match.group("name"))
+                                 owner=str(owner_symbol.get("owner", "")), field=match.group("name"),
+                                 field_symbol=field.get("id"))
             if not candidates and injection_kind not in {"optional", "provider"}:
                 diagnostics.append({"code": "SPRING_UNRESOLVED_INJECTION", "path": path, "source_line": line,
                                     "type": type_name, "reason": "No type-compatible bean declaration in indexed source scope."})
@@ -2893,6 +2894,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         selected_injections = []
         declared_symbol = symbols.get(site.get("declared_target"), {})
         receiver_type = _simple(str(declared_symbol.get("owner", "")))
+        receiver_binding = site.get("receiver_binding")
         for injection_edge in injection_edges:
             injection = nodes[injection_edge.source]
             metadata = injection.metadata or {}
@@ -2900,11 +2902,17 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             if metadata.get("owner") != caller_owner or bean is None or bean.get("condition_status") != "ACTIVE":
                 continue
             target_type = _simple(str(target_owner or ""))
-            if metadata.get("type") == receiver_type and (target_type in bean.get("types", [])
-                    or receiver_type in bean.get("types", [])):
+            binding_matches = (site.get("receiver_binding_kind") == "FIELD"
+                               and isinstance(receiver_binding, str)
+                               and metadata.get("field_symbol") == receiver_binding)
+            type_matches = (metadata.get("type") == receiver_type
+                            and (target_type in bean.get("types", [])
+                                 or receiver_type in bean.get("types", [])))
+            if binding_matches and type_matches:
                 selected_injections.append((injection, bean))
         if len(selected_injections) != 1:
-            unresolved_proxy(site, target, "proxy receiver does not map to one active injected bean",
+            unresolved_proxy(site, target,
+                             "compiler receiver binding does not map to one active injected field",
                              "SPRING_PROXY_RECEIVER_UNRESOLVED")
             continue
         injection, bean = selected_injections[0]

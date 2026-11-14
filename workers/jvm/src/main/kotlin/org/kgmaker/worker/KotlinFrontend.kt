@@ -274,6 +274,12 @@ class KotlinFrontend(private val state: State) {
             }catch(error: Exception){reason="UNSUPPORTED_SIGNATURE:"+(error.message?:error.javaClass.name)}
             val invocation=if(descriptor is ConstructorDescriptor)"CONSTRUCTOR" else if(descriptor?.extensionReceiverParameter!=null)"EXTENSION" else "CALL"
             val identity=state.site(caller,loc(expression),target,invocation,receiver,reason);calls[expression]=identity
+            val receiverBinding=valueBinding((expression.parent as? KtQualifiedExpression)?.receiverExpression)
+            val receiverSymbol=receiverBinding?.takeIf { it["kind"]=="FIELD" }?.get("symbol") as? String
+            if(receiverSymbol!=null) {
+                state.sites.last()["receiver_binding"]=receiverSymbol
+                state.sites.last()["receiver_binding_kind"]="FIELD"
+            }
             if(target!=null && descriptor!=null && resolved!=null && resolved.status.isSuccess) {
                 val arguments=expression.valueArguments+expression.lambdaArguments
                 var completeBinding=true

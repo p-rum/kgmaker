@@ -13,10 +13,11 @@
 
 ## Skutečná změna
 
-Spring rules `annotation-source-v7-proxy-async` přidávají versioned
+Spring rules `annotation-source-v8-proxy-receiver` přidávají versioned
 `spring_proxy_policy`, `spring_proxy_path`, async/event/reactive boundary a
 lokalizované UNKNOWN diagnostiky. `may_apply_advice` vznikne pouze pro externí
-compiler call s právě jednou ACTIVE injection, ACTIVE specializovanou policy a
+compiler call s přesnou FIELD receiver identitou shodnou s právě jednou ACTIVE
+injection, ACTIVE specializovanou policy a
 podporovanou interceptable JDK/CGLIB deklarací. Všechny pozitivní cesty zůstávají
 `execution=NOT_OBSERVED`, `availability=UNKNOWN`.
 
@@ -25,7 +26,9 @@ Transaction, Async, Cache a method-security advice vyžadují odpovídající
 `EnableMethodSecurity`; samotné `EnableAspectJAutoProxy` je jen obecná policy.
 AspectJ mode bez weaving artefaktu je UNKNOWN. Same-owner volání má synchronní
 `bypasses_proxy` a `@Async` self-call netvrdí scheduling. Process view označí
-Async/coroutine/reactive target jako samostatnou boundary a tělo nerozvine.
+Async target jako samostatnou boundary jen přes doložený proxy path;
+`bypasses_proxy` self-call rozvine synchronně. Coroutine/reactive target zůstává
+samostatnou boundary a tělo se nerozvine.
 EventListener zůstává event-delivery declaration, nikoli přímá call edge.
 
 Veřejná CLI syntaxe a graph/store schema v1/v2/v3 se nemění. Starší Spring rule
@@ -36,24 +39,29 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
 
 | AC | Přímá evidence |
 |---|---|
-| AC01 | `test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method`, `test_process_stops_at_async_boundary_without_claiming_execution` |
+| AC01 | `test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method`, `test_process_stops_at_async_boundary_without_claiming_execution`, `test_process_expands_async_self_invocation_synchronously` |
 | AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; graph v1/v2/v3 zůstává beze změny a framework round-trip validuje každý výsledek |
-| AC03 | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, CGLIB/JDK incompatible receiver assertions |
-| AC04 | README, compiler-inspection, acceptance inventář a stavová matice odkazují na přesnou v7 matici a nepovyšují T003-S05 nad PARTIAL |
+| AC03 | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_receiver_never_reuses_same_type_injected_field`, CGLIB/JDK incompatible receiver assertions |
+| AC04 | README, compiler-inspection, acceptance inventář a stavová matice odkazují na přesnou v8 matici a nepovyšují T003-S05 nad PARTIAL |
 
 ## Skutečné kontroly a omezení
 
-- Cílená Spring/proxy/condition/import/build-aware/compiler sada: **49 passed,
+- Cílená Spring/proxy/condition/import/build-aware/compiler sada: **52 passed,
   39 skipped**; skipy jsou existující volitelné worker/API prerequisite matice.
-- Full `python -m pytest -q`: **1641 passed, 1057 skipped, 76 subtests passed**
-  za 42.21 s.
+- Full `python -m pytest -q`: **1644 passed, 1057 skipped, 76 subtests passed**
+  za 43.83 s.
 - Dva parametrické actual-javac případy jsou lokálně **SKIP** s explicitním
   `TOOLCHAIN_UNAVAILABLE`, protože JVM worker není připraven. Explicitní Maven
   příprava workeru byla přerušena zvenčí před publikací artefaktu; nejde o PASS.
 - `compileall` a `git diff --check`: PASS; semantic validate **321 concepts /
   30 671 relationships**; scan/check **544 files / 6151 nodes / 44 026
   relationships**.
-- GH CI a nezávislé exact-pair review jsou zatím NOT_RUN.
+- CI na původním review headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d`
+  má u všech sedmi jobů `steps=null` a `logs_url=null`, tedy administrativní
+  NOT_RUN podle T045. Nezávislé review `PRR_kwDOUyD9Wc8AAAABX94H6w` našlo dva
+  P1: Async self-call v process view a chybějící receiver provenance. Oba jsou
+  opravené FIELD bindingem, proxy-evidence gate a přímými negativními testy;
+  opravný head vyžaduje nové exact-pair review.
 
 Neověřený runtime dispatch, skutečné advice execution, task scheduling, event
 delivery, reactive subscription, AspectJ weaving a širší meta/class-level

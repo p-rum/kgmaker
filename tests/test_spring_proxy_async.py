@@ -8,7 +8,7 @@ from kgmaker.analysis_model import file_hash
 from kgmaker.flow import process
 from kgmaker.framework import SPRING_RULE_VERSION, augment_framework_graph
 from kgmaker.inspection import inspect_jvm
-from kgmaker.model import KnowledgeGraph, Node
+from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.worker_protocol import WorkerError
 
 
@@ -46,6 +46,7 @@ interface WorkApi {{ @Transactional public void advised(); public void asyncWork
   public void callInterface() {{ api.advised(); }}
   public void callClass() {{ service.classAdvised(); }}
   public void callAsync() {{ api.asyncWork(); }}
+  public void callLocal() {{ new WorkService().classAdvised(); }}
 }}
 """
     path = tmp_path / "src/main/java/example/Fixture.java"
@@ -118,17 +119,24 @@ interface WorkApi {{ @Transactional public void advised(); public void asyncWork
     symbol("call-interface", "callInterface", "method", "example.Caller", "callInterface()", modifiers=["public"])
     symbol("call-class", "callClass", "method", "example.Caller", "callClass()", modifiers=["public"])
     symbol("call-async", "callAsync", "method", "example.Caller", "callAsync()", modifiers=["public"])
+    symbol("call-local", "callLocal", "method", "example.Caller", "callLocal()", modifiers=["public"])
 
     calls = [
         {"id": "site-interface", "caller": "call-interface", "declared_target": "api-advised",
          "dispatch_candidates": [], "dispatch_complete": False, "invocation_kind": "INTERFACE",
+         "receiver_binding": "api-field", "receiver_binding_kind": "FIELD",
          "path": relative, "context_id": context["id"]},
         {"id": "site-class", "caller": "call-class", "declared_target": "class-advised",
          "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_binding": "service-field", "receiver_binding_kind": "FIELD",
          "path": relative, "context_id": context["id"]},
         {"id": "site-async", "caller": "call-async", "declared_target": "api-async",
          "dispatch_candidates": ["async-work"], "dispatch_complete": False, "invocation_kind": "INTERFACE",
+         "receiver_binding": "api-field", "receiver_binding_kind": "FIELD",
          "path": relative, "context_id": context["id"]},
+        {"id": "site-local", "caller": "call-local", "declared_target": "class-advised",
+         "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_type": "example.WorkService", "path": relative, "context_id": context["id"]},
         {"id": "site-self-tx", "caller": "local", "declared_target": "class-advised",
          "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
          "path": relative, "context_id": context["id"]},
@@ -204,16 +212,35 @@ def test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence(tmp
     assert any(item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED" for item in graph.diagnostics)
 
 
+def test_local_receiver_never_reuses_same_type_injected_field(tmp_path):
+    source_graph = _graph(tmp_path, cglib=True)
+    graph = augment_framework_graph(tmp_path, source_graph, source_graph.contexts[0])
+    assert not any(node.kind == "spring_proxy_path"
+                   and (node.metadata or {}).get("call_site") == "site-local"
+                   for node in graph.nodes)
+    assert any(item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED"
+               and item.get("call_site") == "site-local" for item in graph.diagnostics)
+
+
 def test_process_stops_at_async_boundary_without_claiming_execution():
     nodes = [Node(identity, "method" if identity != "site" else "call_site", identity, "A.java", line=1,
                   scope="production", role="executable_code", origin="handwritten")
              for identity in ("caller", "callee", "site")]
-    graph = KnowledgeGraph(3, ".", "now", nodes, [], {"A.java": "0"}, [], [], [],
-        [{"id": "caller", "kind": "method", "annotations": []},
+    nodes.extend([
+        Node("proxy-path", "spring_proxy_path", "async proxy", "A.java", line=1,
+             scope="production", role="framework", origin="generated", metadata={"policy_kind": "ASYNC"}),
+        Node("async-boundary", "spring_async_boundary", "async boundary", "A.java", line=1,
+             scope="production", role="framework", origin="generated")])
+    graph = KnowledgeGraph(3, ".", "now", nodes,
+        [Edge("site", "proxy-path", "may_traverse_proxy"),
+         Edge("proxy-path", "async-boundary", "crosses_async_boundary")],
+        {"A.java": "0"}, [], [], [],
+        [{"id": "caller", "kind": "method", "owner": "example.Caller", "annotations": []},
          {"id": "callee", "kind": "method", "annotations": [
-             {"name": "org.springframework.scheduling.annotation.Async", "values": {}}]}],
+             {"name": "org.springframework.scheduling.annotation.Async", "values": {}}],
+           "owner": "example.WorkService"}],
         [{"id": "site", "caller": "caller", "declared_target": "callee", "dispatch_candidates": [],
-          "dispatch_complete": True, "invocation_kind": "STATIC"}],
+          "dispatch_complete": True, "invocation_kind": "VIRTUAL"}],
         [{"method": "caller", "representation": "SOURCE", "entry": "caller-entry", "exit": "caller-exit",
           "exceptional_exit": "caller-error", "blocks": [
               {"id": "caller-entry", "kind": "entry"}, {"id": "site", "kind": "call", "call_site_ids": ["site"]},
@@ -231,6 +258,39 @@ def test_process_stops_at_async_boundary_without_claiming_execution():
     assert boundary["continuation"] == "SEPARATE"
     assert boundary["execution"] == "NOT_OBSERVED"
     assert report["status"] == "PARTIAL"
+
+
+def test_process_expands_async_self_invocation_synchronously():
+    nodes = [Node(identity, "method" if identity != "site" else "call_site", identity, "A.java", line=1,
+                  scope="production", role="executable_code", origin="handwritten")
+             for identity in ("caller", "callee", "site")]
+    nodes.append(Node("self-boundary", "spring_proxy_boundary", "self invocation", "A.java", line=1,
+                      scope="production", role="framework", origin="generated",
+                      metadata={"boundary_kind": "SELF_INVOCATION"}))
+    graph = KnowledgeGraph(3, ".", "now", nodes,
+        [Edge("site", "self-boundary", "bypasses_proxy")], {"A.java": "0"}, [], [], [],
+        [{"id": "caller", "kind": "method", "owner": "example.WorkService", "annotations": []},
+         {"id": "callee", "kind": "method", "owner": "example.WorkService", "annotations": [
+             {"name": "org.springframework.scheduling.annotation.Async", "values": {}}]}],
+        [{"id": "site", "caller": "caller", "declared_target": "callee", "dispatch_candidates": [],
+          "dispatch_complete": True, "invocation_kind": "VIRTUAL"}],
+        [{"method": "caller", "representation": "SOURCE", "entry": "caller-entry", "exit": "caller-exit",
+          "exceptional_exit": "caller-error", "blocks": [
+              {"id": "caller-entry", "kind": "entry"}, {"id": "site", "kind": "call", "call_site_ids": ["site"]},
+              {"id": "caller-exit", "kind": "exit"}, {"id": "caller-error", "kind": "exceptional_exit"}],
+          "edges": [{"source": "caller-entry", "target": "site", "kind": "normal"},
+                    {"source": "site", "target": "caller-exit", "kind": "normal"}]},
+         {"method": "callee", "representation": "SOURCE", "entry": "callee-entry", "exit": "callee-exit",
+          "exceptional_exit": "callee-error", "blocks": [
+              {"id": "callee-entry", "kind": "entry"}, {"id": "callee-exit", "kind": "exit"},
+              {"id": "callee-error", "kind": "exceptional_exit"}],
+          "edges": [{"source": "callee-entry", "target": "callee-exit", "kind": "normal"}]}])
+    report = process(graph, "caller", scope="production")
+    call = next(block for block in report["cfg"]["blocks"] if "site" in block.get("original_ids", []))
+    assert call["continuation"] == "SYNCHRONOUS"
+    assert call["async_scheduled"] is False
+    assert {block["method"] for block in report["cfg"]["blocks"]} == {"caller", "callee"}
+    assert not any(block.get("boundary_kind") == "SPRING_ASYNC" for block in report["cfg"]["blocks"])
 
 
 @pytest.mark.parametrize("proxy_target,expected", [(False, "JDK_DYNAMIC"), (True, "CGLIB_SUBCLASS")])

@@ -62,14 +62,16 @@ srovnání](changes/113_reconcileT046DeliverySummary.md).
 ## T003-S05-W04 — Spring proxy a async semantics — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
 
 PR [#95](https://github.com/p-rum/kgmaker/pull/95), první přesně publikovaný
-implementační head `d310122e757e881875eb4d498c968af4fe91434d`; exact-pair review a
-GitHub CI jsou zatím NOT_RUN.
+implementační head `d310122e757e881875eb4d498c968af4fe91434d`. Review původního
+headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d` našlo dva P1; FIELD receiver
+provenance a synchronní Async self-call jsou opravené a čekají na nové exact-pair
+review. CI tohoto headu je administrativní NOT_RUN (`steps=null`, bez logů).
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
-| T003-S05-W04-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_spring_proxy_async.py::test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method` a `test_process_stops_at_async_boundary_without_claiming_execution`: advice jen přes bounded `may_*` proxy path, self-call synchronní bypass, Async continuation oddělená a execution NOT_OBSERVED |
-| T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v7-proxy-async`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v6, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
-| T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
+| T003-S05-W04-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_spring_proxy_async.py::test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method`, `test_process_stops_at_async_boundary_without_claiming_execution` a `test_process_expands_async_self_invocation_synchronously`: advice jen přes bounded `may_*` proxy path, self-call synchronní bypass, pouze proxied Async continuation oddělená a execution NOT_OBSERVED |
+| T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v8-proxy-receiver`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v7, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
+| T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_receiver_never_reuses_same_type_injected_field` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
 ## Historická acceptance podle uvedených checkpointů

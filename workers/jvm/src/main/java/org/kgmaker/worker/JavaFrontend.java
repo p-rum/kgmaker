@@ -187,6 +187,13 @@ public final class JavaFrontend {
             }catch(IllegalArgumentException error){reason="UNSUPPORTED_SIGNATURE:"+error.getMessage();}
             if(tree instanceof MemberReferenceTree)kind="METHOD_REFERENCE";
             String identity=state.site(caller,location,target,kind,receiver,reason);calls.put(tree,identity);
+            if(tree instanceof MethodInvocationTree invocation && invocation.getMethodSelect() instanceof MemberSelectTree select) {
+                var receiverBinding=binding(select.getExpression());
+                if(receiverBinding!=null && "FIELD".equals(receiverBinding.get("kind")) && receiverBinding.get("symbol") instanceof String symbol) {
+                    state.sites.getLast().put("receiver_binding",symbol);
+                    state.sites.getLast().put("receiver_binding_kind","FIELD");
+                }
+            }
             if(target!=null && element instanceof ExecutableElement executable && !(tree instanceof MemberReferenceTree)) {
                 List<? extends ExpressionTree> arguments=tree instanceof MethodInvocationTree call?call.getArguments():
                     tree instanceof NewClassTree call?call.getArguments():List.of();
