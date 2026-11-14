@@ -450,9 +450,10 @@ a neznámé `@Profile`, `@ConditionalOnProperty`, `@ConditionalOnClass` a custom
 `@Conditional`. Pouze jediný aktivní kandidát dostane `injects_bean`; neznámé nebo
 víceznačné varianty zůstávají `may_inject_bean`. Qualifier/Primary, short-name guard
 a self-invocation proxy boundary jsou součástí stejného context-bound výsledku.
-Aktuální Spring rules v8 navíc oddělují deklaraci advice od proxy-eligible cesty:
+Aktuální Spring rules v9 navíc oddělují deklaraci advice od proxy-eligible cesty:
 pozitivní `may_traverse_proxy`/`may_apply_advice` vyžaduje compiler call z jiného
-beanu, přesnou compiler FIELD identitu receiveru shodnou s aktivní injection,
+beanu, přesnou compiler FIELD identitu receiveru shodnou s explicitně
+`@Autowired`/`@Inject`/`@Resource` aktivní injection,
 explicitní aktivní `Enable*` policy a
 interceptable JDK interface nebo CGLIB class metodu. I tak zůstává execution
 `NOT_OBSERVED` a availability `UNKNOWN`. Self-call má synchronní `bypasses_proxy`;
@@ -460,7 +461,9 @@ interceptable JDK interface nebo CGLIB class metodu. I tak zůstává execution
 boundary bez domyšleného scheduling/subscription. AspectJ mode bez doloženého
 weaving artefaktu a local/new receiver bez FIELD provenance zůstávají UNKNOWN.
 Process view označí Async continuation jako oddělenou pouze pro doložený proxy
-path; self-invocation rozvine synchronně. Podporovaná matice a negativní případy jsou v
+path; self-invocation rozvine synchronně jen s compiler receiverem `THIS`/`SUPER`.
+Stejný owner volaný přes parametr nebo jiné pole zůstává UNKNOWN, není vydáván za
+self-call. Podporovaná matice a negativní případy jsou v
 [compiler inspection](docs/compiler-inspection.md#t003-s05-w04--proxy-weaving-a-async-boundaries).
 
 ```bash

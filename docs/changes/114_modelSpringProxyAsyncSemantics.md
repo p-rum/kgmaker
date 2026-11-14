@@ -15,11 +15,12 @@
 
 ## Skutečná změna
 
-Spring rules `annotation-source-v8-proxy-receiver` přidávají versioned
+Spring rules `annotation-source-v9-proxy-provenance` přidávají versioned
 `spring_proxy_policy`, `spring_proxy_path`, async/event/reactive boundary a
 lokalizované UNKNOWN diagnostiky. `may_apply_advice` vznikne pouze pro externí
-compiler call s přesnou FIELD receiver identitou shodnou s právě jednou ACTIVE
-injection, ACTIVE specializovanou policy a
+compiler call s přesnou FIELD receiver identitou shodnou s právě jednou explicitně
+anotovanou `@Autowired`/`@Inject`/`@Resource` ACTIVE injection, ACTIVE
+specializovanou policy a
 podporovanou interceptable JDK/CGLIB deklarací. Všechny pozitivní cesty zůstávají
 `execution=NOT_OBSERVED`, `availability=UNKNOWN`.
 
@@ -29,7 +30,9 @@ Transaction, Async, Cache a method-security advice vyžadují odpovídající
 AspectJ mode bez weaving artefaktu je UNKNOWN. Same-owner volání má synchronní
 `bypasses_proxy` a `@Async` self-call netvrdí scheduling. Process view označí
 Async target jako samostatnou boundary jen přes doložený proxy path;
-`bypasses_proxy` self-call rozvine synchronně. Coroutine/reactive target zůstává
+`bypasses_proxy` self-call rozvine synchronně pouze s compiler `THIS`/`SUPER`
+receiverem; stejný owner přes parametr nebo jinou instanci zůstává UNKNOWN.
+Coroutine/reactive target zůstává
 samostatnou boundary a tělo se nerozvine.
 EventListener zůstává event-delivery declaration, nikoli přímá call edge.
 
@@ -43,15 +46,15 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
 |---|---|
 | AC01 | `test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method`, `test_process_stops_at_async_boundary_without_claiming_execution`, `test_process_expands_async_self_invocation_synchronously` |
 | AC02 | `test_legacy_spring_rules_remain_readable_but_require_reinspection`; graph v1/v2/v3 zůstává beze změny a framework round-trip validuje každý výsledek |
-| AC03 | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_receiver_never_reuses_same_type_injected_field`, CGLIB/JDK incompatible receiver assertions |
-| AC04 | README, compiler-inspection, acceptance inventář a stavová matice odkazují na přesnou v8 matici a nepovyšují T003-S05 nad PARTIAL |
+| AC03 | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation`, CGLIB/JDK incompatible receiver assertions |
+| AC04 | README, compiler-inspection, acceptance inventář a stavová matice odkazují na přesnou v9 matici a nepovyšují T003-S05 nad PARTIAL |
 
 ## Skutečné kontroly a omezení
 
-- Cílená Spring/proxy/condition/import/build-aware/compiler sada: **52 passed,
+- Cílená Spring/proxy/condition/import/build-aware/compiler sada: **54 passed,
   39 skipped**; skipy jsou existující volitelné worker/API prerequisite matice.
-- Full `python -m pytest -q`: **1644 passed, 1057 skipped, 76 subtests passed**
-  za 46.22 s na finálním review-fix tree.
+- Full `python -m pytest -q`: **1646 passed, 1057 skipped, 76 subtests passed**
+  za 43.40 s na druhém review-fix tree.
 - Dva parametrické actual-javac případy jsou lokálně **SKIP** s explicitním
   `TOOLCHAIN_UNAVAILABLE`, protože JVM worker není připraven. Explicitní Maven
   příprava workeru byla přerušena zvenčí před publikací artefaktu; nejde o PASS.
@@ -65,6 +68,12 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
   opravené FIELD bindingem, proxy-evidence gate a přímými negativními testy;
   opravný head vyžaduje nové exact-pair review. Jeho CI run `43635104440` má
   stejný administrativní NOT_RUN stav: všech sedm jobů bez kroků a logů.
+- Druhé nezávislé review `PRR_kwDOUyD9Wc8AAAABYBNa9Q` na headu
+  `0de66dde234d7725d06073ed81095c3abca18556` našlo další dva P1: neanotované
+  pole se nesmělo stát injection a shodný method owner nebyl důkaz `this` callu.
+  Oprava vyžaduje kanonickou explicitní injection anotaci a compiler
+  `receiver_binding_kind=THIS|SUPER`; ručně inicializované pole i parametr jiné
+  instance mají přímé negativní regrese a čekají na nové exact-pair review.
 
 Neověřený runtime dispatch, skutečné advice execution, task scheduling, event
 delivery, reactive subscription, AspectJ weaving a širší meta/class-level

@@ -107,7 +107,8 @@ def test_tampered_condition_snapshot_is_stale_without_process_or_mutation(tmp_pa
 
 
 @pytest.mark.parametrize("old", ["annotation-source-v3", "annotation-source-v4", "annotation-source-v5",
-                                  "annotation-source-v6", "annotation-source-v7-proxy-async"])
+                                  "annotation-source-v6", "annotation-source-v7-proxy-async",
+                                  "annotation-source-v8-proxy-receiver"])
 def test_legacy_spring_rules_remain_readable_but_require_reinspection(tmp_path, old):
     from kgmaker.model import KnowledgeGraph
     context = {"id": "old", "language": "jvm", "framework_rule_versions": {"spring": old}}

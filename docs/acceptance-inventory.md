@@ -67,12 +67,15 @@ headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d` našlo dva P1; FIELD receiver
 provenance a synchronní Async self-call jsou opravené v implementačním headu
 `276886c55f16cf09746970342cb2b80ab814745d`, který čeká na nové exact-pair review.
 CI původního i opravného headu je administrativní NOT_RUN (`steps=null`, bez logů).
+Druhé review `PRR_kwDOUyD9Wc8AAAABYBNa9Q` na `0de66dde234d7725d06073ed81095c3abca18556`
+našlo neprokázanou injection obyčejného pole a falešný same-owner self-call; obě
+opravy jsou lokálně zelené a čekají na publikaci a nové exact-pair review.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
 | T003-S05-W04-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_spring_proxy_async.py::test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method`, `test_process_stops_at_async_boundary_without_claiming_execution` a `test_process_expands_async_self_invocation_synchronously`: advice jen přes bounded `may_*` proxy path, self-call synchronní bypass, pouze proxied Async continuation oddělená a execution NOT_OBSERVED |
-| T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v8-proxy-receiver`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v7, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
-| T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_receiver_never_reuses_same_type_injected_field` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
+| T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v9-proxy-provenance`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v8, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
+| T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
 ## Historická acceptance podle uvedených checkpointů

@@ -23,7 +23,7 @@ from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v8-proxy-receiver"
+SPRING_RULE_VERSION = "annotation-source-v9-proxy-provenance"
 JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
@@ -1399,8 +1399,9 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         diagnostics.append({"code": "SPRING_REGISTRATION_NAME_COLLISION", "name": name,
             "reason": "Registry override order is not executed; competing declarations remain UNKNOWN."})
 
-    # Constructor/field injection is intentionally conservative.  A matching
-    # type is a candidate, while qualifier/primary/profile controls the result.
+    # Explicit field injection is intentionally conservative.  A matching type
+    # is only a candidate when a canonical injection annotation is present;
+    # qualifier/primary/profile then controls the result.
     def resolve_query_property(model_owner: str, property_name: str) -> tuple[str | None, str | None]:
         normalized = property_name.replace("_", "").casefold()
         direct = entity_attributes.get(model_owner, {}).get(normalized)
@@ -1445,11 +1446,13 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
 
     for path, source in source_text.items():
         imports = _imports(source)
-        if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject") or item.startswith("javax.inject") for item in imports):
+        if not any(item.startswith("org.springframework") or item.startswith("jakarta.inject")
+                   or item.startswith("javax.inject") or item.startswith("jakarta.annotation")
+                   or item.startswith("javax.annotation") for item in imports):
             continue
         type_lines = [(node, (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0))
                       for node in nodes.values() if node.id in symbols and node.path == path and node.kind in {"class", "interface"}]
-        for match in re.finditer(r"(?P<ann>@(?:Autowired|Inject|Resource|Qualifier)(?:\([^\n]*\))?\s*)*(?P<type>[A-Z][\w.]*(?:\s*<[^;=]+>)?)\s+(?P<name>\w+)\s*(?:[;=]|(?:=\s*lateinit))", source):
+        for match in re.finditer(r"(?P<ann>(?:@(?:[A-Za-z_]\w*\.)*(?:Autowired|Inject|Resource|Qualifier)(?:\([^\n]*\))?\s*)+)(?P<type>[A-Z][\w.]*(?:\s*<[^;=]+>)?)\s+(?P<name>\w+)\s*(?:[;=]|(?:=\s*lateinit))", source):
             line = _line(source, match.start())
             owner = max((node for node, start in type_lines if start <= line), key=lambda node: (symbols.get(node.id) or {}).get("range", {}).get("start_line", 0), default=None)
             if owner is None:
@@ -1470,6 +1473,12 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 injection_kind, type_name = "single", outer
             qualifiers = [(item.group(1), _args(item.group(0))) for item in
                           re.finditer(r"@([A-Za-z_][\w.]*)\s*(\([^\n]*\))?", match.group("ann") or "")]
+            injection_families = ("org.springframework.beans.factory.annotation.", "jakarta.inject.",
+                                  "javax.inject.", "jakarta.annotation.", "javax.annotation.")
+            if not any(_simple(name) in {"Autowired", "Inject", "Resource"}
+                       and _allowed_annotation(name, imports, injection_families)
+                       for name, _ in qualifiers):
+                continue
             qualifier = next((_string_arg(args, ("value", "name")) for name, args in qualifiers if _simple(name) == "Qualifier"), None)
             candidates = [bean for bean in spring_beans if type_name in bean.get("types", [bean["type"]])]
             # A user interface named FactoryBean is not the Spring contract.
@@ -2875,7 +2884,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if target is None:
             continue
         caller_owner, target_owner = caller_symbol.get("owner"), target_symbol.get("owner")
-        if caller_owner == target_owner:
+        if caller_owner == target_owner and site.get("receiver_binding_kind") in {"THIS", "SUPER"}:
             advice_names = {(nodes[identity].metadata or {}).get("advice")
                             for identity in advice_by_method[target.id]}
             boundary = add_node("spring_proxy_boundary", f"self-invocation:{target.name}", target.path,

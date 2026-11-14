@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "fd3ce0527c6c396ffd67ca0f4959623c508e91cf8f2ddd4e17fbaa6696590b9e",
-    "docs/acceptance-inventory.md": "a8809ea2d90c9ce18b3f2e78373058811022af6540cc6bd8b8ae5ca40f241849",
+    "README.md": "794d9fc00075828e8cdd6e12e92ed9560dec07a4b9a1b22ee64b3c80d4f95869",
+    "docs/acceptance-inventory.md": "258bb1e7aefe47d37be02a9acfefe2ec984302ea5ecccc23a56d29e07eb806aa",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -16,7 +16,7 @@
     "docs/changes/111_reconcileDeliveryStatus.md": "3e59cf2781f2bb99ed575073faf47f965db67adae5b1e396fc11c9b72bfa1489",
     "docs/changes/112_specifyTargetAgentIsolation.md": "15ac22de104dc1598e893f6980d905a0292c49210dcf4aa91c053238846940db",
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
-    "docs/changes/114_modelSpringProxyAsyncSemantics.md": "ba0e8e29c0e816969eabcfaaf5d5b3394e61b5039210f49e73456dbc1468582c",
+    "docs/changes/114_modelSpringProxyAsyncSemantics.md": "56b1f6f46d7683d13dc344e558f57d6477ab9f6ef126cc2f92f30e5659fc7585",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -98,7 +98,7 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "797efb5331e442aca32bf9b512fface89ff46f6c19db9bdd11e76fdf4251eb2c",
+    "docs/compiler-inspection.md": "fdd3747128d44ab19cfbe818732c49a1ce57bff88fe0f60a17b2dca1680d159a",
     "docs/delivery-workflow.md": "1fd9eec5c013263f61267e6022ae4bbf409dcf73c8278879c2578526581e343a",
     "docs/feature-analysis.md": "0d842008766bc2451feb990afc3f49db84bab0360d0ed56c00a5c4bac78d538d",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
@@ -372,7 +372,7 @@
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
     "src/kgmaker/flow.py": "59fd3a56ba49b731fd9e3050d83185565ae9dd0d99b8558d6e8cefd6a1cf8b9d",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
-    "src/kgmaker/framework.py": "944e626e86ff2f9cf2fc56a2d308544cf3f0cf35fabe792426b96f22a448cbd3",
+    "src/kgmaker/framework.py": "76b2814ef3ac7ad487188470bfe7fcd66f95633c4c7a0274bab52854074a992e",
     "src/kgmaker/graph_provider.py": "ca328bf9973175e4c72656471816751f4fb3464f1503b49d70d261c435ca2de4",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "7ca5ee49b7d6d9fb1a608da2307966a2e5a3967f443b84b1fad7b67412ed798a",
@@ -478,10 +478,10 @@
     "tests/test_return_consumer_flow.py": "e8bb757ea66920fba53e16cd55df88dae81daf7957e23a1b906669e7a272f333",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_schema_compatibility.py": "06f63bfe8e7c177c0db1d27412429a4ecbb3f5e80043407f935592f2569609fb",
-    "tests/test_spring_conditions.py": "c4a4e4ef830b7f9a5e8af92fca6f044171e7f3013210685ad789a2094f45d857",
+    "tests/test_spring_conditions.py": "671881b262ed42a0f23ce00eff3164f8b79288ed8865c65b3c27faa8055b4a5e",
     "tests/test_spring_imports.py": "38bb6a255e4f6b48930e1d96dd8f28cb150d9bbc35365b9ca50886b45ffaa4c0",
     "tests/test_spring_imports_context.py": "3c8463498ba8f7a66d252e4729950b3f6b366559f48eae22f3e4eabc45d4e15e",
-    "tests/test_spring_proxy_async.py": "76b713beb68f12ba278f42c886e4fe16fd8bc8c1c2fd2a595bf31a261901f26b",
+    "tests/test_spring_proxy_async.py": "c322367e0eef375f877bd7d6a79ae6b5a6065ff983e3e06af638cdad7bbc7ef3",
     "tests/test_spring_registrations.py": "2d9b5b656ab3cf9dc362edf86f4d8d849e9e4635b2622cafcaf155053c4c5ab9",
     "tests/test_synthetic_data.py": "471db7f1cdfeb63b16da9a7b09ba5188dbc5f79fb3f36e037773eb3281722d81",
     "tests/test_t005_add_view_model.py": "b9b241f71803c99d1f9626871f2d48a5fbce54e521ae62b17922b18e278300dd",
@@ -533,13 +533,13 @@
     "workers/jvm/k2/KotlinFrontend.kt": "dc1ba29445df6737843ef450825a6ddd7f3ad560d42760a838ef7589730d1843",
     "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java": "b663fbe88f93b9e656a7ae34ecfbb29c66aca72eb1118278e90dab389ab7963e",
     "workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java": "7d74d465954860797c59724594223ebcc6ec892fc88fc3f096941eb7b7aa83ac",
-    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "c109f11c8cb99eb4ab39d0a45b49b8e7d389b8f7f196ed4702dee6e23f391d87",
+    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "777564fbb30a0cf1623b120724b4cdd6640d3c3cf22e369f34f7a65503dacca0",
     "workers/jvm/src/main/java/org/kgmaker/worker/RegistrationFacts.java": "9db1fe4417f58a618418c67819fd49eeb1b325d2ab7ec6807f3a65bc9656af34",
     "workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java": "083177824a39304ba4ac24c0ce8fcde76515ec56973e6e12f50edac7d9e82fea",
     "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java": "7eed18dd31ff990a764723e6a75129ddaed20a15e4135a68b5a85057a3214410",
     "workers/jvm/src/main/java/org/kgmaker/worker/State.java": "7004fca4970adaad869dd91cd63707640b117f1241bbcae26b40cee870915728",
     "workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt": "d6cd2a1ca007caa36a812ce6a3213233b7713299f1a30ee728d7037cc419c777",
-    "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt": "09cc23f14847b9bcad5564527a20f9d2604de3b5ce2e3a90da76cb083cebe3d4",
+    "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt": "a564fe795ebc0dae8315f539066534458d085206a61ccbb58cae13275fcedcce",
     "workers/typescript/input_snapshot.cjs": "a407f4f525bb03a479888aa8e420a67eb455dd703844511b4c487328183aabea",
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "3ae75f1708d0f383a306dd65740413720b83375dbc61028597a4a183fa371341",
@@ -803,21 +803,21 @@
       "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
       "name": "Typed HTTP request and terminal intent",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1297,
+      "source_line": 1301,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
     },
     {
       "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "name": "Bounded Thymeleaf static fragment provenance",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1277,
+      "source_line": 1281,
       "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     },
     {
       "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "name": "Explicit persistence realm binding",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
     },
     {
@@ -832,7 +832,7 @@
       "name": "Bounded Spring proxy and async semantics",
       "source_file": "docs/compiler-inspection.md",
       "source_line": 1102,
-      "summary": "Spring rules v8 require an external compiler call with receiver_binding_kind FIELD whose receiver_binding symbol exactly matches one active injected field_symbol, an active specialized policy and an interceptable JDK or CGLIB declaration before emitting only proxy may-edges; Async process separation additionally requires a proven ASYNC proxy path, while bypassed self-invocation expands synchronously and unresolved or local receivers remain UNKNOWN."
+      "summary": "Spring rules v9 require an external compiler call whose FIELD receiver binding exactly matches the field symbol of one active canonically annotated @Autowired, @Inject or @Resource injection, together with an active specialized policy and interceptable JDK or CGLIB declaration, before emitting only proxy may-edges; self bypass requires compiler THIS or SUPER provenance, while parameters, other instances, unannotated or manually initialized fields and unresolved receivers remain UNKNOWN."
     }
   ],
   "edges": [
@@ -1598,7 +1598,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1909",
+      "target": "function:src/kgmaker/framework.py:property_site_annotations::1918",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
@@ -1753,7 +1753,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 284,
+      "source_line": 291,
       "evidence": "K1 compiler descriptors preserve source suspend and exact coroutine API boundary markers in call sites and source IR."
     },
     {
@@ -1813,7 +1813,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1297,
+      "source_line": 1301,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1823,7 +1823,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1297,
+      "source_line": 1301,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1833,7 +1833,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1297,
+      "source_line": 1301,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1843,7 +1843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1297,
+      "source_line": 1301,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     },
     {
@@ -1853,7 +1853,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1277,
+      "source_line": 1281,
       "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
     },
     {
@@ -1923,7 +1923,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1933,7 +1933,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1943,7 +1943,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1953,7 +1953,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1963,7 +1963,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -2003,7 +2003,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1153,
+      "source_line": 1157,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -2064,7 +2064,7 @@
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
       "source_line": 1110,
-      "evidence": "The v8 framework projection requires receiver_binding_kind to equal FIELD and the call site's compiler receiver_binding symbol to match exactly one active injection field_symbol, together with the matching Enable policy and an interceptable JDK or CGLIB declaration, before emitting proxy may-edges."
+      "evidence": "The v9 framework projection accepts only a canonical explicit @Autowired, @Inject or @Resource field injection whose compiler field_symbol equals the call site's FIELD receiver_binding, and creates self-bypass only for compiler THIS or SUPER receivers; matching policy and interceptability remain required before proxy may-edges."
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
@@ -2073,8 +2073,8 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1129,
-      "evidence": "The process view marks Spring Async continuation SEPARATE only when the call traverses a proven ASYNC proxy path that crosses its boundary; bypassed self-invocation expands synchronously and unresolved proxy evidence remains UNKNOWN."
+      "source_line": 1131,
+      "evidence": "The process view marks Spring Async continuation SEPARATE only across a proven ASYNC proxy path; it expands synchronously only when framework evidence establishes a THIS or SUPER bypass, while other same-owner receivers remain UNKNOWN."
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
@@ -2083,8 +2083,8 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1135,
-      "evidence": "The configuration view exposes policy, FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
+      "source_line": 1139,
+      "evidence": "The configuration view exposes policy, canonically injected FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
     },
     {
       "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
@@ -2093,8 +2093,8 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1138,
-      "evidence": "The bounded fixture covers FIELD-kind and symbol-matched JDK and CGLIB paths, local/new receiver rejection, synchronous Async self-invocation, proven proxied Async separation, event/reactive declarations, unverified AspectJ and ambiguous injection."
+      "source_line": 1142,
+      "evidence": "The bounded fixture validates canonical annotated JDK/CGLIB field paths, rejects unannotated or manually initialized fields and local/new/parameter receivers, distinguishes THIS/SUPER self-bypass from other same-owner instances, and retains proxied Async, event, reactive and unverified AspectJ boundaries."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
@@ -2104,7 +2104,7 @@
       "confidence_score": 1,
       "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
       "source_line": 190,
-      "evidence": "Javac records receiver_binding_kind FIELD and the exact attributed FIELD symbol for a member-select receiver on the call site; local and new receivers do not acquire injected-field provenance."
+      "evidence": "Javac classifies non-static call receivers as THIS, SUPER, NEW or compiler binding kinds such as FIELD and PARAMETER, preserving the exact field symbol or other binding ID so same-owner instances are not conflated with self-calls."
     },
     {
       "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
@@ -2114,7 +2114,7 @@
       "confidence_score": 1,
       "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
       "source_line": 277,
-      "evidence": "K1 records receiver_binding_kind FIELD and its exact symbol only when the qualified call receiver resolves to that compiler field, preserving receiver provenance on the call site."
+      "evidence": "K1 records THIS and SUPER explicitly and otherwise preserves the compiler receiver binding kind plus exact FIELD symbol or other binding ID, preventing parameter or peer-instance calls from becoming self-bypass evidence."
     },
     {
       "source": "file:tests/test_spring_conditions.py:test_spring_conditions.py",
@@ -2124,7 +2124,7 @@
       "confidence_score": 1,
       "source_file": "tests/test_spring_conditions.py",
       "source_line": 109,
-      "evidence": "The compatibility regression keeps v7 Spring rule snapshots readable but requires explicit reinspection under the v8 receiver-provenance rule."
+      "evidence": "The compatibility regression keeps v8 and older Spring rule snapshots readable but requires explicit reinspection under the v9 injection-and-receiver-provenance rule."
     }
   ],
   "episodes": [

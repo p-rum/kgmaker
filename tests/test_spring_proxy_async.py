@@ -22,6 +22,7 @@ def _graph(tmp_path: Path, *, cglib: bool = False, ambiguous: bool = False) -> K
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Async;
@@ -38,15 +39,18 @@ interface WorkApi {{ @Transactional public void advised(); public void asyncWork
   @EventListener public void onEvent(String value) {{}}
   public reactor.core.publisher.Mono<String> reactiveWork() {{ return null; }}
   void local() {{ classAdvised(); asyncWork(); }}
+  void forward(WorkService other) {{ other.asyncWork(); }}
 }}
 {"@Service class OtherService implements WorkApi { public void advised() {} public void asyncWork() {} }" if ambiguous else ""}
 @Service class Caller {{
-  WorkApi api;
-  WorkService service;
+  @Autowired WorkApi api;
+  @Autowired WorkService service;
+  WorkService manual = new WorkService();
   public void callInterface() {{ api.advised(); }}
   public void callClass() {{ service.classAdvised(); }}
   public void callAsync() {{ api.asyncWork(); }}
   public void callLocal() {{ new WorkService().classAdvised(); }}
+  public void callManual() {{ manual.classAdvised(); }}
 }}
 """
     path = tmp_path / "src/main/java/example/Fixture.java"
@@ -113,13 +117,16 @@ interface WorkApi {{ @Transactional public void advised(); public void asyncWork
     symbol("reactive-work", "reactiveWork", "method", "example.WorkService", "reactiveWork()",
            modifiers=["public"], return_type="reactor.core.publisher.Mono<java.lang.String>")
     symbol("local", "local", "method", "example.WorkService", "void local()", return_type="void")
+    symbol("forward", "forward", "method", "example.WorkService", "void forward(", return_type="void")
     symbol("caller", "Caller", "class", "example.Caller", "class Caller", annotations=service)
     symbol("api-field", "api", "field", "example.Caller", "WorkApi api", field_type="example.WorkApi")
     symbol("service-field", "service", "field", "example.Caller", "WorkService service", field_type="example.WorkService")
+    symbol("manual-field", "manual", "field", "example.Caller", "WorkService manual", field_type="example.WorkService")
     symbol("call-interface", "callInterface", "method", "example.Caller", "callInterface()", modifiers=["public"])
     symbol("call-class", "callClass", "method", "example.Caller", "callClass()", modifiers=["public"])
     symbol("call-async", "callAsync", "method", "example.Caller", "callAsync()", modifiers=["public"])
     symbol("call-local", "callLocal", "method", "example.Caller", "callLocal()", modifiers=["public"])
+    symbol("call-manual", "callManual", "method", "example.Caller", "callManual()", modifiers=["public"])
 
     calls = [
         {"id": "site-interface", "caller": "call-interface", "declared_target": "api-advised",
@@ -137,11 +144,21 @@ interface WorkApi {{ @Transactional public void advised(); public void asyncWork
         {"id": "site-local", "caller": "call-local", "declared_target": "class-advised",
          "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
          "receiver_type": "example.WorkService", "path": relative, "context_id": context["id"]},
+        {"id": "site-manual", "caller": "call-manual", "declared_target": "class-advised",
+         "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_type": "example.WorkService", "receiver_binding": "manual-field",
+         "receiver_binding_kind": "FIELD", "path": relative, "context_id": context["id"]},
         {"id": "site-self-tx", "caller": "local", "declared_target": "class-advised",
          "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_binding_kind": "THIS",
          "path": relative, "context_id": context["id"]},
         {"id": "site-self-async", "caller": "local", "declared_target": "async-work",
          "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_binding_kind": "THIS",
+         "path": relative, "context_id": context["id"]},
+        {"id": "site-peer-async", "caller": "forward", "declared_target": "async-work",
+         "dispatch_candidates": [], "dispatch_complete": True, "invocation_kind": "VIRTUAL",
+         "receiver_binding": "forward:parameter:0", "receiver_binding_kind": "PARAMETER",
          "path": relative, "context_id": context["id"]},
     ]
     for call in calls:
@@ -174,6 +191,8 @@ def test_jdk_proxy_async_event_and_self_invocation_are_bounded(tmp_path):
                for node in graph.nodes)
     assert any(node.kind == "spring_reactive_boundary"
                and node.metadata["continuation"] == "SUBSCRIPTION_DEPENDENT" for node in graph.nodes)
+    assert any(item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED"
+               and item.get("call_site") == "site-peer-async" for item in graph.diagnostics)
 
 
 def test_cglib_path_requires_interceptable_concrete_method(tmp_path):
@@ -212,14 +231,26 @@ def test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence(tmp
     assert any(item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED" for item in graph.diagnostics)
 
 
-def test_local_receiver_never_reuses_same_type_injected_field(tmp_path):
+def test_local_or_non_injected_field_never_reuses_injected_proxy_evidence(tmp_path):
     source_graph = _graph(tmp_path, cglib=True)
     graph = augment_framework_graph(tmp_path, source_graph, source_graph.contexts[0])
     assert not any(node.kind == "spring_proxy_path"
-                   and (node.metadata or {}).get("call_site") == "site-local"
+                   and (node.metadata or {}).get("call_site") in {"site-local", "site-manual"}
+                   for node in graph.nodes)
+    unresolved = {item.get("call_site") for item in graph.diagnostics
+                  if item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED"}
+    assert {"site-local", "site-manual"} <= unresolved
+
+
+def test_same_owner_parameter_receiver_is_not_self_invocation(tmp_path):
+    source_graph = _graph(tmp_path)
+    graph = augment_framework_graph(tmp_path, source_graph, source_graph.contexts[0])
+    assert not any(node.kind == "spring_proxy_boundary"
+                   and (node.metadata or {}).get("boundary_kind") == "SELF_INVOCATION"
+                   and (node.metadata or {}).get("declaration_identity") == "site-peer-async"
                    for node in graph.nodes)
     assert any(item.get("code") == "SPRING_PROXY_RECEIVER_UNRESOLVED"
-               and item.get("call_site") == "site-local" for item in graph.diagnostics)
+               and item.get("call_site") == "site-peer-async" for item in graph.diagnostics)
 
 
 def test_process_stops_at_async_boundary_without_claiming_execution():
@@ -299,6 +330,9 @@ def test_actual_javac_proxy_async_event_fixture(tmp_path, proxy_target, expected
         "org/springframework/stereotype/Service.java": """package org.springframework.stereotype;
 import java.lang.annotation.*; @Target(ElementType.TYPE) @Retention(RetentionPolicy.RUNTIME)
 public @interface Service { String value() default ""; }""",
+        "org/springframework/beans/factory/annotation/Autowired.java": """package org.springframework.beans.factory.annotation;
+import java.lang.annotation.*; @Target({ElementType.FIELD,ElementType.CONSTRUCTOR}) @Retention(RetentionPolicy.RUNTIME)
+public @interface Autowired {}""",
         "org/springframework/context/annotation/Configuration.java": """package org.springframework.context.annotation;
 import java.lang.annotation.*; @Target(ElementType.TYPE) @Retention(RetentionPolicy.RUNTIME)
 public @interface Configuration {}""",
@@ -326,6 +360,7 @@ import java.lang.annotation.*; import org.springframework.context.annotation.Adv
 public @interface EnableTransactionManagement { boolean proxyTargetClass() default false; AdviceMode mode() default AdviceMode.PROXY; }""",
         "example/Fixture.java": f"""package example;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -343,10 +378,12 @@ interface Api {{ @Transactional void tx(); @Async void async(); }}
   @Async public void classAsync() {{}}
   @EventListener public void event(String value) {{}}
   void local() {{ classTx(); classAsync(); }}
+  void forward(Impl other) {{ other.classAsync(); }}
 }}
-@Service class Caller {{ Api api; Impl impl;
+@Service class Caller {{ @Autowired Api api; @Autowired Impl impl; Impl manual = new Impl();
   void throughInterface() {{ api.tx(); api.async(); }}
   void throughClass() {{ impl.classTx(); impl.classAsync(); }}
+  void throughManual() {{ manual.classTx(); }}
 }}
 """,
     }
@@ -372,3 +409,7 @@ interface Api {{ @Transactional void tx(); @Async void async(); }}
     assert len([node for node in graph.nodes if node.kind == "spring_proxy_boundary"
                 and node.metadata.get("boundary_kind") == "SELF_INVOCATION"]) == 2
     assert any(node.kind == "spring_event_boundary" for node in graph.nodes)
+    manual_method = next(symbol["id"] for symbol in graph.symbols if symbol.get("name") == "throughManual")
+    manual_sites = {site["id"] for site in graph.call_sites if site.get("caller") == manual_method}
+    assert manual_sites
+    assert not any((node.metadata or {}).get("call_site") in manual_sites for node in paths)

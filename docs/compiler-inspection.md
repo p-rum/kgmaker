@@ -1101,15 +1101,16 @@ remaining unsupported cases; this does not complete all of T003-S05.
 
 ## T003-S05-W04 — proxy, weaving a async boundaries
 
-Spring rules `annotation-source-v8-proxy-receiver` zachovávají graph/store schéma
+Spring rules `annotation-source-v9-proxy-provenance` zachovávají graph/store schéma
 v1/v2/v3 a přidávají pouze framework nodes/edges a metadata. Deklarace
 `spring_advice` má vždy `DECLARATION_ONLY`, `execution=NOT_OBSERVED` a
 `availability=UNKNOWN`; samotná `@Transactional`, `@Async`, cache nebo method
 security anotace nikdy nedokládá aplikaci advice.
 
 Pozitivní proxy-eligible cesta vyžaduje současně compiler-resolved externí call,
-compiler FIELD receiver binding shodný s jedinou ACTIVE injection do ACTIVE
-Spring beanu, explicitní ACTIVE policy
+compiler FIELD receiver binding shodný s jedinou explicitně anotovanou
+`@Autowired`/`@Inject`/`@Resource` ACTIVE injection do ACTIVE Spring beanu,
+explicitní ACTIVE policy
 (`EnableTransactionManagement`, `EnableAsync`, `EnableCaching` nebo
 `EnableMethodSecurity`) a podporovanou interceptable deklaraci. JDK dynamic cesta
 vyžaduje přesně určený injected compiler interface a public metodu. CGLIB cesta
@@ -1121,7 +1122,8 @@ neaktivuje specializované Transaction/Async/Cache/Security advice.
 
 `AdviceMode.ASPECTJ` bez compiler/load-time weaving artefaktu má status UNKNOWN a
 diagnostiku `SPRING_WEAVING_UNVERIFIED`; nevytvoří pozitivní proxy path. Nejednoznačná
-injection, local/new receiver, konfliktní policy, neinterceptable metoda a chybějící receiver proof
+injection, prosté nebo ručně inicializované pole, local/new receiver, konfliktní
+policy, neinterceptable metoda a chybějící receiver proof
 končí `spring_proxy_boundary`/`proxy_resolution_unknown`. Same-owner call používá
 `bypasses_proxy`, `continuation=SYNCHRONOUS`; self-call na `@Async` tedy netvrdí
 naplánování tasku.
@@ -1129,7 +1131,9 @@ naplánování tasku.
 `@Async`, `@EventListener` a přesný `Mono`/`Flux`/`Publisher` return na Spring
 beanu mají samostatné declaration boundaries. Process view se na Async targetu
 zastaví s `continuation=SEPARATE` jen přes doložený `may_traverse_proxy` a
-`crosses_async_boundary`; self-invocation s `bypasses_proxy` rozvine synchronně.
+`crosses_async_boundary`; self-invocation s `bypasses_proxy` rozvine synchronně
+jen při compiler receiver kind `THIS`/`SUPER`. Stejný method owner přes parametr,
+jinou instanci nebo pole bez proxy evidence zůstává UNKNOWN.
 Coroutine/reactive target zůstává samostatnou boundary s `continuation=SEPARATE`,
 `execution=NOT_OBSERVED`; event listener neprodukuje přímou call edge a default
 caller-thread delivery není vydávána za pozorovaný běh. Configuration view umí
