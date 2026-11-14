@@ -1099,6 +1099,54 @@ missing tools/APIs are SKIP unless required. See
 [change note50](changes/50_expandSpringConditions.md) for final test results and
 remaining unsupported cases; this does not complete all of T003-S05.
 
+## T003-S05-W04 — proxy, weaving a async boundaries
+
+Spring rules `annotation-source-v7-proxy-async` zachovávají graph/store schéma
+v1/v2/v3 a přidávají pouze framework nodes/edges a metadata. Deklarace
+`spring_advice` má vždy `DECLARATION_ONLY`, `execution=NOT_OBSERVED` a
+`availability=UNKNOWN`; samotná `@Transactional`, `@Async`, cache nebo method
+security anotace nikdy nedokládá aplikaci advice.
+
+Pozitivní proxy-eligible cesta vyžaduje současně compiler-resolved externí call,
+jedinou ACTIVE injection do ACTIVE Spring beanu, explicitní ACTIVE policy
+(`EnableTransactionManagement`, `EnableAsync`, `EnableCaching` nebo
+`EnableMethodSecurity`) a podporovanou interceptable deklaraci. JDK dynamic cesta
+vyžaduje přesně určený injected compiler interface a public metodu. CGLIB cesta
+vyžaduje konkrétní injected non-final bean a public/protected non-final,
+non-private, non-static class metodu. Výstup je záměrně jen
+`may_traverse_proxy` → `may_apply_advice`; runtime dispatch ani advice execution
+se z něj nestává. `EnableAspectJAutoProxy` se eviduje jako obecná policy, ale
+neaktivuje specializované Transaction/Async/Cache/Security advice.
+
+`AdviceMode.ASPECTJ` bez compiler/load-time weaving artefaktu má status UNKNOWN a
+diagnostiku `SPRING_WEAVING_UNVERIFIED`; nevytvoří pozitivní proxy path. Nejednoznačná
+injection, konfliktní policy, neinterceptable metoda a chybějící receiver proof
+končí `spring_proxy_boundary`/`proxy_resolution_unknown`. Same-owner call používá
+`bypasses_proxy`, `continuation=SYNCHRONOUS`; self-call na `@Async` tedy netvrdí
+naplánování tasku.
+
+`@Async`, `@EventListener` a přesný `Mono`/`Flux`/`Publisher` return na Spring
+beanu mají samostatné declaration boundaries. Process view se na compilerově
+doloženém Async/coroutine/reactive targetu zastaví s `continuation=SEPARATE`,
+`execution=NOT_OBSERVED`; event listener neprodukuje přímou call edge a default
+caller-thread delivery není vydávána za pozorovaný běh. Configuration view umí
+nové policy/path/boundary vztahy zobrazit, execution ranking je nepovyšuje.
+
+Přímá matice je `tests/test_spring_proxy_async.py`: JDK/CGLIB, self-invocation,
+Async, EventListener, reactive declaration, AspectJ bez weaving proof,
+ambiguous injection a flow boundary. Dva actual-javac parametry jsou povinné jen
+v připraveném worker prostředí (`KGMAKER_REQUIRE_WORKERS=1`); lokálně chybějící
+worker je explicitní SKIP, nikdy PASS. Žádný scan/hook/view nespouští worker,
+build, Spring context, task executor, event publisher ani reactive subscription.
+
+```bash
+kgmaker inspect code --root app --manifest build-manifest.json --format json
+kgmaker graph view --root app --view configuration --scope production --format json
+```
+
+`graph view` je nad uloženým explicitním contextem read-only; varianty vyžadují
+existující `--context` výběr stejně jako ostatní compiler-backed pohledy.
+
 ## Explicit persistence realms (T003-S06-W04, verified bounded subset)
 
 Current physical schema binding requires an explicit database_id/schema_stream_id

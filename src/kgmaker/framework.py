@@ -23,7 +23,7 @@ from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
-SPRING_RULE_VERSION = "annotation-source-v6"
+SPRING_RULE_VERSION = "annotation-source-v7-proxy-async"
 JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
@@ -49,6 +49,18 @@ SPRING_ENTRYPOINTS = {
     "ApplicationRunner": "application_runner", "CommandLineRunner": "command_runner",
 }
 SPRING_ADVICE = {"Transactional", "Async", "Cacheable", "CachePut", "CacheEvict", "Secured", "PreAuthorize"}
+SPRING_PROXY_POLICIES = {
+    "org.springframework.context.annotation.EnableAspectJAutoProxy": "AOP",
+    "org.springframework.transaction.annotation.EnableTransactionManagement": "TRANSACTION",
+    "org.springframework.scheduling.annotation.EnableAsync": "ASYNC",
+    "org.springframework.cache.annotation.EnableCaching": "CACHE",
+    "org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity": "SECURITY",
+}
+SPRING_ADVICE_POLICIES = {
+    "Transactional": "TRANSACTION", "Async": "ASYNC",
+    "Cacheable": "CACHE", "CachePut": "CACHE", "CacheEvict": "CACHE",
+    "Secured": "SECURITY", "PreAuthorize": "SECURITY",
+}
 SPRING_SELECTION = {"Qualifier", "Primary", "Profile"}
 SPRING_CONDITIONS = {"Conditional", "ConditionalOnProperty", "ConditionalOnClass"}
 HTTP_ANNOTATIONS = {"GetMapping": "GET", "PostMapping": "POST", "PutMapping": "PUT",
@@ -699,6 +711,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     diagnostics.extend(jpa_xml["diagnostics"])
     annotations: list[dict[str, Any]] = list(graph.analysis_annotations)
     spring_beans: list[dict[str, Any]] = []
+    spring_proxy_policies: list[dict[str, Any]] = []
     entity_decls: list[dict[str, Any]] = []
     embeddable_decls: list[dict[str, Any]] = []
     mapped_superclass_decls: list[dict[str, Any]] = []
@@ -1192,10 +1205,88 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 entry = add_node("spring_entrypoint", f"{SPRING_ENTRYPOINTS[name]}:{node.name}", path, line, node,
                                  entrypoint_kind=SPRING_ENTRYPOINTS[name], async_boundary=name in {"Async", "EventListener", "KafkaListener"})
                 add_edge(node.id, entry, "declares_entrypoint", path, line, f"@{name} framework entrypoint")
+                if name == "Async":
+                    boundary = add_node("spring_async_boundary", f"async:{node.name}", path, line, node,
+                                        boundary_kind="TASK_EXECUTOR", continuation="SEPARATE",
+                                        scheduling="FRAMEWORK_MANAGED", execution="NOT_OBSERVED",
+                                        availability="UNKNOWN")
+                    add_edge(node.id, boundary, "declares_async_transition", path, line,
+                             "@Async declares a task-executor transition; scheduling is not observed")
+                elif name == "EventListener":
+                    boundary = add_node("spring_event_boundary", f"event-listener:{node.name}", path, line, node,
+                                        boundary_kind="APPLICATION_EVENT", continuation="SEPARATE",
+                                        scheduling="CALLER_THREAD_BY_DEFAULT", execution="NOT_OBSERVED",
+                                        availability="UNKNOWN")
+                    add_edge(node.id, boundary, "declares_event_transition", path, line,
+                             "@EventListener declares event delivery, not a direct synchronous call edge")
             if name in SPRING_ADVICE:
                 if _allowed_annotation(annotation, imports, ("org.springframework.",)):
-                    advice = add_node("spring_advice", f"{name}:{node.name}", path, line, node, advice=name)
+                    advice = add_node("spring_advice", f"{name}:{node.name}", path, line, node, advice=name,
+                                      application_status="DECLARATION_ONLY", execution="NOT_OBSERVED",
+                                      availability="UNKNOWN")
                     add_edge(node.id, advice, "advised_by", path, line, f"@{name} advice declaration")
+
+        return_type = str(item.get("return_type", "")).split("<", 1)[0].rstrip("?")
+        spring_owner = any(symbols.get(bean["node"].id, {}).get("owner") == item.get("owner")
+                           and bean.get("condition_status") != "INACTIVE" for bean in spring_beans)
+        if spring_owner and return_type in {"reactor.core.publisher.Mono", "reactor.core.publisher.Flux",
+                                            "org.reactivestreams.Publisher"}:
+            boundary = add_node("spring_reactive_boundary", f"reactive:{node.name}", path, line, node,
+                                boundary_kind="REACTIVE_PUBLISHER", continuation="SUBSCRIPTION_DEPENDENT",
+                                publisher_type=return_type, execution="NOT_OBSERVED", availability="UNKNOWN")
+            add_edge(node.id, boundary, "declares_reactive_transition", path, line,
+                     "Exact reactive publisher return type; subscription and execution are not observed")
+
+    # Proxy selection is declaration-only.  A later call-site projection may
+    # reference an ACTIVE policy, but neither this annotation nor a compatible
+    # source call proves that advice ran.
+    for owner, record in type_records.items():
+        if not record["configuration"]:
+            continue
+        for annotation, args in record["values"]:
+            policy_kind = SPRING_PROXY_POLICIES.get(annotation)
+            if policy_kind is None:
+                continue
+            simple = _simple(annotation)
+            if not isinstance(args, AnnotationArguments) \
+                    or args.resolved is not True or not isinstance(args.members, dict):
+                mode, strategy, status = "UNKNOWN", "UNKNOWN", "UNKNOWN"
+                reasons = ["typed compiler annotation members are unavailable"]
+            else:
+                members = args.members
+                proxy_target = members.get("proxyTargetClass", False)
+                advice_mode = members.get("mode", "org.springframework.context.annotation.AdviceMode.PROXY")
+                if type(proxy_target) is not bool:
+                    mode, strategy, status = "UNKNOWN", "UNKNOWN", "UNKNOWN"
+                    reasons = ["proxyTargetClass is not a compiler-resolved boolean"]
+                elif policy_kind != "AOP" and isinstance(advice_mode, str) and advice_mode.endswith(".ASPECTJ"):
+                    mode, strategy, status = "ASPECTJ", "ASPECTJ_WEAVING", "UNKNOWN"
+                    reasons = ["AspectJ mode is declared but no compile/load-time weaving artifact is observed"]
+                elif policy_kind != "AOP" and (not isinstance(advice_mode, str) or not advice_mode.endswith(".PROXY")):
+                    mode, strategy, status = "UNKNOWN", "UNKNOWN", "UNKNOWN"
+                    reasons = ["async advice mode is unresolved or unsupported"]
+                else:
+                    mode = "PROXY"
+                    strategy = "CGLIB_SUBCLASS" if proxy_target else "JDK_DYNAMIC"
+                    status = configuration_states.get(owner, "INACTIVE")
+                    reasons = list(record["direct_reasons"])
+            declaration = record["symbol"]
+            line = (declaration.get("range") or {}).get("start_line")
+            policy = add_node("spring_proxy_policy", f"{simple}:{owner}", declaration["path"], line,
+                              symbol_node(declaration), policy_kind=policy_kind,
+                              mode=mode, strategy=strategy, activation_status=status,
+                              condition_status=configuration_states.get(owner, "INACTIVE"),
+                              reasons=reasons, execution="NOT_EXECUTED")
+            add_edge(declaration["id"], policy, "enables_proxy_policy", declaration["path"], line,
+                     f"@{simple} compiler-resolved proxy policy declaration")
+            spring_proxy_policies.append({"node": policy,
+                                          "kind": policy_kind,
+                                          "mode": mode, "strategy": strategy, "status": status,
+                                          "path": declaration["path"], "line": line})
+            if status == "UNKNOWN":
+                diagnostics.append({"code": "SPRING_WEAVING_UNVERIFIED" if mode == "ASPECTJ" else "SPRING_PROXY_POLICY_UNRESOLVED",
+                                    "path": declaration["path"], "source_line": line, "policy": policy,
+                                    "reasons": reasons})
 
     # Registrar declarations inherit the importing configuration's condition;
     # RootBeanDefinition does not evaluate the target class's @Profile itself.
@@ -1430,7 +1521,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         "reason": "Multiple type-compatible beans; no unique Qualifier/Primary evidence."})
             injection = add_node("spring_injection", f"{owner.name}.{match.group('name')}", path, line, owner,
                                  type=type_name, declared_type=declared_type,
-                                 injection_kind=injection_kind, qualifier=qualifier)
+                                 injection_kind=injection_kind, qualifier=qualifier,
+                                 owner=str(owner_symbol.get("owner", "")), field=match.group("name"))
             if not candidates and injection_kind not in {"optional", "provider"}:
                 diagnostics.append({"code": "SPRING_UNRESOLVED_INJECTION", "path": path, "source_line": line,
                                     "type": type_name, "reason": "No type-compatible bean declaration in indexed source scope."})
@@ -2742,24 +2834,139 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         "path": path, "source_line": line, "method": method.id,
                                         "table": table_name, "candidates": [candidate.id for candidate in matches]})
 
-    # Self-invocation is a framework boundary, not a normal proxy traversal.
+    # A proxy-eligible path needs all of: an external compiler call, one active
+    # Spring injection, one active compatible policy and an interceptable
+    # declaration.  It is still a may-edge with execution NOT_OBSERVED.
+    advice_edges = [edge for edge in edges.values() if edge.kind == "advised_by"
+                    and nodes.get(edge.target) is not None and nodes[edge.target].kind == "spring_advice"]
+    advice_by_method: dict[str, list[str]] = {}
+    for edge in advice_edges:
+        advice_by_method.setdefault(edge.source, []).append(edge.target)
+    bean_records = {bean["bean"]: bean for bean in spring_beans}
+    injection_edges = [edge for edge in edges.values() if edge.kind == "injects_bean"
+                       and nodes.get(edge.source) is not None and nodes[edge.source].kind == "spring_injection"]
+
+    def unresolved_proxy(site: dict[str, Any], target: Node, reason: str, code: str) -> None:
+        boundary = add_node("spring_proxy_boundary", f"proxy-unresolved:{target.name}", target.path, target.line,
+                            target, declaration_identity=str(site.get("id")), proxy_traversal=None,
+                            boundary_kind="PROXY_RESOLUTION", reason=reason,
+                            execution="NOT_OBSERVED", availability="UNKNOWN")
+        add_edge(str(site.get("id")), boundary, "proxy_resolution_unknown", target.path, target.line,
+                 "Proxy advice application remains UNKNOWN: " + reason)
+        diagnostics.append({"code": code, "path": target.path, "source_line": target.line,
+                            "call_site": site.get("id"), "target": target.id, "reason": reason})
+
     for site in graph.call_sites:
-        if site.get("caller") not in symbols:
+        caller_symbol = symbols.get(site.get("caller"))
+        if caller_symbol is None or site.get("id") not in nodes:
             continue
-        caller = nodes.get(site.get("caller")); target = nodes.get(site.get("declared_target"))
-        if not caller or not target or caller.id == target.id:
+        candidate_ids = [site.get("declared_target"), *site.get("dispatch_candidates", [])]
+        candidates = list(dict.fromkeys(identity for identity in candidate_ids if identity in advice_by_method))
+        if not candidates:
             continue
-        caller_symbol = symbols.get(caller.id, {}); target_symbol = symbols.get(target.id, {})
-        if caller_symbol.get("owner") != target_symbol.get("owner"):
+        if len(candidates) != 1:
+            target = nodes.get(candidates[0])
+            if target is not None:
+                unresolved_proxy(site, target, "multiple advised dispatch candidates", "SPRING_PROXY_TARGET_AMBIGUOUS")
             continue
-        target_annotations = _annotation_map(target_symbol, source_text.get(target.path, ""))
-        if any(_simple(name) in SPRING_ADVICE for name, _ in target_annotations):
-            boundary = add_node("spring_proxy_boundary", f"self-invocation:{target.name}", target.path, target.line, target,
-                                proxy_traversal=False, reason="same-owner invocation bypasses external proxy")
+        target = nodes.get(candidates[0])
+        target_symbol = symbols.get(candidates[0], {})
+        if target is None:
+            continue
+        caller_owner, target_owner = caller_symbol.get("owner"), target_symbol.get("owner")
+        if caller_owner == target_owner:
+            advice_names = {(nodes[identity].metadata or {}).get("advice")
+                            for identity in advice_by_method[target.id]}
+            boundary = add_node("spring_proxy_boundary", f"self-invocation:{target.name}", target.path,
+                                target.line, target, declaration_identity=str(site.get("id")),
+                                proxy_traversal=False, boundary_kind="SELF_INVOCATION",
+                                continuation="SYNCHRONOUS", async_scheduled=False,
+                                reason="same-owner invocation bypasses external proxy",
+                                execution="NOT_OBSERVED", availability="UNKNOWN")
             add_edge(site["id"], boundary, "bypasses_proxy", target.path, target.line,
-                     "Same-class call to advised method; runtime proxy traversal is not observed")
+                     "Same-class call to advised method bypasses an external Spring proxy")
             diagnostics.append({"code": "SPRING_SELF_INVOCATION_PROXY_BOUNDARY", "path": target.path,
-                                "source_line": target.line, "call_site": site["id"], "target": target.id})
+                                "source_line": target.line, "call_site": site["id"], "target": target.id,
+                                "async_scheduled": False if "Async" in advice_names else None})
+            continue
+
+        selected_injections = []
+        declared_symbol = symbols.get(site.get("declared_target"), {})
+        receiver_type = _simple(str(declared_symbol.get("owner", "")))
+        for injection_edge in injection_edges:
+            injection = nodes[injection_edge.source]
+            metadata = injection.metadata or {}
+            bean = bean_records.get(injection_edge.target)
+            if metadata.get("owner") != caller_owner or bean is None or bean.get("condition_status") != "ACTIVE":
+                continue
+            target_type = _simple(str(target_owner or ""))
+            if metadata.get("type") == receiver_type and (target_type in bean.get("types", [])
+                    or receiver_type in bean.get("types", [])):
+                selected_injections.append((injection, bean))
+        if len(selected_injections) != 1:
+            unresolved_proxy(site, target, "proxy receiver does not map to one active injected bean",
+                             "SPRING_PROXY_RECEIVER_UNRESOLVED")
+            continue
+        injection, bean = selected_injections[0]
+        bean_symbol = symbols.get(bean["node"].id, {})
+        bean_owner = str(bean_symbol.get("owner", ""))
+
+        advice_groups: dict[str, list[str]] = {}
+        for advice_id in advice_by_method[target.id]:
+            advice_name = (nodes[advice_id].metadata or {}).get("advice")
+            policy_kind = SPRING_ADVICE_POLICIES.get(str(advice_name))
+            if policy_kind:
+                advice_groups.setdefault(policy_kind, []).append(advice_id)
+        for policy_kind, advice_ids in advice_groups.items():
+            if not advice_ids:
+                continue
+            policies = [policy for policy in spring_proxy_policies
+                        if policy["kind"] == policy_kind and policy["status"] == "ACTIVE"]
+            strategies = {policy["strategy"] for policy in policies}
+            if len(strategies) != 1:
+                unresolved_proxy(site, target, "no unique active " + policy_kind + " proxy strategy",
+                                 "SPRING_PROXY_POLICY_UNRESOLVED")
+                continue
+            strategy = next(iter(strategies))
+            injection_type = str((injection.metadata or {}).get("type", ""))
+            target_modifiers = set(target_symbol.get("modifiers", []))
+            bean_modifiers = set(bean_symbol.get("modifiers", []))
+            if strategy == "JDK_DYNAMIC":
+                interface_owners = [owner for owner, record in type_records.items()
+                                    if record["symbol"].get("kind") == "interface"
+                                    and record["symbol"].get("name") == injection_type]
+                eligible = (len(interface_owners) == 1 and injection_type in bean.get("types", [])
+                            and "public" in target_modifiers)
+                reason = "JDK proxy requires one injected compiler interface and a public advised method"
+            else:
+                eligible = (target_owner == bean_owner and "final" not in bean_modifiers
+                            and not ({"final", "private", "static"} & target_modifiers)
+                            and bool({"public", "protected"} & target_modifiers))
+                reason = "CGLIB proxy requires an injected non-final bean and an interceptable class method"
+            if not eligible:
+                unresolved_proxy(site, target, reason, "SPRING_PROXY_METHOD_UNSUPPORTED")
+                continue
+            proxy_path = add_node("spring_proxy_path", f"{strategy}:{target.name}", target.path, target.line,
+                                  target, declaration_identity=f"{site['id']}:{policy_kind}:{strategy}",
+                                  call_site=site["id"], target=target.id, bean=bean["bean"],
+                                  injection=injection.id, policy_kind=policy_kind,
+                                  mode="PROXY", strategy=strategy, eligibility="SUPPORTED",
+                                  execution="NOT_OBSERVED", availability="UNKNOWN")
+            add_edge(site["id"], proxy_path, "may_traverse_proxy", target.path, target.line,
+                     "Compiler call plus unique active injection and explicit compatible proxy policy",
+                     compiler_fact=site)
+            for policy in policies:
+                add_edge(policy["node"], proxy_path, "governs_proxy_path", policy["path"], policy["line"],
+                         "Active compiler-resolved proxy policy")
+            for advice_id in advice_ids:
+                add_edge(proxy_path, advice_id, "may_apply_advice", target.path, target.line,
+                         "Advice is eligible only through this evidenced proxy path; execution is not observed")
+            if policy_kind == "ASYNC":
+                async_boundaries = [edge.target for edge in edges.values()
+                                    if edge.source == target.id and edge.kind == "declares_async_transition"]
+                for boundary in async_boundaries:
+                    add_edge(proxy_path, boundary, "crosses_async_boundary", target.path, target.line,
+                             "Eligible @Async proxy path separates caller continuation from task execution")
 
     # ORM XML is an explicit, root-confined mapping input. Apply it after the
     # existing annotation projection so the same ORM entities/attributes are

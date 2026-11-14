@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "32d47fc734c760379d591bb4644b751f031fbe7488152048e4653fe71a3fa79b",
-    "docs/acceptance-inventory.md": "f3a9f2137cfd1f3386fbf6079f824741a53e4efcb38f224727d7f2fc41e2ad31",
+    "README.md": "d0dd1d49266da549b8718454ad88a96386ffa832926c871c85d668a4764cf3fe",
+    "docs/acceptance-inventory.md": "b808619da48950e346b6e0c2de360bf32b1f16f1ba0bbfccf7c3d705724d016d",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -16,6 +16,7 @@
     "docs/changes/111_reconcileDeliveryStatus.md": "3e59cf2781f2bb99ed575073faf47f965db67adae5b1e396fc11c9b72bfa1489",
     "docs/changes/112_specifyTargetAgentIsolation.md": "15ac22de104dc1598e893f6980d905a0292c49210dcf4aa91c053238846940db",
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
+    "docs/changes/114_modelSpringProxyAsyncSemantics.md": "2972e51725ad3d5c1b7a27c9ca20d6beb3c4dffbee16021d01d1a7bede6a1ca9",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -97,7 +98,7 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "f1d4bd6d1f8c7eb43437d805d15f032f25ec662c3c2709998928f4627bec2c83",
+    "docs/compiler-inspection.md": "54dcdea408535d2d4788c7256b09d5d1f097fca89b7f1719643a34b4eb56b3c2",
     "docs/delivery-workflow.md": "1fd9eec5c013263f61267e6022ae4bbf409dcf73c8278879c2578526581e343a",
     "docs/feature-analysis.md": "0d842008766bc2451feb990afc3f49db84bab0360d0ed56c00a5c4bac78d538d",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
@@ -114,7 +115,7 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "4ea6033c7b534a503d6728cf4df95afdef79376ea3c27f5b02a3d489f7b297bd",
+    "docs/production-analysis-progress.md": "16d56edda91e951a5c4d5d2db276fd332e976e3e5ef5de02bf8c547baf6519f8",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
@@ -369,9 +370,9 @@
     "src/kgmaker/domain.py": "8e9afa2da4ff5e53b6f78359447d8cdbf8eeeb625bc5f00a3182715a8732c0b7",
     "src/kgmaker/feature.py": "bde2f6cb7d24bcc0fbe2634cf8f404c3421fee5cc9afa2b9454b2a9fd0ce7d9c",
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
-    "src/kgmaker/flow.py": "04962cee0bf964d8a2c8b61a41a3d38a472ceeffe12afdb53acfc2514c6fc681",
+    "src/kgmaker/flow.py": "a1f82289769da38dc5e5b1ce3d6ff0c37f80feef88581e493c14ad7966a269de",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
-    "src/kgmaker/framework.py": "169008dcfffd2c009acbbe47f4d6662ea4212ad32d08782534ea10a02c4e890b",
+    "src/kgmaker/framework.py": "7e15e565222a2d26419a39bff9ac8cb34be8c27ffcf68319bc47b20cae863be4",
     "src/kgmaker/graph_provider.py": "ca328bf9973175e4c72656471816751f4fb3464f1503b49d70d261c435ca2de4",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "7ca5ee49b7d6d9fb1a608da2307966a2e5a3967f443b84b1fad7b67412ed798a",
@@ -409,7 +410,7 @@
     "src/kgmaker/topology_filter.py": "2a0816b27564811331ce03d49cd9c8ca59eb9a290d9a8334d03d39b0051461f3",
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
     "src/kgmaker/view_explanation.py": "3be4dd4169065ed054b9cd9162c479020631e30962c2eb31443e638e00aa1563",
-    "src/kgmaker/views.py": "eadff6f9e679ce42fdd6b222818665622a03beafd4c06a387452aa7e4c013ea7",
+    "src/kgmaker/views.py": "de5e5442df5b53dd13ebbd0af1a28998cc381fcd34e8bc3dcc24d3e920e55934",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
     "src/kgmaker/workflow.py": "e755e1fd7080f040da6f344430220be51d21ce5047e653ecfd5c3d58cde5f8b2",
@@ -434,7 +435,7 @@
     "tests/test_binary_xls.py": "8ead893b31e2a70115c13307da6c24bc42d7298905b90bc458ed3ba698e65618",
     "tests/test_build_aware.py": "10e42dc3dfbff66276be47f2af6a90243bb24eebf4e91a13956fc05ce5f81f40",
     "tests/test_build_runner.py": "59b7fa2bdea3c22cd5e07007e91e088d848ad7253122e595afb1c006a09f296a",
-    "tests/test_compiler_workers.py": "682531b0f2e583b7c7f9c1e84095253422df17866a5886541f5d10302df3cd9a",
+    "tests/test_compiler_workers.py": "086d17064cb2eb86246dd9d0d9436015ebf855191c6e64f8861f9ac60a051703",
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_context_roles.py": "8061d8edf4e51f8405483cef00d26fbd608c8c194672a9360531a2173d49095a",
@@ -477,9 +478,10 @@
     "tests/test_return_consumer_flow.py": "e8bb757ea66920fba53e16cd55df88dae81daf7957e23a1b906669e7a272f333",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_schema_compatibility.py": "06f63bfe8e7c177c0db1d27412429a4ecbb3f5e80043407f935592f2569609fb",
-    "tests/test_spring_conditions.py": "2ff2de8247e192c40706fa56d1fca0a7f16910eb11aaf17e3b999957207bbdfd",
-    "tests/test_spring_imports.py": "5deb8ae9d0bf46fe1256d973bd708b2784e49cf7a3c3a32c53fb138bd15b4600",
+    "tests/test_spring_conditions.py": "c41f800f3607b7184903d86dcc931067e71ce059cd65c125027e4181d1bc8409",
+    "tests/test_spring_imports.py": "38bb6a255e4f6b48930e1d96dd8f28cb150d9bbc35365b9ca50886b45ffaa4c0",
     "tests/test_spring_imports_context.py": "3c8463498ba8f7a66d252e4729950b3f6b366559f48eae22f3e4eabc45d4e15e",
+    "tests/test_spring_proxy_async.py": "f67696662597a9737d7b2b8eab39f7022d20dc1ae75454d2583d5247087ae1b3",
     "tests/test_spring_registrations.py": "2d9b5b656ab3cf9dc362edf86f4d8d849e9e4635b2622cafcaf155053c4c5ab9",
     "tests/test_synthetic_data.py": "471db7f1cdfeb63b16da9a7b09ba5188dbc5f79fb3f36e037773eb3281722d81",
     "tests/test_t005_add_view_model.py": "b9b241f71803c99d1f9626871f2d48a5fbce54e521ae62b17922b18e278300dd",
@@ -672,76 +674,6 @@
       "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
     },
     {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 710,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "name": "Kotlin JPA use-site access",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 576,
-      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "name": "Versioned React JSX event evidence",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 803,
-      "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
-      "name": "Repository entity owner resolution",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 363,
-      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "name": "JPA ORM XML mapping precedence",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "summary": "Selected persistence-unit ORM XML mappings apply in declared order and override annotation table/scalar-column facts; metadata-complete suppresses annotation-only bindings, and unsafe or unsupported XML remains UNKNOWN with path/hash/unit provenance."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "name": "Compiler proven coroutine source boundaries",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 857,
-      "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "name": "Hand labelled JVM acceptance corpus",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 879,
-      "summary": "Versioned per-backend test inventories check source callable identities/counts, unsupported diagnostic provenance and CFG/reflection limits without runtime extrapolation."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "name": "Typed HTTP request and terminal intent",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1222,
-      "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "name": "Bounded Thymeleaf static fragment provenance",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1202,
-      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "name": "Explicit persistence realm binding",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
-    },
-    {
       "id": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
       "name": "Read-only process annotation validation",
       "source_file": "docs/process-annotations.md",
@@ -819,11 +751,88 @@
       "summary": "Pure deterministic interface Markdown preserves original identities, contract revisions, context/evidence/status distinctions and bounded escaped text without capture or runtime authority."
     },
     {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 710,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "name": "Kotlin JPA use-site access",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 576,
+      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "name": "Versioned React JSX event evidence",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 803,
+      "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
+      "name": "Repository entity owner resolution",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 363,
+      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "name": "JPA ORM XML mapping precedence",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "summary": "Selected persistence-unit ORM XML mappings apply in declared order and override annotation table/scalar-column facts; metadata-complete suppresses annotation-only bindings, and unsafe or unsupported XML remains UNKNOWN with path/hash/unit provenance."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "name": "Compiler proven coroutine source boundaries",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 857,
+      "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "name": "Hand labelled JVM acceptance corpus",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 879,
+      "summary": "Versioned per-backend test inventories check source callable identities/counts, unsupported diagnostic provenance and CFG/reflection limits without runtime extrapolation."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "name": "Typed HTTP request and terminal intent",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1294,
+      "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "name": "Bounded Thymeleaf static fragment provenance",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1274,
+      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "name": "Explicit persistence realm binding",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1150,
+      "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 188,
+      "source_line": 198,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "name": "Bounded Spring proxy and async semantics",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1102,
+      "summary": "Explicit Spring policy, unique active injection and interceptable JDK or CGLIB declarations create only proxy-eligible may-edges; self, Async, event, reactive and unverified weaving boundaries never imply observed execution."
     }
   ],
   "edges": [
@@ -1028,16 +1037,6 @@
       "evidence": "The adapter binds pinned API resources and canonical listener/handler compiler facts to static retry policy declarations; unsupported configurations remain UNKNOWN."
     },
     {
-      "source": "file:src/kgmaker/flow.py:flow.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/flow.py",
-      "source_line": 67,
-      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
-    },
-    {
       "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
       "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
       "kind": "validates",
@@ -1098,26 +1097,6 @@
       "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
     },
     {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
       "source": "file:src/kgmaker/data_resources.py:data_resources.py",
       "target": "concept:docs/architecture.md:realm_bound_data_resources",
       "kind": "implements",
@@ -1166,6 +1145,336 @@
       "source_file": "docs/process-label-packets.md",
       "source_line": 9,
       "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::384",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 143,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 156,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
+      "target": "function:src/kgmaker/process_semantics.py:validate_process_annotations::463",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-annotations.md",
+      "source_line": 9,
+      "evidence": "The documented validation API consumes current ProcessView, T030 packet and semantic candidate without applying annotations."
+    },
+    {
+      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
+      "target": "concept:docs/process-label-packets.md:pure_process_label_packets",
+      "kind": "depends_on",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/process-annotations.md",
+      "source_line": 9,
+      "evidence": "Validation extends T030 and rederives its complete packet before accepting proposal structure."
+    },
+    {
+      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
+      "target": "function:src/kgmaker/process_store.py:prepare_process_review::54",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_store.py",
+      "source_line": 54,
+      "evidence": "prepare_process_review revalidates current explicit inputs through T031 before returning an independent semantic envelope."
+    },
+    {
+      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
+      "target": "function:src/kgmaker/process_store.py:read_process_reviews::302",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_store.py",
+      "source_line": 302,
+      "evidence": "read_process_reviews rederives current packet binding and exposes historical decisions separately from active annotations."
+    },
+    {
+      "source": "concept:docs/process-catalog.md:explicit_process_catalog",
+      "target": "function:src/kgmaker/process_catalog.py:catalog_business_processes::178",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/process_catalog.py",
+      "source_line": 178,
+      "evidence": "catalog_business_processes joins only explicit ProcessViews and T024 inventory, reads T032 review, and retains separate alias members without write/discovery."
+    },
+    {
+      "source": "file:src/kgmaker/remote_interfaces.py:remote_interfaces.py",
+      "target": "concept:docs/remote-interfaces.md:captured_remote_interface_topology",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/remote_interfaces.py",
+      "source_line": 65,
+      "evidence": "The module exposes the pure explicit captured remote-interface topology projection; the multiline public definition has no deterministic function node in the current scanner."
+    },
+    {
+      "source": "function:src/kgmaker/remote_interfaces.py:_proof::48",
+      "target": "concept:docs/remote-interfaces.md:captured_remote_interface_topology",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/remote_interfaces.py",
+      "source_line": 53,
+      "evidence": "The proof allowlist preserves original public proof identities, kinds, freshness and polarity while retaining only a payload hash for omitted fields."
+    },
+    {
+      "source": "function:src/kgmaker/context_roles.py:classify_context_role::12",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/context_roles.py",
+      "source_line": 14,
+      "evidence": "The pure classifier validates canonical producer identity while separating captured role from source freshness."
+    },
+    {
+      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/kafka_bindings.py",
+      "source_line": 280,
+      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
+    },
+    {
+      "source": "file:tests/test_context_roles.py:test_context_roles.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_context_roles.py",
+      "source_line": 95,
+      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
+    },
+    {
+      "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
+      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
+      "kind": "coordinates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/service_topology.py",
+      "source_line": 36,
+      "evidence": "The explicit local capture uses one workspace/snapshot/coverage tuple for existing T015/W07/T014 projections and rechecks the closure without workers, builds or store publication."
+    },
+    {
+      "source": "function:src/kgmaker/service_topology.py:aggregate_service_topology::140",
+      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/service_topology.py",
+      "source_line": 142,
+      "evidence": "The public pure aggregator projects the captured service/resource/channel topology without live I/O or new execution/availability evidence."
+    },
+    {
+      "source": "function:src/kgmaker/topology_filter.py:_filter::63",
+      "target": "concept:docs/topology-filter.md:bounded_topology_filter_inventory",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/topology_filter.py",
+      "source_line": 65,
+      "evidence": "The pure filter validates the captured topology, applies deterministic real-edge scope/context/budget criteria and returns the retained model with explicit omission metadata."
+    },
+    {
+      "source": "function:src/kgmaker/topology_filter.py:_inventory::29",
+      "target": "concept:docs/topology-filter.md:bounded_topology_filter_inventory",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/topology_filter.py",
+      "source_line": 31,
+      "evidence": "The original identity inventory extracts interface/mapping/release/original IDs from every retained or omitted claim and candidate rather than inventing shortcut dependencies."
+    },
+    {
+      "source": "function:src/kgmaker/view_explanation.py:explain_view_element::266",
+      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/view_explanation.py",
+      "source_line": 268,
+      "evidence": "The pure public explanation rederives the original captured T016/T017 view and returns original identity, evidence, location and source-status boundaries without current reads."
+    },
+    {
+      "source": "function:src/kgmaker/view_explanation.py:capture_explanation_source_status::412",
+      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
+      "kind": "coordinates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/view_explanation.py",
+      "source_line": 414,
+      "evidence": "Explicit optional source-status capture validates original public graph locators and declared workspace membership before confined hash-only file observation; it does not replace the original view or prove runtime availability."
+    },
+    {
+      "source": "function:src/kgmaker/view_explanation.py:_range::123",
+      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/view_explanation.py",
+      "source_line": 125,
+      "evidence": "Captured source ranges reject internally contradictory same-line columns while incomplete or unsupported ranges remain unavailable rather than invented."
+    },
+    {
+      "source": "file:src/kgmaker/remote_mapping.py:remote_mapping.py",
+      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/remote_mapping.py",
+      "source_line": 185,
+      "evidence": "Explicit read-only capture is the sole source-validation boundary; pure resolution does no hidden provider or filesystem I/O."
+    },
+    {
+      "source": "file:src/kgmaker/dataflow.py:dataflow.py",
+      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/dataflow.py",
+      "source_line": 448,
+      "evidence": "Existing data-flow API delegates to the captured canonical remote mapping without inventing JVM calls or payload transfer."
+    },
+    {
+      "source": "file:tests/test_cross_service_contract_mapping.py:test_cross_service_contract_mapping.py",
+      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_cross_service_contract_mapping.py",
+      "source_line": 377,
+      "evidence": "Actual HTTP and Kafka fixtures preserve request versus execution, versioned candidates, context and contract provenance."
+    },
+    {
+      "source": "file:tests/test_t014_bind_remote_interfaces.py:test_t014_bind_remote_interfaces.py",
+      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t014_bind_remote_interfaces.py",
+      "source_line": 206,
+      "evidence": "A fresh ordinary Python public projection rejects file/process/network I/O during invocation and preserves static UNKNOWN/SOURCE_ONLY semantics; no helper preload or native proof claim."
+    },
+    {
+      "source": "function:src/kgmaker/architecture_cli.py:run::281",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 281,
+      "evidence": "The adapter validates safe arguments, exact captured selectors/fingerprint, fixed diagnostics and bounded JSON output before returning explicit exit codes."
+    },
+    {
+      "source": "function:src/kgmaker/architecture_cli.py:_preflight::151",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 151,
+      "evidence": "Explicit local capture requires every original public index to exist and validate before parser/capture work; missing/corrupt originals are not repaired or published."
+    },
+    {
+      "source": "function:src/kgmaker/architecture_render.py:render_interface_markdown::62",
+      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_render.py",
+      "source_line": 62,
+      "evidence": "The pure renderer validates and renders supplied interfaces without source/provider/store fallback."
+    },
+    {
+      "source": "function:src/kgmaker/architecture_cli.py:run::281",
+      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 281,
+      "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
+    },
+    {
+      "source": "function:tests/test_t020_render_interface_markdown.py:test_public_golden_keeps_original_ids_statuses_contexts_and_evidence_links::61",
+      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t020_render_interface_markdown.py",
+      "source_line": 61,
+      "evidence": "Public parser checks preserve original IDs/status/context and generated internal evidence links."
+    },
+    {
+      "source": "function:tests/test_t020_render_interface_markdown.py:test_first_interface_markdown_render_is_io_free_in_fresh_python_process::335",
+      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t020_render_interface_markdown.py",
+      "source_line": 335,
+      "evidence": "Accepted007v2 first ordinary public interface render denies Python file/filesystem/process/network operations, preserves exact parent expected output and input inventory; pure parser proof, not native runtime evidence."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:main::1025",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1025,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
+      "source": "file:src/kgmaker/flow.py:flow.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/flow.py",
+      "source_line": 67,
+      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -1259,7 +1568,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::165",
+      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::177",
       "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1269,7 +1578,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_annotation_map::544",
+      "target": "function:src/kgmaker/framework.py:_annotation_map::556",
       "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1279,7 +1588,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1816",
+      "target": "function:src/kgmaker/framework.py:property_site_annotations::1908",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1289,7 +1598,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:augment_framework_graph::659",
+      "target": "function:src/kgmaker/framework.py:augment_framework_graph::671",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -1494,7 +1803,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
+      "source_line": 1294,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1504,7 +1813,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
+      "source_line": 1294,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1514,7 +1823,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
+      "source_line": 1294,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1524,7 +1833,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
+      "source_line": 1294,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     },
     {
@@ -1534,7 +1843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1204,
+      "source_line": 1274,
       "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
     },
     {
@@ -1604,7 +1913,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1614,7 +1923,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1624,7 +1933,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1634,7 +1943,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1644,7 +1953,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1684,118 +1993,8 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1150,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::384",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
-      "target": "function:src/kgmaker/process_semantics.py:validate_process_annotations::463",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-annotations.md",
-      "source_line": 9,
-      "evidence": "The documented validation API consumes current ProcessView, T030 packet and semantic candidate without applying annotations."
-    },
-    {
-      "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
-      "target": "concept:docs/process-label-packets.md:pure_process_label_packets",
-      "kind": "depends_on",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/process-annotations.md",
-      "source_line": 9,
-      "evidence": "Validation extends T030 and rederives its complete packet before accepting proposal structure."
-    },
-    {
-      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
-      "target": "function:src/kgmaker/process_store.py:prepare_process_review::54",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_store.py",
-      "source_line": 54,
-      "evidence": "prepare_process_review revalidates current explicit inputs through T031 before returning an independent semantic envelope."
-    },
-    {
-      "source": "concept:docs/process-review-store.md:explicit_local_semantic_review",
-      "target": "function:src/kgmaker/process_store.py:read_process_reviews::302",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_store.py",
-      "source_line": 302,
-      "evidence": "read_process_reviews rederives current packet binding and exposes historical decisions separately from active annotations."
-    },
-    {
-      "source": "concept:docs/process-catalog.md:explicit_process_catalog",
-      "target": "function:src/kgmaker/process_catalog.py:catalog_business_processes::178",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/process_catalog.py",
-      "source_line": 178,
-      "evidence": "catalog_business_processes joins only explicit ProcessViews and T024 inventory, reads T032 review, and retains separate alias members without write/discovery."
-    },
-    {
-      "source": "file:src/kgmaker/remote_interfaces.py:remote_interfaces.py",
-      "target": "concept:docs/remote-interfaces.md:captured_remote_interface_topology",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/remote_interfaces.py",
-      "source_line": 65,
-      "evidence": "The module exposes the pure explicit captured remote-interface topology projection; the multiline public definition has no deterministic function node in the current scanner."
-    },
-    {
-      "source": "function:src/kgmaker/remote_interfaces.py:_proof::48",
-      "target": "concept:docs/remote-interfaces.md:captured_remote_interface_topology",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/remote_interfaces.py",
-      "source_line": 53,
-      "evidence": "The proof allowlist preserves original public proof identities, kinds, freshness and polarity while retaining only a payload hash for omitted fields."
-    },
-    {
-      "source": "function:src/kgmaker/context_roles.py:classify_context_role::12",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/context_roles.py",
-      "source_line": 14,
-      "evidence": "The pure classifier validates canonical producer identity while separating captured role from source freshness."
-    },
-    {
-      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/kafka_bindings.py",
-      "source_line": 280,
-      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
     },
     {
       "source": "file:src/kgmaker/views.py:views.py",
@@ -1808,126 +2007,6 @@
       "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
     },
     {
-      "source": "file:tests/test_context_roles.py:test_context_roles.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_context_roles.py",
-      "source_line": 95,
-      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
-    },
-    {
-      "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
-      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
-      "kind": "coordinates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/service_topology.py",
-      "source_line": 36,
-      "evidence": "The explicit local capture uses one workspace/snapshot/coverage tuple for existing T015/W07/T014 projections and rechecks the closure without workers, builds or store publication."
-    },
-    {
-      "source": "function:src/kgmaker/service_topology.py:aggregate_service_topology::140",
-      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/service_topology.py",
-      "source_line": 142,
-      "evidence": "The public pure aggregator projects the captured service/resource/channel topology without live I/O or new execution/availability evidence."
-    },
-    {
-      "source": "function:src/kgmaker/topology_filter.py:_filter::63",
-      "target": "concept:docs/topology-filter.md:bounded_topology_filter_inventory",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/topology_filter.py",
-      "source_line": 65,
-      "evidence": "The pure filter validates the captured topology, applies deterministic real-edge scope/context/budget criteria and returns the retained model with explicit omission metadata."
-    },
-    {
-      "source": "function:src/kgmaker/topology_filter.py:_inventory::29",
-      "target": "concept:docs/topology-filter.md:bounded_topology_filter_inventory",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/topology_filter.py",
-      "source_line": 31,
-      "evidence": "The original identity inventory extracts interface/mapping/release/original IDs from every retained or omitted claim and candidate rather than inventing shortcut dependencies."
-    },
-    {
-      "source": "function:src/kgmaker/view_explanation.py:explain_view_element::266",
-      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/view_explanation.py",
-      "source_line": 268,
-      "evidence": "The pure public explanation rederives the original captured T016/T017 view and returns original identity, evidence, location and source-status boundaries without current reads."
-    },
-    {
-      "source": "function:src/kgmaker/view_explanation.py:capture_explanation_source_status::412",
-      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
-      "kind": "coordinates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/view_explanation.py",
-      "source_line": 414,
-      "evidence": "Explicit optional source-status capture validates original public graph locators and declared workspace membership before confined hash-only file observation; it does not replace the original view or prove runtime availability."
-    },
-    {
-      "source": "function:src/kgmaker/view_explanation.py:_range::123",
-      "target": "concept:docs/view-explanation.md:snapshot_bound_explanation_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/view_explanation.py",
-      "source_line": 125,
-      "evidence": "Captured source ranges reject internally contradictory same-line columns while incomplete or unsupported ranges remain unavailable rather than invented."
-    },
-    {
-      "source": "file:src/kgmaker/remote_mapping.py:remote_mapping.py",
-      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/remote_mapping.py",
-      "source_line": 185,
-      "evidence": "Explicit read-only capture is the sole source-validation boundary; pure resolution does no hidden provider or filesystem I/O."
-    },
-    {
-      "source": "file:src/kgmaker/dataflow.py:dataflow.py",
-      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/dataflow.py",
-      "source_line": 448,
-      "evidence": "Existing data-flow API delegates to the captured canonical remote mapping without inventing JVM calls or payload transfer."
-    },
-    {
-      "source": "file:tests/test_cross_service_contract_mapping.py:test_cross_service_contract_mapping.py",
-      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_cross_service_contract_mapping.py",
-      "source_line": 377,
-      "evidence": "Actual HTTP and Kafka fixtures preserve request versus execution, versioned candidates, context and contract provenance."
-    },
-    {
-      "source": "file:tests/test_t014_bind_remote_interfaces.py:test_t014_bind_remote_interfaces.py",
-      "target": "concept:docs/remote-contract-mapping.md:explicit_remote_contract_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t014_bind_remote_interfaces.py",
-      "source_line": 206,
-      "evidence": "A fresh ordinary Python public projection rejects file/process/network I/O during invocation and preserves static UNKNOWN/SOURCE_ONLY semantics; no helper preload or native proof claim."
-    },
-    {
       "source": "file:src/kgmaker/inspection.py:inspection.py",
       "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
       "kind": "uses",
@@ -1938,83 +2017,13 @@
       "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
     },
     {
-      "source": "function:src/kgmaker/architecture_cli.py:run::281",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 281,
-      "evidence": "The adapter validates safe arguments, exact captured selectors/fingerprint, fixed diagnostics and bounded JSON output before returning explicit exit codes."
-    },
-    {
-      "source": "function:src/kgmaker/architecture_cli.py:_preflight::151",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 151,
-      "evidence": "Explicit local capture requires every original public index to exist and validate before parser/capture work; missing/corrupt originals are not repaired or published."
-    },
-    {
-      "source": "function:src/kgmaker/architecture_render.py:render_interface_markdown::62",
-      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_render.py",
-      "source_line": 62,
-      "evidence": "The pure renderer validates and renders supplied interfaces without source/provider/store fallback."
-    },
-    {
-      "source": "function:src/kgmaker/architecture_cli.py:run::281",
-      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 281,
-      "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
-    },
-    {
-      "source": "function:tests/test_t020_render_interface_markdown.py:test_public_golden_keeps_original_ids_statuses_contexts_and_evidence_links::61",
-      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t020_render_interface_markdown.py",
-      "source_line": 61,
-      "evidence": "Public parser checks preserve original IDs/status/context and generated internal evidence links."
-    },
-    {
-      "source": "function:tests/test_t020_render_interface_markdown.py:test_first_interface_markdown_render_is_io_free_in_fresh_python_process::335",
-      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t020_render_interface_markdown.py",
-      "source_line": 335,
-      "evidence": "Accepted007v2 first ordinary public interface render denies Python file/filesystem/process/network operations, preserves exact parent expected output and input inventory; pure parser proof, not native runtime evidence."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:main::1025",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1025,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
-    },
-    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 188,
+      "source_line": 198,
       "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
     },
     {
@@ -2044,8 +2053,48 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_line": 190,
+      "source_line": 200,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1102,
+      "evidence": "The framework projection requires an explicit matching Enable policy, one active injection and an interceptable JDK or CGLIB declaration before emitting may-apply advice evidence."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/flow.py:flow.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1130,
+      "evidence": "The process view stops at Spring Async, coroutine and reactive boundaries and marks continuation separate with execution not observed."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1137,
+      "evidence": "The configuration view exposes policy, proxy eligibility and transition relations without adding them to execution ranking."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:tests/test_spring_proxy_async.py:test_spring_proxy_async.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1136,
+      "evidence": "The bounded fixture covers JDK, CGLIB, self invocation, Async, event, reactive, unverified AspectJ and ambiguous injection cases."
     }
   ],
   "episodes": [

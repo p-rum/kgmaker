@@ -1,6 +1,6 @@
 # kgmaker
 
-**A local knowledge graph for GitHub Copilot CLI.** kgmaker maps files, declarations, imports, database tables, Kafka topics, API endpoints, frontend routes, and likely cross-file calls. Copilot receives a lean bootstrap at session start and retrieves task-specific graph locations and prior implementation episodes on demand. The source-only Python core runs locally using the standard library. Optional compiler inspection requires separately installed JDK/Node workers. JVM inspection adds an evidence-backed subset of Spring bean/entrypoint/proxy and JPA/Spring Data bindings; it does not start the application or connect to a database.
+**A local knowledge graph for GitHub Copilot CLI.** kgmaker maps files, declarations, imports, database tables, Kafka topics, API endpoints, frontend routes, and likely cross-file calls. Copilot receives a lean bootstrap at session start and retrieves task-specific graph locations and prior implementation episodes on demand. The source-only Python core runs locally using the standard library. Optional compiler inspection requires separately installed JDK/Node workers. JVM inspection adds an evidence-backed subset of Spring bean/entrypoint/proxy-policy and JPA/Spring Data bindings; it does not start the application or connect to a database.
 
 kgmaker is designed for one host: GitHub Copilot CLI. Repository hooks handle automatic refresh and context. A repository custom agent can enrich architectural explanations using Copilot itself. There is no model API key, provider configuration, MCP server, or external graph service.
 
@@ -450,6 +450,22 @@ a neznámé `@Profile`, `@ConditionalOnProperty`, `@ConditionalOnClass` a custom
 `@Conditional`. Pouze jediný aktivní kandidát dostane `injects_bean`; neznámé nebo
 víceznačné varianty zůstávají `may_inject_bean`. Qualifier/Primary, short-name guard
 a self-invocation proxy boundary jsou součástí stejného context-bound výsledku.
+Aktuální Spring rules v7 navíc oddělují deklaraci advice od proxy-eligible cesty:
+pozitivní `may_traverse_proxy`/`may_apply_advice` vyžaduje compiler call z jiného
+beanu, právě jednu aktivní injection, explicitní aktivní `Enable*` policy a
+interceptable JDK interface nebo CGLIB class metodu. I tak zůstává execution
+`NOT_OBSERVED` a availability `UNKNOWN`. Self-call má synchronní `bypasses_proxy`;
+`@Async`, `@EventListener` a přesný Reactor Publisher return vytvářejí oddělené
+boundary bez domyšleného scheduling/subscription. AspectJ mode bez doloženého
+weaving artefaktu zůstává UNKNOWN. Podporovaná matice a negativní případy jsou v
+[compiler inspection](docs/compiler-inspection.md#t003-s05-w04--proxy-weaving-a-async-boundaries).
+
+```bash
+kgmaker inspect code --root app --manifest build-manifest.json --format json
+kgmaker graph view --root app --view configuration --scope production --format json
+```
+
+První příkaz je jediný explicitní compiler krok; druhý pouze čte uložený context.
 Compiler-symbol meta-anotace se rozvíjejí nejvýše osm kroků a explicitní
 `spring_component_packages` určuje ACTIVE/INACTIVE scan scope; bez něj je dostupnost UNKNOWN.
 Collection/map injection zachovává všechny aktivní členy, Optional může vybrat
@@ -668,7 +684,7 @@ semantic labels remain separate from technical evidence and status. See
 This supplies T023's model only; process discovery, annotation review, process
 CLI and rendering remain separate tasks. Existing `flow render` is unchanged.
 
-Spring condition rules v6 preserve typed compiler annotation members. Supported
+Spring condition subset v6, zachovaný v aktuálních rules v7, preserve typed compiler annotation members. Supported
 profiles include OR arrays and bounded `!`, `&`, `|`, parentheses; properties
 support aliases, prefix, all names, `havingValue` and boolean `matchIfMissing`.
 Class conditions compare all exact identities against an explicit context

@@ -16,6 +16,7 @@ from kgmaker import feature
 from kgmaker.analysis_model import AnalysisError, INPUT_METADATA
 from kgmaker.data_check import data_check
 from kgmaker.graph_provider import retain_compiler_layer
+from kgmaker.framework import SPRING_RULE_VERSION
 from kgmaker.model import KnowledgeGraph
 from kgmaker.scanner import scan_repository
 from kgmaker.worker_protocol import WorkerError
@@ -159,7 +160,7 @@ def test_literal_and_static_imports_link_without_processor_beans(actual_imports)
         if edge["kind"] == "selects_import":
             assert edge["evidence_kind"] == "FRAMEWORK_DERIVED"
             assert tuple(edge["context_ids"]) == (result["context"]["id"],)
-            assert all(next(e for e in graph["evidence"] if e["id"] == identity)["framework_rules"]["spring"] == "annotation-source-v6" for identity in edge["evidence_ids"])
+            assert all(next(e for e in graph["evidence"] if e["id"] == identity)["framework_rules"]["spring"] == SPRING_RULE_VERSION for identity in edge["evidence_ids"])
 
 
 def test_unknown_filters_and_deferred_groups_remain_unknown(actual_imports):
