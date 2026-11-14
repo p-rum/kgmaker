@@ -1,11 +1,11 @@
 # Inventář acceptance T001 a T002
 
-## Aktuální audit dodání — 2026-11-12
+## Aktuální audit dodání — 2026-11-14
 
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 61 položek se sloučenou prací a 39 bez ní. T046-S01 až S06 jsou
+T003/T004 mají 62 položek se sloučenou prací a 38 bez ní. T046-S01 až S06 jsou
 MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
@@ -59,18 +59,19 @@ exact-pair review sloučen jako `9bcf91db1d1349241f7e1f7114f74c0331c25802`.
 Stav MERGED; širší toolchain NOT_RUN/SKIP. [Post-merge
 srovnání](changes/113_reconcileT046DeliverySummary.md).
 
-## T003-S05-W04 — Spring proxy a async semantics — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
+## T003-S05-W04 — Spring proxy a async semantics — MERGED / VERIFIED_IN_SCOPE
 
 PR [#95](https://github.com/p-rum/kgmaker/pull/95), první přesně publikovaný
 implementační head `d310122e757e881875eb4d498c968af4fe91434d`. Review původního
 headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d` našlo dva P1; FIELD receiver
 provenance a synchronní Async self-call jsou opravené v implementačním headu
-`276886c55f16cf09746970342cb2b80ab814745d`, který čeká na nové exact-pair review.
+`276886c55f16cf09746970342cb2b80ab814745d`.
 CI původního i opravného headu je administrativní NOT_RUN (`steps=null`, bez logů).
 Druhé review `PRR_kwDOUyD9Wc8AAAABYBNa9Q` na `0de66dde234d7725d06073ed81095c3abca18556`
 našlo neprokázanou injection obyčejného pole a falešný same-owner self-call; obě
-opravy jsou publikované v implementačním headu
-`bc77c3be2c51d6f7e89b3c018f1e2825df619a0c` a čekají na nové exact-pair review.
+opravy prošly čistým exact-pair review na finálním headu
+`44af09d36b69589fee882d017d22f07bdc2e3216` a PR byl sloučen jako
+`39eb46ba283e526d9748e80e2572f28b4f4348ed`.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|

@@ -12,6 +12,9 @@
   tree `ba5660a300bdccf3a3ace52c91868f7bff955b25`.
 - Druhý review-fix implementační head `bc77c3be2c51d6f7e89b3c018f1e2825df619a0c`,
   tree `f6c0dbdfbeeb233017276605471300b88d9235fb`.
+- Finální reviewovaný head `44af09d36b69589fee882d017d22f07bdc2e3216`,
+  tree `e0d8dd4ff12704a27c3e3376c07b8625bab91baf`; sloučeno jako
+  `39eb46ba283e526d9748e80e2572f28b4f4348ed`.
 - Cíl: oddělit declaration, proxy eligibility a runtime execution; self-call,
   Async/event/reactive boundary nesmějí vytvořit smyšlený synchronní execution.
 
@@ -75,7 +78,9 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
   pole se nesmělo stát injection a shodný method owner nebyl důkaz `this` callu.
   Oprava vyžaduje kanonickou explicitní injection anotaci a compiler
   `receiver_binding_kind=THIS|SUPER`; ručně inicializované pole i parametr jiné
-  instance mají přímé negativní regrese a čekají na nové exact-pair review.
+  instance mají přímé negativní regrese. Finální exact-pair review
+  `PRR_kwDOUyD9Wc8AAAABYBdlXQ` je čisté; run `43637413705` je administrativní
+  NOT_RUN, protože všech sedm jobů nemá kroky ani logy.
 
 Neověřený runtime dispatch, skutečné advice execution, task scheduling, event
 delivery, reactive subscription, AspectJ weaving a širší meta/class-level
