@@ -499,7 +499,8 @@ Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
 deklarace není runtime availability. Přesný bounded scope a testy:
 [change note47](docs/changes/47_declareSpringRegistrations.md).
 
-JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
+JPA rules `annotation-source-v8-jpql-hql-grammar` oddělují `@Entity`,
+`@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
 `@AttributeOverride` a rozlišují owning/inverse asociace přes `mappedBy`.
 Vztahový atribut nevytváří smyšlený scalar column; explicitní JoinColumn/JoinTable
@@ -509,8 +510,15 @@ association a embedded atributům, zachovává operátory a `OrderBy` a rozlišu
 čtení od delete intentu. Neznámá property nevytvoří resolved hranu.
 Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry,
 návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
-ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
-repository metoda se na ni váže přes `uses_named_query`.
+ORM tabulky. Bounded JPQL/HQL grammar navíc rozlišuje root a association join
+aliasy, subquery reads, bulk `UPDATE`/`DELETE`, `select new` constructor projection
+a clause-specific path edges (`projects_attribute`, `filters_by`, `orders_by`,
+`groups_by`, `updates_attribute`). Hibernate `join ... with` je explicitní
+podporované rozšíření; `lateral`, set/window operace, `treat`, collection-index
+funkce a další nepodporované fragmenty zůstávají PARTIAL s query offsetem,
+řádkem a sloupcem. Lexikálně nebo závorkově neplatný dotaz nevytvoří žádný
+query read/write/path edge. Statické `@NamedQuery`/`@NamedNativeQuery` mají
+vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
 properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
@@ -546,8 +554,9 @@ Explicit JPQL entity names and repository return types also resolve by compiler
 owner; simple source return names require an exact JVM method descriptor owner.
 Missing qualified types and generic type variables remain UNKNOWN rather than
 binding to an unrelated same-simple-name class.
-Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
-tento omezený rozsah.
+Širší provider-specific query syntax, named-query containers, Criteria,
+Specification, QueryDSL a úplná schema/deployment availability jsou mimo tento
+omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
 `kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.
@@ -758,6 +767,17 @@ links without a proven realm. Supported physical replay binding currently covers
 non-renamed table/column identities; creation-stable IDs after a rename remain
 UNKNOWN pending S06-W08 lifecycle proof. See docs/changes/74_isolatePersistenceRealms.md for
 actual validation and incomplete scope.
+
+Po explicitní JVM inspekci lze uložené query uzly vyhledat bez spuštění workeru,
+aplikace nebo databáze, například:
+
+```bash
+kgmaker inspect jvm --root app --build-id BUILD_ID
+kgmaker query --root app --scope production JPQL PurchaseOrder
+```
+
+Výsledek je statický persistence intent, nikoli důkaz provedeného SQL, commitu
+nebo dostupnosti dat.
 
 HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
 integrations --format json` includes `http.requests`; process JSON/Markdown shows

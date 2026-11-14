@@ -376,8 +376,18 @@ exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
 atributu; teprve pak vznikne `filters_by`/`orders_by`. Query nese `query_reads`
 nebo statický `query_deletes` intent, nikdy tvrzení o provedeném SQL či commitu.
-Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPQL řeší
-entitu, alias paths, parametry a return entity/projection; native SQL váže pouze
+Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPA rules
+`annotation-source-v8-jpql-hql-grammar` tokenizují omezený statický JPQL/HQL
+subset: root a association join aliasy, subquery roots, bulk `UPDATE`/`DELETE`,
+`select new` s přesným compiler-owned DTO a clause-specific path expressions.
+Vznikají oddělené `query_reads`/`query_writes`/`query_deletes`, `joins_by`,
+`projects_attribute`, `filters_by`, `orders_by`, `groups_by` a
+`updates_attribute`; implicitní association traversal přidá read pouze pro
+jediný přesný entity owner. Hibernate `join ... with` je podporovaný bounded
+provider extension. `lateral`, set/window operace, `treat`, collection-index
+funkce a direct entity join mimo association grammar jsou PARTIAL s přesným
+query offset/line/column locatorem. Malformed lexical input nebo nevyvážené
+závorky jsou UNKNOWN a nepublikují read/write/path hrany. Native SQL nadále váže pouze
 explicitní názvy tabulek v aktuální ORM projekci a při kolizi zůstává ambiguous.
 Statické JPA named queries mají oddělenou definici a repository reference; SpEL,
 `${...}` a jiné dynamické části se nerozvíjejí.

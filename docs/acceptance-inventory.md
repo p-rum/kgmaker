@@ -80,6 +80,15 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
+## T003-S06-W05 — rozšířená JPQL/HQL gramatika — LOCAL_VERIFIED_IN_SCOPE
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W05-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_jpql_hql_grammar.py::test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection`: exact compiler-owned root/join/subquery reads, bulk update/delete, DTO constructor a clause-specific path edges; `partialLateral` je PARTIAL s query locatorem |
+| T003-S06-W05-AC02 | LOCAL_VERIFIED_IN_SCOPE | `JPA_RULE_VERSION=annotation-source-v8-jpql-hql-grammar`; `test_legacy_jpa_rules_remain_readable_but_require_reinspection` pokrývá v6/v7, graph/store v1/v2/v3 zůstává beze změny a stávající realm/schema suite prochází |
+| T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence`: malformed query nevytváří query edges, unknown path nevytváří `filters_by`, duplicate entity name nevytváří read/write/delete edge a vstupní graph se nemutuje |
+| T003-S06-W05-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | Bounded corpus 5 PASS; relevantní JPA/schema sada 31 PASS /5 SKIP; full 1651 PASS /1058 SKIP /76 subtests; `test_actual_javac_extended_jpql_fixture` je bez připraveného workeru explicitní SKIP. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
+
 ## Historická acceptance podle uvedených checkpointů
 
 
@@ -378,7 +387,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access and JPA bindings; `test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed` — actual K2 `@field:`/`@get:`, explicit/mismatched `@Access`, Kotlin `EmbeddedId`, unqualified ambiguity and embeddable column; rules `annotation-source-v4` | XML override priority, inheritance attributes, two data sources with same table, broader query grammar/dynamic builders, implicit Kotlin annotation-target resolution and complete schema matrix |
+| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v8-jpql-hql-grammar` | Named-query containers, Criteria/Specification/QueryDSL, broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc

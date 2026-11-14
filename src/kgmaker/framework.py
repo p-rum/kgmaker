@@ -24,7 +24,7 @@ from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v9-proxy-provenance"
-JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
+JPA_RULE_VERSION = "annotation-source-v8-jpql-hql-grammar"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -87,6 +87,253 @@ DERIVED_QUERY_OPERATORS = (
     "NotLike", "Like", "NotIn", "In", "Between", "LessThan", "GreaterThan",
     "Before", "After", "IsTrue", "True", "IsFalse", "False", "IsNot", "Not",
 )
+
+JPQL_ALIAS_RESERVED = {
+    "as", "asc", "by", "delete", "desc", "fetch", "from", "full", "group",
+    "having", "inner", "join", "left", "on", "order", "outer", "right",
+    "select", "set", "update", "where", "with",
+}
+JPQL_UNSUPPORTED_KEYWORDS = {
+    "except": "set operation",
+    "indices": "collection index function",
+    "insert": "insert-select statement",
+    "intersect": "set operation",
+    "lateral": "lateral join",
+    "over": "window expression",
+    "returning": "DML returning clause",
+    "treat": "polymorphic treat expression",
+    "union": "set operation",
+    "versioned": "versioned bulk update",
+    "window": "window declaration",
+}
+
+
+def _jpql_locator(text: str, offset: int, token: str, reason: str) -> dict[str, Any]:
+    line_start = text.rfind("\n", 0, offset) + 1
+    return {"query_offset": offset, "query_line": text.count("\n", 0, offset) + 1,
+            "query_column": offset - line_start + 1, "token": token, "reason": reason}
+
+
+def _parse_jpql_hql(text: str) -> dict[str, Any]:
+    """Parse a deliberately bounded JPQL/HQL subset without executing a provider.
+
+    The result contains only syntactic candidates.  Entity, attribute, association
+    and projection identity is resolved later against compiler-owned JPA facts.
+    Unsupported provider syntax is localized and leaves the result PARTIAL;
+    malformed lexical/parenthesis input is UNKNOWN and publishes no query edges.
+    """
+    tokens: list[dict[str, Any]] = []
+    index = 0
+    invalid: list[dict[str, Any]] = []
+    while index < len(text):
+        char = text[index]
+        if char.isspace():
+            index += 1
+            continue
+        if text.startswith("--", index):
+            end = text.find("\n", index + 2)
+            index = len(text) if end < 0 else end + 1
+            continue
+        if text.startswith("/*", index):
+            end = text.find("*/", index + 2)
+            if end < 0:
+                invalid.append(_jpql_locator(text, index, "/*", "unterminated block comment"))
+                break
+            index = end + 2
+            continue
+        if char == "'":
+            start = index
+            index += 1
+            while index < len(text):
+                if text[index] != "'":
+                    index += 1
+                    continue
+                if index + 1 < len(text) and text[index + 1] == "'":
+                    index += 2
+                    continue
+                index += 1
+                break
+            else:
+                invalid.append(_jpql_locator(text, start, "'", "unterminated string literal"))
+            tokens.append({"kind": "literal", "value": text[start:index], "lower": "",
+                           "start": start, "end": index})
+            continue
+        identifier = re.match(r"[A-Za-z_$][\w$]*", text[index:])
+        if identifier:
+            value = identifier.group(0)
+            tokens.append({"kind": "identifier", "value": value, "lower": value.casefold(),
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        parameter = re.match(r"(?::[A-Za-z_]\w*|\?\d+)", text[index:])
+        if parameter:
+            value = parameter.group(0)
+            tokens.append({"kind": "parameter", "value": value, "lower": "",
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        number = re.match(r"\d+(?:\.\d+)?", text[index:])
+        if number:
+            value = number.group(0)
+            tokens.append({"kind": "literal", "value": value, "lower": "",
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        operator = next((value for value in (">=", "<=", "<>", "!=") if text.startswith(value, index)), None)
+        if operator:
+            tokens.append({"kind": "operator", "value": operator, "lower": operator,
+                           "start": index, "end": index + len(operator)})
+            index += len(operator)
+            continue
+        if char in "(),.=<>+-*/%":
+            tokens.append({"kind": "punctuation" if char in "(),." else "operator",
+                           "value": char, "lower": char, "start": index, "end": index + 1})
+            index += 1
+            continue
+        invalid.append(_jpql_locator(text, index, char, "unsupported lexical token"))
+        index += 1
+
+    depth = 0
+    for token in tokens:
+        if token["value"] == ")":
+            depth -= 1
+            if depth < 0:
+                invalid.append(_jpql_locator(text, token["start"], ")", "unmatched closing parenthesis"))
+                depth = 0
+        token["depth"] = depth
+        if token["value"] == "(":
+            depth += 1
+    if depth:
+        invalid.append(_jpql_locator(text, len(text), "EOF", "unclosed parenthesis"))
+
+    unsupported = [_jpql_locator(text, token["start"], token["value"], JPQL_UNSUPPORTED_KEYWORDS[token["lower"]])
+                   for token in tokens if token["kind"] == "identifier"
+                   and token["lower"] in JPQL_UNSUPPORTED_KEYWORDS]
+    identifiers = [token for token in tokens if token["kind"] == "identifier"]
+    if identifiers and identifiers[0]["lower"] == "with":
+        unsupported.append(_jpql_locator(text, identifiers[0]["start"], identifiers[0]["value"],
+                                          "common table expression"))
+
+    def path_at(position: int) -> tuple[list[str], int]:
+        if position >= len(tokens) or tokens[position]["kind"] != "identifier":
+            return [], position
+        parts = [tokens[position]["value"]]
+        position += 1
+        while position + 1 < len(tokens) and tokens[position]["value"] == "." \
+                and tokens[position + 1]["kind"] == "identifier":
+            parts.append(tokens[position + 1]["value"])
+            position += 2
+        return parts, position
+
+    first = identifiers[0]["lower"] if identifiers else ""
+    statement = "DELETE" if first == "delete" else "UPDATE" if first == "update" else "SELECT"
+    roots: list[dict[str, Any]] = []
+    joins: list[dict[str, Any]] = []
+    constructors: list[dict[str, Any]] = []
+
+    def alias_at(position: int) -> tuple[str | None, int]:
+        if position < len(tokens) and tokens[position]["kind"] == "identifier" and tokens[position]["lower"] == "as":
+            position += 1
+        if position < len(tokens) and tokens[position]["kind"] == "identifier" \
+                and tokens[position]["lower"] not in JPQL_ALIAS_RESERVED:
+            return tokens[position]["value"], position + 1
+        return None, position
+
+    position = 0
+    while position < len(tokens):
+        token = tokens[position]
+        if token["kind"] == "identifier" and token["lower"] == "update" and token["depth"] == 0:
+            parts, end = path_at(position + 1)
+            alias, end = alias_at(end)
+            if parts:
+                roots.append({"entity": ".".join(parts), "alias": alias, "action": "query_writes",
+                              "depth": token["depth"], "locator": _jpql_locator(text, token["start"], token["value"], "bulk update target")})
+            position = max(position + 1, end)
+            continue
+        if token["kind"] == "identifier" and token["lower"] == "from":
+            cursor = position + 1
+            action = "query_deletes" if statement == "DELETE" and token["depth"] == 0 else "query_reads"
+            while cursor < len(tokens):
+                parts, end = path_at(cursor)
+                if not parts:
+                    break
+                alias, end = alias_at(end)
+                roots.append({"entity": ".".join(parts), "alias": alias, "action": action,
+                              "depth": token["depth"], "locator": _jpql_locator(text, tokens[cursor]["start"], parts[0], "query root")})
+                if end >= len(tokens) or tokens[end]["value"] != ",":
+                    break
+                cursor = end + 1
+            position = max(position + 1, end)
+            continue
+        if token["kind"] == "identifier" and token["lower"] == "join":
+            cursor = position + 1
+            fetch = False
+            if cursor < len(tokens) and tokens[cursor]["kind"] == "identifier" and tokens[cursor]["lower"] == "fetch":
+                fetch = True
+                cursor += 1
+            parts, end = path_at(cursor)
+            alias, end = alias_at(end)
+            if len(parts) >= 2:
+                joins.append({"base_alias": parts[0], "path": parts[1:], "alias": alias, "fetch": fetch,
+                              "locator": _jpql_locator(text, token["start"], token["value"], "association join")})
+            elif parts and parts[0].casefold() not in JPQL_UNSUPPORTED_KEYWORDS:
+                unsupported.append(_jpql_locator(text, tokens[cursor]["start"], parts[0],
+                                                  "direct entity join outside bounded association grammar"))
+            position = max(position + 1, end)
+            continue
+        if token["kind"] == "identifier" and token["lower"] == "new":
+            parts, end = path_at(position + 1)
+            if parts:
+                constructors.append({"type": ".".join(parts),
+                                     "locator": _jpql_locator(text, token["start"], token["value"], "constructor projection")})
+            position = max(position + 1, end)
+            continue
+        position += 1
+
+    aliases = {item["alias"] for item in roots + joins if item.get("alias")}
+    clauses: dict[int, str] = {}
+    paths: list[dict[str, Any]] = []
+    position = 0
+    while position < len(tokens):
+        token = tokens[position]
+        lower = token["lower"]
+        depth_value = token["depth"]
+        if token["kind"] == "identifier":
+            if lower == "select":
+                clauses[depth_value] = "projection"
+            elif lower in {"where", "having", "on", "with"}:
+                clauses[depth_value] = "filter"
+            elif lower == "set":
+                clauses[depth_value] = "update"
+            elif lower == "join":
+                clauses[depth_value] = "join"
+            elif lower == "from":
+                clauses[depth_value] = "from"
+            elif lower == "order" and position + 1 < len(tokens) and tokens[position + 1]["lower"] == "by":
+                clauses[depth_value] = "order"
+            elif lower == "group" and position + 1 < len(tokens) and tokens[position + 1]["lower"] == "by":
+                clauses[depth_value] = "group"
+            if token["value"] in aliases and position + 1 < len(tokens) and tokens[position + 1]["value"] == ".":
+                parts, end = path_at(position)
+                role = clauses.get(depth_value)
+                if role is None:
+                    role = next((clauses[candidate] for candidate in range(depth_value - 1, -1, -1)
+                                 if candidate in clauses), "filter")
+                if role == "update":
+                    role = "update" if end < len(tokens) and tokens[end]["value"] == "=" else "read"
+                paths.append({"alias": parts[0], "path": parts[1:], "role": role,
+                              "locator": _jpql_locator(text, token["start"], token["value"], "path expression")})
+                position = end
+                continue
+        position += 1
+
+    provider_extensions = []
+    if any(token["kind"] == "identifier" and token["lower"] == "with" for token in tokens[1:]):
+        provider_extensions.append("HQL_JOIN_WITH")
+    return {"status": "UNKNOWN" if invalid else "PARTIAL" if unsupported else "COMPLETE",
+            "statement": statement, "roots": roots, "joins": joins, "paths": paths,
+            "constructors": constructors, "invalid_fragments": invalid,
+            "unsupported_fragments": unsupported, "provider_extensions": provider_extensions}
 
 
 def _simple(value: str) -> str:
@@ -2780,6 +3027,29 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if unbound:
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
+        parsed_query = _parse_jpql_hql(value) if language == "JPQL" else None
+        if parsed_query is not None:
+            query_node = nodes.get(query_id)
+            if query_node:
+                nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}),
+                    "grammar_version": JPA_RULE_VERSION,
+                    "analysis_status": "UNKNOWN" if unbound else parsed_query["status"],
+                    "statement_kind": parsed_query["statement"],
+                    "provider_extensions": parsed_query["provider_extensions"],
+                    "unsupported_fragments": parsed_query["unsupported_fragments"],
+                    "invalid_fragments": parsed_query["invalid_fragments"],
+                    "validated": bool((query_node.metadata or {}).get("validated"))
+                                 and parsed_query["status"] == "COMPLETE"})
+            for fragment in parsed_query["unsupported_fragments"]:
+                diagnostics.append({"code": "JPQL_HQL_UNSUPPORTED_FRAGMENT", "path": path,
+                                    "source_line": line, "method": method.id, **fragment,
+                                    "reason": "Unsupported provider/query fragment is localized; independently resolved roots and paths remain PARTIAL."})
+            for fragment in parsed_query["invalid_fragments"]:
+                diagnostics.append({"code": "JPQL_HQL_SYNTAX_INVALID", "path": path,
+                                    "source_line": line, "method": method.id, **fragment,
+                                    "reason": "Malformed query text publishes no persistence read/write/path edges."})
+            if parsed_query["status"] == "UNKNOWN":
+                continue
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
             if projection_node:
                 projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
@@ -2792,40 +3062,142 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "source_line": line, "method": method.id, "projection_type": projection_type_ref})
                 query_node = nodes.get(query_id)
                 if query_node:
-                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}),
+                                                                    "validated": False,
+                                                                    "analysis_status": "UNKNOWN"})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
-            entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
-            alias = entity_match.group(2) if entity_match else None
-            query_owners = entity_query_owners.get(query_entity or "", [])
-            query_owner = query_owners[0] if len(query_owners) == 1 else None
-            entity_id = entity_nodes_by_owner.get(query_owner or "")
-            if entity_id:
-                add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
-            else:
-                diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity or "UNKNOWN",
-                                    "candidates": query_owners,
-                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
-                current_query = nodes.get(query_id)
-                if current_query:
-                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
-            if alias:
-                for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
-                    property_name = "".join(part[:1].upper() + part[1:] if index else part
-                                            for index, part in enumerate(attribute_path.split(".")))
-                    target, resolved_path = resolve_query_property(query_owner or "", property_name)
-                    if target:
-                        add_edge(query_id, target, "filters_by", path, line,
-                                 f"JPQL path {resolved_path} resolved against entity model")
-                    else:
-                        diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
-                                            "source_line": line, "method": method.id, "attribute": attribute_path})
-                        current_query = nodes.get(query_id)
-                        if current_query:
-                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
+            assert parsed_query is not None
+
+            def invalidate_query() -> None:
+                current = nodes.get(query_id)
+                if current:
+                    status = (current.metadata or {}).get("analysis_status")
+                    nodes[query_id] = replace(current, metadata={**(current.metadata or {}),
+                                                                  "validated": False,
+                                                                  "analysis_status": "PARTIAL" if status == "PARTIAL" else "UNKNOWN"})
+
+            alias_owners: dict[str, str] = {}
+            ambiguous_aliases: set[str] = set()
+            for root_record in parsed_query["roots"]:
+                query_entity = str(root_record["entity"]).replace("$", ".")
+                query_owners = entity_query_owners.get(query_entity, [])
+                query_owner = query_owners[0] if len(query_owners) == 1 else None
+                entity_id = entity_nodes_by_owner.get(query_owner or "")
+                if entity_id:
+                    add_edge(query_id, entity_id, root_record["action"], path, line,
+                             f"{parsed_query['statement']} root resolved against compiler JPA model")
+                else:
+                    diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
+                                        "method": method.id, "entity": query_entity,
+                                        "candidates": query_owners, "locator": root_record["locator"],
+                                        "reason": "JPQL/HQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                    invalidate_query()
+                alias = root_record.get("alias")
+                if alias and query_owner:
+                    if alias in alias_owners and alias_owners[alias] != query_owner:
+                        ambiguous_aliases.add(alias)
+                        alias_owners.pop(alias, None)
+                        diagnostics.append({"code": "JPQL_ALIAS_AMBIGUOUS", "path": path, "source_line": line,
+                                            "method": method.id, "alias": alias,
+                                            "reason": "The same alias identifies multiple query roots; path evidence is omitted."})
+                        invalidate_query()
+                    elif alias not in ambiguous_aliases:
+                        alias_owners[alias] = query_owner
+
+            for join in parsed_query["joins"]:
+                owner = alias_owners.get(join["base_alias"])
+                target_owner = owner
+                association_target = None
+                for segment in join["path"]:
+                    if not target_owner:
+                        break
+                    association_type = entity_association_types.get((target_owner, str(segment).casefold()))
+                    candidates = entity_owners_by_simple.get(association_type or "", [])
+                    if len(candidates) != 1:
+                        target_owner = None
+                        break
+                    target_owner = candidates[0]
+                    association_target = target_owner
+                property_name = "".join(part[:1].upper() + part[1:] if index else part
+                                        for index, part in enumerate(join["path"]))
+                attribute_id, resolved_path = resolve_query_property(owner or "", property_name)
+                if owner and target_owner and association_target and attribute_id:
+                    add_edge(query_id, attribute_id, "joins_by", path, line,
+                             f"JPQL/HQL association join {resolved_path} resolved against entity model")
+                    target_entity = entity_nodes_by_owner.get(target_owner)
+                    if target_entity:
+                        add_edge(query_id, target_entity, "query_reads", path, line,
+                                 "Joined association target is read by the static query")
+                    join_alias = join.get("alias")
+                    if join_alias:
+                        if join_alias in alias_owners and alias_owners[join_alias] != target_owner:
+                            ambiguous_aliases.add(join_alias)
+                            alias_owners.pop(join_alias, None)
+                            invalidate_query()
+                        elif join_alias not in ambiguous_aliases:
+                            alias_owners[join_alias] = target_owner
+                else:
+                    diagnostics.append({"code": "JPQL_JOIN_UNRESOLVED", "path": path, "source_line": line,
+                                        "method": method.id, "base_alias": join["base_alias"],
+                                        "association_path": ".".join(join["path"]),
+                                        "locator": join["locator"],
+                                        "reason": "Association join must resolve through one compiler-owned JPA relationship at every segment."})
+                    invalidate_query()
+
+            relation_by_role = {"projection": "projects_attribute", "filter": "filters_by",
+                                "order": "orders_by", "group": "groups_by",
+                                "update": "updates_attribute", "read": "reads_attribute",
+                                "join": "joins_by"}
+            seen_paths: set[tuple[str, tuple[str, ...], str]] = set()
+            for expression in parsed_query["paths"]:
+                key = (expression["alias"], tuple(expression["path"]), expression["role"])
+                if key in seen_paths:
+                    continue
+                seen_paths.add(key)
+                owner = alias_owners.get(expression["alias"])
+                property_name = "".join(part[:1].upper() + part[1:] if index else part
+                                        for index, part in enumerate(expression["path"]))
+                target, resolved_path = resolve_query_property(owner or "", property_name)
+                relation = relation_by_role.get(expression["role"])
+                if owner and target and relation:
+                    add_edge(query_id, target, relation, path, line,
+                             f"JPQL/HQL {expression['role']} path {resolved_path} resolved against entity model")
+                    traversed_owner = owner
+                    for segment in expression["path"]:
+                        association_type = entity_association_types.get((traversed_owner, str(segment).casefold()))
+                        candidates = entity_owners_by_simple.get(association_type or "", [])
+                        if not association_type:
+                            continue
+                        if len(candidates) != 1:
+                            break
+                        traversed_owner = candidates[0]
+                        traversed_entity = entity_nodes_by_owner.get(traversed_owner)
+                        if traversed_entity:
+                            add_edge(query_id, traversed_entity, "query_reads", path, line,
+                                     "Implicit association path reads exact compiler-owned target entity")
+                elif expression["alias"] not in ambiguous_aliases:
+                    diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
+                                        "source_line": line, "method": method.id,
+                                        "alias": expression["alias"],
+                                        "attribute": ".".join(expression["path"]),
+                                        "locator": expression["locator"]})
+                    invalidate_query()
+
+            for constructor in parsed_query["constructors"]:
+                constructor_owner = str(constructor["type"]).replace("$", ".")
+                constructor_node = type_nodes_by_owner.get(constructor_owner)
+                if constructor_node:
+                    add_edge(query_id, constructor_node.id, "returns_projection", path, line,
+                             "JPQL/HQL constructor projection uses exact compiler-owned type")
+                else:
+                    diagnostics.append({"code": "JPQL_CONSTRUCTOR_PROJECTION_UNRESOLVED", "path": path,
+                                        "source_line": line, "method": method.id,
+                                        "projection_type": constructor_owner,
+                                        "locator": constructor["locator"],
+                                        "reason": "Constructor projection requires an exact compiler-owned qualified type."})
+                    invalidate_query()
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:

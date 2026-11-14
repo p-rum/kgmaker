@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "794d9fc00075828e8cdd6e12e92ed9560dec07a4b9a1b22ee64b3c80d4f95869",
-    "docs/acceptance-inventory.md": "cb92b3c99d21cfedf814967f39327a87ef7a1241fa15ee8265a496601e188676",
+    "README.md": "2c26ff76c2264d2495314f0c7f51b3886409a44cfba4a2d351044a4982c08ab7",
+    "docs/acceptance-inventory.md": "ae14958f47c8e2dc5f51f708163e28d0559449cb9715a5477cb4f9a0427bf350",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -18,6 +18,7 @@
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
     "docs/changes/114_modelSpringProxyAsyncSemantics.md": "58fa56c415f115d7791a96d181160406cddf7b3e805d7458816cbab3912d7ee4",
     "docs/changes/115_reconcileSpringProxyAsyncDelivery.md": "4e732faccffc9bfe9410761cfe44ece8c9104816c94bd9099f1b2d62c661a4ac",
+    "docs/changes/116_parseExtendedJpqlHql.md": "c7c2d733587b65765a06d5b49ac57a84b2af982b5de350aa6a26a89037abf84c",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -99,7 +100,7 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "fdd3747128d44ab19cfbe818732c49a1ce57bff88fe0f60a17b2dca1680d159a",
+    "docs/compiler-inspection.md": "f87cb349997ad5af867a074616dbf74dbe345aa23a49270da1058c0145e7ce1e",
     "docs/delivery-workflow.md": "1fd9eec5c013263f61267e6022ae4bbf409dcf73c8278879c2578526581e343a",
     "docs/feature-analysis.md": "0d842008766bc2451feb990afc3f49db84bab0360d0ed56c00a5c4bac78d538d",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
@@ -116,7 +117,7 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "21244d310260548ffe7489e1a9e0cc8a4aa233f8adce69fa978bade4eab689d8",
+    "docs/production-analysis-progress.md": "f521cfc331f628c4e10ee991a5b7cead25bbab0b71b429998fc6adab9ccf243f",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
@@ -364,7 +365,7 @@
     "src/kgmaker/control_flow.py": "c996692b8389620e5703216a6569d76c1da235b65384969e9ef07a9a51bc5c73",
     "src/kgmaker/data_agent.py": "415ee77b71f47a73b4587f231d20b52e0de444ea0636027f29e4e89420acd20e",
     "src/kgmaker/data_check.py": "54368ea59a443a691306795ad4d6742a036ec77fe564677587f1f61514708201",
-    "src/kgmaker/data_resources.py": "235cbb31f6a58a4caf74dc4d5b39fab092599279a4b74996089937bfe36e721c",
+    "src/kgmaker/data_resources.py": "6a33c99fb9270d4d773fe8d45ca5fd522ab1041486a2800b229cb00108948e8a",
     "src/kgmaker/dataflow.py": "8c7b08a5ca2052f1318563e9f1d50b090c15c6ded5670cb742b23fe531775bb9",
     "src/kgmaker/delivery_cli.py": "e8656b25bf524658aeabbd88bbdedc9ade5c19ed0573f0ed5747ad4709937f2b",
     "src/kgmaker/delivery_instructions.py": "9f233c1174c4668d2bd72e1e82a5b30f7fa6f0a9b1f01361b7e025c1a50d5178",
@@ -373,7 +374,7 @@
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
     "src/kgmaker/flow.py": "59fd3a56ba49b731fd9e3050d83185565ae9dd0d99b8558d6e8cefd6a1cf8b9d",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
-    "src/kgmaker/framework.py": "76b2814ef3ac7ad487188470bfe7fcd66f95633c4c7a0274bab52854074a992e",
+    "src/kgmaker/framework.py": "4b4de9e2407c87c9f7ed0fc5201d6b1bb0e7eaeb2065fe959a3fe181007cbbf1",
     "src/kgmaker/graph_provider.py": "ca328bf9973175e4c72656471816751f4fb3464f1503b49d70d261c435ca2de4",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "7ca5ee49b7d6d9fb1a608da2307966a2e5a3967f443b84b1fad7b67412ed798a",
@@ -461,6 +462,7 @@
     "tests/test_http_provider_privacy_integration.py": "08757662e386097fb867ec3e26dc04c1cdef26bcea90c5989047c4c0ee9453ba",
     "tests/test_init.py": "f25404edf1cbde6f2d7f7f312a7b1e9e1d00b54b50d5a6f4f58d5dd310bdeaaf",
     "tests/test_inspection_contract.py": "4370d83b2f97caa74414dc489ae7c85eb6b392db00c7af86d58dd5ce9f519db5",
+    "tests/test_jpql_hql_grammar.py": "00ef0ab94ec173730bd81dadcf2ea280b2728d2bc1d48212a4a0863dae1b4b4d",
     "tests/test_jvm_golden_corpus.py": "87a04f7c8b424de1ec96842362e198fe3071a47b1ccd1a069958ccfb06d536c0",
     "tests/test_k2_backend.py": "c412a9848486eb05491eabe25841e37482f8f623eddf38f99cd0cf457f92c2dd",
     "tests/test_kafka_bindings.py": "32f1fa4da22ea3eec4149229e854448abe9d693baecc17c1759112e2e9e20e85",
@@ -755,21 +757,21 @@
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 710,
+      "source_line": 720,
       "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
     },
     {
       "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
       "name": "Kotlin JPA use-site access",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 576,
+      "source_line": 586,
       "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
     },
     {
       "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
       "name": "Versioned React JSX event evidence",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 803,
+      "source_line": 813,
       "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
     },
     {
@@ -790,35 +792,35 @@
       "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
       "name": "Compiler proven coroutine source boundaries",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 857,
+      "source_line": 867,
       "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
     },
     {
       "id": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
       "name": "Hand labelled JVM acceptance corpus",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 879,
+      "source_line": 889,
       "summary": "Versioned per-backend test inventories check source callable identities/counts, unsupported diagnostic provenance and CFG/reflection limits without runtime extrapolation."
     },
     {
       "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
       "name": "Typed HTTP request and terminal intent",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1301,
+      "source_line": 1311,
       "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
     },
     {
       "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
       "name": "Bounded Thymeleaf static fragment provenance",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1281,
+      "source_line": 1291,
       "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
     },
     {
       "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
       "name": "Explicit persistence realm binding",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
     },
     {
@@ -832,8 +834,15 @@
       "id": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
       "name": "Bounded Spring proxy and async semantics",
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
+      "source_line": 1112,
       "summary": "Spring rules v9 require an external compiler call whose FIELD receiver binding exactly matches the field symbol of one active canonically annotated @Autowired, @Inject or @Resource injection, together with an active specialized policy and interceptable JDK or CGLIB declaration, before emitting only proxy may-edges; self bypass requires compiler THIS or SUPER provenance, while parameters, other instances, unannotated or manually initialized fields and unresolved receivers remain UNKNOWN."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "name": "Bounded JPQL/HQL grammar",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 379,
+      "summary": "JPA rules v8 conservatively project compiler-owned static JPQL/HQL roots, association joins, subquery reads, bulk DML, constructor projections and clause-specific paths; unsupported provider fragments remain localized PARTIAL and malformed or ambiguous inputs remain UNKNOWN without stronger edges."
     }
   ],
   "edges": [
@@ -1096,16 +1105,6 @@
       "source_file": "docs/architecture.md",
       "source_line": 136,
       "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
       "source": "concept:docs/architecture.md:view_evidence_and_coverage",
@@ -1488,6 +1487,16 @@
       "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
     },
     {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 28,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "kind": "implements",
@@ -1544,7 +1553,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 515,
+      "source_line": 525,
       "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
     },
     {
@@ -1579,7 +1588,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::177",
+      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::424",
       "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
@@ -1589,7 +1598,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_annotation_map::556",
+      "target": "function:src/kgmaker/framework.py:_annotation_map::803",
       "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
@@ -1599,7 +1608,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1918",
+      "target": "function:src/kgmaker/framework.py:property_site_annotations::2165",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
@@ -1609,7 +1618,7 @@
     },
     {
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:augment_framework_graph::671",
+      "target": "function:src/kgmaker/framework.py:augment_framework_graph::918",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
@@ -1659,7 +1668,7 @@
     },
     {
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
+      "source_line": 596,
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
@@ -1669,7 +1678,7 @@
     },
     {
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
+      "source_line": 596,
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
@@ -1679,7 +1688,7 @@
     },
     {
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
+      "source_line": 596,
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
@@ -1689,7 +1698,7 @@
     },
     {
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
+      "source_line": 596,
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
@@ -1814,7 +1823,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1301,
+      "source_line": 1311,
       "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
     },
     {
@@ -1824,7 +1833,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1301,
+      "source_line": 1311,
       "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
     },
     {
@@ -1834,7 +1843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1301,
+      "source_line": 1311,
       "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
     },
     {
@@ -1844,7 +1853,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1301,
+      "source_line": 1311,
       "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
     },
     {
@@ -1854,7 +1863,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1281,
+      "source_line": 1291,
       "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
     },
     {
@@ -1924,7 +1933,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1934,7 +1943,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1944,7 +1953,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1954,7 +1963,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -1964,7 +1973,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -2004,7 +2013,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1157,
+      "source_line": 1167,
       "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
@@ -2064,7 +2073,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1110,
+      "source_line": 1120,
       "evidence": "The v9 framework projection accepts only a canonical explicit @Autowired, @Inject or @Resource field injection whose compiler field_symbol equals the call site's FIELD receiver_binding, and creates self-bypass only for compiler THIS or SUPER receivers; matching policy and interceptability remain required before proxy may-edges."
     },
     {
@@ -2074,7 +2083,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1131,
+      "source_line": 1141,
       "evidence": "The process view marks Spring Async continuation SEPARATE only across a proven ASYNC proxy path; it expands synchronously only when framework evidence establishes a THIS or SUPER bypass, while other same-owner receivers remain UNKNOWN."
     },
     {
@@ -2084,7 +2093,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1139,
+      "source_line": 1149,
       "evidence": "The configuration view exposes policy, canonically injected FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
     },
     {
@@ -2094,7 +2103,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/compiler-inspection.md",
-      "source_line": 1142,
+      "source_line": 1152,
       "evidence": "The bounded fixture validates canonical annotated JDK/CGLIB field paths, rejects unannotated or manually initialized fields and local/new/parameter receivers, distinguishes THIS/SUPER self-bypass from other same-owner instances, and retains proxied Async, event, reactive and unverified AspectJ boundaries."
     },
     {
@@ -2126,6 +2135,66 @@
       "source_file": "tests/test_spring_conditions.py",
       "source_line": 109,
       "evidence": "The compatibility regression keeps v8 and older Spring rule snapshots readable but requires explicit reinspection under the v9 injection-and-receiver-provenance rule."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "target": "function:src/kgmaker/framework.py:_parse_jpql_hql::115",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 379,
+      "evidence": "The documented v8 bounded grammar is implemented by the static JPQL/HQL tokenizer and parser; it localizes unsupported fragments and treats malformed input as UNKNOWN without query edges."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "target": "function:src/kgmaker/framework.py:augment_framework_graph::918",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 383,
+      "evidence": "Framework projection resolves parsed roots, joins, constructor DTOs and clause-specific paths only against exact compiler-owned JPA identities."
+    },
+    {
+      "source": "function:tests/test_jpql_hql_grammar.py:test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection::116",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_jpql_hql_grammar.py",
+      "source_line": 116,
+      "evidence": "The positive corpus validates exact join and subquery reads, bulk update/delete, constructor projection, clause-specific path edges and the bounded HQL join-with extension."
+    },
+    {
+      "source": "function:tests/test_jpql_hql_grammar.py:test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence::163",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_jpql_hql_grammar.py",
+      "source_line": 163,
+      "evidence": "The negative corpus proves localized PARTIAL syntax, malformed UNKNOWN without query edges, unresolved paths without filters and ambiguous entities without read/write/delete evidence."
+    },
+    {
+      "source": "section:docs/tasks/T003-S06-05-jpqlHqlGrammar.md:Cíl::12",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
+      "source_line": 5,
+      "evidence": "T003-S06-W05 defines conservative joins, subqueries, updates/deletes, constructor projections and path expressions as the required bounded capability."
+    },
+    {
+      "source": "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::25",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
+      "source_line": 25,
+      "evidence": "Change116 records the v8 edge model, compatibility boundary, explicit toolchain skip and remaining named-query/dynamic-provider scope."
     }
   ],
   "episodes": [
