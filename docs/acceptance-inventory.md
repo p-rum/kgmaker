@@ -69,7 +69,8 @@ provenance a synchronní Async self-call jsou opravené v implementačním headu
 CI původního i opravného headu je administrativní NOT_RUN (`steps=null`, bez logů).
 Druhé review `PRR_kwDOUyD9Wc8AAAABYBNa9Q` na `0de66dde234d7725d06073ed81095c3abca18556`
 našlo neprokázanou injection obyčejného pole a falešný same-owner self-call; obě
-opravy jsou lokálně zelené a čekají na publikaci a nové exact-pair review.
+opravy jsou publikované v implementačním headu
+`bc77c3be2c51d6f7e89b3c018f1e2825df619a0c` a čekají na nové exact-pair review.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|

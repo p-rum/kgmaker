@@ -10,6 +10,8 @@
   `461df3b78a9214f8a3be63d94de0979dd963905a`.
 - Review-fix implementační head `276886c55f16cf09746970342cb2b80ab814745d`,
   tree `ba5660a300bdccf3a3ace52c91868f7bff955b25`.
+- Druhý review-fix implementační head `bc77c3be2c51d6f7e89b3c018f1e2825df619a0c`,
+  tree `f6c0dbdfbeeb233017276605471300b88d9235fb`.
 - Cíl: oddělit declaration, proxy eligibility a runtime execution; self-call,
   Async/event/reactive boundary nesmějí vytvořit smyšlený synchronní execution.
 
@@ -59,7 +61,7 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
   `TOOLCHAIN_UNAVAILABLE`, protože JVM worker není připraven. Explicitní Maven
   příprava workeru byla přerušena zvenčí před publikací artefaktu; nejde o PASS.
 - `compileall` a `git diff --check`: PASS; semantic validate **321 concepts /
-  30 575 relationships**; scan/check **544 files / 6153 nodes / 43 947
+  30 575 relationships**; scan/check **544 files / 6154 nodes / 43 952
   relationships**.
 - CI na původním review headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d`
   má u všech sedmi jobů `steps=null` a `logs_url=null`, tedy administrativní
