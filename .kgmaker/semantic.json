@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "32d47fc734c760379d591bb4644b751f031fbe7488152048e4653fe71a3fa79b",
-    "docs/acceptance-inventory.md": "f3a9f2137cfd1f3386fbf6079f824741a53e4efcb38f224727d7f2fc41e2ad31",
+    "README.md": "794d9fc00075828e8cdd6e12e92ed9560dec07a4b9a1b22ee64b3c80d4f95869",
+    "docs/acceptance-inventory.md": "0290b8a7530f0ff2fad7f62914f5ff325c07ec19e4e9f4b8ce86c4302606bf2d",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -16,6 +16,7 @@
     "docs/changes/111_reconcileDeliveryStatus.md": "3e59cf2781f2bb99ed575073faf47f965db67adae5b1e396fc11c9b72bfa1489",
     "docs/changes/112_specifyTargetAgentIsolation.md": "15ac22de104dc1598e893f6980d905a0292c49210dcf4aa91c053238846940db",
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
+    "docs/changes/114_modelSpringProxyAsyncSemantics.md": "5d01151ba0581502c2e9395eab64ded727b04542719b88920af19a6313dfd9fd",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -97,7 +98,7 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "f1d4bd6d1f8c7eb43437d805d15f032f25ec662c3c2709998928f4627bec2c83",
+    "docs/compiler-inspection.md": "fdd3747128d44ab19cfbe818732c49a1ce57bff88fe0f60a17b2dca1680d159a",
     "docs/delivery-workflow.md": "1fd9eec5c013263f61267e6022ae4bbf409dcf73c8278879c2578526581e343a",
     "docs/feature-analysis.md": "0d842008766bc2451feb990afc3f49db84bab0360d0ed56c00a5c4bac78d538d",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
@@ -114,7 +115,7 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "4ea6033c7b534a503d6728cf4df95afdef79376ea3c27f5b02a3d489f7b297bd",
+    "docs/production-analysis-progress.md": "b39e6cb288e1f3fde5c4b4dfb757800802da825d177914c933ffba74b53419b1",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
@@ -369,9 +370,9 @@
     "src/kgmaker/domain.py": "8e9afa2da4ff5e53b6f78359447d8cdbf8eeeb625bc5f00a3182715a8732c0b7",
     "src/kgmaker/feature.py": "bde2f6cb7d24bcc0fbe2634cf8f404c3421fee5cc9afa2b9454b2a9fd0ce7d9c",
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
-    "src/kgmaker/flow.py": "04962cee0bf964d8a2c8b61a41a3d38a472ceeffe12afdb53acfc2514c6fc681",
+    "src/kgmaker/flow.py": "59fd3a56ba49b731fd9e3050d83185565ae9dd0d99b8558d6e8cefd6a1cf8b9d",
     "src/kgmaker/flyway.py": "e12a1f0c3e806ba759391032b0c502359e300b6ef641ca0a96fb39a1efa3f64e",
-    "src/kgmaker/framework.py": "169008dcfffd2c009acbbe47f4d6662ea4212ad32d08782534ea10a02c4e890b",
+    "src/kgmaker/framework.py": "76b2814ef3ac7ad487188470bfe7fcd66f95633c4c7a0274bab52854074a992e",
     "src/kgmaker/graph_provider.py": "ca328bf9973175e4c72656471816751f4fb3464f1503b49d70d261c435ca2de4",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "7ca5ee49b7d6d9fb1a608da2307966a2e5a3967f443b84b1fad7b67412ed798a",
@@ -409,7 +410,7 @@
     "src/kgmaker/topology_filter.py": "2a0816b27564811331ce03d49cd9c8ca59eb9a290d9a8334d03d39b0051461f3",
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
     "src/kgmaker/view_explanation.py": "3be4dd4169065ed054b9cd9162c479020631e30962c2eb31443e638e00aa1563",
-    "src/kgmaker/views.py": "eadff6f9e679ce42fdd6b222818665622a03beafd4c06a387452aa7e4c013ea7",
+    "src/kgmaker/views.py": "de5e5442df5b53dd13ebbd0af1a28998cc381fcd34e8bc3dcc24d3e920e55934",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
     "src/kgmaker/workflow.py": "e755e1fd7080f040da6f344430220be51d21ce5047e653ecfd5c3d58cde5f8b2",
@@ -434,7 +435,7 @@
     "tests/test_binary_xls.py": "8ead893b31e2a70115c13307da6c24bc42d7298905b90bc458ed3ba698e65618",
     "tests/test_build_aware.py": "10e42dc3dfbff66276be47f2af6a90243bb24eebf4e91a13956fc05ce5f81f40",
     "tests/test_build_runner.py": "59b7fa2bdea3c22cd5e07007e91e088d848ad7253122e595afb1c006a09f296a",
-    "tests/test_compiler_workers.py": "682531b0f2e583b7c7f9c1e84095253422df17866a5886541f5d10302df3cd9a",
+    "tests/test_compiler_workers.py": "086d17064cb2eb86246dd9d0d9436015ebf855191c6e64f8861f9ac60a051703",
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_context_roles.py": "8061d8edf4e51f8405483cef00d26fbd608c8c194672a9360531a2173d49095a",
@@ -477,9 +478,10 @@
     "tests/test_return_consumer_flow.py": "e8bb757ea66920fba53e16cd55df88dae81daf7957e23a1b906669e7a272f333",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_schema_compatibility.py": "06f63bfe8e7c177c0db1d27412429a4ecbb3f5e80043407f935592f2569609fb",
-    "tests/test_spring_conditions.py": "2ff2de8247e192c40706fa56d1fca0a7f16910eb11aaf17e3b999957207bbdfd",
-    "tests/test_spring_imports.py": "5deb8ae9d0bf46fe1256d973bd708b2784e49cf7a3c3a32c53fb138bd15b4600",
+    "tests/test_spring_conditions.py": "671881b262ed42a0f23ce00eff3164f8b79288ed8865c65b3c27faa8055b4a5e",
+    "tests/test_spring_imports.py": "38bb6a255e4f6b48930e1d96dd8f28cb150d9bbc35365b9ca50886b45ffaa4c0",
     "tests/test_spring_imports_context.py": "3c8463498ba8f7a66d252e4729950b3f6b366559f48eae22f3e4eabc45d4e15e",
+    "tests/test_spring_proxy_async.py": "c322367e0eef375f877bd7d6a79ae6b5a6065ff983e3e06af638cdad7bbc7ef3",
     "tests/test_spring_registrations.py": "2d9b5b656ab3cf9dc362edf86f4d8d849e9e4635b2622cafcaf155053c4c5ab9",
     "tests/test_synthetic_data.py": "471db7f1cdfeb63b16da9a7b09ba5188dbc5f79fb3f36e037773eb3281722d81",
     "tests/test_t005_add_view_model.py": "b9b241f71803c99d1f9626871f2d48a5fbce54e521ae62b17922b18e278300dd",
@@ -531,13 +533,13 @@
     "workers/jvm/k2/KotlinFrontend.kt": "dc1ba29445df6737843ef450825a6ddd7f3ad560d42760a838ef7589730d1843",
     "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java": "b663fbe88f93b9e656a7ae34ecfbb29c66aca72eb1118278e90dab389ab7963e",
     "workers/jvm/src/main/java/org/kgmaker/worker/DependencyHierarchy.java": "7d74d465954860797c59724594223ebcc6ec892fc88fc3f096941eb7b7aa83ac",
-    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "e02cd885a48397a280c4c51e3dc1cc883bfcdcccddde71916a2251a912d91c63",
+    "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java": "777564fbb30a0cf1623b120724b4cdd6640d3c3cf22e369f34f7a65503dacca0",
     "workers/jvm/src/main/java/org/kgmaker/worker/RegistrationFacts.java": "9db1fe4417f58a618418c67819fd49eeb1b325d2ab7ec6807f3a65bc9656af34",
     "workers/jvm/src/main/java/org/kgmaker/worker/SelectorFacts.java": "083177824a39304ba4ac24c0ce8fcde76515ec56973e6e12f50edac7d9e82fea",
     "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java": "7eed18dd31ff990a764723e6a75129ddaed20a15e4135a68b5a85057a3214410",
     "workers/jvm/src/main/java/org/kgmaker/worker/State.java": "7004fca4970adaad869dd91cd63707640b117f1241bbcae26b40cee870915728",
     "workers/jvm/src/main/kotlin/org/kgmaker/worker/JvmWorker.kt": "d6cd2a1ca007caa36a812ce6a3213233b7713299f1a30ee728d7037cc419c777",
-    "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt": "30b883ed5a9b2666e2a6d24536f0dab25491500651a97a5ad8415c29326daee5",
+    "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt": "a564fe795ebc0dae8315f539066534458d085206a61ccbb58cae13275fcedcce",
     "workers/typescript/input_snapshot.cjs": "a407f4f525bb03a479888aa8e420a67eb455dd703844511b4c487328183aabea",
     "workers/typescript/package-lock.json": "f3d464c5e28254597d08887c1f8d982eec91145f650eb5025317244e8b27bae2",
     "workers/typescript/package.json": "3ae75f1708d0f383a306dd65740413720b83375dbc61028597a4a183fa371341",
@@ -672,76 +674,6 @@
       "summary": "Pure packets bind existing process identity and captured evidence while omitting raw prose and accounting complete budget."
     },
     {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "name": "Compiler proven default and bridge declaration mapping",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 710,
-      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "name": "Kotlin JPA use-site access",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 576,
-      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "name": "Versioned React JSX event evidence",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 803,
-      "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
-      "name": "Repository entity owner resolution",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 363,
-      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "name": "JPA ORM XML mapping precedence",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "summary": "Selected persistence-unit ORM XML mappings apply in declared order and override annotation table/scalar-column facts; metadata-complete suppresses annotation-only bindings, and unsafe or unsupported XML remains UNKNOWN with path/hash/unit provenance."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "name": "Compiler proven coroutine source boundaries",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 857,
-      "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "name": "Hand labelled JVM acceptance corpus",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 879,
-      "summary": "Versioned per-backend test inventories check source callable identities/counts, unsupported diagnostic provenance and CFG/reflection limits without runtime extrapolation."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "name": "Typed HTTP request and terminal intent",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1222,
-      "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "name": "Bounded Thymeleaf static fragment provenance",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1202,
-      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
-    },
-    {
-      "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "name": "Explicit persistence realm binding",
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
-    },
-    {
       "id": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
       "name": "Read-only process annotation validation",
       "source_file": "docs/process-annotations.md",
@@ -819,11 +751,88 @@
       "summary": "Pure deterministic interface Markdown preserves original identities, contract revisions, context/evidence/status distinctions and bounded escaped text without capture or runtime authority."
     },
     {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "name": "Compiler proven default and bridge declaration mapping",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 710,
+      "summary": "Separate generated identities map to source declarations only with compatible compiler-proven staticness, exact signatures and bounded structural proof; missing ABI stays bytecode-only."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "name": "Kotlin JPA use-site access",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 576,
+      "summary": "K2 compiler-resolved Kotlin annotation identity, use-site placement, and values select JPA access and mapping facts; ambiguous placement or unresolved explicit values remain diagnostic or UNKNOWN without invented physical bindings."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "name": "Versioned React JSX event evidence",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 803,
+      "summary": "Bounded React18 compiler-selected tag, factory, callback and forwarding proofs retain package/declaration versions and static-only availability boundaries."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
+      "name": "Repository entity owner resolution",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 363,
+      "summary": "Spring Data repository models, JPQL entities, and query return projections resolve through exact compiler-qualified owners; bare source return names require a matching JVM descriptor, and missing or ambiguous identities remain unresolved without simple-name or repository-domain fallback."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "name": "JPA ORM XML mapping precedence",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "summary": "Selected persistence-unit ORM XML mappings apply in declared order and override annotation table/scalar-column facts; metadata-complete suppresses annotation-only bindings, and unsafe or unsupported XML remains UNKNOWN with path/hash/unit provenance."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "name": "Compiler proven coroutine source boundaries",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 857,
+      "summary": "Original compiler suspend/API call sites retain source provenance; bounded continuation metadata maps declarations without manufacturing instruction locations or scheduling proof."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "name": "Hand labelled JVM acceptance corpus",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 879,
+      "summary": "Versioned per-backend test inventories check source callable identities/counts, unsupported diagnostic provenance and CFG/reflection limits without runtime extrapolation."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "name": "Typed HTTP request and terminal intent",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1301,
+      "summary": "Compiler-bound Java request origins separate cold definitions from same-origin static terminals; configuration provenance and privacy boundaries preserve UNKNOWN runtime availability."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "name": "Bounded Thymeleaf static fragment provenance",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1281,
+      "summary": "Static same-scope exact-arity Thymeleaf fragment links pass literal model paths through fragment-scoped parameters; unsupported local-variable scopes and other expressions remain UNKNOWN."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "name": "Explicit persistence realm binding",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
-      "source_line": 188,
+      "source_line": 198,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
+    },
+    {
+      "id": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "name": "Bounded Spring proxy and async semantics",
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1102,
+      "summary": "Spring rules v9 require an external compiler call whose FIELD receiver binding exactly matches the field symbol of one active canonically annotated @Autowired, @Inject or @Resource injection, together with an active specialized policy and interceptable JDK or CGLIB declaration, before emitting only proxy may-edges; self bypass requires compiler THIS or SUPER provenance, while parameters, other instances, unannotated or manually initialized fields and unresolved receivers remain UNKNOWN."
     }
   ],
   "edges": [
@@ -1028,16 +1037,6 @@
       "evidence": "The adapter binds pinned API resources and canonical listener/handler compiler facts to static retry policy declarations; unsupported configurations remain UNKNOWN."
     },
     {
-      "source": "file:src/kgmaker/flow.py:flow.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/flow.py",
-      "source_line": 67,
-      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
-    },
-    {
       "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
       "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
       "kind": "validates",
@@ -1098,26 +1097,6 @@
       "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
     },
     {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
       "source": "file:src/kgmaker/data_resources.py:data_resources.py",
       "target": "concept:docs/architecture.md:realm_bound_data_resources",
       "kind": "implements",
@@ -1166,526 +1145,6 @@
       "source_file": "docs/process-label-packets.md",
       "source_line": 9,
       "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 87,
-      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
-      "source_line": 107,
-      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
-    },
-    {
-      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_default_body_mapping.py",
-      "source_line": 1,
-      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 92,
-      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 82,
-      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 515,
-      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved nested override and class-literal values."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 14,
-      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 21,
-      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::165",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 29,
-      "evidence": "The change note specifies direct canonical Jakarta/Javax package checks for known JPA annotations."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:_annotation_map::544",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 11,
-      "evidence": "The change note says unresolved explicit table, column, and override values do not create physical defaults."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:property_site_annotations::1816",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 5,
-      "evidence": "The change note ties FIELD or PROPERTY projection to compiler identity and explicit access."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "function:src/kgmaker/framework.py:augment_framework_graph::659",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 22,
-      "evidence": "The change note says an unknown table remains without a physical schema binding."
-    },
-    {
-      "source": "function:tests/test_k2_backend.py:test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed::136",
-      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 34,
-      "evidence": "The actual K2 fixture covers foreign annotations and alias imports from a Jakarta persistence subpackage, along with access and fail-closed value cases."
-    },
-    {
-      "source": "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::461",
-      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
-      "source_line": 80,
-      "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
-    },
-    {
-      "source": "file:workers/typescript/ui_events.cjs:ui_events.cjs",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/typescript/ui_events.cjs",
-      "source_line": 198,
-      "evidence": "The adapter checks selected official tag/factory declarations and compiler-symbol binding writes before static handler evidence; members and dynamic bindings remain unknown."
-    },
-    {
-      "source": "file:tests/test_ui_events.py:test_ui_events.py",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_ui_events.py",
-      "source_line": 1,
-      "evidence": "Actual pinned TypeScript TSX fixtures verify supported handlers and fake/tag/factory/version/open-world negatives without UI execution."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "kind": "uses",
-      "evidence": "The K2 frontend emits compiler-resolved Kotlin annotation identity, use-site placement, and annotation values for the supported JPA subset."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:src/kgmaker/framework.py:framework.py",
-      "kind": "implements",
-      "evidence": "Framework projection accepts only canonical Jakarta/Javax annotations and requires supported access/value evidence before creating physical JPA bindings."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:tests/test_k2_backend.py:test_k2_backend.py",
-      "kind": "validates",
-      "evidence": "Actual K2 fixtures cover use-site access, annotation values, unresolved values, canonical annotation packages, and inherited embeddable access."
-    },
-    {
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 586,
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
-      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
-      "kind": "validates",
-      "evidence": "Actual Javac compatibility fixtures cover JPA embedded identifiers and association roles alongside the Kotlin-specific K2 checks."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
-      "target": "file:src/kgmaker/framework.py:framework.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 363,
-      "evidence": "Framework projection indexes entities by canonical compiler owner, maps declared JPQL entity names only when unique, and resolves return nodes from exact qualified types or a JVM descriptor that proves the canonical owner; unresolved generics and missing owners do not receive a name-only match."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
-      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 363,
-      "evidence": "Actual Javac regressions prove descriptor-backed right.Thing resolution and reject an unavailable foreign.Thing return when only unrelated right.Thing is indexed, as well as generic T when local right.T exists."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "target": "file:src/kgmaker/framework.py:framework.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "evidence": "The JVM framework projection parses the selected, root-confined ORM XML subset, applies mapping precedence, and records XML provenance while suppressing unsupported physical bindings."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
-      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 352,
-      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
-    },
-    {
-      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
-      "source_line": 88,
-      "evidence": "Continuation declaration mapping checks DebugMetadata, outer signature/delegate, exact realm and source declaration proof."
-    },
-    {
-      "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
-      "source_line": 278,
-      "evidence": "K1 compiler descriptors preserve source suspend and exact coroutine API boundary markers in call sites and source IR."
-    },
-    {
-      "source": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
-      "source_line": 313,
-      "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
-    },
-    {
-      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_coroutine_mapping.py",
-      "source_line": 75,
-      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
-    },
-    {
-      "source": "file:tests/test_jvm_golden_corpus.py:test_jvm_golden_corpus.py",
-      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_jvm_golden_corpus.py",
-      "source_line": 159,
-      "evidence": "Inventory checks exact counts and caller/target/source identities; mutations reject missing, extra, retargeted or stronger observations."
-    },
-    {
-      "source": "file:tests/fixtures/jvm-golden/expected.json:expected.json",
-      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/fixtures/jvm-golden/expected.json",
-      "source_line": 3,
-      "evidence": "Hand-labelled per-backend expectations separate source call resolution from unsupported compiler/model diagnostics."
-    },
-    {
-      "source": "file:fixtures/build-inspection/ground-truth.json:ground-truth.json",
-      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "fixtures/build-inspection/ground-truth.json",
-      "source_line": 4,
-      "evidence": "Existing mixed golden declarations retain their identities and gain explicit source locators reused by the corpus."
-    },
-    {
-      "source": "function:src/kgmaker/http_execution.py:augment_http_graph::605",
-      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
-      "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
-    },
-    {
-      "source": "function:src/kgmaker/http_execution.py:prepare_context::87",
-      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
-      "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
-    },
-    {
-      "source": "function:src/kgmaker/dataflow.py:http_request_inventory::426",
-      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
-      "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
-    },
-    {
-      "source": "file:tests/test_http_client_execution.py:test_http_client_execution.py",
-      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1224,
-      "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "target": "function:src/kgmaker/templates.py:attach_templates::384",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1204,
-      "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 72,
-      "evidence": "The fixture verifies same-element fragment ownership, a literal caller model path, scoped parameter use and same-named variables remaining distinct across fragments."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::228",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 228,
-      "evidence": "The fixture verifies PARTIAL/UNKNOWN conditions and unsupported selector diagnostics without evaluation."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::270",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 270,
-      "evidence": "The negative fixture verifies dynamic, ambiguous and wrong-arity calls have diagnostics, no resolved include edge, and no input graph mutation."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 33,
-      "evidence": "The existing regression verifies literal template variable IDs, backend binding and the explicit external PDF boundary remain present."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 140,
-      "evidence": "The public fixture verifies nested fragment arguments originate at the exact caller-scoped variable and traverse to the nested parameter without global aliases."
-    },
-    {
-      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::253",
-      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_templates.py",
-      "source_line": 253,
-      "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/schema_replay.py:schema_replay.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/framework.py:framework.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/feature.py:feature.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:tests/test_persistence_realms.py:test_persistence_realms.py",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
-      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
-      "source_line": 114,
-      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
-    },
-    {
-      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/graph_provider.py",
-      "source_line": 98,
-      "evidence": "Offline React context validation rejects legacy rules; existing captured input replay verifies package/declaration contents."
-    },
-    {
-      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
-      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/control_flow.py",
-      "source_line": 196,
-      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
-    },
-    {
-      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/compiler-inspection.md",
-      "source_line": 1102,
-      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
     },
     {
       "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
@@ -1796,16 +1255,6 @@
       "source_file": "src/kgmaker/kafka_bindings.py",
       "source_line": 280,
       "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
-    },
-    {
-      "source": "file:src/kgmaker/views.py:views.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/views.py",
-      "source_line": 164,
-      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
     },
     {
       "source": "file:tests/test_context_roles.py:test_context_roles.py",
@@ -1928,16 +1377,6 @@
       "evidence": "A fresh ordinary Python public projection rejects file/process/network I/O during invocation and preserves static UNKNOWN/SOURCE_ONLY semantics; no helper preload or native proof claim."
     },
     {
-      "source": "file:src/kgmaker/inspection.py:inspection.py",
-      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/inspection.py",
-      "source_line": 549,
-      "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
-    },
-    {
       "source": "function:src/kgmaker/architecture_cli.py:run::281",
       "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
       "kind": "implements",
@@ -2008,13 +1447,583 @@
       "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
     },
     {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 164,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 145,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "file:src/kgmaker/views.py:views.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 164,
+      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
+    },
+    {
+      "source": "file:src/kgmaker/flow.py:flow.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/flow.py",
+      "source_line": 67,
+      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 87,
+      "evidence": "mapMethod emits declaration mapping facts or an explicit bytecode-only diagnostic after structural checks."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java:Bytecode.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/Bytecode.java",
+      "source_line": 107,
+      "evidence": "Bytecode method metadata delegates declaration mapping to SourceMapping while keeping generated IDs."
+    },
+    {
+      "source": "file:tests/test_default_body_mapping.py:test_default_body_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_default_body_mapping.py",
+      "source_line": 1,
+      "evidence": "Actual K1/K2 compiler golden fixtures validate source mapping, debug-free boundaries and no mutation."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 92,
+      "evidence": "K1 uses compiler descriptor and DescriptorAsmUtil staticness proof, preserving unknown unsupported ABI."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 82,
+      "evidence": "K2 uses the selected JVM light method STATIC flag as declaration ABI proof."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationFacts::119",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 515,
+      "evidence": "The compiler-inspection guide records Kotlin annotation facts for JPA use-site projection from K2."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:annotationValue::103",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved nested override and class-literal values."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiConstant::133",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 14,
+      "evidence": "The change note records compiler-resolved annotation values and all-or-fail array completeness."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:workers/jvm/k2/KotlinFrontend.kt:psiAnnotationFacts::153",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 21,
+      "evidence": "The change note states unresolved explicit access cannot be inferred from identity placement."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:_allowed_jpa_annotation::177",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 29,
+      "evidence": "The change note specifies direct canonical Jakarta/Javax package checks for known JPA annotations."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:_annotation_map::556",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 11,
+      "evidence": "The change note says unresolved explicit table, column, and override values do not create physical defaults."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:property_site_annotations::1918",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 5,
+      "evidence": "The change note ties FIELD or PROPERTY projection to compiler identity and explicit access."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "function:src/kgmaker/framework.py:augment_framework_graph::671",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 22,
+      "evidence": "The change note says an unknown table remains without a physical schema binding."
+    },
+    {
+      "source": "function:tests/test_k2_backend.py:test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed::136",
+      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 34,
+      "evidence": "The actual K2 fixture covers foreign annotations and alias imports from a Jakarta persistence subpackage, along with access and fail-closed value cases."
+    },
+    {
+      "source": "function:tests/test_compiler_workers.py:test_ac06_real_javac_embedded_id_and_association_roles::461",
+      "target": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/43_kotlinJpaUseSiteAccess.md",
+      "source_line": 80,
+      "evidence": "The documented compatibility run exercises the byte-verified Maven fixture through actual Javac alongside the K2 JPA regression."
+    },
+    {
+      "source": "file:workers/typescript/ui_events.cjs:ui_events.cjs",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/typescript/ui_events.cjs",
+      "source_line": 198,
+      "evidence": "The adapter checks selected official tag/factory declarations and compiler-symbol binding writes before static handler evidence; members and dynamic bindings remain unknown."
+    },
+    {
+      "source": "file:tests/test_ui_events.py:test_ui_events.py",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_ui_events.py",
+      "source_line": 1,
+      "evidence": "Actual pinned TypeScript TSX fixtures verify supported handlers and fake/tag/factory/version/open-world negatives without UI execution."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 586,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "kind": "uses",
+      "evidence": "The K2 frontend emits compiler-resolved Kotlin annotation identity, use-site placement, and annotation values for the supported JPA subset."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 586,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "evidence": "Framework projection accepts only canonical Jakarta/Javax annotations and requires supported access/value evidence before creating physical JPA bindings."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 586,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:tests/test_k2_backend.py:test_k2_backend.py",
+      "kind": "validates",
+      "evidence": "Actual K2 fixtures cover use-site access, annotation values, unresolved values, canonical annotation packages, and inherited embeddable access."
+    },
+    {
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 586,
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source": "concept:docs/compiler-inspection.md:kotlin_jpa_use_site_access",
+      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
+      "kind": "validates",
+      "evidence": "Actual Javac compatibility fixtures cover JPA embedded identifiers and association roles alongside the Kotlin-specific K2 checks."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 363,
+      "evidence": "Framework projection indexes entities by canonical compiler owner, maps declared JPQL entity names only when unique, and resolves return nodes from exact qualified types or a JVM descriptor that proves the canonical owner; unresolved generics and missing owners do not receive a name-only match."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:repository_entity_owner_resolution",
+      "target": "file:tests/test_compiler_workers.py:test_compiler_workers.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 363,
+      "evidence": "Actual Javac regressions prove descriptor-backed right.Thing resolution and reject an unavailable foreign.Thing return when only unrelated right.Thing is indexed, as well as generic T when local right.T exists."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "evidence": "The JVM framework projection parses the selected, root-confined ORM XML subset, applies mapping precedence, and records XML provenance while suppressing unsupported physical bindings."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:jpa_orm_xml_mapping_precedence",
+      "target": "file:tests/test_orm_xml_overrides.py:test_orm_xml_overrides.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 352,
+      "evidence": "Actual Javac fixtures validate selected-unit precedence, metadata-complete suppression, unsafe XML rejection, and same-simple-name owner isolation."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java",
+      "source_line": 88,
+      "evidence": "Continuation declaration mapping checks DebugMetadata, outer signature/delegate, exact realm and source declaration proof."
+    },
+    {
+      "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 291,
+      "evidence": "K1 compiler descriptors preserve source suspend and exact coroutine API boundary markers in call sites and source IR."
+    },
+    {
+      "source": "file:workers/jvm/k2/KotlinFrontend.kt:KotlinFrontend.kt",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/k2/KotlinFrontend.kt",
+      "source_line": 313,
+      "evidence": "K2 compiler symbols preserve suspension boundaries while unsupported JVM targets and source CFG remain unresolved."
+    },
+    {
+      "source": "file:tests/test_coroutine_mapping.py:test_coroutine_mapping.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_coroutine_mapping.py",
+      "source_line": 75,
+      "evidence": "Actual pinned Kotlin/coroutines debug/no-debug fixtures verify original source sites, bounded mapping and negative metadata/realm cases."
+    },
+    {
+      "source": "file:tests/test_jvm_golden_corpus.py:test_jvm_golden_corpus.py",
+      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_jvm_golden_corpus.py",
+      "source_line": 159,
+      "evidence": "Inventory checks exact counts and caller/target/source identities; mutations reject missing, extra, retargeted or stronger observations."
+    },
+    {
+      "source": "file:tests/fixtures/jvm-golden/expected.json:expected.json",
+      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/fixtures/jvm-golden/expected.json",
+      "source_line": 3,
+      "evidence": "Hand-labelled per-backend expectations separate source call resolution from unsupported compiler/model diagnostics."
+    },
+    {
+      "source": "file:fixtures/build-inspection/ground-truth.json:ground-truth.json",
+      "target": "concept:docs/compiler-inspection.md:hand_labelled_jvm_acceptance_corpus",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "fixtures/build-inspection/ground-truth.json",
+      "source_line": 4,
+      "evidence": "Existing mixed golden declarations retain their identities and gain explicit source locators reused by the corpus."
+    },
+    {
+      "source": "function:src/kgmaker/http_execution.py:augment_http_graph::605",
+      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1301,
+      "evidence": "The pure projection adds request definitions and framework-derived terminal intent using typed IR."
+    },
+    {
+      "source": "function:src/kgmaker/http_execution.py:prepare_context::87",
+      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1301,
+      "evidence": "Context preparation redacts private URI inputs and binds explicit configuration file/profile/hash provenance."
+    },
+    {
+      "source": "function:src/kgmaker/dataflow.py:http_request_inventory::426",
+      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1301,
+      "evidence": "The read-only inventory exposes existing typed request facts without inferring execution from labels."
+    },
+    {
+      "source": "file:tests/test_http_client_execution.py:test_http_client_execution.py",
+      "target": "concept:docs/compiler-inspection.md:typed_http_request_and_terminal_intent",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1301,
+      "evidence": "Actual pinned APIs and negative provenance, privacy, escape, protocol and legacy-store tests bound HTTP claims."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "target": "function:src/kgmaker/templates.py:attach_templates::384",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1281,
+      "evidence": "The capability section describes attach_templates as the bounded Thymeleaf fragment projection."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_static_fragment_arguments_bind_scoped_fragment_parameters_without_collisions::72",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 72,
+      "evidence": "The fixture verifies same-element fragment ownership, a literal caller model path, scoped parameter use and same-named variables remaining distinct across fragments."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_conditional_and_unsupported_expressions_remain_partial_unknown::228",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 228,
+      "evidence": "The fixture verifies PARTIAL/UNKNOWN conditions and unsupported selector diagnostics without evaluation."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_dynamic_ambiguous_and_wrong_arity_fragments_have_diagnostics_and_no_edges::270",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 270,
+      "evidence": "The negative fixture verifies dynamic, ambiguous and wrong-arity calls have diagnostics, no resolved include edge, and no input graph mutation."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_thymeleaf_literal_binding_and_pdf_boundary::33",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 33,
+      "evidence": "The existing regression verifies literal template variable IDs, backend binding and the explicit external PDF boundary remain present."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_nested_fragment_arguments_follow_exact_scoped_variables::140",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 140,
+      "evidence": "The public fixture verifies nested fragment arguments originate at the exact caller-scoped variable and traverse to the nested parameter without global aliases."
+    },
+    {
+      "source": "function:tests/test_templates.py:test_duplicate_reference_attributes_and_aliases_are_ambiguous_without_edges::253",
+      "target": "concept:docs/compiler-inspection.md:bounded_thymeleaf_static_fragment_provenance",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_templates.py",
+      "source_line": 253,
+      "evidence": "The public fixture verifies duplicate same-name reference attributes and mixed reference aliases produce diagnostics without include or argument edges."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/schema_replay.py:schema_replay.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/feature.py:feature.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:tests/test_persistence_realms.py:test_persistence_realms.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
+      "target": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 114,
+      "evidence": "Javac supplies the actual STATIC modifier as source method ABI proof."
+    },
+    {
+      "source": "file:src/kgmaker/graph_provider.py:graph_provider.py",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/graph_provider.py",
+      "source_line": 98,
+      "evidence": "Offline React context validation rejects legacy rules; existing captured input replay verifies package/declaration contents."
+    },
+    {
+      "source": "file:src/kgmaker/control_flow.py:control_flow.py",
+      "target": "concept:docs/compiler-inspection.md:compiler_proven_coroutine_source_boundaries",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/control_flow.py",
+      "source_line": 196,
+      "evidence": "Source CFG retains call nodes and explicit resume/async/failure boundaries without runtime scheduling claims."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:explicit_persistence_realm_binding",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1157,
+      "evidence": "Documented bounded realm contract uses exact structured identity, context isolation and conservative UNKNOWN handling; regression matrix verifies physical binding."
+    },
+    {
+      "source": "file:src/kgmaker/inspection.py:inspection.py",
+      "target": "concept:docs/compiler-inspection.md:versioned_react_jsx_event_evidence",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/inspection.py",
+      "source_line": 549,
+      "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
+    },
+    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
+      "confidence_score": 1,
       "source_file": "README.md",
-      "source_line": 188,
+      "source_line": 198,
       "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
     },
     {
@@ -2022,7 +2031,7 @@
       "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
       "kind": "implements",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
+      "confidence_score": 1,
       "source_file": "src/kgmaker/semantic.py",
       "source_line": 440,
       "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
@@ -2032,7 +2041,7 @@
       "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
       "kind": "validates",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
+      "confidence_score": 1,
       "source_file": "src/kgmaker/semantic.py",
       "source_line": 100,
       "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
@@ -2042,10 +2051,80 @@
       "target": "concept:README.md:optional_agent_authored_semantic_layer",
       "kind": "uses",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
+      "confidence_score": 1,
       "source_file": "README.md",
-      "source_line": 190,
+      "source_line": 200,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/framework.py:framework.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1110,
+      "evidence": "The v9 framework projection accepts only a canonical explicit @Autowired, @Inject or @Resource field injection whose compiler field_symbol equals the call site's FIELD receiver_binding, and creates self-bypass only for compiler THIS or SUPER receivers; matching policy and interceptability remain required before proxy may-edges."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/flow.py:flow.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1131,
+      "evidence": "The process view marks Spring Async continuation SEPARATE only across a proven ASYNC proxy path; it expands synchronously only when framework evidence establishes a THIS or SUPER bypass, while other same-owner receivers remain UNKNOWN."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1139,
+      "evidence": "The configuration view exposes policy, canonically injected FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
+    },
+    {
+      "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "target": "file:tests/test_spring_proxy_async.py:test_spring_proxy_async.py",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/compiler-inspection.md",
+      "source_line": 1142,
+      "evidence": "The bounded fixture validates canonical annotated JDK/CGLIB field paths, rejects unannotated or manually initialized fields and local/new/parameter receivers, distinguishes THIS/SUPER self-bypass from other same-owner instances, and retains proxied Async, event, reactive and unverified AspectJ boundaries."
+    },
+    {
+      "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java:JavaFrontend.java",
+      "target": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/java/org/kgmaker/worker/JavaFrontend.java",
+      "source_line": 190,
+      "evidence": "Javac classifies non-static call receivers as THIS, SUPER, NEW or compiler binding kinds such as FIELD and PARAMETER, preserving the exact field symbol or other binding ID so same-owner instances are not conflated with self-calls."
+    },
+    {
+      "source": "file:workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt:KotlinFrontend.kt",
+      "target": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "workers/jvm/src/main/kotlin/org/kgmaker/worker/KotlinFrontend.kt",
+      "source_line": 277,
+      "evidence": "K1 records THIS and SUPER explicitly and otherwise preserves the compiler receiver binding kind plus exact FIELD symbol or other binding ID, preventing parameter or peer-instance calls from becoming self-bypass evidence."
+    },
+    {
+      "source": "file:tests/test_spring_conditions.py:test_spring_conditions.py",
+      "target": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "tests/test_spring_conditions.py",
+      "source_line": 109,
+      "evidence": "The compatibility regression keeps v8 and older Spring rule snapshots readable but requires explicit reinspection under the v9 injection-and-receiver-provenance rule."
     }
   ],
   "episodes": [

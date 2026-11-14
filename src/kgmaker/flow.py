@@ -96,6 +96,10 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
     blocks, edges, omitted = {}, [], []
     expanded_methods = set()
     symbols = {symbol["id"]: symbol for symbol in graph.symbols}
+    graph_nodes = {node.id: node for node in graph.nodes}
+    graph_edges = defaultdict(list)
+    for edge in graph.edges:
+        graph_edges[edge.source].append(edge)
 
     def expand(method, depth, ancestry, prefix):
         cfg = cfgs[method]
@@ -119,12 +123,34 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
             candidates = set(site.get("dispatch_candidates", []))
             uncertain = len(candidates) > 1 or (candidates and candidates != {target}) or ((site.get("invocation_kind") in {"VIRTUAL", "INTERFACE", "INVOKEVIRTUAL", "INVOKEINTERFACE"} or (site.get("invocation_kind") == "CALL" and site.get("receiver_type"))) and not site.get("dispatch_complete"))
             target_symbol = symbols.get(target, {})
-            async_hint = target_symbol.get("suspend") is True or any(
-                isinstance(annotation, dict) and annotation.get("name") == "org.springframework.scheduling.annotation.Async"
-                for annotation in (target_symbol.get("annotations") if isinstance(target_symbol.get("annotations"), list) else []))
-            reason = "async/coroutine unsupported" if async_hint else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
+            annotations = target_symbol.get("annotations") if isinstance(target_symbol.get("annotations"), list) else []
+            spring_async_declared = any(isinstance(annotation, dict)
+                                        and annotation.get("name") == "org.springframework.scheduling.annotation.Async"
+                                        for annotation in annotations)
+            site_edges = graph_edges.get(site["id"], [])
+            spring_async_bypass = any(edge.kind == "bypasses_proxy" for edge in site_edges)
+            proxy_paths = {edge.target for edge in site_edges if edge.kind == "may_traverse_proxy"}
+            spring_async_proxy = any(
+                (graph_nodes.get(identity) is not None
+                 and graph_nodes[identity].kind == "spring_proxy_path"
+                 and (graph_nodes[identity].metadata or {}).get("policy_kind") == "ASYNC"
+                 and any(edge.kind == "crosses_async_boundary" for edge in graph_edges.get(identity, [])))
+                for identity in proxy_paths)
+            spring_async = spring_async_declared and spring_async_proxy and not spring_async_bypass
+            spring_async_unknown = spring_async_declared and not spring_async_proxy and not spring_async_bypass
+            coroutine = target_symbol.get("suspend") is True
+            return_type = str(target_symbol.get("return_type", "")).split("<", 1)[0].rstrip("?")
+            reactive = return_type in {"reactor.core.publisher.Mono", "reactor.core.publisher.Flux",
+                                       "org.reactivestreams.Publisher"}
+            transition = ("SPRING_ASYNC" if spring_async else "COROUTINE" if coroutine
+                          else "REACTIVE_PUBLISHER" if reactive else None)
+            reason = "async boundary" if spring_async else "async proxy resolution unknown" if spring_async_unknown else "coroutine boundary" if coroutine else "reactive boundary" if reactive else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
+            if spring_async_declared and spring_async_bypass:
+                blocks[source_id].update(proxy_traversal=False, continuation="SYNCHRONOUS",
+                                         async_scheduled=False, execution="NOT_OBSERVED",
+                                         availability="UNKNOWN")
             blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
             from .return_flow import return_consumer_bindings
             blocks[source_id]["return_consumer_bindings"] = return_consumer_bindings(graph, site["id"])
@@ -140,6 +166,13 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
                 "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
             if reason:
                 blocks[source_id]["boundary_reason"] = reason
+                if transition:
+                    blocks[source_id].update(boundary_kind=transition, continuation="SEPARATE",
+                                             execution="NOT_OBSERVED", availability="UNKNOWN")
+                elif spring_async_unknown:
+                    blocks[source_id].update(boundary_kind="SPRING_ASYNC_PROXY",
+                                             continuation="UNKNOWN", execution="NOT_OBSERVED",
+                                             availability="UNKNOWN")
                 omitted.append({"call_site": site["id"], "target": target, "reason": reason})
                 continue
             # A single lexical call-site can have several structural CFG clones

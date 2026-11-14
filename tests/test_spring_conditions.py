@@ -7,6 +7,7 @@ from pathlib import Path
 import zipfile
 
 from kgmaker.spring_conditions import AnnotationArguments, evaluate_conditions
+from kgmaker.framework import SPRING_RULE_VERSION
 from kgmaker.inspection import command, inspect_jvm
 from kgmaker.worker_protocol import WorkerError
 from kgmaker.graph_provider import validate_context_snapshot
@@ -90,7 +91,7 @@ def test_profile_array_is_or_and_inactive_condition_dominates_unknown():
 @pytest.mark.parametrize("changed", ["spring_profiles", "spring_properties", "spring_available_classes"])
 def test_tampered_condition_snapshot_is_stale_without_process_or_mutation(tmp_path, changed):
     import copy
-    context = {"language": "jvm", "framework_rule_versions": {"spring": "annotation-source-v6"},
+    context = {"language": "jvm", "framework_rule_versions": {"spring": SPRING_RULE_VERSION},
                "spring_profiles": ["prod"], "spring_properties": {"enabled": "true"},
                "spring_available_classes": ["java.lang.String"]}
     context["spring_condition_inputs_hash"] = digest(condition_inputs(context))
@@ -105,7 +106,9 @@ def test_tampered_condition_snapshot_is_stale_without_process_or_mutation(tmp_pa
         assert context == tampered
 
 
-@pytest.mark.parametrize("old", ["annotation-source-v3", "annotation-source-v4", "annotation-source-v5"])
+@pytest.mark.parametrize("old", ["annotation-source-v3", "annotation-source-v4", "annotation-source-v5",
+                                  "annotation-source-v6", "annotation-source-v7-proxy-async",
+                                  "annotation-source-v8-proxy-receiver"])
 def test_legacy_spring_rules_remain_readable_but_require_reinspection(tmp_path, old):
     from kgmaker.model import KnowledgeGraph
     context = {"id": "old", "language": "jvm", "framework_rule_versions": {"spring": old}}

@@ -9,7 +9,7 @@ import shutil
 import unittest
 from pathlib import Path
 
-from kgmaker.framework import JPA_RULE_VERSION
+from kgmaker.framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
 from kgmaker.inspection import command, inspect_frontend, inspect_jvm
 from kgmaker.model import KnowledgeGraph
 from kgmaker.worker_protocol import WorkerError, handshake, request_worker
@@ -391,8 +391,8 @@ object Singleton {
 
             blue=inspect(['blue'],{'feature.custom':'false'})
             selected_context=next(item for item in blue.contexts if item.get('language')=='jvm')
-            self.assertEqual('annotation-source-v6',selected_context['framework_rule_versions']['spring'])
-            self.assertEqual('annotation-source-v6',selected_context['framework_analysis']['spring'])
+            self.assertEqual(SPRING_RULE_VERSION, selected_context['framework_rule_versions']['spring'])
+            self.assertEqual(SPRING_RULE_VERSION, selected_context['framework_analysis']['spring'])
             beans={node.name:node.id for node in blue.nodes if node.kind=='spring_bean'}
             injections={node.name:node.id for node in blue.nodes if node.kind=='spring_injection'}
             selected={(edge.source,edge.target) for edge in blue.edges if edge.kind=='injects_bean'}

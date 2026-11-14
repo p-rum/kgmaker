@@ -904,7 +904,12 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                                 "imports_configuration", "uses_import_selector", "selects_import", "may_select_import",
                                                 "uses_bean_registrar", "registers_bean", "produces_bean",
                                                 "defines_bean", "injects_bean", "advised_by",
-                                                "declares_entrypoint", "bypasses_proxy"}]
+                                                "declares_entrypoint", "bypasses_proxy",
+                                                "enables_proxy_policy", "may_traverse_proxy",
+                                                "governs_proxy_path", "may_apply_advice",
+                                                "proxy_resolution_unknown", "declares_async_transition",
+                                                "declares_event_transition", "declares_reactive_transition",
+                                                "crosses_async_boundary"}]
     elif view == "data-flow":
         edges = [e for e in edges if e.kind in {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
                                                 "maps_field", "maps_to_table", "maps_to_column", "declared_on_table",

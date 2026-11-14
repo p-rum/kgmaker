@@ -187,6 +187,33 @@ public final class JavaFrontend {
             }catch(IllegalArgumentException error){reason="UNSUPPORTED_SIGNATURE:"+error.getMessage();}
             if(tree instanceof MemberReferenceTree)kind="METHOD_REFERENCE";
             String identity=state.site(caller,location,target,kind,receiver,reason);calls.put(tree,identity);
+            if(tree instanceof MethodInvocationTree invocation && element instanceof ExecutableElement executable &&
+                    !executable.getModifiers().contains(Modifier.STATIC)) {
+                String receiverKind=null,receiverIdentity=null;
+                if(invocation.getMethodSelect() instanceof IdentifierTree) {
+                    receiverKind="THIS";
+                } else if(invocation.getMethodSelect() instanceof MemberSelectTree select) {
+                    Tree expression=select.getExpression();
+                    if(expression instanceof IdentifierTree identifier && identifier.getName().contentEquals("this") ||
+                            expression instanceof MemberSelectTree qualifier && qualifier.getIdentifier().contentEquals("this")) {
+                        receiverKind="THIS";
+                    } else if(expression instanceof IdentifierTree identifier && identifier.getName().contentEquals("super") ||
+                            expression instanceof MemberSelectTree qualifier && qualifier.getIdentifier().contentEquals("super")) {
+                        receiverKind="SUPER";
+                    } else {
+                        var receiverBinding=binding(expression);
+                        if(receiverBinding!=null) {
+                            receiverKind=(String)receiverBinding.get("kind");
+                            Object candidate="FIELD".equals(receiverKind)?receiverBinding.get("symbol"):receiverBinding.get("id");
+                            if(candidate instanceof String value)receiverIdentity=value;
+                        } else if(expression instanceof NewClassTree)receiverKind="NEW";
+                    }
+                }
+                if(receiverKind!=null) {
+                    state.sites.getLast().put("receiver_binding_kind",receiverKind);
+                    if(receiverIdentity!=null)state.sites.getLast().put("receiver_binding",receiverIdentity);
+                }
+            }
             if(target!=null && element instanceof ExecutableElement executable && !(tree instanceof MemberReferenceTree)) {
                 List<? extends ExpressionTree> arguments=tree instanceof MethodInvocationTree call?call.getArguments():
                     tree instanceof NewClassTree call?call.getArguments():List.of();
