@@ -5,6 +5,9 @@
 - Work package: [T003-S05-W04](../tasks/T003-S05-04-springProxyAsyncSemantics.md),
   T003-S05 / T003-AC05; navazuje na sloučené W01–W03 a S04-W03.
 - Výchozí main: `a8e75be2fcf7678526579a6607e1977de2f0bd45`.
+- PR [#95](https://github.com/p-rum/kgmaker/pull/95); první implementační head
+  `d310122e757e881875eb4d498c968af4fe91434d`, tree
+  `461df3b78a9214f8a3be63d94de0979dd963905a`.
 - Cíl: oddělit declaration, proxy eligibility a runtime execution; self-call,
   Async/event/reactive boundary nesmějí vytvořit smyšlený synchronní execution.
 

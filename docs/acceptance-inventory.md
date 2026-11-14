@@ -61,6 +61,10 @@ srovnání](changes/113_reconcileT046DeliverySummary.md).
 
 ## T003-S05-W04 — Spring proxy a async semantics — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
 
+PR [#95](https://github.com/p-rum/kgmaker/pull/95), první přesně publikovaný
+implementační head `d310122e757e881875eb4d498c968af4fe91434d`; exact-pair review a
+GitHub CI jsou zatím NOT_RUN.
+
 | ID | Stav | Přímá evidence |
 |---|---|---|
 | T003-S05-W04-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_spring_proxy_async.py::test_jdk_proxy_async_event_and_self_invocation_are_bounded`, `test_cglib_path_requires_interceptable_concrete_method` a `test_process_stops_at_async_boundary_without_claiming_execution`: advice jen přes bounded `may_*` proxy path, self-call synchronní bypass, Async continuation oddělená a execution NOT_OBSERVED |
