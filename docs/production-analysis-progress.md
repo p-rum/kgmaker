@@ -20,14 +20,14 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 37 | 22 | 1 | 60 |
+| T003 work packages | 38 | 22 | 0 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 67 | 51 | 1 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 68 | 51 | 0 | 119 |
 
-T003/T004 mají 39 položek bez sloučené dodávky; jedna z nich je PR_OPEN a 38
-zůstává PLANNED. T047 není dalších 13 nezávislých
+T003/T004 mají 38 položek bez sloučené dodávky; všechny zůstávají PLANNED.
+T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
 `NOT_RUN` nikdy nepřebírá PASS z popisu PR. T046-S01 až S06 jsou v `main`; jejich
@@ -59,7 +59,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S05-W01](tasks/T003-S05-01-dynamicSpringImports.md) | MERGED | PARTIAL | `4113a7975451a8313321fd521252485c959908e3` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_spring_imports.py](../tests/test_spring_imports.py) | [# 30](https://github.com/p-rum/kgmaker/pull/30) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S05-W02](tasks/T003-S05-02-springRegistrarsFactories.md) | MERGED | PARTIAL | `c76f6dcfd38f0bfeed8c899535bcae5c5f3ccc8a` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_spring_imports.py](../tests/test_spring_imports.py) | [# 53](https://github.com/p-rum/kgmaker/pull/53) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S05-W03](tasks/T003-S05-03-springConditionMatrix.md) | MERGED | PARTIAL | `8b1eeceb28b71c122c2d48bf179e08cefa79c43c` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_spring_conditions.py](../tests/test_spring_conditions.py) | [# 34](https://github.com/p-rum/kgmaker/pull/34) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S05-W04](tasks/T003-S05-04-springProxyAsyncSemantics.md) | PR_OPEN | LOCAL_VERIFIED_IN_SCOPE | `bc77c3be2c51d6f7e89b3c018f1e2825df619a0c` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [src/kgmaker/views.py](../src/kgmaker/views.py), [tests/test_spring_proxy_async.py](../tests/test_spring_proxy_async.py) | [# 95](https://github.com/p-rum/kgmaker/pull/95) | Review P1 opravené explicitní DI, exact FIELD receiver provenance, `THIS`/`SUPER` self-call a proxy-evidence Async gate; actual-javac worker je explicitní TOOLCHAIN_SKIP a runtime advice/scheduling zůstávají UNKNOWN. |
+| [T003-S05-W04](tasks/T003-S05-04-springProxyAsyncSemantics.md) | MERGED | VERIFIED_IN_SCOPE | `39eb46ba283e526d9748e80e2572f28b4f4348ed` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [src/kgmaker/views.py](../src/kgmaker/views.py), [tests/test_spring_proxy_async.py](../tests/test_spring_proxy_async.py) | [# 95](https://github.com/p-rum/kgmaker/pull/95) | Exact-pair review finálního headu `44af09d36b69589fee882d017d22f07bdc2e3216` je čisté; actual-javac worker je explicitní TOOLCHAIN_SKIP a runtime advice/scheduling zůstávají UNKNOWN. |
 | [T003-S06-W01](tasks/T003-S06-01-kotlinJpaAccess.md) | MERGED | PARTIAL | `966948b533a7a9417dea370733f300f91fd2b61c` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_k2_backend.py](../tests/test_k2_backend.py) | [# 32](https://github.com/p-rum/kgmaker/pull/32) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W02](tasks/T003-S06-02-jpaInheritedAttributes.md) | MERGED | PARTIAL | `469e615b2766f78f27c11b85172d223b929cb031` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 39](https://github.com/p-rum/kgmaker/pull/39) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W03](tasks/T003-S06-03-ormXmlOverrides.md) | MERGED | PARTIAL | `355e98fe2ab62fadbf4869eb4485cd3562173068` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_orm_xml_overrides.py](../tests/test_orm_xml_overrides.py) | [# 50](https://github.com/p-rum/kgmaker/pull/50) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
