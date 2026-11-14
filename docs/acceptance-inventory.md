@@ -64,8 +64,9 @@ srovnání](changes/113_reconcileT046DeliverySummary.md).
 PR [#95](https://github.com/p-rum/kgmaker/pull/95), první přesně publikovaný
 implementační head `d310122e757e881875eb4d498c968af4fe91434d`. Review původního
 headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d` našlo dva P1; FIELD receiver
-provenance a synchronní Async self-call jsou opravené a čekají na nové exact-pair
-review. CI tohoto headu je administrativní NOT_RUN (`steps=null`, bez logů).
+provenance a synchronní Async self-call jsou opravené v implementačním headu
+`276886c55f16cf09746970342cb2b80ab814745d`, který čeká na nové exact-pair review.
+CI původního i opravného headu je administrativní NOT_RUN (`steps=null`, bez logů).
 
 | ID | Stav | Přímá evidence |
 |---|---|---|

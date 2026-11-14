@@ -8,6 +8,8 @@
 - PR [#95](https://github.com/p-rum/kgmaker/pull/95); první implementační head
   `d310122e757e881875eb4d498c968af4fe91434d`, tree
   `461df3b78a9214f8a3be63d94de0979dd963905a`.
+- Review-fix implementační head `276886c55f16cf09746970342cb2b80ab814745d`,
+  tree `ba5660a300bdccf3a3ace52c91868f7bff955b25`.
 - Cíl: oddělit declaration, proxy eligibility a runtime execution; self-call,
   Async/event/reactive boundary nesmějí vytvořit smyšlený synchronní execution.
 
@@ -49,19 +51,20 @@ view ani offline validace nespouštějí worker, build, aplikaci nebo Spring con
 - Cílená Spring/proxy/condition/import/build-aware/compiler sada: **52 passed,
   39 skipped**; skipy jsou existující volitelné worker/API prerequisite matice.
 - Full `python -m pytest -q`: **1644 passed, 1057 skipped, 76 subtests passed**
-  za 43.83 s.
+  za 46.22 s na finálním review-fix tree.
 - Dva parametrické actual-javac případy jsou lokálně **SKIP** s explicitním
   `TOOLCHAIN_UNAVAILABLE`, protože JVM worker není připraven. Explicitní Maven
   příprava workeru byla přerušena zvenčí před publikací artefaktu; nejde o PASS.
 - `compileall` a `git diff --check`: PASS; semantic validate **321 concepts /
-  30 671 relationships**; scan/check **544 files / 6151 nodes / 44 026
+  30 575 relationships**; scan/check **544 files / 6153 nodes / 43 947
   relationships**.
 - CI na původním review headu `cbe4a0e42ed97a51ac1c11c980f91d4c5b92fb4d`
   má u všech sedmi jobů `steps=null` a `logs_url=null`, tedy administrativní
   NOT_RUN podle T045. Nezávislé review `PRR_kwDOUyD9Wc8AAAABX94H6w` našlo dva
   P1: Async self-call v process view a chybějící receiver provenance. Oba jsou
   opravené FIELD bindingem, proxy-evidence gate a přímými negativními testy;
-  opravný head vyžaduje nové exact-pair review.
+  opravný head vyžaduje nové exact-pair review. Jeho CI run `43635104440` má
+  stejný administrativní NOT_RUN stav: všech sedm jobů bez kroků a logů.
 
 Neověřený runtime dispatch, skutečné advice execution, task scheduling, event
 delivery, reactive subscription, AspectJ weaving a širší meta/class-level
