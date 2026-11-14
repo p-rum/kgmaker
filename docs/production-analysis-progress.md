@@ -20,13 +20,13 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 38 | 22 | 0 | 60 |
+| T003 work packages | 38 | 21 | 1 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 68 | 51 | 0 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 68 | 50 | 1 | 119 |
 
-T003/T004 mají 38 položek bez sloučené dodávky; všechny zůstávají PLANNED.
+T003/T004 mají 38 položek bez sloučené dodávky; jedna je PR_OPEN a 37 zůstává PLANNED.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
@@ -64,7 +64,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S06-W02](tasks/T003-S06-02-jpaInheritedAttributes.md) | MERGED | PARTIAL | `469e615b2766f78f27c11b85172d223b929cb031` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 39](https://github.com/p-rum/kgmaker/pull/39) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W03](tasks/T003-S06-03-ormXmlOverrides.md) | MERGED | PARTIAL | `355e98fe2ab62fadbf4869eb4485cd3562173068` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_orm_xml_overrides.py](../tests/test_orm_xml_overrides.py) | [# 50](https://github.com/p-rum/kgmaker/pull/50) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W04](tasks/T003-S06-04-multiDatasourceRealms.md) | MERGED | PARTIAL | `9f6605db0258d1b27bf233e25c7737bf0b675f5b` | [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 62](https://github.com/p-rum/kgmaker/pull/62) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S06-W05](tasks/T003-S06-05-jpqlHqlGrammar.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
+| [T003-S06-W05](tasks/T003-S06-05-jpqlHqlGrammar.md) | PR_OPEN | LOCAL_VERIFIED_IN_SCOPE | `1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_jpql_hql_grammar.py](../tests/test_jpql_hql_grammar.py) | [#97](https://github.com/p-rum/kgmaker/pull/97) | Bounded join/subquery/bulk DML/constructor/path grammar; actual-javac worker je explicitní TOOLCHAIN_SKIP, širší provider syntax, W06/W07 a runtime SQL zůstávají PARTIAL/UNKNOWN. |
 | [T003-S06-W06](tasks/T003-S06-06-namedQueryContainers.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S06-W07](tasks/T003-S06-07-criteriaSpecificationQuerydsl.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S06-W08](tasks/T003-S06-08-schemaCompatibility.md) | MERGED | PARTIAL | `3bef611d0ed555e26e6663a0b243ce5a2bf1d428` | [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_schema_compatibility.py](../tests/test_schema_compatibility.py) | [# 64](https://github.com/p-rum/kgmaker/pull/64) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |

@@ -80,7 +80,11 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
-## T003-S06-W05 — rozšířená JPQL/HQL gramatika — LOCAL_VERIFIED_IN_SCOPE
+## T003-S06-W05 — rozšířená JPQL/HQL gramatika — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
+
+PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
+`1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
+`fbc521331a7a68a94768d636f52552917008bfba`; čeká na exact-pair review.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|

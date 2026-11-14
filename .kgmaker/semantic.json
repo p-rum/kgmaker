@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
     "README.md": "2c26ff76c2264d2495314f0c7f51b3886409a44cfba4a2d351044a4982c08ab7",
-    "docs/acceptance-inventory.md": "ae14958f47c8e2dc5f51f708163e28d0559449cb9715a5477cb4f9a0427bf350",
+    "docs/acceptance-inventory.md": "b0e390b8709c0cafedb018a8d26ec9e259fc9e6548dabe702dd215359a8891e3",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
     "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
@@ -18,7 +18,7 @@
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
     "docs/changes/114_modelSpringProxyAsyncSemantics.md": "58fa56c415f115d7791a96d181160406cddf7b3e805d7458816cbab3912d7ee4",
     "docs/changes/115_reconcileSpringProxyAsyncDelivery.md": "4e732faccffc9bfe9410761cfe44ece8c9104816c94bd9099f1b2d62c661a4ac",
-    "docs/changes/116_parseExtendedJpqlHql.md": "c7c2d733587b65765a06d5b49ac57a84b2af982b5de350aa6a26a89037abf84c",
+    "docs/changes/116_parseExtendedJpqlHql.md": "1abe1edc279bc50bbbb72ae13ca6f0c951b3a10e3f9e9726fce42c3e3978dd8c",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -117,7 +117,7 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "f521cfc331f628c4e10ee991a5b7cead25bbab0b71b429998fc6adab9ccf243f",
+    "docs/production-analysis-progress.md": "c1d3569057a6c85fc13b1c371fe0d0fcb611f6858b91dc8a1ffcfd3237503c1b",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
@@ -2187,13 +2187,13 @@
       "evidence": "T003-S06-W05 defines conservative joins, subqueries, updates/deletes, constructor projections and path expressions as the required bounded capability."
     },
     {
-      "source": "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::25",
+      "source": "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::28",
       "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
       "kind": "models",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
       "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
-      "source_line": 25,
+      "source_line": 28,
       "evidence": "Change116 records the v8 edge model, compatibility boundary, explicit toolchain skip and remaining named-query/dynamic-provider scope."
     }
   ],

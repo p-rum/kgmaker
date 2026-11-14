@@ -5,6 +5,9 @@
 - Work package: [T003-S06-W05](../tasks/T003-S06-05-jpqlHqlGrammar.md),
   T003-S06 / T003-AC06.
 - Výchozí main: `193c89b4d461047fd3330fd74892c5830ba8ac81`.
+- PR [#97](https://github.com/p-rum/kgmaker/pull/97); první implementační head
+  `1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
+  `fbc521331a7a68a94768d636f52552917008bfba`.
 - JPA rules: `annotation-source-v8-jpql-hql-grammar`; graph/store schema zůstává
   v1/v2/v3 beze změny.
 
