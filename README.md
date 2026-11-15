@@ -1155,8 +1155,10 @@ current verification limits are in the delivery inventory.
 The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
 retains catch/finally paths through business-step collapse and adds bounded static
 retry/DLT policy boundaries from explicit snapshots. A canonical Kafka entry or
-witnessed T028 consumer import is required for each occurrence; an ordinary local
-call of an annotated listener remains UNKNOWN. Local transaction declarations
+T028 consumer import bound to its exact T014 mapping declaration is required for each occurrence; an ordinary local
+call of an annotated listener remains UNKNOWN. Endpoint/reference-only evidence
+cannot replace membership authority; legacy imports missing the retained T014 tuple
+keep UNKNOWN retry boundaries. Local transaction declarations
 do not imply rollback of HTTP/Kafka effects; compensation remains a separately
 cited PROPOSED annotation. Java/K1 Spring Kafka 3.3.2 is the supported policy subset;
 K2 policy capture and runtime delivery remain UNKNOWN. See

@@ -1507,7 +1507,7 @@ intermediate FAIL/error results. New pure API has no persistent schema migration
 | T029-AC02 | `test_actual_retry_dlt_static_path_and_finally`, `test_policy_budget_and_upstream_truncation_are_explicit` | PASS; actual Java/K1 3.3.2 static retry→DLT only at canonical Kafka entry or witnessed T028 import; ordinary listener calls UNKNOWN, no normal-exit retry/handler execution; actual K2 UNKNOWN |
 | T029-AC03 | `test_local_transaction_never_rolls_back_http_or_kafka`, `test_compensation_is_only_an_explicit_proposed_annotation` | PASS; declaration-only local scope, remote rollback NOT_PROVEN, no new compensation edges |
 | T029-AC04 | `test_invalid_inputs_preserve_input_and_last_artifact`, `test_invalid_graph_snapshot_never_mutates_inputs_or_artifact`, actual snapshot/filesystem equality and offline mocks | PASS; no mutation or implicit process/network |
-| T029-AC05 | `test_actual_ordinary_listener_callee_has_no_container_policy`, `test_actual_imported_entry_and_ordinary_same_method_are_distinct`, `test_imported_retry_requires_current_exact_entry_authority`, `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
+| T029-AC05 | `test_endpoint_proof_cannot_replace_removed_mapping_declarations`, `test_import_requires_exact_t014_tuple_and_declaration_type`, `test_copied_actual_other_endpoint_witness_cannot_authorize_retry`, `test_actual_ordinary_listener_callee_has_no_container_policy`, `test_actual_imported_entry_and_ordinary_same_method_are_distinct`, `test_imported_retry_requires_current_exact_entry_authority`, `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
 | T029-AC06 | README, capability/API examples, progress and change130 per-step evidence | Updated; PR/review and semantic publication recorded with final handoff |
 
 281 targeted tests passed before the final diagnostics fix; the current complete
@@ -1521,3 +1521,16 @@ entry/proof/membership cases pass: 75 PASS / 0 SKIP, 36.24 s (73 public + 2 actu
 [change130 step6](changes/130_projectProcessFailures.md). Independent review of
 the new published revision is required; the initial REQUEST_CHANGES is historical
 evidence, not an approval of this correction.
+
+T028-S01/S03–S05, AC04–AC06 additive membership tuple preservation in PR110:
+`test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift`
+now supplies canonical T012 service topology before T014 capture.
+`test_post_capture_candidate_tamper_cannot_reuse_membership_declaration_id` keeps
+the former post-capture modification as a negative. T029 AC04 adds cycle/size
+witness guards; AC05 distinguishes endpoint refs from exact mapping declarations.
+Current review-fix results are in [change130 steps9–11](changes/130_projectProcessFailures.md);
+historical passing checkpoints do not substitute for this correction.
+
+Second PR110 membership correction: **177 PASS / 0 SKIP, 71.60 s** in T014/T028/T029
+and all three reviewer reproductions before the separate main83999fb integration;
+see [change130 steps9–11](changes/130_projectProcessFailures.md).

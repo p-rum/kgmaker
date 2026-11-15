@@ -394,6 +394,13 @@ public class Code {
     assert {'publish','one','scheduled'}<=set(processes)
     imported=project_async_process_boundary(processes['publish'],remote,target_processes=[processes['one']])
     assert any(n.attributes.get('source_process_id')==processes['one'].definition.process_id for n in imported.steps)
+    for node in imported.steps:
+        if node.attributes.get('async_role')!='subscription':continue
+        witness=node.attributes['membership_witness']
+        assert witness['capture_id']==captured['capture_id'] and witness['rules_version']==remote.rules_version
+        for key in ('source','target','binding'):
+            assert witness[key]==next(n.to_dict() for n in remote.nodes if n.id==witness[key]['id'])
+        assert witness['edge']==next(e.to_dict() for e in remote.edges if e.id==witness['edge']['id'])
     return graph,imported,processes['scheduled']
 
 
@@ -401,7 +408,7 @@ def test_actual_imported_entry_and_ordinary_same_method_are_distinct(actual_impo
     from kgmaker.process_model import ProcessDefinition
     from kgmaker.analysis_model import digest
     graph,imported,ordinary=actual_imported_retry
-    doc=imported.to_dict();other=ordinary.to_dict();view=doc['technical_view']
+    doc=deepcopy(imported.to_dict());other=ordinary.to_dict();view=doc['technical_view']
     # Explicit disjoint union of two already captured paths, no inferred order.
     for key in ('nodes','edges','provenance'):
         merged={item['id']:item for item in view[key]}
@@ -438,7 +445,7 @@ def test_actual_imported_entry_and_ordinary_same_method_are_distinct(actual_impo
     'foreign_trigger_original','missing_body_association','foreign_membership_reference'])
 def test_imported_retry_requires_current_exact_entry_authority(actual_imported_retry,mutation):
     from kgmaker.views import _summarize_view_evidence
-    graph,imported,_=actual_imported_retry;doc=imported.to_dict();view=doc['technical_view']
+    graph,imported,_=actual_imported_retry;doc=deepcopy(imported.to_dict());view=doc['technical_view']
     trigger=next(n for n in view['nodes'] if n['kind']=='trigger' and n['attributes'].get('trigger_kind')=='KAFKA')
     link=next(e for e in view['edges'] if e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL')
     association=next(e for e in view['edges'] if e['source']==trigger['id']
@@ -470,3 +477,114 @@ def test_imported_retry_requires_current_exact_entry_authority(actual_imported_r
     assert all(p in result.technical_view.provenance for p in view['provenance'])
     assert any('KAFKA_ENTRY_OCCURRENCE_UNPROVEN' in d.get('reasons',[]) for d in result.technical_view.diagnostics)
     assert result.technical_status=='PARTIAL' and (doc,graph.to_dict())==before
+
+
+def test_endpoint_proof_cannot_replace_removed_mapping_declarations(actual_imported_retry):
+    from kgmaker.views import _summarize_view_evidence
+    graph,imported,_=actual_imported_retry;doc=deepcopy(imported.to_dict());view=doc['technical_view']
+    byproof={p['id']:p for p in view['provenance']}
+    link=next(e for e in view['edges'] if e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL')
+    subscription=next(n for n in view['nodes'] if n['id']==link['source'])
+    raw=[byproof[ref].get('original_provenance',byproof[ref]) for ref in subscription['evidence_refs']]
+    endpoint=next(p for p in raw if not p.get('mapping_ids'))
+    assert endpoint['evidence_kind']=='FRAMEWORK_DERIVED'
+    removed={ref for ref,p in byproof.items() if p.get('original_provenance',p).get('mapping_ids')}
+    assert removed
+    for item in view['nodes']+view['edges']:
+        if set(item['evidence_refs']) & removed:
+            item['evidence_refs']=[ref for ref in item['evidence_refs'] if ref not in removed]
+            item.update(_summarize_view_evidence(item['evidence_refs'],byproof))
+    view['provenance']=[p for p in view['provenance'] if p['id'] not in removed]
+    # Alter both copies, so merely comparing the new witness fields cannot pass this test.
+    for item in (subscription,link):
+        item['attributes']['membership_evidence_refs']=[endpoint['id']]
+        item['attributes']['remote_evidence_refs']=[p['id'] for p in raw if not p.get('mapping_ids')]
+    ProcessView.from_dict(doc);before=deepcopy((doc,graph.to_dict()))
+    with patch('subprocess.Popen',side_effect=AssertionError('offline')),patch('socket.socket',side_effect=AssertionError('offline')):
+        result=api(doc,graph)
+    assert not any(n.attributes.get('policy_status')=='DECLARED' for n in result.steps)
+    assert not any(e.attributes.get('failure_transition') for e in result.transitions)
+    assert any(n.attributes.get('policy_status')=='UNKNOWN' for n in result.steps)
+    assert all(p in result.technical_view.provenance for p in view['provenance'])
+    assert (doc,graph.to_dict())==before
+
+
+@pytest.mark.parametrize('mutation',['legacy','rules','schema_bool','capture','binding','source_endpoint','target_endpoint',
+    'scope','context','proof_capture','proof_mapping','proof_kind','binding_proof_as_membership'])
+def test_import_requires_exact_t014_tuple_and_declaration_type(actual_imported_retry,mutation):
+    from kgmaker.views import _summarize_view_evidence
+    graph,imported,_=actual_imported_retry;doc=deepcopy(imported.to_dict());view=doc['technical_view']
+    link=next(e for e in view['edges'] if e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL')
+    subscription=next(n for n in view['nodes'] if n['id']==link['source'])
+    witness=subscription['attributes']['membership_witness'];assert witness
+    proofs={p.get('original_provenance',p)['id']:p.get('original_provenance',p) for p in view['provenance']}
+    declaration=proofs[witness['edge']['evidence_refs'][0]]
+    assert declaration['evidence_kind']=='SOURCE_ONLY' and declaration['mapping_ids']
+    if mutation=='legacy':subscription['attributes'].pop('membership_witness')
+    elif mutation=='rules':witness['rules_version']='foreign-version'
+    elif mutation=='schema_bool':witness['schema_version']=True
+    elif mutation=='capture':witness['capture_id']='foreign-capture'
+    elif mutation=='binding':witness['binding']['id']='foreign-binding'
+    elif mutation=='source_endpoint':witness['source']['id']='foreign-source'
+    elif mutation=='target_endpoint':witness['target']['id']='foreign-target'
+    elif mutation=='scope':witness['edge']['attributes']['scope']='test'
+    elif mutation=='context':witness['edge']['attributes']['context_ids']=['foreign-context']
+    elif mutation=='proof_capture':declaration['capture_id']='foreign-capture'
+    elif mutation=='proof_mapping':declaration['mapping_ids']=['foreign-mapping']
+    elif mutation=='proof_kind':declaration['evidence_kind']='FRAMEWORK_DERIVED'
+    else:
+        refs=witness['binding']['evidence_refs']
+        witness['edge'].update(evidence_refs=deepcopy(refs),unknown_refs=deepcopy(refs))
+        subscription['attributes']['membership_evidence_refs']=deepcopy(refs)
+    link['attributes']=deepcopy({**subscription['attributes'],'async_transition':'CONSUMER_POTENTIAL'})
+    records={p['id']:p for p in view['provenance']}
+    for item in view['nodes']+view['edges']:
+        if item['evidence_refs']:item.update(_summarize_view_evidence(item['evidence_refs'],records))
+    ProcessView.from_dict(doc);before=deepcopy((doc,graph.to_dict()))
+    result=api(doc,graph)
+    assert not any(n.attributes.get('policy_status')=='DECLARED' for n in result.steps)
+    assert not any(e.attributes.get('failure_transition') for e in result.transitions)
+    assert any(n.attributes.get('policy_status')=='UNKNOWN' for n in result.steps)
+    assert all(p in result.technical_view.provenance for p in view['provenance'])
+    assert (doc,graph.to_dict())==before
+
+
+from test_t028_cross_async_process_boundary import actual_pipeline as actual_other_memberships
+
+
+@pytest.mark.parametrize('actual_other_memberships',['k1'],indirect=True)
+def test_copied_actual_other_endpoint_witness_cannot_authorize_retry(actual_imported_retry,actual_other_memberships):
+    from kgmaker.business_process import project_async_process_boundary
+    graph,imported,_=actual_imported_retry
+    processes,remote,_=actual_other_memberships
+    donor=project_async_process_boundary(processes['publish'],remote,target_processes=[processes['one'],processes['two']])
+    witnesses=[n.attributes['membership_witness'] for n in donor.steps if n.attributes.get('async_role')=='subscription']
+    assert len(witnesses)==2 and all(witnesses)
+    for witness in witnesses:
+        doc=deepcopy(imported.to_dict());view=doc['technical_view']
+        link=next(e for e in view['edges'] if e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL')
+        subscription=next(n for n in view['nodes'] if n['id']==link['source'])
+        assert witness['target']['id']!=subscription['attributes']['target_interface_id']
+        assert witness['capture_id']!=subscription['attributes']['membership_witness']['capture_id']
+        for item in (subscription,link):item['attributes']['membership_witness']=deepcopy(witness)
+        ProcessView.from_dict(doc);before=deepcopy(doc);result=api(doc,graph)
+        assert not any(n.attributes.get('policy_status')=='DECLARED' for n in result.steps)
+        assert not any(e.attributes.get('failure_transition') for e in result.transitions)
+        assert doc==before
+
+
+@pytest.mark.parametrize('mutation',['cycle','oversize'])
+def test_invalid_witness_respects_existing_bounds_without_mutation(actual_imported_retry,tmp_path,mutation):
+    graph,imported,_=actual_imported_retry;doc=deepcopy(imported.to_dict())
+    witness=next(n['attributes']['membership_witness'] for n in doc['technical_view']['nodes']
+        if n['attributes'].get('async_role')=='subscription')
+    if mutation=='cycle':witness['invalid']=witness
+    else:witness['invalid']=[None]*50_001
+    graph_before=graph.to_dict();saved=tmp_path/'last-valid.json';saved.write_text('last valid')
+    nodes_before=len(doc['technical_view']['nodes']);refs_before=deepcopy(doc['technical_view']['provenance'])
+    with patch('subprocess.Popen',side_effect=AssertionError('offline')),patch('socket.socket',side_effect=AssertionError('offline')):
+        with pytest.raises(BusinessProcessError):api(doc,graph)
+    assert saved.read_text()=='last valid' and graph.to_dict()==graph_before
+    assert len(doc['technical_view']['nodes'])==nodes_before and doc['technical_view']['provenance']==refs_before
+    if mutation=='cycle':assert witness['invalid'] is witness
+    else:assert witness['invalid']==[None]*50_001

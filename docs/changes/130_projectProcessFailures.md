@@ -369,3 +369,113 @@ Primary refs před publikací potvrzují main `cceb1109...` a předchozí PR110 
 `7dee1dd...`; normal push publikuje fix commit a dvourodičovou integraci společně.
 Nezávislé review nové dvojice base/HEAD a GH CI nejsou vydávány za PASS; implementer
 PR nemerguje. Runtime/worker scope a ostatní NOT_RUN limity se integrací nemění.
+
+## Krok 9 — přesný T014 tuple a druhý review fix (T029-S02/S04, T028-S01/S03–S05, AC04–AC06)
+
+Baseline `e415b7f65be780a944784d39f6bc3adb433022fb`, base `cceb1109...`.
+[REQUEST_CHANGES2](https://github.com/p-rum/kgmaker/pull/110#issuecomment-6901003371)
+uzavřelo první invocation P1, ale doložilo druhý: odstranění všech mapping proofs
+z ProcessView a nahrazení membership ref existujícím FRAMEWORK_DERIVED endpoint
+proofem stále vytvářelo retry/DLT. Nezávislých 301 PASS / 70.10 s je historický
+samostatný běh; nový repro má 1 FAIL / 7.45 s. Vlastní reprodukce stejného skriptu
+`/tmp/kgmaker-review110-membership.py`: **1 FAIL / 0 SKIP, 7.39 s**.
+
+Rekognoskace dle context/architect přímo ve zdroji ověřila T014 `declaration`,
+canonical candidate/edge ID, SOURCE_ONLY/UNKNOWN mapping/capture kontrakt a T028
+ztrátu plného candidate tuple. Parent výslovně schválil minimální aditivní passthrough
+jako nutnou provenance opravu, ne nový resolver. Membership ref samotný nestačí.
+Původní runtime task vyčerpal tři iteration a odmítl další advance; nový bugfix
+workflow `task:a4895442104ff5881736b69b4fd262748f7e0e94a21f5c69da804d7c2ce5567a`
+navazuje na stejné T029/change130, bez nového Task ID/specification.
+
+`business_process.py` vyjímá stávající T028 membership kontrolu do společného pure
+helperu. T028 subscription aditivně zachová `membership_witness` schema1: přesné
+T014 source/target/binding/edge dokumenty + rules/capture. Nepřenáší celý remote view
+ani druhý proof katalog. Canonical declaration ID se ověřuje z T014 VERSION,
+capture a konkrétní edge/binding identity; canonical edge ID váže celý candidate.
+Mapping IDs, source/target/service/context/scope, contract/release, podpůrné refs a
+subscription/link/consumer occurrence musejí souhlasit. T029 helper používá
+výhradně původní raw provenance z ProcessView; chybějící declaration nelze nahradit
+endpoint proofem ani obálkou. T012 owner je přesné manifest service ID, T025
+přidává literal `service:` prefix; žádný suffix/name-match resolver.
+
+Zachovány všechny původní IDs, raw proofs, context selection a partial order.
+T028 rules zůstávají async-process-boundary-1, přenos je aditivní metadata. T029
+rules jsou process-failures-3; v1/v2/v3 failure output se nepoužívá jako nový input.
+Legacy T028 import bez tuple zůstává čitelný a má UNKNOWN retry boundary; legitimní
+root Kafka entry se nemění. Bounded input/output guard platí i pro nový tuple,
+cyklus nebo příliš velká kolekce neprovádí mutaci ani I/O.
+
+Dotčeno: business_process.py, vlastní T029 test a úzká T028 fixture/regrese, README,
+process-paths capability/API, progress a acceptance. T014/T012 source, resolver,
+flow.py, framework, worker a sousední report/feature soubory se nemění. CLI,
+registry/spec identity/revision a managed templates bez dopadu. Změna T028 není
+vydávána za pouhý refaktor; schopnost uchovat podklad pro downstream replay je
+výslovně nová aditivní část této opravy.
+
+První focused replay: 11 PASS / 1 FAIL, 15.44 s — pozitivní import odhalil rozdíl
+T014/T025 owner namespace. První společný checkpoint 172 PASS / 2 FAIL, 73.55 s:
+stejný owner převod a stará pozitivní T028 fixture měnící candidate až po T014
+projekci. Opraven přesný namespace převod. Fixture nyní mění vstup před
+refresh_handoff/project_remote, aby nový candidate získal vlastní canonical IDs.
+Druhý checkpoint 173 PASS / 1 FAIL, 71.87 s ukázal navíc původní neúplnou UNKNOWN
+catalog topology: stávající T014 gate vyžaduje service node + declares_kafka_interface.
+Doplněna výhradně producer-shaped protocol fixture; neoslabuje se guard. Její
+unknown/stale/raw preservation assertions zůstávají. Původní post-capture zásah
+zůstává samostatný negativ. Tyto dvě fixture regrese: **2 PASS / 58 deselected,
+0.53 s** (`pytest ... test_t028... -k 'scopeless or post_capture_candidate'`).
+
+Další checkpoint 176 PASS / 1 FAIL, 71.77 s zachytil sdílený nested witness při
+negativním cycle testu. Testy nyní před mutací dělají explicitní deepcopy serializace;
+API již vstupní ProcessView kopíruje, source model se nemění. Původní negativy se
+opakují nad izolovanými inputy, jejich staré PASS nejsou náhradou aktuálního běhu.
+Nové testy pokrývají odebrání všech declarations, dvanáct tuple/proof negativů,
+převzetí skutečného witness jiného endpointu/capture a cycle/size/no-mutation.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-membership-clean tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py tests/test_t014_bind_remote_interfaces.py /tmp/kgmaker-review110-membership.py '/tmp/t029-review-scheduler.py::test_scheduled_local_listener_call_does_not_enter_kafka_retry[java]' '/tmp/t029-review-callee.py::test_listener_policy_does_not_apply_to_ordinary_local_callee[java]'
+```
+
+**177 PASS / 0 SKIP, 71.60 s**, log `/tmp/t029-membership-clean.txt`; skutečný JDK21,
+Java/K1 pozitivo, K2 UNKNOWN a všechny tři reviewer reprodukce. První RED používal
+stejné prostředí, jen `/tmp/kgmaker-review110-membership.py` a basetemp
+`/tmp/kgmaker-t029-membership-red`. Intermediate checkpoint příkazy měly stejné
+moduly/env a vlastní basetemp suffix membership-fix/final/verified; plný poslední
+běh je jediný current výsledek tohoto fix kroku. Full suite, runtime/broker/DB a
+chybějící actual Kafka3.2.0 gate NOT_RUN. GH CI není náhradou nezávislého review.
+
+## Krok 10 — evidence druhé opravy (T029-S05, T028-S05, AC06)
+
+Baseline `e415b7f65be780a944784d39f6bc3adb433022fb`. Source-backed reanchor zachovává
+všech 50 konceptů / 170 vztahů / 318 epizod; nový koncept nebo vztah se nevymýšlí.
+Původní T027/earlier business prefix zůstává byte-identický, T028 je výslovně
+aditivně rozšířen v kroku9. T014/remote_mapping/flow/framework/worker source se nemění.
+Generované grafy pouze CLI; výsledky níže. Předběžně fetch potvrdil skutečný main
+`83999fb2e08c6d9d67449687c95b2217eee08b09`; integrace bude až po fix commitu.
+
+Závěrečný úzký schema guard odmítá `schema_version=True` místo integer1. Nový
+negativ a actual mixed pozitivum: **2 PASS / 88 deselected, 7.47 s**, stejné env
+jako krok9, `pytest ... tests/test_t029_project_process_failures.py -k
+'schema_bool or imported_entry_and_ordinary'`, basetemp `/tmp/kgmaker-t029-membership-schema`.
+Je oddělený od předchozí177sady; integrovaný celý rozsah se ověří v kroku11.
+
+```sh
+./kgmaker semantic update --base e415b7f65be780a944784d39f6bc3adb433022fb --note docs/changes/130_projectProcessFailures.md
+./kgmaker scan --no-docs
+python3 /tmp/t029-membership-semantic.py
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t029-membership-preservation.py
+./kgmaker memory capture --base e415b7f65be780a944784d39f6bc3adb433022fb --validation membership-targeted=passed --validation semantic-preservation=passed --validation full-suite=skipped
+```
+
+Apply/validate/preservation **PASS**: 7 konceptů/19 vztahů source-backed reanchor,
+žádné removal, všech 50/170/318 z reviewed HEAD zachováno. Skutečná capture po177PASS
+přidala historickou epizodu `episode:ec8774d35f983b1c71327427383c74845b2f45e12e5cfe1d1b58b80e03ce00d5`;
+stav50/170/319. Následující schema_bool follow-up je ověřený zvlášť výše; epizoda
+se zpětně nepřepisuje. Final reanchor/check ověřuje aktuální source po follow-up.
+
+Final `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t029-membership-preservation.py`, `git diff --check` — **PASS**;
+50/170/319, worker symlinky odstraněny, změny jsou dohledatelné v samostatném fix
+commitu před ordinary merge main83999fb. Full/GH CI/runtime zůstávají NOT_RUN.
