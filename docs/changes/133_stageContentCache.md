@@ -2,7 +2,7 @@
 
 Task `T003-S10-W01`, kroky 1–5, acceptance `T003-S10-W01-AC01–04`, nadřazené
 `T003-AC10`. Datum 2026-11-15. Výchozí SHA
-`9c86d29fc267014e2bee4b197c7692f17a1cda93`. Dodání `IN_PROGRESS`, ověření
+`9c86d29fc267014e2bee4b197c7692f17a1cda93`. Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), ověření
 `VERIFIED_IN_SCOPE`; tento dokument netvrdí dokončení celého S10 ani T003.
 
 ## Krok 1 — source audit a nahrazení nevyhovujícího prototypu (Step 1, AC01–04)
@@ -216,3 +216,23 @@ a aktuální source, netvrdí retroaktivně čistý pre-change graph. Graph view
 obnovují jen CLI scan. Test artifact `df4f84e0e91dc0bc30f5f1d796a5e82effc10a1ce398db2d417167adceda7ed0`
 zachytil přesný 102 PASS checkpoint a NOT_RUN. Task je ve fázi review; implementer
 nevytváří vlastní approval ani merge. Finální docs mění pouze evidenci výsledků.
+
+
+## Krok 10 — publikace a final graph kontrola (Step 5, AC04)
+
+Baseline `1823ad2`; dokumentační/semantic checkpoint `e2cb40bd1b84fc454b1e5ad33b3081d7be18cc7d`
+pushnut bez force a otevřen [PR114](https://github.com/p-rum/kgmaker/pull/114) do
+ověřeného main `84f94d4462437fe1228f07d0ba8f51071224952e`. Kontrola open PRs
+a main potvrdila, že change133 nekoliduje s change132 v PR113. Poslední změna
+doplňuje pouze PR reference a tento krok, nezměnila testovaný source/test/toolchain.
+
+Fresh semantic packet `eca6f49a88119a865b817a718c7b22f740754396866777378690aa014b2faa35`
+zachoval 14 affected concepts /78 relationships včetně vlastních nových vazeb.
+`semantic apply`, `semantic validate`, `scan`, `check`, `status` a `git diff --check`
+PASS; counts 53 concepts /181 relationships /329 episodes. Generated CLI views
+obsahují 628 indexed files /7347 nodes /50080 relationships. Status current
+uvádí 629 files (včetně vlastní metadata vrstvy), bez fresh compiler kontextu
+či runtime/data promotion. Po přidání PR odkazů se stejný source-backed update/scan
+opakuje jen pro dokumentační snapshot. Full suite a GH CI NOT_RUN; žádný nový
+PASS se nevymýšlí. Ready stav a aktuální exact base/head/tree se ověří přes remote
+před předáním reviewerovi. Implementer nemerguje.
