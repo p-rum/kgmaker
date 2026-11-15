@@ -2,10 +2,11 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "b696f7b1e6c82c588d60c3e5410f691f950c9ff0f7a77048c826ec4146ec5b68",
-    "docs/acceptance-inventory.md": "b0994cbeacf672e8deea6f1bce75197b40f218bf931e5be3b4e99fdf0e9f3e9e",
+    "README.md": "488d83d6cf0c105d306ecfe58a578defe6b9467b3ab704f9346caf6ffde1ee86",
+    "docs/acceptance-inventory.md": "ebbce9cc508013add06b54b4b3f6a17ede69202f1f24a79dc65262f4e586bfa7",
+    "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
-    "docs/architecture.md": "da8ab15c2a50957396b8e13792f0fa85d3248b243f5af388e0eab4f03566a4a4",
+    "docs/architecture.md": "10f29292554d7c00962929121fdabf3c37e45a1bd1c981fed490abe931e4d62c",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/100_renderInterfaceMarkdown.md": "ea1a43213c0e82dabefea1c9e1ea1cad233aa2ce0a7980f7d0eed2508fe12f06",
     "docs/changes/108_fixColdRemoteProjection.md": "4a6b161f4a8e7b10bf3c5077896334bb084d42ea56c276fc26b6b07ad450f334",
@@ -18,7 +19,10 @@
     "docs/changes/113_reconcileT046DeliverySummary.md": "1494c7317cc3982e344ffc817e1d5acc3c9b4ed865c0e69fc7fb8c27760f0262",
     "docs/changes/114_modelSpringProxyAsyncSemantics.md": "58fa56c415f115d7791a96d181160406cddf7b3e805d7458816cbab3912d7ee4",
     "docs/changes/115_reconcileSpringProxyAsyncDelivery.md": "4e732faccffc9bfe9410761cfe44ece8c9104816c94bd9099f1b2d62c661a4ac",
-    "docs/changes/116_parseExtendedJpqlHql.md": "9f89958356bacfe06de1f460d34cf4f575bd81fbac96e8b5926d79af6749faff",
+    "docs/changes/116_parseExtendedJpqlHql.md": "2e0d169dcd73b69ce50328b63dbd4d6974df7691ef6a5cde562163ba6c7eab0b",
+    "docs/changes/117_addTargetProjectSkills.md": "4efa0effbf9fca03644244e2456189a669c61a2bab44764b8a4272e9bf548bf3",
+    "docs/changes/118_connectProjectWorkflows.md": "eb0b8ebedb9fc4b1da6b3221eb5a0d625e5e08462530f2b5781b32c9c949beb8",
+    "docs/changes/119_reconcileJpqlDelivery.md": "ce00e0d5665c0173bf22fdc54530e2f5d32c01ddcfa26f0479c899f125cffa8a",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -101,7 +105,7 @@
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "f01efdc0bc7d53059e7e8db43b3e40d1401e4767029abcc67e7f1d6a678f11e8",
-    "docs/delivery-workflow.md": "1fd9eec5c013263f61267e6022ae4bbf409dcf73c8278879c2578526581e343a",
+    "docs/delivery-workflow.md": "3ca834a925aed4e77589aa703d80ad0ae95bfda35b64354780095815d29eaa6e",
     "docs/feature-analysis.md": "0d842008766bc2451feb990afc3f49db84bab0360d0ed56c00a5c4bac78d538d",
     "docs/flyway-workspace-proofs.md": "69e5f9255eeadb86a05e51a0508df3e8bbd13c4164cfe3c05911893799dd6433",
     "docs/http-consumers.md": "f27598f4245200073a443af131ecdb2d27da54993ed481286b0ed1538934d556",
@@ -117,9 +121,10 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "f7bd4d008f697e48dbd77b166ab1044ea5aa03bc64ca105afd9214f665ab44e0",
+    "docs/production-analysis-progress.md": "6b6a51ca4859f47d7e4b8332f3f78bb153946706883df72300b80b5c0a40e349",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
+    "docs/project-workflows.md": "7b2709b8b16b795fe9a0836daea59cb98e10cfb9fc3d241e03029684fb6172ff",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
     "docs/remote-interfaces.md": "188dac8c0c4e85b76901aa0fec4d8e7e7b8c4c59ce69aa1d909f36def57265f8",
     "docs/schema-compatibility.md": "927e1178ff0e6cd5068cffe983ef4506b71b602a3c432d5e19c0517a5785a50c",
@@ -141,7 +146,9 @@
     "docs/tasks/48_completeImplementationHandoff.md": "28b1bb841cc8dcbfd8b942cc7ca20fc36685f59c5c6c7d9a15f855a98de06b76",
     "docs/tasks/49_separateTargetAgents.md": "749af4a85574f36b6dc5585828bb8fcb9f6c5398c4e3bc56c5d7a728dc66395f",
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
-    "docs/tasks/README.md": "ad61752c22243ac3d5b4b224d7300020226425e067e507801f0a13d6ea481aad",
+    "docs/tasks/50_addTargetProjectSkills.md": "179d18be56a4c77c337212fac92c7fac643423d63b184e89b785e5c26681ac6b",
+    "docs/tasks/51_connectProjectWorkflows.md": "6dee419ded0bbf1a9fa487ade39473d507565560b4b689cc09c73eef995dbc7c",
+    "docs/tasks/README.md": "32b55c5396ec7cb8813cebfcd3665ffbf36762fea61ae57892662eb017eb7b88",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "9e3c464290037669f322eb3c0ab51c37d9979299174966b7da21c6c3b45ed8f2",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -256,6 +263,7 @@
     "docs/validation/t033-descendant-proof.json": "e191d1900adabab95e830ea2fadf46d8b582f2565a7a6f6f15c7b046ba4041fe",
     "docs/view-explanation.md": "f188ef4240a382f9033f70b8cd1da54dd7f2dcddfe868f123d73af69e2e8e157",
     "docs/windows-install.md": "b706cd4404956348440b377fac7771f97e7dd405bc34c75ff4aefb97a2352a59",
+    "examples/workflows/python-project.json": "e2533597a061585411aca56c9eb29a29df127cc28d7c31ce5ff2963acc7dbcaa",
     "fixtures/build-inspection/frontend/checker.cjs": "c63200f117a543b42b8facc045fa9a1c7ea8519926607fb1945a592d60e90e4a",
     "fixtures/build-inspection/frontend/package-lock.json": "99f866cc68d76842292e4699184d1f948202396855fcc0422717d5b34b75b7a3",
     "fixtures/build-inspection/frontend/package.json": "9e9d1e2883f1f5030b098a99bce59a10ec7b412b2fd137813c494b17ce15c0e2",
@@ -355,11 +363,11 @@
     "src/kgmaker/business_process.py": "5d3cf41b1d6dffdc8bac63ad2e9c4507e08c81ec55b412179c2fef404babafb7",
     "src/kgmaker/callgraph.py": "8fff5e53a9386997abfaa8c85791c221265857679329b28224ec64e820788f9a",
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
-    "src/kgmaker/cli.py": "5d70acf53d2f3ef446777b6ef44eb6e3f22d0bc1bd630354622e031218271c45",
+    "src/kgmaker/cli.py": "b0791010ffb887327baa584f8e84c397bb8017cafce7de05d2ecedf678381c26",
     "src/kgmaker/confluence.py": "381d2f48afd854bdc57d4eb1feeba14f509b61280d0754b564a1b70bcd88f6ce",
     "src/kgmaker/confluence_sync.py": "e76df309595a33c70aeed77c06d2fb9fad11425e3b5a7d354e9b2fe923c8e3c8",
     "src/kgmaker/confluence_sync_config.py": "9d7f26485ac1fde54898accb9b789c60243edcca8aee553931130fa31c55e0c0",
-    "src/kgmaker/context.py": "bc18d1de8fa1ac11f30e28cf3e81817a86fd57f39ed0f81f52b74bd9e766f0c6",
+    "src/kgmaker/context.py": "8781ae906b3e13d22011fd6fbd0738e0e77e74755f1adeb3ccda6d421d0add8b",
     "src/kgmaker/context_roles.py": "2496e42aee60377e14561d45af2da2cbda6ac95db5155cab726b84b70c923764",
     "src/kgmaker/contract_inputs.py": "d52da75e99ac66472364eb2697918d52f58ae0c3ebf8ccfbb56bb966f52072b2",
     "src/kgmaker/control_flow.py": "c996692b8389620e5703216a6569d76c1da235b65384969e9ef07a9a51bc5c73",
@@ -368,7 +376,7 @@
     "src/kgmaker/data_resources.py": "6a33c99fb9270d4d773fe8d45ca5fd522ab1041486a2800b229cb00108948e8a",
     "src/kgmaker/dataflow.py": "8c7b08a5ca2052f1318563e9f1d50b090c15c6ded5670cb742b23fe531775bb9",
     "src/kgmaker/delivery_cli.py": "e8656b25bf524658aeabbd88bbdedc9ade5c19ed0573f0ed5747ad4709937f2b",
-    "src/kgmaker/delivery_instructions.py": "9f233c1174c4668d2bd72e1e82a5b30f7fa6f0a9b1f01361b7e025c1a50d5178",
+    "src/kgmaker/delivery_instructions.py": "feb414e4575232a8dd43a08ab8689c896310495e4d13b03ae869fd11218449a4",
     "src/kgmaker/domain.py": "8e9afa2da4ff5e53b6f78359447d8cdbf8eeeb625bc5f00a3182715a8732c0b7",
     "src/kgmaker/feature.py": "bde2f6cb7d24bcc0fbe2634cf8f404c3421fee5cc9afa2b9454b2a9fd0ce7d9c",
     "src/kgmaker/feature_cli.py": "cc4be4a89722435683d69d4b2f0812d0ff6388c11aa6f7305be7b2a1000c729f",
@@ -402,6 +410,7 @@
     "src/kgmaker/schema_replay.py": "aede1ab2ccac6d93b294c8a4aa1afea426ba1d4b7024d91c3d1ac42cfb24e24b",
     "src/kgmaker/semantic.py": "df646556cfde391bead20c03822a787ac02c7d9b64a3b812836f927503a21e88",
     "src/kgmaker/service_topology.py": "99f1dd53e07e3d8e00c05856d69fd75b07f9d13b3b62d41c9aa4e78baeecf782",
+    "src/kgmaker/skills.py": "1f942a5e262b4d94c9c4ab6f1cda02a43816b66b9924455a48da73f8ddd5d469",
     "src/kgmaker/spring_beans.py": "3578bff2781501216031c60493f6737fd1b6a4e703294cd499f43c3e6544fd13",
     "src/kgmaker/spring_conditions.py": "70788d9310a8b41d954d91fc0ef52a13608fa1da23ae52cd791c6021e5c76ac8",
     "src/kgmaker/spring_imports.py": "7147ac065c5fd7c97edaa6483712837183071b16feaa2c34ac2e1fd23c73579c",
@@ -415,7 +424,8 @@
     "src/kgmaker/views.py": "de5e5442df5b53dd13ebbd0af1a28998cc381fcd34e8bc3dcc24d3e920e55934",
     "src/kgmaker/workbooks.py": "c550018f069288038aefd2fc957ebf6e5c971237d9d0abd432030915e99696d0",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
-    "src/kgmaker/workflow.py": "e755e1fd7080f040da6f344430220be51d21ce5047e653ecfd5c3d58cde5f8b2",
+    "src/kgmaker/workflow.py": "b7113fc41664e9d2d0927219c2d2a27918cd72cc9cd049d6331badc4858214a6",
+    "src/kgmaker/workflow_profiles.py": "43d6e56ebba2b9f31e8b86674b0c54269c05d5d38f2f5e1a9f0d52bf8803edbb",
     "src/kgmaker/workspace.py": "55be0c776812d41777956f227f2089d8244404fde38cab8b5f06f9b0afd59c8a",
     "src/kgmaker/workspace_cli.py": "15dca0ac815b6b0e466d7f6aab426c47172d7853d30113f9e971e8a7b177c501",
     "tests/fixtures/jvm-golden/Advanced.kt": "ca314f687667241a465d056cb028ebfb1399dbbeb54de04dc1186abff0e5bb8a",
@@ -481,6 +491,7 @@
     "tests/test_return_consumer_flow.py": "e8bb757ea66920fba53e16cd55df88dae81daf7957e23a1b906669e7a272f333",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_schema_compatibility.py": "06f63bfe8e7c177c0db1d27412429a4ecbb3f5e80043407f935592f2569609fb",
+    "tests/test_skills.py": "a3e4c7c64bccd456f0552dafaf21e2ab297bc07293db0f992133eb476b07e716",
     "tests/test_spring_conditions.py": "ca6d393654e4fa0aaee7135386bf23acac913da93674995ad67c57561801fafb",
     "tests/test_spring_imports.py": "798db232bff7c9551a0b2fbe137bd2109804cf634611112f3bb7c4671ad811c0",
     "tests/test_spring_imports_context.py": "3c8463498ba8f7a66d252e4729950b3f6b366559f48eae22f3e4eabc45d4e15e",
@@ -525,6 +536,7 @@
     "tests/test_worker_install.py": "21348ee66c9f1c2a04a54e5ac1260ef80512469d4ced695f37606ed6f4aaa9f9",
     "tests/test_worker_protocol.py": "cb390238b80aec905b927ea4c9930826dd062a25eda645a4babef39240164436",
     "tests/test_workflow.py": "53963fcf32b5a38d0f25a1fe71b77736bb9c62bf0d0ad3d4707f23885a551d65",
+    "tests/test_workflow_profiles.py": "a5a8b6a901192cb174c2201147525ddc953e7b8940f53235a7b3098013812629",
     "tests/test_workspace.py": "5cf9c65606d895dc7720fe10980fd17c88f4f46376319d57b0c80b9e98c8c301",
     "tests/test_xlsx_references.py": "6314c056592f814b59c0ed6a2981d15a75187f0fb27139780c0c147075835e77",
     "tests/windows/restricted_launcher.py": "dcb0a32c24d666a934f762021554e0b28c9cb3a7a335920d21f2bb54e8aaede4",
@@ -628,48 +640,6 @@
       "summary": "Pinned static annotation policy and exact canonical proof replay preserve async intent without execution or delivery claims; strict full on647 passed1908/10; current schema-parent composition preserves tested policy/native source and passes bounded pure checks."
     },
     {
-      "id": "concept:docs/architecture.md:source_code_is_authoritative",
-      "name": "Source code is authoritative",
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "name": "Explicit workspace service ownership",
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
-    },
-    {
-      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "name": "Explicit service inventory projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
-    },
-    {
-      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "name": "View evidence and coverage",
-      "source_file": "docs/architecture.md",
-      "source_line": 138,
-      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
-    },
-    {
-      "id": "concept:docs/architecture.md:realm_bound_data_resources",
-      "name": "Realm-bound data resources",
-      "source_file": "docs/architecture.md",
-      "source_line": 211,
-      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
-    },
-    {
-      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "name": "Scoped HTTP provider projection",
-      "source_file": "docs/architecture.md",
-      "source_line": 236,
-      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
-    },
-    {
       "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
       "name": "Pure process label packets",
       "source_file": "docs/process-label-packets.md",
@@ -703,13 +673,6 @@
       "source_file": "docs/remote-interfaces.md",
       "source_line": 15,
       "summary": "Pure projection of the explicit W07 handoff retains endpoint, candidate and evidence identities in derived SOURCE_ONLY UNKNOWN topology without source capture or remote execution."
-    },
-    {
-      "id": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "name": "Workspace derived context role boundary",
-      "source_file": "docs/architecture.md",
-      "source_line": 298,
-      "summary": "Producer-owned derived context identity is separated from service source/compiler ownership without requiring current private replay; unsupported claims remain diagnostic and full input graphs remain immutable."
     },
     {
       "id": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
@@ -824,13 +787,6 @@
       "summary": "Structured database and stream identity plus proven selected JPA context bind non-renamed replay objects; ambiguous, partial or renamed objects remain UNKNOWN."
     },
     {
-      "id": "concept:README.md:optional_agent_authored_semantic_layer",
-      "name": "Optional agent-authored semantic layer",
-      "source_file": "README.md",
-      "source_line": 198,
-      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
       "id": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
       "name": "Bounded Spring proxy and async semantics",
       "source_file": "docs/compiler-inspection.md",
@@ -843,6 +799,62 @@
       "source_file": "docs/compiler-inspection.md",
       "source_line": 379,
       "summary": "Consuming bounded JPQL/HQL grammar validates complete clauses and scalar/predicate expressions, uses lexical query-block alias scopes, and publishes only compiler-owned static persistence intent; invalid bindings are UNKNOWN and unsupported syntax is localized PARTIAL."
+    },
+    {
+      "id": "concept:docs/architecture.md:source_code_is_authoritative",
+      "name": "Source code is authoritative",
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "summary": "When documentation conflicts with code-derived facts, source code wins and contradictions remain report evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "name": "Explicit workspace service ownership",
+      "source_file": "docs/architecture.md",
+      "source_line": 171,
+      "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
+    },
+    {
+      "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "name": "Explicit service inventory projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 179,
+      "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
+    },
+    {
+      "id": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "name": "View evidence and coverage",
+      "source_file": "docs/architecture.md",
+      "source_line": 151,
+      "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
+    },
+    {
+      "id": "concept:docs/architecture.md:realm_bound_data_resources",
+      "name": "Realm-bound data resources",
+      "source_file": "docs/architecture.md",
+      "source_line": 228,
+      "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
+    },
+    {
+      "id": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "name": "Scoped HTTP provider projection",
+      "source_file": "docs/architecture.md",
+      "source_line": 251,
+      "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
+    },
+    {
+      "id": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "name": "Workspace derived context role boundary",
+      "source_file": "docs/architecture.md",
+      "source_line": 313,
+      "summary": "Producer-owned derived context identity is separated from service source/compiler ownership without requiring current private replay; unsupported claims remain diagnostic and full input graphs remain immutable."
+    },
+    {
+      "id": "concept:README.md:optional_agent_authored_semantic_layer",
+      "name": "Optional agent-authored semantic layer",
+      "source_file": "README.md",
+      "source_line": 207,
+      "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     }
   ],
   "edges": [
@@ -1067,66 +1079,6 @@
       "evidence": "Captured compiler snapshots and public flow/CLI mutations verify localized UNKNOWN boundaries, preserving unrelated policies and all input records."
     },
     {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
-    },
-    {
-      "source": "concept:docs/architecture.md:source_code_is_authoritative",
-      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 136,
-      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_t009_propagate_view_evidence.py",
-      "source_line": 70,
-      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
-    },
-    {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 225,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
       "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
       "target": "function:src/kgmaker/process_semantics.py:prepare_process_label_packet::230",
       "kind": "implements",
@@ -1145,26 +1097,6 @@
       "source_file": "docs/process-label-packets.md",
       "source_line": 9,
       "evidence": "Packet preparation consumes the existing ProcessView or its validated document without discovering or applying semantics."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::384",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 143,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 156,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
       "source": "concept:docs/process-annotations.md:read_only_process_annotation_validation",
@@ -1235,36 +1167,6 @@
       "source_file": "src/kgmaker/remote_interfaces.py",
       "source_line": 53,
       "evidence": "The proof allowlist preserves original public proof identities, kinds, freshness and polarity while retaining only a payload hash for omitted fields."
-    },
-    {
-      "source": "function:src/kgmaker/context_roles.py:classify_context_role::12",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/context_roles.py",
-      "source_line": 14,
-      "evidence": "The pure classifier validates canonical producer identity while separating captured role from source freshness."
-    },
-    {
-      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/kafka_bindings.py",
-      "source_line": 280,
-      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
-    },
-    {
-      "source": "file:tests/test_context_roles.py:test_context_roles.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_context_roles.py",
-      "source_line": 95,
-      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
     },
     {
       "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
@@ -1437,46 +1339,6 @@
       "evidence": "Accepted007v2 first ordinary public interface render denies Python file/filesystem/process/network operations, preserves exact parent expected output and input inventory; pure parser proof, not native runtime evidence."
     },
     {
-      "source": "function:src/kgmaker/cli.py:main::1025",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1025,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 164,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 145,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "file:src/kgmaker/views.py:views.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/views.py",
-      "source_line": 164,
-      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
-    },
-    {
       "source": "file:src/kgmaker/flow.py:flow.py",
       "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
       "kind": "uses",
@@ -1485,16 +1347,6 @@
       "source_file": "src/kgmaker/flow.py",
       "source_line": 67,
       "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
-    },
-    {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 28,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -2027,46 +1879,6 @@
       "evidence": "Frontend inspection requires the versioned opt-in UI input snapshot and binds the selected React rule."
     },
     {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 198,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 440,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 100,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::498",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 200,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
       "source": "concept:docs/compiler-inspection.md:bounded_spring_proxy_and_async_semantics",
       "target": "file:src/kgmaker/framework.py:framework.py",
       "kind": "implements",
@@ -2175,6 +1987,206 @@
       "source_file": "tests/test_jpql_hql_grammar.py",
       "source_line": 177,
       "evidence": "The negative corpus proves localized PARTIAL syntax, malformed UNKNOWN without query edges, unresolved paths without filters and ambiguous entities without read/write/delete evidence."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
+    },
+    {
+      "source": "concept:docs/architecture.md:source_code_is_authoritative",
+      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 151,
+      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "function:tests/test_t009_propagate_view_evidence.py:test_ac02_mixed_evidence_retains_support_conflict_unknown_refs_and_diagnostics::70",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_t009_propagate_view_evidence.py",
+      "source_line": 72,
+      "evidence": "This test asserts that mixed support, contradiction, and unknown references remain separate with a diagnostic and PARTIAL coverage."
+    },
+    {
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 251,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::384",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 171,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 171,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
+      "source": "function:src/kgmaker/context_roles.py:classify_context_role::12",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/context_roles.py",
+      "source_line": 14,
+      "evidence": "The pure classifier validates canonical producer identity while separating captured role from source freshness."
+    },
+    {
+      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/kafka_bindings.py",
+      "source_line": 280,
+      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
+    },
+    {
+      "source": "file:tests/test_context_roles.py:test_context_roles.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_context_roles.py",
+      "source_line": 95,
+      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:main::1039",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1043,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 179,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 160,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "file:src/kgmaker/views.py:views.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 164,
+      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
+    },
+    {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 27,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 207,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::507",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 209,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
       "source": "section:docs/tasks/T003-S06-05-jpqlHqlGrammar.md:Cíl::12",
@@ -130189,6 +130201,291 @@
         }
       ],
       "id": "episode:9a120f2af17af2a7501d5ccbb1b7863a5cee1b37474dee279516281135279eb6"
+    },
+    {
+      "base_commit": "2bebab00c2ca368e3e5a6a4d7daa47fce2addcea",
+      "head_commit": "2bebab00c2ca368e3e5a6a4d7daa47fce2addcea",
+      "worktree_fingerprint": "b05d3d0aadaa480c96bbe3789e05af3016547062c6d6f27b4eb75da41805069b",
+      "title": "Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06",
+      "changed_files": [
+        {
+          "path": ".codex/agents/README.md",
+          "status": "M",
+          "sha256": "0a0679188fd6e56891a0efccfc9da443b0b610b2713bad91224b247c900a5e6c"
+        },
+        {
+          "path": ".codex/agents/code-review.toml",
+          "status": "M",
+          "sha256": "6d9d3ddf711e919b3c28077eb05ade5402737058cae658e6e2b81610c257c01c"
+        },
+        {
+          "path": "docs/acceptance-inventory.md",
+          "status": "M",
+          "sha256": "ebbce9cc508013add06b54b4b3f6a17ede69202f1f24a79dc65262f4e586bfa7"
+        },
+        {
+          "path": "docs/changes/116_parseExtendedJpqlHql.md",
+          "status": "M",
+          "sha256": "2e0d169dcd73b69ce50328b63dbd4d6974df7691ef6a5cde562163ba6c7eab0b"
+        },
+        {
+          "path": "docs/changes/119_reconcileJpqlDelivery.md",
+          "status": "A",
+          "sha256": "ce00e0d5665c0173bf22fdc54530e2f5d32c01ddcfa26f0479c899f125cffa8a"
+        },
+        {
+          "path": "docs/production-analysis-progress.md",
+          "status": "M",
+          "sha256": "6b6a51ca4859f47d7e4b8332f3f78bb153946706883df72300b80b5c0a40e349"
+        }
+      ],
+      "affected_node_ids": [
+        "concept:README.md:optional_agent_authored_semantic_layer",
+        "concept:docs/architecture.md:explicit_service_inventory_projection",
+        "concept:docs/architecture.md:explicit_workspace_service_ownership",
+        "concept:docs/architecture.md:realm_bound_data_resources",
+        "concept:docs/architecture.md:scoped_http_provider_projection",
+        "concept:docs/architecture.md:source_code_is_authoritative",
+        "concept:docs/architecture.md:view_evidence_and_coverage",
+        "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+        "file:docs/acceptance-inventory.md:acceptance-inventory.md",
+        "file:docs/changes/116_parseExtendedJpqlHql.md:116_parseExtendedJpqlHql.md",
+        "file:docs/changes/119_reconcileJpqlDelivery.md:119_reconcileJpqlDelivery.md",
+        "file:docs/production-analysis-progress.md:production-analysis-progress.md",
+        "section:docs/acceptance-inventory.md:Aktuální audit dodání — 2026-11-14::34",
+        "section:docs/acceptance-inventory.md:Aktuální oddělený T020 checkpoint — 2026-11-06::1174",
+        "section:docs/acceptance-inventory.md:Aktuální stage ověření — 2026-11-06::1197",
+        "section:docs/acceptance-inventory.md:Current blocker — first-call renderer purity::1160",
+        "section:docs/acceptance-inventory.md:Doplnění T003-S11-W01 (2026-10-26)::225",
+        "section:docs/acceptance-inventory.md:Historická acceptance podle uvedených checkpointů::133",
+        "section:docs/acceptance-inventory.md:Inventář acceptance T001 a T002::1",
+        "section:docs/acceptance-inventory.md:Neuzavřené blokátory::414",
+        "section:docs/acceptance-inventory.md:T001::295",
+        "section:docs/acceptance-inventory.md:T002::374",
+        "section:docs/acceptance-inventory.md:T003-S04-W01 — K2 Analysis API 2.1.10::477",
+        "section:docs/acceptance-inventory.md:T003-S04-W02 — bounded default/bridge declaration mapping::585",
+        "section:docs/acceptance-inventory.md:T003-S04-W03 — bounded coroutine source mapping::632",
+        "section:docs/acceptance-inventory.md:T003-S04-W04 — Dependency dispatch hierarchy::533",
+        "section:docs/acceptance-inventory.md:T003-S04-W05 — exact hand-labelled JVM corpus::641",
+        "section:docs/acceptance-inventory.md:T003-S05-W01 — bounded dynamické Spring importy::556",
+        "section:docs/acceptance-inventory.md:T003-S05-W02 — registrars a FactoryBean produkty::655",
+        "section:docs/acceptance-inventory.md:T003-S05-W03 — condition matrix::712",
+        "section:docs/acceptance-inventory.md:T003-S05-W04 — Spring proxy a async semantics — MERGED / VERIFIED_IN_SCOPE::93",
+        "section:docs/acceptance-inventory.md:T003-S06-W01 — Kotlin JPA use-site a access::136",
+        "section:docs/acceptance-inventory.md:T003-S06-W02 — zděděné persistence atributy::154",
+        "section:docs/acceptance-inventory.md:T003-S06-W03 — ORM XML overrides::163",
+        "section:docs/acceptance-inventory.md:T003-S06-W04 — Explicit persistence realms (VERIFIED_IN_SCOPE)::764",
+        "section:docs/acceptance-inventory.md:T003-S06-W05 — rozšířená JPQL/HQL gramatika — MERGED / LOCAL_VERIFIED_IN_SCOPE::114",
+        "section:docs/acceptance-inventory.md:T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)::843",
+        "section:docs/acceptance-inventory.md:T003-S07-W01 — Argument → parameter binding::607",
+        "section:docs/acceptance-inventory.md:T003-S07-W02 — Return → consumer binding::678",
+        "section:docs/acceptance-inventory.md:T003-S07-W04 revize2 — draft code/group acceptance::865",
+        "section:docs/acceptance-inventory.md:T003-S07-W04 — bounded Kafka configuration identity::726",
+        "section:docs/acceptance-inventory.md:T003-S07-W05 — retry/DLT policy draft::889",
+        "section:docs/acceptance-inventory.md:T003-S07-W06 — HTTP client intent, omezený compiler subset::786",
+        "section:docs/acceptance-inventory.md:T003-S07-W07 — explicit remote mapping draft::972",
+        "section:docs/acceptance-inventory.md:T003-S08-W01 — project references::181",
+        "section:docs/acceptance-inventory.md:T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING::171",
+        "section:docs/acceptance-inventory.md:T003-S08-W03 — bounded callbacks — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING::144",
+        "section:docs/acceptance-inventory.md:T003-S08-W04 — versioned bounded React events::616",
+        "section:docs/acceptance-inventory.md:T003-S09-W01 — přesné tokeny a XLSX reference boundaries::541",
+        "section:docs/acceptance-inventory.md:T003-S09-W02 — diagnostika binárních XLS::521",
+        "section:docs/acceptance-inventory.md:T003-S09-W03 — Thymeleaf fragment provenance::510",
+        "section:docs/acceptance-inventory.md:T003-S11-W02 — distribuce build exporterů::216",
+        "section:docs/acceptance-inventory.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE::203",
+        "section:docs/acceptance-inventory.md:T003-S11-W04 — required worker CI gates::572",
+        "section:docs/acceptance-inventory.md:T003-S12-W01 revize 2 — offline konfigurace::501",
+        "section:docs/acceptance-inventory.md:T005 — model high-level pohledu::234",
+        "section:docs/acceptance-inventory.md:T006 — výběr kontextů pro více služeb::278",
+        "section:docs/acceptance-inventory.md:T006/T008 revision2 — derived context role boundary::879",
+        "section:docs/acceptance-inventory.md:T007 — explicitní vlastnictví služeb::245",
+        "section:docs/acceptance-inventory.md:T008 — inventář služeb a externích systémů::256",
+        "section:docs/acceptance-inventory.md:T009 — propagace evidence a coverage::267",
+        "section:docs/acceptance-inventory.md:T010 rev2 — colliding normalized variants (VERIFIED_IN_SCOPE)::860",
+        "section:docs/acceptance-inventory.md:T010 — HTTP provider inventory (bounded PARTIAL)::698",
+        "section:docs/acceptance-inventory.md:T011 — typed HTTP consumer inventory::811",
+        "section:docs/acceptance-inventory.md:T012 — Kafka interface catalogue (verified bounded scope)::898",
+        "section:docs/acceptance-inventory.md:T013 — explicit versioned contract attachments (verified bounded scope)::911",
+        "section:docs/acceptance-inventory.md:T014 — current-parent descendant-result transfer::1041",
+        "section:docs/acceptance-inventory.md:T015 — database resource projection::667",
+        "section:docs/acceptance-inventory.md:T016 — current-parent descendant-result transfer::1054",
+        "section:docs/acceptance-inventory.md:T017 — current-parent descendant-result transfer::1068",
+        "section:docs/acceptance-inventory.md:T018 — current-parent descendant-result transfer::1085",
+        "section:docs/acceptance-inventory.md:T019 — current-parent exact descendant-result transfer::1101",
+        "section:docs/acceptance-inventory.md:T020 current-main publication transfer (2026-11-06)::1141",
+        "section:docs/acceptance-inventory.md:T020 — Markdown renderer, pre-staging source candidate::1129",
+        "section:docs/acceptance-inventory.md:T023 — explicit process model::687",
+        "section:docs/acceptance-inventory.md:T024 — bounded trigger inventory::753",
+        "section:docs/acceptance-inventory.md:T025 revision2 — compiler local operation evidence (candidate)::819",
+        "section:docs/acceptance-inventory.md:T025 — local technical process path::800",
+        "section:docs/acceptance-inventory.md:T026 — lossless business-step projection (candidate)::832",
+        "section:docs/acceptance-inventory.md:T030 — pure process-label packet (candidate)::926",
+        "section:docs/acceptance-inventory.md:T031 — read-only annotation validation (final review candidate)::984",
+        "section:docs/acceptance-inventory.md:T032 — explicit local semantic review (final review candidate)::1004",
+        "section:docs/acceptance-inventory.md:T033 — read-only process catalog (final review candidate)::1024",
+        "section:docs/acceptance-inventory.md:T046 — Offline delivery workflow::948",
+        "section:docs/acceptance-inventory.md:T046 — integrační evidence f115 (2026-11-06)::1227",
+        "section:docs/acceptance-inventory.md:T049 — oddělení cílových agentů (2026-11-11)::1236",
+        "section:docs/acceptance-inventory.md:T050 — cílové Agent Skills, 2026-11-15::18",
+        "section:docs/acceptance-inventory.md:T051 — projektové workflows, 2026-11-15::3",
+        "section:docs/acceptance-inventory.md:W07/T014 cold invocation correction (note108)::1113",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Autorizovaná publikace oprav — 2026-11-15::221",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Canonical Spring fixture injection — T003-S05-W01/W03 AC01, AC03::269",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Finální kontroly a hranice::338",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Kompatibilita entity Order — 2026-11-15::138",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Kompletní licenční podklady workeru — T003-S11-W01::319",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Lokální ověření před novým souhlasem uživatele — 2026-11-15::166",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Oprava po review #5907376141::60",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Opravy integračních fixture a přípravy celé sady — 2026-11-15::251",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Portable HTTP capture — T011-S04 / AC03–AC05::258",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Připravený K2 backend — T003-S04-W01/W04, žádná změna protokolu::284",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Skutečné kontroly::43",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:T003-S06-W05 — rozšířená JPQL/HQL gramatika::1",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Ucelená oprava gramatiky po druhém review — 2026-11-15::92",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Zadání a podporovaný rozsah::3",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::28",
+        "section:docs/changes/116_parseExtendedJpqlHql.md:Čisté packaging prostředí a generated descriptor — T003-S11-W01/W02::300",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:Kompatibilita a nedokončený rozsah T048::64",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:Kompatibilita a nedokončený rozsah T048::68",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:Problém a přesná historie::9",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:Provedené kontroly T048::42",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:T045-S02 / S03, R01–R04 / AC02–AC04 — skutečný cílový ref::78",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:T045-S02 / S03, R01–R04 / AC02–AC04 — skutečný cílový ref::82",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:T048 — skutečný post-merge stav a integrační ověření::1",
+        "section:docs/changes/119_reconcileJpqlDelivery.md:T048-S01 / AC01, dílčí S03 / AC03 — stav a integrační evidence::28",
+        "section:docs/production-analysis-progress.md:Aktualizace stavu::537",
+        "section:docs/production-analysis-progress.md:Aktuální oddělený T020 checkpoint — 2026-11-06::1404",
+        "section:docs/production-analysis-progress.md:Aktuální pracovní inventář T048-S01 — 2026-11-07::55",
+        "section:docs/production-analysis-progress.md:Aktuální stage ověření — 2026-11-06::1427",
+        "section:docs/production-analysis-progress.md:Aktuální stav a zbývající práce::1",
+        "section:docs/production-analysis-progress.md:Atomické položky::86",
+        "section:docs/production-analysis-progress.md:Co lze nyní použít::477",
+        "section:docs/production-analysis-progress.md:Current blocker — first-call renderer purity::1390",
+        "section:docs/production-analysis-progress.md:Historické checkpointy — stav k jejich uvedeným SHA::249",
+        "section:docs/production-analysis-progress.md:Integrační ověření T048-S02 / T046 — 2026-11-12::44",
+        "section:docs/production-analysis-progress.md:Kritická návaznost::487",
+        "section:docs/production-analysis-progress.md:Merge politika po uživatelské změně 2026-11-03::317",
+        "section:docs/production-analysis-progress.md:Otevřené PR — přesné base/head páry::210",
+        "section:docs/production-analysis-progress.md:Ověřená upstream CI evidence::509",
+        "section:docs/production-analysis-progress.md:Ověření tohoto auditu a pokračování::239",
+        "section:docs/production-analysis-progress.md:Post-merge integrace PR97 — 2026-11-15::3",
+        "section:docs/production-analysis-progress.md:Propojené workflows T051 — 2026-11-15::11",
+        "section:docs/production-analysis-progress.md:Předání dokončovacího programu — 2026-11-06::255",
+        "section:docs/production-analysis-progress.md:Return → consumer bindings::884",
+        "section:docs/production-analysis-progress.md:Skilly v cílovém projektu T050 — 2026-11-15::27",
+        "section:docs/production-analysis-progress.md:Stav pracovního rozšíření 2026-10-16::425",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 review opravy (2026-10-19)::553",
+        "section:docs/production-analysis-progress.md:T003-S03-W02 — custom Gradle source sets::544",
+        "section:docs/production-analysis-progress.md:T003-S03-W03 — captured composite builds::562",
+        "section:docs/production-analysis-progress.md:T003-S04-W01 — K2 Analysis API 2.1.10::597",
+        "section:docs/production-analysis-progress.md:T003-S04-W02 — bounded source declaration mappings::780",
+        "section:docs/production-analysis-progress.md:T003-S04-W03 — coroutine boundaries::834",
+        "section:docs/production-analysis-progress.md:T003-S04-W04 — Dependency dispatch hierarchy::721",
+        "section:docs/production-analysis-progress.md:T003-S04-W05 — JVM golden acceptance corpus::843",
+        "section:docs/production-analysis-progress.md:T003-S05-W01 — deklarace import selectorů bez execution::752",
+        "section:docs/production-analysis-progress.md:T003-S05-W02 — bounded registrar/factory deklarace::855",
+        "section:docs/production-analysis-progress.md:T003-S05-W03 — typed profile/property/class conditions::962",
+        "section:docs/production-analysis-progress.md:T003-S06-W02 — zděděné JPA persistence atributy (2026-10-26)::294",
+        "section:docs/production-analysis-progress.md:T003-S06-W03 — JPA ORM XML overrides (2026-10-26)::272",
+        "section:docs/production-analysis-progress.md:T003-S06-W04 — explicit persistence realms LOCAL_VERIFIED_IN_SCOPE::987",
+        "section:docs/production-analysis-progress.md:T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)::1089",
+        "section:docs/production-analysis-progress.md:T003-S07-W01 — Argument → parameter binding::803",
+        "section:docs/production-analysis-progress.md:T003-S07-W05 — Kafka retry/DLT draft::1080",
+        "section:docs/production-analysis-progress.md:T003-S07-W07 — verified bounded source; dependency merge pending::1189",
+        "section:docs/production-analysis-progress.md:T003-S08-W01 — TypeScript project references (2026-10-26)::354",
+        "section:docs/production-analysis-progress.md:T003-S08-W02 — selected tsconfig freshness LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::340",
+        "section:docs/production-analysis-progress.md:T003-S08-W03 — bounded callbacks LOCAL_VERIFIED_IN_SCOPE (2026-10-26)::326",
+        "section:docs/production-analysis-progress.md:T003-S08-W04 — versioned React event subset::815",
+        "section:docs/production-analysis-progress.md:T003-S09-W01 — hranice formula tokenů a dynamických referencí::733",
+        "section:docs/production-analysis-progress.md:T003-S09-W02 — bezpečná diagnostika legacy XLS::704",
+        "section:docs/production-analysis-progress.md:T003-S09-W03 — statické Thymeleaf fragmenty::748",
+        "section:docs/production-analysis-progress.md:T003-S09-W04 — hash-bound approved methodology::618",
+        "section:docs/production-analysis-progress.md:T003-S11-W01 — instalace workerů mimo checkout (2026-10-26)::404",
+        "section:docs/production-analysis-progress.md:T003-S11-W02 — distribuce build exporterů (2026-10-26)::386",
+        "section:docs/production-analysis-progress.md:T003-S11-W03 — Windows user-space VERIFIED_IN_SCOPE (2026-10-26)::373",
+        "section:docs/production-analysis-progress.md:T003-S11-W04 — explicit required versus optional CI prerequisites::769",
+        "section:docs/production-analysis-progress.md:T003-S12-W01 — odložené živé připojení, konfigurovatelné parametry::630",
+        "section:docs/production-analysis-progress.md:T005 — společný model pohledu (integrace 2026-10-26)::583",
+        "section:docs/production-analysis-progress.md:T006/T008 revize 2 — verified shared context roles (2026-11-05)::1111",
+        "section:docs/production-analysis-progress.md:T006/T008 revize2 — shared context-role boundary (review pending)::1068",
+        "section:docs/production-analysis-progress.md:T007 — explicitní vlastnictví služeb (ověřeno v deklarovaném rozsahu)::642",
+        "section:docs/production-analysis-progress.md:T008 — explicitní service inventory (ověřeno v deklarovaném rozsahu)::660",
+        "section:docs/production-analysis-progress.md:T009 — evidence a coverage agregovaných pohledů (omezený fallback)::684",
+        "section:docs/production-analysis-progress.md:T010 normalized variant correction (2026-11-03)::1102",
+        "section:docs/production-analysis-progress.md:T010 — scoped HTTP provider projection::929",
+        "section:docs/production-analysis-progress.md:T011 — typed HTTP consumer catalogue::1027",
+        "section:docs/production-analysis-progress.md:T012 — Kafka interface catalogue (verified bounded scope)::1014",
+        "section:docs/production-analysis-progress.md:T013 — explicit interface contract attachments (verified bounded scope)::1123",
+        "section:docs/production-analysis-progress.md:T014 — remote topology current-parent review candidate::1268",
+        "section:docs/production-analysis-progress.md:T015 — explicit datasource resource projection::872",
+        "section:docs/production-analysis-progress.md:T016 — current-parent common-capture review candidate::1280",
+        "section:docs/production-analysis-progress.md:T017 — current-parent bounded filtering review candidate::1291",
+        "section:docs/production-analysis-progress.md:T018 — current-parent snapshot explanation review candidate::1307",
+        "section:docs/production-analysis-progress.md:T019 — current-parent architecture JSON review candidate::1320",
+        "section:docs/production-analysis-progress.md:T020 current-main publication transfer (2026-11-06)::1371",
+        "section:docs/production-analysis-progress.md:T020 — interface Markdown source candidate::1352",
+        "section:docs/production-analysis-progress.md:T023 — ProcessDefinition / ProcessView (explicit model)::913",
+        "section:docs/production-analysis-progress.md:T024 — proved trigger inventory, local bounded implementation::975",
+        "section:docs/production-analysis-progress.md:T025 revision2 — local operation proof prerequisite (in progress)::1037",
+        "section:docs/production-analysis-progress.md:T025 — local technical process path, explicit T024 stack::1001",
+        "section:docs/production-analysis-progress.md:T026 — reversible certified local-operation groups (candidate)::1052",
+        "section:docs/production-analysis-progress.md:T030 — process-label packet (final review candidate)::1136",
+        "section:docs/production-analysis-progress.md:T031 — read-only process annotations (final review candidate)::1208",
+        "section:docs/production-analysis-progress.md:T032 — explicit local review (final review candidate)::1231",
+        "section:docs/production-analysis-progress.md:T033 — explicit process catalog (final review candidate)::1253",
+        "section:docs/production-analysis-progress.md:T046 — integrační evidence f115 (2026-11-06)::1457",
+        "section:docs/production-analysis-progress.md:T046 — opravy review z 2026-10-27::1171",
+        "section:docs/production-analysis-progress.md:T046 — Šablony, testovací návrhy a dohledatelnost::1153",
+        "section:docs/production-analysis-progress.md:T049 — oddělení cílových agentů (2026-11-11)::1466",
+        "section:docs/production-analysis-progress.md:Větve bez PR a historický PR4::226",
+        "section:docs/production-analysis-progress.md:W07/T014 — first-call purity correction (note108)::1333"
+      ],
+      "graph_delta": {
+        "added": [
+          "concept:README.md:optional_agent_authored_semantic_layer",
+          "concept:docs/architecture.md:explicit_service_inventory_projection",
+          "concept:docs/architecture.md:explicit_workspace_service_ownership",
+          "concept:docs/architecture.md:realm_bound_data_resources",
+          "concept:docs/architecture.md:scoped_http_provider_projection",
+          "concept:docs/architecture.md:source_code_is_authoritative",
+          "concept:docs/architecture.md:view_evidence_and_coverage",
+          "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+          "section:docs/changes/119_reconcileJpqlDelivery.md:Kompatibilita a nedokončený rozsah T048::68",
+          "section:docs/changes/119_reconcileJpqlDelivery.md:T045-S02 / S03, R01–R04 / AC02–AC04 — skutečný cílový ref::82"
+        ],
+        "removed": [
+          "section:docs/changes/119_reconcileJpqlDelivery.md:Kompatibilita a nedokončený rozsah T048::64",
+          "section:docs/changes/119_reconcileJpqlDelivery.md:T045-S02 / S03, R01–R04 / AC02–AC04 — skutečný cílový ref::78"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "base2b_full2318_481",
+          "status": "passed"
+        },
+        {
+          "label": "runtime_inputs_unchanged",
+          "status": "passed"
+        },
+        {
+          "label": "review_profile_toml_prompt_registry",
+          "status": "passed"
+        },
+        {
+          "label": "docs_links_atomic119",
+          "status": "passed"
+        },
+        {
+          "label": "gh_ci",
+          "status": "unknown"
+        },
+        {
+          "label": "new_session_profile_execution",
+          "status": "unknown"
+        }
+      ],
+      "id": "episode:a9b17ad9fc72025e00e122e406523648cc801e01916c7eccb4db4d3fc7bd5f8f"
     }
   ]
 }

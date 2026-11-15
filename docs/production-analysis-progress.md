@@ -1,16 +1,24 @@
 # Aktuální stav a zbývající práce
 
+## Post-merge integrace PR97 — 2026-11-15
+
+W05 je MERGED v `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea`; skutečný první merge parent je `6eb755ec1d4e777abe8d34dea7bee9477c90692f`.
+Nový čerstvý full nad tímto sloučeným main: **2318 PASS /481 SKIP /0 FAIL /0 ERROR**.
+Původní branch full2264/481 jej nenahrazuje.
+[Postup, oprava base ověření a limity](changes/119_reconcileJpqlDelivery.md).
+T003/T004 i verification scope níže zůstávají částečné.
+
 ## Propojené workflows T051 — 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 [zadání](tasks/51_connectProjectWorkflows.md), [change118](changes/118_connectProjectWorkflows.md),
-[uživatelský průchod](project-workflows.md). [PR #99](https://github.com/p-rum/kgmaker/pull/99) nyní cílí na main; závislost #98 je MERGED. Merge T051 neproveden.
+[uživatelský průchod](project-workflows.md). [PR #99](https://github.com/p-rum/kgmaker/pull/99) je MERGED do main jako `6eb755ec1d4e777abe8d34dea7bee9477c90692f`; závislost #98 je MERGED. Historická lokální evidence zůstává níže, aktuální integrace viz change119.
 
 | Krok | Dodání | Ověření | Důkaz a omezení |
 |---|---|---|---|
-| T051-S01 | PR_OPEN | VERIFIED_IN_SCOPE | Striktní JSON profily, builtins, read-only CLI; nulová mutace a ukázkový profil v cílených testech PASS |
-| T051-S02 | PR_OPEN | VERIFIED_IN_SCOPE | V3 snapshot/context/handoffs, v1/v2 regrese, stale test/review a plný CLI průchod PASS; evidence LOCAL_DECLARED |
-| T051-S03 | PR_OPEN | PARTIAL | 103 cílených testů PASS, čistý wheel smoke PASS, instrukce/docs; nové review po retargetu dle PR, živí hostitelé NOT_RUN; GH CI neověřené |
+| T051-S01 | MERGED | VERIFIED_IN_SCOPE | Striktní JSON profily, builtins, read-only CLI; nulová mutace a ukázkový profil v cílených testech PASS |
+| T051-S02 | MERGED | VERIFIED_IN_SCOPE | V3 snapshot/context/handoffs, v1/v2 regrese, stale test/review a plný CLI průchod PASS; evidence LOCAL_DECLARED |
+| T051-S03 | MERGED | PARTIAL | 103 cílených testů PASS, čistý wheel smoke PASS, instrukce/docs; nové review po retargetu dle PR, živí hostitelé NOT_RUN; GH CI neověřené |
 
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
@@ -53,13 +61,13 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 38 | 21 | 1 | 60 |
+| T003 work packages | 39 | 21 | 0 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 68 | 50 | 1 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 69 | 50 | 0 | 119 |
 
-T003/T004 mají 38 položek bez sloučené dodávky; jedna je PR_OPEN a 37 zůstává PLANNED.
+T003/T004 mají 37 položek bez sloučené dodávky; všechny zůstávají PLANNED.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
@@ -97,7 +105,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S06-W02](tasks/T003-S06-02-jpaInheritedAttributes.md) | MERGED | PARTIAL | `469e615b2766f78f27c11b85172d223b929cb031` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 39](https://github.com/p-rum/kgmaker/pull/39) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W03](tasks/T003-S06-03-ormXmlOverrides.md) | MERGED | PARTIAL | `355e98fe2ab62fadbf4869eb4485cd3562173068` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_orm_xml_overrides.py](../tests/test_orm_xml_overrides.py) | [# 50](https://github.com/p-rum/kgmaker/pull/50) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W04](tasks/T003-S06-04-multiDatasourceRealms.md) | MERGED | PARTIAL | `9f6605db0258d1b27bf233e25c7737bf0b675f5b` | [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 62](https://github.com/p-rum/kgmaker/pull/62) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S06-W05](tasks/T003-S06-05-jpqlHqlGrammar.md) | PR_OPEN | PARTIAL | parser `1dcf9ff` beze změn; opravený test/build checkpoint nad `7a054b6` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_jpql_hql_grammar.py](../tests/test_jpql_hql_grammar.py), [changes/116_parseExtendedJpqlHql.md](changes/116_parseExtendedJpqlHql.md) | [#97](https://github.com/p-rum/kgmaker/pull/97) | Konzumující gramatika: 42 PASS včetně actual-javac + T015 actual 1 PASS; širší JPA 130 PASS /32 SKIP. Aktuální full 2264 PASS /481 SKIP /0 FAIL /0 ERROR; původní fixture/prerequisite chyby opravené, viz change116. Autorizovaný push předchozích oprav PASS; aktuální exact-pair review a head jsou v PR97. PR není merged. Širší provider syntax, W06/W07 a runtime SQL zůstávají PARTIAL/UNKNOWN. |
+| [T003-S06-W05](tasks/T003-S06-05-jpqlHqlGrammar.md) | MERGED | PARTIAL | `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea` (head `ff31433eba0e180deb1df2b5f4aa8b76f3e690e0`) | [framework.py](../src/kgmaker/framework.py), [test_jpql_hql_grammar.py](../tests/test_jpql_hql_grammar.py), [change116](changes/116_parseExtendedJpqlHql.md), [post-merge change119](changes/119_reconcileJpqlDelivery.md) | [#97](https://github.com/p-rum/kgmaker/pull/97) | Bounded grammar a integrační opravy dodané. Původní branch full2264/481 a nové merged-main 2318 PASS /481 SKIP /0 FAIL /0 ERROR jsou oddělené receipty. Base-ověřovací chyba a dodatečný audit jsou transparentně v change119. W06/W07, další provider syntax a runtime SQL zůstávají PARTIAL/UNKNOWN. |
 | [T003-S06-W06](tasks/T003-S06-06-namedQueryContainers.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S06-W07](tasks/T003-S06-07-criteriaSpecificationQuerydsl.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S06-W08](tasks/T003-S06-08-schemaCompatibility.md) | MERGED | PARTIAL | `3bef611d0ed555e26e6663a0b243ce5a2bf1d428` | [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_schema_compatibility.py](../tests/test_schema_compatibility.py) | [# 64](https://github.com/p-rum/kgmaker/pull/64) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |

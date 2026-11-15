@@ -2,8 +2,8 @@
 
 ## T051 — projektové workflows, 2026-11-15
 
-Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání PR_OPEN
-([PR #99](https://github.com/p-rum/kgmaker/pull/99) do main, závislost #98 MERGED). [Zadání](tasks/51_connectProjectWorkflows.md),
+Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
+([PR #99](https://github.com/p-rum/kgmaker/pull/99), merge `6eb755ec1d4e777abe8d34dea7bee9477c90692f`, závislost #98 MERGED). [Zadání](tasks/51_connectProjectWorkflows.md),
 [change118](changes/118_connectProjectWorkflows.md).
 
 | Acceptance | Ověření | Důkaz a limit |
@@ -36,9 +36,9 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-T003/T004 mají 62 položek se sloučenou prací a 38 bez ní. T046-S01 až S06 jsou
+Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 bez ní; [post-merge evidence](changes/119_reconcileJpqlDelivery.md). T046-S01 až S06 jsou
 MERGED,
-T047 PLANNED se sdílenými upstream vlastníky. Současná úplná acceptance NOT_RUN.
+T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
 T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,
@@ -111,23 +111,24 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
-## T003-S06-W05 — rozšířená JPQL/HQL gramatika — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
+## T003-S06-W05 — rozšířená JPQL/HQL gramatika — MERGED / LOCAL_VERIFIED_IN_SCOPE
 
-PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
+PR [#97](https://github.com/p-rum/kgmaker/pull/97) je MERGED jako `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea`.
+Aktuální post-merge full a korekci base ověření dokládá [change119](changes/119_reconcileJpqlDelivery.md).
+Historický první implementační head
 `1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
 `fbc521331a7a68a94768d636f52552917008bfba`; historický publikovaný stav. Review opravy z 2026-11-15 byly po výslovném souhlasu uživatele publikovány
 v checkpointu `7369e2d`; produkční parser beze změn vůči `1dcf9ff` má
 code review bez nálezu. Opravené test/build vstupy mají samostatný aktuální receipt.
 Po uživatelem vyžádané opravě fixture a toolchain prostředí má aktuální
-full receipt nulový FAIL/ERROR; aktuální exact-pair verdikt a publikovaný HEAD
-jsou v PR97 (podrobně change116).
+full receipt nulový FAIL/ERROR; původní branch evidence níže je odlišná od post-merge main receipt v change119.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
 | T003-S06-W05-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_jpql_hql_grammar.py::test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection`: exact compiler-owned root/join/subquery reads, bulk update/delete, DTO constructor a clause-specific path edges; `partialLateral` je PARTIAL s query locatorem |
 | T003-S06-W05-AC02 | LOCAL_VERIFIED_IN_SCOPE | `JPA_RULE_VERSION=annotation-source-v8-jpql-hql-grammar`; `test_legacy_jpa_rules_remain_readable_but_require_reinspection` pokrývá v6/v7, graph/store v1/v2/v3 zůstává beze změny a stávající realm/schema suite prochází |
 | T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence` plus bounded invalid-clause regressions: malformed/incomplete query, unknown path, duplicate entity, undeclared alias a trailing token nevytvářejí silnější evidence; vstupní graph se nemutuje |
-| T003-S06-W05-AC04 | PARTIAL | Finální corpus 42 PASS /0 SKIP včetně actual-javac; T015 actual 1 PASS; širší JPA 130 PASS /32 SKIP. Aktuální full: 2264 PASS /481 SKIP /0 FAIL /0 ERROR. Předchozí šest FAIL/41 ERROR odstraněno opravou integračních fixture a přípravou pinned toolchainů; nové exact-pair review je v PR97. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
+| T003-S06-W05-AC04 | PARTIAL | Finální corpus 42 PASS /0 SKIP včetně actual-javac; T015 actual 1 PASS; širší JPA 130 PASS /32 SKIP. Historický branch full na ff31433: 2264 PASS /481 SKIP /0 FAIL /0 ERROR. Předchozí šest FAIL/41 ERROR odstraněno opravou integračních fixture a přípravou pinned toolchainů. Aktuální merged-main full na 2bebab00: 2318 PASS /481 SKIP /0 FAIL /0 ERROR; viz change119 a korekce v PR97. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
 
 ## Historická acceptance podle uvedených checkpointů
 
