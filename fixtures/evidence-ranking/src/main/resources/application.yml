@@ -1,0 +1,4 @@
+# Configuration mentions are not invocation evidence.
+ranking:
+  enum: ranking.Currency
+  method: decide

@@ -92,7 +92,11 @@ Neznámé soubory se nepovažují za production. `query --scope all` a `graph vi
 --scope all` zpřístupní inventory. Python renderer umí explicitní `scope="all"`.
 Diagram je architektura, nikoli control-flow nebo pořadí vykonání.
 
-Profily `execution-1` a `impact-1` mají stabilní ID tie-break a score breakdown.
+Profily `execution-2` a `impact-2` mají stabilní ID tie-break, score breakdown,
+konkrétní contributions/path a lokalizované penalty za neúplnost.
+`kgmaker graph rank --profile impact --format markdown` vykreslí stejnou evidenci
+jako výchozí JSON. Podrobný kontrakt a omezení: [evidence ranking](evidence-ranking.md),
+[change126](changes/126_evidenceRanking.md).
 Execution profile používá explicitní call-site/dispatch rodiny; legacy `calls`,
 typové reference, konstanty, contains, testy a dokumentace mají nulový execution
 příspěvek. Side effects a shared type references jsou samostatné dimenze. Enum

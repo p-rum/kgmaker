@@ -317,3 +317,87 @@ vygenerovaný graf má 587 souborů, 6 742 uzlů a 46 843 vztahů (včetně epiz
 Task workflow je v opravné iteraci 1 ve fázi review; uloženy skutečné implementační
 a testové artefakty, žádné vlastní APPROVE. Cílené testy se po dokumentační údržbě
 zbytečně neopakovaly; funkční source/test obsah zůstal od finálního běhu shodný.
+
+## Krok 10 — integrace MERGED PR106 (T028-S01/S04/S05, AC01/AC04–AC06)
+
+Výchozí T028 fix HEAD `284dc68d0367c3ccfcc564dfb20638b1aeae4eef`, tree
+`14cba5422dbf17ff42599bd769eafdfe2704dc5d`. Nový skutečný main
+`8e7dff5b82597184662797c07a68e5ec460e9e0e` má ověřené parents
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` a
+`9117c801f490fffc315487c6d543bb7cd44e7dc9`, tree
+`21b6e0fbfa4f7b863c5141361c86e1b96e7cce10`; odpovídá
+[nezávislému merge auditu PR106](https://github.com/p-rum/kgmaker/pull/106#issuecomment-6899380938).
+Merge probíhá normálně, se dvěma rodiči, bez rebase/force nebo změny historie.
+
+Zdrojová rekognoskace integračního diffu: W08 mění `views.project` a izolaci
+compiler context/proof/CFG. Tento tok používá T025 a tedy actual T028 pipeline;
+není důvod znovu spouštět celý scoring/full suite, pokud jejich zdroje zůstaly
+beze změny. Ověřena byte identity T028 `business_process.py`, `remote_interfaces.py`
+a vlastních testů vůči `284dc68`, a všech W08 source/test modulů vůči `8e7dff5b`.
+**PASS**, žádný funkční conflict nebo dodatečná implementace. README auto-merge
+zachovává oba veřejné kontrakty. Skutečné konflikty jsou pouze `.kgmaker/GRAPH.md`,
+`.kgmaker/semantic.json`, koncové sekce acceptance a progress dokumentů. Obě
+obsahové části dokumentů zůstávají, W08 delivery je aktualizováno na MERGED se
+samostatným odlišením jeho historických testů od nového běhu integrace T028.
+Capability/API příklady a CLI parametry jsou beze změny oproti fixu — bez dalšího
+dopadu; nové docs odkazy vedou na tento integrační krok. Task registry/worker
+protocol/installed templates bez dopadu. Nesloučené PR107 není přebíráno.
+
+Semantic union obou rodičů zachovává **47 konceptů / 154 vztahů / 306 epizod**
+před novou integrační capture. Společné facts jsou porovnány beze změny ID,
+summary, kind/confidence/evidence (kromě doložených anchor line suffixů); společné
+epizody jsou přesně shodné. **PASS**. Reanchor respektuje konkrétního rodiče
+každého převzatého concept/edge, ne neexistující jednotnou pre-merge podobu zdroje.
+Grafy se obnovují jen příkazem. Nový koncept ani business tvrzení se v integraci
+nevytváří.
+
+Cílený integrační příkaz:
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_t028_cross_async_process_boundary.py tests/test_t025_build_local_process_path.py tests/test_t006_select_service_contexts.py tests/test_context_roles.py tests/test_production_scope.py tests/test_graph_provider.py /tmp/kgmaker-review108-repros.py
+```
+
+Předchozí 264 PASS z kroku 8 a upstream W08 173/31/4 PASS jsou zachované historické
+výsledky, nikoli předstíraný nový běh. CI fixu `284dc68` run `43748254064` má opět
+sedm explicitně ověřených `steps=[]` (5 failure, 2 cancelled), test evidence NOT_RUN.
+Full suite, nový runtime a remote delivery jsou nadále NOT_RUN.
+
+
+Výsledek integračního příkazu: **PASS 158 / 0 SKIP, 28.09 s**. T028/T025 actual
+pipeline prochází s novou W08 context/provenance izolací; všechny 4 reviewer
+reprodukce zůstávají PASS. Funkční kód nebylo nutné upravit. Source/test byte
+identity vůči oběma rodičům zůstává PASS; nová integrační regrese nebyla vymyšlena,
+protože merge neukázal další interakční chybu. Dočasné JVM target/target-k2 symlinky
+byly odstraněny. Full suite i nesouvisející celý scoring test set NOT_RUN; upstream
+173/31/4 PASS z ověřeného identického main tree se neoznačuje jako nový běh.
+
+Údržba integrace: `./kgmaker semantic update --base
+8e7dff5b82597184662797c07a68e5ec460e9e0e --note
+docs/changes/127_crossAsyncProcessBoundary.md`, source-backed patch pro aktuální
+packet, `./kgmaker semantic apply` a `./kgmaker semantic validate` — PASS.
+Reanchor používá vlastníka citace z příslušného rodiče, ověří hash jeho zdrojového
+souboru a nezměněný řádek v současném zdroji; nedošlo k odstranění faktů.
+`python3 /tmp/t028-integration-preservation.py` ověřil proti **oběma** rodičům
+všechny koncepty a vztahy (povolena jen změna doloženého source_line/symbol line
+anchoru) a přesnou rovnost všech původních epizod: PASS. Union před capture
+47 konceptů / 154 vztahů / 306 epizod.
+
+`./kgmaker memory capture --base 284dc68d0367c3ccfcc564dfb20638b1aeae4eef
+--validation integration-targeted=passed --validation union-preservation=passed
+--validation full-suite=skipped` — PASS; skutečná integrační epizoda
+`episode:c5b113ec9c2b832b719a1b487f7a7e14c6c7ea4e44202a154a9b1dbff815bd13`.
+Výsledná historie má **47 konceptů / 154 vztahů / 307 epizod**. Tato epizoda je
+aktuální capture integrace, nikoli zpětně vymyšlený pre-task index. Stav PR108
+zůstává PR_OPEN; nové nezávislé review nad integračním HEAD je před merge nutné.
+
+Závěrečné `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t028-integration-preservation.py`, `git diff --check` a
+`git diff --cached --check` — PASS. Vygenerovaný graf obsahuje 594 souborů,
+6836 uzlů a 47117 vztahů (včetně odvozené memory vrstvy; nejde o počty samotných
+ručně doložených konceptů/vztahů výše). Současné worker symlinky jsou odstraněné.
+Task workflow pokračuje integrační iterací 2; výchozí 4000-token context limit
+byl nedostatečný a context byl znovu připraven s `--token-budget 12000`. Záznam
+artefaktu nejprve odmítl interní `.kgmaker/semantic.json` jako sensitive path;
+veřejný artifact nyní cituje soubory dokumentace a zdroje, přesný semantic audit
+zůstává zde. Žádná z těchto workflow kontrol nemění vstupní data ani nerozhoduje
+nezávislé review. Publish neznamená merge; PR108 vyžaduje nové APPROVE.

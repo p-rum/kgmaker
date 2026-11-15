@@ -1379,3 +1379,75 @@ must be superseded for the current HEAD before merge.
 | AC01/AC03/AC05 | `test_release_aliases_across_bindings_preserve_conflicts_without_duplicate_consumer_paths` | PASS; two RESOLVED T014 binding objects retain two conflict boundaries and zero duplicated consumer imports |
 | AC01/AC05 | `test_distinct_versioned_endpoints_across_bindings_keep_independent_paths`, existing same-group/fanout and actual pipeline tests | PASS; genuinely different endpoint/version/group memberships remain potential independent paths, no A-before-B |
 | AC06 | README, capability/API example, remote-interface handoff, progress and change127 review steps | Updated; full suite and runtime NOT_RUN; new PR review/CI status tracked in PR108 |
+
+
+## T003-S07-W08 — vysvětlitelný evidence ranking
+
+Dodání MERGED ([PR106](https://github.com/p-rum/kgmaker/pull/106), main `8e7dff5b82597184662797c07a68e5ec460e9e0e`); ověření VERIFIED_IN_SCOPE nad main
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, verze `execution-2`/`impact-2`.
+Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanking.md).
+[Podporovaný kontrakt](evidence-ranking.md), [fixture](../fixtures/evidence-ranking/README.md).
+
+| Acceptance | Ověření | Konkrétní důkaz |
+|---|---|---|
+| T003-S07-W08-AC01 | VERIFIED_IN_SCOPE | `test_every_score_has_traceable_contributions_and_local_penalty`, `test_noise_and_order_do_not_inflate_execution_and_impact_is_separate`, `test_confidence_and_duplicate_records_do_not_add_weight`, actual Javac/JSON/Markdown CLI |
+| T003-S07-W08-AC02 | VERIFIED_IN_SCOPE | `test_old_schemas_roundtrip_without_invented_execution` v1/v2/v3; validovaný store, `test_selected_variant_retains_only_required_source_contexts_and_valid_records`, graph-provider feature packet regrese |
+| T003-S07-W08-AC03 | VERIFIED_IN_SCOPE | unresolved/ambiguous/stale/runtime parametrizace, invalid refs před scope filtering, no mutation/implicit process, nezávislá static completeness; actual unresolved Javac target |
+| T003-S07-W08-AC04 | VERIFIED_IN_SCOPE | README, capability, CLI příklady, production matrix, change126; framework side effects jsou schema fixture, pouze Java má nový actual-native ranking průchod |
+
+Full/GH CI NOT_RUN; kompletní S07, W09, runtime dostupnost a obecná dispatch
+úplnost zůstávají mimo ověřený rozsah.
+
+
+### T003-S07-W08 — review regresní rozšíření AC01/AC03
+
+Nad reviewed HEAD `e0bfd41b13fe0190e5608f88964a0eef36f274de` reviewer doložil
+2 FAIL, které předchozí72PASS nepokrývaly. `test_stale_proof_records_cannot_supply_current_weight_or_paths`
+nově ověřuje execution/impact, nulovou mutaci, contributions a paths;
+`test_non_execution_site_cannot_close_runtime_only_dispatch_gap` pokrývá
+METHOD_REFERENCE/INVOKEDYNAMIC/unsupported kind.
+`test_only_admitted_current_static_path_closes_observation_gap` pokrývá
+stale/unknown/site-only proof, chybějící hrany, unresolved/scope/config hranice.
+`test_runtime_only_and_unknown_proof_gaps_follow_the_selected_path` ověřuje
+přenesení konkrétních gap refs do potomků. Skutečný Javac test rozšířen o public
+CLI nad stale evidence records. Cílená sada **96 PASS / 0 SKIP, 3.20 s**;
+nezávislé repro **2 PASS**. Historický pre-merge stav byl PR_OPEN, verification
+VERIFIED_IN_SCOPE; následné APPROVE a merge jsou doloženy níže. Podrobnosti a přesné příkazy:
+[change126 kroky6–7](changes/126_evidenceRanking.md).
+
+
+### T003-S07-W08 — authority/variant regrese AC01–AC04
+
+Nad reviewed `7169e88d97595694bf7591117c683716bb812218` měly nové nezávislé
+reprodukce 2 FAIL. Dodatečná verification VERIFIED_IN_SCOPE nyní pokrývá:
+`test_context_authority_is_required_before_execution_admission` (oba profily a scopes,
+SOURCE_ONLY/UNKNOWN, bare build, missing producer/binding a foreign proof negativy),
+`test_legacy_source_only_label_never_becomes_execution` (v2/v3),
+`test_real_producer_context_shape_preserves_separate_evidence_families`
+(compiler/candidate/framework/runtime plus source/imported-build původ),
+`test_mixed_compiler_edge_is_omitted_without_importing_other_variant`,
+`test_variant_boundary_cannot_expand_symbols_sites_cfg_or_evidence` a
+`test_selected_projection_retains_source_provenance_of_evidence_without_compiler_promotion`.
+Public actual Javac a feature graph_selection/roundtrip regrese prošly beze změny
+runtime identit. **173 PASS / 0 SKIP / 3.50 s + 31 PASS / 1.23 s**, nezávislé repro 4 PASS / 0.14 s.
+Historický pre-merge stav PR_OPEN následně uzavřelo APPROVE nad `9117c801`
+a merge `8e7dff5b`. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
+obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
+
+
+### T028 integration with MERGED PR106
+
+PR106 delivery is MERGED at `8e7dff5b82597184662797c07a68e5ec460e9e0e` after
+independent APPROVE of `9117c801` (173 ranking/projection PASS, 31 context-role
+PASS, 4 reviewer repro PASS). This is historical upstream evidence. PR108 merges
+that actual main into review-fixed `284dc68`, preserving exact source/test contents
+of both parents. AC01/AC04/AC05 integration is checked through T028/T025 actual
+pipeline and context/projection tests; new counts and precise commands are in
+[change127 step 10](changes/127_crossAsyncProcessBoundary.md). PR108 remains PR_OPEN;
+new independent review of its exact base/HEAD is required. Full suite NOT_RUN.
+
+Current integration result: **158 PASS / 0 SKIP, 28.09 s**, actual JDK21/Javac/K1/K2,
+including all 4 reviewer reproductions. T028/T025 plus service/context/projection
+regressions pass against the merged W08 context isolation. Both parents' functional
+source/test content is byte-identical; no new implementation change was needed.
+This result is distinct from the historical 264-case review-fix run.

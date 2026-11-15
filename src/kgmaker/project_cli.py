@@ -12,11 +12,11 @@ from .store import load_graph
 from .views import project, rank
 
 
-def common(parser):
+def common(parser, *, formats=("json",)):
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--workspace", type=Path, help="workspace manifest selecting an explicit checkout")
     parser.add_argument("--repo", help="repository ID in --workspace")
-    parser.add_argument("--format", choices=("json",), default="json")
+    parser.add_argument("--format", choices=formats, default="json")
     parser.add_argument("--strict", action="store_true", help="fail with exit 4 if coverage is partial")
 
 
@@ -52,7 +52,7 @@ def register(sub):
     p = actions.add_parser("migrate", help="conservatively migrate the stored v1 index to v2")
     common(p)
     p = actions.add_parser("rank")
-    common(p)
+    common(p, formats=("json", "markdown"))
     p.add_argument("--entry")
     p.add_argument("--scope", choices=sorted(SCOPES | {"all"}), default="production")
     p.add_argument("--profile", choices=("execution", "impact"), default="execution")
@@ -164,8 +164,12 @@ def run(args):
                               diagnostics=graph.diagnostics, limitations=["Coverage applies only to the selected compiler context and supported matrix."])
             result["freshness"] = freshness
             result["analysis_source"] = "VALIDATED_COMPILER_INDEX" if graph.schema_version == 3 else "CURRENT_SOURCE_IN_MEMORY"
-        print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
-        return 4 if args.strict and result["status"] == "PARTIAL" else 0
+        if args.command == "graph" and args.graph_command == "rank" and args.format == "markdown":
+            from .analysis_report import render_ranking_report
+            print(render_ranking_report(result))
+        else:
+            print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
+        return 4 if args.strict and result["status"] in {"PARTIAL", "UNKNOWN"} else 0
     except (AnalysisError, ValueError, TypeError, OSError) as error:
         code = getattr(error, "code", 2)
         status = "REJECTED_SNAPSHOT" if code == 3 else "STRICT_COVERAGE_FAILED" if code == 4 else "INVALID_INPUT"
