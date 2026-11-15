@@ -84,9 +84,10 @@ opravy prošly čistým exact-pair review na finálním headu
 
 PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
 `1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
-`fbc521331a7a68a94768d636f52552917008bfba`; historický publikovaný stav. Lokální review opravy z 2026-11-15 jsou
-oddělené; runtime `1dcf9ff` má code review bez nálezu. Push je blokován
-bezpečnostní kontrolou a celý test gate je FAIL (podrobně change116).
+`fbc521331a7a68a94768d636f52552917008bfba`; historický publikovaný stav. Review opravy z 2026-11-15 byly po výslovném souhlasu uživatele publikovány
+v checkpointu `7369e2d`; runtime `1dcf9ff` má code review bez nálezu.
+Nové review publikovaného HEAD je samostatné; celý test gate zůstává FAIL
+(podrobně change116).
 
 | ID | Stav | Přímá evidence |
 |---|---|---|

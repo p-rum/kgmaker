@@ -163,7 +163,7 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
   platí, registr a instalované instrukce bez dopadu. Publikace nadále BLOCKED.
 
 
-## Finální lokální ověření a předání — 2026-11-15
+## Lokální ověření před novým souhlasem uživatele — 2026-11-15
 
 - Krok `T003-S06-W05-S05`, `AC01–AC04`; runtime commit
   `1dcf9ff24b549b2c5ae240ee6ff7c855cfb86053`, base PR
@@ -216,3 +216,33 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
   vyřešit baseline Spring testy a získat úspěšné povinné kontroly; autorizovaně
   publikovat opravy a znovu provést exact-pair review před případným merge.
   W06/W07, další provider syntax a runtime/data dostupnost zůstávají mimo dodávku.
+
+
+## Autorizovaná publikace oprav — 2026-11-15
+
+- Krok `T003-S06-W05-S05`, `AC04`; výchozí lokální SHA
+  `7369e2d29b7522f990c9056cf840d6a1be4dc354`.
+- Uživatel po vysvětlení důvodu zamítnutí výslovně schválil push, PR,
+  nové review a podmíněný merge po schválení. Předchozí push BLOCKED byl
+  historický stav před tímto souhlasem; nejde již o chybějící autorizaci.
+- HTTPS CLI push **FAIL** kvůli chybějícím přihlašovacím údajům. Následný
+  autorizovaný SSH push stejného commitu bez force **PASS**:
+  `git -c core.sshCommand='ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15'
+  push git@github.com:p-rum/kgmaker.git HEAD:refs/heads/feat/t003-s06-05-jpql-hql-grammar`.
+  GitHub read-back potvrdil head `7369e2d`, base `193c89b`, ready/open/unmerged.
+- Aktualizuje se existující [PR97](https://github.com/p-rum/kgmaker/pull/97),
+  duplicitní PR nevzniká. Dokumentační publikace nemění runtime ani testy;
+  ověřené runtime SHA zůstává `1dcf9ff`. Code review bez nálezu nenahrazuje
+  nesplněnou úplnou sadu **FAIL: 1897 PASS /752 SKIP /6 FAIL /41 ERROR**.
+- README, compiler guide, CLI/API, schémata, templates a registr zadání:
+  bez dopadu, protože jde pouze o stav publikace. Acceptance inventory a
+  stavová matice odstraňují již neplatnou aktuální push blokaci. Scope,
+  podporované varianty a omezení se nemění.
+- Kontroly tohoto metadata kroku: shodnost `src/`, `tests/`, `workers/`
+  vůči `1dcf9ff`, `git diff --check`, scoped semantic validate a generovaný
+  scan/check; finální výsledky se ověřují před předáním reviewerovi.
+  Nový plný pytest se neopakuje kvůli metadata změně. GH CI se ověřuje
+  samostatně nad publikovaným headem; bez nového výsledku je NOT_RUN.
+- Zbývá nové nezávislé review přesného publikovaného base/head. Merge je
+  povolen pouze po APPROVE a všech ostatních povinných kontrolách; aktuální
+  full-suite FAIL nadále blokuje merge. T003-S06 tím není uzavřen.
