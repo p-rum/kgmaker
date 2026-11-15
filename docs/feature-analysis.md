@@ -109,6 +109,10 @@ Markdown is the default. All report output must be under
 traversal and symlink components are rejected. Generated feature reports, including
 nested fixture reports, are excluded from graph and packet source inventories.
 This prevents report output from becoming independent implementation evidence.
+Report targets reject symlinks and hardlink aliases. Late abort preserves the
+last output and removes only empty directories created by that publication;
+preexisting or concurrently populated directories remain. The report uses pinned
+JSON bytes and rechecks source/context content before replacement (change131).
 
 Exit codes: **0** valid processing (including incomplete), **1** operational error,
 **2** invalid input/candidate, **3** stale baseline/packet, **4** valid incomplete

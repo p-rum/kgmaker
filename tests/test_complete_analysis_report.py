@@ -254,3 +254,62 @@ def test_report_reads_legacy_graph_store_without_rewriting_it(analysis,version):
     report=json.loads((root/'docs/generated/features/report.json').read_text())
     assert report['report_projection']['status']=='PARTIAL'
     assert report['analysis']['schema_version']==1
+
+
+@pytest.mark.parametrize('error',[TimeoutError,KeyboardInterrupt])
+def test_new_nested_output_abort_removes_only_owned_empty_parents(analysis,error):
+    root,_,candidate=analysis
+    assert feature.apply(root,'report',candidate)['valid']
+    before=files(root);directories={p for p in root.rglob('*') if p.is_dir()}
+    from kgmaker import feature_cli
+    atomic=feature_cli.atomic_write
+    def abort(target,text,*,before_replace):
+        def fail():
+            before_replace();raise error('late cancellation')
+        return atomic(target,text,before_replace=fail)
+    with patch.object(feature_cli,'atomic_write',abort):
+        if error is KeyboardInterrupt:
+            with pytest.raises(KeyboardInterrupt):cli(root,'report','--analysis','report','--output','docs/generated/features/new/nested/report.md')
+        else:assert cli(root,'report','--analysis','report','--output','docs/generated/features/new/nested/report.md')[0]==1
+    assert files(root)==before
+    assert {p for p in root.rglob('*') if p.is_dir()}==directories
+
+
+def test_nested_abort_preserves_preexisting_and_concurrent_content(analysis):
+    root,_,candidate=analysis
+    assert feature.apply(root,'report',candidate)['valid']
+    existing=root/'docs/generated/features';existing.mkdir(parents=True)
+    from kgmaker import feature_cli
+    atomic=feature_cli.atomic_write
+    def abort(target,text,*,before_replace):
+        def fail():
+            before_replace();(target.parent/'concurrent.txt').write_text('another writer')
+            raise TimeoutError('late timeout')
+        return atomic(target,text,before_replace=fail)
+    with patch.object(feature_cli,'atomic_write',abort):
+        assert cli(root,'report','--analysis','report','--output','docs/generated/features/new/report.md')[0]==1
+    assert existing.is_dir()
+    assert (existing/'new/concurrent.txt').read_text()=='another writer'
+    assert not (existing/'new/report.md').exists()
+
+
+def test_report_rejects_hardlink_alias_of_input(analysis):
+    import os
+    root,_,candidate=analysis
+    assert feature.apply(root,'report',candidate)['valid']
+    output=root/'docs/generated/features/report.md';output.parent.mkdir(parents=True)
+    os.link(root/'requirement.md',output)
+    before=files(root)
+    assert cli(root,'report','--analysis','report')[0]==2
+    assert files(root)==before and output.samefile(root/'requirement.md')
+
+
+def test_report_never_binds_another_loaded_payload_to_pinned_bytes(analysis):
+    root,packet,_=analysis
+    other=copy.deepcopy(packet);other['requirement']='A different payload'
+    other['packet_id']=feature.packet_identity(other)
+    before=files(root)
+    with patch.object(feature,'load_packet',return_value=other):
+        code,result=cli(root,'report','--analysis','report')
+    assert code==3 and 'changed' in result['error']
+    assert files(root)==before

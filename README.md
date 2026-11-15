@@ -374,7 +374,9 @@ report reuse that selection; passing a different selection is rejected.
 Run `kgmaker init` to install the `kgmaker-analyst` custom agent and JetBrains
 analysis command instructions. Reports expose independent Required/Existing/Missing/Derived/External/Unresolved facets,
 explicit business/tool blockers and a requirement-linked delivery/test plan. Static
-presence does not imply data availability; execution remains NOT_RUN. See the
+presence does not imply data availability; execution remains NOT_RUN. Failed report
+publication preserves the previous output and cleans only its own empty new
+directories. See the
 [complete report scope](docs/complete-analysis-report.md) and
 [change131](docs/changes/131_completeAnalysisReport.md). See [workflow, schema and exact limitations](docs/feature-analysis.md)
 and the [fixture report](docs/generated/features/additional-hedge-example.md).

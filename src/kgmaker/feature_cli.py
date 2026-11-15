@@ -83,7 +83,7 @@ def run(args) -> int:
         elif command == "status":
             result = feature.status(root, args.analysis)
         else:
-            from .report_publication import ReportGuard
+            from .report_publication import ReportGuard, report_output_path, publish_report
             guard = ReportGuard(root)
             packet = guard.read(safe_path(root, f".kgmaker/analyses/{args.analysis}/packet.json"),
                                 lambda: feature.load_packet(root, args.analysis))
@@ -117,16 +117,15 @@ def run(args) -> int:
                     raise AnalysisError("Stored analysis failed validation: " + "; ".join(errors))
             result = {"analysis": candidate, "report_projection": report_projection(candidate, historical, stale), "stale": stale, "completion": candidate["completion"], "exit_code": 3 if stale else 0}
             output = args.output or f"docs/generated/features/{args.analysis}.{'json' if args.format == 'json' else 'md'}"
-            # Restrict reports to their reserved directory, keeping them out of evidence.
-            if not output.startswith(feature.GENERATED_PREFIX):
-                raise AnalysisError("Feature report output must be under docs/generated/features/ to prevent evidence feedback")
-            target = safe_path(root, output)
+            target = report_output_path(root, output)
             rendered = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n" if args.format == "json" else render_report(candidate, historical, stale, applied)
             def verify_report():
+                if report_output_path(root, output) != target:
+                    raise AnalysisError("Report output path changed during publication", 3)
                 guard.verify()
                 if observation_staleness(candidate) != observed_stale:
                     raise AnalysisError("Report observation freshness changed during publication", 3)
-            atomic_write(target, rendered, before_replace=verify_report)
+            publish_report(target, rendered, atomic_write, before_replace=verify_report)
             result = {"output": output, "completion": candidate["completion"], "stale": stale, "exit_code": result["exit_code"]}
         if not result["exit_code"] and args.require_complete and result["completion"].get("processing_status") != "COMPLETE":
             result["exit_code"] = 4

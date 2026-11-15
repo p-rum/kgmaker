@@ -1496,10 +1496,10 @@ PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
 
 
-## T003-S09-W05 — complete analytical report (IN_PROGRESS / VERIFIED_IN_SCOPE)
+## T003-S09-W05 — complete analytical report (PR_OPEN / VERIFIED_IN_SCOPE)
 
 Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_completeAnalysisReport.md),
-[capability/CLI](complete-analysis-report.md). Current integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131.
+[capability/CLI](complete-analysis-report.md). Current integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131. Subsequent publication audit: 151 PASS / 0 SKIP / 2 DESELECTED; nested empty-parent cleanup, concurrent content preservation, hardlink alias rejection and exact pinned JSON payload are covered by five new tests. Actual post-fix report fixture: 5 PASS / 0 SKIP / 26.31 s. [PR112](https://github.com/p-rum/kgmaker/pull/112).
 
 | Acceptance | Public test | Bounded evidence |
 |---|---|---|

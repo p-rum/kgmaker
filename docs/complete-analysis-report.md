@@ -60,8 +60,13 @@ Publication uses existing `atomic_write(before_replace=...)`: loaded current and
 historical packet, accepted analysis, receipt and requirement bytes are pinned;
 the existing read-only source/context snapshot is compared again immediately
 before replacement. Input drift exits 3 and preserves the previous report. A
-late timeout or cancellation removes the temporary output and preserves the last
-valid generation. Already stale source bytes changing again are also detected;
+late timeout or cancellation removes the temporary output and only empty parent
+directories created by this publication attempt; preexisting directories and
+concurrent contents remain. The last valid generation is preserved. Pinned JSON
+is parsed from the captured bytes with the existing strict parser, and the
+validated loader payload must match. Existing symlink rejection remains in
+force; reserved outputs also reject hardlink aliases via the shared safe-target
+checks. Already stale source bytes changing again are also detected;
 repeated identical STALE messages cannot hide such a change.
 
 ## Actual cross-layer acceptance and boundary
