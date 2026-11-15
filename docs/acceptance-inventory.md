@@ -1236,3 +1236,16 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 ## T049 — oddělení cílových agentů (2026-11-11)
 
 [Scénáře AC01–AC12 a jejich ověření](tasks/49_separateTargetAgents.md) jsou PLANNED / NOT_RUN. Při implementaci přidej ke každému dodanému AC důkaz, SHA, verzi hostitele a skutečný výsledek.
+
+## T003-S07-W03 — field a explicitní mapping flow
+
+Baseline `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`, 2026-11-15;
+dodání IN_PROGRESS, ověření omezené na `field-mapping-1`, nikoli celé T003-AC07.
+Přesné příkazy/výsledky: [change124](changes/124_fieldAndMappingFlow.md).
+
+| Acceptance | Ověření | Konkrétní důkaz |
+|---|---|---|
+| T003-S07-W03-AC01 | VERIFIED_IN_SCOPE | `test_public_manual_and_actual_generated_mapper`, `test_source_provenance_and_generated_origin_are_captured`: skutečný Javac/JDK21 a MapStruct1.6.3, public fields i getter/identity/setter, source SHA/ranges |
+| T003-S07-W03-AC02 | VERIFIED_IN_SCOPE | `test_legacy_schema_has_no_invented_compiler_mapping` v1/v2/v3, store roundtrip/offline scan, workspace kvalifikace |
+| T003-S07-W03-AC03 | VERIFIED_IN_SCOPE | `test_unknown_business_transform_dispatch_recursion_and_aliases`, invalid actual compiler response, timeout/cancel orchestrace, source/version STALE, nulové implicitní procesy SOURCE_ONLY |
+| T003-S07-W03-AC04 | PARTIAL | [Podporovaná matice](field-mapping.md), skutečná [fixture](../fixtures/field-mapping/README.md), lokální targeted regrese; full/GH CI NOT_RUN |

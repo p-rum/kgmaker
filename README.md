@@ -370,7 +370,11 @@ kgmaker impact --root . --entity '<existing-field-id>' --include-data-flow --for
 ```
 
 This includes simple Kotlin expressions/constructor mappings and field inventory
-for Java, TypeScript and JSON contracts. Parser limitations are explicit in feature
+for Java, TypeScript and JSON contracts. Explicit JVM inspection additionally captures
+[bounded Javac field transfers and manual/generated mapper helpers](docs/field-mapping.md)
+with source provenance; `field_mapping_bindings` retains UNKNOWN business equivalence
+and availability ([change124](docs/changes/124_fieldAndMappingFlow.md)).
+Parser limitations are explicit in feature
 coverage; a static path does not prove runtime availability or financial validity.
 `.xlsx` workbooks contribute sheets, cells, named ranges, formula dependencies and
 hash-bound cell evidence. Formulas are not evaluated and cached values retain
