@@ -640,7 +640,7 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 
 Current rule4 results are recorded in change69; GH CI is optional under T045 revision2, while publication and independent exact-pair review remain required.
 
-## T003-S08-W05 — backend→frontend value flow (IN_PROGRESS / VERIFIED_IN_SCOPE)
+## T003-S08-W05 — backend→frontend value flow (PR_OPEN / VERIFIED_IN_SCOPE)
 
 | Acceptance | Actual check | Scope |
 |---|---|---|
@@ -649,7 +649,8 @@ Current rule4 results are recorded in change69; GH CI is optional under T045 rev
 | T003-S08-W05-AC03 | `test_ac03_stale_and_ambiguous_inputs_do_not_join`, `test_ac03_compiler_symbols_reject_name_only_flow`, `test_ac03_invalid_worker_value_does_not_replace_store` | Stale contract/generated/backend input, release conflict, missing repo, ambiguous service, unrelated JSON/promise/state/assertion, symbol shadowing, multiple writes, invalid worker hash/range/context/version; last-valid store and offline snapshot unchanged. |
 | T003-S08-W05-AC04 | [change125](changes/125_backendFrontendValueFlow.md), [capability/workflow](backend-frontend-value-flow.md) | Await/local-const + pinned React only; Promise callbacks, arbitrary UI frameworks and Kotlin matrix NOT_RUN. S08/T003-AC08 remains PARTIAL. |
 
-Current focused checks and exact commands are in change125; full suite is NOT_RUN
+Current PR: [#107](https://github.com/p-rum/kgmaker/pull/107), code96856d4.
+Focused checks and exact commands are in change125; full suite is NOT_RUN
 under the user's targeted-only instruction until completion of the package.
 
 T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;

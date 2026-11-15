@@ -4,7 +4,7 @@ Datum: 2026-11-15. Výchozí SHA všech níže uvedených kroků:
 `d2507ef465c9b4844830520de68629a3b577c0d2`. Větev:
 `feat/t003-s08-05-backend-frontend-value-flow`. Cílový main poPR105 byl začleněn samostatně; jeho SHA a integrační ověření
 jsou uvedeny níže.
-Task `T003-S08-W05`, nadřazená `T003-AC08`; dodání IN_PROGRESS,
+Task `T003-S08-W05`, nadřazená `T003-AC08`; dodání PR_OPEN,
 ověření VERIFIED_IN_SCOPE pro omezenou matici. S08 jako celek zůstává PARTIAL.
 
 ## Krok 1 — rekognoskace a audit rozpracované změny
@@ -190,3 +190,17 @@ pre-task graph delta. Capture episode `0475787e39d03ca0507f0a3ca91e8366435a40ec5
 je current. Finální refresh po aktualizaci publikačních metadat zachová tyto kotvy.
 Publikační stav: implementace dokončena v omezeném scope; samostatný PR se
 předává reviewerovi, celý S08 zůstává PARTIAL.
+
+### Publikace PR a finální metadata
+
+[PR107](https://github.com/p-rum/kgmaker/pull/107), code commit
+`96856d44f8681116f929a548a1b07e7bf9d5369b`, base main
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`. Závěrečný docs commit mění pouze
+publikační stav/odkazy a generované graph/semantic hash kotvy; kód zůstává přesně
+ve stavu posledních31 PASS. Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE.
+Nezávislé review je další gate a merge provádí pouze pověřený reviewer.
+
+Po aktualizaci metadat je znovu proveden aktuální semantic update/apply/validate
+a generovaný scan; preservují se46concepts/147edges/300episodes, včetně všech
+parent facts. Registry je beze změny, číslo125 nekolizní s main (max124) i
+parent rezervací sousedních úloh. Původní root checkout nebyl upraven.
