@@ -6,7 +6,9 @@ versions to match. That deliberately includes absent-provider lookup space.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
+import stat
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -126,11 +128,15 @@ def _cache_value(path: Path) -> dict | None:
 
 def _safe_cache_target(path: Path) -> Path:
     target = path.absolute()
-    if target.exists() and target.is_symlink():
+    if target.is_symlink():
         raise ViewCacheError("VIEW_CACHE_UNSAFE_PATH")
+    if target.exists():
+        info = target.stat()
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ViewCacheError("VIEW_CACHE_UNSAFE_PATH")
     current = target.parent
     while True:
-        if current.is_symlink():
+        if current.is_symlink() or (current.exists() and not current.is_dir()):
             raise ViewCacheError("VIEW_CACHE_UNSAFE_PATH")
         if current.parent == current:
             break
@@ -165,17 +171,48 @@ def _read_hit(path: Path, binding: dict, scope: str, selection: dict) -> ViewDoc
     return document
 
 
-def get_or_build_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
-                      rules: Mapping[str, Any], scope: str,
-                      context_selection: Mapping[str, Any] | None,
-                      builder: Callable[[], ViewDocument], annotations: Any = (),
-                      expected_baseline_fingerprint: str) -> ViewDocument:
-    """Return a current cached view or build and atomically publish a valid one.
+@dataclass(frozen=True)
+class PreparedView:
+    """Validated cache candidate; preparation never writes the target.
 
-    Invalid inputs and builder failures happen before the cache file is touched.
-    A stale/corrupt entry is treated as a miss and remains intact until a new,
-    fully validated result is ready for atomic replacement.
+    Call ``publish`` only after downstream validation/output succeeds. Publication
+    rechecks the original dependency objects and safe destination. A hit remains
+    read-only. This is a local single-writer boundary, not a multi-store commit.
     """
+
+    document: ViewDocument
+    _commit: Callable[[], None]
+
+    def publish(self) -> ViewDocument:
+        self._commit()
+        return self.document
+
+
+def _publish_atomic(target: Path, raw: str) -> None:
+    # atomic_write cleans up its temporary file. Also remove newly created empty
+    # parent directories if publication fails, preserving the prior filesystem.
+    missing = []
+    parent = target.parent
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    try:
+        atomic_write(target, raw)
+    except BaseException:
+        for parent in missing:
+            try:
+                parent.rmdir()
+            except OSError:
+                pass
+        raise
+
+
+def prepare_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
+                 rules: Mapping[str, Any], scope: str,
+                 context_selection: Mapping[str, Any] | None,
+                 builder: Callable[[], ViewDocument], annotations: Any = (),
+                 expected_baseline_fingerprint: str) -> PreparedView:
+    """Validate/reuse/build a view without publishing any cache changes."""
     if not callable(builder):
         raise ViewCacheError("VIEW_CACHE_INVALID_BUILDER")
     if not isinstance(expected_baseline_fingerprint, str) or not expected_baseline_fingerprint:
@@ -186,11 +223,19 @@ def get_or_build_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
     binding = dependency_binding(workspace=workspace, graph=graph, rules=rules,
                                  scope=scope, context_selection=selection,
                                  annotations=annotations)
+    def assert_current():
+        current = dependency_binding(workspace=workspace, graph=graph, rules=rules,
+            scope=scope, context_selection=context_selection, annotations=annotations)
+        if current["fingerprint"] != binding["fingerprint"]:
+            raise ViewCacheError("VIEW_CACHE_INPUT_CHANGED_DURING_BUILD")
+        _safe_cache_target(target)
+
     target = _safe_cache_target(Path(path))
     hit = _read_hit(target, binding, scope, selection)
     if hit is not None and hit.baseline_fingerprint == expected_baseline_fingerprint:
-        return hit
+        return PreparedView(hit, assert_current)
     document = builder()
+    assert_current()
     if not isinstance(document, ViewDocument):
         raise ViewCacheError("VIEW_CACHE_INVALID_BUILDER_RESULT")
     # Round-trip the public representation so unsupported fields/invalid
@@ -205,12 +250,6 @@ def get_or_build_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
         raise ViewCacheError("VIEW_CACHE_BUILDER_BINDING_MISMATCH")
     if validated.baseline_fingerprint != expected_baseline_fingerprint:
         raise ViewCacheError("VIEW_CACHE_BUILDER_BINDING_MISMATCH")
-    # Protect against builders that mutate their supposedly captured inputs while
-    # running; never publish a result after its dependency binding moved.
-    current = dependency_binding(workspace=workspace, graph=graph, rules=rules,
-        scope=scope, context_selection=selection, annotations=annotations)
-    if current["fingerprint"] != binding["fingerprint"]:
-        raise ViewCacheError("VIEW_CACHE_INPUT_CHANGED_DURING_BUILD")
     value = {"schema_version": _SCHEMA_VERSION, "rules_version": _RULES_VERSION,
              "dependency_fingerprint": binding["fingerprint"], "scope": scope,
              "context_selection": selection, "view": serialized}
@@ -218,8 +257,42 @@ def get_or_build_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
     raw = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False) + "\n"
     if len(raw.encode("utf-8")) > _MAX_CACHE_BYTES:
         raise ViewCacheError("VIEW_CACHE_SIZE_LIMIT")
-    atomic_write(target, raw)
-    return validated
+    def commit():
+        assert_current()
+        _publish_atomic(target, raw)
+    return PreparedView(validated, commit)
+
+
+def get_or_build_view(path: Path, *, workspace: Mapping[str, Any], graph: Any,
+                      rules: Mapping[str, Any], scope: str,
+                      context_selection: Mapping[str, Any] | None,
+                      builder: Callable[[], ViewDocument], annotations: Any = (),
+                      expected_baseline_fingerprint: str) -> ViewDocument:
+    """Return a current cached view or build and atomically publish a valid one."""
+    return prepare_view(path, workspace=workspace, graph=graph, rules=rules,
+        scope=scope, context_selection=context_selection, builder=builder,
+        annotations=annotations,
+        expected_baseline_fingerprint=expected_baseline_fingerprint).publish()
+
+
+def prepare_snapshot_view(path: Path, *, snapshot: Mapping[str, Any],
+                               rules: Mapping[str, Any], scope: str,
+                               context_selection: Mapping[str, Any],
+                               builder: Callable[[], ViewDocument],
+                               expected_baseline_fingerprint: str,
+                               annotations: Any = ()) -> PreparedView:
+    """Prepare a view derived from one already-validated content-bound handoff.
+
+    This supports public projection call sites that consume a versioned capture
+    bundle rather than separate workspace and graph objects. The complete bundle
+    and annotation/review snapshot are part of the key.
+    """
+    if not isinstance(snapshot, Mapping):
+        raise ViewCacheError("VIEW_CACHE_INVALID_SNAPSHOT")
+    return prepare_view(path, workspace={"captured_snapshot": snapshot},
+        graph={"schema_version": 1, "contexts": []}, rules=rules, scope=scope,
+        context_selection=context_selection, builder=builder, annotations=annotations,
+        expected_baseline_fingerprint=expected_baseline_fingerprint)
 
 
 def get_or_build_snapshot_view(path: Path, *, snapshot: Mapping[str, Any],
@@ -228,15 +301,7 @@ def get_or_build_snapshot_view(path: Path, *, snapshot: Mapping[str, Any],
                                builder: Callable[[], ViewDocument],
                                expected_baseline_fingerprint: str,
                                annotations: Any = ()) -> ViewDocument:
-    """Cache a view derived from one already-validated content-bound handoff.
-
-    This supports public projection call sites that consume a versioned capture
-    bundle rather than separate workspace and graph objects. The complete bundle
-    and annotation/review snapshot are part of the key.
-    """
-    if not isinstance(snapshot, Mapping):
-        raise ViewCacheError("VIEW_CACHE_INVALID_SNAPSHOT")
-    return get_or_build_view(path, workspace={"captured_snapshot": dict(snapshot)},
-        graph={"schema_version": 1, "contexts": []}, rules=rules, scope=scope,
+    """Build/reuse and publish a view bound to the caller's original snapshot."""
+    return prepare_snapshot_view(path, snapshot=snapshot, rules=rules, scope=scope,
         context_selection=context_selection, builder=builder, annotations=annotations,
-        expected_baseline_fingerprint=expected_baseline_fingerprint)
+        expected_baseline_fingerprint=expected_baseline_fingerprint).publish()

@@ -336,3 +336,218 @@ def test_architecture_topology_cli_uses_only_explicit_cache_flag(tmp_path):
     second = run_cli("topology", "--capture-snapshot", captured, "--view-cache", cache)
     assert second.returncode == 0 and json.loads(second.stdout) == json.loads(uncached.stdout)
     assert cache.read_bytes() == cache_bytes and cache.stat().st_mtime_ns == cache_time
+
+
+def filesystem_snapshot(root):
+    return {str(path.relative_to(root)): (path.read_bytes(), path.stat().st_mtime_ns)
+            if path.is_file() else None for path in root.rglob('*')}
+
+
+def cache_fixture(tmp_path, state):
+    captured = write(tmp_path / 'capture.json', labelled_handoff())
+    cache = tmp_path / 'new-parent' / 'cache.json'
+    if state == 'stale':
+        workspace, graph, rules = inputs()
+        run(cache, workspace, graph, rules)
+    elif state == 'hit':
+        result = run_cli('topology', '--capture-snapshot', captured, '--view-cache', cache)
+        assert result.returncode == 0, result.stderr
+    return captured, cache
+
+
+@pytest.mark.parametrize('state', ['missing', 'stale', 'hit'])
+@pytest.mark.parametrize(('extra', 'code'), [
+    (['--filter-contexts', 'ctx-that-does-not-exist'], 2),
+    (['--focus', 'secret=hidden'], 2),
+    (['--max-nodes', '0'], 2),
+    (['--expected-fingerprint', '0' * 64], 3),
+    (['--format', 'unsupported'], 2),
+    (['--strict'], 4),
+])
+def test_cli_rejected_request_preserves_inputs_and_cache(tmp_path, state, extra, code):
+    captured, cache = cache_fixture(tmp_path, state)
+    before = filesystem_snapshot(tmp_path)
+    result = run_cli('topology', '--capture-snapshot', captured, '--view-cache', cache, *extra)
+    assert result.returncode == code, result.stderr
+    assert filesystem_snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize('state', ['missing', 'stale', 'hit'])
+@pytest.mark.parametrize('failure', ['output_limit', 'unsafe_output', 'write', 'flush', 'cancel'])
+def test_cli_late_output_failure_never_publishes(tmp_path, monkeypatch, capsys, state, failure):
+    import kgmaker.architecture_cli as cli
+    captured, cache = cache_fixture(tmp_path, state)
+    before = filesystem_snapshot(tmp_path)
+    expected = 2
+    if failure == 'output_limit':
+        monkeypatch.setattr(cli, '_MAX_OUTPUT_CHARS', 1)
+    elif failure == 'unsafe_output':
+        monkeypatch.setattr(cli, 'sanitize', lambda value: {'redacted': True})
+    elif failure == 'cancel':
+        calls = []
+        def cancel(args):
+            calls.append(True)
+            if len(calls) == 2:
+                raise KeyboardInterrupt
+        monkeypatch.setattr(cli, '_cancel', cancel)
+        expected = 130
+    else:
+        class BrokenOutput:
+            def write(self, value):
+                if failure == 'write':
+                    raise BrokenPipeError('closed')
+            def flush(self):
+                raise BrokenPipeError('closed')
+        monkeypatch.setattr(cli.sys, 'stdout', BrokenOutput())
+        expected = 141
+    assert cli.run(['topology', '--capture-snapshot', str(captured), '--view-cache', str(cache)]) == expected
+    assert filesystem_snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize('state', ['missing', 'stale'])
+@pytest.mark.parametrize(('error', 'code', 'diagnostic'), [(OSError, 2, 'INVALID_INPUT'), (KeyboardInterrupt, 130, 'CANCELLED')])
+def test_cli_failed_atomic_publication_preserves_files_and_removes_temporary_paths(tmp_path, monkeypatch, capsys, state, error, code, diagnostic):
+    import kgmaker.architecture_cli as cli
+    import kgmaker.analysis_model as model
+    captured, cache = cache_fixture(tmp_path, state)
+    before = filesystem_snapshot(tmp_path)
+    def failed_replace(source, destination):
+        raise error('publication unavailable')
+    monkeypatch.setattr(model.os, 'replace', failed_replace)
+    assert cli.run(['topology', '--capture-snapshot', str(captured), '--view-cache', str(cache)]) == code
+    output = capsys.readouterr()
+    # stdout is a stream, not a transactional export; the process reports the
+    # failed cache commit even though the valid view was already delivered.
+    assert json.loads(output.out)['document']['kind'] == 'topology'
+    assert json.loads(output.err)['code'] == diagnostic
+    assert filesystem_snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize('alias', ['capture', 'selector', 'hardlink', 'symlink', 'symlink_parent'])
+def test_cli_cache_input_aliases_are_rejected_without_writes(tmp_path, alias):
+    import os
+    captured = write(tmp_path / 'capture.json', labelled_handoff())
+    selector = write(tmp_path / 'selector.json', {'schema_version': 1, 'contexts': []})
+    cache = captured
+    if alias == 'selector':
+        cache = selector
+    elif alias == 'hardlink':
+        cache = tmp_path / 'linked.json'
+        os.link(captured, cache)
+    elif alias == 'symlink':
+        cache = tmp_path / 'linked.json'
+        cache.symlink_to(captured)
+    elif alias == 'symlink_parent':
+        link = tmp_path / 'linked'
+        link.symlink_to(tmp_path, target_is_directory=True)
+        cache = link / 'capture.json'
+    before = filesystem_snapshot(tmp_path)
+    result = run_cli('topology', '--capture-snapshot', captured, '--context-selection', selector,
+                     '--view-cache', cache)
+    assert result.returncode == 2, result.stderr
+    assert result.stdout == ''
+    assert filesystem_snapshot(tmp_path) == before
+
+
+from test_t019_add_architecture_json_cli import explicit_contract_fixture
+
+
+@pytest.mark.parametrize('destination', ['manifest', 'source', 'index'])
+def test_local_capture_cache_cannot_overwrite_workspace_or_source(explicit_contract_fixture, destination):
+    from kgmaker.model import KnowledgeGraph
+    manifest, *_ = explicit_contract_fixture
+    for name in ['backend', 'client']:
+        index = manifest.parent / name / '.kgmaker/graph.json'
+        index.parent.mkdir()
+        write(index, KnowledgeGraph(3, '.', 'old', [], [], {}).to_dict())
+    cache = manifest
+    if destination == 'source':
+        cache = next((manifest.parent / 'backend').rglob('*.java'))
+    elif destination == 'index':
+        cache = manifest.parent / 'backend/.kgmaker/graph.json'
+    before = filesystem_snapshot(manifest.parent)
+    result = run_cli('topology', '--capture-local', '--workspace', manifest, '--view-cache', cache)
+    assert result.returncode == 2, result.stderr
+    assert result.stdout == ''
+    assert filesystem_snapshot(manifest.parent) == before
+
+
+@pytest.mark.parametrize('mutation', ['replace', 'add', 'delete', 'nested', 'list'])
+def test_snapshot_wrapper_detects_original_input_mutations(tmp_path, mutation):
+    workspace, graph, rules = inputs()
+    valid = build(workspace, graph, rules)
+    snapshot = {'id': 'one', 'nested': {'value': 'old'}, 'items': ['one']}
+    path = tmp_path / 'cache.json'
+    kwargs = dict(snapshot=snapshot, rules=rules, scope='production', context_selection={},
+                  expected_baseline_fingerprint=valid.baseline_fingerprint)
+    first = get_or_build_snapshot_view(path, **kwargs, builder=lambda: valid)
+    stored = path.read_bytes()
+    snapshot['id'] = 'two'  # Force a miss before the builder starts.
+    def mutate():
+        if mutation == 'replace': snapshot['id'] = 'new'
+        elif mutation == 'add': snapshot['new-key'] = 'new'
+        elif mutation == 'delete': del snapshot['id']
+        elif mutation == 'nested': snapshot['nested']['value'] = 'new'
+        else: snapshot['items'].append('new')
+        return first
+    with pytest.raises(ValueError, match='VIEW_CACHE_INPUT_CHANGED_DURING_BUILD'):
+        get_or_build_snapshot_view(path, **kwargs, builder=mutate)
+    assert path.read_bytes() == stored
+
+
+def test_snapshot_wrapper_unchanged_build_hit_and_deferred_guard(tmp_path):
+    from kgmaker.view_cache import prepare_snapshot_view
+    workspace, graph, rules = inputs()
+    valid = build(workspace, graph, rules)
+    snapshot = {'id': 'one', 'nested': {'value': 'old'}}
+    path = tmp_path / 'cache.json'
+    kwargs = dict(snapshot=snapshot, rules=rules, scope='production', context_selection={},
+                  expected_baseline_fingerprint=valid.baseline_fingerprint)
+    before = deepcopy(snapshot)
+    pending = prepare_snapshot_view(path, **kwargs, builder=lambda: valid)
+    assert not path.exists()
+    assert pending.publish().content_fingerprint == valid.content_fingerprint
+    stored = path.read_bytes()
+    def forbidden(): raise AssertionError('cache hit must not build')
+    assert get_or_build_snapshot_view(path, **kwargs, builder=forbidden) == valid
+    assert snapshot == before
+    hit = prepare_snapshot_view(path, **kwargs, builder=forbidden)
+    snapshot['id'] = 'changed-after-prepare'
+    with pytest.raises(ValueError, match='VIEW_CACHE_INPUT_CHANGED_DURING_BUILD'):
+        hit.publish()
+    assert path.read_bytes() == stored
+
+
+def test_local_capture_explicit_cache_directory_preserves_all_source_inputs(explicit_contract_fixture):
+    from kgmaker.model import KnowledgeGraph
+    manifest, *_ = explicit_contract_fixture
+    for name in ['backend', 'client']:
+        index = manifest.parent / name / '.kgmaker/graph.json'
+        index.parent.mkdir()
+        write(index, KnowledgeGraph(3, '.', 'old', [], [], {}).to_dict())
+    cache = manifest.parent / 'backend/.kgmaker/views/topology.json'
+    before = {str(p): p.read_bytes() for p in manifest.parent.rglob('*') if p.is_file()}
+    result = run_cli('topology', '--capture-local', '--workspace', manifest, '--view-cache', cache)
+    assert result.returncode == 0, result.stderr
+    assert ViewDocument.from_dict(json.loads(cache.read_text())['view']).kind == 'topology'
+    after = {str(p): p.read_bytes() for p in manifest.parent.rglob('*') if p.is_file() and p != cache}
+    assert after == before
+
+
+@pytest.mark.parametrize('state', ['missing', 'stale'])
+def test_deferred_snapshot_miss_rechecks_original_before_publication(tmp_path, state):
+    from kgmaker.view_cache import prepare_snapshot_view
+    workspace, graph, rules = inputs()
+    valid = build(workspace, graph, rules)
+    path = tmp_path / 'cache.json'
+    if state == 'stale':
+        run(path, workspace, graph, rules)
+    before = filesystem_snapshot(tmp_path)
+    snapshot = {'id': 'one'}
+    pending = prepare_snapshot_view(path, snapshot=snapshot, rules=rules, scope='production',
+        context_selection={}, expected_baseline_fingerprint=valid.baseline_fingerprint,
+        builder=lambda: valid)
+    snapshot['id'] = 'changed-after-build'
+    with pytest.raises(ValueError, match='VIEW_CACHE_INPUT_CHANGED_DURING_BUILD'):
+        pending.publish()
+    assert filesystem_snapshot(tmp_path) == before

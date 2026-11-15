@@ -28,7 +28,9 @@ view = get_or_build_view(
 current inputs used by `builder`. This rejects an old builder result even when
 its scope and rule version happen to match. The cache recomputes the dependency
 binding after the builder returns and refuses publication if the builder changed
-the captured inputs.
+the caller's original captured inputs (top-level key changes and nested/list changes
+are included); the wrapper does not keep a one-time top-level copy. The same check
+runs immediately before publication.
 
 Workspace binding zahrnuje služby, ownership, contract/release mapping a všechny
 explicitní provider deklarace. Graph binding zahrnuje celý graph včetně kontextů,
@@ -36,6 +38,20 @@ anotací, evidence a provider uzlů; generovaný čas není závislost. Úplný 
 znamená, že i dříve chybějící provider změní fingerprint a unresolved lookup se
 znovu vyhodnotí. Změna pravidel je explicitní přes `rules`; volající musí předat
 každou verzi pravidla použitého builderem.
+
+Pro navazující validaci existují `prepare_view(...)`, `prepare_snapshot_view(...)`
+a `service_topology.prepare_service_topology_cache(...)`. Mají stejné vstupy jako
+odpovídající okamžitě zapisující wrappery a vracejí `PreparedView`: `.document` je
+validovaný pohled, `.publish()` provede kontrolu původních závislostí a atomický
+zápis. Příprava nevytváří soubor ani adresář. Cache hit při publish nic nepřepisuje.
+
+```python
+from kgmaker.service_topology import prepare_service_topology_cache
+
+pending = prepare_service_topology_cache(captured, Path(".kgmaker/views/topology.json"))
+validate_consumer_requirements(pending.document)
+view = pending.publish()  # Explicit commit after consumer validation succeeds.
+```
 
 Cache vrací pouze `ViewDocument` se stejným fingerprintem, scope a context
 selection. Dokument se validuje před publikací; zápis používá existující
@@ -60,7 +76,20 @@ kgmaker architecture topology --capture-snapshot topology-inputs.json \
 
 Bez `--view-cache` jsou view renderery a CLI cache-free; T019 replay zůstává
 read-only ve výchozím stavu. Existující CLI exit codes ani JSON envelope se
-nemění.
+nemění. CLI publikuje až po validaci filtru, očekávaného fingerprintu, bezpečnosti
+výstupu a jeho velikosti a po úspěšném stdout write/flush, pouze pro exit 0.
+Chybný formát/filtr, fingerprint konflikt, zrušení, strict exit 4 ani selhání stdout
+nemění capture ani poslední cache. Publikace znovu ověří původní závislosti.
+
+Cíl musí být vyhrazený cache soubor. CLI odmítá shodu s capture, selectors,
+workspace manifestem či cancel souborem; API i CLI odmítají symlink cíle/rodiče,
+hardlinky a ne-regulární cíle. Při `--capture-local` může cesta uvnitř zdrojového
+repozitáře ležet pouze v `.kgmaker/views/`; source a původní index se nepřepisují.
+Selhání atomické výměny zachová poslední obsah a odstraní dočasný soubor i nově
+vzniklé prázdné adresáře. V tom případě CLI vrátí 2; validní view už mohlo odejít
+na stdout, proto příjemce musí kontrolovat exit code. Stdout a cache nejsou společná
+atomická transakce exportu. Kód nevrací zpět vedlejší efekty, které vyvolá samotný
+uživatelský builder; detekuje změnu jeho vstupů a zabrání publikaci výsledku.
 
 Limity: artefakt je lokální a single-file, ne distribuovaná cache. Fingerprint
 záměrně invaliduje i při nesouvisející změně graph/workspace snapshotu. Builder

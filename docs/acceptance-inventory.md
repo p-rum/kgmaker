@@ -1248,11 +1248,14 @@ ověření PARTIAL při přípravě review. [Zadání](tasks/T-037_invalidate-de
 | T037-AC01 | VERIFIED_IN_SCOPE | `test_dependency_mutations_force_rebuild_without_reusing_cached_approval`: service, contract, context, rule, annotation a workspace mapping changes způsobují miss; T032 review test doloží APPROVED→NEEDS_REVALIDATION. |
 | T037-AC02 | VERIFIED_IN_SCOPE | `test_negative_lookup_new_provider_and_unrelated_edit_invalidate_conservatively`: přidaný dříve chybějící provider znovu spouští builder; celý snapshot je konzervativní invalidation boundary. |
 | T037-AC03 | VERIFIED_IN_SCOPE | `test_mutation_refresh_matches_independent_full_rebuild` testuje create/edit/delete/rename proti nezávislému builderu, bez cache readback. |
-| T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink parent negatives zachovávají poslední validní artefakt; symlink write se odmítne před builderem. |
+| T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink negatives zachovávají poslední validní artefakt. Oprava review navíc dokládá `test_cli_rejected_request_preserves_inputs_and_cache`, `test_cli_late_output_failure_never_publishes`, `test_cli_failed_atomic_publication_preserves_files_and_removes_temporary_paths`, input/source alias matice a `test_snapshot_wrapper_detects_original_input_mutations`; původní snapshot se kontroluje i při odložené publikaci. |
 | T037-AC05 | VERIFIED_IN_SCOPE | Scope/context cache isolation, exact ViewDocument round-trip a test no approval/runtime evidence in cached topology; limity/truncation se kopírují beze změny v T016 view. |
-| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; PR/review a remote CI zatím NOT_RUN. |
+| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; první nezávislé review REQUEST_CHANGES bylo opraveno ve třech samostatně evidovaných krocích change121. Nové review/PR/remote CI zatím NOT_RUN. |
 
-Cílená sada: **22 passed** v `tests/test_t037_invalidate_derived_views.py`.
-Koalesced view/provider/dependency sada: **244 passed**; přesné příkazy, základní
+Původní checkpoint `43d7010` historicky uváděl 22/244 passed; jeho review přesto
+odhalilo mezery AC04 a sémantické evidence. Po opravách obsahuje T037 modul 74
+případů a stejná cílená view/provider/dependency sada má **296 passed in 10.96s**.
+Po doplnění cleanup při přerušení zápisu prošel přímo dotčený T037 modul
+**76 passed in 4.65s**; přesné příkazy, základní
 dependency evidence a neprovedené kontroly viz change121. Není to full pytest,
 actual runtime/toolchain ani úplná T004/produkční acceptance.

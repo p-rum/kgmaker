@@ -147,21 +147,21 @@ def aggregate_service_topology(captured):
         _fail('TOPOLOGY_INVALID_INPUT')
 
 
-def aggregate_service_topology_cached(captured, cache_path, *, annotations=()):
-    """Explicitly cache an aggregate while retaining the ordinary pure API.
+def prepare_service_topology_cache(captured, cache_path, *, annotations=()):
+    """Prepare a cache candidate without publishing it.
 
     The complete, already-validated T016 handoff is the dependency snapshot.
     Callers that combine reviewed process annotations with this view may pass
     their current T032 review snapshot as ``annotations``; any review transition
     invalidates the cache, but review state is never copied into the topology.
     """
-    from .view_cache import get_or_build_snapshot_view
+    from .view_cache import prepare_snapshot_view
     try:
         _validated(captured)
         selection={'requested_selection':deepcopy(captured['remote_selection']),
             'actual_selection_fingerprint':digest(captured['actual_selection'])}
         expected_baseline=digest([VERSION,captured['capture_id']])
-        return get_or_build_snapshot_view(cache_path,snapshot=captured,
+        return prepare_snapshot_view(cache_path,snapshot=captured,
             rules={'capture':CAPTURE_VERSION,'view':VERSION},
             scope=captured['input_binding']['scope'],context_selection=selection,
             annotations=annotations,expected_baseline_fingerprint=expected_baseline,
@@ -169,6 +169,12 @@ def aggregate_service_topology_cached(captured, cache_path, *, annotations=()):
     except ServiceTopologyError:raise
     except (ValueError,TypeError,KeyError,AttributeError,RecursionError,OverflowError):
         _fail('TOPOLOGY_CACHE_UNAVAILABLE')
+
+
+def aggregate_service_topology_cached(captured, cache_path, *, annotations=()):
+    """Explicitly prepare and atomically publish an aggregate cache."""
+    return prepare_service_topology_cache(captured, cache_path,
+        annotations=annotations).publish()
 
 
 def _aggregate(captured):

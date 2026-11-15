@@ -1044,6 +1044,10 @@ snapshots, rule versions, scope and context selection. It reuses a serialized
 declarations therefore revalidate old unresolved lookups. Cache writes happen
 only through this explicit API after builder output validates. The topology CLI
 also accepts an explicit `--view-cache PATH`; its default remains cache-free.
+CLI publication follows filter/fingerprint/output validation and successful stdout
+write/flush, only on exit 0. Rejected requests preserve input files and the previous
+cache. Cache targets cannot alias inputs, symlinks or hardlinks; with local capture,
+a target inside a source repository must be under `.kgmaker/views/`.
 See [cache API and limits](docs/view-cache.md) and
 [T037 change note](docs/changes/121_invalidateDerivedViews.md).
 
