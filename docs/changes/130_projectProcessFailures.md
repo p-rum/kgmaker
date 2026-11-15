@@ -540,3 +540,86 @@ Runtime workflow má skutečné integration implementation/test artifacts ve rev
 Normal push předá samostatný fix475b35d a dvourodičový integrační commit; PR110
 body aktualizuje aktuální pair, aditivní T028 kontrakt a všechny historické FAIL
 odděleně. GH CI nového HEAD a nové nezávislé review nejsou předem označeny PASS.
+
+## Krok 12 — integrace merged report main (T029-S04/S05, T028-S04/S05, AC01–AC06)
+
+Výchozí publikovaný HEAD `3b3d0dc4fe5f317d635f9450a336231b85ad832d`,
+actual main `9c86d29fc267014e2bee4b197c7692f17a1cda93`. Primary fetch
+ověřil dva rodiče `83999fb2e08c6d9d67449687c95b2217eee08b09` +
+`edb5cff914e210b05482f2a84b01259f45efcd6c` a tree
+`a9bc1d2c39b96342bf919e9c5b50e6237b92359a`. Normální merge --no-ff
+--no-commit, bez přepisu historie. Předchozí345PASS z kroku11 zůstává
+historickým výsledkem původní integrace; není vydáván za nový běh.
+
+Konflikty pouze semantic.json, GRAPH.md a jeden W09 progress řádek.
+Pět report modulů a dva report test moduly převzaty byte-identicky z main;
+vlastní business_process.py a T028/T029 testy byte-identické s výchozím HEAD.
+Žádná funkční integrační oprava ani změna veřejného kontraktu. Report je projekce
+FeatureAnalysis a nepřidává procesním proofům autoritu; report source nevolá
+T029. Inventáře zachovávají obě části a pravdivě označují S09-W05 MERGED, T029
+stále PR_OPEN. README/report capability/CLI změny převzaty z main; process API
+a příklady beze změny proti fixu (bez dopadu). Task registry, instructions/templates
+a workers se v této integraci nemění.
+
+Relevantní nový rozsah: T014/T028/T029 + všechny tři přesné reviewer reprodukce
+a veřejné report projection/publication testy. T025/T026/T027 source je beze změny,
+jejich345sada z kroku11 se neopakuje. Actual report Javac/TS fixture právě nezávisle
+ověřená v PR112 se při byte identity neopakuje (NOT_RUN v tomto kroku); nejde
+o převzetí nového PASS. Actual Java/K1/K2 podklady T029 se ověřují znovu.
+Matching read-only worker a temporary target/target-k2 symlinky jsou stejné jako
+v kroku11; žádný build či přepsání sdílených worker outputs.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-t029/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-main112 tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py tests/test_t014_bind_remote_interfaces.py tests/test_complete_analysis_report.py /tmp/kgmaker-review110-membership.py '/tmp/t029-review-scheduler.py::test_scheduled_local_listener_call_does_not_enter_kafka_retry[java]' '/tmp/t029-review-callee.py::test_listener_policy_does_not_apply_to_ordinary_local_callee[java]'
+```
+
+**203 PASS / 0 SKIP, 74.02 s**, log `/tmp/t029-main112.txt`. Actual worker JAR
+SHA256 před/po `651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`.
+Oba dočasné symlinky odstraněny, source preservation PASS.
+Full suite, opakování nesouvisejících actual report/T025–T027 a runtime/broker/DB
+NOT_RUN; žádná implicitní instalace, běh aplikace ani live služby. GH CI
+checkpointu3b3d0dc skončilo5 failure/2 cancelled, všech7 jobů mělo prázdné steps,
+tedy test evidence NOT_RUN. Nový HEAD ani review nejsou předem označeny PASS.
+
+```sh
+./kgmaker semantic update --base 9c86d29fc267014e2bee4b197c7692f17a1cda93 --note docs/changes/130_projectProcessFailures.md
+./kgmaker scan --no-docs
+python3 /tmp/t029-main112-semantic.py patch
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t029-main112-preservation.py
+```
+
+Union zachovává všechny **52 koncepty /176 vztahů /327 přesných epizod** obou
+rodičů. Adaptovaný skript ověřuje source hash příslušného rodiče a identický
+citovaný řádek; žádná removal, nový koncept ani smyšlená epizoda. Nový runtime
+workflow záznam integrace je iteration2 stejného bugfix tasku; nevzniká nové
+Task ID ani paralelní feature.
+
+Maintenance první apply po souběžném doplnění dokumentace odmítl změněný analysis
+context (**FAIL**, žádný semantic zápis); packet je regenerován po finální
+dokumentaci. První interní implementation artifact odmítnut pro chybějící
+`disposition`, druhý pro reserved `.kgmaker` changed_paths; obě validace bez zápisu
+artefaktu, následný advance odmítnut. Opravený interní receipt má přesná pole a
+pouze veřejné changed_paths, generated údržbu dokládá notes/change130.
+
+Regenerovaný packet/apply/validate/preservation **PASS**: 7 konceptů/19 vztahů
+source-backed reanchor, všech52/176/327 zachováno. Skutečná capture:
+
+```sh
+./kgmaker memory capture --base 9c86d29fc267014e2bee4b197c7692f17a1cda93 --validation report-main-integration=passed --validation semantic-union=passed --validation full-suite=skipped
+```
+
+Epizoda `episode:d0216b40d53ca23eaea80e206916286b0ea05af722a88f8bde2fdde030ba771b`,
+finální stav **52/176/328**. Žádná původní epizoda se nepřepisuje.
+Závěrečný `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t029-main112-preservation.py` a `git diff --check` ověřují aktuální
+dokumentaci a generated graph. Primary main před publikací musí zůstat9c86d29;
+open PR audit nalezl jen110 a historický draft4, change130/131 bez kolize.
+Nové nezávislé review je nad novou publikovanou pair nutné; implementer nemerguje.
+
+Final scan/check, semantic validate, preservation a diff check **PASS**.
+Všechny skutečné atomické inventory řádky znovu spočteny: T00347MERGED/13PLANNED,
+T005–T04427MERGED/12PLANNED/1PR_OPEN. Opraven zastaralý součet; nejde o nové
+ověření dalších acceptance. Po této textové korekci je scan/check obnoven ještě
+jednou, žádný funkční test se bez změny zdrojů neopakuje.

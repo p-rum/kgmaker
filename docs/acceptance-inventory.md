@@ -1497,7 +1497,7 @@ value-flow intersection separately; see [change125 step11](changes/125_backendFr
 
 ## T029 — static process failure projection
 
-Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `83999fb` plus T029. Current actual integrated T014 + T025–T029 + all three reviewer reproductions: **345 PASS / 0 SKIP, 83.01 s** (change130 krok11). The former301 checkpoint predates the second membership correction.
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `9c86d29`. New integration: **203 PASS / 0 SKIP, 74.02 s**, T014/T028/T029 + all three actual reviewer reproductions + report projection/publication (change130 step12). Source byte identity preserved. Historical integration on main `83999fb`: T014 + T025–T029 + all three reviewer reproductions: **345 PASS / 0 SKIP, 83.01 s** (change130 krok11). The former301 checkpoint predates the second membership correction.
 [Change130](changes/130_projectProcessFailures.md) contains exact commands and all
 intermediate FAIL/error results. New pure API has no persistent schema migration.
 
@@ -1535,6 +1535,17 @@ and all three reviewer reproductions before the separate main83999fb integration
 see [change130 steps9–11](changes/130_projectProcessFailures.md).
 
 
+## T003-S09-W05 — complete analytical report (MERGED / VERIFIED_IN_SCOPE)
+
+Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_completeAnalysisReport.md),
+[capability/CLI](complete-analysis-report.md). Merged in `9c86d29fc267014e2bee4b197c7692f17a1cda93` (approved `edb5cff`); report source preserved in T029 integration (change130 step12). Historical integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131. Subsequent publication audit: 151 PASS / 0 SKIP / 2 DESELECTED; nested empty-parent cleanup, concurrent content preservation, hardlink alias rejection and exact pinned JSON payload are covered by five new tests. Actual post-fix report fixture: 5 PASS / 0 SKIP / 26.31 s. [PR112](https://github.com/p-rum/kgmaker/pull/112).
+
+| Acceptance | Public test | Bounded evidence |
+|---|---|---|
+| AC01 | `tests/test_complete_analysis_report.py`, `tests/test_complete_analysis_report_actual.py` | Independent facets, evidence/questions/changes/acceptance/test trace; declared business/tool blockers. Actual Javac21/TS5.7.3/React BEFE artifact and separate SOURCE_ONLY template/PDF capability. |
+| AC02 | `tests/test_feature.py`, `tests/test_feature_fixture.py`, `tests/test_unified_flow_views.py` legacy cases | Existing feature v1 candidates/receipts and graph/store v1/v2/v3 readable, optional blocker type additive. |
+| AC03 | report late input drift/abort tests, scoped absence and ambiguous evidence tests; actual foreign path/artifact drift | No inference uplift, no implicit worker/network; invalid/cancelled/timeout keeps last valid report and inputs. |
+| AC04 | [scope matrix](complete-analysis-report.md#actual-cross-layer-acceptance-and-boundary) | Single-context feature selection unchanged. Artifact citation is not a validated cross-context path. No runtime/data/PDF rendering claim; full suite NOT_RUN by user instruction. |
 ## T003-S06-W07 — programmatic query intent
 
 Delivery MERGED ([PR111](https://github.com/p-rum/kgmaker/pull/111)) v `83999fb`, approved `c57b57f`; verification VERIFIED_IN_SCOPE, Java/Javac scope.
