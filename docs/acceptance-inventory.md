@@ -1,5 +1,21 @@
 # Inventář acceptance T001 a T002
 
+## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
+
+Dodání `MERGED` ([PR101](https://github.com/p-rum/kgmaker/pull/101),
+commit `d2507ef465c9b4844830520de68629a3b577c0d2`);
+ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
+[per-step evidence a historie](changes/122_runtimeTraceProducer.md).
+Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
+běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W01-AC01 | VERIFIED_IN_SCOPE (JDK21/POSIX) | `tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values` + `test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch`: skutečný javac, JVM compiler worker, aplikace a source-bound IDs; povinné identity, žádné raw credentials. `tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes` a import pod zákazem Popen. Žádný automatický Spring capture ani deployment proof. |
+| T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
+| T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
+| T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
@@ -840,6 +856,28 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
+## T003-S06-W06 — NamedQueries a named native queries (MERGED / VERIFIED_IN_SCOPE)
+
+Aktuální integrační evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
+JPA rule `annotation-source-v9-named-query-containers`; skutečný Javac 21.0.13.0.3.
+Dodání `MERGED` ([PR102](https://github.com/p-rum/kgmaker/pull/102), commit
+`9f88d8463b3c968592f0f1937736b752dfccee1d`). Historická společná cílená sada nad
+HEAD `00603901`: 205 PASS / 0 SKIP, 36.87 s (W06 117 + runtime 88); nezávislé
+review opakovalo 205 PASS / 0 SKIP, 37.88 s. PR103 zachovává obsah W06/runtime
+zdrojů; nejde o nový běh této sady ([change121](changes/121_invalidateDerivedViews.md)).
+
+| Acceptance | Konkrétní evidence |
+|---|---|
+| T003-S06-W06-AC01 | `test_actual_javac_named_query_containers_reference_parameters_and_projections`: kontejnery, repeatable JPQL/native, XML root/entity, named/positional parametry a projekce; trojitá duplicita, chybějící jméno/tělo, XML/anotace a malformed tělo. `test_actual_named_queries_select_xml_persistence_realm_without_cross_binding`: dva publikované kontexty, žádný cross-realm fallback. |
+| T003-S06-W06-AC02 | `test_legacy_named_query_metadata_remains_readable`: v1/v2/v3; structured compiler roundtrip; existující `test_jpql_hql_grammar.py` a `test_orm_xml_overrides.py`. Graph schema ani worker protocol se nemění; framework rule v9 vyžaduje refresh. |
+| T003-S06-W06-AC03 | `test_actual_named_query_strict_rejection_cancel_timeout_preserve_store`: strict invalid XML, cancellation a skutečný worker timeout zachovají byte-identický store. `test_actual_offline_scan_and_hook_preserve_named_query_evidence`: zákaz subprocess; pure projection nemutuje vstup. Foreign container/class a malformed XML nevytvoří binding. `test_public_native_query_lexical_boundaries_and_statement_intent` a actual Javac fixture ověřují, že SQL literály/komentáře nevytváří tabulky a komentovaný UPDATE/DELETE zachová write/delete intent. |
+| T003-S06-W06-AC04 | `fixtures/named-queries/Model.java`, `orm.xml`; testy výše a přesný příkaz/výsledek v change120. Ověřené compiler fakty nepovyšují runtime/data availability. |
+
+Hranice: native SQL poskytuje statické přesné table/type bindings, nikoli provider
+validaci; result-set mapping je PARTIAL. `@Param` aliasy, implicitní repository
+named convention, dynamické EntityManager lookupy a samostatná actual Kotlin
+container matice nejsou tímto scope garantovány. Celý T003-S06 není dokončen.
+
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
 Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)
@@ -1239,8 +1277,11 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 
 ## T003-S07-W03 — field a explicitní mapping flow
 
-Baseline `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`, 2026-11-15;
-dodání IN_PROGRESS, ověření omezené na `field-mapping-1`, nikoli celé T003-AC07.
+Baseline W03 `d78286ed65e137495c130e72233dd466da0dd96b`, integrovaný main
+`b1a8ba1f4234cd399de8319fcf5cde2c670dac26`, 2026-11-15; dodání PR_OPEN
+([PR104](https://github.com/p-rum/kgmaker/pull/104)), ověření omezené na
+`field-mapping-1`, nikoli celé T003-AC07. Nový cílený běh 166 PASS / 0 SKIP,
+67.84 s (163 W03 + actual Javac named-query positive + dva runtime capture testy).
 Přesné příkazy/výsledky: [change124](changes/124_fieldAndMappingFlow.md).
 
 | Acceptance | Ověření | Konkrétní důkaz |
@@ -1249,3 +1290,32 @@ Přesné příkazy/výsledky: [change124](changes/124_fieldAndMappingFlow.md).
 | T003-S07-W03-AC02 | VERIFIED_IN_SCOPE | `test_legacy_schema_has_no_invented_compiler_mapping` v1/v2/v3, store roundtrip/offline scan, workspace kvalifikace |
 | T003-S07-W03-AC03 | VERIFIED_IN_SCOPE | `test_unknown_business_transform_dispatch_recursion_and_aliases`, invalid actual compiler response, timeout/cancel orchestrace, source/version STALE, nulové implicitní procesy SOURCE_ONLY |
 | T003-S07-W03-AC04 | PARTIAL | [Podporovaná matice](field-mapping.md), skutečná [fixture](../fixtures/field-mapping/README.md), lokální targeted regrese; full/GH CI NOT_RUN |
+
+## T037 — invalidace odvozených pohledů (2026-11-15)
+
+Delivery MERGED na `b1a8ba1f4234cd399de8319fcf5cde2c670dac26`
+([PR103](https://github.com/p-rum/kgmaker/pull/103)); ověření PARTIAL v
+dokumentovaném scope. HEAD `03aaf0d` má nezávislé APPROVE a 298 PASS / 0 SKIP,
+21.57 s. [Zadání](tasks/T-037_invalidate-derived-views.md),
+[API](view-cache.md), [change121](changes/121_invalidateDerivedViews.md).
+
+| Acceptance | Ověření | Přímý test / limit |
+|---|---|---|
+| T037-AC01 | VERIFIED_IN_SCOPE | `test_dependency_mutations_force_rebuild_without_reusing_cached_approval`: service, contract, context, rule, annotation a workspace mapping changes způsobují miss; T032 review test doloží APPROVED→NEEDS_REVALIDATION. |
+| T037-AC02 | VERIFIED_IN_SCOPE | `test_negative_lookup_new_provider_and_unrelated_edit_invalidate_conservatively`: přidaný dříve chybějící provider znovu spouští builder; celý snapshot je konzervativní invalidation boundary. |
+| T037-AC03 | VERIFIED_IN_SCOPE | `test_mutation_refresh_matches_independent_full_rebuild` testuje create/edit/delete/rename proti nezávislému builderu, bez cache readback. |
+| T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink negatives zachovávají poslední validní artefakt. Oprava review navíc dokládá `test_cli_rejected_request_preserves_inputs_and_cache`, `test_cli_late_output_failure_never_publishes`, `test_cli_failed_atomic_publication_preserves_files_and_removes_temporary_paths`, input/source alias matice a `test_snapshot_wrapper_detects_original_input_mutations`; původní snapshot se kontroluje i při odložené publikaci. |
+| T037-AC05 | VERIFIED_IN_SCOPE | Scope/context cache isolation, exact ViewDocument round-trip a test no approval/runtime evidence in cached topology; limity/truncation se kopírují beze změny v T016 view. |
+| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; první nezávislé review REQUEST_CHANGES bylo opraveno ve třech samostatně evidovaných krocích change121. PR103 je MERGED po nezávislém APPROVE integračního HEAD 03aaf0d; full suite a remote CI NOT_RUN. |
+
+Původní checkpoint `43d7010` historicky uváděl 22/244 passed; jeho review přesto
+odhalilo mezery AC04 a sémantické evidence. Po opravách obsahuje T037 modul 74
+případů a stejná cílená view/provider/dependency sada má **296 passed in 10.96s**.
+Po doplnění cleanup při přerušení zápisu prošel přímo dotčený T037 modul
+**76 passed in 4.65s**; přesné příkazy, základní
+dependency evidence a neprovedené kontroly viz change121. Není to full pytest,
+actual runtime/toolchain ani úplná T004/produkční acceptance.
+
+Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
+11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
+reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.

@@ -13,6 +13,23 @@ def _compiler_contexts(graph: KnowledgeGraph, *, include_stale: bool = True) -> 
             and (include_stale or context.get("freshness") != "STALE")]
 
 
+def view_context_fingerprint(graph: KnowledgeGraph | dict) -> str:
+    """Fingerprint complete context inventory for derived-view invalidation.
+
+    Context rows include selected and unselected compiler variants. Sorting by
+    stable ID removes incidental storage ordering while retaining every captured
+    context field, including freshness and rule/configuration snapshots.
+    """
+    from .analysis_model import digest
+
+    contexts = graph.contexts if isinstance(graph, KnowledgeGraph) else graph.get("contexts", [])
+    if not isinstance(contexts, list) or any(
+            not isinstance(item, dict) or not isinstance(item.get("id"), str)
+            for item in contexts):
+        raise ValueError("Invalid graph context inventory")
+    return digest(sorted(contexts, key=lambda item: item["id"]))
+
+
 def _inspection_command(context: dict) -> str:
     kind = "frontend" if context.get("language") == "typescript" else "code"
     values = ["kgmaker", "inspect", kind,

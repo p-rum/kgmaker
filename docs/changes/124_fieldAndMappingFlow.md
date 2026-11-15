@@ -3,8 +3,8 @@
 Datum 2026-11-15. Zadání: [T003-S07-W03](../tasks/T003-S07-03-fieldAndMappingFlow.md),
 parent T003-S07 / T003-AC07. Výchozí SHA všech kroků:
 `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`. Samostatná větev
-`feat/t003-s07-03-field-and-mapping-flow`. Dodání IN_PROGRESS (lokální implementace
-k předání PR), ověření VERIFIED_IN_SCOPE pro níže uvedené Javac testy;
+`feat/t003-s07-03-field-and-mapping-flow`. Historické dodání při tomto checkpointu
+IN_PROGRESS (lokální implementace k předání PR), ověření VERIFIED_IN_SCOPE pro níže uvedené Javac testy;
 celá milníková/produkční acceptance PARTIAL. Závislosti W01/W02 a S06-W02 jsou
 v baseline merged; původní výsledky se nepřejmenovávají na nový PASS.
 
@@ -145,3 +145,101 @@ bez zachyceného generated source také nevytvoří transfer.
 
 Zbývá nezávislé PR review, případné opravy a merge autorizovaným reviewerem.
 Tento krok nedeklaruje dokončení celého S07/T003 ani libovolného produkčního mapperu.
+
+
+## Krok 6 — integrace po PR103 (T003-S07-W03, AC01–AC04; 2026-11-15)
+
+Výchozí schválený HEAD PR104: `d78286ed65e137495c130e72233dd466da0dd96b`.
+Skutečný main: `b1a8ba1f4234cd399de8319fcf5cde2c670dac26`, potvrzený dvourodičový
+merge PR103 se stejným tree jako schválený `03aaf0d`; PR101–103 jsou MERGED.
+`git merge --no-ff --no-commit b1a8ba1f4234cd399de8319fcf5cde2c670dac26` zachovává
+historii bez rebase/force. PR104 zůstává PR_OPEN, nový integrační HEAD vyžaduje
+samostatné nezávislé review. Žádné změny souběžné BE→FE větve se nepřebírají.
+
+Rekognoskace kgmaker-context ověřila status, query, memory recall a zdroje.
+Jediný funkční překryv je `graph_provider.py`: W03 guard pro
+`field_flow_rule_version` uvnitř `validate_context_snapshot` a T037 samostatný
+`view_context_fingerprint`. Git je sloučil automaticky; AST celého modulu po
+odebrání pouze T037 helperu je shodné s W03 rodičem a helper s main. Všech dalších
+11 W03 a 16 main source/test/fixture souborů je byte-identických s příslušným
+rodičem. Žádný funkční integrační patch ani nový behavior test nebyl potřeba.
+
+Konflikty v acceptance/progress zachovávají obě task sekce; aktuálně uvádějí
+PR103 MERGED a PR104 PR_OPEN. Semantic/generated konflikt se řeší v kroku 7.
+README a compiler capability se sloučily bez konfliktu; field-mapping.md,
+view-cache.md, runtime-trace.md, architecture CLI, fixture README a všechny
+API/CLI příklady jsou bez nové změny veřejného chování. Registry/revize zadání,
+worker protocol, graph/store schéma a installed templates jsou bez dopadu.
+Source-freshness, UNKNOWN business/runtime limity a veřejné příkazy zůstávají.
+
+`inspection.graph_from_response` je doložený společný tok W03 projekce s novými
+JVM named-query a runtime fixtures. Proto vedle původních pěti W03 modulů běží
+jen jeden actual named-query pozitivní test a dva actual runtime capture testy;
+celé dřívější sady 205/298 se neopakují.
+
+```sh
+env PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
+  JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+  KGMAKER_WORKERS_HOME=/tmp/kgmaker-w03/workers KGMAKER_REQUIRE_WORKERS=1 \
+  PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q \
+  tests/test_field_mapping_flow.py tests/test_dataflow.py \
+  tests/test_argument_parameter_flow.py tests/test_return_consumer_flow.py \
+  tests/test_worker_protocol.py \
+  tests/test_named_query_containers.py::test_actual_javac_named_query_containers_reference_parameters_and_projections \
+  tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values \
+  tests/test_runtime_trace_producer.py::test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch \
+  --tb=line
+```
+
+**PASS: 166 passed / 0 skipped, 67.84 s**. Použit skutečný JDK21, MapStruct1.6.3,
+existující K1/K2 worker distribuce a TypeScript dependencies. Předem existující
+lokální ignorované symlinky `workers/jvm/target`, `target-k2` a
+`workers/typescript/node_modules` byly pouze použity; žádná instalace ani další
+worker build. Výše uvedený test explicitně generuje/kompiluje fixture a spouští
+dva opt-in runtime scénáře; scan/hook nemění svůj offline kontrakt.
+
+Source identity a AST složení **PASS**. Full suite, další produkční corpus a
+GH CI **NOT_RUN** dle pověření. Předchozí 163 PASS/63.09 s a 14 PASS zůstávají
+historickými výsledky původního W03 HEAD; nový výsledek 166 testů je nerozšiřuje na obecné
+Kotlin/TS field projection ani MapStruct business ekvivalenci.
+
+
+## Krok 7 — zachování kumulativní evidence (T003-S07-W03, AC04; 2026-11-15)
+
+Výchozí SHA jsou W03 `d78286ed65e137495c130e72233dd466da0dd96b` a main
+`b1a8ba1f4234cd399de8319fcf5cde2c670dac26`. Semantic konflikt zachoval aktuální
+main fakta i doložený W03 koncept/tři vztahy; epizody tvoří union podle ID s
+kontrolou shodnosti objektů. Scoped patch z aktuálního packetu obsahoval 14
+konceptů a 77 vztahů, bez removals. Reanchor porovnal source hash správného
+rodiče, nezměněný text citované řádky a jednoznačnou deklaraci v aktuálním indexu.
+Nezavádí novou technickou ani business evidence.
+
+```sh
+./kgmaker semantic update --base b1a8ba1f4234cd399de8319fcf5cde2c670dac26 --note docs/changes/124_fieldAndMappingFlow.md
+./kgmaker scan --no-docs
+# Source-backed patch používá právě připravené update_id, žádné removals.
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/w03-integration-preservation.py
+./kgmaker memory capture --base b1a8ba1f4234cd399de8319fcf5cde2c670dac26 --validation w03-integration166=passed --validation semantic-preservation=passed --validation source-identity=passed --validation full-suite=skipped
+./kgmaker scan
+./kgmaker check
+git diff --check b1a8ba1f4234cd399de8319fcf5cde2c670dac26
+git diff --check d78286ed65e137495c130e72233dd466da0dd96b
+```
+
+Všechny uvedené kontroly **PASS**. První scan před reanchor pravdivě vynechal
+74 stale vztahů; finální scan je již nevynechává. Audit zachoval všechny
+concept IDs, relationship `(source,target,kind,confidence,confidence_score)`
+s normalizací pouze koncového line suffixu `::číslo` a všechny původní episode
+objekty: baseline **42/135/286**, W03 **43/138/288**, main **43/138/294**.
+Union před capture je **44/141/296**, po jedné skutečné nové epizodě
+`aea25d5b22a3cd1a9730c6e283a5b060dc3b4b83c3d878a48328b0daca0aebcb`
+celkem **44/141/297**. Source identity všech 27 souborů a AST složení
+`graph_provider.py` z kroku 6 také **PASS**. Všechny generated grafy vznikly
+příkazem, po závěrečném dokumentačním textu se obnovují stejným scan/check.
+
+Dokumentace a veřejné návody mají stejný dopad jako krok 6; tato údržba mění
+pouze interní citace/generovanou navigaci. Full suite, další toolchain/produkční
+corpus a GitHub CI **NOT_RUN**. Žádné vlastní APPROVE ani tvrzení MERGED PR104;
+zbývá nezávislé review přesné publikované integrační revize a autorizovaný merge.
