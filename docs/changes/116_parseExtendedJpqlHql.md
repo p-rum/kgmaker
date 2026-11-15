@@ -66,11 +66,21 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
   bindingy jsou vedené po subquery scope s korelovaným lookupem do vnějšího
   scope. Neznámý dotted alias zůstává bez silnější evidence a invaliduje query
   při compiler-owned resolution.
+- `T003-S06-W05-S04 / AC01, AC03`: query blocks dostaly stabilní lexical scope
+  identity; sibling subqueries tedy mohou znovu použít alias a korelované
+  vnější bindingy se zachovají. Doplňující augmented-graph testy pokrývají
+  neúplný UPDATE/DELETE/ORDER BY, bare undeclared alias, sibling scopes a
+  korelovaný `Customer.id` filter.
+- Výchozí baseline tohoto kroku: `6a54640cbd3dc06de2e193df642dea89964364c2`.
 - Výchozí opravný head: `878eabc25f3ddb0066213ad00928c4a7b5cfeb76`.
 - Kontroly: `PYTHONPATH=src python3 -m pytest -q tests/test_jpql_hql_grammar.py`
   **11 passed, 1 skipped**; relevantní sada
   `tests/test_jpql_hql_grammar.py tests/test_build_aware.py tests/test_compiler_workers.py`
   **16 passed, 16 skipped**; `git diff --check` **PASS**.
+- Izolovaný full běh s `PYTHONPATH=src:/tmp/kgmaker-python-test-deps`:
+  **1605 passed, 1017 skipped, 44 errors**. Errors jsou environmentální
+  toolchain/install prerequisites (Snap Kotlin, chybějící setuptools a externí
+  worker artefakty), nikoli fail tohoto work package.
 - Celý `PYTHONPATH=src python3 -m pytest -q` **FAIL při collection** kvůli
   nekompatibilnímu lokálnímu `referencing`/Python 3.12 (`TypeError: default is
   an invalid keyword argument for typevar()`); tento výsledek není vydáván jako

@@ -206,6 +206,22 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
     if depth:
         invalid.append(_jpql_locator(text, len(text), "EOF", "unclosed parenthesis"))
 
+    # Stable lexical query-block identities distinguish sibling subqueries that
+    # happen to have the same parenthesis depth.
+    scope_parents: dict[int, int | None] = {0: None}
+    scope_by_depth: dict[int, int] = {}
+    next_scope = 1
+    for token in tokens:
+        for level in list(scope_by_depth):
+            if level > token["depth"]:
+                scope_by_depth.pop(level, None)
+        if token["kind"] == "identifier" and token["lower"] == "select" and token["depth"] > 0:
+            parent = scope_by_depth.get(token["depth"] - 1, 0)
+            scope_by_depth[token["depth"]] = next_scope
+            scope_parents[next_scope] = parent
+            next_scope += 1
+        token["scope_id"] = scope_by_depth.get(token["depth"], 0)
+
     unsupported = [_jpql_locator(text, token["start"], token["value"], JPQL_UNSUPPORTED_KEYWORDS[token["lower"]])
                    for token in tokens if token["kind"] == "identifier"
                    and token["lower"] in JPQL_UNSUPPORTED_KEYWORDS]
@@ -247,7 +263,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             alias, end = alias_at(end)
             if parts:
                 roots.append({"entity": ".".join(parts), "alias": alias, "action": "query_writes",
-                              "depth": token["depth"], "locator": _jpql_locator(text, token["start"], token["value"], "bulk update target")})
+                              "depth": token["depth"], "scope_id": token["scope_id"], "locator": _jpql_locator(text, token["start"], token["value"], "bulk update target")})
             position = max(position + 1, end)
             continue
         if token["kind"] == "identifier" and token["lower"] == "from":
@@ -259,7 +275,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                     break
                 alias, end = alias_at(end)
                 roots.append({"entity": ".".join(parts), "alias": alias, "action": action,
-                              "depth": token["depth"], "locator": _jpql_locator(text, tokens[cursor]["start"], parts[0], "query root")})
+                              "depth": token["depth"], "scope_id": token["scope_id"], "locator": _jpql_locator(text, tokens[cursor]["start"], parts[0], "query root")})
                 if end >= len(tokens) or tokens[end]["value"] != ",":
                     break
                 cursor = end + 1
@@ -275,7 +291,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             alias, end = alias_at(end)
             if len(parts) >= 2:
                 joins.append({"base_alias": parts[0], "path": parts[1:], "alias": alias, "fetch": fetch,
-                              "depth": token["depth"],
+                              "depth": token["depth"], "scope_id": token["scope_id"],
                               "locator": _jpql_locator(text, token["start"], token["value"], "association join")})
             elif parts and parts[0].casefold() not in JPQL_UNSUPPORTED_KEYWORDS:
                 unsupported.append(_jpql_locator(text, tokens[cursor]["start"], parts[0],
@@ -298,7 +314,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
     while position < len(tokens):
         token = tokens[position]
         lower = token["lower"]
-        depth_value = token["depth"]
+        depth_value = token["scope_id"]
         if token["kind"] == "identifier":
             if lower == "select":
                 clauses[depth_value] = "projection"
@@ -323,7 +339,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                 if role == "update":
                     role = "update" if end < len(tokens) and tokens[end]["value"] == "=" else "read"
                 paths.append({"alias": parts[0], "path": parts[1:], "role": role,
-                              "depth": depth_value,
+                              "depth": token["depth"], "scope_id": depth_value,
                               "locator": _jpql_locator(text, token["start"], token["value"], "path expression")})
                 position = end
                 continue
@@ -337,7 +353,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
     if first_token is None or first_token["lower"] not in {"select", "update", "delete"}:
         structural_invalid.append(_jpql_locator(text, 0, first_token["value"] if first_token else "EOF",
                                                  "query must start with SELECT, UPDATE, or DELETE"))
-    top_words = {"where", "having", "on", "with", "set", "from", "group", "order"}
+    top_words = {"where", "having", "on", "with", "set", "from", "group", "order", "and", "or"}
     for index, token in enumerate(tokens):
         if token["kind"] != "identifier" or token["lower"] not in {"where", "having", "on", "with", "set"}:
             continue
@@ -360,6 +376,18 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                 and following["lower"] not in {"and", "or", "order", "group", "having", "where"}:
             structural_invalid.append(_jpql_locator(text, following["start"], following["value"],
                                                      "unexpected token after completed expression"))
+    for index, token in enumerate(tokens):
+        if token["kind"] == "identifier" and token["lower"] in {"and", "or"}:
+            following = tokens[index + 1] if index + 1 < len(tokens) else None
+            if following is None or following["value"] in {")", ","} or (following["kind"] == "identifier"
+                    and following["lower"] in top_words):
+                structural_invalid.append(_jpql_locator(text, token["start"], token["value"],
+                                                         "logical operator requires an expression"))
+        if token["kind"] == "identifier" and token["lower"] in {"order", "group"}:
+            following = tokens[index + 1] if index + 1 < len(tokens) else None
+            if following is None or following["lower"] != "by" or index + 2 >= len(tokens):
+                structural_invalid.append(_jpql_locator(text, token["start"], token["value"],
+                                                         "ORDER/GROUP BY requires an expression"))
     if first_token and first_token["lower"] == "select":
         from_token = next((token for token in tokens if token["kind"] == "identifier" and token["lower"] == "from" and token["depth"] == 0), None)
         projection = [token for token in tokens[1:] if token["depth"] == 0 and token["start"] < (from_token["start"] if from_token else len(text))
@@ -371,6 +399,10 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
         if not any(token["kind"] == "identifier" and token["lower"] == "from" and token["depth"] == 0 for token in tokens):
             structural_invalid.append(_jpql_locator(text, first_token["start"], first_token["value"],
                                                      "DML statement requires top-level FROM"))
+    if first_token and first_token["lower"] == "update":
+        if not any(token["kind"] == "identifier" and token["lower"] == "set" and token["depth"] == 0 for token in tokens):
+            structural_invalid.append(_jpql_locator(text, first_token["start"], first_token["value"],
+                                                     "UPDATE statement requires top-level SET"))
     # Preserve unknown dotted bindings as paths so the resolver can invalidate
     # the query instead of silently dropping an undeclared alias.
     for index, token in enumerate(tokens[:-2]):
@@ -384,8 +416,32 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
         if not any(path["alias"].casefold() == token["lower"] and path["depth"] == token["depth"] for path in paths):
             parts, end = path_at(index)
             paths.append({"alias": parts[0], "path": parts[1:], "role": clauses.get(token["depth"], "filter"),
-                          "depth": token["depth"],
+                          "depth": token["depth"], "scope_id": token["scope_id"],
                           "locator": _jpql_locator(text, token["start"], token["value"], "path expression")})
+    # A simple unknown projection alias must be retained for semantic
+    # resolution; otherwise `select x from Entity e` looked complete.
+    from_token = next((token for token in tokens if token["kind"] == "identifier"
+                       and token["lower"] == "from" and token["depth"] == 0), None)
+    select_token = next((token for token in tokens if token["kind"] == "identifier"
+                         and token["lower"] == "select" and token["depth"] == 0), None)
+    if select_token and from_token:
+        for token in tokens:
+            if not (select_token["end"] <= token["start"] < from_token["start"]
+                    and token["kind"] == "identifier" and token["lower"] not in {"distinct", "new"}
+                    and token["lower"] not in aliases):
+                continue
+            token_index = tokens.index(token)
+            if ((token_index and tokens[token_index - 1]["value"] == ".")
+                    or (token_index + 1 < len(tokens) and tokens[token_index + 1]["value"] == ".")):
+                continue
+            if token["value"] in {"count", "sum", "avg", "min", "max"}:
+                continue
+            if any(path["alias"].casefold() == token["lower"] and path["scope_id"] == token["scope_id"]
+                   for path in paths):
+                continue
+            paths.append({"alias": token["value"], "path": [], "role": "projection",
+                          "depth": token["depth"], "scope_id": token["scope_id"],
+                          "locator": _jpql_locator(text, token["start"], token["value"], "projection binding")})
     invalid.extend(structural_invalid)
     provider_extensions = []
     if any(token["kind"] == "identifier" and token["lower"] == "with" for token in tokens[1:]):
@@ -393,6 +449,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
     return {"status": "UNKNOWN" if invalid else "PARTIAL" if unsupported else "COMPLETE",
             "statement": statement, "roots": roots, "joins": joins, "paths": paths,
             "constructors": constructors, "invalid_fragments": invalid,
+            "scope_parents": scope_parents,
             "unsupported_fragments": unsupported, "provider_extensions": provider_extensions}
 
 
@@ -3138,13 +3195,14 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                                   "validated": False,
                                                                   "analysis_status": "PARTIAL" if status == "PARTIAL" else "UNKNOWN"})
 
-            alias_owners_by_depth: dict[int, dict[str, str]] = {}
-            ambiguous_aliases_by_depth: dict[int, set[str]] = {}
+            alias_owners_by_scope: dict[int, dict[str, str]] = {}
+            ambiguous_aliases_by_scope: dict[int, set[str]] = {}
+            scope_parents = {int(key): value for key, value in parsed_query.get("scope_parents", {}).items()}
 
-            def bind_alias(depth: int, alias: str, owner: str) -> None:
+            def bind_alias(scope: int, alias: str, owner: str) -> None:
                 key = alias.casefold()
-                owners = alias_owners_by_depth.setdefault(depth, {})
-                ambiguous = ambiguous_aliases_by_depth.setdefault(depth, set())
+                owners = alias_owners_by_scope.setdefault(scope, {})
+                ambiguous = ambiguous_aliases_by_scope.setdefault(scope, set())
                 if key in owners and owners[key] != owner:
                     ambiguous.add(key)
                     owners.pop(key, None)
@@ -3155,14 +3213,20 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 elif key not in ambiguous:
                     owners[key] = owner
 
-            def lookup_alias(depth: int, alias: str) -> tuple[str | None, bool]:
+            def lookup_alias(scope: int, alias: str) -> tuple[str | None, bool]:
                 key = alias.casefold()
-                for scope in range(depth, -1, -1):
-                    if key in ambiguous_aliases_by_depth.get(scope, set()):
+                visited: set[int] = set()
+                while scope not in visited:
+                    visited.add(scope)
+                    if key in ambiguous_aliases_by_scope.get(scope, set()):
                         return None, True
-                    owner = alias_owners_by_depth.get(scope, {}).get(key)
+                    owner = alias_owners_by_scope.get(scope, {}).get(key)
                     if owner:
                         return owner, False
+                    parent = scope_parents.get(scope)
+                    if parent is None:
+                        break
+                    scope = int(parent)
                 return None, False
 
             for root_record in parsed_query["roots"]:
@@ -3181,10 +3245,10 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     invalidate_query()
                 alias = root_record.get("alias")
                 if alias and query_owner:
-                    bind_alias(int(root_record.get("depth", 0)), alias, query_owner)
+                    bind_alias(int(root_record.get("scope_id", 0)), alias, query_owner)
 
             for join in parsed_query["joins"]:
-                owner, join_ambiguous = lookup_alias(int(join.get("depth", 0)), join["base_alias"])
+                owner, join_ambiguous = lookup_alias(int(join.get("scope_id", 0)), join["base_alias"])
                 target_owner = owner
                 association_target = None
                 for segment in join["path"]:
@@ -3209,7 +3273,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                  "Joined association target is read by the static query")
                     join_alias = join.get("alias")
                     if join_alias:
-                        bind_alias(int(join.get("depth", 0)), join_alias, target_owner)
+                        bind_alias(int(join.get("scope_id", 0)), join_alias, target_owner)
                 else:
                     diagnostics.append({"code": "JPQL_JOIN_UNRESOLVED", "path": path, "source_line": line,
                                         "method": method.id, "base_alias": join["base_alias"],
@@ -3224,11 +3288,11 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                 "join": "joins_by"}
             seen_paths: set[tuple[str, tuple[str, ...], str]] = set()
             for expression in parsed_query["paths"]:
-                key = (expression["alias"], tuple(expression["path"]), expression["role"])
+                key = (int(expression.get("scope_id", 0)), expression["alias"].casefold(), tuple(expression["path"]), expression["role"])
                 if key in seen_paths:
                     continue
                 seen_paths.add(key)
-                owner, expression_ambiguous = lookup_alias(int(expression.get("depth", 0)), expression["alias"])
+                owner, expression_ambiguous = lookup_alias(int(expression.get("scope_id", 0)), expression["alias"])
                 property_name = "".join(part[:1].upper() + part[1:] if index else part
                                         for index, part in enumerate(expression["path"]))
                 target, resolved_path = resolve_query_property(owner or "", property_name)

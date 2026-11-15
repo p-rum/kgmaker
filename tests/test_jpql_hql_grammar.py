@@ -51,6 +51,12 @@ interface OrderRepository extends JpaRepository<Order,Long> {
   java.util.List<example.Order> unknownPath(String value);
   @Query("select d from Duplicate d where d.id = :id")
   java.util.List<example.Order> ambiguousEntity(Long id);
+  @Query("update PurchaseOrder o set") int invalidUpdate();
+  @Query("delete from PurchaseOrder o where o.status = :status and") int danglingAnd(String status);
+  @Query("select o from PurchaseOrder o where o.id = :id order by") java.util.List<example.Order> danglingOrder(Long id);
+  @Query("select x from PurchaseOrder o") java.util.List<example.Order> undeclaredBare();
+  @Query("select o from PurchaseOrder o where exists (select c.id from Customer c) and exists (select c.id from PurchaseOrder c)") java.util.List<example.Order> siblingScopes();
+  @Query("select o from PurchaseOrder o where o.id = :id and exists (select o.id from Customer o where o.id = :id)") java.util.List<example.Order> correlatedScope(Long id);
 }
 """
     relative = "src/main/java/example/Model.java"
@@ -101,6 +107,12 @@ interface OrderRepository extends JpaRepository<Order,Long> {
         ("malformed", "malformed", "select o from PurchaseOrder o where (o.id = :id", "java.util.List<example.Order>", ["id"]),
         ("unknown", "unknownPath", "select o from PurchaseOrder o where o.missing = :value", "java.util.List<example.Order>", ["value"]),
         ("ambiguous", "ambiguousEntity", "select d from Duplicate d where d.id = :id", "java.util.List<example.Order>", ["id"]),
+        ("invalid-update", "invalidUpdate", "update PurchaseOrder o set", "int", []),
+        ("dangling-and", "danglingAnd", "delete from PurchaseOrder o where o.status = :status and", "int", ["status"]),
+        ("dangling-order", "danglingOrder", "select o from PurchaseOrder o where o.id = :id order by", "java.util.List<example.Order>", ["id"]),
+        ("undeclared-bare", "undeclaredBare", "select x from PurchaseOrder o", "java.util.List<example.Order>", []),
+        ("sibling-scopes", "siblingScopes", "select o from PurchaseOrder o where exists (select c.id from Customer c) and exists (select c.id from PurchaseOrder c)", "java.util.List<example.Order>", []),
+        ("correlated-scope", "correlatedScope", "select o from PurchaseOrder o where o.id = :id and exists (select o.id from Customer o where o.id = :id)", "java.util.List<example.Order>", ["id"]),
     ]
     for identity, name, text, return_type, parameters in methods:
         declaration(identity, name, "method", "example.OrderRepository", f"{name}(",
@@ -166,6 +178,7 @@ def test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence(t
     _, graph, context = _fixture(tmp_path)
     result = augment_framework_graph(tmp_path, graph, context)
     queries = _queries(result)
+    nodes = {node.id: node for node in result.nodes}
 
     partial = queries["partialLateral:JPQL"]
     assert partial.metadata["analysis_status"] == "PARTIAL"
@@ -202,6 +215,20 @@ def test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence(t
     assert any(item.get("code") == "JPQL_ENTITY_UNRESOLVED"
                and item.get("method") == "ambiguous" and len(item.get("candidates", [])) == 2
                for item in result.diagnostics)
+
+    for name in ("invalidUpdate", "danglingAnd", "danglingOrder"):
+        assert queries[f"{name}:JPQL"].metadata["analysis_status"] == "UNKNOWN"
+        assert not any(edge.source == queries[f"{name}:JPQL"].id
+                       and edge.kind in {"query_reads", "query_writes", "query_deletes", "filters_by"}
+                       for edge in result.edges)
+    undeclared = queries["undeclaredBare:JPQL"]
+    assert undeclared.metadata["analysis_status"] == "UNKNOWN"
+    sibling = queries["siblingScopes:JPQL"]
+    assert sibling.metadata["analysis_status"] == "COMPLETE"
+    correlated = queries["correlatedScope:JPQL"]
+    assert correlated.metadata["analysis_status"] == "COMPLETE"
+    assert any(edge.source == correlated.id and edge.kind == "filters_by"
+               and nodes[edge.target].name == "Customer.id" for edge in result.edges)
 
 
 @pytest.mark.parametrize("query", [
