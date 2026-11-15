@@ -21,6 +21,12 @@ The source-only core and its extensions are organized as follows:
 7. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, implementation `memory`, durable `task`, and the Copilot hook command. Semantic updates, task packets, recall, and hook context accept approximate token budgets.
 8. `confluence.py` ingests an optional local multi-file Confluence HTML export using structural parsing, resolves internal links and attachments, parses Mermaid and Draw.io/XML diagrams deterministically, caches artifact hashes, merges documentation evidence into the unified graph, and validates claims against the code graph. The source code is authoritative; contradictions are retained as evidence and rendered to a Markdown report.
 
+`runtime_evidence.produce_manifest` is the explicit execution boundary for a
+sanitized runtime trace producer. It runs only when the caller invokes
+`runtime produce`, validates the selected compiler context, and atomically writes
+call/bean/condition/mapping facts with build/config/service/version and source
+identity. Import, scan, hook and feature commands remain non-executing.
+
 The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md`, `.kgmaker/GRAPH.mmd`, and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker scan --no-docs` updates only the machine index; `kgmaker docs` can regenerate both views later. `kgmaker semantic update --token-budget N` limits the changed-file context packet using a conservative character-to-token estimate; it cannot control the separate token accounting of the host Copilot model. `kgmaker check` compares fresh Markdown and Mermaid renders against the committed snapshots and can run in CI without the local JSON index.
 
 Confluence exports are optional and read-only. `kgmaker docs check --confluence-dir PATH` performs deterministic ingestion first, then compares assertions to current code. Verified code facts use `VERIFIED_BY_CODE`; business or external-system claims that static analysis cannot establish remain `NOT_VERIFIABLE_FROM_CODE` and are not reported as lies. The cache stores per-artifact SHA-256 values and `CodeEntity → DocumentationAssertions` reverse links so later code changes can revalidate affected documentation.

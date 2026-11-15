@@ -6,13 +6,115 @@ as a negative fact.
 """
 from __future__ import annotations
 
+import json
+import os
+import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from .analysis_model import AnalysisError, digest, file_hash, safe_path
 from .model import Edge, KnowledgeGraph
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = {1, 2}
+_SENSITIVE_KEY = re.compile(r"(?:pass(?:word)?|secret|token|authorization|api[_-]?key|private[_-]?key)", re.I)
+_SENSITIVE_QUERY = re.compile(r"(?i)([?&](?:token|secret|password|api[_-]?key|authorization)=[^&#\s]*)")
+
+
+def _sanitize(value: Any, key: str = "") -> Any:
+    """Return a JSON-safe trace value with credentials removed.
+
+    Producer output is untrusted application output.  Sanitization is deliberately
+    conservative and does not claim that an opaque value is safe merely because
+    it was supplied by a fixture.
+    """
+    if _SENSITIVE_KEY.search(key):
+        return "[REDACTED]"
+    if isinstance(value, dict):
+        return {str(k): _sanitize(v, str(k)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize(v, key) for v in value]
+    if isinstance(value, str):
+        return _SENSITIVE_QUERY.sub(lambda m: m.group(1).split("=", 1)[0] + "=[REDACTED]", value)
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    raise AnalysisError("Runtime producer emitted a non-JSON value")
+
+
+def _context_for(graph: KnowledgeGraph, context_id: str) -> dict[str, Any]:
+    contexts = [item for item in graph.contexts if item.get("id") == context_id]
+    if len(contexts) != 1:
+        raise AnalysisError("Runtime producer context is absent from the stored compiler graph", 3)
+    context = contexts[0]
+    if context.get("freshness") == "STALE":
+        raise AnalysisError("STALE_RUNTIME: compiler context is stale", 3)
+    return context
+
+
+def produce_manifest(root: Path, command: list[str], *, context_id: str, runtime_id: str,
+                     build_id: str, config_fingerprint: str, service_id: str,
+                     service_version: str, timeout: float = 120,
+                     output: Path | None = None) -> dict[str, Any]:
+    """Explicitly run a caller-supplied trace producer and atomically publish JSON.
+
+    This is the sole execution boundary. Scan, hooks, feature analysis and runtime
+    import never call it. The command must print one JSON object containing a
+    ``facts`` array (or a bare facts array); the application is responsible for
+    opting in to its producer instrumentation.
+    """
+    if not isinstance(command, list) or not command or any(not isinstance(x, str) or not x for x in command):
+        raise AnalysisError("Runtime producer command must be a non-empty argv array")
+    if timeout <= 0 or timeout > 900:
+        raise AnalysisError("Runtime producer timeout is outside the bounded range")
+    root = root.resolve()
+    from .store import load_graph
+    graph = load_graph(root)
+    if graph is None or graph.schema_version != 3:
+        raise AnalysisError("Runtime producer requires a stored schema 3 compiler graph", 3)
+    context = _context_for(graph, context_id)
+    try:
+        completed = subprocess.run(command, cwd=root, capture_output=True, text=True,
+                                   timeout=timeout, check=False,
+                                   env={**os.environ, "KGMAKER_RUNTIME_TRACE": "1"})
+    except subprocess.TimeoutExpired as exc:
+        raise AnalysisError("RUNTIME_PRODUCER_TIMEOUT: no artifact was published", 3) from exc
+    if completed.returncode != 0:
+        raise AnalysisError(f"RUNTIME_PRODUCER_FAILED: exit {completed.returncode}; no artifact was published", 3)
+    try:
+        raw = json.loads(completed.stdout)
+    except (ValueError, TypeError) as exc:
+        raise AnalysisError("Runtime producer stdout must be one JSON object; no artifact was published", 3) from exc
+    if isinstance(raw, list):
+        raw = {"facts": raw}
+    if not isinstance(raw, dict) or not isinstance(raw.get("facts"), list):
+        raise AnalysisError("Runtime producer output requires a facts array; no artifact was published", 3)
+    facts = _sanitize(raw["facts"], "facts")
+    allowed_kinds = {"call", "bean", "condition", "mapping"}
+    for index, fact in enumerate(facts):
+        if not isinstance(fact, dict) or fact.get("kind") not in allowed_kinds:
+            raise AnalysisError(f"Runtime facts[{index}] requires kind call/bean/condition/mapping")
+    source_hashes = context.get("source_files", {})
+    manifest = {
+        "schema_version": 2, "runtime_id": runtime_id, "context_id": context_id,
+        "build_id": build_id, "config_fingerprint": config_fingerprint,
+        "service_id": service_id, "service_version": service_version,
+        "source_identity": {"context_fingerprint": context.get("content_hash"),
+                            "source_manifest_fingerprint": digest(source_hashes)},
+        "source_hashes": source_hashes,
+        "worker_distribution": context.get("worker", {}).get("distribution", []),
+        "facts": facts, "observations": _sanitize(raw.get("observations", []), "observations"),
+        "status": "COMPLETE" if facts else "PARTIAL",
+        "diagnostics": _sanitize(raw.get("diagnostics", []), "diagnostics"),
+        "producer": {"executable": os.path.basename(command[0]),
+                     "command_fingerprint": digest(command), "opt_in": True},
+    }
+    validate_manifest(graph, root, manifest)
+    if output is not None:
+        from .analysis_model import atomic_write
+        output = output if output.is_absolute() else root / output
+        atomic_write(output, json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
+    return manifest
 
 
 def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any]) -> None:
@@ -36,8 +138,8 @@ def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any])
 
 
 def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    if not isinstance(manifest, dict) or manifest.get("schema_version") != SCHEMA_VERSION:
-        raise AnalysisError("RuntimeManifest schema_version must be 1")
+    if not isinstance(manifest, dict) or manifest.get("schema_version") not in SUPPORTED_SCHEMA_VERSIONS:
+        raise AnalysisError("RuntimeManifest schema_version must be 1 or 2")
     for key in ("runtime_id", "context_id", "build_id", "config_fingerprint"):
         if not isinstance(manifest.get(key), str) or not manifest[key]:
             raise AnalysisError("RuntimeManifest requires " + key)

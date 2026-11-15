@@ -450,6 +450,20 @@ svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovaj�
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
 
+Explicitní opt-in producer lze spustit pouze příkazem `runtime produce`; scan,
+hook, feature ani import jej nespouštějí. Producer očekává JSON s `facts` typu
+`call`, `bean`, `condition` nebo `mapping`, doplní build/config/service/version
+fingerprinty a rediguje hesla, tokeny a citlivé query parametry. Výstup se zapíše
+atomicky až po validaci proti čerstvému compiler contextu; timeout, chyba procesu
+nebo nejednoznačný fact ponechá předchozí artefakt beze změny.
+
+```text
+kgmaker runtime produce --root PROJECT --context ctx --runtime-id run-1 \
+  --build-id build-1 --config-fingerprint cfg-1 --service-id orders \
+  --service-version 1.2.3 --output .kgmaker/runtime/trace.json \
+  ./bin/explicit-trace-producer
+```
+
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
 a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě

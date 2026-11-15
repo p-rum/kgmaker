@@ -1,5 +1,14 @@
 # Inventář acceptance T001 a T002
 
+## T003-S13-W01 — sanitizovaný runtime trace producer (bounded)
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W01-AC01 | VERIFIED_IN_SCOPE | `tests/test_runtime_trace_producer.py::test_explicit_fixture_producer_emits_redacted_facts_and_fingerprints`; explicit fixture command, schema v2 identity and redaction. Scan/import remain non-executing. |
+| T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | Existing `tests/test_build_aware.py::test_runtime_import_is_bound_to_context_and_rejects_stale_source`; importer accepts v1 and producer emits additive v2. |
+| T003-S13-W01-AC03 | VERIFIED_IN_SCOPE | `test_failed_or_ambiguous_producer_keeps_existing_artifact`; invalid JSON/unknown fact fails before atomic output and leaves sentinel unchanged. |
+| T003-S13-W01-AC04 | PARTIAL | Fixture and focused tests are recorded in [change122](changes/122_runtimeTraceProducer.md); S13 and T003 remain PARTIAL, no runtime availability claim. |
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
