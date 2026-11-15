@@ -20,13 +20,14 @@ CAPABILITIES = {
     'fields': ['Kotlin primary constructor val/var', 'Java records and simple fields',
                'TypeScript interface/type properties', 'JSON Schema/OpenAPI JSON properties'],
     'value_flow': ['Kotlin expression functions with explicit parameter/return types',
-                   'local numeric/property expressions', 'unambiguous Kotlin constructor mapping'],
+                   'local numeric/property expressions', 'unambiguous Kotlin constructor mapping',
+                   'compiler-bound HTTP JSON→destructuring→React state→JSX/test argument with explicit contract provenance'],
     'unsupported': ['SOURCE_ONLY overloaded/interprocedural calls', 'control-flow-dependent mappings', 'dynamic SQL',
-                    'OpenAPI YAML fields', 'Kafka payload resolution', 'frontend binding', 'template binding'],
+                    'OpenAPI YAML fields', 'Kafka payload resolution', 'dynamic/template frontend binding'],
 }
 # Direction of propagation of a changed value, not direction of its stored edge.
 FORWARD = {'maps_to', 'serialized_as', 'displayed_in', 'rendered_in', 'sent_to',
-           'tested_by', 'documented_by', 'writes_value', 'argument_to_parameter', 'returns_to'}
+           'tested_by', 'documented_by', 'passes_value', 'writes_value', 'argument_to_parameter', 'returns_to'}
 REVERSE = {'reads_value', 'derived_from', 'persisted_in', 'asserts_field', 'targets_ui',
            'tests_endpoint', 'uses_fixture', 'depends_on_contract'}
 
@@ -332,6 +333,9 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
     return {'seed': entity, 'paths': paths, 'truncated': truncated,
             'argument_parameter_bindings': bindings,
             'return_consumer_bindings': [p for p in return_consumer_bindings(graph) if p['source'] in used|{entity} or p['target'] in used|{entity}],
+            'frontend_value_bindings': [p for p in graph.evidence
+                if (p.get('value_flow_version') == 1 or p.get('extractor') == 'frontend-values-1')
+                and (p.get('source') in used|{entity} or p.get('target') in used|{entity})],
             'limitations': CAPABILITIES['unsupported'],
             'interpretation': 'static value dependency, not runtime availability or business equivalence'}
 

@@ -1435,3 +1435,15 @@ and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.
+
+## Backend response values in frontend consumers
+
+Explicit frontend inspection now captures optional `value_flow_version=1`
+occurrences/facts for the bounded await/JSON/destructuring path. The opt-in
+pinned React adapter additionally binds state writes to concrete JSX consumers.
+The complete prerequisites, workspace generation metadata, CLI example and
+SOURCE_ONLY behavior are in [backend→frontend value flow](backend-frontend-value-flow.md)
+and [change125](changes/125_backendFrontendValueFlow.md). Existing worker-response
+v1 and graph/store v1/v2/v3 remain readable; absent optional fields grant no value
+proof. The packaged `frontend_values.cjs` helper is content-bound in the worker
+distribution and required when its package marker is present.

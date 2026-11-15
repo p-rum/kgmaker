@@ -120,6 +120,10 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         if ui_marker is not None and (type(ui_marker) is not int or ui_marker != 1
                 or not (home / "typescript/ui_events.cjs").is_file()):
             raise WorkerError("TypeScript UI adapter helper unavailable or unsupported", "TOOLCHAIN_UNAVAILABLE")
+        value_marker = package_data.get("kgmaker_frontend_values")
+        if value_marker is not None and (type(value_marker) is not int or value_marker != 1
+                or not (home / "typescript/frontend_values.cjs").is_file()):
+            raise WorkerError("TypeScript value flow helper unavailable or unsupported", "TOOLCHAIN_UNAVAILABLE")
     return [node, str(script)]
 
 
@@ -134,6 +138,9 @@ def distribution(language: str, home=None, *, kotlin_backend="k1") -> list[dict]
         ui_helper = root / "typescript/ui_events.cjs"
         if ui_helper.is_file():
             paths.append(ui_helper)
+        flow_helper = root / "typescript/frontend_values.cjs"
+        if flow_helper.is_file():
+            paths.append(flow_helper)
         package = root / "typescript/package.json"
         if package.is_file():
             paths.append(package)
@@ -345,6 +352,8 @@ def validate_response(response: dict, selected_context: dict):
         if not isinstance(fact.get("source"), str) or not isinstance(fact.get("target"), str) or fact["source"] not in ids or fact["target"] not in ids:
             raise WorkerError("Dangling compiler fact", "INVALID_PROTOCOL")
 
+    from .frontend_flow import validate_frontend_values
+    validate_frontend_values(response, selected_context)
     from .return_flow import validate_return_ir
     from .local_operations import validate_operations
     try:
@@ -415,6 +424,10 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
                           "parameter_index", "parameter_name", "transformation", "binding_kind")})
         if fact.get("kind") == "handles_event" and fact.get("ui_adapter"):
             record.update(ui_adapter=fact["ui_adapter"], execution="NOT_OBSERVED")
+        if fact.get("value_flow_version") == 1:
+            record.update(value_flow_version=1, runtime_execution="NOT_OBSERVED", availability="UNKNOWN")
+            if fact.get("ui_adapter"):
+                record["ui_adapter"] = fact["ui_adapter"]
         identity = "evidence:" + digest(record)
         evidence[identity] = {"id": identity, **record}
         return identity

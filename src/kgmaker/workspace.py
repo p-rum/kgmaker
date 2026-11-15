@@ -76,7 +76,7 @@ def _qualified_node(repo: str, node):
     """The exact public Node projection shared by snapshots and validation."""
     metadata=node.metadata
     if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
-    elif (metadata or {}).get('return_mapping_version')==1:metadata=_qualified_symbol(repo,metadata)
+    elif (metadata or {}).get('return_mapping_version')==1 or (metadata or {}).get('value_flow_version')==1:metadata=_qualified_symbol(repo,metadata)
     elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
     elif node.kind=='kafka_retry_policy':metadata=_qualified_retry_metadata(repo,metadata or {})
     return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
@@ -139,6 +139,14 @@ def _qualified_symbol(repo: str, value: dict) -> dict:
     result['context_id'] = qualified(repo, value['context_id'])
     if isinstance(value.get('path'), str):
         result['path'] = source_key(repo, value['path'])
+    if value.get('value_flow_version') == 1:
+        if isinstance(result.get('field_declaration'), dict):
+            result['field_declaration']['symbol'] = qualified(repo, result['field_declaration']['symbol'])
+            result['field_declaration']['path'] = source_key(repo, result['field_declaration']['path'])
+        if isinstance(value.get('setter_binding'), str):
+            result['setter_binding'] = qualified(repo, value['setter_binding'])
+        if isinstance(result.get('request'), dict) and isinstance(result['request'].get('call_site'), str):
+            result['request']['call_site'] = qualified(repo, result['request']['call_site'])
     if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
         result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
     return result
@@ -648,10 +656,20 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                     pending_cache[key] = (KnowledgeGraph.from_dict(cached['payload']['graph']), cached['payload']['schemas'])
             except (AnalysisError, KeyError, TypeError, ValueError, OSError):
                 pass  # corrupted cache is a cache miss, not evidence
-        if key in _REPO_CACHE:
-            local, local_schema = copy.deepcopy(_REPO_CACHE[key])
-        elif key in pending_cache:
-            local, local_schema = copy.deepcopy(pending_cache[key])
+        cached = _REPO_CACHE.get(key, pending_cache.get(key))
+        if cached is not None:
+            # Compiler inputs include excluded dependencies and the external worker
+            # distribution. A source/index cache key alone cannot prove freshness.
+            from .graph_provider import validate_context_snapshot
+            from .worker_protocol import WorkerError
+            try:
+                for captured_context in cached[0].contexts:
+                    if captured_context.get('analyzer_version') and captured_context.get('freshness') != 'STALE':
+                        validate_context_snapshot(root, captured_context)
+            except (WorkerError, ValueError, OSError):
+                cached = None
+        if cached is not None:
+            local, local_schema = copy.deepcopy(cached)
         else:
             local, _, error = feature.current_graph(root)
             local_schema = None
@@ -703,6 +721,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
         annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]
     link_nodes, link_edges, link_diagnostics = federated_links(workspace, graphs, sources)
     nodes += link_nodes; edges += link_edges; diagnostics += link_diagnostics
+    from .frontend_flow import workspace_value_links
+    value_edges, value_evidence, value_diagnostics, value_contexts = workspace_value_links(workspace, graphs, sources)
+    edges += value_edges; diagnostics += value_diagnostics
     release_nodes, release_edges, release_evidence, release_diagnostics, release_report = (
         _release_artifact_links(workspace, graphs)
     )
@@ -726,6 +747,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             raise AnalysisError('Checkout appeared during workspace snapshot: ' + identity, 3)
     if file_hash(manifest) != workspace['_manifest_hash']:
         raise AnalysisError('Manifest changed during workspace snapshot', 3)
+    from .graph_provider import validate_context_snapshot
+    for value_root, value_context in value_contexts:
+        validate_context_snapshot(value_root, value_context)
     _validate_release_artifact_snapshot(workspace, release_report)
     validate_kafka_snapshot(workspace, kafka_report)
     _REPO_CACHE.update(pending_cache)
@@ -745,7 +769,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                             + release_diagnostics + kafka_diagnostics),
                            ([_qualified_evidence(repo, e)
                              for repo, local in graphs.items() for e in local.evidence]
-                            + release_evidence + kafka_evidence),
+                            + release_evidence + kafka_evidence + value_evidence),
                            symbols=sorted(symbols, key=lambda item: item['id']),
                            call_sites=sorted(call_sites, key=lambda item: item['id']),
                            cfgs=sorted(cfgs, key=lambda item: (item['method'], item.get('representation', ''))),

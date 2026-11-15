@@ -142,7 +142,7 @@ def federated_links(workspace, graphs, sources):
                              'Generated client derives from original contract; no independent proof')
                     # Optional explicit origin ID in contract; a linkage, not an availability proof.
                     origin = spec.get('x-kgmaker-source') if isinstance(spec, dict) else None
-                    if isinstance(origin, str) and any(n.id == origin for n in graphs.get(service['backend_repo'], graphs[repo]).nodes):
+                    if isinstance(origin, str) and spec.get('x-kgmaker-source-sha256') is None and any(n.id == origin for n in graphs.get(service['backend_repo'], graphs[repo]).nodes):
                         edge(qualified(service['backend_repo'], origin), field_node.id, 'serialized_as',
                              repo, path, 1, 'Explicit contract source annotation; business equivalence unassessed', 'INFERRED')
                 consumers = service.get('frontend_repos', []) + service.get('test_repos', [])
@@ -180,8 +180,8 @@ def federated_links(workspace, graphs, sources):
                         file_id = file_identity(consumer, file_path)
                         if file_id is None:
                             diagnostics.append('Consumer source has no structural file identity: ' + consumer + '/' + file_path); continue
-                        calls.setdefault((consumer, file_path), []).append((endpoint.id, field_nodes))
                         for match in matches:
+                            calls.setdefault((consumer, file_path), []).append((endpoint.id, field_nodes))
                             line = text.count('\n', 0, match.start()) + 1
                             edge(endpoint.id, file_id, 'sent_to', consumer, file_path, line, 'Explicit HTTP call under manifest service/prefix mapping')
                             if consumer in service.get('test_repos', []):
@@ -202,19 +202,13 @@ def federated_links(workspace, graphs, sources):
             file_id = file_identity(repo, path)
             if file_id is None:
                 continue
-            if role == 'frontend' and (repo, path) in fields:
-                for match in re.finditer(r'<([A-Za-z]\w*)[^>]*\bdata-testid=[\"\']([^\"\']+)[\"\'][^>]*>\s*\{\s*\w+\.(\w+)\s*\}', text):
-                    if not code[match.start():match.start() + 1].strip():
+            if role == 'frontend':
+                for match in re.finditer(r'<[A-Za-z]\w*[^>]*\bdata-testid=[\"\']([^\"\']+)[\"\']', text):
+                    if not code[match.start():match.start()+1].strip():
                         continue
-                    if match[3] not in fields[repo, path]:
-                        diagnostics.append('UI field absent from selected contract: ' + repo + '/' + path + ':' + match[3]); continue
-                    if len(calls.get((repo, path), [])) != 1:
-                        diagnostics.append('Multiple endpoint responses prevent UI field resolution: ' + repo + '/' + path); continue
                     line = text.count('\n', 0, match.start()) + 1
-                    ui = node(qualified(repo, 'ui_element:' + path + ':' + match[2]), 'ui_element', match[2], repo, path, line)
-                    ui_elements.setdefault(match[2], []).append(ui.id)
-                    edge(fields[repo, path][match[3]], ui.id, 'displayed_in', repo, path, line,
-                         'Explicit field use in a single-response component; runtime mapping unverified', 'INFERRED')
+                    ui = node(qualified(repo, 'ui_element:' + path + ':' + match[1]), 'ui_element', match[1], repo, path, line)
+                    ui_elements.setdefault(match[1], []).append(ui.id)
             if role == 'automated-tests':
                 suite = node(qualified(repo, 'test_suite:' + path), 'test_suite', path, repo, path, 1)
                 test_matches = [m for m in re.finditer(r'\b(?:test|it)\s*\(\s*[\"\']([^\"\']+)[\"\']|@Test\s+(?:public\s+)?(?:void|fun)\s+(\w+)', text)
@@ -235,9 +229,6 @@ def federated_links(workspace, graphs, sources):
                         line = text.count('\n', 0, offset + match.start()) + 1
                         assertion = node(qualified(repo, 'test_assertion:' + path + ':' + str(line)), 'test_assertion', field, repo, path, line)
                         edge(case.id, assertion.id, 'tested_by', repo, path, line, 'Explicit assertion in test case')
-                        if field in fields.get((repo, path), {}) and len(calls.get((repo, path), [])) == 1:
-                            target = fields[repo, path][field]
-                            edge(assertion.id, target, 'asserts_field', repo, path, line, 'Single-call field assertion; not a runtime PASS claim', 'INFERRED')
                     for match in re.finditer(r'getByTestId\s*\(\s*[\"\']([^\"\']+)[\"\']', body):
                         if not code[offset + match.start():offset + match.start() + 2].strip():
                             continue
