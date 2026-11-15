@@ -479,3 +479,64 @@ Final `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
 `python3 /tmp/t029-membership-preservation.py`, `git diff --check` — **PASS**;
 50/170/319, worker symlinky odstraněny, změny jsou dohledatelné v samostatném fix
 commitu před ordinary merge main83999fb. Full/GH CI/runtime zůstávají NOT_RUN.
+
+## Krok 11 — integrace merged Criteria main (T029-S04/S05, T028-S04/S05, AC01–AC06)
+
+Fix parent `475b35df5d17e3f5221dec793d327f17bb1c3b77`; actual main
+`83999fb2e08c6d9d67449687c95b2217eee08b09`, parents `cceb1109` +
+`c57b57f478a675a9d16af71384fd5a304d48f38f`, tree
+`098cb3277e62058c032b3526f342cca752715b48` ověřeny proti primary fetch.
+Normální merge --no-ff --no-commit, bez rebase/force. Konflikty pouze v obou
+inventářích, semantic.json a generovaných grafech; source bez konfliktu. Zachovány
+obě dokumentační části a obě semantic historie. S09 report/validation/feature_cli
+pracovní soubory se nepřebírají.
+
+Integrační skutečný JDK21 worker je read-only symlink na
+`/tmp/kgmaker-criteria-queries/workers/jvm/target` (včetně lib), JAR SHA256
+`651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`.
+K2 target symlink zůstává na `/tmp/kgmaker-pr97-reconciled/workers/jvm/target-k2`;
+jeho source se v Criteria neměnil. KGMAKER_WORKERS_HOME ukazuje na vlastní složený
+workers adresář, žádný cizí target se nepřestavuje. Symlinky se po testu odstraní.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-t029/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-main111 tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py tests/test_t014_bind_remote_interfaces.py tests/test_t025_build_local_process_path.py tests/test_t026_collapse_business_steps.py tests/test_t027_cross_http_process_boundary.py /tmp/kgmaker-review110-membership.py '/tmp/t029-review-scheduler.py::test_scheduled_local_listener_call_does_not_enter_kafka_retry[java]' '/tmp/t029-review-callee.py::test_listener_policy_does_not_apply_to_ordinary_local_callee[java]'
+```
+
+**345 PASS / 0 SKIP, 83.01 s**, log `/tmp/t029-main111.txt`. Všechny tři skutečné
+reviewer reprodukce, exact tuple/capture/legacy negativy, actual T012→T014→T025→T028
+mixed path, Java/K1 root pozitivum, K2 UNKNOWN a finally/HTTP scope guard regrese.
+Žádná integrační funkční oprava nebyla potřeba. Source byte audit **PASS**: vlastní
+business_process.py a oba T028/T029 testy proti475b35d; všech5 Criteria source/test/
+worker souborů změněných v main proti83999fb. Matching worker JAR hash beze změny.
+Full suite/runtime/Kafka3.2.0 actual absent gate/GH CI test evidence NOT_RUN.
+
+Progress/acceptance označují Criteria MERGED a T029 stále PR_OPEN; nový345 běh je
+oddělený od historických301/177/2 checkpointů. Capability/API a README z fix parent
+zůstávají, CLI/registry/templates bez dopadu. Inventory součty sledují atomické
+řádky, neprohlašují novou verification nesouvisejících dodávek.
+
+```sh
+./kgmaker semantic update --base 83999fb2e08c6d9d67449687c95b2217eee08b09 --note docs/changes/130_projectProcessFailures.md
+./kgmaker scan --no-docs
+python3 /tmp/t029-main111-semantic.py patch
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t029-main111-preservation.py
+./kgmaker memory capture --base 83999fb2e08c6d9d67449687c95b2217eee08b09 --validation membership-integration=passed --validation semantic-union=passed --validation full-suite=skipped
+```
+
+Apply/validate/preservation **PASS**: všech 51 konceptů / 173 vztahů / 323 přesných
+epizod obou rodičů zachováno. Source-backed reanchor ověřuje správný parent hash
++ identický citovaný řádek, žádná removal. Skutečná integrační capture
+`episode:c212fdb8cd99b8ac1581478e04d88596a0bc0517671b1748c5b1defdfe6af8d7`
+přidává jedinou novou epizodu; finální **51/173/324**. Oba worker symlinky odstraněny.
+Primary refs před publikací potvrzují main83999fb a dosavadní PR110 head e415b7f.
+Otevřené PR112, PR110 a historický draft4; change130 bez kolize, žádné nové Task ID.
+Nezávislé review nové pair zůstává nutné; implementer nemerguje.
+
+Finální `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t029-main111-preservation.py`, `git diff --check 83999fb...` — **PASS**.
+Runtime workflow má skutečné integration implementation/test artifacts ve review.
+Normal push předá samostatný fix475b35d a dvourodičový integrační commit; PR110
+body aktualizuje aktuální pair, aditivní T028 kontrakt a všechny historické FAIL
+odděleně. GH CI nového HEAD a nové nezávislé review nejsou předem označeny PASS.

@@ -358,9 +358,11 @@ def validate_response(response: dict, selected_context: dict):
     validate_frontend_values(response, selected_context)
     from .return_flow import validate_return_ir
     from .local_operations import validate_operations
+    from .criteria_queries import validate_query_ir
     try:
         validate_return_ir(response, selected_context)
         validate_operations(response, selected_context)
+        validate_query_ir(response, selected_context)
     except ValueError as error:
         raise WorkerError(str(error), "INVALID_PROTOCOL") from error
 
@@ -529,6 +531,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     graph = augment_return_flow(graph, sanitize(response["bodies"]), selected_context)
     from .field_flow import augment_field_flow
     graph = augment_field_flow(graph, sanitize(response["bodies"]), selected_context)
+    from .criteria_queries import capture_query_facts
+    graph = capture_query_facts(graph, sanitize(response["bodies"]), selected_context)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
 

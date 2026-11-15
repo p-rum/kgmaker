@@ -444,7 +444,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v8-jpql-hql-grammar` | Named-query containers, Criteria/Specification/QueryDSL, broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
+| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v10-programmatic-queries` | Broader Criteria/Specification/QueryDSL beyond [W07 scope](programmatic-queries.md), broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc
@@ -1497,7 +1497,7 @@ value-flow intersection separately; see [change125 step11](changes/125_backendFr
 
 ## T029 — static process failure projection
 
-Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on merged W09 main `cceb1109` plus T029. Current actual integrated T025–T029 + reviewer reproductions: **301 PASS / 0 SKIP, 65.23 s** (change130 krok8).
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `83999fb` plus T029. Current actual integrated T014 + T025–T029 + all three reviewer reproductions: **345 PASS / 0 SKIP, 83.01 s** (change130 krok11). The former301 checkpoint predates the second membership correction.
 [Change130](changes/130_projectProcessFailures.md) contains exact commands and all
 intermediate FAIL/error results. New pure API has no persistent schema migration.
 
@@ -1510,8 +1510,7 @@ intermediate FAIL/error results. New pure API has no persistent schema migration
 | T029-AC05 | `test_endpoint_proof_cannot_replace_removed_mapping_declarations`, `test_import_requires_exact_t014_tuple_and_declaration_type`, `test_copied_actual_other_endpoint_witness_cannot_authorize_retry`, `test_actual_ordinary_listener_callee_has_no_container_policy`, `test_actual_imported_entry_and_ordinary_same_method_are_distinct`, `test_imported_retry_requires_current_exact_entry_authority`, `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
 | T029-AC06 | README, capability/API examples, progress and change130 per-step evidence | Updated; PR/review and semantic publication recorded with final handoff |
 
-281 targeted tests passed before the final diagnostics fix; the current complete
-Historical pre-review T029 test module passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
+Historically, 281 targeted tests passed before the diagnostics fix; the pre-review T029 module then passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
 Full suite, runtime delivery/rollback and actual unavailable Kafka3.2.0 JAR gate
 are NOT_RUN. Framework version support is inherited, not broadened by this API.
 
@@ -1534,3 +1533,20 @@ historical passing checkpoints do not substitute for this correction.
 Second PR110 membership correction: **177 PASS / 0 SKIP, 71.60 s** in T014/T028/T029
 and all three reviewer reproductions before the separate main83999fb integration;
 see [change130 steps9–11](changes/130_projectProcessFailures.md).
+
+
+## T003-S06-W07 — programmatic query intent
+
+Delivery MERGED ([PR111](https://github.com/p-rum/kgmaker/pull/111)) v `83999fb`, approved `c57b57f`; verification VERIFIED_IN_SCOPE, Java/Javac scope.
+Aktuální ordinary merge maincceb + vlastní844c: **397 PASS /0SKIP /95.57s**,
+včetně45W07 a aktuálních W09/flow integračních kontrol; full/GHCI NOT_RUN.
+Korekčních147PASS/85.27s i původních134PASS jsou samostatné historické checkpointy. Base
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change129](changes/129_criteriaSpecificationQuerydsl.md)
+records actual commands/results and separate fixes. No whole S06 completion.
+
+| Acceptance | Source/fixture/check | Boundary |
+|---|---|---|
+| T003-S06-W07-AC01 | `test_actual_criteria_specification_querydsl_and_fragment`, actual QueryDSL APT + official API JARs; `test_actual_criteria_where_replaces_querydsl_where_accumulates_and_helpers_are_unknown` | Only supported root/equality intent, query=null, no runtime/data proof |
+| T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; old intent v1 replay rejected pending explicit reinspection; invalid/timeout/cancel preserve last valid generation |
+| T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases; `test_actual_review_query_state_and_callable_boundaries` (6 cases), immutable field/override replay checks | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
+| T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
