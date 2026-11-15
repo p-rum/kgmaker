@@ -334,3 +334,82 @@ checked across all bindings. Each subscription remains visible with
 consumer is imported from that conflict. Different canonical endpoints, contexts,
 groups and explicitly compatible versioned endpoints retain independent potential
 paths. No selector name alone creates another consumer or orders its execution.
+
+## Static failure projection (T029)
+
+`kgmaker.business_process.project_process_failures(process, graph=None, *,
+compensation_proposals=(), max_policies=128)` returns the shared immutable
+`ProcessView` (`process-failures-1`). Supply the original T025/T027/T028 process
+and an explicit `KnowledgeGraph` snapshot or graph dictionary. A previously
+projected failure view is rejected; recompute from its original inputs.
+
+```python
+from kgmaker.business_process import project_process_failures, collapse_business_steps
+
+failures = project_process_failures(process, graph, max_policies=128)
+business = collapse_business_steps(failures)
+for node in business.steps:
+    if node.attributes.get("failure_role"):
+        print(node.attributes["policy_status"], node.attributes["execution"])
+```
+
+Catch and distinct finally continuations retain all existing CFG edges and origin
+IDs. Supplied T026 groups are expanded only through their validated stored members;
+normal/return/throw continuations are not reconstructed from names. The existing
+collapse contract continues to protect finally operations and exceptional edges.
+
+Retry/DLT uses the existing `kafka-retry-1` producer and pure policy replay. The
+supported positive scope is Java/K1 with pinned Spring Kafka 3.3.2, literal attempts
+and suffixes, and one owner/context-bound `DltHandler`. The declared listener's
+current selected exceptional-exit CFG certificate must exactly match the supplied
+graph. `RETRY_POTENTIAL` connects that exit to one bounded retry declaration;
+`DLT_POTENTIAL` connects it to the declared DLT boundary. Neither edge executes a
+handler, unrolls attempts, implies a retry destination, or guarantees success.
+Normal exits and unrelated callee exits do not initiate retries. Separate listener
+groups are selected by original method/policy identity, never by topic/name.
+
+Both roles retain `execution=NOT_OBSERVED`, `delivery=NOT_OBSERVED`,
+`processing_completion=UNKNOWN`, `activation=UNKNOWN` and static policy status.
+Raw policy/compiler records survive exactly inside explicit UNKNOWN
+`PROVENANCE_REFERENCE_ONLY` envelopes; their process scope is projection metadata,
+not an upgrade of the original proof. Admission checks raw proofs and exact CFG
+anchors before creating a transition. Stale/contradicting/foreign/unsupported
+inputs retain an UNKNOWN boundary and diagnostic. Missing graph or policy does not
+infer retries from names, attempts attributes or annotations in a process label.
+K2 Kafka annotation capture is not supported by this policy producer and stays
+UNKNOWN; actual K2 capture is tested as a negative case, not a positive retry claim.
+
+An already explicit `transaction_boundary` is a `LOCAL_DECLARATION_ONLY` scope;
+actual rollback remains UNKNOWN. Existing HTTP/Kafka boundaries carry
+`local_transaction_rollback=NOT_PROVEN`. No remote effect is included in local
+rollback and no compensation relation is inferred from a method name.
+
+Compensation input uses only the existing semantic annotation schema:
+
+```python
+proposal = {
+    "id": "proposal:compensation", "target_id": target_step_id,
+    "label": "Proposed compensation", "source_refs": [existing_source_id],
+    "semantic_review_status": "PROPOSED",
+}
+failures = project_process_failures(process, graph, compensation_proposals=[proposal])
+annotation = next(a for a in failures.to_dict()["semantic_annotations"] if a["id"] == proposal["id"])
+assert annotation["semantic_review_status"] == "PROPOSED"
+```
+
+Targets/source refs must already exist in the supplied process. An APPROVED input,
+unknown field, invalid ref or cyclic value fails before output; proposal acceptance
+creates no technical edge or confirmed rollback. Existing technical diagnostics,
+truncation and limits remain visible. `max_policies` is an integer 0–512 (default
+128); omitted policy IDs appear in `FAILURE_POLICY_LIMIT` and coverage is truncated.
+There are at most 128 proposals, 10,000 output nodes and 30,000 edges, with the shared
+bounded input guards. Coverage is PARTIAL because static failure feasibility and
+runtime outcomes remain unknown. Schema v1/v2/v3 graph inputs stay readable;
+legacy graphs without the policy contract gain no retry facts.
+
+This pure API performs no filesystem, worker, application, network or database
+operation. There is no new CLI command, store or migration. Existing `graph view`
+and `flow render` arguments are unchanged; T034/T035 remain separate tasks.
+[Change130](changes/130_projectProcessFailures.md) records actual tests and limits;
+Spring Kafka 3.2.0 actual version-matrix regression is NOT_RUN here because that
+pinned JAR is unavailable, and full suite/runtime delivery are NOT_RUN.

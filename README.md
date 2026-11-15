@@ -1151,3 +1151,11 @@ JSON stays default. See [contract and parser checks](docs/interface-markdown.md)
 Merged in PR87 (`250e7c1`) with the first-call purity correction.
 Topology/explain remain JSON-only; T021/T022 are planned. Historical checks and
 current verification limits are in the delivery inventory.
+
+The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
+retains catch/finally paths through business-step collapse and adds bounded static
+retry/DLT policy boundaries from explicit snapshots. Local transaction declarations
+do not imply rollback of HTTP/Kafka effects; compensation remains a separately
+cited PROPOSED annotation. Java/K1 Spring Kafka 3.3.2 is the supported policy subset;
+K2 policy capture and runtime delivery remain UNKNOWN. See
+[change130](docs/changes/130_projectProcessFailures.md) for actual evidence and limits.

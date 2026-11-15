@@ -1103,3 +1103,196 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
         raise
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as error:
         raise BusinessProcessError('INVALID_ASYNC_PROCESS_BOUNDARY', 'Invalid or incompatible async process input') from error
+
+
+FAILURE_VERSION = 'process-failures-1'
+
+
+def project_process_failures(process, graph=None, *, compensation_proposals=(), max_policies=128):
+    """Preserve source CFG and project bounded static failure-policy declarations.
+
+    graph is an explicit KnowledgeGraph snapshot, never a path or a loader.
+    Retry/DLT associations do not execute handlers or roll back remote effects.
+    Compensation is accepted only in the existing PROPOSED semantic overlay.
+    """
+    try:
+        from .model import KnowledgeGraph
+        from .process_model import ProcessDefinition
+        from .process_paths import _cfg_proofs
+        from .kafka_retry import policy_boundaries
+        if type(max_policies) is not int or not 0 <= max_policies <= 512:
+            _fail('Invalid failure policy budget')
+        if not isinstance(compensation_proposals, (list, tuple)) or len(compensation_proposals) > 128:
+            _fail('Invalid compensation proposal collection')
+        _bounded(compensation_proposals)
+        doc = _document(process)
+        if doc['technical_view']['rules_version'] == FAILURE_VERSION:
+            _fail('Failure projection requires its original input, not a previous projection')
+        # Only validated stored T026 membership can recover the technical CFG.
+        if any(_GROUP in n['attributes'] for n in doc['technical_view']['nodes']):
+            doc = _expand_checked(doc).to_dict()
+        view = doc['technical_view']; scope = doc['definition']['scope']
+        contexts = set(doc['definition']['context_ids'])
+        nodes = view['nodes']; edges = view['edges']; provenance = {p['id']:p for p in view['provenance']}
+        diagnostics = view['diagnostics']; truncated = view['coverage'].get('truncated') is True
+        methods = {n['attributes']['method'] for n in nodes if isinstance(n['attributes'].get('method'), str)}
+        methods.update(n['attributes']['entry_symbol_id'] for n in nodes
+            if n['kind'] == 'trigger' and isinstance(n['attributes'].get('entry_symbol_id'), str))
+        for node in nodes:
+            if node['kind'] == 'transaction_boundary':
+                node['attributes']['failure_semantics'] = {'transaction_scope':'LOCAL_DECLARATION_ONLY',
+                    'rollback':'UNKNOWN', 'remote_effects':'NOT_INCLUDED', 'execution':'NOT_OBSERVED'}
+                diagnostics.append({'code':'LOCAL_TRANSACTION_ROLLBACK_UNOBSERVED','node_id':node['id']})
+            elif node['kind'] in {'service_boundary','async_boundary'}:
+                node['attributes']['failure_semantics'] = {'local_transaction_rollback':'NOT_PROVEN'}
+        for proposal in compensation_proposals:
+            if not isinstance(proposal, Mapping) or proposal.get('semantic_review_status') != 'PROPOSED':
+                _fail('Compensation must be a separate PROPOSED semantic annotation')
+            doc['semantic_annotations'].append(deepcopy(dict(proposal)))
+            diagnostics.append({'code':'COMPENSATION_PROPOSAL_ONLY','annotation_id':proposal.get('id'),
+                'technical_relationship':'NOT_ESTABLISHED','rollback':'UNKNOWN'})
+        # Validate proposals against the existing exact target/provenance refs.
+        view['coverage']['status'] = doc['technical_status'] = 'PARTIAL'
+        ProcessView.from_dict(doc)
+        snapshot = None; rows = []; graph_proofs = {}; graph_nodes = {}; cfgs = {}; expected_proofs = {}
+        if graph is None:
+            diagnostics.append({'code':'FAILURE_POLICY_INPUT_UNAVAILABLE','policy_status':'UNKNOWN'})
+        else:
+            raw = graph.to_dict() if isinstance(graph, KnowledgeGraph) else graph
+            _bounded(raw)
+            snapshot = KnowledgeGraph.from_dict(deepcopy(raw))
+            graph_proofs = {p['id']:p for p in snapshot.evidence}; graph_nodes = {n.id:n for n in snapshot.nodes}
+            symbols = {s['id']:s for s in snapshot.symbols}
+            for context in snapshot.contexts:
+                if context['id'] in contexts and context.get('scope') == scope:
+                    accepted, proofs = _cfg_proofs(snapshot, context, graph_nodes, symbols)
+                    cfgs.update(accepted); expected_proofs.update(proofs)
+            rows = policy_boundaries(snapshot, methods)
+            relevant = [d for d in snapshot.diagnostics if d.get('scope',scope)==scope and (
+                d.get('context_id') in contexts or d.get('source_id') in methods
+                or bool(set(d.get('context_ids',[])) & contexts)
+                or not any(d.get(k) for k in ('context_id','context_ids','source_id')))]
+            diagnostics.extend({'failure_upstream':True, **deepcopy(d)} for d in relevant)
+            truncated = truncated or any(d.get('truncated') is True for d in relevant)
+            if not rows:
+                diagnostics.append({'code':'FAILURE_POLICY_NOT_PROVEN','policy_status':'UNKNOWN'})
+        groups = defaultdict(list)
+        for row in rows: groups[row['policy_id']].append(row)
+        if len(groups) > max_policies:
+            truncated = True
+            diagnostics.append({'code':'FAILURE_POLICY_LIMIT','limit':max_policies,
+                'omitted_policy_ids':sorted(groups)[max_policies:]})
+        def retained(records, cids):
+            refs = []
+            for raw in sorted(records, key=lambda p:p['id']):
+                identity = 'ev:failure-reference:' + digest([raw, scope, cids])
+                item = {'id':identity,'original_id':raw['id'],'scope':scope,'context_ids':cids,
+                    'evidence_kind':'UNKNOWN','freshness':'STALE' if raw.get('freshness')=='STALE' else 'UNKNOWN',
+                    'polarity':'UNKNOWN','authority':'PROVENANCE_REFERENCE_ONLY',
+                    'original_provenance':deepcopy(raw)}
+                if identity in provenance and provenance[identity] != item: _fail('Failure provenance collision')
+                provenance[identity] = item; refs.append(identity)
+            return refs
+        def boundary(identity, role, originals, cids, refs, attrs, owner=None):
+            if any(n['id']==identity for n in nodes): _fail('Failure boundary identity collision')
+            summary = _summarize_view_evidence(refs, provenance)
+            if not refs: summary['evidence_kinds'] = []
+            node = ViewNode(identity,'retry' if role=='retry' else 'async_boundary',
+                'Static '+role+' policy', original_ids=tuple(sorted(set(originals))),owner_id=owner,
+                evidence_refs=tuple(refs),attributes={'scope':scope,'context_ids':cids,
+                    'failure_role':role,'boundary_reason':'STATIC_POLICY_ONLY',
+                    'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED','activation':'UNKNOWN',
+                    'runtime_availability':'UNKNOWN','processing_completion':'UNKNOWN',**attrs},
+                resolution_status='UNRESOLVED',**summary).to_dict()
+            if len(nodes)>=10000: _fail('Failure output topology budget exceeded')
+            nodes.append(node); return node
+        def transition(source, target, role, node):
+            identity = 'failure-transition:' + digest([source,target,role])
+            if any(e['id']==identity for e in edges): _fail('Failure transition identity collision')
+            summary = _summarize_view_evidence(node['evidence_refs'],provenance)
+            edges.append(ViewEdge(identity,source,target,'retry' if role=='RETRY_POTENTIAL' else 'async',
+                original_ids=tuple(node['original_ids']),evidence_refs=tuple(node['evidence_refs']),
+                attributes={'scope':scope,'context_ids':node['attributes']['context_ids'],
+                    'failure_transition':role,'boundary_reason':'STATIC_POLICY_ONLY',
+                    'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED','condition':'failure policy may apply; feasibility UNKNOWN'},
+                resolution_status='UNRESOLVED',**summary).to_dict())
+        def selected_anchor(node, cids):
+            choice=doc['definition']['context_selection']
+            row=choice.get('services',{}).get((node.get('owner_id') or '').removeprefix('service:'),{})
+            return (choice.get('scope',scope)==scope and row.get('scope')==scope
+                and row.get('status')!='STALE' and len(cids)==1
+                and any(c.get('context_id')==cids[0] and c.get('scope',scope)==scope
+                    and c.get('status')=='CURRENT' and c.get('freshness')!='STALE'
+                    for c in row.get('contexts',[])))
+        for policy_id in sorted(groups)[:max_policies]:
+            group = groups[policy_id]; policy = graph_nodes.get(policy_id)
+            md = policy.metadata if policy and isinstance(policy.metadata,dict) else {}
+            origin = md.get('origin_id')
+            if not isinstance(origin,str): origin = next((r['source'] for r in group if r['source'] in methods),None)
+            process_contexts = {cid for n in nodes if n['attributes'].get('method')==origin
+                or n['attributes'].get('entry_symbol_id')==origin for cid in n['attributes']['context_ids']}
+            cids = sorted(process_contexts or contexts)
+            context_valid = len(cids)==1 and md.get('context_id')==cids[0]
+            related = [e for e in snapshot.edges if e.kind in {'declares_retry_boundary','declares_dlt_boundary'}
+                and policy_id in (e.source,e.target)]
+            raw_refs = {r for e in related for r in e.evidence_ids}
+            pending = list(raw_refs)
+            while pending:
+                for ref in graph_proofs.get(pending.pop(),{}).get('compiler_evidence_ids',[]):
+                    if ref not in raw_refs: raw_refs.add(ref); pending.append(ref)
+            records = [graph_proofs[r] for r in sorted(raw_refs) if r in graph_proofs]
+            proof_valid = bool(records) and len(records)==len(raw_refs) and all(
+                p.get('freshness') not in {'STALE'} and p.get('polarity') != 'CONTRADICTING'
+                and p.get('scope',scope)==scope and p.get('context_ids')==cids for p in records)
+            candidates = [n for n in nodes if n['kind']=='exceptional_exit'
+                and n['attributes'].get('method')==origin and n['attributes'].get('context_ids')==cids]
+            cfg = cfgs.get(origin,{}); expected = expected_proofs.get(origin,[])
+            anchors = [n for n in candidates if cfg.get('exceptional_exit') in n['original_ids']
+                and n['freshness']=='CURRENT' and not n['contradicting_refs']
+                and selected_anchor(n,cids) and expected and all(p['polarity']!='CONTRADICTING' and p['id'] in n['evidence_refs']
+                    and provenance.get(p['id'])==p for p in expected)]
+            declared = (context_valid and bool(anchors) and proof_valid and md.get('status')=='DECLARED'
+                and all(r['status']=='DECLARED' for r in group)
+                and {r['kind'] for r in group}=={'declares_retry_boundary','declares_dlt_boundary'})
+            refs = retained(records,cids)
+            attrs = {'policy_id':policy_id,'policy_logical_id':md.get('logical_id'),
+                'origin_method':origin,'policy_status':'DECLARED' if declared else 'UNKNOWN',
+                'attempts':md.get('attempts') if declared else None,
+                'attempts_semantics':'DECLARED_TOTAL_LIMIT_NOT_OBSERVED',
+                'retry_suffix':md.get('retry_suffix') if declared else None,
+                'dlt_suffix':md.get('dlt_suffix') if declared else None,
+                'destinations':'UNKNOWN','scheduling':'UNKNOWN','unrolled_attempts':0,
+                'upstream_policy_rows':deepcopy(group),'original_evidence_refs':sorted(raw_refs)}
+            occurrences = anchors if declared else [None]
+            for anchor in occurrences:
+                identity = 'failure-policy:' + digest([policy_id,origin,anchor['id'] if anchor else None])
+                retry = boundary(identity,'retry',[policy_id,*([origin] if origin else [])],cids,refs,attrs,
+                    anchor.get('owner_id') if anchor else None)
+                if not declared:
+                    diagnostics.append({'code':'FAILURE_POLICY_UNPROVEN','policy_id':policy_id,
+                        'boundary_id':identity,'reasons':sorted({r for row in group for r in row['reasons']}
+                            | ({'PROCESS_CFG_OR_POLICY_AUTHORITY_UNPROVEN'}))})
+                    continue
+                transition(anchor['id'],retry['id'],'RETRY_POTENTIAL',retry)
+                dlt = boundary(identity+':dlt','dlt',[policy_id,md['handler_id']],cids,refs,
+                    {**attrs,'handler_id':md['handler_id'],'handler_execution':'NOT_OBSERVED',
+                        'condition':'declared attempt limit may be exhausted'},anchor.get('owner_id'))
+                transition(retry['id'],dlt['id'],'DLT_POTENTIAL',dlt)
+        if len(nodes)>10000 or len(edges)>30000: _fail('Failure output topology budget exceeded')
+        baseline = digest([FAILURE_VERSION,ProcessView.from_dict(_document(process)).content_fingerprint,
+            snapshot.to_dict() if snapshot else None,compensation_proposals,max_policies])
+        definition = ProcessDefinition.from_dict({**doc['definition'],'baseline_fingerprint':baseline})
+        view.update(rules_version=FAILURE_VERSION,baseline_fingerprint=baseline,provenance=list(provenance.values()),
+            coverage={**view['coverage'],'status':'PARTIAL','truncated':truncated},
+            limits=list(dict.fromkeys(view['limits']+[
+                'Failure policies are static declarations; retry scheduling, delivery and successful processing are not observed.',
+                'Local transaction declarations do not establish rollback of HTTP/Kafka effects.',
+                'Compensation proposals are semantic annotations, not technical rollback relationships.'])))
+        doc.update(definition=definition.to_dict(),definition_fingerprint=definition.content_fingerprint,
+            technical_view=ViewDocument.from_dict(view).to_dict(),technical_status='PARTIAL')
+        _bounded(doc)
+        return ProcessView.from_dict(doc)
+    except BusinessProcessError:
+        raise
+    except (ValueError,TypeError,KeyError,AttributeError,RecursionError,OverflowError) as error:
+        raise BusinessProcessError('INVALID_PROCESS_FAILURES','Invalid failure projection input') from error

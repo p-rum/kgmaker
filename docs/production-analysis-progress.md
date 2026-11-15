@@ -171,7 +171,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T026](tasks/T-026_collapse-business-steps.md) | MERGED | PARTIAL | `9442114d169b84e6c9f98dd097faafd80eff0d48` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t026_collapse_business_steps.py](../tests/test_t026_collapse_business_steps.py) | [#66](https://github.com/p-rum/kgmaker/pull/66) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T027](tasks/T-027_cross-http-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t027_cross_http_process_boundary.py](../tests/test_t027_cross_http_process_boundary.py) | [PR105](https://github.com/p-rum/kgmaker/pull/105), independent APPROVE and verified two-parent merge | Historical integration 200 PASS / 0 SKIP, 10.76 s; independent review 200 PASS / 0 SKIP, 13.00 s. Source/semantic preservation verified. Status reconciled in change127; full suite remains NOT_RUN. |
 | [T028](tasks/T-028_cross-async-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `9f538634807957abe1004dde43450271b77f1bb5` | [business_process.py](../src/kgmaker/business_process.py), [test_t028_cross_async_process_boundary.py](../tests/test_t028_cross_async_process_boundary.py) | [PR108](https://github.com/p-rum/kgmaker/pull/108), [change127 steps 7–10](changes/127_crossAsyncProcessBoundary.md) | New context/projection/T025/T028 integration: 158 PASS / 0 SKIP, 28.09 s, actual JDK21/Javac/K1/K2 and 4 reviewer repros; both parent source/test trees preserved. Historical review-fix run 264 PASS / 0 SKIP. Independent APPROVE/merge and317 targeted PASS are recorded in [merge audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441); full suite NOT_RUN. |
-| [T029](tasks/T-029_project-process-failures.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
+| [T029](tasks/T-029_project-process-failures.md) | PR_OPEN | VERIFIED_IN_SCOPE | `7bb8b8d389c461c684197704203a99dcb2b83724` + T029 | [test_t029_project_process_failures.py](../tests/test_t029_project_process_failures.py), actual Java/K1 positive and K2 UNKNOWN | [change130](changes/130_projectProcessFailures.md) | Pure failure projection; 281 targeted regression PASS before final diagnostic guard, then 60 T029 PASS / 0 SKIP (13.02 s). Finally paths preserved, static retry/DLT, no remote rollback, PROPOSED compensation only. Full/actual Kafka3.2.0/runtime NOT_RUN. |
 | [T030](tasks/T-030_prepare-process-label-packet.md) | MERGED | PARTIAL | `9eec41a403b4e6601fe3addac168bf39d37f31b6` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t030_prepare_process_label_packet.py](../tests/test_t030_prepare_process_label_packet.py) | [#75](https://github.com/p-rum/kgmaker/pull/75) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T031](tasks/T-031_validate-process-annotations.md) | MERGED | PARTIAL | `2c7b38ea2dc7b5ad08009eefa276c4dc41a5b1a9` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t031_validate_process_annotations.py](../tests/test_t031_validate_process_annotations.py) | [#77](https://github.com/p-rum/kgmaker/pull/77) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T032](tasks/T-032_persist-process-review.md) | MERGED | PARTIAL | `7e6c838342ba9e59609d420f3387a05625290fcf` | [src/kgmaker/process_store.py](../src/kgmaker/process_store.py), [tests/test_t032_persist_process_review.py](../tests/test_t032_persist_process_review.py) | [#78](https://github.com/p-rum/kgmaker/pull/78) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -1628,3 +1628,20 @@ PR107 now integrates the actual PR108 main9f538634 while preserving both parents
 source/test contents. This is an integration only; W05 remains PR_OPEN and awaits
 independent review. Scoped workspace/remote/process verification and semantic
 preservation are recorded in [change125 step11](changes/125_backendFrontendValueFlow.md).
+
+## T029 — Static failure projection (2026-11-15)
+
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE above main `7bb8b8d`.
+[Change130](changes/130_projectProcessFailures.md) separates RED, actual fixture
+repairs, implementation, final diagnostics fix and real test runs. The pure API
+preserves all catch/finally CFG paths and only attaches validated static retry/DLT
+policy boundaries at matching selected exceptional exits. Java/K1 Spring Kafka
+3.3.2 is positive; actual K2 Kafka annotation absence is an explicit UNKNOWN test.
+Raw rejected proofs and relevant diagnostics/truncation survive. Local transaction
+declarations do not establish remote rollback; compensation is only PROPOSED
+semantic annotation. Public [API examples/limits](process-paths.md#static-failure-projection-t029).
+
+Actual targeted regression: 281 PASS / 0 SKIP, 44.31 s before the final diagnostic
+retention guard; after that guard 60 T029 PASS / 0 SKIP, 13.02 s. No flow.py/worker
+change. Full suite and runtime NOT_RUN. Actual Kafka3.2.0 version matrix NOT_RUN
+because its pinned JAR is unavailable; supported 3.3.2 capture is not a substitute.

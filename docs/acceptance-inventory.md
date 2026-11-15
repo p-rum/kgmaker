@@ -1470,3 +1470,23 @@ PR108 merge at9f538634 and its317 targeted review PASS are historical upstream
 evidence ([audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441)).
 PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
+
+## T029 — static process failure projection
+
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on main `7bb8b8d` plus T029.
+[Change130](changes/130_projectProcessFailures.md) contains exact commands and all
+intermediate FAIL/error results. New pure API has no persistent schema migration.
+
+| Acceptance | Public test/evidence | Result |
+|---|---|---|
+| T029-AC01 | `test_finally_keeps_distinct_return_throw_paths_through_collapse`, `test_actual_certified_group_and_finally_clones_survive_projection` | PASS; original paths/IDs and certified finally clones preserved through collapse/expand |
+| T029-AC02 | `test_actual_retry_dlt_static_path_and_finally`, `test_policy_budget_and_upstream_truncation_are_explicit` | PASS; actual Java/K1 3.3.2 static retry→DLT, no normal-exit retry/handler execution; actual K2 UNKNOWN |
+| T029-AC03 | `test_local_transaction_never_rolls_back_http_or_kafka`, `test_compensation_is_only_an_explicit_proposed_annotation` | PASS; declaration-only local scope, remote rollback NOT_PROVEN, no new compensation edges |
+| T029-AC04 | `test_invalid_inputs_preserve_input_and_last_artifact`, `test_invalid_graph_snapshot_never_mutates_inputs_or_artifact`, actual snapshot/filesystem equality and offline mocks | PASS; no mutation or implicit process/network |
+| T029-AC05 | `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
+| T029-AC06 | README, capability/API examples, progress and change130 per-step evidence | Updated; PR/review and semantic publication recorded with final handoff |
+
+281 targeted tests passed before the final diagnostics fix; the current complete
+T029 test module passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
+Full suite, runtime delivery/rollback and actual unavailable Kafka3.2.0 JAR gate
+are NOT_RUN. Framework version support is inherited, not broadened by this API.
