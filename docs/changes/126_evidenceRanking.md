@@ -3,7 +3,7 @@
 Task **T003-S07-W08**, nadřazený krok **T003-S07**, acceptance
 **T003-S07-W08-AC01 až AC04**, cílový kontrakt:
 [zadání](../tasks/T003-S07-08-evidenceRanking.md). Tento PR nedokončuje celé S07,
-W09 ani S09-W05. Dodání IN_PROGRESS, ověření VERIFIED_IN_SCOPE.
+W09 ani S09-W05. Dodání PR_OPEN ([PR106](https://github.com/p-rum/kgmaker/pull/106)), ověření VERIFIED_IN_SCOPE.
 
 ## Krok 1 — rekognoskace a failing acceptance
 
@@ -146,3 +146,25 @@ reference. Skóre nic nemění na UNKNOWN runtime dostupnosti.
 
 Zbývá nezávislé review/případné opravy, širší unified flow/report práce v jejich
 samostatných zadáních a pozdější celobalíková acceptance. Celé S07 není hotové.
+
+
+## Krok 5 — publikace a synchronizace stavu
+
+T003-S07-W08, implementační krok 5 / dokumentační předání, AC04.
+Výchozí implementační HEAD `61481bdb9c9252fd057fcc6dff4275d9381f125c`,
+base main `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`.
+Publikován samostatný ready PR106; tento krok opravuje stav na PR_OPEN a doplňuje
+URL v tomto záznamu, production matrix a acceptance inventory. README/capability/
+CLI **bez dalšího dopadu**: tento krok nemění příkaz ani algoritmus dodaný krokem2.
+
+Workflow test-artifact poprvé odmítl delší než 200znakový command field; žádný
+artefakt nevznikl. Stejných šest souborů bylo poté spuštěno s kratším skutečným
+Bash brace-expansion příkazem ve výše uvedeném native prostředí:
+`/tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_{evidence_ranking,production_scope,graph_provider,build_aware,inspection_contract,feature}.py`:
+**PASS 72 / 0 SKIP, 2.97 s**. Validovaný test-artifact byl uložen a workflow
+přešlo do review; nezávislé review není nahrazeno vlastním schválením.
+
+Kontroly tohoto docs-only kroku: `kgmaker semantic validate`, `kgmaker scan`,
+`kgmaker check`, `python3 /tmp/ranking-preservation.py` a `git diff --check`
+**PASS**. Opakování pytest po samotné změně stavu/URL **NOT_RUN — bez změny kódu**.
+Nadále zbývá nezávislé review; implementační agent PR nemergoval.

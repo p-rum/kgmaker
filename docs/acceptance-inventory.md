@@ -1343,7 +1343,7 @@ reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokl
 
 ## T003-S07-W08 — vysvětlitelný evidence ranking
 
-Dodání IN_PROGRESS; ověření VERIFIED_IN_SCOPE nad main
+Dodání PR_OPEN ([PR106](https://github.com/p-rum/kgmaker/pull/106)); ověření VERIFIED_IN_SCOPE nad main
 `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, verze `execution-2`/`impact-2`.
 Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanking.md).
 [Podporovaný kontrakt](evidence-ranking.md), [fixture](../fixtures/evidence-ranking/README.md).
