@@ -1436,7 +1436,7 @@ obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
 
 ### T003-S07-W09 — unified flow model
 
-Delivery IN_PROGRESS; verification PARTIAL před finální integrační kontrolou.
+Delivery IN_PROGRESS; verification VERIFIED_IN_SCOPE po integraci main9f538634.
 [Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
 
 | Acceptance | Aktuální cílený důkaz |
@@ -1447,7 +1447,9 @@ Delivery IN_PROGRESS; verification PARTIAL před finální integrační kontrolo
 | W09-AC04 | `test_actual_javac_public_formats_parser_and_readonly_failures`, fixture/golden a konkrétní limity v capability; scoped native Javac, nikoli libovolný production CFG |
 
 Předintegrační349 PASS + po exact-proof doplnění221 PASS (překrývající se sady,
-nesčítají se jako unikátní testy); full/GH CI NOT_RUN. T003-S07 stále PARTIAL.
+nesčítají se jako unikátní testy). Finální288 PASS / 0 SKIP / 32.30 s ověřuje
+integrovaný main9f, T028 a všechny dotčené flow kontrakty. Full/GH CI NOT_RUN;
+T003-S07 stále PARTIAL.
 
 ### T028 integration with MERGED PR106
 

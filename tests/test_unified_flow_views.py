@@ -286,3 +286,29 @@ def test_actual_javac_public_formats_parser_and_readonly_failures(tmp_path,monke
     assert target.read_bytes()==valid
     assert cli(['--output','.kgmaker/graph.json'])[0]==2
     assert (tmp_path/'.kgmaker/graph.json').read_bytes()==before
+
+
+@pytest.mark.parametrize('refs',[[],['site','site']])
+def test_ambiguous_call_block_is_partial_without_guessed_expansion(refs):
+    graph=process_graph();graph.cfgs[0]['blocks'][2]['call_site_ids']=refs
+    report=flow.build_report(graph,'method',view='process')
+    assert report['status']=='PARTIAL'
+    assert any(g['code']=='AMBIGUOUS_CALL_BLOCK' for g in report['coverage']['gaps'])
+    assert not any(e['kind']=='call' for e in report['cfg']['edges'])
+
+
+def test_invalid_representation_is_not_an_unknown_empty_success():
+    with pytest.raises(AnalysisError): flow.build_report(model_graph(),'method',representation='INVALID')
+
+
+@pytest.mark.parametrize('damage',['configuration','type','test_scope'])
+def test_process_never_expands_non_execution_roles_or_cross_scope(damage):
+    from dataclasses import replace
+    graph=process_graph()
+    if damage=='configuration': graph.nodes=[replace(n,role='configuration') if n.id=='method' else n for n in graph.nodes]
+    elif damage=='type': graph.nodes=[replace(n,kind='class') if n.id=='callee' else n for n in graph.nodes]
+    else: graph.nodes=[replace(n,scope='test') if n.id=='callee' else n for n in graph.nodes]
+    report=flow.build_report(graph,'method',view='process',scope='all')
+    assert not any(e['kind']=='call' for e in report['cfg']['edges'])
+    assert not any(b.get('method')=='callee' for b in report['cfg']['blocks'])
+    assert report['status']=='PARTIAL' and report['boundaries']

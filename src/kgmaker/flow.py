@@ -227,7 +227,13 @@ from .flow_report import finalize, mermaid, markdown, render, publish, RenderBud
 
 
 def _site_admission(graph, site):
-    from .views import execution_authority_gaps, evidence_freshness_gaps, is_execution_callsite
+    from .views import execution_authority_gaps, evidence_freshness_gaps, is_execution_callsite, is_execution_entity
+    nodes={node.id:node for node in graph.nodes}
+    endpoints=[nodes.get(site.get(key)) for key in ("caller","id","declared_target")]
+    if not all(is_execution_entity(node) for node in endpoints):
+        return "non-executable caller/site/target role"
+    if len({node.scope for node in endpoints})!=1:
+        return "cross-scope execution boundary"
     if not is_execution_callsite(site):
         return "non-execution call-site kind"
     if site.get('evidence_kind') not in {'SYMBOL_RESOLVED','DISPATCH_CANDIDATE'}:
@@ -250,6 +256,8 @@ def build_report(graph, entry, *, view='control-flow', scope='production', max_d
                  max_nodes=500, context_id=None, representation='SOURCE', budget=None):
     from .model import KnowledgeGraph
     from .views import select_context
+    if representation not in {'SOURCE','BYTECODE'} or (view=='process' and representation!='SOURCE'):
+        raise AnalysisError('Unsupported flow representation')
     if view not in {'control-flow','process','integrations','data-flow'}:
         raise AnalysisError('Unsupported flow view')
     if type(max_depth) is not int or type(max_nodes) is not int or max_depth<0 or max_nodes<1:

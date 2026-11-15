@@ -81,6 +81,8 @@ def finalize(report, graph=None):
     sites = {s['id']:s for s in graph.call_sites} if graph is not None else {}
     for block in cfg['blocks']:
         refs = {'node_ids':[block['id']], 'original_ids':block.get('original_ids',[])}
+        if not relation and block.get('kind')=='call' and len(block.get('call_site_ids',[]))!=1:
+            gap('AMBIGUOUS_CALL_BLOCK','This CFG block does not identify one ordered call occurrence.',**refs)
         if block.get('boundary_reason') or block.get('kind') == 'unresolved_boundary':
             gap('UNRESOLVED_BOUNDARY',block.get('boundary_reason') or block.get('label','Unresolved boundary'),**refs)
         if block.get('kind') == 'async_boundary' or block.get('async_boundary') or block.get('continuation') in {'SEPARATE','UNKNOWN'}:

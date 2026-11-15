@@ -17,6 +17,7 @@ EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-2", "impact": "impact-2"}
+EXECUTABLE_NODE_KINDS = {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "call_site"}
 CURRENT_COMPILER_FRESHNESS = {"CONTENT_VERIFIED", "CURRENT", "EXECUTION_BOUND"}
 COMPILER_MODES = {"BUILD_IMPORT", "BUILD_EXECUTE"}
 COMPILER_ORIGINS = {"LOCAL_COMPILER_INPUTS", "LOCAL_TRUSTED", "SUPPLIED_EXPORT_UNVERIFIED"}
@@ -1050,6 +1051,11 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                          and set(a.get('evidence_ids', [])) <= selected_evidence])
 
 
+def is_execution_entity(node) -> bool:
+    """Shared role boundary: type/configuration references are not execution."""
+    return node is not None and node.kind in EXECUTABLE_NODE_KINDS and node.role == 'executable_code'
+
+
 def is_execution_callsite(site: Mapping[str, Any]) -> bool:
     """Shared invocation boundary for call navigation, scoring and completeness.
 
@@ -1125,7 +1131,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     nodes = {n.id: n for n in graph.nodes}
     if entry is not None and entry not in nodes:
         raise ValueError("entry is absent from selected scope")
-    executable = {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "call_site"}
+    executable = EXECUTABLE_NODE_KINDS
     rankable = executable - {"call_site"} | {"class", "enum", "interface", "type"}
     contexts = {c['id']: c for c in graph.contexts if isinstance(c.get('id'), str)}
     sites = {s['id']: s for s in graph.call_sites}
@@ -1134,7 +1140,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=False)
     unique = lambda values: [json.loads(key) for key in sorted({canonical(value) for value in values})]
     def runnable(identity):
-        return nodes[identity].kind in executable and nodes[identity].role == 'executable_code'
+        return is_execution_entity(nodes[identity])
     gaps = defaultdict(list)
     def gap(identity, code, reason, penalty, **refs):
         gaps[identity].append({'code': code, 'reason': reason, 'penalty': penalty, **refs})

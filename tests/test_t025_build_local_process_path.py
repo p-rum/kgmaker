@@ -22,6 +22,7 @@ def setup(tmp_path):
         if context.get('analyzer_version'):
             context.update(mode='BUILD_IMPORT', origin_trust='LOCAL_COMPILER_INPUTS',
                 worker={'protocol_version':1,'worker':'model-only','compiler_version':'model-only'})
+    graph.nodes=[replace(node,role='executable_code') if node.kind in {'method','call_site'} else node for node in graph.nodes]
     method = entries[('production', 'http')][0]
     symbol = next(s for s in graph.symbols if s['id'] == method)
     return workspace, graph, coverage, method, symbol
@@ -47,7 +48,7 @@ def helper(graph, parent, name):
     value = {**deepcopy(parent), 'id': parent['id'] + ':' + name, 'name': name, 'annotations': []}
     graph.symbols.append(value)
     graph.nodes.append(Node(value['id'], 'method', name, value['path'], 1,
-        scope='production', metadata=deepcopy(value)))
+        scope='production', role='executable_code', metadata=deepcopy(value)))
     return value
 
 
@@ -59,7 +60,7 @@ def call(graph, caller, target, name, **extra):
         'evidence_ids': ['invoke-proof:' + name, 'resolve-proof:' + name], 'resolution_reason': 'EXPLICIT_FIXTURE', **extra}
     graph.call_sites.append(site)
     graph.nodes.append(Node(site['id'], 'call_site', site['invocation_kind'], caller['path'], 1,
-        scope='production', metadata=deepcopy(site)))
+        scope='production', role='executable_code', metadata=deepcopy(site)))
     for ref, source, dest, relation in [(site['evidence_ids'][0], caller['id'], site['id'], 'declares_call'),
             (site['evidence_ids'][1], site['id'], target['id'], 'resolves_to')]:
         graph.evidence.append({'id': ref, 'kind': 'SYMBOL_RESOLVED', 'source': source,
