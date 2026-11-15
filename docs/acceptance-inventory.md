@@ -840,19 +840,23 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
-## T003-S06-W06 — NamedQueries a named native queries (PR_OPEN / VERIFIED_IN_SCOPE)
+## T003-S06-W06 — NamedQueries a named native queries (IN_PROGRESS / VERIFIED_IN_SCOPE)
 
-- AC01: ORM XML `named-query` and `named-native-query` declarations are captured
-  with source hash/provenance and use the same `orm_named_query` catalog as JPA
-  annotations. Duplicate names and annotation/XML collisions remain unresolved.
-- AC02: Existing annotation and graph identities remain unchanged; XML is an
-  additive projection and does not execute providers or mutate the store.
-- AC03: Missing names/query bodies and duplicate definitions emit localized
-  `ORM_XML_NAMED_QUERY_UNRESOLVED`/`ORM_XML_NAMED_QUERY_AMBIGUOUS` diagnostics;
-  no stronger query evidence is published.
-- AC04: `tests/test_named_query_containers.py` covers JPQL/native capture,
-  provenance, duplicate names and missing bodies. Compiler worker integration and
-  provider/runtime availability remain NOT_RUN pending toolchain fixtures.
+Aktuální lokální evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
+JPA rule `annotation-source-v9-named-query-containers`; skutečný Javac 21.0.13.0.3.
+Dodání PR/review/merge ověřuje samostatně předávající agent.
+
+| Acceptance | Konkrétní evidence |
+|---|---|
+| T003-S06-W06-AC01 | `test_actual_javac_named_query_containers_reference_parameters_and_projections`: kontejnery, repeatable JPQL/native, XML root/entity, named/positional parametry a projekce; trojitá duplicita, chybějící jméno/tělo, XML/anotace a malformed tělo. `test_actual_named_queries_select_xml_persistence_realm_without_cross_binding`: dva publikované kontexty, žádný cross-realm fallback. |
+| T003-S06-W06-AC02 | `test_legacy_named_query_metadata_remains_readable`: v1/v2/v3; structured compiler roundtrip; existující `test_jpql_hql_grammar.py` a `test_orm_xml_overrides.py`. Graph schema ani worker protocol se nemění; framework rule v9 vyžaduje refresh. |
+| T003-S06-W06-AC03 | `test_actual_named_query_strict_rejection_cancel_timeout_preserve_store`: strict invalid XML, cancellation a skutečný worker timeout zachovají byte-identický store. `test_actual_offline_scan_and_hook_preserve_named_query_evidence`: zákaz subprocess; pure projection nemutuje vstup. Foreign container/class a malformed XML nevytvoří binding. |
+| T003-S06-W06-AC04 | `fixtures/named-queries/Model.java`, `orm.xml`; testy výše a přesný příkaz/výsledek v change120. Ověřené compiler fakty nepovyšují runtime/data availability. |
+
+Hranice: native SQL poskytuje statické přesné table/type bindings, nikoli provider
+validaci; result-set mapping je PARTIAL. `@Param` aliasy, implicitní repository
+named convention, dynamické EntityManager lookupy a samostatná actual Kotlin
+container matice nejsou tímto scope garantovány. Celý T003-S06 není dokončen.
 
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 

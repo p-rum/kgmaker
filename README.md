@@ -555,8 +555,16 @@ uvádí [compiler dokumentace](docs/compiler-inspection.md);
 opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` i repeatable
 `@NamedQueries`/`@NamedNativeQueries` mají vlastní definici a repository metoda
 se na ni váže přes `uses_named_query`. Stejný katalog přijímá ORM XML
-`named-query`/`named-native-query` s hashovanou provenance; duplicitní nebo
-neúplné definice zůstávají UNKNOWN.
+`named-query`/`named-native-query` v kořeni i entity/mapped-superclass s hashovanou
+provenance. `@Query(name="Order.byStatus")` vybere právě jednu úplnou deklaraci
+ve vybraném compiler/persistence kontextu; duplicita (včetně XML/anotace), chybějící
+jméno nebo tělo zůstává UNKNOWN. Named reference používá stejnou JPQL gramatiku,
+kontrolu pojmenovaných a číslovaných parametrů a compiler-owned projekcí jako
+přímý dotaz. Native `resultClass` a XML `result-class` se vážou na přesný compiler
+typ; `resultSetMapping` zůstává PARTIAL. Native tabulky se hledají až v konečném
+XML mapování. Skutečná Javac fixture a hranice podpory jsou v
+[change120](docs/changes/120_namedQueryContainers.md) a
+[compiler dokumentaci](docs/compiler-inspection.md#named-query-containers-t003-s06-w06).
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
 properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné

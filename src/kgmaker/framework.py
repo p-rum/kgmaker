@@ -19,12 +19,13 @@ from typing import Any
 
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
+from .named_queries import declarations as named_query_declarations, parameters as query_parameter_names
 from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v9-proxy-provenance"
-JPA_RULE_VERSION = "annotation-source-v8-jpql-hql-grammar"
+JPA_RULE_VERSION = "annotation-source-v9-named-query-containers"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -833,18 +834,29 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
         # JPA ORM descriptors may declare named queries at the mapping root.
         # Keep these as source-backed declarations; resolution to a repository
         # happens later against the same named-query catalog as annotations.
-        for query_element in document:
+        packages = [(child.text or "").strip() for child in document if _xml_local(child)[1] == "package"]
+        query_owners = {}
+        for parent in document:
+            if _xml_local(parent)[1] in {"entity", "mapped-superclass"}:
+                owner = (parent.get("class") or "").strip()
+                if "." not in owner and len(packages) == 1 and packages[0]:
+                    owner = packages[0] + "." + owner
+                query_owners.update({id(child): owner for child in parent})
+        for query_element in [*document, *[child for parent in document
+                              if _xml_local(parent)[1] in {"entity", "mapped-superclass"}
+                              for child in parent]]:
             query_kind = _xml_local(query_element)[1]
             if query_kind not in {"named-query", "named-native-query"}:
                 continue
             query_name = (query_element.get("name") or "").strip()
-            query_child = next((child for child in query_element if _xml_local(child)[1] == "query"), None)
-            query_text = (query_child.text or "").strip() if query_child is not None else ""
+            query_children = [child for child in query_element if _xml_local(child)[1] == "query"]
+            query_child = query_children[0] if len(query_children) == 1 else None
+            query_text = (query_child.text or "").strip() if query_child is not None and not len(query_child) else ""
             provenance = {"xml_sha256": info["sha256"], "xml_mapping_file": info["path"],
                           "persistence_xml_sha256": model["descriptor_sha256"],
                           "persistence_xml_path": model["descriptor_path"],
                           "persistence_unit": model["persistence_unit"], "xml_mapping_order": order,
-                          "xml_precedence": "ORM_XML_OVER_ANNOTATIONS"}
+                          "xml_precedence": "UNIQUE_NAMED_QUERY_IN_REALM"}
             if not query_name or not query_text:
                 if query_name:
                     if query_name not in model["invalid_named_query_names"]:
@@ -855,7 +867,10 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                 continue
             language = "NATIVE_SQL" if query_kind == "named-native-query" else "JPQL"
             model["named_queries"].append({"name": query_name, "query": query_text,
-                                            "language": language, "provenance": provenance})
+                                            "language": language, "provenance": provenance,
+                                            "xml_declaring_class": query_owners.get(id(query_element)),
+                                            "result_class": query_element.get("result-class"),
+                                            "result_set_mapping": query_element.get("result-set-mapping")})
         root_complete = _xml_bool(document.get("metadata-complete"))
         if root_complete is None:
             model["diagnostics"].append({"code": "ORM_XML_METADATA_COMPLETE_UNKNOWN", "path": info["path"],
@@ -1018,7 +1033,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                                      "reason": "XML inheritance strategy is outside the supported JPA enum values."})
                     else:
                         record["inheritance_strategy"] = strategy
-                elif child_name != "description":
+                elif child_name not in {"description", "named-query", "named-native-query"}:
                     record["unknown"] = True
                     model["diagnostics"].append({"code": "ORM_XML_CONSTRUCT_UNSUPPORTED", "path": info["path"],
                                                  "class": owner, "construct": child_name,
@@ -2320,46 +2335,6 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "ORM_ANNOTATION_VALUE_UNRESOLVED", "path": entity["path"],
                                 "source_line": entity["line"], "annotation": "Table",
                                 "reason": "Explicit @Table values are unresolved; no physical table fallback is published."})
-        named_values = []
-        for annotation_name, annotation_args in values:
-            named_simple = _simple(annotation_name)
-            if named_simple in {"NamedQueries", "NamedNativeQueries"}:
-                members = getattr(annotation_args, "members", {})
-                entries = members.get("value", members.get("queries", [])) if isinstance(members, dict) else []
-                if not isinstance(entries, list):
-                    entries = [entries]
-                child_name = "NamedNativeQuery" if named_simple == "NamedNativeQueries" else "NamedQuery"
-                for entry in entries:
-                    if isinstance(entry, dict):
-                        child_args = AnnotationArguments(
-                            ",".join(f"{key}={_format_annotation_value(value)}" for key, value in entry.items()),
-                            entry, True)
-                        named_values.append((child_name, child_args))
-                continue
-            named_values.append((annotation_name, annotation_args))
-        for annotation_name, annotation_args in named_values:
-            named_kind = _simple(annotation_name)
-            if named_kind not in {"NamedQuery", "NamedNativeQuery"} or not _allowed_jpa_annotation(
-                    annotation_name, entity["imports"]):
-                continue
-            query_name = _named_string_arg(annotation_args, "name")
-            query_text = _named_string_arg(annotation_args, "query")
-            if not query_name or not query_text:
-                diagnostics.append({"code": "ORM_NAMED_QUERY_UNRESOLVED", "path": entity["path"],
-                                    "source_line": entity["line"], "entity": node.id,
-                                    "reason": "Named query name or static query text is unavailable."})
-                continue
-            language = "NATIVE_SQL" if named_kind == "NamedNativeQuery" else "JPQL"
-            named_id = add_node("orm_named_query", query_name, entity["path"], entity["line"], node,
-                                query_language=language, query=query_text, entity=node.name, dynamic=False)
-            add_edge(node.id, named_id, "defines_named_query", entity["path"], entity["line"],
-                     f"Static JPA @{named_kind}")
-            action = "query_deletes" if query_text.lstrip().casefold().startswith("delete") else (
-                "query_writes" if query_text.lstrip().casefold().startswith(("update", "insert")) else "query_reads")
-            if language == "JPQL" or table_id:
-                add_edge(named_id, node.id if language == "JPQL" else table_id, action, entity["path"], entity["line"],
-                         "Named query owner entity/table; static intent only")
-            named_queries[query_name] = {"id": named_id, "language": language, "entity": node.name}
         for supertype in entity["symbol"].get("supertypes", []):
             super_name = str(supertype).split("<", 1)[0].strip().replace("/", ".")
             candidates = ([mapped_superclasses_by_owner[super_name]] if super_name in mapped_superclasses_by_owner
@@ -3191,26 +3166,55 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
 
-    # Merge XML named-query declarations into the same catalog used by
-    # annotation declarations. Duplicate XML names remain unresolved and do
-    # not overwrite an already indexed definition.
-    for invalid_name in jpa_xml.get("invalid_named_query_names", []):
-        named_queries.pop(invalid_name, None)
-        diagnostics.append({"code": "ORM_NAMED_QUERY_AMBIGUOUS", "query_name": invalid_name,
-                            "reason": "A named query name has an incomplete XML declaration; no definition is selected."})
-    for item in jpa_xml.get("named_queries", []):
-        name = item["name"]
-        provenance = item.get("provenance", {})
-        if item.get("ambiguous") or name in named_queries:
-            diagnostics.append({"code": "ORM_NAMED_QUERY_AMBIGUOUS", "path": provenance.get("xml_mapping_file"),
-                                "query_name": name,
-                                "reason": "Named query name is duplicated across annotation/XML declarations; no definition is selected."})
-            named_queries.pop(name, None)
+    # Resolve the complete context-local catalog once. A rejected name remains
+    # rejected even after further XML/annotation declarations with that name.
+    named_candidates: dict[str, list[dict[str, Any]]] = {}
+    for declaration in [*entity_decls, *mapped_superclass_decls]:
+        owner = str(declaration["symbol"].get("owner", ""))
+        record = jpa_xml["classes"].get(owner, {})
+        if (jpa_xml["global_unknown"] or jpa_xml["metadata_complete"] or record.get("metadata_complete")
+                or record.get("unknown") or (jpa_xml.get("exclude_unlisted") and not record
+                and owner not in jpa_xml.get("listed_classes", []))):
             continue
-        named_id = add_node("orm_named_query", name, provenance.get("xml_mapping_file"), None, None,
-                            query_language=item["language"], query=item["query"], entity=None,
-                            dynamic=False, mapping_source="ORM_XML", **provenance)
-        named_queries[name] = {"id": named_id, "language": item["language"], "entity": None}
+        for candidate in named_query_declarations(declaration["symbol"].get("annotations", [])):
+            candidate = {**candidate, "path": declaration["path"], "line": declaration["line"],
+                         "source": declaration["node"], "compiler_fact": declaration["symbol"]}
+            if not candidate["name"] or not candidate["query"]:
+                diagnostics.append({"code": "ORM_NAMED_QUERY_UNRESOLVED", "path": candidate["path"],
+                                    "source_line": candidate["line"], "query_name": candidate["name"],
+                                    "reason": "Named query requires a compiler-resolved name and nonempty query body."})
+            if candidate["name"]:
+                named_candidates.setdefault(candidate["name"], []).append(candidate)
+    for candidate in jpa_xml.get("named_queries", []):
+        provenance = candidate["provenance"]
+        owner = candidate.get("xml_declaring_class")
+        if owner is not None and (not owner or owner not in type_records
+                                  or jpa_xml["classes"].get(owner, {}).get("unknown")):
+            candidate = {**candidate, "query": None}
+        named_candidates.setdefault(candidate["name"], []).append({**candidate,
+            "path": provenance["xml_mapping_file"], "line": None, "source": None})
+    for name, candidates in named_candidates.items():
+        if (jpa_xml["global_unknown"] or len(candidates) != 1 or not candidates[0].get("query")
+                or name in jpa_xml["invalid_named_query_names"] or candidates[0].get("ambiguous")):
+            diagnostics.append({"code": "ORM_NAMED_QUERY_AMBIGUOUS", "query_name": name,
+                                "path": candidates[0]["path"],
+                                "reason": "No unique complete definition in the selected persistence context."})
+            continue
+        candidate = candidates[0]
+        text = candidate["query"]
+        query_parameters, positional_parameters = query_parameter_names(text)
+        provenance = candidate.get("provenance", {})
+        named_id = add_node("orm_named_query", name, candidate["path"], candidate["line"], candidate["source"],
+            query_language=candidate["language"], query=text, dynamic="#{" in text or "${" in text,
+            entity=candidate["source"].name if candidate["source"] else None,
+            parameters=query_parameters, positional_parameters=positional_parameters,
+            result_class=candidate.get("result_class"), result_set_mapping=candidate.get("result_set_mapping"),
+            mapping_source="ORM_XML" if provenance else "ANNOTATION", analysis_status="PARTIAL",
+            **provenance)
+        if candidate["source"]:
+            add_edge(candidate["source"].id, named_id, "defines_named_query", candidate["path"], candidate["line"],
+                     "Compiler-owned JPA named query declaration", compiler_fact=candidate["compiler_fact"])
+        named_queries[name] = {**candidate, "id": named_id}
 
     type_nodes_by_owner: dict[str, Node] = {}
     for symbol in symbols.values():
@@ -3226,6 +3230,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             return None
         match = re.search(r"\)(?:\[*)L([^;<]+);$", descriptor)
         return match.group(1).replace("/", ".").replace("$", ".") if match else None
+
+    native_query_records: list[dict[str, Any]] = []
 
     # Explicit @Query is owned by its compiler method symbol. Static JPQL is
     # resolved against entity attributes; native SQL is limited to exact table
@@ -3248,10 +3254,16 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         raw = query_annotation[1]
         language = "NATIVE_SQL" if (_named_string_arg(raw, "nativeQuery") or "false").casefold() == "true" else "JPQL"
         value = _named_string_arg(raw, "value") or _named_string_arg(raw, "query")
+        named_query_name = _jpa_name_arg(raw, ("name",)) if value is None else None
+        named = named_queries.get(named_query_name) if named_query_name else None
+        if named:
+            value, language = named["query"], named["language"]
         dynamic = value is None or "#{" in value or "${" in value
         parameter_names = [str(name) for name in item.get("parameter_names", [])]
-        query_parameters = sorted(set(re.findall(r":([A-Za-z_]\w*)", value or "")))
+        query_parameters, positional_parameters = query_parameter_names(value or "")
         unbound = sorted(set(query_parameters) - set(parameter_names))
+        unbound.extend("?" + str(position) for position in positional_parameters
+                       if position < 1 or position > len(parameter_names))
         return_type = str(item.get("return_type", ""))
         return_parts = re.findall(r"[A-Za-z_$][\w.$]*", return_type)
         projection_type_ref = return_parts[-1].replace("$", ".") if return_parts else None
@@ -3268,31 +3280,29 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             projection_node = type_nodes_by_owner.get(return_owner)
         model_owner = repository_models[str(item.get("owner"))]
         model_name = _simple(model_owner)
-        named_query_name = _named_string_arg(raw, "name")
-        if value is None and named_query_name:
-            named = named_queries.get(named_query_name)
-            language = str(named.get("language")) if named else "NAMED"
-            query_id = add_node("orm_query", f"{method.name}:{language}", path, line, method,
-                                query_language=language, query=None, query_name=named_query_name,
-                                dynamic=False, entity=model_name, parameters=[],
+        if named_query_name and not named:
+            query_id = add_node("orm_query", f"{method.name}:NAMED", path, line, method,
+                                query_language="NAMED", query=None, query_name=named_query_name,
+                                dynamic=False, entity=model_name, parameters=[], positional_parameters=[],
                                 method_parameters=parameter_names, unbound_parameters=[],
                                 return_type=return_type or None, projection_type=projection_type,
-                                validated=named is not None)
+                                validated=False, analysis_status="UNKNOWN")
             add_edge(method.id, query_id, "declares_query", path, line, "Compiler-owned named repository query")
-            if named:
-                add_edge(query_id, named["id"], "uses_named_query", path, line,
-                         "@Query name resolves to static JPA named query")
-            else:
-                diagnostics.append({"code": "SPRING_DATA_NAMED_QUERY_UNRESOLVED", "path": path,
-                                    "source_line": line, "method": method.id, "query_name": named_query_name})
+            diagnostics.append({"code": "SPRING_DATA_NAMED_QUERY_UNRESOLVED", "path": path,
+                                "source_line": line, "method": method.id, "query_name": named_query_name})
             continue
         query_id = add_node("orm_query", f"{method.name}:{language}", path, line, method,
-                            query_language=language, query=value, dynamic=dynamic,
-                            entity=model_name, parameters=query_parameters,
+                            query_language=language, query=value, query_name=named_query_name, dynamic=dynamic,
+                            entity=model_name, parameters=query_parameters, positional_parameters=positional_parameters,
                             method_parameters=parameter_names, unbound_parameters=unbound,
                             return_type=return_type or None, projection_type=projection_type,
+                            analysis_status="UNKNOWN" if dynamic or unbound else "PARTIAL",
                             validated=False if dynamic or unbound else True)
         add_edge(method.id, query_id, "declares_query", path, line, f"Compiler-owned @Query {language}")
+        if named:
+            add_edge(query_id, named["id"], "uses_named_query", path, line,
+                     "Unique static named query in the selected persistence context",
+                     compiler_fact=item, xml_provenance=named.get("provenance"))
         if dynamic:
             diagnostics.append({"code": "ORM_DYNAMIC_QUERY_UNRESOLVED", "path": path, "source_line": line,
                                 "method": method.id, "query_language": language})
@@ -3338,6 +3348,25 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}),
                                                                     "validated": False,
                                                                     "analysis_status": "UNKNOWN"})
+        if named and named.get("result_class") not in {None, "", "void", "java.lang.Void"}:
+            result_class = str(named["result_class"]).replace("$", ".")
+            result_node = type_nodes_by_owner.get(result_class)
+            if result_node:
+                add_edge(query_id, result_node.id,
+                         "returns_entity" if result_class in entity_nodes_by_owner else "returns_projection",
+                         path, line, "Named query result-class resolves to exact compiler-owned type",
+                         xml_provenance=named.get("provenance"))
+            else:
+                diagnostics.append({"code": "ORM_NAMED_QUERY_PROJECTION_UNRESOLVED", "path": path,
+                                    "source_line": line, "query_name": named_query_name, "result_class": result_class})
+                nodes[query_id] = replace(nodes[query_id], metadata={**nodes[query_id].metadata,
+                                         "validated": False, "analysis_status": "UNKNOWN"})
+        if named and named.get("result_set_mapping"):
+            diagnostics.append({"code": "ORM_NAMED_QUERY_RESULT_MAPPING_UNSUPPORTED", "path": path,
+                                "source_line": line, "query_name": named_query_name,
+                                "result_set_mapping": named["result_set_mapping"]})
+            nodes[query_id] = replace(nodes[query_id], metadata={**nodes[query_id].metadata,
+                                     "validated": False, "analysis_status": "PARTIAL"})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
@@ -3491,22 +3520,9 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         "reason": "Constructor projection requires an exact compiler-owned qualified type."})
                     invalidate_query()
         else:
-            tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
-            for table_name in tables:
-                query_parts = table_name.split('.')
-                query_schema = query_parts[0] if len(query_parts) == 2 else None
-                matches = [candidate for candidate in nodes.values() if candidate.kind == "orm_table"
-                           and (candidate.metadata or {}).get('context_id') == context_id
-                           and len(query_parts) <= 2
-                           and _sql_identifier((candidate.metadata or {}).get("logical_name", candidate.name)) == _sql_identifier(query_parts[-1])
-                           and (query_schema is None or _sql_identifier((candidate.metadata or {}).get('schema')) == _sql_identifier(query_schema))]
-                if len(matches) == 1:
-                    add_edge(query_id, matches[0].id, action, path, line,
-                             "Native SQL exact table name in selected ORM projection")
-                else:
-                    diagnostics.append({"code": "NATIVE_QUERY_TABLE_UNRESOLVED" if not matches else "NATIVE_QUERY_TABLE_AMBIGUOUS",
-                                        "path": path, "source_line": line, "method": method.id,
-                                        "table": table_name, "candidates": [candidate.id for candidate in matches]})
+            native_query_records.append({"query_id": query_id, "value": value, "action": action,
+                "path": path, "line": line, "method": method.id,
+                "provenance": named.get("provenance") if named else None})
 
     # A proxy-eligible path needs all of: an external compiler call, one active
     # Spring injection, one active compatible policy and an interceptable
@@ -4128,6 +4144,32 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 metadata = nodes.get(key[1])
                 if metadata is not None:
                     nodes[key[1]] = replace(metadata, metadata={**(metadata.metadata or {}), **jpa_rule_metadata})
+
+    # Native text must bind against the effective XML table names. Resolving
+    # earlier could select an annotation table which XML subsequently removes.
+    for record in native_query_records:
+        query_id, value, action = record["query_id"], record["value"], record["action"]
+        path, line = record["path"], record["line"]
+        tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
+        for table_name in tables:
+            query_parts = table_name.split('.')
+            query_schema = query_parts[0] if len(query_parts) == 2 else None
+            matches = [candidate for candidate in nodes.values() if candidate.kind == "orm_table"
+                       and (candidate.metadata or {}).get('context_id') == context_id
+                       and len(query_parts) <= 2
+                       and _sql_identifier((candidate.metadata or {}).get("logical_name", candidate.name)) == _sql_identifier(query_parts[-1])
+                       and (query_schema is None or _sql_identifier((candidate.metadata or {}).get('schema')) == _sql_identifier(query_schema))]
+            if len(matches) == 1:
+                add_edge(query_id, matches[0].id, action, path, line,
+                         "Native SQL exact table name in final selected ORM projection",
+                         xml_provenance=record["provenance"])
+            else:
+                current = nodes[query_id]
+                nodes[query_id] = replace(current, metadata={**current.metadata, "validated": False,
+                                                             "analysis_status": "UNKNOWN"})
+                diagnostics.append({"code": "NATIVE_QUERY_TABLE_UNRESOLVED" if not matches else "NATIVE_QUERY_TABLE_AMBIGUOUS",
+                                    "path": path, "source_line": line, "method": record["method"],
+                                    "table": table_name, "candidates": [candidate.id for candidate in matches]})
 
     # Finish physical column binding for effective PROPERTY/inherited mappings
     # through the same selected-realm matcher used by declared FIELD mappings.
