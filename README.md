@@ -521,7 +521,7 @@ projekce, přiřazení a predikáty (porovnání, AND/OR/NOT, EXISTS, IN, BETWEE
 LIKE a IS NULL). Alias je case-insensitive a patří konkrétnímu bloku SELECT;
 vnořené závorky scope nemění. Neplatný nebo nerozvázaný alias ani neúplný
 výraz nevytvoří query read/write/path edge. Podporované funkce a limity
-uvádí [compiler dokumentace](docs/compiler-inspection.md#bounded-jpqlhql-grammar);
+uvádí [compiler dokumentace](docs/compiler-inspection.md);
 opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` mají
 vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
