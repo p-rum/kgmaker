@@ -148,7 +148,7 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
         "input_requirements": {"id", "name", "requirement_ids", "source_ids", "evidence_ids", "dependency_ids", "question_ids", "availability", "acquisition", "usability", "verification_scope", "next_step", "owner_role", "transformation", "search_fingerprint", "availability_proof"} | set(INPUT_METADATA),
         "capability_matches": {"id", "entity_ids", "requirement_ids", "evidence_ids", "rationale", "limitations", "state", "method", "validity"},
         "changes": {"id", "repo_id", "requirement_ids", "entity_ids", "dependency_ids", "layer", "reason", "inputs", "outputs", "test_impact", "state"},
-        "questions": {"id", "text", "owner_role", "status", "requirement_ids", "blocking"},
+        "questions": {"id", "text", "owner_role", "status", "requirement_ids", "blocking", "blocker_kind"},
         "assumptions": {"id", "text", "state", "requirement_ids"},
         "alternatives": {"id", "name", "constraints", "limitations", "proposal_ids", "question_ids", "requirement_ids"},
         "acceptance_criteria": {"id", "text", "requirement_ids"},
@@ -247,6 +247,8 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
         strings(item, "owner_role", nullable=True)
         strings(item, "status", {"OPEN", "ANSWERED"})
         refs(item, "requirement_ids", requirements, True)
+        if "blocker_kind" in item:
+            strings(item, "blocker_kind", {"BUSINESS", "TOOL", "UNCLASSIFIED"})
         if type(item.get("blocking")) is not bool:
             errors.append("question.blocking must be boolean")
         if item.get("status") == "ANSWERED" and not any(a["question_id"] == item.get("id") for a in packet["answers"]):

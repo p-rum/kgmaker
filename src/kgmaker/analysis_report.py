@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from .feature import REPORT_MARKER
+from .report_projection import report_projection
 
 HEADINGS = {
     "cs": ["Business cíl a rozsah", "Stav analýzy, baseline a pokrytí", "Existující schopnosti a omezení",
@@ -24,6 +25,7 @@ def cell(value):
 
 
 def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool = True, *, data_audit: dict | None = None) -> str:
+    projection = report_projection(candidate, packet, stale, data_audit=data_audit)
     cs = candidate["language"] == "cs"
     headings = HEADINGS[candidate["language"]]
     lines = [REPORT_MARKER, f"# Feature: {cell(candidate['analysis_id'])}", ""]
@@ -89,6 +91,14 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
                   item["source_ids"], item["transformation"], item["evidence_ids"], item["next_step"]]
         lines += ["| " + " | ".join(cell(v) for v in values) + " |"]
     lines += [""]
+    lines += ['### Required / Existing / Missing / Derived / External / Unresolved', '',
+              'Facets overlap. Existing = cited source; availability remains independent. Missing = current scoped CONFIRMED_MISSING.', '',
+              '| Input ID | Facets | Availability | Acquisition (declared) | Usability | Scope | Unresolved reasons |',
+              '|---|---|---|---|---|---|---|']
+    for row in projection['inputs']:
+        lines += ['| ' + ' | '.join(cell(row[key]) for key in ('id', 'facets', 'availability',
+                    'acquisition', 'usability', 'verification_scope', 'unresolved_reasons')) + ' |']
+    lines += ['', 'Report projection: ' + projection['status'], '']
     section(4)
     lines += ["| " + ("Položka | Konkrétní zadání / rozhodnutí | Role |" if cs else "Item | Delivery / decision | Role |"), "|---|---|---|"]
     for item in candidate["input_requirements"]:
@@ -112,6 +122,8 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
                 gap.get("input_id"), gap["kind"], gap.get("reason", gap.get("details")))) + " |"]
         lines += ["", ("Nejistota nástroje neprokazuje chybějící business data." if cs else
                        "Tool uncertainty does not prove missing business data."), ""]
+    lines += ['### Business / tool blockers', '']
+    objects(projection['blockers'])
     section(5)
     if repos:
         lines += ['| Repository | Layer | Proposed change | Test / rollout impact |', '|---|---|---|---|']
@@ -130,6 +142,13 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
     section(8)
     objects(candidate["acceptance_criteria"])
     objects(candidate["test_plan"])
+    lines += ['### Delivery and test trace', '',
+              'DECLARED_REQUIREMENT_IDS — associations by declared requirement, execution NOT_RUN.', '',
+              '| Requirement | Inputs | Decisions | Changes | Acceptance | Tests | Gaps |', '|---|---|---|---|---|---|---|']
+    for row in projection['delivery_plan']:
+        lines += ['| ' + ' | '.join(cell(row[key]) for key in ('requirement_id', 'input_ids',
+                  'question_ids', 'change_ids', 'acceptance_ids', 'test_ids', 'gaps')) + ' |']
+    lines += ['']
     section(9)
     objects(candidate["questions"])
     section(10)
