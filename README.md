@@ -210,7 +210,7 @@ kgmaker runtime import --root PATH --manifest runtime-manifest.json
 - Semantic artifacts track evidence per source-file hash, so a change in one file does not invalidate every relationship. If an evidence file changes, its relationships are skipped until the focused update is applied. Commit `.kgmaker/semantic.json` if the project wants to share agent-authored knowledge.
 - `query` ranks relevant files and declarations, then includes one-hop graph neighbors.
 - The Copilot hook calls `hook-context`, refreshes the index, and emits a small bootstrap in Copilot's hook format. Use `memory recall` with the actual request for detailed context. You can run `kgmaker hook-context --token-budget N` to cap startup context (approximately four characters per token). Hook errors fail open so they do not interrupt a Copilot session.
-- JetBrains integration includes `.junie/commands/kgmaker.md` for the `/kgmaker` slash command and `.agents/skills/kgmaker/SKILL.md` for the standard `$kgmaker` Agent Skill invocation. Both route implementation requests through graph reconnaissance, source verification, scoped semantic updates, validation, and tests.
+- JetBrains integration includes `.junie/commands/kgmaker.md`. Host-neutral Agent Skills cover context, semantic maintenance, feature/data analysis and testgen; see [the installed skills guide](docs/agent-skills.md). Implementation handoffs use the [project workflows](docs/project-workflows.md).
 
 ## What gets indexed
 
@@ -266,6 +266,24 @@ Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md
 The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. Host-neutral Agent Skills are installed alongside them under `.agents/skills/`; automatic discovery depends on the host. kgmaker makes no model API calls itself.
 
 ## Implementation memory and workflow
+
+Configurable profiles connect analysis, planning, implementation, testing and review:
+
+```bash
+kgmaker workflow list
+kgmaker task add "Create a minimal working application" --workflow greenfield
+kgmaker task add "Extend the existing export" --workflow existing-feature
+kgmaker task add "Fix the empty-input regression" --workflow bugfix
+```
+
+Version `.kgmaker/workflows.json` to configure role instructions, required test
+commands, iteration limits and packet budgets. Each profiled task pins its exact
+configuration and requires completed role artifacts, passed required checks and
+current test/review evidence before completion. Commands in a profile are data;
+kgmaker does not execute them. Legacy tasks keep their existing behavior.
+See the [project workflow guide](docs/project-workflows.md),
+[configuration example](examples/workflows/python-project.json) and
+[T051 change record](docs/changes/118_connectProjectWorkflows.md).
 
 `memory capture` records one deterministic episode from a Git baseline, the stored pre-task graph, a fresh graph, changed file hashes, affected node IDs, and bounded validation statuses. It stores no source text, raw diff, prompt transcript, test output, or sensitive path content. Repeating capture for the same Git/worktree fingerprint is idempotent. Semantic schema v1 and v2 remain readable; the first capture writes schema v3 while preserving valid concepts and relationships.
 

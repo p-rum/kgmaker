@@ -230,5 +230,14 @@ volbu nepřijímají, protože nic nezapisují.
 Nový implement/review binding se při uložení vypočítá pod workflow lockem.
 Pokud caller dodá jiné hodnoty než skutečný HEAD a source inventory, zápis
 se odmítne. Chybějící binding nízkoúrovňového v1 save se doplní se schématem v2;
-identita tasku a artefaktu zůstane stejná. Top-level source observations se
-aktualizují pouze s novým implement/review artefaktem.
+identita tasku a artefaktu zůstane stejná. U legacy tasků v1/v2 se top-level
+source observations aktualizují pouze s novým implement/review artefaktem.
+Profilované v3 tasky zachovávají verzi 3 a přidávají obsahovou vazbu také při
+test artefaktu.
+
+## Propojené projektové workflow (T051)
+
+Konfigurace rolí, povinné testové příkazy a neměnný snapshot v task v3 jsou
+popsané v [projektových workflows](project-workflows.md). Používají existující
+trace/approval kontrakty této příručky; synchronizace zůstává explicitní.
+[Záznam změny](changes/118_connectProjectWorkflows.md).

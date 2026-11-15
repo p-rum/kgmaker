@@ -797,10 +797,11 @@ def memory_recall(root: Path, terms: str, limit: int = 8, token_budget: int = 1_
     return 0
 
 
-def task_add(root: Path, request: str, title: str | None, max_iterations: int) -> int:
+def task_add(root: Path, request: str, title: str | None, max_iterations: int | None,
+             workflow: str | None = None) -> int:
     try:
-        task = add_task(root, request, title=title, max_iterations=max_iterations)
-    except (OSError, WorkflowError) as error:
+        task = add_task(root, request, title=title, max_iterations=max_iterations, workflow=workflow)
+    except (OSError, ValueError) as error:
         print(f"Task was not added: {error}", file=sys.stderr)
         return 2
     print(task["id"])
@@ -911,6 +912,9 @@ def build_parser() -> argparse.ArgumentParser:
     from .confluence_sync_config import register as register_confluence
     register_confluence(sub)
 
+    from .workflow_profiles import register as register_workflow
+    register_workflow(sub)
+
     init_parser = sub.add_parser("init", help="add Agent Skills, Copilot hooks and instructions")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
     init_parser.add_argument("--force", action="store_true", help="overwrite kgmaker-managed instructions and skills")
@@ -935,7 +939,8 @@ def build_parser() -> argparse.ArgumentParser:
     task_add_parser = task_sub.add_parser("add", help="create an intake task")
     task_add_parser.add_argument("request", help="implementation request")
     task_add_parser.add_argument("--title")
-    task_add_parser.add_argument("--max-iterations", type=int, default=DEFAULT_MAX_ITERATIONS)
+    task_add_parser.add_argument("--workflow", help="builtin or project workflow profile")
+    task_add_parser.add_argument("--max-iterations", type=int, default=None)
     task_add_parser.add_argument("--root", type=Path, default=Path.cwd())
     task_list_parser = task_sub.add_parser("list", help="list workflow tasks")
     task_list_parser.add_argument("--status", choices=STATUSES)
@@ -959,7 +964,7 @@ def build_parser() -> argparse.ArgumentParser:
     task_context_parser = task_sub.add_parser("context", help="prepare a bounded role-specific RAG packet")
     task_context_parser.add_argument("task_id")
     task_context_parser.add_argument("--role", required=True, choices=ROLES)
-    task_context_parser.add_argument("--token-budget", type=int, default=DEFAULT_CONTEXT_TOKEN_BUDGET)
+    task_context_parser.add_argument("--token-budget", type=int, default=None)
     task_context_parser.add_argument("--root", type=Path, default=Path.cwd())
 
     scan_parser = sub.add_parser("scan", help="scan source files and update the local graph")
@@ -1060,6 +1065,9 @@ def main() -> None:
     elif args.command == "confluence":
         from .confluence_sync_config import run
         code = run(args)
+    elif args.command == "workflow":
+        from .workflow_profiles import run
+        code = run(args)
     elif args.command == "init":
         code = init(root, args.force)
     elif args.command == "memory" and args.memory_command == "capture":
@@ -1067,7 +1075,7 @@ def main() -> None:
     elif args.command == "memory" and args.memory_command == "recall":
         code = memory_recall(root, " ".join(args.terms), args.limit, args.token_budget)
     elif args.command == "task" and args.task_command == "add":
-        code = task_add(root, args.request, args.title, args.max_iterations)
+        code = task_add(root, args.request, args.title, args.max_iterations, args.workflow)
     elif args.command == "task" and args.task_command == "list":
         code = task_list(root, args.status)
     elif args.command == "task" and args.task_command == "show":

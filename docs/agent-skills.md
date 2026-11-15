@@ -82,3 +82,12 @@ Po změně templates obnov jen jejich explicitní cesty a ověř paritu pomocí
 `python -m pytest -q tests/test_skills.py`. Nespouštěj `init --force` nad checkoutem
 KGMakeru kvůli synchronizaci skillů: přepsal by i jiné upravené instrukce.
 Konkrétní příkazy, výsledky a neprovedené kontroly jsou v [change117](changes/117_addTargetProjectSkills.md).
+
+## Návaznost analýzy, implementace a testů
+
+Skill kgmaker-context a distribuované workflow role odkazují na
+[konfigurovatelné projektové workflows](project-workflows.md). `task add --workflow`
+volí greenfield/existing-feature/bugfix nebo projektový profil; task context předává
+konkrétní instrukce role a povinné validace. Samostatné audity používají dosavadní
+feature/data-check a testy existujícího kódu testgen, bez umělých implementačních
+fází. Aktualizované templates i spravované kopie: [change118](changes/118_connectProjectWorkflows.md).

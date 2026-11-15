@@ -1,10 +1,26 @@
 # Inventář acceptance T001 a T002
 
+## T051 — projektové workflows, 2026-11-15
+
+Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání PR_OPEN
+([PR #99](https://github.com/p-rum/kgmaker/pull/99) do main, závislost #98 MERGED). [Zadání](tasks/51_connectProjectWorkflows.md),
+[change118](changes/118_connectProjectWorkflows.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T051-AC01 | VERIFIED_IN_SCOPE | tests/test_workflow_profiles.py: strict config, duplicate JSON, symlink, null mutation, commands data-only |
+| T051-AC02 | VERIFIED_IN_SCOPE | Legacy ID/regrese, v3 immutable snapshot, konfigurace smazána bez změny tasku, role packet |
+| T051-AC03 | VERIFIED_IN_SCOPE | Persistence gates, required label/command, skipped/unknown/failed, stale binding, retry, review major; lokálně deklarované artefakty |
+| T051-AC04 | PARTIAL | Init parity/preservation a CLI handoffs PASS; wheel mimo checkout PASS; živý hostitel NOT_RUN |
+| T051-AC05 | PARTIAL | 103 testů PASS a dokumentace po krocích; GH CI a review publikovaného HEAD NOT_RUN |
+
+
 ## T050 — cílové Agent Skills, 2026-11-15
 
 Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
 [T050 revize 1](tasks/50_addTargetProjectSkills.md),
-[change117](changes/117_addTargetProjectSkills.md). Dodání S01/S02 PR_OPEN (draft, větev `feat/t050-target-project-skills`);
+[change117](changes/117_addTargetProjectSkills.md). Dodání S01/S02 MERGED ([PR #98](https://github.com/p-rum/kgmaker/pull/98),
+main `31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde`);
 ověření uvedené níže je lokální a neprokazuje automatickou discovery hostitelů.
 
 | Acceptance | Ověření | Aktuální důkaz |

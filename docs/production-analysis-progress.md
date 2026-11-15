@@ -1,5 +1,21 @@
 # Aktuální stav a zbývající práce
 
+## Propojené workflows T051 — 2026-11-15
+
+Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
+[zadání](tasks/51_connectProjectWorkflows.md), [change118](changes/118_connectProjectWorkflows.md),
+[uživatelský průchod](project-workflows.md). [PR #99](https://github.com/p-rum/kgmaker/pull/99) nyní cílí na main; závislost #98 je MERGED. Merge T051 neproveden.
+
+| Krok | Dodání | Ověření | Důkaz a omezení |
+|---|---|---|---|
+| T051-S01 | PR_OPEN | VERIFIED_IN_SCOPE | Striktní JSON profily, builtins, read-only CLI; nulová mutace a ukázkový profil v cílených testech PASS |
+| T051-S02 | PR_OPEN | VERIFIED_IN_SCOPE | V3 snapshot/context/handoffs, v1/v2 regrese, stale test/review a plný CLI průchod PASS; evidence LOCAL_DECLARED |
+| T051-S03 | PR_OPEN | PARTIAL | 103 cílených testů PASS, čistý wheel smoke PASS, instrukce/docs; nové review po retargetu dle PR, živí hostitelé NOT_RUN; GH CI neověřené |
+
+Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
+source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
+
+
 ## Skilly v cílovém projektu T050 — 2026-11-15
 
 Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
@@ -8,12 +24,12 @@ Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
 
 | Krok | Dodání | Ověření | Důkaz a omezení |
 |---|---|---|---|
-| T050-S01 | PR_OPEN | VERIFIED_IN_SCOPE | Pět skillů + tři references, init preflight, parity a ochrana uživatelských souborů; čistý wheel smoke PASS. Hostitelská discovery NOT_RUN; neuzavírá T049. |
-| T050-S02 | PR_OPEN | PARTIAL | 83 cílených testů PASS, 5 skill validací PASS; příklady prošly skutečnými validátory. Plná sada má environmentální/toolchain chyby, živé hostitelské scénáře a GH CI NOT_RUN. |
+| T050-S01 | MERGED | VERIFIED_IN_SCOPE | Pět skillů + tři references, init preflight, parity a ochrana uživatelských souborů; čistý wheel smoke PASS. Hostitelská discovery NOT_RUN; neuzavírá T049. |
+| T050-S02 | MERGED | PARTIAL | 83 cílených testů PASS, 5 skill validací PASS; příklady prošly skutečnými validátory. Plná sada má environmentální/toolchain chyby, živé hostitelské scénáře a GH CI NOT_RUN. |
 
-Publikace draft PR na větvi `feat/t050-target-project-skills` probíhá po výslovném
-pokynu uživatele přes GitHub konektor; Git HTTPS zde nemá přihlašovací údaje.
-Obsah publikovaného stromu se ověřuje proti lokálnímu commitu.
+[PR #98](https://github.com/p-rum/kgmaker/pull/98) byl sloučen do main jako
+`31a69bcf5b72c5f1f3be4ed699cc6b5672bcdcde` dne 2026-11-15. Historické lokální
+výsledky výše se nepovyšují na celou produkční ani hostitelskou podporu.
 Příručka: [agent-skills.md](agent-skills.md). T050 nemění delivery součty T003,
 T004, T046 nebo T047 níže. Lokální soubory nejsou důkaz merge ani živé podpory hostitele.
 

@@ -340,3 +340,13 @@ view = project_service_inventory(workspace, graph, source_coverage=coverage)
 No CLI, worker/protocol/store schema, source parser, app execution or data
 availability proof is introduced. [Change84](changes/84_classifyWorkspaceContextRoles.md)
 separates pure fixtures from replay of actual captured compiler/workspace facts.
+
+## Configurable project workflows (T051)
+
+`workflow_profiles.py` resolves data-only profiles from `.kgmaker/workflows.json`.
+`workflow.py` pins the profile in task schema v3 and validates forward handoffs
+inside shared persistence. Test/review artifacts bind to the existing source
+inventory and HEAD. `context.py` supplies role instructions and required checks
+within the packet budget. Legacy task v1/v2 and the graph/store schema are unchanged.
+There is no command runner or new task store. See [workflow contracts](project-workflows.md)
+and [change118](changes/118_connectProjectWorkflows.md).
