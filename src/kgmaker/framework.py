@@ -19,7 +19,8 @@ from typing import Any
 
 from .analysis_model import AnalysisError, digest
 from .model import Edge, KnowledgeGraph, Node
-from .named_queries import declarations as named_query_declarations, parameters as query_parameter_names
+from .named_queries import (declarations as named_query_declarations,
+                            mask_query_noncode, parameters as query_parameter_names)
 from .spring_imports import selector_info
 from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
@@ -3253,7 +3254,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         line = (item.get("range") or {}).get("start_line")
         raw = query_annotation[1]
         language = "NATIVE_SQL" if (_named_string_arg(raw, "nativeQuery") or "false").casefold() == "true" else "JPQL"
-        value = _named_string_arg(raw, "value") or _named_string_arg(raw, "query")
+        value = _jpa_name_arg(raw, ("value",)) or _jpa_name_arg(raw, ("query",))
         named_query_name = _jpa_name_arg(raw, ("name",)) if value is None else None
         named = named_queries.get(named_query_name) if named_query_name else None
         if named:
@@ -3367,8 +3368,6 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                 "result_set_mapping": named["result_set_mapping"]})
             nodes[query_id] = replace(nodes[query_id], metadata={**nodes[query_id].metadata,
                                      "validated": False, "analysis_status": "PARTIAL"})
-        query_lower = value.lstrip().casefold()
-        action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
             assert parsed_query is not None
 
@@ -3520,7 +3519,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                         "reason": "Constructor projection requires an exact compiler-owned qualified type."})
                     invalidate_query()
         else:
-            native_query_records.append({"query_id": query_id, "value": value, "action": action,
+            native_query_records.append({"query_id": query_id, "value": value,
                 "path": path, "line": line, "method": method.id,
                 "provenance": named.get("provenance") if named else None})
 
@@ -4148,9 +4147,22 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     # Native text must bind against the effective XML table names. Resolving
     # earlier could select an annotation table which XML subsequently removes.
     for record in native_query_records:
-        query_id, value, action = record["query_id"], record["value"], record["action"]
+        query_id, value = record["query_id"], record["value"]
         path, line = record["path"], record["line"]
-        tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
+        code, lexically_complete = mask_query_noncode(value)
+        first_token = re.match(r"\s*([A-Za-z_]\w*)\b", code)
+        action = {"select": "query_reads", "update": "query_writes",
+                  "insert": "query_writes", "delete": "query_deletes"}.get(
+                      first_token[1].casefold() if first_token else "")
+        tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", code, re.I)))
+        if not lexically_complete or action is None or not tables:
+            current = nodes[query_id]
+            nodes[query_id] = replace(current, metadata={**current.metadata, "validated": False,
+                                                         "analysis_status": "UNKNOWN"})
+            diagnostics.append({"code": "NATIVE_QUERY_STRUCTURE_UNRESOLVED", "path": path,
+                                "source_line": line, "method": record["method"],
+                                "reason": "Native binding requires complete standard quoting/comments, a supported first statement token and an unquoted table reference."})
+            continue
         for table_name in tables:
             query_parts = table_name.split('.')
             query_schema = query_parts[0] if len(query_parts) == 2 else None

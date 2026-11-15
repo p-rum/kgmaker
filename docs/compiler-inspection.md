@@ -429,6 +429,18 @@ repository návratový typ a native `resultClass`/XML `result-class` vyžadují
 přesný compiler typ. SQL result-set mapping má lokalizovanou diagnostiku a
 PARTIAL, bez předstírání provider interpretace. Native názvy tabulek se hledají
 v konečné ORM projekci po XML overrides; nerozlišené jméno je UNKNOWN.
+Společná lexikální vrstva named i přímých native queries maskuje standardní
+SQL quoted spans (včetně zdvojených uvozovek) a `--`/`/* ... */` komentáře.
+Text `from orders` uvnitř literálu/komentáře není table reference. První skutečný
+statement keyword za komentáři rozlišuje SELECT/UPDATE/INSERT/DELETE; například
+`/* audit */ update orders set status='x'` vytváří statický write intent.
+Quoted token na začátku dotazu nemůže zpřístupnit pozdější klíčové slovo jako
+začátek statementu. Neuzavřený literál/komentář, dialect-dependent quoting,
+nepodporovaný první token a dotaz bez podporované unquoted table reference
+vrací `NATIVE_QUERY_STRUCTURE_UNRESOLVED`, `validated=false` a UNKNOWN bez
+read/write/delete hran. Týká se to i scalar-only SELECT; nejde o SQL grammar
+validator. Plná syntaxe, dialect-specific string escapes a quoted table names
+nejsou tímto lexikálním kontraktem interpretovány.
 
 Například po explicitní inspekci projektu s uvedenou deklarací:
 

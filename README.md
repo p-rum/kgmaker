@@ -562,7 +562,9 @@ jméno nebo tělo zůstává UNKNOWN. Named reference používá stejnou JPQL gr
 kontrolu pojmenovaných a číslovaných parametrů a compiler-owned projekcí jako
 přímý dotaz. Native `resultClass` a XML `result-class` se vážou na přesný compiler
 typ; `resultSetMapping` zůstává PARTIAL. Native tabulky se hledají až v konečném
-XML mapování. Skutečná Javac fixture a hranice podpory jsou v
+XML mapování a pouze mimo SQL literály a komentáře; typ operace určuje první
+statement keyword za komentáři. Neúplná lexikální struktura nebo chybějící
+podporovaná table reference zůstává UNKNOWN. Skutečná Javac fixture a hranice podpory jsou v
 [change120](docs/changes/120_namedQueryContainers.md) a
 [compiler dokumentaci](docs/compiler-inspection.md#named-query-containers-t003-s06-w06).
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a

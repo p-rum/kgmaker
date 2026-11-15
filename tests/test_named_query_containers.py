@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from kgmaker.framework import _jpa_xml_model
 
 
@@ -151,6 +153,16 @@ def test_actual_javac_named_query_containers_reference_parameters_and_projection
     # Defining class is not a query root: Other.first reads Order through its body.
     assert not any(edge.source == definitions['Other.first'].id and edge.kind == 'query_reads' for edge in graph.edges)
     assert KnowledgeGraph.from_dict(graph.to_dict()).to_dict() == graph.to_dict()
+    for method in ['nativeLiteralOnly', 'nativeCommentOnly']:
+        assert q[method].metadata['validated'] is False
+        assert q[method].metadata['analysis_status'] == 'UNKNOWN'
+        assert not any(edge.source == q[method].id and edge.kind in {
+            'query_reads', 'query_writes', 'query_deletes'} for edge in graph.edges)
+    for method, action in [('nativeCommentUpdate', 'query_writes'), ('nativeCommentDelete', 'query_deletes')]:
+        assert q[method].metadata['validated'] is True
+        assert {(nodes[edge.target].name, edge.kind) for edge in graph.edges
+                if edge.source == q[method].id and edge.kind in {
+                    'query_reads', 'query_writes', 'query_deletes'}} == {('orders', action)}
 
 
 def test_actual_named_queries_select_xml_persistence_realm_without_cross_binding(tmp_path):
@@ -333,3 +345,47 @@ def test_named_native_query_binds_final_xml_table_and_metadata_complete(tmp_path
             if edge.source == query.id and edge.kind == 'query_reads'} == {'xml_orders'}
     assert any(edge.source == query.id and edge.kind == 'uses_named_query'
                and nodes[edge.target].metadata['mapping_source'] == 'ORM_XML' for edge in projected.edges)
+
+
+@pytest.mark.parametrize('named', [True, False], ids=['named-reference', 'inline-query'])
+@pytest.mark.parametrize(('query', 'expected'), [
+    ("select 'from Order'", set()),
+    ('select 1 /* from Order */', set()),
+    ('select 1 -- from Order', set()),
+    ('select "from Order"', set()),
+    ('select * from "Order"', set()),
+    ("'update Customer' select * from Order", set()),
+    ("select 'a'' from Order', ':fake' from Customer /* join Order */", {('Customer', 'query_reads')}),
+    ("/* audit */ update Order set status='x'", {('Order', 'query_writes')}),
+    ("-- audit\nDELETE FROM Order WHERE status='x'", {('Order', 'query_deletes')}),
+    ("/* DELETE FROM Customer */ select * from Order where status='update Customer'", {('Order', 'query_reads')}),
+    ("select 'unterminated from Order", set()),
+    ('select 1 /* unterminated from Order', set()),
+    ('select * from Order -- where id=:fake', {('Order', 'query_reads')}),
+])
+def test_public_native_query_lexical_boundaries_and_statement_intent(tmp_path, named, query, expected):
+    from test_jpql_hql_grammar import _fixture
+    from kgmaker.framework import augment_framework_graph
+    _, graph, context = _fixture(tmp_path)
+    method = next(symbol for symbol in graph.symbols if symbol['id'] == 'hql')
+    if named:
+        order = next(symbol for symbol in graph.symbols if symbol['id'] == 'order')
+        order['annotations'].append({'name': 'jakarta.persistence.NamedNativeQuery', 'values': {
+            'name': 'Order.lexical', 'query': query}})
+        method['annotations'][0]['values'] = {'name': 'Order.lexical'}
+    else:
+        method['annotations'][0]['values'] = {'value': query, 'nativeQuery': True}
+    result = augment_framework_graph(tmp_path, graph, context)
+    projected = queries(result)['hqlWith']
+    nodes = {node.id: node for node in result.nodes}
+    assert {(nodes[edge.target].name, edge.kind) for edge in result.edges
+            if edge.source == projected.id and edge.kind in {
+                'query_reads', 'query_writes', 'query_deletes'}} == expected
+    assert projected.metadata['parameters'] == []
+    assert projected.metadata['validated'] is bool(expected)
+    if not expected:
+        assert projected.metadata['analysis_status'] == 'UNKNOWN'
+        assert any(item.get('code') == 'NATIVE_QUERY_STRUCTURE_UNRESOLVED'
+                   and item.get('method') == method['id'] for item in result.diagnostics)
+    if named:
+        assert any(edge.source == projected.id and edge.kind == 'uses_named_query' for edge in result.edges)

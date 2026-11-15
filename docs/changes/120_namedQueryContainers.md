@@ -158,7 +158,7 @@ PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q --tb=short \
   tests/test_orm_xml_overrides.py tests/test_jpql_hql_grammar.py
 ```
 
-Finální výsledek: **PASS, 91 passed, 0 skipped** (26.56 s; finální opakování po kontrole unresolved container values). Předchozí aktuální
+Výsledek před nezávislým review nad `f6a8934`: **PASS, 91 passed, 0 skipped** (26.56 s; finální opakování po kontrole unresolved container values). Předchozí aktuální
 cílený běh: **90 PASS, 0 SKIP** (26.89 s), před doplněním explicitní stale-v8 varianty
 a rozšířením actual fixture o jednotlivé legacy anotace.
 
@@ -186,3 +186,54 @@ Případná obnova historických semantic vazeb je oddělená práce. Lokální 
 `task:0e778f28d69603b6e963871d1309fb8ce7321bcc2265afcdf1d5397c7f6cfbe2`
 uchovává retrospektivní rekognoskaci/plán, skutečnou implementaci a výsledek testů;
 nezávislé review do něj implementační agent nepředstírá.
+
+
+## Oprava T003-S06-W06-S03 po nezávislém review — AC03 (2026-11-15)
+
+Baseline: `f6a8934adc1e69631dbd74b7592668a92129983b`, review nad base
+`14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`: **REQUEST_CHANGES**, dva P1 nálezy.
+Dosavadních 91 PASS neodhalilo, že raw native SQL regex považoval text v
+literálu/komentáři za tabulku a že úvodní komentář klasifikoval UPDATE jako READ.
+
+Skutečné změny: `src/kgmaker/named_queries.py` obsahuje společnou lexikální
+masku parametrů a native textu. Standardní quoted spans a komentáře nejsou
+zdrojem table names; neuzavřené a dialect-dependent quoting zůstává unknown.
+`framework.py` určuje native operaci z prvního skutečného statement keywordu
+za komentáři a hledá tabulky v maskovaném textu. Bez podporovaného statementu,
+lexikálně úplného vstupu a unquoted table reference vydá lokalizovanou
+`NATIVE_QUERY_STRUCTURE_UNRESOLVED`, `validated=false`, UNKNOWN a žádnou
+query read/write/delete hranu. Přímé `@Query` uchovává compiler string celou,
+včetně apostrofů, takže využívá stejnou bezpečnou cestu jako named reference.
+Jde o lexikální hranici existujícího native subsetu, nikoli nový SQL parser.
+
+Regrese: `tests/test_named_query_containers.py` přes veřejný graf porovnává
+named reference a inline queries pro literály, zdvojené SQL apostrofy, řádkové
+/blokové komentáře, neúplné delimitery, cizí názvy tabulek v non-code textu,
+leading literal a komentované UPDATE/DELETE. `fixtures/named-queries/Model.java`
+přidává actual Javac literal-only/comment-only negativy a komentované DML.
+Fixture README popisuje tyto případy. Aktualizované uživatelské plochy:
+README, capability/CLI dokumentace, production progress a acceptance inventář.
+CLI syntaxe, task registry, graph schema, worker protocol a installed templates
+jsou **bez dopadu**; veřejný rozsah a důkazní limity jsou zpřesněny.
+
+Příklad: `select 'from orders'` ani `select 1 /* from orders */` nevytváří
+`query_reads`; `/* audit */ update orders set status='x'` vytváří pouze
+`query_writes` na skutečnou tabulku. `-- audit` před DELETE obdobně zachová
+`query_deletes`. Scalar-only SELECT a quoted table names zůstávají mimo bounded
+table binding. Runtime/provider dostupnost ani široká SQL grammar nejsou tvrzeny.
+
+Kontroly po opravě: cílený public regression běh před přidáním leading-literal
+varianty **PASS, 20 passed / 13 deselected**, příkaz
+`PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q --tb=short tests/test_named_query_containers.py -k lexical_boundaries`.
+Finální cílená sada používá stejný přesný JDK/worker příkaz výše:
+**PASS, 117 passed / 0 skipped, 26.87 s** (včetně quoted-identifier negativů).
+Předchozí meziběh **113 PASS / 0 SKIP, 27.12 s** je historický.
+`git diff --check` a `compileall` pro oba změněné Python moduly: **PASS**.
+`memory capture --base f6a8934adc1e69631dbd74b7592668a92129983b
+--validation named-query-review113=passed`: epizoda nevznikla (**NOT_RUN**),
+protože starší semantic node22 má stale compiler-documentation evidence.
+Aktuální `semantic update --base f6a8934adc1e69631dbd74b7592668a92129983b
+--token-budget 1200` připravil10 změněných cest; žádný spekulativní semantic
+patch nebyl aplikován. Následný lokální `scan --no-docs` obnovuje machine index. Full suite a GitHub CI: **NOT_RUN** podle rozsahu pověření.
+Zbývá nezávislé opakované review aktuálního HEAD, případná integrace nového main a publikace
+orchestrátorem; oprava sama nepředstírá APPROVE ani merge.

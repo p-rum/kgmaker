@@ -92,9 +92,65 @@ def declarations(annotations: list[dict]):
                "result_set_mapping": members.get("resultSetMapping")}
 
 
+def mask_query_noncode(query: str) -> tuple[str, bool]:
+    """Mask standard SQL/JPQL quoted spans and comments, preserving offsets.
+
+    This is a lexical boundary, not SQL grammar or dialect validation. Broken
+    delimiters and dialect-dependent quoting cannot establish native bindings.
+    """
+    chars = list(query)
+    index, complete = 0, True
+    while index < len(query):
+        start = index
+        if query.startswith("--", index):
+            end = query.find("\n", index + 2)
+            index = len(query) if end < 0 else end
+        elif query.startswith("/*", index):
+            end = query.find("*/", index + 2)
+            if end < 0:
+                complete, index = False, len(query)
+            else:
+                complete = complete and "/*" not in query[index + 2:end]
+                index = end + 2
+        elif query[index] in "'\"":
+            quote = query[index]
+            index += 1
+            closed = False
+            while index < len(query):
+                if query[index] == "\\":
+                    # Backslash string escapes depend on provider settings.
+                    complete = False
+                    index += 2
+                elif query[index] == quote:
+                    index += 1
+                    if index < len(query) and query[index] == quote:
+                        index += 1
+                    else:
+                        closed = True
+                        break
+                else:
+                    index += 1
+            complete = complete and closed
+        else:
+            if query[index] in "`[]#" or (query[index] == "$" and
+                    re.compile(r"\$(?:[A-Za-z_]\w*)?\$").match(query, index)):
+                complete = False
+            index += 1
+            continue
+        masked = ["\n" if char == "\n" else " " for char in query[start:index]]
+        if query[start] in "'\"":
+            # A literal is a token, not whitespace: a leading literal cannot
+            # expose a later word as the statement keyword, nor a table name.
+            masked[0] = "@"
+        chars[start:index] = masked
+    return "".join(chars), complete
+
+
 def parameters(query: str) -> tuple[list[str], list[int]]:
-    """Exclude SQL/JPQL strings, quoted identifiers, comments and PostgreSQL casts."""
-    text = re.sub(r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|--[^\n]*|/\*.*?\*/", " ", query, flags=re.S)
+    """Exclude quoted spans, comments and PostgreSQL casts from parameters."""
+    text, complete = mask_query_noncode(query)
+    if not complete:
+        return [], []
     named = sorted(set(re.findall(r"(?<!:):([A-Za-z_]\w*)", text)))
     positional = sorted({int(value) for value in re.findall(r"\?(\d+)", text)})
     return named, positional

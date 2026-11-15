@@ -6,7 +6,8 @@ adds bounded Jakarta/Spring API stubs, and invokes the real JVM worker/Javac.
 The fixture does not build or execute an application or connect to a database.
 
 `Model.java` includes explicit and repeatable JPQL/native containers, repository
-references, parameters and DTO projections. `orm.xml` supplies root/entity
+references, parameters and DTO projections. Native literal/comment-only table
+lookalikes and commented UPDATE/DELETE statements exercise lexical boundaries. `orm.xml` supplies root/entity
 queries, duplicates, incomplete definitions and annotation/XML collisions.
 Tests also select two persistence units, replace XML table names, reject malformed
 mapping, and verify strict/cancel/timeout publication and offline refresh.

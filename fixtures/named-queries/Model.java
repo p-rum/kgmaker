@@ -17,6 +17,10 @@ import org.springframework.data.jpa.repository.Query;
 })
 @NamedNativeQueries({
  @NamedNativeQuery(name="Order.native", query="select id, status from orders where status=:status", resultClass=Summary.class),
+ @NamedNativeQuery(name="Order.literalOnly", query="select 'from orders'"),
+ @NamedNativeQuery(name="Order.commentOnly", query="select 1 /* from orders */"),
+ @NamedNativeQuery(name="Order.commentUpdate", query="/* audit */ update orders set status='x'"),
+ @NamedNativeQuery(name="Order.commentDelete", query="-- audit\ndelete from orders where status='x'"),
  @NamedNativeQuery(name="Order.mapping", query="select * from orders", resultSetMapping="not-indexed")
 })
 class Order {
@@ -35,6 +39,10 @@ class Other { @Id Long id; }
 class Single { @Id Long id; }
 class Summary { Summary(Long id, String status) {} }
 interface Orders extends JpaRepository<Order, Long> {
+ @Query(name="Order.literalOnly") int nativeLiteralOnly();
+ @Query(name="Order.commentOnly") int nativeCommentOnly();
+ @Query(name="Order.commentUpdate") int nativeCommentUpdate();
+ @Query(name="Order.commentDelete") int nativeCommentDelete();
  @Query(name="Single.jpql") Order singleJpql();
  @Query(name="Single.native") Summary singleNative();
  @Query(name="Order.summary") Summary summary(String status);
