@@ -145,3 +145,22 @@ def render_report(candidate: dict, packet: dict, stale: list[str], applied: bool
         lines += [f"- `{cell(item['id'])}` — `{cell(label)}` — SHA-256 `{item.get('sha256', 'N/A')}` — {cell(item['supports'])} — {item['method']}/{('STALE' if stale else item['validity'])}"]
     lines += [""] + ["- " + cell(p) for p in candidate["completion"]["pending"]] + [""]
     return "\n".join(lines)
+
+
+def render_ranking_report(result: dict) -> str:
+    """Render the same deterministic score/evidence payload as graph rank JSON."""
+    lines = ['# Evidence ranking', '',
+             f"Profile: `{cell(result['profile'])}`; scope: `{cell(result['scope'])}`; status: `{cell(result['status'])}`", '',
+             'Scores express evidence priority, not runtime availability or business importance.', '',
+             '| Entity | Score | Coverage | Breakdown |', '|---|---:|---|---|']
+    for row in result['results']:
+        lines.append('| ' + ' | '.join(cell(value) for value in (
+            row['id'], row['score'], row['coverage']['status'], row['breakdown'])) + ' |')
+    for row in result['results']:
+        lines += ['', '## ' + cell(row['id']), '', 'Path: ' + cell(row['path']), '',
+                  'Contributions (exact graph witnesses and localized gaps):', '']
+        for term, contributions in row['contributions'].items():
+            lines.append('- ' + cell(term) + ': ' + cell(contributions))
+    lines += ['', 'Policy: ' + cell(result['scoring_policy']), '']
+    lines.extend('- ' + cell(limit) for limit in result['limitations'])
+    return '\n'.join(lines) + '\n'

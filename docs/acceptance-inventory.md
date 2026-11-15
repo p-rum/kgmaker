@@ -1339,3 +1339,56 @@ actual runtime/toolchain ani úplná T004/produkční acceptance.
 Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
 11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
 reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.
+
+
+## T003-S07-W08 — vysvětlitelný evidence ranking
+
+Dodání PR_OPEN ([PR106](https://github.com/p-rum/kgmaker/pull/106)); ověření VERIFIED_IN_SCOPE nad main
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, verze `execution-2`/`impact-2`.
+Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanking.md).
+[Podporovaný kontrakt](evidence-ranking.md), [fixture](../fixtures/evidence-ranking/README.md).
+
+| Acceptance | Ověření | Konkrétní důkaz |
+|---|---|---|
+| T003-S07-W08-AC01 | VERIFIED_IN_SCOPE | `test_every_score_has_traceable_contributions_and_local_penalty`, `test_noise_and_order_do_not_inflate_execution_and_impact_is_separate`, `test_confidence_and_duplicate_records_do_not_add_weight`, actual Javac/JSON/Markdown CLI |
+| T003-S07-W08-AC02 | VERIFIED_IN_SCOPE | `test_old_schemas_roundtrip_without_invented_execution` v1/v2/v3; validovaný store, `test_selected_variant_retains_only_required_source_contexts_and_valid_records`, graph-provider feature packet regrese |
+| T003-S07-W08-AC03 | VERIFIED_IN_SCOPE | unresolved/ambiguous/stale/runtime parametrizace, invalid refs před scope filtering, no mutation/implicit process, nezávislá static completeness; actual unresolved Javac target |
+| T003-S07-W08-AC04 | VERIFIED_IN_SCOPE | README, capability, CLI příklady, production matrix, change126; framework side effects jsou schema fixture, pouze Java má nový actual-native ranking průchod |
+
+Full/GH CI NOT_RUN; kompletní S07, W09, runtime dostupnost a obecná dispatch
+úplnost zůstávají mimo ověřený rozsah.
+
+
+### T003-S07-W08 — review regresní rozšíření AC01/AC03
+
+Nad reviewed HEAD `e0bfd41b13fe0190e5608f88964a0eef36f274de` reviewer doložil
+2 FAIL, které předchozí72PASS nepokrývaly. `test_stale_proof_records_cannot_supply_current_weight_or_paths`
+nově ověřuje execution/impact, nulovou mutaci, contributions a paths;
+`test_non_execution_site_cannot_close_runtime_only_dispatch_gap` pokrývá
+METHOD_REFERENCE/INVOKEDYNAMIC/unsupported kind.
+`test_only_admitted_current_static_path_closes_observation_gap` pokrývá
+stale/unknown/site-only proof, chybějící hrany, unresolved/scope/config hranice.
+`test_runtime_only_and_unknown_proof_gaps_follow_the_selected_path` ověřuje
+přenesení konkrétních gap refs do potomků. Skutečný Javac test rozšířen o public
+CLI nad stale evidence records. Cílená sada **96 PASS / 0 SKIP, 3.20 s**;
+nezávislé repro **2 PASS**. Delivery PR_OPEN, verification VERIFIED_IN_SCOPE;
+nové nezávislé review ještě proběhne. Podrobnosti a přesné příkazy:
+[change126 kroky6–7](changes/126_evidenceRanking.md).
+
+
+### T003-S07-W08 — authority/variant regrese AC01–AC04
+
+Nad reviewed `7169e88d97595694bf7591117c683716bb812218` měly nové nezávislé
+reprodukce 2 FAIL. Dodatečná verification VERIFIED_IN_SCOPE nyní pokrývá:
+`test_context_authority_is_required_before_execution_admission` (oba profily a scopes,
+SOURCE_ONLY/UNKNOWN, bare build, missing producer/binding a foreign proof negativy),
+`test_legacy_source_only_label_never_becomes_execution` (v2/v3),
+`test_real_producer_context_shape_preserves_separate_evidence_families`
+(compiler/candidate/framework/runtime plus source/imported-build původ),
+`test_mixed_compiler_edge_is_omitted_without_importing_other_variant`,
+`test_variant_boundary_cannot_expand_symbols_sites_cfg_or_evidence` a
+`test_selected_projection_retains_source_provenance_of_evidence_without_compiler_promotion`.
+Public actual Javac a feature graph_selection/roundtrip regrese prošly beze změny
+runtime identit. **173 PASS / 0 SKIP / 3.50 s + 31 PASS / 1.23 s**, nezávislé repro 4 PASS / 0.14 s.
+Delivery PR_OPEN; nové nezávislé review očekáváno. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
+obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.

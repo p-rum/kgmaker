@@ -123,13 +123,22 @@ class ProductionScopeTests(unittest.TestCase):
         nodes = [Node("currency", "enum", "Currency", "src/Currency.kt", scope="production", role="executable_code"),
                  Node("decision", "method", "decide", "src/Currency.kt", scope="production", role="executable_code"),
                  Node("entry", "method", "entry", "src/Entry.kt", scope="production", role="executable_code")]
-        graph = KnowledgeGraph(2, ".", "", nodes, [Edge("entry", "decision", "resolves_to", evidence_kind="SYMBOL_RESOLVED")], {})
+        graph = KnowledgeGraph(2, ".", "", nodes, [Edge("entry", "decision", "resolves_to",
+            evidence_kind="SYMBOL_RESOLVED", context_ids=("ranking",), evidence_ids=("ranking-call",))], {},
+            contexts=[{"id": "ranking", "scope": "production", "freshness": "CONTENT_VERIFIED",
+                       "coverage": "COMPLETE_WITHIN_INDEXED_SCOPE"}],
+            evidence=[{"id": "ranking-call", "kind": "SYMBOL_RESOLVED"}])
         before = rank(graph, "entry")
         overlay = replace(graph, nodes=nodes + [Node("mock", "method", "mock", "test/Mock.kt", scope="test", role="executable_code")],
                           edges=graph.edges + [Edge("entry", "currency", "references_type") for _ in range(500)] + [Edge("mock", "currency", "resolves_to")])
         after = rank(overlay, "entry")
         self.assertEqual([(r["id"], r["score"]) for r in before["results"]], [(r["id"], r["score"]) for r in after["results"]])
-        self.assertGreater(next(r["score"] for r in after["results"] if r["id"] == "decision"), next(r["score"] for r in after["results"] if r["id"] == "currency"))
+        # This legacy fixture has no compiler producer authority. Typed labels
+        # remain readable but cannot create execution weight; actual enum-method
+        # ranking is independently exercised by the Javac acceptance fixture.
+        self.assertTrue(all(row["score"] == 0 for row in after["results"]))
+        self.assertTrue(any(gap["code"] == "EXECUTION_AUTHORITY_UNKNOWN"
+                            for row in after["results"] for gap in row["coverage"]["gaps"]))
         self.assertEqual(after, rank(overlay, "entry"))
         self.assertEqual(500, next(r["shared_references"] for r in after["results"] if r["id"] == "currency"))
 

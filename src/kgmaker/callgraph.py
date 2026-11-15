@@ -5,13 +5,13 @@ from collections import defaultdict, deque
 
 from .analysis_model import AnalysisError
 from .model import KnowledgeGraph
-from .views import project
+from .views import is_execution_callsite, project
 
 
 def adjacency(graph: KnowledgeGraph, include_candidates=True):
     result = defaultdict(list)
     for site in graph.call_sites:
-        if site.get("invocation_kind") in {"METHOD_REFERENCE", "INVOKEDYNAMIC"}:
+        if not is_execution_callsite(site):
             continue
         target = site.get("declared_target")
         if target:
@@ -34,7 +34,8 @@ def adjacency(graph: KnowledgeGraph, include_candidates=True):
                                     "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
                                     "kind": "RUNTIME_OBSERVED",
                                     "evidence_ids": list(edge.evidence_ids),
-                                    "dispatch_complete": True})
+                                    "dispatch_complete": False,
+                                    "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"})
     for key in result:
         result[key].sort(key=lambda e: (e["target"], e["call_site"], e["kind"]))
     return result
