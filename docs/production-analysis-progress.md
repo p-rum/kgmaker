@@ -179,7 +179,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T034](tasks/T-034_add-process-cli.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T035](tasks/T-035_render-business-process-mermaid.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T036](tasks/T-036_render-business-process-report.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
-| [T037](tasks/T-037_invalidate-derived-views.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
+| [T037](tasks/T-037_invalidate-derived-views.md) | IN_PROGRESS | PARTIAL | `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8` | [view_cache.py](../src/kgmaker/view_cache.py), [graph_provider.py](../src/kgmaker/graph_provider.py), [test_t037_invalidate_derived_views.py](../tests/test_t037_invalidate_derived_views.py) | TBD | Explicitní single-view cache a broad invalidation jsou cíleně ověřovány; T037 PR/review/full acceptance ještě nedokončeny. Viz [change121](changes/121_invalidateDerivedViews.md) a [API limity](view-cache.md). |
 | [T038](tasks/T-038_publish-view-artifacts-atomically.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T039](tasks/T-039_diff-architecture-and-processes.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T040](tasks/T-040_add-agent-process-instructions.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
@@ -1466,3 +1466,17 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 ## T049 — oddělení cílových agentů (2026-11-11)
 
 [T049](tasks/49_separateTargetAgents.md) · S01–S07 PLANNED · ověření NOT_RUN. Návrh pokrývá init, projektové profily, souhlas pro commit/push a migraci. Implementační evidence zatím chybí.
+
+## T037 — invalidace odvozených pohledů (2026-11-15)
+
+T037-S01–S05 jsou v samostatném implementačním checkpointu nad main
+`14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`; delivery IN_PROGRESS, ověření PARTIAL.
+Explicitní `view_cache.get_or_build_view` váže celý public workspace/graph,
+contexts, rules, scope a context selection. Cache miss rebuildí celý view, takže
+zachytí i přidané provider inventáře; není deklarována selektivita ani runtime
+fresness. Cílená sada je v `tests/test_t037_invalidate_derived_views.py`;
+konkrétní příkazy a výsledky jsou ve [change121](changes/121_invalidateDerivedViews.md).
+README, architecture capability, CLI hranice, acceptance inventory a API příklad
+odkazují na [T037 API dokumentaci](view-cache.md). Full pytest, independent review,
+remote PR CI a libovolné produkční workspace/toolchain acceptance jsou zatím
+NOT_RUN; T004 zůstává nedokončený.

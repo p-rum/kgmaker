@@ -1236,3 +1236,23 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 ## T049 — oddělení cílových agentů (2026-11-11)
 
 [Scénáře AC01–AC12 a jejich ověření](tasks/49_separateTargetAgents.md) jsou PLANNED / NOT_RUN. Při implementaci přidej ke každému dodanému AC důkaz, SHA, verzi hostitele a skutečný výsledek.
+
+## T037 — invalidace odvozených pohledů (2026-11-15)
+
+Baseline `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8`; delivery IN_PROGRESS;
+ověření PARTIAL při přípravě review. [Zadání](tasks/T-037_invalidate-derived-views.md),
+[API](view-cache.md), [change121](changes/121_invalidateDerivedViews.md).
+
+| Acceptance | Ověření | Přímý test / limit |
+|---|---|---|
+| T037-AC01 | VERIFIED_IN_SCOPE | `test_dependency_mutations_force_rebuild_without_reusing_cached_approval`: service, contract, context, rule, annotation a workspace mapping changes způsobují miss; T032 review test doloží APPROVED→NEEDS_REVALIDATION. |
+| T037-AC02 | VERIFIED_IN_SCOPE | `test_negative_lookup_new_provider_and_unrelated_edit_invalidate_conservatively`: přidaný dříve chybějící provider znovu spouští builder; celý snapshot je konzervativní invalidation boundary. |
+| T037-AC03 | VERIFIED_IN_SCOPE | `test_mutation_refresh_matches_independent_full_rebuild` testuje create/edit/delete/rename proti nezávislému builderu, bez cache readback. |
+| T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink parent negatives zachovávají poslední validní artefakt; symlink write se odmítne před builderem. |
+| T037-AC05 | VERIFIED_IN_SCOPE | Scope/context cache isolation, exact ViewDocument round-trip a test no approval/runtime evidence in cached topology; limity/truncation se kopírují beze změny v T016 view. |
+| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; PR/review a remote CI zatím NOT_RUN. |
+
+Cílená sada: **22 passed** v `tests/test_t037_invalidate_derived_views.py`.
+Koalesced view/provider/dependency sada: **244 passed**; přesné příkazy, základní
+dependency evidence a neprovedené kontroly viz change121. Není to full pytest,
+actual runtime/toolchain ani úplná T004/produkční acceptance.

@@ -52,11 +52,12 @@ def _configure(parser):
             child.add_argument('--catalog',choices=tuple(_CATALOGS),required=True)
             inputs=child.add_mutually_exclusive_group(required=True)
             inputs.add_argument('--interface-capture',type=Path)
-            inputs.add_argument('--capture-local',action='store_true',help='explicit read-only source/parser replay; existing indexes required, no publication')
+            inputs.add_argument('--capture-local',action='store_true',help='explicit source/parser replay; existing indexes required, no index publication')
         elif name=='topology':
             inputs=child.add_mutually_exclusive_group(required=True)
             inputs.add_argument('--capture-snapshot',type=Path)
-            inputs.add_argument('--capture-local',action='store_true',help='explicit read-only source/parser replay; existing indexes required, no publication')
+            inputs.add_argument('--capture-local',action='store_true',help='explicit source/parser replay; existing indexes required, no index publication; --view-cache separately opts into view publication')
+            child.add_argument('--view-cache',type=Path,help='explicitly reuse/publish a derived view cache artifact')
             child.add_argument('--focus')
             child.add_argument('--direction',choices=('incoming','outgoing','both'),default='both')
             child.add_argument('--max-hops',type=int)
@@ -75,7 +76,7 @@ def _configure(parser):
 
 
 def register(subparsers):
-    _configure(subparsers.add_parser('architecture',help='read-only architecture snapshots; interface JSON or Markdown'))
+    _configure(subparsers.add_parser('architecture',help='architecture snapshots; explicit derived-view cache opt-in'))
 
 
 def _path(args,value):
@@ -203,7 +204,7 @@ def _interfaces(args,selected):
 
 
 def _topology(args,selected):
-    from .service_topology import capture_topology_inputs,aggregate_service_topology
+    from .service_topology import capture_topology_inputs,aggregate_service_topology,aggregate_service_topology_cached
     from .topology_filter import filter_topology
     if args.max_nodes<1 or args.max_nodes>20000 or args.max_hops is not None and not 0<=args.max_hops<=20000:
         _fail('INVALID_FILTER')
@@ -220,7 +221,8 @@ def _topology(args,selected):
         captured=_read(args,args.capture_snapshot)
     selection=captured['remote_selection']
     _assert_selection(args,selection['scope'],selection['selected_contexts'],selected)
-    original=aggregate_service_topology(captured)
+    original=(aggregate_service_topology_cached(captured,_path(args,args.view_cache))
+              if args.view_cache is not None else aggregate_service_topology(captured))
     result=filter_topology(original,focus_service=args.focus,direction=args.direction,
         max_hops=args.max_hops,max_nodes=args.max_nodes,relations=args.relations,
         scope=args.scope,context_ids=args.filter_contexts)

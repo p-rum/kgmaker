@@ -7,12 +7,18 @@ Use the [current delivery inventory](production-analysis-progress.md) and
 [change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 Default commands replay explicit captured JSON. They do not read a live workspace,
-run workers, build indexes, publish caches, or execute applications.
+run workers, build indexes, publish caches, or execute applications. The topology
+command may explicitly read or publish one derived-view cache artifact with
+`--view-cache PATH`; without that option the command stays cache-free. This flag
+does not capture a new workspace or graph and is not a worker/build instruction.
+Python callers may use the same [derived-view cache API](view-cache.md). See
+[T037 implementation evidence](changes/121_invalidateDerivedViews.md).
 
 ```sh
 kgmaker architecture interfaces --root /repo --catalog http-providers --interface-capture interfaces.json
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50
 kgmaker architecture explain --root /repo --snapshot filtered.json --capture-snapshot topology-inputs.json --element service:checkout
+kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --view-cache .kgmaker/views/topology.json
 ```
 
 Interfaces input is a versioned transport bundle with exactly `schema_version: 1`,
