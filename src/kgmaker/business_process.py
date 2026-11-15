@@ -692,3 +692,318 @@ def project_http_process_boundary(local_process, remote_interfaces, *, target_pr
         raise
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as error:
         raise BusinessProcessError('INVALID_HTTP_PROCESS_BOUNDARY', 'Invalid or incompatible HTTP process boundary input') from error
+
+
+ASYNC_VERSION = 'async-process-boundary-1'
+
+
+def project_async_process_boundary(local_process, remote_interfaces, *, target_processes=(),
+                                   max_depth=4, max_expansions=32):
+    """Project potential Kafka paths from supplied T014/T025 documents, without I/O.
+
+    Exact original call-site/listener IDs join the snapshots. A declared remote
+    membership is static evidence only: neither delivery nor instance correlation.
+    Fan-out branches never rejoin the publisher or each other. Recursion is bounded
+    and leaves its subscription boundary visible when a target cannot be expanded.
+    """
+    try:
+        if (type(max_depth) is not int or not 0 <= max_depth <= 32
+                or type(max_expansions) is not int or not 0 <= max_expansions <= 128
+                or not isinstance(target_processes, (list, tuple)) or len(target_processes) > 128):
+            _fail('ASYNC_INVALID_LIMITS_OR_TARGETS')
+        _bounded([value._document if isinstance(value, ProcessView) else value for value in target_processes])
+        local = _document(local_process)
+        remote_raw = remote_interfaces.to_dict() if isinstance(remote_interfaces, ViewDocument) else remote_interfaces
+        _bounded(remote_raw)
+        remote = ViewDocument.from_dict(remote_raw)
+        targets = [_document(value) for value in target_processes]
+        if remote.rules_version != REMOTE_VIEW_VERSION:
+            _fail('ASYNC_UNSUPPORTED_REMOTE_VERSION')
+        scope = local['definition']['scope']
+        if remote.kind != 'topology' or remote.scope != scope:
+            _fail('ASYNC_SCOPE_OR_KIND_MISMATCH')
+        view = deepcopy(local['technical_view'])
+        nodes = {n['id']: n for n in view['nodes']}
+        edges = {e['id']: e for e in view['edges']}
+        proofs = {p['id']: p for p in view['provenance']}
+        rnodes = {n.id: n for n in remote.nodes}
+        rproofs = {p['id']: p for p in remote.provenance}
+        selection = deepcopy(local['definition']['context_selection'])
+        contexts = set(local['definition']['context_ids'])
+        diagnostics = list(view['diagnostics']) + deepcopy(list(remote.diagnostics))
+        limits = list(view['limits']) + list(remote.limits) + [
+            'Potential static Kafka membership paths; no consumer order or return to publisher.',
+            'Delivery, processing completion and exactly-once are not observed.',
+            'Supported inputs contain no instance-correlation mapping contract; topic equality is not correlation.']
+        truncated = view['coverage'].get('truncated') is True or remote.coverage.get('truncated') is True
+        truncated = truncated or any(d.get('truncated') is True for d in remote.diagnostics)
+        upstream = [{'kind':'remote_interfaces', 'view_id':remote.view_id,
+            'fingerprint':remote.content_fingerprint, 'coverage':deepcopy(remote.coverage)}]
+        expansions = 0
+        boundary_count = 0
+
+        def service(node):
+            return node.attributes.get('service_id') or (node.owner_id or '').removeprefix('service:')
+
+        def selected(doc, owner, context):
+            definition = doc['definition']
+            choice = definition['context_selection']
+            row = choice.get('services', {}).get(owner, {})
+            return (definition['scope'] == scope and context in definition['context_ids']
+                and choice.get('scope', scope) == scope and row.get('scope') == scope
+                and row.get('status') != 'STALE'
+                and any(c.get('context_id') == context and c.get('scope', scope) == scope
+                    and c.get('freshness') != 'STALE' and c.get('status') not in {'STALE','AMBIGUOUS','UNRESOLVED','UNKNOWN'}
+                    for c in row.get('contexts', [])))
+
+        def put_proof(proof):
+            if proof.get('scope') != scope:
+                _fail('ASYNC_PROOF_SCOPE_MISMATCH')
+            if proof['id'] in proofs and proofs[proof['id']] != proof:
+                _fail('ASYNC_PROOF_COLLISION')
+            proofs[proof['id']] = deepcopy(proof)
+            contexts.update(proof.get('context_ids', []))
+
+        def put(collection, item):
+            if item['id'] in collection:
+                _fail('ASYNC_ID_COLLISION')
+            collection[item['id']] = item
+
+        def derived(identity, role, originals, refs, context_ids, attrs):
+            nonlocal boundary_count
+            refs = tuple(sorted(set(refs)))
+            for ref in refs:
+                if ref not in proofs:
+                    if ref not in rproofs: _fail('ASYNC_PROOF_MISSING')
+                    put_proof(rproofs[ref])
+            context_ids = set(context_ids)
+            for ref in refs: context_ids.update(proofs[ref].get('context_ids', []))
+            contexts.update(context_ids)
+            common = {'scope':scope, 'context_ids':sorted(context_ids), 'async_role':role,
+                'runtime_execution':'NOT_OBSERVED', 'delivery':'NOT_OBSERVED',
+                'processing_completion':'UNKNOWN', 'exactly_once':'UNKNOWN',
+                'instance_correlation':'UNKNOWN', 'correlation_evidence_refs':[],
+                'boundary_reason':'ASYNC_STATIC_POTENTIAL', **attrs}
+            kinds = tuple(sorted({proofs[ref].get('evidence_kind', 'UNKNOWN') for ref in refs}))
+            node = ViewNode(identity, 'async_boundary', role, original_ids=tuple(sorted(set(originals))),
+                evidence_refs=refs, evidence_kinds=kinds, resolution_status='UNRESOLVED', freshness='UNKNOWN',
+                unknown_refs=refs, attributes=common)
+            put(nodes, node.to_dict())
+            boundary_count += 1
+            return node
+
+        def transition(source, target, witness, role):
+            identity = 'async-edge:' + digest([source, target, witness.id, role])
+            edge = ViewEdge(identity, source, target, 'async', original_ids=witness.original_ids,
+                evidence_refs=witness.evidence_refs, evidence_kinds=witness.evidence_kinds,
+                resolution_status='UNRESOLVED', freshness='UNKNOWN', unknown_refs=witness.evidence_refs,
+                attributes={**deepcopy(witness.attributes), 'async_transition':role})
+            put(edges, edge.to_dict())
+
+        def current_interface(node, direction):
+            attrs = node.attributes
+            return (node.kind == 'kafka_interface' and attrs.get('direction') == direction
+                and attrs.get('scope') == scope and node.freshness != 'STALE'
+                and node.resolution_status == 'RESOLVED' and not node.contradicting_refs
+                and attrs.get('code_binding') == 'VERIFIED_STATIC'
+                and all(attrs[key] in node.original_ids for key in ('origin_id', 'subscription_id', 'code_fact_id')
+                    if attrs.get(key) is not None))
+
+        def membership(source, edge, binding, source_context):
+            """Validate one exact T014 candidate; aggregate ambiguity is not authority."""
+            target = rnodes.get(edge.target)
+            if target is None or binding is None:
+                return None
+            attrs, ba = edge.attributes, binding.attributes
+            candidates = ba.get('candidates', [])
+            matches = [c for c in candidates if c.get('mapping_id') == attrs.get('mapping_id')]
+            if len(matches) != 1: return None
+            candidate = matches[0]
+            if sum((c.get('target_interface_id'), c.get('target_release_id')) ==
+                    (candidate.get('target_interface_id'), candidate.get('target_release_id')) for c in candidates) != 1:
+                return None
+            pairs = {(c.get('target_interface_id'), c.get('target_release_id')) for c in candidates}
+            expected = 'AMBIGUOUS' if len(pairs) > 1 else 'UNRESOLVED' if ba.get('unresolved_mapping_ids') else 'RESOLVED'
+            if (binding.kind != 'remote_binding' or binding.freshness == 'STALE' or binding.contradicting_refs
+                    or binding.resolution_status != expected or edge.resolution_status != expected
+                    or edge.freshness == 'STALE' or edge.contradicting_refs
+                    or ba.get('transport') != 'KAFKA' or ba.get('scope') != scope
+                    or ba.get('source_interface_id') != source.id
+                    or ba.get('context_ids') != [source_context]
+                    or ba.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
+                    or attrs.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
+                    or not all(attrs.get(k) == v for k, v in candidate.items())
+                    or candidate.get('mapping_id') not in ba.get('mapping_ids', [])
+                    or candidate.get('mapping_id') in ba.get('unresolved_mapping_ids', [])
+                    or attrs.get('target_interface_id') != target.id or attrs.get('scope') != scope
+                    or attrs.get('target_service_id') != service(target)
+                    or attrs.get('transition_kind') != 'ASYNC_PUBLISH_SUBSCRIBE'
+                    or attrs.get('compatibility') not in {'EXACT_DECLARATION', 'EXPLICIT_PAIRED_DECLARATION'}
+                    or not current_interface(source, 'PRODUCER') or not current_interface(target, 'CONSUMER')
+                    or not edge.evidence_refs
+                    or any(rproofs[ref].get('freshness') == 'STALE' or rproofs[ref].get('scope') != scope
+                        or rproofs[ref].get('mapping_ids') != [candidate['mapping_id']]
+                        or set(rproofs[ref].get('context_ids', [])) != set(candidate.get('context_ids', []))
+                        for ref in edge.evidence_refs)
+                    or source.attributes.get('broker_realm') is None
+                    or source.attributes.get('broker_realm') != target.attributes.get('broker_realm')
+                    or not source.attributes.get('topics') or source.attributes.get('topics') != target.attributes.get('topics')
+                    or source.attributes.get('topic_pattern') or target.attributes.get('topic_pattern')):
+                return None
+            # Multiple release selectors for the same endpoint remain ambiguous.
+            if len({c.get('target_release_id') for c in candidates if c.get('target_interface_id') == target.id}) != 1:
+                return None
+            target_contexts = set(attrs.get('context_ids', [])) - {source_context}
+            if not target_contexts and attrs.get('context_ids') == [source_context]:
+                target_contexts = {source_context}
+            if len(target_contexts) != 1: return None
+            target_context = next(iter(target_contexts))
+            if (set(attrs['context_ids']) != {source_context, target_context}
+                    or source.attributes.get('context_id', source_context) != source_context
+                    or target.attributes.get('context_id', target_context) != target_context):
+                return None
+            return target, target_context
+
+        def expand(doc, id_map, depth, ancestry):
+            nonlocal expansions, truncated
+            for source in sorted(remote.nodes, key=lambda n: n.id):
+                if source.kind != 'kafka_interface' or source.attributes.get('direction') != 'PRODUCER':
+                    continue
+                # Only concrete call-site-bearing CFG nodes initiate publication;
+                # returns_to/exception edge sources are never origin candidates.
+                origins = []
+                for node in doc['technical_view']['nodes']:
+                    if node['kind'] not in {'call','unresolved_boundary','basic_block','action'}: continue
+                    sites = set(node['attributes'].get('call_site_ids', []))
+                    if isinstance(node['attributes'].get('call_site'), str): sites.add(node['attributes']['call_site'])
+                    matched = sites & set(source.original_ids)
+                    if source.attributes.get('origin_id') is not None:
+                        matched &= {source.attributes['origin_id']}
+                    if len(matched) == 1:
+                        cids = set(node['attributes'].get('context_ids', [])) & set(doc['definition']['context_ids'])
+                        if len(cids) == 1 and selected(doc, service(source), next(iter(cids))):
+                            origins.append((node, next(iter(matched)), next(iter(cids))))
+                for origin, site, source_context in origins:
+                    prefix = 'async:' + digest([id_map[origin['id']], source.id, site])
+                    origin_refs = origin['evidence_refs']
+                    publish = derived(prefix + ':publish', 'publish', [source.id, site], origin_refs,
+                        [source_context], {'source_interface_id':source.id, 'source_call_site':site})
+                    transition(id_map[origin['id']], publish.id, publish, 'PUBLISH_INTENT')
+                    channel = derived(prefix + ':channel', 'channel', [source.id, site], origin_refs,
+                        [source_context], {'source_interface_id':source.id,
+                            'broker_realm':source.attributes.get('broker_realm'), 'topics':deepcopy(source.attributes.get('topics', []))})
+                    transition(publish.id, channel.id, channel, 'CHANNEL_INTENT')
+                    diagnostics.append({'code':'ASYNC_INSTANCE_CORRELATION_UNKNOWN', 'boundary_id':publish.id})
+                    branches = [(e, rnodes.get(e.attributes.get('binding_id')), None) for e in remote.edges
+                        if e.source == source.id and e.relation == 'remote_kafka_publish_subscribe']
+                    for binding in remote.nodes:
+                        if binding.kind == 'remote_binding' and binding.attributes.get('source_interface_id') == source.id:
+                            for selector in binding.attributes.get('unresolved_selectors', []):
+                                branches.append((None, binding, selector))
+                    if not branches: branches = [(None, None, None)]
+                    branches.sort(key=lambda branch: digest([branch[0].id if branch[0] else None,
+                        branch[1].id if branch[1] else None, branch[2]]))
+                    for edge, binding, selector in branches:
+                        refs = edge.evidence_refs if edge else binding.evidence_refs if binding else origin_refs
+                        target = rnodes.get(edge.target) if edge else None
+                        checked = membership(source, edge, binding, source_context) if edge else None
+                        if origin['freshness'] == 'STALE' or any(proofs[r].get('freshness') == 'STALE' for r in origin_refs):
+                            checked = None
+                        target_context = checked[1] if checked else None
+                        reasons = 'ASYNC_REMOTE_MEMBERSHIP_UNPROVEN' if edge else 'ASYNC_REMOTE_TARGET_UNRESOLVED'
+                        matching = []
+                        if checked:
+                            for tp in targets:
+                                if not selected(tp, service(target), target_context): continue
+                                triggers = [n for n in tp['technical_view']['nodes']
+                                    if n['kind'] == 'trigger' and n['id'] in tp['entry_ids']
+                                    and n['attributes'].get('trigger_kind') == 'KAFKA'
+                                    and n['attributes'].get('entry_symbol_id') in target.original_ids
+                                    and n['freshness'] != 'STALE'
+                                    and n['attributes'].get('context_ids') == [target_context]
+                                    and all(p.get('freshness') != 'STALE' for p in tp['technical_view']['provenance']
+                                        if p['id'] in n['evidence_refs'])]
+                                if len(triggers) == 1: matching.append((tp, triggers[0]))
+                            reasons = 'ASYNC_TARGET_PROCESS_UNAVAILABLE' if not matching else 'ASYNC_TARGET_PROCESS_AMBIGUOUS'
+                        selected_target = matching[0] if len(matching) == 1 else None
+                        key = None
+                        if selected_target:
+                            tp, trigger = selected_target
+                            tv = tp['technical_view']
+                            diagnostics.extend({**deepcopy(d), 'async_source_process_id':tp['process_id'],
+                                'async_source_revision':tp['revision']} for d in tv['diagnostics'])
+                            limits.extend(tv['limits'])
+                            truncated = truncated or tv['coverage'].get('truncated') is True
+                            upstream.append({'kind':'target_process', 'process_id':tp['process_id'], 'revision':tp['revision'],
+                                'fingerprint':ProcessView.from_dict(tp).content_fingerprint, 'coverage':deepcopy(tv['coverage'])})
+                            key = (tp['process_id'], target_context)
+                            has_body = any(n['kind'] not in {'trigger', 'entry', 'exit', 'exceptional_exit', 'unresolved_boundary'}
+                                for n in tp['technical_view']['nodes'])
+                            reasons = ('ASYNC_LOOP' if key in ancestry else 'ASYNC_DEPTH_LIMIT' if depth >= max_depth
+                                else 'ASYNC_EXPANSION_LIMIT' if expansions >= max_expansions
+                                else 'ASYNC_TARGET_CFG_UNAVAILABLE' if not has_body else None)
+                        identity = prefix + ':subscription:' + digest([edge.id if edge else None,
+                            binding.id if binding else None, selector])
+                        attrs = {'boundary_reason':reasons or 'ASYNC_STATIC_POTENTIAL',
+                            'source_interface_id':source.id, 'target_interface_id':target.id if target else (selector or {}).get('interface_id'),
+                            'binding_id':binding.id if binding else None, 'target_selector':deepcopy(selector),
+                            'consumer_group':target.attributes.get('consumer_group') if target else None,
+                            'subscription_id':target.attributes.get('subscription_id') if target else None,
+                            'subscription_logical_id':target.attributes.get('subscription_logical_id') if target else None,
+                            'membership_evidence_refs':list(refs) if edge else [],
+                            'membership_status':edge.resolution_status if edge else 'UNRESOLVED',
+                            'branch_semantics':'POTENTIAL_MEMBERSHIP', 'consumer_order':'UNSPECIFIED'}
+                        original = [source.id, edge.id] + list(edge.original_ids) if edge else [source.id, binding.id] if binding else [source.id]
+                        if target: original += [target.id, *target.original_ids]
+                        subscription = derived(identity, 'subscription', original, refs,
+                            [source_context, *([target_context] if target_context else [])], attrs)
+                        transition(channel.id, subscription.id, subscription, 'SUBSCRIPTION_POTENTIAL')
+                        if reasons:
+                            diagnostics.append({'code':reasons, 'boundary_id':identity})
+                            if reasons in {'ASYNC_DEPTH_LIMIT', 'ASYNC_EXPANSION_LIMIT', 'ASYNC_LOOP'}: truncated = True
+                            continue
+                        tp, trigger = selected_target
+                        expansions += 1
+                        tv = tp['technical_view']
+                        for proof in tv['provenance']: put_proof(proof)
+                        contexts.update(tp['definition']['context_ids'])
+                        for owner, choice in tp['definition']['context_selection'].get('services', {}).items():
+                            if owner not in selection.setdefault('services', {}): selection['services'][owner] = deepcopy(choice)
+                        mapping = {n['id']:identity + ':target:' + n['id'] for n in tv['nodes']}
+                        for n in tv['nodes']:
+                            clone = deepcopy(n); clone['id'] = mapping[n['id']]
+                            clone['attributes'].update(source_process_id=tp['process_id'], source_process_revision=tp['revision'])
+                            put(nodes, clone)
+                        for e in tv['edges']:
+                            clone = deepcopy(e); clone['id'] = identity + ':target:' + e['id']
+                            clone['source'] = mapping[e['source']]; clone['target'] = mapping[e['target']]
+                            clone['attributes']['source_process_id'] = tp['process_id']
+                            put(edges, clone)
+                        transition(subscription.id, mapping[trigger['id']], subscription, 'CONSUMER_POTENTIAL')
+                        if len(nodes) > 10000 or len(edges) > 30000: _fail('ASYNC_OUTPUT_TOPOLOGY_BUDGET')
+                        expand(tp, mapping, depth + 1, ancestry | {key})
+
+        expand(local, {n['id']:n['id'] for n in view['nodes']}, 0,
+            {(local['process_id'], cid) for cid in local['definition']['context_ids']})
+        if len(nodes) > 10000 or len(edges) > 30000: _fail('ASYNC_OUTPUT_TOPOLOGY_BUDGET')
+        from .process_model import ProcessDefinition
+        definition = deepcopy(local['definition'])
+        definition.update(context_ids=sorted(contexts), context_selection=selection,
+            baseline_fingerprint=digest([ASYNC_VERSION, local['definition']['baseline_fingerprint'],
+                remote.content_fingerprint, sorted(ProcessView.from_dict(tp).content_fingerprint for tp in targets),
+                max_depth, max_expansions]))
+        definition = ProcessDefinition.from_dict(definition)
+        view.update(baseline_fingerprint=definition.to_dict()['baseline_fingerprint'], context_selection=selection,
+            rules_version=ASYNC_VERSION, nodes=list(nodes.values()), edges=list(edges.values()),
+            provenance=list(proofs.values()), diagnostics=diagnostics, limits=list(dict.fromkeys(limits)),
+            coverage={**view['coverage'], 'status':'PARTIAL', 'truncated':truncated,
+                'async_boundary_count':boundary_count, 'async_expansion_count':expansions,
+                'async_upstream_coverage':upstream})
+        local.update(definition=definition.to_dict(), definition_fingerprint=definition.content_fingerprint,
+            technical_view=ViewDocument.from_dict(view).to_dict(), technical_status='PARTIAL')
+        _bounded(local)
+        return ProcessView.from_dict(local)
+    except BusinessProcessError:
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as error:
+        raise BusinessProcessError('INVALID_ASYNC_PROCESS_BOUNDARY', 'Invalid or incompatible async process input') from error

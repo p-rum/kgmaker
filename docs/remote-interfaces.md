@@ -49,4 +49,18 @@ source/tests are exact accepted2df; all24own cases PASS in that one2587PASS10SKI
 full. Current2425-case parent union reuses2415PASS10allowedSKIP with explicit source
 and per-ID proof, not a new full on this head. Exact-pair independent review remains
 a gate. No new native build is required solely for this pure projection. T027/T028
-process continuation and remote runtime observations are separate future tasks.
+process continuation was outside that historical checkpoint; current pure APIs
+are documented in [process paths](process-paths.md). Runtime observation remains
+separate.
+
+## Kafka identity handoff to T028
+
+T014 preserves T012 `origin_id`, `subscription_id` and `subscription_logical_id`
+alongside unchanged `original_ids`. When present, origin/subscription physical IDs
+must belong to `original_ids`; malformed identities reject before a view is returned.
+This additive sanitized metadata is not a new resolver, schema version or evidence
+upgrade. The T028 process projector validates each candidate membership before
+expanding a potential consumer path; T014's aggregate AMBIGUOUS is retained rather
+than relabelled as resolved fan-out. A static binding is not proof of instance
+correlation. See [change127](changes/127_crossAsyncProcessBoundary.md) and the
+[public API example](process-paths.md#potential-asynchronous-process-paths-t028).

@@ -858,11 +858,13 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 
 ## T027 — HTTP process boundary
 
-Delivery PR_OPEN ([PR105](https://github.com/p-rum/kgmaker/pull/105)); approved
+Delivery MERGED ([PR105](https://github.com/p-rum/kgmaker/pull/105),
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`); historical approved
 HEAD `82eef329` integrates main `ec05a329fe2e51dbfe0eb47888bed037a251b8bf` with MERGED
 PR101–104. New targeted run: **200 PASS / 0 SKIP, 10.76 s** (191 public cases +
-9 reviewer reproductions), actual Javac/K1/K2. Exact integration review remains
-separate. Historical validation after the original corrections:
+9 reviewer reproductions), actual Javac/K1/K2. Independent exact integration review
+passed 200 / 0 SKIP in 13.00 s before merge; status reconciled in change127.
+Historical validation after the original corrections:
 **187 PASS / 0 SKIP** in T027/T014/T025/T026 with prepared JDK21/Javac/K1/K2;
 the final terminal-only and request-origin guards were then verified by
 **38 PASS / 0 SKIP** (29 public T027 cases + 9 independent reviewer reproductions).
@@ -874,7 +876,7 @@ the final terminal-only and request-origin guards were then verified by
 | AC03 | `test_ac03_missing_target_cfg_retains_external_boundary_and_local_continuation`, `test_terminal_only_target_does_not_supply_a_cfg_body` | VERIFIED_IN_SCOPE; unavailable body remains external, local continuation survives |
 | AC04 | `test_ac04_bad_input_and_failure_boundary_do_not_mutate_inputs`, `test_normal_response_retains_original_witness_without_mapping_server_errors` | VERIFIED_IN_SCOPE; immutable inputs, original exception edges retained, expanded-CFG reachability prevents false REQUEST/RESPONSE paths |
 | AC05 | `test_target_selection_must_match_boundary_scope`, `test_imported_target_truncation_and_limits_remain_visible`, `test_local_and_remote_and_imported_coverage_are_preserved` | VERIFIED_IN_SCOPE; selected scope and every imported limitation preserved; runtime/availability UNKNOWN/NOT_OBSERVED |
-| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | PARTIAL; PR105 is open, reviewed source preserved and current integration tests/semantic audit documented in change123; new integration review and full suite/remote CI NOT_RUN |
+| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | VERIFIED_IN_SCOPE; PR105 merged after independent APPROVE; integration tests/semantic audit in change123, delivery reconciliation in change127; full suite/remote CI NOT_RUN |
 
 ## T003-S06-W06 — NamedQueries a named native queries (MERGED / VERIFIED_IN_SCOPE)
 
@@ -1339,3 +1341,23 @@ actual runtime/toolchain ani úplná T004/produkční acceptance.
 Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
 11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
 reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.
+
+## T028 — Potential asynchronous process paths
+
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on baseline `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`
+plus the T028 working diff. Final targeted T028/T012/T014/T025/T027 run:
+**242 PASS / 0 SKIP, 136.07 s**, actual JDK21/Javac with prepared K1/K2 workers.
+Final bounded-input follow-up: 42 PASS / 0 SKIP, 20.18 s including actual pipeline;
+Kafka-only metadata compatibility follow-up: 66 PASS, 2 deselected, 1.21 s.
+T028 has 43 cases, including two actual public pipeline cases; no new worker
+protocol or Kotlin annotation support is claimed. Commands and compatibility:
+[change127](changes/127_crossAsyncProcessBoundary.md), [API/capability](process-paths.md#potential-asynchronous-process-paths-t028).
+
+| AC | Concrete test / evidence | Result and limit |
+|---|---|---|
+| AC01 | `test_ac01_fanout_groups_have_real_paths_without_consumer_order`, `test_actual_t012_t014_t025_t028_fanout_paths_and_exact_identity`, `test_same_group_consumers_are_potential_alternatives_without_order` | PASS; reachable consumer paths without A-before-B or return to publisher; groups are distinct potential memberships |
+| AC02 | `test_ac02_publish_is_not_completed_processing_or_instance_correlation` | PASS; publication is not delivery, completed processing or exactly-once |
+| AC03 | `test_ac03_missing_consumer_keeps_every_declared_boundary_and_valid_branch`, `test_topic_match_without_remote_declaration_never_expands_consumer`, `test_async_loop_preserves_cycle_boundary_without_unbounded_copies` | PASS; unknown consumer/correlation and bounded async loops remain visible; no supported instance-correlation mapping contract |
+| AC04 | `test_ac04_invalid_input_does_not_mutate_or_write`, `test_invalid_budgets_are_rejected_without_mutation`, `test_cycle_rejected_before_copy_and_terminal_site_does_not_publish` | PASS; pure API, no I/O/subprocess/network, inputs and last valid artifact unchanged |
+| AC05 | `test_ac05_invalid_membership_retains_boundary_without_import`, `test_target_process_identity_is_required`, `test_actual_expanded_callee_exception_cannot_initiate_publish`, `test_blocked_target_and_remote_upstream_truncation_are_not_dropped`, `test_provenance_and_original_local_paths_are_preserved_without_uplift` | PASS; exact membership/scope/context/evidence, exception origin isolation, upstream diagnostics/limits and truncation retained |
+| AC06 | README, process-paths API example, remote-interfaces identity handoff, progress inventory, change127 and independent PR review | Implementation/docs/tests and semantic preservation supplied; independent PR review pending. Full suite and GH CI NOT_RUN |
