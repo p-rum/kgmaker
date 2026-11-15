@@ -406,8 +406,9 @@ Statické JPA named queries mají oddělenou definici a repository reference; Sp
 
 ### Named query containers (T003-S06-W06)
 
-JPA rule `annotation-source-v9-named-query-containers` zachovává schema grafu 3
-bez změny worker protokolu. Jednotlivé `@NamedQuery`/`@NamedNativeQuery`,
+Named-query kontrakt zavedený v `annotation-source-v9-named-query-containers`
+zachovává schema grafu 3; aktuální JPA rule je `annotation-source-v10-programmatic-queries`
+a W07 doplňuje optional typed IR. Jednotlivé `@NamedQuery`/`@NamedNativeQuery`,
 opakované anotace a `@NamedQueries`/`@NamedNativeQueries` používají jeden katalog
 v právě vybraném compiler kontextu a persistence unit. Javac nested annotation
 mirrors a strukturované compiler hodnoty mají stejnou normalizaci. JPA identity
@@ -1520,6 +1521,32 @@ remain UNKNOWN. Runtime/data availability is never promoted.
 The [supported matrix and CLI example](field-mapping.md),
 [actual manual/generated fixture](../fixtures/field-mapping/README.md) and
 [change124](changes/124_fieldAndMappingFlow.md) describe the bounded verification.
+
+
+### Programmatic query intent (T003-S06-W07)
+
+Explicitní JVM inspection používá bounded Java/Javac Criteria `select(root)` +
+`where(equal(root.get("attribute"), value))`, přímo typovanou Specification a
+QueryDSL `selectFrom(root).where(root.field.eq(value)).fetch()`. Skutečný dependency
+původ API, class/generic identity, source binding a QueryDSL member factory
+jsou povinné. Žádný SQL text se nesyntetizuje. Pouze spotřebovaný predicate
+vytvoří `filters_by`; unused selector/projection-only jej nevytvoří. Criteria
+where reset/clear a QueryDSL accumulation jsou odlišené. Custom fragment je
+potenciální deklarovaná kompozice, nikoli Spring runtime dispatch.
+Executable Criteria snapshot vzniká při `EntityManager.createQuery`; pozdější
+změny builderu jej nepřepisují. Opakované snapshoty jsou oddělené UNKNOWN intent.
+QueryDSL attribute evidence vyžaduje final source field; mutable/reassigned člen
+ji nedostane. Direct Specification implementation musí mít Javac `Elements.overrides`
+důkaz pro dependency `toPredicate` a matching descriptor; overload ani chybějící
+contract tuto autoritu nezíská. Saved intent používá `programmatic-query-2`;
+v1 replay je odmítnut a vyžaduje explicitní reinspection, schema grafu se nemění.
+
+[Úplná ověřená matice a CLI příklad](programmatic-queries.md) ·
+[actual Javac/APT fixture](../fixtures/criteria-queries/README.md) ·
+[change129, výsledky a omezení](changes/129_criteriaSpecificationQuerydsl.md).
+Graph/store v1/v2/v3 i staré workery bez additive fields zůstávají čitelné.
+Scan/hook nikdy nespouští worker, APT, package installation, DB ani aplikaci;
+source/context/classpath freshness zůstává oddělená od runtime dostupnosti.
 
 ## Unified flow presentation (T003-S07-W09)
 

@@ -444,7 +444,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v8-jpql-hql-grammar` | Named-query containers, Criteria/Specification/QueryDSL, broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
+| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v10-programmatic-queries` | Broader Criteria/Specification/QueryDSL beyond [W07 scope](programmatic-queries.md), broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc
@@ -1494,3 +1494,20 @@ PR108 merge at9f538634 and its317 targeted review PASS are historical upstream
 evidence ([audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441)).
 PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
+
+
+## T003-S06-W07 — programmatic query intent
+
+Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE, Java/Javac scope.
+Aktuální ordinary merge maincceb + vlastní844c: **397 PASS /0SKIP /95.57s**,
+včetně45W07 a aktuálních W09/flow integračních kontrol; full/GHCI NOT_RUN.
+Korekčních147PASS/85.27s i původních134PASS jsou samostatné historické checkpointy. Base
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change129](changes/129_criteriaSpecificationQuerydsl.md)
+records actual commands/results and separate fixes. No whole S06 completion.
+
+| Acceptance | Source/fixture/check | Boundary |
+|---|---|---|
+| T003-S06-W07-AC01 | `test_actual_criteria_specification_querydsl_and_fragment`, actual QueryDSL APT + official API JARs; `test_actual_criteria_where_replaces_querydsl_where_accumulates_and_helpers_are_unknown` | Only supported root/equality intent, query=null, no runtime/data proof |
+| T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; old intent v1 replay rejected pending explicit reinspection; invalid/timeout/cancel preserve last valid generation |
+| T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases; `test_actual_review_query_state_and_callable_boundaries` (6 cases), immutable field/override replay checks | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
+| T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
