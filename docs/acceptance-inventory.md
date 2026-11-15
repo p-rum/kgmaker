@@ -858,11 +858,13 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 
 ## T027 — HTTP process boundary
 
-Delivery PR_OPEN ([PR105](https://github.com/p-rum/kgmaker/pull/105)); approved
+Delivery MERGED ([PR105](https://github.com/p-rum/kgmaker/pull/105),
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`); historical approved
 HEAD `82eef329` integrates main `ec05a329fe2e51dbfe0eb47888bed037a251b8bf` with MERGED
 PR101–104. New targeted run: **200 PASS / 0 SKIP, 10.76 s** (191 public cases +
-9 reviewer reproductions), actual Javac/K1/K2. Exact integration review remains
-separate. Historical validation after the original corrections:
+9 reviewer reproductions), actual Javac/K1/K2. Independent exact integration review
+passed 200 / 0 SKIP in 13.00 s before merge; status reconciled in change127.
+Historical validation after the original corrections:
 **187 PASS / 0 SKIP** in T027/T014/T025/T026 with prepared JDK21/Javac/K1/K2;
 the final terminal-only and request-origin guards were then verified by
 **38 PASS / 0 SKIP** (29 public T027 cases + 9 independent reviewer reproductions).
@@ -874,7 +876,7 @@ the final terminal-only and request-origin guards were then verified by
 | AC03 | `test_ac03_missing_target_cfg_retains_external_boundary_and_local_continuation`, `test_terminal_only_target_does_not_supply_a_cfg_body` | VERIFIED_IN_SCOPE; unavailable body remains external, local continuation survives |
 | AC04 | `test_ac04_bad_input_and_failure_boundary_do_not_mutate_inputs`, `test_normal_response_retains_original_witness_without_mapping_server_errors` | VERIFIED_IN_SCOPE; immutable inputs, original exception edges retained, expanded-CFG reachability prevents false REQUEST/RESPONSE paths |
 | AC05 | `test_target_selection_must_match_boundary_scope`, `test_imported_target_truncation_and_limits_remain_visible`, `test_local_and_remote_and_imported_coverage_are_preserved` | VERIFIED_IN_SCOPE; selected scope and every imported limitation preserved; runtime/availability UNKNOWN/NOT_OBSERVED |
-| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | PARTIAL; PR105 is open, reviewed source preserved and current integration tests/semantic audit documented in change123; new integration review and full suite/remote CI NOT_RUN |
+| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | VERIFIED_IN_SCOPE; PR105 merged after independent APPROVE; integration tests/semantic audit in change123, delivery reconciliation in change127; full suite/remote CI NOT_RUN |
 
 ## T003-S06-W06 — NamedQueries a named native queries (MERGED / VERIFIED_IN_SCOPE)
 
@@ -1340,10 +1342,48 @@ Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
 11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
 reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.
 
+## T028 — Potential asynchronous process paths
+
+Historical initial handoff `1732a3d` (subsequent AC05 REQUEST_CHANGES and fixes below):
+initial targeted T028/T012/T014/T025/T027 run on base `93c52d33` plus the original diff:
+**242 PASS / 0 SKIP, 136.07 s**, actual JDK21/Javac with prepared K1/K2 workers.
+Final bounded-input follow-up: 42 PASS / 0 SKIP, 20.18 s including actual pipeline;
+Kafka-only metadata compatibility follow-up: 66 PASS, 2 deselected, 1.21 s.
+That initial handoff had 43 T028 cases, including two actual public pipeline cases; no new worker
+protocol or Kotlin annotation support is claimed. Commands and compatibility:
+[change127](changes/127_crossAsyncProcessBoundary.md), [API/capability](process-paths.md#potential-asynchronous-process-paths-t028).
+
+| AC | Concrete test / evidence | Result and limit |
+|---|---|---|
+| AC01 | `test_ac01_fanout_groups_have_real_paths_without_consumer_order`, `test_actual_t012_t014_t025_t028_fanout_paths_and_exact_identity`, `test_same_group_consumers_are_potential_alternatives_without_order` | PASS; reachable consumer paths without A-before-B or return to publisher; groups are distinct potential memberships |
+| AC02 | `test_ac02_publish_is_not_completed_processing_or_instance_correlation` | PASS; publication is not delivery, completed processing or exactly-once |
+| AC03 | `test_ac03_missing_consumer_keeps_every_declared_boundary_and_valid_branch`, `test_topic_match_without_remote_declaration_never_expands_consumer`, `test_async_loop_preserves_cycle_boundary_without_unbounded_copies` | PASS; unknown consumer/correlation and bounded async loops remain visible; no supported instance-correlation mapping contract |
+| AC04 | `test_ac04_invalid_input_does_not_mutate_or_write`, `test_invalid_budgets_are_rejected_without_mutation`, `test_cycle_rejected_before_copy_and_terminal_site_does_not_publish` | PASS; pure API, no I/O/subprocess/network, inputs and last valid artifact unchanged |
+| AC05 | `test_ac05_invalid_membership_retains_boundary_without_import`, `test_target_process_identity_is_required`, `test_actual_expanded_callee_exception_cannot_initiate_publish`, `test_blocked_target_and_remote_upstream_truncation_are_not_dropped`, `test_provenance_and_original_local_paths_are_preserved_without_uplift` | PASS; exact membership/scope/context/evidence, exception origin isolation, upstream diagnostics/limits and truncation retained |
+| AC06 | README, process-paths API example, remote-interfaces identity handoff, progress inventory, change127 and independent PR review | Implementation/docs/tests and semantic preservation supplied; independent PR review pending. Full suite and GH CI NOT_RUN |
+
+
+### T028 — PR108 AC05 review-fix evidence
+
+Baseline `1732a3d7b924a7dfd60c67436622ae05db43dfff` plus fixes in
+[change127 steps 7–8](changes/127_crossAsyncProcessBoundary.md). Delivery PR_OPEN,
+verification VERIFIED_IN_SCOPE: **264 PASS / 0 SKIP, 138.32 s**, 260 public cases
+and 4 independent reviewer repros, actual JDK21/Javac/K1/K2. Historical results above
+remain historical. New independent review is pending; original REQUEST_CHANGES
+must be superseded for the current HEAD before merge.
+
+| AC | Added concrete regression | Current bounded result |
+|---|---|---|
+| AC04/AC05 | `test_referenced_endpoint_and_binding_proofs_gate_expansion_and_survive` (9 cases), `test_binding_declaration_authority_must_match_membership` (4 cases) | PASS; stale/contradicting/foreign raw endpoint and declaration authority blocks expansion, inputs and original proof records preserved |
+| AC05 | `test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift` | PASS; canonical UNKNOWN framework proof preserved inside reference-only envelope; no virtual context promotion, PARTIAL gap remains, stale raw record still blocks |
+| AC01/AC03/AC05 | `test_release_aliases_across_bindings_preserve_conflicts_without_duplicate_consumer_paths` | PASS; two RESOLVED T014 binding objects retain two conflict boundaries and zero duplicated consumer imports |
+| AC01/AC05 | `test_distinct_versioned_endpoints_across_bindings_keep_independent_paths`, existing same-group/fanout and actual pipeline tests | PASS; genuinely different endpoint/version/group memberships remain potential independent paths, no A-before-B |
+| AC06 | README, capability/API example, remote-interface handoff, progress and change127 review steps | Updated; full suite and runtime NOT_RUN; new PR review/CI status tracked in PR108 |
+
 
 ## T003-S07-W08 — vysvětlitelný evidence ranking
 
-Dodání PR_OPEN ([PR106](https://github.com/p-rum/kgmaker/pull/106)); ověření VERIFIED_IN_SCOPE nad main
+Dodání MERGED ([PR106](https://github.com/p-rum/kgmaker/pull/106), main `8e7dff5b82597184662797c07a68e5ec460e9e0e`); ověření VERIFIED_IN_SCOPE nad main
 `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, verze `execution-2`/`impact-2`.
 Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanking.md).
 [Podporovaný kontrakt](evidence-ranking.md), [fixture](../fixtures/evidence-ranking/README.md).
@@ -1371,8 +1411,8 @@ stale/unknown/site-only proof, chybějící hrany, unresolved/scope/config hrani
 `test_runtime_only_and_unknown_proof_gaps_follow_the_selected_path` ověřuje
 přenesení konkrétních gap refs do potomků. Skutečný Javac test rozšířen o public
 CLI nad stale evidence records. Cílená sada **96 PASS / 0 SKIP, 3.20 s**;
-nezávislé repro **2 PASS**. Delivery PR_OPEN, verification VERIFIED_IN_SCOPE;
-nové nezávislé review ještě proběhne. Podrobnosti a přesné příkazy:
+nezávislé repro **2 PASS**. Historický pre-merge stav byl PR_OPEN, verification
+VERIFIED_IN_SCOPE; následné APPROVE a merge jsou doloženy níže. Podrobnosti a přesné příkazy:
 [change126 kroky6–7](changes/126_evidenceRanking.md).
 
 
@@ -1390,5 +1430,24 @@ SOURCE_ONLY/UNKNOWN, bare build, missing producer/binding a foreign proof negati
 `test_selected_projection_retains_source_provenance_of_evidence_without_compiler_promotion`.
 Public actual Javac a feature graph_selection/roundtrip regrese prošly beze změny
 runtime identit. **173 PASS / 0 SKIP / 3.50 s + 31 PASS / 1.23 s**, nezávislé repro 4 PASS / 0.14 s.
-Delivery PR_OPEN; nové nezávislé review očekáváno. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
+Historický pre-merge stav PR_OPEN následně uzavřelo APPROVE nad `9117c801`
+a merge `8e7dff5b`. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
 obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
+
+
+### T028 integration with MERGED PR106
+
+PR106 delivery is MERGED at `8e7dff5b82597184662797c07a68e5ec460e9e0e` after
+independent APPROVE of `9117c801` (173 ranking/projection PASS, 31 context-role
+PASS, 4 reviewer repro PASS). This is historical upstream evidence. PR108 merges
+that actual main into review-fixed `284dc68`, preserving exact source/test contents
+of both parents. AC01/AC04/AC05 integration is checked through T028/T025 actual
+pipeline and context/projection tests; new counts and precise commands are in
+[change127 step 10](changes/127_crossAsyncProcessBoundary.md). PR108 remains PR_OPEN;
+new independent review of its exact base/HEAD is required. Full suite NOT_RUN.
+
+Current integration result: **158 PASS / 0 SKIP, 28.09 s**, actual JDK21/Javac/K1/K2,
+including all 4 reviewer reproductions. T028/T025 plus service/context/projection
+regressions pass against the merged W08 context isolation. Both parents' functional
+source/test content is byte-identical; no new implementation change was needed.
+This result is distinct from the historical 264-case review-fix run.
