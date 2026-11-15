@@ -222,6 +222,18 @@ Python, Java, Kotlin, JavaScript, TypeScript, Go, Rust, Markdown, reStructuredTe
 
 The scanner extracts Kotlin/Java declarations, TypeScript declarations and file-based app routes, SQL tables and columns, Spring Data entity/repository mappings, Kafka listener/producer/config topic references, Spring/Ktor HTTP routes, common HTTP client calls, and OpenAPI paths from YAML or JSON. It links matching HTTP method/path pairs across backend declarations, OpenAPI contracts, and frontend calls. It also recognizes PostgreSQL connection markers and common Kafka imports/configuration.
 
+Explicit workspaces can join an actual backend compiler field through a
+hash/release-bound declared contract to TypeScript JSON/destructuring, a pinned
+React `useState` setter and a concrete JSX or test argument consumer. This reads
+existing explicit inspection indexes; scan/hook/feature never run workers.
+Object mutation or escape through a local alias invalidates its response origin;
+`Readonly<T>` alone does not make an escaped reference safe. Stale cache entries
+reload the original captured index and revalidate its inputs without inspection.
+SOURCE_ONLY inventories remain PARTIAL and no longer turn matching field names
+into UI/assertion value paths. Runtime availability and payload equivalence stay
+UNKNOWN. See [the supported workflow and limits](docs/backend-frontend-value-flow.md)
+and [change125](docs/changes/125_backendFrontendValueFlow.md).
+
 `imports` are parsed from source. `calls` are heuristic and can be wrong when names collide. The default scanner uses pattern-based SQL, YAML, Kotlin and TypeScript extraction. Separate opt-in JVM/TypeScript workers use compiler APIs; they are not invoked by scan/hook/feature. Explicit JVM inspection can project imported Spring/JPA annotations into `FRAMEWORK_DERIVED` nodes and edges, including bean candidates, HTTP/listener entrypoints, proxy boundaries, entity/table/column bindings, and simple Spring Data repository/query declarations. Dynamic URLs, custom frameworks, indirect Kafka topic names, jOOQ-generated schemas, and complex OpenAPI YAML may not resolve. The graph is a navigation aid; inspect source before relying on it. Raw file contents are not copied into the graph. `.kgmaker/graph.json` is intended to stay local; the human-readable map can be committed if the repository wants a shared snapshot.
 
 Explicit `kgmaker inspect frontend --root /path/to/repo --tsconfig tsconfig.json`

@@ -211,7 +211,11 @@ owns lifecycle, receipts and proposal isolation.
 
 Offline tests use three synthetic Git checkout directories (no network), manually
 specified V1/V2/V10 schema expectations, matching path/name collision fixtures,
-frontend displays, HTTP/UI assertions and stale SQL fixtures. They cover fake
+frontend display/assertion syntax inventories and stale SQL fixtures. Compiler-bound
+backend→frontend value consumers require the explicit inspection and generation
+provenance described in [change125](changes/125_backendFrontendValueFlow.md) and
+[the value-flow workflow](backend-frontend-value-flow.md); SOURCE_ONLY field-name
+matches do not establish those paths. They cover fake
 citations/mapping approvals, incomplete metadata, stale observations and source
 drift, cache reuse, coherent snapshot rejection, scoped absence, and single-root
 compatibility. There is no claim of complete SQL grammar, full TypeScript/JVM

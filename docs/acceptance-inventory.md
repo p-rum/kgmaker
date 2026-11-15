@@ -640,6 +640,20 @@ Final W02 ABI/main evidence superseding historical410/9: **425 PASS /10 SKIP**,
 
 Current rule4 results are recorded in change69; GH CI is optional under T045 revision2, while publication and independent exact-pair review remain required.
 
+## T003-S08-W05 — backend→frontend value flow (PR_OPEN / VERIFIED_IN_SCOPE)
+
+| Acceptance | Actual check | Scope |
+|---|---|---|
+| T003-S08-W05-AC01 | `tests/test_backend_frontend_value_flow.py::test_ac01_actual_backend_field_has_exact_ui_and_test_paths` | Actual Javac21 field → declared current contract → exact TS5.7.3 destructuring/mapping → React18.3.1 state → JSX and test argument. Exact IDs/edges/proofs and request/JSON ancestry; no runtime or payload-equivalence claim. |
+| T003-S08-W05-AC02 | `test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow`, `test_ac02_genuine_legacy_worker_facts_still_publish`, `tests/test_workspace.py` | Graph v1/v2/v3 and manifest v1 read compatibility; SOURCE_ONLY keeps syntax inventory and reports missing compiler evidence. |
+| T003-S08-W05-AC03 | `test_ac03_stale_and_ambiguous_inputs_do_not_join`, `test_ac03_compiler_symbols_reject_name_only_flow`, `test_ac03_invalid_worker_value_does_not_replace_store` | Stale contract/generated/backend input, release conflict, missing repo, ambiguous service, unrelated JSON/promise/state/assertion, symbol shadowing, multiple writes, invalid worker hash/range/context/version; actual alias-chain writes/escapes (including Readonly/casts) remove native and public workspace paths while primitive copies retain them; missing/unknown/mixed v1 claims reject publication; same-input dependency invalidation/restoration recovers only the original verified path without inspection; last-valid store and offline snapshot unchanged. |
+| T003-S08-W05-AC04 | [change125](changes/125_backendFrontendValueFlow.md), [capability/workflow](backend-frontend-value-flow.md) | Await/local-const + pinned React only; Promise callbacks, arbitrary UI frameworks and Kotlin matrix NOT_RUN. S08/T003-AC08 remains PARTIAL. |
+
+Current PR: [#107](https://github.com/p-rum/kgmaker/pull/107); review-fix6389c8d against baseline1550978, preserved at340a1d7 and integrated main9f538634 (change125 step11).
+Alias/protocol regression scope and final results are recorded in change125.
+Focused checks and exact commands are in change125; full suite is NOT_RUN
+under the user's targeted-only instruction until completion of the package.
+
 T003-S08-W04 historical pre-binding proof: matrix43 PASS/32 DESELECTED237.28s;
 full624 PASS/10 SKIP762.95s. Historical rule3 proof: final focus36 PASS/30 DESELECTED
 266.43s; prepared strict full727 PASS/10 SKIP791.26s, all66 UI cases, zero failures/errors. onChange input/select/textarea and form onSubmit are actual positives;
@@ -1459,7 +1473,7 @@ PASS, 4 reviewer repro PASS). This is historical upstream evidence. PR108 merges
 that actual main into review-fixed `284dc68`, preserving exact source/test contents
 of both parents. AC01/AC04/AC05 integration is checked through T028/T025 actual
 pipeline and context/projection tests; new counts and precise commands are in
-[change127 step 10](changes/127_crossAsyncProcessBoundary.md). PR108 remains PR_OPEN;
+[change127 step 10](changes/127_crossAsyncProcessBoundary.md). PR108 was PR_OPEN at that handoff and is now MERGED at9f538634 after independent APPROVE;
 new independent review of its exact base/HEAD is required. Full suite NOT_RUN.
 
 Current integration result: **158 PASS / 0 SKIP, 28.09 s**, actual JDK21/Javac/K1/K2,
@@ -1467,3 +1481,8 @@ including all 4 reviewer reproductions. T028/T025 plus service/context/projectio
 regressions pass against the merged W08 context isolation. Both parents' functional
 source/test content is byte-identical; no new implementation change was needed.
 This result is distinct from the historical 264-case review-fix run.
+
+PR108 merge at9f538634 and its317 targeted review PASS are historical upstream
+evidence ([audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441)).
+PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
+value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
