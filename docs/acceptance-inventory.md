@@ -1,5 +1,21 @@
 # Inventář acceptance T001 a T002
 
+## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
+
+Dodání `MERGED` ([PR101](https://github.com/p-rum/kgmaker/pull/101),
+commit `d2507ef465c9b4844830520de68629a3b577c0d2`);
+ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
+[per-step evidence a historie](changes/122_runtimeTraceProducer.md).
+Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
+běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W01-AC01 | VERIFIED_IN_SCOPE (JDK21/POSIX) | `tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values` + `test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch`: skutečný javac, JVM compiler worker, aplikace a source-bound IDs; povinné identity, žádné raw credentials. `tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes` a import pod zákazem Popen. Žádný automatický Spring capture ani deployment proof. |
+| T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
+| T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
+| T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
@@ -840,11 +856,14 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
-## T003-S06-W06 — NamedQueries a named native queries (IN_PROGRESS / VERIFIED_IN_SCOPE)
+## T003-S06-W06 — NamedQueries a named native queries (PR_OPEN / VERIFIED_IN_SCOPE)
 
-Aktuální lokální evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
+Aktuální integrační evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
 JPA rule `annotation-source-v9-named-query-containers`; skutečný Javac 21.0.13.0.3.
-Dodání PR/review/merge ověřuje samostatně předávající agent.
+Dodání `PR_OPEN` ([PR102](https://github.com/p-rum/kgmaker/pull/102)); sloučen main
+`d2507ef465c9b4844830520de68629a3b577c0d2` s MERGED PR101. Společná cílená
+sada: 205 PASS / 0 SKIP, 36.87 s (W06 117 + runtime 88). Novou integrační revizi
+před merge samostatně ověřuje nezávislý reviewer.
 
 | Acceptance | Konkrétní evidence |
 |---|---|

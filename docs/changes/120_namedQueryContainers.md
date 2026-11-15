@@ -132,7 +132,7 @@ jsou **PASS**; fixture je compiler evidence, nikoli JPA runtime/provider test.
 Aktualizované plochy: [README](../../README.md),
 [capability a CLI příklad](../compiler-inspection.md#named-query-containers-t003-s06-w06),
 [stavová matice](../production-analysis-progress.md),
-[acceptance](../acceptance-inventory.md#t003-s06-w06--namedqueries-a-named-native-queries-in_progress--verified_in_scope)
+[acceptance](../acceptance-inventory.md#t003-s06-w06--namedqueries-a-named-native-queries-pr_open--verified_in_scope)
 a tento change note. Registr `docs/tasks/README.md` je **bez dopadu**: identita,
 revize, závislosti a odkaz zadání zůstávají stejné. Instalované agent instrukce,
 Python templates a CLI parser jsou **bez dopadu**: nový příkaz ani přepínač
@@ -237,3 +237,96 @@ Aktuální `semantic update --base f6a8934adc1e69631dbd74b7592668a92129983b
 patch nebyl aplikován. Následný lokální `scan --no-docs` obnovuje machine index. Full suite a GitHub CI: **NOT_RUN** podle rozsahu pověření.
 Zbývá nezávislé opakované review aktuálního HEAD, případná integrace nového main a publikace
 orchestrátorem; oprava sama nepředstírá APPROVE ani merge.
+
+
+## Integrace T003-S06-W06-S03 — AC01 až AC04 s runtime PR101 (2026-11-15)
+
+Výchozí HEAD PR102: `8810070f4eaa08b3750a51498725b4b6664c5831`; skutečný
+main: `d2507ef465c9b4844830520de68629a3b577c0d2` (PR101 MERGED). Integrace
+používá `git merge --no-ff --no-commit d2507ef465c9b4844830520de68629a3b577c0d2`,
+bez rebase či přepisování historie. PR101 byl již publikován jako squash;
+jeho přítomnost dokládá skutečný main a zachovaný obsah, nikoli ancestry
+původního review commitu. Dodání W06 zůstává **PR_OPEN**, nikoli MERGED.
+
+Rekognoskace podle kgmaker-context ověřila existující graf, status, query,
+memory recall a změněné zdroje. Starší semantic citace byly stale; graf sloužil
+jen k navigaci a závěry byly ověřeny přímo v kódu. W06 mění `framework.py` a
+`named_queries.py`, runtime mění `runtime_evidence.py` a `inspection_cli.py`.
+Obě vrstvy používají existující graph/store/compiler kontext bez nového schématu.
+Merge proběhl bez konfliktů a bez funkčního integračního patche. W06 moduly a
+jejich test jsou byte-identické s výchozím HEAD; runtime moduly, SDK a test
+jsou byte-identické s main. Aktualizovány jsou delivery/verification řádky v
+production progress a acceptance inventáři, kde je PR101 MERGED a PR102 PR_OPEN.
+
+README a capability/API/CLI příklady jsou **bez změny veřejného chování**:
+merge zachovává oba již dodané návody v README, `docs/compiler-inspection.md`,
+`docs/runtime-trace.md` a `docs/architecture.md`. W06 CLI příklad zůstává
+`kgmaker inspect jvm --root app` a navazující `kgmaker query --root app
+--scope production Order.byStatus`; runtime
+příkazy se integrací nemění. Registry/task revision, installed templates a
+worker protocol jsou **bez dopadu**. Nová feature ani nové číslo zadání nevzniká.
+
+Přesná cílená kontrola na sloučeném stromu:
+
+```sh
+ln -s /tmp/kgmaker-pr97-reconciled/workers/jvm/target workers/jvm/target
+env JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+  PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
+  KGMAKER_REQUIRE_WORKERS=1 \
+  KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers \
+  PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q --tb=short \
+  tests/test_named_query_containers.py tests/test_orm_xml_overrides.py \
+  tests/test_jpql_hql_grammar.py tests/test_runtime_trace_producer.py \
+  tests/test_build_aware.py \
+  tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes \
+  tests/test_worker_protocol.py
+rm workers/jvm/target
+```
+
+Výsledek **PASS: 205 passed / 0 skipped, 36.87 s**; W06 117 a runtime 88,
+skutečný JDK21 a připravený worker. Dočasný symlink byl odstraněn. Obsahové
+kontroly proti oběma výchozím SHA: **PASS** (prázdný diff dotčených modulů/testů).
+Full suite a GitHub CI **NOT_RUN** dle pověření; cílený PASS neprokazuje širší
+Kotlin/provider/runtime podporu. Zbývá nezávislé review nového HEAD a merge PR102.
+
+## Údržba evidence po integraci — T003-S06-W06-S03 / AC04 (2026-11-15)
+
+Výchozí SHA jsou stejné jako v integračním kroku: PR102 `8810070f4eaa08b3750a51498725b4b6664c5831`
+a main `d2507ef465c9b4844830520de68629a3b577c0d2`. Dřívější hlášení o stale
+semantic citacích výše je historické; tento krok je opravuje na aktuálním stromu.
+Packet obsahoval 13 dotčených konceptů a 70 vztahů. Scoped patch nepřidal ani
+neodstranil koncept/vztah: zachovává identitu, druh a confidence, přesouvá citace
+na existující zdroj a posunutá declaration IDs. U citací byl ověřen obsah proti
+hashům main a aktuálním zdrojům; historické nepřesné line locators byly v tomto
+packet scope zpřesněny. Text jedné JPQL evidence odkazuje na současnou JPA rule v9,
+která zachovává bounded gramatiku v8. Runtime evidence z main zůstává zachována.
+
+Provedené kontroly a údržba:
+
+```sh
+./kgmaker semantic update --base d2507ef465c9b4844830520de68629a3b577c0d2 --note docs/changes/120_namedQueryContainers.md
+./kgmaker scan --no-docs
+# Source-backed scoped patch je svázán s aktuálním update_id; žádné removals.
+./kgmaker semantic apply
+./kgmaker semantic validate
+./kgmaker memory capture --base d2507ef465c9b4844830520de68629a3b577c0d2 --validation integration-targeted=passed --validation semantic-preservation=passed --validation full-suite=skipped
+./kgmaker scan
+./kgmaker check
+git diff --check
+git diff --cached --check
+```
+
+Všechny uvedené kontroly **PASS**. První scan před reanchor pravdivě hlásil
+70 stale vztahů; scan po aplikaci již žádné semantic entries nevynechává.
+Audit porovnal s baseline `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8` i main
+`d2507ef465c9b4844830520de68629a3b577c0d2` množiny všech concept IDs,
+relationship `(source, target, kind, confidence, confidence_score)` po odstranění
+pouze koncového line suffixu `::číslo` a plné původní episode objekty:
+**42/42 konceptů, 135/135 vztahů, 286/286 epizod zachováno**. Memory capture
+přidal jednu skutečnou integrační epizodu, celkem 287. Generované
+`.kgmaker/GRAPH.md` a `GRAPH.mmd` vznikly pouze příkazem `scan`; semantic fakta
+ani runtime dostupnost nejsou odvozovány ze zelených testů. Žádná další funkční
+změna, build, full suite nebo GH CI v tomto kroku neproběhly. README/capability/CLI
+jsou bez dalšího dopadu: mění se pouze interní citace a generovaná navigace;
+stavové dokumenty odkazují na tento change note. Ready/merge gate zůstává
+nezávislé review přesného integračního HEAD.
