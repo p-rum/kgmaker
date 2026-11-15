@@ -2,9 +2,12 @@
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
-Dodání `IN_PROGRESS` (lokální oprava review nad `45dae061ee8e61fca8e2c48dfae3ddb6f6258dae`);
+Dodání `MERGED` ([PR101](https://github.com/p-rum/kgmaker/pull/101),
+commit `d2507ef465c9b4844830520de68629a3b577c0d2`);
 ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
 [per-step evidence a historie](changes/122_runtimeTraceProducer.md).
+Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
+běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
@@ -852,6 +855,27 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC04 | immutable inputs on invalid/stale/foreign/tampered proof, no subprocess/network; structural budgets | No write/publish API |
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
+
+## T003-S06-W06 — NamedQueries a named native queries (PR_OPEN / VERIFIED_IN_SCOPE)
+
+Aktuální integrační evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
+JPA rule `annotation-source-v9-named-query-containers`; skutečný Javac 21.0.13.0.3.
+Dodání `PR_OPEN` ([PR102](https://github.com/p-rum/kgmaker/pull/102)); sloučen main
+`d2507ef465c9b4844830520de68629a3b577c0d2` s MERGED PR101. Společná cílená
+sada: 205 PASS / 0 SKIP, 36.87 s (W06 117 + runtime 88). Novou integrační revizi
+před merge samostatně ověřuje nezávislý reviewer.
+
+| Acceptance | Konkrétní evidence |
+|---|---|
+| T003-S06-W06-AC01 | `test_actual_javac_named_query_containers_reference_parameters_and_projections`: kontejnery, repeatable JPQL/native, XML root/entity, named/positional parametry a projekce; trojitá duplicita, chybějící jméno/tělo, XML/anotace a malformed tělo. `test_actual_named_queries_select_xml_persistence_realm_without_cross_binding`: dva publikované kontexty, žádný cross-realm fallback. |
+| T003-S06-W06-AC02 | `test_legacy_named_query_metadata_remains_readable`: v1/v2/v3; structured compiler roundtrip; existující `test_jpql_hql_grammar.py` a `test_orm_xml_overrides.py`. Graph schema ani worker protocol se nemění; framework rule v9 vyžaduje refresh. |
+| T003-S06-W06-AC03 | `test_actual_named_query_strict_rejection_cancel_timeout_preserve_store`: strict invalid XML, cancellation a skutečný worker timeout zachovají byte-identický store. `test_actual_offline_scan_and_hook_preserve_named_query_evidence`: zákaz subprocess; pure projection nemutuje vstup. Foreign container/class a malformed XML nevytvoří binding. `test_public_native_query_lexical_boundaries_and_statement_intent` a actual Javac fixture ověřují, že SQL literály/komentáře nevytváří tabulky a komentovaný UPDATE/DELETE zachová write/delete intent. |
+| T003-S06-W06-AC04 | `fixtures/named-queries/Model.java`, `orm.xml`; testy výše a přesný příkaz/výsledek v change120. Ověřené compiler fakty nepovyšují runtime/data availability. |
+
+Hranice: native SQL poskytuje statické přesné table/type bindings, nikoli provider
+validaci; result-set mapping je PARTIAL. `@Param` aliasy, implicitní repository
+named convention, dynamické EntityManager lookupy a samostatná actual Kotlin
+container matice nejsou tímto scope garantovány. Celý T003-S06 není dokončen.
 
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
