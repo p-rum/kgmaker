@@ -76,7 +76,7 @@ def _qualified_node(repo: str, node):
     """The exact public Node projection shared by snapshots and validation."""
     metadata=node.metadata
     if node.kind=='http_request_definition':metadata=_qualified_http_metadata(repo,metadata or {})
-    elif (metadata or {}).get('return_mapping_version')==1 or (metadata or {}).get('value_flow_version')==1:metadata=_qualified_symbol(repo,metadata)
+    elif any((metadata or {}).get(key) == 1 for key in ('return_mapping_version', 'field_mapping_version', 'value_flow_version')):metadata=_qualified_symbol(repo,metadata)
     elif node.kind in {'kafka_code_listener','kafka_code_producer'}:metadata=_qualified_kafka_metadata(repo,metadata or {})
     elif node.kind=='kafka_retry_policy':metadata=_qualified_retry_metadata(repo,metadata or {})
     return replace(node,id=qualified(repo,node.id),path=source_key(repo,node.path),metadata=metadata)
@@ -158,11 +158,18 @@ def _qualified_evidence(repo: str, value: dict) -> dict:
                   source=qualified(repo, value['source']), target=qualified(repo, value['target']),
                   source_file=source_key(repo, value['source_file']) if value.get('source_file') else None,
                   context_ids=[qualified(repo, item) for item in value.get('context_ids', [])])
-    for key in ('call_site', 'producer_call_site', 'consumer_call_site', 'declared_target'):
+    for key in ('call_site', 'producer_call_site', 'consumer_call_site', 'declared_target', 'owner_method'):
         if isinstance(value.get(key), str):
             result[key] = qualified(repo, value[key])
     if isinstance(result.get('projection'), dict) and isinstance(result['projection'].get('component_target'), str):
         result['projection']['component_target'] = qualified(repo, result['projection']['component_target'])
+    if value.get('field_mapping_version') == 1:
+        for locator in result.get('provenance', []):
+            for key in ('method', 'call_site'):
+                if isinstance(locator.get(key), str):
+                    locator[key] = qualified(repo, locator[key])
+            if isinstance(locator.get('path'), str):
+                locator['path'] = source_key(repo, locator['path'])
     if str(value.get('extractor', '')).startswith(('kafka-code-', 'kafka-retry-')):
         if isinstance(value.get('origin_id'), str):
             result['original_origin_id'] = value['origin_id']

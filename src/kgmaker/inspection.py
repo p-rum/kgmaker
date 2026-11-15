@@ -280,6 +280,8 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     from .return_flow import VERSION as RETURN_VERSION
     value["return_flow_rule_version"] = RETURN_VERSION
     if language == "jvm":
+        from .field_flow import VERSION as FIELD_VERSION
+        value["field_flow_rule_version"] = FIELD_VERSION
         from .local_operations import VERSION as LOCAL_OPERATION_VERSION
         value["local_operation_rule_version"] = LOCAL_OPERATION_VERSION
     from .graph_provider import _selection_key
@@ -525,6 +527,8 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     from .return_flow import augment_return_flow
     graph = materialize_operations(graph, local_operations, selected_context)
     graph = augment_return_flow(graph, sanitize(response["bodies"]), selected_context)
+    from .field_flow import augment_field_flow
+    graph = augment_field_flow(graph, sanitize(response["bodies"]), selected_context)
     KnowledgeGraph.from_dict(graph.to_dict())
     return graph
 

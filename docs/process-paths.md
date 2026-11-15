@@ -173,3 +173,68 @@ characters, collections above50,000, or topology above10,000 nodes/30,000 edges.
 Expanded/grouped outputs obey the same structure limits. There is no new CLI,
 persistence format migration or runtime observation. Older documents without
 group metadata remain readable and expand unchanged.
+
+## Explicit HTTP process boundary (T027)
+
+`kgmaker.business_process.project_http_process_boundary(local_process,
+remote_interfaces, target_processes=())` joins a local T025 `ProcessView` to a
+remote T014 topology snapshot. It matches the consumer's exact
+`origin_call_site` to the local process callsite, then follows only a T014
+`remote_http_request_response` binding whose release, contract, service, scope,
+and selected context passed the upstream resolver. A supplied target process is
+eligible only when its selected service/context and trigger handler match the
+bound provider interface.
+
+```python
+from kgmaker.business_process import project_http_process_boundary
+from kgmaker.remote_interfaces import project_remote_interfaces
+
+remote = project_remote_interfaces(workspace, graph, interfaces,
+    captured=remote_capture, scope="production")
+cross_service = project_http_process_boundary(
+    checkout_process, remote, target_processes=[orders_process])
+print([(step.kind, step.attributes.get("target_service_id"))
+       for step in cross_service.steps if step.kind == "service_boundary"])
+```
+
+The projection is pure and consumes only supplied snapshots. A missing target
+process/CFG, unresolved or incompatible binding, ambiguous candidate set,
+or context mismatch remains an external boundary; the local continuation remains
+in the result. An unmatched callsite leaves the original process unchanged. The boundary records HTTP
+request/response and a separate `TRANSPORT_BOUNDARY_ONLY` error meaning. It
+does not create a business failure outcome, promote runtime/data availability,
+or infer an unrelated handler. Imported target steps preserve their evidence
+and receive source-process provenance. The composed view remains `PARTIAL`; no
+CLI or persistent format is introduced. See
+[T027](tasks/T-027_cross-http-process-boundary.md) and
+[change123](changes/123_crossHttpProcessBoundary.md).
+
+
+Review corrections (see [change123](changes/123_crossHttpProcessBoundary.md)):
+
+- Only the supported T014 `rules_version` is admitted. Expansion requires a
+  resolved, non-STALE HTTP binding and provider, `PROVIDED`/`PROVIDER` direction,
+  matching endpoint scope/context and a target service/context selection in the
+  same scope. T014's normal UNKNOWN freshness is retained; it is not upgraded to
+  observed current state. Unsupported versions reject without input mutation;
+  stale or incompatible candidates remain external.
+- REQUEST originates only at the single matching local call node. T025 annotates
+  `call`, `returns_to` and `exception` transitions with the same lexical callsite;
+  callee exit nodes are not new request origins. This applies equally to resolved,
+  ambiguous and unresolved-selector boundaries.
+- RESPONSE edges join only normal target `exit` nodes to explicit normal caller
+  continuations (or matching original `returns_to` witnesses). Original local
+  exception paths remain unchanged. Target exceptional exits do not establish a
+  client error or HTTP response mapping: they stay visible with
+  `HTTP_TARGET_ERROR_BOUNDARY` diagnostics. Terminal-only targets have no CFG body.
+  Each response retains its original continuation ID and attributes.
+- Imported target diagnostics retain their code and carry source process/revision;
+  original limits are combined without dropping local/remote limits. Output
+  truncation is the OR of local, remote and imported-target truncation. Full remote
+  and imported target coverage remains in `coverage.http_upstream_coverage` with
+  document fingerprints; local counters are not relabelled as combined counts.
+
+These checks validate supplied snapshots, not a live deployment or arbitrary
+replacement JSON authenticity. No transport failure is converted into a proved
+business outcome. `ProcessView` and `ViewDocument` schema versions remain unchanged;
+new metadata uses their existing extensible attributes/coverage fields.

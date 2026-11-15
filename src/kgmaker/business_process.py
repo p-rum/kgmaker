@@ -8,8 +8,10 @@ from collections.abc import Mapping
 from copy import deepcopy
 
 from .analysis_model import digest
+from .architecture_model import ViewDocument, ViewEdge, ViewNode
 from .local_operations import VERSION as OPERATION_VERSION, _BASE, _original_proof, _range, _TYPES
 from .process_model import ProcessView
+from .remote_interfaces import VERSION as REMOTE_VIEW_VERSION
 from .views import _summarize_view_evidence
 
 VERSION = 'business-steps-1'
@@ -290,3 +292,403 @@ def collapse_business_steps(process):
 def expand_business_steps(process):
     """Restore the canonical technical document exactly, validating group records."""
     return _public(process, True)
+
+
+def project_http_process_boundary(local_process, remote_interfaces, *, target_processes=()):
+    """Join a local ProcessView to only its explicitly bound HTTP target.
+
+    The remote T014 view is the authority for the source callsite, release,
+    target service/context and candidate status. Target ProcessViews are
+    caller-supplied snapshots. Missing or ambiguous target CFG stays an
+    external service boundary; original local transitions are retained.
+    """
+    try:
+        if not isinstance(target_processes, (list, tuple)):
+            _fail('HTTP_BOUNDARY_INVALID_TARGETS')
+        local = ProcessView.from_dict(_document(local_process))
+        remote = ViewDocument.from_dict(remote_interfaces.to_dict() if isinstance(remote_interfaces, ViewDocument)
+                                       else deepcopy(remote_interfaces))
+        targets = [ProcessView.from_dict(_document(value)) for value in target_processes]
+        if remote.rules_version != REMOTE_VIEW_VERSION:
+            _fail('HTTP_BOUNDARY_UNSUPPORTED_REMOTE_VERSION')
+        if remote.kind != 'topology' or remote.scope != local.definition.scope:
+            _fail('HTTP_BOUNDARY_SCOPE_OR_KIND_MISMATCH')
+        local_doc = local.to_dict()
+        technical = deepcopy(local_doc['technical_view'])
+        existing_nodes = {row['id']: row for row in technical['nodes']}
+        existing_edges = {row['id']: row for row in technical['edges']}
+        provenance = {row['id']: row for row in technical['provenance']}
+        remote_nodes = {node.id: node for node in remote.nodes}
+        local_contexts = set(local.to_dict()['definition']['context_ids'])
+        local_definition = local.to_dict()['definition']
+        service_selections = deepcopy(local_definition['context_selection'].get('services', {}))
+        all_contexts = set(local_contexts)
+        matched_call_sites = set()
+        diagnostics = list(technical['diagnostics']) + deepcopy(list(remote.diagnostics))
+        limits = list(technical['limits']) + list(remote.limits)
+        truncated = technical['coverage'].get('truncated') is True or remote.coverage.get('truncated') is True
+        upstream_coverage = [{'kind': 'remote_interfaces', 'view_id': remote.view_id,
+            'fingerprint': remote.content_fingerprint, 'coverage': deepcopy(remote.coverage)}]
+
+        def selection_matches(selection, service, context, *, required=False):
+            if selection.get('scope', local.definition.scope) != local.definition.scope:
+                return False
+            row = selection.get('services', {}).get(service)
+            if row is None:
+                return not required
+            return (row.get('scope') == local.definition.scope
+                and any(item.get('context_id') == context
+                    and item.get('scope', local.definition.scope) == local.definition.scope
+                    and item.get('freshness') != 'STALE' and item.get('status') != 'STALE'
+                    for item in row.get('contexts', [])))
+
+        def add_proof(proof):
+            prior = provenance.get(proof['id'])
+            if prior is not None and prior != proof:
+                _fail('HTTP_BOUNDARY_PROOF_COLLISION')
+            provenance[proof['id']] = deepcopy(proof)
+
+        for remote_edge in remote.edges:
+            if remote_edge.relation != 'remote_http_request_response':
+                continue
+            source = remote_nodes.get(remote_edge.source)
+            target_interface = remote_nodes.get(remote_edge.target)
+            if source is None or target_interface is None:
+                _fail('HTTP_BOUNDARY_ENDPOINT_MISSING')
+            site = source.attributes.get('origin_call_site')
+            if (source.kind != 'http_interface' or source.attributes.get('direction') != 'CONSUMER'
+                    or not isinstance(site, str) or source.resolution_status != 'RESOLVED'
+                    or source.attributes.get('scope') != local.definition.scope
+                    or source.attributes.get('context_id') not in local_contexts):
+                continue
+            call_nodes = [node for node in technical['nodes']
+                if site in node['attributes'].get('call_site_ids', [])
+                or node['attributes'].get('call_site') == site or site in node.get('original_ids', [])]
+            call_edges = [edge for edge in technical['edges']
+                if edge['attributes'].get('call_site') == site or site in edge.get('original_ids', [])]
+            if len(call_nodes) != 1 or not call_edges or site in matched_call_sites:
+                continue
+            matched_call_sites.add(site)
+            attrs = remote_edge.attributes
+            candidate = attrs if (attrs.get('target_interface_id') == target_interface.id
+                and attrs.get('target_service_id') == target_interface.attributes.get('service_id')
+                and target_interface.attributes.get('context_id') in attrs.get('context_ids', [])) else None
+            site_edges = [edge for edge in remote.edges if edge.relation == 'remote_http_request_response'
+                and edge.source == source.id]
+            if remote_edge.resolution_status == 'AMBIGUOUS' or len(site_edges) > 1:
+                matched_call_sites.add(site)
+                source_context = source.attributes['context_id']
+                target_contexts = sorted({ctx for edge in site_edges
+                    for ctx in edge.attributes.get('context_ids', []) if ctx != source_context})
+                contexts = sorted({source_context, *target_contexts})
+                refs = tuple(sorted({ref for edge in site_edges for ref in edge.evidence_refs}))
+                remote_proofs = {proof['id']: proof for proof in remote.provenance}
+                for ref in refs:
+                    if ref in remote_proofs: add_proof(remote_proofs[ref])
+                candidates = []
+                for edge in site_edges:
+                    target_node = remote_nodes.get(edge.target)
+                    if target_node:
+                        candidates.append({'interface_id': target_node.id,
+                            'service_id': edge.attributes.get('target_service_id'),
+                            'release_id': edge.attributes.get('target_release_id'),
+                            'context_ids': list(edge.attributes.get('context_ids', [])),
+                            'mapping_id': edge.attributes.get('mapping_id')})
+                boundary_id = 'http-boundary:' + digest([local.definition.process_id, source.id, site,
+                    sorted(edge.id for edge in site_edges)])
+                boundary = ViewNode(boundary_id, 'service_boundary', 'Ambiguous HTTP remote boundary',
+                    original_ids=tuple(sorted({site, source.id, *(edge.id for edge in site_edges)})),
+                    evidence_refs=refs, attributes={'scope': local.definition.scope, 'context_ids': contexts,
+                        'binding_id': attrs.get('binding_id'), 'source_call_site': site,
+                        'target_candidates': candidates, 'boundary_reason': 'AMBIGUOUS_REMOTE_BINDING',
+                        'request_response': 'HTTP_REQUEST_RESPONSE', 'error_semantics': 'TRANSPORT_BOUNDARY_ONLY',
+                        'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'},
+                    evidence_kinds=tuple(sorted({kind for edge in site_edges for kind in edge.evidence_kinds})),
+                    resolution_status='UNRESOLVED', freshness='UNKNOWN', unknown_refs=refs)
+                existing_nodes[boundary_id] = boundary.to_dict()
+                local_call = call_nodes[0]['id']
+                identity='http-transition:'+digest([boundary_id,local_call,'ambiguous'])
+                transition=ViewEdge(identity,local_call,boundary_id,'call',
+                    original_ids=tuple(sorted({local_call,site,*(edge.id for edge in site_edges)})),
+                    evidence_refs=refs,attributes={'scope':local.definition.scope,'context_ids':contexts,
+                        'http_transition':'REQUEST','boundary_reason':'AMBIGUOUS_REMOTE_BINDING'},
+                    evidence_kinds=boundary.evidence_kinds,resolution_status='UNRESOLVED',
+                    freshness='UNKNOWN',unknown_refs=refs)
+                existing_edges[identity]=transition.to_dict()
+                all_contexts.update(contexts)
+                for item in candidates:
+                    service_id=item['service_id']
+                    if service_id and service_id not in service_selections:
+                        service_selections[service_id]={'scope':local.definition.scope,
+                            'status':'EXPLICIT_REMOTE_BINDING','contexts':[{'context_id':ctx,
+                                'status':'EXPLICIT_REMOTE_BINDING'} for ctx in item['context_ids'] if ctx != source_context]}
+                diagnostics.append({'code':'AMBIGUOUS_REMOTE_BINDING','boundary_id':boundary_id,
+                                    'candidate_count':len(candidates)})
+                continue
+            binding_valid = (remote_edge.resolution_status == 'RESOLVED' and candidate is not None
+                    and candidate.get('scope') == local.definition.scope
+                    and candidate.get('capture_freshness') == 'CAPTURE_TIME_ONLY'
+                    and remote_edge.freshness != 'STALE' and source.freshness != 'STALE'
+                    and target_interface.freshness != 'STALE'
+                    and target_interface.kind == 'http_interface'
+                    and target_interface.attributes.get('direction') in {'PROVIDED', 'PROVIDER'}
+                    and target_interface.attributes.get('scope') == local.definition.scope
+                    and target_interface.resolution_status == 'RESOLVED'
+                    and set(candidate.get('context_ids', [])) == {
+                        source.attributes['context_id'], target_interface.attributes.get('context_id')}
+                    and selection_matches(remote.context_selection, source.attributes.get('service_id'),
+                        source.attributes['context_id'])
+                    and selection_matches(remote.context_selection, candidate.get('target_service_id'),
+                        target_interface.attributes.get('context_id')))
+            source_context = source.attributes['context_id']
+            context_values = (candidate or attrs).get('context_ids', [])
+            target_contexts = [ctx for ctx in context_values if ctx != source_context]
+            if len(target_contexts) != 1:
+                continue
+            target_context = target_contexts[0]
+            target_service = (candidate or attrs).get('target_service_id')
+            if not isinstance(target_service, str):
+                continue
+            matching_processes = []
+            handlers = set(target_interface.attributes.get('handler_ids', [])) if binding_valid else set()
+            for target_process in (targets if binding_valid else ()):
+                target_definition = target_process.to_dict()['definition']
+                selection = target_definition['context_selection'].get('services', {})
+                service = selection.get(target_service)
+                if (target_process.definition.scope != local.definition.scope
+                        or target_context not in target_process.to_dict()['definition']['context_ids'] or service is None
+                        or not selection_matches(target_definition['context_selection'], target_service,
+                            target_context, required=True)):
+                    continue
+                selected = {row.get('context_id') for row in service.get('contexts', [])}
+                if target_context not in selected:
+                    continue
+                triggers = [node for node in target_process.steps if node.kind == 'trigger'
+                    and node.attributes.get('entry_symbol_id') in handlers]
+                if len(triggers) == 1:
+                    matching_processes.append((target_process, triggers[0]))
+            selected_process = matching_processes[0] if len(matching_processes) == 1 else None
+            process_has_cfg = False
+            if selected_process is not None:
+                tp, trigger = selected_process
+                process_has_cfg = any(node.id != trigger.id and node.kind not in
+                    {'trigger', 'unresolved_boundary', 'entry', 'exit', 'exceptional_exit'} for node in tp.steps)
+            boundary_reason = None if process_has_cfg else ('TARGET_PROCESS_UNAVAILABLE' if binding_valid else 'REMOTE_BINDING_UNRESOLVED')
+            remote_services = remote.context_selection.get('services', {})
+            remote_selection = remote_services.get(target_service)
+            if remote_selection is not None and selection_matches(remote.context_selection, target_service, target_context):
+                service_selections[target_service] = deepcopy(remote_selection)
+            elif target_service not in service_selections:
+                service_selections[target_service] = {'scope': local.definition.scope,
+                    'status': 'EXPLICIT_REMOTE_BINDING', 'contexts': [{'context_id': target_context,
+                        'status': 'EXPLICIT_REMOTE_BINDING'}]}
+            all_contexts.update((source_context, target_context))
+            remote_proofs = {proof['id']: proof for proof in remote.provenance}
+            refs = tuple(remote_edge.evidence_refs)
+            for ref in refs:
+                if ref in remote_proofs:
+                    add_proof(remote_proofs[ref])
+            boundary_id = 'http-boundary:' + digest([local.definition.process_id, remote_edge.id, site])
+            boundary = ViewNode(boundary_id, 'service_boundary', 'HTTP request/response boundary',
+                original_ids=tuple(sorted(set((site, remote_edge.id, *remote_edge.original_ids)))),
+                evidence_refs=refs, attributes={'scope': local.definition.scope,
+                    'context_ids': sorted(set((source_context, target_context))),
+                    'binding_id': attrs.get('binding_id'), 'mapping_ids': list(attrs.get('mapping_ids', [])),
+                    'source_call_site': site, 'target_interface_id': target_interface.id,
+                    'target_service_id': target_service, 'target_context_id': target_context,
+                    'target_release_id': (candidate or attrs).get('target_release_id'),
+                    'boundary_reason': boundary_reason,
+                    'request_response': 'HTTP_REQUEST_RESPONSE',
+                    'error_semantics': 'TRANSPORT_BOUNDARY_ONLY',
+                    'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'},
+                evidence_kinds=tuple(remote_edge.evidence_kinds), resolution_status='UNRESOLVED',
+                freshness='UNKNOWN', unknown_refs=refs)
+            if boundary.id in existing_nodes:
+                _fail('HTTP_BOUNDARY_NODE_COLLISION')
+            existing_nodes[boundary.id] = boundary.to_dict()
+            local_call = call_nodes[0]['id']
+            # T025 annotates call, returns_to AND exception edges with the
+            # same lexical site. Only the matching call node initiates HTTP;
+            # callee exits must never start another request.
+            identity = 'http-transition:' + digest([boundary_id, local_call, 'request'])
+            edge = ViewEdge(identity, local_call, boundary_id, 'call',
+                original_ids=tuple(sorted(set((local_call, site, remote_edge.id)))),
+                evidence_refs=refs, attributes={'scope': local.definition.scope,
+                    'context_ids': sorted(set((source_context, target_context))),
+                    'http_transition': 'REQUEST', 'binding_id': attrs.get('binding_id')},
+                evidence_kinds=tuple(remote_edge.evidence_kinds), resolution_status='UNRESOLVED',
+                freshness='UNKNOWN', unknown_refs=refs)
+            existing_edges[identity] = edge.to_dict()
+            if boundary_reason:
+                diagnostics.append({'code': boundary_reason, 'boundary_id': boundary_id,
+                                    'target_service_id': target_service, 'target_context_id': target_context})
+                continue
+
+            tp, trigger = selected_process
+            tp_doc = tp.to_dict(); tp_view = tp_doc['technical_view']
+            diagnostics.extend({**deepcopy(item), 'http_source_process_id': tp.definition.process_id,
+                'http_source_revision': tp.definition.revision} for item in tp_view['diagnostics'])
+            limits.extend(tp_view['limits'])
+            truncated = truncated or tp_view['coverage'].get('truncated') is True
+            upstream_coverage.append({'kind': 'target_process', 'process_id': tp.definition.process_id,
+                'revision': tp.definition.revision, 'fingerprint': tp.content_fingerprint,
+                'coverage': deepcopy(tp_view['coverage'])})
+            prefix = 'http-target:' + digest([boundary_id, tp.definition.process_id, tp.definition.revision]) + ':'
+            id_map = {row['id']: prefix + row['id'] for row in tp_view['nodes']}
+            for proof in tp_view['provenance']:
+                add_proof(proof)
+            for row in tp_view['nodes']:
+                clone = deepcopy(row); clone['id'] = id_map[row['id']]
+                clone['attributes']['source_process_id'] = tp.definition.process_id
+                clone['attributes']['source_process_revision'] = tp.definition.revision
+                clone['attributes']['context_ids'] = sorted(set(clone['attributes'].get('context_ids', [])))
+                if clone['id'] in existing_nodes:
+                    _fail('HTTP_BOUNDARY_NODE_COLLISION')
+                existing_nodes[clone['id']] = clone
+            for row in tp_view['edges']:
+                clone = deepcopy(row); clone['id'] = prefix + row['id']
+                clone['source'] = id_map[row['source']]; clone['target'] = id_map[row['target']]
+                clone['attributes']['source_process_id'] = tp.definition.process_id
+                existing_edges[clone['id']] = clone
+            entry = id_map.get(trigger.id)
+            connect = ViewEdge('http-transition:' + digest([boundary_id, entry, 'enter']),
+                boundary_id, entry, 'call', original_ids=(remote_edge.id, trigger.id),
+                evidence_refs=refs, attributes={'scope': local.definition.scope,
+                    'context_ids': sorted(set((source_context, target_context))),
+                    'http_transition': 'TARGET_ENTRY', 'binding_id': attrs.get('binding_id')},
+                evidence_kinds=tuple(remote_edge.evidence_kinds), resolution_status='UNRESOLVED',
+                freshness='UNKNOWN', unknown_refs=refs)
+            existing_edges[connect.id] = connect.to_dict()
+            # A target exception does not prove an HTTP/client exception mapping.
+            # Only a normal target exit may rejoin the original normal caller
+            # continuation. Preserve local exception paths without joining them.
+            normal_exits = [identity for identity in tp_doc['exit_ids']
+                if next(row for row in tp_view['nodes'] if row['id'] == identity)['kind'] == 'exit']
+            exceptional_exits = [identity for identity in tp_doc['exit_ids'] if identity not in normal_exits]
+            if exceptional_exits:
+                diagnostics.append({'code': 'HTTP_TARGET_ERROR_BOUNDARY', 'boundary_id': boundary_id,
+                    'http_source_process_id': tp.definition.process_id,
+                    'original_exit_ids': exceptional_exits, 'error_semantics': 'TRANSPORT_BOUNDARY_ONLY'})
+            local_origins = {local_call, *call_nodes[0]['original_ids']}
+            for call_edge in call_edges:
+                if not (call_edge['relation'] == 'normal' and call_edge['source'] == local_call
+                        or call_edge['relation'] == 'returns_to'
+                        and call_edge['attributes'].get('caller_block') in local_origins):
+                    continue
+                continuation = call_edge['target']
+                if existing_nodes[continuation]['kind'] == 'exceptional_exit':
+                    continue
+                for target_exit in normal_exits:
+                    identity = 'http-transition:' + digest([boundary_id, target_exit, continuation, call_edge['id'], 'return'])
+                    exit_edge = ViewEdge(identity, id_map[target_exit], continuation, 'returns_to',
+                        original_ids=tuple(sorted((remote_edge.id, site, call_edge['id']))), evidence_refs=refs,
+                        attributes={'scope': local.definition.scope,
+                            'context_ids': sorted(set((source_context, target_context))),
+                            'http_transition': 'RESPONSE', 'binding_id': attrs.get('binding_id'),
+                            'original_continuation_id': call_edge['id'],
+                            'caller_transition': deepcopy(call_edge['attributes'])},
+                        evidence_kinds=tuple(remote_edge.evidence_kinds), resolution_status='UNRESOLVED',
+                        freshness='UNKNOWN', unknown_refs=refs)
+                    existing_edges[identity] = exit_edge.to_dict()
+            all_contexts.update((source_context, target_context))
+            tp_selection = tp.to_dict()['definition']['context_selection'].get('services', {})
+            if target_service in tp_selection:
+                service_selections[target_service] = deepcopy(tp_selection[target_service])
+
+        # T014 represents an incompatible or wholly unresolved declaration as a
+        # binding plus selector records, with no candidate edge. Keep that source
+        # callsite visible as an external boundary instead of silently dropping it.
+        for binding in remote.nodes:
+            if binding.kind != 'remote_binding' or binding.resolution_status == 'RESOLVED':
+                continue
+            source = remote_nodes.get(binding.attributes.get('source_interface_id'))
+            selectors = binding.attributes.get('unresolved_selectors', [])
+            if source is None or not selectors or source.kind != 'http_interface':
+                continue
+            site = source.attributes.get('origin_call_site')
+            if (not isinstance(site, str) or source.attributes.get('context_id') not in local_contexts
+                    or site in matched_call_sites):
+                continue
+            call_nodes = [node for node in technical['nodes'] if site in node['attributes'].get('call_site_ids', [])
+                or node['attributes'].get('call_site') == site or site in node.get('original_ids', [])]
+            call_edges = [edge for edge in technical['edges'] if edge['attributes'].get('call_site') == site
+                or site in edge.get('original_ids', [])]
+            if len(call_nodes) != 1 or not call_edges:
+                continue
+            selector = selectors[0]
+            target_context = selector.get('context_id')
+            target_service = selector.get('service_id')
+            if not isinstance(target_context, str) or not isinstance(target_service, str):
+                continue
+            matched_call_sites.add(site)
+            source_context = source.attributes['context_id']
+            refs = tuple(binding.evidence_refs)
+            for proof in remote.provenance:
+                if proof['id'] in refs:
+                    add_proof(proof)
+            boundary_id = 'http-boundary:' + digest([local.definition.process_id, binding.id, site])
+            boundary = ViewNode(boundary_id, 'service_boundary', 'Unresolved HTTP remote boundary',
+                original_ids=tuple(sorted(set((site, binding.id, *binding.original_ids)))), evidence_refs=refs,
+                attributes={'scope': local.definition.scope, 'context_ids': sorted({source_context, target_context}),
+                    'binding_id': binding.id, 'mapping_ids': list(binding.attributes.get('mapping_ids', [])),
+                    'source_call_site': site, 'target_interface_id': selector.get('interface_id'),
+                    'target_service_id': target_service, 'target_context_id': target_context,
+                    'target_release_id': selector.get('id'), 'boundary_reason': 'REMOTE_BINDING_UNRESOLVED',
+                    'request_response': 'HTTP_REQUEST_RESPONSE', 'error_semantics': 'TRANSPORT_BOUNDARY_ONLY',
+                    'runtime_execution': 'NOT_OBSERVED', 'runtime_availability': 'UNKNOWN'},
+                evidence_kinds=tuple(binding.evidence_kinds), resolution_status='UNRESOLVED',
+                freshness='UNKNOWN', unknown_refs=refs)
+            if boundary_id in existing_nodes:
+                _fail('HTTP_BOUNDARY_NODE_COLLISION')
+            existing_nodes[boundary_id] = boundary.to_dict()
+            local_call = call_nodes[0]['id']
+            identity = 'http-transition:' + digest([boundary_id, local_call, 'unresolved'])
+            edge = ViewEdge(identity, local_call, boundary_id, 'call',
+                original_ids=tuple(sorted(set((local_call, site, binding.id)))), evidence_refs=refs,
+                attributes={'scope': local.definition.scope, 'context_ids': sorted({source_context, target_context}),
+                    'http_transition': 'REQUEST', 'binding_id': binding.id},
+                evidence_kinds=tuple(binding.evidence_kinds), resolution_status='UNRESOLVED',
+                freshness='UNKNOWN', unknown_refs=refs)
+            existing_edges[identity] = edge.to_dict()
+            remote_services = remote.context_selection.get('services', {})
+            remote_selection = remote_services.get(target_service)
+            if remote_selection is not None and selection_matches(remote.context_selection, target_service, target_context):
+                service_selections[target_service] = deepcopy(remote_selection)
+            elif target_service not in service_selections:
+                service_selections[target_service] = {'scope': local.definition.scope,
+                    'status': 'EXPLICIT_REMOTE_BINDING', 'contexts': [{'context_id': target_context,
+                        'status': 'EXPLICIT_REMOTE_BINDING'}]}
+            all_contexts.update((source_context, target_context))
+            diagnostics.append({'code': 'REMOTE_BINDING_UNRESOLVED', 'boundary_id': boundary_id,
+                                'target_service_id': target_service, 'target_context_id': target_context})
+
+        if not matched_call_sites:
+            return local
+        selection = deepcopy(local_definition['context_selection'])
+        selection['services'] = service_selections
+        definition = local.definition.to_dict()
+        definition['context_selection'] = selection
+        definition['context_ids'] = sorted(all_contexts)
+        definition['baseline_fingerprint'] = digest({'local': local_definition['baseline_fingerprint'],
+            'remote': remote.content_fingerprint, 'targets': sorted(tp.content_fingerprint for tp in targets),
+            'rule': 'http-process-boundary-1'})
+        from .process_model import ProcessDefinition
+        canonical_definition = ProcessDefinition.from_dict(definition)
+        technical.update(view_id=local.definition.process_id, baseline_fingerprint=canonical_definition.to_dict()['baseline_fingerprint'],
+            context_selection=selection, nodes=list(existing_nodes.values()), edges=list(existing_edges.values()),
+            provenance=list(provenance.values()), diagnostics=diagnostics,
+            limits=list(dict.fromkeys(limits)),
+            coverage={**technical['coverage'], 'status': 'PARTIAL', 'truncated': truncated,
+                'http_boundary_count': len(matched_call_sites), 'http_upstream_coverage': upstream_coverage})
+        technical_view = ViewDocument.from_dict(technical)
+        result = local_doc
+        result['definition'] = canonical_definition.to_dict()
+        result['definition_fingerprint'] = canonical_definition.content_fingerprint
+        result['technical_view'] = technical_view.to_dict()
+        result['technical_status'] = 'PARTIAL'
+        _bounded(result)
+        return ProcessView.from_dict(result)
+    except BusinessProcessError:
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as error:
+        raise BusinessProcessError('INVALID_HTTP_PROCESS_BOUNDARY', 'Invalid or incompatible HTTP process boundary input') from error

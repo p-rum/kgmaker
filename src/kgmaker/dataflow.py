@@ -21,7 +21,8 @@ CAPABILITIES = {
                'TypeScript interface/type properties', 'JSON Schema/OpenAPI JSON properties'],
     'value_flow': ['Kotlin expression functions with explicit parameter/return types',
                    'local numeric/property expressions', 'unambiguous Kotlin constructor mapping',
-                   'compiler-bound HTTP JSON→destructuring→React state→JSX/test argument with explicit contract provenance'],
+                   'compiler-bound HTTP JSON→destructuring→React state→JSX/test argument with explicit contract provenance',
+                   'Javac field read/write and closed straight-line source mapper helpers'],
     'unsupported': ['SOURCE_ONLY overloaded/interprocedural calls', 'control-flow-dependent mappings', 'dynamic SQL',
                     'OpenAPI YAML fields', 'Kafka payload resolution', 'dynamic/template frontend binding'],
 }
@@ -332,6 +333,8 @@ def impact_paths(graph: KnowledgeGraph, entity: str, max_depth: int = 20) -> dic
     bindings = [item for site in binding_sites for item in argument_parameter_bindings(graph, site)]
     return {'seed': entity, 'paths': paths, 'truncated': truncated,
             'argument_parameter_bindings': bindings,
+            'field_mapping_bindings': [p for p in field_mapping_bindings(graph)
+                                       if p['source'] in used | {entity} or p['target'] in used | {entity}],
             'return_consumer_bindings': [p for p in return_consumer_bindings(graph) if p['source'] in used|{entity} or p['target'] in used|{entity}],
             'frontend_value_bindings': [p for p in graph.evidence
                 if (p.get('value_flow_version') == 1 or p.get('extractor') == 'frontend-values-1')
@@ -454,3 +457,9 @@ def remote_contract_bindings(workspace, graph, interfaces, *, captured, scope="p
     from .remote_mapping import resolve_remote_mappings
     return resolve_remote_mappings(workspace, graph, interfaces, captured=captured,
                                    scope=scope, selected_contexts=selected_contexts)
+
+
+def field_mapping_bindings(graph: KnowledgeGraph) -> list[dict]:
+    """Compiler source field transfers; never business equivalence or availability."""
+    from .field_flow import field_mapping_bindings as bindings
+    return bindings(graph)
