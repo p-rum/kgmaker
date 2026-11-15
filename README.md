@@ -1151,3 +1151,13 @@ JSON stays default. See [contract and parser checks](docs/interface-markdown.md)
 Merged in PR87 (`250e7c1`) with the first-call purity correction.
 Topology/explain remain JSON-only; T021/T022 are planned. Historical checks and
 current verification limits are in the delivery inventory.
+
+### Unified flow reports
+
+`kgmaker flow render --entry METHOD_ID --view process --format markdown` uses the
+same CFG model as JSON and Mermaid, with original IDs, explicit coverage gaps and
+truncation. Expansion requires the current source-body proof of the exact caller
+and callee; reference-only bindings do not establish an execution path. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
+the loaded index and source snapshot; rendering
+never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
+and [change128](docs/changes/128_unifiedFlowViews.md).

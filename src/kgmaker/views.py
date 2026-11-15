@@ -17,6 +17,7 @@ EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-2", "impact": "impact-2"}
+EXECUTABLE_NODE_KINDS = {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "call_site"}
 CURRENT_COMPILER_FRESHNESS = {"CONTENT_VERIFIED", "CURRENT", "EXECUTION_BOUND"}
 COMPILER_MODES = {"BUILD_IMPORT", "BUILD_EXECUTE"}
 COMPILER_ORIGINS = {"LOCAL_COMPILER_INPUTS", "LOCAL_TRUSTED", "SUPPLIED_EXPORT_UNVERIFIED"}
@@ -969,7 +970,8 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                                 "declares_event_transition", "declares_reactive_transition",
                                                 "crosses_async_boundary"}]
     elif view == "data-flow":
-        edges = [e for e in edges if e.kind in {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
+        from .dataflow import FORWARD, REVERSE
+        edges = [e for e in edges if e.kind in FORWARD | REVERSE | {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
                                                 "maps_field", "maps_to_table", "maps_to_column", "declared_on_table",
                                                 "resolves_to_schema_table", "resolves_to_schema_column", "repository_for",
                                                 "declares_query", "defines_named_query", "uses_named_query",
@@ -1050,6 +1052,11 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                          and set(a.get('evidence_ids', [])) <= selected_evidence])
 
 
+def is_execution_entity(node) -> bool:
+    """Shared role boundary: type/configuration references are not execution."""
+    return node is not None and node.kind in EXECUTABLE_NODE_KINDS and node.role == 'executable_code'
+
+
 def is_execution_callsite(site: Mapping[str, Any]) -> bool:
     """Shared invocation boundary for call navigation, scoring and completeness.
 
@@ -1060,6 +1067,53 @@ def is_execution_callsite(site: Mapping[str, Any]) -> bool:
     return site.get("invocation_kind") in {None, "CALL", "STATIC", "VIRTUAL", "INTERFACE",
                                             "SPECIAL", "CONSTRUCTOR", "EXTENSION", "OPERATOR", "ACCESSOR"}
 
+
+def evidence_freshness_gaps(proofs, evidence_ids):
+    result = []
+    for evidence_id in sorted(set(evidence_ids)):
+        proof = proofs.get(evidence_id, {})
+        # Older valid v2/v3 proofs omit freshness; retain their existing
+        # context-bound behavior. An explicit state always takes precedence.
+        if 'freshness' not in proof:
+            continue
+        if proof['freshness'] == 'STALE':
+            result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
+                'reason': 'A stale proof contributes no execution or impact weight.',
+                'evidence_ids': [evidence_id]})
+        elif proof['freshness'] not in CURRENT_COMPILER_FRESHNESS:
+            result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
+                'reason': 'The proof does not establish current content.',
+                'evidence_ids': [evidence_id]})
+    return result
+
+def execution_authority_gaps(contexts, files, proofs, context_ids, evidence_ids, site=None):
+    """Shared admission contract for ranking and interprocedural CFG expansion."""
+    result = []
+    authority_contexts = set(context_ids)
+    if site:
+        authority_contexts.add(site['context_id'])
+    proof_contexts = set()
+    for identity in evidence_ids:
+        proof = proofs.get(identity, {})
+        declared_contexts = proof.get('context_ids', [])
+        if isinstance(declared_contexts, (list, tuple)):
+            proof_contexts.update(c for c in declared_contexts if isinstance(c, str))
+        if isinstance(proof.get('context_id'), str):
+            proof_contexts.add(proof['context_id'])
+    mismatched_proof_contexts = proof_contexts - authority_contexts
+    authority_contexts.update(proof_contexts)
+    invalid_contexts = sorted(c for c in authority_contexts
+                              if not _compiler_authority(contexts.get(c, {}), files))
+    invalid_proofs = sorted({identity for identity in evidence_ids
+        if (('mode' in proofs.get(identity, {}) and proofs[identity]['mode'] not in COMPILER_MODES)
+            or ('origin_trust' in proofs.get(identity, {})
+                and proofs[identity]['origin_trust'] not in COMPILER_ORIGINS))})
+    if not authority_contexts or invalid_contexts or invalid_proofs or mismatched_proof_contexts:
+        result.append({'code': 'EXECUTION_AUTHORITY_UNKNOWN', 'penalty': 3,
+            'reason': 'Execution requires a current content-bound inspection context and compatible proof authority.',
+            'context_ids': sorted(set(invalid_contexts) | mismatched_proof_contexts),
+            'evidence_ids': invalid_proofs or list(evidence_ids)})
+    return result
 
 def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execution", scope: str = "production") -> dict:
     """Read-only, versioned priority from validated graph evidence, not confidence.
@@ -1078,7 +1132,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     nodes = {n.id: n for n in graph.nodes}
     if entry is not None and entry not in nodes:
         raise ValueError("entry is absent from selected scope")
-    executable = {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "call_site"}
+    executable = EXECUTABLE_NODE_KINDS
     rankable = executable - {"call_site"} | {"class", "enum", "interface", "type"}
     contexts = {c['id']: c for c in graph.contexts if isinstance(c.get('id'), str)}
     sites = {s['id']: s for s in graph.call_sites}
@@ -1087,27 +1141,12 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=False)
     unique = lambda values: [json.loads(key) for key in sorted({canonical(value) for value in values})]
     def runnable(identity):
-        return nodes[identity].kind in executable and nodes[identity].role == 'executable_code'
+        return is_execution_entity(nodes[identity])
     gaps = defaultdict(list)
     def gap(identity, code, reason, penalty, **refs):
         gaps[identity].append({'code': code, 'reason': reason, 'penalty': penalty, **refs})
     def proof_gaps(evidence_ids):
-        result = []
-        for evidence_id in sorted(set(evidence_ids)):
-            proof = proofs.get(evidence_id, {})
-            # Older valid v2/v3 proofs omit freshness; retain their existing
-            # context-bound behavior. An explicit state always takes precedence.
-            if 'freshness' not in proof:
-                continue
-            if proof['freshness'] == 'STALE':
-                result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
-                    'reason': 'A stale proof contributes no execution or impact weight.',
-                    'evidence_ids': [evidence_id]})
-            elif proof['freshness'] not in CURRENT_COMPILER_FRESHNESS:
-                result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
-                    'reason': 'The proof does not establish current content.',
-                    'evidence_ids': [evidence_id]})
-        return result
+        return evidence_freshness_gaps(proofs, evidence_ids)
 
     def context_gaps(identity, ids):
         if not ids:
@@ -1169,30 +1208,8 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
                     context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
         if kind not in EXECUTION_EDGES | SIDE_EFFECTS:
             continue
-        authority_contexts = set(record['context_ids'])
-        if related_site:
-            authority_contexts.add(related_site['context_id'])
-        proof_contexts = set()
-        for identity in relevant_proofs:
-            proof = proofs.get(identity, {})
-            declared_contexts = proof.get('context_ids', [])
-            if isinstance(declared_contexts, (list, tuple)):
-                proof_contexts.update(c for c in declared_contexts if isinstance(c, str))
-            if isinstance(proof.get('context_id'), str):
-                proof_contexts.add(proof['context_id'])
-        mismatched_proof_contexts = proof_contexts - authority_contexts
-        authority_contexts.update(proof_contexts)
-        invalid_contexts = sorted(c for c in authority_contexts
-                                  if not _compiler_authority(contexts.get(c, {}), graph.files))
-        invalid_proofs = sorted({identity for identity in relevant_proofs
-            if (('mode' in proofs.get(identity, {}) and proofs[identity]['mode'] not in COMPILER_MODES)
-                or ('origin_trust' in proofs.get(identity, {})
-                    and proofs[identity]['origin_trust'] not in COMPILER_ORIGINS))})
-        if not authority_contexts or invalid_contexts or invalid_proofs or mismatched_proof_contexts:
-            record_gaps.append({'code': 'EXECUTION_AUTHORITY_UNKNOWN', 'penalty': 3,
-                'reason': 'Execution requires a current content-bound inspection context and compatible proof authority.',
-                'context_ids': sorted(set(invalid_contexts) | mismatched_proof_contexts),
-                'evidence_ids': invalid_proofs or record['evidence_ids']})
+        record_gaps.extend(execution_authority_gaps(
+            contexts, graph.files, proofs, record['context_ids'], relevant_proofs, related_site))
         affected = {source, target}
         if related_site:
             affected.add(related_site['caller'])
