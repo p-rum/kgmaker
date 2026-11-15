@@ -163,3 +163,16 @@ příkazem před přidáním této regrese. Kompatibilita a single-writer limit 
 žádná crash/concurrency garance. Uživatelské kontrakty zůstávají dle guide výše.
 Runtime implementation artifact `artifact:c0f4f8af8fcd83f23dd371fedd0dd8980dc5899ce074a681ad13dd91bf240eda`
 obsahuje skutečné změny i dosud nedokončenou integraci/semantic/final gate.
+
+
+## Krok 7 — ordinary integrace main (Steps 2–5, AC01–04)
+
+Vlastní checkpoint `c60893b` integruje main
+`84f94d4462437fe1228f07d0ba8f51071224952e` ordinary merge bez přepisování historie.
+Fetch ze skutečného remote potvrdil toto SHA. Konflikt pouze v sousedních řádcích
+progress: ponechán main MERGED stav S09-W05 a vlastní skutečný W01 checkpoint.
+Zdrojové změny main T028/T029 v `business_process.py` zůstaly bez zásahu; W01
+nezavádí žádné procesní změny. Sémantická vrstva obou rodičů obsahuje union
+52 concepts /176 relations /328 immutable episodes; další vlastní capture
+a ověření preservation budou zaznamenány samostatně. Generated views z main
+se znovu vytvoří CLI po scoped update. Integrační actual gate zatím NOT_RUN.
