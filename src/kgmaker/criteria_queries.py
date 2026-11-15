@@ -6,13 +6,14 @@ is inferred. Candidates retain original source/call identities for later ORM rep
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from copy import deepcopy
 import hashlib
 import re
 
 from .analysis_model import digest
 from .return_flow import _children, _range
 
-VERSION = 'programmatic-query-1'
+VERSION = 'programmatic-query-2'
 SPEC = 'org.springframework.data.jpa.domain.Specification'
 QBASE = 'com.querydsl.core.types.dsl.EntityPathBase'
 JPA = ('jakarta.persistence.', 'javax.persistence.')
@@ -44,6 +45,17 @@ def _source(value, context):
             and context.get('source_files', {}).get(value.get('path')) == value['sha256'])
 
 
+def _spec_override(symbol, symbols, context):
+    if not isinstance(symbol.get('query_override'), str):
+        return False
+    contract = symbols.get(symbol.get('query_override'), {})
+    return (symbol.get('kind') == 'method' and _source(symbol, context)
+            and _dependency(contract, context) and contract.get('owner') == SPEC
+            and contract.get('name') == symbol.get('name') == 'toPredicate'
+            and contract.get('descriptor') == symbol.get('descriptor')
+            and 'public' in symbol.get('modifiers', []) and not symbol.get('jvm_static'))
+
+
 def validate_query_ir(response, context):
     """Optional v1 fields are strict whenever any part of the extension is present."""
     symbols = {s['id']: s for s in response['symbols']}
@@ -52,6 +64,7 @@ def validate_query_ir(response, context):
     for body in response['bodies']:
         nodes = list(_walk(body.get('body', {})))
         present = ('query_ir_version' in body or 'query_parameters' in body or 'query_ir_status' in body
+                   or 'query_override' in symbols[body['method']]
                    or any(extension.intersection(node) for node in nodes))
         if not present:
             continue
@@ -113,6 +126,9 @@ def validate_query_ir(response, context):
                 if site.get('caller') != body['method'] or site.get('range') != node.get('range'):
                     raise ValueError('Invalid query call identity')
     for symbol in response['symbols']:
+        if 'query_override' in symbol and (not isinstance(symbol['query_override'], str)
+                or not _spec_override(symbol, symbols, context)):
+            raise ValueError('Invalid Specification override identity')
         if 'querydsl_path' in symbol:
             path = symbol['querydsl_path']
             if (not isinstance(path, dict) or type(path.get('version')) is not int or path['version'] != 1
@@ -221,6 +237,8 @@ class _Capture:
         member = self.symbols.get(binding.get('symbol'), {})
         path = member.get('querydsl_path')
         if path:
+            if 'final' not in member.get('modifiers', []):
+                return _Value(gaps=['QUERYDSL_MUTABLE_PATH_UNSUPPORTED'])
             receiver = self.evaluate(node.get('field_receiver'))
             if receiver.kind == 'ROOT' and receiver.entity == path['entity_type']:
                 return _Value('PATH', receiver.entity, receiver.root,
@@ -283,8 +301,9 @@ class _Capture:
         if api == 'criteria.CriteriaQuery' and name in {'select', 'where'} and receiver.kind == 'QUERY':
             return self.query_clause(receiver, args, name, witness, replace_filters=True)
         if api == 'EntityManager' and name == 'createQuery' and len(args) == 1 and args[0].kind == 'QUERY':
-            args[0].witnesses.append(witness)
-            return args[0]
+            value = self.snapshot('CRITERIA', args[0], node)
+            value.witnesses.append(witness)
+            return value
         if api in {'TypedQuery', 'Query'} and name == 'getResultList' and receiver.kind == 'QUERY':
             receiver.operations.append(name)
             receiver.witnesses.append(witness)
@@ -306,9 +325,10 @@ class _Capture:
         if owner == 'com.querydsl.core.support.QueryBase' and name == 'where' and receiver.kind == 'QUERY':
             return self.query_clause(receiver, args, name, witness)
         if owner == 'com.querydsl.jpa.impl.AbstractJPAQuery' and name == 'fetch' and receiver.kind == 'QUERY':
-            receiver.operations.append(name)
-            receiver.witnesses.append(witness)
-            return receiver
+            value = self.snapshot('QUERYDSL', receiver, node)
+            value.operations.append(name)
+            value.witnesses.append(witness)
+            return value
         # An attributed dependency call is not automatically a trusted builder API.
         # It may retain/mutate a query value just like a source-defined helper.
         if receiver.kind in {'QUERY', 'ROOT', 'PATH', 'PREDICATE'} or any(
@@ -319,6 +339,14 @@ class _Capture:
                 receiver.gaps.append('UNSUPPORTED_QUERY_OPERATION:' + name)
             return _Value(gaps=['UNSUPPORTED_QUERY_OPERATION:' + str(name)], witnesses=[witness])
         return _Value('SCALAR')
+
+    def snapshot(self, family, query, node):
+        # Criteria createQuery copies the definition; later builder edits must not
+        # rewrite executable intent. QueryDSL fetch captures its current definition.
+        value = deepcopy(query)
+        self.queries = [(f, q, n) for f, q, n in self.queries if q is not query]
+        self.queries.append((family, value, node))
+        return value
 
     def query_clause(self, query, args, name, witness, *, replace_filters=False):
         query.witnesses.append(witness)
@@ -355,9 +383,11 @@ class _Capture:
             callable_symbol = self.symbols.get(symbol.get('query_callable_symbol'), {})
             if _dependency(callable_symbol, self.context) and callable_symbol.get('owner') == SPEC:
                 spec_entity = _generic(symbol.get('query_callable_type'), SPEC)
-            elif symbol.get('name') == 'toPredicate':
+            elif _spec_override(symbol, self.symbols, self.context):
                 spec_entity = self.type_entity(symbol.get('owner'), SPEC)
             spec_value = _Value('QUERY', spec_entity, self.method, operations=['PREDICATE'], witnesses=[self.witness(symbol)]) if spec_entity else None
+            if spec_value and symbol.get('query_override'):
+                spec_value.witnesses[0]['compiler_contract'] = symbol['query_override']
             for parameter in body.get('query_parameters', []):
                 binding = parameter['binding']
                 root_entity = next((_generic(parameter['type'], prefix + 'criteria.Root') for prefix in JPA
@@ -380,7 +410,7 @@ class _Capture:
                 if len(self.queries) > 1:
                     gaps.append('MULTIPLE_QUERIES_UNSUPPORTED')
                 witnesses = {digest(w): w for w in query.witnesses if _source(w, self.context)}
-                record = {'version': 1, 'family': family, 'method': self.method,
+                record = {'version': 2, 'family': family, 'method': self.method,
                           'entity': query.entity, 'root': query.root, 'attributes': query.attributes,
                           'operations': sorted(set(query.operations)), 'gaps': gaps,
                           'witnesses': list(witnesses.values()), 'context_id': self.context['id'],
@@ -419,7 +449,7 @@ def project_queries(root, graph, context, nodes, symbols, edges, entity_nodes,
         return hashes[path] == proof['sha256']
 
     def valid(record, symbol):
-        if (not isinstance(record, dict) or type(record.get('version')) is not int or record['version'] != 1
+        if (not isinstance(record, dict) or type(record.get('version')) is not int or record['version'] != 2
                 or record.get('context_id') != context['id'] or record.get('method') != symbol['id']
                 or record.get('id') != digest({k: v for k, v in record.items() if k != 'id'})
                 or record.get('family') not in {'CRITERIA', 'SPECIFICATION', 'QUERYDSL'}
@@ -435,12 +465,27 @@ def project_queries(root, graph, context, nodes, symbols, edges, entity_nodes,
         for witness in record['witnesses']:
             if not current(witness):
                 return False
+            if 'compiler_contract' in witness and (witness['compiler_contract'] != symbol.get('query_override')
+                    or not _spec_override(symbol, symbols, context)):
+                return False
             if witness.get('call_site'):
                 site = sites.get(witness['call_site'], {})
                 target = symbols.get(witness.get('compiler_target'), {})
                 if (site.get('caller') != symbol['id'] or site.get('declared_target') != target.get('id')
                         or site.get('range') != witness.get('range') or not current(site)
                         or site.get('evidence_kind') != 'SYMBOL_RESOLVED' or not _dependency(target, context)):
+                    return False
+        if record['family'] == 'SPECIFICATION' and symbol.get('kind') == 'method':
+            if (not _spec_override(symbol, symbols, context)
+                    or not any(w.get('compiler_contract') == symbol['query_override'] for w in record['witnesses'])):
+                return False
+        if record['family'] == 'QUERYDSL':
+            for attribute in record['attributes']:
+                member = symbols.get(attribute.get('symbol'), {})
+                path = member.get('querydsl_path') or {}
+                if (not current(member) or 'final' not in member.get('modifiers', [])
+                        or path.get('entity_type') != attribute['entity'] or path.get('attribute') != attribute['name']
+                        or not _dependency(symbols.get(path.get('factory'), {}), context)):
                     return False
         return True
 

@@ -261,3 +261,148 @@ capture přidal epizodu `episode:fc6221f29a12c550e5a43e1b5f97558a15e94641882df50
 celkem312epizod. Původních310 je přesně zachováno;311. zůstává historický
 pre-escape current checkpoint a poslední je finální corrective current capture.
 Obě jsou post-change evidence, nikoli retrospektivní pre-task graf.
+
+## Krok 11 — oprava executable snapshotu po review (AC01, AC03)
+
+T003-S06-W07, implementační kroky1/3/4. Výchozí HEAD
+`baaf573c6c5ad8a3ba24141c4a3d668e303be090`, tree
+`2c4b8aea2b7b1430f9be71ad2b3f5628206ea68d`; base main zůstává
+`7bb8b8d389c461c684197704203a99dcb2b83724`. Nezávislé review PR111
+REQUEST_CHANGES odhalilo tři P1 přes čtyři chybné COMPLETE výstupy.
+Původních134PASS/64.98s (autor) a134PASS/64.39s (reviewer) byly pravdivé
+historické testy, ale nepokrývaly tyto adversarial scénáře. Nové actual testy
+`test_actual_review_query_state_and_callable_boundaries` reprodukovaly
+**4 FAIL /12.14s**, vždy bez Javac errors; log `/tmp/kgmaker-w07-review-red.log`.
+Příkaz byl stejný environment jako krok14, pytest pouze tento test, `--tb=short`.
+
+`criteria_queries.py` nově pořídí samostatnou kopii builder definition při
+`EntityManager.createQuery`, takže následné `q.where()` nevymaže status filter
+již vytvořeného TypedQuery. Odpovídá
+[Jakarta Persistence3.1 §6.9](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1):
+pozdější změna Criteria definition neovlivní existující executable dotaz.
+QueryDSL fetch obdobně zachytí intent v místě callsite. Dva executable snapshoty
+ze stejného builderu v jednom těle se neslijí: každý má vlastní range/witnesses,
+oba jsou UNKNOWN s `MULTIPLE_QUERIES_UNSUPPORTED`, bez query_reads/filters_by.
+Nejde o nové runtime execution proof. Tests obsahují Criteria clear-after-create,
+Criteria opakované create/execution a analogické QueryDSL single/repeated fetch.
+Kompatibilita: schema grafu beze změny; queryintent v2 popisuje krok13.
+Limity: vícenásobné dotazy nejsou přesně vyřešeny, pouze poctivě ohraničeny.
+Ověření: první W07 opravený běh41PASS/57.11s, finální rozšíření v kroku14.
+
+## Krok 12 — neměnná QueryDSL member autorita (AC01, AC03)
+
+T003-S06-W07, implementační kroky3/4, výchozí HEAD `baaf573c6c5ad8a3ba24141c4a3d668e303be090`.
+Legal custom Qtype může změnit původní `status` field na
+`Expressions.stringPath("unrelated")`; initializer pak není důkaz aktuálního
+atributu. `criteria_queries.py` přijímá factory-backed attribute pouze na
+compiler memberu s modifierem final. Mutable člen zůstane PARTIAL s
+`QUERYDSL_MUTABLE_PATH_UNSUPPORTED` a bez filters_by. Konzervativní hranice platí
+i bez viditelného zápisu, takže nespoléhá na lokální sledování všech field writes.
+Replay ověřuje final/source/factory dependency identity znovu. Test mění skutečně
+vygenerovaný QOrder, odstraní final a provede legal reassignment; zero Javac errors
+je explicitní assertion. Pozitivní genuine APT final String/Number cesty zůstávají.
+Další dva replay negativy odeberou final nebo změní factory origin na source.
+Kompatibilita/omezení: mutable QueryDSL metamodel je mimo podporovaný subset;
+žádná nová dostupnost nebo SQL. Ověření: RED je součást4FAIL kroku11, první zelená
+matice41PASS a konečný běh v kroku14. Dotčené soubory helper/tests a veřejná matice.
+
+## Krok 13 — skutečný Specification override a bezpečný replay (AC01–03)
+
+T003-S06-W07, implementační kroky2/3/4, výchozí HEAD `baaf573c6c5ad8a3ba24141c4a3d668e303be090`.
+Pouhé jméno `toPredicate` na třídě implementující Specification přidělovalo autoritu
+nesprávnému dvouargumentovému overloadu. JavaFrontend nyní vydá additive
+`query_override` pouze při kladném Javac `Elements.overrides` vůči skutečné
+source-absent dependency Specification metodě. Python validator/capture ověří
+compiler target owner/name/descriptor, public instance method a generic root;
+source `@Override` anotace není požadována. Replay kontroluje tentýž dependency
+contract witness a odmítne odstraněný/source-origin contract.
+Actual fixture obsahuje pravý tříargumentový override bez anotace i dvouargumentový
+overload: pouze první získá query intent. Malformed target/descriptor jsou
+INVALID_PROTOCOL bez mutace posledního validního grafu.
+
+Saved intent je nyní `programmatic-query-2`/candidate version2. Staré v1 kandidáty
+zůstávají čitelné v grafu, ale nemohou přehrát neopravenou autoritu; explicitní
+inspection je obnoví. Body IR zůstává optional strict v1, graph/store1/2/3 a staré
+payloady bez query fields fungují dál. Test rehashuje starý candidate version1,
+aby rejection nebyla jen následkem integrity mismatch.
+
+Vlastní izolovaný worker rebuild (žádné shared outputs):
+
+```bash
+python3 workers/jvm/build.py --kotlin-home /tmp/kgmaker-kotlin-official/kotlinc \
+  --maven-repository /home/petra/.m2/repository \
+  --java-home /usr/lib/jvm/java-21-openjdk-amd64
+```
+
+**PASS**, `/tmp/kgmaker-w07-review-build.log`, matching JAR SHA256
+`651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`.
+Pyproject distribuce již zahrnuje všechny `jvm/src/main/java/.../*.java` i lokální
+`jvm/target/kgmaker-jvm-worker*.jar`; nový soubor, manifest formát ani dependency
+lock nevznikly. Skutečné handshakes/inspection běží nad tímto novým artifactem.
+Kotlin K1/K2 programmatic support ani provider/DB runtime se nedeklaruje.
+
+## Krok 14 — cílená korekční acceptance a dokumentace (AC01–04)
+
+T003-S06-W07, implementační krok5; source baseline `baaf573c6c5ad8a3ba24141c4a3d668e303be090`,
+base main7bb8b8d ověřen opět přes `git ls-remote`. První sandbox remote lookup
+nemohl použít systémový SSH config; stejný read-only příkaz s autorizovaným
+network přístupem PASS, main i PR HEAD souhlasily. Root checkout beze změn.
+
+Časové checkpointy se nesčítají:41PASS/57.11s (`review-green`) po prvních opravách;
+143PASS/76.94s (`review-final`) před posledními QueryDSL snapshot/replay negativy;
+145PASS/84.62s (`review-final2`) před doplněním dvou replay negativů.
+Finální přesný příkaz je následující; výsledek a semantic navazují níže.
+
+```bash
+PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+KGMAKER_WORKERS_HOME=/tmp/kgmaker-criteria-queries/workers \
+KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src \
+/tmp/kgmaker-test-venv/bin/python -m pytest -q \
+  tests/test_criteria_queries.py tests/test_named_query_containers.py \
+  tests/test_jpql_hql_grammar.py tests/test_field_mapping_flow.py \
+  tests/test_inspection_contract.py \
+  'tests/test_return_consumer_flow.py::test_java_branch_returns_assignment_and_chained_receiver[k1]' \
+  'tests/test_return_consumer_flow.py::test_actual_java_ir_preserves_both_binding_consumers[k1]' \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_ac06_real_javac_embedded_id_and_association_roles \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_repository_generic_uses_exact_entity_owner_for_same_simple_names \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_protocol_handshakes_are_versioned_and_log_free \
+  --junitxml=/tmp/kgmaker-w07-review-final3.xml --tb=short
+```
+
+README, capability/CLI matice programmatic-queries, compiler-inspection, fixture
+README, production-analysis-progress a acceptance-inventory reflektují všechny
+hranice těchto oprav a odkazují na change129. CLI parametry jsou beze změny;
+příklad nadále používá explicitní inspect. Spec/registry identity/revision/deps
+jsou beze změny, žádný nový Task ID. Init/installed templates bez dopadu, jejich
+chování ani obsah nebyl měněn. dataflow/inspection hooks a cizí W09/T029 moduly
+beze změny. Full suite, GH CI, provider/DB/application runtime, další Kotlin
+programmatic corpus jsou **NOT_RUN**; cílené testování má výslovnou prioritu.
+Zbývá nové nezávislé review aktuálního HEAD, opravy případných nových nálezů a merge
+reviewerem; implementer nemerguje.
+
+Finální korekční běh: **147 PASS /0FAIL /0SKIP /85.27s**, z toho45 W07,
+log `/tmp/kgmaker-w07-review-final3.log`, JUnit `/tmp/kgmaker-w07-review-final3.xml`.
+Obsahuje všech šest actual snapshot/overload/mutable-Qfield scénářů bez Javac
+errors, strict IR/replay negativy, staré graph1/2/3 a payloady, scan/hook bez
+implicitních procesů, error/timeout/cancel last-valid-store i vybrané
+ORM/JPQL/named-query/field/return/worker-protocol regrese. `git diff --check` PASS.
+Po tomto běhu se source ani testy nemění; následuje semantic/dokumentace/publikace.
+
+Scoped semantic correction vychází ze skutečného předchozího HEAD baaf573.
+Packet `f8b41472bdb539a34b93be40ebdd49e74fefd69b902bb57f53d2140923b93957`
+reanchored14 dotčených konceptů/73 vztahů; `semantic apply` a `semantic validate`
+**PASS**, celkově49 konceptů/160 vztahů. Programatická kontrola proti baaf573
+potvrdila totožné ID/meaning/evidence/confidence všech původních konceptů/vztahů
+(pouze aktuální řádky/structural IDs) a přesnou rovnost312 historických epizod.
+Oficiální `memory capture --base baaf573c6c5ad8a3ba24141c4a3d668e303be090
+--validation targeted=passed --validation worker_build=passed` přidal korekční
+epizodu `51c3863a5f5591b94147d34294abaad56e715a8a9b016d2c9d01cd76097a46ef`;
+celkem313. Tentokrát existoval skutečný předchozí index a recall před opravou;
+nejde o retrospektivní doplnění chybějícího původního pre-task graphu. Po zápisu
+tohoto záznamu následuje pouze freshness refresh téhož semantic rozsahu a generovaný
+scan, bez ručních změn GRAPH.md/mmd a bez nové source/test změny. Workflow iteration2
+obsahuje implementation artifact a přesný actual test receipt, stav review;
+nezávislé APPROVE za reviewera vytvořeno nebylo.
+
+Freshness refresh packet `8cab5abf09e294bc7d78be1e9acd47808c6bb1bb8a357360d8a703a91a9df4ca`: apply/validate **PASS**; scan **PASS**,606files/6411declarations. Zachování49/160/312 znovu ověřeno, aktuálně49/160/313. Finální redakční upřesnění směru snapshotu nemění source/test kontrakt; graf se regeneruje po tomto zápisu.

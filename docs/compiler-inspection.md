@@ -1532,6 +1532,13 @@ jsou povinné. Žádný SQL text se nesyntetizuje. Pouze spotřebovaný predicat
 vytvoří `filters_by`; unused selector/projection-only jej nevytvoří. Criteria
 where reset/clear a QueryDSL accumulation jsou odlišené. Custom fragment je
 potenciální deklarovaná kompozice, nikoli Spring runtime dispatch.
+Executable Criteria snapshot vzniká při `EntityManager.createQuery`; pozdější
+změny builderu jej nepřepisují. Opakované snapshoty jsou oddělené UNKNOWN intent.
+QueryDSL attribute evidence vyžaduje final source field; mutable/reassigned člen
+ji nedostane. Direct Specification implementation musí mít Javac `Elements.overrides`
+důkaz pro dependency `toPredicate` a matching descriptor; overload ani chybějící
+contract tuto autoritu nezíská. Saved intent používá `programmatic-query-2`;
+v1 replay je odmítnut a vyžaduje explicitní reinspection, schema grafu se nemění.
 
 [Úplná ověřená matice a CLI příklad](programmatic-queries.md) ·
 [actual Javac/APT fixture](../fixtures/criteria-queries/README.md) ·

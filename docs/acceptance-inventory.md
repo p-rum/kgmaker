@@ -1474,14 +1474,14 @@ value-flow intersection separately; see [change125 step11](changes/125_backendFr
 
 ## T003-S06-W07 — programmatic query intent
 
-Delivery PR_OPEN při předání; verification VERIFIED_IN_SCOPE, Java/Javac scope.
-Konečný targeted výsledek **134 PASS /0SKIP /64.98s**, z toho32W07; full/GHCI NOT_RUN. Baseline
+Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE, Java/Javac scope.
+Korekční targeted výsledek **147 PASS /0SKIP /85.27s**, z toho45W07; full/GHCI NOT_RUN. Původní134PASS je historický pre-review checkpoint. Base
 `7bb8b8d389c461c684197704203a99dcb2b83724`; [change129](changes/129_criteriaSpecificationQuerydsl.md)
 records actual commands/results and separate fixes. No whole S06 completion.
 
 | Acceptance | Source/fixture/check | Boundary |
 |---|---|---|
 | T003-S06-W07-AC01 | `test_actual_criteria_specification_querydsl_and_fragment`, actual QueryDSL APT + official API JARs; `test_actual_criteria_where_replaces_querydsl_where_accumulates_and_helpers_are_unknown` | Only supported root/equality intent, query=null, no runtime/data proof |
-| T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; invalid/timeout/cancel preserve last valid generation |
-| T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
+| T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; old intent v1 replay rejected pending explicit reinspection; invalid/timeout/cancel preserve last valid generation |
+| T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases; `test_actual_review_query_state_and_callable_boundaries` (6 cases), immutable field/override replay checks | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
 | T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |

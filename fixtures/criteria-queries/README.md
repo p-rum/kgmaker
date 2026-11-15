@@ -23,6 +23,10 @@ Criteria, Specification lambda/explicit implementation, QueryDSL String/Number
 paths and a repository fragment. Negative cases include dynamic root/attribute/
 predicate, ambiguous fragments, official API source shadowing, unused selectors,
 unsupported projections, access conflicts, stale context and invalid IR.
+Review regressions compile executable Criteria snapshots, repeated execution of
+one builder, a legal reassignment of a non-final generated Qfield, and a same-name
+Specification overload. The genuine override deliberately has no `@Override`.
+Every case asserts zero Javac errors before checking the bounded inference.
 See [capabilities](../../docs/programmatic-queries.md) and
 [change129](../../docs/changes/129_criteriaSpecificationQuerydsl.md).
 

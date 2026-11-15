@@ -121,7 +121,7 @@ def test_actual_criteria_specification_querydsl_and_fragment(actual):
 
 @pytest.mark.parametrize('mutation', ['missing_version', 'unknown_version', 'bool_version', 'foreign_parameter',
                                       'class_type', 'source_hash', 'foreign_call', 'bad_receiver', 'querydsl_factory',
-                                      'binding_reference', 'malformed_status'])
+                                      'binding_reference', 'malformed_status', 'override_target', 'override_descriptor'])
 def test_invalid_actual_query_ir_is_rejected_without_store_mutation(actual, tmp_path, monkeypatch, mutation):
     from copy import deepcopy
     from kgmaker.inspection import validate_response
@@ -142,6 +142,10 @@ def test_invalid_actual_query_ir_is_rejected_without_store_mutation(actual, tmp_
     elif mutation == 'binding_reference':
         next(n for n in _walk(body['body']) if n.get('binding_ref', {}).get('kind') == 'LOCAL_VARIABLE')['binding_ref']['id'] = 'wrong-binding'
     elif mutation == 'malformed_status': body['query_ir_status'] = []
+    elif mutation.startswith('override_'):
+        method = next(s for s in response['symbols'] if s.get('query_override'))
+        if mutation == 'override_target': method['query_override'] = 'foreign'
+        else: method['descriptor'] = '()V'
     elif mutation == 'foreign_call': call['call_site'] = next(s['id'] for s in response['call_sites'] if s['caller'] != body['method'])
     elif mutation == 'bad_receiver': call['receiver']['field_receiver'] = 5
     else:
@@ -153,7 +157,9 @@ def test_invalid_actual_query_ir_is_rejected_without_store_mutation(actual, tmp_
     assert graph.to_dict() == before
 
 
-@pytest.mark.parametrize('mutation', ['stale', 'foreign_context', 'candidate_tamper', 'target_source', 'missing_call'])
+@pytest.mark.parametrize('mutation', ['stale', 'foreign_context', 'candidate_tamper', 'target_source', 'missing_call',
+                                     'legacy_intent', 'override_source', 'override_missing',
+                                     'querydsl_mutable', 'querydsl_factory_source'])
 def test_replay_rejects_invalid_programmatic_provenance(actual, mutation):
     from copy import deepcopy
     from kgmaker.framework import augment_framework_graph
@@ -162,9 +168,24 @@ def test_replay_rejects_invalid_programmatic_provenance(actual, mutation):
     context = deepcopy(original_context)
     symbols = {s['id']: s for s in graph.symbols}
     method = next(s for s in graph.symbols if s.get('name') == 'criteria' and s.get('programmatic_queries'))
+    if mutation.startswith('override_'):
+        method = next(s for s in graph.symbols if s.get('query_override') and s.get('programmatic_queries'))
+    if mutation.startswith('querydsl_'):
+        method = next(s for s in graph.symbols if s.get('name') == 'querydsl' and s.get('programmatic_queries'))
     if mutation == 'stale': context['freshness'] = 'STALE'
     elif mutation == 'foreign_context': method['programmatic_queries'][0]['context_id'] = 'foreign'
     elif mutation == 'candidate_tamper': method['programmatic_queries'][0]['entity'] = 'other.Order'
+    elif mutation == 'legacy_intent':
+        from kgmaker.analysis_model import digest
+        record = method['programmatic_queries'][0]
+        record['version'] = 1
+        record['id'] = digest({k: v for k, v in record.items() if k != 'id'})
+    elif mutation == 'override_source': symbols[method['query_override']]['origin'] = 'handwritten'
+    elif mutation == 'override_missing': method.pop('query_override')
+    elif mutation.startswith('querydsl_'):
+        member = symbols[method['programmatic_queries'][0]['attributes'][0]['symbol']]
+        if mutation == 'querydsl_mutable': member['modifiers'].remove('final')
+        else: symbols[member['querydsl_path']['factory']]['origin'] = 'handwritten'
     else:
         witness = next(w for w in method['programmatic_queries'][0]['witnesses'] if w.get('call_site'))
         if mutation == 'target_source': symbols[witness['compiler_target']]['origin'] = 'handwritten'
@@ -192,7 +213,7 @@ def test_old_graph_and_worker_protocol_remain_readable(actual, version):
             for key in ('query_type', 'class_literal', 'query_lambda', 'field_receiver'):
                 node.pop(key, None)
     for symbol in response['symbols']:
-        for key in ('querydsl_path', 'query_type_contracts', 'query_callable_type', 'query_callable_symbol'):
+        for key in ('querydsl_path', 'query_type_contracts', 'query_callable_type', 'query_callable_symbol', 'query_override'):
             symbol.pop(key, None)
     validate_response(response, context)
 
@@ -485,3 +506,81 @@ def test_actual_duplicate_entity_compiler_error_cannot_select_one_definition(tmp
         assert query.metadata['analysis_status'] == 'UNKNOWN'
         assert 'COMPILER_BODY_UNAVAILABLE' in query.metadata['gaps']
         assert not any(e.source == query.id for e in graph.edges)
+
+
+@pytest.mark.parametrize('scenario', ['snapshot', 'multiple', 'querydslSnapshot', 'querydslMultiple', 'overload', 'mutable_path'])
+def test_actual_review_query_state_and_callable_boundaries(tmp_path, scenario):
+    """Review111 regressions use real API/APT sources and require zero Javac errors."""
+    paths = project(tmp_path)
+    (tmp_path / 'src/main/java/demo/ReviewQueries.java').write_text('''package demo;
+import jakarta.persistence.*;
+import jakarta.persistence.criteria.*;
+final class ReviewQueries {
+    java.util.List<Order> snapshot(EntityManager em) {
+        var cb=em.getCriteriaBuilder(); var q=cb.createQuery(Order.class); var r=q.from(Order.class);
+        q.where(cb.equal(r.get("status"), "OPEN")); var typed=em.createQuery(q); q.where();
+        return typed.getResultList();
+    }
+    java.util.List<Order> multiple(EntityManager em) {
+        var cb=em.getCriteriaBuilder(); var q=cb.createQuery(Order.class); var r=q.from(Order.class);
+        q.where(cb.equal(r.get("status"), "OPEN")); em.createQuery(q).getResultList();
+        q.where(cb.equal(r.get("id"), 1L)); return em.createQuery(q).getResultList();
+    }
+    java.util.List<Order> querydslSnapshot(com.querydsl.jpa.impl.JPAQueryFactory factory) {
+        var o=QOrder.order; var q=factory.selectFrom(o).where(o.status.eq("OPEN"));
+        var rows=q.fetch(); q.where(o.id.eq(1L)); return rows;
+    }
+    java.util.List<Order> querydslMultiple(com.querydsl.jpa.impl.JPAQueryFactory factory) {
+        var o=QOrder.order; var q=factory.selectFrom(o).where(o.status.eq("OPEN"));
+        q.fetch(); q.where(o.id.eq(1L)); return q.fetch();
+    }
+}
+final class ReviewSpecification implements org.springframework.data.jpa.domain.Specification<Order> {
+    public Predicate toPredicate(Root<Order> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+        return cb.equal(root.get("status"), "OPEN");
+    }
+    public Predicate toPredicate(Root<Order> root, CriteriaBuilder cb) {
+        return cb.equal(root.get("id"), 1L);
+    }
+}''')
+    if scenario == 'mutable_path':
+        qpath = tmp_path / 'src/generated/java/demo/QOrder.java'
+        qpath.write_text(qpath.read_text().replace('public final StringPath status', 'public StringPath status'))
+        page = tmp_path / 'src/main/java/demo/Queries.java'
+        page.write_text(page.read_text().replace(
+            'return factory.selectFrom(order).where(order.status.eq(status)).fetch();',
+            'order.status = com.querydsl.core.types.dsl.Expressions.stringPath("unrelated"); '
+            'return factory.selectFrom(order).where(order.status.eq(status)).fetch();'))
+    result = inspect(tmp_path, paths, publish=False)
+    assert not [d for d in result['diagnostics'] if d.get('code', '').startswith('JAVAC_')]
+    graph = KnowledgeGraph.from_dict(result['graph'])
+    symbols = {s['id']: s for s in graph.symbols}
+    nodes = {n.id: n for n in graph.nodes}
+    def filters(query):
+        return {nodes[e.target].metadata['attribute'] for e in graph.edges
+                if e.source == query.id and e.kind == 'filters_by'}
+    if scenario == 'overload':
+        queries = [q for q in programmatic(graph) if symbols[q.metadata['method']].get('owner') == 'demo.ReviewSpecification']
+        assert len(queries) == 1
+        method = symbols[queries[0].metadata['method']]
+        assert len(method['parameter_types']) == 3
+        assert 'Override' not in str(method.get('annotations', []))
+        assert queries[0].metadata['analysis_status'] == 'COMPLETE'
+        assert filters(queries[0]) == {'status'}
+    elif scenario in {'multiple', 'querydslMultiple'}:
+        queries = [q for q in programmatic(graph) if q.name == scenario + (':CRITERIA' if scenario == 'multiple' else ':QUERYDSL')]
+        assert len(queries) == 2
+        for query in queries:
+            assert query.metadata['analysis_status'] == 'UNKNOWN'
+            assert 'MULTIPLE_QUERIES_UNSUPPORTED' in query.metadata['gaps']
+            assert not any(e.source == query.id for e in graph.edges)
+    else:
+        name = {'snapshot': 'snapshot:CRITERIA', 'querydslSnapshot': 'querydslSnapshot:QUERYDSL', 'mutable_path': 'querydsl:QUERYDSL'}[scenario]
+        query = next(q for q in programmatic(graph) if q.name == name)
+        if scenario in {'snapshot', 'querydslSnapshot'}:
+            assert query.metadata['analysis_status'] == 'COMPLETE'
+            assert filters(query) == {'status'}
+        else:
+            assert query.metadata['analysis_status'] == 'PARTIAL'
+            assert 'QUERYDSL_MUTABLE_PATH_UNSUPPORTED' in query.metadata['gaps']
+            assert not filters(query)

@@ -152,6 +152,22 @@ public final class JavaFrontend {
                 Map<String,Object> location=loc(tree);
                 if(location.get("range")==null)return null; // compiler-generated constructor has no invented source range
                 caller=method(executable,location);
+                // Only the actual dependency interface override grants Specification
+                // intent. A same-name overload (with or without @Override) is not it.
+                if(executable.getEnclosingElement() instanceof TypeElement declaring) {
+                    for(var parent:types.directSupertypes(declaring.asType())) {
+                        if(parent instanceof DeclaredType d && d.asElement() instanceof TypeElement contract
+                                && contract.getQualifiedName().contentEquals("org.springframework.data.jpa.domain.Specification")
+                                && trees.getPath(contract)==null) {
+                            for(var member:contract.getEnclosedElements()) {
+                                if(member instanceof ExecutableElement candidate
+                                        && candidate.getSimpleName().contentEquals("toPredicate")
+                                        && elements.overrides(executable,candidate,declaring))
+                                    state.symbols.get(caller).put("query_override",method(candidate,null));
+                            }
+                        }
+                    }
+                }
                 var literal=selectorFacts.literalReturn(executable,tree,errorAt(tree));
                 if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
                 state.symbols.get(caller).putAll(registrationFacts.method(executable,tree,getCurrentPath(),errorAt(tree)));

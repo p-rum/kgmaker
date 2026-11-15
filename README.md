@@ -649,6 +649,10 @@ Java/Javac má nyní [bounded Criteria/Specification/QueryDSL projekci](docs/pro
 entity-root selection a equality predicates přes skutečné compiler API/binding
 identity včetně unique repository fragments. `query` zůstává null, dynamické
 části PARTIAL/UNKNOWN a dostupnost UNKNOWN. [Change129](docs/changes/129_criteriaSpecificationQuerydsl.md)
+upřesňuje executable snapshoty, final QueryDSL členy a compiler-proven Specification
+override; stejnojmenný overload query autoritu nezíská. Více executable snapshotů
+v jednom těle zůstává UNKNOWN. Saved intent v1 vyžaduje explicitní reinspection na v2.
+Change129 dále
 uvádí actual API/APT fixture, kompatibilitu a cílené výsledky. Širší provider
 syntax, Kotlin programmatic dotazy a úplná schema/deployment availability
 zůstávají mimo tento rozsah.
