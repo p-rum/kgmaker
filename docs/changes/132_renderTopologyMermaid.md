@@ -130,6 +130,7 @@ items remain outside this change.
 | `node -p "require('./tests/rendering/node_modules/jsdom/package.json').version"` | PASS — 26.0.0 |
 | Mermaid `parse` + actual `render` via `tests/rendering/validate_t021_topology.mjs` | PASS — compared hashed node IDs and edge endpoints for malicious golden (5/4) and actual T016 HTTP (2/1) and Kafka (3/2) outputs; DOM contains no script, image, link or event-handler nodes/attributes |
 | `git diff --check` | PASS — clean |
+| implementation memory capture | PASS — `episode:45dbd0b78a458f82bfd57b89c6ac607aab4486a576dfc95c910b407048e8a2e7`, base `9c86d29fc267014e2bee4b197c7692f17a1cda93`; 51/173/323 with parent episodes preserved |
 | `python3 -m pytest -q` | NOT_RUN — celé pytest se spouští až po dokončení balíčku dle pokynu uživatele |
 | GH CI | NOT_RUN — PR has not been opened |
 | Full W09 producer/compiler and runtime/data tests | NOT_RUN — T021 consumes their merged captured topology contract and adds no producer or runtime behavior |
@@ -140,4 +141,8 @@ No serialized schema, graph/store, cache, worker or migration format changed; no
 migration is needed. T017 omission/frontier state is retained in the diagram's
 escaped metadata comment and is not rendered as a false topology node. The graph
 remains a static selected snapshot. Broader production coverage and runtime/data
-availability are not established by these renderer/parser fixtures. Remaining work: report-main ordinary merge and targeted integration identity check, final semantic workflow after that merge, exact source diff checks, commit/push, remote diff and CI evidence, followed by independent review and any requested fixes.
+availability are not established by these renderer/parser fixtures. Remaining work: merge the current T029 main when its exact SHA is provided, repeat focused integration checks, refresh semantic capture/scan and status, commit/push, verify remote diff and then hand to independent review.
+
+### Workflow provenance
+
+The T021 task runtime record is `task:58d9577d5d7598ce17925f8e3a2fcf7ee24f96e1aa1983297d8ba4663eb5f558`. The source/architecture audit and T016/T017/T019 contract verification were performed before code changes. The task runtime's analyze and plan artifacts were recorded after implementation had begun; they document the verified decisions and are not represented as pre-implementation gates. The implementation and targeted-test artifacts contain the actual changed paths and outcomes; independent review is still pending.

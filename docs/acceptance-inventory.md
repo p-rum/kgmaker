@@ -1496,6 +1496,17 @@ PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
 
 
+## T003-S09-W05 — complete analytical report (PR_OPEN / VERIFIED_IN_SCOPE)
+
+Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_completeAnalysisReport.md),
+[capability/CLI](complete-analysis-report.md). Current integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131. Subsequent publication audit: 151 PASS / 0 SKIP / 2 DESELECTED; nested empty-parent cleanup, concurrent content preservation, hardlink alias rejection and exact pinned JSON payload are covered by five new tests. Actual post-fix report fixture: 5 PASS / 0 SKIP / 26.31 s. [PR112](https://github.com/p-rum/kgmaker/pull/112).
+
+| Acceptance | Public test | Bounded evidence |
+|---|---|---|
+| AC01 | `tests/test_complete_analysis_report.py`, `tests/test_complete_analysis_report_actual.py` | Independent facets, evidence/questions/changes/acceptance/test trace; declared business/tool blockers. Actual Javac21/TS5.7.3/React BEFE artifact and separate SOURCE_ONLY template/PDF capability. |
+| AC02 | `tests/test_feature.py`, `tests/test_feature_fixture.py`, `tests/test_unified_flow_views.py` legacy cases | Existing feature v1 candidates/receipts and graph/store v1/v2/v3 readable, optional blocker type additive. |
+| AC03 | report late input drift/abort tests, scoped absence and ambiguous evidence tests; actual foreign path/artifact drift | No inference uplift, no implicit worker/network; invalid/cancelled/timeout keeps last valid report and inputs. |
+| AC04 | [scope matrix](complete-analysis-report.md#actual-cross-layer-acceptance-and-boundary) | Single-context feature selection unchanged. Artifact citation is not a validated cross-context path. No runtime/data/PDF rendering claim; full suite NOT_RUN by user instruction. |
 ## T003-S06-W07 — programmatic query intent
 
 Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE, Java/Javac scope.
@@ -1515,7 +1526,7 @@ records actual commands/results and separate fixes. No whole S06 completion.
 
 ## T021 — topology Mermaid (current implementation checkpoint)
 
-Base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
+Integration base `9c86d29fc267014e2bee4b197c7692f17a1cda93` (ordinary merge); original renderer base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
 T017 merge `64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
 `0dcbf4a0fb23cc5d860f93aeee8da9b86bab4e40`, and W09 `cceb1109`. The combined
 targeted run `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q
@@ -1525,7 +1536,7 @@ tests/test_t005_add_view_model.py::test_existing_graph_loader_still_accepts_lega
 reported 129 PASS / 0 SKIP in 5.77s on the current source. The T021-specific file
 reported 9 PASS / 0 SKIP / 1.72s, including actual T016 HTTP and Kafka diagrams.
 Mermaid 11.4.1 and jsdom 26.0.0 parse/render ran under Node v24.22.1; full suite remains NOT_RUN per package-level targeted-only
-sequencing. The selected compatibility case also confirms graph schema 1/2/3 loading.
+sequencing. The selected compatibility case also confirms graph schema 1/2/3 loading. The report source identity integration check was attempted and SKIP because its trusted prebuilt JVM worker is unavailable; see change132.
 Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
 
 | Acceptance | Current evidence | Status |
