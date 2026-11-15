@@ -363,6 +363,7 @@ kgmaker feature prepare --root . --requirement requirements/new-feature.md --id 
 kgmaker feature validate --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
 kgmaker feature apply --root . --analysis new-feature --candidate .kgmaker/analyses/new-feature/candidate.json
 kgmaker feature report --root . --analysis new-feature
+kgmaker feature report --root . --analysis new-feature --format json
 ```
 
 `--context` is optional when the selected scope has at most one fresh compiler
@@ -371,7 +372,11 @@ context ID and stores it with `--scope` in the packet. Validate, apply, status a
 report reuse that selection; passing a different selection is rejected.
 
 Run `kgmaker init` to install the `kgmaker-analyst` custom agent and JetBrains
-analysis command instructions. See [workflow, schema and exact limitations](docs/feature-analysis.md)
+analysis command instructions. Reports expose independent Required/Existing/Missing/Derived/External/Unresolved facets,
+explicit business/tool blockers and a requirement-linked delivery/test plan. Static
+presence does not imply data availability; execution remains NOT_RUN. See the
+[complete report scope](docs/complete-analysis-report.md) and
+[change131](docs/changes/131_completeAnalysisReport.md). See [workflow, schema and exact limitations](docs/feature-analysis.md)
 and the [fixture report](docs/generated/features/additional-hedge-example.md).
 This implements a subset of T001, including scoped positive availability proofs,
 Flyway, explicit workspaces, bounded offline XLSX extraction and the fake Confluence

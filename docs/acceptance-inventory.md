@@ -1494,3 +1494,16 @@ PR108 merge at9f538634 and its317 targeted review PASS are historical upstream
 evidence ([audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441)).
 PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
+
+
+## T003-S09-W05 — complete analytical report (IN_PROGRESS / PARTIAL)
+
+Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_completeAnalysisReport.md),
+[capability/CLI](complete-analysis-report.md). Actual fixture results will be recorded before PR.
+
+| Acceptance | Public test | Bounded evidence |
+|---|---|---|
+| AC01 | `tests/test_complete_analysis_report.py`, `tests/test_complete_analysis_report_actual.py` | Independent facets, evidence/questions/changes/acceptance/test trace; declared business/tool blockers. Actual Javac21/TS5.7.3/React BEFE artifact and separate SOURCE_ONLY template/PDF capability. |
+| AC02 | `tests/test_feature.py`, `tests/test_feature_fixture.py`, `tests/test_unified_flow_views.py` legacy cases | Existing feature v1 candidates/receipts and graph/store v1/v2/v3 readable, optional blocker type additive. |
+| AC03 | report late input drift/abort tests, scoped absence and ambiguous evidence tests; actual foreign path/artifact drift | No inference uplift, no implicit worker/network; invalid/cancelled/timeout keeps last valid report and inputs. |
+| AC04 | [scope matrix](complete-analysis-report.md#actual-cross-layer-acceptance-and-boundary) | Single-context feature selection unchanged. Artifact citation is not a validated cross-context path. No runtime/data/PDF rendering claim; full suite NOT_RUN by user instruction. |

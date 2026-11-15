@@ -19,7 +19,7 @@ are implemented in the supported subset described in
 | Workspace/schema | Explicit supplied repos, content caches, selected Flyway stream/target | Full compiler cross-repo and ORM coverage |
 | Budget | Full metadata manifest, selected source context and explicit omissions | Dependency-aware relevance and resumable packets |
 | Freshness | Content baseline, no timestamp identity | Whole-packet invalidation remains for unrelated source changes |
-| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings and static exact-arity fragments; unsupported `th:each`/`th:with` local scopes stay UNKNOWN | Full cross-layer paths, loop/alias scope modeling, other template dialects and richer artifact coverage |
+| Agents/reports | Analyst/data-auditor routing, Czech/English reports, immutable revisions; literal Thymeleaf model/template bindings and static exact-arity fragments; unsupported `th:each`/`th:with` local scopes stay UNKNOWN | Multi-context feature impact paths (a separately supplied BEFE artifact may be cited), loop/alias scope modeling, other template dialects and richer artifact coverage |
 | Confluence/XLSX | Content-bound offline Confluence approvals; bounded XLSX sheets/cells/named ranges/formula dependencies; fake sync adapter with hash/version approval; offline connection configuration | Live adapter and integration execution are deferred |
 
 No model client, MCP server or implicit build/network call is introduced by feature
@@ -97,7 +97,13 @@ questions; it never synthesizes an absent variant. Plain query remains AS_IS onl
 `query --analysis ID` includes a specific validated proposal and labels every hit
 AS_IS/TO_BE. A stale mixed query returns diagnostics instead of current-looking hits.
 
-`report --format json` emits the stored analysis, completion and stale diagnostics.
+`report --format json` emits the stored analysis, completion, stale diagnostics and
+additive `report_projection` schema v1. Markdown uses the same independent facets,
+business/tool blockers and requirement-linked delivery/acceptance/test projection.
+See [complete report semantics and actual scope](complete-analysis-report.md) and
+[change131](changes/131_completeAnalysisReport.md). The original analysis envelope
+and receipts remain unchanged; optional question `blocker_kind` is a declaration,
+with legacy absence projecting as UNCLASSIFIED.
 Markdown is the default. All report output must be under
 `docs/generated/features/`; custom filenames are allowed there. Absolute paths,
 traversal and symlink components are rejected. Generated feature reports, including

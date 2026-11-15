@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import feature
 from .analysis_model import AnalysisError, atomic_write, digest, inventory_candidate, read_json, safe_path
-from .analysis_report import render_report
+from .analysis_report import render_report, report_projection
 from .analysis_validation import validate_candidate
 
 
@@ -83,22 +83,29 @@ def run(args) -> int:
         elif command == "status":
             result = feature.status(root, args.analysis)
         else:
-            packet = feature.load_packet(root, args.analysis)
+            from .report_publication import ReportGuard
+            guard = ReportGuard(root)
+            packet = guard.read(safe_path(root, f".kgmaker/analyses/{args.analysis}/packet.json"),
+                                lambda: feature.load_packet(root, args.analysis))
             path = safe_path(root, f".kgmaker/analyses/{args.analysis}/analysis.json")
-            candidate = read_json(path) if path.exists() else inventory_candidate(packet)
+            guard.watch(path)
+            applied = path.exists()
+            candidate = guard.read(path) if applied else inventory_candidate(packet)
             # Historical reports must validate against the exact revision they used.
             historical = packet
             if candidate.get("packet_id") != packet["packet_id"]:
-                historical = read_json(safe_path(root, f".kgmaker/analyses/{args.analysis}/history/packet-{candidate['revision']}.json"))
+                historical = guard.read(safe_path(root, f".kgmaker/analyses/{args.analysis}/history/packet-{candidate['revision']}.json"))
                 if candidate.get("packet_id") != historical.get("packet_id") or historical.get("packet_id") != feature.packet_identity(historical):
                     raise AnalysisError("Historical packet integrity mismatch")
+            guard.bind_sources(historical)
             stale = feature.freshness(root, historical)
             from .availability import observation_staleness
-            stale += observation_staleness(candidate)
+            observed_stale = observation_staleness(candidate)
+            stale += observed_stale
             if historical != packet:
                 stale.append("Newer analysis packet exists; report uses a historical revision")
-            if path.exists():
-                receipt = read_json(safe_path(root, f".kgmaker/analyses/{args.analysis}/receipts/{candidate['revision']}.json"))
+            if applied:
+                receipt = guard.read(safe_path(root, f".kgmaker/analyses/{args.analysis}/receipts/{candidate['revision']}.json"))
                 if receipt != {"candidate_hash": digest(candidate), "packet_id": candidate["packet_id"], "revision": candidate["revision"]}:
                     raise AnalysisError("Stored analysis differs from its validated apply receipt")
             # An unchanged receipt establishes that this historical candidate passed
@@ -108,14 +115,18 @@ def run(args) -> int:
                 errors = validate_candidate(root, historical, candidate)
                 if errors:
                     raise AnalysisError("Stored analysis failed validation: " + "; ".join(errors))
-            result = {"analysis": candidate, "stale": stale, "completion": candidate["completion"], "exit_code": 3 if stale else 0}
+            result = {"analysis": candidate, "report_projection": report_projection(candidate, historical, stale), "stale": stale, "completion": candidate["completion"], "exit_code": 3 if stale else 0}
             output = args.output or f"docs/generated/features/{args.analysis}.{'json' if args.format == 'json' else 'md'}"
             # Restrict reports to their reserved directory, keeping them out of evidence.
             if not output.startswith(feature.GENERATED_PREFIX):
                 raise AnalysisError("Feature report output must be under docs/generated/features/ to prevent evidence feedback")
             target = safe_path(root, output)
-            rendered = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n" if args.format == "json" else render_report(candidate, historical, stale, path.exists())
-            atomic_write(target, rendered)
+            rendered = json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n" if args.format == "json" else render_report(candidate, historical, stale, applied)
+            def verify_report():
+                guard.verify()
+                if observation_staleness(candidate) != observed_stale:
+                    raise AnalysisError("Report observation freshness changed during publication", 3)
+            atomic_write(target, rendered, before_replace=verify_report)
             result = {"output": output, "completion": candidate["completion"], "stale": stale, "exit_code": result["exit_code"]}
         if not result["exit_code"] and args.require_complete and result["completion"].get("processing_status") != "COMPLETE":
             result["exit_code"] = 4
