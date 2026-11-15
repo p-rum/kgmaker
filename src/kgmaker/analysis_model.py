@@ -88,7 +88,7 @@ def read_json(path: Path) -> Any:
         raise AnalysisError(f"Invalid JSON in {path.name}: {exc}") from exc
 
 
-def atomic_write(path: Path, text: str) -> None:
+def atomic_write(path: Path, text: str, *, before_replace=None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix=".kgmaker-", dir=path.parent)
     try:
@@ -96,6 +96,8 @@ def atomic_write(path: Path, text: str) -> None:
             stream.write(text)
             stream.flush()
             os.fsync(stream.fileno())
+        if before_replace is not None:
+            before_replace()
         os.replace(name, path)
     finally:
         if os.path.exists(name):

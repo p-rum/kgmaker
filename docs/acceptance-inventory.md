@@ -1392,3 +1392,18 @@ Public actual Javac a feature graph_selection/roundtrip regrese prošly beze zm�
 runtime identit. **173 PASS / 0 SKIP / 3.50 s + 31 PASS / 1.23 s**, nezávislé repro 4 PASS / 0.14 s.
 Delivery PR_OPEN; nové nezávislé review očekáváno. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
 obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
+
+### T003-S07-W09 — unified flow model
+
+Delivery IN_PROGRESS; verification PARTIAL před finální integrační kontrolou.
+[Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
+
+| Acceptance | Aktuální cílený důkaz |
+|---|---|
+| W09-AC01 | `test_three_formats_share_cfg_order_provenance_and_gaps`, permutation/cycle, truthful bounded truncation, Mermaid11.4.1 actual parser deep comparison |
+| W09-AC02 | legacy v1/all, v2/v3 SOURCE_ONLY UNKNOWN; current CFG/process IDs; původní W08/provider/T025/argument/return regrese |
+| W09-AC03 | invalid refs před projection; current authority/call witness/callee CFG guard; stale/nonexecution negative; atomic timeout/cancel/interrupt cleanup bez implicitních procesů |
+| W09-AC04 | `test_actual_javac_public_formats_parser_and_readonly_failures`, fixture/golden a konkrétní limity v capability; scoped native Javac, nikoli libovolný production CFG |
+
+Předintegrační349 PASS + po exact-proof doplnění221 PASS (překrývající se sady,
+nesčítají se jako unikátní testy); full/GH CI NOT_RUN. T003-S07 stále PARTIAL.

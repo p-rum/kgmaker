@@ -1061,6 +1061,53 @@ def is_execution_callsite(site: Mapping[str, Any]) -> bool:
                                             "SPECIAL", "CONSTRUCTOR", "EXTENSION", "OPERATOR", "ACCESSOR"}
 
 
+def evidence_freshness_gaps(proofs, evidence_ids):
+    result = []
+    for evidence_id in sorted(set(evidence_ids)):
+        proof = proofs.get(evidence_id, {})
+        # Older valid v2/v3 proofs omit freshness; retain their existing
+        # context-bound behavior. An explicit state always takes precedence.
+        if 'freshness' not in proof:
+            continue
+        if proof['freshness'] == 'STALE':
+            result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
+                'reason': 'A stale proof contributes no execution or impact weight.',
+                'evidence_ids': [evidence_id]})
+        elif proof['freshness'] not in CURRENT_COMPILER_FRESHNESS:
+            result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
+                'reason': 'The proof does not establish current content.',
+                'evidence_ids': [evidence_id]})
+    return result
+
+def execution_authority_gaps(contexts, files, proofs, context_ids, evidence_ids, site=None):
+    """Shared admission contract for ranking and interprocedural CFG expansion."""
+    result = []
+    authority_contexts = set(context_ids)
+    if site:
+        authority_contexts.add(site['context_id'])
+    proof_contexts = set()
+    for identity in evidence_ids:
+        proof = proofs.get(identity, {})
+        declared_contexts = proof.get('context_ids', [])
+        if isinstance(declared_contexts, (list, tuple)):
+            proof_contexts.update(c for c in declared_contexts if isinstance(c, str))
+        if isinstance(proof.get('context_id'), str):
+            proof_contexts.add(proof['context_id'])
+    mismatched_proof_contexts = proof_contexts - authority_contexts
+    authority_contexts.update(proof_contexts)
+    invalid_contexts = sorted(c for c in authority_contexts
+                              if not _compiler_authority(contexts.get(c, {}), files))
+    invalid_proofs = sorted({identity for identity in evidence_ids
+        if (('mode' in proofs.get(identity, {}) and proofs[identity]['mode'] not in COMPILER_MODES)
+            or ('origin_trust' in proofs.get(identity, {})
+                and proofs[identity]['origin_trust'] not in COMPILER_ORIGINS))})
+    if not authority_contexts or invalid_contexts or invalid_proofs or mismatched_proof_contexts:
+        result.append({'code': 'EXECUTION_AUTHORITY_UNKNOWN', 'penalty': 3,
+            'reason': 'Execution requires a current content-bound inspection context and compatible proof authority.',
+            'context_ids': sorted(set(invalid_contexts) | mismatched_proof_contexts),
+            'evidence_ids': invalid_proofs or list(evidence_ids)})
+    return result
+
 def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execution", scope: str = "production") -> dict:
     """Read-only, versioned priority from validated graph evidence, not confidence.
 
@@ -1092,22 +1139,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     def gap(identity, code, reason, penalty, **refs):
         gaps[identity].append({'code': code, 'reason': reason, 'penalty': penalty, **refs})
     def proof_gaps(evidence_ids):
-        result = []
-        for evidence_id in sorted(set(evidence_ids)):
-            proof = proofs.get(evidence_id, {})
-            # Older valid v2/v3 proofs omit freshness; retain their existing
-            # context-bound behavior. An explicit state always takes precedence.
-            if 'freshness' not in proof:
-                continue
-            if proof['freshness'] == 'STALE':
-                result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
-                    'reason': 'A stale proof contributes no execution or impact weight.',
-                    'evidence_ids': [evidence_id]})
-            elif proof['freshness'] not in CURRENT_COMPILER_FRESHNESS:
-                result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
-                    'reason': 'The proof does not establish current content.',
-                    'evidence_ids': [evidence_id]})
-        return result
+        return evidence_freshness_gaps(proofs, evidence_ids)
 
     def context_gaps(identity, ids):
         if not ids:
@@ -1169,30 +1201,8 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
                     context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
         if kind not in EXECUTION_EDGES | SIDE_EFFECTS:
             continue
-        authority_contexts = set(record['context_ids'])
-        if related_site:
-            authority_contexts.add(related_site['context_id'])
-        proof_contexts = set()
-        for identity in relevant_proofs:
-            proof = proofs.get(identity, {})
-            declared_contexts = proof.get('context_ids', [])
-            if isinstance(declared_contexts, (list, tuple)):
-                proof_contexts.update(c for c in declared_contexts if isinstance(c, str))
-            if isinstance(proof.get('context_id'), str):
-                proof_contexts.add(proof['context_id'])
-        mismatched_proof_contexts = proof_contexts - authority_contexts
-        authority_contexts.update(proof_contexts)
-        invalid_contexts = sorted(c for c in authority_contexts
-                                  if not _compiler_authority(contexts.get(c, {}), graph.files))
-        invalid_proofs = sorted({identity for identity in relevant_proofs
-            if (('mode' in proofs.get(identity, {}) and proofs[identity]['mode'] not in COMPILER_MODES)
-                or ('origin_trust' in proofs.get(identity, {})
-                    and proofs[identity]['origin_trust'] not in COMPILER_ORIGINS))})
-        if not authority_contexts or invalid_contexts or invalid_proofs or mismatched_proof_contexts:
-            record_gaps.append({'code': 'EXECUTION_AUTHORITY_UNKNOWN', 'penalty': 3,
-                'reason': 'Execution requires a current content-bound inspection context and compatible proof authority.',
-                'context_ids': sorted(set(invalid_contexts) | mismatched_proof_contexts),
-                'evidence_ids': invalid_proofs or record['evidence_ids']})
+        record_gaps.extend(execution_authority_gaps(
+            contexts, graph.files, proofs, record['context_ids'], relevant_proofs, related_site))
         affected = {source, target}
         if related_site:
             affected.add(related_site['caller'])

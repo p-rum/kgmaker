@@ -1503,3 +1503,11 @@ remain UNKNOWN. Runtime/data availability is never promoted.
 The [supported matrix and CLI example](field-mapping.md),
 [actual manual/generated fixture](../fixtures/field-mapping/README.md) and
 [change124](changes/124_fieldAndMappingFlow.md) describe the bounded verification.
+
+## Unified flow presentation (T003-S07-W09)
+
+All four `flow render` views support JSON/Markdown/Mermaid through the same report.
+CFG presentation order preserves branches and async/loop boundaries; relation
+views do not establish execution order. Missing CFG is UNKNOWN, with strict exit4.
+See [public contract](unified-flow-views.md) and [change128](changes/128_unifiedFlowViews.md)
+for context/proof guards, atomic output and exact bounded native verification.

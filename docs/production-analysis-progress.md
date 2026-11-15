@@ -1568,3 +1568,16 @@ regrese **31 PASS / 1.23 s**; oba soubory nezávislých reprodukcí **4 PASS / 0
 Actual Javac/public CLI zůstává pozitivním důkazem; schema model není native PASS.
 Dodání PR_OPEN, verification VERIFIED_IN_SCOPE; předchozí REQUEST_CHANGES není
 zrušeno bez nového review. Full/GH CI a celý S07 nadále neuzavřené.
+
+## T003-S07-W09 — unified flow views (2026-11-15)
+
+Dodání IN_PROGRESS, verification PARTIAL do finální integrace/publikace.
+[Change128](changes/128_unifiedFlowViews.md) zaznamenává model a skutečné testy
+odděleně. `flow-view-1` přidává společné pořadí z CFG, coverage/provenance a tři
+formáty pro control-flow/process/integrations/data-flow. Relation view není CFG.
+Source/legacy bez CFG je UNKNOWN, invalid input zůstává chyba; statická expanze
+vyžaduje sdílenou W08 authority. Výstup `.kgmaker/flows/` je atomický a abort
+zachovává poslední validní generaci. Předintegrační cílená matice349 PASS, následné
+exact-proof regrese221 PASS, skutečný Javac21 a Mermaid11.4.1 parser ověřeny.
+Native Kotlin/TS binding regrese nedokládají novou obecnou CFG podporu. Whole S07,
+W09 finální integrační acceptance a full/GH CI nejsou tímto prohlášeny za hotové.

@@ -17,6 +17,11 @@ from test_t024_discover_process_triggers import inputs
 
 def setup(tmp_path):
     workspace, graph, coverage, entries = inputs(tmp_path)
+    # Explicit schema model, not a claim that this fixture executed a compiler.
+    for context in graph.contexts:
+        if context.get('analyzer_version'):
+            context.update(mode='BUILD_IMPORT', origin_trust='LOCAL_COMPILER_INPUTS',
+                worker={'protocol_version':1,'worker':'model-only','compiler_version':'model-only'})
     method = entries[('production', 'http')][0]
     symbol = next(s for s in graph.symbols if s['id'] == method)
     return workspace, graph, coverage, method, symbol
@@ -441,3 +446,18 @@ def test_finally_return_throw_clones_do_not_share_callee_continuations(tmp_path)
         bounded=build_local_process(g,inv,t,process_id='process:finally-limit',max_nodes=limit)
         assert len(bounded.steps)<=limit and bounded.technical_status=='PARTIAL'
     assert (g.to_dict(),inv.to_dict())==before
+
+
+def test_bare_legacy_context_does_not_expand_interprocedural_cfg(tmp_path):
+    w,g,c,m,s=setup(tmp_path)
+    for context in g.contexts:
+        if context.get('analyzer_version'):
+            context.update(mode='SYMBOL_RESOLVED');context.pop('worker',None);context.pop('origin_trust',None)
+    child=helper(g,s,'legacy-child')
+    add_cfg(g,child['id'],child,ir(child,'statement',label='legacy-child-body'))
+    add_cfg(g,m,s,call(g,s,child,'legacy'))
+    report=process(g,m)
+    assert report['status']=='UNKNOWN'
+    assert not any(b.get('label')=='legacy-child-body' for b in report['cfg']['blocks'])
+    assert not any(e['kind']=='call' for e in report['cfg']['edges'])
+    assert any(x['code']=='EXECUTION_AUTHORITY_UNKNOWN' for x in report['coverage']['gaps'])

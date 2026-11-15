@@ -253,15 +253,35 @@ def test_same_owner_parameter_receiver_is_not_self_invocation(tmp_path):
                and item.get("call_site") == "site-peer-async" for item in graph.diagnostics)
 
 
+def _flow_model(graph):
+    """Complete producer-shaped schema input; actual JVM tests remain separate."""
+    from dataclasses import replace
+    from hashlib import sha256
+    checksum=sha256(b'class A { void caller() { callee(); } void callee() {} }').hexdigest()
+    graph.files={'A.java':checksum}
+    graph.contexts=[{'id':'model-context','mode':'BUILD_IMPORT','scope':'production',
+        'origin_trust':'LOCAL_COMPILER_INPUTS','freshness':'CONTENT_VERIFIED',
+        'analyzer_version':'model-only','source_files':graph.files,
+        'worker':{'protocol_version':1,'worker':'model-only','compiler_version':'model-only'}}]
+    graph.evidence=[{'id':'model-proof','kind':'SYMBOL_RESOLVED','context_ids':['model-context'],'freshness':'CURRENT'}]
+    for symbol in graph.symbols: symbol['context_id']='model-context'
+    for cfg in graph.cfgs: cfg.update(context_id='model-context',evidence_ids=['model-proof'])
+    for site in graph.call_sites:
+        site.update(context_id='model-context',evidence_ids=['model-proof'],evidence_kind='SYMBOL_RESOLVED',resolution_reason='MODEL_ONLY')
+        graph.edges.extend([Edge(site['caller'],site['id'],'declares_call',evidence_kind='SYMBOL_RESOLVED',context_ids=('model-context',),evidence_ids=('model-proof',)),
+            Edge(site['id'],site['declared_target'],'resolves_to',evidence_kind='SYMBOL_RESOLVED',context_ids=('model-context',),evidence_ids=('model-proof',))])
+    return KnowledgeGraph.from_dict(graph.to_dict())
+
+
 def test_process_stops_at_async_boundary_without_claiming_execution():
     nodes = [Node(identity, "method" if identity != "site" else "call_site", identity, "A.java", line=1,
                   scope="production", role="executable_code", origin="handwritten")
              for identity in ("caller", "callee", "site")]
     nodes.extend([
         Node("proxy-path", "spring_proxy_path", "async proxy", "A.java", line=1,
-             scope="production", role="framework", origin="generated", metadata={"policy_kind": "ASYNC"}),
+             scope="production", role="configuration", origin="generated", metadata={"policy_kind": "ASYNC"}),
         Node("async-boundary", "spring_async_boundary", "async boundary", "A.java", line=1,
-             scope="production", role="framework", origin="generated")])
+             scope="production", role="configuration", origin="generated")])
     graph = KnowledgeGraph(3, ".", "now", nodes,
         [Edge("site", "proxy-path", "may_traverse_proxy"),
          Edge("proxy-path", "async-boundary", "crosses_async_boundary")],
@@ -283,7 +303,7 @@ def test_process_stops_at_async_boundary_without_claiming_execution():
               {"id": "callee-entry", "kind": "entry"}, {"id": "callee-exit", "kind": "exit"},
               {"id": "callee-error", "kind": "exceptional_exit"}],
           "edges": [{"source": "callee-entry", "target": "callee-exit", "kind": "normal"}]}])
-    report = process(graph, "caller", scope="production")
+    report = process(_flow_model(graph), "caller", scope="production")
     boundary = next(block for block in report["cfg"]["blocks"] if block.get("boundary_reason") == "async boundary")
     assert boundary["boundary_kind"] == "SPRING_ASYNC"
     assert boundary["continuation"] == "SEPARATE"
@@ -296,7 +316,7 @@ def test_process_expands_async_self_invocation_synchronously():
                   scope="production", role="executable_code", origin="handwritten")
              for identity in ("caller", "callee", "site")]
     nodes.append(Node("self-boundary", "spring_proxy_boundary", "self invocation", "A.java", line=1,
-                      scope="production", role="framework", origin="generated",
+                      scope="production", role="configuration", origin="generated",
                       metadata={"boundary_kind": "SELF_INVOCATION"}))
     graph = KnowledgeGraph(3, ".", "now", nodes,
         [Edge("site", "self-boundary", "bypasses_proxy")], {"A.java": "0"}, [], [], [],
@@ -316,7 +336,7 @@ def test_process_expands_async_self_invocation_synchronously():
               {"id": "callee-entry", "kind": "entry"}, {"id": "callee-exit", "kind": "exit"},
               {"id": "callee-error", "kind": "exceptional_exit"}],
           "edges": [{"source": "callee-entry", "target": "callee-exit", "kind": "normal"}]}])
-    report = process(graph, "caller", scope="production")
+    report = process(_flow_model(graph), "caller", scope="production")
     call = next(block for block in report["cfg"]["blocks"] if "site" in block.get("original_ids", []))
     assert call["continuation"] == "SYNCHRONOUS"
     assert call["async_scheduled"] is False

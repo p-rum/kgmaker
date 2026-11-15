@@ -62,6 +62,9 @@ def register(sub):
     p.add_argument("--format", choices=("json", "mermaid", "markdown"), default="mermaid")
     p.add_argument("--max-depth", type=int, default=3)
     p.add_argument("--max-nodes", type=int, default=500)
+    p.add_argument("--output", type=Path, help="atomic report in .kgmaker/flows/; stdout by default")
+    p.add_argument("--timeout", type=float, default=30.0, help="cooperative local render deadline")
+    p.add_argument("--cancel-file", type=Path)
     runtime = sub.add_parser("runtime", help="explicit runtime trace operations; import never starts the application")
     actions = runtime.add_subparsers(dest="runtime_command", required=True)
     p = actions.add_parser("import", help="validate and import a sanitized runtime manifest")
@@ -87,6 +90,10 @@ def indexed(args):
     graph = load_graph(root)
     if graph is None:
         raise AnalysisError("INVALID_INDEX" if (root / GRAPH_FILE).exists() else "MISSING_INDEX: run an explicit compiler inspection")
+    is_flow = getattr(args,"command",None)=="flow"
+    if graph.schema_version != 3 and is_flow:
+        if args.context: raise AnalysisError("Legacy graph has no compiler context")
+        return graph
     if graph.schema_version != 3:
         raise AnalysisError("UNSUPPORTED_INDEX: source-only/legacy index has no compiler call sites or CFG")
     from .graph_provider import validate_compiler_snapshot
@@ -107,8 +114,9 @@ def indexed(args):
         if len(selected) > 1:
             raise AnalysisError("Explicit --context required; available: " + ", ".join(c["id"] for c in selected))
     if len(selected) != 1:
+        if is_flow and not all_contexts and not args.context: return graph
         raise AnalysisError("No matching compiler analysis context")
-    if getattr(args,"command",None)=="flow" and getattr(args,"view",None)=="process":
+    if is_flow:
         # Preserve original proof tuples until process applies its selected CFG
         # scope. Otherwise projection could hide a malformed cross-scope edge.
         args._flow_context_id=selected[0]["id"]
@@ -159,6 +167,10 @@ def run(args):
             code = result.pop("exit_code", 0)
             print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
             return code
+        budget = None
+        if args.command == "flow":
+            from .flow_report import RenderBudget
+            budget = RenderBudget(args.timeout,args.cancel_file)
         graph = indexed(args)
         if args.command == "callgraph":
             from . import callgraph
@@ -193,29 +205,21 @@ def run(args):
                       "limitations": ["Generated framework entrypoints are annotation-derived; runtime registration is not observed."]}
         else:
             from . import flow
-            if args.view == "control-flow":
-                result = flow.control_flow(graph, args.entry, scope=args.scope, max_nodes=args.max_nodes)
-            elif args.view == "process":
-                result = flow.process(graph, args.entry, scope=args.scope, max_depth=args.max_depth, max_nodes=args.max_nodes, context_id=getattr(args,"_flow_context_id",None))
-            else:
-                from .views import project
-                selected = project(graph, args.scope, view=args.view)
-                result = {"status": "PARTIAL", "view": args.view, "scope": args.scope, "contexts": selected.contexts,
-                          "entry": args.entry, "nodes": [n.id for n in selected.nodes], "edges": [e.__dict__ for e in selected.edges]}
-                if args.view == "data-flow":
-                    from .return_flow import return_consumer_bindings
-                    result["return_consumer_bindings"] = return_consumer_bindings(selected)
-
-                from .dataflow import http_request_inventory
-                result["http"] = http_request_inventory(selected)
-                if args.format != "json":
-                    raise AnalysisError("Integration/data views require --format json until the framework view renderer is available")
-            if args.format == "mermaid":
-                print(flow.mermaid(result), end="")
-                return 4 if args.strict and result["status"] == "PARTIAL" else 0
-            if args.format == "markdown":
-                print(flow.markdown(result), end="")
-                return 4 if args.strict and result["status"] == "PARTIAL" else 0
+            from .flow_report import output_path
+            target=output_path(args.root,args.output,graph,args.cancel_file) if args.output else None
+            result=flow.build_report(graph,args.entry,view=args.view,scope=args.scope,
+                max_depth=args.max_depth,max_nodes=args.max_nodes,
+                context_id=getattr(args,"_flow_context_id",None),budget=budget)
+            # Recheck aliases immediately before publication, including late changes.
+            if target is not None:
+                original_check=budget.check
+                def publication_check():
+                    original_check()
+                    output_path(args.root,args.output,graph,args.cancel_file)
+                budget.check=publication_check
+            text=flow.publish(result,args.format,target,budget=budget)
+            if target is None: print(text,end="")
+            return 4 if args.strict and result["status"] in {"PARTIAL","UNKNOWN"} else 0
         print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
         return 4 if args.strict and result.get("status") in {"PARTIAL", "UNKNOWN"} else 0
     except (AnalysisError, ValueError, OSError) as error:
