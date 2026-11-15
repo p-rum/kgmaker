@@ -132,7 +132,7 @@ T003-S11-W02 přidává `build/exporters.json` (schema/protocol 1) a `build/LICE
 do resource package. Záznam obsahuje relativní cestu, SHA-256, očekávané exporter
 ID (`maven-session-2` / `gradle-composite-1`) a cestu licence. JAR obsahuje pouze
 projektový EventSpy; Maven/Gradle/JDK ani jejich závislosti se nedistribuují.
-Checksum zajišťuje vazbu obsahu, nikoli autenticitu vydavatele.
+Checksum zajišťuje vazbu obsahu, nikoli autenticitu vydavatele. Při přípravě wheelu musí aktuální trusted JAR a descriptor pocházet ze stejného explicitního běhu `workers/build/build.py`; starý lokální JAR nelze kombinovat s novým descriptor-em. Lokální oprava prostředí a hash refresh pro Maven3.9.9 /Gradle8.13 /JDK21.0.13 jsou doloženy v [change116](changes/116_parseExtendedJpqlHql.md).
 
 `project build-plan` ověří dostupný descriptor a adapter bez spuštění procesu.
 Nový plán aditivně nese `exporter_contract`, který váže také descriptor a licenci;

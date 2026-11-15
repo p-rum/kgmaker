@@ -270,11 +270,14 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 ## Development
 
 ```bash
-python -m pip install -e . pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
+python -m venv .venv
+source .venv/bin/activate  # POSIX; on Windows activate the venv from Scripts
+python -m pip install -e . pytest==8.3.4 jsonschema==4.23.0 setuptools==84.2.1 wheel==0.48.0
+python -m pip install --require-hashes -r tests/requirements-markdown.txt
 python -m pytest -q
 ```
 
-The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time. Use a clean venv rather than copying system setuptools into another Python distribution. Actual compiler/build fixtures require the documented pinned toolchains (JDK21, Kotlin2.1.10, Maven3.9.9, Gradle8.12.1/8.13); system Gradle4.4 is outside that matrix. The HTTP capture stays in pytest temporary storage. [Integration repair and current validation](docs/changes/116_parseExtendedJpqlHql.md).
 
 The required `compiler-workers` job prepares and exercises JVM/Kotlin K1, K2,
 TypeScript and the mixed Maven fixture. Its negative prerequisite matrix runs

@@ -246,3 +246,127 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
 - Zbývá nové nezávislé review přesného publikovaného base/head. Merge je
   povolen pouze po APPROVE a všech ostatních povinných kontrolách; aktuální
   full-suite FAIL nadále blokuje merge. T003-S06 tím není uzavřen.
+
+
+## Opravy integračních fixture a přípravy celé sady — 2026-11-15
+
+Společná baseline kroků je `7a054b6e96a942a1a0d2a4c2a9a5454f5f3b76da`. Jde o uživatelem vyžádané
+opravy blokací PR97 podle `T048-S03 / T048-AC03` a testovacího DoD W05,
+nikoli o novou funkci či dokončení sousedních milníků.
+Durable runtime task: `task:67eca4c4d73451dddfb4712aadc842135cd0b563a7ffd830b3900ba8614dd585`.
+
+### Portable HTTP capture — T011-S04 / AC03–AC05
+
+- `tests/test_t011_catalog_http_consumers.py`: skutečný compiler capture byl
+  úspěšný; fixture padala až při zápisu JSON na pevnou neexistující cestu
+  `/workspace/t011-validation`. Artefakt nyní vzniká v existujícím `tmp_path_factory`
+  prostoru vedle lokálního workspace. Graph je stále vytvořen skutečným workerem;
+  žádný předpřipravený/falešný capture ani odstranění assertions nepřibylo.
+- Stejná fixture se používá i v actual HTTP cross-service acceptance. Pozitivní,
+  negativní, offline a immutable input kontroly se nezměnily. Runtime HTTP
+  observation ani dostupnost vzdálené služby z toho neplyne.
+
+### Canonical Spring fixture injection — T003-S05-W01/W03 AC01, AC03
+
+- `tests/test_spring_conditions.py` a `tests/test_spring_imports.py`: zamýšlená
+  injekční pole nyní mají skutečné canonical `@Autowired`. Samotný typ pole
+  ani `@Qualifier` nejsou injekčním důkazem. Dvě původní actual K1 reprodukce
+  před opravou **2 FAIL /StopIteration**, 3.82 s.
+- Produkční `framework.py` se nemění a jeho přísný guard se neuvolňuje.
+  `Consumer.gateway` prokáže vazbu na aktivní negative-profile bean;
+  `Consumer.filtered` zachová UNKNOWN a pouze `may_inject_bean`, nikdy
+  nepodložené `injects_bean`. Původní negativní assertions zůstaly zachované.
+- Společný skutečný příkaz s K1/K2 a `KGMAKER_REQUIRE_WORKERS=1`:
+  `python -m pytest -q tests/test_t011_catalog_http_consumers.py
+  tests/test_spring_conditions.py tests/test_spring_imports.py` — **127 PASS /0 SKIP**,
+  42.80 s; `/tmp/kgmaker-pr97-fixture-fixes.log`.
+
+### Připravený K2 backend — T003-S04-W01/W04, žádná změna protokolu
+
+- Všechny Analysis API additions byly staženy přes `workers/jvm/fetch_k2.py`
+  a ověřeny proti `dependencies-k2.lock.json`; lock nebyl změněn.
+- Skutečný build: `python workers/jvm/build.py --backend k2
+  --kotlin-home /tmp/kgmaker-review-pr97-kotlin
+  --maven-repository /home/petra/.m2/repository
+  --java-home /usr/lib/jvm/java-21-openjdk-amd64
+  --analysis-api-home /tmp/kgmaker-k2-analysis-api` — **SUCCESS**.
+  Worker SHA256 `aca49fa09a6439bc8b835b8ae27395f7ffae0f532f5da7efe4288ab3c1feffc1`.
+- `/tmp/kotlinc` používá skutečný pinned compiler2.1.10; nefunkční Snap
+  launcher se nepoužívá. `pytest -q tests/test_dependency_dispatch.py -k k2`
+  s required workerem — **5 PASS**, 36 deselected. Žádná výjimka nebyla
+  zaměněna za PASS či nový skip. K2 build/CLI jsou lokální explicitní prerequisites,
+  ne implicitní instalace při scan/hook.
+
+### Čisté packaging prostředí a generated descriptor — T003-S11-W01/W02
+
+- Čistý `/tmp/kgmaker-test-venv` používá Python3.12.0, pytest8.3.4,
+  jsonschema4.23.0, setuptools84.2.1, wheel0.48.0 a hash-pinned Markdown parser.
+  Kopie Ubuntu setuptools do jiného Pythonu byla příčinou `install_layout`;
+  není součástí opravy ani finálního prostředí. Globální Python se nemění.
+- Maven3.9.9 a Gradle8.13 jsou oficiální checksumově ověřené distribuce v `/tmp`.
+  SHA512 Maven archivu:
+  `a555254d6b53d267965a3404ecb14e53c3827c09c3b94b5678835887ab404556bfaf78dcfe03ba76fa2508649dca8531c74bca4d5846513522404d48e8c4ac8b`.
+  SHA256 Gradle archivu:
+  `20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78`.
+- Stávající `workers/build/build.py` skutečně offline sestavil aktuální Maven
+  EventSpy a automaticky obnovil `workers/build/exporters.json`. Nový JAR SHA256
+  `d6aa88416fc15629b0e9a31a74e22383112337603cdbbd58b80f4e9c472aeddd`.
+  Descriptor hash nebyl změněn ručně a mismatch guard zůstal zachován.
+- `python -m pytest -q tests/test_exporter_distribution.py` proti těmto
+  toolchainům — **10 PASS**, 14.49 s, včetně instalovaného Maven i Gradle exportu.
+  Sdist/wheel/clean-install používá aktuální připravené artefakty, ne stale JAR.
+
+### Kompletní licenční podklady workeru — T003-S11-W01
+
+- První repaired full měl **1 FAIL /2263 PASS /481 SKIP /0 ERROR**, 818.32 s:
+  nový skutečně provedený installed-JVM test odmítl neúplnou lokálně připravenou
+  distribuci bez `licenses/kotlin/LICENSE.txt`. Všech původních šest FAIL a 41 ERROR
+  bylo již odstraněno. Historický log `/tmp/kgmaker-pr97-full-repaired.log`.
+- Kompletní oficiální Kotlin2.1.10 archiv byl ověřen proti CI SHA256
+  `c6e9e2636889828e19c8811d5ab890862538c89dc2a3101956dfee3c2a8ba6b1`
+  a rozbalen do `/tmp/kgmaker-kotlin-official/kotlinc`. Explicitní K1/K2 buildy
+  převzaly všech 51 licenčních souborů do obou `target/licenses/kotlin` adresářů.
+- Licence `LICENSE.txt` SHA256
+  `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`.
+  Oba worker JARy zůstaly byte-for-byte stejné jako před doplněním licencí.
+  Povinná license assertion se neměnila. Správný čistý venv nesmí být zastíněn
+  starým `/tmp/kgmaker-python-test-deps` přes PYTHONPATH.
+- `python -m pytest -q tests/test_worker_install.py` ve finálním prostředí:
+  **8 PASS /1 SKIP**, 18.11 s. TypeScript artefakt není v tomto klonu připraven;
+  jeho optional SKIP není PASS. Záznam `/tmp/kgmaker-pr97-licensed-install.log`.
+
+### Finální kontroly a hranice
+
+- Úplný skutečný běh: **2264 PASS /481 SKIP /0 FAIL /0 ERROR**, 822.30 s;
+  `/tmp/kgmaker-pr97-full-repaired-final.log`. Příkaz:
+  `PATH=/tmp/kgmaker-test-venv/bin:/tmp/apache-maven-3.9.9/apache-maven-3.9.9/bin:/tmp/gradle-8.13/bin:/tmp:/usr/lib/jvm/java-21-openjdk-amd64/bin:/usr/local/bin:/usr/bin:/bin
+  JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+  KGMAKER_WORKERS_HOME=/tmp/kgmaker-review-pr97/workers
+  KGMAKER_REQUIRE_MARKDOWN_PARSER=1 GRADLE_USER_HOME=/tmp/kgmaker-gradle-home
+  PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q -ra --durations=10 --junitxml=/tmp/kgmaker-pr97-full-repaired-final.xml`.
+- Obsahový guard před/po potvrzuje shodu všech 317 sledovaných source/test/build
+  vstupů; žádná část úspěšného full není součtem běhů přes různé snapshoty.
+  SKIP jsou stále SKIP (nepřipravené volitelné prerequisites); nejsou důkazem
+  nepodporované toolchain/platform varianty ani produkční/runtime dostupnosti.
+- XML receipt `/tmp/kgmaker-pr97-full-repaired-final.xml` rozlišuje zbývající
+  optional SKIP: 196 případů potřebuje nepřipravený pinned Kafka3.2.0 JAR,
+  další skupiny potřebují TypeScript/React či mixed Maven fixture, 50 případů
+  zvláštní compiler/coroutines vstupy a tři Gradle případy explicitní opt-in
+  `KGMAKER_TEST_GRADLE`. Windows/second-JDK gates nejsou tímto ověřené.
+  Žádná taková varianta se nepřebírá jako PASS ani jako dokončení T003.
+- Kompatibilita: aplikační Python produkční logika, CLI/API, graph/store/worker
+  schémata, Task ID a instalační instrukce/templates beze změny. README development
+  a compiler guide byly sladěny s čistým venv a explicitním buildem; CLI příklady
+  zůstávají stejné. Registry identity/revize/dependencies bez dopadu. Historické
+  neúspěšné výsledky výše zůstávají zachované s jejich SHA.
+- `git diff --check` a `python -m compileall -q src` + tři změněné testovací
+  soubory: **PASS**. `kgmaker semantic update --base 7a054b6`, aktuálním packetem
+  vázaný patch zachovávající 13 konceptů /70 vztahů, `semantic apply` a
+  `semantic validate`: **PASS**. Žádné nedoložené nové vazby nevznikly.
+  `memory capture` zaznamenal skutečné úspěšné kontroly; generované `scan`
+  a `check`: **PASS**. Výstupy nejsou ručně editované. Metadata dokumentace
+  nemění úspěšně testovaných 317 source/test/build vstupů ani 178 build artefaktů.
+- Zbývá zveřejnit tento opravený checkpoint a získat nové exact-pair review.
+  GH CI se ověřuje odděleně; místní PASS není tvrzením remote CI PASS.
+  Celé T003/T004 ani nepřipravené Windows/TypeScript/mixed-fixture varianty
+  tím nejsou označené jako dokončené. Merge jen po APPROVE a povinných kontrolách.
