@@ -91,7 +91,7 @@ Opraveno; konečná sada výše je nové ověření po opravách, nikoli přeps�
 
 Plná produkční/compiler/toolchain/Windows sada a živí hostitelé **NOT_RUN**;
 změna je čistě Python orchestrace a instrukce. Historické environmentální chyby
-celé sady z change117 se tímto neoznačují za opravené. GH CI **NOT_RUN**.
+celé sady z change117 se tímto neoznačují za opravené. GH CI: poslední pozorované běhy skončily FAIL před spuštěním kroků; viz audit níže.
 Nejde o runtime data proof, automatický runner ani automatické vytváření trace vazeb.
 
 `memory capture` **NOT_RUN**: pracovní strom zahrnuje cizí změny, které nelze
@@ -133,4 +133,16 @@ mění delivery stav z lokálního IN_PROGRESS na PR_OPEN; nemění funkční k�
 Před zveřejněním byl strom porovnán s dočasným lokálním Git indexem, který
 nezměnil uživatelův staging. Změny pyproject.toml a smazání starého skillu nejsou
 součástí PR. Merge neproveden; po dodání #98 aktualizovat base a provést nezávislé
-review aktuálního HEAD. GH CI dosud NOT_RUN.
+review aktuálního HEAD. GH CI není ověřené; viz audit níže.
+
+### Audit GitHub Actions po publikaci
+
+Pro dokumentační HEAD `ecd5a587a45801cd4bf87d54931788a5b9b6ce91` mají běhy
+[43703382892](https://github.com/p-rum/kgmaker/actions/runs/43703382892) a
+[43703378838](https://github.com/p-rum/kgmaker/actions/runs/43703378838) conclusion
+**failure**. Joby skončily failure/cancelled a všechny mají prázdné `steps`.
+Log unittest jobu 132779162086 není dostupný (BlobNotFound); konektor neposkytuje
+check-run annotations. Příčina není ověřená a nelze ji vydávat za konkrétní chybu
+kódu ani za prokázaný billing problém. Vzdálené testy jsou **NOT_RUN / neověřené**,
+nikoli PASS. Cílená lokální sada po publikaci znovu **103 PASS** a diff check PASS.
+Tato poznámka je dokumentační audit, nikoli oprava CI nebo nezávislé review HEAD.
