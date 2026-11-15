@@ -130,7 +130,7 @@ items remain outside this change.
 | `git diff --check` | PASS — clean |
 | implementation memory capture | PASS — `episode:45dbd0b78a458f82bfd57b89c6ac607aab4486a576dfc95c910b407048e8a2e7`, base `9c86d29fc267014e2bee4b197c7692f17a1cda93`; 51/173/323 with parent episodes preserved |
 | `python3 -m pytest -q` | NOT_RUN — celé pytest se spouští až po dokončení balíčku dle pokynu uživatele |
-| GitHub Actions | FAIL / UNCLASSIFIED — PR run `43765496906` has failing `gradle-build-export`, `windows-user-install`, `rendering`, Python 3.11/3.12 and `compiler-workers` jobs; Python 3.13 was cancelled. Connector returned empty step lists and `BlobNotFound` for job logs, so no code-vs-infrastructure cause could be established. Local targeted acceptance remains PASS; reviewer should inspect/retry the failed run if required. |
+| GitHub Actions | Workflow run `43765496906` concluded FAIL. All seven jobs returned empty step lists; test-step evidence is NOT_RUN. Connector log fetches returned `BlobNotFound` (404), so the cause is UNKNOWN and no code/test failure is asserted. |
 | Full W09 producer/compiler and runtime/data tests | NOT_RUN — T021 consumes their merged captured topology contract and adds no producer or runtime behavior |
 
 ## Kompatibilita, změna/konflikty a zbývající práce
