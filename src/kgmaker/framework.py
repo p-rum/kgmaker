@@ -702,7 +702,7 @@ def _safe_jpa_xml(root: Path, relative: str) -> tuple[ET.Element | None, dict[st
 def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
     """Read a selected persistence unit and bounded ORM XML class metadata."""
     descriptor = root / "META-INF/persistence.xml"
-    model: dict[str, Any] = {"classes": {}, "named_queries": [], "diagnostics": [], "active": False,
+    model: dict[str, Any] = {"classes": {}, "named_queries": [], "invalid_named_query_names": [], "diagnostics": [], "active": False,
                              "global_unknown": False, "metadata_complete": False,
                              "persistence_unit": context.get("persistence_unit"),
                              "descriptor_path": None, "descriptor_sha256": None}
@@ -846,6 +846,9 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                           "persistence_unit": model["persistence_unit"], "xml_mapping_order": order,
                           "xml_precedence": "ORM_XML_OVER_ANNOTATIONS"}
             if not query_name or not query_text:
+                if query_name:
+                    if query_name not in model["invalid_named_query_names"]:
+                        model["invalid_named_query_names"].append(query_name)
                 model["diagnostics"].append({"code": "ORM_XML_NAMED_QUERY_UNRESOLVED", "path": info["path"],
                                              "query_name": query_name or None,
                                              "reason": "XML named query requires a literal name and query body."})
@@ -1026,7 +1029,7 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
     for item in model["named_queries"]:
         grouped.setdefault(item["name"], []).append(item)
     for name, entries in grouped.items():
-        if len(entries) > 1:
+        if len(entries) > 1 or name in model["invalid_named_query_names"]:
             for item in entries:
                 item["ambiguous"] = True
             model["diagnostics"].append({"code": "ORM_XML_NAMED_QUERY_AMBIGUOUS", "query_name": name,
@@ -2317,7 +2320,24 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
             diagnostics.append({"code": "ORM_ANNOTATION_VALUE_UNRESOLVED", "path": entity["path"],
                                 "source_line": entity["line"], "annotation": "Table",
                                 "reason": "Explicit @Table values are unresolved; no physical table fallback is published."})
+        named_values = []
         for annotation_name, annotation_args in values:
+            named_simple = _simple(annotation_name)
+            if named_simple in {"NamedQueries", "NamedNativeQueries"}:
+                members = getattr(annotation_args, "members", {})
+                entries = members.get("value", members.get("queries", [])) if isinstance(members, dict) else []
+                if not isinstance(entries, list):
+                    entries = [entries]
+                child_name = "NamedNativeQuery" if named_simple == "NamedNativeQueries" else "NamedQuery"
+                for entry in entries:
+                    if isinstance(entry, dict):
+                        child_args = AnnotationArguments(
+                            ",".join(f"{key}={_format_annotation_value(value)}" for key, value in entry.items()),
+                            entry, True)
+                        named_values.append((child_name, child_args))
+                continue
+            named_values.append((annotation_name, annotation_args))
+        for annotation_name, annotation_args in named_values:
             named_kind = _simple(annotation_name)
             if named_kind not in {"NamedQuery", "NamedNativeQuery"} or not _allowed_jpa_annotation(
                     annotation_name, entity["imports"]):
@@ -3174,6 +3194,10 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
     # Merge XML named-query declarations into the same catalog used by
     # annotation declarations. Duplicate XML names remain unresolved and do
     # not overwrite an already indexed definition.
+    for invalid_name in jpa_xml.get("invalid_named_query_names", []):
+        named_queries.pop(invalid_name, None)
+        diagnostics.append({"code": "ORM_NAMED_QUERY_AMBIGUOUS", "query_name": invalid_name,
+                            "reason": "A named query name has an incomplete XML declaration; no definition is selected."})
     for item in jpa_xml.get("named_queries", []):
         name = item["name"]
         provenance = item.get("provenance", {})

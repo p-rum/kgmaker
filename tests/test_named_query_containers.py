@@ -40,3 +40,14 @@ def test_xml_named_query_duplicate_is_ambiguous_and_missing_body_is_unresolved(t
     codes = {item["code"] for item in model["diagnostics"]}
     assert "ORM_XML_NAMED_QUERY_AMBIGUOUS" in codes
     assert "ORM_XML_NAMED_QUERY_UNRESOLVED" in codes
+
+
+def test_xml_incomplete_duplicate_name_cannot_fall_back_to_valid_definition(tmp_path):
+    write_orm(
+        tmp_path,
+        '<named-query name="Order.same"/>'
+        '<named-query name="Order.same"><query>select o from Order o</query></named-query>',
+    )
+    model = _jpa_xml_model(tmp_path, {})
+    assert any(item["name"] == "Order.same" and item.get("ambiguous") for item in model["named_queries"])
+    assert "ORM_XML_NAMED_QUERY_AMBIGUOUS" in {item["code"] for item in model["diagnostics"]}

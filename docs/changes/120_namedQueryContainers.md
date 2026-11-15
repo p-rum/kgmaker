@@ -36,3 +36,15 @@ Kompatibilita: staré anotační named queries, v1/v2/v3 graph identity a XML
 precedence zůstávají čitelné. Omezení: XML named query se zatím nepropojuje na
 entity bez jednoznačného compiler důkazu; runtime SQL/provider semantics,
 Criteria/Specification/QueryDSL a plná produkční matice zůstávají mimo rozsah.
+
+## Oprava S02 — repeatable containers a kolize neúplných jmen
+
+Anotační `@NamedQueries` a `@NamedNativeQueries` se nyní rozbalují do stejného
+katalogu jako jednotlivé anotace. XML jméno se označí jako nejednoznačné i tehdy,
+když jedna z jeho duplicitních deklarací nemá tělo; platná deklarace tedy nemůže
+umlčet chybný protějšek. README popisuje veřejně viditelnou rozšířenou projekci.
+
+Dodatečný cílený test `test_xml_incomplete_duplicate_name_cannot_fall_back_to_valid_definition`
+je PASS; opakovaná sada nyní hlásí **18 passed, 20 skipped**. JVM actual fixture
+zůstává NOT_RUN: `fixtures/build-inspection` není v tomto repozitářovém checkoutu
+přítomná ani po nastavení připraveného worker home.

@@ -552,8 +552,11 @@ LIKE a IS NULL). Alias je case-insensitive a patří konkrétnímu bloku SELECT;
 vnořené závorky scope nemění. Neplatný nebo nerozvázaný alias ani neúplný
 výraz nevytvoří query read/write/path edge. Podporované funkce a limity
 uvádí [compiler dokumentace](docs/compiler-inspection.md);
-opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` mají
-vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
+opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` i repeatable
+`@NamedQueries`/`@NamedNativeQueries` mají vlastní definici a repository metoda
+se na ni váže přes `uses_named_query`. Stejný katalog přijímá ORM XML
+`named-query`/`named-native-query` s hashovanou provenance; duplicitní nebo
+neúplné definice zůstávají UNKNOWN.
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
 properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
@@ -589,7 +592,7 @@ Explicit JPQL entity names and repository return types also resolve by compiler
 owner; simple source return names require an exact JVM method descriptor owner.
 Missing qualified types and generic type variables remain UNKNOWN rather than
 binding to an unrelated same-simple-name class.
-Širší provider-specific query syntax, named-query containers, Criteria,
+Širší provider-specific query syntax, Criteria,
 Specification, QueryDSL a úplná schema/deployment availability jsou mimo tento
 omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
