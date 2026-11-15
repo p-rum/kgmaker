@@ -50,8 +50,13 @@ class WorkspaceTests(unittest.TestCase):
             self.assertIn(qualified(repo, 'data_field:src/model.ts:Client.balance'), {n.id for n in graph.nodes})
         result = impact_paths(graph, qualified('backend', 'data_field:src/model.kt:ExposureOutput.decline'))
         reached = {p['entity_ids'][-1] for p in result['paths']}
-        self.assertIn(qualified('frontend', 'ui_element:src/page.tsx:decline'), reached)
-        self.assertTrue(any('test_assertion' in node for node in reached))
+        # SOURCE_ONLY names remain inventory, not a response value proof.
+        self.assertIn(qualified('frontend', 'ui_element:src/page.tsx:decline'), identities)
+        self.assertTrue(any(n.kind == 'test_assertion' for n in graph.nodes))
+        self.assertNotIn(qualified('frontend', 'ui_element:src/page.tsx:decline'), reached)
+        self.assertFalse(any('test_assertion' in node for node in reached))
+        self.assertIn('workspace:service:exposure-api:endpoint:GET:/exposure:field:decline', reached)
+        self.assertTrue(any('VALUE_FLOW_COMPILER_EVIDENCE_UNAVAILABLE' in item for item in coverage['limitations']))
         self.assertTrue(any(p['weakest_confidence'] == 'INFERRED' for p in result['paths']))
         self.assertEqual('COMPLETE', coverage['schemas']['backend'][0]['status'])
 

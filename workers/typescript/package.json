@@ -10,5 +10,6 @@
     "worker": "node worker.cjs"
   },
   "kgmaker_input_snapshot": 1,
-  "kgmaker_ui_adapter": 1
+  "kgmaker_ui_adapter": 1,
+  "kgmaker_frontend_values": 1
 }

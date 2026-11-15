@@ -275,11 +275,11 @@ def test_new_snapshot_survives_supported_graph_loader_versions(tmp_path, version
     validate_context_snapshot(tmp_path, graph.contexts[0])
 
 
-@pytest.mark.parametrize('helper_name', ['input_snapshot.cjs', 'ui_events.cjs'])
+@pytest.mark.parametrize('helper_name', ['input_snapshot.cjs', 'ui_events.cjs', 'frontend_values.cjs'])
 def test_snapshot_helper_is_hash_bound_to_distribution(tmp_path, helper_name):
     custom = tmp_path / 'custom-workers/typescript'
     custom.mkdir(parents=True)
-    for name in ('worker.cjs', 'input_snapshot.cjs', 'ui_events.cjs', 'package.json'):
+    for name in ('worker.cjs', 'input_snapshot.cjs', 'ui_events.cjs', 'frontend_values.cjs', 'package.json'):
         shutil.copy2(HOME / 'typescript' / name, custom / name)
     try:
         (custom / 'node_modules').symlink_to(HOME / 'typescript/node_modules', target_is_directory=True)

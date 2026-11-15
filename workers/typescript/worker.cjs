@@ -11,7 +11,7 @@ const canonical = value => JSON.stringify(value);
 
 function handshake() {
   return {protocol_version:PROTOCOL,worker:VERSION,compiler_version:ts.version,
-    capabilities:['return-consumer-ir-v1','argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','bounded-callback-candidates','source-ir','react-events'],
+    capabilities:['return-consumer-ir-v1','argument-parameter-bindings-v1','typescript-program','typechecker','overloads','aliases','project-references','bounded-callback-candidates','source-ir','react-events','frontend-values-v1'],
     limitations:['No Angular/Vue template semantics.','Dynamic callbacks/any remain unresolved.','Source IR is not runtime ordering.']};
 }
 
@@ -648,6 +648,8 @@ function analyze(request) {
     const source=location(node),captured=context.source_files&&context.source_files[source.path]===source.sha256;
     bodies.push({method:id(node),body:ts.isBlock(node.body)?ir(node.body):{kind:'return',value:ir(node.body)},language:'typescript',context_id:context.id,return_flow_version:captured?1:undefined,return_ir_reason:captured?null:'RETURN_SOURCE_NOT_CAPTURED',return_body_kind:kind,return_type:valueInfo(node,true),return_binding_boundary:dynamicScopeFiles.get(path.resolve(node.getSourceFile().fileName))||null,return_dispatch:ts.isFunctionDeclaration(node)&&!dynamicScopeFiles.has(path.resolve(node.getSourceFile().fileName))&&((ts.isSourceFile(node.parent)&&ts.isExternalModule(node.parent))||ts.isBlock(node.parent))&&!reassignedFunctions.has(id(node))?'LEXICAL':node.name&&ts.isPrivateIdentifier(node.name)?'HARD_PRIVATE':'OPEN'});
   }
+  const resolvedValueSites=new Set(sites.filter(s=>s.evidence_kind==='SYMBOL_RESOLVED'&&s.declared_target).map(s=>s.id));
+  require('./frontend_values.cjs').collect({ts,functions:functionNodes.filter(n=>!dynamicScopeFiles.has(path.resolve(n.getSourceFile().fileName))),checkerFor:n=>declarationContext(n).checker,location,binding:valueBinding,siteFor:n=>siteByNode.get(n),symbols,facts,context,register,adapters:uiAdapters.byFile,diagnostics,resolvedSite:n=>resolvedValueSites.has(siteByNode.get(n)),limit:limits.symbols});
   for (const {program} of programs) for (const source of program.getSourceFiles()) fileInfo(source);
   discovery.validate();
   for (const before of transportInputs.values()) if(hash(fs.readFileSync(before.path))!==before.sha256) throw Error('MIXED_CONFIG_SNAPSHOT');
