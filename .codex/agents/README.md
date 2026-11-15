@@ -20,6 +20,10 @@ závislostí a mergeability. Draft si sám nepřepíná na ready.
 Vlastní GitHub PR nelze vždy schválit stejným účtem; tehdy agent zaznamená verdikt
 do PR komentáře a stále respektuje pravidla cílové větve. Stará lokální aprobace
 neplatí po změně base ani HEAD.
+SHA cílové větve se ověřuje přímo z git ref/commit lookupu větve;
+normalizovaný PR snapshot může mít zastaralé `base_sha`. Po merge reviewer
+porovná skutečné rodiče s oběma schválenými SHA. [Oprava guardu a
+post-merge ověření](../../docs/changes/119_reconcileJpqlDelivery.md).
 
 Profily jsou projektové a Codex je načítá z `.codex/agents`. Po přidání nebo
 změně profilu založ novou session, aby se obnovil registr agentů. Spuštění agenta

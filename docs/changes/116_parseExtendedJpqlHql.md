@@ -366,7 +366,9 @@ Durable runtime task: `task:67eca4c4d73451dddfb4712aadc842135cd0b563a7ffd830b390
   `memory capture` zaznamenal skutečné úspěšné kontroly; generované `scan`
   a `check`: **PASS**. Výstupy nejsou ručně editované. Metadata dokumentace
   nemění úspěšně testovaných 317 source/test/build vstupů ani 178 build artefaktů.
-- Zbývá zveřejnit tento opravený checkpoint a získat nové exact-pair review.
+- Při checkpointu ff31433 zbývalo zveřejnění a review; tento stav je historický.
+  PR97 je MERGED; skutečné rodiče, opravu base ověření a post-merge full dokládá
+  [change119](119_reconcileJpqlDelivery.md).
   GH CI se ověřuje odděleně; místní PASS není tvrzením remote CI PASS.
   Celé T003/T004 ani nepřipravené Windows/TypeScript/mixed-fixture varianty
   tím nejsou označené jako dokončené. Merge jen po APPROVE a povinných kontrolách.
