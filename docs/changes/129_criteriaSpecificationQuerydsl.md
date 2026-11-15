@@ -406,3 +406,103 @@ obsahuje implementation artifact a přesný actual test receipt, stav review;
 nezávislé APPROVE za reviewera vytvořeno nebylo.
 
 Freshness refresh packet `8cab5abf09e294bc7d78be1e9acd47808c6bb1bb8a357360d8a703a91a9df4ca`: apply/validate **PASS**; scan **PASS**,606files/6411declarations. Zachování49/160/312 znovu ověřeno, aktuálně49/160/313. Finální redakční upřesnění směru snapshotu nemění source/test kontrakt; graf se regeneruje po tomto zápisu.
+
+## Krok 15 — ordinary merge skutečného W09 main (AC01–04)
+
+T003-S06-W07, integrační implementační kroky3–5. Výchozí vlastní HEAD
+`844c0abce9c68ed747edd0195081b62d12f447b4`, tree
+`970bd4b4667f74a2c8c84e3a51999de57813a2c7`. Nový main po PR109 je
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`, parents
+`7bb8b8d389c461c684197704203a99dcb2b83724` a
+`999e60f660c348ece85681440fd14bafff4bd26c`, tree
+`0949b95f3e44ad10cf9fa33030a67f6210d7a7b4`. Přesné Git objekty ověřeny po
+`git fetch origin main`; integrace použila `git merge --no-commit origin/main`,
+bez rebase, force nebo zásahu do root checkoutu. Nezávislý reviewer nad844c
+uzavřel všechny3 P1 jako RESOLVED, doložil147PASS/84.88s a správné původní probes;
+tento historický výsledek není důkaz nové kombinace.
+
+Source merge byl bez konfliktu. Konflikty byly pouze v generated GRAPH.md/mmd,
+semantic.json a sousedních append sekcích compiler-inspection. Dokumentace
+zachovává obě capability sekce W07/W09. Grafy regeneruje výhradně CLI scan.
+Semantic byl sjednocen podle identity konceptů/vztahů, source reanchored vůči
+přesným oběma parentům; společná immutable epizoda musí být identická.
+Programatická kontrola prokázala zachování všech49/160/313 z844c i49/167/315
+zcceb; union má **50 konceptů/170 vztahů/318 epizod**. Žádné unrelated fakty,
+evidence/confidence ani historie nebyly odstraněny. První `semantic validate`
+a `scan` PASS (615files/6511declarations); final refresh navazuje po docs.
+
+Byte-identita byla ověřena přímým porovnáním source bytes s `git show` pro:
+- W07 `criteria_queries.py`, `framework.py`, `inspection.py`, `JavaFrontend.java`,
+  `test_criteria_queries.py` proti844c;
+- W09 `analysis_model.py`, `flow.py`, `flow_report.py`, `inspection_cli.py`,
+  `views.py`, `workbooks.py`, `test_unified_flow_views.py` proti cceb.
+
+JavaFrontend SHA256 zůstává
+`a7be5c10f437a6208d37fa37aeaadf5d65044bd45a65292ff8f3191cbbf161d1`;
+matching vlastní lokální JAR z kroku13 má nadále
+`651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`.
+Nový rebuild **NOT_RUN (beze změny worker source)**; skutečné aktuální testy
+používají tento artifact. Žádný shared target se nepřepisuje. Pro W09 Mermaid
+parser byl výslovně připojen ignored read-only symlink z lokálně připraveného
+`/home/petra/wrk/tepsivo/kgmaker/tests/rendering/node_modules` do tohoto checkoutu;
+verze11.4.1 ověřena. První lookup ve W09 clone připravený parser nenašel,
+nejde o test FAIL ani externí blocker. Žádná instalace neběžela implicitně.
+
+Nová cílená integrační matice kombinuje dosavadní W07/ORM/protocol/return checks
+s W09 public flow, caller ownership, snapshot publication, provider/workbook a
+ranking/CFG/binding kontrolami. Přesný příkaz:
+
+```bash
+JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+KGMAKER_WORKERS_HOME=/tmp/kgmaker-criteria-queries/workers \
+KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src \
+/tmp/kgmaker-test-venv/bin/python -m pytest -q \
+  tests/test_criteria_queries.py tests/test_named_query_containers.py \
+  tests/test_jpql_hql_grammar.py tests/test_field_mapping_flow.py \
+  tests/test_inspection_contract.py \
+  'tests/test_return_consumer_flow.py::test_java_branch_returns_assignment_and_chained_receiver[k1]' \
+  'tests/test_return_consumer_flow.py::test_actual_java_ir_preserves_both_binding_consumers[k1]' \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_ac06_real_javac_embedded_id_and_association_roles \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_repository_generic_uses_exact_entity_owner_for_same_simple_names \
+  tests/test_compiler_workers.py::CompilerWorkerTests::test_protocol_handshakes_are_versioned_and_log_free \
+  tests/test_unified_flow_views.py tests/test_control_flow.py \
+  tests/test_evidence_ranking.py tests/test_graph_provider.py tests/test_workbooks.py \
+  tests/test_argument_parameter_flow.py::test_graph_evidence_roundtrip_and_process_preserve_call_binding \
+  tests/test_return_consumer_flow.py::test_process_and_impact_report_static_return_consumer_provenance \
+  --junitxml=/tmp/kgmaker-w07-integration-cceb.xml --tb=short
+```
+
+Full suite, další Kotlin programmatic/provider/runtime matice a GH CI jsou
+**NOT_RUN**. W09 originální chování je beze změny, šíře jeho historical testů se
+nepřenáší jako PASS na novou kombinaci. CLI parametry, schema/version a příklady
+obou capabilities se integrací nemění. README a compiler-inspection obsahují oba
+návody, vlastní programmatic matrix/fixture odkazují na tento krok; relevantní
+production/acceptance řádky uvádějí aktuální base a integrační ověření.
+Spec/registry/init/templates bez dopadu: identity, závislosti a instalované
+instrukce se nemění. Zbývá nové nezávislé review přesného current base/head;
+implementer nemerguje.
+
+Výsledek nové kombinované matice: **397 PASS /0FAIL /0SKIP /95.57s**,
+raw `/tmp/kgmaker-w07-integration-cceb.log`, JUnit `/tmp/kgmaker-w07-integration-cceb.xml`.
+Jde o jeden nový skutečný běh na kombinovaném source stavu, nikoli součet147
+a dřívějších W09 výsledků. Testovaný source/test obsah se následně nemění.
+`git diff --check` i `git diff --cached --check` PASS; unmerged paths prázdné.
+
+Durable task zůstává iteration2/max3: nový `task advance ... implement` byl
+**FAIL (limit další iterace)**, následný implementation record/test advance
+odmítnut beze změny historie. Stejně jako dřívější W09 handoff se limit ani
+historické artefakty nepřepisují. Skutečná integrační evidence je append-only
+orchestrator artifact `37647bd6a8e0a62864883c14f89a9e8f23b1c85a14a03cb116e65fca8711edf5`
+ve stávající review fázi. Není to independent APPROVE ani smyšlená implement/test
+fáze; všechny provedené příkazy/výsledky jsou výše.
+
+Current integrační semantic packet
+`af01d1ecb5b6905a177969181aba86efda8c4ffa65ff0b67a6d304499b78fd70`: apply/validate
+**PASS**,50/170/318. Oficiální `memory capture --base cceb1109df6d88e4f46107f9f9ad12f5e563c0d3
+--validation integration=passed --validation worker_source_identity=passed`
+přidal episode `e77fd586076bcae0328efa4e99471fbf7b12deb923145d00d243a5910066f472`,
+celkem319. Je to CURRENT post-merge capture nad skutečným current indexem;
+nepředstírá zpětně zachycený pre-task graf. Po tomto zápisu pouze freshness
+refresh/validate/scan a Git publikace; nové relation facts se nevymýšlejí.

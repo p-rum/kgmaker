@@ -490,8 +490,9 @@ Source mapping bez debug metadata nevymýšlí řádky.
 Spring conditions/custom registrars, rozšířený Hibernate model a query grammar,
 Kafka cluster/retry/DLT, Feign/WebClient/RestClient, service mapping a BE/FE
 value-flow nejsou tímto inkrementem dokončeny. Stávající Flyway/workspace/
-availability implementace zůstává zachovaná. Data/integration view zatím poskytuje
-JSON, nikoli dokončený framework Markdown/Mermaid renderer. Runtime import je
+availability implementace zůstává zachovaná. Data/integration view poskytuje
+JSON/Markdown/Mermaid ze společného modelu jako RELATIONSHIP_ONLY; netvrdí CFG
+execution pořadí. Viz [W09 kontrakt](unified-flow-views.md). Runtime import je
 samostatný důkaz konkrétního běhu; nepřítomnost pozorování nic nevyvrací.
 
 
@@ -1546,3 +1547,11 @@ v1 replay je odmítnut a vyžaduje explicitní reinspection, schema grafu se nem
 Graph/store v1/v2/v3 i staré workery bez additive fields zůstávají čitelné.
 Scan/hook nikdy nespouští worker, APT, package installation, DB ani aplikaci;
 source/context/classpath freshness zůstává oddělená od runtime dostupnosti.
+
+## Unified flow presentation (T003-S07-W09)
+
+All four `flow render` views support JSON/Markdown/Mermaid through the same report.
+CFG presentation order preserves branches and async/loop boundaries; relation
+views do not establish execution order. Missing CFG is UNKNOWN, with strict exit4.
+See [public contract](unified-flow-views.md) and [change128](changes/128_unifiedFlowViews.md)
+for context/proof guards, atomic output and exact bounded native verification.

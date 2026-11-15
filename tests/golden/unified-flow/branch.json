@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "view": "control-flow",
+  "scope": "production",
+  "entry": "method",
+  "contexts": [
+    {
+      "id": "ctx",
+      "mode": "BUILD_IMPORT",
+      "scope": "production",
+      "origin_trust": "LOCAL_COMPILER_INPUTS",
+      "freshness": "CONTENT_VERIFIED",
+      "analyzer_version": "model-only",
+      "worker": {
+        "protocol_version": 1,
+        "worker": "model-only",
+        "compiler_version": "model-only"
+      },
+      "source_files": {
+        "src/main/java/Checkout.java": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c"
+      },
+      "coverage": "COMPLETE"
+    }
+  ],
+  "cfg": {
+    "method": "method",
+    "context_id": "ctx",
+    "representation": "SOURCE",
+    "entry": "entry",
+    "exit": "exit",
+    "exceptional_exit": "error",
+    "blocks": [
+      {
+        "id": "entry",
+        "kind": "entry",
+        "label": "entry",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:entry"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "choice",
+        "kind": "condition",
+        "label": "approved?",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:choice"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "left",
+        "kind": "basic_block",
+        "label": "charge \"<amount>\" | accepted",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:left"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "right",
+        "kind": "async_boundary",
+        "label": "enqueue",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:right"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "join",
+        "kind": "loop_header",
+        "label": "retry?",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:join"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "error",
+        "kind": "exceptional_exit",
+        "label": "error",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:error"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "unknown",
+        "kind": "unresolved_boundary",
+        "label": "unknown callee",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:unknown"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "id": "exit",
+        "kind": "exit",
+        "label": "return",
+        "source_file": "src/main/java/Checkout.java",
+        "sha256": "589889d1cf9233cd961eabd85e2a96adf16de5a043d1abdcec725a73e6ccd92c",
+        "source_range": {
+          "start_line": 4
+        },
+        "original_ids": [
+          "ast:exit"
+        ],
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "source": "entry",
+        "target": "choice",
+        "kind": "normal",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "choice",
+        "target": "left",
+        "kind": "true",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "choice",
+        "target": "right",
+        "kind": "false",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "left",
+        "target": "join",
+        "kind": "normal",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "right",
+        "target": "join",
+        "kind": "resume",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "right",
+        "target": "error",
+        "kind": "exception",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "join",
+        "target": "unknown",
+        "kind": "true",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "join",
+        "target": "exit",
+        "kind": "false",
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      },
+      {
+        "source": "unknown",
+        "target": "join",
+        "kind": "normal",
+        "loop_back": true,
+        "context_ids": [
+          "ctx"
+        ],
+        "evidence_ids": [
+          "cfg-proof"
+        ]
+      }
+    ],
+    "evidence_ids": [
+      "cfg-proof"
+    ]
+  },
+  "truncated": false,
+  "status": "PARTIAL",
+  "limitations": [],
+  "diagnostics": [],
+  "limits": {
+    "max_nodes": 500,
+    "max_depth": 3
+  },
+  "flow_model_version": "flow-view-1",
+  "ordering": {
+    "kind": "CFG_PARTIAL_ORDER",
+    "display_order": [
+      "entry",
+      "choice",
+      "left",
+      "right",
+      "join",
+      "error",
+      "unknown",
+      "exit"
+    ],
+    "unreachable_from_entry": [],
+    "meaning": "Deterministic adjacency display; list position is not execution order. Branch alternatives, cycles and async boundaries retain their edges."
+  },
+  "execution": "NOT_OBSERVED",
+  "availability": "UNKNOWN",
+  "coverage": {
+    "status": "PARTIAL",
+    "gaps": [
+      {
+        "code": "ASYNC_ORDER_UNKNOWN",
+        "node_ids": [
+          "right"
+        ],
+        "original_ids": [
+          "ast:right"
+        ],
+        "reason": "Caller continuation does not establish worker completion, delivery or global async order."
+      },
+      {
+        "code": "UNRESOLVED_BOUNDARY",
+        "node_ids": [
+          "unknown"
+        ],
+        "original_ids": [
+          "ast:unknown"
+        ],
+        "reason": "unknown callee"
+      }
+    ]
+  },
+  "provenance": {
+    "evidence": [
+      {
+        "id": "cfg-proof",
+        "kind": "SYNTAX_CANDIDATE",
+        "context_ids": [
+          "ctx"
+        ],
+        "freshness": "CURRENT"
+      }
+    ],
+    "context_ids": [
+      "ctx"
+    ],
+    "evidence_ids": [
+      "cfg-proof"
+    ]
+  }
+}

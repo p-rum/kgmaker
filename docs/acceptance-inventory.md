@@ -1448,6 +1448,30 @@ Historický pre-merge stav PR_OPEN následně uzavřelo APPROVE nad `9117c801`
 a merge `8e7dff5b`. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
 obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
 
+### T003-S07-W09 — unified flow model
+
+Delivery PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)); verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
+[Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
+
+| Acceptance | Aktuální cílený důkaz |
+|---|---|
+| W09-AC01 | `test_three_formats_share_cfg_order_provenance_and_gaps`, permutation/cycle, truthful bounded truncation, Mermaid11.4.1 actual parser deep comparison |
+| W09-AC02 | legacy v1/all, v2/v3 SOURCE_ONLY UNKNOWN; current CFG/process IDs; původní W08/provider/T025/argument/return regrese |
+| W09-AC03 | invalid refs před projection; current authority/call witness/callee CFG guard; stale/nonexecution negative; exact initial index/source inventory a late binary/text mutation; atomic timeout/cancel/interrupt cleanup bez implicitních procesů |
+| W09-AC04 | `test_actual_javac_public_formats_parser_and_readonly_failures`, fixture/golden a konkrétní limity v capability; scoped native Javac, nikoli libovolný production CFG |
+
+Předintegrační349 PASS + po exact-proof doplnění221 PASS (překrývající se sady,
+nesčítají se jako unikátní testy). Finální293 PASS / 0 SKIP / 46.72 s ověřuje
+integrovaný main7bb, T028, BEFE relation/cache/legacy a dotčené flow kontrakty.
+Následný R07 guard ověřuje samostatná sada **84 PASS / 0 SKIP / 9.30 s**
+(vlastní W09, provider, workbook); včetně skutečného Javac/TS/Mermaid a v1/v2/v3
+SOURCE_ONLY mutation negatives. Full/GH CI NOT_RUN; T003-S07 stále PARTIAL.
+Review-fix caller/CFG ownership a current proof: **429 PASS /0 SKIP /78.90 s**,
+včetně dvou nezávislých reprodukcí a34 root/nested/occurrence/context negativů.
+Doplňující actual binding/guard/repro sada38 PASS /3.46 s; actual positive kontrola
+zůstává oddělená od modelů. Reference-only binding
+zachovává raw freshness a nevytváří expanzi. Nové review nad opraveným HEAD zbývá.
+
 
 ### T028 integration with MERGED PR106
 
@@ -1475,8 +1499,10 @@ value-flow intersection separately; see [change125 step11](changes/125_backendFr
 ## T003-S06-W07 — programmatic query intent
 
 Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE, Java/Javac scope.
-Korekční targeted výsledek **147 PASS /0SKIP /85.27s**, z toho45W07; full/GHCI NOT_RUN. Původní134PASS je historický pre-review checkpoint. Base
-`7bb8b8d389c461c684197704203a99dcb2b83724`; [change129](changes/129_criteriaSpecificationQuerydsl.md)
+Aktuální ordinary merge maincceb + vlastní844c: **397 PASS /0SKIP /95.57s**,
+včetně45W07 a aktuálních W09/flow integračních kontrol; full/GHCI NOT_RUN.
+Korekčních147PASS/85.27s i původních134PASS jsou samostatné historické checkpointy. Base
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change129](changes/129_criteriaSpecificationQuerydsl.md)
 records actual commands/results and separate fixes. No whole S06 completion.
 
 | Acceptance | Source/fixture/check | Boundary |
