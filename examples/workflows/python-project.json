@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "default": "team-feature",
+  "profiles": {
+    "team-feature": {
+      "extends": "existing-feature",
+      "description": "Malá ověřitelná změna existujícího Python projektu",
+      "max_iterations": 3,
+      "token_budget": 5000,
+      "instructions": {
+        "implementation": [
+          "Dodrž plán a rozsah požadavku; zachovej rozpracované cizí změny.",
+          "Při změně veřejného chování aktualizuj návod a příklady."
+        ],
+        "test_expert": [
+          "Ověř acceptance a regresi. Zapiš skutečný výsledek každého příkazu; chybějící nástroje nejsou PASS."
+        ]
+      },
+      "validations": [
+        {"label": "unit", "command": "python -m unittest discover -s tests"}
+      ]
+    },
+    "team-bugfix": {
+      "extends": "bugfix",
+      "max_iterations": 2,
+      "validations": [
+        {"label": "regression", "command": "python -m unittest discover -s tests"}
+      ]
+    }
+  }
+}

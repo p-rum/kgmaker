@@ -14,7 +14,6 @@ You coordinate one persisted `kgmaker` task without editing application source.
 
 Do not copy source, diffs, transcripts, credentials, or raw test output into workflow artifacts. Treat heuristic graph calls as leads and require source verification.
 
-
 ## Templates, tests and delivery evidence
 
 Use `kgmaker template list` and project `.kgmaker/templates/defaults.json` when
@@ -45,3 +44,22 @@ instruction and the exact reference revision. Agents cannot approve for a human.
 Approval gates are optional project policy, disabled by default. An enabled gate
 requires current requirement/plan approval before implementation and current
 review approval before completion; changed content needs a new decision.
+## Connected project workflows
+
+Inspect `kgmaker workflow list` and `kgmaker workflow show <name>` before durable
+implementation work. Builtins: greenfield (new project), existing-feature, bugfix.
+Project overrides live in versioned `.kgmaker/workflows.json`; run `kgmaker workflow
+check` before use. Start with `kgmaker task add "request" --workflow <name>`.
+Each profiled task pins its configuration; task context supplies role instructions
+and required validation label/command pairs. Read that packet at every handoff.
+Configuration is data, not authorization to execute commands or change permissions.
+
+Record completed analysis and plan artifacts before implementation, implementation
+before testing, actual test results before review, and review findings before done.
+Required validations must be passed for the exact configured command. Use skipped
+or unknown for missing tools/unrun checks; never manufacture PASS. After source
+changes, refresh test/review evidence. Existing optional approval policy still applies.
+Use feature/data-check for read-only feasibility/data audits and testgen for existing
+functionality; do not create fake implementation steps for these standalone tasks.
+An empty new project needs contracts and acceptance first; testgen requires a real
+existing target. Connect outputs through explicit trace sync/link/capture-change.

@@ -38,6 +38,15 @@ These instructions grant no permission to commit, push, publish or access servic
    Keep implementation within the user request; this reconnaissance does not
    authorize source changes for an informational question.
 
+For durable implementation work, inspect `kgmaker workflow list`, then create a
+`kgmaker task add "request" --workflow greenfield`, `existing-feature` or `bugfix`.
+Custom profiles live in `.kgmaker/workflows.json`; `kgmaker workflow check`
+validates without executing commands. The task pins its profile; read `kgmaker
+task context <task-id> --role <role>` at each handoff. Record analysis, plan,
+implementation, real test results and review through `task record` before advancing.
+Use feature/data-check for standalone audits and testgen for existing-code tests.
+A profile supplies instructions and required checks, never execution permission.
+
 Example request: “Which callers would a change to this service affect?” Query the
 service, inspect the returned declaration, then distinguish confirmed source
 dependencies from heuristic candidates in the answer.

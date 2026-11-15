@@ -70,11 +70,14 @@ def _canonical(record: dict[str, Any], exclude: set[str]) -> bytes:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
 
 
-def task_id(title: str, request: str, max_iterations: int, base_commit: str | None) -> str:
+def task_id(title: str, request: str, max_iterations: int, base_commit: str | None,
+            workflow: dict[str, Any] | None = None) -> str:
     """Derive a stable task ID from the creation contract fields."""
     payload = {
         "title": title, "request": request, "max_iterations": max_iterations, "base_commit": base_commit,
     }
+    if workflow is not None:
+        payload["workflow"] = workflow
     digest = hashlib.sha256(json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
     return "task:" + digest
 
@@ -275,12 +278,17 @@ def validate_task(record: Any) -> dict[str, Any]:
     if not isinstance(record, dict):
         raise WorkflowError("task must be an object")
     version = record.get('schema_version')
-    fields = TASK_FIELDS | ({'delivery'} if version == 2 else set())
+    if type(version) is not int or version not in {1, 2, 3}:
+        raise WorkflowError('task must use schema_version 1, 2 or 3')
+    fields = TASK_FIELDS | ({'delivery'} if version in {2, 3} else set())
+    if version == 3:
+        fields |= {'workflow'}
     if set(record) != fields:
         raise WorkflowError("task must contain exactly the workflow contract fields")
-    if type(version) is not int or version not in {1, 2}:
-        raise WorkflowError('task must use schema_version 1 or 2')
-    if version == 2:
+    if version == 3:
+        from .workflow_profiles import validate_snapshot
+        validate_snapshot(record['workflow'])
+    if version in {2, 3}:
         delivery = record['delivery']
         if not isinstance(delivery, dict) or set(delivery) != {'schema_version','bindings'} or delivery['schema_version'] != 1 or not isinstance(delivery['bindings'], dict):
             raise WorkflowError('Invalid task delivery metadata')
@@ -331,7 +339,7 @@ def validate_task(record: Any) -> dict[str, Any]:
         seen.append(artifact["id"])
     if seen != artifact_ids:
         raise WorkflowError("artifact_ids must match artifacts in order")
-    expected = task_id(title, request, max_iterations, record["base_commit"])
+    expected = task_id(title, request, max_iterations, record["base_commit"], record.get("workflow"))
     if record["id"] != expected:
         raise WorkflowError(f"id must be `{expected}`")
     record["accepted_paths"] = accepted
@@ -367,7 +375,8 @@ def create_task(
     root: Path,
     request: str,
     title: str | None = None,
-    max_iterations: int = DEFAULT_MAX_ITERATIONS,
+    max_iterations: int | None = None,
+    *, workflow: str | None = None,
 ) -> dict[str, Any]:
     """Create an intake task bound to HEAD when the root is a Git repository."""
     if not isinstance(request, str) or not request.strip() or len(request) > MAX_REQUEST:
@@ -376,13 +385,17 @@ def create_task(
     if title is None:
         title = re.sub(r"\s+", " ", request.splitlines()[0]).strip()[:MAX_TITLE]
     title = _bounded_text(title, "title", MAX_TITLE)
+    from .workflow_profiles import select_profile
+    snapshot = select_profile(root, workflow)
+    if max_iterations is None:
+        max_iterations = snapshot['profile']['max_iterations'] if snapshot else DEFAULT_MAX_ITERATIONS
     if (isinstance(max_iterations, bool) or not isinstance(max_iterations, int)
             or max_iterations < 1 or max_iterations > MAX_ITERATIONS_LIMIT):
         raise WorkflowError(f"max_iterations must be an integer from 1 to {MAX_ITERATIONS_LIMIT}")
     base_commit = _git_head(root)
     record = {
         "schema_version": SCHEMA_VERSION,
-        "id": task_id(title, request, max_iterations, base_commit),
+        "id": task_id(title, request, max_iterations, base_commit, snapshot),
         "title": title,
         "request": request,
         "status": "intake",
@@ -397,6 +410,9 @@ def create_task(
         "stop_reason": None,
         "artifacts": [],
     }
+    if snapshot is not None:
+        record.update(schema_version=3, workflow=snapshot,
+                      delivery={'schema_version': 1, 'bindings': {}})
     return validate_task(record)
 
 
@@ -451,6 +467,8 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
             return path
         if expected_revision is None:
             raise WorkflowError('Existing task updates require expected_revision')
+        if validated.get('workflow') != existing.get('workflow'):
+            raise WorkflowError('Workflow snapshot is immutable')
         count = len(existing['artifacts'])
         if validated['artifacts'][:count] != existing['artifacts']:
             raise WorkflowError('Task artifact history is immutable')
@@ -473,13 +491,13 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
         if validated['iteration'] != expected_iteration:
             raise WorkflowError('Task iteration must follow its phase transition')
         added = validated['artifacts'][count:]
-        captured_ids = {a['id'] for a in added if a['phase'] in {'implement', 'review'}}
+        captured_ids = {a['id'] for a in added if a['phase'] in ({'implement', 'test', 'review'} if validated['schema_version'] == 3 else {'implement', 'review'})}
         if any(key not in old_bindings and key not in captured_ids for key in new_bindings):
             raise WorkflowError('Cannot invent bindings for historical artifacts')
     for artifact in added:
         if artifact['phase'] != validated['status'] or artifact['iteration'] != validated['iteration']:
             raise WorkflowError('New artifact phase and iteration must match the current task')
-    captured = [a for a in added if a['phase'] in {'implement', 'review'}]
+    captured = [a for a in added if a['phase'] in ({'implement', 'test', 'review'} if validated['schema_version'] == 3 else {'implement', 'review'})]
     if captured:
         from .feature import source_inventory
         binding = {'head_commit': _git_head(root),
@@ -488,7 +506,7 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
         for artifact in captured:
             if artifact['id'] in bindings and bindings[artifact['id']] != binding:
                 raise WorkflowError('New artifact binding differs from current source/HEAD')
-        validated['schema_version'] = 2
+        validated['schema_version'] = max(2, validated['schema_version'])
         validated.setdefault('delivery', {'schema_version': 1, 'bindings': {}})
         for artifact in captured:
             validated['delivery']['bindings'][artifact['id']] = dict(binding)
@@ -498,6 +516,9 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
     elif existing is not None and any(validated[k] != existing[k]
                                      for k in ('head_commit', 'worktree_fingerprint')):
         raise WorkflowError('Source observations require a new implementation/review artifact')
+    if existing is not None and validated['schema_version'] == 3:
+        from .workflow_profiles import enforce_handoff
+        enforce_handoff(root, existing, validated)
     if validated['status'] in {'implement', 'done'}:
         enforce_gate(root, validated, validated['status'])
     elif any(artifact['phase'] == 'implement' for artifact in added):
@@ -552,10 +573,11 @@ def add_task(
     root: Path,
     request: str,
     title: str | None = None,
-    max_iterations: int = DEFAULT_MAX_ITERATIONS,
+    max_iterations: int | None = None,
+    *, workflow: str | None = None,
 ) -> dict[str, Any]:
     """Create or return the existing intake task for the same creation contract."""
-    task = create_task(root, request, title=title, max_iterations=max_iterations)
+    task = create_task(root, request, title=title, max_iterations=max_iterations, workflow=workflow)
     path = task_path(root, task['id'])
     from .provenance import transaction
     from .analysis_model import AnalysisError
@@ -660,12 +682,12 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
             raise WorkflowError("artifact packet does not belong to this task role")
         if packet.get("iteration") != artifact["iteration"]:
             raise WorkflowError("artifact packet iteration does not match the artifact")
-    if artifact['phase'] in {'implement', 'review'}:
+    if artifact['phase'] in ({'implement', 'test', 'review'} if task['schema_version'] == 3 else {'implement', 'review'}):
         from .feature import source_inventory
         from .analysis_model import digest
         task['head_commit'] = _git_head(root)
         task['worktree_fingerprint'] = digest(source_inventory(root)[0])
-        task['schema_version'] = 2
+        task['schema_version'] = max(2, task['schema_version'])
         task.setdefault('delivery', {'schema_version':1, 'bindings':{}})
         task['delivery']['bindings'][artifact['id']] = {
             'head_commit':task['head_commit'], 'source_fingerprint':task['worktree_fingerprint']}
