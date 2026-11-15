@@ -3,7 +3,7 @@
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
     "README.md": "fc20f14982f6b6a19dfd29365cddc83e0c724db73182e203d2cc97e19e67472b",
-    "docs/acceptance-inventory.md": "13b3061342d1c37a6239662ee6fe08b49a0f15adbdd3a5d048af487eaf0b025c",
+    "docs/acceptance-inventory.md": "c955ebcf874ccd3102364296dc80815a8de64df12b4bff5363c9588ea1cd5dba",
     "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "bc54f4593e759553853f4f59c493b9f8a71a80f825317d251f8ae533a0b3bb9f",
     "docs/architecture.md": "c2aa05b90796e334828364b11a31784047cfb8eea379d5920e58c21c905388ea",
@@ -37,7 +37,7 @@
     "docs/changes/129_criteriaSpecificationQuerydsl.md": "9c6dea491de939612a260837ca5d79c382220ef6d34e948afb5f05e61c4a2cf6",
     "docs/changes/130_projectProcessFailures.md": "2351d1ea69cdeea1512a7137187ad70049aa6ddc1547c6af099f8afcc447f7d6",
     "docs/changes/131_completeAnalysisReport.md": "3837a3938b542d76749b12097af5f969a99e0be4a4554eb644752717c117d977",
-    "docs/changes/132_renderTopologyMermaid.md": "2a302666ae013d39c950f59e4b68469bb77b8104d688032146bedf498fb99b2a",
+    "docs/changes/132_renderTopologyMermaid.md": "f7b5bd86ad1bfc154cd2499c60fbfa0f468f573216b4921f7e9244d5c0a03afc",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
@@ -138,7 +138,7 @@
     "docs/process-paths.md": "6a8d715f8302e0e771445052b48578729a05be59b80dfe84bc4a7f195c67af52",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "0193dc0756ee77183955c398b3ad1b8388bd87f972449fa1735a40e1870f67a0",
+    "docs/production-analysis-progress.md": "0b17cee63437fccf14e02aff63107527665048e7a94ea54c947911d823094a1a",
     "docs/production-scope.md": "5ae70daad7ae15c4fc136b3313f22dca2bb257aac201c8ca130f6d1ecc8734c4",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
@@ -2486,44 +2486,24 @@
       "evidence": "The public API declares static policy scope, retained raw proof authority, local-only transaction boundaries and separate PROPOSED semantic compensation."
     },
     {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/store.py:save_graph::38",
-      "kind": "uses",
+      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "models",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 19,
-      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
+      "source_file": "src/kgmaker/kafka_bindings.py",
+      "source_line": 280,
+      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
     },
     {
-      "source": "function:src/kgmaker/cli.py:semantic_update::507",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 214,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 15,
-      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
-    },
-    {
-      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
-      "target": "concept:docs/architecture.md:realm_bound_data_resources",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/data_resources.py",
-      "source_line": 27,
-      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
     },
     {
       "source": "function:src/kgmaker/architecture_render.py:render_interface_markdown::63",
@@ -2536,6 +2516,46 @@
       "evidence": "The pure renderer validates and renders supplied interfaces without source/provider/store fallback."
     },
     {
+      "source": "function:src/kgmaker/cli.py:main::1039",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1043,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
+      "source": "file:src/kgmaker/views.py:views.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 198,
+      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
+    },
+    {
+      "source": "function:src/kgmaker/architecture_cli.py:run::306",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 318,
+      "evidence": "The adapter validates safe arguments, exact captured selectors/fingerprint, fixed diagnostics and bounded JSON output before returning explicit exit codes."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
+      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 201,
+      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+    },
+    {
       "source": "function:src/kgmaker/architecture_cli.py:_preflight::153",
       "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
       "kind": "validates",
@@ -2544,6 +2564,16 @@
       "source_file": "src/kgmaker/architecture_cli.py",
       "source_line": 159,
       "evidence": "Explicit local capture requires every original public index to exist and validate before parser/capture work; missing/corrupt originals are not repaired or published."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 212,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
     },
     {
       "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
@@ -2556,14 +2586,14 @@
       "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
     },
     {
-      "source": "function:src/kgmaker/kafka_bindings.py:_workspace_context::278",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "models",
+      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
+      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
+      "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/kafka_bindings.py",
-      "source_line": 280,
-      "evidence": "The existing Kafka producer and classifier share the exact declaration context digest and tuple."
+      "source_file": "docs/architecture.md",
+      "source_line": 281,
+      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
     },
     {
       "source": "function:src/kgmaker/context_roles.py:classify_context_role::12",
@@ -2576,6 +2606,86 @@
       "evidence": "The pure classifier validates canonical producer identity while separating captured role from source freshness."
     },
     {
+      "source": "file:tests/test_context_roles.py:test_context_roles.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_context_roles.py",
+      "source_line": 95,
+      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
+    },
+    {
+      "source": "file:src/kgmaker/data_resources.py:data_resources.py",
+      "target": "concept:docs/architecture.md:realm_bound_data_resources",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/data_resources.py",
+      "source_line": 27,
+      "evidence": "project_data_resources reuses service inventory and existing schema/query facts, validates realm/source snapshots, and returns a ViewDocument without database execution or artifact writes."
+    },
+    {
+      "source": "file:src/kgmaker/architecture_cli.py:architecture_cli.py",
+      "target": "concept:docs/view-cache.md:content_bound_derived_view_cache",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 330,
+      "evidence": "The explicit --view-cache path prepares the topology cache without writes and publishes only after filter/fingerprint/output validation and successful stdout write/flush on exit 0."
+    },
+    {
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/scanner.py:scan_repository::268",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 15,
+      "evidence": "Architecture identifies scanner.py as the layer that walks the repository and extracts files, declarations, imports, and conservative call candidates."
+    },
+    {
+      "source": "concept:docs/architecture.md:source_code_is_authoritative",
+      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 22,
+      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::507",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 214,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
+      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
+      "kind": "coordinates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/service_topology.py",
+      "source_line": 36,
+      "evidence": "The explicit local capture uses one workspace/snapshot/coverage tuple for existing T015/W07/T014 projections and rechecks the closure without workers, builds or store publication."
+    },
+    {
       "source": "function:src/kgmaker/service_topology.py:aggregate_service_topology::140",
       "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
       "kind": "implements",
@@ -2586,24 +2696,34 @@
       "evidence": "The public pure aggregator projects the captured service/resource/channel topology without live I/O or new execution/availability evidence."
     },
     {
-      "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::399",
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 173,
+      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 201,
-      "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
+      "source_line": 182,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
     },
     {
-      "source": "file:tests/test_context_roles.py:test_context_roles.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "validates",
+      "source": "function:src/kgmaker/architecture_cli.py:run::306",
+      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
+      "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "tests/test_context_roles.py",
-      "source_line": 95,
-      "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
+      "source_file": "src/kgmaker/architecture_cli.py",
+      "source_line": 321,
+      "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
     },
     {
       "source": "concept:docs/architecture.md:view_evidence_and_coverage",
@@ -2617,7 +2737,7 @@
     },
     {
       "source": "concept:docs/architecture.md:explicit_workspace_service_ownership",
-      "target": "file:src/kgmaker/workspace.py:workspace.py",
+      "target": "function:src/kgmaker/workspace.py:resolve_service_ownership::399",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -2626,134 +2746,14 @@
       "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
-      "source": "function:src/kgmaker/architecture_cli.py:run::306",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 318,
-      "evidence": "The adapter validates safe arguments, exact captured selectors/fingerprint, fixed diagnostics and bounded JSON output before returning explicit exit codes."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "class:src/kgmaker/architecture_model.py:ViewDocument::326",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 173,
-      "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
-    },
-    {
-      "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
-      "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
-      "kind": "coordinates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/service_topology.py",
-      "source_line": 36,
-      "evidence": "The explicit local capture uses one workspace/snapshot/coverage tuple for existing T015/W07/T014 projections and rechecks the closure without workers, builds or store publication."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 182,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "file:src/kgmaker/views.py:views.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "target": "function:src/kgmaker/store.py:save_graph::38",
       "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/views.py",
-      "source_line": 198,
-      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "file:src/kgmaker/architecture_cli.py:architecture_cli.py",
-      "target": "concept:docs/view-cache.md:content_bound_derived_view_cache",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 330,
-      "evidence": "The explicit --view-cache path prepares the topology cache without writes and publishes only after filter/fingerprint/output validation and successful stdout write/flush on exit 0."
-    },
-    {
-      "source": "function:src/kgmaker/architecture_cli.py:run::306",
-      "target": "concept:docs/interface-markdown.md:bounded_interface_markdown_evidence",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/architecture_cli.py",
-      "source_line": 321,
-      "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:main::1039",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1043,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
-    },
-    {
-      "source": "concept:docs/architecture.md:scoped_http_provider_projection",
-      "target": "file:src/kgmaker/interfaces.py:interfaces.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 281,
-      "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 212,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:docs/architecture.md:source_code_is_authoritative",
-      "target": "function:src/kgmaker/confluence.py:ingest_export::289",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 22,
-      "evidence": "Architecture states that source code is authoritative and contradictions are retained as evidence."
+      "source_line": 19,
+      "evidence": "Architecture identifies store.py as the layer that writes the machine graph and generated views."
     }
   ],
   "episodes": [

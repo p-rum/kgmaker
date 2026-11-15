@@ -1563,7 +1563,7 @@ records actual commands/results and separate fixes. No whole S06 completion.
 | T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
 
 
-## T021 — topology Mermaid (current implementation checkpoint)
+## T021 — topology Mermaid (PR #113 checkpoint)
 
 Integration base `84f94d4462437fe1228f07d0ba8f51071224952e` (ordinary merge after report main); original renderer base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
 T017 merge `64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
@@ -1576,7 +1576,7 @@ reported 129 PASS / 0 SKIP / 5.69s after current main integration. The T021-spec
 reported 9 PASS / 0 SKIP / 1.70s, including actual T016 HTTP and Kafka diagrams.
 Mermaid 11.4.1 and jsdom 26.0.0 parse/render ran under Node v24.22.1; full suite remains NOT_RUN per package-level targeted-only
 sequencing. The selected compatibility case also confirms graph schema 1/2/3 loading. The report source identity integration check was attempted and SKIP because its trusted prebuilt JVM worker is unavailable; see change132.
-Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
+PR [#113](https://github.com/p-rum/kgmaker/pull/113) is open for independent review. Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
 
 | Acceptance | Current evidence | Status |
 |---|---|---|

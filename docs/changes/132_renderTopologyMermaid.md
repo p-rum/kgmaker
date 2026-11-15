@@ -2,13 +2,11 @@
 
 ## Stav
 
-Task `T021`, Revision 1. Base `83999fb2e08c6d9d67449687c95b2217eee08b09`.
-Delivery `IN_PROGRESS`; verification `PARTIAL` pending final source/semantic scan,
-commit, push, remote parity and independent review. T017 merge
-`64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
+Task `T021`, Revision 1. Implementation base `83999fb2e08c6d9d67449687c95b2217eee08b09`; current PR base `84f94d4462437fe1228f07d0ba8f51071224952e`.
+Delivery `PR_OPEN` ([#113](https://github.com/p-rum/kgmaker/pull/113)); verification
+`PARTIAL` pending independent review and any requested fixes. The branch is pushed and remote parity was verified when opening the PR; the active head is shown on the PR. T017 merge `64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
 `0dcbf4a0fb23cc5d860f93aeee8da9b86bab4e40` and W09 merge `cceb1109` are verified
-ancestors of the base. T017 filtering, T019 explicit topology snapshot CLI and W09
-Mermaid toolchain are present on that base.
+ancestors of the implementation base; report/T029 main integrations are recorded below.
 
 ## Problém a hranice
 
@@ -132,7 +130,7 @@ items remain outside this change.
 | `git diff --check` | PASS — clean |
 | implementation memory capture | PASS — `episode:45dbd0b78a458f82bfd57b89c6ac607aab4486a576dfc95c910b407048e8a2e7`, base `9c86d29fc267014e2bee4b197c7692f17a1cda93`; 51/173/323 with parent episodes preserved |
 | `python3 -m pytest -q` | NOT_RUN — celé pytest se spouští až po dokončení balíčku dle pokynu uživatele |
-| GH CI | NOT_RUN — PR has not been opened |
+| GH CI | NOT_VERIFIED — PR #113 is open; CI state is not represented as PASS in this local checkpoint |
 | Full W09 producer/compiler and runtime/data tests | NOT_RUN — T021 consumes their merged captured topology contract and adds no producer or runtime behavior |
 
 ## Kompatibilita, změna/konflikty a zbývající práce
@@ -161,7 +159,7 @@ The T021 task runtime record is `task:58d9577d5d7598ce17925f8e3a2fcf7ee24f96e1aa
 
 - Main merge `84f94d4462437fe1228f07d0ba8f51071224952e` (tree `623cae88df34b54c456177b0a8afe8e2a76280c6`, parents `9c86d29fc267014e2bee4b197c7692f17a1cda93` and `e95ebf6ed04ca0f6041f04c2c8d1f93cb4ae7e83`) was verified and ordinary-merged into this branch; no history rewrite.
 - Semantic resolution starts with main's 52 concepts/176 relationships/328 episodes and adds only the captured T021 episode. Final state is 52/176/329; every episode from current main plus the T021 episode is present. Final canonical episode-array SHA256: `c80ff5996b687236ffe11d7f6352d7dfe466f54d60674e1fbd1089b303078541`.
-- `kgmaker semantic apply` PASS (52/176, no removals); `kgmaker semantic validate` PASS (381 merged concepts/35,648 relationships); CLI-generated scan PASS (626 files, 6,672 declarations/sections, 51,161 relationships). `git diff --exit-code 84f94d4462437fe1228f07d0ba8f51071224952e -- src/kgmaker/business_process.py tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py docs/changes/130_projectProcessFailures.md` PASS: T029 source identity is unchanged.
+- `kgmaker semantic apply` PASS (52/176, no removals); `kgmaker semantic validate` PASS (381 merged concepts/35,639 relationships); CLI-generated scan PASS (626 files, 6,672 declarations/sections, 51,156 relationships). `git diff --exit-code 84f94d4462437fe1228f07d0ba8f51071224952e -- src/kgmaker/business_process.py tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py docs/changes/130_projectProcessFailures.md` PASS: T029 source identity is unchanged.
 - Post-integration targeted run: combined T017/T019/T020/T021/legacy graph compatibility 129 passed / 0 skipped / 5.69 s; T021-only 9 passed / 0 skipped / 1.70 s. Actual Mermaid 11.4.1 parser and jsdom 26.0.0 renderer ran under Node 24.22.1 for hostile golden and actual T016 HTTP/Kafka topologies. The report source identity test was attempted but SKIP because the prebuilt JVM worker is unavailable; no worker was built.
 
 ### Workflow provenance
