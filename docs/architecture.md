@@ -189,6 +189,12 @@ from ranking and does not infer execution priority. See
 [T009](tasks/T-009_propagate-view-evidence.md) and the larger
 [T004 plan](tasks/4_addHighLevelProjectViews.md).
 
+The captured service/resource/channel topology can be rendered as Mermaid through
+the T019 architecture CLI's `--format mermaid` output. This pure T021 renderer
+preserves model evidence, scope, contexts, realm identity and truncation metadata;
+it does not add runtime or delivery evidence. See the [topology rendering contract](service-topology.md#mermaid-rendering-t021)
+and [CLI example](architecture-json-cli.md#architecture-topology-mermaid-t021).
+
 Workspace v1 optionally accepts a separate `service_ownership` schema v1.
 Each declaration attaches explicit repository-relative roots and/or exact
 repo-qualified module IDs to an already declared legacy service ID, with separately listed external
