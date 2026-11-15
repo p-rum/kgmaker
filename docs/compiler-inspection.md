@@ -1555,3 +1555,17 @@ CFG presentation order preserves branches and async/loop boundaries; relation
 views do not establish execution order. Missing CFG is UNKNOWN, with strict exit4.
 See [public contract](unified-flow-views.md) and [change128](changes/128_unifiedFlowViews.md)
 for context/proof guards, atomic output and exact bounded native verification.
+
+
+## Obsahová cache inspekčních stupňů (T003-S10-W01)
+
+Explicitní JVM/TS inspekce vrací navíc `cache` se stavem jednotlivých stages.
+Stejný úplný captured context a obsah upstream vstupů umožňuje vynechat analyze,
+compiler graph a u JVM framework augmentation. Handshake/TS project preflight
+zůstávají skutečné; implicitní worker ani build se nepřidává. Metadata jsou uvnitř
+existujícího graph indexu a public/scoped graph je nevypisuje. Stará v1/v2/v3
+metadata jsou čitelná, neúplná či poškozená cache je pouze MISS/BYPASS.
+[Detaily, příklady a single-writer limity](stage-content-cache.md),
+[per-step evidence](changes/133_stageContentCache.md). Jde o replay celých
+inspekčních stupňů; historické tvrzení o nepodporované incremental compilation
+cache ve výše uvedeném S08 kontraktu se nepovyšuje na per-file compiler reuse.

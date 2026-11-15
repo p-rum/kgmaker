@@ -1176,3 +1176,15 @@ and callee; reference-only bindings do not establish an execution path. `--outpu
 the loaded index and source snapshot; rendering
 never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
 and [change128](docs/changes/128_unifiedFlowViews.md).
+
+
+### Obsahová cache explicitní inspekce (T003-S10-W01)
+
+Opakované `kgmaker inspect code --root ./service --module core --source-set main`
+nebo `kgmaker inspect frontend --root ./ui --tsconfig tsconfig.json` může při úplné
+shodě vstupů vynechat worker analyze a compiler/framework projekce. JSON výsledek
+obsahuje `cache.stages` s HIT/MISS/BYPASS a důvodem. Handshake a frontend project
+preflight zůstávají explicitní; scan/hook/feature žádný worker nespustí.
+Cache sdílí autoritativní graph generation a nemění evidence, IDs ani dostupnost dat.
+[Kontrakt, limity a CLI](docs/stage-content-cache.md),
+[provedené kontroly](docs/changes/133_stageContentCache.md).

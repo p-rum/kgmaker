@@ -1,5 +1,19 @@
 # Inventář acceptance T001 a T002
 
+## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
+
+Dodání IN_PROGRESS, verification PARTIAL. Baseline `9c86d29...`, vlastní diff.
+[Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
+Aktuální doložený checkpoint 101 targeted PASS /0 SKIP; integrační kontrola následuje.
+
+| Acceptance | Konkrétní důkaz | Hranice |
+|---|---|---|
+| T003-S10-W01-AC01 | `test_public_inspect_cold_warm_skips_actual_stage_functions`, `test_real_input_change_misses_in_public_inspect`; actual Java/Kotlin/TS cold/warm, skutečný classpath/config drift | Celé stages, žádná per-file incremental compiler garance |
+| T003-S10-W01-AC02 | `test_legacy_and_unknown_cache_metadata_do_not_change_graph_facts`, `test_public_graph_serialization_cannot_expose_unselected_cache_payload`; graph_provider regrese | Graph v1/v2/v3, interní envelope v1; unknown/corrupt cache je MISS |
+| T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
+| T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
+
+
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
 Dodání `MERGED` ([PR101](https://github.com/p-rum/kgmaker/pull/101),

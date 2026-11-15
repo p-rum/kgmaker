@@ -53,6 +53,7 @@ class KnowledgeGraph:
     call_sites: list[dict[str, Any]] = field(default_factory=list)
     cfgs: list[dict[str, Any]] = field(default_factory=list)
     analysis_annotations: list[dict[str, Any]] = field(default_factory=list)
+    extraction_cache: dict[str, Any] = field(default_factory=dict)
 
     def migrate_legacy(self) -> "KnowledgeGraph":
         """Keep original IDs as legacy identities; do not claim JVM/TS resolution."""
@@ -69,7 +70,7 @@ class KnowledgeGraph:
                                   "identity_mapping": mapping, "identity_kind": "LEGACY", "freshness": "UNKNOWN"}],
                        diagnostics=[{"code": "LEGACY_RESOLUTION_UNKNOWN", "reason": "v1 confidence does not prove symbol resolution"}])
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, *, include_cache: bool = False) -> dict[str, Any]:
         result = {
             "schema_version": self.schema_version,
             "root": self.root,
@@ -84,6 +85,13 @@ class KnowledgeGraph:
         if self.schema_version == 3:
             result.update(symbols=self.symbols, call_sites=self.call_sites, cfgs=self.cfgs,
                           analysis_annotations=self.analysis_annotations)
+        # Replay candidates are internal store metadata, never a source of
+        # additional facts in a scoped/public graph serialization.
+        if include_cache and self.extraction_cache:
+            from .extraction_cache import decode
+            cache = decode(self.extraction_cache)
+            if cache:
+                result['extraction_cache'] = cache
         return result
 
     @classmethod
@@ -186,6 +194,7 @@ class KnowledgeGraph:
                         raise ValueError("Annotation cannot invent target IDs")
                     if annotation.get("origin") != "LLM_ANNOTATION" or set(annotation.get("evidence_ids", [])) - evidence_ids:
                         raise ValueError("Annotation cannot create technical evidence")
+        from .extraction_cache import decode
         return cls(
             schema_version=version,
             root=str(data.get("root", ".")),
@@ -200,4 +209,5 @@ class KnowledgeGraph:
             call_sites=list(data.get("call_sites", [])),
             cfgs=list(data.get("cfgs", [])),
             analysis_annotations=list(data.get("analysis_annotations", [])),
+            extraction_cache=decode(data.get('extraction_cache')),
         )
