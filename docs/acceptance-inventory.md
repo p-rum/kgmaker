@@ -645,11 +645,12 @@ Current rule4 results are recorded in change69; GH CI is optional under T045 rev
 | Acceptance | Actual check | Scope |
 |---|---|---|
 | T003-S08-W05-AC01 | `tests/test_backend_frontend_value_flow.py::test_ac01_actual_backend_field_has_exact_ui_and_test_paths` | Actual Javac21 field → declared current contract → exact TS5.7.3 destructuring/mapping → React18.3.1 state → JSX and test argument. Exact IDs/edges/proofs and request/JSON ancestry; no runtime or payload-equivalence claim. |
-| T003-S08-W05-AC02 | `test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow`, `tests/test_workspace.py` | Graph v1/v2/v3 and manifest v1 read compatibility; SOURCE_ONLY keeps syntax inventory and reports missing compiler evidence. |
-| T003-S08-W05-AC03 | `test_ac03_stale_and_ambiguous_inputs_do_not_join`, `test_ac03_compiler_symbols_reject_name_only_flow`, `test_ac03_invalid_worker_value_does_not_replace_store` | Stale contract/generated/backend input, release conflict, missing repo, ambiguous service, unrelated JSON/promise/state/assertion, symbol shadowing, multiple writes, invalid worker hash/range/context/version; last-valid store and offline snapshot unchanged. |
+| T003-S08-W05-AC02 | `test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow`, `test_ac02_genuine_legacy_worker_facts_still_publish`, `tests/test_workspace.py` | Graph v1/v2/v3 and manifest v1 read compatibility; SOURCE_ONLY keeps syntax inventory and reports missing compiler evidence. |
+| T003-S08-W05-AC03 | `test_ac03_stale_and_ambiguous_inputs_do_not_join`, `test_ac03_compiler_symbols_reject_name_only_flow`, `test_ac03_invalid_worker_value_does_not_replace_store` | Stale contract/generated/backend input, release conflict, missing repo, ambiguous service, unrelated JSON/promise/state/assertion, symbol shadowing, multiple writes, invalid worker hash/range/context/version; actual alias-chain writes/escapes (including Readonly/casts) remove native and public workspace paths while primitive copies retain them; missing/unknown/mixed v1 claims reject publication; same-input dependency invalidation/restoration recovers only the original verified path without inspection; last-valid store and offline snapshot unchanged. |
 | T003-S08-W05-AC04 | [change125](changes/125_backendFrontendValueFlow.md), [capability/workflow](backend-frontend-value-flow.md) | Await/local-const + pinned React only; Promise callbacks, arbitrary UI frameworks and Kotlin matrix NOT_RUN. S08/T003-AC08 remains PARTIAL. |
 
-Current PR: [#107](https://github.com/p-rum/kgmaker/pull/107), code96856d4.
+Current PR: [#107](https://github.com/p-rum/kgmaker/pull/107); review-fix baseline1550978.
+Alias/protocol regression scope and final results are recorded in change125.
 Focused checks and exact commands are in change125; full suite is NOT_RUN
 under the user's targeted-only instruction until completion of the package.
 

@@ -14,24 +14,31 @@ def validate_frontend_values(response, context):
     sites = {s['id']: s for s in response['call_sites']}
     def fail():
         raise WorkerError('Invalid frontend value occurrence/source/context', 'INVALID_PROTOCOL')
-    for item in [*response['symbols'], *response['facts']]:
-        if 'value_flow_version' not in item:
-            continue
+    # Legacy compatibility is for disconnected old facts, not unmarked edges
+    # into this protocol. Retain claims even if a producer strips their marker.
+    claims = {s['id'] for s in response['symbols']
+              if 'value_flow_version' in s or s.get('kind') == 'value_occurrence'
+              or s['id'].startswith(f"value:{context['id']}:")
+              or s.get('value_role') in ROLES and 'request' in s}
+    items = [(s, False) for s in response['symbols'] if s['id'] in claims]
+    items += [(f, True) for f in response['facts'] if 'value_flow_version' in f
+              or f.get('source') in claims or f.get('target') in claims]
+    for item, is_fact in items:
         path = item.get('path'); span = item.get('range')
-        if (type(item['value_flow_version']) is not int or item['value_flow_version'] != 1
+        if (type(item.get('value_flow_version')) is not int or item.get('value_flow_version') != 1
                 or not isinstance(path, str) or context.get('source_files', {}).get(path) != item.get('sha256')
                 or not _range(span) or item.get('runtime_execution') != 'NOT_OBSERVED'
                 or item.get('availability') != 'UNKNOWN'):
             fail()
-        if 'source' in item:
+        if is_fact:
             expected_kind = 'FRAMEWORK_DERIVED' if item.get('kind') == 'writes_value' else 'SYMBOL_RESOLVED'
             if item.get('evidence_kind') != expected_kind:
                 fail()
             if item.get('kind') not in {'maps_to', 'writes_value', 'passes_value', 'displayed_in'}:
                 fail()
             for key in ('source', 'target'):
-                target = symbols.get(item[key], {})
-                if target.get('value_flow_version') != 1 or target.get('context_id') != context['id']:
+                target = symbols.get(item.get(key), {})
+                if type(target.get('value_flow_version')) is not int or target.get('value_flow_version') != 1 or target.get('context_id') != context['id']:
                     fail()
             source, target = symbols[item['source']], symbols[item['target']]
             if (source.get('request') != target.get('request')

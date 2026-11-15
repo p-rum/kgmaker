@@ -671,7 +671,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             from .worker_protocol import WorkerError
             try:
                 for captured_context in cached[0].contexts:
-                    if captured_context.get('analyzer_version') and captured_context.get('freshness') != 'STALE':
+                    if captured_context.get('analyzer_version'):
+                        # A downgraded cache entry no longer carries all original
+                        # facts. Reload the explicit index and validate its inputs;
+                        # restored dependencies may make that index current again.
+                        if captured_context.get('freshness') == 'STALE':
+                            cached = None
+                            break
                         validate_context_snapshot(root, captured_context)
             except (WorkerError, ValueError, OSError):
                 cached = None

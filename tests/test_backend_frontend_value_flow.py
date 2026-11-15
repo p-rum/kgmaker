@@ -63,10 +63,8 @@ def prepare_ts(root, source, filename='src/page.tsx'):
         'include': ['src/**/*', 'generated/**/*']})
 
 
-@pytest.fixture(scope='module')
-def captured(tmp_path_factory):
+def capture_workspace(root):
     require_workers()
-    root=tmp_path_factory.mktemp('befe')
     for name in ('backend','frontend','tests'):
         (root/name).mkdir();subprocess.run(['git','init','-q',str(root/name)],check=True)
     java=root/'backend/src/main/java/demo/Exposure.java';java.parent.mkdir(parents=True)
@@ -93,6 +91,11 @@ def captured(tmp_path_factory):
         'services':[{'id':'exposure-api','backend_repo':'backend','frontend_repos':['frontend'],'test_repos':['tests'],
         'contract':{'repo_id':'backend','path':'contracts/exposure.json'},'consumer_path_prefix':'/api','generated_clients':declarations}]})
     return root,origin
+
+
+@pytest.fixture(scope='module')
+def captured(tmp_path_factory):
+    return capture_workspace(tmp_path_factory.mktemp('befe'))
 
 
 def snapshot(root):
@@ -208,7 +211,9 @@ def test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow(captured)
         for p,data in zip(files,originals):p.write_bytes(data)
 
 
-@pytest.mark.parametrize('corruption', ['hash', 'range', 'context', 'version', 'cross-request', 'fact-range', 'fact-file', 'evidence-kind', 'adapter'])
+@pytest.mark.parametrize('corruption', ['hash', 'range', 'context', 'version', 'cross-request', 'fact-range', 'fact-file', 'evidence-kind', 'adapter',
+    'unmarked-cross-request', 'unmarked-fact', 'unknown-fact-version', 'mixed-endpoint',
+    'unmarked-symbol', 'unknown-symbol-version', 'all-unmarked', 'role-stripped'])
 def test_ac03_invalid_worker_value_does_not_replace_store(tmp_path, corruption):
     require_workers()
     prepare_ts(tmp_path, PAGE.replace('assign({decline: amount});', "assign({decline: amount}); const otherResponse = await fetch('/api/other'); const otherData: Exposure = await otherResponse.json(); const other = otherData.decline;"))
@@ -220,11 +225,17 @@ def test_ac03_invalid_worker_value_does_not_replace_store(tmp_path, corruption):
     def corrupt(*args,**kwargs):
         result=original(*args,**kwargs)
         candidates=[s for s in result.get('symbols',[]) if s.get('value_flow_version')==1]
-        if candidates and corruption in {'cross-request','fact-range','fact-file','evidence-kind','adapter'}:
+        if candidates and corruption in {'cross-request','fact-range','fact-file','evidence-kind','adapter',
+                'unmarked-cross-request','unmarked-fact','unknown-fact-version','mixed-endpoint'}:
             symbols={s['id']:s for s in result['symbols']}
             fact=next(f for f in result['facts'] if f.get('value_flow_version')==1 and symbols[f['target']].get('value_role')=='JSON_RESULT' and symbols[f['target']]['request']['path']=='/api/other')
-            if corruption=='cross-request':
+            if corruption in {'cross-request','unmarked-cross-request'}:
                 fact['source']=next(s['id'] for s in candidates if s.get('value_role')=='ASSIGNMENT' and s['request']['path']=='/api/exposure')
+                if corruption=='unmarked-cross-request':del fact['value_flow_version']
+            elif corruption=='unmarked-fact':del fact['value_flow_version']
+            elif corruption=='unknown-fact-version':fact['value_flow_version']=2
+            elif corruption=='mixed-endpoint':
+                fact['source']=next(s['id'] for s in result['symbols'] if 'value_flow_version' not in s and s['path']==fact['path'])
             elif corruption=='fact-range':
                 fact['range']={**fact['range'],'start':fact['range']['start']+1,'start_column':fact['range']['start_column']+1}
             elif corruption=='evidence-kind':fact['evidence_kind']='RUNTIME_OBSERVED'
@@ -239,6 +250,11 @@ def test_ac03_invalid_worker_value_does_not_replace_store(tmp_path, corruption):
             if corruption=='hash':item['sha256']='0'*64
             elif corruption=='range':item['range']['end']=10**9
             elif corruption=='context':item['context_id']='another-context'
+            elif corruption=='unmarked-symbol':del item['value_flow_version']
+            elif corruption=='unknown-symbol-version':item['value_flow_version']=2
+            elif corruption=='role-stripped':del item['value_role']
+            elif corruption=='all-unmarked':
+                for value in [*result['symbols'],*result['facts']]:value.pop('value_flow_version',None)
             else:item['value_flow_version']=True
         return result
     with patch.object(inspection,'request_worker',side_effect=corrupt):
@@ -277,7 +293,12 @@ def test_ac03_local_same_name_type_is_not_generated_contract(captured):
 
 def test_ac03_cached_context_revalidates_external_package_inputs(captured):
     root,origin=captured
-    snapshot(root)  # prime workspace cache before changing an excluded dependency
+    baseline=snapshot(root)[3]  # prime cache before changing an excluded dependency
+    original_targets=consumers(baseline,'frontend','JSX_CONSUMER')
+    assert len(original_targets)==1
+    start=qualified('backend',origin['id']);target=original_targets[0]['id']
+    original_route=path_between(baseline,start,target);assert original_route
+    stored=root/'frontend/.kgmaker/graph.json';stored_bytes=stored.read_bytes()
     package=root/'frontend/node_modules/react/package.json';before=package.read_bytes()
     try:
         data=json.loads(before);data['version']='99.0.0';write_json(package,data)
@@ -286,4 +307,114 @@ def test_ac03_cached_context_revalidates_external_package_inputs(captured):
         assert any('COMPILER_EVIDENCE_UNAVAILABLE' in d for d in coverage['limitations'])
         assert any(c.get('freshness')=='STALE' and c.get('repo_id')=='frontend' for c in graph.contexts)
         assert not consumers(graph,'frontend','JSX_CONSUMER')
+        # A repeated read while the dependency is still invalid cannot promote it.
+        repeated=snapshot(root)[3]
+        assert not consumers(repeated,'frontend','JSX_CONSUMER')
+        assert any(c.get('freshness')=='STALE' and c.get('repo_id')=='frontend' for c in repeated.contexts)
     finally:package.write_bytes(before)
+    # Exact original bytes recover the original captured proof without inspection.
+    restored=snapshot(root)[3]
+    assert path_between(restored,start,target)==original_route
+    assert stored.read_bytes()==stored_bytes
+
+
+ALIAS_HAZARDS = {
+    'alias-write': 'const alias = data; alias.decline = 7;',
+    'alias-escape': 'const alias = data; overwrite(alias);',
+    'chain-write': 'const first = data; const second = first; second.decline = 7;',
+    'chain-escape': 'const first = data; const second = first; overwrite((second as Exposure));',
+    'chain-compound': 'const first = data; const second = first; second.decline += 7;',
+    'chain-increment': 'const first = data; const second = first; second.decline++;',
+    'cast-delete': 'const alias = data; delete (alias as Partial<Exposure>).decline;',
+    'cast-scalar': 'const first = data as unknown as number; const second = first; (second as any).decline = 7;',
+    'cast-scalar-escape': 'const first = data as unknown as number; const second = first; overwrite(second as unknown as Exposure);',
+    'object-container': 'const holder = {data}; holder.data.decline = 7;',
+    'array-container': 'const holder = [data]; holder[0].decline = 7;',
+    'static-mutator': 'const alias = data; Object.assign(alias, {decline:7});',
+    'receiver-mutator': 'const alias = data as Exposure & {overwrite():void}; alias.overwrite();',
+    'readonly-escape': 'const alias: Readonly<Exposure> = data; overwrite(alias);',
+    'readonly-callee': 'const alias = data; ((value:Readonly<Exposure>)=>overwrite(value))(alias);',
+    'conditional-assignment': 'let alias:Exposure = {decline:0}; alias = true ? data : {decline:7}; alias.decline = 7;',
+    'class-container': 'class Holder { payload = data; } const holder = new Holder(); holder.payload.decline = 7;',
+    'tagged-receiver': 'const alias = data as Exposure & {overwrite(parts:TemplateStringsArray):void}; alias.overwrite``;',
+    'conditional-alias': 'const alias = true ? data : {decline:7}; alias.decline = 7;',
+    'arrow-return': 'const get = () => data; const alias = get(); alias.decline = 7;',
+    'await-alias': 'const alias = await data; alias.decline = 7;',
+    'reassigned-alias': 'let alias:Exposure; alias = data; alias.decline = 7;',
+}
+
+
+def hazard_source(source, addition, variable='observed'):
+    return ('function overwrite(x: {decline:number}) { x.decline = 7; }\n' +
+            source.replace(f'const {{decline: {variable}}} = data;', addition + f' const {{decline: {variable}}} = data;'))
+
+
+@pytest.mark.parametrize('hazard', ALIAS_HAZARDS)
+def test_ac03_actual_alias_mutation_and_escape_invalidate_origin(tmp_path, hazard):
+    require_workers()
+    prepare_ts(tmp_path,hazard_source(TEST,ALIAS_HAZARDS[hazard]))
+    result=inspect_frontend(tmp_path,home=HOME,publish=True)
+    assert not [d for d in result['diagnostics'] if d.get('category')=='Error']
+    graph=KnowledgeGraph.from_dict(result['graph'])
+    requests=[s for s in graph.symbols if s.get('value_role')=='HTTP_RESPONSE']
+    assert len(requests)==1  # The explicit request remains evidenced.
+    assert not [s for s in graph.symbols if s.get('value_role') in {'ARGUMENT','JSX_CONSUMER'}]
+    assert (tmp_path/'.kgmaker/graph.json').is_file()
+
+
+@pytest.mark.parametrize('variant', ['readonly-alias-chain','primitive-copy','primitive-property-copy','unrelated-object'])
+def test_ac01_safe_aliases_and_independent_scalars_keep_exact_path(tmp_path, variant):
+    require_workers()
+    source=TEST
+    if variant=='readonly-alias-chain':source=source.replace('const {decline: observed} = data;', 'const first = data; const second = first; const {decline: observed} = second;')
+    elif variant=='primitive-copy':source=source.replace('check(observed);', 'let copy = observed; copy = 7; check(observed);')
+    elif variant=='primitive-property-copy':source=source.replace('check(observed);', 'const alias = data; const scalar = alias.decline; let copy = scalar; copy = 7; check(observed);')
+    else:source=source.replace('check(observed);', 'const independent = {decline:7}; const alias = independent; overwrite(alias); check(observed);')
+    prepare_ts(tmp_path,'function overwrite(x:{decline:number}) {x.decline=8;}\n'+source)
+    result=inspect_frontend(tmp_path,home=HOME,publish=False)
+    assert not [d for d in result['diagnostics'] if d.get('category')=='Error']
+    graph=KnowledgeGraph.from_dict(result['graph'])
+    request=next(s for s in graph.symbols if s.get('value_role')=='HTTP_RESPONSE')
+    consumer=next(s for s in graph.symbols if s.get('value_role')=='ARGUMENT')
+    route=path_between(graph,request['id'],consumer['id'])
+    assert route and all(e.evidence_ids for e in route)
+    assert route[-1].kind=='passes_value'
+
+
+@pytest.mark.parametrize('repo,hazard', [('tests','alias-write'),('frontend','chain-escape')])
+def test_ac03_workspace_never_bridges_aliased_mutable_payload(tmp_path,repo,hazard):
+    # Own explicit captures: the stale-dependency test intentionally leaves a
+    # conservative STALE cache entry in the shared module fixture.
+    root,origin=capture_workspace(tmp_path)
+    filename='src/response.ts' if repo=='tests' else 'src/page.tsx'
+    page=root/repo/filename;store=root/repo/'.kgmaker/graph.json'
+    original_page,original_store=page.read_bytes(),store.read_bytes()
+    try:
+        page.write_text(hazard_source(TEST if repo=='tests' else PAGE,ALIAS_HAZARDS[hazard], 'observed' if repo=='tests' else 'amount'))
+        result=inspect_frontend(root/repo,home=HOME,repo_id=repo,ui_framework='react',publish=True)
+        assert not [d for d in result['diagnostics'] if d.get('category')=='Error']
+        _,coverage,_,graph,_=snapshot(root)
+        assert not consumers(graph,repo,'ARGUMENT' if repo=='tests' else 'JSX_CONSUMER')
+        assert any('VALUE_FLOW_CONSUMER_UNPROVEN: '+repo+'/' in d for d in coverage['limitations'])
+        # Independent other repository still has its fully evidenced BE path.
+        other='frontend' if repo=='tests' else 'tests'
+        target=consumers(graph,other,'JSX_CONSUMER' if other=='frontend' else 'ARGUMENT')[0]
+        assert path_between(graph,qualified('backend',origin['id']),target['id'])
+    finally:page.write_bytes(original_page);store.write_bytes(original_store)
+
+
+def test_ac02_genuine_legacy_worker_facts_still_publish(tmp_path):
+    require_workers();prepare_ts(tmp_path,TEST)
+    from kgmaker import inspection
+    original=inspection.request_worker
+    def legacy(*args,**kwargs):
+        result=original(*args,**kwargs)
+        if 'symbols' in result:
+            result['symbols']=[s for s in result['symbols'] if 'value_flow_version' not in s]
+            result['facts']=[f for f in result['facts'] if 'value_flow_version' not in f]
+            assert result['symbols'] and result['facts']
+        return result
+    with patch.object(inspection,'request_worker',side_effect=legacy):
+        result=inspection.inspect_frontend(tmp_path,home=HOME,publish=True)
+    assert result['graph']['symbols'] and (tmp_path/'.kgmaker/graph.json').is_file()
+    assert not any(s.get('value_flow_version') for s in result['graph']['symbols'])

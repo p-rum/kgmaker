@@ -8,16 +8,93 @@ function collect(api) {
   const libDom=path.resolve(path.dirname(require.resolve('typescript')),'lib.dom.d.ts');
   const key=n=>binding(n)?.id;
   const symbolAt=n=>{const c=checkerFor(n);let s=c.getSymbolAtLocation(n);return s?.flags&ts.SymbolFlags.Alias?c.getAliasedSymbol(s):s;};
-  function root(n){while(n&&(ts.isPropertyAccessExpression(n)||ts.isElementAccessExpression(n)))n=n.expression;return n;}
+  function unwrap(n) {
+    while(n&&(ts.isParenthesizedExpression(n)||ts.isAsExpression(n)||ts.isTypeAssertionExpression(n)||ts.isSatisfiesExpression(n)||ts.isNonNullExpression(n)))n=n.expression;
+    return n;
+  }
+  function root(n) {
+    n=unwrap(n);
+    while(n&&(ts.isPropertyAccessExpression(n)||ts.isElementAccessExpression(n)))n=unwrap(n.expression);
+    return n;
+  }
+  function reference(n) {
+    // A cast is not evidence that a reference became an independent scalar.
+    const type=checkerFor(n).getTypeAtLocation(unwrap(n));
+    const scalar=ts.TypeFlags.StringLike|ts.TypeFlags.NumberLike|ts.TypeFlags.BooleanLike|ts.TypeFlags.BigIntLike|ts.TypeFlags.ESSymbolLike|ts.TypeFlags.Null|ts.TypeFlags.Undefined|ts.TypeFlags.Void|ts.TypeFlags.Never;
+    function possible(t){return t.isUnion()?t.types.some(possible):!(t.flags&scalar);}
+    return possible(type);
+  }
+  const aliases=new Map();
+  function representative(id) {
+    if(!aliases.has(id))aliases.set(id,id);
+    if(aliases.get(id)!==id)aliases.set(id,representative(aliases.get(id)));
+    return aliases.get(id);
+  }
+  function referenceAlias(n){return reference(n)||ts.isIdentifier(unwrap(n))&&aliases.has(key(unwrap(n)));}
+  function union(a,b) {if(a&&b)aliases.set(representative(a),representative(b));}
+  function assignment(n){return ts.isBinaryExpression(n)&&n.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&n.operatorToken.kind<=ts.SyntaxKind.LastAssignment;}
+  // Flow-insensitive reference equivalence is deliberately conservative. A
+  // write/escape through any alias invalidates the whole origin, including
+  // aliases discovered later. Primitive copies do not join this equivalence.
+  function collectAliases(n) {
+    if(ts.isVariableDeclaration(n)&&n.initializer) {
+      const origin=key(root(n.initializer));
+      function bind(pattern,projected=false) {
+        if(ts.isIdentifier(pattern)){if(referenceAlias(n.initializer)&&(!projected||reference(pattern)))union(key(pattern),origin);}
+        else if(ts.isObjectBindingPattern(pattern)||ts.isArrayBindingPattern(pattern))for(const e of pattern.elements)if(ts.isBindingElement(e))bind(e.name,true);
+      }
+      bind(n.name);
+    }
+    if(assignment(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isIdentifier(unwrap(n.left))&&referenceAlias(n.right))union(key(unwrap(n.left)),key(root(n.right)));
+    ts.forEachChild(n,collectAliases);
+  }
+  function escape(n) {
+    n=unwrap(n);if(!n)return;
+    if(ts.isIdentifier(n)||ts.isPropertyAccessExpression(n)||ts.isElementAccessExpression(n)) {
+      if(reference(n)||ts.isIdentifier(n)&&aliases.has(key(n)))mutated.add(key(root(n)));
+    } else if(ts.isObjectLiteralExpression(n)||ts.isArrayLiteralExpression(n)||ts.isConditionalExpression(n)||ts.isBinaryExpression(n)||ts.isSpreadElement(n)||ts.isSpreadAssignment(n))ts.forEachChild(n,escape);
+    else if(ts.isPropertyAssignment(n))escape(n.initializer);
+    else if(ts.isShorthandPropertyAssignment(n)) {
+      const d=checkerFor(n).getShorthandAssignmentValueSymbol(n)?.valueDeclaration;
+      if(d&&(reference(d)||aliases.has(key(d))))mutated.add(key(d));
+    }
+  }
   function audit(n) {
-    if(ts.isBinaryExpression(n)&&n.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&n.operatorToken.kind<=ts.SyntaxKind.LastAssignment)mutated.add(key(root(n.left)));
+    if(ts.isVariableDeclaration(n)&&n.initializer) {
+      const init=unwrap(n.initializer);
+      if(ts.isConditionalExpression(init)||ts.isBinaryExpression(init))escape(init);
+    }
+    if(ts.isArrowFunction(n)&&!ts.isBlock(n.body))escape(n.body);
+    if(ts.isAwaitExpression(n)||ts.isYieldExpression(n)||ts.isTemplateSpan(n))escape(n.expression);
+    if(assignment(n)) {
+      mutated.add(key(root(n.left)));
+      poisoned.add(symbolAt(ts.isPropertyAccessExpression(n.left)?n.left.name:n.left));
+      if(!ts.isIdentifier(unwrap(n.left))||ts.isConditionalExpression(unwrap(n.right))||ts.isBinaryExpression(unwrap(n.right)))escape(n.right);
+    }
     if((ts.isPostfixUnaryExpression(n)||ts.isPrefixUnaryExpression(n))&&[ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(n.operator))mutated.add(key(root(n.operand)));
     if(ts.isDeleteExpression(n))mutated.add(key(root(n.expression)));
-    if(ts.isBinaryExpression(n)&&n.operatorToken.kind>=ts.SyntaxKind.FirstAssignment&&n.operatorToken.kind<=ts.SyntaxKind.LastAssignment)poisoned.add(symbolAt(ts.isPropertyAccessExpression(n.left)?n.left.name:n.left));
-    if(ts.isCallExpression(n))for(const arg of n.arguments)if(ts.isIdentifier(arg)){const type=checkerFor(arg).getTypeAtLocation(arg);if(!(type.flags&(ts.TypeFlags.StringLike|ts.TypeFlags.NumberLike|ts.TypeFlags.BooleanLike|ts.TypeFlags.BigIntLike)))mutated.add(key(arg));}
+    if(ts.isCallExpression(n)||ts.isNewExpression(n)) {
+      for(const arg of n.arguments||[])escape(arg);
+      const callee=unwrap(n.expression);
+      if(ts.isPropertyAccessExpression(callee)||ts.isElementAccessExpression(callee)) {
+        if(!(ts.isCallExpression(n)&&ts.isPropertyAccessExpression(callee)&&n.arguments.length===0&&official(callee.name,'json','Body')))escape(callee.expression);
+      }
+    }
+    // Heap containers/returns are outside this local protocol. Never retain a
+    // payload origin after handing out an object reference through them.
+    if(ts.isObjectLiteralExpression(n)||ts.isArrayLiteralExpression(n))escape(n);
+    if(ts.isPropertyDeclaration(n))escape(n.initializer);
+    if(ts.isTaggedTemplateExpression(n)) {
+      const tag=unwrap(n.tag);
+      if(ts.isPropertyAccessExpression(tag)||ts.isElementAccessExpression(tag))escape(tag.expression);
+    }
+    if(ts.isReturnStatement(n)||ts.isThrowStatement(n))escape(n.expression);
     ts.forEachChild(n,audit);
   }
-  const sources=[...new Set(functions.map(f=>f.getSourceFile()))];sources.forEach(audit);
+  const sources=[...new Set(functions.map(f=>f.getSourceFile()))];
+  sources.forEach(collectAliases);sources.forEach(audit);
+  const unsafe=new Set([...mutated].filter(Boolean).map(representative));
+  for(const id of aliases.keys())if(unsafe.has(representative(id)))mutated.add(id);
   function official(n,name,owner) {
     const s=symbolAt(n);return !poisoned.has(s)&&!!s?.declarations?.length&&s.declarations.every(d=>path.resolve(d.getSourceFile().fileName)===libDom&&d.name?.getText()===name&&(!owner||d.parent.name?.text===owner));
   }
@@ -105,7 +182,7 @@ function collect(api) {
         let value;
         if(ts.isShorthandPropertyAssignment(p)) {
           const s=checkerFor(p).getShorthandAssignmentValueSymbol(p),d=s?.valueDeclaration;
-          value=d?env.get(key(d))||values.get(key(d)):null;
+          value=d&&!mutated.has(key(d))?env.get(key(d))||values.get(key(d)):null;
         } else value=evaluate(p.initializer,env);
         if(value?.stage==='field')properties.set(p.name.text,project(value,p,'OBJECT_MAPPING'));
       }

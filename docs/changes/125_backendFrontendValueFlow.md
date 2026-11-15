@@ -204,3 +204,113 @@ Po aktualizaci metadat je znovu proveden aktuální semantic update/apply/valida
 a generovaný scan; preservují se46concepts/147edges/300episodes, včetně všech
 parent facts. Registry je beze změny, číslo125 nekolizní s main (max124) i
 parent rezervací sousedních úloh. Původní root checkout nebyl upraven.
+
+### Krok 6 — review P1: objektové aliasy a únik reference
+
+Baseline `15509781f955a9c4b73cf78fd2bf4a3c8c1c8bec`, Task T003-S08-W05,
+kroky 1/3/4/5, AC01/AC03/AC04. Nezávislé
+[REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/107#issuecomment-6899067284)
+reprodukovalo zápis `const alias=data; alias.decline=7` a předání
+`overwrite(alias)`: původní audit zneplatnil jen spelling aliasu, zatímco původní
+`data` dál vytvářelo falešnou HTTP_RESPONSE→ARGUMENT cestu. **FAIL baseline**:
+`PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python /tmp/befe-review-repro.py`
+(kopie nezávislého `/tmp/review107_probes.py` pouze s cestou vlastní fixture)
+vypsal obě cesty `True`, bez TS errors; stejně prošla vadná publikace z kroku7.
+
+`workers/typescript/frontend_values.cjs` nyní používá skupiny compiler bindingů
+pro reference a jejich řetězce. Mutace, únik do neznámého call/receiveru, kontejneru
+nebo návratu zneplatní celý původ. Podporované transparentní obaly/přetypování
+nemohou odpojit skutečnou referenci. Shorthand mapping respektuje stejné guardy.
+Podmíněné aliasy a nepodporované heap návraty se konzervativně odmítají.
+Typ `Readonly<T>`, readonly parametr ani `const` neprokazují bezpečný escape.
+Skutečně samostatné primitivní kopie se do reference skupiny nepřipojují.
+Audit je flow-insensitive: může odmítnout i dřívější čtení před pozdější mutací;
+neslibuje heap/control-flow ani runtime ekvivalenci.
+
+`tests/test_backend_frontend_value_flow.py` přidává actual TS případy pro zápis,
+compound/increment/delete, aliasové řetězce, wrapped/Readonly/cast escape,
+kontejnery, conditional alias, receiver a návrat reference. Pozitivy ověřují
+čtené aliasy bez escape, nezávislé scalar kopie i nesouvisející objekt. Veřejný
+BE/FE/test snapshot odmítá cestu po mutaci/escape a zachová přesnou cestu druhého
+nezměněného repo; žádný implicitní proces/síť ani mutace snapshot vstupů.
+
+Kompatibilita: schéma ani API se nemění; nově se odstraní nesound paths pro
+mutované/uniklé referenční hodnoty, s `VALUE_FLOW_CONSUMER_UNPROVEN` a UNKNOWN
+availability. Staré již zachycené compiler kontexty jsou změnou distribution
+hash STALE a potřebují explicitní inspection. Bez automatické instalace/rebuild.
+Výsledky finální cílené matice jsou níže. První vývojový běh měl **55 PASS/1 FAIL**
+(157.66s): vývoj helperu probíhal během běhu. Opakovaný stabilní běh měl **64 PASS/1 FAIL**
+(181.57s) a odhalil skutečnou příčinu: sdílená module fixture po předchozím testu
+změněné dependency záměrně ponechala konzervativní STALE cache entry; nový pozitivní
+kontrolní consumer tedy už nebyl přítomen. Nové veřejné alias testy nyní vytvářejí
+vlastní BE/FE/test checkouty s explicitními čerstvými compiler captures. Nemění
+se očekávání consumeru ani invalidace cache. Oba vývojové FAIL zůstávají uvedeny;
+finální stabilní běh je níže.
+
+### Krok 7 — review P1: fail-closed volitelný protokol
+
+Stejný baseline, Task T003-S08-W05, kroky 2/3/4/5, AC02/AC03/AC04.
+`src/kgmaker/frontend_flow.py` dříve přeskočil libovolný fact bez
+`value_flow_version`. Cross-request hranu šlo protlačit přes legacy větev pouhým
+smazáním markeru. **FAIL baseline** nezávislého repro: `published True`,
+`cross_request_path True`.
+
+Validator rozpoznává frontend claims podle markeru, occurrence kind/identity a
+role/request metadat. Každý fact dotýkající se takového occurrence musí mít
+podporovanou celočíselnou verzi1 a dva validní v1 endpointy; symboly a facts se
+validují odděleně. Chybějící marker, neznámá verze, smíšený legacy endpoint nebo
+odstraněná role neumožní obejít request/path/hash/range/evidence kontroly.
+`tests/test_backend_frontend_value_flow.py` injektuje tyto poruchy do skutečné
+worker response a pro veřejné `inspect_frontend(publish=True)` kontroluje
+`INVALID_PROTOCOL` a byte-identical původní `.kgmaker` store. Opravdu stará,
+od v1 occurrences odpojená facts zůstávají publikovatelná; samostatná legacy
+fixture to ověřuje. Graph/store v1/v2/v3 zůstává čitelný, bez migrace či změny
+veřejných parametrů. Runtime/payload důkaz stále UNKNOWN.
+
+### Krok 8 — dokumentace a kontrola review oprav
+
+Stejný baseline, Task T003-S08-W05 krok5, AC04. README, capability
+`docs/backend-frontend-value-flow.md` (včetně CLI příkladu),
+`docs/compiler-inspection.md`, `docs/production-analysis-progress.md` a
+`docs/acceptance-inventory.md` vysvětlují alias guard, konzervativní scope,
+fail-closed marker a skutečnou legacy kompatibilitu. Registry/spec mají stejnou
+identitu/revizi/závislosti, tedy bez dopadu. Instalované agent instructions a
+Python templates se nemění, tedy bez dopadu; distribuovaný worker helper zůstává
+ve stejném package manifestu a v content-bound kontrole. Cílený clean install
+ověřuje právě aktuální zabalený helper mimo checkout. Celý milník zůstává PARTIAL.
+
+### Krok 9 — obnova compiler evidence po vrácení dependency
+
+Baseline opět1550978, Task T003-S08-W05 kroky3/4/5, AC01/AC03/AC04.
+Parent review izolace fixture potvrdilo produktovou chybu: workspace cache
+ukládala už snížený STALE graf pod source/index klíčem, který nezahrnuje vyloučený
+node_modules obsah. Následné čtení tento STALE kontext přeskočilo a ani po obnovení
+přesných dependency bytes nevrátilo původní doloženou cestu. Nešlo o mutaci store
+ani falešné zvýšení evidence, ale o chybnou obnovu platných důkazů.
+
+`src/kgmaker/workspace.py` nyní při STALE compiler cache entry znovu čte původní
+explicitní index přes existující `current_graph` obsahovou validaci. Žádný index
+se automaticky neobnovuje/spouští; stále neplatné podklady zůstanou STALE. Přesné
+obnovení původních bytes může vrátit jen původní validovaný důkaz. Veřejný test
+`test_ac03_cached_context_revalidates_external_package_inputs` provádí v jednom
+workspace validní cestu → změnu React dependency → STALE → opakované STALE čtení
+→ obnovení bytes → přesně shodnou původní cestu/edge evidence. Každý snapshot
+zakazuje jiné subprocess než git a síť, porovnává všechny vstupní bytes a navíc
+explicitně zachová `.kgmaker/graph.json` byte-identical. Izolované alias fixture
+nenahrazují tuto regresi stejného vstupu.
+
+**FAIL před opravou / PASS po opravě**, se stejným JDK21/REQUIRE_WORKERS/PYTHONPATH
+environmentem a Pythonem uvedeným výše:
+`python -m pytest -q tests/test_backend_frontend_value_flow.py -k cached_context -x`
+— nejprve1 FAIL/66 deselected7.08s, potom1 PASS/66 deselected7.11s.
+README, capability/CLI a progress/acceptance nyní výslovně popisují obnovu
+z původního indexu; schema/API a instalované templates beze změny.
+
+### Ověření review oprav před integrací PR106
+
+Se stejným výše uvedeným explicitním toolchain environmentem:
+
+- **PASS** `python -m pytest -q tests/test_backend_frontend_value_flow.py -k 'workspace_never or genuine_legacy' -x` —3 PASS/64 deselected19.57s po izolaci nových alias fixture.
+- **PASS** `python -m pytest -q tests/test_backend_frontend_value_flow.py tests/test_workspace.py tests/test_dataflow.py tests/test_ui_events.py tests/test_inspection_contract.py tests/test_tsconfig_freshness.py tests/test_typescript_project_references.py tests/test_typescript_callbacks.py tests/test_worker_install.py::InstalledWorkerTests::test_packaged_typescript_analyzes_outside_checkout -x` —235 PASS/0 SKIP406.78s; včetně67 W05 případů, skutečného toolchainu a aktuálního helperu zabaleného/instalovaného mimo checkout. Běh před samostatnou cache recovery opravou, která má RED/GREEN důkaz výše a integrační regresi níže.
+- **PASS** `node --check workers/typescript/frontend_values.cjs`, `git diff --check`.
+- **NOT_RUN** full suite, runtime aplikace/UI, Kotlin W05 matice; uživatel výslovně požaduje pouze cílené testy. Aktuální GH CI se netvrdí jako PASS.

@@ -13,6 +13,15 @@ occurrences lead to the exact field projection. A separately evidenced backend
 field → contract field → projection bridge joins that ancestry; a route or field
 name alone cannot create this bridge.
 
+Reference aliases share a compiler-binding identity group. A property write,
+unknown call/receiver, container storage or return escape invalidates the entire
+group, including chained aliases. The audit is flow-insensitive: even an earlier
+read can be withheld if a later use mutates or escapes the object. `const`,
+`Readonly<T>` and casts are not immutability evidence. Proven primitive copies
+remain separate; reading local aliases without mutation or escape is supported.
+Unknown alias-producing conditional expressions, heap containers and returned
+references are conservatively excluded, not modeled as safe heap flow.
+
 For React 18.3.1 with `@types/react` 18.3.18 and the pinned declaration hash, the
 compiler-selected `useState` declaration pairs the state and setter bindings.
 Exactly one direct setter call can carry a projected field to an intrinsic JSX
@@ -62,6 +71,7 @@ kgmaker inspect code --root /workspace/backend --repo-id backend
 kgmaker inspect frontend --root /workspace/frontend --repo-id frontend --tsconfig tsconfig.json --ui-framework react
 kgmaker inspect frontend --root /workspace/tests --repo-id tests --tsconfig tsconfig.json
 kgmaker scan --root /workspace/coordinator --workspace /workspace/workspace.json
+# A mutable/escaped response reports VALUE_FLOW_CONSUMER_UNPROVEN; it has no value consumer path.
 kgmaker impact --root /workspace/coordinator --workspace /workspace/workspace.json --entity '<repo-qualified backend field ID>' --include-data-flow --format json
 ```
 
@@ -76,10 +86,17 @@ bridges are `FRAMEWORK_DERIVED`. All report `runtime_execution=NOT_OBSERVED` and
 contract/generated hash or release, ambiguous service/generation declaration,
 missing backend field and an unproven consumer produce localized `VALUE_FLOW_*`
 coverage gaps. Cached contexts are revalidated against captured dependency/distribution inputs;
-final snapshot validation also checks them again. No last-valid graph is replaced
-on worker protocol failure.
+final snapshot validation also checks them again. A cached STALE compiler result
+is reloaded from the original explicit index. Restoring the exact captured
+dependency bytes can recover its original proof; still-invalid inputs remain
+STALE. This read does not inspect/build or replace the stored index. No last-valid graph is replaced
+on worker protocol failure. Every fact touching a frontend value occurrence
+must carry the supported integer `value_flow_version=1`, with two valid v1
+endpoints. Removing a marker does not make an edge legacy; missing/unknown/mixed
+versions or role/identity mismatches are rejected before publishing.
 
-Graph/store v1/v2/v3 and old worker responses remain readable. Older generation
+Graph/store v1/v2/v3 and old worker responses remain readable. Disconnected legacy
+facts without frontend value occurrences still publish unchanged. Older generation
 metadata still supports its existing declaration inventory but supplies no W05
 value bridge. SOURCE_ONLY still inventories endpoint/UI/assertion syntax; the
 old name-only `displayed_in`/`asserts_field` shortcuts are removed because an

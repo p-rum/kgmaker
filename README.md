@@ -222,6 +222,9 @@ Explicit workspaces can join an actual backend compiler field through a
 hash/release-bound declared contract to TypeScript JSON/destructuring, a pinned
 React `useState` setter and a concrete JSX or test argument consumer. This reads
 existing explicit inspection indexes; scan/hook/feature never run workers.
+Object mutation or escape through a local alias invalidates its response origin;
+`Readonly<T>` alone does not make an escaped reference safe. Stale cache entries
+reload the original captured index and revalidate its inputs without inspection.
 SOURCE_ONLY inventories remain PARTIAL and no longer turn matching field names
 into UI/assertion value paths. Runtime availability and payload equivalence stay
 UNKNOWN. See [the supported workflow and limits](docs/backend-frontend-value-flow.md)
