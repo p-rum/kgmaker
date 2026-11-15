@@ -1450,7 +1450,7 @@ obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
 
 ### T003-S07-W09 — unified flow model
 
-Delivery PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)); verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
+Delivery MERGED ([PR109](https://github.com/p-rum/kgmaker/pull/109)) v `cceb1109`, approved HEAD `999e60f`; původní verification evidence níže. T029 integration zachovává jeho source byte identity (change130 krok8).
 [Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
 
 | Acceptance | Aktuální cílený důkaz |
@@ -1495,11 +1495,50 @@ evidence ([audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650
 PR107 preserves those exact T028/remote sources and checks their workspace/HTTP
 value-flow intersection separately; see [change125 step11](changes/125_backendFrontendValueFlow.md).
 
+## T029 — static process failure projection
 
-## T003-S09-W05 — complete analytical report (PR_OPEN / VERIFIED_IN_SCOPE)
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `9c86d29`. New integration: **203 PASS / 0 SKIP, 74.02 s**, T014/T028/T029 + all three actual reviewer reproductions + report projection/publication (change130 step12). Source byte identity preserved. Historical integration on main `83999fb`: T014 + T025–T029 + all three reviewer reproductions: **345 PASS / 0 SKIP, 83.01 s** (change130 krok11). The former301 checkpoint predates the second membership correction.
+[Change130](changes/130_projectProcessFailures.md) contains exact commands and all
+intermediate FAIL/error results. New pure API has no persistent schema migration.
+
+| Acceptance | Public test/evidence | Result |
+|---|---|---|
+| T029-AC01 | `test_finally_keeps_distinct_return_throw_paths_through_collapse`, `test_actual_certified_group_and_finally_clones_survive_projection` | PASS; original paths/IDs and certified finally clones preserved through collapse/expand |
+| T029-AC02 | `test_actual_retry_dlt_static_path_and_finally`, `test_policy_budget_and_upstream_truncation_are_explicit` | PASS; actual Java/K1 3.3.2 static retry→DLT only at canonical Kafka entry or witnessed T028 import; ordinary listener calls UNKNOWN, no normal-exit retry/handler execution; actual K2 UNKNOWN |
+| T029-AC03 | `test_local_transaction_never_rolls_back_http_or_kafka`, `test_compensation_is_only_an_explicit_proposed_annotation` | PASS; declaration-only local scope, remote rollback NOT_PROVEN, no new compensation edges |
+| T029-AC04 | `test_invalid_inputs_preserve_input_and_last_artifact`, `test_invalid_graph_snapshot_never_mutates_inputs_or_artifact`, actual snapshot/filesystem equality and offline mocks | PASS; no mutation or implicit process/network |
+| T029-AC05 | `test_endpoint_proof_cannot_replace_removed_mapping_declarations`, `test_import_requires_exact_t014_tuple_and_declaration_type`, `test_copied_actual_other_endpoint_witness_cannot_authorize_retry`, `test_actual_ordinary_listener_callee_has_no_container_policy`, `test_actual_imported_entry_and_ordinary_same_method_are_distinct`, `test_imported_retry_requires_current_exact_entry_authority`, `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
+| T029-AC06 | README, capability/API examples, progress and change130 per-step evidence | Updated; PR/review and semantic publication recorded with final handoff |
+
+Historically, 281 targeted tests passed before the diagnostics fix; the pre-review T029 module then passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
+Full suite, runtime delivery/rollback and actual unavailable Kafka3.2.0 JAR gate
+are NOT_RUN. Framework version support is inherited, not broadened by this API.
+
+PR110 review-fix adds canonical invocation authority and preserves each rejected
+ordinary callee as UNKNOWN. Actual mixed T028-import/local-call and ten negative
+entry/proof/membership cases pass: 75 PASS / 0 SKIP, 36.24 s (73 public + 2 actual reviewer Java reproductions). Exact history and commands are in
+[change130 step6](changes/130_projectProcessFailures.md). Independent review of
+the new published revision is required; the initial REQUEST_CHANGES is historical
+evidence, not an approval of this correction.
+
+T028-S01/S03–S05, AC04–AC06 additive membership tuple preservation in PR110:
+`test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift`
+now supplies canonical T012 service topology before T014 capture.
+`test_post_capture_candidate_tamper_cannot_reuse_membership_declaration_id` keeps
+the former post-capture modification as a negative. T029 AC04 adds cycle/size
+witness guards; AC05 distinguishes endpoint refs from exact mapping declarations.
+Current review-fix results are in [change130 steps9–11](changes/130_projectProcessFailures.md);
+historical passing checkpoints do not substitute for this correction.
+
+Second PR110 membership correction: **177 PASS / 0 SKIP, 71.60 s** in T014/T028/T029
+and all three reviewer reproductions before the separate main83999fb integration;
+see [change130 steps9–11](changes/130_projectProcessFailures.md).
+
+
+## T003-S09-W05 — complete analytical report (MERGED / VERIFIED_IN_SCOPE)
 
 Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_completeAnalysisReport.md),
-[capability/CLI](complete-analysis-report.md). Current integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131. Subsequent publication audit: 151 PASS / 0 SKIP / 2 DESELECTED; nested empty-parent cleanup, concurrent content preservation, hardlink alias rejection and exact pinned JSON payload are covered by five new tests. Actual post-fix report fixture: 5 PASS / 0 SKIP / 26.31 s. [PR112](https://github.com/p-rum/kgmaker/pull/112).
+[capability/CLI](complete-analysis-report.md). Merged in `9c86d29fc267014e2bee4b197c7692f17a1cda93` (approved `edb5cff`); report source preserved in T029 integration (change130 step12). Historical integration against main83999fb: **73 PASS / 0 SKIP / 34.73 s**, including 25 own report/actual/legacy checks. Historical regression checkpoint 215 PASS / 2 DESELECTED is recorded separately in change131. Subsequent publication audit: 151 PASS / 0 SKIP / 2 DESELECTED; nested empty-parent cleanup, concurrent content preservation, hardlink alias rejection and exact pinned JSON payload are covered by five new tests. Actual post-fix report fixture: 5 PASS / 0 SKIP / 26.31 s. [PR112](https://github.com/p-rum/kgmaker/pull/112).
 
 | Acceptance | Public test | Bounded evidence |
 |---|---|---|
@@ -1509,7 +1548,7 @@ Baseline `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; [change131](changes/131_com
 | AC04 | [scope matrix](complete-analysis-report.md#actual-cross-layer-acceptance-and-boundary) | Single-context feature selection unchanged. Artifact citation is not a validated cross-context path. No runtime/data/PDF rendering claim; full suite NOT_RUN by user instruction. |
 ## T003-S06-W07 — programmatic query intent
 
-Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE, Java/Javac scope.
+Delivery MERGED ([PR111](https://github.com/p-rum/kgmaker/pull/111)) v `83999fb`, approved `c57b57f`; verification VERIFIED_IN_SCOPE, Java/Javac scope.
 Aktuální ordinary merge maincceb + vlastní844c: **397 PASS /0SKIP /95.57s**,
 včetně45W07 a aktuálních W09/flow integračních kontrol; full/GHCI NOT_RUN.
 Korekčních147PASS/85.27s i původních134PASS jsou samostatné historické checkpointy. Base

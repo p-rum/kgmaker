@@ -694,6 +694,160 @@ def project_http_process_boundary(local_process, remote_interfaces, *, target_pr
         raise BusinessProcessError('INVALID_HTTP_PROCESS_BOUNDARY', 'Invalid or incompatible HTTP process boundary input') from error
 
 
+def _kafka_membership(source, edge, binding, target, proofs, source_context, scope):
+    """Replay the existing T014 tuple; endpoint evidence is not mapping authority."""
+    def endpoint_proofs_valid(node):
+        # UNKNOWN is canonical for T012's mixed framework evidence. It is
+        # retained, not promoted. STALE/contradicting/foreign proofs cannot
+        # authorize an expansion regardless of the endpoint summary flag.
+        return all(proofs[ref].get('freshness') != 'STALE'
+            and proofs[ref].get('polarity') != 'CONTRADICTING'
+            and proofs[ref].get('scope') in {None, scope}
+            and proofs[ref].get('evidence_kind') not in
+                {'UNKNOWN', 'UNRESOLVED', 'SYNTAX_CANDIDATE', 'DISPATCH_CANDIDATE'}
+            for ref in node.evidence_refs)
+
+    def declaration_proofs_valid(node, expected_contexts, mapping_ids):
+        return bool(node.evidence_refs) and all(
+            proofs[ref].get('evidence_kind') == 'SOURCE_ONLY'
+            and proofs[ref].get('freshness') == 'UNKNOWN'
+            and proofs[ref].get('polarity') == 'UNKNOWN'
+            and proofs[ref].get('scope') == scope
+            and set(proofs[ref].get('context_ids', [])) == set(expected_contexts)
+            and set(proofs[ref].get('mapping_ids', [])) == set(mapping_ids)
+            and isinstance(proofs[ref].get('capture_id'), str)
+            and bool(proofs[ref]['capture_id'])
+            and ref == 'remote-declaration:'+digest([REMOTE_VIEW_VERSION,proofs[ref]['capture_id'],node.id])
+            for ref in node.evidence_refs)
+
+    def current_interface(node, direction):
+        attrs = node.attributes
+        return (node.kind == 'kafka_interface' and attrs.get('direction') == direction
+            and attrs.get('scope') == scope and node.freshness != 'STALE'
+            and node.resolution_status == 'RESOLVED' and not node.contradicting_refs
+            and endpoint_proofs_valid(node)
+            and attrs.get('code_binding') == 'VERIFIED_STATIC'
+            and all(attrs[key] in node.original_ids for key in ('origin_id', 'subscription_id', 'code_fact_id')
+                if attrs.get(key) is not None))
+
+
+    if (target is None or binding is None
+            or any(ref not in proofs for n in (source,target,edge,binding) for ref in n.evidence_refs)):
+        return None
+    attrs, ba = edge.attributes, binding.attributes
+    candidates = ba.get('candidates', [])
+    matches = [c for c in candidates if c.get('mapping_id') == attrs.get('mapping_id')]
+    if len(matches) != 1: return None
+    candidate = matches[0]
+    if sum((c.get('target_interface_id'), c.get('target_release_id')) ==
+            (candidate.get('target_interface_id'), candidate.get('target_release_id')) for c in candidates) != 1:
+        return None
+    pairs = {(c.get('target_interface_id'), c.get('target_release_id')) for c in candidates}
+    expected = 'AMBIGUOUS' if len(pairs) > 1 else 'UNRESOLVED' if ba.get('unresolved_mapping_ids') else 'RESOLVED'
+    if (edge.source!=source.id or edge.target!=target.id or edge.relation!='remote_kafka_publish_subscribe'
+            or edge.id!='remote-edge:'+digest([REMOTE_VIEW_VERSION,binding.id,candidate])
+            or attrs.get('binding_id')!=binding.id
+            or set(edge.original_ids)!={candidate.get('mapping_id'),ba.get('source_release_id'),candidate.get('target_release_id')}
+            or set(binding.original_ids)!={source.id,ba.get('source_release_id'),*ba.get('mapping_ids',[])}
+            or binding.kind != 'remote_binding' or binding.freshness == 'STALE' or binding.contradicting_refs
+            or binding.resolution_status != expected or edge.resolution_status != expected
+            or edge.freshness == 'STALE' or edge.contradicting_refs
+            or ba.get('transport') != 'KAFKA' or ba.get('scope') != scope
+            or ba.get('source_interface_id') != source.id
+            or ba.get('context_ids') != [source_context]
+            or ba.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
+            or attrs.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
+            or not all(attrs.get(k) == v for k, v in candidate.items())
+            or candidate.get('mapping_id') not in ba.get('mapping_ids', [])
+            or candidate.get('mapping_id') in ba.get('unresolved_mapping_ids', [])
+            or attrs.get('target_interface_id') != target.id or attrs.get('scope') != scope
+            or attrs.get('target_service_id') != (target.attributes.get('service_id') or (target.owner_id or '').removeprefix('service:'))
+            or attrs.get('transition_kind') != 'ASYNC_PUBLISH_SUBSCRIBE'
+            or attrs.get('compatibility') not in {'EXACT_DECLARATION', 'EXPLICIT_PAIRED_DECLARATION'}
+            or not current_interface(source, 'PRODUCER') or not current_interface(target, 'CONSUMER')
+            or set(candidate.get('evidence_refs', [])) != set(source.evidence_refs) | set(target.evidence_refs)
+            or set(attrs.get('original_evidence_refs', [])) != set(candidate.get('evidence_refs', []))
+            or not declaration_proofs_valid(binding, [source_context], ba.get('mapping_ids', []))
+            or not declaration_proofs_valid(edge, candidate.get('context_ids', []), [candidate['mapping_id']])
+            or len({proofs[ref]['capture_id'] for ref in (*binding.evidence_refs, *edge.evidence_refs)}) != 1
+            or source.attributes.get('broker_realm') is None
+            or source.attributes.get('broker_realm') != target.attributes.get('broker_realm')
+            or not source.attributes.get('topics') or source.attributes.get('topics') != target.attributes.get('topics')
+            or source.attributes.get('topic_pattern') or target.attributes.get('topic_pattern')):
+        return None
+    # Multiple release selectors for the same endpoint remain ambiguous.
+    if len({c.get('target_release_id') for c in candidates if c.get('target_interface_id') == target.id}) != 1:
+        return None
+    target_contexts = set(attrs.get('context_ids', [])) - {source_context}
+    if not target_contexts and attrs.get('context_ids') == [source_context]:
+        target_contexts = {source_context}
+    if len(target_contexts) != 1: return None
+    target_context = next(iter(target_contexts))
+    if (set(attrs['context_ids']) != {source_context, target_context}
+            or source.attributes.get('context_id', source_context) != source_context
+            or target.attributes.get('context_id', target_context) != target_context):
+        return None
+    return target, target_context
+
+
+def _imported_kafka_membership(subscription, link, trigger, records, view):
+    """Check the retained T014 tuple against this T028 consumer occurrence.
+
+    The tuple contains no duplicate authority: its refs must resolve in the
+    process's retained raw provenance. Missing legacy tuples stay unproved.
+    """
+    try:
+        attrs=subscription['attributes'];witness=attrs.get('membership_witness')
+        if (not isinstance(witness,dict) or set(witness)!={'schema_version','rules_version','capture_id','source','target','binding','edge'}
+                or type(witness['schema_version']) is not int or witness['schema_version']!=1
+                or witness['rules_version']!=REMOTE_VIEW_VERSION
+                or link['attributes'].get('membership_witness')!=witness): return False
+        proofs={}
+        for proof in records:
+            if proof['id'] in proofs and proofs[proof['id']]!=proof:return False
+            proofs[proof['id']]=proof
+        required={ref for name in ('source','target','binding','edge') for ref in witness[name]['evidence_refs']}
+        if not required <= proofs.keys():return False
+        document=ViewDocument.from_dict({**view,'kind':'topology','rules_version':REMOTE_VIEW_VERSION,
+            'nodes':[witness[k] for k in ('source','target','binding')], 'edges':[witness['edge']],
+            'provenance':[proofs[ref] for ref in sorted(required)]})
+        nodes={n.id:n for n in document.nodes};source=nodes[witness['source']['id']]
+        target=nodes[witness['target']['id']];binding=nodes[witness['binding']['id']];edge=document.edges[0]
+        source_context=binding.attributes['context_ids'][0]
+        checked=_kafka_membership(source,edge,binding,target,proofs,source_context,view['scope'])
+        if checked is None:return False
+        target_context=checked[1]
+        for node,cid in ((source,source_context),(target,target_context)):
+            # T012 Kafka owner_id is the exact manifest service ID; T025
+            # adds the literal service: namespace. No suffix/name inference.
+            service=node.owner_id
+            if not isinstance(service,str) or not service or node.attributes.get('service_id',service)!=service:return False
+            selected=view['context_selection'].get('services',{}).get(service,{})
+            if (selected.get('scope')!=view['scope'] or selected.get('status')=='STALE'
+                    or not any(c.get('context_id')==cid and c.get('status')=='CURRENT'
+                        and c.get('scope',view['scope'])==view['scope'] and c.get('freshness')!='STALE'
+                        for c in selected.get('contexts',[]))):return False
+        expected_originals={source.id,edge.id,*edge.original_ids,target.id,*target.original_ids}
+        return (witness['capture_id']==proofs[edge.evidence_refs[0]]['capture_id']
+            and attrs.get('source_interface_id')==source.id and attrs.get('target_interface_id')==target.id
+            and attrs.get('binding_id')==binding.id and attrs.get('target_selector') is None
+            and attrs.get('membership_evidence_refs')==list(edge.evidence_refs)
+            and set(attrs.get('remote_evidence_refs',[]))==required
+            and attrs.get('membership_status')==edge.resolution_status and not attrs.get('conflicting_selectors')
+            and set(attrs.get('context_ids',[]))=={source_context,target_context}
+            and attrs.get('scope')==view['scope']
+            and all(attrs.get(k)==target.attributes.get(k) for k in ('consumer_group','subscription_id','subscription_logical_id'))
+            and set(subscription['original_ids'])==expected_originals
+            and trigger['attributes'].get('entry_symbol_id') in target.original_ids
+            and trigger['attributes'].get('context_ids')==[target_context]
+            and trigger.get('owner_id')=='service:'+target.owner_id
+            and subscription['id'].endswith(':subscription:'+digest([edge.id,binding.id,None]))
+            and link['id']=='async-edge:'+digest([subscription['id'],trigger['id'],subscription['id'],'CONSUMER_POTENTIAL']))
+    except (ValueError,TypeError,KeyError,IndexError,AttributeError):
+        return False
+
+
+
 ASYNC_VERSION = 'async-process-boundary-1'
 
 
@@ -865,92 +1019,9 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                 result.append(retained['id'])
             return result
 
-        def endpoint_proofs_valid(node):
-            # UNKNOWN is canonical for T012's mixed framework evidence. It is
-            # retained, not promoted. STALE/contradicting/foreign proofs cannot
-            # authorize an expansion regardless of the endpoint summary flag.
-            return all(rproofs[ref].get('freshness') != 'STALE'
-                and rproofs[ref].get('polarity') != 'CONTRADICTING'
-                and rproofs[ref].get('scope') in {None, scope}
-                and rproofs[ref].get('evidence_kind') not in
-                    {'UNKNOWN', 'UNRESOLVED', 'SYNTAX_CANDIDATE', 'DISPATCH_CANDIDATE'}
-                for ref in node.evidence_refs)
-
-        def declaration_proofs_valid(node, expected_contexts, mapping_ids):
-            return bool(node.evidence_refs) and all(
-                rproofs[ref].get('evidence_kind') == 'SOURCE_ONLY'
-                and rproofs[ref].get('freshness') == 'UNKNOWN'
-                and rproofs[ref].get('polarity') == 'UNKNOWN'
-                and rproofs[ref].get('scope') == scope
-                and set(rproofs[ref].get('context_ids', [])) == set(expected_contexts)
-                and set(rproofs[ref].get('mapping_ids', [])) == set(mapping_ids)
-                and isinstance(rproofs[ref].get('capture_id'), str)
-                and bool(rproofs[ref]['capture_id']) for ref in node.evidence_refs)
-
-        def current_interface(node, direction):
-            attrs = node.attributes
-            return (node.kind == 'kafka_interface' and attrs.get('direction') == direction
-                and attrs.get('scope') == scope and node.freshness != 'STALE'
-                and node.resolution_status == 'RESOLVED' and not node.contradicting_refs
-                and endpoint_proofs_valid(node)
-                and attrs.get('code_binding') == 'VERIFIED_STATIC'
-                and all(attrs[key] in node.original_ids for key in ('origin_id', 'subscription_id', 'code_fact_id')
-                    if attrs.get(key) is not None))
-
         def membership(source, edge, binding, source_context):
-            """Validate one exact T014 candidate; aggregate ambiguity is not authority."""
-            target = rnodes.get(edge.target)
-            if target is None or binding is None or edge.id in selector_conflicts:
-                return None
-            attrs, ba = edge.attributes, binding.attributes
-            candidates = ba.get('candidates', [])
-            matches = [c for c in candidates if c.get('mapping_id') == attrs.get('mapping_id')]
-            if len(matches) != 1: return None
-            candidate = matches[0]
-            if sum((c.get('target_interface_id'), c.get('target_release_id')) ==
-                    (candidate.get('target_interface_id'), candidate.get('target_release_id')) for c in candidates) != 1:
-                return None
-            pairs = {(c.get('target_interface_id'), c.get('target_release_id')) for c in candidates}
-            expected = 'AMBIGUOUS' if len(pairs) > 1 else 'UNRESOLVED' if ba.get('unresolved_mapping_ids') else 'RESOLVED'
-            if (binding.kind != 'remote_binding' or binding.freshness == 'STALE' or binding.contradicting_refs
-                    or binding.resolution_status != expected or edge.resolution_status != expected
-                    or edge.freshness == 'STALE' or edge.contradicting_refs
-                    or ba.get('transport') != 'KAFKA' or ba.get('scope') != scope
-                    or ba.get('source_interface_id') != source.id
-                    or ba.get('context_ids') != [source_context]
-                    or ba.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
-                    or attrs.get('capture_freshness') != 'CAPTURE_TIME_ONLY'
-                    or not all(attrs.get(k) == v for k, v in candidate.items())
-                    or candidate.get('mapping_id') not in ba.get('mapping_ids', [])
-                    or candidate.get('mapping_id') in ba.get('unresolved_mapping_ids', [])
-                    or attrs.get('target_interface_id') != target.id or attrs.get('scope') != scope
-                    or attrs.get('target_service_id') != service(target)
-                    or attrs.get('transition_kind') != 'ASYNC_PUBLISH_SUBSCRIBE'
-                    or attrs.get('compatibility') not in {'EXACT_DECLARATION', 'EXPLICIT_PAIRED_DECLARATION'}
-                    or not current_interface(source, 'PRODUCER') or not current_interface(target, 'CONSUMER')
-                    or set(candidate.get('evidence_refs', [])) != set(source.evidence_refs) | set(target.evidence_refs)
-                    or set(attrs.get('original_evidence_refs', [])) != set(candidate.get('evidence_refs', []))
-                    or not declaration_proofs_valid(binding, [source_context], ba.get('mapping_ids', []))
-                    or not declaration_proofs_valid(edge, candidate.get('context_ids', []), [candidate['mapping_id']])
-                    or len({rproofs[ref]['capture_id'] for ref in (*binding.evidence_refs, *edge.evidence_refs)}) != 1
-                    or source.attributes.get('broker_realm') is None
-                    or source.attributes.get('broker_realm') != target.attributes.get('broker_realm')
-                    or not source.attributes.get('topics') or source.attributes.get('topics') != target.attributes.get('topics')
-                    or source.attributes.get('topic_pattern') or target.attributes.get('topic_pattern')):
-                return None
-            # Multiple release selectors for the same endpoint remain ambiguous.
-            if len({c.get('target_release_id') for c in candidates if c.get('target_interface_id') == target.id}) != 1:
-                return None
-            target_contexts = set(attrs.get('context_ids', [])) - {source_context}
-            if not target_contexts and attrs.get('context_ids') == [source_context]:
-                target_contexts = {source_context}
-            if len(target_contexts) != 1: return None
-            target_context = next(iter(target_contexts))
-            if (set(attrs['context_ids']) != {source_context, target_context}
-                    or source.attributes.get('context_id', source_context) != source_context
-                    or target.attributes.get('context_id', target_context) != target_context):
-                return None
-            return target, target_context
+            if edge.id in selector_conflicts: return None
+            return _kafka_membership(source,edge,binding,rnodes.get(edge.target),rproofs,source_context,scope)
 
         def expand(doc, id_map, depth, ancestry):
             nonlocal expansions, truncated
@@ -1045,6 +1116,10 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                             'subscription_id':target.attributes.get('subscription_id') if target else None,
                             'subscription_logical_id':target.attributes.get('subscription_logical_id') if target else None,
                             'membership_evidence_refs':list(edge.evidence_refs) if edge else [],
+                            'membership_witness':{'schema_version':1,'rules_version':remote.rules_version,
+                                'capture_id':rproofs[edge.evidence_refs[0]]['capture_id'],
+                                'source':source.to_dict(),'target':target.to_dict(),
+                                'binding':binding.to_dict(),'edge':edge.to_dict()} if checked else None,
                             'remote_evidence_refs':sorted(remote_refs),
                             'conflicting_selectors':deepcopy(selector_conflicts.get(edge.id, [])) if edge else [],
                             'membership_status':edge.resolution_status if edge else 'UNRESOLVED',
@@ -1103,3 +1178,282 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
         raise
     except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as error:
         raise BusinessProcessError('INVALID_ASYNC_PROCESS_BOUNDARY', 'Invalid or incompatible async process input') from error
+
+
+FAILURE_VERSION = 'process-failures-3'
+
+
+def project_process_failures(process, graph=None, *, compensation_proposals=(), max_policies=128):
+    """Preserve source CFG and project bounded static failure-policy declarations.
+
+    graph is an explicit KnowledgeGraph snapshot, never a path or a loader.
+    Retry/DLT associations do not execute handlers or roll back remote effects.
+    Compensation is accepted only in the existing PROPOSED semantic overlay.
+    """
+    try:
+        from .model import KnowledgeGraph
+        from .process_model import ProcessDefinition
+        from .process_paths import _cfg_proofs, _selected_trigger, ProcessPathError, TRIGGER_VERSION
+        from .kafka_retry import policy_boundaries
+        if type(max_policies) is not int or not 0 <= max_policies <= 512:
+            _fail('Invalid failure policy budget')
+        if not isinstance(compensation_proposals, (list, tuple)) or len(compensation_proposals) > 128:
+            _fail('Invalid compensation proposal collection')
+        _bounded(compensation_proposals)
+        doc = _document(process)
+        if doc['technical_view']['rules_version'] in {FAILURE_VERSION, 'process-failures-1', 'process-failures-2'}:
+            _fail('Failure projection requires its original input, not a previous projection')
+        # Only validated stored T026 membership can recover the technical CFG.
+        if any(_GROUP in n['attributes'] for n in doc['technical_view']['nodes']):
+            doc = _expand_checked(doc).to_dict()
+        view = doc['technical_view']; scope = doc['definition']['scope']
+        contexts = set(doc['definition']['context_ids'])
+        nodes = view['nodes']; edges = view['edges']; provenance = {p['id']:p for p in view['provenance']}
+        diagnostics = view['diagnostics']; truncated = view['coverage'].get('truncated') is True
+        methods = {n['attributes']['method'] for n in nodes if isinstance(n['attributes'].get('method'), str)}
+        methods.update(n['attributes']['entry_symbol_id'] for n in nodes
+            if n['kind'] == 'trigger' and isinstance(n['attributes'].get('entry_symbol_id'), str))
+        for node in nodes:
+            if node['kind'] == 'transaction_boundary':
+                node['attributes']['failure_semantics'] = {'transaction_scope':'LOCAL_DECLARATION_ONLY',
+                    'rollback':'UNKNOWN', 'remote_effects':'NOT_INCLUDED', 'execution':'NOT_OBSERVED'}
+                diagnostics.append({'code':'LOCAL_TRANSACTION_ROLLBACK_UNOBSERVED','node_id':node['id']})
+            elif node['kind'] in {'service_boundary','async_boundary'}:
+                node['attributes']['failure_semantics'] = {'local_transaction_rollback':'NOT_PROVEN'}
+        for proposal in compensation_proposals:
+            if not isinstance(proposal, Mapping) or proposal.get('semantic_review_status') != 'PROPOSED':
+                _fail('Compensation must be a separate PROPOSED semantic annotation')
+            doc['semantic_annotations'].append(deepcopy(dict(proposal)))
+            diagnostics.append({'code':'COMPENSATION_PROPOSAL_ONLY','annotation_id':proposal.get('id'),
+                'technical_relationship':'NOT_ESTABLISHED','rollback':'UNKNOWN'})
+        # Validate proposals against the existing exact target/provenance refs.
+        view['coverage']['status'] = doc['technical_status'] = 'PARTIAL'
+        ProcessView.from_dict(doc)
+        snapshot = None; rows = []; graph_proofs = {}; graph_nodes = {}; cfgs = {}; expected_proofs = {}
+        if graph is None:
+            diagnostics.append({'code':'FAILURE_POLICY_INPUT_UNAVAILABLE','policy_status':'UNKNOWN'})
+        else:
+            raw = graph.to_dict() if isinstance(graph, KnowledgeGraph) else graph
+            _bounded(raw)
+            snapshot = KnowledgeGraph.from_dict(deepcopy(raw))
+            graph_proofs = {p['id']:p for p in snapshot.evidence}; graph_nodes = {n.id:n for n in snapshot.nodes}
+            symbols = {s['id']:s for s in snapshot.symbols}
+            for context in snapshot.contexts:
+                if context['id'] in contexts and context.get('scope') == scope:
+                    accepted, proofs = _cfg_proofs(snapshot, context, graph_nodes, symbols)
+                    cfgs.update(accepted); expected_proofs.update(proofs)
+            rows = policy_boundaries(snapshot, methods)
+            relevant = [d for d in snapshot.diagnostics if d.get('scope',scope)==scope and (
+                d.get('context_id') in contexts or d.get('source_id') in methods
+                or bool(set(d.get('context_ids',[])) & contexts)
+                or not any(d.get(k) for k in ('context_id','context_ids','source_id')))]
+            diagnostics.extend({'failure_upstream':True, **deepcopy(d)} for d in relevant)
+            truncated = truncated or any(d.get('truncated') is True for d in relevant)
+            if not rows:
+                diagnostics.append({'code':'FAILURE_POLICY_NOT_PROVEN','policy_status':'UNKNOWN'})
+        groups = defaultdict(list)
+        for row in rows: groups[row['policy_id']].append(row)
+        if len(groups) > max_policies:
+            truncated = True
+            diagnostics.append({'code':'FAILURE_POLICY_LIMIT','limit':max_policies,
+                'omitted_policy_ids':sorted(groups)[max_policies:]})
+        def retained(records, cids):
+            refs = []
+            for raw in sorted(records, key=lambda p:p['id']):
+                identity = 'ev:failure-reference:' + digest([raw, scope, cids])
+                item = {'id':identity,'original_id':raw['id'],'scope':scope,'context_ids':cids,
+                    'evidence_kind':'UNKNOWN','freshness':'STALE' if raw.get('freshness')=='STALE' else 'UNKNOWN',
+                    'polarity':'UNKNOWN','authority':'PROVENANCE_REFERENCE_ONLY',
+                    'original_provenance':deepcopy(raw)}
+                if identity in provenance and provenance[identity] != item: _fail('Failure provenance collision')
+                provenance[identity] = item; refs.append(identity)
+            return refs
+        def boundary(identity, role, originals, cids, refs, attrs, owner=None):
+            if any(n['id']==identity for n in nodes): _fail('Failure boundary identity collision')
+            summary = _summarize_view_evidence(refs, provenance)
+            if not refs: summary['evidence_kinds'] = []
+            node = ViewNode(identity,'retry' if role=='retry' else 'async_boundary',
+                'Static '+role+' policy', original_ids=tuple(sorted(set(originals))),owner_id=owner,
+                evidence_refs=tuple(refs),attributes={'scope':scope,'context_ids':cids,
+                    'failure_role':role,'boundary_reason':'STATIC_POLICY_ONLY',
+                    'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED','activation':'UNKNOWN',
+                    'runtime_availability':'UNKNOWN','processing_completion':'UNKNOWN',**attrs},
+                resolution_status='UNRESOLVED',**summary).to_dict()
+            if len(nodes)>=10000: _fail('Failure output topology budget exceeded')
+            nodes.append(node); return node
+        def transition(source, target, role, node):
+            identity = 'failure-transition:' + digest([source,target,role])
+            if any(e['id']==identity for e in edges): _fail('Failure transition identity collision')
+            summary = _summarize_view_evidence(node['evidence_refs'],provenance)
+            edges.append(ViewEdge(identity,source,target,'retry' if role=='RETRY_POTENTIAL' else 'async',
+                original_ids=tuple(node['original_ids']),evidence_refs=tuple(node['evidence_refs']),
+                attributes={'scope':scope,'context_ids':node['attributes']['context_ids'],
+                    'failure_transition':role,'boundary_reason':'STATIC_POLICY_ONLY',
+                    'execution':'NOT_OBSERVED','delivery':'NOT_OBSERVED','condition':'failure policy may apply; feasibility UNKNOWN'},
+                resolution_status='UNRESOLVED',**summary).to_dict())
+        def selected_anchor(node, cids):
+            choice=doc['definition']['context_selection']
+            row=choice.get('services',{}).get((node.get('owner_id') or '').removeprefix('service:'),{})
+            return (choice.get('scope',scope)==scope and row.get('scope')==scope
+                and row.get('status')!='STALE' and len(cids)==1
+                and any(c.get('context_id')==cids[0] and c.get('scope',scope)==scope
+                    and c.get('status')=='CURRENT' and c.get('freshness')!='STALE'
+                    for c in row.get('contexts',[])))
+        original_nodes = {n['id']:n for n in nodes}
+        def kafka_occurrence(exit_node, origin, cfg, cids, expected):
+            # T025's root CFG path is (entry method,). Ordinary local calls use
+            # an additional call-site/block path, even for the same declaration.
+            body_entry = 'process:' + digest({'path':(origin,), 'id':cfg['entry']})[:24]
+            body_exit = 'process:' + digest({'path':(origin,), 'id':cfg['exceptional_exit']})[:24]
+            matches = []
+            for trigger in original_nodes.values():
+                attrs = trigger['attributes']
+                if (trigger['kind']!='trigger' or attrs.get('trigger_kind')!='KAFKA'
+                        or attrs.get('entry_symbol_id')!=origin or attrs.get('context_ids')!=cids
+                        or trigger['freshness']!='CURRENT' or trigger['contradicting_refs']):
+                    continue
+                canonical = 'trigger:' + digest({'context':cids[0], 'symbol':origin,
+                    'entrypoint':attrs.get('entrypoint_id'), 'kind':'KAFKA'})
+                if not trigger['id'].endswith(canonical): continue
+                prefix = trigger['id'][:-len(canonical)]
+                if exit_node['id']!=prefix+body_exit: continue
+                entry = original_nodes.get(prefix+body_entry)
+                if (entry is None or entry['kind']!='entry' or entry['freshness']!='CURRENT'
+                        or entry['contradicting_refs'] or entry['owner_id']!=exit_node['owner_id']
+                        or trigger['owner_id']!=exit_node['owner_id']
+                        or cfg['entry'] not in entry['original_ids']
+                        or entry['attributes'].get('method')!=origin
+                        or entry['attributes'].get('context_ids')!=cids
+                        or any(p['id'] not in entry['evidence_refs'] or provenance.get(p['id'])!=p for p in expected)):
+                    continue
+                declaration = [e for e in edges if e['source']==trigger['id'] and e['target']==entry['id']
+                    and e['id']==prefix+'process-entry:'+digest([canonical,body_entry])
+                    and e['relation']=='unknown' and {canonical,origin}<=set(e['original_ids'])
+                    and e['attributes'].get('boundary_reason')=='declaration-to-body static association'
+                    and e['attributes'].get('scope')==scope and e['attributes'].get('context_ids')==cids]
+                if (len(declaration)!=1 or sum(e['target']==entry['id'] for e in edges)!=1
+                        or declaration[0]['freshness']=='STALE' or declaration[0]['contradicting_refs']): continue
+                occurrence_refs = list(trigger['evidence_refs'])
+                if not prefix:
+                    if trigger['id'] not in doc['entry_ids'] or trigger['id'] not in doc['definition']['trigger_ids']: continue
+                else:
+                    # T028 supplies one distinct subscription -> consumer entry
+                    # association per imported occurrence, not a Java call edge.
+                    incoming = [e for e in edges if e['target']==trigger['id'] and e['relation']=='async'
+                        and e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL']
+                    if len(incoming)!=1: continue
+                    link = incoming[0]; subscription = original_nodes.get(link['source'])
+                    if (subscription is None or subscription['kind']!='async_boundary'
+                            or prefix!=subscription['id']+':target:'
+                            or subscription['attributes'].get('async_role')!='subscription'
+                            or subscription['attributes'].get('boundary_reason')!='ASYNC_STATIC_POTENTIAL'
+                            or origin not in subscription['original_ids']
+                            or not subscription['attributes'].get('membership_evidence_refs')
+                            or link['evidence_refs']!=subscription['evidence_refs']
+                            or link['original_ids']!=subscription['original_ids']
+                            or any(n['freshness']=='STALE' or n['contradicting_refs'] for n in (subscription,link))
+                            or not isinstance(attrs.get('source_process_id'),str)
+                            or type(attrs.get('source_process_revision')) is not int
+                            or any(n['attributes'].get(k)!=attrs[k] for n in (entry,exit_node)
+                                for k in ('source_process_id','source_process_revision'))):
+                        continue
+                    occurrence_refs += link['evidence_refs'] + subscription['evidence_refs']
+                    raw = [provenance[ref].get('original_provenance',provenance[ref]) for ref in occurrence_refs]
+                    if any(p.get('freshness')=='STALE' or p.get('polarity')=='CONTRADICTING'
+                           or p.get('scope') not in (None,scope) for p in raw): continue
+                if prefix and not _imported_kafka_membership(subscription,link,trigger,raw,view): continue
+                # Replay the existing T025 trigger guard over its exact original
+                # declaration/proofs. Renaming a trigger or adding metadata cannot
+                # turn a scheduler/call occurrence into a Kafka entry.
+                canonical_node = {**deepcopy(trigger), 'id':canonical}
+                inventory = ViewDocument.from_dict({**view, 'rules_version':TRIGGER_VERSION,
+                    'nodes':[canonical_node], 'edges':[],
+                    'provenance':[provenance[ref] for ref in trigger['evidence_refs']]})
+                try:
+                    _selected_trigger(snapshot,inventory,canonical)
+                except ProcessPathError:
+                    continue
+                matches.append({'trigger_id':trigger['id'],'entry_id':entry['id'],
+                    'exceptional_exit_id':exit_node['id'],'evidence_refs':sorted(set(occurrence_refs))})
+            return matches[0] if len(matches)==1 else None
+        for policy_id in sorted(groups)[:max_policies]:
+            group = groups[policy_id]; policy = graph_nodes.get(policy_id)
+            md = policy.metadata if policy and isinstance(policy.metadata,dict) else {}
+            origin = md.get('origin_id')
+            if not isinstance(origin,str): origin = next((r['source'] for r in group if r['source'] in methods),None)
+            process_contexts = {cid for n in nodes if n['attributes'].get('method')==origin
+                or n['attributes'].get('entry_symbol_id')==origin for cid in n['attributes']['context_ids']}
+            cids = sorted(process_contexts or contexts)
+            context_valid = len(cids)==1 and md.get('context_id')==cids[0]
+            related = [e for e in snapshot.edges if e.kind in {'declares_retry_boundary','declares_dlt_boundary'}
+                and policy_id in (e.source,e.target)]
+            raw_refs = {r for e in related for r in e.evidence_ids}
+            pending = list(raw_refs)
+            while pending:
+                for ref in graph_proofs.get(pending.pop(),{}).get('compiler_evidence_ids',[]):
+                    if ref not in raw_refs: raw_refs.add(ref); pending.append(ref)
+            records = [graph_proofs[r] for r in sorted(raw_refs) if r in graph_proofs]
+            proof_valid = bool(records) and len(records)==len(raw_refs) and all(
+                p.get('freshness') not in {'STALE'} and p.get('polarity') != 'CONTRADICTING'
+                and p.get('scope',scope)==scope and p.get('context_ids')==cids for p in records)
+            candidates = [n for n in nodes if n['kind']=='exceptional_exit'
+                and n['attributes'].get('method')==origin and n['attributes'].get('context_ids')==cids]
+            cfg = cfgs.get(origin,{}); expected = expected_proofs.get(origin,[])
+            anchors = [n for n in candidates if cfg.get('exceptional_exit') in n['original_ids']
+                and n['freshness']=='CURRENT' and not n['contradicting_refs']
+                and selected_anchor(n,cids) and expected and all(p['polarity']!='CONTRADICTING' and p['id'] in n['evidence_refs']
+                    and provenance.get(p['id'])==p for p in expected)]
+            policy_valid = (context_valid and proof_valid and md.get('status')=='DECLARED'
+                and all(r['status']=='DECLARED' for r in group)
+                and {r['kind'] for r in group}=={'declares_retry_boundary','declares_dlt_boundary'})
+            refs = retained(records,cids)
+            attrs = {'policy_id':policy_id,'policy_logical_id':md.get('logical_id'),
+                'origin_method':origin,
+                'attempts_semantics':'DECLARED_TOTAL_LIMIT_NOT_OBSERVED',
+                'destinations':'UNKNOWN','scheduling':'UNKNOWN','unrolled_attempts':0,
+                'upstream_policy_rows':deepcopy(group),'original_evidence_refs':sorted(raw_refs)}
+            for anchor in candidates or [None]:
+                occurrence = kafka_occurrence(anchor,origin,cfg,cids,expected) if anchor in anchors else None
+                declared = policy_valid and occurrence is not None
+                # An async membership spans producer and consumer contexts. Keep
+                # its original proof intact; the target policy's reference-only
+                # envelope does not rebind that upstream authority in place.
+                occurrence_refs = sorted(set(refs + (retained(
+                    [provenance[ref] for ref in occurrence['evidence_refs']],cids) if occurrence else [])))
+                occurrence_attrs = {**attrs,'policy_status':'DECLARED' if declared else 'UNKNOWN',
+                    'attempts':md.get('attempts') if declared else None,
+                    'retry_suffix':md.get('retry_suffix') if declared else None,
+                    'dlt_suffix':md.get('dlt_suffix') if declared else None,
+                    'kafka_entry_occurrence':deepcopy(occurrence) if declared else None,
+                    'source_exceptional_exit':anchor['id'] if anchor else None}
+                identity = 'failure-policy:' + digest([policy_id,origin,anchor['id'] if anchor else None])
+                retry = boundary(identity,'retry',[policy_id,*([origin] if origin else [])],cids,occurrence_refs,occurrence_attrs,
+                    anchor.get('owner_id') if anchor else None)
+                if not declared:
+                    diagnostics.append({'code':'FAILURE_POLICY_UNPROVEN','policy_id':policy_id,
+                        'boundary_id':identity,'reasons':sorted({r for row in group for r in row['reasons']}
+                            | ({'KAFKA_ENTRY_OCCURRENCE_UNPROVEN'} if occurrence is None else {'PROCESS_CFG_OR_POLICY_AUTHORITY_UNPROVEN'}))})
+                    continue
+                transition(anchor['id'],retry['id'],'RETRY_POTENTIAL',retry)
+                dlt = boundary(identity+':dlt','dlt',[policy_id,md['handler_id']],cids,occurrence_refs,
+                    {**occurrence_attrs,'handler_id':md['handler_id'],'handler_execution':'NOT_OBSERVED',
+                        'condition':'declared attempt limit may be exhausted'},anchor.get('owner_id'))
+                transition(retry['id'],dlt['id'],'DLT_POTENTIAL',dlt)
+        if len(nodes)>10000 or len(edges)>30000: _fail('Failure output topology budget exceeded')
+        baseline = digest([FAILURE_VERSION,ProcessView.from_dict(_document(process)).content_fingerprint,
+            snapshot.to_dict() if snapshot else None,compensation_proposals,max_policies])
+        definition = ProcessDefinition.from_dict({**doc['definition'],'baseline_fingerprint':baseline})
+        view.update(rules_version=FAILURE_VERSION,baseline_fingerprint=baseline,provenance=list(provenance.values()),
+            coverage={**view['coverage'],'status':'PARTIAL','truncated':truncated},
+            limits=list(dict.fromkeys(view['limits']+[
+                'Failure policies are static declarations; retry scheduling, delivery and successful processing are not observed.',
+                'Local transaction declarations do not establish rollback of HTTP/Kafka effects.',
+                'Compensation proposals are semantic annotations, not technical rollback relationships.'])))
+        doc.update(definition=definition.to_dict(),definition_fingerprint=definition.content_fingerprint,
+            technical_view=ViewDocument.from_dict(view).to_dict(),technical_status='PARTIAL')
+        _bounded(doc)
+        return ProcessView.from_dict(doc)
+    except BusinessProcessError:
+        raise
+    except (ValueError,TypeError,KeyError,AttributeError,RecursionError,OverflowError) as error:
+        raise BusinessProcessError('INVALID_PROCESS_FAILURES','Invalid failure projection input') from error

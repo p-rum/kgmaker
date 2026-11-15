@@ -61,14 +61,15 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 39 | 20 | 1 | 60 |
-| T004 / T005–T044 | 24 | 16 | 0 | 40 |
+| T003 work packages | 47 | 13 | 0 | 60 |
+| T004 / T005–T044 | 27 | 12 | 1 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 69 | 49 | 1 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 80 | 38 | 1 | 119 |
 
-T003/T004 mají v tomto řádkovém inventáři 37 položek bez sloučené dodávky;
-36 je PLANNED a W09 je PR_OPEN.
+T003/T004 mají podle níže uvedených atomických řádků 26 položek bez sloučené
+dodávky: 25 PLANNED a 1 PR_OPEN. W09 a S09-W05 jsou MERGED; tento součet je inventář
+řádků, nikoli nové nezávislé ověření všech dodávek.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
@@ -81,7 +82,7 @@ testový receipt.
 Po baseline T048 `250e7c1` byly kromě dokumentačních instrukcí sloučeny také
 T046-S01 až S06 a přibylo zadání T049; jejich přesné SHA jsou v atomických řádcích.
 T020 zůstává MERGED v PR87; topology/explain nadále přijímají jen JSON. T021 je
-blokován upstream T003-S07-W09, nikoli chybějícím T019. T031 a T032 jsou sloučené;
+nyní má upstream T003-S07-W09 sloučený v PR109; vlastní dodávka T021 zůstává PLANNED. T031 a T032 jsou sloučené;
 T034 procesní CLI zůstává PLANNED.
 
 ### Atomické položky
@@ -108,7 +109,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S06-W04](tasks/T003-S06-04-multiDatasourceRealms.md) | MERGED | PARTIAL | `9f6605db0258d1b27bf233e25c7737bf0b675f5b` | [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [tests/test_build_aware.py](../tests/test_build_aware.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py) | [# 62](https://github.com/p-rum/kgmaker/pull/62) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S06-W05](tasks/T003-S06-05-jpqlHqlGrammar.md) | MERGED | PARTIAL | `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea` (head `ff31433eba0e180deb1df2b5f4aa8b76f3e690e0`) | [framework.py](../src/kgmaker/framework.py), [test_jpql_hql_grammar.py](../tests/test_jpql_hql_grammar.py), [change116](changes/116_parseExtendedJpqlHql.md), [post-merge change119](changes/119_reconcileJpqlDelivery.md) | [#97](https://github.com/p-rum/kgmaker/pull/97) | Bounded grammar a integrační opravy dodané. Původní branch full2264/481 a nové merged-main 2318 PASS /481 SKIP /0 FAIL /0 ERROR jsou oddělené receipty. Base-ověřovací chyba a dodatečný audit jsou transparentně v change119. W06/W07, další provider syntax a runtime SQL zůstávají PARTIAL/UNKNOWN. |
 | [T003-S06-W06](tasks/T003-S06-06-namedQueryContainers.md) | MERGED | VERIFIED_IN_SCOPE | `9f88d8463b3c968592f0f1937736b752dfccee1d` | [framework](../src/kgmaker/framework.py), [named query decoder](../src/kgmaker/named_queries.py), [actual Javac fixture](../fixtures/named-queries/Model.java), [tests](../tests/test_named_query_containers.py), [change120](changes/120_namedQueryContainers.md) | [PR102](https://github.com/p-rum/kgmaker/pull/102) MERGED; source preserved in PR103 integration | Unique context-local annotation/XML catalog; repeatable containers, named/positional parameter checks, compiler projections, final XML native tables; SQL quoted spans/comments cannot invent table references, leading comments preserve UPDATE/DELETE intent; duplicates/missing/malformed remain unresolved. Integration with merged PR101: 205 targeted PASS / 0 SKIP (W06 117 + runtime 88), actual JDK21; provider/runtime and separate Kotlin corpus NOT_RUN. |
-| [T003-S06-W07](tasks/T003-S06-07-criteriaSpecificationQuerydsl.md) | PR_OPEN | VERIFIED_IN_SCOPE | `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3` | [criteria_queries](../src/kgmaker/criteria_queries.py), [actual tests](../tests/test_criteria_queries.py), [matrix](programmatic-queries.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | [PR111](https://github.com/p-rum/kgmaker/pull/111) | Bounded Java/Javac Criteria/Specification/QueryDSL equality a direct custom fragments; actual Jakarta3.1/SpringDataJPA3.4.2/QueryDSL5.1 APT. Dynamic/ambiguous/stale remains PARTIAL/UNKNOWN; Kotlin/provider/runtime outside scope. |
+| [T003-S06-W07](tasks/T003-S06-07-criteriaSpecificationQuerydsl.md) | MERGED | VERIFIED_IN_SCOPE | `83999fb2e08c6d9d67449687c95b2217eee08b09` (approved `c57b57f`) | [criteria_queries](../src/kgmaker/criteria_queries.py), [actual tests](../tests/test_criteria_queries.py), [matrix](programmatic-queries.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | [PR111](https://github.com/p-rum/kgmaker/pull/111) | Bounded Java/Javac Criteria/Specification/QueryDSL equality a direct custom fragments; actual Jakarta3.1/SpringDataJPA3.4.2/QueryDSL5.1 APT. Dynamic/ambiguous/stale remains PARTIAL/UNKNOWN; Kotlin/provider/runtime outside scope. |
 | [T003-S06-W08](tasks/T003-S06-08-schemaCompatibility.md) | MERGED | PARTIAL | `3bef611d0ed555e26e6663a0b243ce5a2bf1d428` | [src/kgmaker/schema_replay.py](../src/kgmaker/schema_replay.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [tests/test_compiler_workers.py](../tests/test_compiler_workers.py), [tests/test_schema_compatibility.py](../tests/test_schema_compatibility.py) | [# 64](https://github.com/p-rum/kgmaker/pull/64) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W01](tasks/T003-S07-01-argumentParameterFlow.md) | MERGED | PARTIAL | `1915ebf0be25cab4cb8b0836e2fce25b05c7b10f` | [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_argument_parameter_flow.py](../tests/test_argument_parameter_flow.py), [tests/test_typescript_callback_limits.py](../tests/test_typescript_callback_limits.py) | [# 47](https://github.com/p-rum/kgmaker/pull/47) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W02](tasks/T003-S07-02-returnConsumerFlow.md) | MERGED | PARTIAL | `deb3691c23de19064a9e9c0484cf6a62ab295592` | [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_argument_parameter_flow.py](../tests/test_argument_parameter_flow.py), [tests/test_default_body_mapping.py](../tests/test_default_body_mapping.py) | [# 70](https://github.com/p-rum/kgmaker/pull/70) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
@@ -118,7 +119,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S07-W06](tasks/T003-S07-06-httpClientExecution.md) | MERGED | PARTIAL | `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_http_client_execution.py](../tests/test_http_client_execution.py), [tests/test_http_provider_privacy_integration.py](../tests/test_http_provider_privacy_integration.py) | [# 49](https://github.com/p-rum/kgmaker/pull/49) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W07](tasks/T003-S07-07-crossServiceContractMapping.md) | MERGED | PARTIAL | `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d` | [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [tests/test_cross_service_contract_mapping.py](../tests/test_cross_service_contract_mapping.py) | [# 76](https://github.com/p-rum/kgmaker/pull/76) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W08](tasks/T003-S07-08-evidenceRanking.md) | MERGED | VERIFIED_IN_SCOPE | `8e7dff5b82597184662797c07a68e5ec460e9e0e` | [tests/test_evidence_ranking.py](../tests/test_evidence_ranking.py), actual Javac/JDK21 fixture | [PR106](https://github.com/p-rum/kgmaker/pull/106) | execution-2/impact-2, evidence contributions, lokalizované gaps/penalty, JSON/Markdown CLI; [change126](changes/126_evidenceRanking.md), [podpora](evidence-ranking.md). Celé S07 zůstává PARTIAL. |
-| [T003-S07-W09](tasks/T003-S07-09-unifiedFlowViews.md) | MERGED | VERIFIED_IN_SCOPE | merge `cceb1109`; head `999e60f` | [Unified flow capability](unified-flow-views.md), [change128 kroky12–14](changes/128_unifiedFlowViews.md) | [PR109](https://github.com/p-rum/kgmaker/pull/109) | Jednotný CFG model a tři formáty; caller/source proof guard, final429 + binding38 + T02859 PASS (překryv). PR109 merged po nezávislém review; historická ověření zachována; SOURCE_ONLY/legacy UNKNOWN, bounded async, full/GH CI NOT_RUN. |
+| [T003-S07-W09](tasks/T003-S07-09-unifiedFlowViews.md) | MERGED | VERIFIED_IN_SCOPE | merge `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`; approved `999e60f` | [Unified flow capability](unified-flow-views.md), [change128 kroky12–14](changes/128_unifiedFlowViews.md) | [PR109](https://github.com/p-rum/kgmaker/pull/109) | Jednotný CFG model a tři formáty; caller/source proof guard, final429 + binding38 + T02859 PASS (překryv). Nezávislé review APPROVE a merge ověřeny; SOURCE_ONLY/legacy UNKNOWN, bounded async, full/GH CI NOT_RUN. |
 | [T003-S08-W01](tasks/T003-S08-01-typescriptProjectReferences.md) | MERGED | PARTIAL | `1091330b67a7ff67db329ffbbb2eaba162313b3f` | [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_typescript_project_references.py](../tests/test_typescript_project_references.py), [tests/test_worker_protocol.py](../tests/test_worker_protocol.py) | [# 28](https://github.com/p-rum/kgmaker/pull/28) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S08-W02](tasks/T003-S08-02-tsconfigPathsExclude.md) | MERGED | PARTIAL | `5430388a282f19f6c9637319c12a1731ae6d0674` | [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [tests/test_tsconfig_freshness.py](../tests/test_tsconfig_freshness.py) | [# 36](https://github.com/p-rum/kgmaker/pull/36) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S08-W03](tasks/T003-S08-03-typescriptCallbacksGenerics.md) | MERGED | PARTIAL | `3a7f76b00bb5136bbe5990546d9c8942a7f53f73` | [src/kgmaker/callgraph.py](../src/kgmaker/callgraph.py), [tests/test_typescript_callback_limits.py](../tests/test_typescript_callback_limits.py), [tests/test_typescript_callback_projects.py](../tests/test_typescript_callback_projects.py) | [# 46](https://github.com/p-rum/kgmaker/pull/46) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
@@ -128,7 +129,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S09-W02](tasks/T003-S09-02-binaryXlsDiagnostics.md) | MERGED | PARTIAL | `35033096e8a2ea5d74ae8d2195a7b27d22c7590a` | [src/kgmaker/workbooks.py](../src/kgmaker/workbooks.py), [src/kgmaker/data_check.py](../src/kgmaker/data_check.py), [tests/test_binary_xls.py](../tests/test_binary_xls.py) | [# 21](https://github.com/p-rum/kgmaker/pull/21) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W03](tasks/T003-S09-03-templateDialectExpansion.md) | MERGED | PARTIAL | `2b0cf353c31f88c0c0226cf415585433843187f2` | [src/kgmaker/templates.py](../src/kgmaker/templates.py), [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_templates.py](../tests/test_templates.py) | [# 38](https://github.com/p-rum/kgmaker/pull/38) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W04](tasks/T003-S09-04-approvedMethodologyConflicts.md) | MERGED | PARTIAL | `aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533` | [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py), [src/kgmaker/analysis_report.py](../src/kgmaker/analysis_report.py), [tests/test_methodology_conflicts.py](../tests/test_methodology_conflicts.py) | [# 8](https://github.com/p-rum/kgmaker/pull/8) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S09-W05](tasks/T003-S09-05-completeAnalysisReport.md) | PR_OPEN | VERIFIED_IN_SCOPE | `83999fb` integration + publication audit | [Report capability/CLI](complete-analysis-report.md), [actual fixture](../tests/test_complete_analysis_report_actual.py) | [PR112](https://github.com/p-rum/kgmaker/pull/112) | Independent overlapping facets, declared business/tool blockers, explicit delivery/acceptance/test links and pinned atomic publication. 73 integration PASS with actual Javac21/TS5.7.3/React; subsequent publication audit151 PASS / 2 DESELECTED + actual5 PASS / 0 SKIP; compiler BEFE artifact and SOURCE_ONLY template/PDF capability remain separate. Single-context feature selection, runtime/data UNKNOWN; [change131](changes/131_completeAnalysisReport.md). |
+| [T003-S09-W05](tasks/T003-S09-05-completeAnalysisReport.md) | MERGED | VERIFIED_IN_SCOPE | `9c86d29fc267014e2bee4b197c7692f17a1cda93` (approved `edb5cff`) | [Report capability/CLI](complete-analysis-report.md), [actual fixture](../tests/test_complete_analysis_report_actual.py) | [PR112](https://github.com/p-rum/kgmaker/pull/112) | Independent overlapping facets, declared business/tool blockers, explicit delivery/acceptance/test links and pinned atomic publication. 73 integration PASS with actual Javac21/TS5.7.3/React; subsequent publication audit151 PASS / 2 DESELECTED + actual5 PASS / 0 SKIP; compiler BEFE artifact and SOURCE_ONLY template/PDF capability remain separate. Single-context feature selection, runtime/data UNKNOWN; [change131](changes/131_completeAnalysisReport.md). |
 | [T003-S10-W01](tasks/T003-S10-01-stageContentCache.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W02](tasks/T003-S10-02-reverseDependencyIndexes.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W03](tasks/T003-S10-03-negativeLookupInvalidation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
@@ -172,7 +173,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T026](tasks/T-026_collapse-business-steps.md) | MERGED | PARTIAL | `9442114d169b84e6c9f98dd097faafd80eff0d48` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t026_collapse_business_steps.py](../tests/test_t026_collapse_business_steps.py) | [#66](https://github.com/p-rum/kgmaker/pull/66) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T027](tasks/T-027_cross-http-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t027_cross_http_process_boundary.py](../tests/test_t027_cross_http_process_boundary.py) | [PR105](https://github.com/p-rum/kgmaker/pull/105), independent APPROVE and verified two-parent merge | Historical integration 200 PASS / 0 SKIP, 10.76 s; independent review 200 PASS / 0 SKIP, 13.00 s. Source/semantic preservation verified. Status reconciled in change127; full suite remains NOT_RUN. |
 | [T028](tasks/T-028_cross-async-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `9f538634807957abe1004dde43450271b77f1bb5` | [business_process.py](../src/kgmaker/business_process.py), [test_t028_cross_async_process_boundary.py](../tests/test_t028_cross_async_process_boundary.py) | [PR108](https://github.com/p-rum/kgmaker/pull/108), [change127 steps 7–10](changes/127_crossAsyncProcessBoundary.md) | New context/projection/T025/T028 integration: 158 PASS / 0 SKIP, 28.09 s, actual JDK21/Javac/K1/K2 and 4 reviewer repros; both parent source/test trees preserved. Historical review-fix run 264 PASS / 0 SKIP. Independent APPROVE/merge and317 targeted PASS are recorded in [merge audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441); full suite NOT_RUN. |
-| [T029](tasks/T-029_project-process-failures.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
+| [T029](tasks/T-029_project-process-failures.md) | PR_OPEN | VERIFIED_IN_SCOPE | `9c86d29fc267014e2bee4b197c7692f17a1cda93` + T029 | [test_t029_project_process_failures.py](../tests/test_t029_project_process_failures.py), actual Java/K1 positive and K2 UNKNOWN | [change130](changes/130_projectProcessFailures.md) | Pure failure projection, per-occurrence canonical Kafka entry and exact T014 membership tuple after the second PR110 review; current report-main integration 203 PASS / 0 SKIP (74.02 s), T014/T028/T029 + all 3 reviewer reproductions + report projection/publication; historical345 in step11; change130 steps9–12. Finally paths preserved, static retry/DLT, no remote rollback, PROPOSED compensation only. Full/actual Kafka3.2.0/runtime NOT_RUN. |
 | [T030](tasks/T-030_prepare-process-label-packet.md) | MERGED | PARTIAL | `9eec41a403b4e6601fe3addac168bf39d37f31b6` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t030_prepare_process_label_packet.py](../tests/test_t030_prepare_process_label_packet.py) | [#75](https://github.com/p-rum/kgmaker/pull/75) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T031](tasks/T-031_validate-process-annotations.md) | MERGED | PARTIAL | `2c7b38ea2dc7b5ad08009eefa276c4dc41a5b1a9` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t031_validate_process_annotations.py](../tests/test_t031_validate_process_annotations.py) | [#77](https://github.com/p-rum/kgmaker/pull/77) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T032](tasks/T-032_persist-process-review.md) | MERGED | PARTIAL | `7e6c838342ba9e59609d420f3387a05625290fcf` | [src/kgmaker/process_store.py](../src/kgmaker/process_store.py), [tests/test_t032_persist_process_review.py](../tests/test_t032_persist_process_review.py) | [#78](https://github.com/p-rum/kgmaker/pull/78) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -1606,7 +1607,7 @@ PR106 je MERGED (8e7dff5b); Full/GH CI a celý S07 nadále neuzavřené.
 
 ## T003-S07-W09 — unified flow views (2026-11-15)
 
-Dodání PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)), verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
+Dodání MERGED ([PR109](https://github.com/p-rum/kgmaker/pull/109)) v `cceb1109`; schválený HEAD `999e60f` a jeho source zachovány v T029 integraci (change130 krok8). Historické ověření níže zůstává oddělené od merge.
 [Change128](changes/128_unifiedFlowViews.md) zaznamenává model a skutečné testy
 odděleně. `flow-view-1` přidává společné pořadí z CFG, coverage/provenance a tři
 formáty pro control-flow/process/integrations/data-flow. Relation view není CFG.
@@ -1657,10 +1658,41 @@ source/test contents. This is an integration only; W05 remains PR_OPEN and await
 independent review. Scoped workspace/remote/process verification and semantic
 preservation are recorded in [change125 step11](changes/125_backendFrontendValueFlow.md).
 
+## T029 — Static failure projection (2026-11-15)
+
+Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `9c86d29`. New integration: **203 PASS / 0 SKIP, 74.02 s**, T014/T028/T029 + three actual reviewer reproductions + report projection/publication (change130 step12). Source byte identity preserved. Historical integration on main `83999fb`: 345 PASS / 0 SKIP, 83.01 s (T014 + T025–T029 and all three actual reviewer reproductions); change130 step11. The former 301 PASS checkpoint predates the second membership correction.
+[Change130](changes/130_projectProcessFailures.md) separates RED, actual fixture
+repairs, implementation, final diagnostics fix and real test runs. The pure API
+preserves all catch/finally CFG paths and only attaches validated static retry/DLT
+policy boundaries at matching selected exceptional exits of canonical Kafka entries
+or witnessed T028 consumer imports. An ordinary call of the same listener retains
+an UNKNOWN boundary; annotation identity alone is insufficient. Java/K1 Spring Kafka
+3.3.2 is positive; actual K2 Kafka annotation absence is an explicit UNKNOWN test.
+Raw rejected proofs and relevant diagnostics/truncation survive. Local transaction
+declarations do not establish remote rollback; compensation is only PROPOSED
+semantic annotation. Public [API examples/limits](process-paths.md#static-failure-projection-t029).
+
+Historical initial checks: 281 PASS / 0 SKIP, 44.31 s before the diagnostic
+retention guard, then 60 T029 PASS / 0 SKIP, 13.02 s. Independent review on
+`7dee1dd` passed 285 checks but found two actual invocation reproductions failing.
+Historical first review-fix: 75 PASS / 0 SKIP, 36.24 s (73 public T029 + 2 actual Java reviewer reproductions), with history and limits in change130 step6. No flow.py/worker
+change. Full suite and runtime NOT_RUN. Actual Kafka3.2.0 version matrix NOT_RUN
+because its pinned JAR is unavailable; supported 3.3.2 capture is not a substitute.
+
+T028 downstream membership preservation is an additive PR110 correction, documented
+in [change130 steps9–11](changes/130_projectProcessFailures.md). Its tuple keeps
+original IDs/raw proofs; endpoint evidence cannot replace a mapping declaration.
+Existing T028 delivery remains MERGED; this correction is PR_OPEN and the current
+verification is recorded separately from the historical 301 PASS above.
+
+Second PR110 membership correction: **177 PASS / 0 SKIP, 71.60 s** in T014/T028/T029
+and all three reviewer reproductions before the separate main83999fb integration;
+see [change130 steps9–11](changes/130_projectProcessFailures.md).
+
 
 ## T003-S06-W07 — bounded programmatic query intent (2026-11-15)
 
-Delivery PR_OPEN ([PR111](https://github.com/p-rum/kgmaker/pull/111)); verification VERIFIED_IN_SCOPE pro [Java/Javac
+Delivery MERGED ([PR111](https://github.com/p-rum/kgmaker/pull/111)) v `83999fb`, schválený HEAD `c57b57f`; verification VERIFIED_IN_SCOPE pro [Java/Javac
 matici](programmatic-queries.md), nikoli celý S06. [Change129](changes/129_criteriaSpecificationQuerydsl.md)
 odděluje initial RED, where replacement/clear fix, duplicate-qualified-entity
 fail-closed, strict IR validation a opravy nezávislého review v krocích11–14.
@@ -1674,7 +1706,7 @@ tímto ověřeny. Historické134PASS,132PASS a127PASS/2setupERROR zůstávají o
 Pozdější změny builderu nepřepisují executable snapshoty; opakované snapshoty jsou
 UNKNOWN; QueryDSL attributes vyžadují final člen a Specification skutečný
 compiler override. V1 intent replay odmítnut, explicitní reinspection vytváří v2.
-Před merge je nutné nové nezávislé review opraveného HEAD.
+Opravený HEAD `c57b57f` byl nezávisle schválen a sloučen; T029 integrace jeho source zachovává beze změny (change130 krok11).
 Aktuální ordinary merge W09 maincceb do844c zachovává obě source varianty beze
 změny. Nové kombinované cílené ověření: **397 PASS /0SKIP /95.57s** (W07, W09,
 ORM/protocol, CFG/ranking/provider/workbook/binding); [change129 krok15](changes/129_criteriaSpecificationQuerydsl.md).
