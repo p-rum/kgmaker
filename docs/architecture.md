@@ -32,6 +32,17 @@ invalid requests, input aliases and failed atomic writes preserve the previous c
 See [T037 cache API and
 limits](view-cache.md) and [change121](changes/121_invalidateDerivedViews.md).
 
+`runtime_evidence.produce_manifest` is the explicit POSIX execution boundary.
+It reuses the compiler snapshot validator and bounded worker pipe/process cleanup,
+validates identities/output before launch and revalidates before atomic publication
+under `.kgmaker/runtime`. Its closed v2 contract rejects arbitrary text and preserves
+PARTIAL/UNKNOWN. The source JDK21 `RuntimeTrace` SDK executes instrumented synchronous
+callbacks/factories/predicates and map-router registration; its capture remains PARTIAL.
+Facts do not become RTA/value-flow or availability evidence. Legacy v1 import stays
+readable; v2 identities and symbol context membership are mandatory. Import, scan,
+hook and feature commands remain non-executing. See [runtime contract and limits](runtime-trace.md)
+and [change122](changes/122_runtimeTraceProducer.md).
+
 The local index is built from repository source. No source files are sent to a service by kgmaker. The Copilot hook reads the index generation from the local process and writes JSON context to standard output. Graph JSON stays ignored by Git; `.kgmaker/GRAPH.md`, `.kgmaker/GRAPH.mmd`, and `.kgmaker/NOTES.md` may be shared if the repository wants them committed. `kgmaker scan --no-docs` updates only the machine index; `kgmaker docs` can regenerate both views later. `kgmaker semantic update --token-budget N` limits the changed-file context packet using a conservative character-to-token estimate; it cannot control the separate token accounting of the host Copilot model. `kgmaker check` compares fresh Markdown and Mermaid renders against the committed snapshots and can run in CI without the local JSON index.
 
 Confluence exports are optional and read-only. `kgmaker docs check --confluence-dir PATH` performs deterministic ingestion first, then compares assertions to current code. Verified code facts use `VERIFIED_BY_CODE`; business or external-system claims that static analysis cannot establish remain `NOT_VERIFIABLE_FROM_CODE` and are not reported as lies. The cache stores per-artifact SHA-256 values and `CodeEntity → DocumentationAssertions` reverse links so later code changes can revalidate affected documentation.

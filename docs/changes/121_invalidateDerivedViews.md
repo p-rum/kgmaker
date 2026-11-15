@@ -2,10 +2,11 @@
 
 Baseline: `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8` (`main`, 2026-11-15).
 Task: [T037](../tasks/T-037_invalidate-derived-views.md), kroky S01–S05,
-acceptance AC01–AC06. Delivery při tomto checkpointu IN_PROGRESS; ověření
+acceptance AC01–AC06. Historický stav při původním checkpointu IN_PROGRESS; ověření
 VERIFIED_IN_SCOPE pro AC01–AC05 po níže uvedených opravách a PARTIAL pro AC06.
 První review nad `43d7010c4c3f3f632c41b68bbf4f1efa53018712` vrátilo REQUEST_CHANGES;
-opakované review a PR/publication jsou ještě NOT_RUN. T004 se tímto krokem neuzavírá.
+opakované review a PR/publication tehdy byly NOT_RUN. Aktuální PR103/integrace
+je uvedena v závěrečném kroku níže. T004 se tímto krokem neuzavírá.
 
 ## T037-S01 — dependency fingerprint a graph context binding
 
@@ -313,3 +314,102 @@ Opakovaný preservation audit **PASS**, celkem 43 concepts / 138 edges / 292 epi
 všechny baseline entries zachovány. `git diff --check 14d7f7c` **PASS**.
 Generated views se po tomto závěrečném textovém záznamu obnovují stejným příkazem;
 výsledky Python testů se tím nerozšiřují na další scope.
+
+
+## Integrace po PR102 — T037-S03/S04/S05, AC04–AC06 (2026-11-15)
+
+Výchozí T037 HEAD `ed79c3b078514f7914d11431a6b5e30847cecf59` má nezávislé
+APPROVE a otevřený PR103. Integrační main
+`9f88d8463b3c968592f0f1937736b752dfccee1d` je ověřený dvourodičový merge
+PR102, obsahuje MERGED PR101 runtime a W06. `git merge --no-ff --no-commit
+9f88d8463b3c968592f0f1937736b752dfccee1d` zachovává historii bez rebase/force.
+Dodání T037 zůstává PR_OPEN; nový HEAD čeká na nezávislé review a merge.
+
+Rekognoskace dle kgmaker-context ověřila status/query/memory recall a zdrojové
+kontrakty. T037 mění cache/architecture/topology/provider; runtime/W06 mění
+jiné funkční moduly. Překryv je pouze v README, architecture dokumentaci,
+acceptance/progress a semantic/generated artefaktech. Konflikt architecture
+zachovává oba odstavce: explicitní cache prepare→validate/output→publish i
+opt-in runtime producer. Žádný funkční integrační patch nebyl potřeba; původní
+snapshot guard, vstupní alias ochrana a poslední validní cache se nemění.
+
+Semantic konflikt spojuje již schválené fakty obou rodičů: 43 konceptů,
+138 vztahů a union 293 původních epizod. W06 text současné JPA rule v9 i T037
+read-only-default/explicit-cache hranice zůstávají. Následující aktuální packet
+reanchoruje source lines/IDs; žádný vztah ani historická epizoda se nemaže.
+Generované GRAPH.md/mmd jsou obnovovány výhradně příkazem scan.
+
+Dokumentace: tento krok, production progress a acceptance odlišují PR101/102
+MERGED od PR103 PR_OPEN. V change120 je opravena pouze kotva odkazu na aktuální
+W06 acceptance sekci, historické výsledky zůstávají. README, `docs/view-cache.md`,
+`docs/architecture-json-cli.md`, compiler/runtime příručky a CLI příklady jsou
+bez nové změny veřejného chování: oba dodané kontrakty jsou zachovány. Registry,
+API/schémata, installed templates a worker protocol jsou bez dopadu. Širší T038
+export transakce, souběžní zapisovatelé a celý T004 nejsou tímto merge dodány.
+
+Přesný nový T037 testový příkaz na integrovaném stromu:
+
+```sh
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_t037_invalidate_derived_views.py tests/test_graph_provider.py tests/test_t016_aggregate_service_topology.py tests/test_t018_explain_view_elements.py tests/test_t019_add_architecture_json_cli.py tests/test_t032_persist_process_review.py tests/test_t033_catalog_business_processes.py
+```
+
+Runtime/W06 mají předchozí důkaz nad HEAD `00603901` se stejným tree jako
+merge main: implementační 205 PASS / 0 SKIP, 36.87 s a nezávislé opakování
+205 PASS / 0 SKIP, 37.88 s. Tento integrační krok tyto sady znovu nespouští;
+zachování kódu prokazuje byte identity proti main. Full suite, další toolchain
+matice a GH CI jsou NOT_RUN dle pověření. Nový T037 výsledek a preservation
+kontroly jsou zapsány níže; nejde o tvrzení nového runtime pozorování.
+
+
+Výsledek nového sedmimodulového běhu: **PASS, 298 passed / 0 skipped, 11.07 s**.
+Byte identity proti výchozímu T037 HEAD: `view_cache.py`, `graph_provider.py`,
+`architecture_cli.py`, `service_topology.py` a T037 test **PASS**. Proti main:
+`framework.py`, `named_queries.py`, `inspection_cli.py`, `runtime_evidence.py`,
+named-query/runtime/JPQL testy a `RuntimeTrace.java` **PASS**. Tím je odděleno
+nové ověření T037 od historických worker/runtime výsledků PR102.
+
+## Údržba po merge — T037-S05 / AC06 (2026-11-15)
+
+Výchozí SHA: T037 `ed79c3b078514f7914d11431a6b5e30847cecf59` a main
+`9f88d8463b3c968592f0f1937736b752dfccee1d`. Řešení semantic konfliktu vychází
+z aktuálních main facts, přidává existující T037 cache koncept/tři vztahy a
+zachovává jeho read-only-default summary; episode union kontroluje shodné objekty
+pod stejným ID. Nejde o vytváření nových vztahů. Následný scoped patch pro
+10 konceptů a 30 vztahů reanchoruje původní citace dle správného rodiče a
+aktuálního graph indexu. Nepřesné historické blank-line odkazy architecture CLI
+jsou zpřesněny na odpovídající `run`/`_preflight` deklarace. Generated grafy
+nebyly řešeny ruční editací; úplně je obnovuje scan.
+
+```sh
+./kgmaker semantic update --base 9f88d8463b3c968592f0f1937736b752dfccee1d --note docs/changes/121_invalidateDerivedViews.md
+./kgmaker scan --no-docs
+# Current update_id, source-backed patch; remove_nodes/remove_edges jsou prázdné.
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t037-integration-preservation.py
+./kgmaker memory capture --base 9f88d8463b3c968592f0f1937736b752dfccee1d --validation t037-targeted=passed --validation semantic-preservation=passed --validation source-identity=passed --validation full-suite=skipped
+./kgmaker scan
+./kgmaker check
+git diff --check 9f88d8463b3c968592f0f1937736b752dfccee1d
+git diff --check ed79c3b078514f7914d11431a6b5e30847cecf59
+```
+
+`semantic apply` a `semantic validate` **PASS**. Preservation audit **PASS**:
+stejný algoritmus z opravy review 3 výše (concept IDs, relationship tuple včetně
+confidence s normalizací koncového line suffixu, původní episode objekty) byl
+proveden proti všem třem referencím: baseline **42/135/286**, T037 rodič
+**43/138/292**, runtime/W06 main **42/135/287**. Všechny zachovány; sjednocení
+obsahuje **43 konceptů / 138 vztahů / 293 původních epizod** před novou capture.
+První scan před reanchor pravdivě vynechal29 stale vztahů; nejsou odstraněny.
+Záznam tohoto kroku nerozšiřuje veřejné cache/CLI chování. README/API/CLI příklady
+jsou bez dalšího dopadu; progress/acceptance uvádějí aktuální dodání a testy.
+Full suite a GH CI NOT_RUN; zbývá nezávislé review nového HEAD a merge PR103.
+
+Závěrečné výsledky údržby: current-packet `semantic apply/validate` **PASS**,
+`memory capture` **PASS** (nová epizoda
+`f5d4511dec7752fb940cdb6f5d88b7bb44e22073504a6cd32c904d1800592d80`),
+celkem **43 / 138 / 294** source-authored concepts/edges/episodes. `scan` a
+`check` **PASS**, žádné vynechané stale semantic entries. Oba diff checky
+**PASS**; původní třístranný preservation audit i source identity po capture
+**PASS**. Grafy se po tomto výsledkovém textu obnovují stejným příkazem scan.
+Nová capture je jediný přidaný historický záznam tohoto integračního kroku.
