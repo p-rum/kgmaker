@@ -118,6 +118,11 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if context["return_flow_rule_version"] != RETURN_VERSION:
             raise WorkerError("STALE_INDEX: return/consumer rules changed; inspect again", "STALE")
 
+    if "field_flow_rule_version" in context:
+        from .field_flow import VERSION as FIELD_VERSION
+        if context["field_flow_rule_version"] != FIELD_VERSION:
+            raise WorkerError("STALE_INDEX: field mapping rules changed; inspect again", "STALE")
+
     if "local_operation_rule_version" in context:
         from .local_operations import VERSION as LOCAL_OPERATION_VERSION
         if context["local_operation_rule_version"] != LOCAL_OPERATION_VERSION:

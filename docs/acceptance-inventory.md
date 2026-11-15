@@ -1275,12 +1275,28 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 
 [Scénáře AC01–AC12 a jejich ověření](tasks/49_separateTargetAgents.md) jsou PLANNED / NOT_RUN. Při implementaci přidej ke každému dodanému AC důkaz, SHA, verzi hostitele a skutečný výsledek.
 
+## T003-S07-W03 — field a explicitní mapping flow
+
+Baseline W03 `d78286ed65e137495c130e72233dd466da0dd96b`, integrovaný main
+`b1a8ba1f4234cd399de8319fcf5cde2c670dac26`, 2026-11-15; dodání PR_OPEN
+([PR104](https://github.com/p-rum/kgmaker/pull/104)), ověření omezené na
+`field-mapping-1`, nikoli celé T003-AC07. Nový cílený běh 166 PASS / 0 SKIP,
+67.84 s (163 W03 + actual Javac named-query positive + dva runtime capture testy).
+Přesné příkazy/výsledky: [change124](changes/124_fieldAndMappingFlow.md).
+
+| Acceptance | Ověření | Konkrétní důkaz |
+|---|---|---|
+| T003-S07-W03-AC01 | VERIFIED_IN_SCOPE | `test_public_manual_and_actual_generated_mapper`, `test_source_provenance_and_generated_origin_are_captured`: skutečný Javac/JDK21 a MapStruct1.6.3, public fields i getter/identity/setter, source SHA/ranges |
+| T003-S07-W03-AC02 | VERIFIED_IN_SCOPE | `test_legacy_schema_has_no_invented_compiler_mapping` v1/v2/v3, store roundtrip/offline scan, workspace kvalifikace |
+| T003-S07-W03-AC03 | VERIFIED_IN_SCOPE | `test_unknown_business_transform_dispatch_recursion_and_aliases`, invalid actual compiler response, timeout/cancel orchestrace, source/version STALE, nulové implicitní procesy SOURCE_ONLY |
+| T003-S07-W03-AC04 | PARTIAL | [Podporovaná matice](field-mapping.md), skutečná [fixture](../fixtures/field-mapping/README.md), lokální targeted regrese; full/GH CI NOT_RUN |
+
 ## T037 — invalidace odvozených pohledů (2026-11-15)
 
-Baseline T037 `ed79c3b078514f7914d11431a6b5e30847cecf59`, integrovaný main
-`9f88d8463b3c968592f0f1937736b752dfccee1d`; delivery PR_OPEN
-([PR103](https://github.com/p-rum/kgmaker/pull/103)); ověření PARTIAL před review
-nového integračního HEAD. [Zadání](tasks/T-037_invalidate-derived-views.md),
+Delivery MERGED na `b1a8ba1f4234cd399de8319fcf5cde2c670dac26`
+([PR103](https://github.com/p-rum/kgmaker/pull/103)); ověření PARTIAL v
+dokumentovaném scope. HEAD `03aaf0d` má nezávislé APPROVE a 298 PASS / 0 SKIP,
+21.57 s. [Zadání](tasks/T-037_invalidate-derived-views.md),
 [API](view-cache.md), [change121](changes/121_invalidateDerivedViews.md).
 
 | Acceptance | Ověření | Přímý test / limit |
@@ -1290,7 +1306,7 @@ nového integračního HEAD. [Zadání](tasks/T-037_invalidate-derived-views.md)
 | T037-AC03 | VERIFIED_IN_SCOPE | `test_mutation_refresh_matches_independent_full_rebuild` testuje create/edit/delete/rename proti nezávislému builderu, bez cache readback. |
 | T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink negatives zachovávají poslední validní artefakt. Oprava review navíc dokládá `test_cli_rejected_request_preserves_inputs_and_cache`, `test_cli_late_output_failure_never_publishes`, `test_cli_failed_atomic_publication_preserves_files_and_removes_temporary_paths`, input/source alias matice a `test_snapshot_wrapper_detects_original_input_mutations`; původní snapshot se kontroluje i při odložené publikaci. |
 | T037-AC05 | VERIFIED_IN_SCOPE | Scope/context cache isolation, exact ViewDocument round-trip a test no approval/runtime evidence in cached topology; limity/truncation se kopírují beze změny v T016 view. |
-| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; první nezávislé review REQUEST_CHANGES bylo opraveno ve třech samostatně evidovaných krocích change121. PR103 je otevřený a původní HEAD ed79c3b má nezávislé APPROVE; review nové integrační revize a remote CI zatím NOT_RUN. |
+| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; první nezávislé review REQUEST_CHANGES bylo opraveno ve třech samostatně evidovaných krocích change121. PR103 je MERGED po nezávislém APPROVE integračního HEAD 03aaf0d; full suite a remote CI NOT_RUN. |
 
 Původní checkpoint `43d7010` historicky uváděl 22/244 passed; jeho review přesto
 odhalilo mezery AC04 a sémantické evidence. Po opravách obsahuje T037 modul 74

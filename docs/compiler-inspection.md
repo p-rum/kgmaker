@@ -1491,3 +1491,15 @@ and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.
+
+## Field read/write and explicit mapper bindings
+
+T003-S07-W03 adds `field-mapping-1` on existing validated Javac return IR, with
+no protocol/store schema change. Direct fields, straight-line static/private/final
+helpers and actual captured MapStruct Java source produce source-backed
+`reads_value`/`writes_value` occurrences and `maps_to` declaration dependencies.
+Business transforms, open dispatch, recursion and ambiguous local definitions
+remain UNKNOWN. Runtime/data availability is never promoted.
+The [supported matrix and CLI example](field-mapping.md),
+[actual manual/generated fixture](../fixtures/field-mapping/README.md) and
+[change124](changes/124_fieldAndMappingFlow.md) describe the bounded verification.
