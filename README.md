@@ -1172,8 +1172,7 @@ current verification limits are in the delivery inventory.
 ### T021 topology Mermaid
 
 `kgmaker architecture topology --capture-snapshot topology-inputs.json --format mermaid`
-renders the existing T017 filtered topology without recapturing sources. Renderer
-IDs are SHA-256 hashes of the captured logical IDs plus realm/scope/context identity;
+renders the existing T017 filtered topology without recapturing sources. Node renderer IDs are SHA-256 hashes of captured logical IDs plus realm/scope/context identity; model edge IDs remain in JSON metadata;
 labels retain relation, evidence, resolution and freshness text. The title reports
 scope, evidence, coverage and truncation, while the complete input envelope remains
 in safe JSON Mermaid comments. Async Kafka relations explicitly say `ASYNC; delivery
@@ -1181,6 +1180,18 @@ UNKNOWN`; runtime/data availability and ordering are not inferred. The renderer
 creates no legend or truncation vertices and publishes no files itself. See the
 [topology CLI contract](docs/architecture-json-cli.md#architecture-topology-mermaid-t021)
 and [topology model](docs/service-topology.md#mermaid-rendering-t021).
+
+The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
+retains catch/finally paths through business-step collapse and adds bounded static
+retry/DLT policy boundaries from explicit snapshots. A canonical Kafka entry or
+T028 consumer import bound to its exact T014 mapping declaration is required for each occurrence; an ordinary local
+call of an annotated listener remains UNKNOWN. Endpoint/reference-only evidence
+cannot replace membership authority; legacy imports missing the retained T014 tuple
+keep UNKNOWN retry boundaries. Local transaction declarations
+do not imply rollback of HTTP/Kafka effects; compensation remains a separately
+cited PROPOSED annotation. Java/K1 Spring Kafka 3.3.2 is the supported policy subset;
+K2 policy capture and runtime delivery remain UNKNOWN. See
+[change130](docs/changes/130_projectProcessFailures.md) for actual evidence and limits.
 
 ### Unified flow reports
 

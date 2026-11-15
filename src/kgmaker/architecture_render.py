@@ -143,9 +143,10 @@ def _topology_relation(edge):
 def render_topology_mermaid(value):
     """Render a supplied T017 topology result as a pure, bounded Mermaid diagram.
 
-    Node and edge identities are hashes of their captured logical model IDs. The
-    title carries scope/evidence/coverage in text; comments retain the complete
-    input envelope, so no synthetic Mermaid vertex changes topology cardinality.
+    Node IDs are hashes of captured logical model IDs. Mermaid edge syntax has no
+    emitted model edge ID here; comments retain each edge's original logical ID,
+    and the visible endpoints preserve its relation without changing cardinality.
+    The title carries scope/evidence/coverage without synthetic graph vertices.
     """
     try:
         if type(value) not in (dict,ViewDocument):_topology_fail()
@@ -179,8 +180,7 @@ def render_topology_mermaid(value):
 
         node_ids={node.id:'n'+hashlib.sha256(_topology_node_identity(node,view.scope).encode('utf-8')).hexdigest()
                   for node in view.nodes}
-        edge_ids={edge.id:'e'+hashlib.sha256(edge.id.encode('utf-8')).hexdigest() for edge in view.edges}
-        if len(set(node_ids.values()))!=len(node_ids) or len(set(edge_ids.values()))!=len(edge_ids):
+        if len(set(node_ids.values()))!=len(node_ids):
             _topology_fail('TOPOLOGY_MERMAID_ID_COLLISION')
         status=view.coverage.get('status','UNKNOWN')
         truncated=(view.coverage.get('truncated') is True or

@@ -575,14 +575,24 @@ def test_distinct_versioned_endpoints_across_bindings_keep_independent_paths():
 
 
 def test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift():
-    remote=project_remote(specimen()).to_dict();source=next(n for n in remote['nodes'] if n['id']=='client')
+    inputs=specimen();source_doc=next(d for d in inputs[2] if any(n['id']=='client' for n in d['nodes']))
+    source=next(n for n in source_doc['nodes'] if n['id']=='client')
     proof={'id':'raw-framework','evidence_kind':'FRAMEWORK_DERIVED','freshness':'UNKNOWN',
         'polarity':'SUPPORTING','context_ids':['virtual:kafka','client-context'],'original_payload_hash':'a'*64}
-    remote['provenance'].append(proof)
+    source_doc['provenance'].append(proof)
     source.update(evidence_refs=[proof['id']],evidence_kinds=['FRAMEWORK_DERIVED'],supporting_refs=[proof['id']],freshness='UNKNOWN')
-    binding=next(n for n in remote['nodes'] if n['kind']=='remote_binding')
-    binding['attributes']['candidates'][0]['evidence_refs']=[proof['id']]
-    remote['edges'][0]['attributes'].update(evidence_refs=[proof['id']],original_evidence_refs=[proof['id']])
+    # UNKNOWN T012 catalogs also carry the service declaration edge; T014's
+    # existing UNKNOWN authority gate requires this producer-shaped topology.
+    from kgmaker.architecture_model import ViewNode,ViewEdge
+    source_doc['nodes'].append(ViewNode('service:checkout','service','Checkout',
+        attributes={'scope':'production','context_ids':['client-context']}).to_dict())
+    source_doc['edges'].append(ViewEdge('declares-client','service:checkout','client','declares_kafka_interface',
+        evidence_refs=(proof['id'],),evidence_kinds=('FRAMEWORK_DERIVED',),supporting_refs=(proof['id'],),
+        freshness='UNKNOWN',resolution_status='UNRESOLVED').to_dict())
+    # Re-capture before T014 so the candidate and declaration identities bind
+    # this changed endpoint proof, rather than editing a projected candidate.
+    refresh_handoff(*inputs);remote=project_remote(inputs).to_dict()
+    proof=next(p for p in remote['provenance'] if p['id']=='raw-framework')
     result=api(local(),remote,target_processes=consumers())
     assert imported(result,'consumer-a') and proof in remote_proof_records(result)
     envelopes=[p for p in result.technical_view.provenance if p.get('original_id')==proof['id']]
@@ -597,3 +607,18 @@ def test_unknown_scopeless_framework_proof_is_retained_as_reference_without_upli
     proof['freshness']='STALE'
     refused=api(local(),remote,target_processes=consumers())
     assert not imported(refused,'consumer-a') and proof in remote_proof_records(refused)
+
+
+def test_post_capture_candidate_tamper_cannot_reuse_membership_declaration_id():
+    remote=project_remote(specimen()).to_dict();source=next(n for n in remote['nodes'] if n['id']=='client')
+    proof={'id':'replaced-endpoint-proof','evidence_kind':'FRAMEWORK_DERIVED','freshness':'UNKNOWN',
+        'polarity':'SUPPORTING','context_ids':['client-context']}
+    remote['provenance'].append(proof)
+    source.update(evidence_refs=[proof['id']],evidence_kinds=['FRAMEWORK_DERIVED'],supporting_refs=[proof['id']],freshness='UNKNOWN')
+    binding=next(n for n in remote['nodes'] if n['kind']=='remote_binding')
+    binding['attributes']['candidates'][0]['evidence_refs']=[proof['id']]
+    remote['edges'][0]['attributes'].update(evidence_refs=[proof['id']],original_evidence_refs=[proof['id']])
+    before=deepcopy(remote);result=api(local(),remote,target_processes=consumers())
+    assert not imported(result,'consumer-a') and proof in remote_proof_records(result)
+    assert any(d['code']=='ASYNC_REMOTE_MEMBERSHIP_UNPROVEN' for d in result.technical_view.diagnostics)
+    assert remote==before

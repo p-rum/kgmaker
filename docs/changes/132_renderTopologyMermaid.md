@@ -113,10 +113,10 @@ items remain outside this change.
   relationships; generated GRAPH.md/GRAPH.mmd via CLI. Semantic artifact remains
   exactly 50 concepts / 170 relationships / 319 episodes with the same episode hash.
 - Reanchoring preserved all semantic identities and relationship count; no node or
-  relationship removal or speculative addition. The final `semantic update --base
-  83999fb2e08c6d9d67449687c95b2217eee08b09 --note docs/changes/132_renderTopologyMermaid.md`,
-  scoped patch/apply, `semantic validate` and CLI-generated `scan` were repeated
-  against this note revision before commit.
+  relationship removal or speculative addition. At the original baseline checkpoint, `semantic update --base
+  83999fb2e08c6d9d67449687c95b2217eee08b09` and the scoped patch/apply/validate/scan
+  passed. Subsequent ordinary integrations and final semantic evidence are recorded
+  separately in T021-S07 and T021-S09.
 
 ## Kontroly
 
@@ -146,3 +146,24 @@ availability are not established by these renderer/parser fixtures. Remaining wo
 ### Workflow provenance
 
 The T021 task runtime record is `task:58d9577d5d7598ce17925f8e3a2fcf7ee24f96e1aa1983297d8ba4663eb5f558`. The source/architecture audit and T016/T017/T019 contract verification were performed before code changes. The task runtime's analyze and plan artifacts were recorded after implementation had begun; they document the verified decisions and are not represented as pre-implementation gates. The implementation and targeted-test artifacts contain the actual changed paths and outcomes; independent review is still pending.
+
+### T021-S07 — report-main integration and preservation audit
+
+- Report-main `9c86d29fc267014e2bee4b197c7692f17a1cda93` (tree `a9bc1d2c39b96342bf919e9c5b50e6237b92359a`, parents `83999fb2e08c6d9d67449687c95b2217eee08b09` and `edb5cff914e210b05482f2a84b01259f45efcd6c`) was verified and ordinary-merged. Generated graph files were recreated by `kgmaker scan`.
+- Fresh semantic update identified 10 concepts/27 relationships. Citations were source-verified and reanchored with zero removals. All report-main episodes and all base83999 episodes were preserved. A T021 memory episode was captured later against 9c86: `episode:45dbd0b78a458f82bfd57b89c6ac607aab4486a576dfc95c910b407048e8a2e7`.
+
+### T021-S08 — renderer ID contract correction
+
+- The task requires hash-based renderer IDs and distinct identities across realms. This renderer hashes node IDs; Mermaid output does not assign a separate model-edge ID. Original edge IDs remain in escaped metadata comments, while parsed edge endpoints and relation labels preserve the model.
+- Removed an unused edge-hash map and corrected the docstring and README. Emitted diagram syntax is unchanged. AC01/02 are verified by actual parser comparison of node IDs and edge endpoints.
+
+### T021-S09 — current T029 main integration
+
+- Main merge `84f94d4462437fe1228f07d0ba8f51071224952e` (tree `623cae88df34b54c456177b0a8afe8e2a76280c6`, parents `9c86d29fc267014e2bee4b197c7692f17a1cda93` and `e95ebf6ed04ca0f6041f04c2c8d1f93cb4ae7e83`) was verified and ordinary-merged into this branch; no history rewrite.
+- Semantic resolution starts with main's 52 concepts/176 relationships/328 episodes and adds only the captured T021 episode. Final state is 52/176/329; every episode from current main plus the T021 episode is present. Final canonical episode-array SHA256: `c80ff5996b687236ffe11d7f6352d7dfe466f54d60674e1fbd1089b303078541`.
+- `kgmaker semantic apply` PASS (52/176, no removals); `kgmaker semantic validate` PASS (381 merged concepts/35,648 relationships); CLI-generated scan PASS (626 files, 6,672 declarations/sections, 51,161 relationships). `git diff --exit-code 84f94d4462437fe1228f07d0ba8f51071224952e -- src/kgmaker/business_process.py tests/test_t029_project_process_failures.py tests/test_t028_cross_async_process_boundary.py docs/changes/130_projectProcessFailures.md` PASS: T029 source identity is unchanged.
+- Post-integration targeted run: combined T017/T019/T020/T021/legacy graph compatibility 129 passed / 0 skipped / 5.69 s; T021-only 9 passed / 0 skipped / 1.70 s. Actual Mermaid 11.4.1 parser and jsdom 26.0.0 renderer ran under Node 24.22.1 for hostile golden and actual T016 HTTP/Kafka topologies. The report source identity test was attempted but SKIP because the prebuilt JVM worker is unavailable; no worker was built.
+
+### Workflow provenance
+
+Task runtime record: `task:58d9577d5d7598ce17925f8e3a2fcf7ee24f96e1aa1983297d8ba4663eb5f558`. Source/architecture reconnaissance and T016/T017/T019 contract verification happened before code changes. Runtime analyze/plan artifacts were recorded after implementation began; they document decisions but are not presented as pre-implementation gates. Implementation/test artifacts contain actual changed paths/outcomes. Independent review remains pending.
