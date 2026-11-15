@@ -22,7 +22,15 @@ def snapshot():
                  ('Currency', 'enum', 'contract'), ('Order', 'class', 'contract'),
                  ('first', 'call_site', 'executable_code'), ('second', 'call_site', 'executable_code'),
                  ('unknown', 'call_site', 'executable_code'), ('table', 'table', 'contract')]]
-    contexts = [{'id': 'ctx', 'scope': 'production', 'mode': 'COMPILER',
+    # Producer-shaped MODEL input; these IDs/claims are not native compiler results.
+    # The separate actual Javac/CLI test establishes the positive native boundary.
+    import hashlib
+    source = Path(__file__).resolve().parents[1] / 'fixtures/evidence-ranking/src/main/java/Orders.java'
+    files = {'src/main/java/Orders.java': hashlib.sha256(source.read_bytes()).hexdigest()}
+    contexts = [{'id': 'ctx', 'scope': 'production', 'mode': 'BUILD_IMPORT',
+                 'origin_trust': 'LOCAL_COMPILER_INPUTS', 'analyzer_version': 'model-inspection',
+                 'worker': {'protocol_version': 1, 'worker': 'model-only-not-executed', 'compiler_version': 'model-only'},
+                 'source_files': files.copy(),
                  'freshness': 'CONTENT_VERIFIED', 'coverage': 'COMPLETE_WITHIN_INDEXED_SCOPE'}]
     evidence = []
     edges = []
@@ -43,7 +51,7 @@ def snapshot():
     edge('save', 'table', 'query_writes', 'FRAMEWORK_DERIVED')
     edge('entry', 'Currency', 'references_type')
     edge('entry', 'Order', 'references_type')
-    graph = KnowledgeGraph(3, '.', '', nodes, edges, {}, contexts=contexts, evidence=evidence,
+    graph = KnowledgeGraph(3, '.', '', nodes, edges, files, contexts=contexts, evidence=evidence,
         symbols=[{'id': i, 'context_id': 'ctx'} for i in ('entry', 'decide', 'save', 'Currency', 'Order')], call_sites=sites)
     return KnowledgeGraph.from_dict(graph.to_dict())
 
@@ -419,3 +427,150 @@ def test_supported_compiler_invocation_kinds_retain_static_evidence(kind):
     assert any(e['kind'] == 'declares_call' for e in entry['contributions']['execution_centrality'])
     assert not any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in entry['coverage']['gaps'])
     assert any(e['kind'] == 'DECLARED_TARGET' and e['dispatch_complete'] for e in adjacency(graph)['entry'])
+
+
+@pytest.mark.parametrize('profile', ['execution', 'impact'])
+@pytest.mark.parametrize('scope', ['production', 'all'])
+@pytest.mark.parametrize('damage', ['source_only', 'unknown_mode', 'legacy_compiler_label', 'missing_mode',
+                                    'bare_build', 'missing_analyzer', 'missing_worker', 'missing_sources',
+                                    'mismatched_sources', 'unknown_freshness', 'source_only_proof', 'foreign_proof_context'])
+def test_context_authority_is_required_before_execution_admission(profile, scope, damage):
+    graph = snapshot()
+    context = graph.contexts[0]
+    if damage == 'source_only': context['mode'] = 'SOURCE_ONLY'
+    elif damage == 'unknown_mode': context['mode'] = 'UNKNOWN'
+    elif damage == 'legacy_compiler_label': context['mode'] = 'COMPILER'
+    elif damage == 'missing_mode': context.pop('mode')
+    elif damage == 'bare_build':
+        graph.contexts[0] = {'id':'ctx', 'mode':'BUILD_IMPORT', 'scope':'production',
+                             'freshness':'CONTENT_VERIFIED', 'coverage':'COMPLETE'}
+    elif damage == 'missing_analyzer': context.pop('analyzer_version', None)
+    elif damage == 'missing_worker': context.pop('worker', None)
+    elif damage == 'missing_sources': context.pop('source_files', None)
+    elif damage == 'mismatched_sources': graph.files = {}
+    elif damage == 'unknown_freshness': context['freshness'] = 'UNKNOWN'
+    elif damage == 'source_only_proof':
+        for proof in graph.evidence: proof['mode'] = 'SOURCE_ONLY'
+    else:
+        graph.contexts.append({**context, 'id':'other'})
+        for proof in graph.evidence: proof['context_ids'] = ['other']
+    before = copy.deepcopy(graph.to_dict())
+    result = rank(KnowledgeGraph.from_dict(graph.to_dict()), 'entry', profile, scope)
+    for row in result['results']:
+        assert all(row['breakdown'][term] == 0 for term in ('entry_relevance', 'execution_path', 'execution_centrality', 'side_effects'))
+        assert not row['path']['entity_ids']
+    entry = rows(result)['entry']
+    assert entry['score'] == 0 and entry['coverage']['status'] == 'UNKNOWN'
+    assert any('AUTHORITY' in g['code'] for g in entry['coverage']['gaps'])
+    assert graph.to_dict() == before
+
+
+@pytest.mark.parametrize('profile', ['execution', 'impact'])
+@pytest.mark.parametrize('scope', ['production', 'all'])
+def test_mixed_compiler_edge_is_omitted_without_importing_other_variant(profile, scope):
+    from kgmaker.views import project
+    graph = snapshot()
+    graph.contexts.append({**graph.contexts[0], 'id': 'other'})
+    graph.contexts.append({'id':'source', 'mode':'SOURCE_ONLY', 'scope':'production'})
+    graph.edges[0] = replace(graph.edges[0], context_ids=('ctx', 'other'))
+    graph.edges.append(Edge('entry', 'Order', 'contains', context_ids=('source',)))
+    before = copy.deepcopy(graph.to_dict())
+    selected = project(KnowledgeGraph.from_dict(graph.to_dict()), scope, context_id='ctx')
+    assert {c['id'] for c in selected.contexts} == {'ctx', 'source'}
+    assert all(set(e.context_ids) <= {'ctx', 'source'} for e in selected.edges)
+    assert not any(e.source == 'entry' and e.target == 'first' for e in selected.edges)
+    assert any(d['code'] == 'COMPILER_CONTEXT_BOUNDARY_UNKNOWN' for d in selected.diagnostics)
+    assert selected.call_sites[0]['dispatch_complete'] is False
+    assert selected.call_sites[0]['declared_target'] is None
+    assert set(selected.call_sites[0]['evidence_ids']).isdisjoint(graph.edges[0].evidence_ids)
+    assert KnowledgeGraph.from_dict(selected.to_dict()).to_dict() == selected.to_dict()
+    entry = rows(rank(selected, 'entry', profile, scope))['entry']
+    assert entry['breakdown']['execution_centrality'] == 0 and not entry['path']['entity_ids']
+    assert graph.to_dict() == before
+
+
+@pytest.mark.parametrize('origin,freshness', [('LOCAL_COMPILER_INPUTS', 'CONTENT_VERIFIED'),
+    ('LOCAL_TRUSTED', 'EXECUTION_BOUND'), ('SUPPLIED_EXPORT_UNVERIFIED', 'EXECUTION_BOUND')])
+@pytest.mark.parametrize('kind,relation', [('SYMBOL_RESOLVED','resolves_to'),
+    ('DISPATCH_CANDIDATE','may_dispatch_to'), ('FRAMEWORK_DERIVED','query_writes'),
+    ('RUNTIME_OBSERVED','observed_dispatch_to')])
+def test_real_producer_context_shape_preserves_separate_evidence_families(origin, freshness, kind, relation):
+    graph = snapshot()
+    graph.contexts[0].update(origin_trust=origin, freshness=freshness)
+    graph.edges = [Edge('entry','save',relation,evidence_kind=kind,context_ids=('ctx',),evidence_ids=('proof',))]
+    graph.call_sites = []
+    graph.evidence = [{'id':'proof','kind':kind, 'freshness':freshness, 'origin_trust':origin}]
+    # These are modeled valid producer tuples. The separate actual JVM test
+    # verifies that real inspection output satisfies this same admission rule.
+    row = rows(rank(graph, 'entry'))['entry']
+    assert row['score'] > 0
+    assert row['breakdown']['side_effects' if kind == 'FRAMEWORK_DERIVED' else 'execution_centrality'] == 1
+    assert not any('AUTHORITY' in g['code'] for g in row['coverage']['gaps'])
+    if kind == 'RUNTIME_OBSERVED':
+        assert any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in row['coverage']['gaps'])
+
+
+@pytest.mark.parametrize('version', [2, 3])
+@pytest.mark.parametrize('profile', ['execution', 'impact'])
+@pytest.mark.parametrize('scope', ['production', 'all'])
+def test_legacy_source_only_label_never_becomes_execution(version, profile, scope):
+    graph = snapshot()
+    graph.schema_version = version
+    graph.contexts = [{'id':'ctx', 'mode':'SOURCE_ONLY', 'freshness':'UNKNOWN',
+                       'scope':'production', 'coverage':'PARTIAL'}]
+    result = rank(KnowledgeGraph.from_dict(graph.to_dict()), 'entry', profile, scope)
+    assert rows(result)['entry']['score'] == 0
+    assert all(row['breakdown']['execution_centrality'] == 0 and not row['path']['steps'] for row in result['results'])
+
+
+@pytest.mark.parametrize('foreign_place', ['edge', 'proof', 'site', 'cfg'])
+def test_variant_boundary_cannot_expand_symbols_sites_cfg_or_evidence(foreign_place):
+    from kgmaker.views import project
+    graph = snapshot()
+    graph.contexts.append({**graph.contexts[0], 'id':'other'})
+    for identity, kind in [('other-method','method'), ('other-call','call_site')]:
+        graph.nodes.append(Node(identity,kind,identity,'src/main/java/Orders.java',scope='production',role='executable_code'))
+    graph.symbols.append({'id':'other-method','context_id':'other'})
+    graph.evidence.append({'id':'foreign-proof','kind':'SYMBOL_RESOLVED','context_ids':['other']})
+    graph.call_sites.append({'id':'other-call','caller':'other-method','declared_target':'other-method',
+        'context_id':'other','evidence_kind':'SYMBOL_RESOLVED','evidence_ids':['foreign-proof'],
+        'resolution_reason':'MODEL','dispatch_complete':True})
+    graph.cfgs.append({'context_id':'other','method':'other-method','entry':'in','exit':'out',
+                      'blocks':[{'id':'in'},{'id':'out'}],'edges':[],'evidence_ids':['foreign-proof']})
+    if foreign_place == 'edge':
+        graph.edges.append(Edge('entry','other-method','resolves_to',evidence_kind='SYMBOL_RESOLVED',
+                               context_ids=('ctx','other'),evidence_ids=('foreign-proof',)))
+    elif foreign_place == 'proof':
+        graph.edges.append(Edge('entry','decide','resolves_to',evidence_kind='SYMBOL_RESOLVED',
+                               context_ids=('ctx',),evidence_ids=('foreign-proof',)))
+    elif foreign_place == 'site':
+        graph.call_sites[0]['evidence_ids'].append('foreign-proof')
+    else:
+        graph.cfgs.append({'context_id':'ctx','method':'entry','entry':'in','exit':'out',
+            'blocks':[{'id':'in','local_operation_version':1,'local_operation_evidence_ids':['foreign-proof']},
+                      {'id':'out'}],'edges':[]})
+    graph = KnowledgeGraph.from_dict(graph.to_dict())
+    before = copy.deepcopy(graph.to_dict())
+    selected = project(graph, context_id='ctx')
+    assert {c['id'] for c in selected.contexts} == {'ctx'}
+    assert all(not n.id.startswith('other-') for n in selected.nodes)
+    assert all(s.get('context_id') == 'ctx' for s in selected.symbols + selected.call_sites + selected.cfgs)
+    assert all(e['id'] != 'foreign-proof' for e in selected.evidence)
+    assert all('other' not in e.context_ids and 'foreign-proof' not in e.evidence_ids for e in selected.edges)
+    assert any(d['code'] == 'COMPILER_CONTEXT_BOUNDARY_UNKNOWN' for d in selected.diagnostics)
+    assert KnowledgeGraph.from_dict(selected.to_dict()).to_dict() == selected.to_dict()
+    assert graph.to_dict() == before
+
+
+
+def test_selected_projection_retains_source_provenance_of_evidence_without_compiler_promotion():
+    from kgmaker.views import project
+    graph = snapshot()
+    graph.contexts.append({'id':'source', 'mode':'SOURCE_ONLY', 'scope':'production', 'freshness':'CONTENT_VERIFIED'})
+    for proof in graph.evidence:
+        proof['context_ids'] = ['source']
+    selected = project(graph, context_id='ctx')
+    assert {c['id'] for c in selected.contexts} == {'ctx','source'}
+    assert all(p['context_ids'] == ['source'] for p in selected.evidence)
+    assert KnowledgeGraph.from_dict(selected.to_dict()).to_dict() == selected.to_dict()
+    assert rows(rank(selected, 'entry'))['entry']['score'] == 0

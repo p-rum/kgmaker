@@ -277,3 +277,106 @@ Finální maintenance kroků6–8: **PASS** semantic apply/validate/scan/check,
 zapsal episode `1fa8e1391c8bb7fcc0b155dc143e7067708d49cecde955e65de4037f918580e7`.
 Celkem46 konceptů /149 vztahů /302 epizod; obě předchozí historie zachované.
 Po doplnění výsledků do dokumentace pytest znovu **NOT_RUN — bez další změny kódu**.
+
+
+## Krok 9 — druhé review P1: explicitní compiler authority
+
+T003-S07-W08, oprava implementačních kroků 2–4, nadřazený T003-S07,
+AC01/AC02/AC03/AC04. Výchozí reviewed SHA
+`7169e88d97595694bf7591117c683716bb812218`, actual main 93c beze změny.
+[REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/106#issuecomment-6899096164)
+nezávisle potvrdilo, že SOURCE_ONLY/UNKNOWN kontext s formálně validní
+SYMBOL_RESOLVED hranou měl score 7; penalty nezabránila vymyšlené execution váze.
+Předchozí dva P1 v tomto HEAD již byly opravené a jejich repro prošlo.
+
+Změny: `views._compiler_authority` rozpoznává zachycený tuple existujícího
+`inspection.context`: BUILD_IMPORT/BUILD_EXECUTE, analyzer_version, protocol 1
+worker/compiler metadata, aktuální freshness, explicitní compiler/imported-build
+původ a obsahově vázané source_files vůči graph.files (případně zachycené bytecode
+artefakty při prázdných sources). `build_model.inspection_inputs` může zachovat
+EXECUTION_BOUND a LOCAL_TRUSTED/SUPPLIED_EXPORT_UNVERIFIED, ale samotný build/export
+bez následných compiler metadat nedostačuje. Ani explicitně odlišný proof
+mode/origin/context se nepovyšuje. Neplatná/chybějící authority vytváří
+EXECUTION_AUTHORITY_UNKNOWN a nulový entry/path/centrality/side-effect příspěvek.
+
+Legitimní framework/runtime rodiny zůstávají oddělené a použitelné nad příslušným
+compiler contextem; nejsou plošně odstraněny. Runtime import právě tento context
+používá. Pure rank ověřuje zachycený tuple, ne digitální podpis běhu workeru;
+public indexed navíc ověřuje skutečné vstupy na disku. Modelová fixture byla
+výslovně zpřesněna na producer-shaped schema input s hashem fixture souboru,
+nezaměňuje se za native compiler výsledek. SOURCE_ONLY repro a legacy produkční
+fixture bez mode nebyly přejmenovány na COMPILER: jejich správné očekávání je
+UNKNOWN / zero execution. Positive enum path nadále dokládá samostatný actual Javac.
+
+Dotčeno `src/kgmaker/views.py`, `tests/test_evidence_ranking.py`,
+`tests/test_production_scope.py`, fixture README a veřejná dokumentace níže.
+Kompatibilita: v1/v2/v3 readable bez migrace; chybějící authority u legacy zůstává
+UNKNOWN. Params/profileIDs/schema/protocol beze změny. Typové/source inventory
+se zachovává, nenahrazuje execution. Žádný worker ani sousední BEFE/T028 kód změněn.
+
+## Krok 10 — druhé review P1: izolovaný compiler výběr
+
+T003-S07-W08, oprava implementačních kroků 3–4, nadřazený T003-S07,
+AC01/AC02/AC03/AC04. Výchozí SHA opět `7169e88d97595694bf7591117c683716bb812218`.
+Původní provenance oprava ponechala celou mixed-context hranu a přitáhla druhý
+compiler context. To odporovalo explicitnímu graph_selection.
+
+`views.project` nyní vynechá celý claim obsahující jiný compiler context nebo
+proof takového kontextu. Neupravuje context_ids, aby claim vypadal jednoznačný.
+Selected symbol/site/CFG/node metadata se váže pouze na vybranou variantu;
+SOURCE_ONLY provenance může zůstat jako zdrojová evidence. Nepřenese se cizí
+compiler evidence, CFG ani annotations. Site ztrácející proof dostane konkrétní
+omitted target, incomplete dispatch a COMPILER_CONTEXT_BOUNDARY_UNKNOWN;
+stejná lokalizovaná diagnostika označuje vynechané edge/CFG. Hrany, které jen
+vybírají jinou variantu, nezpřístupní její symboly. Zachovává se validní roundtrip,
+explicitní graph_selection a reference na SOURCE_ONLY context z edge i proof.
+Scope-projection rovněž neponechá complete flag po vynechání target/candidate.
+
+Dotčeno `views.py` a vlastní regression testy; veřejná API evidence jsou aditivní
+boundary diagnostiky. Původní graf/store beze změny. Přesný schema/model test
+nepředstírá native compiler běh a všechny actual CLI kontroly zůstávají oddělené.
+README, evidence-ranking capability, fixture README, production matrix,
+acceptance inventory a tento záznam aktualizovány. Production-scope/architecture
+**bez dalšího dopadu**: jejich odkazy vedou na aktualizovaný kontrakt. Registr,
+init instrukce a templates **bez dopadu**: žádné změny identity/parametrů/init.
+
+### Kontroly kroků 9–10
+
+Vše v `/tmp/kgmaker-evidence-ranking`; native prostředí jako výše, JDK 21,
+prepared KGMAKER_WORKERS_HOME, KGMAKER_REQUIRE_WORKERS=1, PYTHONPATH=src.
+
+- `PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=line /tmp/pr106_review_context_repros.py`:
+  před opravou **FAIL 2 / 0.09 s**.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_evidence_ranking.py -k 'context_authority_is_required or mixed_compiler_edge'`:
+  RED před opravou **FAIL 48 / 44 deselected / 0.62 s**.
+- `/tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_{evidence_ranking,production_scope,graph_provider,build_aware,inspection_contract,feature}.py`:
+  finálně **PASS 173 / 0 SKIP / 3.50 s**, actual Javac/public CLI plus positive framework/runtime schema family matrix.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_t006_select_service_contexts.py tests/test_context_roles.py`:
+  **PASS 31 / 1.23 s**.
+- `PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=line /tmp/pr106_review_repros.py /tmp/pr106_review_context_repros.py`:
+  **PASS 4 / 0.14 s**, obě review generace. Modelový pozitivní compiler tuple zajišťuje,
+  že stará repro nejsou náhodně zelená kvůli odmítnutí všech vstupů.
+- Historické meziběhy 144 PASS / 3.21 s a 168 PASS / 3.50 s následovaly postupné doplnění matice;
+  nenahrazují finální 173 PASS.
+- Full/GH CI a nová native K1/K2/TS matice **NOT_RUN** dle targeted-only omezení;
+  nejde o změnu compiler workeru ani tvrzení o celém S07.
+
+Zbývá nové nezávislé review. Žádný předchozí REQUEST_CHANGES se nepovažuje za APPROVE.
+Finální maintenance kroků 9–10:
+
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker semantic update --base 7169e88d97595694bf7591117c683716bb812218`: **PASS**, aktuální scoped packet.
+- `python3 /tmp/ranking-review2-reanchor.py`: **PASS**, ověřené baseline hashe a
+  nezměněné citation lines, přezkoumané zdrojové vazby; dvě nové test vazby,
+  žádné removals. Skript je lokální auditní pomůcka, výsledkem je verzovaný artefakt.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker semantic apply`
+  a `semantic validate`: **PASS**, 46 konceptů / 151 vztahů.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker memory capture --base 7169e88d97595694bf7591117c683716bb812218 --validation targeted-173=passed --validation context-31=passed --validation review-repros-4=passed --validation full=skipped`:
+  **PASS**, episode `eeb80e7269b1237dcc64f4dcb03052dc8d9544688a6543585a082c6e7f8bbe6a`.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker scan` a `check`:
+  **PASS**, generované grafy obnoveny příkazem.
+- `python3 /tmp/ranking-review2-preservation.py` a
+  `python3 /tmp/ranking-preservation.py`: **PASS**, všechny reviewed 7169
+  (46/149/302) a main 93c (45/144/299) koncepty/vztahy/epizody zachované;
+  nyní **46/151/303**. Citation posuny nevytvářejí nové historické tvrzení.
+- `git diff --check`: **PASS**. Po doplnění tohoto výsledku pouze finální
+  scan/check/diff; pytest znovu **NOT_RUN — žádná další změna kódu**.

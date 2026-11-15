@@ -86,7 +86,9 @@ projection using that selection and explicit ownership. The CLI exposes `archite
 [interface Markdown](docs/interface-markdown.md). Evidence ranking now exposes `execution-2`/`impact-2` with witness paths, localized
 penalties and `graph rank --format markdown`; see [ranking scope](docs/evidence-ranking.md)
 and [change126](docs/changes/126_evidenceRanking.md). Scores are priorities, not runtime availability. Stale proof records contribute
-no weight; a reference or unsupported invocation cannot establish static dispatch completeness. See [architecture](docs/architecture.md), the
+no weight; execution requires a captured compiler inspection context, and a reference
+or unsupported invocation cannot establish static dispatch completeness. Explicit context
+selection omits mixed compiler-variant claims while retaining source provenance. See [architecture](docs/architecture.md), the
 [T006 selection contract](docs/tasks/T-006_select-service-contexts.md), and the
 [T004 plan](docs/tasks/4_addHighLevelProjectViews.md).
 

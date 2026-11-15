@@ -1553,3 +1553,18 @@ VERIFIED_IN_SCOPE: **96 PASS / 0 SKIP, 3.20 s**, včetně skutečného Javac,
 veřejného CLI nad stale proofs a 10 compatibility variant invocation kindů. Dvě nezávislé reprodukce prošly; předchozí
 REQUEST_CHANGES zůstává platné do nového nezávislého review. Historický72PASS
 nebyl důkazem správnosti těchto případů. Full/GH CI nadále NOT_RUN.
+
+
+### T003-S07-W08 — druhé review, authority a izolace variant
+
+Reviewed HEAD `7169e88d97595694bf7591117c683716bb812218` opravil první dva P1,
+ale nezávislé review doložilo další dva: SOURCE_ONLY/bare kontext mohl získat
+execution weight ze silnějšího edge labelu a mixed-context hrana přitáhla druhou
+compiler variantu. [Change126 kroky 9–10](changes/126_evidenceRanking.md) nyní
+vyžaduje skutečný zachycený inspection tuple/source binding a vynechává celý
+neizolovatelný claim s konkrétní boundary diagnostikou. Source provenance zůstává.
+Nové cílené ověření: **173 PASS / 0 SKIP, 3.50 s**, navíc context selection/role
+regrese **31 PASS / 1.23 s**; oba soubory nezávislých reprodukcí **4 PASS / 0.14 s**.
+Actual Javac/public CLI zůstává pozitivním důkazem; schema model není native PASS.
+Dodání PR_OPEN, verification VERIFIED_IN_SCOPE; předchozí REQUEST_CHANGES není
+zrušeno bez nového review. Full/GH CI a celý S07 nadále neuzavřené.

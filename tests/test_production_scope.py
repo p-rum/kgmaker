@@ -133,7 +133,12 @@ class ProductionScopeTests(unittest.TestCase):
                           edges=graph.edges + [Edge("entry", "currency", "references_type") for _ in range(500)] + [Edge("mock", "currency", "resolves_to")])
         after = rank(overlay, "entry")
         self.assertEqual([(r["id"], r["score"]) for r in before["results"]], [(r["id"], r["score"]) for r in after["results"]])
-        self.assertGreater(next(r["score"] for r in after["results"] if r["id"] == "decision"), next(r["score"] for r in after["results"] if r["id"] == "currency"))
+        # This legacy fixture has no compiler producer authority. Typed labels
+        # remain readable but cannot create execution weight; actual enum-method
+        # ranking is independently exercised by the Javac acceptance fixture.
+        self.assertTrue(all(row["score"] == 0 for row in after["results"]))
+        self.assertTrue(any(gap["code"] == "EXECUTION_AUTHORITY_UNKNOWN"
+                            for row in after["results"] for gap in row["coverage"]["gaps"]))
         self.assertEqual(after, rank(overlay, "entry"))
         self.assertEqual(500, next(r["shared_references"] for r in after["results"] if r["id"] == "currency"))
 

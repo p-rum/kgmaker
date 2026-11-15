@@ -1374,3 +1374,21 @@ CLI nad stale evidence records. Cílená sada **96 PASS / 0 SKIP, 3.20 s**;
 nezávislé repro **2 PASS**. Delivery PR_OPEN, verification VERIFIED_IN_SCOPE;
 nové nezávislé review ještě proběhne. Podrobnosti a přesné příkazy:
 [change126 kroky6–7](changes/126_evidenceRanking.md).
+
+
+### T003-S07-W08 — authority/variant regrese AC01–AC04
+
+Nad reviewed `7169e88d97595694bf7591117c683716bb812218` měly nové nezávislé
+reprodukce 2 FAIL. Dodatečná verification VERIFIED_IN_SCOPE nyní pokrývá:
+`test_context_authority_is_required_before_execution_admission` (oba profily a scopes,
+SOURCE_ONLY/UNKNOWN, bare build, missing producer/binding a foreign proof negativy),
+`test_legacy_source_only_label_never_becomes_execution` (v2/v3),
+`test_real_producer_context_shape_preserves_separate_evidence_families`
+(compiler/candidate/framework/runtime plus source/imported-build původ),
+`test_mixed_compiler_edge_is_omitted_without_importing_other_variant`,
+`test_variant_boundary_cannot_expand_symbols_sites_cfg_or_evidence` a
+`test_selected_projection_retains_source_provenance_of_evidence_without_compiler_promotion`.
+Public actual Javac a feature graph_selection/roundtrip regrese prošly beze změny
+runtime identit. **173 PASS / 0 SKIP / 3.50 s + 31 PASS / 1.23 s**, nezávislé repro 4 PASS / 0.14 s.
+Delivery PR_OPEN; nové nezávislé review očekáváno. [Change126 kroky 9–10](changes/126_evidenceRanking.md)
+obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.

@@ -17,6 +17,39 @@ EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
 PROFILES = {"execution": "execution-2", "impact": "impact-2"}
+CURRENT_COMPILER_FRESHNESS = {"CONTENT_VERIFIED", "CURRENT", "EXECUTION_BOUND"}
+COMPILER_MODES = {"BUILD_IMPORT", "BUILD_EXECUTE"}
+COMPILER_ORIGINS = {"LOCAL_COMPILER_INPUTS", "LOCAL_TRUSTED", "SUPPLIED_EXPORT_UNVERIFIED"}
+
+
+def _compiler_authority(context: Mapping[str, Any], files: Mapping[str, str]) -> bool:
+    """Recognize the existing inspection producer tuple, not a build label.
+
+    This checks captured authority; public indexed() separately verifies files,
+    source selection and worker distribution on disk. A supplied build export
+    only participates after an actual inspection has added compiler metadata.
+    """
+    worker = context.get('worker')
+    sources = context.get('source_files')
+    artifacts = context.get('bytecode_artifacts', [])
+    def checksum(value):
+        return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+    source_bound = (isinstance(sources, Mapping) and bool(sources)
+                    and all(isinstance(path, str) and checksum(value) and files.get(path) == value
+                            for path, value in sources.items()))
+    bytecode_bound = (isinstance(sources, Mapping) and not sources and isinstance(artifacts, list)
+                      and bool(artifacts) and all(isinstance(a, Mapping) and checksum(a.get('sha256'))
+                                                for a in artifacts))
+    return (context.get('mode') in COMPILER_MODES
+            and context.get('origin_trust') in COMPILER_ORIGINS
+            and isinstance(context.get('analyzer_version'), str) and bool(context['analyzer_version'])
+            and context.get('freshness') in CURRENT_COMPILER_FRESHNESS
+            and isinstance(worker, Mapping) and type(worker.get('protocol_version')) is int
+            and worker.get('protocol_version') == 1
+            and isinstance(worker.get('worker'), str) and bool(worker['worker'])
+            and isinstance(worker.get('compiler_version'), str) and bool(worker['compiler_version'])
+            and (source_bound or bytecode_bound))
+
 
 
 def _canonical_kind(value: Any) -> str:
@@ -875,9 +908,28 @@ def select_context(graph: KnowledgeGraph, scope: str, context_id: str | None = N
 def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "architecture", context_id: str | None = None) -> KnowledgeGraph:
     if scope not in {"production", "test", "test_fixture", "development", "unknown", "all"}:
         raise ValueError("invalid scope: " + scope)
+    context_index = {c.get('id'): c for c in graph.contexts}
+    # Extra provenance may only come from source contexts. A mixed-variant
+    # witness is omitted as a whole; stripping its context IDs would forge it.
+    provenance_contexts = {c.get('id') for c in graph.contexts
+                           if c.get('mode') == 'SOURCE_ONLY' and not c.get('analyzer_version')}
+    allowed_contexts = provenance_contexts | {context_id}
+    proof_index = {p.get('id'): p for p in graph.evidence}
+    def isolated_proof(identity):
+        if context_id is None:
+            return True
+        proof = proof_index.get(identity, {})
+        refs = proof.get('context_ids', [])
+        if not isinstance(refs, (list, tuple)) or any(not isinstance(c, str) for c in refs):
+            return False
+        refs = set(refs)
+        if 'context_id' in proof:
+            refs.add(proof['context_id'])
+        return refs <= allowed_contexts
+    def isolated_edge(edge):
+        return context_id is None or (set(edge.context_ids) <= allowed_contexts
+                                      and all(isolated_proof(i) for i in edge.evidence_ids))
     # Implementation episodes are repository history, not source-set code.
-    # Keep them in the default documentation projection even though their
-    # synthetic nodes have no compiler scope.
     nodes = [n for n in graph.nodes if scope == "all" or n.scope == scope or n.kind == "implementation_episode"]
     if context_id is not None:
         compiler_ids = {item.get("id") for item in [*graph.symbols, *graph.call_sites]}
@@ -885,18 +937,24 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         selected_ids = {item.get("id") for item in graph.symbols if item.get("context_id") == context_id}
         selected_ids.update(item.get("id") for item in graph.call_sites if item.get("context_id") == context_id)
         selected_ids.update(item.get("method") for item in graph.cfgs if item.get("context_id") == context_id)
-        selected_ids.update(identity for edge in graph.edges if context_id in edge.context_ids
-                            for identity in (edge.source, edge.target))
-        nodes = [node for node in nodes if (node.id not in compiler_ids or node.id in selected_ids)
-                 and (node.kind != "http_request_definition" or (node.metadata or {}).get("context_id") == context_id)]
+        for node in graph.nodes:
+            owner = (node.metadata or {}).get('context_id')
+            if owner in context_index and owner not in provenance_contexts:
+                compiler_ids.add(node.id)
+                if owner == context_id:
+                    selected_ids.add(node.id)
+        nodes = [node for node in nodes if node.id not in compiler_ids or node.id in selected_ids]
     ids = {n.id for n in nodes}
-    compiler_context_ids = {item.get("id") for item in graph.contexts
-                            if item.get("analyzer_version") and isinstance(item.get("id"), str)}
-    edges = [e for e in graph.edges if e.source in ids and e.target in ids and (
-        context_id is None
-        or context_id in e.context_ids
-        or not (set(e.context_ids) & compiler_context_ids)
-    )]
+    omitted_edges = [e for e in graph.edges if context_id is not None and not isolated_edge(e)
+                     and e.source in ids and (e.target in ids or context_id in e.context_ids)]
+    edges = [e for e in graph.edges if e.source in ids and e.target in ids and isolated_edge(e)]
+    retained_proofs = {identity for e in edges for identity in e.evidence_ids}
+    omitted_proofs = {identity for e in omitted_edges for identity in e.evidence_ids} - retained_proofs
+    boundary_diagnostics = [{'code': 'COMPILER_CONTEXT_BOUNDARY_UNKNOWN', 'context_id': context_id,
+        'source': e.source, 'target': e.target, 'relation': e.kind,
+        'omitted_context_ids': sorted(set(e.context_ids) - allowed_contexts),
+        'reason': 'Relation omitted because its context/proof belongs to another compiler variant.'}
+        for e in sorted(omitted_edges, key=lambda e: (e.source, e.target, e.kind, e.context_ids))]
     if view == "calls":
         edges = [e for e in edges if e.kind in EXECUTION_EDGES or e.kind == "calls"]
     elif view == "configuration":
@@ -932,32 +990,64 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         target = site.get("declared_target")
         if target is not None and target not in ids:
             site.update(declared_target=None, omitted_declared_target=target,
-                        resolution_reason="RESOLVED_TARGET_EXCLUDED_BY_SCOPE")
+                        resolution_reason="RESOLVED_TARGET_EXCLUDED_BY_SCOPE", dispatch_complete=False)
         site["dispatch_candidates"] = [c for c in site.get("dispatch_candidates", []) if c in ids]
+        if len(site['dispatch_candidates']) != len(original.get('dispatch_candidates', [])):
+            site['dispatch_complete'] = False
+        omitted_site_refs = [i for i in site.get('evidence_ids', []) if i in omitted_proofs or not isolated_proof(i)]
+        if omitted_site_refs:
+            site['evidence_ids'] = [i for i in site.get('evidence_ids', []) if i not in omitted_site_refs]
+            site.update(declared_target=None, omitted_declared_target=original.get('declared_target'),
+                        dispatch_candidates=[], dispatch_complete=False,
+                        resolution_reason='COMPILER_CONTEXT_BOUNDARY_OMITTED')
+            boundary_diagnostics.append({'code':'COMPILER_CONTEXT_BOUNDARY_UNKNOWN', 'context_id':context_id,
+                'call_site':site['id'], 'reason':'Call target omitted with its cross-variant evidence.'})
         sites.append(site)
     selected_evidence = {identity for edge in edges for identity in edge.evidence_ids}
     selected_evidence.update(identity for site in sites for identity in site.get("evidence_ids", []))
-    selected_cfgs = [c for c in graph.cfgs if c.get("method") in ids and (context_id is None or c.get("context_id") == context_id)]
+    selected_cfgs = []
+    for cfg in graph.cfgs:
+        if cfg.get('method') not in ids or (context_id is not None and cfg.get('context_id') != context_id):
+            continue
+        refs = list(cfg.get('evidence_ids', []))
+        refs += [i for block in cfg.get('blocks', []) for i in block.get('local_operation_evidence_ids', [])]
+        if any(not isolated_proof(i) or i in omitted_proofs for i in refs):
+            boundary_diagnostics.append({'code':'COMPILER_CONTEXT_BOUNDARY_UNKNOWN', 'context_id':context_id,
+                'method':cfg['method'], 'reason':'CFG omitted with its cross-variant evidence.'})
+            continue
+        selected_cfgs.append(cfg)
     selected_evidence.update(identity for cfg in selected_cfgs for identity in cfg.get("evidence_ids", []))
     selected_evidence.update(identity for cfg in selected_cfgs for block in cfg.get('blocks', [])
         if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1
         for refs in [block.get('local_operation_evidence_ids', [])]
         if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs)
         for identity in refs)
+    selected_symbols = [symbol for symbol in graph.symbols if symbol.get('id') in ids
+                        and (context_id is None or symbol.get('context_id') == context_id)]
     # Retained structural/source edges still need their original provenance
     # contexts when an explicit compiler variant is selected. Keep only contexts
     # actually referenced by selected records; this does not select more variants.
     referenced_contexts = {identity for edge in edges for identity in edge.context_ids}
     referenced_contexts.update(record.get("context_id") for record in [
-        *sites, *selected_cfgs, *[symbol for symbol in graph.symbols if symbol.get("id") in ids]])
+        *sites, *selected_cfgs, *selected_symbols])
+    for proof in graph.evidence:
+        if proof.get('id') in selected_evidence:
+            referenced_contexts.update(proof.get('context_ids', []))
+            if isinstance(proof.get('context_id'), str):
+                referenced_contexts.add(proof['context_id'])
     return replace(graph, nodes=nodes, edges=edges,
                    files={p: h for p, h in graph.files.items() if any(n.path == p for n in nodes)},
                    contexts=[c for c in graph.contexts if c.get("id") in referenced_contexts or
                              (scope == "all" or c.get("scope") == scope) and (context_id is None or c.get("id") == context_id)],
-                   diagnostics=[d for d in graph.diagnostics if not (d.get("path") or d.get("source_file")) or (d.get("path") or d.get("source_file")) in {n.path for n in nodes}],
+                   diagnostics=[d for d in graph.diagnostics
+                                if (context_id is None or not d.get('context_id') or d['context_id'] in allowed_contexts)
+                                and (not (d.get('path') or d.get('source_file'))
+                                     or (d.get('path') or d.get('source_file')) in {n.path for n in nodes})] + boundary_diagnostics,
                    evidence=[e for e in graph.evidence if e.get("id") in selected_evidence],
-                   symbols=[s for s in graph.symbols if s.get("id") in ids], call_sites=sites,
-                   cfgs=selected_cfgs)
+                   symbols=selected_symbols, call_sites=sites, cfgs=selected_cfgs,
+                   analysis_annotations=[a for a in graph.analysis_annotations
+                                         if set(a.get('target_ids', [])) <= ids
+                                         and set(a.get('evidence_ids', [])) <= selected_evidence])
 
 
 def is_execution_callsite(site: Mapping[str, Any]) -> bool:
@@ -1013,7 +1103,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
                 result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
                     'reason': 'A stale proof contributes no execution or impact weight.',
                     'evidence_ids': [evidence_id]})
-            elif proof['freshness'] not in {'CONTENT_VERIFIED', 'CURRENT'}:
+            elif proof['freshness'] not in CURRENT_COMPILER_FRESHNESS:
                 result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
                     'reason': 'The proof does not establish current content.',
                     'evidence_ids': [evidence_id]})
@@ -1026,7 +1116,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
             c = contexts.get(context_id, {})
             if c.get('freshness') == 'STALE':
                 gap(identity, 'STALE_CONTEXT', 'Stale context contributes no execution evidence.', 5, context_id=context_id)
-            elif c.get('freshness') not in {'CONTENT_VERIFIED', 'CURRENT'}:
+            elif c.get('freshness') not in CURRENT_COMPILER_FRESHNESS:
                 gap(identity, 'CONTEXT_FRESHNESS_UNKNOWN', 'The context does not establish current content.', 2, context_id=context_id)
             if c.get('mode') == 'SOURCE_ONLY':
                 gap(identity, 'SOURCE_ONLY', 'Syntax does not establish compiler call resolution.', 3, context_id=context_id)
@@ -1079,6 +1169,30 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
                     context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
         if kind not in EXECUTION_EDGES | SIDE_EFFECTS:
             continue
+        authority_contexts = set(record['context_ids'])
+        if related_site:
+            authority_contexts.add(related_site['context_id'])
+        proof_contexts = set()
+        for identity in relevant_proofs:
+            proof = proofs.get(identity, {})
+            declared_contexts = proof.get('context_ids', [])
+            if isinstance(declared_contexts, (list, tuple)):
+                proof_contexts.update(c for c in declared_contexts if isinstance(c, str))
+            if isinstance(proof.get('context_id'), str):
+                proof_contexts.add(proof['context_id'])
+        mismatched_proof_contexts = proof_contexts - authority_contexts
+        authority_contexts.update(proof_contexts)
+        invalid_contexts = sorted(c for c in authority_contexts
+                                  if not _compiler_authority(contexts.get(c, {}), graph.files))
+        invalid_proofs = sorted({identity for identity in relevant_proofs
+            if (('mode' in proofs.get(identity, {}) and proofs[identity]['mode'] not in COMPILER_MODES)
+                or ('origin_trust' in proofs.get(identity, {})
+                    and proofs[identity]['origin_trust'] not in COMPILER_ORIGINS))})
+        if not authority_contexts or invalid_contexts or invalid_proofs or mismatched_proof_contexts:
+            record_gaps.append({'code': 'EXECUTION_AUTHORITY_UNKNOWN', 'penalty': 3,
+                'reason': 'Execution requires a current content-bound inspection context and compatible proof authority.',
+                'context_ids': sorted(set(invalid_contexts) | mismatched_proof_contexts),
+                'evidence_ids': invalid_proofs or record['evidence_ids']})
         affected = {source, target}
         if related_site:
             affected.add(related_site['caller'])
@@ -1098,7 +1212,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
             for identity in affected:
                 gap(identity, 'STALE_CONTEXT', 'Stale relation contributes no execution evidence.', 5,
                     context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
-        if stale_context or stale_proof:
+        if stale_context or stale_proof or any(g['code'] == 'EXECUTION_AUTHORITY_UNKNOWN' for g in record_gaps):
             continue
         if related_site and not is_execution_callsite(related_site):
             continue
@@ -1135,7 +1249,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     for site in graph.call_sites:
         if (not is_execution_callsite(site) or site.get('dispatch_complete') is not True
                 or site.get('evidence_kind') not in known_kinds - {'RUNTIME_OBSERVED'}
-                or contexts.get(site['context_id'], {}).get('freshness') not in {'CONTENT_VERIFIED', 'CURRENT'}
+                or not _compiler_authority(contexts.get(site['context_id'], {}), graph.files)
                 or not site.get('evidence_ids') or proof_gaps(site['evidence_ids'])
                 or (site['caller'], site['id'], 'declares_call') not in static_links):
             continue

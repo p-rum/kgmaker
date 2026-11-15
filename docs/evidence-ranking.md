@@ -88,12 +88,55 @@ Proof-freshness and runtime-only gaps follow the selected path to descendants.
 See review fixes 6–7 in [change126](changes/126_evidenceRanking.md).
 
 Graph/store v1, v2 and v3 remain readable through the existing reader. V1 retains
-unknown scope/role and does not acquire compiler proof. V2 resolved edges remain
-usable with valid context/evidence references, but lack per-site completeness.
+unknown scope/role and does not acquire compiler proof. V2 edges can contribute
+only with captured compiler authority as described below; valid IDs or a
+SYMBOL_RESOLVED label alone are insufficient. They lack per-site completeness.
 V3 retains unresolved/candidate boundaries. Selecting a compiler variant now also
-preserves SOURCE_ONLY contexts actually referenced by retained structural edges,
-so the projected snapshot can round-trip. `graph_selection` still selects exactly
-one compiler variant; this is provenance retention, not extra compiler selection.
+preserves SOURCE_ONLY contexts actually referenced by retained structural edges
+or evidence records, so the projected snapshot can round-trip. `graph_selection`
+still selects exactly one compiler variant. A mixed compiler-context edge is
+omitted whole, including incompatible proof records; its context IDs are never
+rewritten to make it look isolated. Cross-variant symbols, sites, CFGs and
+annotations are excluded. A site losing its proof keeps an explicit omitted target
+and incomplete dispatch. `COMPILER_CONTEXT_BOUNDARY_UNKNOWN` identifies omitted
+edge/site/CFG boundaries, rather than silently importing another variant.
+
+## Captured authority admission
+
+Execution terms (including side effects and paths) require the existing inspection
+producer tuple, independently from the edge's evidence label:
+
+| Captured field | Accepted authority |
+|---|---|
+| `mode` | `BUILD_IMPORT` or `BUILD_EXECUTE` |
+| `analyzer_version` | nonempty compiler inspection version |
+| `worker` | protocol version1, nonempty worker and compiler version |
+| `origin_trust` | `LOCAL_COMPILER_INPUTS`; or `LOCAL_TRUSTED` / `SUPPLIED_EXPORT_UNVERIFIED` only with the full compiler tuple |
+| `freshness` | `CURRENT`, `CONTENT_VERIFIED`, or `EXECUTION_BOUND` with the full compiler tuple |
+| Input binding | nonempty `source_files` SHA-256 values matching graph.files; or explicitly captured content-addressed bytecode artifacts with an empty source inventory |
+
+`inspection.context` normally produces BUILD_IMPORT/LOCAL_COMPILER_INPUTS.
+`build_model.inspection_inputs` can supply EXECUTION_BOUND and a build-export
+origin; these fields become usable only after explicit inspection adds worker,
+analyzer and source/artifact binding. A bare build/export/test result, SOURCE_ONLY,
+unknown/missing mode, or legacy COMPILER label does not establish compiler
+execution. `EXECUTION_AUTHORITY_UNKNOWN` gives exact incompatible context/proof
+IDs with zero execution contributions. Supplementary source evidence is retained
+for inspection and type impact; it is not silently promoted to compiler authority.
+
+Explicit proof mode/origin must be compatible with its authority, and declared
+proof contexts must agree with the contributing context tuple. Runtime import
+references the same compiler context; its evidence remains RUNTIME_OBSERVED.
+Framework-derived evidence remains FRAMEWORK_DERIVED. Neither becomes compiler
+or runtime completeness just because admission succeeds. Missing authority in an
+old graph stays UNKNOWN without requiring a schema migration.
+
+The pure library checks the supplied captured tuple, not a signed attestation of
+worker execution. The public CLI additionally uses the existing index validation
+to verify on-disk compiler inputs. Model tests are producer-shaped schema fixtures,
+explicitly not native compiler results; the separate Javac test verifies real
+inspection output and public CLI. Review fixes9–10 and exact results:
+[change126](changes/126_evidenceRanking.md).
 
 ## Verified scope
 
