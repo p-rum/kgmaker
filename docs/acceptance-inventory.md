@@ -840,6 +840,20 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
+## T003-S06-W06 — NamedQueries a named native queries (PR_OPEN / VERIFIED_IN_SCOPE)
+
+- AC01: ORM XML `named-query` and `named-native-query` declarations are captured
+  with source hash/provenance and use the same `orm_named_query` catalog as JPA
+  annotations. Duplicate names and annotation/XML collisions remain unresolved.
+- AC02: Existing annotation and graph identities remain unchanged; XML is an
+  additive projection and does not execute providers or mutate the store.
+- AC03: Missing names/query bodies and duplicate definitions emit localized
+  `ORM_XML_NAMED_QUERY_UNRESOLVED`/`ORM_XML_NAMED_QUERY_AMBIGUOUS` diagnostics;
+  no stronger query evidence is published.
+- AC04: `tests/test_named_query_containers.py` covers JPQL/native capture,
+  provenance, duplicate names and missing bodies. Compiler worker integration and
+  provider/runtime availability remain NOT_RUN pending toolchain fixtures.
+
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
 Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)

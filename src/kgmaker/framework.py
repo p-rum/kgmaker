@@ -702,7 +702,7 @@ def _safe_jpa_xml(root: Path, relative: str) -> tuple[ET.Element | None, dict[st
 def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
     """Read a selected persistence unit and bounded ORM XML class metadata."""
     descriptor = root / "META-INF/persistence.xml"
-    model: dict[str, Any] = {"classes": {}, "diagnostics": [], "active": False,
+    model: dict[str, Any] = {"classes": {}, "named_queries": [], "diagnostics": [], "active": False,
                              "global_unknown": False, "metadata_complete": False,
                              "persistence_unit": context.get("persistence_unit"),
                              "descriptor_path": None, "descriptor_sha256": None}
@@ -830,6 +830,29 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                                          "reason": "orm.xml contains a foreign namespace element."})
             model["global_unknown"] = True
             continue
+        # JPA ORM descriptors may declare named queries at the mapping root.
+        # Keep these as source-backed declarations; resolution to a repository
+        # happens later against the same named-query catalog as annotations.
+        for query_element in document:
+            query_kind = _xml_local(query_element)[1]
+            if query_kind not in {"named-query", "named-native-query"}:
+                continue
+            query_name = (query_element.get("name") or "").strip()
+            query_child = next((child for child in query_element if _xml_local(child)[1] == "query"), None)
+            query_text = (query_child.text or "").strip() if query_child is not None else ""
+            provenance = {"xml_sha256": info["sha256"], "xml_mapping_file": info["path"],
+                          "persistence_xml_sha256": model["descriptor_sha256"],
+                          "persistence_xml_path": model["descriptor_path"],
+                          "persistence_unit": model["persistence_unit"], "xml_mapping_order": order,
+                          "xml_precedence": "ORM_XML_OVER_ANNOTATIONS"}
+            if not query_name or not query_text:
+                model["diagnostics"].append({"code": "ORM_XML_NAMED_QUERY_UNRESOLVED", "path": info["path"],
+                                             "query_name": query_name or None,
+                                             "reason": "XML named query requires a literal name and query body."})
+                continue
+            language = "NATIVE_SQL" if query_kind == "named-native-query" else "JPQL"
+            model["named_queries"].append({"name": query_name, "query": query_text,
+                                            "language": language, "provenance": provenance})
         root_complete = _xml_bool(document.get("metadata-complete"))
         if root_complete is None:
             model["diagnostics"].append({"code": "ORM_XML_METADATA_COMPLETE_UNKNOWN", "path": info["path"],
@@ -997,6 +1020,17 @@ def _jpa_xml_model(root: Path, context: dict[str, Any]) -> dict[str, Any]:
                     model["diagnostics"].append({"code": "ORM_XML_CONSTRUCT_UNSUPPORTED", "path": info["path"],
                                                  "class": owner, "construct": child_name,
                                                  "reason": "Unsupported class-level ORM XML construct remains UNKNOWN."})
+    # Duplicate names are not safely attributable to one provider mapping;
+    # retain the declarations for diagnostics but mark every duplicate unknown.
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in model["named_queries"]:
+        grouped.setdefault(item["name"], []).append(item)
+    for name, entries in grouped.items():
+        if len(entries) > 1:
+            for item in entries:
+                item["ambiguous"] = True
+            model["diagnostics"].append({"code": "ORM_XML_NAMED_QUERY_AMBIGUOUS", "query_name": name,
+                                         "reason": "Multiple XML named query definitions share one name."})
     return model
 
 
@@ -3136,6 +3170,23 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                             "source_line": query_line, "method": method.id,
                                             "entity": model_name, "properties": sorted(set(unresolved_predicates)),
                                             "reason": "Derived query property does not resolve in the indexed entity model."})
+
+    # Merge XML named-query declarations into the same catalog used by
+    # annotation declarations. Duplicate XML names remain unresolved and do
+    # not overwrite an already indexed definition.
+    for item in jpa_xml.get("named_queries", []):
+        name = item["name"]
+        provenance = item.get("provenance", {})
+        if item.get("ambiguous") or name in named_queries:
+            diagnostics.append({"code": "ORM_NAMED_QUERY_AMBIGUOUS", "path": provenance.get("xml_mapping_file"),
+                                "query_name": name,
+                                "reason": "Named query name is duplicated across annotation/XML declarations; no definition is selected."})
+            named_queries.pop(name, None)
+            continue
+        named_id = add_node("orm_named_query", name, provenance.get("xml_mapping_file"), None, None,
+                            query_language=item["language"], query=item["query"], entity=None,
+                            dynamic=False, mapping_source="ORM_XML", **provenance)
+        named_queries[name] = {"id": named_id, "language": item["language"], "entity": None}
 
     type_nodes_by_owner: dict[str, Node] = {}
     for symbol in symbols.values():
