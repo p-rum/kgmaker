@@ -516,8 +516,13 @@ a clause-specific path edges (`projects_attribute`, `filters_by`, `orders_by`,
 `groups_by`, `updates_attribute`). Hibernate `join ... with` je explicitní
 podporované rozšíření; `lateral`, set/window operace, `treat`, collection-index
 funkce a další nepodporované fragmenty zůstávají PARTIAL s query offsetem,
-řádkem a sloupcem. Lexikálně nebo závorkově neplatný dotaz nevytvoří žádný
-query read/write/path edge. Statické `@NamedQuery`/`@NamedNativeQuery` mají
+řádkem a sloupcem. Konzumovaná bounded gramatika ověřuje pořadí klauzulí,
+projekce, přiřazení a predikáty (porovnání, AND/OR/NOT, EXISTS, IN, BETWEEN,
+LIKE a IS NULL). Alias je case-insensitive a patří konkrétnímu bloku SELECT;
+vnořené závorky scope nemění. Neplatný nebo nerozvázaný alias ani neúplný
+výraz nevytvoří query read/write/path edge. Podporované funkce a limity
+uvádí [compiler dokumentace](docs/compiler-inspection.md#bounded-jpqlhql-grammar);
+opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` mají
 vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor

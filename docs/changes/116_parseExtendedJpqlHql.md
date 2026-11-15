@@ -88,3 +88,49 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
   KGMAKER_WORKERS_HOME=/tmp/kgmaker-review-pr97/workers PYTHONPATH=src python3
   -m pytest -q tests/test_jpql_hql_grammar.py::test_actual_javac_extended_jpql_fixture`
   je **1 passed** proti pinned workeru `sha256=6de50becda4dd0bdb81babf8a638c074a94bac3cb4742bb197c63bfe870d3eae`.
+
+## Ucelená oprava gramatiky po druhém review — 2026-11-15
+
+- Krok `T003-S06-W05-S03`, acceptance `AC01–AC04`, baseline
+  `a42a54a2d2b78f034794c261a104b4b5e6e7f1bf`.
+- Problém: dílčí blacklisty přijímaly neplatné operátory, neúplné přiřazení,
+  neznámé skalární aliasy a prázdné predikáty. Depth-based zpracování navíc
+  zaměňovalo běžné závorky za scope a části dotted path za nový alias.
+- `src/kgmaker/framework.py`: konzumující recursive-descent gramatika pro
+  SELECT/UPDATE/DELETE, pořadí klauzulí, skalární/predikátové výrazy, aritu
+  podporovaných funkcí a úplné spotřebování tokenů. Rekurzivní query-block
+  scope zachová korelaci, shadowing i nezávislost sibling poddotazů.
+  Reference aliasů se ověří před publikací persistence hran. Unsupported
+  funkce/provider syntax zůstávají PARTIAL s locatorem; invalidní gramatika
+  a nerozvázaný alias jsou UNKNOWN bez read/write/path hran.
+- `tests/test_jpql_hql_grammar.py`: všech 10 reprodukcí posledního review bylo
+  před změnou **FAIL**; nyní **PASS**. Přibylo 18 kladných/záporných příkladů
+  bounded výrazů, funkcí, klauzulí a izolace aliasů.
+- Kompatibilita: veřejné CLI/API a graph/store/worker v1/v2/v3 beze změny.
+  Reuse stejného JPA pravidla v8 z tohoto dosud nesloučeného PR. Nejde o
+  providerovou validaci typů, constructor signature ani runtime SQL.
+- README a `docs/compiler-inspection.md` popisují skutečný grammar scope,
+  funkce a limity a odkazují sem. CLI příkazy/parametry beze změny: příklad
+  `kgmaker query --root app --scope production JPQL PurchaseOrder` platí dál.
+  Registr zadání bez dopadu: identita/revize/závislosti se nemění.
+  Instalované agent instrukce/templates bez dopadu: nebyly změněny.
+- Kontroly: `PYTHONPATH=src:/tmp/kgmaker-python-test-deps python3 -m pytest -q
+  tests/test_jpql_hql_grammar.py tests/test_build_aware.py
+  tests/test_persistence_realms.py tests/test_schema_compatibility.py
+  tests/test_orm_xml_overrides.py tests/test_compiler_workers.py` — **89 PASS /
+  70 SKIP**. Samotný W05 corpus s explicitním JDK21 a
+  `KGMAKER_WORKERS_HOME=/tmp/kgmaker-review-pr97/workers` — **40 PASS /0 SKIP**,
+  včetně actual-javac fixture proti pinned workeru
+  `6de50becda4dd0bdb81babf8a638c074a94bac3cb4742bb197c63bfe870d3eae`.
+- Izolované Python závislosti v `/tmp/kgmaker-python-test-deps` nahrazují
+  chybějící typing_extensions/setuptools; globální prostředí se nemění.
+  Celý pytest nad novou gramatikou je při tomto checkpointu **IN_PROGRESS**;
+  jeho konečný výsledek musí být doplněn před předáním. Průběžná selhání
+  nezaměňujeme za PASS. GH CI nad lokálními opravami **NOT_RUN**.
+- Publikace **BLOCKED**: automatická kontrola zamítla
+  `git push origin feat/t003-s06-05-jpql-hql-grammar` kvůli chybějícímu
+  výslovnému potvrzení důvěryhodnosti cíle a odeslání. Alternativní cesta
+  nebyla použita. PR97 stále obsahuje původní head `878eabc`; lokální opravy
+  vyžadují nové nezávislé review i případnou autorizaci push.
+- Zbývá: konečný full-suite receipt, semantic/memory/scan a finální review;
+  W06/W07, další provider syntax a runtime/data dostupnost nejsou dodané.

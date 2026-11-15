@@ -84,14 +84,15 @@ opravy prošly čistým exact-pair review na finálním headu
 
 PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
 `1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
-`fbc521331a7a68a94768d636f52552917008bfba`; čeká na exact-pair review.
+`fbc521331a7a68a94768d636f52552917008bfba`; historický publikovaný stav. Lokální review opravy z 2026-11-15 jsou
+oddělené; push je blokován bezpečnostní kontrolou, full suite ještě běží.
 
 | ID | Stav | Přímá evidence |
 |---|---|---|
 | T003-S06-W05-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_jpql_hql_grammar.py::test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection`: exact compiler-owned root/join/subquery reads, bulk update/delete, DTO constructor a clause-specific path edges; `partialLateral` je PARTIAL s query locatorem |
 | T003-S06-W05-AC02 | LOCAL_VERIFIED_IN_SCOPE | `JPA_RULE_VERSION=annotation-source-v8-jpql-hql-grammar`; `test_legacy_jpa_rules_remain_readable_but_require_reinspection` pokrývá v6/v7, graph/store v1/v2/v3 zůstává beze změny a stávající realm/schema suite prochází |
 | T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence` plus bounded invalid-clause regressions: malformed/incomplete query, unknown path, duplicate entity, undeclared alias a trailing token nevytvářejí silnější evidence; vstupní graph se nemutuje |
-| T003-S06-W05-AC04 | PARTIAL | Opravný bounded corpus 11 PASS /1 SKIP; relevantní sada 16 PASS /16 SKIP; actual-javac fixture 1 PASS proti pinned workeru; full pytest má collection FAIL kvůli lokální nekompatibilitě `referencing` s Python 3.12. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
+| T003-S06-W05-AC04 | PARTIAL | Lokální bounded corpus 40 PASS /0 SKIP včetně actual-javac pinned workeru; širší JPA sada 89 PASS /70 SKIP. Full suite IN_PROGRESS; nejde o PASS. Deset graph-level review reprodukcí a 18 expression/scope variant nově testuje konzumující gramatiku. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
 
 ## Historická acceptance podle uvedených checkpointů
 

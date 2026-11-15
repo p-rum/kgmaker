@@ -323,3 +323,75 @@ interface Orders extends JpaRepository<Order,Long> {
     assert any(edge.source == queries["summaries:JPQL"].id and edge.kind == "joins_by" for edge in graph.edges)
     assert any(edge.source == queries["updateStatus:JPQL"].id and edge.kind == "query_writes" for edge in graph.edges)
     assert any(edge.source == queries["deleteStatus:JPQL"].id and edge.kind == "query_deletes" for edge in graph.edges)
+
+
+@pytest.mark.parametrize("query", [
+    "select o from PurchaseOrder o where o.id = = :name",
+    "select o from PurchaseOrder o where o.id :name",
+    "select o from PurchaseOrder o where o.id = :name and not",
+    "update PurchaseOrder o set o.status",
+    "update PurchaseOrder o set o.status=:name,",
+    "delete from PurchaseOrder o garbage",
+    "select o from PurchaseOrder o where ()",
+    "select o from PurchaseOrder o order by x",
+])
+def test_review_invalid_expressions_publish_no_persistence_evidence(tmp_path, query):
+    _, graph, context = _fixture(tmp_path)
+    symbol = next(item for item in graph.symbols if item['id'] == 'hql')
+    symbol['annotations'][0]['values']['value'] = query
+    result = augment_framework_graph(tmp_path, graph, context)
+    node = _queries(result)['hqlWith:JPQL']
+    assert node.metadata['analysis_status'] == 'UNKNOWN'
+    assert node.metadata['validated'] is False
+    assert not any(edge.source == node.id and edge.kind in {
+        'query_reads', 'query_writes', 'query_deletes', 'filters_by', 'updates_attribute',
+        'projects_attribute', 'orders_by', 'groups_by',
+    } for edge in result.edges)
+
+
+@pytest.mark.parametrize("query", [
+    "select o from PurchaseOrder o where exists (select c.id from Customer c where (c.id=:name))",
+    "select o from PurchaseOrder o where exists (select c.id from Customer c where c.id=o.customer.id)",
+])
+def test_review_nested_grouping_and_correlation_keep_exact_paths(tmp_path, query):
+    _, graph, context = _fixture(tmp_path)
+    symbol = next(item for item in graph.symbols if item['id'] == 'hql')
+    symbol['annotations'][0]['values']['value'] = query
+    result = augment_framework_graph(tmp_path, graph, context)
+    node = _queries(result)['hqlWith:JPQL']
+    assert node.metadata['analysis_status'] == 'COMPLETE'
+    nodes = {item.id: item for item in result.nodes}
+    assert any(edge.source == node.id and edge.kind == 'filters_by'
+               and nodes[edge.target].name == 'Customer.id' for edge in result.edges)
+
+
+@pytest.mark.parametrize('query', [
+    'select count(o.id) from PurchaseOrder o where o.id between 1 and 10',
+    'select o from PurchaseOrder o where not (o.id = :id or o.status is null)',
+    "select o from PurchaseOrder o where o.status not in ('A', 'B') and o.id >= 1",
+    "select o from PurchaseOrder o where lower(o.status) like 'a%'",
+    'update PurchaseOrder o set o.id=o.id+1, o.status=:status where o.id in (select c.id from Customer c)',
+    'select o.id, c.id from PurchaseOrder o left outer join o.customer c on c.id=o.customer.id group by o.id,c.id having count(c.id)>0 order by o.id desc',
+])
+def test_bounded_expression_and_clause_grammar(query):
+    assert _parse_jpql_hql(query)['status'] == 'COMPLETE'
+
+
+@pytest.mark.parametrize('query', [
+    'select o from PurchaseOrder o where o.id > < :id',
+    'select o from PurchaseOrder o where o.id = :id = :id',
+    'select o from PurchaseOrder o where not o.id',
+    'select o from PurchaseOrder o where o.id between 1 and',
+    'select o from PurchaseOrder o where o.id in ()',
+    'select o from PurchaseOrder o where o.id is',
+    'select o from PurchaseOrder o where o.id + :id',
+    'select o from PurchaseOrder o order by o.id,',
+    'select o from PurchaseOrder o where exists (select c.id from Customer c where ())',
+    'select o from PurchaseOrder o where exists (select c.id from Customer c) and c.id=:id',
+    'select o from PurchaseOrder o where exists (select c.id from Customer c) and exists (select c.id from PurchaseOrder x)',
+    'update PurchaseOrder o set o.id=:id where o.id=:id order by o.id',
+])
+def test_unconsumed_or_invalid_expression_is_unknown(query):
+    parsed = _parse_jpql_hql(query)
+    assert parsed['status'] == 'UNKNOWN'
+    assert parsed['invalid_fragments']

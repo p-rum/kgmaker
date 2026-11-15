@@ -386,8 +386,20 @@ Vznikají oddělené `query_reads`/`query_writes`/`query_deletes`, `joins_by`,
 jediný přesný entity owner. Hibernate `join ... with` je podporovaný bounded
 provider extension. `lateral`, set/window operace, `treat`, collection-index
 funkce a direct entity join mimo association grammar jsou PARTIAL s přesným
-query offset/line/column locatorem. Malformed lexical input nebo nevyvážené
-závorky jsou UNKNOWN a nepublikují read/write/path hrany. Native SQL nadále váže pouze
+query offset/line/column locatorem. Bounded parser konzumuje celé klauzule a
+výrazy; porovnání, AND/OR/NOT, EXISTS, IN (seznam/poddotaz), BETWEEN, LIKE
+(s volitelným ESCAPE), IS [NOT] NULL a základní aritmetika mají oddělenou
+predikátovou a skalární syntaxi. Alias lookup je case-insensitive; každý
+poddotaz má vlastní scope a lexical parent, běžné závorky zachovají scope.
+Sourozenecké poddotazy mohou znovu použít alias, vnější alias lze korelovat,
+vnitřní alias nesmí uniknout ven. Malformed input, neúplné klauzule,
+neočekávané tokeny a nerozvázané aliasy jsou UNKNOWN bez read/write/path hran.
+Podporované funkce jsou count/sum/avg/min/max, lower/upper/length/abs/sqrt,
+mod, concat, substring, coalesce a nullif s kontrolou arity. Další funkce
+jsou PARTIAL s locatorem; CASE, enum konstanty, select-result aliasy,
+collection operators a složitější provider gramatika nejsou garantované.
+DML poddotaz s GROUP/ORDER BY zůstává mimo tento omezený scope.
+[Opravy po review a testy](changes/116_parseExtendedJpqlHql.md). Native SQL nadále váže pouze
 explicitní názvy tabulek v aktuální ORM projekci a při kolizi zůstává ambiguous.
 Statické JPA named queries mají oddělenou definici a repository reference; SpEL,
 `${...}` a jiné dynamické části se nerozvíjejí.
