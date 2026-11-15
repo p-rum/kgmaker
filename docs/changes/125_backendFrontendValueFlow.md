@@ -2,8 +2,8 @@
 
 Datum: 2026-11-15. Výchozí SHA všech níže uvedených kroků:
 `d2507ef465c9b4844830520de68629a3b577c0d2`. Větev:
-`feat/t003-s08-05-backend-frontend-value-flow`. Cílový main se před publikací
-začlení samostatně; jeho SHA a integrační ověření budou uvedeny níže.
+`feat/t003-s08-05-backend-frontend-value-flow`. Cílový main poPR105 byl začleněn samostatně; jeho SHA a integrační ověření
+jsou uvedeny níže.
 Task `T003-S08-W05`, nadřazená `T003-AC08`; dodání IN_PROGRESS,
 ověření VERIFIED_IN_SCOPE pro omezenou matici. S08 jako celek zůstává PARTIAL.
 
@@ -113,8 +113,8 @@ CLI, compatibility/limity), `docs/compiler-inspection.md`,
 a `impact --help` (**PASS**). Registry/spec jsou **bez dopadu**: nezměněna
 identita, revize, dependency ani odkaz existujícího W05; SPECIFICATION zůstává cíl.
 
-Závěrečné stabilní kontroly, začlenění main, semantic update/validate/scan,
-paměť, commit/push/PR a nezávislé review budou doplněny před předáním.
+Závěrečné kontroly a integrace jsou uvedeny níže. Nezávislé review a merge
+provádí pověřený reviewer; implementer nemerguje.
 
 ### Krok 3/4 — závěrečný hardening generation a cache
 
@@ -141,3 +141,52 @@ environment + `python -m pytest -q tests/test_backend_frontend_value_flow.py -k 
 Finální veřejný test a negativy generation/cache před tím prošly s workspace/dataflow
 regresí: **48 PASS /0 SKIP,54.94s**. Zdrojový audit také přidal localized gap pro
 nečitelný/nepodporovaný OpenAPI capture místo neřízené práce s jeho tvarem.
+
+### Krok 5 — integrace main po PR105
+
+Integrační baseline `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, vlastní implementace
+`502d2f9`, merge `0e85411`. Zachovány W03 field_mapping_bindings, kvalifikace
+field-mapping symbolů i navazující capability dokumentace; konflikty byly jen
+v dataflow capability seznamu, workspace qualifieru a konci compiler dokumentace.
+**PASS** finální integrační JDK21/REQUIRE_WORKERS/PYTHONPATH environment +
+`python -m pytest -q tests/test_backend_frontend_value_flow.py tests/test_workspace.py tests/test_dataflow.py tests/test_field_mapping_flow.py tests/test_t027_cross_http_process_boundary.py tests/test_inspection_contract.py -x`
+— **95 passed /0 skipped,73.53s**.
+
+Následná W01 regrese našla **FAIL**: obecný `if` bez response hodnoty dostal
+nový frontend coverage gap a změnil COMPLETE na PARTIAL. Oprava lokalizuje tuto
+diagnostiku jen na prostředí s přítomnými response hodnotami; běžné funkce bez
+value toku status nemění. Dotčený worker helper, AC02/AC03, stejná integrační
+baseline. Cílený opakovaný výsledek je uveden níže.
+
+### Závěrečná ověřená matice
+
+Všechny příkazy spuštěny v izolovaném checkoutu s
+`JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`, jeho `bin` na PATH,
+`KGMAKER_REQUIRE_WORKERS=1`, `PYTHONPATH=src` a Pythonem
+`/tmp/kgmaker-test-venv/bin/python` (3.12.0). Toolchain: OpenJDK21.0.13.0.3,
+Node24.22.1, TypeScript5.7.3, React18.3.1, @types/react18.3.18.
+
+- **PASS** `python -m pytest -q tests/test_tsconfig_freshness.py::test_snapshot_helper_is_hash_bound_to_distribution tests/test_worker_install.py::InstalledWorkerTests::test_packaged_typescript_analyzes_outside_checkout tests/test_typescript_project_references.py tests/test_typescript_callbacks.py tests/test_backend_frontend_value_flow.py -x` — **55 passed /0 skipped,132.81s** po opravě nepříslušného control-flow gapu.
+- Dodatečný AC03 guard: reuse existujícího `dynamicScopeFiles` odmítá dynamic-eval soubory; protocol v1 fact musí zachovat očekávaný evidence kind a přesný React adapter target occurrence. Dotčeno: worker.cjs, frontend_flow.py a vlastní negativy; baseline0e85411.
+- **PASS** `python -m pytest -q tests/test_backend_frontend_value_flow.py tests/test_worker_install.py::InstalledWorkerTests::test_packaged_typescript_analyzes_outside_checkout -x` — **31 passed /0 skipped,94.06s** na finálním kódu (30 W05 a clean installed TS).
+- **PASS** `git diff --check` po integraci a source opravách.
+- **NOT_RUN** celý test suite (výslovný targeted-only pokyn), Kotlin K1/K2 W05 matice, runtime aplikace/HTTP/UI test execution, obecné Promise/heap/control-flow podpory a GH CI.
+
+### Sémantická evidence a zachování historie
+
+Scoped `semantic update --base 93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` +
+`semantic apply` + `semantic validate` proběhly **PASS**. Reanchor ověřil původní
+hashe zdrojů a mapoval jen nezměněné citované řádky; nejednoznačné IDs či změněné
+citace jsou fail-closed. Přidán jediný doložený W05 concept a tři implementační/
+validační vazby. **PASS preservation** obou rodičů: původní baseline42concepts/
+135edges/286episodes a main45/144/299. Aktuální stav před capture:46/147/299,
+žádné odstranění historických faktů nebo epizod.
+
+Původní pre-task graph.json chyběl. Implementační paměť byla proto zachycena až
+nad explicitním postintegration maintenance checkpointem; nedokládá historický
+pre-task graph delta. Capture episode `0475787e39d03ca0507f0a3ca91e8366435a40ec50c12d6fff233749a61b928e`
+(**PASS**) zachoval299 historických epizod a přidal jednu (celkem300).
+`semantic validate`, generovaný `scan` a `status` jsou **PASS**; source graph
+je current. Finální refresh po aktualizaci publikačních metadat zachová tyto kotvy.
+Publikační stav: implementace dokončena v omezeném scope; samostatný PR se
+předává reviewerovi, celý S08 zůstává PARTIAL.

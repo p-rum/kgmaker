@@ -87,7 +87,7 @@ unrelated object/promise/assertion could otherwise appear to consume a response.
 SOURCE_ONLY therefore remains PARTIAL/UNKNOWN.
 
 Current limits: await/local-const flow only; no Promise callbacks, branch/loop/try
-merging, mutable/escaped objects, setter aliases/updater callbacks, multiple state
+merging, mutable/escaped objects, dynamic-eval source files, setter aliases/updater callbacks, multiple state
 writes, custom JSX components, Axios/Playwright transport adapters, dynamic URLs,
 interprocedural mapping or arbitrary UI frameworks. Type assertions are syntax,
 not payload validation. Kotlin backend and arbitrary production repositories are

@@ -155,7 +155,7 @@ function collect(api) {
     }
     if(ts.isReturnStatement(n)) {if(n.expression)collectUi(n.expression,env);return;}
     // No propagation through conditional/loop/try or callback control flow.
-    if(ts.isIfStatement(n)||ts.isIterationStatement(n,false)||ts.isTryStatement(n))diagnostics.push({code:'FRONTEND_VALUE_CONTROL_FLOW_UNKNOWN',...location(n)});
+    if(env.size&&(ts.isIfStatement(n)||ts.isIterationStatement(n,false)||ts.isTryStatement(n)))diagnostics.push({code:'FRONTEND_VALUE_CONTROL_FLOW_UNKNOWN',...location(n)});
   }
   function collectUi(n,env) {
     if(ts.isJsxElement(n)) {

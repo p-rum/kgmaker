@@ -174,7 +174,7 @@ def test_ac03_stale_and_ambiguous_inputs_do_not_join(captured,change,diagnostic)
     finally:path.write_bytes(original)
 
 
-@pytest.mark.parametrize('change', ['unrelated-json','unrelated-promise','shadowed-state','fake-use-state','multiple-setters','no-await','shadowed-fetch','unrelated-assertion'])
+@pytest.mark.parametrize('change', ['unrelated-json','unrelated-promise','shadowed-state','fake-use-state','multiple-setters','no-await','shadowed-fetch','unrelated-assertion','dynamic-eval'])
 def test_ac03_compiler_symbols_reject_name_only_flow(tmp_path,change):
     require_workers()
     source=PAGE
@@ -185,6 +185,7 @@ def test_ac03_compiler_symbols_reject_name_only_flow(tmp_path,change):
     elif change=='multiple-setters':source=source.replace('assign({decline: amount});','assign({decline: amount}); assign({decline:7});')
     elif change=='no-await':source=source.replace('await response.json()', 'response.json() as any')
     elif change=='shadowed-fetch':source=source.replace('async function load() {', "async function load() { const fetch = async (url:string)=>new Response('{\"decline\":7}');")
+    elif change=='dynamic-eval':source=source.replace('const {decline: amount} = data;', "eval('data.decline = 7'); const {decline: amount} = data;")
     else:source=TEST.replace('check(observed);','{const observed = 7; check(observed);}')
     prepare_ts(tmp_path,source)
     result=inspect_frontend(tmp_path,home=HOME,ui_framework='react',publish=False)
@@ -207,7 +208,7 @@ def test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow(captured)
         for p,data in zip(files,originals):p.write_bytes(data)
 
 
-@pytest.mark.parametrize('corruption', ['hash', 'range', 'context', 'version', 'cross-request', 'fact-range', 'fact-file'])
+@pytest.mark.parametrize('corruption', ['hash', 'range', 'context', 'version', 'cross-request', 'fact-range', 'fact-file', 'evidence-kind', 'adapter'])
 def test_ac03_invalid_worker_value_does_not_replace_store(tmp_path, corruption):
     require_workers()
     prepare_ts(tmp_path, PAGE.replace('assign({decline: amount});', "assign({decline: amount}); const otherResponse = await fetch('/api/other'); const otherData: Exposure = await otherResponse.json(); const other = otherData.decline;"))
@@ -219,13 +220,17 @@ def test_ac03_invalid_worker_value_does_not_replace_store(tmp_path, corruption):
     def corrupt(*args,**kwargs):
         result=original(*args,**kwargs)
         candidates=[s for s in result.get('symbols',[]) if s.get('value_flow_version')==1]
-        if candidates and corruption in {'cross-request','fact-range','fact-file'}:
+        if candidates and corruption in {'cross-request','fact-range','fact-file','evidence-kind','adapter'}:
             symbols={s['id']:s for s in result['symbols']}
             fact=next(f for f in result['facts'] if f.get('value_flow_version')==1 and symbols[f['target']].get('value_role')=='JSON_RESULT' and symbols[f['target']]['request']['path']=='/api/other')
             if corruption=='cross-request':
                 fact['source']=next(s['id'] for s in candidates if s.get('value_role')=='ASSIGNMENT' and s['request']['path']=='/api/exposure')
             elif corruption=='fact-range':
                 fact['range']={**fact['range'],'start':fact['range']['start']+1,'start_column':fact['range']['start_column']+1}
+            elif corruption=='evidence-kind':fact['evidence_kind']='RUNTIME_OBSERVED'
+            elif corruption=='adapter':
+                fact=next(f for f in result['facts'] if f.get('value_flow_version')==1 and f['kind']=='writes_value')
+                fact['ui_adapter']={**fact['ui_adapter'],'react_version':'99.0.0'}
             else:
                 other=next(s for s in result['symbols'] if s.get('path')=='generated/client.ts')
                 fact.update(path=other['path'],sha256=other['sha256'],range=other['range'])

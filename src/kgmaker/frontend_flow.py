@@ -24,6 +24,9 @@ def validate_frontend_values(response, context):
                 or item.get('availability') != 'UNKNOWN'):
             fail()
         if 'source' in item:
+            expected_kind = 'FRAMEWORK_DERIVED' if item.get('kind') == 'writes_value' else 'SYMBOL_RESOLVED'
+            if item.get('evidence_kind') != expected_kind:
+                fail()
             if item.get('kind') not in {'maps_to', 'writes_value', 'passes_value', 'displayed_in'}:
                 fail()
             for key in ('source', 'target'):
@@ -35,6 +38,8 @@ def validate_frontend_values(response, context):
                     or any(source.get(k) != target.get(k) or item.get(k) != target.get(k) for k in ('path', 'sha256'))
                     or item.get('range') != target.get('range')
                     or source.get('field') is not None and source.get('field') != target.get('field')):
+                fail()
+            if item['kind'] == 'writes_value' and item.get('ui_adapter') != target.get('ui_adapter'):
                 fail()
             target_roles = {'writes_value': 'STATE_WRITE', 'passes_value': 'ARGUMENT', 'displayed_in': 'JSX_CONSUMER'}
             if item['kind'] in target_roles and target.get('value_role') != target_roles[item['kind']]:
