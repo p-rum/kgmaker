@@ -56,3 +56,25 @@ Jde o statický persistence intent, nikoli runtime SQL, commit nebo data availab
 Širší provider-specific HQL, container annotations/XML named queries, dynamic
 query builders, execution plan, runtime dispatch a deployment/data availability
 zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
+
+## Oprava po review #5907376141
+
+- `T003-S06-W05-S02 / AC01, AC03`: bounded parser nyní odmítá neúplné
+  projekce, klauzule a pravé strany porovnání jako `UNKNOWN`; doplněné testy
+  nepřipouštějí trailing tokeny ani neúplný bulk DML.
+- `T003-S06-W05-S03 / AC01, AC03`: aliasy se porovnávají case-insensitive a
+  bindingy jsou vedené po subquery scope s korelovaným lookupem do vnějšího
+  scope. Neznámý dotted alias zůstává bez silnější evidence a invaliduje query
+  při compiler-owned resolution.
+- Výchozí opravný head: `878eabc25f3ddb0066213ad00928c4a7b5cfeb76`.
+- Kontroly: `PYTHONPATH=src python3 -m pytest -q tests/test_jpql_hql_grammar.py`
+  **11 passed, 1 skipped**; relevantní sada
+  `tests/test_jpql_hql_grammar.py tests/test_build_aware.py tests/test_compiler_workers.py`
+  **16 passed, 16 skipped**; `git diff --check` **PASS**.
+- Celý `PYTHONPATH=src python3 -m pytest -q` **FAIL při collection** kvůli
+  nekompatibilnímu lokálnímu `referencing`/Python 3.12 (`TypeError: default is
+  an invalid keyword argument for typevar()`); tento výsledek není vydáván jako
+  PASS. `PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH
+  KGMAKER_WORKERS_HOME=/tmp/kgmaker-review-pr97/workers PYTHONPATH=src python3
+  -m pytest -q tests/test_jpql_hql_grammar.py::test_actual_javac_extended_jpql_fixture`
+  je **1 passed** proti pinned workeru `sha256=6de50becda4dd0bdb81babf8a638c074a94bac3cb4742bb197c63bfe870d3eae`.

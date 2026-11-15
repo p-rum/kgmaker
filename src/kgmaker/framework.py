@@ -275,6 +275,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             alias, end = alias_at(end)
             if len(parts) >= 2:
                 joins.append({"base_alias": parts[0], "path": parts[1:], "alias": alias, "fetch": fetch,
+                              "depth": token["depth"],
                               "locator": _jpql_locator(text, token["start"], token["value"], "association join")})
             elif parts and parts[0].casefold() not in JPQL_UNSUPPORTED_KEYWORDS:
                 unsupported.append(_jpql_locator(text, tokens[cursor]["start"], parts[0],
@@ -290,7 +291,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             continue
         position += 1
 
-    aliases = {item["alias"] for item in roots + joins if item.get("alias")}
+    aliases = {item["alias"].casefold() for item in roots + joins if item.get("alias")}
     clauses: dict[int, str] = {}
     paths: list[dict[str, Any]] = []
     position = 0
@@ -313,7 +314,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                 clauses[depth_value] = "order"
             elif lower == "group" and position + 1 < len(tokens) and tokens[position + 1]["lower"] == "by":
                 clauses[depth_value] = "group"
-            if token["value"] in aliases and position + 1 < len(tokens) and tokens[position + 1]["value"] == ".":
+            if token["lower"] in aliases and position + 1 < len(tokens) and tokens[position + 1]["value"] == ".":
                 parts, end = path_at(position)
                 role = clauses.get(depth_value)
                 if role is None:
@@ -322,11 +323,70 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                 if role == "update":
                     role = "update" if end < len(tokens) and tokens[end]["value"] == "=" else "read"
                 paths.append({"alias": parts[0], "path": parts[1:], "role": role,
+                              "depth": depth_value,
                               "locator": _jpql_locator(text, token["start"], token["value"], "path expression")})
                 position = end
                 continue
         position += 1
 
+    # A bounded grammar still rejects incomplete clause expressions.  Without
+    # this check a trailing WHERE/assignment was treated as a valid query and
+    # could publish persistence edges.
+    structural_invalid: list[dict[str, Any]] = []
+    first_token = next((token for token in tokens if token["kind"] == "identifier"), None)
+    if first_token is None or first_token["lower"] not in {"select", "update", "delete"}:
+        structural_invalid.append(_jpql_locator(text, 0, first_token["value"] if first_token else "EOF",
+                                                 "query must start with SELECT, UPDATE, or DELETE"))
+    top_words = {"where", "having", "on", "with", "set", "from", "group", "order"}
+    for index, token in enumerate(tokens):
+        if token["kind"] != "identifier" or token["lower"] not in {"where", "having", "on", "with", "set"}:
+            continue
+        following = tokens[index + 1] if index + 1 < len(tokens) else None
+        if following is None or following["value"] in {",", ")", "="} \
+                or (following["kind"] == "identifier" and following["lower"] in top_words):
+            structural_invalid.append(_jpql_locator(text, token["start"], token["value"],
+                                                     "clause requires an expression"))
+    for index, token in enumerate(tokens):
+        if token["value"] not in {"=", ">", "<", ">=", "<=", "<>", "!="}:
+            continue
+        following = tokens[index + 1] if index + 1 < len(tokens) else None
+        if following is None or following["value"] in {",", ")"} \
+                or (following["kind"] == "identifier" and following["lower"] in top_words):
+            structural_invalid.append(_jpql_locator(text, token["start"], token["value"],
+                                                     "comparison requires a right-hand expression"))
+    for index, token in enumerate(tokens[:-1]):
+        following = tokens[index + 1]
+        if token["kind"] in {"parameter", "literal"} and following["kind"] == "identifier" \
+                and following["lower"] not in {"and", "or", "order", "group", "having", "where"}:
+            structural_invalid.append(_jpql_locator(text, following["start"], following["value"],
+                                                     "unexpected token after completed expression"))
+    if first_token and first_token["lower"] == "select":
+        from_token = next((token for token in tokens if token["kind"] == "identifier" and token["lower"] == "from" and token["depth"] == 0), None)
+        projection = [token for token in tokens[1:] if token["depth"] == 0 and token["start"] < (from_token["start"] if from_token else len(text))
+                      and token["kind"] == "identifier" and token["lower"] not in {"distinct", "new"}]
+        if from_token is None or not projection:
+            structural_invalid.append(_jpql_locator(text, first_token["start"], first_token["value"],
+                                                     "SELECT requires a projection and top-level FROM"))
+    if first_token and first_token["lower"] == "delete":
+        if not any(token["kind"] == "identifier" and token["lower"] == "from" and token["depth"] == 0 for token in tokens):
+            structural_invalid.append(_jpql_locator(text, first_token["start"], first_token["value"],
+                                                     "DML statement requires top-level FROM"))
+    # Preserve unknown dotted bindings as paths so the resolver can invalidate
+    # the query instead of silently dropping an undeclared alias.
+    for index, token in enumerate(tokens[:-2]):
+        if token["kind"] != "identifier" or token["lower"] in aliases:
+            continue
+        if tokens[index + 1]["value"] != "." or tokens[index + 2]["kind"] != "identifier":
+            continue
+        previous = tokens[index - 1]["lower"] if index else ""
+        if previous == "new" or token["lower"] in JPQL_ALIAS_RESERVED:
+            continue
+        if not any(path["alias"].casefold() == token["lower"] and path["depth"] == token["depth"] for path in paths):
+            parts, end = path_at(index)
+            paths.append({"alias": parts[0], "path": parts[1:], "role": clauses.get(token["depth"], "filter"),
+                          "depth": token["depth"],
+                          "locator": _jpql_locator(text, token["start"], token["value"], "path expression")})
+    invalid.extend(structural_invalid)
     provider_extensions = []
     if any(token["kind"] == "identifier" and token["lower"] == "with" for token in tokens[1:]):
         provider_extensions.append("HQL_JOIN_WITH")
@@ -3078,8 +3138,33 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                                                   "validated": False,
                                                                   "analysis_status": "PARTIAL" if status == "PARTIAL" else "UNKNOWN"})
 
-            alias_owners: dict[str, str] = {}
-            ambiguous_aliases: set[str] = set()
+            alias_owners_by_depth: dict[int, dict[str, str]] = {}
+            ambiguous_aliases_by_depth: dict[int, set[str]] = {}
+
+            def bind_alias(depth: int, alias: str, owner: str) -> None:
+                key = alias.casefold()
+                owners = alias_owners_by_depth.setdefault(depth, {})
+                ambiguous = ambiguous_aliases_by_depth.setdefault(depth, set())
+                if key in owners and owners[key] != owner:
+                    ambiguous.add(key)
+                    owners.pop(key, None)
+                    diagnostics.append({"code": "JPQL_ALIAS_AMBIGUOUS", "path": path, "source_line": line,
+                                        "method": method.id, "alias": alias,
+                                        "reason": "The same alias identifies multiple query roots in one query scope; path evidence is omitted."})
+                    invalidate_query()
+                elif key not in ambiguous:
+                    owners[key] = owner
+
+            def lookup_alias(depth: int, alias: str) -> tuple[str | None, bool]:
+                key = alias.casefold()
+                for scope in range(depth, -1, -1):
+                    if key in ambiguous_aliases_by_depth.get(scope, set()):
+                        return None, True
+                    owner = alias_owners_by_depth.get(scope, {}).get(key)
+                    if owner:
+                        return owner, False
+                return None, False
+
             for root_record in parsed_query["roots"]:
                 query_entity = str(root_record["entity"]).replace("$", ".")
                 query_owners = entity_query_owners.get(query_entity, [])
@@ -3096,18 +3181,10 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                     invalidate_query()
                 alias = root_record.get("alias")
                 if alias and query_owner:
-                    if alias in alias_owners and alias_owners[alias] != query_owner:
-                        ambiguous_aliases.add(alias)
-                        alias_owners.pop(alias, None)
-                        diagnostics.append({"code": "JPQL_ALIAS_AMBIGUOUS", "path": path, "source_line": line,
-                                            "method": method.id, "alias": alias,
-                                            "reason": "The same alias identifies multiple query roots; path evidence is omitted."})
-                        invalidate_query()
-                    elif alias not in ambiguous_aliases:
-                        alias_owners[alias] = query_owner
+                    bind_alias(int(root_record.get("depth", 0)), alias, query_owner)
 
             for join in parsed_query["joins"]:
-                owner = alias_owners.get(join["base_alias"])
+                owner, join_ambiguous = lookup_alias(int(join.get("depth", 0)), join["base_alias"])
                 target_owner = owner
                 association_target = None
                 for segment in join["path"]:
@@ -3132,12 +3209,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                  "Joined association target is read by the static query")
                     join_alias = join.get("alias")
                     if join_alias:
-                        if join_alias in alias_owners and alias_owners[join_alias] != target_owner:
-                            ambiguous_aliases.add(join_alias)
-                            alias_owners.pop(join_alias, None)
-                            invalidate_query()
-                        elif join_alias not in ambiguous_aliases:
-                            alias_owners[join_alias] = target_owner
+                        bind_alias(int(join.get("depth", 0)), join_alias, target_owner)
                 else:
                     diagnostics.append({"code": "JPQL_JOIN_UNRESOLVED", "path": path, "source_line": line,
                                         "method": method.id, "base_alias": join["base_alias"],
@@ -3156,7 +3228,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                 if key in seen_paths:
                     continue
                 seen_paths.add(key)
-                owner = alias_owners.get(expression["alias"])
+                owner, expression_ambiguous = lookup_alias(int(expression.get("depth", 0)), expression["alias"])
                 property_name = "".join(part[:1].upper() + part[1:] if index else part
                                         for index, part in enumerate(expression["path"]))
                 target, resolved_path = resolve_query_property(owner or "", property_name)
@@ -3177,7 +3249,7 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                         if traversed_entity:
                             add_edge(query_id, traversed_entity, "query_reads", path, line,
                                      "Implicit association path reads exact compiler-owned target entity")
-                elif expression["alias"] not in ambiguous_aliases:
+                elif not expression_ambiguous:
                     diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
                                         "source_line": line, "method": method.id,
                                         "alias": expression["alias"],

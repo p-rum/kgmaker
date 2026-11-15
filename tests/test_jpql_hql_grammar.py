@@ -5,7 +5,7 @@ import os
 import pytest
 
 from kgmaker.analysis_model import digest, file_hash
-from kgmaker.framework import JPA_RULE_VERSION, augment_framework_graph
+from kgmaker.framework import JPA_RULE_VERSION, augment_framework_graph, _parse_jpql_hql
 from kgmaker.graph_provider import validate_context_snapshot
 from kgmaker.inspection import inspect_jvm
 from kgmaker.model import KnowledgeGraph, Node
@@ -202,6 +202,37 @@ def test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence(t
     assert any(item.get("code") == "JPQL_ENTITY_UNRESOLVED"
                and item.get("method") == "ambiguous" and len(item.get("candidates", [])) == 2
                for item in result.diagnostics)
+
+
+@pytest.mark.parametrize("query", [
+    "delete from PurchaseOrder o where",
+    "select o from PurchaseOrder o where o.status =",
+    "select from PurchaseOrder o",
+])
+def test_incomplete_jpql_clauses_are_unknown(query):
+    parsed = _parse_jpql_hql(query)
+    assert parsed["status"] == "UNKNOWN"
+    assert parsed["invalid_fragments"]
+
+
+def test_jpql_aliases_are_case_insensitive_and_scoped():
+    parsed = _parse_jpql_hql(
+        "select O.id from PurchaseOrder o where exists "
+        "(select o.id from Customer o where o.name = :name)"
+    )
+    assert parsed["status"] == "COMPLETE"
+    assert {path["alias"].casefold() for path in parsed["paths"]} == {"o"}
+    assert {path["depth"] for path in parsed["paths"]} == {0, 1}
+    assert all(path["alias"].casefold() == "o" for path in parsed["paths"])
+
+
+@pytest.mark.parametrize("query", [
+    "select o from PurchaseOrder o where o.status = :status garbage",
+    "update PurchaseOrder o set",
+])
+def test_unbound_alias_and_trailing_tokens_are_not_complete(query):
+    parsed = _parse_jpql_hql(query)
+    assert parsed["status"] == "UNKNOWN"
 
 
 @pytest.mark.parametrize("old", [

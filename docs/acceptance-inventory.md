@@ -90,8 +90,8 @@ PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
 |---|---|---|
 | T003-S06-W05-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_jpql_hql_grammar.py::test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection`: exact compiler-owned root/join/subquery reads, bulk update/delete, DTO constructor a clause-specific path edges; `partialLateral` je PARTIAL s query locatorem |
 | T003-S06-W05-AC02 | LOCAL_VERIFIED_IN_SCOPE | `JPA_RULE_VERSION=annotation-source-v8-jpql-hql-grammar`; `test_legacy_jpa_rules_remain_readable_but_require_reinspection` pokrývá v6/v7, graph/store v1/v2/v3 zůstává beze změny a stávající realm/schema suite prochází |
-| T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence`: malformed query nevytváří query edges, unknown path nevytváří `filters_by`, duplicate entity name nevytváří read/write/delete edge a vstupní graph se nemutuje |
-| T003-S06-W05-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | Bounded corpus 5 PASS; relevantní JPA/schema sada 31 PASS /5 SKIP; full 1651 PASS /1058 SKIP /76 subtests; `test_actual_javac_extended_jpql_fixture` je bez připraveného workeru explicitní SKIP. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
+| T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence` plus bounded invalid-clause regressions: malformed/incomplete query, unknown path, duplicate entity, undeclared alias a trailing token nevytvářejí silnější evidence; vstupní graph se nemutuje |
+| T003-S06-W05-AC04 | PARTIAL | Opravný bounded corpus 11 PASS /1 SKIP; relevantní sada 16 PASS /16 SKIP; actual-javac fixture 1 PASS proti pinned workeru; full pytest má collection FAIL kvůli lokální nekompatibilitě `referencing` s Python 3.12. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
 
 ## Historická acceptance podle uvedených checkpointů
 
