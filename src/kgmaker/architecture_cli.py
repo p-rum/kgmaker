@@ -52,11 +52,12 @@ def _configure(parser):
             child.add_argument('--catalog',choices=tuple(_CATALOGS),required=True)
             inputs=child.add_mutually_exclusive_group(required=True)
             inputs.add_argument('--interface-capture',type=Path)
-            inputs.add_argument('--capture-local',action='store_true',help='explicit read-only source/parser replay; existing indexes required, no publication')
+            inputs.add_argument('--capture-local',action='store_true',help='explicit source/parser replay; existing indexes required, no index publication')
         elif name=='topology':
             inputs=child.add_mutually_exclusive_group(required=True)
             inputs.add_argument('--capture-snapshot',type=Path)
-            inputs.add_argument('--capture-local',action='store_true',help='explicit read-only source/parser replay; existing indexes required, no publication')
+            inputs.add_argument('--capture-local',action='store_true',help='explicit source/parser replay; existing indexes required, no index publication; --view-cache separately opts into view publication')
+            child.add_argument('--view-cache',type=Path,help='explicitly reuse/publish a derived view cache artifact')
             child.add_argument('--focus')
             child.add_argument('--direction',choices=('incoming','outgoing','both'),default='both')
             child.add_argument('--max-hops',type=int)
@@ -75,7 +76,7 @@ def _configure(parser):
 
 
 def register(subparsers):
-    _configure(subparsers.add_parser('architecture',help='read-only architecture snapshots; interface JSON or Markdown'))
+    _configure(subparsers.add_parser('architecture',help='architecture snapshots; explicit derived-view cache opt-in'))
 
 
 def _path(args,value):
@@ -202,9 +203,29 @@ def _interfaces(args,selected):
     return view.to_dict(include_generation_metadata=False),view.content_fingerprint
 
 
+def _cache_target(args, workspace=None):
+    """Protect explicit input files and source repositories from cache writes."""
+    if args.view_cache is None:return None
+    from .view_cache import _safe_cache_target
+    target=_safe_cache_target(_path(args,args.view_cache))
+    for name in ('capture_snapshot','context_selection','workspace','cancel_file'):
+        value=getattr(args,name,None)
+        if value is None:continue
+        source=_path(args,value)
+        if target==source or target.exists() and source.exists() and target.samefile(source):
+            _fail('VIEW_CACHE_INPUT_ALIAS')
+    if workspace is not None:
+        for repo in workspace['repositories']:
+            root=Path(repo['_root']).resolve()
+            if target.is_relative_to(root) and not target.is_relative_to(root/'.kgmaker/views'):
+                _fail('VIEW_CACHE_SOURCE_PATH')
+    return target
+
+
 def _topology(args,selected):
-    from .service_topology import capture_topology_inputs,aggregate_service_topology
+    from .service_topology import capture_topology_inputs,aggregate_service_topology,prepare_service_topology_cache
     from .topology_filter import filter_topology
+    target=_cache_target(args)
     if args.max_nodes<1 or args.max_nodes>20000 or args.max_hops is not None and not 0<=args.max_hops<=20000:
         _fail('INVALID_FILTER')
     for values in (args.relations,args.filter_contexts):
@@ -214,13 +235,16 @@ def _topology(args,selected):
     if args.capture_local:
         with _readonly_git():
             workspace,manifest=_preflight(args);_cancel(args)
+            _cache_target(args,workspace)
             captured=capture_topology_inputs(manifest,scope=args.scope or 'production',selected_contexts=selected)
     else:
         if args.workspace is not None:_fail('EXPLICIT_CAPTURE_REQUIRED')
         captured=_read(args,args.capture_snapshot)
     selection=captured['remote_selection']
     _assert_selection(args,selection['scope'],selection['selected_contexts'],selected)
-    original=aggregate_service_topology(captured)
+    args.prepared_view=(prepare_service_topology_cache(captured,target)
+        if target is not None else None)
+    original=args.prepared_view.document if args.prepared_view is not None else aggregate_service_topology(captured)
     result=filter_topology(original,focus_service=args.focus,direction=args.direction,
         max_hops=args.max_hops,max_nodes=args.max_nodes,relations=args.relations,
         scope=args.scope,context_ids=args.filter_contexts)
@@ -298,6 +322,10 @@ def run(argv):
         if len(payload)>_MAX_OUTPUT_CHARS:_fail('OUTPUT_LIMIT')
         code=4 if args.strict and _incomplete(result) else 0
         sys.stdout.write(payload);sys.stdout.flush()
+        prepared=getattr(args,'prepared_view',None)
+        if code==0 and prepared is not None:
+            _cancel(args)
+            prepared.publish()
         return code
     except ArchitectureCLIError as error:
         _diagnostic(error.code,error.exit_code);return error.exit_code

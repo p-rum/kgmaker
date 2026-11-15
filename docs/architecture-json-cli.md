@@ -7,12 +7,29 @@ Use the [current delivery inventory](production-analysis-progress.md) and
 [change111](changes/111_reconcileDeliveryStatus.md) for present status.
 
 Default commands replay explicit captured JSON. They do not read a live workspace,
-run workers, build indexes, publish caches, or execute applications.
+run workers, build indexes, publish caches, or execute applications. The topology
+command may explicitly read or publish one derived-view cache artifact with
+`--view-cache PATH`; without that option the command stays cache-free. This flag
+does not capture a new workspace or graph and is not a worker/build instruction.
+Publication occurs only for exit 0, after filter, expected fingerprint, output safety,
+size and stdout write/flush checks. Invalid format/filter/fingerprint, cancellation,
+strict exit 4 or an output failure leaves the previous cache and inputs unchanged.
+The target must be a dedicated cache path: input/selector/manifest/cancel-file aliases,
+symlinks (including parents), hardlinks and non-regular targets are rejected. For
+local capture, destinations inside a source repository are limited to `.kgmaker/views/`.
+A failed final atomic cache write returns 2 and preserves previous bytes/removes
+new empty cache directories; stdout may already contain the valid view. Consumers
+must check the exit status; stdout and cache are not one atomic export transaction.
+Python callers may use the same [derived-view cache API](view-cache.md). See
+[T037 implementation evidence](changes/121_invalidateDerivedViews.md).
 
 ```sh
 kgmaker architecture interfaces --root /repo --catalog http-providers --interface-capture interfaces.json
 kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --max-nodes 50
 kgmaker architecture explain --root /repo --snapshot filtered.json --capture-snapshot topology-inputs.json --element service:checkout
+kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --view-cache .kgmaker/views/topology.json
+# Rejected context returns 2 and leaves the capture and last valid cache unchanged:
+kgmaker architecture topology --root /repo --capture-snapshot topology-inputs.json --view-cache .kgmaker/views/topology.json --filter-contexts ctx-that-does-not-exist
 ```
 
 Interfaces input is a versioned transport bundle with exactly `schema_version: 1`,
@@ -33,7 +50,8 @@ Explicit `--capture-local --workspace workspace.json` is available for interface
 and topology. Every declared repository must already have a valid original
 `.kgmaker/graph.json` BEFORE parser/capture work begins. Missing/corrupt originals
 return fixed actionable errors; capture never creates them. Capture reads local
-sources/parsers, uses existing bounded APIs and disables cache publication. This
+sources/parsers, uses existing bounded APIs and disables workspace/index cache publication.
+Only topology with `--view-cache` may separately publish its derived-view cache. This
 is source replay, not a compiler, application, deployment or runtime proof.
 
 Explain's separate `--check-source --workspace workspace.json --graph-snapshot graph.json`

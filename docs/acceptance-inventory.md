@@ -856,14 +856,15 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
-## T003-S06-W06 — NamedQueries a named native queries (PR_OPEN / VERIFIED_IN_SCOPE)
+## T003-S06-W06 — NamedQueries a named native queries (MERGED / VERIFIED_IN_SCOPE)
 
 Aktuální integrační evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
 JPA rule `annotation-source-v9-named-query-containers`; skutečný Javac 21.0.13.0.3.
-Dodání `PR_OPEN` ([PR102](https://github.com/p-rum/kgmaker/pull/102)); sloučen main
-`d2507ef465c9b4844830520de68629a3b577c0d2` s MERGED PR101. Společná cílená
-sada: 205 PASS / 0 SKIP, 36.87 s (W06 117 + runtime 88). Novou integrační revizi
-před merge samostatně ověřuje nezávislý reviewer.
+Dodání `MERGED` ([PR102](https://github.com/p-rum/kgmaker/pull/102), commit
+`9f88d8463b3c968592f0f1937736b752dfccee1d`). Historická společná cílená sada nad
+HEAD `00603901`: 205 PASS / 0 SKIP, 36.87 s (W06 117 + runtime 88); nezávislé
+review opakovalo 205 PASS / 0 SKIP, 37.88 s. PR103 zachovává obsah W06/runtime
+zdrojů; nejde o nový běh této sady ([change121](changes/121_invalidateDerivedViews.md)).
 
 | Acceptance | Konkrétní evidence |
 |---|---|
@@ -1273,3 +1274,32 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 ## T049 — oddělení cílových agentů (2026-11-11)
 
 [Scénáře AC01–AC12 a jejich ověření](tasks/49_separateTargetAgents.md) jsou PLANNED / NOT_RUN. Při implementaci přidej ke každému dodanému AC důkaz, SHA, verzi hostitele a skutečný výsledek.
+
+## T037 — invalidace odvozených pohledů (2026-11-15)
+
+Baseline T037 `ed79c3b078514f7914d11431a6b5e30847cecf59`, integrovaný main
+`9f88d8463b3c968592f0f1937736b752dfccee1d`; delivery PR_OPEN
+([PR103](https://github.com/p-rum/kgmaker/pull/103)); ověření PARTIAL před review
+nového integračního HEAD. [Zadání](tasks/T-037_invalidate-derived-views.md),
+[API](view-cache.md), [change121](changes/121_invalidateDerivedViews.md).
+
+| Acceptance | Ověření | Přímý test / limit |
+|---|---|---|
+| T037-AC01 | VERIFIED_IN_SCOPE | `test_dependency_mutations_force_rebuild_without_reusing_cached_approval`: service, contract, context, rule, annotation a workspace mapping changes způsobují miss; T032 review test doloží APPROVED→NEEDS_REVALIDATION. |
+| T037-AC02 | VERIFIED_IN_SCOPE | `test_negative_lookup_new_provider_and_unrelated_edit_invalidate_conservatively`: přidaný dříve chybějící provider znovu spouští builder; celý snapshot je konzervativní invalidation boundary. |
+| T037-AC03 | VERIFIED_IN_SCOPE | `test_mutation_refresh_matches_independent_full_rebuild` testuje create/edit/delete/rename proti nezávislému builderu, bez cache readback. |
+| T037-AC04 | VERIFIED_IN_SCOPE | `test_invalid_inputs_and_builder_failure_leave_input_and_last_valid_artifact_unchanged`, corrupted cache, stale builder, mid-build dependency drift a symlink negatives zachovávají poslední validní artefakt. Oprava review navíc dokládá `test_cli_rejected_request_preserves_inputs_and_cache`, `test_cli_late_output_failure_never_publishes`, `test_cli_failed_atomic_publication_preserves_files_and_removes_temporary_paths`, input/source alias matice a `test_snapshot_wrapper_detects_original_input_mutations`; původní snapshot se kontroluje i při odložené publikaci. |
+| T037-AC05 | VERIFIED_IN_SCOPE | Scope/context cache isolation, exact ViewDocument round-trip a test no approval/runtime evidence in cached topology; limity/truncation se kopírují beze změny v T016 view. |
+| T037-AC06 | PARTIAL | README, architecture/API, CLI příklad, progress, acceptance row a [český change note](changes/121_invalidateDerivedViews.md) jsou aktualizované; první nezávislé review REQUEST_CHANGES bylo opraveno ve třech samostatně evidovaných krocích change121. PR103 je otevřený a původní HEAD ed79c3b má nezávislé APPROVE; review nové integrační revize a remote CI zatím NOT_RUN. |
+
+Původní checkpoint `43d7010` historicky uváděl 22/244 passed; jeho review přesto
+odhalilo mezery AC04 a sémantické evidence. Po opravách obsahuje T037 modul 74
+případů a stejná cílená view/provider/dependency sada má **296 passed in 10.96s**.
+Po doplnění cleanup při přerušení zápisu prošel přímo dotčený T037 modul
+**76 passed in 4.65s**; přesné příkazy, základní
+dependency evidence a neprovedené kontroly viz change121. Není to full pytest,
+actual runtime/toolchain ani úplná T004/produkční acceptance.
+
+Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
+11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
+reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.

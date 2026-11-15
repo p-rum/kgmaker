@@ -21,6 +21,17 @@ The source-only core and its extensions are organized as follows:
 7. `cli.py` exposes `init`, full-scan `build`/`update`, `scan`, local `status`, deterministic CI `check`, `impact`, `query`, `docs`, semantic prepare/update/apply/validation, implementation `memory`, durable `task`, and the Copilot hook command. Semantic updates, task packets, recall, and hook context accept approximate token budgets.
 8. `confluence.py` ingests an optional local multi-file Confluence HTML export using structural parsing, resolves internal links and attachments, parses Mermaid and Draw.io/XML diagrams deterministically, caches artifact hashes, merges documentation evidence into the unified graph, and validates claims against the code graph. The source code is authoritative; contradictions are retained as evidence and rendered to a Markdown report.
 
+High-level `ViewDocument` projections may use the explicit `view_cache.py` API.
+It binds the full public workspace and graph snapshots, rule versions, scope and
+context selection; any difference rebuilds the whole cached view, including
+previously unresolved provider lookups. The cache does not alter graph storage
+or approval history; the topology CLI uses it only when `--view-cache` is given.
+Prepared cache candidates are published after downstream CLI validation and stdout
+success. Original snapshot dependencies are checked again before publication;
+invalid requests, input aliases and failed atomic writes preserve the previous cache.
+See [T037 cache API and
+limits](view-cache.md) and [change121](changes/121_invalidateDerivedViews.md).
+
 `runtime_evidence.produce_manifest` is the explicit POSIX execution boundary.
 It reuses the compiler snapshot validator and bounded worker pipe/process cleanup,
 validates identities/output before launch and revalidates before atomic publication

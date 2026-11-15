@@ -132,7 +132,7 @@ jsou **PASS**; fixture je compiler evidence, nikoli JPA runtime/provider test.
 Aktualizované plochy: [README](../../README.md),
 [capability a CLI příklad](../compiler-inspection.md#named-query-containers-t003-s06-w06),
 [stavová matice](../production-analysis-progress.md),
-[acceptance](../acceptance-inventory.md#t003-s06-w06--namedqueries-a-named-native-queries-pr_open--verified_in_scope)
+[acceptance](../acceptance-inventory.md#t003-s06-w06--namedqueries-a-named-native-queries-merged--verified_in_scope)
 a tento change note. Registr `docs/tasks/README.md` je **bez dopadu**: identita,
 revize, závislosti a odkaz zadání zůstávají stejné. Instalované agent instrukce,
 Python templates a CLI parser jsou **bez dopadu**: nový příkaz ani přepínač
