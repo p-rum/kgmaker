@@ -371,3 +371,76 @@ vyřešil je příkaz scan, nikoli ruční editace. Po tomto publikačním zázn
 znovu obnovují pouze aktuální hash kotvy a generované pohledy stejnými příkazy.
 Full a aktuální GH test execution zůstávají **NOT_RUN**; nezávislé re-review
 nad novým HEAD/base je další povinný krok. Implementer nemerguje do main.
+
+### Krok 11 — integrace schváleného PR108 bez změny W05 implementace
+
+Vlastní baseline `340a1d722811aa612bfdac8428e6923a206e25e3`, nový actual main
+`9f538634807957abe1004dde43450271b77f1bb5`, rodiče main
+`8e7dff5b82597184662797c07a68e5ec460e9e0e` a
+`8f023bc65396f1f7feec757f78effd8a0d9c33fd`, tree
+`990f9de74320da19466b8400cdb6224e3975e072`. Task T003-S08-W05 kroky1/5,
+AC01–AC04; návaznost na T028/T014 pouze v procesu/remote handoff a workspace.
+[Nezávislý merge audit PR108](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441)
+uzavřel jeho dva P1 a doložil317 targeted PASS. To je upstream evidence, ne nový
+běh této integrace.
+
+Zdrojový průnik: T028 přidává `project_async_process_boundary` do
+`business_process.py`; `remote_interfaces.py` přenáší explicitní Kafka
+origin/subscription identitu a validuje její příslušnost k original IDs.
+HTTP extra attributes tím nejsou přebírány. W05 používá workspace a stávající
+contract/field evidence. Merge neměl funkční konflikt: **PASS byte identity**
+W05 `frontend_flow.py`, `workspace.py`, `frontend_values.cjs` a vlastních testů
+vůči340a1d7, a T028 `business_process.py`, `remote_interfaces.py` a vlastních testů
+vůči9f538634. Worker helpery nebyly během paralelního reviewer běhu změněny.
+
+README se spojilo automaticky. Progress/acceptance nyní správně uvádějí PR108
+MERGED, W05 PR_OPEN a rozlišují historické PASS od nového scoped běhu. Nové
+CLI parametry, API/protocol změny ani instalované instrukce/templates se
+nezavádějí — capability a CLI příklady tedy bez dalšího dopadu. Task identity,
+revize a dependencies se nemění, registry bez dopadu. Jediné konflikty byly
+sémantický artefakt a generovaný GRAPH.md; oba se obnovují doloženým union,
+aktuálním packetem/patch a generátorem, nikoli ruční editací grafu.
+
+Sémantický union zachovává immutable epizody obou rodičů: main47concepts/
+154edges/307episodes, vlastní47/154/305, společný stav před capture48/157/309.
+Každá citace se reanchoruje podle svého vlastníka, po ověření jeho source hash;
+nezměněné řádky přes SequenceMatcher, nejednoznačné ID nebo změněná citace fail-closed.
+Žádná nová business tvrzení ani odstranění nesouvisející historie.
+
+Cílený příkaz po této integraci (nikoli opakování235/265):
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_t028_cross_async_process_boundary.py tests/test_t014_bind_remote_interfaces.py tests/test_cross_service_contract_mapping.py tests/test_workspace.py tests/test_backend_frontend_value_flow.py::test_ac01_actual_backend_field_has_exact_ui_and_test_paths tests/test_backend_frontend_value_flow.py::test_ac03_cached_context_revalidates_external_package_inputs tests/test_backend_frontend_value_flow.py::test_ac03_workspace_never_bridges_aliased_mutable_payload -x
+```
+
+**PASS193 /0 SKIP95.11s**: T028/T014/remote handoff a workspace plus konkrétní
+BE→FE/test cesta, stejný vstup cache recovery a aliasovaná payload hranice.
+Skutečný JDK21/Javac/K1/K2 a TS5.7.3/React18; žádná implicitní inspection ve
+snapshot cestách. Celé235/265, full suite ani nový clean install se neopakovaly:
+W05 code/distribution se nezměnily. **PASS source/test/distribution identity**:
+všech12 dotčených souborů W05 vůči340a1d7 a všechny3 source/test soubory PR108
+vůči9f538634 jsou byte-identical. Upstream317 PASS a nezávislé review PR107
+265+144 PASS jsou historické oddělené výsledky, nikoli nové běhy integrace.
+
+[Review PR107 nad340a1d7](https://github.com/p-rum/kgmaker/pull/107#pullrequestreview-5912329170)
+uzavřelo oba P1 i cache recovery bez nového nálezu; nové head/base vyžaduje nové
+integrační review. **PASS** aktuální semantic update/apply/validate a
+`PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python /tmp/befe-main108-preservation.py`:
+oba rodiče i předchozí baseline zachovány, včetně celých immutable epizod a
+facts kromě doložených přepočtených locatorů. Full/runtime/GH test execution
+zůstávají NOT_RUN; implementer nemerguje do main.
+
+**PASS** `memory capture --base 340a1d722811aa612bfdac8428e6923a206e25e3
+--validation integration193=passed --validation source-identity=passed
+--validation semantic-preservation=passed --validation full-suite=unknown`:
+aktuální integrační epizoda
+`ad6e5e6e06c7f34f6a08970eddbb38ecdfec23ba7f8d555c4f75c28de36350db`, celkem
+48 konceptů/157 vztahů/310 epizod. Pre-integration graph byl skutečně přítomen a
+current nad340a1d7; nevyrábí se zpětná pre-task evidence. Dočasné target/target-k2
+symlinky byly před capture odstraněny.
+
+**PASS** generovaný `kgmaker scan`, `kgmaker status`, opakovaná preservation a
+`git diff --check`: graf current, všechny původní epizody/facts zachovány a žádné
+conflict markery. Tento poslední audit mění pouze dokumentační hash; následný
+aktuální semantic update/apply/validate a scan obnovují hash kotvy stejnými
+příkazy. Nový head/base se předává pověřenému reviewerovi, bez merge implementerem.

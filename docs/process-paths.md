@@ -238,3 +238,99 @@ These checks validate supplied snapshots, not a live deployment or arbitrary
 replacement JSON authenticity. No transport failure is converted into a proved
 business outcome. `ProcessView` and `ViewDocument` schema versions remain unchanged;
 new metadata uses their existing extensible attributes/coverage fields.
+
+## Potential asynchronous process paths (T028)
+
+`kgmaker.business_process.project_async_process_boundary(local_process,
+remote_interfaces, *, target_processes=(), max_depth=4, max_expansions=32)` consumes
+explicit T025 `ProcessView` documents and the current T014 remote topology. It is a
+pure API: it performs no capture, I/O, worker invocation, application execution or
+artifact publication. A caller supplies already validated snapshots; their
+consistency is not authentication or a fresh physical checkout check.
+
+```python
+from kgmaker.business_process import project_async_process_boundary
+
+async_process = project_async_process_boundary(
+    publisher_process, remote, target_processes=[billing_process, audit_process],
+    max_depth=4, max_expansions=32)
+subscriptions = [step for step in async_process.steps
+                 if step.attributes.get("async_role") == "subscription"]
+print([(step.attributes["consumer_group"], step.attributes["boundary_reason"])
+       for step in subscriptions])
+# Original remote proof IDs remain inspectable, including rejected authority.
+print([step.attributes["remote_evidence_refs"] for step in subscriptions])
+```
+
+The example uses the same explicit `remote` snapshot creation shown in the T027
+example above. T028 adds no CLI command; existing `graph view` and `flow render`
+commands retain their contracts. Process lifecycle/export CLI belongs to T034/T038.
+
+The projection matches producer `original_ids` to concrete T025 node call-site IDs,
+then matches a consumer's original listener symbol to the selected target trigger.
+It requires the same service, scope and context, current non-STALE endpoints, and
+an exact individually supported T014 candidate/mapping/release membership. T012
+origin/subscription identity survives T014 sanitization; older T014 documents can
+still join through `original_ids`. Topic equality alone creates no membership.
+
+Each admitted publication retains separate `async_boundary` steps with
+`async_role=publish|channel|subscription`, connected by `async` transitions. A
+subscription can enter a supplied consumer CFG through `CONSUMER_POTENTIAL`; its
+exits never connect back to the publisher. Existing local success/exception edges
+remain unchanged. Two consumer branches have no A-before-B path. Consumers in the
+same group remain separate potential alternatives; the static view does not claim
+that both receive the message. A generic T014 AMBIGUOUS status is not proof of
+fan-out: every membership is checked independently. Duplicate members, conflicting
+release selectors, stale/proof/context conflicts retain unresolved subscriptions.
+
+`delivery=NOT_OBSERVED`, `processing_completion=UNKNOWN`, `exactly_once=UNKNOWN`
+and `runtime_execution=NOT_OBSERVED` apply to derived steps/transitions. Supported
+inputs contain **no instance-correlation mapping contract**. Consequently every
+boundary records `instance_correlation=UNKNOWN` and `correlation_evidence_refs=[]`;
+`membership_evidence_refs` documents a static binding, never correlation of one
+business instance. Missing correlation never hides or removes a boundary.
+
+Missing consumer/CFG, unknown membership, async ancestry loops, depth and expansion
+limits retain reachable subscription boundaries and diagnostics. `max_depth` accepts
+0–32 and `max_expansions` 0–128 (integers; zero preserves all immediate boundaries
+without expanding targets). Loop/depth/expansion stops set `coverage.truncated`;
+selected target diagnostics/limits/coverage survive even when expansion stops.
+Root coverage counters remain root counters; `async_upstream_coverage` records
+upstream contributions without presenting their sum as execution coverage. Output
+is PARTIAL, with original evidence kinds/provenance and context IDs retained.
+Malformed documents, unsupported T014 versions and hard topology/structure budget
+overflows reject without mutation. At most 128 target process documents are accepted;
+their combined structure/text budget is checked before copying (500,000 items,
+32,000,000 text characters, depth 80). The output topology bound is 10,000 nodes and
+30,000 edges; it never silently drops a candidate to fit that bound.
+
+Compatibility: the existing ProcessView schema is unchanged; no store migration or
+worker protocol change is introduced. Actual positive fixture uses Javac 21 on
+prepared K1/K2 worker configurations; upstream Kotlin/unsupported annotation/CFG
+limits remain boundaries, not new language support claims. See
+[change127](changes/127_crossAsyncProcessBoundary.md) for exact AC tests and results.
+
+
+T028 provenance and selector review corrections ([change127, steps 7–8](changes/127_crossAsyncProcessBoundary.md)):
+endpoint summary UNKNOWN does not hide referenced STALE, contradictory or foreign
+proofs. Every candidate's original evidence IDs must match its endpoint refs;
+binding/edge declaration proofs must retain their exact T014 mapping/context/scope
+and shared capture authority. Rejected memberships stay reachable boundaries.
+
+Original proofs with compatible process scope/contexts are retained unchanged.
+When an upstream record has missing/foreign scope or virtual Kafka contexts, an
+explicit `REMOTE_PROOF_ENVELOPE` with `authority=PROVENANCE_REFERENCE_ONLY` retains
+the entire unchanged record under `original_provenance` and its `original_id`.
+Envelope scope/context describes only the derived reference's placement. Its kind
+and polarity are UNKNOWN, freshness is STALE for a stale origin and otherwise
+UNKNOWN. It never supplies compiler authority or bypasses the raw-proof guard;
+`ASYNC_REMOTE_PROOF_REFERENCE_ONLY` preserves the original scope/context gap.
+`remote_evidence_refs` lists original IDs; `membership_evidence_refs` remains only
+the static declaration refs, never instance-correlation evidence.
+
+Duplicate/conflicting release selectors for the same canonical membership are
+checked across all bindings. Each subscription remains visible with
+`ASYNC_MEMBERSHIP_SELECTOR_CONFLICT` and every `conflicting_selectors` entry, but no
+consumer is imported from that conflict. Different canonical endpoints, contexts,
+groups and explicitly compatible versioned endpoints retain independent potential
+paths. No selector name alone creates another consumer or orders its execution.

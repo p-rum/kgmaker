@@ -29,12 +29,19 @@ def _node(value, scope):
     """Preserve identity/status/buckets, omit raw labels and payload attributes."""
     attrs=value['attributes']
     if attrs.get('scope',scope)!=scope:_fail('REMOTE_VIEW_SCOPE_MISMATCH')
+    for key in ('origin_id', 'subscription_id'):
+        if (value['kind'] == 'kafka_interface' and attrs.get(key) is not None
+                and attrs[key] not in value['original_ids']):
+            _fail('REMOTE_VIEW_KAFKA_ORIGINAL_ID_MISMATCH')
     safe={}
     for key in ('service_id','direction','context_id','code_binding','subscription_kind',
                 'execution_status','payload_compatibility','caller','origin_call_site',
                 'terminal_call_site','request_definition_id','declaration_id','code_fact_id',
-                'broker_realm','consumer_group','topic_pattern','http_method',
+                'broker_realm','consumer_group','topic_pattern','origin_id','subscription_id',
+                'subscription_logical_id','http_method',
                 'route_expression','normalized_route'):
+        if key in {'origin_id','subscription_id','subscription_logical_id'} and value['kind'] != 'kafka_interface':
+            continue
         if attrs.get(key) is not None:safe[key]=_ref(attrs[key])
     for key in ('context_ids','topics','handler_ids'):
         if key in attrs:safe[key]=list(_refs(attrs[key]))
