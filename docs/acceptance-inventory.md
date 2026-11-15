@@ -856,6 +856,26 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
+## T027 — HTTP process boundary
+
+Delivery PR_OPEN ([PR105](https://github.com/p-rum/kgmaker/pull/105)); approved
+HEAD `82eef329` integrates main `ec05a329fe2e51dbfe0eb47888bed037a251b8bf` with MERGED
+PR101–104. New targeted run: **200 PASS / 0 SKIP, 10.76 s** (191 public cases +
+9 reviewer reproductions), actual Javac/K1/K2. Exact integration review remains
+separate. Historical validation after the original corrections:
+**187 PASS / 0 SKIP** in T027/T014/T025/T026 with prepared JDK21/Javac/K1/K2;
+the final terminal-only and request-origin guards were then verified by
+**38 PASS / 0 SKIP** (29 public T027 cases + 9 independent reviewer reproductions).
+
+| Acceptance | Concrete public-contract test | Current evidence / remaining gate |
+|---|---|---|
+| AC01 | `test_public_t014_projection_links_cross_repository_client_callsite_to_target_process`, `test_invalid_remote_endpoint_or_binding_cannot_authorize_expansion` | VERIFIED_IN_SCOPE; exact T014 version, HTTP endpoint direction, service/context and stale guards |
+| AC02 | `test_ac02_incompatible_or_nonresolved_release_stays_external`, `test_public_t014_incompatible_release_without_candidate_edge_remains_external` | VERIFIED_IN_SCOPE; incompatible selector and ambiguity have no handler winner |
+| AC03 | `test_ac03_missing_target_cfg_retains_external_boundary_and_local_continuation`, `test_terminal_only_target_does_not_supply_a_cfg_body` | VERIFIED_IN_SCOPE; unavailable body remains external, local continuation survives |
+| AC04 | `test_ac04_bad_input_and_failure_boundary_do_not_mutate_inputs`, `test_normal_response_retains_original_witness_without_mapping_server_errors` | VERIFIED_IN_SCOPE; immutable inputs, original exception edges retained, expanded-CFG reachability prevents false REQUEST/RESPONSE paths |
+| AC05 | `test_target_selection_must_match_boundary_scope`, `test_imported_target_truncation_and_limits_remain_visible`, `test_local_and_remote_and_imported_coverage_are_preserved` | VERIFIED_IN_SCOPE; selected scope and every imported limitation preserved; runtime/availability UNKNOWN/NOT_OBSERVED |
+| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | PARTIAL; PR105 is open, reviewed source preserved and current integration tests/semantic audit documented in change123; new integration review and full suite/remote CI NOT_RUN |
+
 ## T003-S06-W06 — NamedQueries a named native queries (MERGED / VERIFIED_IN_SCOPE)
 
 Aktuální integrační evidence 2026-11-15; [change120](changes/120_namedQueryContainers.md).
@@ -1277,11 +1297,11 @@ T046 integrace 2026-11-06 nad `250e7c16250a97b9f8df5256b9894c8119dc64d9`: plná 
 
 ## T003-S07-W03 — field a explicitní mapping flow
 
-Baseline W03 `d78286ed65e137495c130e72233dd466da0dd96b`, integrovaný main
-`b1a8ba1f4234cd399de8319fcf5cde2c670dac26`, 2026-11-15; dodání PR_OPEN
+Dodání MERGED na `ec05a329fe2e51dbfe0eb47888bed037a251b8bf`, 2026-11-15
 ([PR104](https://github.com/p-rum/kgmaker/pull/104)), ověření omezené na
-`field-mapping-1`, nikoli celé T003-AC07. Nový cílený běh 166 PASS / 0 SKIP,
-67.84 s (163 W03 + actual Javac named-query positive + dva runtime capture testy).
+`field-mapping-1`, nikoli celé T003-AC07. Integrační běh nad `1f2acec0`: 166 PASS /
+0 SKIP, 67.84 s; nezávisle 166 PASS / 0 SKIP, 68.33 s. PR105 zachovává jeho source
+obsah, tuto sadu znovu neopakuje.
 Přesné příkazy/výsledky: [change124](changes/124_fieldAndMappingFlow.md).
 
 | Acceptance | Ověření | Konkrétní důkaz |
