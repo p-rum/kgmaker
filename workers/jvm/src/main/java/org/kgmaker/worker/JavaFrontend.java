@@ -19,6 +19,7 @@ public final class JavaFrontend {
     private RegistrationFacts registrationFacts;
     private CompilationUnitTree unit; private Path file; private String source;
     private final Map<Tree,String> calls = new IdentityHashMap<>();
+    private final Map<Tree,String> lambdas = new IdentityHashMap<>();
     private final List<Diagnostic<? extends JavaFileObject>> errors = new ArrayList<>();
     public JavaFrontend(State state){this.state=state;}
 
@@ -125,6 +126,15 @@ public final class JavaFrontend {
             if(element instanceof TypeElement type) {
                 var metadata=annotations(type);metadata.put("kind",type.getKind().toString().toLowerCase(Locale.ROOT));
                 metadata.put("supertypes",types.directSupertypes(type.asType()).stream().map(TypeMirror::toString).toList());
+                var contracts=new ArrayList<Map<String,Object>>();
+                for(var parent:types.directSupertypes(type.asType())) {
+                    if(parent instanceof DeclaredType d && d.asElement() instanceof TypeElement t
+                        && Set.of("org.springframework.data.jpa.domain.Specification","com.querydsl.core.types.dsl.EntityPathBase",
+                            "org.springframework.data.jpa.repository.JpaRepository","org.springframework.data.repository.CrudRepository",
+                            "org.springframework.data.repository.PagingAndSortingRepository","org.springframework.data.repository.Repository").contains(t.getQualifiedName().toString()))
+                        contracts.add(map("type",parent.toString(),"symbol",state.type(elements.getBinaryName(t).toString(),declarationLocation(t),null)));
+                }
+                if(!contracts.isEmpty())metadata.put("query_type_contracts",contracts);
                 metadata.put("jvm_interfaces",type.getInterfaces().stream().map(t->elements.getBinaryName((TypeElement)types.asElement(types.erasure(t))).toString().replace('.','/')).toList());
                 metadata.put("jvm_superclass",type.getSuperclass().getKind()==TypeKind.NONE?null:elements.getBinaryName((TypeElement)types.asElement(types.erasure(type.getSuperclass()))).toString().replace('.','/'));
                 metadata.put("modifiers",type.getModifiers().stream().map(m->m.toString()).toList());
@@ -146,7 +156,7 @@ public final class JavaFrontend {
                 if(literal!=null)state.symbols.get(caller).put("static_import_return",literal);
                 state.symbols.get(caller).putAll(registrationFacts.method(executable,tree,getCurrentPath(),errorAt(tree)));
                 super.visitMethod(tree,unused);
-                if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind",errorAt(tree)?"ERROR":executable.getKind()==ElementKind.CONSTRUCTOR?"CONSTRUCTOR":"DECLARED","return_type",valueInfo(executable.getReturnType()),"local_operation_version",1,"local_operation_status",executable.getKind()==ElementKind.METHOD&&!errorAt(tree)&&errors.stream().noneMatch(d->d.getSource()!=null&&d.getSource().toUri().equals(unit.getSourceFile().toUri()))?"AVAILABLE":"UNAVAILABLE","body",ir(tree.getBody())));
+                if(tree.getBody()!=null)state.bodies.add(map("method",caller,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind",errorAt(tree)?"ERROR":executable.getKind()==ElementKind.CONSTRUCTOR?"CONSTRUCTOR":"DECLARED","return_type",valueInfo(executable.getReturnType()),"local_operation_version",1,"local_operation_status",executable.getKind()==ElementKind.METHOD&&!errorAt(tree)&&errors.stream().noneMatch(d->d.getSource()!=null&&d.getSource().toUri().equals(unit.getSourceFile().toUri()))?"AVAILABLE":"UNAVAILABLE","query_ir_version",1,"query_ir_status",errors.isEmpty()?"AVAILABLE":"UNAVAILABLE","query_parameters",tree.getParameters().stream().map(this::queryParameter).toList(),"body",ir(tree.getBody())));
                 return null;
             }catch(IllegalArgumentException error){state.diagnostic("JAVA_UNSUPPORTED_METHOD_TYPE",error.getMessage(),loc(tree));return null;}
             finally{caller=old;}
@@ -156,10 +166,16 @@ public final class JavaFrontend {
             var location=loc(tree);
             String lambda="lambda:"+caller+":"+location.get("sha256")+":"+((Map<?,?>)location.get("range")).get("start");
             var value=map("id",lambda,"name","<lambda>","kind","function","identity_stability","SNAPSHOT","scope",state.context.get("scope"),"context_id",state.context.get("id"));
-            value.putAll(location);state.symbols.put(lambda,value);caller=lambda;
+            value.putAll(location);value.put("query_callable_type",trees.getTypeMirror(getCurrentPath()).toString());
+            var callable=types.asElement(trees.getTypeMirror(getCurrentPath()));
+            if(callable instanceof TypeElement t)value.put("query_callable_symbol",state.type(elements.getBinaryName(t).toString(),declarationLocation(t),null));state.symbols.put(lambda,value);lambdas.put(tree,lambda);caller=lambda;
             super.visitLambdaExpression(tree,unused);
-            state.bodies.add(map("method",lambda,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind","CALLABLE","body",ir(tree.getBody())));
+            state.bodies.add(map("method",lambda,"language","java","context_id",state.context.get("id"),"return_flow_version",1,"return_body_kind","CALLABLE","query_ir_version",1,"query_ir_status",errors.isEmpty()?"AVAILABLE":"UNAVAILABLE","query_parameters",tree.getParameters().stream().map(this::queryParameter).toList(),"body",ir(tree.getBody())));
             caller=old;return null;
+        }
+        private Map<String,Object> queryParameter(VariableTree tree) {
+            var type=trees.getTypeMirror(TreePath.getPath(unit,tree));
+            return map("binding",binding(tree),"type",type==null?null:type.toString());
         }
         private void invocation(Tree tree,String kind) {
             if(caller==null)return;
@@ -260,7 +276,7 @@ public final class JavaFrontend {
         @Override public Void visitVariable(VariableTree tree,Void unused) {
             var element=trees.getElement(getCurrentPath());
             if(element instanceof VariableElement variable && (variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT))try {
-                var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+                var metadata=fieldMetadata(variable);
                 if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
                 state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),loc(tree),metadata);
                 if(tree.getInitializer()!=null){state.diagnostic("JAVA_INITIALIZER_CFG_UNSUPPORTED","Initializer body is not mapped to constructor/class initializer CFG",loc(tree));return null;}
@@ -296,6 +312,29 @@ public final class JavaFrontend {
         }.scan(node,null);
         return values;
     }
+    /** Bounded source-backed QueryDSL generated member initialization, never a Q-name guess. */
+    private Map<String,Object> fieldMetadata(VariableElement variable) {
+        var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+        var path=trees.getPath(variable);
+        if(path==null || !(path.getLeaf() instanceof VariableTree declaration)
+                || !(declaration.getInitializer() instanceof MethodInvocationTree init))return metadata;
+        var ownerType=variable.getEnclosingElement();
+        if(!(ownerType instanceof TypeElement type))return metadata;
+        var bases=types.directSupertypes(type.asType());
+        var base=bases.stream().filter(t->t instanceof DeclaredType d &&
+            ((TypeElement)d.asElement()).getQualifiedName().contentEquals("com.querydsl.core.types.dsl.EntityPathBase")
+            && trees.getPath(d.asElement())==null).findFirst().orElse(null);
+        if(!(base instanceof DeclaredType declared) || declared.getTypeArguments().size()!=1)return metadata;
+        var target=trees.getElement(new TreePath(path,init));
+        if(!(target instanceof ExecutableElement method) || trees.getPath(method)!=null
+                || !owner(method).equals("com.querydsl.core.types.dsl.BeanPath")
+                || !Set.of("createString","createNumber").contains(method.getSimpleName().toString())
+                || init.getArguments().isEmpty() || !(init.getArguments().getFirst() instanceof LiteralTree literal)
+                || !(literal.getValue() instanceof String property))return metadata;
+        metadata.put("querydsl_path",map("version",1,"entity_type",declared.getTypeArguments().getFirst().toString(),
+            "attribute",property,"factory",method(method,null),"factory_owner",owner(method)));
+        return metadata;
+    }
     private Map<String,Object> valueInfo(TypeMirror type) {
         if(type==null || type.getKind()==TypeKind.ERROR || type.getKind()==TypeKind.NONE)
             return map("version",1,"status","UNKNOWN","type_ref","unknown","nullability","UNKNOWN");
@@ -329,7 +368,7 @@ public final class JavaFrontend {
             if(variable.getKind()==ElementKind.PARAMETER){int index=method.getParameters().indexOf(variable);if(index<0)return null;id=methodId+":parameter:"+index;}
         }
         if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {
-            var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+            var metadata=fieldMetadata(variable);
             if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
             symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,metadata);
         }
@@ -345,7 +384,7 @@ public final class JavaFrontend {
         var location=declarationLocation(variable);
         String symbol=null;
         if(variable.getKind()==ElementKind.FIELD || variable.getKind()==ElementKind.ENUM_CONSTANT) {
-            var metadata=annotations(variable);metadata.put("type",variable.asType().toString());
+            var metadata=fieldMetadata(variable);
             if(variable.getKind()==ElementKind.ENUM_CONSTANT)metadata.put("kind","enum_constant");
             symbol=state.field(owner(variable),variable.getSimpleName().toString(),typeDescriptor(variable.asType()),location,metadata);
         }
@@ -387,11 +426,22 @@ public final class JavaFrontend {
     public Map<String,Object> ir(Tree node) {
         if(node==null)return map("kind","empty");
         var base=map("kind","statement","label",label(node),"calls",callsIn(node));base.putAll(loc(node));
-        if(node instanceof ExpressionTree)base.put("value_info",valueInfo(node));
+        if(node instanceof ExpressionTree) {
+            base.put("value_info",valueInfo(node));
+            var path=TreePath.getPath(unit,node);var type=path==null?null:trees.getTypeMirror(path);
+            if(type!=null && type.getKind()!=TypeKind.ERROR && base.get("range")!=null)base.put("query_type",type.toString());
+        }
         var operation=localOperation(node);if(operation!=null)base.put("local_operation",operation);
         switch(node.getKind()) {
             case IDENTIFIER,MEMBER_SELECT->{
                 base.put("value_binding",valueBinding(node));
+                if(node instanceof MemberSelectTree select) {
+                    if(select.getIdentifier().contentEquals("class")) {
+                        var tp=TreePath.getPath(unit,select.getExpression());var te=tp==null?null:trees.getElement(tp);
+                        if(te instanceof TypeElement type && !errorAt(node))
+                            base.put("class_literal",map("version",1,"owner",elements.getBinaryName(type).toString()));
+                    } else base.put("field_receiver",ir(select.getExpression()));
+                }
                 var p=TreePath.getPath(unit,node);var e=p==null?null:trees.getElement(p);
                 if(e instanceof TypeElement || e instanceof PackageElement)base.putAll(map("kind","reference","calls",List.of()));
                 if(e instanceof VariableElement variable) {
@@ -411,6 +461,7 @@ public final class JavaFrontend {
                 var refs=referencedBindings(node);
                 base.putAll(map("kind","reference","calls",List.of(),"captured_bindings",refs,"binding_references_complete",refs.size()<128));
                 if(node instanceof MemberReferenceTree reference)base.put("reference_receiver",ir(reference.getQualifierExpression()));
+                if(node instanceof LambdaExpressionTree)base.put("query_lambda",lambdas.get(node));
             }
             case BLOCK->{base.put("kind","block");base.put("statements",((BlockTree)node).getStatements().stream().map(this::ir).toList());}
             case IF->{var t=(IfTree)node;base.putAll(map("kind","if","condition",ir(t.getCondition()),"then",ir(t.getThenStatement()),"else",ir(t.getElseStatement())));}
