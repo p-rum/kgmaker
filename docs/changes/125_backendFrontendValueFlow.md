@@ -314,3 +314,60 @@ Se stejným výše uvedeným explicitním toolchain environmentem:
 - **PASS** `python -m pytest -q tests/test_backend_frontend_value_flow.py tests/test_workspace.py tests/test_dataflow.py tests/test_ui_events.py tests/test_inspection_contract.py tests/test_tsconfig_freshness.py tests/test_typescript_project_references.py tests/test_typescript_callbacks.py tests/test_worker_install.py::InstalledWorkerTests::test_packaged_typescript_analyzes_outside_checkout -x` —235 PASS/0 SKIP406.78s; včetně67 W05 případů, skutečného toolchainu a aktuálního helperu zabaleného/instalovaného mimo checkout. Běh před samostatnou cache recovery opravou, která má RED/GREEN důkaz výše a integrační regresi níže.
 - **PASS** `node --check workers/typescript/frontend_values.cjs`, `git diff --check`.
 - **NOT_RUN** full suite, runtime aplikace/UI, Kotlin W05 matice; uživatel výslovně požaduje pouze cílené testy. Aktuální GH CI se netvrdí jako PASS.
+
+### Krok 10 — integrace main po PR106 a zachování sémantické historie
+
+Baseline integračního rodiče `8e7dff5b82597184662797c07a68e5ec460e9e0e`, vlastní
+review opravy `6389c8d`, původní review1550978; Task T003-S08-W05 kroky1/5,
+AC01–AC04. Ranking PR106 se přebírá beze změny: `analysis_report.py`,
+`callgraph.py`, `project_cli.py`, `views.py`, `test_evidence_ranking.py` jsou
+byte-identical s novým main. README/progress/acceptance se spojily automaticky;
+konflikty se týkaly jen sémantického artefaktu a generovaných pohledů.
+
+Historické epizody z obou rodičů se spojily podle ID a shodného payloadu.
+`semantic update --base 8e7dff5b82597184662797c07a68e5ec460e9e0e`, aktuální patch,
+`semantic apply` a `semantic validate` jsou **PASS**. Patch reanchoruje pouze
+nezměněné citované řádky přes SequenceMatcher po ověření původního hash obsahu
+ze správného rodiče; změněné citace/nejednoznačné entity jsou fail-closed.
+Zachovává původní W05 concept a jeho tři vazby vedle všech ranking/main faktů.
+Žádné ruční úpravy generovaného grafu, žádné odstranění nesouvisející evidence.
+
+**PASS** `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python /tmp/befe-review-preservation.py`:
+původníbaseline42/135/286, main93c52 45/144/299, review1550978 46/147/300 a
+main8e7dff5 46/151/303 zachovány; aktuálně47 concepts/154 edges/304 episodes.
+Kontrola porovnává historické IDs/typy/confidence, celé immutable epizody a pro
+oba aktuální rodiče celé facts kromě přeukotveného řádku/strukturálního locatoru.
+Starší baseline již v main upravila summary T037 architektury; není to tato oprava
+ani odstranění faktu. Generované pohledy obnovuje závěrečný `kgmaker scan`.
+
+**PASS finální integrační matice** se stejným JDK21/REQUIRE_WORKERS/PYTHONPATH:
+`python -m pytest -q tests/test_backend_frontend_value_flow.py tests/test_workspace.py tests/test_dataflow.py tests/test_evidence_ranking.py tests/test_graph_provider.py tests/test_t027_cross_http_process_boundary.py tests/test_field_mapping_flow.py -x`
+— **265 passed /0 skipped205.44s**. Obsahuje všech67 aktuálních W05 testů včetně
+cache RED/GREEN regrese i společné ranking/projection/workspace/flow kontroly.
+Předchozí235PASS dokládá stejný finální TS helper v čisté instalaci; po něm se
+měnil jen workspace cache recovery a integrace main, ověřené touto sadou.
+
+**PASS původní nezávislé repro po opravě**:
+`PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python /tmp/befe-review-repro-assert.py`
+spouští původní reviewer skript s cestou vlastní fixture, kontroluje obě
+`path False`/`ts_errors []` a odmítnutí neoznačené cross-request publikace přes
+WorkerError. Byte-identical zachování existujícího store dokazují veřejné
+protokolové testy, nikoli tento samostatný repro.
+
+Existující lokální pre-fix graph byl obsahově ověřen proti1550978 pro dotčený
+worker/validator/workspace/test; tentokrát je tedy k dispozici skutečný pre-change
+checkpoint. `memory capture --base 15509781f955a9c4b73cf78fd2bf4a3c8c1c8bec
+--validation alias-protocol-and-install235=passed --validation integrated265=passed
+--validation cache-recovery=passed --validation full-suite=unknown` je **PASS**:
+episode `6637bfb0acf8c6dbbde6cf3fd60332212699b9595aad65e487db65c2202ade9b`.
+První pokus byl bezpečně odmítnut kvůli dočasnému externímu JVM target symlinku;
+po odstranění testovacího symlinku proběhl capture bez změny historických epizod.
+Aktuální počet47/154/305; původních304 epizod z obou rodičů zůstává beze změny.
+
+Závěrečné `semantic update/apply/validate`, generovaný `scan`, `status` a
+`git diff --check` jsou **PASS**; graph current, žádné konfliktní značky.
+Před dokončením generování diff check správně hlásil konflikty generated views;
+vyřešil je příkaz scan, nikoli ruční editace. Po tomto publikačním záznamu se
+znovu obnovují pouze aktuální hash kotvy a generované pohledy stejnými příkazy.
+Full a aktuální GH test execution zůstávají **NOT_RUN**; nezávislé re-review
+nad novým HEAD/base je další povinný krok. Implementer nemerguje do main.

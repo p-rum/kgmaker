@@ -10,6 +10,7 @@ from kgmaker.feature import current_graph
 from kgmaker.inspection import context, graph_from_response
 from kgmaker.graph_provider import merge_compiler_context
 from kgmaker.scanner import scan_repository
+from kgmaker.model import KnowledgeGraph
 from kgmaker.store import load_graph, save_graph
 from kgmaker.worker_protocol import WorkerError
 
@@ -194,8 +195,15 @@ def test_feature_requires_and_persists_explicit_context_for_variants(tmp_path):
         prepare(tmp_path, 'requirement.md', 'ambiguous')
     packet = prepare(tmp_path, 'requirement.md', 'selected', context_id=context_a['id'])
     assert packet['graph_selection'] == {'scope': 'all', 'context_id': context_a['id']}
-    assert [item['id'] for item in packet['analysis_contexts']] == [context_a['id']]
-    assert {item['id'] for item in graph_for_packet(tmp_path, packet).symbols} == {'compiler:a'}
+    assert [item['id'] for item in packet['analysis_contexts'] if item.get('analyzer_version')] == [context_a['id']]
+    selected_graph = graph_for_packet(tmp_path, packet)
+    referenced = {identity for edge in selected_graph.edges for identity in edge.context_ids}
+    assert all(item.get('mode') == 'SOURCE_ONLY' and item['id'] in referenced
+               for item in packet['analysis_contexts'] if not item.get('analyzer_version'))
+    assert {item['id'] for item in selected_graph.symbols} == {'compiler:a'}
+    assert all('compiler:b' not in (edge.source, edge.target) for edge in selected_graph.edges)
+    assert all(item.get('context_id') == context_a['id'] for item in selected_graph.call_sites + selected_graph.cfgs)
+    assert KnowledgeGraph.from_dict(selected_graph.to_dict()).to_dict() == selected_graph.to_dict()
 
 def test_invalid_second_module_does_not_publish_over_first(tmp_path):
     for module in ('a', 'b'):
