@@ -2,7 +2,7 @@
 
 Datum 2026-11-15; [T051 revize 1](../tasks/51_connectProjectWorkflows.md).
 Výchozí SHA všech kroků: `6790b0e0a930089924c61c3f8a6b3aef1d44121c`.
-Dodání **IN_PROGRESS (lokální implementace, před publikací)**; ověření
+Dodání **PR_OPEN** ([draft PR #99](https://github.com/p-rum/kgmaker/pull/99)); ověření
 **VERIFIED_IN_SCOPE** pro níže uvedené lokální kontrakty, živí hostitelé NOT_RUN.
 Vstupní změna verze v pyproject.toml a staged smazání starého skillu patří uživateli.
 
@@ -122,3 +122,15 @@ navazovat na větev T050 a vyžaduje dokončení závislosti #98.
 Nezávislé read-only review finálního lokálního diffu: **APPROVE**,
 103 testů a diff check nezávisle zopakovány PASS. Není to GitHub review
 publikovaného HEAD ani oprávnění k merge.
+
+## Publikované předání
+
+Draft PR [#99](https://github.com/p-rum/kgmaker/pull/99), větev
+`feat/t051-project-workflows`, base `feat/t050-target-project-skills` (závislost #98).
+Implementační commit `504ad625a01ba9571759a40b870382cf8bc12568`, ověřený tree
+`5c6cd9fec7238bd4289a6a0626a947bd91851bde`. Následující čistě dokumentační záznam
+mění delivery stav z lokálního IN_PROGRESS na PR_OPEN; nemění funkční kód.
+Před zveřejněním byl strom porovnán s dočasným lokálním Git indexem, který
+nezměnil uživatelův staging. Změny pyproject.toml a smazání starého skillu nejsou
+součástí PR. Merge neproveden; po dodání #98 aktualizovat base a provést nezávislé
+review aktuálního HEAD. GH CI dosud NOT_RUN.

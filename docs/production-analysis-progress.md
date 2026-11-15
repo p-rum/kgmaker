@@ -4,13 +4,13 @@
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 [zadání](tasks/51_connectProjectWorkflows.md), [change118](changes/118_connectProjectWorkflows.md),
-[uživatelský průchod](project-workflows.md). Lokální implementace, publikace zatím neprovedena.
+[uživatelský průchod](project-workflows.md). [Draft PR #99](https://github.com/p-rum/kgmaker/pull/99), závislost #98; merge neproveden.
 
 | Krok | Dodání | Ověření | Důkaz a omezení |
 |---|---|---|---|
-| T051-S01 | IN_PROGRESS | VERIFIED_IN_SCOPE | Striktní JSON profily, builtins, read-only CLI; nulová mutace a ukázkový profil v cílených testech PASS |
-| T051-S02 | IN_PROGRESS | VERIFIED_IN_SCOPE | V3 snapshot/context/handoffs, v1/v2 regrese, stale test/review a plný CLI průchod PASS; evidence LOCAL_DECLARED |
-| T051-S03 | IN_PROGRESS | PARTIAL | 103 cílených testů PASS, čistý wheel smoke PASS, instrukce/docs; živí hostitelé a GH CI NOT_RUN |
+| T051-S01 | PR_OPEN | VERIFIED_IN_SCOPE | Striktní JSON profily, builtins, read-only CLI; nulová mutace a ukázkový profil v cílených testech PASS |
+| T051-S02 | PR_OPEN | VERIFIED_IN_SCOPE | V3 snapshot/context/handoffs, v1/v2 regrese, stale test/review a plný CLI průchod PASS; evidence LOCAL_DECLARED |
+| T051-S03 | PR_OPEN | PARTIAL | 103 cílených testů PASS, čistý wheel smoke PASS, instrukce/docs; živí hostitelé a GH CI NOT_RUN |
 
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.

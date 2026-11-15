@@ -2,8 +2,8 @@
 
 ## T051 — projektové workflows, 2026-11-15
 
-Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání IN_PROGRESS
-(lokální implementace před publikací). [Zadání](tasks/51_connectProjectWorkflows.md),
+Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání PR_OPEN
+([draft PR #99](https://github.com/p-rum/kgmaker/pull/99), závislost #98). [Zadání](tasks/51_connectProjectWorkflows.md),
 [change118](changes/118_connectProjectWorkflows.md).
 
 | Acceptance | Ověření | Důkaz a limit |
