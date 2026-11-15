@@ -960,6 +960,17 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                    cfgs=selected_cfgs)
 
 
+def is_execution_callsite(site: Mapping[str, Any]) -> bool:
+    """Shared invocation boundary for call navigation, scoring and completeness.
+
+    Missing kind is the supported legacy form. Explicit unsupported kinds are
+    not promoted to calls; in particular references and invokedynamic are not
+    execution evidence in the current compiler matrix.
+    """
+    return site.get("invocation_kind") in {None, "CALL", "STATIC", "VIRTUAL", "INTERFACE",
+                                            "SPECIAL", "CONSTRUCTOR", "EXTENSION", "OPERATOR", "ACCESSOR"}
+
+
 def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execution", scope: str = "production") -> dict:
     """Read-only, versioned priority from validated graph evidence, not confidence.
 
@@ -981,6 +992,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     rankable = executable - {"call_site"} | {"class", "enum", "interface", "type"}
     contexts = {c['id']: c for c in graph.contexts if isinstance(c.get('id'), str)}
     sites = {s['id']: s for s in graph.call_sites}
+    proofs = {p['id']: p for p in graph.evidence}
     known_kinds = {"SYMBOL_RESOLVED", "DISPATCH_CANDIDATE", "FRAMEWORK_DERIVED", "RUNTIME_OBSERVED"}
     canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=False)
     unique = lambda values: [json.loads(key) for key in sorted({canonical(value) for value in values})]
@@ -989,6 +1001,24 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     gaps = defaultdict(list)
     def gap(identity, code, reason, penalty, **refs):
         gaps[identity].append({'code': code, 'reason': reason, 'penalty': penalty, **refs})
+    def proof_gaps(evidence_ids):
+        result = []
+        for evidence_id in sorted(set(evidence_ids)):
+            proof = proofs.get(evidence_id, {})
+            # Older valid v2/v3 proofs omit freshness; retain their existing
+            # context-bound behavior. An explicit state always takes precedence.
+            if 'freshness' not in proof:
+                continue
+            if proof['freshness'] == 'STALE':
+                result.append({'code': 'STALE_EVIDENCE', 'penalty': 5,
+                    'reason': 'A stale proof contributes no execution or impact weight.',
+                    'evidence_ids': [evidence_id]})
+            elif proof['freshness'] not in {'CONTENT_VERIFIED', 'CURRENT'}:
+                result.append({'code': 'EVIDENCE_FRESHNESS_UNKNOWN', 'penalty': 2,
+                    'reason': 'The proof does not establish current content.',
+                    'evidence_ids': [evidence_id]})
+        return result
+
     def context_gaps(identity, ids):
         if not ids:
             gap(identity, 'CONTEXT_UNKNOWN', 'No compiler/evidence context is available for this entity.', 3)
@@ -1014,6 +1044,7 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
     for symbol in graph.symbols:
         node_contexts[symbol['id']].add(symbol['context_id'])
     adjacency = defaultdict(list)
+    witness_gaps = {}
     degree, references, effects = defaultdict(list), defaultdict(list), defaultdict(list)
     shared = defaultdict(int)
     for edge in graph.edges:
@@ -1031,40 +1062,56 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
             witness_records[key] = record
     for record in sorted(witness_records.values(), key=canonical):
         source, target, kind = record['source'], record['target'], record['kind']
+        related_site = sites.get(source) or sites.get(target)
+        relevant_proofs = list(record['evidence_ids'])
+        if related_site and kind in EXECUTION_EDGES | SIDE_EFFECTS:
+            relevant_proofs += related_site.get('evidence_ids', [])
+        record_gaps = proof_gaps(relevant_proofs)
+        stale_proof = any(g['code'] == 'STALE_EVIDENCE' for g in record_gaps)
+        stale_context = any(contexts.get(c, {}).get('freshness') == 'STALE' for c in record['context_ids'])
         if kind in TYPE_EDGES:
-            if not any(contexts.get(c, {}).get('freshness') == 'STALE' for c in record['context_ids']):
+            node_contexts[target].update(record['context_ids'])
+            gaps[target].extend(record_gaps)
+            if not stale_context and not stale_proof:
                 references[target].append(record)
-            else:
+            elif stale_context:
                 gap(target, 'STALE_CONTEXT', 'Stale relation contributes no impact evidence.', 5,
                     context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
         if kind not in EXECUTION_EDGES | SIDE_EFFECTS:
             continue
-        for identity in (source, target):
+        affected = {source, target}
+        if related_site:
+            affected.add(related_site['caller'])
+        for identity in affected:
             node_contexts[identity].update(record['context_ids'])
+            gaps[identity].extend(record_gaps)
         if not runnable(source):
             continue
-        if record['evidence_kind'] not in known_kinds:
-            # In particular an unresolved declares_call is not an executed call.
+        if record['evidence_kind'] not in known_kinds or (related_site and related_site.get('evidence_kind') not in known_kinds):
+            # An unresolved site cannot be promoted by a stronger-looking edge.
             if kind in EXECUTION_EDGES:
-                gap(source, 'EXECUTION_EVIDENCE_UNRESOLVED', 'This relation has no resolved execution evidence.', 3,
-                    source=source, target=target, evidence_ids=record['evidence_ids'])
+                for identity in affected:
+                    gap(identity, 'EXECUTION_EVIDENCE_UNRESOLVED', 'This relation has no resolved execution evidence.', 3,
+                        source=source, target=target, evidence_ids=record['evidence_ids'])
             continue
-        if any(contexts.get(c, {}).get('freshness') == 'STALE' for c in record['context_ids']):
-            gap(source, 'STALE_CONTEXT', 'Stale relation contributes no execution evidence.', 5,
-                context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
+        if stale_context:
+            for identity in affected:
+                gap(identity, 'STALE_CONTEXT', 'Stale relation contributes no execution evidence.', 5,
+                    context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
+        if stale_context or stale_proof:
             continue
-        related_site = sites.get(source) or sites.get(target)
-        if related_site and related_site.get('invocation_kind') in {'METHOD_REFERENCE', 'INVOKEDYNAMIC'}:
+        if related_site and not is_execution_callsite(related_site):
             continue
         if kind in SIDE_EFFECTS:
             effects[source].append(record)
         elif runnable(target) and nodes[source].scope == nodes[target].scope:
             adjacency[source].append(record)
+            witness_gaps[canonical(record)] = record_gaps
             degree[source].append(record)
             degree[target].append(record)
 
     for site in sorted(graph.call_sites, key=lambda s: s['id']):
-        if site.get('invocation_kind') in {'METHOD_REFERENCE', 'INVOKEDYNAMIC'}:
+        if not is_execution_callsite(site):
             continue
         refs = {'call_site': site['id'], 'context_id': site['context_id'],
                 'evidence_ids': sorted(site.get('evidence_ids', []))}
@@ -1079,16 +1126,32 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
 
     # An observed pair is positive sampled evidence. It cannot close a static
     # target set; independently complete static call sites remain intact.
-    complete_pairs = {(site['caller'], target) for site in graph.call_sites
-                      if site.get('dispatch_complete') is True
-                      and contexts.get(site['context_id'], {}).get('freshness') in {'CONTENT_VERIFIED', 'CURRENT'}
-                      for target in [site.get('declared_target'), *site.get('dispatch_candidates', [])] if target}
+    # Completeness must have the same admitted executable path as scoring.
+    # Metadata alone (or a filtered/stale/reference edge) cannot close a pair.
+    static_links = {(r['source'], r['target'], r['kind']) for values in adjacency.values() for r in values
+                    if r['evidence_kind'] != 'RUNTIME_OBSERVED'
+                    and not proof_gaps(r['evidence_ids'])}
+    complete_pairs = set()
+    for site in graph.call_sites:
+        if (not is_execution_callsite(site) or site.get('dispatch_complete') is not True
+                or site.get('evidence_kind') not in known_kinds - {'RUNTIME_OBSERVED'}
+                or contexts.get(site['context_id'], {}).get('freshness') not in {'CONTENT_VERIFIED', 'CURRENT'}
+                or not site.get('evidence_ids') or proof_gaps(site['evidence_ids'])
+                or (site['caller'], site['id'], 'declares_call') not in static_links):
+            continue
+        for target in [site.get('declared_target'), *site.get('dispatch_candidates', [])]:
+            if ((site['id'], target, 'resolves_to') in static_links
+                    or (site['id'], target, 'may_dispatch_to') in static_links):
+                complete_pairs.add((site['caller'], target))
     for source, edges in sorted(adjacency.items()):
         for record in edges:
             if record['kind'] == 'observed_dispatch_to' and (source, record['target']) not in complete_pairs:
+                observation_gap = {'code': 'RUNTIME_SAMPLE_ONLY', 'penalty': 2,
+                    'reason': 'Observed dispatch does not establish static dispatch completeness.',
+                    'source': source, 'target': record['target'], 'evidence_ids': record['evidence_ids']}
+                witness_gaps[canonical(record)].append(observation_gap)
                 for identity in (source, record['target']):
-                    gap(identity, 'RUNTIME_SAMPLE_ONLY', 'Observed dispatch does not establish static dispatch completeness.', 2,
-                        source=source, target=record['target'], evidence_ids=record['evidence_ids'])
+                    gaps[identity].append(observation_gap)
 
     paths = {}
     if entry is not None and runnable(entry) and (degree[entry] or effects[entry]):
@@ -1141,6 +1204,8 @@ def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execut
         for identity in selected_path['entity_ids']:
             if identity != n.id and identity in sites:
                 row_gaps.extend(local_gaps.get(identity, []))
+        for step in selected_path['steps']:
+            row_gaps.extend(witness_gaps.get(canonical(step), []))
         row_gaps = unique(row_gaps)
         has_execution = bool(degree[n.id] or effects[n.id])
         breakdown = {'entry_relevance': 10 if n.id == entry and has_execution else 0,

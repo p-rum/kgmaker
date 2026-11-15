@@ -168,3 +168,112 @@ Kontroly tohoto docs-only kroku: `kgmaker semantic validate`, `kgmaker scan`,
 `kgmaker check`, `python3 /tmp/ranking-preservation.py` a `git diff --check`
 **PASS**. Opakování pytest po samotné změně stavu/URL **NOT_RUN — bez změny kódu**.
 Nadále zbývá nezávislé review; implementační agent PR nemergoval.
+
+
+## Krok 6 — review P1: freshness konkrétních proof records
+
+T003-S07-W08, oprava implementačních kroků2–4, nadřazený T003-S07,
+AC01/AC02/AC03/AC04. Výchozí reviewed SHA
+`e0bfd41b13fe0190e5608f88964a0eef36f274de`, integrační base93c beze změny.
+[Nezávislý REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/106#issuecomment-6898922692)
+doložil, že current context překryl explicitní STALE v graph.evidence: entry
+mělo score16 a COMPLETE bez gaps. Formální GitHub self-review bylo serverem
+odmítnuto422, reviewer vložil transparentní technický REQUEST_CHANGES comment.
+
+Změny: `views.rank` indexuje proof records a posuzuje jejich vlastní freshness,
+včetně refs celého call site. STALE proof nemá execution/impact/side-effect ani
+path příspěvek. `STALE_EVIDENCE` uvádí přesný proof ID; explicitní unknown stav
+vytváří `EVIDENCE_FRESHNESS_UNKNOWN` a nemůže doložit completeness. Stejné proof
+mezery se deduplikují, jiné příčiny zůstávají samostatné. Vstup/store zůstávají
+beze změny. Testy jsou v `tests/test_evidence_ranking.py`; actual Javac test nyní
+ověřuje i veřejný CLI read-only průchod nad stale proof records při validním
+compiler contextu.
+
+Kompatibilita: legacy v2/v3 evidence bez pole freshness používá původní
+context-bound interpretaci. Explicitní freshness má přednost. Graph/worker
+schema, profile IDs execution-2/impact-2 a CLI parametry se nemění. Pole gaps se
+rozšířilo o dva popsané důvody, confidence se nepovyšuje. README, capability,
+production matrix a acceptance inventory aktualizovány; production-scope a
+architecture **bez dalšího dopadu** — už odkazují na aktualizovaný kontrakt.
+Registr/host templates **bez dopadu** — žádná změna identity nebo init instrukcí.
+
+## Krok 7 — review P1: statická completeness pouze z přijaté call path
+
+T003-S07-W08, oprava implementačních kroků2–4, nadřazený T003-S07,
+AC01/AC02/AC03/AC04. Stejný výchozí reviewed SHA `e0bfd41b13fe0190e5608f88964a0eef36f274de`.
+Původní `complete_pairs` četlo samotné metadata METHOD_REFERENCE a tím potlačilo
+RUNTIME_SAMPLE_ONLY, ačkoli scoring samotnou referenci správně nepovažoval za call.
+
+Změny: sdílené `views.is_execution_callsite` používají `callgraph.adjacency`,
+rank traversal a completeness. Známé executable kindy a legacy omitted kind
+zůstávají podporované; explicitní neznámé kindy, METHOD_REFERENCE a INVOKEDYNAMIC
+se nepovažují za execution. Complete pair vyžaduje aktuální kontext/proofs a
+již přijaté statické caller→site→target hrany. Samotná metadata, unresolved site,
+stale/unknown proof, chybějící hrana ani scope/config hranice nestačí. Skutečná
+nezávislá current static completeness se zachovává. Runtime-only a proof-freshness
+mezery se přenesou do potomků právě té path, která příslušnou hranu používá;
+nezahrnují nesouvisející cesty. Tento navazující source nález byl také opraven a
+má vlastní regresní test.
+
+Dotčené soubory: `src/kgmaker/views.py`, `src/kgmaker/callgraph.py`,
+`tests/test_evidence_ranking.py`, README, evidence-ranking capability,
+production matrix, acceptance inventory, tento záznam a generovaná semantic/graph
+maintenance. Kompatibilita: graph/worker schemata a výstupní keys zachované;
+explicitní unsupported invocation se nyní konzervativně nepromuje.
+Žádná změna sousedních BEFE/T028 modulů ani spouštění projektu.
+
+### Kontroly obou review oprav
+
+Native prostředí shodné s krokem2 (`JAVA_HOME` JDK21, `KGMAKER_WORKERS_HOME`
+prepared distribution, `KGMAKER_REQUIRE_WORKERS=1`, `PYTHONPATH=src`).
+
+- `PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=line /tmp/pr106_review_repros.py`:
+  před opravou **FAIL 2 / 0.09 s**, po opravě **PASS 2 / 0.08 s**.
+- `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_evidence_ranking.py -k 'stale_proof_records or non_execution_site or only_admitted'`:
+  před opravou **FAIL13,20deselected / 0.20s**, po opravě **PASS13,20deselected / 0.08s**.
+- `/tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_{evidence_ranking,production_scope,graph_provider,build_aware,inspection_contract,feature}.py`:
+  po obou opravách včetně navazující path regrese **PASS86 / 0SKIP, 3.21s**.
+  Skutečný Javac/JDK21 a public CLI stale proofs jsou součástí tohoto běhu.
+- Full suite/GH CI **NOT_RUN**, targeted-only pokyn zůstává. K1/K2/TS nové native
+  acceptance **NOT_RUN**; nebyl změněn worker/protocol ani rozšířena compiler matice.
+- `kgmaker semantic update --base e0bfd41b13fe0190e5608f88964a0eef36f274de`, reviewed source reanchor patch, `semantic apply`, `semantic validate`, `scan`, `check`: **PASS**.
+- `python3 /tmp/ranking-review-preservation.py` a `python3 /tmp/ranking-preservation.py`: **PASS**; zachovány všechny koncepty/vztahy/epizody reviewed e0 (46/147/300) i main93c (45/144/299), nyní46/149/302.
+- `git diff --check`: **PASS**.
+
+Zbývá nové nezávislé review nového HEAD. Předchozí review není přejmenováno na
+APPROVE a implementační agent nemerguje.
+
+
+## Krok 8 — zachování dříve podporovaných invocation kindů
+
+T003-S07-W08, navazující source review opravy kroku7, AC01/AC02/AC03/AC04,
+výchozí publikovaný SHA `e0bfd41b13fe0190e5608f88964a0eef36f274de`.
+Při kontrole všech producentů v `workers/jvm` a `workers/typescript` bylo zjištěno,
+že K1 produkuje také OPERATOR a ACCESSOR. Sdílený eligibility helper zachovává
+oba spolu s ostatními existujícími kindy; explicitní unsupported druhy jsou
+nadále konzervativně vyloučené. Žádný worker nebyl upraven.
+`test_supported_compiler_invocation_kinds_retain_static_evidence` ověřuje všech
+9 emitovaných kindů a legacy omitted kind v ranking i callgraph. Jde o modelový
+compatibility test, nikoli nové tvrzení o nativní Kotlin/TS acceptance.
+Dotčeno `views.py`, `tests/test_evidence_ranking.py` a capability text; ostatní
+veřejné příkazy/schema **bez dalšího dopadu**. Důkaz producentů: K1
+`KotlinFrontend.kt` uvádí OPERATOR/ACCESSOR, K2 CALL/CONSTRUCTOR, Java a bytecode
+STATIC/VIRTUAL/INTERFACE/SPECIAL/CONSTRUCTOR, TypeScript CALL/CONSTRUCTOR.
+
+Stejný přesný šestisouborový příkaz z kroku7 s JDK21 prostředím:
+**PASS96 / 0SKIP, 3.20s**. Nezávislé `/tmp/pr106_review_repros.py` opět
+**PASS2 / 0.08s**. Checkpoint86PASS3.21s je historický před touto dodatečnou
+compatibility regresí. Full/GH CI a další native matice NOT_RUN jako výše.
+
+Semantic po opravách: scoped update nad reviewed e0bfd, ověřené unchanged
+source citations reanchor, dva nové source-backed test vztahy, bez odstranění
+historie; finální validate/scan/check/diff a preservation jsou součástí publikace.
+
+
+Finální maintenance kroků6–8: **PASS** semantic apply/validate/scan/check,
+`git diff --check` a preservation vůči main93c i reviewed e0. Nově2 test vazby,
+2 implementační epizody (první zaznamenává checkpoint86, druhá finální96).
+`kgmaker memory capture --base e0bfd41b13fe0190e5608f88964a0eef36f274de --validation targeted-96=passed --validation review-repros-2=passed --validation full=skipped`
+zapsal episode `1fa8e1391c8bb7fcc0b155dc143e7067708d49cecde955e65de4037f918580e7`.
+Celkem46 konceptů /149 vztahů /302 epizod; obě předchozí historie zachované.
+Po doplnění výsledků do dokumentace pytest znovu **NOT_RUN — bez další změny kódu**.

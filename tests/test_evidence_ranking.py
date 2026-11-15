@@ -231,6 +231,25 @@ def test_actual_javac_ranking_fixture_and_public_cli(tmp_path):
         else:
             assert symbols['decide'] in out.getvalue() and 'UNRESOLVED_CALL' in out.getvalue()
     assert (tmp_path / '.kgmaker/graph.json').read_bytes() == stored
+    # Public CLI must honor stale proof records even when compiler inputs/context
+    # still validate as current. No worker is invoked to read the stored snapshot.
+    from kgmaker.store import save_graph
+    for proof in graph.evidence:
+        proof['freshness'] = 'STALE'
+    save_graph(graph, tmp_path, generate_docs=False)
+    stored = (tmp_path / '.kgmaker/graph.json').read_bytes()
+    out = io.StringIO()
+    with patch('subprocess.run', side_effect=AssertionError('implicit process')), patch('sys.argv', [
+            'kgmaker', 'graph', 'rank', '--root', str(tmp_path), '--entry', symbols['entry'],
+            '--context', result['context']['id']]), redirect_stdout(out):
+        with pytest.raises(SystemExit) as exit_result:
+            main()
+    assert exit_result.value.code == 0, out.getvalue()
+    public = json.loads(out.getvalue())
+    assert all(row['score'] == 0 and not row['path']['steps'] for row in public['results'])
+    assert public['status'] == 'UNKNOWN'
+    assert any(g['code'] == 'STALE_EVIDENCE' for row in public['results'] for g in row['coverage']['gaps'])
+    assert (tmp_path / '.kgmaker/graph.json').read_bytes() == stored
 
 
 def test_selected_variant_retains_only_required_source_contexts_and_valid_records():
@@ -292,3 +311,111 @@ def test_confidence_and_duplicate_records_do_not_add_weight():
     graph.edges += [replace(edge, confidence_score=.01, evidence='another presentation') for edge in graph.edges]
     after = rows(rank(graph, 'entry'))
     assert {i: r['score'] for i, r in before.items()} == {i: r['score'] for i, r in after.items()}
+
+
+@pytest.mark.parametrize('profile', ['execution', 'impact'])
+def test_stale_proof_records_cannot_supply_current_weight_or_paths(profile, tmp_path):
+    from kgmaker.analysis_report import render_ranking_report
+    from kgmaker.store import save_graph
+    graph = snapshot()
+    for proof in graph.evidence:
+        proof['freshness'] = 'STALE'
+    graph = KnowledgeGraph.from_dict(graph.to_dict())
+    save_graph(graph, tmp_path, generate_docs=False)
+    before = copy.deepcopy(graph.to_dict())
+    stored = (tmp_path / '.kgmaker/graph.json').read_bytes()
+    with patch('subprocess.run', side_effect=AssertionError('implicit process')):
+        result = rank(graph, 'entry', profile)
+    assert result['status'] == 'UNKNOWN'
+    for row in result['results']:
+        assert row['score'] == 0
+        assert row['coverage']['status'] == 'UNKNOWN'
+        assert row['path'] == {'entity_ids': [], 'steps': []}
+        assert not row['evidence']
+        assert all(not value for term, value in row['contributions'].items() if term != 'incompleteness_penalty')
+    entry = rows(result)['entry']
+    assert any(g['code'] == 'STALE_EVIDENCE' and g['evidence_ids'] for g in entry['coverage']['gaps'])
+    assert 'STALE_EVIDENCE' in render_ranking_report(result)
+    assert graph.to_dict() == before and (tmp_path / '.kgmaker/graph.json').read_bytes() == stored
+
+
+@pytest.mark.parametrize('kind', ['METHOD_REFERENCE', 'INVOKEDYNAMIC', 'UNSUPPORTED_REFERENCE'])
+def test_non_execution_site_cannot_close_runtime_only_dispatch_gap(kind):
+    from kgmaker.callgraph import adjacency
+    graph = snapshot()
+    graph.call_sites[0]['invocation_kind'] = kind
+    assert graph.call_sites[0]['dispatch_complete'] is True
+    graph.evidence.append({'id': 'runtime-only', 'kind': 'RUNTIME_OBSERVED', 'freshness': 'CURRENT'})
+    graph.edges.append(Edge('entry', 'decide', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                           context_ids=('ctx',), evidence_ids=('runtime-only',)))
+    result = rows(rank(KnowledgeGraph.from_dict(graph.to_dict()), 'entry'))
+    entry = result['entry']
+    assert any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in entry['coverage']['gaps'])
+    assert entry['coverage']['status'] == 'PARTIAL'
+    assert all(e['kind'] == 'observed_dispatch_to' for e in entry['contributions']['execution_centrality'])
+    assert result['decide']['path']['entity_ids'] == ['entry', 'decide']
+    assert all(step['kind'] == 'observed_dispatch_to' for step in result['decide']['path']['steps'])
+    assert all(e['kind'] == 'RUNTIME_OBSERVED' and not e['dispatch_complete'] for e in adjacency(graph)['entry'])
+
+
+@pytest.mark.parametrize('damage', ['stale_proof', 'unknown_proof', 'stale_site_proof', 'missing_declares',
+                                    'missing_resolves', 'unresolved_site', 'cross_scope', 'configuration_caller'])
+def test_only_admitted_current_static_path_closes_observation_gap(damage):
+    graph = snapshot()
+    site = graph.call_sites[0]
+    if damage in {'stale_proof', 'unknown_proof'}:
+        proof = next(p for p in graph.evidence if p['id'] == site['evidence_ids'][-1])
+        proof['freshness'] = 'STALE' if damage == 'stale_proof' else 'UNKNOWN'
+    elif damage == 'stale_site_proof':
+        graph.evidence.append({'id': 'stale-site', 'kind': 'SYMBOL_RESOLVED', 'freshness': 'STALE'})
+        site['evidence_ids'].append('stale-site')
+    elif damage == 'missing_declares':
+        graph.edges = [e for e in graph.edges if not (e.source == 'entry' and e.target == 'first')]
+    elif damage == 'missing_resolves':
+        graph.edges = [e for e in graph.edges if not (e.source == 'first' and e.target == 'decide')]
+    elif damage == 'unresolved_site':
+        site['evidence_kind'] = 'UNRESOLVED'
+    elif damage == 'cross_scope':
+        graph.nodes = [replace(n, scope='test') if n.id == 'first' else n for n in graph.nodes]
+    else:
+        graph.nodes = [replace(n, role='configuration') if n.id == 'first' else n for n in graph.nodes]
+    graph.evidence.append({'id': 'runtime-only', 'kind': 'RUNTIME_OBSERVED', 'freshness': 'CURRENT'})
+    graph.edges.append(Edge('entry', 'decide', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                           context_ids=('ctx',), evidence_ids=('runtime-only',)))
+    result = rows(rank(graph, 'entry', scope='all'))
+    assert any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in result['entry']['coverage']['gaps'])
+    assert result['entry']['coverage']['status'] == 'PARTIAL'
+    if damage in {'stale_proof', 'stale_site_proof', 'unresolved_site', 'cross_scope', 'configuration_caller'}:
+        assert all(e['kind'] == 'observed_dispatch_to' for e in result['entry']['contributions']['execution_centrality'])
+    if damage == 'unknown_proof':
+        assert any(g['code'] == 'EVIDENCE_FRESHNESS_UNKNOWN' for g in result['entry']['coverage']['gaps'])
+
+
+
+def test_runtime_only_and_unknown_proof_gaps_follow_the_selected_path():
+    graph = snapshot()
+    graph.call_sites[0]['invocation_kind'] = 'METHOD_REFERENCE'
+    graph.evidence.append({'id': 'runtime-only', 'kind': 'RUNTIME_OBSERVED', 'freshness': 'UNKNOWN'})
+    graph.edges.append(Edge('entry', 'decide', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                           context_ids=('ctx',), evidence_ids=('runtime-only',)))
+    result = rows(rank(graph, 'entry'))['save']
+    assert result['path']['entity_ids'] == ['entry', 'decide', 'second', 'save']
+    for code in ['RUNTIME_SAMPLE_ONLY', 'EVIDENCE_FRESHNESS_UNKNOWN']:
+        assert any(g['code'] == code and g['evidence_ids'] == ['runtime-only'] for g in result['coverage']['gaps'])
+    assert result['coverage']['status'] == 'PARTIAL'
+
+
+
+@pytest.mark.parametrize('kind', [None, 'CALL', 'STATIC', 'VIRTUAL', 'INTERFACE', 'SPECIAL',
+                                  'CONSTRUCTOR', 'EXTENSION', 'OPERATOR', 'ACCESSOR'])
+def test_supported_compiler_invocation_kinds_retain_static_evidence(kind):
+    from kgmaker.callgraph import adjacency
+    graph = snapshot()
+    graph.call_sites[0]['invocation_kind'] = kind
+    graph.evidence.append({'id': 'runtime-only', 'kind': 'RUNTIME_OBSERVED', 'freshness': 'CURRENT'})
+    graph.edges.append(Edge('entry', 'decide', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                           context_ids=('ctx',), evidence_ids=('runtime-only',)))
+    entry = rows(rank(graph, 'entry'))['entry']
+    assert any(e['kind'] == 'declares_call' for e in entry['contributions']['execution_centrality'])
+    assert not any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in entry['coverage']['gaps'])
+    assert any(e['kind'] == 'DECLARED_TARGET' and e['dispatch_complete'] for e in adjacency(graph)['entry'])

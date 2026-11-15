@@ -5,13 +5,13 @@ from collections import defaultdict, deque
 
 from .analysis_model import AnalysisError
 from .model import KnowledgeGraph
-from .views import project
+from .views import is_execution_callsite, project
 
 
 def adjacency(graph: KnowledgeGraph, include_candidates=True):
     result = defaultdict(list)
     for site in graph.call_sites:
-        if site.get("invocation_kind") in {"METHOD_REFERENCE", "INVOKEDYNAMIC"}:
+        if not is_execution_callsite(site):
             continue
         target = site.get("declared_target")
         if target:

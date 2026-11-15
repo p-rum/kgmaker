@@ -58,12 +58,18 @@ same metric. No persisted graph schema or compiler worker protocol changes.
 Gap penalties are: missing context 3, unknown freshness 2, SOURCE_ONLY 3,
 partial/unknown context coverage 2, legacy missing call-site inventory 2,
 no execution witness 3, unresolved relation 3, unresolved call 5,
-incomplete dispatch 2, ambiguous dispatch 3, stale context/relation 5,
+incomplete dispatch 2, ambiguous dispatch 3, stale context/relation/proof 5,
+explicit unknown proof freshness 2,
 runtime-only sample 2, and relevant provider diagnostics 1. Repeated identical
 gaps count once; distinct causes remain distinct. A path inherits its call-site
 gaps, not unrelated calls in another method. Provider diagnostics use their
 context/path/line bounds when available. Unknown source locations remain explicit
-in their original diagnostic. Stale relations add no execution or impact weight.
+in their original diagnostic. Stale contexts **or referenced evidence records** add no execution or impact
+weight, including side effects, runtime observations and selected paths. A stale
+call-site proof also prevents its attached call relations from contributing.
+Explicit unknown proof freshness retains a gap and cannot establish completeness.
+Legacy v2/v3 proof records without a freshness field retain their context-bound
+interpretation; an explicit proof freshness always takes precedence.
 
 A row without admissible evidence is `UNKNOWN`; an evidenced row with gaps is
 `PARTIAL`. `COMPLETE_WITHIN_INDEXED_SCOPE` is limited to that row's supplied
@@ -72,7 +78,14 @@ exists and `UNKNOWN` when none exists. `--strict` returns 4 for either status;
 invalid input returns 2. A runtime edge always reports
 `dispatch_complete=false` in callgraph navigation: an observation is a sample.
 An independently complete current static call site retains its completeness;
-it is not overwritten by the runtime record.
+it is not overwritten by the runtime record. Completeness requires the admitted
+static caller → call-site → target edges and current proof/context evidence;
+call-site metadata alone is insufficient. Navigation, rank traversal and this
+completeness check share invocation eligibility: CALL, STATIC, VIRTUAL, INTERFACE,
+SPECIAL, CONSTRUCTOR, EXTENSION, OPERATOR and ACCESSOR, plus the legacy omitted kind. Explicit
+unsupported kinds, METHOD_REFERENCE and INVOKEDYNAMIC do not close a dispatch gap.
+Proof-freshness and runtime-only gaps follow the selected path to descendants.
+See review fixes 6–7 in [change126](changes/126_evidenceRanking.md).
 
 Graph/store v1, v2 and v3 remain readable through the existing reader. V1 retains
 unknown scope/role and does not acquire compiler proof. V2 resolved edges remain

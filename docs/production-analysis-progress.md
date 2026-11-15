@@ -1541,3 +1541,15 @@ Skutečný Javac/JDK21 test používá [fixture](../fixtures/evidence-ranking/RE
 syntetické schema fixtures netvrdí compiler či runtime PASS. Full suite a GH CI
 NOT_RUN dle uživatelského targeted-only pokynu. Nadřazené S07 zůstává PARTIAL;
 W09 a S09-W05 nejsou tímto dodány.
+
+
+### T003-S07-W08 — opravy nezávislého review PR106
+
+Reviewed HEAD `e0bfd41b13fe0190e5608f88964a0eef36f274de` měl dva P1 nálezy:
+STALE proof records se započítávaly přes aktuální context a METHOD_REFERENCE
+mohla potlačit runtime-only gap. [Change126 kroky6–7](changes/126_evidenceRanking.md)
+opravuje oba kontrakty i konzistenci cest. Dodání PR_OPEN, nové ověření
+VERIFIED_IN_SCOPE: **96 PASS / 0 SKIP, 3.20 s**, včetně skutečného Javac,
+veřejného CLI nad stale proofs a 10 compatibility variant invocation kindů. Dvě nezávislé reprodukce prošly; předchozí
+REQUEST_CHANGES zůstává platné do nového nezávislého review. Historický72PASS
+nebyl důkazem správnosti těchto případů. Full/GH CI nadále NOT_RUN.

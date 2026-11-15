@@ -1357,3 +1357,20 @@ Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanki
 
 Full/GH CI NOT_RUN; kompletní S07, W09, runtime dostupnost a obecná dispatch
 úplnost zůstávají mimo ověřený rozsah.
+
+
+### T003-S07-W08 — review regresní rozšíření AC01/AC03
+
+Nad reviewed HEAD `e0bfd41b13fe0190e5608f88964a0eef36f274de` reviewer doložil
+2 FAIL, které předchozí72PASS nepokrývaly. `test_stale_proof_records_cannot_supply_current_weight_or_paths`
+nově ověřuje execution/impact, nulovou mutaci, contributions a paths;
+`test_non_execution_site_cannot_close_runtime_only_dispatch_gap` pokrývá
+METHOD_REFERENCE/INVOKEDYNAMIC/unsupported kind.
+`test_only_admitted_current_static_path_closes_observation_gap` pokrývá
+stale/unknown/site-only proof, chybějící hrany, unresolved/scope/config hranice.
+`test_runtime_only_and_unknown_proof_gaps_follow_the_selected_path` ověřuje
+přenesení konkrétních gap refs do potomků. Skutečný Javac test rozšířen o public
+CLI nad stale evidence records. Cílená sada **96 PASS / 0 SKIP, 3.20 s**;
+nezávislé repro **2 PASS**. Delivery PR_OPEN, verification VERIFIED_IN_SCOPE;
+nové nezávislé review ještě proběhne. Podrobnosti a přesné příkazy:
+[change126 kroky6–7](changes/126_evidenceRanking.md).
