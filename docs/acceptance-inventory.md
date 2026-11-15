@@ -1344,12 +1344,12 @@ reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokl
 
 ## T028 — Potential asynchronous process paths
 
-Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on baseline `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`
-plus the T028 working diff. Final targeted T028/T012/T014/T025/T027 run:
+Historical initial handoff `1732a3d` (subsequent AC05 REQUEST_CHANGES and fixes below):
+initial targeted T028/T012/T014/T025/T027 run on base `93c52d33` plus the original diff:
 **242 PASS / 0 SKIP, 136.07 s**, actual JDK21/Javac with prepared K1/K2 workers.
 Final bounded-input follow-up: 42 PASS / 0 SKIP, 20.18 s including actual pipeline;
 Kafka-only metadata compatibility follow-up: 66 PASS, 2 deselected, 1.21 s.
-T028 has 43 cases, including two actual public pipeline cases; no new worker
+That initial handoff had 43 T028 cases, including two actual public pipeline cases; no new worker
 protocol or Kotlin annotation support is claimed. Commands and compatibility:
 [change127](changes/127_crossAsyncProcessBoundary.md), [API/capability](process-paths.md#potential-asynchronous-process-paths-t028).
 
@@ -1361,3 +1361,21 @@ protocol or Kotlin annotation support is claimed. Commands and compatibility:
 | AC04 | `test_ac04_invalid_input_does_not_mutate_or_write`, `test_invalid_budgets_are_rejected_without_mutation`, `test_cycle_rejected_before_copy_and_terminal_site_does_not_publish` | PASS; pure API, no I/O/subprocess/network, inputs and last valid artifact unchanged |
 | AC05 | `test_ac05_invalid_membership_retains_boundary_without_import`, `test_target_process_identity_is_required`, `test_actual_expanded_callee_exception_cannot_initiate_publish`, `test_blocked_target_and_remote_upstream_truncation_are_not_dropped`, `test_provenance_and_original_local_paths_are_preserved_without_uplift` | PASS; exact membership/scope/context/evidence, exception origin isolation, upstream diagnostics/limits and truncation retained |
 | AC06 | README, process-paths API example, remote-interfaces identity handoff, progress inventory, change127 and independent PR review | Implementation/docs/tests and semantic preservation supplied; independent PR review pending. Full suite and GH CI NOT_RUN |
+
+
+### T028 — PR108 AC05 review-fix evidence
+
+Baseline `1732a3d7b924a7dfd60c67436622ae05db43dfff` plus fixes in
+[change127 steps 7–8](changes/127_crossAsyncProcessBoundary.md). Delivery PR_OPEN,
+verification VERIFIED_IN_SCOPE: **264 PASS / 0 SKIP, 138.32 s**, 260 public cases
+and 4 independent reviewer repros, actual JDK21/Javac/K1/K2. Historical results above
+remain historical. New independent review is pending; original REQUEST_CHANGES
+must be superseded for the current HEAD before merge.
+
+| AC | Added concrete regression | Current bounded result |
+|---|---|---|
+| AC04/AC05 | `test_referenced_endpoint_and_binding_proofs_gate_expansion_and_survive` (9 cases), `test_binding_declaration_authority_must_match_membership` (4 cases) | PASS; stale/contradicting/foreign raw endpoint and declaration authority blocks expansion, inputs and original proof records preserved |
+| AC05 | `test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift` | PASS; canonical UNKNOWN framework proof preserved inside reference-only envelope; no virtual context promotion, PARTIAL gap remains, stale raw record still blocks |
+| AC01/AC03/AC05 | `test_release_aliases_across_bindings_preserve_conflicts_without_duplicate_consumer_paths` | PASS; two RESOLVED T014 binding objects retain two conflict boundaries and zero duplicated consumer imports |
+| AC01/AC05 | `test_distinct_versioned_endpoints_across_bindings_keep_independent_paths`, existing same-group/fanout and actual pipeline tests | PASS; genuinely different endpoint/version/group memberships remain potential independent paths, no A-before-B |
+| AC06 | README, capability/API example, remote-interface handoff, progress and change127 review steps | Updated; full suite and runtime NOT_RUN; new PR review/CI status tracked in PR108 |

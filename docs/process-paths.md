@@ -258,6 +258,8 @@ subscriptions = [step for step in async_process.steps
                  if step.attributes.get("async_role") == "subscription"]
 print([(step.attributes["consumer_group"], step.attributes["boundary_reason"])
        for step in subscriptions])
+# Original remote proof IDs remain inspectable, including rejected authority.
+print([step.attributes["remote_evidence_refs"] for step in subscriptions])
 ```
 
 The example uses the same explicit `remote` snapshot creation shown in the T027
@@ -307,3 +309,28 @@ worker protocol change is introduced. Actual positive fixture uses Javac 21 on
 prepared K1/K2 worker configurations; upstream Kotlin/unsupported annotation/CFG
 limits remain boundaries, not new language support claims. See
 [change127](changes/127_crossAsyncProcessBoundary.md) for exact AC tests and results.
+
+
+T028 provenance and selector review corrections ([change127, steps 7–8](changes/127_crossAsyncProcessBoundary.md)):
+endpoint summary UNKNOWN does not hide referenced STALE, contradictory or foreign
+proofs. Every candidate's original evidence IDs must match its endpoint refs;
+binding/edge declaration proofs must retain their exact T014 mapping/context/scope
+and shared capture authority. Rejected memberships stay reachable boundaries.
+
+Original proofs with compatible process scope/contexts are retained unchanged.
+When an upstream record has missing/foreign scope or virtual Kafka contexts, an
+explicit `REMOTE_PROOF_ENVELOPE` with `authority=PROVENANCE_REFERENCE_ONLY` retains
+the entire unchanged record under `original_provenance` and its `original_id`.
+Envelope scope/context describes only the derived reference's placement. Its kind
+and polarity are UNKNOWN, freshness is STALE for a stale origin and otherwise
+UNKNOWN. It never supplies compiler authority or bypasses the raw-proof guard;
+`ASYNC_REMOTE_PROOF_REFERENCE_ONLY` preserves the original scope/context gap.
+`remote_evidence_refs` lists original IDs; `membership_evidence_refs` remains only
+the static declaration refs, never instance-correlation evidence.
+
+Duplicate/conflicting release selectors for the same canonical membership are
+checked across all bindings. Each subscription remains visible with
+`ASYNC_MEMBERSHIP_SELECTOR_CONFLICT` and every `conflicting_selectors` entry, but no
+consumer is imported from that conflict. Different canonical endpoints, contexts,
+groups and explicitly compatible versioned endpoints retain independent potential
+paths. No selector name alone creates another consumer or orders its execution.

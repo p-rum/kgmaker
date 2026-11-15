@@ -431,7 +431,7 @@ def test_duplicate_declared_membership_is_not_two_valid_consumers():
     result=api(local(),project_remote(inputs),target_processes=consumers())
     assert len(role(result,'subscription'))==2
     assert not imported(result,'consumer-a')
-    assert all(n.attributes['boundary_reason']=='ASYNC_REMOTE_MEMBERSHIP_UNPROVEN' for n in role(result,'subscription'))
+    assert all(n.attributes['boundary_reason']=='ASYNC_MEMBERSHIP_SELECTOR_CONFLICT' for n in role(result,'subscription'))
 
 
 def test_legacy_t014_original_ids_join_without_new_metadata():
@@ -475,3 +475,125 @@ def test_kafka_identity_allowlist_does_not_change_http_extra_attributes():
     remote=project_remote(inputs)
     assert all(not {'origin_id','subscription_id','subscription_logical_id'} & set(n.attributes)
         for n in remote.nodes if n.kind=='http_interface')
+
+
+def remote_proof_records(view):
+    return [p.get('original_provenance', p) for p in view.technical_view.provenance]
+
+
+@pytest.mark.parametrize('subject', ['client', 'provider', 'binding'])
+@pytest.mark.parametrize('damage', ['stale', 'contradicting', 'foreign-scope'])
+def test_referenced_endpoint_and_binding_proofs_gate_expansion_and_survive(subject, damage):
+    remote = project_remote(specimen()).to_dict()
+    node = next(n for n in remote['nodes'] if n['kind']=='remote_binding') if subject=='binding' else next(n for n in remote['nodes'] if n['id']==subject)
+    if subject=='binding':
+        proof = next(p for p in remote['provenance'] if p['id'] in node['evidence_refs'])
+    else:
+        proof = {'id':'endpoint-proof:'+subject,'evidence_kind':'SYMBOL_RESOLVED',
+            'freshness':'CURRENT','polarity':'SUPPORTING','scope':'production',
+            'context_ids':[node['attributes']['context_id']]}
+        remote['provenance'].append(proof)
+        node.update(evidence_refs=[proof['id']], evidence_kinds=['SYMBOL_RESOLVED'],
+            supporting_refs=[proof['id']], freshness='UNKNOWN')
+        # Keep the candidate's endpoint reference set coherent; prove that the
+        # proof itself is rejected, not merely an obsolete refs list.
+        binding = next(n for n in remote['nodes'] if n['kind']=='remote_binding')
+        binding['attributes']['candidates'][0]['evidence_refs']=[proof['id']]
+        remote['edges'][0]['attributes']['evidence_refs']=[proof['id']]
+        remote['edges'][0]['attributes']['original_evidence_refs']=[proof['id']]
+    if damage=='stale': proof['freshness']='STALE'
+    elif damage=='contradicting':
+        proof['polarity']='CONTRADICTING'
+        node.update(supporting_refs=[],unknown_refs=[],contradicting_refs=[proof['id']])
+    else: proof['scope']='test'
+    before=deepcopy(remote)
+    result=api(local(),remote,target_processes=consumers())
+    assert not imported(result,'consumer-a') and remote==before
+    assert len(role(result,'subscription'))==1
+    assert reaches(result,'local-call',role(result,'subscription')[0].id)
+    assert proof in remote_proof_records(result)
+    assert 'test' not in {p['scope'] for p in result.technical_view.provenance}
+    assert result.technical_status=='PARTIAL'
+
+
+@pytest.mark.parametrize('damage',['mapping-id','capture-id','kind','missing-proof'])
+def test_binding_declaration_authority_must_match_membership(damage):
+    remote=project_remote(specimen()).to_dict()
+    binding=next(n for n in remote['nodes'] if n['kind']=='remote_binding')
+    proof=next(p for p in remote['provenance'] if p['id'] in binding['evidence_refs'])
+    if damage=='mapping-id': proof['mapping_ids']=['unrelated']
+    elif damage=='capture-id': proof['capture_id']='f'*64
+    elif damage=='kind': proof['evidence_kind']='SYMBOL_RESOLVED';binding['evidence_kinds']=['SYMBOL_RESOLVED']
+    else: binding.update(evidence_refs=[],unknown_refs=[],evidence_kinds=[])
+    result=api(local(),remote,target_processes=consumers())
+    assert not imported(result,'consumer-a') and len(role(result,'subscription'))==1
+    if damage!='missing-proof': assert proof in remote_proof_records(result)
+
+
+def aliased_release_specimen():
+    inputs=specimen(); workspace=inputs[0]
+    source=deepcopy(workspace['remote_mapping']['releases'][0]);source['id']='client-other'
+    target=deepcopy(workspace['remote_mapping']['releases'][1]);target['id']='provider-other'
+    workspace['remote_mapping']['releases'].extend([source,target])
+    workspace['remote_mapping']['mappings'].append({'id':'other','transport':'KAFKA',
+        'source_release_id':source['id'],'target_release_id':target['id'],'compatibility_id':None})
+    refresh_handoff(*inputs)
+    return inputs
+
+
+def test_release_aliases_across_bindings_preserve_conflicts_without_duplicate_consumer_paths():
+    remote=project_remote(aliased_release_specimen()); before=remote.to_json()
+    assert [n.resolution_status for n in remote.nodes if n.kind=='remote_binding']==['RESOLVED','RESOLVED']
+    result=api(local(),remote,target_processes=consumers())
+    subscriptions=role(result,'subscription')
+    assert len(subscriptions)==2 and all(reaches(result,'local-call',n.id) for n in subscriptions)
+    assert not imported(result,'consumer-a') and remote.to_json()==before
+    assert all(n.attributes['boundary_reason']=='ASYNC_MEMBERSHIP_SELECTOR_CONFLICT' for n in subscriptions)
+    assert len({n.attributes['binding_id'] for n in subscriptions})==2
+    assert any(d['code']=='ASYNC_MEMBERSHIP_SELECTOR_CONFLICT' for d in result.technical_view.diagnostics)
+    assert result.technical_view.coverage['async_expansion_count']==0
+
+
+def test_distinct_versioned_endpoints_across_bindings_keep_independent_paths():
+    inputs=specimen(fanout=True);workspace,_,documents,_=inputs
+    source=deepcopy(workspace['remote_mapping']['releases'][0]);source['id']='client-second'
+    workspace['remote_mapping']['releases'].append(source)
+    versioned=next(n for d in documents for n in d['nodes'] if n['id']=='consumer-two')
+    versioned['attributes']['message_contract_ref']['release']='v2'
+    release=next(r for r in workspace['remote_mapping']['releases'] if r['interface_id']=='consumer-two')
+    release['release']='v2'
+    mapping=next(m for m in workspace['remote_mapping']['mappings'] if m['id']=='two')
+    mapping.update(source_release_id=source['id'],compatibility_id='explicit-v2')
+    workspace['remote_mapping']['compatibilities']=[{'id':'explicit-v2','source_release_id':source['id'],
+        'target_release_id':release['id'],'assertion':'DECLARED_OPERATION_COMPATIBILITY'}]
+    refresh_handoff(*inputs)
+    result=api(local(),project_remote(inputs),target_processes=consumers())
+    left,right=imported(result,'consumer-a'),imported(result,'consumer-b')
+    assert left and right and len(role(result,'subscription'))==2
+    assert not any(reaches(result,a.id,b.id) or reaches(result,b.id,a.id) for a in left for b in right)
+    assert not any(d['code']=='ASYNC_MEMBERSHIP_SELECTOR_CONFLICT' for d in result.technical_view.diagnostics)
+
+
+def test_unknown_scopeless_framework_proof_is_retained_as_reference_without_uplift():
+    remote=project_remote(specimen()).to_dict();source=next(n for n in remote['nodes'] if n['id']=='client')
+    proof={'id':'raw-framework','evidence_kind':'FRAMEWORK_DERIVED','freshness':'UNKNOWN',
+        'polarity':'SUPPORTING','context_ids':['virtual:kafka','client-context'],'original_payload_hash':'a'*64}
+    remote['provenance'].append(proof)
+    source.update(evidence_refs=[proof['id']],evidence_kinds=['FRAMEWORK_DERIVED'],supporting_refs=[proof['id']],freshness='UNKNOWN')
+    binding=next(n for n in remote['nodes'] if n['kind']=='remote_binding')
+    binding['attributes']['candidates'][0]['evidence_refs']=[proof['id']]
+    remote['edges'][0]['attributes'].update(evidence_refs=[proof['id']],original_evidence_refs=[proof['id']])
+    result=api(local(),remote,target_processes=consumers())
+    assert imported(result,'consumer-a') and proof in remote_proof_records(result)
+    envelopes=[p for p in result.technical_view.provenance if p.get('original_id')==proof['id']]
+    assert envelopes and all(p['authority']=='PROVENANCE_REFERENCE_ONLY' and p['evidence_kind']=='UNKNOWN'
+        and p['freshness']=='UNKNOWN' and p['polarity']=='UNKNOWN' and p['original_provenance']==proof for p in envelopes)
+    assert 'virtual:kafka' not in result.definition.to_dict()['context_ids']
+    assert any(d['code']=='ASYNC_REMOTE_PROOF_REFERENCE_ONLY' and d['original_proof_id']==proof['id']
+        for d in result.technical_view.diagnostics)
+    assert result.technical_status=='PARTIAL'
+    # A previously constructed process-scope envelope cannot make its changed
+    # raw authority current on the next projection.
+    proof['freshness']='STALE'
+    refused=api(local(),remote,target_processes=consumers())
+    assert not imported(refused,'consumer-a') and proof in remote_proof_records(refused)

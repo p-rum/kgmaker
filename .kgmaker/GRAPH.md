@@ -6,11 +6,11 @@
 - Scope: production; omitted files: 490
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `7561aae655bb807600e7f617ce3475406b3f935c1110280abf35e85a6ed6dd9d`; content: `838b126a6a3f5c1a171cf6d41f25da653961ef7ca5ec24012f489956bc642ac8`; freshness: CONTENT_VERIFIED
+- Context: `c05e1ae2c257bd550621f49d16bda2700fefa77e10add6ab31ae7934b8d1f761`; content: `0aedf4e6d65b3ec6f14a28e858b74ac64ce7d37f761285eae8d27bff608a1453`; freshness: CONTENT_VERIFIED
 - Files indexed: 97
-- Symbols and sections: 1332
+- Symbols and sections: 1335
 - Internal imports: 406
-- Heuristic cross-file calls: 7486
+- Heuristic cross-file calls: 7519
 - PostgreSQL tables/columns: 0/0
 - Kafka topics: 0
 - API endpoints: 0
@@ -18,8 +18,8 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 301
-- Inferred/ambiguous relationships: 7486/0
+- Implementation episodes: 302
+- Inferred/ambiguous relationships: 7519/0
 
 ## Architecture diagram
 
@@ -723,14 +723,17 @@ flowchart LR
 - **function** `add_proof` line 344 — `add_proof(proof)`
 - **function** `project_async_process_boundary` line 698 — `project_async_process_boundary(local_process, remote_interfaces, *, target_processes=()`
 - **function** `service` line 744 — `service(node)`
-- **function** `selected` line 747 — `selected(doc, owner, context)`
-- **function** `put_proof` line 758 — `put_proof(proof)`
-- **function** `put` line 766 — `put(collection, item)`
-- **function** `derived` line 771 — `derived(identity, role, originals, refs, context_ids, attrs)`
-- **function** `transition` line 794 — `transition(source, target, witness, role)`
-- **function** `current_interface` line 802 — `current_interface(node, direction)`
-- **function** `membership` line 811 — `membership(source, edge, binding, source_context)`
-- **function** `expand` line 866 — `expand(doc, id_map, depth, ancestry)`
+- **function** `selected` line 773 — `selected(doc, owner, context)`
+- **function** `put_proof` line 784 — `put_proof(proof)`
+- **function** `put` line 792 — `put(collection, item)`
+- **function** `derived` line 797 — `derived(identity, role, originals, refs, context_ids, attrs)`
+- **function** `transition` line 824 — `transition(source, target, witness, role)`
+- **function** `retained_remote_refs` line 834 — `retained_remote_refs(refs, projection_contexts)`
+- **function** `endpoint_proofs_valid` line 867 — `endpoint_proofs_valid(node)`
+- **function** `declaration_proofs_valid` line 878 — `declaration_proofs_valid(node, expected_contexts, mapping_ids)`
+- **function** `current_interface` line 889 — `current_interface(node, direction)`
+- **function** `membership` line 899 — `membership(source, edge, binding, source_context)`
+- **function** `expand` line 954 — `expand(doc, id_map, depth, ancestry)`
 
 ### `src/kgmaker/callgraph.py`
 - **function** `adjacency` line 9 — `adjacency(graph: KnowledgeGraph, include_candidates=True)`
@@ -2356,6 +2359,7 @@ flowchart LR
 - **Change Akceptační kritéria a způsob ověření, Aktualizace stavu, Aktuální audit dodání — 2026-11-07** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/112_specifyTargetAgentIsolation.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md; validation: targeted-tests=passed, full-tests=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/30_packageWorkerResources.md, docs/compiler-inspection.md; validation: wheel7=passed, pytest244=passed, toolchain5=skipped
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest193=passed, kotlin-accessor-cfg=passed, backing-field-no-recursion=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/127_crossAsyncProcessBoundary.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: targeted=passed, review-repros=passed, full-suite=skipped
 - **merge main into T007 ownership branch** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: ownership-tests=passed, exporter-negative-tests=passed, toolchain-gates=skipped, semantic-validation=passed, full-pytest=unknown
 - **Change Akceptační kritéria a způsob ověření, Aktualizace stavu, Aktuální audit dodání — 2026-11-07** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/112_specifyTargetAgentIsolation.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md; validation: targeted_pytest_114_tests_49_subtests=passed, full_pytest_1633_tests_1055_skipped_71_subtests=passed
 - **merge exporters main into T007 branch** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, t006-context-tests=passed, semantic-validation=passed, full-pytest=unknown
@@ -3586,13 +3590,24 @@ flowchart LR
 - `src/kgmaker/business_process.py` may call `294 in `src/kgmaker/architecture_model.py`` (name match at line 554; src/kgmaker/business_process.py:554; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `294 in `src/kgmaker/architecture_model.py`` (name match at line 583; src/kgmaker/business_process.py:583; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `294 in `src/kgmaker/architecture_model.py`` (name match at line 646; src/kgmaker/business_process.py:646; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `294 in `src/kgmaker/architecture_model.py`` (name match at line 797; src/kgmaker/business_process.py:797; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `294 in `src/kgmaker/architecture_model.py`` (name match at line 827; src/kgmaker/business_process.py:827; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 399; src/kgmaker/business_process.py:399; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 492; src/kgmaker/business_process.py:492; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 630; src/kgmaker/business_process.py:630; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 788; src/kgmaker/business_process.py:788; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `262 in `src/kgmaker/architecture_model.py`` (name match at line 817; src/kgmaker/business_process.py:817; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `270 in `src/kgmaker/local_operations.py`` (name match at line 112; src/kgmaker/business_process.py:112; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 101; src/kgmaker/business_process.py:101; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1014; src/kgmaker/business_process.py:1014; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1015; src/kgmaker/business_process.py:1015; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1017; src/kgmaker/business_process.py:1017; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1018; src/kgmaker/business_process.py:1018; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1030; src/kgmaker/business_process.py:1030; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1042; src/kgmaker/business_process.py:1042; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1044; src/kgmaker/business_process.py:1044; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1045; src/kgmaker/business_process.py:1045; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1046; src/kgmaker/business_process.py:1046; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1049; src/kgmaker/business_process.py:1049; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 1066; src/kgmaker/business_process.py:1066; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 109; src/kgmaker/business_process.py:109; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 112; src/kgmaker/business_process.py:112; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 141; src/kgmaker/business_process.py:141; INFERRED 0.85)
@@ -3683,72 +3698,93 @@ flowchart LR
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 738; src/kgmaker/business_process.py:738; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 739; src/kgmaker/business_process.py:739; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 746; src/kgmaker/business_process.py:746; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 751; src/kgmaker/business_process.py:751; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 753; src/kgmaker/business_process.py:753; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 754; src/kgmaker/business_process.py:754; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 755; src/kgmaker/business_process.py:755; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 756; src/kgmaker/business_process.py:756; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 757; src/kgmaker/business_process.py:757; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 758; src/kgmaker/business_process.py:758; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 759; src/kgmaker/business_process.py:759; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 760; src/kgmaker/business_process.py:760; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 765; src/kgmaker/business_process.py:765; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 767; src/kgmaker/business_process.py:767; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 769; src/kgmaker/business_process.py:769; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 770; src/kgmaker/business_process.py:770; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 771; src/kgmaker/business_process.py:771; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 777; src/kgmaker/business_process.py:777; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 779; src/kgmaker/business_process.py:779; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 780; src/kgmaker/business_process.py:780; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 787; src/kgmaker/business_process.py:787; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 805; src/kgmaker/business_process.py:805; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 781; src/kgmaker/business_process.py:781; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 782; src/kgmaker/business_process.py:782; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 783; src/kgmaker/business_process.py:783; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 786; src/kgmaker/business_process.py:786; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 791; src/kgmaker/business_process.py:791; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 806; src/kgmaker/business_process.py:806; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 808; src/kgmaker/business_process.py:808; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 810; src/kgmaker/business_process.py:810; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 813; src/kgmaker/business_process.py:813; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 814; src/kgmaker/business_process.py:814; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 818; src/kgmaker/business_process.py:818; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 819; src/kgmaker/business_process.py:819; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 822; src/kgmaker/business_process.py:822; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 823; src/kgmaker/business_process.py:823; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 825; src/kgmaker/business_process.py:825; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 826; src/kgmaker/business_process.py:826; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 830; src/kgmaker/business_process.py:830; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 831; src/kgmaker/business_process.py:831; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 832; src/kgmaker/business_process.py:832; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 833; src/kgmaker/business_process.py:833; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 834; src/kgmaker/business_process.py:834; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 835; src/kgmaker/business_process.py:835; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 836; src/kgmaker/business_process.py:836; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 837; src/kgmaker/business_process.py:837; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 838; src/kgmaker/business_process.py:838; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 839; src/kgmaker/business_process.py:839; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 840; src/kgmaker/business_process.py:840; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 841; src/kgmaker/business_process.py:841; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 844; src/kgmaker/business_process.py:844; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 845; src/kgmaker/business_process.py:845; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 846; src/kgmaker/business_process.py:846; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 848; src/kgmaker/business_process.py:848; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 849; src/kgmaker/business_process.py:849; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 850; src/kgmaker/business_process.py:850; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 851; src/kgmaker/business_process.py:851; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 854; src/kgmaker/business_process.py:854; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 856; src/kgmaker/business_process.py:856; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 857; src/kgmaker/business_process.py:857; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 855; src/kgmaker/business_process.py:855; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 861; src/kgmaker/business_process.py:861; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 862; src/kgmaker/business_process.py:862; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 863; src/kgmaker/business_process.py:863; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 870; src/kgmaker/business_process.py:870; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 877; src/kgmaker/business_process.py:877; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 878; src/kgmaker/business_process.py:878; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 880; src/kgmaker/business_process.py:880; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 872; src/kgmaker/business_process.py:872; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 873; src/kgmaker/business_process.py:873; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 874; src/kgmaker/business_process.py:874; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 875; src/kgmaker/business_process.py:875; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 881; src/kgmaker/business_process.py:881; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 882; src/kgmaker/business_process.py:882; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 883; src/kgmaker/business_process.py:883; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 894; src/kgmaker/business_process.py:894; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 897; src/kgmaker/business_process.py:897; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 900; src/kgmaker/business_process.py:900; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 901; src/kgmaker/business_process.py:901; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 908; src/kgmaker/business_process.py:908; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 884; src/kgmaker/business_process.py:884; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 885; src/kgmaker/business_process.py:885; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 886; src/kgmaker/business_process.py:886; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 887; src/kgmaker/business_process.py:887; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 892; src/kgmaker/business_process.py:892; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 893; src/kgmaker/business_process.py:893; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 896; src/kgmaker/business_process.py:896; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 898; src/kgmaker/business_process.py:898; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 902; src/kgmaker/business_process.py:902; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 906; src/kgmaker/business_process.py:906; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 907; src/kgmaker/business_process.py:907; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 910; src/kgmaker/business_process.py:910; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 911; src/kgmaker/business_process.py:911; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 913; src/kgmaker/business_process.py:913; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 914; src/kgmaker/business_process.py:914; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 918; src/kgmaker/business_process.py:918; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 919; src/kgmaker/business_process.py:919; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 920; src/kgmaker/business_process.py:920; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 921; src/kgmaker/business_process.py:921; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 922; src/kgmaker/business_process.py:922; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 923; src/kgmaker/business_process.py:923; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 924; src/kgmaker/business_process.py:924; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 925; src/kgmaker/business_process.py:925; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 926; src/kgmaker/business_process.py:926; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 927; src/kgmaker/business_process.py:927; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 928; src/kgmaker/business_process.py:928; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 929; src/kgmaker/business_process.py:929; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 931; src/kgmaker/business_process.py:931; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 932; src/kgmaker/business_process.py:932; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 933; src/kgmaker/business_process.py:933; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 934; src/kgmaker/business_process.py:934; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 936; src/kgmaker/business_process.py:936; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 948; src/kgmaker/business_process.py:948; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 937; src/kgmaker/business_process.py:937; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 938; src/kgmaker/business_process.py:938; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 939; src/kgmaker/business_process.py:939; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 942; src/kgmaker/business_process.py:942; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 944; src/kgmaker/business_process.py:944; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 945; src/kgmaker/business_process.py:945; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 950; src/kgmaker/business_process.py:950; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 951; src/kgmaker/business_process.py:951; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 952; src/kgmaker/business_process.py:952; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 970; src/kgmaker/business_process.py:970; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 958; src/kgmaker/business_process.py:958; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 965; src/kgmaker/business_process.py:965; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 966; src/kgmaker/business_process.py:966; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 968; src/kgmaker/business_process.py:968; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 971; src/kgmaker/business_process.py:971; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 983; src/kgmaker/business_process.py:983; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 986; src/kgmaker/business_process.py:986; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 989; src/kgmaker/business_process.py:989; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 990; src/kgmaker/business_process.py:990; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 996; src/kgmaker/business_process.py:996; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 998; src/kgmaker/business_process.py:998; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 1020; src/kgmaker/business_process.py:1020; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 1031; src/kgmaker/business_process.py:1031; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 1058; src/kgmaker/business_process.py:1058; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 165; src/kgmaker/business_process.py:165; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 186; src/kgmaker/business_process.py:186; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 187; src/kgmaker/business_process.py:187; INFERRED 0.85)
@@ -3765,16 +3801,17 @@ flowchart LR
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 60; src/kgmaker/business_process.py:60; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 662; src/kgmaker/business_process.py:662; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 76; src/kgmaker/business_process.py:76; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 761; src/kgmaker/business_process.py:761; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 768; src/kgmaker/business_process.py:768; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 84; src/kgmaker/business_process.py:84; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 859; src/kgmaker/business_process.py:859; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 86; src/kgmaker/business_process.py:86; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 885; src/kgmaker/business_process.py:885; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 896; src/kgmaker/business_process.py:896; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 902; src/kgmaker/business_process.py:902; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 926; src/kgmaker/business_process.py:926; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 865; src/kgmaker/business_process.py:865; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 93; src/kgmaker/business_process.py:93; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 937; src/kgmaker/business_process.py:937; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 95; src/kgmaker/business_process.py:95; INFERRED 0.85)
-- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 962; src/kgmaker/business_process.py:962; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 973; src/kgmaker/business_process.py:973; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 985; src/kgmaker/business_process.py:985; INFERRED 0.85)
+- `src/kgmaker/business_process.py` may call `213 in `src/kgmaker/service_topology.py`` (name match at line 991; src/kgmaker/business_process.py:991; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `32 in `src/kgmaker/views.py`` (name match at line 200; src/kgmaker/business_process.py:200; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 117; src/kgmaker/business_process.py:117; INFERRED 0.85)
 - `src/kgmaker/business_process.py` may call `111 in `workers/jvm/src/main/java/org/kgmaker/worker/State.java`` (name match at line 118; src/kgmaker/business_process.py:118; INFERRED 0.85)

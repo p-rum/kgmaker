@@ -179,3 +179,141 @@ Workflow je ve fázi `review` s uloženými architect/implementation/test artefa
 nezávislé review APPROVE nebylo nahrazeno vlastním hodnocením. README/capability/
 API příklady/progress/acceptance odpovídají aktuálnímu kontraktu. Veřejná dodávka
 zůstává PR_OPEN do samostatného review/merge; implementer nemerguje.
+
+## Krok 7 — review fix: skutečná authority endpoint/binding proofs (T028-S01–S04, AC04–AC05)
+
+Výchozí HEAD `1732a3d7b924a7dfd60c67436622ae05db43dfff`, base
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`. Nezávislé
+[REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899165580)
+našlo stale endpoint proof skrytý pod UNKNOWN endpoint summary a stale binding
+proof, které přesto dovolily expanzi. Původní cílená sada reviewerovi prošla
+244 PASS / 0 SKIP, 134.94 s; tím nejsou nálezy vyřešeny. Vlastní opakování všech
+čtyř reviewer reprodukcí na přesném výchozím HEAD: **FAIL očekávaný, 4 failed,
+0.61 s**. Tři reprodukce patří tomuto kroku; čtvrtá je řešena v kroku 8.
+
+`business_process.py` nyní kontroluje přímo referenced endpoint proofs (stale,
+contradicting, foreign scope a nedostatečné evidence kinds), nikoli jen node flag.
+Candidate a `original_evidence_refs` musí přesně odpovídat endpoint refs. Binding
+a edge musí nést původní T014 SOURCE_ONLY/UNKNOWN deklarace se správnými scope,
+contexts, mapping IDs a společným capture ID. Vyšší freshness/kind se nedovozuje
+ze změny summary flagu. Neplatná authority zachová subscription boundary a blokuje
+consumer expansion. Původní lokální success/exception cesty se nemění.
+
+Rejected i přijaté raw proofs se neztrácejí. Pokud původní scope/contexts již
+vyhovují ProcessView, zůstane record beze změny. Jinak nový odvozený provenance
+odkaz nese `projection_role=REMOTE_PROOF_ENVELOPE`,
+`authority=PROVENANCE_REFERENCE_ONLY`, `original_id` a celý nezměněný
+`original_provenance`. Top-level process scope/context popisuje pouze umístění
+odkazu, ne původní authority. Obálka má evidence_kind/polarity UNKNOWN a freshness
+STALE u stale originálu, jinak UNKNOWN; nikdy nepředstírá nový CURRENT compiler
+proof. Guard čte výhradně raw upstream record. Diagnostic
+`ASYNC_REMOTE_PROOF_REFERENCE_ONLY` zachovává původní scope/context/freshness gap.
+Boundary polarity buckets i druh evidence nyní zachovávají konkrétní odkazované
+records; stale boundary se neskrývá pod silnějším summary.
+
+Kompatibilita: canonical T012 framework proofs mohou mít UNKNOWN freshness,
+chybějící scope a virtuální Kafka contexts. Zůstávají použitelné jako původní
+omezená T014 evidence, nikoli přepsané na CURRENT; původní obsah je dohledatelný.
+Není nový resolver, ProcessView schema ani worker protokol. Dotčené soubory:
+`business_process.py`, veřejné `test_t028_cross_async_process_boundary.py` a níže
+uvedené dokumentační plochy. Veřejné negativy v platných ViewDocuments pokrývají
+stale/contradicting/foreign endpoint i binding proof, wrong mapping/capture/kind,
+missing declaration, exact raw preservation a nulovou mutaci. První vlastní RED
+příkaz s `-k 'referenced_endpoint or binding_declaration_authority'`:
+**13 failed, 43 deselected, 0.97 s**. Doplněná positive/negative dvojice potvrzuje,
+že reference-only obálka nezavře PARTIAL gap a neobejde stale raw authority.
+
+## Krok 8 — review fix: aliasy release selectorů napříč bindingy (T028-S01–S04, AC01/AC03/AC05)
+
+Výchozí HEAD `1732a3d7b924a7dfd60c67436622ae05db43dfff` plus krok 7 v témže
+pracovním diffu. Dvě source release IDs téhož producer endpointu a dvě target
+release IDs téhož consumer endpointu vytvořily dva samostatné RESOLVED T014
+bindingy. Původní guard kontroloval pouze jeden candidate array, proto importoval
+stejný consumer dvakrát. Nový index kontroluje membership napříč celým dodaným
+remote view podle canonical endpoint/service/context/group a channel identity.
+Release ID je selector, ne další consumer. Konfliktní selectors zůstávají všechny
+viditelné v `conflicting_selectors`, s boundary/diagnostic
+`ASYNC_MEMBERSHIP_SELECTOR_CONFLICT`, bez importované consumer cesty.
+
+Odlišné canonical endpoints, contexts a groups nejsou sloučeny; positive test
+používá dva bindingy a explicitně kompatibilní v2 endpoint, zachová oba consumers
+a dokládá absenci A-before-B. Nejde o odhad verze podle jména; používá původní
+content-bound interface identity a T014 declaration contract. Původní test duplicity
+v jednom bindingu nyní očekává stejný explicitní conflict důvod. Nový RED:
+`-k 'release_aliases or distinct_versioned or unknown_scopeless'` → **1 failed,
+2 passed, 56 deselected, 0.64 s**.
+
+Po opravách obou nálezů:
+
+```sh
+PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_t028_cross_async_process_boundary.py tests/test_t014_bind_remote_interfaces.py tests/test_t027_cross_http_process_boundary.py /tmp/kgmaker-review108-repros.py -k 'not actual_t012'
+```
+
+**PASS: 115 passed, 2 deselected, 1.95 s**, včetně všech 4 původních reviewer
+reprodukcí. Jde o průběžný protokolový důkaz před závěrečnou actual regresí a
+semantic maintenance; full suite NOT_RUN. README, process-paths API/capability
+včetně ukázky `remote_evidence_refs`, remote-interfaces, progress a acceptance
+jsou aktualizovány ve stejném review fixu. Registry/spec/installed CLI templates
+bez dopadu: identity, schema a CLI parametry se nemění. Zbývající práce tohoto
+kroku je finální cílený běh, source-backed semantic reanchor, commit/push a nové
+nezávislé review přesného HEAD; žádný původní APPROVE se nepředpokládá.
+
+
+Závěrečná cílená regrese kroků 7–8 (funkční kód se po tomto běhu neměnil):
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider tests/test_t028_cross_async_process_boundary.py tests/test_t012_catalog_kafka_interfaces.py tests/test_t014_bind_remote_interfaces.py tests/test_t025_build_local_process_path.py tests/test_t027_cross_http_process_boundary.py /tmp/kgmaker-review108-repros.py
+```
+
+**PASS: 264 passed / 0 SKIP, 138.32 s**: 260 veřejných případů (T028 nyní 59)
+a všechny 4 nezávislé reviewer reprodukce. Skutečný JDK21/Javac/K1/K2; actual
+T012→T014→T025→T028 pipeline obsahuje původní UNKNOWN/scopeless/virtuální Kafka
+proofs a prochází bez jejich přepisování na compiler authority. Dočasné symlinky
+`workers/jvm/target` a `target-k2` do připraveného toolchainu byly opět odstraněny.
+V protokolové fixture byly pro contradictory proof upraveny i jeho odpovídající
+polarity buckets, aby vstup zůstal platným ViewDocument; produkční validátor nebyl
+oslaben. `git diff --check` a byte identity původního T026/T027 prefixu vůči
+`1732a3d`: PASS. Plná suite a nový aplikační/Kafka runtime **NOT_RUN**.
+
+Předchozí CI run `43745930952` nad HEAD `1732a3d` skončil failure se sedmi
+ověřenými prázdnými step seznamy (5 failure, 2 cancelled); žádné CI testy neběžely.
+To je historický NOT_RUN testový důkaz, nikoli code/test PASS nebo náhrada lokálního
+běhu. Nová CI metadata se uvádějí v PR body po publikaci nového HEAD. Merge ani
+APPROVE nejsou součástí tohoto implementačního kroku.
+
+## Krok 9 — review-fix semantic maintenance a předání (T028-S05, AC06)
+
+Výchozí SHA `1732a3d7b924a7dfd60c67436622ae05db43dfff`, nikoli původní main.
+Aktuální pre-fix index existoval; recon prošel přes `status`, query a přímý zdroj.
+Semantic update/apply zachovává všech **46 konceptů / 147 vztahů / 301 epizod**
+reviewované baseline. Patch pouze obnovuje aktuální zdrojové citations 7 dotčených
+konceptů a 18 vazeb; remove seznamy jsou prázdné a nový koncept/vztah se nevymýšlí.
+Reanchor porovnává přesné baseline SHA-256 zdrojů a nezměněné citované řádky.
+Po pozdější dokumentační úpravě apply správně odmítl zastaralý packet beze zápisu
+(`analysis context changed`); nový `semantic update` a nový patch tento packet
+nahradily. Nešlo o přepsání update_id bez nového vyhodnocení.
+
+```sh
+./kgmaker semantic update --base 1732a3d7b924a7dfd60c67436622ae05db43dfff --note docs/changes/127_crossAsyncProcessBoundary.md
+./kgmaker scan --no-docs
+./kgmaker semantic apply
+./kgmaker semantic validate
+./kgmaker memory capture --base 1732a3d7b924a7dfd60c67436622ae05db43dfff --validation targeted=passed --validation review-repros=passed --validation full-suite=skipped
+```
+
+Apply/validate a preservation audit **PASS**. Nová skutečně zachycená review-fix
+epizoda dává **46 konceptů / 147 vztahů / 302 epizod**; všechna původní IDs,
+summary, kind/confidence/evidence a celé historické epizody zachovány. Grafy se
+znovu generují příkazem, ne ručním přepisem. README/API/capability/CLI příklady,
+status a acceptance odpovídají opravě; staré testové výsledky jsou výslovně
+historické a current row obsahuje 264 PASS. Workflow zaznamenává opravnou iteraci,
+nezávislé REQUEST_CHANGES se nepřepisuje vlastní deklarací APPROVE. Před push
+ověřen main `93c52d33` a remote branch stále `1732a3d`; není potřeba přebírat
+nesloučené sousední PR106/107. Následuje normální commit/push a review nového HEAD.
+
+Finální `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+review-baseline preservation audit a `git diff --check`: **PASS**. Aktuální
+vygenerovaný graf má 587 souborů, 6 742 uzlů a 46 843 vztahů (včetně epizod).
+Task workflow je v opravné iteraci 1 ve fázi review; uloženy skutečné implementační
+a testové artefakty, žádné vlastní APPROVE. Cílené testy se po dokumentační údržbě
+zbytečně neopakovaly; funkční source/test obsah zůstal od finálního běhu shodný.

@@ -170,7 +170,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T025](tasks/T-025_build-local-process-path.md) | MERGED | PARTIAL | `32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6` | [src/kgmaker/control_flow.py](../src/kgmaker/control_flow.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_t025_build_local_process_path.py](../tests/test_t025_build_local_process_path.py) | [#65](https://github.com/p-rum/kgmaker/pull/65), [#60](https://github.com/p-rum/kgmaker/pull/60) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T026](tasks/T-026_collapse-business-steps.md) | MERGED | PARTIAL | `9442114d169b84e6c9f98dd097faafd80eff0d48` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t026_collapse_business_steps.py](../tests/test_t026_collapse_business_steps.py) | [#66](https://github.com/p-rum/kgmaker/pull/66) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T027](tasks/T-027_cross-http-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t027_cross_http_process_boundary.py](../tests/test_t027_cross_http_process_boundary.py) | [PR105](https://github.com/p-rum/kgmaker/pull/105), independent APPROVE and verified two-parent merge | Historical integration 200 PASS / 0 SKIP, 10.76 s; independent review 200 PASS / 0 SKIP, 13.00 s. Source/semantic preservation verified. Status reconciled in change127; full suite remains NOT_RUN. |
-| [T028](tasks/T-028_cross-async-process-boundary.md) | PR_OPEN | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [business_process.py](../src/kgmaker/business_process.py), [test_t028_cross_async_process_boundary.py](../tests/test_t028_cross_async_process_boundary.py) | [change127](changes/127_crossAsyncProcessBoundary.md) | Pure potential Kafka memberships; exact source IDs, partial-order fan-out, visible unknown correlation/consumer/loop boundaries. 242 PASS / 0 SKIP, 136.07 s; actual public Kafka pipeline on prepared K1/K2 workers. Final guards: 42 actual-pipeline PASS plus 66 protocol PASS / 2 deselected; semantic preservation and scan/check PASS; independent review pending. |
+| [T028](tasks/T-028_cross-async-process-boundary.md) | PR_OPEN | VERIFIED_IN_SCOPE | reviewed `1732a3d7b924a7dfd60c67436622ae05db43dfff` + AC05 fixes; main `93c52d33` | [business_process.py](../src/kgmaker/business_process.py), [test_t028_cross_async_process_boundary.py](../tests/test_t028_cross_async_process_boundary.py) | [PR108](https://github.com/p-rum/kgmaker/pull/108), [change127 steps 7–8](changes/127_crossAsyncProcessBoundary.md) | 264 PASS / 0 SKIP, 138.32 s (260 public + 4 reviewer repros), actual JDK21/Javac/K1/K2. Raw endpoint/binding authority retained and checked; release aliases across bindings remain conflicting boundaries. New independent review pending; full suite NOT_RUN. |
 | [T029](tasks/T-029_project-process-failures.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T030](tasks/T-030_prepare-process-label-packet.md) | MERGED | PARTIAL | `9eec41a403b4e6601fe3addac168bf39d37f31b6` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t030_prepare_process_label_packet.py](../tests/test_t030_prepare_process_label_packet.py) | [#75](https://github.com/p-rum/kgmaker/pull/75) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T031](tasks/T-031_validate-process-annotations.md) | MERGED | PARTIAL | `2c7b38ea2dc7b5ad08009eefa276c4dc41a5b1a9` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t031_validate_process_annotations.py](../tests/test_t031_validate_process_annotations.py) | [#77](https://github.com/p-rum/kgmaker/pull/77) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -1538,12 +1538,24 @@ are required; duplicates, conflicting selectors, stale evidence, missing consume
 loops and expansion limits stay explicit. Static binding is not instance correlation;
 all supported inputs leave that claim UNKNOWN with no correlation evidence refs.
 
-Current targeted evidence on the T028 diff over `93c52d33`: **242 PASS / 0 SKIP,
+Historical initial handoff `1732a3d` over `93c52d33`: **242 PASS / 0 SKIP,
 136.07 s** across T028/T012/T014/T025/T027 with actual JDK21/Javac and prepared
 K1/K2 worker configurations. Final bounded-input follow-up: 42 PASS / 0 SKIP,
 20.18 s including actual pipeline; Kafka-only metadata follow-up: 66 PASS,
-2 deselected, 1.21 s. T028's 43 cases include the real public pipeline and
+2 deselected, 1.21 s. That initial handoff's 43 T028 cases include the real public pipeline and
 adversarial reachability checks. Full suite, application/Kafka runtime and GH CI are
 NOT_RUN; no data or delivery availability claim follows from these static tests.
 See [change127](changes/127_crossAsyncProcessBoundary.md) and
 [API/capability examples](process-paths.md#potential-asynchronous-process-paths-t028).
+
+
+T028 PR108 independent review found two AC05 blockers after the original handoff:
+stale endpoint/binding proof authority and duplicate release selectors across
+binding objects. Both are addressed in [change127 steps 7–8](changes/127_crossAsyncProcessBoundary.md).
+Current targeted result: **264 PASS / 0 SKIP, 138.32 s**, including all four reviewer
+reproductions and actual JDK21/Javac/K1/K2. Raw proofs survive unchanged, directly
+or inside an explicit UNKNOWN reference-only envelope with gap diagnostics. The
+envelope never authorizes expansion. Global membership conflicts retain every
+boundary while different canonical endpoints/groups and explicitly compatible
+versioned endpoints keep independent potential paths. New independent review of
+the published fix remains required; original review is REQUEST_CHANGES, not APPROVE.

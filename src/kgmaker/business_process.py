@@ -745,6 +745,32 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
         def service(node):
             return node.attributes.get('service_id') or (node.owner_id or '').removeprefix('service:')
 
+        # Release IDs are selectors, not additional consumer identities. Compare
+        # the canonical endpoint/service/context/group across the entire capture,
+        # including separate source-release bindings. Distinct content-bound
+        # endpoint IDs, groups or contexts remain independent potential members.
+        memberships = defaultdict(list)
+        for edge in remote.edges:
+            if edge.relation != 'remote_kafka_publish_subscribe': continue
+            source, target = rnodes.get(edge.source), rnodes.get(edge.target)
+            if source is None or target is None: continue
+            key = digest([source.id, service(source), target.id, service(target),
+                edge.attributes.get('scope'), sorted(edge.attributes.get('context_ids', [])),
+                source.attributes.get('broker_realm'), sorted(source.attributes.get('topics', [])),
+                target.attributes.get('consumer_group')])
+            memberships[key].append(edge)
+        selector_conflicts = {}
+        for group in memberships.values():
+            if len(group) < 2: continue
+            selectors = []
+            for edge in sorted(group, key=lambda value: value.id):
+                binding = rnodes.get(edge.attributes.get('binding_id'))
+                selectors.append({'edge_id':edge.id, 'binding_id':binding.id if binding else None,
+                    'source_release_id':binding.attributes.get('source_release_id') if binding else None,
+                    'target_release_id':edge.attributes.get('target_release_id'),
+                    'mapping_id':edge.attributes.get('mapping_id')})
+            for edge in group: selector_conflicts[edge.id] = selectors
+
         def selected(doc, owner, context):
             definition = doc['definition']
             choice = definition['context_selection']
@@ -785,9 +811,13 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                 'instance_correlation':'UNKNOWN', 'correlation_evidence_refs':[],
                 'boundary_reason':'ASYNC_STATIC_POTENTIAL', **attrs}
             kinds = tuple(sorted({proofs[ref].get('evidence_kind', 'UNKNOWN') for ref in refs}))
+            buckets = {name:tuple(ref for ref in refs if proofs[ref].get('polarity', 'UNKNOWN') == polarity)
+                for name, polarity in [('supporting_refs','SUPPORTING'),
+                    ('contradicting_refs','CONTRADICTING'), ('unknown_refs','UNKNOWN')]}
             node = ViewNode(identity, 'async_boundary', role, original_ids=tuple(sorted(set(originals))),
-                evidence_refs=refs, evidence_kinds=kinds, resolution_status='UNRESOLVED', freshness='UNKNOWN',
-                unknown_refs=refs, attributes=common)
+                evidence_refs=refs, evidence_kinds=kinds, resolution_status='UNRESOLVED',
+                freshness='STALE' if any(proofs[ref].get('freshness') == 'STALE' for ref in refs) else 'UNKNOWN',
+                **buckets, attributes=common)
             put(nodes, node.to_dict())
             boundary_count += 1
             return node
@@ -796,15 +826,73 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
             identity = 'async-edge:' + digest([source, target, witness.id, role])
             edge = ViewEdge(identity, source, target, 'async', original_ids=witness.original_ids,
                 evidence_refs=witness.evidence_refs, evidence_kinds=witness.evidence_kinds,
-                resolution_status='UNRESOLVED', freshness='UNKNOWN', unknown_refs=witness.evidence_refs,
+                resolution_status='UNRESOLVED', freshness=witness.freshness,
+                supporting_refs=witness.supporting_refs, contradicting_refs=witness.contradicting_refs,
+                unknown_refs=witness.unknown_refs,
                 attributes={**deepcopy(witness.attributes), 'async_transition':role})
             put(edges, edge.to_dict())
+
+        def retained_remote_refs(refs, projection_contexts):
+            """Keep raw upstream authority; an envelope supplies only process scope.
+
+            T012 framework proofs can have no scope and virtual Kafka contexts.
+            Rebinding those fields in-place would invent authority. Preserve the
+            exact record inside a distinct envelope when ProcessView cannot admit
+            its original scope/context. The envelope is UNKNOWN reference authority;
+            original kind, freshness and polarity survive only in the raw record.
+            """
+            result = []
+            projection_contexts = sorted(set(projection_contexts))
+            for ref in sorted(set(refs)):
+                proof = rproofs[ref]
+                if (proof.get('scope') == scope
+                        and set(proof.get('context_ids', [])) <= set(projection_contexts)):
+                    retained = proof
+                else:
+                    retained = {'id':'ev:async-remote:' + digest([proof, scope, projection_contexts]),
+                        'original_id':ref, 'scope':scope, 'context_ids':projection_contexts,
+                        'evidence_kind':'UNKNOWN',
+                        'freshness':'STALE' if proof.get('freshness') == 'STALE' else 'UNKNOWN',
+                        'polarity':'UNKNOWN', 'authority':'PROVENANCE_REFERENCE_ONLY',
+                        'projection_role':'REMOTE_PROOF_ENVELOPE', 'original_provenance':deepcopy(proof)}
+                    if retained['id'] not in proofs:
+                        diagnostics.append({'code':'ASYNC_REMOTE_PROOF_REFERENCE_ONLY',
+                            'proof_id':retained['id'], 'original_proof_id':ref,
+                            'original_scope':proof.get('scope'),
+                            'original_context_ids':deepcopy(proof.get('context_ids', [])),
+                            'original_freshness':proof.get('freshness', 'UNKNOWN')})
+                put_proof(retained)
+                result.append(retained['id'])
+            return result
+
+        def endpoint_proofs_valid(node):
+            # UNKNOWN is canonical for T012's mixed framework evidence. It is
+            # retained, not promoted. STALE/contradicting/foreign proofs cannot
+            # authorize an expansion regardless of the endpoint summary flag.
+            return all(rproofs[ref].get('freshness') != 'STALE'
+                and rproofs[ref].get('polarity') != 'CONTRADICTING'
+                and rproofs[ref].get('scope') in {None, scope}
+                and rproofs[ref].get('evidence_kind') not in
+                    {'UNKNOWN', 'UNRESOLVED', 'SYNTAX_CANDIDATE', 'DISPATCH_CANDIDATE'}
+                for ref in node.evidence_refs)
+
+        def declaration_proofs_valid(node, expected_contexts, mapping_ids):
+            return bool(node.evidence_refs) and all(
+                rproofs[ref].get('evidence_kind') == 'SOURCE_ONLY'
+                and rproofs[ref].get('freshness') == 'UNKNOWN'
+                and rproofs[ref].get('polarity') == 'UNKNOWN'
+                and rproofs[ref].get('scope') == scope
+                and set(rproofs[ref].get('context_ids', [])) == set(expected_contexts)
+                and set(rproofs[ref].get('mapping_ids', [])) == set(mapping_ids)
+                and isinstance(rproofs[ref].get('capture_id'), str)
+                and bool(rproofs[ref]['capture_id']) for ref in node.evidence_refs)
 
         def current_interface(node, direction):
             attrs = node.attributes
             return (node.kind == 'kafka_interface' and attrs.get('direction') == direction
                 and attrs.get('scope') == scope and node.freshness != 'STALE'
                 and node.resolution_status == 'RESOLVED' and not node.contradicting_refs
+                and endpoint_proofs_valid(node)
                 and attrs.get('code_binding') == 'VERIFIED_STATIC'
                 and all(attrs[key] in node.original_ids for key in ('origin_id', 'subscription_id', 'code_fact_id')
                     if attrs.get(key) is not None))
@@ -812,7 +900,7 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
         def membership(source, edge, binding, source_context):
             """Validate one exact T014 candidate; aggregate ambiguity is not authority."""
             target = rnodes.get(edge.target)
-            if target is None or binding is None:
+            if target is None or binding is None or edge.id in selector_conflicts:
                 return None
             attrs, ba = edge.attributes, binding.attributes
             candidates = ba.get('candidates', [])
@@ -840,11 +928,11 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                     or attrs.get('transition_kind') != 'ASYNC_PUBLISH_SUBSCRIBE'
                     or attrs.get('compatibility') not in {'EXACT_DECLARATION', 'EXPLICIT_PAIRED_DECLARATION'}
                     or not current_interface(source, 'PRODUCER') or not current_interface(target, 'CONSUMER')
-                    or not edge.evidence_refs
-                    or any(rproofs[ref].get('freshness') == 'STALE' or rproofs[ref].get('scope') != scope
-                        or rproofs[ref].get('mapping_ids') != [candidate['mapping_id']]
-                        or set(rproofs[ref].get('context_ids', [])) != set(candidate.get('context_ids', []))
-                        for ref in edge.evidence_refs)
+                    or set(candidate.get('evidence_refs', [])) != set(source.evidence_refs) | set(target.evidence_refs)
+                    or set(attrs.get('original_evidence_refs', [])) != set(candidate.get('evidence_refs', []))
+                    or not declaration_proofs_valid(binding, [source_context], ba.get('mapping_ids', []))
+                    or not declaration_proofs_valid(edge, candidate.get('context_ids', []), [candidate['mapping_id']])
+                    or len({rproofs[ref]['capture_id'] for ref in (*binding.evidence_refs, *edge.evidence_refs)}) != 1
                     or source.attributes.get('broker_realm') is None
                     or source.attributes.get('broker_realm') != target.attributes.get('broker_realm')
                     or not source.attributes.get('topics') or source.attributes.get('topics') != target.attributes.get('topics')
@@ -886,10 +974,11 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                 for origin, site, source_context in origins:
                     prefix = 'async:' + digest([id_map[origin['id']], source.id, site])
                     origin_refs = origin['evidence_refs']
-                    publish = derived(prefix + ':publish', 'publish', [source.id, site], origin_refs,
+                    publish_refs = [*origin_refs, *retained_remote_refs(source.evidence_refs, [source_context])]
+                    publish = derived(prefix + ':publish', 'publish', [source.id, site], publish_refs,
                         [source_context], {'source_interface_id':source.id, 'source_call_site':site})
                     transition(id_map[origin['id']], publish.id, publish, 'PUBLISH_INTENT')
-                    channel = derived(prefix + ':channel', 'channel', [source.id, site], origin_refs,
+                    channel = derived(prefix + ':channel', 'channel', [source.id, site], publish_refs,
                         [source_context], {'source_interface_id':source.id,
                             'broker_realm':source.attributes.get('broker_realm'), 'topics':deepcopy(source.attributes.get('topics', []))})
                     transition(publish.id, channel.id, channel, 'CHANNEL_INTENT')
@@ -904,13 +993,18 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                     branches.sort(key=lambda branch: digest([branch[0].id if branch[0] else None,
                         branch[1].id if branch[1] else None, branch[2]]))
                     for edge, binding, selector in branches:
-                        refs = edge.evidence_refs if edge else binding.evidence_refs if binding else origin_refs
                         target = rnodes.get(edge.target) if edge else None
                         checked = membership(source, edge, binding, source_context) if edge else None
                         if origin['freshness'] == 'STALE' or any(proofs[r].get('freshness') == 'STALE' for r in origin_refs):
                             checked = None
                         target_context = checked[1] if checked else None
-                        reasons = 'ASYNC_REMOTE_MEMBERSHIP_UNPROVEN' if edge else 'ASYNC_REMOTE_TARGET_UNRESOLVED'
+                        remote_refs = set(source.evidence_refs)
+                        for witness in (edge, binding, target):
+                            if witness is not None: remote_refs.update(witness.evidence_refs)
+                        refs = retained_remote_refs(remote_refs, [source_context,
+                            *([target_context] if target_context else [])]) or origin_refs
+                        reasons = ('ASYNC_MEMBERSHIP_SELECTOR_CONFLICT' if edge and edge.id in selector_conflicts
+                            else 'ASYNC_REMOTE_MEMBERSHIP_UNPROVEN' if edge else 'ASYNC_REMOTE_TARGET_UNRESOLVED')
                         matching = []
                         if checked:
                             for tp in targets:
@@ -950,7 +1044,9 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
                             'consumer_group':target.attributes.get('consumer_group') if target else None,
                             'subscription_id':target.attributes.get('subscription_id') if target else None,
                             'subscription_logical_id':target.attributes.get('subscription_logical_id') if target else None,
-                            'membership_evidence_refs':list(refs) if edge else [],
+                            'membership_evidence_refs':list(edge.evidence_refs) if edge else [],
+                            'remote_evidence_refs':sorted(remote_refs),
+                            'conflicting_selectors':deepcopy(selector_conflicts.get(edge.id, [])) if edge else [],
                             'membership_status':edge.resolution_status if edge else 'UNRESOLVED',
                             'branch_semantics':'POTENTIAL_MEMBERSHIP', 'consumer_order':'UNSPECIFIED'}
                         original = [source.id, edge.id] + list(edge.original_ids) if edge else [source.id, binding.id] if binding else [source.id]

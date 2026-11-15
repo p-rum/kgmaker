@@ -64,3 +64,9 @@ expanding a potential consumer path; T014's aggregate AMBIGUOUS is retained rath
 than relabelled as resolved fan-out. A static binding is not proof of instance
 correlation. See [change127](changes/127_crossAsyncProcessBoundary.md) and the
 [public API example](process-paths.md#potential-asynchronous-process-paths-t028).
+
+T028 inspects raw endpoint and binding proofs in addition to summary freshness.
+It preserves rejected raw records through explicit reference-only process envelopes
+when their original scope/contexts do not fit ProcessView; those envelopes confer
+no new authority. Release aliases across separate T014 binding objects cannot
+multiply the same canonical consumer membership. See [review fixes in change127](changes/127_crossAsyncProcessBoundary.md).
