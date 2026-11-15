@@ -1450,7 +1450,7 @@ obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
 
 ### T003-S07-W09 — unified flow model
 
-Delivery IN_PROGRESS; verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
+Delivery PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)); verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
 [Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
 
 | Acceptance | Aktuální cílený důkaz |

@@ -3,7 +3,7 @@
 Výchozí main `8e7dff5b82597184662797c07a68e5ec460e9e0e`, tree
 `21b6e0fbfa4f7b863c5141361c86e1b96e7cce10`. W08 dependency byla nezávisle
 APPROVE a merged v PR106. Samostatná větev `feat/t003-s07-09-unified-flow-views`.
-Dodání IN_PROGRESS; ověření VERIFIED_IN_SCOPE po níže uvedené finální integraci. Nadřazené T003-S07/T003-AC07 se tímto
+Dodání PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)); ověření VERIFIED_IN_SCOPE po níže uvedené finální integraci. Nadřazené T003-S07/T003-AC07 se tímto
 neprohlašuje za dokončené. Uživatelský pokyn omezuje běhy na cílené testy;
 full pytest je NOT_RUN i přes historický text specifikace/profilu.
 
@@ -407,3 +407,30 @@ nejde o independent APPROVE ani fingované implement/test phase. Přesný pytest
 command a výsledek jsou v kroku9; durable task zůstává review.
 Následný pouze dokumentační PR odkaz vyžaduje scan/check/diff, nikoli znovu pytest.
 Independent review zbývá; implementer nemerguje. Full/GH CI NOT_RUN.
+
+
+## Krok 11 — publikace PR a dokumentační identita
+
+T003-S07-W09 krok5, AC04. Baseline implementační commit
+`9eeb30d0ec6dd0f4470eb33c6bbbefffcc943253`, tree
+`e7110f847a8af8a2c8b1d572d98a34c49cf2083d`; remote main stále7bb8b8d.
+`git push -u origin feat/t003-s07-09-unified-flow-views` **PASS**, poté vznikl
+[PR109](https://github.com/p-rum/kgmaker/pull/109), open / draft=false / merged=false.
+Tento krok mění pouze status/odkaz v change128, production progress a acceptance
+inventáři. Atomický W09 řádek a jeho tabulkové součty posouvá z PLANNED na PR_OPEN;
+žádný sousední work package tím není ověřen ani dokončen. Runtime/source/tests
+jsou byte-identické s9eeb30d. `kgmaker scan`, `kgmaker check`, preservation a
+`git diff --check` po těchto docs změnách **PASS**; pytest **NOT_RUN** (docs-only).
+Kvůli změně dokumentačních fingerprintů zopakovány step10 příkazy semantic
+update/reanchor/apply/validate (bez nového memory capture): **PASS**, všech
+49/165/314 záznamů zachováno. PR body rozlišuje checkpoint293 a finální84, skutečný toolchain od schema fixture,
+base/head a omezení. Implementer nemerguje; nezávislé review zůstává další krok.
+
+Pro reviewerův jednoznačný replay je zde celý původní293 příkaz (historický krok8):
+
+```sh
+JAVA_TOOL_OPTIONS=-XX:-UsePerfData JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_WORKERS_HOME=/tmp/kgmaker-unified-flow-views/workers KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_unified_flow_views.py tests/test_t025_build_local_process_path.py tests/test_spring_proxy_async.py tests/test_control_flow.py tests/test_evidence_ranking.py tests/test_graph_provider.py tests/test_t028_cross_async_process_boundary.py tests/test_argument_parameter_flow.py::test_graph_evidence_roundtrip_and_process_preserve_call_binding tests/test_return_consumer_flow.py::test_process_and_impact_report_static_return_consumer_provenance tests/test_backend_frontend_value_flow.py::test_ac01_actual_backend_field_has_exact_ui_and_test_paths tests/test_backend_frontend_value_flow.py::test_ac02_source_only_and_legacy_versions_never_gain_compiler_flow tests/test_backend_frontend_value_flow.py::test_ac03_cached_context_revalidates_external_package_inputs
+```
+
+Log `/tmp/unified-flow-main7bb-final2.log`. Finální84 příkaz/log jsou v kroku9.
+Sady se překrývají a nesčítají do unikátního celkového PASS.

@@ -61,13 +61,14 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 39 | 21 | 0 | 60 |
+| T003 work packages | 39 | 20 | 1 | 60 |
 | T004 / T005–T044 | 24 | 16 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 69 | 50 | 0 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 69 | 49 | 1 | 119 |
 
-T003/T004 mají 37 položek bez sloučené dodávky; všechny zůstávají PLANNED.
+T003/T004 mají v tomto řádkovém inventáři 37 položek bez sloučené dodávky;
+36 je PLANNED a W09 je PR_OPEN.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
@@ -117,7 +118,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S07-W06](tasks/T003-S07-06-httpClientExecution.md) | MERGED | PARTIAL | `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_http_client_execution.py](../tests/test_http_client_execution.py), [tests/test_http_provider_privacy_integration.py](../tests/test_http_provider_privacy_integration.py) | [# 49](https://github.com/p-rum/kgmaker/pull/49) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W07](tasks/T003-S07-07-crossServiceContractMapping.md) | MERGED | PARTIAL | `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d` | [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [tests/test_cross_service_contract_mapping.py](../tests/test_cross_service_contract_mapping.py) | [# 76](https://github.com/p-rum/kgmaker/pull/76) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W08](tasks/T003-S07-08-evidenceRanking.md) | MERGED | VERIFIED_IN_SCOPE | `8e7dff5b82597184662797c07a68e5ec460e9e0e` | [tests/test_evidence_ranking.py](../tests/test_evidence_ranking.py), actual Javac/JDK21 fixture | [PR106](https://github.com/p-rum/kgmaker/pull/106) | execution-2/impact-2, evidence contributions, lokalizované gaps/penalty, JSON/Markdown CLI; [change126](changes/126_evidenceRanking.md), [podpora](evidence-ranking.md). Celé S07 zůstává PARTIAL. |
-| [T003-S07-W09](tasks/T003-S07-09-unifiedFlowViews.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/views.py](../src/kgmaker/views.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
+| [T003-S07-W09](tasks/T003-S07-09-unifiedFlowViews.md) | PR_OPEN | VERIFIED_IN_SCOPE | `9eeb30d0ec6dd0f4470eb33c6bbbefffcc943253` nad main7bb8b8d | [Unified flow capability](unified-flow-views.md), [change128](changes/128_unifiedFlowViews.md) | [PR109](https://github.com/p-rum/kgmaker/pull/109) | Jednotný CFG model a tři formáty; actual Javac/TS/Mermaid, checkpoint293 a finální84 PASS. SOURCE_ONLY/legacy UNKNOWN, bounded async, full/GH CI NOT_RUN; nezávislé review zbývá. |
 | [T003-S08-W01](tasks/T003-S08-01-typescriptProjectReferences.md) | MERGED | PARTIAL | `1091330b67a7ff67db329ffbbb2eaba162313b3f` | [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_typescript_project_references.py](../tests/test_typescript_project_references.py), [tests/test_worker_protocol.py](../tests/test_worker_protocol.py) | [# 28](https://github.com/p-rum/kgmaker/pull/28) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S08-W02](tasks/T003-S08-02-tsconfigPathsExclude.md) | MERGED | PARTIAL | `5430388a282f19f6c9637319c12a1731ae6d0674` | [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [tests/test_tsconfig_freshness.py](../tests/test_tsconfig_freshness.py) | [# 36](https://github.com/p-rum/kgmaker/pull/36) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S08-W03](tasks/T003-S08-03-typescriptCallbacksGenerics.md) | MERGED | PARTIAL | `3a7f76b00bb5136bbe5990546d9c8942a7f53f73` | [src/kgmaker/callgraph.py](../src/kgmaker/callgraph.py), [tests/test_typescript_callback_limits.py](../tests/test_typescript_callback_limits.py), [tests/test_typescript_callback_projects.py](../tests/test_typescript_callback_projects.py) | [# 46](https://github.com/p-rum/kgmaker/pull/46) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
@@ -1605,7 +1606,7 @@ PR106 je MERGED (8e7dff5b); Full/GH CI a celý S07 nadále neuzavřené.
 
 ## T003-S07-W09 — unified flow views (2026-11-15)
 
-Dodání IN_PROGRESS, verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
+Dodání PR_OPEN ([PR109](https://github.com/p-rum/kgmaker/pull/109)), verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
 [Change128](changes/128_unifiedFlowViews.md) zaznamenává model a skutečné testy
 odděleně. `flow-view-1` přidává společné pořadí z CFG, coverage/provenance a tři
 formáty pro control-flow/process/integrations/data-flow. Relation view není CFG.
