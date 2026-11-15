@@ -370,7 +370,11 @@ kgmaker impact --root . --entity '<existing-field-id>' --include-data-flow --for
 ```
 
 This includes simple Kotlin expressions/constructor mappings and field inventory
-for Java, TypeScript and JSON contracts. Parser limitations are explicit in feature
+for Java, TypeScript and JSON contracts. Explicit JVM inspection additionally captures
+[bounded Javac field transfers and manual/generated mapper helpers](docs/field-mapping.md)
+with source provenance; `field_mapping_bindings` retains UNKNOWN business equivalence
+and availability ([change124](docs/changes/124_fieldAndMappingFlow.md)).
+Parser limitations are explicit in feature
 coverage; a static path does not prove runtime availability or financial validity.
 `.xlsx` workbooks contribute sheets, cells, named ranges, formula dependencies and
 hash-bound cell evidence. Formulas are not evaluated and cached values retain
@@ -449,6 +453,29 @@ svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovaj�
 `origin=generated`. Runtime import accepts only a supplied, hash-bound observation
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
+
+Explicitní `runtime produce` má opt-in JDK21 SDK pro synchronní call, factory,
+condition a registraci map routeru; skutečný příklad je v
+[průvodci runtime capture](docs/runtime-trace.md). Scan, hook, feature a import
+aplikaci nespouštějí. Uzavřený v2 kontrakt přijímá pouze ověřené symbol IDs,
+typové výsledky a diagnostické kódy; volný text, payloady a neznámá pole odmítá.
+SDK nevypisuje argumenty ani návratové hodnoty a z URL odstraní credentials/query
+před hashováním cesty. Jeho výsledek zůstává `PARTIAL / INSTRUMENTED_SCOPE_ONLY`.
+Build/config/source/worker identity a výstupní cesta se ověří před procesem i po
+něm; timeout/cancel ukončí POSIX procesní skupinu a nepřepíše platný artefakt.
+
+```text
+kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \
+  --build-id BUILD_ID --config-fingerprint CONFIG_FINGERPRINT --service-id orders \
+  --service-version 1.2.3 --output .kgmaker/runtime/trace.json \
+  -- java -cp classes example.TraceApplication MAIN_ID FACTORY_ID TYPE_ID CONDITION_ID HANDLER_ID
+```
+
+Jde o explicitně instrumentovaný JDK21/POSIX subset; neprokazuje automatický
+Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
+zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
+nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
+[Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
@@ -552,8 +579,21 @@ LIKE a IS NULL). Alias je case-insensitive a patří konkrétnímu bloku SELECT;
 vnořené závorky scope nemění. Neplatný nebo nerozvázaný alias ani neúplný
 výraz nevytvoří query read/write/path edge. Podporované funkce a limity
 uvádí [compiler dokumentace](docs/compiler-inspection.md);
-opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` mají
-vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
+opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` i repeatable
+`@NamedQueries`/`@NamedNativeQueries` mají vlastní definici a repository metoda
+se na ni váže přes `uses_named_query`. Stejný katalog přijímá ORM XML
+`named-query`/`named-native-query` v kořeni i entity/mapped-superclass s hashovanou
+provenance. `@Query(name="Order.byStatus")` vybere právě jednu úplnou deklaraci
+ve vybraném compiler/persistence kontextu; duplicita (včetně XML/anotace), chybějící
+jméno nebo tělo zůstává UNKNOWN. Named reference používá stejnou JPQL gramatiku,
+kontrolu pojmenovaných a číslovaných parametrů a compiler-owned projekcí jako
+přímý dotaz. Native `resultClass` a XML `result-class` se vážou na přesný compiler
+typ; `resultSetMapping` zůstává PARTIAL. Native tabulky se hledají až v konečném
+XML mapování a pouze mimo SQL literály a komentáře; typ operace určuje první
+statement keyword za komentáři. Neúplná lexikální struktura nebo chybějící
+podporovaná table reference zůstává UNKNOWN. Skutečná Javac fixture a hranice podpory jsou v
+[change120](docs/changes/120_namedQueryContainers.md) a
+[compiler dokumentaci](docs/compiler-inspection.md#named-query-containers-t003-s06-w06).
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
 properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
@@ -589,7 +629,7 @@ Explicit JPQL entity names and repository return types also resolve by compiler
 owner; simple source return names require an exact JVM method descriptor owner.
 Missing qualified types and generic type variables remain UNKNOWN rather than
 binding to an unrelated same-simple-name class.
-Širší provider-specific query syntax, named-query containers, Criteria,
+Širší provider-specific query syntax, Criteria,
 Specification, QueryDSL a úplná schema/deployment availability jsou mimo tento
 omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
@@ -1047,6 +1087,21 @@ only validated, confined graph locators; pure mode is NOT_CHECKED, never CURRENT
 See [API and limits](docs/view-explanation.md). Missing ranges remain unavailable.
 Merged in PR83 (`1005b9f`). Historical source-qualified validation is retained
 in the capability document; current full acceptance has not been rerun.
+
+### T037 derived-view cache
+
+`kgmaker.view_cache.get_or_build_view(...)` accepts explicit workspace/graph
+snapshots, rule versions, scope and context selection. It reuses a serialized
+`ViewDocument` only when the complete dependency fingerprint matches; new provider
+declarations therefore revalidate old unresolved lookups. Cache writes happen
+only through this explicit API after builder output validates. The topology CLI
+also accepts an explicit `--view-cache PATH`; its default remains cache-free.
+CLI publication follows filter/fingerprint/output validation and successful stdout
+write/flush, only on exit 0. Rejected requests preserve input files and the previous
+cache. Cache targets cannot alias inputs, symlinks or hardlinks; with local capture,
+a target inside a source repository must be under `.kgmaker/views/`.
+See [cache API and limits](docs/view-cache.md) and
+[T037 change note](docs/changes/121_invalidateDerivedViews.md).
 
 ### T019 architecture JSON CLI
 

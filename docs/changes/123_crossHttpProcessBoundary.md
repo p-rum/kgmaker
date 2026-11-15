@@ -327,3 +327,94 @@ Závěrečné skutečné výsledky údržby (2026-11-15):
 Po tomto závěrečném textovém záznamu jsou generated views znovu obnoveny a
 zkontrolovány stejnými příkazy; funkční source/test se již nemění. Tento lokální
 krok neprohlašuje dokončení T004 ani merge/PR approval.
+
+
+## Integrace po PR104 — T027-S01/S04/S05, AC01–AC06 (2026-11-15)
+
+Výchozí schválený HEAD PR105 `82eef329261d8b65596cbb95ffd135f41fc4c685`;
+skutečný main `ec05a329fe2e51dbfe0eb47888bed037a251b8bf` je potvrzený dvourodičový
+merge PR104, shodný tree s reviewovaným W03 `1f2acec0`. PR101–104 jsou MERGED.
+Příkaz `git merge --no-ff --no-commit ec05a329fe2e51dbfe0eb47888bed037a251b8bf`
+zachovává historii bez rebase/force. Dodání T027 je PR_OPEN; samostatné review
+nového integračního HEAD a autorizovaný merge zůstávají předáním reviewerovi.
+
+Přímá rekognoskace dle kgmaker-context ověřila status/query/memory a skutečné
+T027 guardy. Mezi větvemi není sdílený změněný funkční source soubor. Merge
+nemění žádný funkční kód: T027 business_process.py a test jsou byte-identické
+se schváleným rodičem, všech 28 main source/test/fixture souborů s main.
+Zachovány jsou přesný caller REQUEST, normální RESPONSE, T014 version/stale/scope
+kontroly i imported diagnostics/limits/truncation. Konflikt acceptance zachovává
+obě T027/W06 sekce; semantic/generated konflikt řeší samostatný krok níže.
+
+Aktualizovány change123, production progress a acceptance: W03/PR104 MERGED,
+T027/PR105 PR_OPEN. README se sloučil automaticky; process-paths API, compiler,
+runtime, cache a field-mapping příručky/CLI příklady jsou bez nové změny veřejného
+chování a zachovávají své limity. Task registry/revize, schémata, worker protocol,
+installed templates a absence nového T027 CLI jsou bez dopadu. Žádná cizí
+rozpracovaná BE→FE/ranking změna nebyla převzata.
+
+Přesný nový cílený běh (191 veřejných T027/T014/T025/T026 případů + 9 nezávislých
+reviewer reprodukcí; poslední jsou již pokryté i versionovanými negativy):
+
+```sh
+ln -s /tmp/kgmaker-pr97-reconciled/workers/jvm/target workers/jvm/target
+ln -s /tmp/kgmaker-pr97-reconciled/workers/jvm/target-k2 workers/jvm/target-k2
+env JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
+  PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers \
+  PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 \
+  /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -rs -p no:cacheprovider \
+  tests/test_t027_cross_http_process_boundary.py tests/test_t014_bind_remote_interfaces.py \
+  tests/test_t025_build_local_process_path.py tests/test_t026_collapse_business_steps.py \
+  /tmp/t027_review_repros.py
+rm workers/jvm/target workers/jvm/target-k2
+```
+
+**PASS: 200 passed / 0 skipped, 10.76 s**. Skutečné Javac/K1/K2 fixture,
+připravené worker artefakty, žádný nový worker build ani package install. Oba
+nově vytvořené dočasné symlinky byly po běhu odstraněny. Source identity **PASS**.
+Full suite, HTTP runtime observation a GH CI **NOT_RUN** dle pověření. Předchozí
+běhy 187/38/200 zůstávají historické, nový výsledek se vztahuje k této integraci.
+
+## Údržba evidence po integraci — T027-S05 / AC06 (2026-11-15)
+
+Výchozí SHA jsou T027 `82eef329261d8b65596cbb95ffd135f41fc4c685` a main
+`ec05a329fe2e51dbfe0eb47888bed037a251b8bf`. Konflikt semantic.json zachovává
+aktuální main entries a existující doložený T027 koncept/tři vztahy. Episode
+union kontroluje shodné objekty pod stejným ID; nic se nemaže. Aktuální scoped
+patch obsahoval pět konceptů a 13 vztahů, bez removals, s reanchorem podle
+source hashů správného rodiče a aktuálních jednoznačných graph declarations.
+Generated GRAPH.md/mmd se řeší výhradně příkazem scan.
+
+```sh
+./kgmaker semantic update --base ec05a329fe2e51dbfe0eb47888bed037a251b8bf --note docs/changes/123_crossHttpProcessBoundary.md
+./kgmaker scan --no-docs
+# Source-backed patch používá aktuální update_id, remove_nodes/remove_edges prázdné.
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t027-integration-preservation.py
+./kgmaker memory capture --base ec05a329fe2e51dbfe0eb47888bed037a251b8bf --validation t027-integration200=passed --validation semantic-preservation=passed --validation source-identity=passed --validation full-suite=skipped
+./kgmaker scan
+./kgmaker check
+git diff --check ec05a329fe2e51dbfe0eb47888bed037a251b8bf
+git diff --check 82eef329261d8b65596cbb95ffd135f41fc4c685
+```
+
+Semantic apply/validate, preservation, source identity, capture a scan/check
+**PASS**. První scan před reanchorem pravdivě hlásil 13 stale vztahů; finální
+scan již žádné semantic entries nevynechává. Audit stejným algoritmem uvedeným
+výše zachoval všechny koncepty, vztahy včetně confidence a přesné původní episode
+objekty: baseline **42/135/286**, T027 **43/138/287**, main **44/141/297**.
+Union před capture je **45/144/298**, po skutečné nové integrační epizodě
+`5268f9476295d4ca07dd109437c0389cb7bc2cfb07b880c7ce382cd0ad522347`
+celkem **45/144/299**. Všech 30 source/test/fixture souborů zachovává byte identity
+vůči příslušnému rodiči. První diff check před dokončením generování hlásil
+**FAIL** kvůli dosud nevyřešeným markerům v generated graphs; po command-generated
+obnově a označení konfliktů za vyřešené jsou závěrečné oba diff checky **PASS**.
+
+Po tomto textu jsou grafy znovu generovány a checknuty. README/API/CLI mají stejný
+nulový funkční dopad jako integrační krok; aktuální progress/acceptance a tento
+záznam uvádějí stav i skutečné výsledky. Full suite, HTTP runtime a GH CI
+**NOT_RUN**. Nové review/merge PR105 zůstává nezávislým krokem nad přesným HEAD;
+žádné vlastní APPROVE ani dokončení T004 se netvrdí.

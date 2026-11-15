@@ -266,6 +266,7 @@ def test_unbound_alias_and_trailing_tokens_are_not_complete(query):
     "annotation-source-v6-persistence-realms",
     "annotation-source-v7-persistence-realms-jpql",
     "annotation-source-v7-schema-compatibility",
+    "annotation-source-v8-jpql-hql-grammar",
 ])
 def test_legacy_jpa_rules_remain_readable_but_require_reinspection(tmp_path, old):
     context = {"id": "old", "language": "jvm", "framework_rule_versions": {"jpa": old}}

@@ -62,12 +62,24 @@ def register(sub):
     p.add_argument("--format", choices=("json", "mermaid", "markdown"), default="mermaid")
     p.add_argument("--max-depth", type=int, default=3)
     p.add_argument("--max-nodes", type=int, default=500)
-    runtime = sub.add_parser("runtime", help="import scoped runtime observations; never starts the application")
+    runtime = sub.add_parser("runtime", help="explicit runtime trace operations; import never starts the application")
     actions = runtime.add_subparsers(dest="runtime_command", required=True)
     p = actions.add_parser("import", help="validate and import a sanitized runtime manifest")
     p.add_argument("--root", type=Path, default=Path.cwd())
     p.add_argument("--manifest", type=Path, required=True)
     p.add_argument("--format", choices=("json",), default="json")
+    p = actions.add_parser("produce", help="explicitly run an opt-in producer command and publish a sanitized trace")
+    p.add_argument("--root", type=Path, default=Path.cwd())
+    p.add_argument("--context", required=True)
+    p.add_argument("--runtime-id", required=True)
+    p.add_argument("--build-id", required=True)
+    p.add_argument("--config-fingerprint", required=True)
+    p.add_argument("--service-id", required=True)
+    p.add_argument("--service-version", required=True)
+    p.add_argument("--timeout", type=float, default=120)
+    p.add_argument("--output", type=Path)
+    p.add_argument("--cancel-file", type=Path)
+    p.add_argument("producer_command", nargs="+", help="producer argv after --; prints a closed runtime capture object")
 
 
 def indexed(args):
@@ -108,8 +120,15 @@ def indexed(args):
 def run(args):
     try:
         if args.command == "runtime":
-            from .runtime_evidence import import_manifest
-            result = import_manifest(args.root.resolve(), read_json(args.manifest))
+            from .runtime_evidence import import_manifest, produce_manifest
+            if args.runtime_command == "produce":
+                result = produce_manifest(args.root.resolve(), args.producer_command, context_id=args.context,
+                                          runtime_id=args.runtime_id, build_id=args.build_id,
+                                          config_fingerprint=args.config_fingerprint,
+                                          service_id=args.service_id, service_version=args.service_version,
+                                          timeout=args.timeout, output=args.output, cancel_file=args.cancel_file)
+            else:
+                result = import_manifest(args.root.resolve(), read_json(args.manifest))
             print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
             return 0
         if args.command == "inspect":

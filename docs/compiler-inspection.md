@@ -377,7 +377,7 @@ OrderBy. Property path se musí vyřešit proti přímému, embedded nebo associ
 atributu; teprve pak vznikne `filters_by`/`orders_by`. Query nese `query_reads`
 nebo statický `query_deletes` intent, nikdy tvrzení o provedeném SQL či commitu.
 Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPA rules
-`annotation-source-v8-jpql-hql-grammar` tokenizují omezený statický JPQL/HQL
+`annotation-source-v9-named-query-containers` tokenizují omezený statický JPQL/HQL
 subset: root a association join aliasy, subquery roots, bulk `UPDATE`/`DELETE`,
 `select new` s přesným compiler-owned DTO a clause-specific path expressions.
 Vznikají oddělené `query_reads`/`query_writes`/`query_deletes`, `joins_by`,
@@ -403,6 +403,62 @@ DML poddotaz s GROUP/ORDER BY zůstává mimo tento omezený scope.
 explicitní názvy tabulek v aktuální ORM projekci a při kolizi zůstává ambiguous.
 Statické JPA named queries mají oddělenou definici a repository reference; SpEL,
 `${...}` a jiné dynamické části se nerozvíjejí.
+
+### Named query containers (T003-S06-W06)
+
+JPA rule `annotation-source-v9-named-query-containers` zachovává schema grafu 3
+bez změny worker protokolu. Jednotlivé `@NamedQuery`/`@NamedNativeQuery`,
+opakované anotace a `@NamedQueries`/`@NamedNativeQueries` používají jeden katalog
+v právě vybraném compiler kontextu a persistence unit. Javac nested annotation
+mirrors a strukturované compiler hodnoty mají stejnou normalizaci. JPA identity
+musí být z `jakarta.persistence` nebo `javax.persistence`. Katalog nepřebírá
+deklarace z jiného kontextu; `exclude-unlisted-classes` a `metadata-complete`
+potlačí příslušné annotation definice. XML podporuje deklarace v kořeni mappingu
+i přímo v entity/mapped-superclass; jejich provenance obsahuje hash mappingu a
+persistence descriptoru. Chybné nebo duplicitní jméno se nikdy znovu nezařadí
+jako jednoznačné jen proto, že po něm následuje další platná deklarace.
+
+`@Query(name="Order.byStatus")` vytvoří `uses_named_query` pouze pro jedinou
+úplnou definici. Tělo prochází stejnou omezenou JPQL/HQL analýzou jako přímé
+`@Query`; vlastník anotace není automaticky čtená entita. Metadata `parameters`,
+`positional_parameters`, `method_parameters` a `unbound_parameters` dokládají
+statickou kontrolu názvů compiler parametrů nebo pozic `?1`, `?2`, …; literály a
+komentáře se za parametry nepovažují. Alias přes Spring `@Param` se zde
+nevyhodnocuje, odlišný název zůstává nevyřešený. Konstruktorová projekce,
+repository návratový typ a native `resultClass`/XML `result-class` vyžadují
+přesný compiler typ. SQL result-set mapping má lokalizovanou diagnostiku a
+PARTIAL, bez předstírání provider interpretace. Native názvy tabulek se hledají
+v konečné ORM projekci po XML overrides; nerozlišené jméno je UNKNOWN.
+Společná lexikální vrstva named i přímých native queries maskuje standardní
+SQL quoted spans (včetně zdvojených uvozovek) a `--`/`/* ... */` komentáře.
+Text `from orders` uvnitř literálu/komentáře není table reference. První skutečný
+statement keyword za komentáři rozlišuje SELECT/UPDATE/INSERT/DELETE; například
+`/* audit */ update orders set status='x'` vytváří statický write intent.
+Quoted token na začátku dotazu nemůže zpřístupnit pozdější klíčové slovo jako
+začátek statementu. Neuzavřený literál/komentář, dialect-dependent quoting,
+nepodporovaný první token a dotaz bez podporované unquoted table reference
+vrací `NATIVE_QUERY_STRUCTURE_UNRESOLVED`, `validated=false` a UNKNOWN bez
+read/write/delete hran. Týká se to i scalar-only SELECT; nejde o SQL grammar
+validator. Plná syntaxe, dialect-specific string escapes a quoted table names
+nejsou tímto lexikálním kontraktem interpretovány.
+
+Například po explicitní inspekci projektu s uvedenou deklarací:
+
+```bash
+kgmaker inspect jvm --root app
+kgmaker query --root app --scope production Order.byStatus
+```
+
+Vybraný persistence unit se přebírá ze stejného build/context kontraktu jako
+ostatní ORM mapping; nový přepínač ani paralelní store nevzniká. `scan` a `hook`
+nevolají worker. Starší v1/v2/v3 grafy zůstávají čitelné; stará framework rule
+vyžaduje čerstvou explicitní inspekci, nikoliv automatické povýšení evidence.
+Skutečná Javac 21 fixture je `fixtures/named-queries/Model.java` a `orm.xml`;
+`tests/test_named_query_containers.py` kontroluje veřejný graf, realm izolaci,
+chyby a neměnnost store. API stubs jsou compiler fixture, nikoli běžící JPA
+provider. Samostatný actual Kotlin container corpus, EntityManager dynamická
+volání, implicitní repository naming convention a runtime dostupnost nejsou
+ověřeny tímto balíkem. [Přesné výsledky a kompatibilita](changes/120_namedQueryContainers.md).
 
 Source CFG vzniká deterministicky z compiler AST IR. Zachovává podmínky,
 protilehlé větve, return/throw, loops, finally abrupt continuations a await/resume.
@@ -1435,3 +1491,15 @@ and [note91](changes/91_planRemoteContractMapping.md).
 Explicit capture and pure resolution preserve service/context/contract/release
 authority; HTTP and Kafka remain distinct declared boundaries, no JVM calls or
 runtime/payload availability promotion. Source-specific334PASS; combined2df parent1963PASS/10optionalSKIP. Dependency merges are complete; final exact-pair review remains pending.
+
+## Field read/write and explicit mapper bindings
+
+T003-S07-W03 adds `field-mapping-1` on existing validated Javac return IR, with
+no protocol/store schema change. Direct fields, straight-line static/private/final
+helpers and actual captured MapStruct Java source produce source-backed
+`reads_value`/`writes_value` occurrences and `maps_to` declaration dependencies.
+Business transforms, open dispatch, recursion and ambiguous local definitions
+remain UNKNOWN. Runtime/data availability is never promoted.
+The [supported matrix and CLI example](field-mapping.md),
+[actual manual/generated fixture](../fixtures/field-mapping/README.md) and
+[change124](changes/124_fieldAndMappingFlow.md) describe the bounded verification.
