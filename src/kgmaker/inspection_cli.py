@@ -78,7 +78,8 @@ def register(sub):
     p.add_argument("--service-version", required=True)
     p.add_argument("--timeout", type=float, default=120)
     p.add_argument("--output", type=Path)
-    p.add_argument("producer_command", nargs="+", help="producer argv; it must print one JSON object")
+    p.add_argument("--cancel-file", type=Path)
+    p.add_argument("producer_command", nargs="+", help="producer argv after --; prints a closed runtime capture object")
 
 
 def indexed(args):
@@ -125,7 +126,7 @@ def run(args):
                                           runtime_id=args.runtime_id, build_id=args.build_id,
                                           config_fingerprint=args.config_fingerprint,
                                           service_id=args.service_id, service_version=args.service_version,
-                                          timeout=args.timeout, output=args.output)
+                                          timeout=args.timeout, output=args.output, cancel_file=args.cancel_file)
             else:
                 result = import_manifest(args.root.resolve(), read_json(args.manifest))
             print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))

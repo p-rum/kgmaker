@@ -2,11 +2,11 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "488d83d6cf0c105d306ecfe58a578defe6b9467b3ab704f9346caf6ffde1ee86",
-    "docs/acceptance-inventory.md": "ebbce9cc508013add06b54b4b3f6a17ede69202f1f24a79dc65262f4e586bfa7",
+    "README.md": "6909a997d476a82d773720c4a549f2c08cae0e57a321bb88c1fa31bdccb2a340",
+    "docs/acceptance-inventory.md": "153870f77e59fe8a717186e759119aadcbfd87d9a024c262a8f0455f12b7b2bf",
     "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "592f00ee708e3a1aa2294f33bf529dc0ccbc382ce94400c217cec199e9ce1b49",
-    "docs/architecture.md": "10f29292554d7c00962929121fdabf3c37e45a1bd1c981fed490abe931e4d62c",
+    "docs/architecture.md": "bc62417c2b26050608d1f5e626635187b4c96c59be93a54cb403d9b07a05ffec",
     "docs/build-aware-code-inspection-analysis.md": "a5d0692768a081c838fa71a2186bc820e98a56227d2a9628c9cfdfdc14095efb",
     "docs/changes/100_renderInterfaceMarkdown.md": "ea1a43213c0e82dabefea1c9e1ea1cad233aa2ce0a7980f7d0eed2508fe12f06",
     "docs/changes/108_fixColdRemoteProjection.md": "4a6b161f4a8e7b10bf3c5077896334bb084d42ea56c276fc26b6b07ad450f334",
@@ -24,6 +24,7 @@
     "docs/changes/118_connectProjectWorkflows.md": "eb0b8ebedb9fc4b1da6b3221eb5a0d625e5e08462530f2b5781b32c9c949beb8",
     "docs/changes/119_reconcileJpqlDelivery.md": "ce00e0d5665c0173bf22fdc54530e2f5d32c01ddcfa26f0479c899f125cffa8a",
     "docs/changes/11_addViewModel.md": "8ceca4b09d57956e80246b3506d16619d150ad45e4079d6b72441b1ded51bb59",
+    "docs/changes/122_runtimeTraceProducer.md": "cecfe987ea94b3429e138c4df9b167386fc5d263193d360d81bf3eafd85e93aa",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
@@ -121,12 +122,13 @@
     "docs/process-paths.md": "6364d2e6a4a12a1ce66d47cd9d070e8fa5745b5989ae2d92420259631d5e1a66",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "6b6a51ca4859f47d7e4b8332f3f78bb153946706883df72300b80b5c0a40e349",
+    "docs/production-analysis-progress.md": "d126f482cd0d29dfeeb46120360044ceabd2d047c4cba12b429e711393b8d2a5",
     "docs/production-scope.md": "f7b522ef151504e6ee3a2d07e93e8051de27bbc314385806eb8f5eb3c734e30a",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
     "docs/project-workflows.md": "7b2709b8b16b795fe9a0836daea59cb98e10cfb9fc3d241e03029684fb6172ff",
     "docs/remote-contract-mapping.md": "2c52fc12c917cef04fa127a2e9157f5f0ac11a185ca7da9092684e89aa122f2a",
     "docs/remote-interfaces.md": "188dac8c0c4e85b76901aa0fec4d8e7e7b8c4c59ce69aa1d909f36def57265f8",
+    "docs/runtime-trace.md": "a912e3e9b65768f9c6791104f4a4a31510f47521c504f8a477ef720f708ba57b",
     "docs/schema-compatibility.md": "927e1178ff0e6cd5068cffe983ef4506b71b602a3c432d5e19c0517a5785a50c",
     "docs/schemas/build-manifest-v1.schema.json": "73a01d8f94535081561f29d5bbdd51e75422f4e0ee57f2071546ece6d81f15fe",
     "docs/schemas/build-plan-v1.schema.json": "cd5d6ba111f7ceb25d68123c6f3b64a5902208e3c3df5fbee939118379c1ef3f",
@@ -386,7 +388,7 @@
     "src/kgmaker/graph_provider.py": "ca328bf9973175e4c72656471816751f4fb3464f1503b49d70d261c435ca2de4",
     "src/kgmaker/http_execution.py": "df62b663ca80c02c5f1d48dc38bd03e29fb51c5f93ab952c821c2700e5080078",
     "src/kgmaker/inspection.py": "7ca5ee49b7d6d9fb1a608da2307966a2e5a3967f443b84b1fad7b67412ed798a",
-    "src/kgmaker/inspection_cli.py": "9f7e5a4edd1c3b54d1c0be8e0f10f47c53c28a209a9594b1974cdcfcc9aaa46c",
+    "src/kgmaker/inspection_cli.py": "4bc135f61c7d842e4432de14a0a6b62f7e61322fba0f0cb2df5616570a3520ad",
     "src/kgmaker/interfaces.py": "0867f65104a7a9ff0510e0074d3a709cb147734d9444b02ee1b805cd53f5d18c",
     "src/kgmaker/kafka_bindings.py": "fe4b19db2d9590b682eb90fcab0dd2bed0a8399f841031433f02f8786c990ce9",
     "src/kgmaker/kafka_code.py": "87b2dbe82f8da8914d496121c7d3fef6dd2d266bb79a43f05f73b1c1c0f1643c",
@@ -405,7 +407,7 @@
     "src/kgmaker/remote_interfaces.py": "1dec46e4b2591cd8c0802f49c2fc28d8328bf068e03aeee30f0c32b426cfec18",
     "src/kgmaker/remote_mapping.py": "8f65dfe135f2320091d841d80ae73287090bb0b26786ba05e0682986293b1013",
     "src/kgmaker/return_flow.py": "2f47d4fbbd2169910e47978bbdb90c02a141a1136ff94d4d0f590d8fda4346ce",
-    "src/kgmaker/runtime_evidence.py": "295bdb1c039047ad42ede665e2cbb73aea5734aa8be9d80c4eeab25bc88fbdfa",
+    "src/kgmaker/runtime_evidence.py": "65fe274228f7c0ef9a013c48187f6f258bc182f923f652b8670e45d309e6fcc4",
     "src/kgmaker/scanner.py": "c64e55e3226d8f3ff742b0e8046cf6bc85a1f3e2d65654724b8778d2cafdb6f2",
     "src/kgmaker/schema_replay.py": "aede1ab2ccac6d93b294c8a4aa1afea426ba1d4b7024d91c3d1ac42cfb24e24b",
     "src/kgmaker/semantic.py": "df646556cfde391bead20c03822a787ac02c7d9b64a3b812836f927503a21e88",
@@ -437,6 +439,7 @@
     "tests/fixtures/jvm-golden/README.md": "0f4e7f7d0e7f3892430b0e48591ffca78b7ae2851de77627f9f36592901fa12f",
     "tests/fixtures/jvm-golden/Work.kt": "a3266cf19e65c5ec5711ea8f90a4285d9b3be083f444754e625e7b11ad8f144d",
     "tests/fixtures/jvm-golden/expected.json": "694af57f5d9583ce136e9390d579e8a5825cfede75d0b6e8aa07f84a97a14b19",
+    "tests/fixtures/runtime-trace/TraceApplication.java": "5ee9932ad909e70b8a04f48f81b6884446bc605da545139e8d2397b589b4bb43",
     "tests/rendering/generate.py": "61c456d3641da2c1112d9dfc809fff2b15d2a6ef101d706a09e04e4fe7621ab5",
     "tests/rendering/package-lock.json": "65dd49c35e012e67c3f425d8f0667039c765a5f1dc1d77979563605d8b47c2f8",
     "tests/rendering/package.json": "327a9b9fa80307b4d408972edae4678e407884a087d6682a37182d2ecf7d4328",
@@ -489,6 +492,7 @@
     "tests/test_production_scope.py": "30f8be276a512c634379f78eb7105b8ef169b56830aad53fef53599bbfe6f43a",
     "tests/test_provenance.py": "283aa0c052ad924856a0ddbebfec4cc82a9704e54979ec6f6b750856fa141511",
     "tests/test_return_consumer_flow.py": "e8bb757ea66920fba53e16cd55df88dae81daf7957e23a1b906669e7a272f333",
+    "tests/test_runtime_trace_producer.py": "a60f9982e1b426d46e0e303256a9d11213023be6fc05e4b1caff1d8a642efd0c",
     "tests/test_scanner.py": "6d8459e0e267797d6399fa0622b5e5607039ddfc69e960b441ae3b3198dc277f",
     "tests/test_schema_compatibility.py": "06f63bfe8e7c177c0db1d27412429a4ecbb3f5e80043407f935592f2569609fb",
     "tests/test_skills.py": "a3e4c7c64bccd456f0552dafaf21e2ab297bc07293db0f992133eb476b07e716",
@@ -540,6 +544,7 @@
     "tests/test_workspace.py": "5cf9c65606d895dc7720fe10980fd17c88f4f46376319d57b0c80b9e98c8c301",
     "tests/test_xlsx_references.py": "6314c056592f814b59c0ed6a2981d15a75187f0fb27139780c0c147075835e77",
     "tests/windows/restricted_launcher.py": "dcb0a32c24d666a934f762021554e0b28c9cb3a7a335920d21f2bb54e8aaede4",
+    "tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java": "a58c0d065c3a2d3cfccc5dfce10cb8726ad04750df6feed6fb1d7f9c238cb225",
     "workers/__init__.py": "b8836a1b9c9845985663f8e3219e4146d4666df37c7dc3a53f054449ab8b547a",
     "workers/jvm/build.py": "bb1fa7364fdd78684d5edd0cba31ff755d77bcfa894eddc1a0ab05074384db0a",
     "workers/jvm/dependencies-k2.lock.json": "b3f2b33a9ee7ab160aead1021d23cb06e548ac01448b394d01ec0bdc300177b1",
@@ -811,42 +816,42 @@
       "id": "concept:docs/architecture.md:explicit_workspace_service_ownership",
       "name": "Explicit workspace service ownership",
       "source_file": "docs/architecture.md",
-      "source_line": 171,
+      "source_line": 182,
       "summary": "Workspace service ownership is assigned only by explicit repository roots or exact repo-qualified module IDs; ambiguity remains visible."
     },
     {
       "id": "concept:docs/architecture.md:explicit_service_inventory_projection",
       "name": "Explicit service inventory projection",
       "source_file": "docs/architecture.md",
-      "source_line": 179,
+      "source_line": 190,
       "summary": "The T008 topology view composes explicit ownership with provider contexts; scoped SOURCE_ONLY roots remain PARTIAL with module coverage UNKNOWN."
     },
     {
       "id": "concept:docs/architecture.md:view_evidence_and_coverage",
       "name": "View evidence and coverage",
       "source_file": "docs/architecture.md",
-      "source_line": 151,
+      "source_line": 162,
       "summary": "Architecture view projections preserve evidence kind, resolution, freshness, explicit polarity and selected-scope coverage without ranking or inferring unknown evidence."
     },
     {
       "id": "concept:docs/architecture.md:realm_bound_data_resources",
       "name": "Realm-bound data resources",
       "source_file": "docs/architecture.md",
-      "source_line": 228,
+      "source_line": 239,
       "summary": "Pure data-resource topology preserves explicit workspace/repository/database/stream identities, scoped upstream access facts, migration derivation and unknown runtime availability."
     },
     {
       "id": "concept:docs/architecture.md:scoped_http_provider_projection",
       "name": "Scoped HTTP provider projection",
       "source_file": "docs/architecture.md",
-      "source_line": 251,
+      "source_line": 262,
       "summary": "HTTP interfaces preserve explicit service identity, case-sensitive routes, registration/contract variants and source/context evidence without deployment/runtime promotion."
     },
     {
       "id": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
       "name": "Workspace derived context role boundary",
       "source_file": "docs/architecture.md",
-      "source_line": 313,
+      "source_line": 324,
       "summary": "Producer-owned derived context identity is separated from service source/compiler ownership without requiring current private replay; unsupported claims remain diagnostic and full input graphs remain immutable."
     },
     {
@@ -1057,16 +1062,6 @@
       "source_file": "src/kgmaker/kafka_retry.py",
       "source_line": 126,
       "evidence": "The adapter binds pinned API resources and canonical listener/handler compiler facts to static retry policy declarations; unsupported configurations remain UNKNOWN."
-    },
-    {
-      "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/inspection_cli.py",
-      "source_line": 102,
-      "evidence": "The process CLI preserves its validated context selector without pruning contradictory policy proofs before integrity checks."
     },
     {
       "source": "file:tests/test_kafka_retry_dlt.py:test_kafka_retry_dlt.py",
@@ -1989,6 +1984,46 @@
       "evidence": "The negative corpus proves localized PARTIAL syntax, malformed UNKNOWN without query edges, unresolved paths without filters and ambiguous entities without read/write/delete evidence."
     },
     {
+      "source": "function:src/kgmaker/cli.py:main::1039",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1043,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
+      "source": "section:docs/tasks/T003-S06-05-jpqlHqlGrammar.md:Cíl::12",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
+      "source_line": 5,
+      "evidence": "T003-S06-W05 defines conservative joins, subqueries, updates/deletes, constructor projections and path expressions as the required bounded capability."
+    },
+    {
+      "source": "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::28",
+      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
+      "kind": "models",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
+      "source_line": 28,
+      "evidence": "Change116 records the v8 edge model, compatibility boundary, explicit toolchain skip and remaining named-query/dynamic-provider scope."
+    },
+    {
+      "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/inspection_cli.py",
+      "source_line": 114,
+      "evidence": "The process CLI preserves its validated context selector without pruning contradictory policy proofs before integrity checks."
+    },
+    {
       "source": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "target": "function:src/kgmaker/scanner.py:scan_repository::268",
       "kind": "implements",
@@ -2025,7 +2060,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 151,
+      "source_line": 162,
       "evidence": "Architecture states that view nodes and edges carry independent evidence kind, resolution, freshness, and polarity-reference fields."
     },
     {
@@ -2045,7 +2080,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 251,
+      "source_line": 262,
       "evidence": "Architecture explicitly identifies interfaces.project_http_providers as the pure scoped HTTP provider projection over T008 ownership and T009 evidence."
     },
     {
@@ -2055,7 +2090,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 171,
+      "source_line": 182,
       "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
@@ -2065,7 +2100,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 171,
+      "source_line": 182,
       "evidence": "Architecture explicitly identifies workspace.resolve_service_ownership as the function that returns ownership status from declared roots and module IDs."
     },
     {
@@ -2099,23 +2134,13 @@
       "evidence": "Public mixed and config-only fixtures preserve original inputs, scoped source selection and historical derived identity without private replay."
     },
     {
-      "source": "function:src/kgmaker/cli.py:main::1039",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1043,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
-    },
-    {
       "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
       "target": "file:src/kgmaker/views.py:views.py",
       "kind": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 179,
+      "source_line": 190,
       "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
     },
     {
@@ -2125,7 +2150,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/architecture.md",
-      "source_line": 160,
+      "source_line": 171,
       "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
     },
     {
@@ -2187,26 +2212,6 @@
       "source_file": "README.md",
       "source_line": 209,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "section:docs/tasks/T003-S06-05-jpqlHqlGrammar.md:Cíl::12",
-      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
-      "kind": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
-      "source_line": 5,
-      "evidence": "T003-S06-W05 defines conservative joins, subqueries, updates/deletes, constructor projections and path expressions as the required bounded capability."
-    },
-    {
-      "source": "section:docs/changes/116_parseExtendedJpqlHql.md:Změny a kompatibilita::28",
-      "target": "concept:docs/compiler-inspection.md:bounded_jpql_hql_grammar",
-      "kind": "models",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "docs/changes/116_parseExtendedJpqlHql.md",
-      "source_line": 28,
-      "evidence": "Change116 records the v8 edge model, compatibility boundary, explicit toolchain skip and remaining named-query/dynamic-provider scope."
     }
   ],
   "episodes": [

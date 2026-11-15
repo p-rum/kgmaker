@@ -450,19 +450,28 @@ svázán hashem, execution ID a vstupním snapshotem; compiler symboly zachovaj�
 manifest and never starts the application. Implementace je stále částečná;
 přesný rozsah a otevřené acceptance jsou v [progress dokumentu](docs/production-analysis-progress.md).
 
-Explicitní opt-in producer lze spustit pouze příkazem `runtime produce`; scan,
-hook, feature ani import jej nespouštějí. Producer očekává JSON s `facts` typu
-`call`, `bean`, `condition` nebo `mapping`, doplní build/config/service/version
-fingerprinty a rediguje hesla, tokeny a citlivé query parametry. Výstup se zapíše
-atomicky až po validaci proti čerstvému compiler contextu; timeout, chyba procesu
-nebo nejednoznačný fact ponechá předchozí artefakt beze změny.
+Explicitní `runtime produce` má opt-in JDK21 SDK pro synchronní call, factory,
+condition a registraci map routeru; skutečný příklad je v
+[průvodci runtime capture](docs/runtime-trace.md). Scan, hook, feature a import
+aplikaci nespouštějí. Uzavřený v2 kontrakt přijímá pouze ověřené symbol IDs,
+typové výsledky a diagnostické kódy; volný text, payloady a neznámá pole odmítá.
+SDK nevypisuje argumenty ani návratové hodnoty a z URL odstraní credentials/query
+před hashováním cesty. Jeho výsledek zůstává `PARTIAL / INSTRUMENTED_SCOPE_ONLY`.
+Build/config/source/worker identity a výstupní cesta se ověří před procesem i po
+něm; timeout/cancel ukončí POSIX procesní skupinu a nepřepíše platný artefakt.
 
 ```text
-kgmaker runtime produce --root PROJECT --context ctx --runtime-id run-1 \
-  --build-id build-1 --config-fingerprint cfg-1 --service-id orders \
+kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \
+  --build-id BUILD_ID --config-fingerprint CONFIG_FINGERPRINT --service-id orders \
   --service-version 1.2.3 --output .kgmaker/runtime/trace.json \
-  ./bin/explicit-trace-producer
+  -- java -cp classes example.TraceApplication MAIN_ID FACTORY_ID TYPE_ID CONDITION_ID HANDLER_ID
 ```
+
+Jde o explicitně instrumentovaný JDK21/POSIX subset; neprokazuje automatický
+Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
+zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
+nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
+[Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
