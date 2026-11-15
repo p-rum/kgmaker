@@ -265,9 +265,17 @@ def _flow_model(graph):
         'worker':{'protocol_version':1,'worker':'model-only','compiler_version':'model-only'}}]
     graph.evidence=[{'id':'model-proof','kind':'SYMBOL_RESOLVED','context_ids':['model-context'],'freshness':'CURRENT'}]
     for symbol in graph.symbols: symbol['context_id']='model-context'
-    for cfg in graph.cfgs: cfg.update(context_id='model-context',evidence_ids=['model-proof'])
+    for cfg in graph.cfgs:
+        proof='body:'+cfg['method']
+        cfg.update(context_id='model-context',evidence_ids=[proof])
+        graph.evidence.append({'id':proof,'kind':'SYNTAX_CANDIDATE','relation':'control_flow',
+            'source':cfg['method'],'target':cfg['method'],'context_ids':['model-context'],
+            'source_file':'A.java','sha256':checksum,'representation':'SOURCE','freshness':'CURRENT',
+            'source_range':{'start':0,'end':54,'start_line':1}})
+        for block in cfg['blocks']:
+            if block['kind']=='call': block.update(source_file='A.java',sha256=checksum,source_range={'start':26,'end':34,'start_line':1})
     for site in graph.call_sites:
-        site.update(context_id='model-context',evidence_ids=['model-proof'],evidence_kind='SYMBOL_RESOLVED',resolution_reason='MODEL_ONLY')
+        site.update(path='A.java',sha256=checksum,range={'start':26,'end':34,'start_line':1},context_id='model-context',evidence_ids=['model-proof'],evidence_kind='SYMBOL_RESOLVED',resolution_reason='MODEL_ONLY')
         graph.edges.extend([Edge(site['caller'],site['id'],'declares_call',evidence_kind='SYMBOL_RESOLVED',context_ids=('model-context',),evidence_ids=('model-proof',)),
             Edge(site['id'],site['declared_target'],'resolves_to',evidence_kind='SYMBOL_RESOLVED',context_ids=('model-context',),evidence_ids=('model-proof',))])
     return KnowledgeGraph.from_dict(graph.to_dict())

@@ -112,6 +112,16 @@ def process_graph():
         'evidence_ids':['cfg-proof'],'blocks':[{'id':i,'kind':k} for i,k in
         [('child-entry','entry'),('child-exit','exit'),('child-error','exceptional_exit')]],
         'edges':[{'source':'child-entry','target':'child-exit','kind':'normal'}]})
+    checksum=graph.files[SOURCE];span={'start':60,'end':65,'start_line':4}
+    graph.call_sites[0].update(path=SOURCE,sha256=checksum,range=span)
+    graph.cfgs[0]['blocks'][2]['source_range']=span
+    for cfg in graph.cfgs:
+        proof_id='body-proof:'+cfg['method']
+        cfg['evidence_ids']=[proof_id]
+        graph.evidence.append({'id':proof_id,'kind':'SYNTAX_CANDIDATE','relation':'control_flow',
+            'source':cfg['method'],'target':cfg['method'],'context_ids':['ctx'],
+            'source_file':SOURCE,'sha256':checksum,'representation':'SOURCE','freshness':'CURRENT',
+            'source_range':{'start':0,'end':len((ROOT/'fixtures/unified-flow'/SOURCE).read_bytes()),'start_line':1}})
     return KnowledgeGraph.from_dict(graph.to_dict())
 
 
@@ -119,7 +129,7 @@ def process_graph():
 def test_process_expansion_requires_current_executable_authority(damage):
     graph=process_graph()
     if damage=='reference': graph.call_sites[0]['invocation_kind']='METHOD_REFERENCE'
-    elif damage=='stale': graph.evidence[-1]['freshness']='STALE'
+    elif damage=='stale': next(p for p in graph.evidence if p['id']=='call-proof')['freshness']='STALE'
     elif damage=='source_only': graph.contexts[0]['mode']='SOURCE_ONLY'
     elif damage=='missing_edge': graph.edges.pop()
     elif damage=='missing_cfg': graph.cfgs.pop()
@@ -250,6 +260,28 @@ def test_actual_javac_public_formats_parser_and_readonly_failures(tmp_path,monke
     assert any(e.get('loop_back') for e in native['cfg']['edges'])
     assert any(e['kind']=='true' for e in native['cfg']['edges'])
     assert any(g['code']=='UNRESOLVED_CALL' for g in flow.build_report(graph,unresolved)['coverage']['gaps'])
+    from kgmaker.dataflow import argument_parameter_bindings
+    site=next(s for s in graph.call_sites if s['caller']==entry and '.charge(' in str(s.get('declared_target')))
+    bindings=argument_parameter_bindings(graph,site['id']);assert bindings
+    for damage in ('weak_context','stale_caller'):
+        weak=KnowledgeGraph.from_dict(copy.deepcopy(graph.to_dict()))
+        root_cfg=next(c for c in weak.cfgs if c['method']==entry)
+        if damage=='weak_context':
+            next(c for c in weak.contexts if c['id']==root_cfg['context_id']).update(mode='BUILD_AWARE',origin_trust='LOCAL_SOURCE',worker={})
+        else:
+            for proof in weak.evidence:
+                if proof['id'] in root_cfg['evidence_ids']: proof['freshness']='STALE'
+        before_weak=copy.deepcopy(weak.to_dict())
+        reference=flow.build_report(weak,entry,view='process')
+        block=next(b for b in reference['cfg']['blocks'] if b.get('argument_parameter_bindings')==bindings)
+        assert block['binding_projection']=='REFERENCE_ONLY'
+        assert block['argument_binding_status']['execution']=='NOT_OBSERVED'
+        assert not any(e['kind'] in {'call','returns_to'} for e in reference['cfg']['edges'])
+        assert not any(b.get('method')==site['declared_target'] for b in reference['cfg']['blocks'])
+        if damage=='stale_caller':
+            assert any(g['code']=='STALE_EVIDENCE' for g in reference['coverage']['gaps'])
+            assert any(p['id'] in root_cfg['evidence_ids'] and p['freshness']=='STALE' for p in reference['provenance']['evidence'])
+        assert weak.to_dict()==before_weak
     texts={}
     def cli(extra):
         out=io.StringIO()
@@ -490,3 +522,109 @@ def test_publication_preserves_binary_fingerprints_and_inventory(tmp_path,monkey
     code,text=cli()
     assert code==3 and json.loads(text)['status']=='STALE',text
     assert target.read_bytes()==valid and not list(target.parent.glob('.kgmaker-*'))
+
+
+def nested_process_graph():
+    from dataclasses import replace
+    from kgmaker.model import Edge
+    graph=process_graph()
+    graph.nodes.extend([replace(next(n for n in graph.nodes if n.id==old),id=new,name=new)
+                        for old,new in [('callee','leaf'),('site','nested-site')]])
+    graph.symbols.append({'id':'leaf','context_id':'ctx','annotations':[]})
+    site={**copy.deepcopy(graph.call_sites[0]),'id':'nested-site','caller':'callee','declared_target':'leaf',
+          'evidence_ids':['nested-call-proof'],'range':{'start':80,'end':85,'start_line':5}}
+    graph.call_sites.append(site)
+    graph.evidence.append({'id':'nested-call-proof','kind':'SYMBOL_RESOLVED','context_ids':['ctx'],'freshness':'CURRENT'})
+    graph.edges.extend([Edge('callee','nested-site','declares_call',evidence_kind='SYMBOL_RESOLVED',context_ids=('ctx',),evidence_ids=('nested-call-proof',)),
+                        Edge('nested-site','leaf','resolves_to',evidence_kind='SYMBOL_RESOLVED',context_ids=('ctx',),evidence_ids=('nested-call-proof',))])
+    child=graph.cfgs[1]
+    child['blocks'].append({'id':'nested-block','kind':'call','call_site_ids':['nested-site'],
+                           'source_file':SOURCE,'sha256':graph.files[SOURCE],'source_range':site['range']})
+    child['edges']=[{'source':'child-entry','target':'nested-block','kind':'normal'},
+                    {'source':'nested-block','target':'child-exit','kind':'normal'}]
+    leaf=copy.deepcopy(process_graph().cfgs[1]);leaf.update(method='leaf',evidence_ids=['body-proof:leaf'])
+    graph.cfgs.append(leaf)
+    proof=copy.deepcopy(next(p for p in graph.evidence if p['id']=='body-proof:callee'))
+    proof.update(id='body-proof:leaf',source='leaf',target='leaf');graph.evidence.append(proof)
+    return KnowledgeGraph.from_dict(graph.to_dict())
+
+
+@pytest.mark.parametrize('nested',[False,True])
+@pytest.mark.parametrize('damage',['foreign_caller','stale_cfg','missing_cfg_proof','foreign_cfg_proof',
+    'cfg_source_hash','cfg_source_path','cfg_source_range','site_source_path','site_source_hash',
+    'site_source_range','block_source_path','block_source_hash','block_source_range','outside_body'])
+def test_process_expansion_is_owned_by_current_caller_cfg_and_occurrence(nested,damage):
+    from dataclasses import replace
+    graph=nested_process_graph() if nested else process_graph()
+    positive=flow.build_report(graph,'method',view='process')
+    assert {e['call_site'] for e in positive['cfg']['edges'] if e['kind']=='call'} == ({'site','nested-site'} if nested else {'site'})
+    cfg=graph.cfgs[1 if nested else 0];site=graph.call_sites[1 if nested else 0]
+    block=next(b for b in cfg['blocks'] if b.get('call_site_ids')==[site['id']])
+    proof=next(p for p in graph.evidence if p['id']==cfg['evidence_ids'][0])
+    if damage=='foreign_caller':
+        graph.nodes.append(Node('foreign','method','foreign',SOURCE,scope='production',role='executable_code'))
+        graph.symbols.append({'id':'foreign','context_id':'ctx'})
+        site['caller']='foreign'
+        graph.edges=[replace(e,source='foreign') if e.kind=='declares_call' and e.target==site['id'] else e for e in graph.edges]
+    elif damage=='stale_cfg': proof['freshness']='STALE'
+    elif damage=='missing_cfg_proof': cfg['evidence_ids']=[]
+    elif damage=='foreign_cfg_proof': proof['source']=proof['target']='method' if nested else 'callee'
+    elif damage=='cfg_source_hash': proof['sha256']='a'*64
+    elif damage=='cfg_source_path': proof['source_file']='elsewhere.java'
+    elif damage=='cfg_source_range': proof.pop('source_range')
+    elif damage=='site_source_path': site['path']='elsewhere.java'
+    elif damage=='site_source_hash': site['sha256']='a'*64
+    elif damage=='site_source_range': site['range']={**site['range'],'end':site['range']['end']+1}
+    elif damage=='block_source_path': block['source_file']='elsewhere.java'
+    elif damage=='block_source_hash': block['sha256']='a'*64
+    elif damage=='block_source_range': block['source_range']={**block['source_range'],'end':block['source_range']['end']+1}
+    else:
+        site['range']=block['source_range']={'start':1000,'end':1001,'start_line':100}
+    graph=KnowledgeGraph.from_dict(graph.to_dict());before=copy.deepcopy(graph.to_dict())
+    report=flow.build_report(graph,'method',view='process')
+    assert not any(e.get('call_site')==site['id'] and e['kind'] in {'call','returns_to'} for e in report['cfg']['edges'])
+    assert not any(b.get('method')==site['declared_target'] for b in report['cfg']['blocks'])
+    assert report['boundaries'] and report['status'] in {'UNKNOWN','PARTIAL'}
+    # A rejected nested body may remain outside the expanded path. Otherwise
+    # retain the original caller block and local normal successor, not a rewired call.
+    retained=[b for b in report['cfg']['blocks'] if block['id'] in b.get('original_ids',[]) and b.get('method')==cfg['method']]
+    if retained:
+        boundary=retained[0]
+        assert boundary['boundary_reason'] and site['id'] in boundary['original_ids']
+        if damage in {'foreign_caller','site_source_path','site_source_hash','site_source_range',
+                      'block_source_path','block_source_hash','block_source_range','outside_body'}:
+            assert 'argument_parameter_bindings' not in boundary
+        else:
+            assert boundary['binding_projection']=='REFERENCE_ONLY'
+            assert boundary['argument_binding_status']['execution']=='NOT_OBSERVED'
+        expected={e['target'] for e in cfg['edges'] if e['source']==block['id']}
+        actual={original for e in report['cfg']['edges'] if e['source']==boundary['id']
+                for b in report['cfg']['blocks'] if b['id']==e['target'] for original in b.get('original_ids',[])}
+        assert expected <= actual
+    if damage=='stale_cfg' and not nested:
+        assert report['status']=='UNKNOWN'
+        assert any(g['code']=='STALE_EVIDENCE' for g in report['coverage']['gaps'])
+    for fmt in ('json','markdown','mermaid'):
+        assert report['status'] in flow.render(report,fmt)
+    assert graph.to_dict()==before
+
+
+@pytest.mark.parametrize('damage',['context_scope','symbol_scope','symbol_context','symbol_path','symbol_hash','site_scope'])
+def test_caller_cfg_declared_context_scope_and_source_identity_are_consistent(damage):
+    graph=process_graph()
+    assert any(e['kind']=='call' for e in flow.build_report(graph,'method',view='process')['cfg']['edges'])
+    symbol=next(s for s in graph.symbols if s['id']=='method')
+    if damage=='context_scope': graph.contexts[0]['scope']='test'
+    elif damage=='symbol_scope': symbol['scope']='test'
+    elif damage=='symbol_context':
+        graph.contexts.append({**copy.deepcopy(graph.contexts[0]),'id':'other'})
+        symbol['context_id']='other'
+    elif damage=='symbol_path': symbol['path']='elsewhere.java'
+    elif damage=='symbol_hash': symbol['sha256']='a'*64
+    else: graph.call_sites[0]['scope']='test'
+    graph=KnowledgeGraph.from_dict(graph.to_dict());before=copy.deepcopy(graph.to_dict())
+    report=flow.build_report(graph,'method',view='process',scope='all',context_id='ctx')
+    assert not any(e['kind']=='call' for e in report['cfg']['edges'])
+    assert not any(b.get('method')=='callee' for b in report['cfg']['blocks'])
+    assert report['status'] in {'UNKNOWN','PARTIAL'}
+    assert graph.to_dict()==before

@@ -104,6 +104,7 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
 
     def expand(method, depth, ancestry, prefix):
         cfg = cfgs[method]
+        caller_admission = _cfg_admission(graph, cfg)
         expanded_methods.add(method)
         ids = {b["id"]: "process:" + digest({"path": prefix, "id": b["id"]})[:24] for b in cfg["blocks"]}
         for b in cfg["blocks"]:
@@ -145,39 +146,44 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
                                        "org.reactivestreams.Publisher"}
             transition = ("SPRING_ASYNC" if spring_async else "COROUTINE" if coroutine
                           else "REACTIVE_PUBLISHER" if reactive else None)
-            admission = _site_admission(graph, site)
+            occurrence_admission = _site_occurrence(graph, site, cfg, block)
+            admission = caller_admission or occurrence_admission or _site_admission(graph, site)
             if not admission and target in cfgs:
-                from .views import execution_authority_gaps, evidence_freshness_gaps
-                body=cfgs[target];refs=body.get("evidence_ids",[])
-                proofs={p["id"]:p for p in graph.evidence}
-                if not refs or execution_authority_gaps({c["id"]:c for c in graph.contexts},graph.files,proofs,[body["context_id"]],refs) or evidence_freshness_gaps(proofs,refs):
-                    admission="current callee CFG proof unavailable"
-            reason = "async boundary" if spring_async else "async proxy resolution unknown" if spring_async_unknown else "coroutine boundary" if coroutine else "reactive boundary" if reactive else admission if admission else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None
+                callee_admission = _cfg_admission(graph, cfgs[target])
+                if callee_admission:
+                    admission = "callee " + callee_admission
+            reason = admission or ("async boundary" if spring_async else "async proxy resolution unknown" if spring_async_unknown else "coroutine boundary" if coroutine else "reactive boundary" if reactive else "unresolved/opaque callee" if target not in cfgs else "dispatch candidates" if uncertain else "recursive call" if target in ancestry else "depth limit" if depth >= max_depth else "node limit" if len(blocks) + len(cfgs[target]["blocks"]) > max_nodes else None)
             source_id = ids[block["id"]]
             blocks[source_id]["original_ids"].append(site["id"])
-            if spring_async_declared and spring_async_bypass:
-                blocks[source_id].update(proxy_traversal=False, continuation="SYNCHRONOUS",
-                                         async_scheduled=False, execution="NOT_OBSERVED",
-                                         availability="UNKNOWN")
-            blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
-            from .return_flow import return_consumer_bindings
-            blocks[source_id]["return_consumer_bindings"] = return_consumer_bindings(graph, site["id"])
-            blocks[source_id]["return_binding_status"] = {
-                "status": site.get("return_mapping_status", "UNKNOWN"),
-                "reason": site.get("return_mapping_reason", "LEGACY_RETURN_BINDINGS_UNAVAILABLE"),
-                "body": site.get("return_body_status", "UNKNOWN"),
-                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
-            blocks[source_id]["argument_binding_status"] = {
-                "status": site.get("argument_mapping_status", "UNKNOWN"),
-                "reason": site.get("argument_mapping_reason", "LEGACY_ARGUMENT_BINDINGS_UNAVAILABLE"),
-                "omitted_parameters": site.get("argument_omissions", []),
-                "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
+            if not admission:
+                if spring_async_declared and spring_async_bypass:
+                    blocks[source_id].update(proxy_traversal=False, continuation="SYNCHRONOUS",
+                                             async_scheduled=False, execution="NOT_OBSERVED",
+                                             availability="UNKNOWN")
+            if not occurrence_admission:
+                # Existing bindings remain reference information even when weak
+                # or stale CFG authority prevents interprocedural expansion.
+                if admission:
+                    blocks[source_id]["binding_projection"] = "REFERENCE_ONLY"
+                blocks[source_id]["argument_parameter_bindings"] = argument_parameter_bindings(graph, site["id"])
+                from .return_flow import return_consumer_bindings
+                blocks[source_id]["return_consumer_bindings"] = return_consumer_bindings(graph, site["id"])
+                blocks[source_id]["return_binding_status"] = {
+                    "status": site.get("return_mapping_status", "UNKNOWN"),
+                    "reason": site.get("return_mapping_reason", "LEGACY_RETURN_BINDINGS_UNAVAILABLE"),
+                    "body": site.get("return_body_status", "UNKNOWN"),
+                    "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
+                blocks[source_id]["argument_binding_status"] = {
+                    "status": site.get("argument_mapping_status", "UNKNOWN"),
+                    "reason": site.get("argument_mapping_reason", "LEGACY_ARGUMENT_BINDINGS_UNAVAILABLE"),
+                    "omitted_parameters": site.get("argument_omissions", []),
+                    "availability": "UNKNOWN", "execution": "NOT_OBSERVED"}
             if reason:
                 blocks[source_id]["boundary_reason"] = reason
-                if transition:
+                if transition and not admission:
                     blocks[source_id].update(boundary_kind=transition, continuation="SEPARATE",
                                              execution="NOT_OBSERVED", availability="UNKNOWN")
-                elif spring_async_unknown:
+                elif spring_async_unknown and not admission:
                     blocks[source_id].update(boundary_kind="SPRING_ASYNC_PROXY",
                                              continuation="UNKNOWN", execution="NOT_OBSERVED",
                                              availability="UNKNOWN")
@@ -226,13 +232,72 @@ size/depth-limited calls remain explicit boundaries with original call-site IDs.
 from .flow_report import finalize, mermaid, markdown, render, publish, RenderBudget
 
 
+def _source_span(value):
+    return (isinstance(value, dict) and type(value.get('start')) is int
+            and type(value.get('end')) is int and 0 <= value['start'] <= value['end'])
+
+
+def _cfg_admission(graph, cfg):
+    """Require the current source-body proof of this exact CFG owner."""
+    from .views import execution_authority_gaps, evidence_freshness_gaps, is_execution_entity
+    nodes={n.id:n for n in graph.nodes}; symbols={s['id']:s for s in graph.symbols}
+    contexts={c['id']:c for c in graph.contexts}; proofs={p['id']:p for p in graph.evidence}
+    owner=nodes.get(cfg.get('method')); symbol=symbols.get(cfg.get('method'),{})
+    context=contexts.get(cfg.get('context_id'),{}); refs=cfg.get('evidence_ids',[])
+    if (not is_execution_entity(owner) or symbol.get('context_id')!=cfg.get('context_id')
+            or context.get('scope')!=owner.scope
+            or ('scope' in symbol and symbol['scope']!=owner.scope)
+            or ('path' in symbol and symbol['path']!=owner.path)
+            or ('sha256' in symbol and symbol['sha256']!=graph.files.get(owner.path))):
+        return 'CFG owner/context/scope unavailable'
+    if (not refs or execution_authority_gaps(contexts,graph.files,proofs,[cfg.get('context_id')],refs)
+            or evidence_freshness_gaps(proofs,refs)):
+        return 'current caller CFG authority/proof unavailable'
+    for ref in refs:
+        proof=proofs.get(ref,{})
+        if (proof.get('kind')!='SYNTAX_CANDIDATE' or proof.get('relation')!='control_flow'
+                or proof.get('source')!=cfg['method'] or proof.get('target')!=cfg['method']
+                or proof.get('representation')!='SOURCE'
+                or set(proof.get('context_ids',[]))!={cfg['context_id']}
+                or proof.get('source_file')!=owner.path
+                or not proof.get('sha256') or proof['sha256']!=graph.files.get(owner.path)
+                or context.get('source_files',{}).get(owner.path)!=proof['sha256']
+                or not _source_span(proof.get('source_range'))):
+            return 'CFG owner/source proof mismatch or unavailable'
+    return None
+
+
+def _site_occurrence(graph, site, cfg, block):
+    """Source identity only; it never establishes executable CFG authority."""
+    nodes={node.id:node for node in graph.nodes}
+    if site.get('caller')!=cfg['method']:
+        return 'call-site caller does not own expanded CFG'
+    if site.get('context_id')!=cfg['context_id']:
+        return 'call-site context differs from expanded CFG'
+    owner=nodes.get(cfg['method'])
+    span=block.get('source_range'); occurrence=site.get('range')
+    if (owner is None or block.get('source_file')!=owner.path or site.get('path')!=owner.path
+            or nodes.get(site['id']) is None or nodes[site['id']].path!=owner.path
+            or not block.get('sha256') or block['sha256']!=site.get('sha256')
+            or block['sha256']!=graph.files.get(owner.path)
+            or not _source_span(span) or not _source_span(occurrence) or span!=occurrence):
+        return 'call-site source occurrence differs from CFG block'
+    proofs={p['id']:p for p in graph.evidence}
+    for ref in cfg.get('evidence_ids',[]):
+        body=proofs.get(ref,{}).get('source_range')
+        if _source_span(body) and not body['start']<=span['start']<=span['end']<=body['end']:
+            return 'call-site occurrence outside caller CFG body'
+    return None
+
+
 def _site_admission(graph, site):
     from .views import execution_authority_gaps, evidence_freshness_gaps, is_execution_callsite, is_execution_entity
     nodes={node.id:node for node in graph.nodes}
     endpoints=[nodes.get(site.get(key)) for key in ("caller","id","declared_target")]
     if not all(is_execution_entity(node) for node in endpoints):
         return "non-executable caller/site/target role"
-    if len({node.scope for node in endpoints})!=1:
+    if (len({node.scope for node in endpoints})!=1
+            or ('scope' in site and site['scope']!=endpoints[0].scope)):
         return "cross-scope execution boundary"
     if not is_execution_callsite(site):
         return "non-execution call-site kind"

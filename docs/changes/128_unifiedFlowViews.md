@@ -434,3 +434,145 @@ JAVA_TOOL_OPTIONS=-XX:-UsePerfData JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 
 
 Log `/tmp/unified-flow-main7bb-final2.log`. Finální84 příkaz/log jsou v kroku9.
 Sady se překrývají a nesčítají do unikátního celkového PASS.
+
+
+## Krok 12 — nezávislé review: vlastník a aktuální důkaz caller CFG
+
+T003-S07-W09 kroky3–5, AC01–AC04. Reviewed baseline
+`028cb7c2e6408946bb2fa9231ab02176c5cc73ed`, base
+`7bb8b8d389c461c684197704203a99dcb2b83724`.
+[REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/109#issuecomment-6900427853)
+nezávisle prokázalo dva P1: CFG mohl použít site jiného calleru s jinak validní
+foreign→site→callee cestou; stale caller CFG se expandoval přes current site a
+callee a až hotový report dostal UNKNOWN. Coverage po falešné expanzi není oprava.
+
+Přesná reprodukce před opravou:
+`PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=line /tmp/pr109_review_repros.py`
+**FAIL2 /0.09 s**. Reviewer historicky doložil84 PASS a validní semantic; tato
+starší sada neobsahovala ownership/current-caller negativy.
+
+`flow.py::_cfg_admission` nyní sdílí tentýž guard pro root, nested caller i callee:
+executable owner a jeho symbol/context/scope, aktuální W08 authority/freshness,
+konkrétní SYNTAX_CANDIDATE control_flow proof source=target=method,
+SOURCE reprezentace, context a source path/hash/range. Výslovně deklarované
+symbol source/scope informace musí být kompatibilní. `_site_occurrence` ověřuje
+caller==expandované CFG method, context, source path/hash a exact block/site
+range uvnitř deklarovaného těla. `_site_admission` nadále vyžaduje skutečnou
+current executable caller→site→target cestu. Root bez důkazu zůstává lokální
+syntax s boundary; nevznikne call/returns_to ani převzatý callee. Foreign source
+occurrence nepřebírá ani binding/proxy/async značky. Original IDs a původní lokální
+normal/exception edges zůstávají, žádná přeskočená větev se nepřepojuje.
+
+Vlastní `process_graph` a schválené model helpers v test_spring_proxy_async.py a
+`test_t025_build_local_process_path.py::add_cfg` byly doplněny producer-shaped
+source-body proof poli podle skutečného inspection.graph_from_response (kind,
+relation, method owner, SOURCE, source range/hash). Původní generic proof neprokazoval
+vlastnictví CFG. Nejde o actual compiler běh ani přejmenování autority; explicitně
+weak/missing/stale modely zůstávají negativní. Actual testy nejsou oslabeny.
+Vlastní34 negativů kontroluje root/nested foreign caller, stale/missing/foreign
+CFG proof, source hash/path/range a symbol/context/scope. Každý nejprve doloží
+kladnou expanzi původního modelu, následně zakáže konkrétní call/return hranu i
+callee nodes, kontroluje boundary/IDs/lokální pokračování a neměnnost vstupu.
+
+První malá kontrola po guardu:
+`PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=line /tmp/pr109_review_repros.py tests/test_unified_flow_views.py -k 'not actual'`
+**PASS70 /2 deselected /1.03 s**. Následná širší cílená matice (příkaz kroku13)
+**FAIL1 /PASS422 /76.76 s**; jediná skutečná regrese zachování readonly argument
+binding je opravena v samostatném kroku13. Native Javac/K1/K2/TS běžely; nejde o
+chybějící toolchain. Full/GH CI NOT_RUN. Žádná graph/store migrace ani worker změna.
+
+## Krok 13 — reference-only kompatibilita a finální review-fix ověření
+
+T003-S07-W09 krok3–5, AC02/AC03/AC04, výchozí commit stále028cb7c;
+navazuje na guard pracovního stromu kroku12. Existující
+`test_graph_evidence_roundtrip_and_process_preserve_call_binding` používá skutečný
+worker capture a záměrně weak BUILD_AWARE/LOCAL_SOURCE kontext: má zobrazit static
+binding bez execution authority. Test zůstává beze změny.
+
+`flow.py` proto odděluje `_site_occurrence` od CFG execution admission. Pokud
+caller/context/source occurrence odpovídá, původní argument/return binding se
+může zobrazit i při weak/stale CFG jako `binding_projection=REFERENCE_ONLY`,
+`execution=NOT_OBSERVED`, dostupnost UNKNOWN. Původní evidence/freshness a stale
+coverage gap zůstávají; nenastává call/return expanze. Foreign caller/occurrence
+binding nepřevezme. Nová actual Javac assertion ve vlastním W09 testu má nonempty
+argument binding, ověřuje weak i stale caller, raw STALE provenance, zakázanou
+callee/call/return expanzi a neměnnost vstupu.
+
+Finální production source prošel tímto přesným příkazem:
+
+```sh
+JAVA_TOOL_OPTIONS=-XX:-UsePerfData JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_WORKERS_HOME=/tmp/kgmaker-unified-flow-views/workers KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=short tests/test_unified_flow_views.py tests/test_control_flow.py tests/test_t025_build_local_process_path.py tests/test_spring_proxy_async.py tests/test_evidence_ranking.py tests/test_graph_provider.py tests/test_argument_parameter_flow.py tests/test_return_consumer_flow.py /tmp/pr109_review_repros.py
+```
+
+**PASS429 /0 SKIP /78.90 s**, log `/tmp/unified-flow-review-fix-final.log`.
+Obě nezávislé reprodukce, W09/current authority/CFG/T025/Spring a skutečné
+Javac/JDK21, Kotlin K1/K2, TS5.7.3/React18 a Mermaid11.4.1 parser prošly.
+
+Po doplnění actual nonempty reference-only assertion následoval tento cílený
+příkaz, bez opakování celé429 sady:
+
+```sh
+JAVA_TOOL_OPTIONS=-XX:-UsePerfData JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_WORKERS_HOME=/tmp/kgmaker-unified-flow-views/workers KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=short tests/test_unified_flow_views.py::test_actual_javac_public_formats_parser_and_readonly_failures tests/test_unified_flow_views.py::test_process_expansion_is_owned_by_current_caller_cfg_and_occurrence tests/test_unified_flow_views.py::test_caller_cfg_declared_context_scope_and_source_identity_are_consistent tests/test_argument_parameter_flow.py::test_graph_evidence_roundtrip_and_process_preserve_call_binding /tmp/pr109_review_repros.py
+```
+
+První pokus **FAIL1 /PASS37 /1.98 s** byl chybou nového testu: mutable nested
+records z modelového from_dict/to_dict roundtripu sdílely původní graph, takže
+injektovaná STALE změnila očekávanou native provenance. Test použil explicitní
+deepcopy před injekcí; production serializer/model ani assertions nebyly měněny.
+Konečný výsledek **PASS38 /0 SKIP /3.46 s**. Log `/tmp/unified-flow-review-fix-binding.log`.
+
+README, capability, progress a acceptance vysvětlují caller CFG ownership a
+reference-only kompatibilitu. Task/registry a instalované instrukce/templates
+bez dopadu: nové ID/revize/API migrace nevznikají. Full/GH CI NOT_RUN. Historické
+84/293 a review REQUEST_CHANGES se nepřepisují; opravený HEAD vyžaduje nové review.
+
+
+Přímá consumer regrese po source freeze (stejné native prostředí):
+
+```sh
+JAVA_TOOL_OPTIONS=-XX:-UsePerfData JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_WORKERS_HOME=/tmp/kgmaker-unified-flow-views/workers KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q -p no:cacheprovider --tb=short tests/test_t028_cross_async_process_boundary.py
+```
+
+**PASS59 /0 SKIP /22.46 s**, log `/tmp/unified-flow-review-fix-t028.log`.
+T028 source/test beze změny; žádná skrytá sousední implementace. Sady429/38/59
+se překrývají, nejsou sčítány do celkového unikátního PASS. Prepared symlinky
+JVM/K2/TS/React/Mermaid byly po native ověření odstraněny bez zásahu do targetů.
+
+
+## Krok 14 — review-fix semantic a přesné předání
+
+T003-S07-W09 krok5, AC04, baseline028cb7c / actual main7bb8b8d. Source-backed
+current packet byl vytvořen po source freeze; dvě nové doložené vazby popisují
+sdílený `_cfg_admission` a vlastnické/occurrence veřejné regrese. Starší doložené
+vazby jsou reanchor přes ověřené nezměněné source řádky nebo explicitní current
+source review W09 konceptu. Žádné remove_nodes/remove_edges ani mazání epizod.
+
+```sh
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker scan
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker semantic update --base 7bb8b8d389c461c684197704203a99dcb2b83724
+python3 /tmp/unified-flow-7bb-reanchor.py
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker semantic apply
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker semantic validate
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker memory capture --base 7bb8b8d389c461c684197704203a99dcb2b83724 --validation review-fix-429=passed --validation binding-38=passed --validation t028-59=passed --validation full=skipped
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker scan
+PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m kgmaker check
+python3 /tmp/unified-flow-7bb-preservation.py
+python3 /tmp/unified-flow-ours-preservation.py
+git diff --check
+git ls-remote origin refs/heads/main
+```
+
+**PASS**: main stále7bb, bez nové integrace; tracked semantic **49/167/315**,
+všech314 předchozích epizod deep-equal zachováno a obě rodičovské historie bez
+ztráty. Nová immutable epizoda
+`fccee79417dba86cbb11c9a310fed8f43c092254c48bd2ea0e273c255009c979`.
+Generated graph aktualizován jen příkazem. Workflow zůstává review při původním
+limitu iterací; append-only orchestration artifact zaznamenává nové skutečné
+receipt bez fingovaného phase návratu nebo nezávislého APPROVE. Kód/testy po
+finálních429/38/59 nejsou měněny; následný docs-only scan/check nedokládá novýpytest.
+
+PR109 zůstává PR_OPEN. Review-fix commit a aktualizované PR body mají běžný push
+bez force; implementer nemerguje. Původní REQUEST_CHANGES musí uzavřít reviewer
+nad přesným novým HEAD/base. Full/GH CI NOT_RUN, žádné zobecnění native CFG scope
+ani dokončení celého S07. README/capability/progress/acceptance a tento krok jsou
+součástí téhož review-fix předání.

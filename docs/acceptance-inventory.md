@@ -1466,6 +1466,12 @@ integrovaný main7bb, T028, BEFE relation/cache/legacy a dotčené flow kontrakt
 Následný R07 guard ověřuje samostatná sada **84 PASS / 0 SKIP / 9.30 s**
 (vlastní W09, provider, workbook); včetně skutečného Javac/TS/Mermaid a v1/v2/v3
 SOURCE_ONLY mutation negatives. Full/GH CI NOT_RUN; T003-S07 stále PARTIAL.
+Review-fix caller/CFG ownership a current proof: **429 PASS /0 SKIP /78.90 s**,
+včetně dvou nezávislých reprodukcí a34 root/nested/occurrence/context negativů.
+Doplňující actual binding/guard/repro sada38 PASS /3.46 s; actual positive kontrola
+zůstává oddělená od modelů. Reference-only binding
+zachovává raw freshness a nevytváří expanzi. Nové review nad opraveným HEAD zbývá.
+
 
 ### T028 integration with MERGED PR106
 

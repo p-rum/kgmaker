@@ -29,8 +29,15 @@ report metadata. Markdown embeds the identical diagram.
 
 Source CFG remains syntax evidence. Interprocedural expansion additionally needs
 current compiler inspection authority, executable call-site kind, exact current
-caller/site/target witnesses and a current callee CFG proof. The shared W08
-admission rules apply; SOURCE_ONLY, stale proofs, type/test/config references and
+caller/site/target witnesses and current source-body proofs of both the caller
+and callee CFG. Every root or nested expansion checks that the call-site belongs
+to that exact CFG method/context/scope and matches the block's path, checksum and
+source range inside the captured body. Foreign, missing or stale caller proof
+retains the original local structure and explicit boundary without call/return
+expansion. Static argument/return binding details whose source occurrence still
+matches may remain as `binding_projection: REFERENCE_ONLY`, with original proof
+freshness, `NOT_OBSERVED` execution and coverage gaps; these are not execution
+witnesses. The shared W08 admission rules apply; SOURCE_ONLY, stale proofs, type/test/config references and
 runtime samples do not manufacture a static call path. Incomplete dispatch,
 recursive calls, unsupported bodies and async/proxy boundaries stay explicit.
 Execution is `NOT_OBSERVED` and availability `UNKNOWN` throughout.

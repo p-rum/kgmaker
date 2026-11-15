@@ -39,6 +39,7 @@ def add_cfg(graph, method, symbol, body):
     graph.evidence.append({'id': proof, 'kind': 'SYNTAX_CANDIDATE', 'source': method,
         'target': method, 'relation': 'control_flow', 'context_ids': [symbol['context_id']],
         'representation': 'SOURCE', 'source_file': symbol['path'], 'sha256': symbol['sha256'],
+        'source_range': body['range'],
         'freshness': 'CURRENT'})
     cfg['evidence_ids'] = [proof]; graph.cfgs.append(cfg)
     return cfg
