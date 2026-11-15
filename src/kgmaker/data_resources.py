@@ -342,7 +342,8 @@ def project_data_resources(workspace: Mapping, graph: KnowledgeGraph, *, source_
         from .framework import JPA_RULE_VERSION
         realm_aware_rules = {'annotation-source-v6-persistence-realms',
                             'annotation-source-v7-persistence-realms-jpql',
-                            'annotation-source-v7-schema-compatibility', JPA_RULE_VERSION}
+                            'annotation-source-v7-schema-compatibility',
+                            'annotation-source-v8-jpql-hql-grammar', JPA_RULE_VERSION}
         if valid and edge.kind in ACCESS and (
                 rules is not None and not isinstance(rules, Mapping)
                 or has_stamp and (not isinstance(jpa_stamp, str) or jpa_stamp not in realm_aware_rules)):

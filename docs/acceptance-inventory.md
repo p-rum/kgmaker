@@ -111,6 +111,24 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
 
+## T003-S06-W05 — rozšířená JPQL/HQL gramatika — PR_OPEN / LOCAL_VERIFIED_IN_SCOPE
+
+PR [#97](https://github.com/p-rum/kgmaker/pull/97), první implementační head
+`1f6f0a9ee63d77d5abb853dd6db057d5b0d15da9`, tree
+`fbc521331a7a68a94768d636f52552917008bfba`; historický publikovaný stav. Review opravy z 2026-11-15 byly po výslovném souhlasu uživatele publikovány
+v checkpointu `7369e2d`; produkční parser beze změn vůči `1dcf9ff` má
+code review bez nálezu. Opravené test/build vstupy mají samostatný aktuální receipt.
+Po uživatelem vyžádané opravě fixture a toolchain prostředí má aktuální
+full receipt nulový FAIL/ERROR; aktuální exact-pair verdikt a publikovaný HEAD
+jsou v PR97 (podrobně change116).
+
+| ID | Stav | Přímá evidence |
+|---|---|---|
+| T003-S06-W05-AC01 | LOCAL_VERIFIED_IN_SCOPE | `tests/test_jpql_hql_grammar.py::test_bounded_jpql_hql_joins_subqueries_dml_and_constructor_projection`: exact compiler-owned root/join/subquery reads, bulk update/delete, DTO constructor a clause-specific path edges; `partialLateral` je PARTIAL s query locatorem |
+| T003-S06-W05-AC02 | LOCAL_VERIFIED_IN_SCOPE | `JPA_RULE_VERSION=annotation-source-v8-jpql-hql-grammar`; `test_legacy_jpa_rules_remain_readable_but_require_reinspection` pokrývá v6/v7, graph/store v1/v2/v3 zůstává beze změny a stávající realm/schema suite prochází |
+| T003-S06-W05-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_partial_invalid_and_ambiguous_queries_never_publish_stronger_evidence` plus bounded invalid-clause regressions: malformed/incomplete query, unknown path, duplicate entity, undeclared alias a trailing token nevytvářejí silnější evidence; vstupní graph se nemutuje |
+| T003-S06-W05-AC04 | PARTIAL | Finální corpus 42 PASS /0 SKIP včetně actual-javac; T015 actual 1 PASS; širší JPA 130 PASS /32 SKIP. Aktuální full: 2264 PASS /481 SKIP /0 FAIL /0 ERROR. Předchozí šest FAIL/41 ERROR odstraněno opravou integračních fixture a přípravou pinned toolchainů; nové exact-pair review je v PR97. [Change116](changes/116_parseExtendedJpqlHql.md); T003-S06 zůstává PARTIAL |
+
 ## Historická acceptance podle uvedených checkpointů
 
 
@@ -409,7 +427,7 @@ worker/build/provider/feature běh měl **53 passed in 28.60 s**.
 | T002-CG-03 | PARTIAL | konstrukční test ověřuje compiler-resolved constructor/lambda/reference/operator, primary-constructor initializer/init pořadí a custom accessor; `test_kotlin_file_facade_and_object_initializers_keep_distinct_callers` ověřuje file `<clinit>` proti object constructor realm; `test_control_flow.py` ověřuje when/Elvis/short-circuit/try/finally/break/continue | K2, default-body mapping mimo W02 a coroutine mapping a širší ručně anotovaný corpus |
 | T003-AC05 / T002-SP-01–03 | VERIFIED_IN_SCOPE | `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard` — dva profily, qualifier, primary, collection/map/optional/provider, property/custom condition UNKNOWN, ambiguity, self-invocation, compiler-symbol meta-stereotype, explicitní component package, statický Configuration/Import/Bean graf a cizí short-name anotace; rules `annotation-source-v3` | Dynamic ImportSelector/registrars/factories a runtime proxy/async execution zůstávají mimo tvrzený scope |
 | T002-HB-02 | PARTIAL | `test_build_aware.py::test_hb02_schema_realm_and_unverified_naming_do_not_silently_merge` | Kompletní multi-datasource konfigurace, entity access a naming strategie |
-| T003-AC06 / T002-HB-01 | PARTIAL | `test_compiler_workers.py::test_ac06_real_javac_embedded_id_and_association_roles`; `test_build_aware.py::test_hb01_embedded_id_and_bidirectional_association_preserve_roles` — Java FIELD/PROPERTY access and JPA bindings; `test_k2_backend.py::test_k2_jpa_use_site_access_and_ambiguity_are_compiler_attributed` — actual K2 `@field:`/`@get:`, explicit/mismatched `@Access`, Kotlin `EmbeddedId`, unqualified ambiguity and embeddable column; rules `annotation-source-v4` | XML override priority, inheritance attributes, two data sources with same table, broader query grammar/dynamic builders, implicit Kotlin annotation-target resolution and complete schema matrix |
+| T003-AC06 / T002-HB-01 | PARTIAL | Existing Java/Kotlin persistence fixtures plus `tests/test_jpql_hql_grammar.py` — bounded join/subquery/bulk DML/constructor/path grammar; current rules `annotation-source-v8-jpql-hql-grammar` | Named-query containers, Criteria/Specification/QueryDSL, broader provider grammar, implicit Kotlin annotation-target resolution and complete schema matrix |
 | T003-AC08 | PARTIAL | `test_compiler_workers.py::test_ts_reexport_resolves_and_lockfile_change_marks_only_context_stale` | Multi-project references a kompletní BE–FE value flow |
 
 Workspace cache invalidaci při publikaci další inspection bez změny zdrojů navíc
@@ -535,6 +553,10 @@ Přesné finální běhy a SKIP důvody jsou v change note39; plná Excel gramma
 vyhodnocování vzorců a runtime availability nejsou tímto scope dodány.
 
 ## T003-S05-W01 — bounded dynamické Spring importy
+
+Aktuální integrační oprava zamýšlených `@Autowired` polí a actual K1/K2 receipt
+jsou v [change116](changes/116_parseExtendedJpqlHql.md); UNKNOWN/may-inject
+hranice nebyla uvolněna.
 
 `annotation-source-v4`, Java/Javac21, skutečné Spring6.2.2 API, obě JVM distribuce
 K1/K2. [Change note42](changes/42_resolveBoundedSpringImports.md); celý S05/AC05 zůstává PARTIAL.
@@ -688,6 +710,10 @@ Runtime acceptance NOT_RUN; no data availability or overall T004 completion clai
 
 ## T003-S05-W03 — condition matrix
 
+[Change116](changes/116_parseExtendedJpqlHql.md) opravuje canonical injection
+v actual fixture; condition/property/profile assertions zůstaly stejné a
+nový K1/K2 běh prochází.
+
 | AC | Test and supported proof |
 |---|---|
 | AC01 | `test_actual_pinned_conditions_and_negated_profile_injection`; `test_actual_variant_input_and_classpath_freshness_are_isolated`: labelled real annotations, explicit variant inputs, independently stale config/JAR with unchanged second context/store |
@@ -787,7 +813,7 @@ AC01 lazy/static intent, AC02 dynamic URI/source identity, AC03 actual Feign and
 WebClient occurrences, AC04 offline/input preservation, AC05 malformed source/
 edge/scope/owner/SHA and selected stale siblings are in
 `tests/test_t011_catalog_http_consumers.py`. AC06 documentation and actual outcome
-are in [change76](changes/76_catalogHttpConsumers.md). Strict full1373PASS/10optionalSKIP; current-pair review pending; runtime NOT_RUN.
+are in [change76](changes/76_catalogHttpConsumers.md) (historical strict full1373PASS/10optionalSKIP). Current portable actual capture and full-suite repair are recorded in [change116](changes/116_parseExtendedJpqlHql.md); runtime NOT_RUN.
 
 ## T025 revision2 — compiler local operation evidence (candidate)
 

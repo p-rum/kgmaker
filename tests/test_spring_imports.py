@@ -109,9 +109,10 @@ public class NonType implements org.springframework.context.annotation.ImportSel
         "app/Consumer.java": '''package app;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 @Service public class Consumer {
-  @Qualifier("direct") String direct;
-  @Qualifier("filtered") String filtered;
+  @Autowired @Qualifier("direct") String direct;
+  @Autowired @Qualifier("filtered") String filtered;
 }''',
     }
     literals = ','.join('"outside.C' + str(index) + '"' for index in range(129))

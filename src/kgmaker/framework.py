@@ -24,7 +24,7 @@ from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v9-proxy-provenance"
-JPA_RULE_VERSION = "annotation-source-v7-schema-compatibility"
+JPA_RULE_VERSION = "annotation-source-v8-jpql-hql-grammar"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -87,6 +87,451 @@ DERIVED_QUERY_OPERATORS = (
     "NotLike", "Like", "NotIn", "In", "Between", "LessThan", "GreaterThan",
     "Before", "After", "IsTrue", "True", "IsFalse", "False", "IsNot", "Not",
 )
+
+JPQL_ALIAS_RESERVED = {
+    "as", "asc", "by", "delete", "desc", "fetch", "from", "full", "group",
+    "having", "inner", "join", "left", "on", "order", "outer", "right",
+    "select", "set", "update", "where", "with",
+}
+JPQL_UNSUPPORTED_KEYWORDS = {
+    "except": "set operation",
+    "indices": "collection index function",
+    "insert": "insert-select statement",
+    "intersect": "set operation",
+    "lateral": "lateral join",
+    "over": "window expression",
+    "returning": "DML returning clause",
+    "treat": "polymorphic treat expression",
+    "union": "set operation",
+    "versioned": "versioned bulk update",
+    "window": "window declaration",
+}
+
+
+def _jpql_locator(text: str, offset: int, token: str, reason: str) -> dict[str, Any]:
+    line_start = text.rfind("\n", 0, offset) + 1
+    return {"query_offset": offset, "query_line": text.count("\n", 0, offset) + 1,
+            "query_column": offset - line_start + 1, "token": token, "reason": reason}
+
+
+def _parse_jpql_hql(text: str) -> dict[str, Any]:
+    """Parse a deliberately bounded JPQL/HQL subset without executing a provider.
+
+    The result contains only syntactic candidates.  Entity, attribute, association
+    and projection identity is resolved later against compiler-owned JPA facts.
+    Unsupported provider syntax is localized and leaves the result PARTIAL;
+    malformed lexical/parenthesis input is UNKNOWN and publishes no query edges.
+    """
+    tokens: list[dict[str, Any]] = []
+    index = 0
+    invalid: list[dict[str, Any]] = []
+    while index < len(text):
+        char = text[index]
+        if char.isspace():
+            index += 1
+            continue
+        if text.startswith("--", index):
+            end = text.find("\n", index + 2)
+            index = len(text) if end < 0 else end + 1
+            continue
+        if text.startswith("/*", index):
+            end = text.find("*/", index + 2)
+            if end < 0:
+                invalid.append(_jpql_locator(text, index, "/*", "unterminated block comment"))
+                break
+            index = end + 2
+            continue
+        if char == "'":
+            start = index
+            index += 1
+            while index < len(text):
+                if text[index] != "'":
+                    index += 1
+                    continue
+                if index + 1 < len(text) and text[index + 1] == "'":
+                    index += 2
+                    continue
+                index += 1
+                break
+            else:
+                invalid.append(_jpql_locator(text, start, "'", "unterminated string literal"))
+            tokens.append({"kind": "literal", "value": text[start:index], "lower": "",
+                           "start": start, "end": index})
+            continue
+        identifier = re.match(r"[A-Za-z_$][\w$]*", text[index:])
+        if identifier:
+            value = identifier.group(0)
+            tokens.append({"kind": "identifier", "value": value, "lower": value.casefold(),
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        parameter = re.match(r"(?::[A-Za-z_]\w*|\?\d+)", text[index:])
+        if parameter:
+            value = parameter.group(0)
+            tokens.append({"kind": "parameter", "value": value, "lower": "",
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        number = re.match(r"\d+(?:\.\d+)?", text[index:])
+        if number:
+            value = number.group(0)
+            tokens.append({"kind": "literal", "value": value, "lower": "",
+                           "start": index, "end": index + len(value)})
+            index += len(value)
+            continue
+        operator = next((value for value in (">=", "<=", "<>", "!=") if text.startswith(value, index)), None)
+        if operator:
+            tokens.append({"kind": "operator", "value": operator, "lower": operator,
+                           "start": index, "end": index + len(operator)})
+            index += len(operator)
+            continue
+        if char in "(),.=<>+-*/%":
+            tokens.append({"kind": "punctuation" if char in "(),." else "operator",
+                           "value": char, "lower": char, "start": index, "end": index + 1})
+            index += 1
+            continue
+        invalid.append(_jpql_locator(text, index, char, "unsupported lexical token"))
+        index += 1
+
+    depth = 0
+    for token in tokens:
+        if token["value"] == ")":
+            depth -= 1
+            if depth < 0:
+                invalid.append(_jpql_locator(text, token["start"], ")", "unmatched closing parenthesis"))
+                depth = 0
+        token["depth"] = depth
+        if token["value"] == "(":
+            depth += 1
+    if depth:
+        invalid.append(_jpql_locator(text, len(text), "EOF", "unclosed parenthesis"))
+
+    # Each recursive query block owns its bindings; grouping parentheses do
+    # not create a query scope. Extraction happens only as grammar is consumed.
+    roots: list[dict[str, Any]] = []
+    joins: list[dict[str, Any]] = []
+    paths: list[dict[str, Any]] = []
+    constructors: list[dict[str, Any]] = []
+    unsupported: list[dict[str, Any]] = []
+    provider_extensions: list[str] = []
+    scope_parents: dict[int, int | None] = {0: None}
+    bindings: dict[int, set[str]] = {}
+    references: list[tuple[int, dict[str, Any]]] = []
+    statement = tokens[0]['lower'].upper() if tokens else 'SELECT'
+
+    class InvalidQuery(Exception):
+        pass
+
+    class UnsupportedQuery(Exception):
+        pass
+
+    class Grammar:
+        position = 0
+        scope = 0
+        role = 'projection'
+
+        def token(self):
+            return tokens[self.position] if self.position < len(tokens) else {
+                'kind': 'eof', 'value': 'EOF', 'lower': '', 'start': len(text), 'depth': 0}
+
+        def at(self, *values):
+            return self.token()['lower'] in values
+
+        def accept(self, value):
+            if self.at(value):
+                self.position += 1
+                return True
+            return False
+
+        def fail(self, reason):
+            token = self.token()
+            invalid.append(_jpql_locator(text, token['start'], token['value'], reason))
+            raise InvalidQuery
+
+        def outside(self, reason):
+            token = self.token()
+            unsupported.append(_jpql_locator(text, token['start'], token['value'], reason))
+            raise UnsupportedQuery
+
+        def expect(self, value):
+            if not self.accept(value):
+                self.fail('expected ' + value)
+
+        def identifier(self, qualified=False):
+            token = self.token()
+            reserved = JPQL_ALIAS_RESERVED | {'and', 'or', 'not', 'exists', 'in',
+                'is', 'null', 'true', 'false', 'between', 'like', 'distinct', 'new'}
+            if token['kind'] != 'identifier' or (not qualified and token['lower'] in reserved):
+                self.fail('expected identifier')
+            self.position += 1
+            return token
+
+        def path(self, entity=False):
+            first = self.identifier(qualified=entity)
+            parts = [first['value']]
+            while self.accept('.'):
+                parts.append(self.identifier(qualified=True)['value'])
+            return first, parts
+
+        def reference(self, token, parts, role=None):
+            references.append((self.scope, token))
+            if len(parts) > 1:
+                paths.append({'alias': parts[0], 'path': parts[1:],
+                    'role': role or self.role, 'depth': token['depth'], 'scope_id': self.scope,
+                    'locator': _jpql_locator(text, token['start'], token['value'], 'path expression')})
+
+        def alias(self):
+            explicit = self.accept('as')
+            token = self.token()
+            if explicit or (token['kind'] == 'identifier' and token['lower'] not in
+                    JPQL_ALIAS_RESERVED | {'and', 'or', 'not', 'exists', 'in', 'is'}):
+                token = self.identifier()
+                known = bindings.setdefault(self.scope, set())
+                if token['lower'] in known:
+                    self.fail('duplicate alias in one query block')
+                known.add(token['lower'])
+                return token['value']
+            return None
+
+        def expression(self, minimum=0):
+            token = self.token()
+            if self.accept('not'):
+                kind = self.expression(3)
+                if kind != 'predicate':
+                    self.fail('NOT requires a predicate')
+            elif self.accept('exists'):
+                self.expect('(')
+                self.query(subquery=True)
+                self.expect(')')
+                kind = 'predicate'
+            elif self.accept('('):
+                if self.at('select'):
+                    self.query(subquery=True)
+                    kind = 'scalar'
+                else:
+                    kind = self.expression()
+                self.expect(')')
+            elif self.accept('+') or self.accept('-'):
+                kind = self.expression(6)
+                if kind != 'scalar':
+                    self.fail('unary arithmetic requires a scalar')
+            elif token['kind'] in {'literal', 'parameter'} or self.at('null', 'true', 'false'):
+                self.position += 1
+                kind = 'scalar'
+            elif self.accept('new'):
+                if self.role != 'projection':
+                    self.fail('constructor outside projection')
+                first, parts = self.path(entity=True)
+                constructors.append({'type': '.'.join(parts),
+                    'locator': _jpql_locator(text, first['start'], first['value'], 'constructor projection')})
+                self.expect('(')
+                self.scalar()
+                while self.accept(','):
+                    self.scalar()
+                self.expect(')')
+                kind = 'scalar'
+            elif token['kind'] == 'identifier':
+                if token['lower'] in JPQL_UNSUPPORTED_KEYWORDS:
+                    self.outside(JPQL_UNSUPPORTED_KEYWORDS[token['lower']])
+                first, parts = self.path()
+                if self.at('('):
+                    arities = {'count': (1, 1), 'sum': (1, 1), 'avg': (1, 1),
+                        'min': (1, 1), 'max': (1, 1), 'lower': (1, 1), 'upper': (1, 1),
+                        'length': (1, 1), 'abs': (1, 1), 'sqrt': (1, 1), 'mod': (2, 2),
+                        'concat': (2, 2), 'substring': (2, 3), 'coalesce': (2, 100), 'nullif': (2, 2)}
+                    if len(parts) != 1 or first['lower'] not in arities:
+                        self.outside('function outside bounded grammar')
+                    self.expect('(')
+                    if first['lower'] in {'count', 'sum', 'avg', 'min', 'max'}:
+                        self.accept('distinct')
+                    self.scalar()
+                    count = 1
+                    while self.accept(','):
+                        self.scalar()
+                        count += 1
+                    self.expect(')')
+                    low, high = arities[first['lower']]
+                    if not low <= count <= high:
+                        self.fail('invalid bounded function arity')
+                else:
+                    self.reference(first, parts)
+                kind = 'scalar'
+            else:
+                self.fail('expected expression')
+            while True:
+                operator = self.token()['lower']
+                negated = operator == 'not'
+                if negated:
+                    following = tokens[self.position + 1]['lower'] if self.position + 1 < len(tokens) else ''
+                    if following not in {'in', 'between', 'like'}:
+                        break
+                    operator = following
+                precedence = {'or': 1, 'and': 2, '=': 3, '!=': 3, '<>': 3,
+                    '<': 3, '>': 3, '<=': 3, '>=': 3, 'is': 3, 'in': 3,
+                    'between': 3, 'like': 3, '+': 4, '-': 4, '*': 5, '/': 5}.get(operator)
+                if precedence is None or precedence < minimum:
+                    break
+                self.position += 2 if negated else 1
+                if operator in {'and', 'or'}:
+                    right = self.expression(precedence + 1)
+                    if kind != 'predicate' or right != 'predicate':
+                        self.fail('logical operator requires predicates')
+                    kind = 'predicate'
+                elif operator in {'+', '-', '*', '/'}:
+                    right = self.expression(precedence + 1)
+                    if kind != 'scalar' or right != 'scalar':
+                        self.fail('arithmetic requires scalars')
+                else:
+                    if kind != 'scalar':
+                        self.fail('chained comparison outside bounded grammar')
+                    if operator == 'is':
+                        self.accept('not')
+                        self.expect('null')
+                    elif operator == 'in':
+                        self.expect('(')
+                        if self.at('select'):
+                            self.query(subquery=True)
+                        else:
+                            self.scalar(4)
+                            while self.accept(','):
+                                self.scalar(4)
+                        self.expect(')')
+                    elif operator == 'between':
+                        self.scalar(4)
+                        self.expect('and')
+                        self.scalar(4)
+                    else:
+                        self.scalar(4)
+                        if operator == 'like' and self.accept('escape'):
+                            self.scalar(4)
+                    kind = 'predicate'
+            return kind
+
+        def scalar(self, minimum=0):
+            if self.expression(minimum) != 'scalar':
+                self.fail('expected scalar expression')
+
+        def predicate(self):
+            if self.expression() != 'predicate':
+                self.fail('expected predicate')
+
+        def root(self, action):
+            token, parts = self.path(entity=True)
+            alias = self.alias()
+            roots.append({'entity': '.'.join(parts), 'alias': alias, 'action': action,
+                'depth': token['depth'], 'scope_id': self.scope,
+                'locator': _jpql_locator(text, token['start'], token['value'], 'query root')})
+
+        def query(self, subquery=False):
+            previous_scope, previous_role = self.scope, self.role
+            if subquery:
+                self.scope = len(scope_parents)
+                scope_parents[self.scope] = previous_scope
+            if self.accept('select'):
+                self.role = 'projection'
+                self.accept('distinct')
+                self.scalar()
+                while self.accept(','):
+                    self.scalar()
+                self.expect('from')
+                self.root('query_reads')
+                while self.accept(','):
+                    self.root('query_reads')
+                while self.at('join', 'inner', 'left', 'right', 'full'):
+                    if not self.at('join'):
+                        self.position += 1
+                        self.accept('outer')
+                    token = self.token()
+                    self.expect('join')
+                    fetch = self.accept('fetch')
+                    if self.at('lateral'):
+                        self.outside('lateral join')
+                    first, parts = self.path()
+                    if len(parts) < 2:
+                        self.outside('direct entity join outside bounded association grammar')
+                    alias = self.alias()
+                    references.append((self.scope, first))
+                    joins.append({'base_alias': parts[0], 'path': parts[1:], 'alias': alias,
+                        'fetch': fetch, 'depth': token['depth'], 'scope_id': self.scope,
+                        'locator': _jpql_locator(text, token['start'], token['value'], 'association join')})
+                    if self.at('on', 'with'):
+                        if self.accept('with'):
+                            if 'HQL_JOIN_WITH' not in provider_extensions:
+                                provider_extensions.append('HQL_JOIN_WITH')
+                        else:
+                            self.expect('on')
+                        self.role = 'filter'
+                        self.predicate()
+            elif not subquery and self.accept('update'):
+                self.root('query_writes')
+                self.expect('set')
+                while True:
+                    first, parts = self.path()
+                    if len(parts) < 2:
+                        self.fail('assignment requires an explicit attribute path')
+                    self.reference(first, parts, 'update')
+                    self.expect('=')
+                    self.role = 'read'
+                    self.scalar(4)
+                    if not self.accept(','):
+                        break
+            elif not subquery and self.accept('delete'):
+                self.expect('from')
+                self.root('query_deletes')
+            else:
+                if self.token()['lower'] in JPQL_UNSUPPORTED_KEYWORDS or self.at('with'):
+                    self.outside('statement outside bounded grammar')
+                self.fail('expected SELECT, UPDATE or DELETE')
+            if self.accept('where'):
+                self.role = 'filter'
+                self.predicate()
+            if self.accept('group'):
+                if not self.at('by') or statement != 'SELECT':
+                    self.fail('GROUP BY requires a SELECT query')
+                self.expect('by')
+                self.role = 'group'
+                self.scalar()
+                while self.accept(','):
+                    self.scalar()
+                if self.accept('having'):
+                    self.role = 'filter'
+                    self.predicate()
+            if self.accept('order'):
+                if statement != 'SELECT':
+                    self.fail('ORDER BY requires a SELECT query')
+                self.expect('by')
+                self.role = 'order'
+                while True:
+                    self.scalar()
+                    if self.at('asc', 'desc'):
+                        self.position += 1
+                    if not self.accept(','):
+                        break
+            if self.token()['kind'] != 'eof' and not (subquery and self.at(')')):
+                if self.token()['lower'] in JPQL_UNSUPPORTED_KEYWORDS:
+                    self.outside(JPQL_UNSUPPORTED_KEYWORDS[self.token()['lower']])
+                self.fail('unexpected trailing query token')
+            self.scope, self.role = previous_scope, previous_role
+
+    if not invalid:
+        grammar = Grammar()
+        try:
+            grammar.query()
+            for scope, token in references:
+                while token['lower'] not in bindings.get(scope, set()):
+                    parent = scope_parents[scope]
+                    if parent is None:
+                        grammar.position = tokens.index(token)
+                        grammar.fail('undeclared alias in query block')
+                    scope = parent
+        except (InvalidQuery, UnsupportedQuery):
+            pass
+        except RecursionError:
+            invalid.append(_jpql_locator(text, 0, 'QUERY', 'query nesting exceeds parser limit'))
+    return {'status': 'UNKNOWN' if invalid else 'PARTIAL' if unsupported else 'COMPLETE',
+        'statement': statement, 'roots': roots, 'joins': joins, 'paths': paths,
+        'constructors': constructors, 'invalid_fragments': invalid, 'scope_parents': scope_parents,
+        'unsupported_fragments': unsupported, 'provider_extensions': provider_extensions}
 
 
 def _simple(value: str) -> str:
@@ -2780,6 +3225,29 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if unbound:
             diagnostics.append({"code": "SPRING_DATA_QUERY_PARAMETER_UNBOUND", "path": path, "source_line": line,
                                 "method": method.id, "parameters": unbound})
+        parsed_query = _parse_jpql_hql(value) if language == "JPQL" else None
+        if parsed_query is not None:
+            query_node = nodes.get(query_id)
+            if query_node:
+                nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}),
+                    "grammar_version": JPA_RULE_VERSION,
+                    "analysis_status": "UNKNOWN" if unbound else parsed_query["status"],
+                    "statement_kind": parsed_query["statement"],
+                    "provider_extensions": parsed_query["provider_extensions"],
+                    "unsupported_fragments": parsed_query["unsupported_fragments"],
+                    "invalid_fragments": parsed_query["invalid_fragments"],
+                    "validated": bool((query_node.metadata or {}).get("validated"))
+                                 and parsed_query["status"] == "COMPLETE"})
+            for fragment in parsed_query["unsupported_fragments"]:
+                diagnostics.append({"code": "JPQL_HQL_UNSUPPORTED_FRAGMENT", "path": path,
+                                    "source_line": line, "method": method.id, **fragment,
+                                    "reason": "Unsupported provider/query fragment is localized; independently resolved roots and paths remain PARTIAL."})
+            for fragment in parsed_query["invalid_fragments"]:
+                diagnostics.append({"code": "JPQL_HQL_SYNTAX_INVALID", "path": path,
+                                    "source_line": line, "method": method.id, **fragment,
+                                    "reason": "Malformed query text publishes no persistence read/write/path edges."})
+            if parsed_query["status"] == "UNKNOWN":
+                continue
         if projection_type and projection_type not in {"void", "boolean", "Boolean", "long", "Long", "int", "Integer"}:
             if projection_node:
                 projection_owner = next((owner for owner, node_id in entity_nodes_by_owner.items()
@@ -2792,40 +3260,161 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                                     "source_line": line, "method": method.id, "projection_type": projection_type_ref})
                 query_node = nodes.get(query_id)
                 if query_node:
-                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}), "validated": False})
+                    nodes[query_id] = replace(query_node, metadata={**(query_node.metadata or {}),
+                                                                    "validated": False,
+                                                                    "analysis_status": "UNKNOWN"})
         query_lower = value.lstrip().casefold()
         action = "query_deletes" if query_lower.startswith("delete") else "query_writes" if query_lower.startswith(("update", "insert")) else "query_reads"
         if language == "JPQL":
-            entity_match = re.search(r"\b(?:from|update)\s+([\w.$]+)(?:\s+(?:as\s+)?([A-Za-z_]\w*))?", value, re.I)
-            query_entity = entity_match.group(1).replace("$", ".") if entity_match else None
-            alias = entity_match.group(2) if entity_match else None
-            query_owners = entity_query_owners.get(query_entity or "", [])
-            query_owner = query_owners[0] if len(query_owners) == 1 else None
-            entity_id = entity_nodes_by_owner.get(query_owner or "")
-            if entity_id:
-                add_edge(query_id, entity_id, action, path, line, "JPQL entity resolved against compiler JPA model")
-            else:
-                diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
-                                    "method": method.id, "entity": query_entity or "UNKNOWN",
-                                    "candidates": query_owners,
-                                    "reason": "JPQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
-                current_query = nodes.get(query_id)
-                if current_query:
-                    nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
-            if alias:
-                for attribute_path in sorted(set(re.findall(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", value))):
-                    property_name = "".join(part[:1].upper() + part[1:] if index else part
-                                            for index, part in enumerate(attribute_path.split(".")))
-                    target, resolved_path = resolve_query_property(query_owner or "", property_name)
-                    if target:
-                        add_edge(query_id, target, "filters_by", path, line,
-                                 f"JPQL path {resolved_path} resolved against entity model")
-                    else:
-                        diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
-                                            "source_line": line, "method": method.id, "attribute": attribute_path})
-                        current_query = nodes.get(query_id)
-                        if current_query:
-                            nodes[query_id] = replace(current_query, metadata={**(current_query.metadata or {}), "validated": False})
+            assert parsed_query is not None
+
+            def invalidate_query() -> None:
+                current = nodes.get(query_id)
+                if current:
+                    status = (current.metadata or {}).get("analysis_status")
+                    nodes[query_id] = replace(current, metadata={**(current.metadata or {}),
+                                                                  "validated": False,
+                                                                  "analysis_status": "PARTIAL" if status == "PARTIAL" else "UNKNOWN"})
+
+            alias_owners_by_scope: dict[int, dict[str, str]] = {}
+            ambiguous_aliases_by_scope: dict[int, set[str]] = {}
+            scope_parents = {int(key): value for key, value in parsed_query.get("scope_parents", {}).items()}
+
+            def bind_alias(scope: int, alias: str, owner: str) -> None:
+                key = alias.casefold()
+                owners = alias_owners_by_scope.setdefault(scope, {})
+                ambiguous = ambiguous_aliases_by_scope.setdefault(scope, set())
+                if key in owners and owners[key] != owner:
+                    ambiguous.add(key)
+                    owners.pop(key, None)
+                    diagnostics.append({"code": "JPQL_ALIAS_AMBIGUOUS", "path": path, "source_line": line,
+                                        "method": method.id, "alias": alias,
+                                        "reason": "The same alias identifies multiple query roots in one query scope; path evidence is omitted."})
+                    invalidate_query()
+                elif key not in ambiguous:
+                    owners[key] = owner
+
+            def lookup_alias(scope: int, alias: str) -> tuple[str | None, bool]:
+                key = alias.casefold()
+                visited: set[int] = set()
+                while scope not in visited:
+                    visited.add(scope)
+                    if key in ambiguous_aliases_by_scope.get(scope, set()):
+                        return None, True
+                    owner = alias_owners_by_scope.get(scope, {}).get(key)
+                    if owner:
+                        return owner, False
+                    parent = scope_parents.get(scope)
+                    if parent is None:
+                        break
+                    scope = int(parent)
+                return None, False
+
+            for root_record in parsed_query["roots"]:
+                query_entity = str(root_record["entity"]).replace("$", ".")
+                query_owners = entity_query_owners.get(query_entity, [])
+                query_owner = query_owners[0] if len(query_owners) == 1 else None
+                entity_id = entity_nodes_by_owner.get(query_owner or "")
+                if entity_id:
+                    add_edge(query_id, entity_id, root_record["action"], path, line,
+                             f"{parsed_query['statement']} root resolved against compiler JPA model")
+                else:
+                    diagnostics.append({"code": "JPQL_ENTITY_UNRESOLVED", "path": path, "source_line": line,
+                                        "method": method.id, "entity": query_entity,
+                                        "candidates": query_owners, "locator": root_record["locator"],
+                                        "reason": "JPQL/HQL entity name must resolve to exactly one compiler-owned JPA entity; repository generic owner is not used as a fallback."})
+                    invalidate_query()
+                alias = root_record.get("alias")
+                if alias and query_owner:
+                    bind_alias(int(root_record.get("scope_id", 0)), alias, query_owner)
+
+            for join in parsed_query["joins"]:
+                owner, join_ambiguous = lookup_alias(int(join.get("scope_id", 0)), join["base_alias"])
+                target_owner = owner
+                association_target = None
+                for segment in join["path"]:
+                    if not target_owner:
+                        break
+                    association_type = entity_association_types.get((target_owner, str(segment).casefold()))
+                    candidates = entity_owners_by_simple.get(association_type or "", [])
+                    if len(candidates) != 1:
+                        target_owner = None
+                        break
+                    target_owner = candidates[0]
+                    association_target = target_owner
+                property_name = "".join(part[:1].upper() + part[1:] if index else part
+                                        for index, part in enumerate(join["path"]))
+                attribute_id, resolved_path = resolve_query_property(owner or "", property_name)
+                if owner and target_owner and association_target and attribute_id:
+                    add_edge(query_id, attribute_id, "joins_by", path, line,
+                             f"JPQL/HQL association join {resolved_path} resolved against entity model")
+                    target_entity = entity_nodes_by_owner.get(target_owner)
+                    if target_entity:
+                        add_edge(query_id, target_entity, "query_reads", path, line,
+                                 "Joined association target is read by the static query")
+                    join_alias = join.get("alias")
+                    if join_alias:
+                        bind_alias(int(join.get("scope_id", 0)), join_alias, target_owner)
+                else:
+                    diagnostics.append({"code": "JPQL_JOIN_UNRESOLVED", "path": path, "source_line": line,
+                                        "method": method.id, "base_alias": join["base_alias"],
+                                        "association_path": ".".join(join["path"]),
+                                        "locator": join["locator"],
+                                        "reason": "Association join must resolve through one compiler-owned JPA relationship at every segment."})
+                    invalidate_query()
+
+            relation_by_role = {"projection": "projects_attribute", "filter": "filters_by",
+                                "order": "orders_by", "group": "groups_by",
+                                "update": "updates_attribute", "read": "reads_attribute",
+                                "join": "joins_by"}
+            seen_paths: set[tuple[int, str, tuple[str, ...], str]] = set()
+            for expression in parsed_query["paths"]:
+                key = (int(expression.get("scope_id", 0)), expression["alias"].casefold(), tuple(expression["path"]), expression["role"])
+                if key in seen_paths:
+                    continue
+                seen_paths.add(key)
+                owner, expression_ambiguous = lookup_alias(int(expression.get("scope_id", 0)), expression["alias"])
+                property_name = "".join(part[:1].upper() + part[1:] if index else part
+                                        for index, part in enumerate(expression["path"]))
+                target, resolved_path = resolve_query_property(owner or "", property_name)
+                relation = relation_by_role.get(expression["role"])
+                if owner and target and relation:
+                    add_edge(query_id, target, relation, path, line,
+                             f"JPQL/HQL {expression['role']} path {resolved_path} resolved against entity model")
+                    traversed_owner = owner
+                    for segment in expression["path"]:
+                        association_type = entity_association_types.get((traversed_owner, str(segment).casefold()))
+                        candidates = entity_owners_by_simple.get(association_type or "", [])
+                        if not association_type:
+                            continue
+                        if len(candidates) != 1:
+                            break
+                        traversed_owner = candidates[0]
+                        traversed_entity = entity_nodes_by_owner.get(traversed_owner)
+                        if traversed_entity:
+                            add_edge(query_id, traversed_entity, "query_reads", path, line,
+                                     "Implicit association path reads exact compiler-owned target entity")
+                elif not expression_ambiguous:
+                    diagnostics.append({"code": "JPQL_ATTRIBUTE_UNRESOLVED", "path": path,
+                                        "source_line": line, "method": method.id,
+                                        "alias": expression["alias"],
+                                        "attribute": ".".join(expression["path"]),
+                                        "locator": expression["locator"]})
+                    invalidate_query()
+
+            for constructor in parsed_query["constructors"]:
+                constructor_owner = str(constructor["type"]).replace("$", ".")
+                constructor_node = type_nodes_by_owner.get(constructor_owner)
+                if constructor_node:
+                    add_edge(query_id, constructor_node.id, "returns_projection", path, line,
+                             "JPQL/HQL constructor projection uses exact compiler-owned type")
+                else:
+                    diagnostics.append({"code": "JPQL_CONSTRUCTOR_PROJECTION_UNRESOLVED", "path": path,
+                                        "source_line": line, "method": method.id,
+                                        "projection_type": constructor_owner,
+                                        "locator": constructor["locator"],
+                                        "reason": "Constructor projection requires an exact compiler-owned qualified type."})
+                    invalidate_query()
         else:
             tables = sorted(set(re.findall(r"\b(?:from|join|update|into)\s+([A-Za-z_][\w.$]*)", value, re.I)))
             for table_name in tables:

@@ -297,11 +297,14 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 ## Development
 
 ```bash
-python -m pip install -e . pytest==8.3.4 setuptools==84.2.1 wheel==0.48.0
+python -m venv .venv
+source .venv/bin/activate  # POSIX; on Windows activate the venv from Scripts
+python -m pip install -e . pytest==8.3.4 jsonschema==4.23.0 setuptools==84.2.1 wheel==0.48.0
+python -m pip install --require-hashes -r tests/requirements-markdown.txt
 python -m pytest -q
 ```
 
-The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time.
+The Python core is intentionally dependency-free at runtime. The development suite requires pytest and the explicit setuptools/wheel tools above for offline installation tests; compiler integration requires the optional toolchains. Missing workers skip optional local integration tests, while CI requires them in its worker job. The Markdown graph is deterministic; the ignored JSON index also records its generation time. Use a clean venv rather than copying system setuptools into another Python distribution. Actual compiler/build fixtures require the documented pinned toolchains (JDK21, Kotlin2.1.10, Maven3.9.9, Gradle8.12.1/8.13); system Gradle4.4 is outside that matrix. The HTTP capture stays in pytest temporary storage. [Integration repair and current validation](docs/changes/116_parseExtendedJpqlHql.md).
 
 The required `compiler-workers` job prepares and exercises JVM/Kotlin K1, K2,
 TypeScript and the mixed Maven fixture. Its negative prerequisite matrix runs
@@ -526,7 +529,8 @@ Custom těla, větve, neznámé typy a abstract factories zůstávají UNKNOWN.
 deklarace není runtime availability. Přesný bounded scope a testy:
 [change note47](docs/changes/47_declareSpringRegistrations.md).
 
-JPA rules v4 oddělují `@Entity`, `@Embeddable` a `@MappedSuperclass`, určují
+JPA rules `annotation-source-v8-jpql-hql-grammar` oddělují `@Entity`,
+`@Embeddable` a `@MappedSuperclass`, určují
 FIELD/PROPERTY access podle umístění identity, modelují `@EmbeddedId` a přesný
 `@AttributeOverride` a rozlišují owning/inverse asociace přes `mappedBy`.
 Vztahový atribut nevytváří smyšlený scalar column; explicitní JoinColumn/JoinTable
@@ -536,8 +540,20 @@ association a embedded atributům, zachovává operátory a `OrderBy` a rozlišu
 čtení od delete intentu. Neznámá property nevytvoří resolved hranu.
 Compiler-owned `@Query` rozlišuje JPQL a native SQL, kontroluje named parametry,
 návratovou entitu/projekci a váže statické dotazy na entity, atributy nebo přesné
-ORM tabulky. Statické `@NamedQuery`/`@NamedNativeQuery` mají vlastní definici a
-repository metoda se na ni váže přes `uses_named_query`.
+ORM tabulky. Bounded JPQL/HQL grammar navíc rozlišuje root a association join
+aliasy, subquery reads, bulk `UPDATE`/`DELETE`, `select new` constructor projection
+a clause-specific path edges (`projects_attribute`, `filters_by`, `orders_by`,
+`groups_by`, `updates_attribute`). Hibernate `join ... with` je explicitní
+podporované rozšíření; `lateral`, set/window operace, `treat`, collection-index
+funkce a další nepodporované fragmenty zůstávají PARTIAL s query offsetem,
+řádkem a sloupcem. Konzumovaná bounded gramatika ověřuje pořadí klauzulí,
+projekce, přiřazení a predikáty (porovnání, AND/OR/NOT, EXISTS, IN, BETWEEN,
+LIKE a IS NULL). Alias je case-insensitive a patří konkrétnímu bloku SELECT;
+vnořené závorky scope nemění. Neplatný nebo nerozvázaný alias ani neúplný
+výraz nevytvoří query read/write/path edge. Podporované funkce a limity
+uvádí [compiler dokumentace](docs/compiler-inspection.md);
+opravy a skutečné kontroly [change116](docs/changes/116_parseExtendedJpqlHql.md). Statické `@NamedQuery`/`@NamedNativeQuery` mají
+vlastní definici a repository metoda se na ni váže přes `uses_named_query`.
 K2 inspection navíc zachovává compiler-resolved Kotlin annotation identity a
 explicitní `@field:`/`@get:` target. JPA FIELD/PROPERTY access se z constructor
 properties vybere jen z jednoznačného identity targetu nebo `@Access`; běžné
@@ -573,8 +589,9 @@ Explicit JPQL entity names and repository return types also resolve by compiler
 owner; simple source return names require an exact JVM method descriptor owner.
 Missing qualified types and generic type variables remain UNKNOWN rather than
 binding to an unrelated same-simple-name class.
-Provider-specific mapping rules a úplná schema/deployment availability jsou mimo
-tento omezený rozsah.
+Širší provider-specific query syntax, named-query containers, Criteria,
+Specification, QueryDSL a úplná schema/deployment availability jsou mimo tento
+omezený rozsah.
 K2 worker zvolíte výslovně při inspekci, například
 `kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.
@@ -785,6 +802,17 @@ links without a proven realm. Supported physical replay binding currently covers
 non-renamed table/column identities; creation-stable IDs after a rename remain
 UNKNOWN pending S06-W08 lifecycle proof. See docs/changes/74_isolatePersistenceRealms.md for
 actual validation and incomplete scope.
+
+Po explicitní JVM inspekci lze uložené query uzly vyhledat bez spuštění workeru,
+aplikace nebo databáze, například:
+
+```bash
+kgmaker inspect jvm --root app --build-id BUILD_ID
+kgmaker query --root app --scope production JPQL PurchaseOrder
+```
+
+Výsledek je statický persistence intent, nikoli důkaz provedeného SQL, commitu
+nebo dostupnosti dat.
 
 HTTP client intent (T003-S07-W06): with an explicit JVM inspection, `flow render --view
 integrations --format json` includes `http.requests`; process JSON/Markdown shows

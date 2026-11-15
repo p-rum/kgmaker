@@ -141,6 +141,7 @@ def actual_conditions(request, tmp_path):
     source.parent.mkdir(parents=True)
     source.write_text('''package fixture;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -153,7 +154,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 @Service("classAbsent") @ConditionalOnClass(name={"java.lang.String","fixture.MissingApi"}) class ClassAbsent {}
 @Service("classPresent") @ConditionalOnClass(value=String.class,name="fixture.Optional") class ClassPresent {}
 interface Gateway {}
-@Service("consumer") class Consumer { Gateway gateway; }
+@Service("consumer") class Consumer { @Autowired Gateway gateway; }
 ''')
     kotlin = tmp_path / "src/main/kotlin/fixture/KotlinConditions.kt"
     kotlin.parent.mkdir(parents=True)

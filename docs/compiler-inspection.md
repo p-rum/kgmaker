@@ -132,7 +132,7 @@ T003-S11-W02 přidává `build/exporters.json` (schema/protocol 1) a `build/LICE
 do resource package. Záznam obsahuje relativní cestu, SHA-256, očekávané exporter
 ID (`maven-session-2` / `gradle-composite-1`) a cestu licence. JAR obsahuje pouze
 projektový EventSpy; Maven/Gradle/JDK ani jejich závislosti se nedistribuují.
-Checksum zajišťuje vazbu obsahu, nikoli autenticitu vydavatele.
+Checksum zajišťuje vazbu obsahu, nikoli autenticitu vydavatele. Při přípravě wheelu musí aktuální trusted JAR a descriptor pocházet ze stejného explicitního běhu `workers/build/build.py`; starý lokální JAR nelze kombinovat s novým descriptor-em. Lokální oprava prostředí a hash refresh pro Maven3.9.9 /Gradle8.13 /JDK21.0.13 jsou doloženy v [change116](changes/116_parseExtendedJpqlHql.md).
 
 `project build-plan` ověří dostupný descriptor a adapter bez spuštění procesu.
 Nový plán aditivně nese `exporter_contract`, který váže také descriptor a licenci;
@@ -376,8 +376,30 @@ exists/delete/remove prefixy, Top/First/Distinct, běžné operátory, And/Or a
 OrderBy. Property path se musí vyřešit proti přímému, embedded nebo association
 atributu; teprve pak vznikne `filters_by`/`orders_by`. Query nese `query_reads`
 nebo statický `query_deletes` intent, nikdy tvrzení o provedeném SQL či commitu.
-Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPQL řeší
-entitu, alias paths, parametry a return entity/projection; native SQL váže pouze
+Explicitní `@Query` je vlastněno přesným compiler method symbolem. JPA rules
+`annotation-source-v8-jpql-hql-grammar` tokenizují omezený statický JPQL/HQL
+subset: root a association join aliasy, subquery roots, bulk `UPDATE`/`DELETE`,
+`select new` s přesným compiler-owned DTO a clause-specific path expressions.
+Vznikají oddělené `query_reads`/`query_writes`/`query_deletes`, `joins_by`,
+`projects_attribute`, `filters_by`, `orders_by`, `groups_by` a
+`updates_attribute`; implicitní association traversal přidá read pouze pro
+jediný přesný entity owner. Hibernate `join ... with` je podporovaný bounded
+provider extension. `lateral`, set/window operace, `treat`, collection-index
+funkce a direct entity join mimo association grammar jsou PARTIAL s přesným
+query offset/line/column locatorem. Bounded parser konzumuje celé klauzule a
+výrazy; porovnání, AND/OR/NOT, EXISTS, IN (seznam/poddotaz), BETWEEN, LIKE
+(s volitelným ESCAPE), IS [NOT] NULL a základní aritmetika mají oddělenou
+predikátovou a skalární syntaxi. Alias lookup je case-insensitive; každý
+poddotaz má vlastní scope a lexical parent, běžné závorky zachovají scope.
+Sourozenecké poddotazy mohou znovu použít alias, vnější alias lze korelovat,
+vnitřní alias nesmí uniknout ven. Malformed input, neúplné klauzule,
+neočekávané tokeny a nerozvázané aliasy jsou UNKNOWN bez read/write/path hran.
+Podporované funkce jsou count/sum/avg/min/max, lower/upper/length/abs/sqrt,
+mod, concat, substring, coalesce a nullif s kontrolou arity. Další funkce
+jsou PARTIAL s locatorem; CASE, enum konstanty, select-result aliasy,
+collection operators a složitější provider gramatika nejsou garantované.
+DML poddotaz s GROUP/ORDER BY zůstává mimo tento omezený scope.
+[Opravy po review a testy](changes/116_parseExtendedJpqlHql.md). Native SQL nadále váže pouze
 explicitní názvy tabulek v aktuální ORM projekci a při kolizi zůstává ambiguous.
 Statické JPA named queries mají oddělenou definici a repository reference; SpEL,
 `${...}` a jiné dynamické části se nerozvíjejí.

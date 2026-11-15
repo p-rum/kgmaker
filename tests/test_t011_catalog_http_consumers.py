@@ -64,7 +64,7 @@ def captured(request, tmp_path_factory):
             'roots':[{'repo_id':'alpha','path':'src'}],'modules':[],'external_systems':[]}]}}))
     _, coverage, _, graph, _ = snapshot_workspace(manifest)
     assert any(n.kind=='http_request_definition' for n in graph.nodes)
-    Path('/workspace/t011-validation/captured-'+request.param+'.json').write_text(json.dumps(graph.to_dict(),indent=2))
+    (base / ('captured-' + request.param + '.json')).write_text(json.dumps(graph.to_dict(), indent=2))
     return load_workspace(manifest),graph,coverage
 
 

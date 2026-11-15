@@ -10,7 +10,7 @@
       "exporter": "maven-session-2",
       "license": "LICENSE",
       "path": "maven/target/kgmaker-build-export.jar",
-      "sha256": "85bfbc9cf38bd3943040c5171e7bab4eeb3dd5640228501a335597699cf9867f"
+      "sha256": "d6aa88416fc15629b0e9a31a74e22383112337603cdbbd58b80f4e9c472aeddd"
     }
   },
   "protocol_version": 1,
