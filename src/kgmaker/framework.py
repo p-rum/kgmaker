@@ -26,7 +26,7 @@ from .spring_conditions import AnnotationArguments, evaluate_conditions
 from .spring_beans import FACTORY, factory_info, registration_assignability
 
 SPRING_RULE_VERSION = "annotation-source-v9-proxy-provenance"
-JPA_RULE_VERSION = "annotation-source-v9-named-query-containers"
+JPA_RULE_VERSION = "annotation-source-v10-programmatic-queries"
 JPA_XML_NAMESPACES = {
     "https://jakarta.ee/xml/ns/persistence/orm",
     "http://xmlns.jcp.org/xml/ns/persistence/orm",
@@ -1234,6 +1234,8 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                             and e.target in nodes]
                 if len(physical) == 1 and isinstance((physical[0].metadata or {}).get('persistence_realm'), dict):
                     record['persistence_realm'] = dict(physical[0].metadata['persistence_realm'])
+        if compiler_fact is not None and compiler_fact.get("programmatic_query_provenance"):
+            record["query_intent_provenance"] = compiler_fact["programmatic_query_provenance"]
         if compiler_fact is not None:
             record.update(compiler_symbol_id=compiler_fact["id"], sha256=compiler_fact.get("sha256"),
                           compiler_backend=compiler_fact.get("compiler_backend", "javac"))
@@ -4208,6 +4210,10 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
         if len(matches) == 1:
             add_edge(column.id, matches[0].id, "resolves_to_schema_column", mapping.source_file,
                      mapping.source_line, "Exact effective column in selected physical table/realm")
+
+    from .criteria_queries import project_queries
+    project_queries(root, graph, context, nodes, symbols, edges, entity_nodes_by_owner,
+                    entity_attributes, repository_models, add_node, add_edge, diagnostics)
 
     # Make the capability and provenance visible in the selected context.
     contexts = list(graph.contexts)

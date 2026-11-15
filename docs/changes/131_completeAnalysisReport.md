@@ -2,7 +2,7 @@
 
 Task `T003-S09-W05`, nadřazené `T003-S09` / `T003-AC09`, průřezové `T003-R01–R10`.
 Výchozí SHA `cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`, datum 2026-11-15.
-Dodání IN_PROGRESS; ověření zatím NOT_RUN. Specifikace je cílový kontrakt.
+Dodání IN_PROGRESS; ověření VERIFIED_IN_SCOPE; report zůstává PARTIAL v popsaných hranicích. Specifikace je cílový kontrakt.
 
 ## Krok 1 — rekognoskace před implementací (Step 1, AC01–04)
 
@@ -114,3 +114,27 @@ dopadu (identity/revize/dependencies stejné); installed instructions/templates
 bez dopadu (žádná jejich změna). Aktuální delivery rows W09/BEFE opraveny podle
 skutečných merged cceb/7bb, historické test výsledky zachovány. Zbývá integrace
 aktuálního main, semantic preservation/regeneration a PR/review.
+
+
+## Krok 5 — integrace aktuálního main (Step 5, AC02–04)
+
+Baseline rodiče `3fbc570` a main `83999fb2e08c6d9d67449687c95b2217eee08b09`
+(PR111). Běžný merge, jediný konflikt append sekcí acceptance inventory; oba
+obsahy zachovány. Main framework/inspection/criteria/JavaFrontend a jejich testy
+jsou byte-identické s main; vlastní report source/test soubory s autorským rodičem.
+Sémantika main má 50 concepts / 170 edges / 319 episodes; vlastní předchozí fakta
+a historie se nesmí ztratit, následuje doložený reanchor.
+
+Aktuální actual JAR použit read-only z `/tmp/kgmaker-criteria-queries/workers/jvm/target`,
+SHA-256 `651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`,
+source shodný s main83999fb. Žádný shared rebuild. Dočasný symlink poté odstraněn.
+`JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 PYTHONPATH=src:tests /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_complete_analysis_report.py tests/test_complete_analysis_report_actual.py tests/test_feature.py tests/test_workspace.py tests/test_data_check.py`
+**73 PASS / 0 SKIP / 34.73 s**. Zahrnuje všech 25 vlastních report/actual/legacy
+kontrol a skutečný Javac21/TS5.7.3/React setup po integraci. Širší 215-case sada se
+bez důvodu neopakuje; je samostatný předintegrační checkpoint, ne current whole-suite.
+Full/Kotlin/K1/K2/Mermaid/GH CI NOT_RUN.
+
+`git diff --check --cached` PASS; source identity ověřena proti oběma rodičům.
+README/capability/CLI/progress/acceptance jsou současně sladěny se skutečným
+jednokontextovým feature scope a oddělenými evidence vrstvami. Žádné nové modely,
+resolver, implicitní worker či migrace.

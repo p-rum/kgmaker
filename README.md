@@ -650,11 +650,19 @@ Explicit JPQL entity names and repository return types also resolve by compiler
 owner; simple source return names require an exact JVM method descriptor owner.
 Missing qualified types and generic type variables remain UNKNOWN rather than
 binding to an unrelated same-simple-name class.
-Širší provider-specific query syntax, Criteria,
-Specification, QueryDSL a úplná schema/deployment availability jsou mimo tento
-omezený rozsah.
+Java/Javac má nyní [bounded Criteria/Specification/QueryDSL projekci](docs/programmatic-queries.md):
+entity-root selection a equality predicates přes skutečné compiler API/binding
+identity včetně unique repository fragments. `query` zůstává null, dynamické
+části PARTIAL/UNKNOWN a dostupnost UNKNOWN. [Change129](docs/changes/129_criteriaSpecificationQuerydsl.md)
+upřesňuje executable snapshoty, final QueryDSL členy a compiler-proven Specification
+override; stejnojmenný overload query autoritu nezíská. Více executable snapshotů
+v jednom těle zůstává UNKNOWN. Saved intent v1 vyžaduje explicitní reinspection na v2.
+Change129 dále
+uvádí actual API/APT fixture, kompatibilitu a cílené výsledky. Širší provider
+syntax, Kotlin programmatic dotazy a úplná schema/deployment availability
+zůstávají mimo tento rozsah.
 K2 worker zvolíte výslovně při inspekci, například
-`kgmaker inspect jvm --root . --kotlin-backend k2`; chybějící K2 distribuce
+`kgmaker inspect code --root . --kotlin-backend k2`; chybějící K2 distribuce
 nepřejde na K1.
 
 
@@ -855,7 +863,7 @@ configuration. Distinct databases may reuse a stream name. Optional
 persistence_schema and flyway_target selectors constrain the supported offline
 replay target; ambiguous or missing realm evidence remains UNKNOWN. Python
 inspect_jvm(..., build_context={...}) and existing imported build-manifest
-inspection carry these fields; the CLI remains kgmaker inspect jvm --root app
+inspection carry these fields; the CLI remains kgmaker inspect code --root app
 --build-id BUILD_ID. Offline snapshot_workspace then joins existing fresh compiler
 facts to its explicit replay schemas; it never runs a worker, app or database.
 Legacy source-only @Table/@Column fields do not create new strong persisted_in
@@ -868,7 +876,7 @@ Po explicitní JVM inspekci lze uložené query uzly vyhledat bez spuštění wo
 aplikace nebo databáze, například:
 
 ```bash
-kgmaker inspect jvm --root app --build-id BUILD_ID
+kgmaker inspect code --root app --build-id BUILD_ID
 kgmaker query --root app --scope production JPQL PurchaseOrder
 ```
 
