@@ -257,20 +257,20 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             if not self.accept(value):
                 self.fail('expected ' + value)
 
-        def identifier(self):
+        def identifier(self, qualified=False):
             token = self.token()
             reserved = JPQL_ALIAS_RESERVED | {'and', 'or', 'not', 'exists', 'in',
                 'is', 'null', 'true', 'false', 'between', 'like', 'distinct', 'new'}
-            if token['kind'] != 'identifier' or token['lower'] in reserved:
+            if token['kind'] != 'identifier' or (not qualified and token['lower'] in reserved):
                 self.fail('expected identifier')
             self.position += 1
             return token
 
-        def path(self):
-            first = self.identifier()
+        def path(self, entity=False):
+            first = self.identifier(qualified=entity)
             parts = [first['value']]
             while self.accept('.'):
-                parts.append(self.identifier()['value'])
+                parts.append(self.identifier(qualified=True)['value'])
             return first, parts
 
         def reference(self, token, parts, role=None):
@@ -321,7 +321,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
             elif self.accept('new'):
                 if self.role != 'projection':
                     self.fail('constructor outside projection')
-                first, parts = self.path()
+                first, parts = self.path(entity=True)
                 constructors.append({'type': '.'.join(parts),
                     'locator': _jpql_locator(text, first['start'], first['value'], 'constructor projection')})
                 self.expect('(')
@@ -416,7 +416,7 @@ def _parse_jpql_hql(text: str) -> dict[str, Any]:
                 self.fail('expected predicate')
 
         def root(self, action):
-            token, parts = self.path()
+            token, parts = self.path(entity=True)
             alias = self.alias()
             roots.append({'entity': '.'.join(parts), 'alias': alias, 'action': action,
                 'depth': token['depth'], 'scope_id': self.scope,

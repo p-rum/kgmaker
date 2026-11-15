@@ -366,6 +366,8 @@ def test_review_nested_grouping_and_correlation_keep_exact_paths(tmp_path, query
 
 
 @pytest.mark.parametrize('query', [
+    'select o from Order o',
+    'select o from example.Order o',
     'select count(o.id) from PurchaseOrder o where o.id between 1 and 10',
     'select o from PurchaseOrder o where not (o.id = :id or o.status is null)',
     "select o from PurchaseOrder o where o.status not in ('A', 'B') and o.id >= 1",

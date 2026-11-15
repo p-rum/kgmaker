@@ -134,3 +134,30 @@ zůstávají PARTIAL/UNKNOWN. Celý T003-S06 ani T003 nejsou tímto uzavřené.
   vyžadují nové nezávislé review i případnou autorizaci push.
 - Zbývá: konečný full-suite receipt, semantic/memory/scan a finální review;
   W06/W07, další provider syntax a runtime/data dostupnost nejsou dodané.
+
+## Kompatibilita entity Order — 2026-11-15
+
+- Krok `T003-S06-W05-S02/S03`, `AC01–AC03`, baseline `f0e5665`.
+- První nový úplný běh: **7 FAIL /1894 PASS /752 SKIP /41 ERROR**, 436.28 s,
+  log `/tmp/kgmaker-w05-full-final.log`. Není to úspěšná kontrola.
+  `Order` bylo chybně odmítnuto jako klíčové slovo v entity-name pozici;
+  selhal skutečný T015 JPA integrační test.
+- `src/kgmaker/framework.py`: identifikátor entity a segment qualified path
+  mohou používat kontextová klíčová slova. Ověření přesného compiler JPA
+  owneru zůstává povinné; pravidla aliasů ani klauzulí se neuvolňují.
+  `tests/test_jpql_hql_grammar.py` přidává `Order` i `example.Order`.
+- Kontrola W05 +
+  `tests/test_t015_project_data_resources.py::test_actual_existing_jpa_native_and_entity_query_facts_project_offline[k1]`
+  s JDK21/pinned workerem: **41 PASS** před přidáním dvou čistě parserových
+  parametrů. Existující T015 skutečný test není nahrazen mockem.
+- Stejných sedm selhaných testů nad čistým main `193c89b` se stejným pinned
+  workerem a prostředím: **6 FAIL /1 PASS**, 11.29 s. T015 na main prochází;
+  zbývají čtyři K2 prerequisite failure a dvě existující Spring injection
+  StopIteration. Tyto baseline chyby nejsou tvrzené jako PASS ani jako
+  prokázaná chyba našeho parseru. Log `/tmp/kgmaker-w05-main-fail-comparison.log`.
+- ERROR skupina prvního běhu obsahuje chybějící externí HTTP capture
+  `/workspace/t011-validation/captured-k1.json` a offline wheel prerequisite
+  `pkg_resources`. Ta byla doplněna ze systémové knihovny pouze do `/tmp`;
+  nový celý pytest nad opraveným runtime je **IN_PROGRESS**.
+- Kompatibilita schémat/CLI beze změny; README/capability limity gramatiky
+  platí, registr a instalované instrukce bez dopadu. Publikace nadále BLOCKED.
