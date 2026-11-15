@@ -17,6 +17,12 @@ from test_t024_discover_process_triggers import inputs
 
 def setup(tmp_path):
     workspace, graph, coverage, entries = inputs(tmp_path)
+    # Explicit schema model, not a claim that this fixture executed a compiler.
+    for context in graph.contexts:
+        if context.get('analyzer_version'):
+            context.update(mode='BUILD_IMPORT', origin_trust='LOCAL_COMPILER_INPUTS',
+                worker={'protocol_version':1,'worker':'model-only','compiler_version':'model-only'})
+    graph.nodes=[replace(node,role='executable_code') if node.kind in {'method','call_site'} else node for node in graph.nodes]
     method = entries[('production', 'http')][0]
     symbol = next(s for s in graph.symbols if s['id'] == method)
     return workspace, graph, coverage, method, symbol
@@ -33,6 +39,7 @@ def add_cfg(graph, method, symbol, body):
     graph.evidence.append({'id': proof, 'kind': 'SYNTAX_CANDIDATE', 'source': method,
         'target': method, 'relation': 'control_flow', 'context_ids': [symbol['context_id']],
         'representation': 'SOURCE', 'source_file': symbol['path'], 'sha256': symbol['sha256'],
+        'source_range': body['range'],
         'freshness': 'CURRENT'})
     cfg['evidence_ids'] = [proof]; graph.cfgs.append(cfg)
     return cfg
@@ -42,7 +49,7 @@ def helper(graph, parent, name):
     value = {**deepcopy(parent), 'id': parent['id'] + ':' + name, 'name': name, 'annotations': []}
     graph.symbols.append(value)
     graph.nodes.append(Node(value['id'], 'method', name, value['path'], 1,
-        scope='production', metadata=deepcopy(value)))
+        scope='production', role='executable_code', metadata=deepcopy(value)))
     return value
 
 
@@ -54,7 +61,7 @@ def call(graph, caller, target, name, **extra):
         'evidence_ids': ['invoke-proof:' + name, 'resolve-proof:' + name], 'resolution_reason': 'EXPLICIT_FIXTURE', **extra}
     graph.call_sites.append(site)
     graph.nodes.append(Node(site['id'], 'call_site', site['invocation_kind'], caller['path'], 1,
-        scope='production', metadata=deepcopy(site)))
+        scope='production', role='executable_code', metadata=deepcopy(site)))
     for ref, source, dest, relation in [(site['evidence_ids'][0], caller['id'], site['id'], 'declares_call'),
             (site['evidence_ids'][1], site['id'], target['id'], 'resolves_to')]:
         graph.evidence.append({'id': ref, 'kind': 'SYMBOL_RESOLVED', 'source': source,
@@ -441,3 +448,18 @@ def test_finally_return_throw_clones_do_not_share_callee_continuations(tmp_path)
         bounded=build_local_process(g,inv,t,process_id='process:finally-limit',max_nodes=limit)
         assert len(bounded.steps)<=limit and bounded.technical_status=='PARTIAL'
     assert (g.to_dict(),inv.to_dict())==before
+
+
+def test_bare_legacy_context_does_not_expand_interprocedural_cfg(tmp_path):
+    w,g,c,m,s=setup(tmp_path)
+    for context in g.contexts:
+        if context.get('analyzer_version'):
+            context.update(mode='SYMBOL_RESOLVED');context.pop('worker',None);context.pop('origin_trust',None)
+    child=helper(g,s,'legacy-child')
+    add_cfg(g,child['id'],child,ir(child,'statement',label='legacy-child-body'))
+    add_cfg(g,m,s,call(g,s,child,'legacy'))
+    report=process(g,m)
+    assert report['status']=='UNKNOWN'
+    assert not any(b.get('label')=='legacy-child-body' for b in report['cfg']['blocks'])
+    assert not any(e['kind']=='call' for e in report['cfg']['edges'])
+    assert any(x['code']=='EXECUTION_AUTHORITY_UNKNOWN' for x in report['coverage']['gaps'])

@@ -376,6 +376,15 @@ def extract(path: Path, relative: str, classifier: Classifier) -> tuple[list[Nod
     return nodes, evidenced, diagnostics, context, evidence
 
 
+def workbook_paths(root: Path) -> list[Path]:
+    """Use the workbook producer discovery scope without parsing a workbook."""
+    return sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink()
+                        and not any(part.startswith(".") or part.lower() in {
+                            "node_modules", "target", "build", "dist", "out", "coverage"
+                        } for part in p.relative_to(root).parts[:-1])
+                        and p.suffix.lower() in {".xlsx", ".xls"})
+
+
 def attach_workbooks(root: Path, graph: KnowledgeGraph) -> KnowledgeGraph:
     """Attach all supported workbooks and explicit binary-XLS diagnostics."""
     root = root.resolve()
@@ -385,11 +394,7 @@ def attach_workbooks(root: Path, graph: KnowledgeGraph) -> KnowledgeGraph:
     contexts = list(graph.contexts)
     evidence = {item["id"]: item for item in graph.evidence}
     files = dict(graph.files)
-    candidates = sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink()
-                        and not any(part.startswith(".") or part.lower() in {
-                            "node_modules", "target", "build", "dist", "out", "coverage"
-                        } for part in p.relative_to(root).parts[:-1])
-                        and p.suffix.lower() in {".xlsx", ".xls"})
+    candidates = workbook_paths(root)
     for path in candidates:
         relative = path.relative_to(root).as_posix()
         unsupported = unsupported_binary(path, relative)

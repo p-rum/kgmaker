@@ -1161,3 +1161,13 @@ do not imply rollback of HTTP/Kafka effects; compensation remains a separately
 cited PROPOSED annotation. Java/K1 Spring Kafka 3.3.2 is the supported policy subset;
 K2 policy capture and runtime delivery remain UNKNOWN. See
 [change130](docs/changes/130_projectProcessFailures.md) for actual evidence and limits.
+
+### Unified flow reports
+
+`kgmaker flow render --entry METHOD_ID --view process --format markdown` uses the
+same CFG model as JSON and Mermaid, with original IDs, explicit coverage gaps and
+truncation. Expansion requires the current source-body proof of the exact caller
+and callee; reference-only bindings do not establish an execution path. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
+the loaded index and source snapshot; rendering
+never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
+and [change128](docs/changes/128_unifiedFlowViews.md).

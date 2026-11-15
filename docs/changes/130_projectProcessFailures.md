@@ -310,3 +310,62 @@ review-fix iteration1 má uložené implementation/test artifacts; první record
 odmítnut pro chybějící povinné disposition=null, po opravě úspěšně zaznamenán.
 Není to náhrada nezávislého review. Po fix commitu následuje samostatná integrace
 ověřeně merged W09 z actual main, bez přebírání pracovních souborů.
+
+## Krok 8 — integrace merged W09 (T029-S04/S05, AC01–AC06)
+
+T029 fix parent `88617e22f99b0b4b6f0b30ea4edefd0d83c32295`; nový skutečný main
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`, parents `7bb8b8d` + `999e60f`,
+tree `0949b95f3e44ad10cf9fa33030a67f6210d7a7b4` ověřen po fetch primárního SSH
+remote. Normální `git merge --no-ff --no-commit cceb1109...`, bez rebase/force.
+Konflikty jen README, semantic.json a generované GRAPH.md/mmd; zdroj/testy bez
+konfliktu. README zachovává obě capability, semantic union oba rodiče. Grafy se
+obnovují CLI. T029 source/test z fix commitu a W09 flow.py/source z merged main
+zůstávají byte-identické; nové pracovní soubory jiných agentů se nepřebírají.
+
+W09 zpřísnil exact executable caller/callee CFG authority. Proto následuje nová
+actual T025–T029 sada a oba Java reviewer repro nad integrovaným stromem. Nejde o
+opakování nesouvisející full suite. Dočasně připojené target/target-k2 opět ukazují
+na připravené `/tmp/kgmaker-pr97-reconciled/workers/jvm`, bez změn jejich obsahu.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-integrated tests/test_t029_project_process_failures.py tests/test_t025_build_local_process_path.py tests/test_t026_collapse_business_steps.py tests/test_t027_cross_http_process_boundary.py tests/test_t028_cross_async_process_boundary.py '/tmp/t029-review-scheduler.py::test_scheduled_local_listener_call_does_not_enter_kafka_retry[java]' '/tmp/t029-review-callee.py::test_listener_policy_does_not_apply_to_ordinary_local_callee[java]'
+```
+
+**301 PASS / 0 SKIP, 65.23 s**, `/tmp/t029-integrated.txt`; actual JDK21/Javac/K1/K2
+v deklarovaném scope. Nepřidaly se žádné funkční integrační opravy ani nové source
+chování. Exact byte audit ověřil T029 business_process.py/own test proti fix parent
+a všech 14 změněných W09 source/test souborů proti main. Nový stricter flow guard
+neodstranil doložený root/import Kafka entry ani finally/callee regresní korpus.
+Full suite/runtime/actual nepřítomná Kafka3.2.0 gate/GH CI test evidence NOT_RUN.
+
+README obsahuje oba kontrakty. Progress/acceptance nyní označují W09 MERGED na
+skutečném SHA, T029 nadále PR_OPEN a uvádějí nový integrační běh odděleně od75PASS.
+Inventářový součet je přepočten z existujících atomických řádků bez povyšování
+jejich verification. Capability/API signatura a příklady z fix commitu jsou beze
+změny; source integration bez dopadu na CLI/registry/templates.
+
+```sh
+./kgmaker semantic update --base cceb1109df6d88e4f46107f9f9ad12f5e563c0d3 --note docs/changes/130_projectProcessFailures.md
+./kgmaker scan --no-docs
+python3 /tmp/t029-integration-semantic.py patch
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t029-integration-preservation.py
+./kgmaker memory capture --base cceb1109df6d88e4f46107f9f9ad12f5e563c0d3 --validation targeted-integration=passed --validation semantic-union=passed --validation full-suite=skipped
+```
+
+**PASS**: union obsahuje všech 50 konceptů / 170 vztahů / 317 přesných epizod
+obou rodičů. Reanchor 7 konceptů / 19 vztahů ověřil původní hash a stejný citovaný
+řádek proti správnému parentu; žádná sémantická removal ani nový spekulativní vztah.
+Skutečná integrační capture přidala epizodu
+`episode:5bb199a167139967707bd8d2bc96cf5e2e8fd9149f6bab0a73f0a50d8f6fd027`;
+finální stav **50 / 170 / 318**. Původních 48/157/310 z baseline7bb i následná
+review/merge historie zůstávají zachovány. Oba dočasné worker symlinky odstraněny.
+
+Závěrečné `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t029-integration-preservation.py` a `git diff --check cceb1109...`
+— **PASS**. Workflow iteration2 je ve review se skutečnými integračními artefakty.
+Primary refs před publikací potvrzují main `cceb1109...` a předchozí PR110 HEAD
+`7dee1dd...`; normal push publikuje fix commit a dvourodičovou integraci společně.
+Nezávislé review nové dvojice base/HEAD a GH CI nejsou vydávány za PASS; implementer
+PR nemerguje. Runtime/worker scope a ostatní NOT_RUN limity se integrací nemění.
