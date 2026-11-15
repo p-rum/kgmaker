@@ -1339,3 +1339,21 @@ actual runtime/toolchain ani úplná T004/produkční acceptance.
 Nový integrační běh T037 po merge main `9f88d846`: **298 PASS / 0 SKIP,
 11.07 s** v sedmi modulech uvedených v change121. Source identity vůči oběma
 reviewovaným rodičům PASS; runtime/W06 sady se tímto výsledkem znovu nedokládají.
+
+
+## T003-S07-W08 — vysvětlitelný evidence ranking
+
+Dodání IN_PROGRESS; ověření VERIFIED_IN_SCOPE nad main
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`, verze `execution-2`/`impact-2`.
+Přesné příkazy a skutečné výsledky: [change126](changes/126_evidenceRanking.md).
+[Podporovaný kontrakt](evidence-ranking.md), [fixture](../fixtures/evidence-ranking/README.md).
+
+| Acceptance | Ověření | Konkrétní důkaz |
+|---|---|---|
+| T003-S07-W08-AC01 | VERIFIED_IN_SCOPE | `test_every_score_has_traceable_contributions_and_local_penalty`, `test_noise_and_order_do_not_inflate_execution_and_impact_is_separate`, `test_confidence_and_duplicate_records_do_not_add_weight`, actual Javac/JSON/Markdown CLI |
+| T003-S07-W08-AC02 | VERIFIED_IN_SCOPE | `test_old_schemas_roundtrip_without_invented_execution` v1/v2/v3; validovaný store, `test_selected_variant_retains_only_required_source_contexts_and_valid_records`, graph-provider feature packet regrese |
+| T003-S07-W08-AC03 | VERIFIED_IN_SCOPE | unresolved/ambiguous/stale/runtime parametrizace, invalid refs před scope filtering, no mutation/implicit process, nezávislá static completeness; actual unresolved Javac target |
+| T003-S07-W08-AC04 | VERIFIED_IN_SCOPE | README, capability, CLI příklady, production matrix, change126; framework side effects jsou schema fixture, pouze Java má nový actual-native ranking průchod |
+
+Full/GH CI NOT_RUN; kompletní S07, W09, runtime dostupnost a obecná dispatch
+úplnost zůstávají mimo ověřený rozsah.

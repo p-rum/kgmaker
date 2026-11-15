@@ -123,7 +123,11 @@ class ProductionScopeTests(unittest.TestCase):
         nodes = [Node("currency", "enum", "Currency", "src/Currency.kt", scope="production", role="executable_code"),
                  Node("decision", "method", "decide", "src/Currency.kt", scope="production", role="executable_code"),
                  Node("entry", "method", "entry", "src/Entry.kt", scope="production", role="executable_code")]
-        graph = KnowledgeGraph(2, ".", "", nodes, [Edge("entry", "decision", "resolves_to", evidence_kind="SYMBOL_RESOLVED")], {})
+        graph = KnowledgeGraph(2, ".", "", nodes, [Edge("entry", "decision", "resolves_to",
+            evidence_kind="SYMBOL_RESOLVED", context_ids=("ranking",), evidence_ids=("ranking-call",))], {},
+            contexts=[{"id": "ranking", "scope": "production", "freshness": "CONTENT_VERIFIED",
+                       "coverage": "COMPLETE_WITHIN_INDEXED_SCOPE"}],
+            evidence=[{"id": "ranking-call", "kind": "SYMBOL_RESOLVED"}])
         before = rank(graph, "entry")
         overlay = replace(graph, nodes=nodes + [Node("mock", "method", "mock", "test/Mock.kt", scope="test", role="executable_code")],
                           edges=graph.edges + [Edge("entry", "currency", "references_type") for _ in range(500)] + [Edge("mock", "currency", "resolves_to")])

@@ -16,7 +16,7 @@ from .architecture_model import EVIDENCE_KINDS, EVIDENCE_POLARITIES, FRESHNESS_S
 EXECUTION_EDGES = {"resolves_to", "may_dispatch_to", "declares_call", "observed_dispatch_to"}
 SIDE_EFFECTS = {"persistence_intent", "query_writes", "query_deletes", "publishes", "consumes", "calls_endpoint"}
 TYPE_EDGES = {"references_type", "reads_constant"}
-PROFILES = {"execution": "execution-1", "impact": "impact-1"}
+PROFILES = {"execution": "execution-2", "impact": "impact-2"}
 
 
 def _canonical_kind(value: Any) -> str:
@@ -944,9 +944,16 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         for refs in [block.get('local_operation_evidence_ids', [])]
         if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs)
         for identity in refs)
+    # Retained structural/source edges still need their original provenance
+    # contexts when an explicit compiler variant is selected. Keep only contexts
+    # actually referenced by selected records; this does not select more variants.
+    referenced_contexts = {identity for edge in edges for identity in edge.context_ids}
+    referenced_contexts.update(record.get("context_id") for record in [
+        *sites, *selected_cfgs, *[symbol for symbol in graph.symbols if symbol.get("id") in ids]])
     return replace(graph, nodes=nodes, edges=edges,
                    files={p: h for p, h in graph.files.items() if any(n.path == p for n in nodes)},
-                   contexts=[c for c in graph.contexts if (scope == "all" or c.get("scope") == scope) and (context_id is None or c.get("id") == context_id)],
+                   contexts=[c for c in graph.contexts if c.get("id") in referenced_contexts or
+                             (scope == "all" or c.get("scope") == scope) and (context_id is None or c.get("id") == context_id)],
                    diagnostics=[d for d in graph.diagnostics if not (d.get("path") or d.get("source_file")) or (d.get("path") or d.get("source_file")) in {n.path for n in nodes}],
                    evidence=[e for e in graph.evidence if e.get("id") in selected_evidence],
                    symbols=[s for s in graph.symbols if s.get("id") in ids], call_sites=sites,
@@ -954,48 +961,218 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
 
 
 def rank(graph: KnowledgeGraph, entry: str | None = None, profile: str = "execution", scope: str = "production") -> dict:
+    """Read-only, versioned priority from validated graph evidence, not confidence.
+
+    Contributions retain the exact edges (including incoming edges), paths and
+    missing-proof records used by each term. Caps and penalties are fixed policy;
+    no score is a probability, runtime availability or business importance.
+    """
+    import json
+
     if profile not in PROFILES:
         raise ValueError("unsupported ranking profile")
-    graph = project(graph, scope)
+    # Validate before projection: a dangling/forged ref cannot disappear through
+    # scope filtering. Rehydrate a private copy, preserving graph/store v1–v3.
+    graph = project(KnowledgeGraph.from_dict(graph.to_dict()), scope)
     nodes = {n.id: n for n in graph.nodes}
     if entry is not None and entry not in nodes:
         raise ValueError("entry is absent from selected scope")
-    adjacency = defaultdict(set)
-    degree, references, effects = defaultdict(int), defaultdict(int), defaultdict(int)
-    evidence = defaultdict(list)
-    for e in graph.edges:
-        proven_call = e.evidence_kind in {"SYMBOL_RESOLVED", "DISPATCH_CANDIDATE", "FRAMEWORK_DERIVED", "RUNTIME_OBSERVED"}
-        if e.kind in EXECUTION_EDGES and (proven_call or e.kind == "declares_call"):
-            adjacency[e.source].add(e.target)
-            degree[e.source] += 1
-            degree[e.target] += 1
-            evidence[e.source].append(asdict(e))
-        if e.kind in TYPE_EDGES:
-            references[e.target] += 1
-        if e.kind in SIDE_EFFECTS and proven_call:
-            effects[e.source] += 1
-            evidence[e.source].append(asdict(e))
-    visited = set()
-    queue = deque([entry] if entry else [])
-    while queue:
-        node = queue.popleft()
-        if node in visited:
+    executable = {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "call_site"}
+    rankable = executable - {"call_site"} | {"class", "enum", "interface", "type"}
+    contexts = {c['id']: c for c in graph.contexts if isinstance(c.get('id'), str)}
+    sites = {s['id']: s for s in graph.call_sites}
+    known_kinds = {"SYMBOL_RESOLVED", "DISPATCH_CANDIDATE", "FRAMEWORK_DERIVED", "RUNTIME_OBSERVED"}
+    canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=False)
+    unique = lambda values: [json.loads(key) for key in sorted({canonical(value) for value in values})]
+    def runnable(identity):
+        return nodes[identity].kind in executable and nodes[identity].role == 'executable_code'
+    gaps = defaultdict(list)
+    def gap(identity, code, reason, penalty, **refs):
+        gaps[identity].append({'code': code, 'reason': reason, 'penalty': penalty, **refs})
+    def context_gaps(identity, ids):
+        if not ids:
+            gap(identity, 'CONTEXT_UNKNOWN', 'No compiler/evidence context is available for this entity.', 3)
+        for context_id in sorted(ids):
+            c = contexts.get(context_id, {})
+            if c.get('freshness') == 'STALE':
+                gap(identity, 'STALE_CONTEXT', 'Stale context contributes no execution evidence.', 5, context_id=context_id)
+            elif c.get('freshness') not in {'CONTENT_VERIFIED', 'CURRENT'}:
+                gap(identity, 'CONTEXT_FRESHNESS_UNKNOWN', 'The context does not establish current content.', 2, context_id=context_id)
+            if c.get('mode') == 'SOURCE_ONLY':
+                gap(identity, 'SOURCE_ONLY', 'Syntax does not establish compiler call resolution.', 3, context_id=context_id)
+            coverage = c.get('coverage')
+            if isinstance(coverage, dict):
+                complete = (coverage.get('calls_found') is not None
+                            and coverage.get('calls_found') == coverage.get('calls_resolved')
+                            and c.get('status') == 'COMPLETE')
+            else:
+                complete = coverage in {'COMPLETE', 'COMPLETE_WITHIN_INDEXED_SCOPE', 'COMPLETE_WITHIN_SELECTED_SCOPE'}
+            if not complete:
+                gap(identity, 'CONTEXT_COVERAGE_PARTIAL', 'Complete call coverage is not evidenced for the selected context.', 2, context_id=context_id)
+
+    node_contexts = defaultdict(set)
+    for symbol in graph.symbols:
+        node_contexts[symbol['id']].add(symbol['context_id'])
+    adjacency = defaultdict(list)
+    degree, references, effects = defaultdict(list), defaultdict(list), defaultdict(list)
+    shared = defaultdict(int)
+    for edge in graph.edges:
+        if edge.kind in TYPE_EDGES:
+            shared[edge.target] += 1
+    # The proof tuple, not legacy confidence or presentation text, defines one
+    # contribution. Retain a deterministic representative of duplicate records.
+    witness_records = {}
+    for edge in graph.edges:
+        record = asdict(edge)
+        record['context_ids'] = sorted(record['context_ids'])
+        record['evidence_ids'] = sorted(record['evidence_ids'])
+        key = canonical([record[k] for k in ('source', 'target', 'kind', 'evidence_kind', 'context_ids', 'evidence_ids')])
+        if key not in witness_records or canonical(record) < canonical(witness_records[key]):
+            witness_records[key] = record
+    for record in sorted(witness_records.values(), key=canonical):
+        source, target, kind = record['source'], record['target'], record['kind']
+        if kind in TYPE_EDGES:
+            if not any(contexts.get(c, {}).get('freshness') == 'STALE' for c in record['context_ids']):
+                references[target].append(record)
+            else:
+                gap(target, 'STALE_CONTEXT', 'Stale relation contributes no impact evidence.', 5,
+                    context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
+        if kind not in EXECUTION_EDGES | SIDE_EFFECTS:
             continue
-        visited.add(node)
-        queue.extend(sorted(adjacency[node] - visited))
+        for identity in (source, target):
+            node_contexts[identity].update(record['context_ids'])
+        if not runnable(source):
+            continue
+        if record['evidence_kind'] not in known_kinds:
+            # In particular an unresolved declares_call is not an executed call.
+            if kind in EXECUTION_EDGES:
+                gap(source, 'EXECUTION_EVIDENCE_UNRESOLVED', 'This relation has no resolved execution evidence.', 3,
+                    source=source, target=target, evidence_ids=record['evidence_ids'])
+            continue
+        if any(contexts.get(c, {}).get('freshness') == 'STALE' for c in record['context_ids']):
+            gap(source, 'STALE_CONTEXT', 'Stale relation contributes no execution evidence.', 5,
+                context_ids=record['context_ids'], evidence_ids=record['evidence_ids'])
+            continue
+        related_site = sites.get(source) or sites.get(target)
+        if related_site and related_site.get('invocation_kind') in {'METHOD_REFERENCE', 'INVOKEDYNAMIC'}:
+            continue
+        if kind in SIDE_EFFECTS:
+            effects[source].append(record)
+        elif runnable(target) and nodes[source].scope == nodes[target].scope:
+            adjacency[source].append(record)
+            degree[source].append(record)
+            degree[target].append(record)
+
+    for site in sorted(graph.call_sites, key=lambda s: s['id']):
+        if site.get('invocation_kind') in {'METHOD_REFERENCE', 'INVOKEDYNAMIC'}:
+            continue
+        refs = {'call_site': site['id'], 'context_id': site['context_id'],
+                'evidence_ids': sorted(site.get('evidence_ids', []))}
+        affected = {site['id'], site['caller'], site.get('declared_target')} | set(site.get('dispatch_candidates', []))
+        for identity in sorted(affected - {None}):
+            if not site.get('declared_target') or site.get('evidence_kind') == 'UNRESOLVED':
+                gap(identity, 'UNRESOLVED_CALL', site.get('resolution_reason', 'Target unknown'), 5, **refs)
+            if site.get('dispatch_complete') is not True:
+                gap(identity, 'INCOMPLETE_DISPATCH', 'The static target set is not proved complete.', 2, **refs)
+            if len(set(site.get('dispatch_candidates', []))) > 1:
+                gap(identity, 'AMBIGUOUS_DISPATCH', 'Multiple possible targets do not prove a selected runtime target.', 3, **refs)
+
+    # An observed pair is positive sampled evidence. It cannot close a static
+    # target set; independently complete static call sites remain intact.
+    complete_pairs = {(site['caller'], target) for site in graph.call_sites
+                      if site.get('dispatch_complete') is True
+                      and contexts.get(site['context_id'], {}).get('freshness') in {'CONTENT_VERIFIED', 'CURRENT'}
+                      for target in [site.get('declared_target'), *site.get('dispatch_candidates', [])] if target}
+    for source, edges in sorted(adjacency.items()):
+        for record in edges:
+            if record['kind'] == 'observed_dispatch_to' and (source, record['target']) not in complete_pairs:
+                for identity in (source, record['target']):
+                    gap(identity, 'RUNTIME_SAMPLE_ONLY', 'Observed dispatch does not establish static dispatch completeness.', 2,
+                        source=source, target=record['target'], evidence_ids=record['evidence_ids'])
+
+    paths = {}
+    if entry is not None and runnable(entry) and (degree[entry] or effects[entry]):
+        paths[entry] = {'entity_ids': [entry], 'steps': []}
+        queue = deque([entry])
+        while queue:
+            source = queue.popleft()
+            for record in sorted(adjacency[source], key=canonical):
+                target = record['target']
+                if target not in paths:
+                    paths[target] = {'entity_ids': paths[source]['entity_ids'] + [target],
+                                     'steps': paths[source]['steps'] + [record]}
+                    queue.append(target)
+
+    for identity in sorted(nodes):
+        if nodes[identity].kind not in rankable or nodes[identity].role not in {'executable_code', 'contract'}:
+            continue
+        context_gaps(identity, node_contexts[identity])
+        if graph.schema_version < 3 and degree[identity]:
+            gap(identity, 'CALLSITE_COVERAGE_UNKNOWN', 'Legacy graph has no per-call-site dispatch completeness inventory.', 2)
+        if not degree[identity] and not effects[identity]:
+            gap(identity, 'EXECUTION_COVERAGE_UNKNOWN', 'No admissible call/side-effect witness establishes execution relevance.', 3)
+    for diagnostic in graph.diagnostics:
+        code = str(diagnostic.get('code', ''))
+        if not any(term in code.upper() for term in ('UNRESOLVED', 'AMBIGUOUS', 'UNKNOWN', 'MISSING',
+                                                     'TRUNCAT', 'TIMEOUT', 'CANCEL', 'UNSUPPORTED', 'STALE')):
+            continue
+        diagnostic_path = diagnostic.get('path') or diagnostic.get('source_file')
+        for identity, node in sorted(nodes.items()):
+            if node.kind not in rankable:
+                continue
+            if diagnostic_path and node.path != diagnostic_path:
+                continue
+            location = diagnostic.get('range') or {}
+            if node.line is not None and isinstance(location.get('start_line'), int) and not (
+                    location['start_line'] <= node.line <= location.get('end_line', location['start_line'])):
+                continue
+            if diagnostic.get('context_id') and diagnostic['context_id'] not in node_contexts[identity]:
+                continue
+            gap(identity, 'PROVIDER_DIAGNOSTIC', diagnostic.get('reason', diagnostic.get('message', code)), 1,
+                diagnostic=diagnostic)
+    # Local incompleteness along the selected witness also limits its descendants.
+    local_gaps = {identity: unique(values) for identity, values in gaps.items()}
     rows = []
-    for n in graph.nodes:
-        if n.kind not in {"method", "function", "constructor", "component", "bytecode_method", "source_initializer", "class", "enum", "interface", "type"} or n.role not in {"executable_code", "contract"}:
+    for n in sorted(graph.nodes, key=lambda node: node.id):
+        if n.kind not in rankable or n.role not in {'executable_code', 'contract'}:
             continue
-        breakdown = {"entry_relevance": 10 if n.id == entry else 0,
-                     "execution_path": 5 if n.id in visited else 0,
-                     "execution_centrality": min(degree[n.id], 10),
-                     "side_effects": min(effects[n.id], 10),
-                     "type_reference_impact": references[n.id] if profile == "impact" else 0}
-        rows.append({"id": n.id, "score": sum(breakdown.values()), "breakdown": breakdown,
-                     "shared_references": references[n.id], "evidence": evidence[n.id]})
-    rows.sort(key=lambda r: (-r["score"], r["id"]))
-    return {"profile": PROFILES[profile], "scope": scope, "entry": entry, "status": "PARTIAL",
-            "contexts": graph.contexts, "results": rows,
-            "limitations": ["Ranking expresses graph evidence, not business importance or path feasibility.",
-                            "Legacy name-match calls have zero execution contribution."]}
+        selected_path = paths.get(n.id, {'entity_ids': [], 'steps': []})
+        row_gaps = list(local_gaps.get(n.id, []))
+        for identity in selected_path['entity_ids']:
+            if identity != n.id and identity in sites:
+                row_gaps.extend(local_gaps.get(identity, []))
+        row_gaps = unique(row_gaps)
+        has_execution = bool(degree[n.id] or effects[n.id])
+        breakdown = {'entry_relevance': 10 if n.id == entry and has_execution else 0,
+                     'execution_path': 5 if n.id in paths else 0,
+                     'execution_centrality': min(len(degree[n.id]), 10),
+                     'side_effects': min(len(effects[n.id]), 10),
+                     'type_reference_impact': len(references[n.id]) if profile == 'impact' else 0}
+        raw = sum(breakdown.values())
+        penalty = min(raw, 10, sum(g['penalty'] for g in row_gaps))
+        breakdown['incompleteness_penalty'] = -penalty
+        witnesses = unique(degree[n.id] + effects[n.id] + selected_path['steps'] +
+                           (references[n.id] if profile == 'impact' else []))
+        status = ('UNKNOWN' if not has_execution and not (profile == 'impact' and references[n.id]) else
+                  'PARTIAL' if row_gaps else 'COMPLETE_WITHIN_INDEXED_SCOPE')
+        contributions = {'entry_relevance': [{'selected_entry': entry, 'evidence': degree[n.id] + effects[n.id]}] if breakdown['entry_relevance'] else [],
+                         'execution_path': [selected_path] if n.id in paths else [],
+                         'execution_centrality': degree[n.id], 'side_effects': effects[n.id],
+                         'type_reference_impact': references[n.id] if profile == 'impact' else [],
+                         'incompleteness_penalty': row_gaps}
+        rows.append({'id': n.id, 'score': raw - penalty, 'breakdown': breakdown,
+                     'shared_references': shared[n.id], 'evidence': witnesses,
+                     'contributions': contributions, 'path': selected_path,
+                     'coverage': {'status': status, 'gaps': row_gaps,
+                                  'penalty_points': sum(g['penalty'] for g in row_gaps), 'penalty_applied': penalty}})
+    rows.sort(key=lambda r: (-r['score'], r['id']))
+    return {'profile': PROFILES[profile], 'scope': scope, 'entry': entry,
+            'status': 'PARTIAL' if any(r['coverage']['status'] != 'UNKNOWN' for r in rows) else 'UNKNOWN',
+            'contexts': sorted(graph.contexts, key=canonical), 'results': rows,
+            'scoring_policy': {'entry_relevance': 10, 'execution_path': 5,
+                'execution_centrality_cap': 10, 'side_effects_cap': 10,
+                'type_reference_impact': 'unique type/constant reference witnesses; impact profile only',
+                'incompleteness_penalty': 'min(raw score, 10, sum of localized gap penalties)'},
+            'limitations': ['Ranking expresses graph evidence, not business importance, runtime availability or path feasibility.',
+                            'Legacy name-match calls, configuration, and type references have zero execution contribution.',
+                            'Runtime observations do not establish complete static dispatch; no project tools are executed.']}

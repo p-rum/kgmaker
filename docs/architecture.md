@@ -182,8 +182,10 @@ The helper does not implement evidence ranking or infer polarity.
 `views.project_service_inventory` is a read-only service-only topology
 projection using explicit T007 ownership and T006 context selection. It uses
 the same additive evidence fields and records unknown deployment/runtime state.
-The architecture CLI and renderers remain separate work. T003-S07-W08 ranking
-is not implemented; this projection is not a substitute for ranking. See
+T003-S07-W08 provides versioned execution/impact ranking with localized gaps,
+score contributions and a public Markdown report; see [ranking](evidence-ranking.md)
+and [change126](changes/126_evidenceRanking.md). This projection remains separate
+from ranking and does not infer execution priority. See
 [T009](tasks/T-009_propagate-view-evidence.md) and the larger
 [T004 plan](tasks/4_addHighLevelProjectViews.md).
 

@@ -1,0 +1,294 @@
+"""T003-S07-W08: evidence-bound priorities, never execution/availability proof."""
+import copy
+import io
+import json
+import shutil
+from contextlib import redirect_stdout
+from dataclasses import replace
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
+from kgmaker.model import Edge, KnowledgeGraph, Node
+from kgmaker.views import rank
+
+
+def snapshot():
+    """Schema-v3 model fixture: exact identities; no compiler execution claimed."""
+    nodes = [Node(i, kind, i, 'src/main/java/Orders.java', scope='production', role=role)
+             for i, kind, role in [('entry', 'method', 'executable_code'),
+                 ('decide', 'method', 'executable_code'), ('save', 'method', 'executable_code'),
+                 ('Currency', 'enum', 'contract'), ('Order', 'class', 'contract'),
+                 ('first', 'call_site', 'executable_code'), ('second', 'call_site', 'executable_code'),
+                 ('unknown', 'call_site', 'executable_code'), ('table', 'table', 'contract')]]
+    contexts = [{'id': 'ctx', 'scope': 'production', 'mode': 'COMPILER',
+                 'freshness': 'CONTENT_VERIFIED', 'coverage': 'COMPLETE_WITHIN_INDEXED_SCOPE'}]
+    evidence = []
+    edges = []
+    def edge(a, b, kind, evidence_kind='SYMBOL_RESOLVED'):
+        identity = f'ev:{a}:{b}:{kind}'
+        evidence.append({'id': identity, 'kind': evidence_kind, 'source_file': 'src/main/java/Orders.java'})
+        edges.append(Edge(a, b, kind, evidence_kind=evidence_kind, context_ids=('ctx',), evidence_ids=(identity,)))
+        return identity
+    sites = []
+    for identity, caller, target in [('first', 'entry', 'decide'), ('second', 'decide', 'save'), ('unknown', 'save', None)]:
+        kind = 'SYMBOL_RESOLVED' if target else 'UNRESOLVED'
+        refs = [edge(caller, identity, 'declares_call', kind)]
+        if target:
+            refs.append(edge(identity, target, 'resolves_to'))
+        sites.append({'id': identity, 'caller': caller, 'context_id': 'ctx', 'declared_target': target,
+            'dispatch_candidates': [], 'dispatch_complete': bool(target), 'evidence_kind': kind,
+            'evidence_ids': refs, 'resolution_reason': 'STATIC_TARGET' if target else 'MISSING_DEPENDENCY'})
+    edge('save', 'table', 'query_writes', 'FRAMEWORK_DERIVED')
+    edge('entry', 'Currency', 'references_type')
+    edge('entry', 'Order', 'references_type')
+    graph = KnowledgeGraph(3, '.', '', nodes, edges, {}, contexts=contexts, evidence=evidence,
+        symbols=[{'id': i, 'context_id': 'ctx'} for i in ('entry', 'decide', 'save', 'Currency', 'Order')], call_sites=sites)
+    return KnowledgeGraph.from_dict(graph.to_dict())
+
+
+def rows(result):
+    return {row['id']: row for row in result['results']}
+
+
+def test_every_score_has_traceable_contributions_and_local_penalty():
+    graph = snapshot()
+    result = rank(graph, 'entry')
+    assert result['profile'] == 'execution-2'
+    indexed = rows(result)
+    for row in result['results']:
+        assert row['score'] == sum(row['breakdown'].values())
+        assert set(row['contributions']) == set(row['breakdown'])
+        for term, value in row['breakdown'].items():
+            if value:
+                assert row['contributions'][term]
+        assert row['coverage']['status'] in {'PARTIAL', 'UNKNOWN', 'COMPLETE_WITHIN_INDEXED_SCOPE'}
+    assert indexed['decide']['score'] > indexed['Currency']['score'] == 0
+    assert indexed['save']['breakdown']['incompleteness_penalty'] < 0
+    assert any(gap['code'] == 'UNRESOLVED_CALL' and gap['call_site'] == 'unknown'
+               for gap in indexed['save']['coverage']['gaps'])
+    assert indexed['save']['path']['entity_ids'] == ['entry', 'first', 'decide', 'second', 'save']
+    assert all(step['evidence_ids'] for step in indexed['save']['path']['steps'])
+    assert any(edge['target'] == 'decide' for edge in indexed['decide']['evidence'])
+
+
+def test_noise_and_order_do_not_inflate_execution_and_impact_is_separate():
+    graph = snapshot()
+    before = rank(graph, 'entry')
+    noise = Node('test', 'method', 'test', 'src/test/java/Test.java', scope='test', role='executable_code')
+    config = Node('config', 'method', 'fake', 'application.yml', scope='production', role='configuration')
+    overlay = replace(graph, nodes=graph.nodes + [noise, config], edges=graph.edges + [
+        Edge('test', 'decide', 'calls'), Edge('config', 'decide', 'calls'),
+        *[Edge('entry', 'Currency', 'references_type') for _ in range(500)],
+        Edge('Currency', 'decide', 'contains')])
+    after = rank(overlay, 'entry')
+    assert [(r['id'], r['score']) for r in before['results']] == [(r['id'], r['score']) for r in after['results']]
+    impact = rows(rank(overlay, 'entry', 'impact'))
+    assert impact['Currency']['breakdown']['type_reference_impact'] > 0
+    assert impact['Currency']['breakdown']['execution_centrality'] == 0
+    shuffled = replace(overlay, nodes=list(reversed(overlay.nodes)), edges=list(reversed(overlay.edges)),
+        contexts=list(reversed(overlay.contexts)), call_sites=list(reversed(overlay.call_sites)), evidence=list(reversed(overlay.evidence)))
+    assert after == rank(shuffled, 'entry')
+
+
+@pytest.mark.parametrize('damage', ['unresolved', 'ambiguous', 'stale', 'runtime'])
+def test_missing_proof_is_not_strengthened(damage):
+    graph = snapshot()
+    if damage == 'unresolved':
+        graph.call_sites[0]['dispatch_complete'] = False
+    elif damage == 'ambiguous':
+        graph.call_sites[0]['dispatch_candidates'] = ['decide', 'save']
+        graph.call_sites[0]['dispatch_complete'] = False
+    elif damage == 'stale':
+        graph.contexts[0]['freshness'] = 'STALE'
+    else:
+        graph.evidence.append({'id': 'runtime', 'kind': 'RUNTIME_OBSERVED'})
+        graph.edges.append(Edge('entry', 'save', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                                context_ids=('ctx',), evidence_ids=('runtime',)))
+        from kgmaker.callgraph import adjacency
+        assert not next(e for e in adjacency(graph)['entry'] if e['kind'] == 'RUNTIME_OBSERVED')['dispatch_complete']
+    result = rank(graph, 'entry')
+    assert result['status'] in {'PARTIAL', 'UNKNOWN'}
+    assert rows(result)['entry']['coverage']['gaps']
+    assert 'availability' not in result
+    if damage == 'stale':
+        assert all(row['breakdown']['execution_centrality'] == 0 for row in result['results'])
+
+
+@pytest.mark.parametrize('version', [1, 2, 3])
+def test_old_schemas_roundtrip_without_invented_execution(version):
+    raw = {'schema_version': version, 'nodes': [dict(id='a', kind='method', name='a', path='src/App.java',
+            scope='production', role='executable_code')], 'edges': [], 'files': {}}
+    graph = KnowledgeGraph.from_dict(raw)
+    before = copy.deepcopy(graph.to_dict())
+    result = rank(graph, scope='all')
+    assert result['status'] == 'UNKNOWN'
+    assert all(row['score'] == 0 for row in result['results'])
+    assert before == graph.to_dict() == KnowledgeGraph.from_dict(graph.to_dict()).to_dict()
+
+
+def test_invalid_and_interrupted_read_only_operations_never_mutate(tmp_path):
+    graph = snapshot()
+    before = copy.deepcopy(graph.to_dict())
+    from kgmaker.store import save_graph
+    save_graph(graph, tmp_path, generate_docs=False)
+    stored = (tmp_path / '.kgmaker/graph.json').read_bytes()
+    with patch('subprocess.run', side_effect=AssertionError('implicit process')):
+        rank(graph)
+        with pytest.raises(ValueError):
+            rank(graph, 'missing')
+        with pytest.raises(ValueError):
+            rank(graph, profile='unknown')
+        with patch('kgmaker.views.project', side_effect=TimeoutError('cancelled')):
+            with pytest.raises(TimeoutError):
+                rank(graph)
+    assert graph.to_dict() == before
+    assert (tmp_path / '.kgmaker/graph.json').read_bytes() == stored
+
+
+def test_public_markdown_cli_and_renderer_are_explainable(tmp_path):
+    from kgmaker.cli import main
+    from kgmaker.analysis_report import render_ranking_report
+    result = rank(snapshot(), 'entry')
+    report = render_ranking_report(result)
+    assert 'execution-2' in report and 'UNRESOLVED_CALL' in report and 'ev:' in report
+    assert 'incompleteness_penalty' in report
+    (tmp_path / 'app.py').write_text('def main(): pass\n')
+    out = io.StringIO()
+    with patch('sys.argv', ['kgmaker', 'graph', 'rank', '--root', str(tmp_path), '--format', 'markdown']), redirect_stdout(out):
+        with pytest.raises(SystemExit) as exit_result:
+            main()
+        assert exit_result.value.code == 0
+    assert '# Evidence ranking' in out.getvalue()
+
+
+@pytest.mark.parametrize('damage', ['evidence', 'context', 'callsite', 'confidence'])
+def test_invalid_references_are_rejected_before_scope_filtering_without_mutation(damage):
+    graph = snapshot()
+    if damage in {'evidence', 'context'}:
+        graph.edges[0] = replace(graph.edges[0], **{damage + '_ids': ('missing',)})
+    elif damage == 'callsite':
+        graph.call_sites[0]['declared_target'] = 'absent'
+    else:
+        graph.edges[0] = replace(graph.edges[0], evidence_kind='RUNTIME_OBSERVED')
+    before = copy.deepcopy(graph.to_dict())
+    with pytest.raises(ValueError):
+        rank(graph, scope='test')
+    assert graph.to_dict() == before
+
+
+def test_runtime_pair_does_not_remove_independent_static_completeness():
+    graph = snapshot()
+    graph.evidence.append({'id': 'runtime', 'kind': 'RUNTIME_OBSERVED'})
+    graph.edges.append(Edge('entry', 'decide', 'observed_dispatch_to', evidence_kind='RUNTIME_OBSERVED',
+                           context_ids=('ctx',), evidence_ids=('runtime',)))
+    from kgmaker.callgraph import adjacency
+    pairs = adjacency(graph)['entry']
+    assert next(e for e in pairs if e['kind'] == 'DECLARED_TARGET')['dispatch_complete']
+    assert not next(e for e in pairs if e['kind'] == 'RUNTIME_OBSERVED')['dispatch_complete']
+    assert not any(g['code'] == 'RUNTIME_SAMPLE_ONLY' for g in rows(rank(graph, 'entry'))['entry']['coverage']['gaps'])
+
+
+def test_actual_javac_ranking_fixture_and_public_cli(tmp_path):
+    import os
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.worker_protocol import WorkerError
+    from kgmaker.cli import main
+    fixture = Path(__file__).resolve().parents[1] / 'fixtures/evidence-ranking'
+    shutil.copytree(fixture / 'src', tmp_path / 'src')
+    try:
+        result = inspect_jvm(tmp_path, classpath=[], publish=True)
+    except WorkerError as error:
+        if error.status == 'TOOLCHAIN_UNAVAILABLE' and os.environ.get('KGMAKER_REQUIRE_WORKERS') != '1':
+            pytest.skip(str(error))
+        raise
+    assert result['exit_code'] == 0
+    graph = KnowledgeGraph.from_dict(result['graph'])
+    symbols = {n.name: n.id for n in graph.nodes if n.kind == 'method' and n.name in {'entry', 'decide', 'unresolved', 'dispatch'}}
+    assert symbols.keys() == {'entry', 'decide', 'unresolved', 'dispatch'}
+    ranked = rank(graph, symbols['entry'])
+    indexed = rows(ranked)
+    currency = next(n.id for n in graph.nodes if n.name == 'Currency' and n.kind == 'enum')
+    assert indexed[symbols['decide']]['score'] > indexed[currency]['score'] == 0
+    assert indexed[symbols['decide']]['path']['steps']
+    assert any(g['code'] == 'UNRESOLVED_CALL' for g in indexed[symbols['unresolved']]['coverage']['gaps'])
+    assert any(g['code'] == 'INCOMPLETE_DISPATCH' for g in indexed[symbols['dispatch']]['coverage']['gaps'])
+    assert not any(n.id in indexed for n in graph.nodes if n.scope == 'test')
+    stored = (tmp_path / '.kgmaker/graph.json').read_bytes()
+    for format in ['json', 'markdown']:
+        out = io.StringIO()
+        with patch('subprocess.run', side_effect=AssertionError('implicit process')), patch('sys.argv', [
+                'kgmaker', 'graph', 'rank', '--root', str(tmp_path), '--entry', symbols['entry'], '--format', format,
+                '--context', result['context']['id']]), redirect_stdout(out):
+            with pytest.raises(SystemExit) as exit_result:
+                main()
+        assert exit_result.value.code == 0, out.getvalue()
+        if format == 'json':
+            public = json.loads(out.getvalue())
+            assert public['profile'] == ranked['profile']
+            assert public['results'] == ranked['results']
+        else:
+            assert symbols['decide'] in out.getvalue() and 'UNRESOLVED_CALL' in out.getvalue()
+    assert (tmp_path / '.kgmaker/graph.json').read_bytes() == stored
+
+
+def test_selected_variant_retains_only_required_source_contexts_and_valid_records():
+    from kgmaker.views import project
+    graph = snapshot()
+    graph.contexts[0]['analyzer_version'] = 'fixture-1'
+    other = snapshot().to_dict()
+    # A disjoint complete compiler variant: symbol, call-site and CFG isolation.
+    other = json.loads(json.dumps(other).replace('"ctx"', '"other"'))
+    mapping = {n['id']: 'other:' + n['id'] for n in other['nodes']}
+    for node in other['nodes']:
+        node['id'] = mapping[node['id']]
+    for edge in other['edges']:
+        edge['source'], edge['target'] = mapping[edge['source']], mapping[edge['target']]
+        edge['evidence_ids'] = ['other:' + i for i in edge['evidence_ids']]
+    for item in other['evidence']:
+        item['id'] = 'other:' + item['id']
+    for item in other['symbols']:
+        item['id'] = mapping[item['id']]
+    for item in other['call_sites']:
+        item['id'], item['caller'] = mapping[item['id']], mapping[item['caller']]
+        if item['declared_target']:
+            item['declared_target'] = mapping[item['declared_target']]
+        item['evidence_ids'] = ['other:' + i for i in item['evidence_ids']]
+    other['symbols'].append({'id': 'other:table', 'context_id': 'other'})
+    other['contexts'][0]['analyzer_version'] = 'fixture-1'
+    raw = graph.to_dict()
+    for key in ['nodes', 'edges', 'evidence', 'contexts', 'symbols', 'call_sites']:
+        raw[key] += other[key]
+    for context_id, method in [('ctx', 'entry'), ('other', 'other:entry')]:
+        raw['cfgs'].append({'context_id': context_id, 'method': method, 'entry': 'in', 'exit': 'out',
+                           'blocks': [{'id': 'in'}, {'id': 'out'}], 'edges': []})
+    raw['contexts'].append({'id': 'source', 'mode': 'SOURCE_ONLY', 'scope': 'production'})
+    raw['edges'].append({'source': 'entry', 'target': 'Order', 'kind': 'contains', 'context_ids': ['source']})
+    selected = project(KnowledgeGraph.from_dict(raw), context_id='ctx')
+    assert {c['id'] for c in selected.contexts} == {'ctx', 'source'}
+    assert all(not n.id.startswith('other:') for n in selected.nodes)
+    assert {s['context_id'] for s in selected.call_sites + selected.symbols + selected.cfgs} == {'ctx'}
+    assert all('other' not in e.context_ids for e in selected.edges)
+    assert KnowledgeGraph.from_dict(selected.to_dict()).to_dict() == selected.to_dict()
+
+
+def test_test_call_and_configuration_call_cannot_inflate_production_in_all_scope():
+    graph = snapshot()
+    baseline = rows(rank(graph, 'entry', scope='all'))
+    for identity, scope, role in [('test', 'test', 'executable_code'), ('config', 'production', 'configuration')]:
+        graph.nodes.append(Node(identity, 'method', identity, identity + '.java', scope=scope, role=role))
+        graph.evidence.append({'id': identity, 'kind': 'SYMBOL_RESOLVED'})
+        graph.edges.append(Edge(identity, 'decide', 'resolves_to', evidence_kind='SYMBOL_RESOLVED',
+                               context_ids=('ctx',), evidence_ids=(identity,)))
+    result = rows(rank(graph, 'entry', scope='all'))
+    assert result['decide']['score'] == baseline['decide']['score']
+
+
+
+def test_confidence_and_duplicate_records_do_not_add_weight():
+    graph = snapshot()
+    before = rows(rank(graph, 'entry'))
+    graph.edges += [replace(edge, confidence_score=.01, evidence='another presentation') for edge in graph.edges]
+    after = rows(rank(graph, 'entry'))
+    assert {i: r['score'] for i, r in before.items()} == {i: r['score'] for i, r in after.items()}

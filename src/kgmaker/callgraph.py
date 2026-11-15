@@ -34,7 +34,8 @@ def adjacency(graph: KnowledgeGraph, include_candidates=True):
                                     "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
                                     "kind": "RUNTIME_OBSERVED",
                                     "evidence_ids": list(edge.evidence_ids),
-                                    "dispatch_complete": True})
+                                    "dispatch_complete": False,
+                                    "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"})
     for key in result:
         result[key].sort(key=lambda e: (e["target"], e["call_site"], e["kind"]))
     return result

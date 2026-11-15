@@ -116,7 +116,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S07-W05](tasks/T003-S07-05-kafkaRetryDlt.md) | MERGED | PARTIAL | `3e5ef0f0c56c406a5428e826120ca525774b373f` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_kafka_retry_dlt.py](../tests/test_kafka_retry_dlt.py), [tests/test_mandatory_worker_ci.py](../tests/test_mandatory_worker_ci.py) | [# 71](https://github.com/p-rum/kgmaker/pull/71) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W06](tasks/T003-S07-06-httpClientExecution.md) | MERGED | PARTIAL | `75d448ee7791cffb3dc9f4cceff5136402a8f5e0` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py), [tests/test_http_client_execution.py](../tests/test_http_client_execution.py), [tests/test_http_provider_privacy_integration.py](../tests/test_http_provider_privacy_integration.py) | [# 49](https://github.com/p-rum/kgmaker/pull/49) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S07-W07](tasks/T003-S07-07-crossServiceContractMapping.md) | MERGED | PARTIAL | `5ffe09952930a5a3e7a5d7b88a08560b7775ee9d` | [src/kgmaker/workspace.py](../src/kgmaker/workspace.py), [src/kgmaker/domain.py](../src/kgmaker/domain.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py), [tests/test_cross_service_contract_mapping.py](../tests/test_cross_service_contract_mapping.py) | [# 76](https://github.com/p-rum/kgmaker/pull/76) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S07-W08](tasks/T003-S07-08-evidenceRanking.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/callgraph.py](../src/kgmaker/callgraph.py), [src/kgmaker/analysis_report.py](../src/kgmaker/analysis_report.py), [src/kgmaker/views.py](../src/kgmaker/views.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
+| [T003-S07-W08](tasks/T003-S07-08-evidenceRanking.md) | IN_PROGRESS | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [tests/test_evidence_ranking.py](../tests/test_evidence_ranking.py), actual Javac/JDK21 fixture | Samostatná větev, publikace následuje | execution-2/impact-2, evidence contributions, lokalizované gaps/penalty, JSON/Markdown CLI; [change126](changes/126_evidenceRanking.md), [podpora](evidence-ranking.md). Celé S07 zůstává PARTIAL. |
 | [T003-S07-W09](tasks/T003-S07-09-unifiedFlowViews.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/views.py](../src/kgmaker/views.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S08-W01](tasks/T003-S08-01-typescriptProjectReferences.md) | MERGED | PARTIAL | `1091330b67a7ff67db329ffbbb2eaba162313b3f` | [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_typescript_project_references.py](../tests/test_typescript_project_references.py), [tests/test_worker_protocol.py](../tests/test_worker_protocol.py) | [# 28](https://github.com/p-rum/kgmaker/pull/28) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S08-W02](tasks/T003-S08-02-tsconfigPathsExclude.md) | MERGED | PARTIAL | `5430388a282f19f6c9637319c12a1731ae6d0674` | [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [tests/test_tsconfig_freshness.py](../tests/test_tsconfig_freshness.py) | [# 36](https://github.com/p-rum/kgmaker/pull/36) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
@@ -691,9 +691,10 @@ nevyřešené a vyloučené objekty pouze v dodaném výběru; prázdný vstup j
 Legacy view data se při načtení doplní pouze konzervativními unresolved/unknown
 výchozími hodnotami.
 
-T009 používá explicitně povolený PARTIAL/UNKNOWN fallback. T003-S07-W08 ranking
-není implementován: nevznikají skóre, inferovaná polarita ani rozhodnutí o
-konfliktu nad rámec zachování explicitních protichůdných referencí. Ověření a
+T009 používá explicitně povolený PARTIAL/UNKNOWN fallback a samo nevytváří
+skóre, inferovanou polaritu ani rozhodnutí o konfliktu. T003-S07-W08 nyní
+dodává samostatný [omezený ranking](evidence-ranking.md), viz
+[change126](changes/126_evidenceRanking.md). Ověření a
 zbývající omezení jsou v [change note 64](changes/64_propagateViewEvidence.md).
 Cílená T009/T005/T006/T008 sada: **53 PASS**; semantic validation, scan, `kgmaker
 check` a `git diff --check` prošly. Před poslední malformed-array guard proběhl
@@ -1526,3 +1527,17 @@ prošel nezávislým APPROVE; nové integrační testy a kontrola zachování ob
 semantic historií jsou v [change121](changes/121_invalidateDerivedViews.md).
 Full pytest, remote PR CI a libovolné produkční workspace/toolchain acceptance
 jsou NOT_RUN; T004 zůstává nedokončený.
+
+
+## T003-S07-W08 — vysvětlitelný ranking (2026-11-15)
+
+Dodání IN_PROGRESS, ověření VERIFIED_IN_SCOPE nad integračním main
+`93c52d338ea273175b9c0ed5a7a5477ae6bf2de0`. [Change126](changes/126_evidenceRanking.md)
+odděluje implementaci, opravu provenance projekce a skutečné cílené testy.
+`execution-2`/`impact-2` zachovává původní klíče JSON a doplňuje contributions,
+path a coverage/gaps. Každé skóre má reprodukovatelný rozklad; test/type/config
+reference nezvyšují production execution, runtime vzorek neuzavírá statický dispatch.
+Skutečný Javac/JDK21 test používá [fixture](../fixtures/evidence-ranking/README.md);
+syntetické schema fixtures netvrdí compiler či runtime PASS. Full suite a GH CI
+NOT_RUN dle uživatelského targeted-only pokynu. Nadřazené S07 zůstává PARTIAL;
+W09 a S09-W05 nejsou tímto dodány.
