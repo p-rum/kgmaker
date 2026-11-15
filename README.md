@@ -880,6 +880,18 @@ reversibly groups only adjacent certified local operations in an explicit proces
 view. It preserves unresolved CFG adjacency and all origins; it does not approve
 business semantics or observe execution. T026 merged in PR66 (`9442114`) after the PR65 prerequisite.
 
+The [T027 HTTP process-boundary API](docs/process-paths.md#explicit-http-process-boundary-t027)
+joins an exact local HTTP callsite to a T014 validated remote binding and, when
+provided, the matching target service/context process snapshot. Missing or
+ambiguous targets remain external boundaries while local continuation is kept;
+transport failures do not become business outcomes. Each request starts at its exact caller node. Only normal target exits rejoin
+proved normal caller continuations; server exceptions remain transport boundaries.
+Unsupported T014 versions, stale binding/endpoints and foreign target selections
+cannot authorize expansion. Imported diagnostics, limits and truncation remain visible.
+It is a Python API over
+explicit snapshots and adds no CLI command or persistent data format
+([change123](docs/changes/123_crossHttpProcessBoundary.md)).
+
 Service inventories distinguish compiler/source ownership from canonical
 workspace-derived declarations. Kafka binding inputs may reference another
 repository's schema without becoming service-owned code or compiler candidates.

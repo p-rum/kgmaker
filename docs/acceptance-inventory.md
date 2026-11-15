@@ -840,6 +840,23 @@ T026 or whole T025/T003/T004 completion is implied by this row.
 | AC05 | aggregate SYNTAX evidence remains UNRESOLVED/PARTIAL; scope/context/method/proof guards | No runtime promotion |
 | AC06 | README, capability, status and change82 | Source APPROVE cff803c; strict full 1566PASS/10SKIP v 1532.43s; PR65 merged32a3bca, metadata-only integration |
 
+## T027 — HTTP process boundary (implementation candidate)
+
+Delivery IN_PROGRESS; first independent review REQUEST_CHANGES is repaired locally;
+repeat review/publication remains separate. Actual validation after the corrections:
+**187 PASS / 0 SKIP** in T027/T014/T025/T026 with prepared JDK21/Javac/K1/K2;
+the final terminal-only and request-origin guards were then verified by
+**38 PASS / 0 SKIP** (29 public T027 cases + 9 independent reviewer reproductions).
+
+| Acceptance | Concrete public-contract test | Current evidence / remaining gate |
+|---|---|---|
+| AC01 | `test_public_t014_projection_links_cross_repository_client_callsite_to_target_process`, `test_invalid_remote_endpoint_or_binding_cannot_authorize_expansion` | VERIFIED_IN_SCOPE; exact T014 version, HTTP endpoint direction, service/context and stale guards |
+| AC02 | `test_ac02_incompatible_or_nonresolved_release_stays_external`, `test_public_t014_incompatible_release_without_candidate_edge_remains_external` | VERIFIED_IN_SCOPE; incompatible selector and ambiguity have no handler winner |
+| AC03 | `test_ac03_missing_target_cfg_retains_external_boundary_and_local_continuation`, `test_terminal_only_target_does_not_supply_a_cfg_body` | VERIFIED_IN_SCOPE; unavailable body remains external, local continuation survives |
+| AC04 | `test_ac04_bad_input_and_failure_boundary_do_not_mutate_inputs`, `test_normal_response_retains_original_witness_without_mapping_server_errors` | VERIFIED_IN_SCOPE; immutable inputs, original exception edges retained, expanded-CFG reachability prevents false REQUEST/RESPONSE paths |
+| AC05 | `test_target_selection_must_match_boundary_scope`, `test_imported_target_truncation_and_limits_remain_visible`, `test_local_and_remote_and_imported_coverage_are_preserved` | VERIFIED_IN_SCOPE; selected scope and every imported limitation preserved; runtime/availability UNKNOWN/NOT_OBSERVED |
+| AC06 | [Capability](process-paths.md#explicit-http-process-boundary-t027), README, status and [change123](changes/123_crossHttpProcessBoundary.md) | PARTIAL; correction steps and exact runs recorded, semantic preservation/check and repeat independent review/publication are documented in change123; full suite NOT_RUN |
+
 ## T003-S06-W08 — bounded schema compatibility (VERIFIED_IN_SCOPE)
 
 Dependency W04 PR62 merged. Current main c193748 (Return+Kafka+HTTP ambiguity)

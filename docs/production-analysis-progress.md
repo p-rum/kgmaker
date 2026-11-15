@@ -169,7 +169,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T024](tasks/T-024_discover-process-triggers.md) | MERGED | PARTIAL | `c98ae1ea85934674eac743d60489b37b322f8fc9` | [src/kgmaker/process_triggers.py](../src/kgmaker/process_triggers.py), [tests/test_t024_discover_process_triggers.py](../tests/test_t024_discover_process_triggers.py) | [#59](https://github.com/p-rum/kgmaker/pull/59) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T025](tasks/T-025_build-local-process-path.md) | MERGED | PARTIAL | `32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6` | [src/kgmaker/control_flow.py](../src/kgmaker/control_flow.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_t025_build_local_process_path.py](../tests/test_t025_build_local_process_path.py) | [#65](https://github.com/p-rum/kgmaker/pull/65), [#60](https://github.com/p-rum/kgmaker/pull/60) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T026](tasks/T-026_collapse-business-steps.md) | MERGED | PARTIAL | `9442114d169b84e6c9f98dd097faafd80eff0d48` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t026_collapse_business_steps.py](../tests/test_t026_collapse_business_steps.py) | [#66](https://github.com/p-rum/kgmaker/pull/66) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
-| [T027](tasks/T-027_cross-http-process-boundary.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
+| [T027](tasks/T-027_cross-http-process-boundary.md) | IN_PROGRESS | VERIFIED_IN_SCOPE | `14d7f7cefab2fa5c9cf8c6d939d3b92e838faea8` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t027_cross_http_process_boundary.py](../tests/test_t027_cross_http_process_boundary.py) | — | Po REQUEST_CHANGES opraveny response/exception isolation, T014/stale/scope guards a target coverage. Cíleně187PASS0SKIP; finální29T027+9review repro38PASS. Opakované review/publication zbývá; viz change123. |
 | [T028](tasks/T-028_cross-async-process-boundary.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T029](tasks/T-029_project-process-failures.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T030](tasks/T-030_prepare-process-label-packet.md) | MERGED | PARTIAL | `9eec41a403b4e6601fe3addac168bf39d37f31b6` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t030_prepare_process_label_packet.py](../tests/test_t030_prepare_process_label_packet.py) | [#75](https://github.com/p-rum/kgmaker/pull/75) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -1064,6 +1064,29 @@ Final ONE strict FIFO full 1566PASS/10SKIP v 1532.43s, all95 T026 cases without 
 tracked/compiler/runtime/license/fixture receipts. Integration changes metadata
 only; runtime/tests remain cff803c, no compiler/full repeat. Final exact-pair
 review/publication remain separate; see change82.
+
+## T027 — HTTP boundary across explicit service processes (candidate)
+
+The local candidate adds `project_http_process_boundary` on top of the merged
+T014 remote binding and T025 `ProcessView` contracts. It joins only the HTTP
+consumer's exact `origin_call_site` to a local CFG callsite and the matching
+remote candidate's target service/context/handler. T014 incompatible selectors,
+ambiguous sets, missing target CFGs and unmatched callsites remain external;
+existing local continuations are retained. HTTP request/response is recorded
+separately from `TRANSPORT_BOUNDARY_ONLY` errors; no runtime, availability,
+business outcome or T004 completion is claimed. See [capability](process-paths.md),
+[acceptance rows](acceptance-inventory.md) and [change123](changes/123_crossHttpProcessBoundary.md).
+First independent review returned REQUEST_CHANGES for crossed response/exception
+paths, missing version/stale/provider guards and dropped target coverage. The
+corrections retain only normal-response witnesses, leave server exceptions as
+transport boundaries, validate selected scope and preserve imported diagnostics,
+limits and truncation. Actual focused regression: **187 PASS / 0 SKIP, 11.05 s**
+with prepared JDK21/Javac/K1/K2. After the final terminal-only/request-origin guards, **38 PASS /
+0 SKIP, 0.54 s** covers 29 public T027 cases and all 9 reviewer reproductions.
+Requests originate only from the matching call node, so expanded callee exception
+exits cannot start a new remote request and reach a normal continuation.
+Repeated independent review and publication remain pending; full suite and HTTP
+runtime observation are NOT_RUN. Exact commands are in change123.
 
 ### T006/T008 revize2 — shared context-role boundary (review pending)
 
