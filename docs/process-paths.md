@@ -339,9 +339,11 @@ paths. No selector name alone creates another consumer or orders its execution.
 
 `kgmaker.business_process.project_process_failures(process, graph=None, *,
 compensation_proposals=(), max_policies=128)` returns the shared immutable
-`ProcessView` (`process-failures-1`). Supply the original T025/T027/T028 process
+`ProcessView` (`process-failures-2`). Supply the original T025/T027/T028 process
 and an explicit `KnowledgeGraph` snapshot or graph dictionary. A previously
-projected failure view is rejected; recompute from its original inputs.
+projected failure view (rules v1 or v2) is rejected; recompute from its original inputs.
+The review correction and actual invocation regressions are recorded in
+[change130, step 6](changes/130_projectProcessFailures.md).
 
 ```python
 from kgmaker.business_process import project_process_failures, collapse_business_steps
@@ -362,18 +364,27 @@ Retry/DLT uses the existing `kafka-retry-1` producer and pure policy replay. The
 supported positive scope is Java/K1 with pinned Spring Kafka 3.3.2, literal attempts
 and suffixes, and one owner/context-bound `DltHandler`. The declared listener's
 current selected exceptional-exit CFG certificate must exactly match the supplied
-graph. `RETRY_POTENTIAL` connects that exit to one bounded retry declaration;
+graph. Admission is per invocation: the canonical Kafka trigger must enter its
+exact T025 root body, or be imported through a witnessed T028 subscription and
+`CONSUMER_POTENTIAL` transition. Trigger/body/exit IDs, source process revision and
+original trigger/membership proofs must agree. An ordinary Java call of a listener
+method does not enter its Kafka container, even when another occurrence of that
+same method is a legitimate imported consumer. `RETRY_POTENTIAL` connects that exit to one bounded retry declaration;
 `DLT_POTENTIAL` connects it to the declared DLT boundary. Neither edge executes a
 handler, unrolls attempts, implies a retry destination, or guarantees success.
-Normal exits and unrelated callee exits do not initiate retries. Separate listener
+Normal exits and ordinary callee exits do not initiate retries. The latter keep
+a separate UNKNOWN policy boundary, raw refs and `KAFKA_ENTRY_OCCURRENCE_UNPROVEN`.
+A declared boundary exposes `kafka_entry_occurrence` with exact trigger, entry and
+exceptional-exit IDs; `source_exceptional_exit` also identifies rejected occurrences. Separate listener
 groups are selected by original method/policy identity, never by topic/name.
 
 Both roles retain `execution=NOT_OBSERVED`, `delivery=NOT_OBSERVED`,
 `processing_completion=UNKNOWN`, `activation=UNKNOWN` and static policy status.
-Raw policy/compiler records survive exactly inside explicit UNKNOWN
+Raw policy/compiler and cross-context subscription records survive exactly inside explicit UNKNOWN
 `PROVENANCE_REFERENCE_ONLY` envelopes; their process scope is projection metadata,
 not an upgrade of the original proof. Admission checks raw proofs and exact CFG
-anchors before creating a transition. Stale/contradicting/foreign/unsupported
+anchors before creating a transition. A reference envelope never authorizes a
+Kafka invocation; original trigger and subscription authority is checked separately. Stale/contradicting/foreign/unsupported
 inputs retain an UNKNOWN boundary and diagnostic. Missing graph or policy does not
 infer retries from names, attempts attributes or annotations in a process label.
 K2 Kafka annotation capture is not supported by this policy producer and stays

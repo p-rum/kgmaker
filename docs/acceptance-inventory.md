@@ -1480,13 +1480,20 @@ intermediate FAIL/error results. New pure API has no persistent schema migration
 | Acceptance | Public test/evidence | Result |
 |---|---|---|
 | T029-AC01 | `test_finally_keeps_distinct_return_throw_paths_through_collapse`, `test_actual_certified_group_and_finally_clones_survive_projection` | PASS; original paths/IDs and certified finally clones preserved through collapse/expand |
-| T029-AC02 | `test_actual_retry_dlt_static_path_and_finally`, `test_policy_budget_and_upstream_truncation_are_explicit` | PASS; actual Java/K1 3.3.2 static retry→DLT, no normal-exit retry/handler execution; actual K2 UNKNOWN |
+| T029-AC02 | `test_actual_retry_dlt_static_path_and_finally`, `test_policy_budget_and_upstream_truncation_are_explicit` | PASS; actual Java/K1 3.3.2 static retry→DLT only at canonical Kafka entry or witnessed T028 import; ordinary listener calls UNKNOWN, no normal-exit retry/handler execution; actual K2 UNKNOWN |
 | T029-AC03 | `test_local_transaction_never_rolls_back_http_or_kafka`, `test_compensation_is_only_an_explicit_proposed_annotation` | PASS; declaration-only local scope, remote rollback NOT_PROVEN, no new compensation edges |
 | T029-AC04 | `test_invalid_inputs_preserve_input_and_last_artifact`, `test_invalid_graph_snapshot_never_mutates_inputs_or_artifact`, actual snapshot/filesystem equality and offline mocks | PASS; no mutation or implicit process/network |
-| T029-AC05 | `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
+| T029-AC05 | `test_actual_ordinary_listener_callee_has_no_container_policy`, `test_actual_imported_entry_and_ordinary_same_method_are_distinct`, `test_imported_retry_requires_current_exact_entry_authority`, `test_policy_authority_never_borrows_stale_foreign_or_unsupported_proofs`, `test_unproved_policy_without_proofs_remains_a_boundary`, `test_legacy_graph_or_policy_names_cannot_invent_retry`, `test_unscoped_upstream_truncation_and_selected_diagnostics_survive` | PASS; raw proof preservation, current service/context/scope checks, explicit UNKNOWN/truncated |
 | T029-AC06 | README, capability/API examples, progress and change130 per-step evidence | Updated; PR/review and semantic publication recorded with final handoff |
 
 281 targeted tests passed before the final diagnostics fix; the current complete
-T029 test module passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
+Historical pre-review T029 test module passed **60 / 0 SKIP, 13.02 s** with actual JDK21/Javac/K1/K2.
 Full suite, runtime delivery/rollback and actual unavailable Kafka3.2.0 JAR gate
 are NOT_RUN. Framework version support is inherited, not broadened by this API.
+
+PR110 review-fix adds canonical invocation authority and preserves each rejected
+ordinary callee as UNKNOWN. Actual mixed T028-import/local-call and ten negative
+entry/proof/membership cases pass: 75 PASS / 0 SKIP, 36.24 s (73 public + 2 actual reviewer Java reproductions). Exact history and commands are in
+[change130 step6](changes/130_projectProcessFailures.md). Independent review of
+the new published revision is required; the initial REQUEST_CHANGES is historical
+evidence, not an approval of this correction.

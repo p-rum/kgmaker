@@ -186,3 +186,127 @@ odmítnut kvůli limitu 200 znaků pro command; uložená krátká runner část
 na plné prostředí/příkaz a skutečný výsledek v kroku 3. Nejde o nový test run.
 Nezávislé review nenahrazujeme vlastní deklarací APPROVE. Zbývá review přesné
 publikované revize a případné opravy; implementační agent PR nemerguje.
+
+## Krok 6 — review fix konkrétního Kafka vstupu (T029-S02/S04, AC02/AC04/AC05)
+
+Baseline `7dee1dd144de68a90ee6c82a0ccc70f2dddb2e2b`, tree
+`7c3cb7523906050a44b5132fdf115554a245fcbe`. Nezávislé
+[REQUEST_CHANGES](https://github.com/p-rum/kgmaker/pull/110#issuecomment-6900482722)
+našlo P1: shoda listener metody/CFG ještě nedokládá vstup přes Kafka container.
+Scheduler→private listener i root listener→jiný listener obyčejným Java voláním
+získávaly neoprávněnou retry/DLT cestu. Původní tvrzení kroku 2 o callee se pro
+annotovaný lokální callee nepotvrdilo; oprava a aktuální rozsah jsou zde.
+Nezávislých 285 PASS / 0 SKIP, 45.88 s na starém HEAD tento nový případ nepokrývalo.
+
+Rekognoskace ověřila konkrétní T025 root/call-site CFG identity, `_selected_trigger`
+a T028 subscription→consumer import. `business_process.py` nyní rozhoduje pro
+každý exceptional-exit occurrence zvlášť: canonical Kafka trigger je ověřen
+existujícím T025 source/proof guardem, musí mít přesnou declaration→root entry
+asociaci a root exit. Imported consumer navíc vyžaduje původní T028 subscription,
+CONSUMER_POTENTIAL hranu, dohledatelné membership refs a stejný source process/revision.
+Běžný callee má jiné call-site CFG IDs; zachová vlastní UNKNOWN boundary/raw refs
+s důvodem KAFKA_ENTRY_OCCURRENCE_UNPROVEN, bez policy transition. Jedna legitimní
+occurrence neautorizuje jinou occurrence stejné metody.
+
+Cross-context subscription proofs se přesně zachovají uvnitř existující explicitní
+UNKNOWN PROVENANCE_REFERENCE_ONLY obálky. Její target process context je metadata
+projekce, ne přepsání raw scope/context. Obálka není authority; admission odděleně
+kontroluje původní Kafka trigger a membership. Původní provenance v ProcessView
+zůstává beze změny včetně odmítnutých stale/foreign/contradicting refs.
+
+Dotčené soubory: `business_process.py`, vlastní T029 veřejné testy, README,
+`docs/process-paths.md`, progress a acceptance. Veřejná signatura a ProcessView
+schema zůstávají; derivation rules jsou `process-failures-2`. Dřívější výstupy v1
+se stejně jako v2 nepoužívají jako vstup nové projekce, přepočet je z originálu.
+Žádný nový resolver, worker, CLI/store/migrace ani změna flow.py. Příklady nyní
+vysvětlují exact occurrence IDs a UNKNOWN callee. Registry/spec/managed templates
+bez dopadu (stejná identita, revize, závislosti, příkazy).
+
+Actual fixture testy recapture provádějí jen explicitně. První spuštění reviewer
+skriptů selhalo 2 FAIL / 4 deselected, 4.53 s kvůli již odstraněné reviewer worker
+cestě; není vykazováno jako funkční RED. Kopie `/tmp/t029-review-scheduler.py` a
+`/tmp/t029-review-callee.py` mění pouze worker home na připravené
+`/tmp/kgmaker-pr97-reconciled/workers`. Jejich skutečný RED: **2 FAIL / 4 deselected,
+8.49 s**, po první opravě **2 PASS / 4 deselected, 8.56 s**. JDK21 a API JARy 3.3.2
+jsou skutečné, nic se neinstalovalo, sdílený worker output se neměnil.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-review-red2 /tmp/t029-review-scheduler.py /tmp/t029-review-callee.py -k java
+```
+
+GREEN použil stejný příkaz s basetemp `/tmp/kgmaker-t029-review-green`.
+Veřejné negativy pro oba callee prošly; při sestavování nové actual T012→T014→T025→
+T028 fixture byly opravovány chybné testové property odkazy ProcessView/Definition
+(2 PASS / 1 ERROR, 13.50 s; 1 FAIL, 7.24 s). Následný výsledek 8 PASS / 2 FAIL,
+8.53 s odhalil cross-context reference mismatch a nevalidní stale-edge fixture bez
+proofu. Raw proof se nyní zachovává v reference-only obálce; fixture používá platný
+missing-association input. Tyto historické FAIL nejsou aktuální PASS.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-review-targeted tests/test_t029_project_process_failures.py tests/test_t025_build_local_process_path.py tests/test_t026_collapse_business_steps.py tests/test_t027_cross_http_process_boundary.py tests/test_t028_cross_async_process_boundary.py /tmp/t029-review-scheduler.py /tmp/t029-review-callee.py
+```
+
+Tento checkpoint: **301 PASS / 2 FAIL / 0 SKIP, 75.67 s**. Dva FAIL byly nové
+negativní fixture assertions, které vybraly nested cleanup entry namísto skutečné
+trigger→entry asociace. Všech 225 existujících upstream T025–T028 testů prošlo.
+Čtyři PASS parametrizace externích reprodukcí mají K1/K2 early-return; nejsou důkaz
+policy a finální příkaz je výslovně vyřazuje. Opravené fixture používají skutečnou
+asociaci. Dodatečný guard ověřuje exact membership refs a shodu T028 link/subscription
+identity; cizí membership metadata nemohou autorizovat import.
+
+```sh
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 KGMAKER_WORKERS_HOME=/tmp/kgmaker-pr97-reconciled/workers PYTHONPATH=src:tests PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-test-venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/kgmaker-t029-review-final tests/test_t029_project_process_failures.py '/tmp/t029-review-scheduler.py::test_scheduled_local_listener_call_does_not_enter_kafka_retry[java]' '/tmp/t029-review-callee.py::test_listener_policy_does_not_apply_to_ordinary_local_callee[java]'
+```
+
+**75 PASS / 0 SKIP, 36.24 s**: všech 73 veřejných T029 testů + 2 skutečné reviewer
+Java reprodukce. Log `/tmp/t029-review-final.txt`. Root Kafka pozitivo Java/K1,
+actual K2 UNKNOWN a finally zachování zůstávají. Nová actual mixed fixture je
+explicitní disjoint union dvou doložených ProcessViews: publish→T028 consumer import
+plus scheduler→obyčejný callee stejné metody, bez odvozeného pořadí mezi vstupy.
+První má doloženou cestu k retry/DLT, druhý ji nemá. Deset negativů pokrývá chybějící/
+stale subscription, cizí membership, chybějící body asociaci, jinou revision/kind,
+stale/contradicting/foreign trigger proof. Zachování celých vstupů/provenance a
+absence implicitního subprocess/network jsou veřejně assertovány.
+
+Nezměněné upstream moduly po posledním úzkém guardu nebyly bezdůvodně znovu spuštěny;
+celý dotčený T029 modul byl. Full suite, skutečný nepřítomný Kafka3.2.0 API gate,
+runtime/broker/DB/delivery/rollback a GH CI jako test evidence NOT_RUN. Původní CI
+run43754909215 na7dee1dd měl jednotlivě ověřené prázdné steps ve všech sedmi jobs;
+nejde o PASS ani o reprodukovanou chybu kódu. Nezávislé review nové revize zbývá.
+
+## Krok 7 — review-fix evidence a publikace (T029-S05, AC06)
+
+Baseline `7dee1dd144de68a90ee6c82a0ccc70f2dddb2e2b`. Zachovat všech 49 konceptů,
+160 vztahů a 311 epizod reviewed HEAD, reanchor pouze aktuální citované řádky bez
+změny významu. Nepřidává se nový spekulativní koncept ani vztah. Generované grafy
+výhradně příkazem. Finální výsledky údržby a čistoty jsou uvedeny níže.
+
+```sh
+./kgmaker semantic update --base 7dee1dd144de68a90ee6c82a0ccc70f2dddb2e2b --note docs/changes/130_projectProcessFailures.md
+./kgmaker scan --no-docs
+python3 /tmp/t029-review-semantic.py
+./kgmaker semantic apply
+./kgmaker semantic validate
+python3 /tmp/t029-review-preservation.py
+./kgmaker memory capture --base 7dee1dd144de68a90ee6c82a0ccc70f2dddb2e2b --validation targeted=passed --validation semantic-preservation=passed --validation full-suite=skipped
+```
+
+Apply/validate/preservation **PASS**: 7 source-backed nodes a 19 vztahů reanchored,
+žádná removal. Všech 49 konceptů / 160 vztahů / 311 epizod reviewed HEAD zachováno;
+flow.py, process_model.py, process_paths.py, kafka_retry.py, framework.py a původní
+business_process prefix byte-identické. Worker symlinky target/target-k2 odstraněny.
+Skutečná capture přidala pouze epizodu
+`episode:d1d49425d5dcdd1aea5982d3522f0f5510f53b7b3be696707d7a28f78c161fde`;
+stav 49 / 160 / 312. Žádná zpětně vymyšlená pre-task evidence.
+
+Před fix commitem primary Git ref stále `7bb8b8d389c461c684197704203a99dcb2b83724`;
+open PR109/W09, PR110/T029, PR111/Criteria a historický draft4. Change130 bez kolize,
+žádné nové Task ID. Cizí nepublikované soubory se nepřebírají. Pokud main před
+publikací postoupí, integrace musí mít samostatný krok a cílené testy.
+
+Finální `./kgmaker scan`, `./kgmaker check`, `./kgmaker semantic validate`,
+`python3 /tmp/t029-review-preservation.py`, `git diff --check` — PASS. Workflow
+review-fix iteration1 má uložené implementation/test artifacts; první record byl
+odmítnut pro chybějící povinné disposition=null, po opravě úspěšně zaznamenán.
+Není to náhrada nezávislého review. Po fix commitu následuje samostatná integrace
+ověřeně merged W09 z actual main, bez přebírání pracovních souborů.

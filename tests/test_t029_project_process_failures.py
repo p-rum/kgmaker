@@ -277,3 +277,196 @@ def test_unscoped_upstream_truncation_and_selected_diagnostics_survive():
     assert not {'FOREIGN_LIMIT','TEST_LIMIT'}&codes
     assert result.technical_view.coverage['truncated'] is True
     assert graph.diagnostics==diagnostics
+
+
+@pytest.mark.parametrize('actual_pipeline',['java'],indirect=True)
+@pytest.mark.parametrize('entry_kind',['scheduler','other_listener'])
+def test_actual_ordinary_listener_callee_has_no_container_policy(actual_pipeline,tmp_path,entry_kind):
+    from pathlib import Path
+    import shutil
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.workspace import load_workspace,snapshot_workspace
+    from kgmaker.process_triggers import discover_process_triggers
+    from test_t024_discover_process_triggers import actual_prerequisites
+    from test_kafka_code_bindings import extra_api_jars
+    _,_,original,_=actual_pipeline
+    # Each recapture owns its source/cache; the module fixture stays immutable.
+    shutil.copytree(original.parent,tmp_path/'fixture');root=tmp_path/'fixture/backend'
+    path=root/'src/main/java/demo/RetryEntries.java';text=path.read_text()
+    if entry_kind=='scheduler':
+        text=text.replace('public void consume(String value) { try','private void consume(String value) { try')
+        text=text.replace('static void cleanup()', '@org.springframework.scheduling.annotation.Scheduled(fixedRate=1000) public void scheduled() { consume("payload"); }\n static void cleanup()')
+    else:
+        text=text.replace('public void consume(String value) { try','public static void consume(String value) { try')
+        text=text.replace('public void consume(String value) {}','public void consume(String value) { RetryEntries.consume(value); }')
+    path.write_text(text)
+    response=inspect_jvm(root,home=Path(__file__).resolve().parents[1]/'workers',repo_id='backend',
+        module='app',source_set='main',scope='production',kotlin_backend='k1',
+        classpath=actual_prerequisites('k1')+extra_api_jars())
+    assert not any('.err.' in d.get('code','') for d in response['diagnostics'])
+    manifest=root.parent/'workspace.json';workspace=load_workspace(manifest)
+    _,coverage,_,graph,_=snapshot_workspace(manifest)
+    inv=discover_process_triggers(workspace,graph,source_coverage=coverage)
+    trigger=next(n for n in inv.nodes if n.attributes.get('trigger_kind')=='SCHEDULER') if entry_kind=='scheduler' else next(
+        n for n in inv.nodes if n.attributes.get('trigger_kind')=='KAFKA' and 'OtherRetryEntries' in n.attributes['entry_symbol_id'])
+    source=build_local_process(graph,inv,trigger.id,process_id='process:'+entry_kind)
+    callee=next(n for n in source.steps if n.kind=='exceptional_exit'
+        and 'method%3Ademo.RetryEntries.consume' in n.attributes.get('method',''))
+    before=deepcopy((source.to_dict(),graph.to_dict()))
+    with patch('subprocess.Popen',side_effect=AssertionError('offline')),patch('socket.socket',side_effect=AssertionError('offline')):
+        result=api(source,graph)
+    boundary=next(n for n in result.steps if n.attributes.get('source_exceptional_exit')==callee.id)
+    assert boundary.attributes['policy_status']=='UNKNOWN' and boundary.evidence_refs
+    assert boundary.attributes['kafka_entry_occurrence'] is None
+    assert not any(e.attributes.get('failure_transition') and e.source==callee.id for e in result.transitions)
+    declared=[n for n in result.steps if n.attributes.get('policy_status')=='DECLARED']
+    if entry_kind=='scheduler':
+        assert not any(n.kind=='trigger' and n.attributes.get('trigger_kind')=='KAFKA' for n in source.steps)
+        assert not declared and not any(e.attributes.get('failure_transition') for e in result.transitions)
+    else:
+        assert len(declared)==2
+        assert all(n.attributes['origin_method']==trigger.attributes['entry_symbol_id'] for n in declared)
+    assert {e.id for e in source.transitions}<={e.id for e in result.transitions}
+    assert (source.to_dict(),graph.to_dict())==before
+
+
+@pytest.fixture(scope='module')
+def actual_imported_retry(tmp_path_factory):
+    """Real T012 -> T014 -> T025 -> T028 plus an ordinary call of the same method."""
+    from pathlib import Path
+    import json
+    from kgmaker.inspection import inspect_jvm
+    from kgmaker.model import KnowledgeGraph
+    from kgmaker.workspace import load_workspace,snapshot_workspace
+    from kgmaker.process_triggers import discover_process_triggers
+    from kgmaker.remote_interfaces import project_remote_interfaces
+    from kgmaker.business_process import project_async_process_boundary
+    from test_kafka_bindings import kafka_workspace
+    from test_t024_discover_process_triggers import actual_prerequisites
+    from test_kafka_code_bindings import extra_api_jars
+    from test_cross_service_contract_mapping import _declare_real_pair
+    root,manifest,document=kafka_workspace.__wrapped__(tmp_path_factory.mktemp('t029-import'))
+    jars=actual_prerequisites('k1')+extra_api_jars()
+    bodies={
+        'producer':'''package demo;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+public class Code { private KafkaTemplate<String,String> template;
+ @Scheduled(fixedRate=1000) public void publish() { template.send("orders-blue", "payload"); } }
+''',
+        'consumer':'''package demo;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.annotation.DltHandler;
+import org.springframework.scheduling.annotation.Scheduled;
+public class Code {
+ @RetryableTopic(attempts="3", retryTopicSuffix="-retry", dltTopicSuffix="-dlt")
+ @KafkaListener(id="one", topics={"orders-blue"}, groupId="group-one")
+ private void one(String value) { try { if(value.isEmpty()) throw new IllegalStateException(); } finally { cleanup(); } }
+ @Scheduled(fixedRate=1000) public void scheduled() { one("local"); }
+ private void cleanup() {}
+ @DltHandler public void dead(String value) {}
+}
+'''}
+    config=root/'consumer/src/main/resources/application.properties'
+    config.write_text(config.read_text()+'spring.cloud.stream.bindings.orders-in-0.group=group-one\n')
+    facts={}
+    for repo,body in bodies.items():
+        path=root/repo/'src/main/java/demo/Code.java';path.parent.mkdir(parents=True);path.write_text(body)
+        response=inspect_jvm(root/repo,home=Path(__file__).resolve().parents[1]/'workers',kotlin_backend='k1',
+            repo_id=repo,classpath=jars,build_context={'spring_profiles':['blue']})
+        assert not any('.err.' in str(d.get('code','')) for d in response['diagnostics'])
+        graph=KnowledgeGraph.from_dict(response['graph'])
+        facts[repo]=(response['context']['id'],next(n for n in graph.nodes if n.kind in {'kafka_code_listener','kafka_code_producer'}))
+    document['kafka_bindings']['schema_version']=2
+    for binding in document['kafka_bindings']['bindings']:
+        cid,fact=facts[binding['repo_id']];binding['context_id']=cid
+        binding['code_ref']={'kind':'send' if binding['repo_id']=='producer' else 'listener',
+            'id':fact.metadata['origin_id'],'context_id':cid,'source_file':fact.metadata['source_file'],
+            'sha256':fact.metadata['source_sha256']}
+    manifest.write_text(json.dumps(document));workspace=load_workspace(manifest)
+    _,coverage,_,graph,_=snapshot_workspace(manifest)
+    workspace,graph,captured=_declare_real_pair(workspace,graph,coverage,'KAFKA')
+    remote=project_remote_interfaces(workspace,graph,captured['canonical_interfaces'],captured=captured)
+    inv=discover_process_triggers(workspace,graph,source_coverage=coverage)
+    processes={next(n.name for n in graph.nodes if n.id==t.attributes['entry_symbol_id']):
+        build_local_process(graph,inv,t.id,process_id='actual:'+t.attributes['entry_symbol_id']) for t in inv.nodes}
+    assert {'publish','one','scheduled'}<=set(processes)
+    imported=project_async_process_boundary(processes['publish'],remote,target_processes=[processes['one']])
+    assert any(n.attributes.get('source_process_id')==processes['one'].definition.process_id for n in imported.steps)
+    return graph,imported,processes['scheduled']
+
+
+def test_actual_imported_entry_and_ordinary_same_method_are_distinct(actual_imported_retry):
+    from kgmaker.process_model import ProcessDefinition
+    from kgmaker.analysis_model import digest
+    graph,imported,ordinary=actual_imported_retry
+    doc=imported.to_dict();other=ordinary.to_dict();view=doc['technical_view']
+    # Explicit disjoint union of two already captured paths, no inferred order.
+    for key in ('nodes','edges','provenance'):
+        merged={item['id']:item for item in view[key]}
+        for item in other['technical_view'][key]:
+            assert item['id'] not in merged or merged[item['id']]==item
+            merged[item['id']]=item
+        view[key]=list(merged.values())
+    for key in ('entry_ids','exit_ids','outcome_ids'):doc[key]=sorted(set(doc[key]+other[key]))
+    definition=ProcessDefinition.from_dict({**doc['definition'],'trigger_ids':doc['entry_ids'],
+        'baseline_fingerprint':digest([imported.content_fingerprint,ordinary.content_fingerprint])})
+    doc.update(definition=definition.to_dict(),definition_fingerprint=definition.content_fingerprint)
+    view['baseline_fingerprint']=definition.to_dict()['baseline_fingerprint']
+    source=ProcessView.from_dict(doc);before=deepcopy((source.to_dict(),graph.to_dict()))
+    with patch('subprocess.Popen',side_effect=AssertionError('offline')),patch('socket.socket',side_effect=AssertionError('offline')):
+        result=api(source,graph)
+    retries=[n for n in result.steps if n.attributes.get('failure_role')=='retry']
+    assert len(retries)==2
+    declared=next(n for n in retries if n.attributes['policy_status']=='DECLARED')
+    unknown=next(n for n in retries if n.attributes['policy_status']=='UNKNOWN')
+    assert declared.attributes['origin_method']==unknown.attributes['origin_method']
+    imported_exit=declared.attributes['source_exceptional_exit'];ordinary_exit=unknown.attributes['source_exceptional_exit']
+    assert imported_exit!=ordinary_exit and ':target:' in imported_exit and ':target:' not in ordinary_exit
+    assert paths(result.transitions,imported.to_dict()['entry_ids'][0],declared.id)
+    assert not paths(result.transitions,ordinary.to_dict()['entry_ids'][0],declared.id)
+    assert not any(e.attributes.get('failure_transition') and e.source==ordinary_exit for e in result.transitions)
+    assert len([n for n in result.steps if n.attributes.get('failure_role')=='dlt'])==1
+    assert declared.attributes['kafka_entry_occurrence']['exceptional_exit_id']==imported_exit
+    assert unknown.evidence_refs and result.technical_status=='PARTIAL'
+    assert (source.to_dict(),graph.to_dict())==before
+
+
+@pytest.mark.parametrize('mutation',['missing_subscription','stale_subscription','wrong_import_revision',
+    'wrong_trigger_kind','stale_trigger_proof','contradicting_trigger_proof','foreign_trigger_proof',
+    'foreign_trigger_original','missing_body_association','foreign_membership_reference'])
+def test_imported_retry_requires_current_exact_entry_authority(actual_imported_retry,mutation):
+    from kgmaker.views import _summarize_view_evidence
+    graph,imported,_=actual_imported_retry;doc=imported.to_dict();view=doc['technical_view']
+    trigger=next(n for n in view['nodes'] if n['kind']=='trigger' and n['attributes'].get('trigger_kind')=='KAFKA')
+    link=next(e for e in view['edges'] if e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL')
+    association=next(e for e in view['edges'] if e['source']==trigger['id']
+        and e['attributes'].get('boundary_reason')=='declaration-to-body static association')
+    entry=next(n for n in view['nodes'] if n['id']==association['target'])
+    proof=next(p for p in view['provenance'] if p['id']==trigger['evidence_refs'][0])
+    if mutation=='missing_subscription':view['edges'].remove(link)
+    elif mutation=='stale_subscription':link['freshness']='STALE'
+    elif mutation=='wrong_import_revision':entry['attributes']['source_process_revision']+=1
+    elif mutation=='wrong_trigger_kind':trigger['attributes']['trigger_kind']='SCHEDULER'
+    elif mutation=='foreign_membership_reference':
+        next(n for n in view['nodes'] if n['id']==link['source'])['attributes']['membership_evidence_refs']=['foreign:membership']
+    elif mutation=='missing_body_association':
+        view['edges'].remove(association)
+    else:
+        if mutation=='stale_trigger_proof':proof['freshness']='STALE'
+        elif mutation=='contradicting_trigger_proof':proof['polarity']='CONTRADICTING'
+        elif mutation=='foreign_trigger_proof':proof['content_hash']='0'*64
+        else:proof['original_id']='foreign:unrelated-proof'
+        records={p['id']:p for p in view['provenance']}
+        for item in view['nodes']+view['edges']:
+            if item['evidence_refs']:item.update(_summarize_view_evidence(item['evidence_refs'],records))
+    ProcessView.from_dict(doc);before=deepcopy((doc,graph.to_dict()))
+    with patch('subprocess.Popen',side_effect=AssertionError('offline')),patch('socket.socket',side_effect=AssertionError('offline')):
+        result=api(doc,graph)
+    retries=[n for n in result.steps if n.attributes.get('failure_role')=='retry']
+    assert len(retries)==1 and retries[0].attributes['policy_status']=='UNKNOWN'
+    assert retries[0].evidence_refs and not any(e.attributes.get('failure_transition') for e in result.transitions)
+    assert all(p in result.technical_view.provenance for p in view['provenance'])
+    assert any('KAFKA_ENTRY_OCCURRENCE_UNPROVEN' in d.get('reasons',[]) for d in result.technical_view.diagnostics)
+    assert result.technical_status=='PARTIAL' and (doc,graph.to_dict())==before

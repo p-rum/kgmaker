@@ -1105,7 +1105,7 @@ def project_async_process_boundary(local_process, remote_interfaces, *, target_p
         raise BusinessProcessError('INVALID_ASYNC_PROCESS_BOUNDARY', 'Invalid or incompatible async process input') from error
 
 
-FAILURE_VERSION = 'process-failures-1'
+FAILURE_VERSION = 'process-failures-2'
 
 
 def project_process_failures(process, graph=None, *, compensation_proposals=(), max_policies=128):
@@ -1118,7 +1118,7 @@ def project_process_failures(process, graph=None, *, compensation_proposals=(), 
     try:
         from .model import KnowledgeGraph
         from .process_model import ProcessDefinition
-        from .process_paths import _cfg_proofs
+        from .process_paths import _cfg_proofs, _selected_trigger, ProcessPathError, TRIGGER_VERSION
         from .kafka_retry import policy_boundaries
         if type(max_policies) is not int or not 0 <= max_policies <= 512:
             _fail('Invalid failure policy budget')
@@ -1126,7 +1126,7 @@ def project_process_failures(process, graph=None, *, compensation_proposals=(), 
             _fail('Invalid compensation proposal collection')
         _bounded(compensation_proposals)
         doc = _document(process)
-        if doc['technical_view']['rules_version'] == FAILURE_VERSION:
+        if doc['technical_view']['rules_version'] in {FAILURE_VERSION, 'process-failures-1'}:
             _fail('Failure projection requires its original input, not a previous projection')
         # Only validated stored T026 membership can recover the technical CFG.
         if any(_GROUP in n['attributes'] for n in doc['technical_view']['nodes']):
@@ -1224,6 +1224,83 @@ def project_process_failures(process, graph=None, *, compensation_proposals=(), 
                 and any(c.get('context_id')==cids[0] and c.get('scope',scope)==scope
                     and c.get('status')=='CURRENT' and c.get('freshness')!='STALE'
                     for c in row.get('contexts',[])))
+        original_nodes = {n['id']:n for n in nodes}
+        def kafka_occurrence(exit_node, origin, cfg, cids, expected):
+            # T025's root CFG path is (entry method,). Ordinary local calls use
+            # an additional call-site/block path, even for the same declaration.
+            body_entry = 'process:' + digest({'path':(origin,), 'id':cfg['entry']})[:24]
+            body_exit = 'process:' + digest({'path':(origin,), 'id':cfg['exceptional_exit']})[:24]
+            matches = []
+            for trigger in original_nodes.values():
+                attrs = trigger['attributes']
+                if (trigger['kind']!='trigger' or attrs.get('trigger_kind')!='KAFKA'
+                        or attrs.get('entry_symbol_id')!=origin or attrs.get('context_ids')!=cids
+                        or trigger['freshness']!='CURRENT' or trigger['contradicting_refs']):
+                    continue
+                canonical = 'trigger:' + digest({'context':cids[0], 'symbol':origin,
+                    'entrypoint':attrs.get('entrypoint_id'), 'kind':'KAFKA'})
+                if not trigger['id'].endswith(canonical): continue
+                prefix = trigger['id'][:-len(canonical)]
+                if exit_node['id']!=prefix+body_exit: continue
+                entry = original_nodes.get(prefix+body_entry)
+                if (entry is None or entry['kind']!='entry' or entry['freshness']!='CURRENT'
+                        or entry['contradicting_refs'] or entry['owner_id']!=exit_node['owner_id']
+                        or trigger['owner_id']!=exit_node['owner_id']
+                        or cfg['entry'] not in entry['original_ids']
+                        or entry['attributes'].get('method')!=origin
+                        or entry['attributes'].get('context_ids')!=cids
+                        or any(p['id'] not in entry['evidence_refs'] or provenance.get(p['id'])!=p for p in expected)):
+                    continue
+                declaration = [e for e in edges if e['source']==trigger['id'] and e['target']==entry['id']
+                    and e['id']==prefix+'process-entry:'+digest([canonical,body_entry])
+                    and e['relation']=='unknown' and {canonical,origin}<=set(e['original_ids'])
+                    and e['attributes'].get('boundary_reason')=='declaration-to-body static association'
+                    and e['attributes'].get('scope')==scope and e['attributes'].get('context_ids')==cids]
+                if (len(declaration)!=1 or sum(e['target']==entry['id'] for e in edges)!=1
+                        or declaration[0]['freshness']=='STALE' or declaration[0]['contradicting_refs']): continue
+                occurrence_refs = list(trigger['evidence_refs'])
+                if not prefix:
+                    if trigger['id'] not in doc['entry_ids'] or trigger['id'] not in doc['definition']['trigger_ids']: continue
+                else:
+                    # T028 supplies one distinct subscription -> consumer entry
+                    # association per imported occurrence, not a Java call edge.
+                    incoming = [e for e in edges if e['target']==trigger['id'] and e['relation']=='async'
+                        and e['attributes'].get('async_transition')=='CONSUMER_POTENTIAL']
+                    if len(incoming)!=1: continue
+                    link = incoming[0]; subscription = original_nodes.get(link['source'])
+                    if (subscription is None or subscription['kind']!='async_boundary'
+                            or prefix!=subscription['id']+':target:'
+                            or subscription['attributes'].get('async_role')!='subscription'
+                            or subscription['attributes'].get('boundary_reason')!='ASYNC_STATIC_POTENTIAL'
+                            or origin not in subscription['original_ids']
+                            or not subscription['attributes'].get('membership_evidence_refs')
+                            or link['evidence_refs']!=subscription['evidence_refs']
+                            or link['original_ids']!=subscription['original_ids']
+                            or any(n['freshness']=='STALE' or n['contradicting_refs'] for n in (subscription,link))
+                            or not isinstance(attrs.get('source_process_id'),str)
+                            or type(attrs.get('source_process_revision')) is not int
+                            or any(n['attributes'].get(k)!=attrs[k] for n in (entry,exit_node)
+                                for k in ('source_process_id','source_process_revision'))):
+                        continue
+                    occurrence_refs += link['evidence_refs'] + subscription['evidence_refs']
+                    raw = [provenance[ref].get('original_provenance',provenance[ref]) for ref in occurrence_refs]
+                    if any(p.get('freshness')=='STALE' or p.get('polarity')=='CONTRADICTING'
+                           or p.get('scope') not in (None,scope) for p in raw): continue
+                if prefix and not set(subscription['attributes']['membership_evidence_refs']) <= {p['id'] for p in raw}: continue
+                # Replay the existing T025 trigger guard over its exact original
+                # declaration/proofs. Renaming a trigger or adding metadata cannot
+                # turn a scheduler/call occurrence into a Kafka entry.
+                canonical_node = {**deepcopy(trigger), 'id':canonical}
+                inventory = ViewDocument.from_dict({**view, 'rules_version':TRIGGER_VERSION,
+                    'nodes':[canonical_node], 'edges':[],
+                    'provenance':[provenance[ref] for ref in trigger['evidence_refs']]})
+                try:
+                    _selected_trigger(snapshot,inventory,canonical)
+                except ProcessPathError:
+                    continue
+                matches.append({'trigger_id':trigger['id'],'entry_id':entry['id'],
+                    'exceptional_exit_id':exit_node['id'],'evidence_refs':sorted(set(occurrence_refs))})
+            return matches[0] if len(matches)==1 else None
         for policy_id in sorted(groups)[:max_policies]:
             group = groups[policy_id]; policy = graph_nodes.get(policy_id)
             md = policy.metadata if policy and isinstance(policy.metadata,dict) else {}
@@ -1251,31 +1328,40 @@ def project_process_failures(process, graph=None, *, compensation_proposals=(), 
                 and n['freshness']=='CURRENT' and not n['contradicting_refs']
                 and selected_anchor(n,cids) and expected and all(p['polarity']!='CONTRADICTING' and p['id'] in n['evidence_refs']
                     and provenance.get(p['id'])==p for p in expected)]
-            declared = (context_valid and bool(anchors) and proof_valid and md.get('status')=='DECLARED'
+            policy_valid = (context_valid and proof_valid and md.get('status')=='DECLARED'
                 and all(r['status']=='DECLARED' for r in group)
                 and {r['kind'] for r in group}=={'declares_retry_boundary','declares_dlt_boundary'})
             refs = retained(records,cids)
             attrs = {'policy_id':policy_id,'policy_logical_id':md.get('logical_id'),
-                'origin_method':origin,'policy_status':'DECLARED' if declared else 'UNKNOWN',
-                'attempts':md.get('attempts') if declared else None,
+                'origin_method':origin,
                 'attempts_semantics':'DECLARED_TOTAL_LIMIT_NOT_OBSERVED',
-                'retry_suffix':md.get('retry_suffix') if declared else None,
-                'dlt_suffix':md.get('dlt_suffix') if declared else None,
                 'destinations':'UNKNOWN','scheduling':'UNKNOWN','unrolled_attempts':0,
                 'upstream_policy_rows':deepcopy(group),'original_evidence_refs':sorted(raw_refs)}
-            occurrences = anchors if declared else [None]
-            for anchor in occurrences:
+            for anchor in candidates or [None]:
+                occurrence = kafka_occurrence(anchor,origin,cfg,cids,expected) if anchor in anchors else None
+                declared = policy_valid and occurrence is not None
+                # An async membership spans producer and consumer contexts. Keep
+                # its original proof intact; the target policy's reference-only
+                # envelope does not rebind that upstream authority in place.
+                occurrence_refs = sorted(set(refs + (retained(
+                    [provenance[ref] for ref in occurrence['evidence_refs']],cids) if occurrence else [])))
+                occurrence_attrs = {**attrs,'policy_status':'DECLARED' if declared else 'UNKNOWN',
+                    'attempts':md.get('attempts') if declared else None,
+                    'retry_suffix':md.get('retry_suffix') if declared else None,
+                    'dlt_suffix':md.get('dlt_suffix') if declared else None,
+                    'kafka_entry_occurrence':deepcopy(occurrence) if declared else None,
+                    'source_exceptional_exit':anchor['id'] if anchor else None}
                 identity = 'failure-policy:' + digest([policy_id,origin,anchor['id'] if anchor else None])
-                retry = boundary(identity,'retry',[policy_id,*([origin] if origin else [])],cids,refs,attrs,
+                retry = boundary(identity,'retry',[policy_id,*([origin] if origin else [])],cids,occurrence_refs,occurrence_attrs,
                     anchor.get('owner_id') if anchor else None)
                 if not declared:
                     diagnostics.append({'code':'FAILURE_POLICY_UNPROVEN','policy_id':policy_id,
                         'boundary_id':identity,'reasons':sorted({r for row in group for r in row['reasons']}
-                            | ({'PROCESS_CFG_OR_POLICY_AUTHORITY_UNPROVEN'}))})
+                            | ({'KAFKA_ENTRY_OCCURRENCE_UNPROVEN'} if occurrence is None else {'PROCESS_CFG_OR_POLICY_AUTHORITY_UNPROVEN'}))})
                     continue
                 transition(anchor['id'],retry['id'],'RETRY_POTENTIAL',retry)
-                dlt = boundary(identity+':dlt','dlt',[policy_id,md['handler_id']],cids,refs,
-                    {**attrs,'handler_id':md['handler_id'],'handler_execution':'NOT_OBSERVED',
+                dlt = boundary(identity+':dlt','dlt',[policy_id,md['handler_id']],cids,occurrence_refs,
+                    {**occurrence_attrs,'handler_id':md['handler_id'],'handler_execution':'NOT_OBSERVED',
                         'condition':'declared attempt limit may be exhausted'},anchor.get('owner_id'))
                 transition(retry['id'],dlt['id'],'DLT_POTENTIAL',dlt)
         if len(nodes)>10000 or len(edges)>30000: _fail('Failure output topology budget exceeded')
