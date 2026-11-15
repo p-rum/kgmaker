@@ -936,6 +936,15 @@ It is a Python API over
 explicit snapshots and adds no CLI command or persistent data format
 ([change123](docs/changes/123_crossHttpProcessBoundary.md)).
 
+The [T028 asynchronous process API](docs/process-paths.md#potential-asynchronous-process-paths-t028)
+projects explicit Kafka publish/channel/subscription memberships into potential
+consumer paths. Fan-out branches have no order between consumers or return to the
+publisher. Missing consumers, correlation, loops and truncation remain visible;
+static bindings do not prove instance correlation, delivery or completed processing.
+Endpoint and binding proofs gate expansion independently of summary flags; rejected
+proofs and conflicting release selectors remain visible without duplicate consumer paths.
+See [change127](docs/changes/127_crossAsyncProcessBoundary.md).
+
 Service inventories distinguish compiler/source ownership from canonical
 workspace-derived declarations. Kafka binding inputs may reference another
 repository's schema without becoming service-owned code or compiler candidates.
