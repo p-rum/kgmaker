@@ -255,6 +255,14 @@ def _write_if_missing(path: Path, text: str, force: bool = False) -> bool:
 
 
 def init(root: Path, force: bool = False) -> int:
+    from .analysis_model import AnalysisError
+    from .skills import planned_skill_files
+
+    try:
+        skill_files = planned_skill_files(root)
+    except AnalysisError as error:
+        print(f"Cannot initialize kgmaker skills: {error}", file=sys.stderr)
+        return error.code
     written = []
     for path, text in (
         (root / HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
@@ -271,6 +279,7 @@ def init(root: Path, force: bool = False) -> int:
         (root / TEST_EXPERT_AGENT_FILE, TEST_EXPERT_AGENT_CONTENT),
         (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
         (root / NOTES_FILE, NOTES_CONTENT),
+        *skill_files,
     ):
         if _write_if_missing(path, text, force=force):
             written.append(path.relative_to(root).as_posix())
@@ -902,9 +911,9 @@ def build_parser() -> argparse.ArgumentParser:
     from .confluence_sync_config import register as register_confluence
     register_confluence(sub)
 
-    init_parser = sub.add_parser("init", help="add Copilot hooks, instructions and the kgmaker agent")
+    init_parser = sub.add_parser("init", help="add Agent Skills, Copilot hooks and instructions")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
-    init_parser.add_argument("--force", action="store_true", help="overwrite kgmaker-managed Copilot files")
+    init_parser.add_argument("--force", action="store_true", help="overwrite kgmaker-managed instructions and skills")
 
     memory_parser = sub.add_parser("memory", help="capture or recall Git-backed implementation episodes")
     memory_sub = memory_parser.add_subparsers(dest="memory_command", required=True)

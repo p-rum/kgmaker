@@ -1,5 +1,20 @@
 # Inventář acceptance T001 a T002
 
+## T050 — cílové Agent Skills, 2026-11-15
+
+Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
+[T050 revize 1](tasks/50_addTargetProjectSkills.md),
+[change117](changes/117_addTargetProjectSkills.md). Dodání S01/S02 PR_OPEN (draft, větev `feat/t050-target-project-skills`);
+ověření uvedené níže je lokální a neprokazuje automatickou discovery hostitelů.
+
+| Acceptance | Ověření | Aktuální důkaz |
+|---|---|---|
+| T050-AC01 | VERIFIED_IN_SCOPE | tests/test_skills.py, všechny 8 resources, parity + references; čistý wheel init mimo checkout PASS |
+| T050-AC02 | VERIFIED_IN_SCOPE | Opakovaný init bytes/mtime, úpravy skills/references/cizích instrukcí, explicitní force a cizí skill PASS |
+| T050-AC03 | VERIFIED_IN_SCOPE | 12 symlink scénářů + 4 file/directory kolize s nulovou mutací; scan neinstaluje skilly PASS |
+| T050-AC04 | PARTIAL | 5 formátových validací PASS; audit/testgen JSON ukázky prošly runtime validátory. Živý model/hostitel NOT_RUN |
+| T050-AC05 | PARTIAL | Záznam obou kroků, README, capability/CLI návod, matice a registr aktualizované; nezávislé review a GH CI NOT_RUN |
+
 ## Aktuální audit dodání — 2026-11-14
 
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)

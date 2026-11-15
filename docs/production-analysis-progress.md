@@ -1,5 +1,22 @@
 # Aktuální stav a zbývající práce
 
+## Skilly v cílovém projektu T050 — 2026-11-15
+
+Baseline `193c89b4d461047fd3330fd74892c5830ba8ac81`,
+[zadání revize 1](tasks/50_addTargetProjectSkills.md),
+[change117: přesné kontroly a omezení](changes/117_addTargetProjectSkills.md).
+
+| Krok | Dodání | Ověření | Důkaz a omezení |
+|---|---|---|---|
+| T050-S01 | PR_OPEN | VERIFIED_IN_SCOPE | Pět skillů + tři references, init preflight, parity a ochrana uživatelských souborů; čistý wheel smoke PASS. Hostitelská discovery NOT_RUN; neuzavírá T049. |
+| T050-S02 | PR_OPEN | PARTIAL | 83 cílených testů PASS, 5 skill validací PASS; příklady prošly skutečnými validátory. Plná sada má environmentální/toolchain chyby, živé hostitelské scénáře a GH CI NOT_RUN. |
+
+Publikace draft PR na větvi `feat/t050-target-project-skills` probíhá po výslovném
+pokynu uživatele přes GitHub konektor; Git HTTPS zde nemá přihlašovací údaje.
+Obsah publikovaného stromu se ověřuje proti lokálnímu commitu.
+Příručka: [agent-skills.md](agent-skills.md). T050 nemění delivery součty T003,
+T004, T046 nebo T047 níže. Lokální soubory nejsou důkaz merge ani živé podpory hostitele.
+
 ## Integrační ověření T048-S02 / T046 — 2026-11-12
 
 S01–S06 jsou sloučené; S06 zachovává historii a integrovalo main

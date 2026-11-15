@@ -1,0 +1,84 @@
+# Skilly KGMakeru v cílovém projektu
+
+`kgmaker init --root /cesta/k/projektu` instaluje pět samostatných skillů do
+`.agents/skills/`. Každý obsahuje `SKILL.md` s name/description; podrobné kontrakty
+pro semantic, data audit a testgen jsou v jeho `references/`. Tyto soubory jsou
+součástí distribuce, nepotřebují checkout ani vývojovou dokumentaci KGMakeru.
+Dodávka: [T050](tasks/50_addTargetProjectSkills.md), [change117](changes/117_addTargetProjectSkills.md).
+
+| Skill | Kdy jej použít | Příklad požadavku agentovi |
+|---|---|---|
+| `kgmaker-context` | Orientace ve zdrojích, architektura, dopad změny a rekognoskace před implementací | „Použij $kgmaker-context a najdi volající této služby; dolož zdroje.“ |
+| `kgmaker-semantic` | Prvotní nebo inkrementální údržba doložených sémantických vazeb | „Použij $kgmaker-semantic pro změny oproti merge-base s origin/main.“ |
+| `kgmaker-feature-analysis` | Posouzení požadavku, návrh změn a otevřených otázek bez implementace | „Použij $kgmaker-feature-analysis pro requirements/exposure.md.“ |
+| `kgmaker-data-audit` | Audit požadovaných vstupů a business nejasností ze schválených lokálních zdrojů | „Použij $kgmaker-data-audit a ověř podklady k tomuto požadavku.“ |
+| `kgmaker-testgen` | Návrhy testů existující funkcionality, syntetických dat a volitelný export | „Použij $kgmaker-testgen pro src/calculator.py; zatím jen návrh.“ |
+
+## Instalace a použití
+
+Po instalaci Python balíčku spusť v cílovém projektu:
+
+```bash
+kgmaker init
+# Samostatná explicitní příprava/obnova strukturálního grafu:
+kgmaker scan
+kgmaker status
+kgmaker query "calculator"
+```
+
+`init` vrací vytvořené cesty; samotná instalace nevytváří graf ani nespouští
+aplikaci, instalaci závislostí, compiler worker, migraci nebo testy. `scan` skilly
+neinstaluje. Při práci s existujícím compiler indexem nejprve ověř status a zdroje;
+neobnovuj index jen kvůli přečtení compiler dat. Zastaralý graf lze při čistě
+informační otázce použít jako vodítko a závěry ověřit přímo ve zdroji.
+
+Automatické objevení `.agents/skills/`, reload i syntaxe `$skill` závisejí na
+hostiteli. Pokud je nenabízí, zadej například:
+„Otevři `.agents/skills/kgmaker-data-audit/SKILL.md` a postupuj podle něj pro tento
+požadavek.“ Skills nevyžadují custom-agent delegaci, registraci služby ani modelové
+API. Konkrétní Copilot/Codex/Junie discovery a odpovědi modelů zatím nemají živé
+ověření; lokální testy dokazují soubory a nástrojové kontrakty, nikoli hostitele.
+
+## Údržba a ochrana existujících souborů
+
+Opakovaný běžný `init` zachová existující skilly i reference včetně vlastních úprav
+a nezmění jejich mtime. Nedoplňuje novou verzi do již existujícího souboru. Pro
+aktualizaci porovnej distribuci v dočasném projektu s místními úpravami. Explicitní
+`--force` přepíše deklarované templates; nikdy jej nepoužívej automaticky. Cizí
+skilly mimo explicitní seznam výstupů zůstávají nedotčené. Dřívější ručně dodaný
+skill `kgmaker` se nemigruje ani neobnovuje.
+
+Nové skill cesty mají preflight před zápisy init: symlink v cestě, adresář místo
+výstupního souboru nebo soubor místo rodičovského adresáře vrací chybu 2 bez zápisu
+init, také s `--force`. Preflight není transakce celého historického instalátoru
+ani ochrana proti souběžné změně cest. Úplná migrace a izolace starých profilů jsou
+samostatným plánem [T049](tasks/49_separateTargetAgents.md); jejich implementace se
+touto dodávkou nemění.
+
+## Hranice jednotlivých workflow
+
+Instrukce respektují pravidla cílového projektu a neobsahují povinnosti vytvářet
+české KGMaker change notes, používat jeho Task ID či jeho release agenta. Stávající
+Copilot/Junie templates mají vlastní historická omezení; T050 je neopravuje.
+Skills samy neudělují oprávnění ke commitu, pushi, publikaci či přístupu ke službám
+a nepředstavují technický sandbox hostitelského shellu.
+
+Semantic patch je vázán na aktuální `update_id`; feature kandidát na packet,
+revision a requirement hash; testgen návrh na svůj packet. Zastaralé závěry je
+nutné znovu posoudit, nestačí změnit ID. Feature/data audit nesmí měnit AS_IS
+graf přes semantic apply. `data-check` vrací obálku: kandidátem pro validate/apply
+je její `candidate`, nikoli celá odpověď. Exit 4 znamená validní neúplný výsledek,
+nikoli runtime úspěch. Statická vazba ani Flyway replay nejsou důkaz naplněných dat.
+
+Testgen návrh, export a spuštění testů jsou tři různé operace. Exportuj až na
+požadavek zápisu testů, potom použij existující projektový runner v povoleném
+rozsahu. Výsledek bez skutečného běhu zůstává NOT_RUN; chybějící toolchain je
+SKIP/blocked. Přehled CLI je přímo v instalovaných skillech a v `kgmaker --help`.
+
+## Zdroj templates a ověření
+
+Zdroj je `src/kgmaker/skills.py`, spravované kopie jsou `.agents/skills/kgmaker-*/`.
+Po změně templates obnov jen jejich explicitní cesty a ověř paritu pomocí
+`python -m pytest -q tests/test_skills.py`. Nespouštěj `init --force` nad checkoutem
+KGMakeru kvůli synchronizaci skillů: přepsal by i jiné upravené instrukce.
+Konkrétní příkazy, výsledky a neprovedené kontroly jsou v [change117](changes/117_addTargetProjectSkills.md).

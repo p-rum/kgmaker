@@ -38,6 +38,19 @@ Confluence exports are optional and read-only. `kgmaker docs check --confluence-
 
 The baseline scanner/domain modules are source-pattern parsers, not SQL engines or complete YAML parsers. Separate optional JVM/TypeScript workers use real compiler APIs; they do not replace the default scanner workflow. Dynamic URLs, indirect topic names, custom annotations, complex OpenAPI documents, and generated schemas may be missed. The `kgmaker` Copilot custom agent can explain behavior from source and keep semantic notes in `.kgmaker/NOTES.md`.
 
+## Target-project Agent Skills (T050)
+
+`skills.py` owns an explicit map of five skill entrypoints and three progressive
+references. Templates are Python strings, so the normal package includes them
+without new package-data rules. `init` preflights all skill paths using the existing
+`analysis_model.safe_path` symlink/containment contract before writing any output,
+then uses its existing preserve/explicit-force writer. `scan` does not install
+skills. This preflight is not transactional installation or concurrent-write
+protection for historical outputs; T049 remains separate. Repository copies under
+`.agents/skills/kgmaker-*/` are byte-checked against templates.
+See [the installation and CLI guide](agent-skills.md) and
+[change117](changes/117_addTargetProjectSkills.md) for scope and verification.
+
 ## Hook lifecycle
 
 The generated repository hook subscribes to Copilot CLI `sessionStart`. It refreshes the graph and returns a lean `additionalContext` bootstrap. Request-specific repository locations and implementation history are retrieved with `kgmaker memory recall`; multi-role agents use bounded `kgmaker task context` packets. A failed scan returns empty context and a diagnostic on standard error, allowing the Copilot session to continue.
