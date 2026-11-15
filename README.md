@@ -2,7 +2,7 @@
 
 **A local knowledge graph for GitHub Copilot CLI.** kgmaker maps files, declarations, imports, database tables, Kafka topics, API endpoints, frontend routes, and likely cross-file calls. Copilot receives a lean bootstrap at session start and retrieves task-specific graph locations and prior implementation episodes on demand. The source-only Python core runs locally using the standard library. Optional compiler inspection requires separately installed JDK/Node workers. JVM inspection adds an evidence-backed subset of Spring bean/entrypoint/proxy-policy and JPA/Spring Data bindings; it does not start the application or connect to a database.
 
-kgmaker is designed for one host: GitHub Copilot CLI. Repository hooks handle automatic refresh and context. A repository custom agent can enrich architectural explanations using Copilot itself. There is no model API key, provider configuration, MCP server, or external graph service.
+Automatic repository hooks target GitHub Copilot CLI. Standalone Agent Skills also provide workflows for compatible hosts, with manual file-based invocation when discovery is unavailable. Repository hooks handle automatic refresh and context. A repository custom agent can enrich architectural explanations using Copilot itself. There is no model API key, provider configuration, MCP server, or external graph service.
 
 ## Documentation and implementation tasks
 
@@ -48,7 +48,16 @@ kgmaker init
 kgmaker scan
 ```
 
-`kgmaker init` creates repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed Copilot files.
+`kgmaker init` creates Agent Skills under `.agents/skills/`, repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed instructions and skills.
+
+The five skills cover code navigation (`kgmaker-context`), semantic graph maintenance
+(`kgmaker-semantic`), requirement analysis (`kgmaker-feature-analysis`), data audits
+(`kgmaker-data-audit`) and test proposals (`kgmaker-testgen`). For example, ask your
+agent to use `$kgmaker-context` to find affected callers, or `$kgmaker-data-audit`
+to assess a requirement's inputs. Discovery and `$` invocation depend on the host;
+you can always explicitly open the installed `SKILL.md` and follow it. See the
+[target-project skills guide](docs/agent-skills.md) for installation, examples,
+preservation rules and limits ([T050 change117](docs/changes/117_addTargetProjectSkills.md)).
 
 Restart Copilot CLI after installing the hook. Each new session refreshes the graph and injects a compact map as `additionalContext`.
 
@@ -254,7 +263,7 @@ serverová pravidla zůstávají závazné.
 Příklad předání: `Předej PR #12 agentovi code_review; po schválení jej merguj.`
 Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md).
 
-The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. kgmaker does not install agents into other products or make model API calls itself.
+The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. Host-neutral Agent Skills are installed alongside them under `.agents/skills/`; automatic discovery depends on the host. kgmaker makes no model API calls itself.
 
 ## Implementation memory and workflow
 
@@ -263,7 +272,7 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 `memory recall` ranks current graph locations and prior episodes against the implementation request. It labels changed or removed episode evidence as historical, applies result and token bounds, and reports the estimated reduction from the broad legacy graph context.
 
 The `task` commands persist workflow state under ignored `.kgmaker/workflow/`. A task follows `intake → analyze → plan → implement → test → review → done`; bounded retries may return test or review to implementation. Architect, implementation, test-expert, review, and orchestrator artifacts have strict role-specific JSON contracts. `task context` assembles a bounded packet from current graph nodes, semantic hits, implementation memory, impact candidates, tests, and prior task artifacts without modifying the graph or semantic layer.
-The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files and an Agent Skill are also supplied in this repository; `init` installs the analyst/data-auditor command templates listed in its output. kgmaker makes no model API calls itself.
+The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files are also supplied; `init` installs the analyst/data-auditor commands and all five Agent Skills listed in its output. kgmaker makes no model API calls itself.
 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 
