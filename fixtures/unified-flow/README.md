@@ -20,3 +20,8 @@ Dependencies must be prepared explicitly; rendering never installs them.
 [Change128](../../docs/changes/128_unifiedFlowViews.md) records the exact environment,
 commands, earlier failures, final PASS and remaining scope. See
 [public contract](../../docs/unified-flow-views.md) for legacy input, budgets and atomic output.
+
+The additional actual frontend relation test reuses the merged W05 capture from
+`tests/test_backend_frontend_value_flow.py`. It validates local frontend value
+relationships and explicit relationship-only ordering; it does not make the
+unified renderer a cross-compiler execution resolver.

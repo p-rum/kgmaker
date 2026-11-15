@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {JSDOM} from 'jsdom';
 const dom=new JSDOM('<!doctype html><html><body></body></html>');
-globalThis.window=dom.window;globalThis.document=dom.window.document;
+globalThis.window=dom.window;globalThis.document=dom.window.document;globalThis.Element=dom.window.Element;
 const {default:mermaid}=await import('mermaid');
 mermaid.initialize({startOnLoad:false,securityLevel:'strict'});
 const [diagramFile,reportFile]=process.argv.slice(2);
@@ -14,6 +14,6 @@ const id=original=>'n'+crypto.createHash('sha256').update(JSON.stringify(origina
 const expected=report.cfg.edges.map(e=>id(e.source)+'>'+id(e.target)).sort();
 const actual=edges.map(e=>e.start+'>'+e.end).sort();
 if(JSON.stringify(expected)!==JSON.stringify(actual))throw Error('Rendered Mermaid changed CFG endpoints');
-if(vertices.size!==report.cfg.blocks.length+(report.truncated?1:0))throw Error('Rendered Mermaid changed CFG vertices');
+if(vertices.size!==report.cfg.blocks.length)throw Error('Rendered Mermaid changed CFG vertices');
 for(const block of report.cfg.blocks)if(!vertices.has(id(block.id)))throw Error('Missing CFG vertex');
 console.log(JSON.stringify({status:'PASS',vertices:vertices.size,edges:edges.length}));

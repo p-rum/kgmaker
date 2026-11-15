@@ -489,8 +489,9 @@ Source mapping bez debug metadata nevymýšlí řádky.
 Spring conditions/custom registrars, rozšířený Hibernate model a query grammar,
 Kafka cluster/retry/DLT, Feign/WebClient/RestClient, service mapping a BE/FE
 value-flow nejsou tímto inkrementem dokončeny. Stávající Flyway/workspace/
-availability implementace zůstává zachovaná. Data/integration view zatím poskytuje
-JSON, nikoli dokončený framework Markdown/Mermaid renderer. Runtime import je
+availability implementace zůstává zachovaná. Data/integration view poskytuje
+JSON/Markdown/Mermaid ze společného modelu jako RELATIONSHIP_ONLY; netvrdí CFG
+execution pořadí. Viz [W09 kontrakt](unified-flow-views.md). Runtime import je
 samostatný důkaz konkrétního běhu; nepřítomnost pozorování nic nevyvrací.
 
 

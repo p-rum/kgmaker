@@ -203,7 +203,7 @@ class RenderBudget:
             raise AnalysisError('FLOW_TIMEOUT: output not published',4)
 
 
-def publish(report, format, output=None, *, budget=None):
+def publish(report, format, output=None, *, budget=None, before_replace=None):
     budget=budget or RenderBudget()
     budget.check()
     text=render(report,format)
@@ -221,7 +221,11 @@ def publish(report, format, output=None, *, budget=None):
                     created.append(parent)
                 except FileExistsError:
                     if not parent.is_dir(): raise
-            atomic_write(target,text,before_replace=budget.check)
+            def check():
+                budget.check()
+                if before_replace is not None: before_replace()
+                budget.check()
+            atomic_write(target,text,before_replace=check)
         except BaseException:
             for parent in reversed(created):
                 try: parent.rmdir()
@@ -248,3 +252,69 @@ def output_path(root, output, graph, cancel_file=None):
     if any(target==p.absolute() or (target.exists() and p.exists() and target.samefile(p)) for p in inputs):
         raise AnalysisError('Flow output aliases an input')
     return target
+
+
+class PublicationSnapshot:
+    """Bind publication to the loaded index and bounded local source inventory."""
+
+    def __init__(self, root, index_bytes, graph):
+        self.root=Path(root).resolve()
+        self.index_bytes=index_bytes
+        self.graph=graph
+        self.models=[None]+[c["project_model"] for c in graph.contexts if c.get("project_model")]
+        self.sources=self._sources()
+        # graph.files uses the scanner's legacy normalized-text digest. Preserve
+        # that contract, but compare raw byte hashes across this render attempt.
+        readable={path:checksum for path,(checksum,_) in self.sources.items()
+                  if checksum is not None and path!=".kgmaker/classification.json"
+                  and (Path(path).suffix.lower() not in {".xls",".xlsx"} or path in graph.files)}
+        if readable!=graph.files:
+            self._stale("indexed source inventory/content changed")
+        from .classification import Classifier
+        for context in graph.contexts:
+            if (context.get("mode")=="SOURCE_ONLY" and context.get("origin_trust")=="LOCAL_SOURCE"
+                    and context.get("classification_fingerprint")
+                    and context["classification_fingerprint"]!=Classifier(self.root).fingerprint):
+                self._stale("source classification changed")
+        self.check()
+
+    @staticmethod
+    def _stale(reason):
+        from .worker_protocol import WorkerError
+        raise WorkerError("STALE_INDEX: "+reason+"; output not published", "STALE")
+
+    def _sources(self):
+        from .analysis_model import safe_path
+        from .scanner import _candidate_files, _safe_source, _file_digest
+        from .workbooks import workbook_hash, workbook_paths
+        def paths():
+            return sorted({p.relative_to(self.root).as_posix()
+                           for model in self.models for p in _candidate_files(self.root,model)}
+                          | {p.relative_to(self.root).as_posix() for p in workbook_paths(self.root)}
+                          | set(self.graph.files) | {".kgmaker/classification.json"})
+        before=paths()
+        result={}
+        for path in before:
+            target=safe_path(self.root,path)
+            if target.is_file() and target.suffix.lower() in {".xls",".xlsx"}:
+                checksum=workbook_hash(target)
+                result[path]=(checksum,checksum)
+            else:
+                text,raw=_safe_source(target)
+                result[path]=(_file_digest(text) if text is not None else None,raw)
+        if paths()!=before: self._stale("source inventory changed during capture")
+        return result
+
+    def check(self):
+        from .graph_provider import validate_compiler_snapshot
+        from .store import GRAPH_FILE
+        try:
+            if (self.root/GRAPH_FILE).read_bytes()!=self.index_bytes:
+                self._stale("index bytes changed during render")
+            if self._sources()!=self.sources:
+                self._stale("source inventory/bytes changed during render")
+            validate_compiler_snapshot(self.root,self.graph)
+            if (self.root/GRAPH_FILE).read_bytes()!=self.index_bytes:
+                self._stale("index bytes changed during validation")
+        except OSError:
+            self._stale("index/source unavailable during render")

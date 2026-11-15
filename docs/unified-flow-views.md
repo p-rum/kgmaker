@@ -56,6 +56,16 @@ the default. `--timeout` is a positive finite cooperative local deadline;
 On invalid input, timeout, cancellation or interruption the last valid file is
 preserved, temporary files are removed, and only empty directories created by
 that attempt are cleaned. Pre-existing directories and concurrent contents remain.
+Before replacement, publication rechecks the exact loaded index bytes, the
+scanner's bounded source inventory, raw source bytes, classification inputs and
+existing compiler snapshot bindings. This also protects SOURCE_ONLY/legacy
+reports: changed/new readable sources cannot be adopted by an older index.
+Indexed XLS/XLSX inputs retain their producer's streaming raw checksum; workbook
+add/change/delete is detected using the producer's unchanged discovery scope,
+without parsing workbooks during rendering. Workbooks absent from the index are
+only inventoried for change detection and gain no flow evidence. A stale snapshot
+returns exit 3 and preserves the last valid output. This check does not lock out
+independent writers after the final validation.
 Valid PARTIAL/UNKNOWN reports may be published, including with strict exit 4.
 Rendering never starts a compiler, build, model, network request or application.
 
@@ -65,3 +75,9 @@ and limit/provenance behavior; Mermaid11.4.1 is actually parsed and its vertices
 edges, order and structured metadata compared with JSON. Existing K1/K2/TS binding
 regressions are not a new general native CFG support claim. Whole T003-S07 and
 runtime scheduling remain outside this work package.
+
+Merged BEFE compatibility uses the existing dataflow FORWARD/REVERSE relation
+sets without reversing stored edges. An actual single-context frontend capture
+retains its HTTP-response→state→JSX path in all formats. Selecting that context
+does not import a second compiler variant or a mixed-context backend bridge;
+such omitted claims remain explicit context-boundary gaps.

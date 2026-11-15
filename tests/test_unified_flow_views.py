@@ -286,6 +286,19 @@ def test_actual_javac_public_formats_parser_and_readonly_failures(tmp_path,monke
     assert target.read_bytes()==valid
     assert cli(['--output','.kgmaker/graph.json'])[0]==2
     assert (tmp_path/'.kgmaker/graph.json').read_bytes()==before
+    source=tmp_path/SOURCE;source_bytes=source.read_bytes();real_fsync=os.fsync
+    for mutation in ('source','index'):
+        def after_write(fd):
+            real_fsync(fd)
+            if mutation=='source': source.write_bytes(source_bytes+b'\n// concurrent edit\n')
+            else: (tmp_path/'.kgmaker/graph.json').write_bytes(before+b'\n')
+        with monkeypatch.context() as m:
+            m.setattr(os,'fsync',after_write)
+            code,text=cli(['--format','json','--output','.kgmaker/flows/report.json'])
+        assert code==3 and json.loads(text)['status']=='STALE',text
+        assert target.read_bytes()==valid
+        assert not list(rendered.glob('.kgmaker-*'))
+        source.write_bytes(source_bytes);(tmp_path/'.kgmaker/graph.json').write_bytes(before)
 
 
 @pytest.mark.parametrize('refs',[[],['site','site']])
@@ -312,3 +325,168 @@ def test_process_never_expands_non_execution_roles_or_cross_scope(damage):
     assert not any(e['kind']=='call' for e in report['cfg']['edges'])
     assert not any(b.get('method')=='callee' for b in report['cfg']['blocks'])
     assert report['status']=='PARTIAL' and report['boundaries']
+
+
+def test_actual_frontend_value_relations_survive_unified_single_context_view(tmp_path,monkeypatch):
+    """Reuse merged W05 capture; no invented cross-compiler context selection."""
+    import subprocess
+    from test_backend_frontend_value_flow import capture_workspace
+    from kgmaker.store import load_graph
+    root,_=capture_workspace(tmp_path)
+    graph=load_graph(root/'frontend');before=copy.deepcopy(graph.to_dict())
+    entry=next(s['id'] for s in graph.symbols if s.get('value_role')=='HTTP_RESPONSE')
+    target=next(s['id'] for s in graph.symbols if s.get('value_role')=='JSX_CONSUMER')
+    with monkeypatch.context() as m:
+        m.setattr('subprocess.Popen',lambda *a,**kw: (_ for _ in ()).throw(AssertionError('implicit process')))
+        report=flow.build_report(graph,entry,view='data-flow')
+        outputs={fmt:flow.render(report,fmt) for fmt in ['json','mermaid','markdown']}
+    assert report['ordering']['kind']=='RELATIONSHIP_ONLY'
+    assert report['execution']=='NOT_OBSERVED' and report['availability']=='UNKNOWN'
+    seen=set();pending=[entry]
+    while pending:
+        identity=pending.pop()
+        if identity in seen: continue
+        seen.add(identity)
+        pending.extend(e['target'] for e in report['cfg']['edges'] if e['source']==identity)
+    assert target in seen
+    # passes_value is an ordinary argument consumer; this frontend fixture
+    # uses a state setter (writes_value), not that separate test path.
+    assert {'writes_value','displayed_in'} <= {e['kind'] for e in report['cfg']['edges']}
+    assert all(e['evidence_ids'] for e in report['cfg']['edges'] if e['kind'] in {'passes_value','writes_value','displayed_in'})
+    assert graph.to_dict()==before
+    (tmp_path/'view.mmd').write_text(outputs['mermaid']);(tmp_path/'view.json').write_text(outputs['json'])
+    parsed=subprocess.run(['node',str(ROOT/'tests/rendering/validate_unified.mjs'),str(tmp_path/'view.mmd'),str(tmp_path/'view.json')],capture_output=True,text=True)
+    assert parsed.returncode==0,parsed.stderr
+
+
+def test_relation_renderer_keeps_mixed_compiler_claim_omitted_with_gap():
+    from kgmaker.model import Edge
+    graph=process_graph();graph.contexts.append({**graph.contexts[0],'id':'other'})
+    graph.evidence.append({'id':'mixed-proof','kind':'SYMBOL_RESOLVED','context_ids':['ctx','other']})
+    graph.edges.append(Edge('method','callee','writes_value',evidence_kind='SYMBOL_RESOLVED',
+                           context_ids=('ctx','other'),evidence_ids=('mixed-proof',)))
+    before=copy.deepcopy(graph.to_dict())
+    report=flow.build_report(graph,'method',view='data-flow',context_id='ctx')
+    assert {c['id'] for c in report['contexts']}=={'ctx'}
+    assert not any(e['kind']=='writes_value' for e in report['cfg']['edges'])
+    assert 'mixed-proof' not in report['provenance']['evidence_ids']
+    assert any(g['code']=='COMPILER_CONTEXT_BOUNDARY_UNKNOWN' for g in report['coverage']['gaps'])
+    for fmt in ('json','markdown','mermaid'):
+        assert 'COMPILER_CONTEXT_BOUNDARY_UNKNOWN' in flow.render(report,fmt)
+    assert graph.to_dict()==before
+
+
+@pytest.mark.parametrize('schema',[1,2,3])
+@pytest.mark.parametrize('mutation',['source','index','addition','classification'])
+@pytest.mark.parametrize('new_parent',[False,True])
+def test_publication_rechecks_legacy_source_only_after_fsync(tmp_path,monkeypatch,schema,mutation,new_parent):
+    import io
+    import os
+    from contextlib import redirect_stdout
+    from kgmaker.cli import main
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    source=tmp_path/'app.py';source.write_text('def entry():\n    return 1\n')
+    graph=scan_repository(tmp_path);graph.schema_version=schema
+    save_graph(graph,tmp_path,generate_docs=False)
+    index=tmp_path/'.kgmaker/graph.json';original=index.read_bytes()
+    entry=next(n.id for n in graph.nodes if n.name=='entry')
+    target=tmp_path/'.kgmaker/flows/new/nested/report.json'
+    if not new_parent: target.parent.mkdir(parents=True);target.write_bytes(b'last-valid')
+    baseline={p.relative_to(tmp_path):p.read_bytes() if p.is_file() else None for p in tmp_path.rglob('*')}
+    real_fsync=os.fsync;mutations=[]
+    def mutate(fd):
+        real_fsync(fd);mutations.append(mutation)
+        if mutation=='source': source.write_text('def entry():\n    return 2\n')
+        elif mutation=='index': index.write_bytes(original+b'\n')
+        elif mutation=='classification': (tmp_path/'.kgmaker/classification.json').write_text('{"schema_version":1,"overrides":[]}')
+        else: (tmp_path/'added.py').write_text('def added(): pass\n')
+    with monkeypatch.context() as m,redirect_stdout(io.StringIO()) as out:
+        m.setattr(os,'fsync',mutate)
+        m.setattr('subprocess.Popen',lambda *a,**kw: (_ for _ in ()).throw(AssertionError('implicit process')))
+        m.setattr('socket.socket',lambda *a,**kw: (_ for _ in ()).throw(AssertionError('implicit network')))
+        m.setattr('sys.argv',['kgmaker','flow','render','--root',str(tmp_path),'--entry',entry,
+                             '--scope','all','--format','json','--output',str(target)])
+        with pytest.raises(SystemExit) as outcome: main()
+    assert outcome.value.code==3,out.getvalue()
+    assert mutations==[mutation]
+    assert json.loads(out.getvalue())['status']=='STALE'
+    # Restore only the independently injected concurrent mutation. Publication
+    # must have left every preexisting byte and directory exactly as before.
+    source.write_bytes(baseline[Path('app.py')]);index.write_bytes(original)
+    (tmp_path/'added.py').unlink(missing_ok=True)
+    (tmp_path/'.kgmaker/classification.json').unlink(missing_ok=True)
+    assert {p.relative_to(tmp_path):p.read_bytes() if p.is_file() else None for p in tmp_path.rglob('*')}==baseline
+    # The syntax-only report is supported but never gains compiler authority.
+    assert flow.build_report(KnowledgeGraph.from_dict(graph.to_dict()),entry,scope='all')['status']=='UNKNOWN'
+
+
+@pytest.mark.parametrize('mutation',['index','addition','source','classification'])
+def test_publication_never_binds_new_inputs_to_previously_loaded_graph(tmp_path,monkeypatch,mutation):
+    import io
+    from contextlib import redirect_stdout
+    from kgmaker import inspection_cli
+    from kgmaker.cli import main
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    (tmp_path/'app.py').write_text('def entry(): pass\n')
+    graph=scan_repository(tmp_path);save_graph(graph,tmp_path,generate_docs=False)
+    entry=next(n.id for n in graph.nodes if n.name=='entry')
+    original_indexed=inspection_cli.indexed
+    def changed(args):
+        result=original_indexed(args)
+        if mutation=='index':
+            index=tmp_path/'.kgmaker/graph.json';index.write_bytes(index.read_bytes()+b'\n')
+        elif mutation=='addition': (tmp_path/'added.py').write_text('def added(): pass\n')
+        elif mutation=='classification': (tmp_path/'.kgmaker/classification.json').write_text(json.dumps({'schema_version':1,'overrides':[{'path':'app.py','scope':'test','reason':'concurrent edit'}]}))
+        else: (tmp_path/'app.py').write_text('def entry(): return 2\n')
+        return result
+    monkeypatch.setattr(inspection_cli,'indexed',changed)
+    monkeypatch.setattr('sys.argv',['kgmaker','flow','render','--root',str(tmp_path),'--entry',entry,
+        '--scope','all','--output','.kgmaker/flows/new/report.json'])
+    with redirect_stdout(io.StringIO()) as out,pytest.raises(SystemExit) as outcome: main()
+    assert outcome.value.code==3 and json.loads(out.getvalue())['status']=='STALE'
+    assert not (tmp_path/'.kgmaker/flows').exists()
+
+
+@pytest.mark.parametrize('suffix',['.xlsx','.xls'])
+@pytest.mark.parametrize('mutation',['changed','added','deleted'])
+def test_publication_preserves_binary_fingerprints_and_inventory(tmp_path,monkeypatch,suffix,mutation):
+    import io
+    import os
+    from contextlib import redirect_stdout
+    from kgmaker.cli import main
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import save_graph
+    from kgmaker.workbooks import attach_workbooks, workbook_hash
+    from test_workbooks import write_xlsx
+    (tmp_path/'app.py').write_text('def entry(): pass\n')
+    workbook=tmp_path/('input'+suffix)
+    if suffix=='.xlsx': write_xlsx(workbook)
+    else: workbook.write_bytes(b'unsupported binary XLS')
+    graph=attach_workbooks(tmp_path,scan_repository(tmp_path))
+    assert graph.files[workbook.name]==workbook_hash(workbook)
+    assert any(n.kind=='workbook_cell' for n in graph.nodes) if suffix=='.xlsx' else any(d['code']=='BINARY_XLS_UNSUPPORTED' for d in graph.diagnostics)
+    save_graph(graph,tmp_path,generate_docs=False)
+    entry=next(n.id for n in graph.nodes if n.name=='entry')
+    target=tmp_path/'.kgmaker/flows/report.json'
+    def cli():
+        with monkeypatch.context() as m,redirect_stdout(io.StringIO()) as out:
+            m.setattr('sys.argv',['kgmaker','flow','render','--root',str(tmp_path),'--entry',entry,
+                                 '--scope','all','--format','json','--output',str(target)])
+            m.setattr('kgmaker.workbooks.extract',lambda *a,**k: (_ for _ in ()).throw(AssertionError('renderer re-parsed workbook')))
+            m.setattr('subprocess.Popen',lambda *a,**k: (_ for _ in ()).throw(AssertionError('implicit process')))
+            with pytest.raises(SystemExit) as outcome: main()
+        return outcome.value.code,out.getvalue()
+    code,text=cli();assert code==0,text
+    valid=target.read_bytes();assert json.loads(valid)['status']=='UNKNOWN'
+    real_fsync=os.fsync
+    def mutate(fd):
+        real_fsync(fd)
+        if mutation=='changed': workbook.write_bytes(workbook.read_bytes()+b'changed')
+        elif mutation=='added': (tmp_path/('another'+suffix)).write_bytes(workbook.read_bytes())
+        else: workbook.unlink()
+    monkeypatch.setattr(os,'fsync',mutate)
+    code,text=cli()
+    assert code==3 and json.loads(text)['status']=='STALE',text
+    assert target.read_bytes()==valid and not list(target.parent.glob('.kgmaker-*'))

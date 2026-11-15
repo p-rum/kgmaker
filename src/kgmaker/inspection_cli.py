@@ -87,10 +87,20 @@ def register(sub):
 
 def indexed(args):
     root = args.root.resolve()
-    graph = load_graph(root)
+    is_flow = getattr(args,"command",None)=="flow"
+    if is_flow and getattr(args,"output",None):
+        # Parse exactly the bytes whose identity publication will recheck.
+        # A second independent load could bind a newer index to an older graph.
+        from .model import KnowledgeGraph
+        try:
+            args._flow_index_bytes=(root / GRAPH_FILE).read_bytes()
+            graph=KnowledgeGraph.from_dict(json.loads(args._flow_index_bytes))
+        except (OSError, ValueError, TypeError, KeyError):
+            graph=None
+    else:
+        graph = load_graph(root)
     if graph is None:
         raise AnalysisError("INVALID_INDEX" if (root / GRAPH_FILE).exists() else "MISSING_INDEX: run an explicit compiler inspection")
-    is_flow = getattr(args,"command",None)=="flow"
     if graph.schema_version != 3 and is_flow:
         if args.context: raise AnalysisError("Legacy graph has no compiler context")
         return graph
@@ -205,19 +215,17 @@ def run(args):
                       "limitations": ["Generated framework entrypoints are annotation-derived; runtime registration is not observed."]}
         else:
             from . import flow
-            from .flow_report import output_path
+            from .flow_report import PublicationSnapshot, output_path
+            snapshot=PublicationSnapshot(args.root,args._flow_index_bytes,graph) if args.output else None
             target=output_path(args.root,args.output,graph,args.cancel_file) if args.output else None
             result=flow.build_report(graph,args.entry,view=args.view,scope=args.scope,
                 max_depth=args.max_depth,max_nodes=args.max_nodes,
                 context_id=getattr(args,"_flow_context_id",None),budget=budget)
-            # Recheck aliases immediately before publication, including late changes.
-            if target is not None:
-                original_check=budget.check
-                def publication_check():
-                    original_check()
-                    output_path(args.root,args.output,graph,args.cancel_file)
-                budget.check=publication_check
-            text=flow.publish(result,args.format,target,budget=budget)
+            def publication_check():
+                output_path(args.root,args.output,graph,args.cancel_file)
+                snapshot.check()
+            text=flow.publish(result,args.format,target,budget=budget,
+                              before_replace=publication_check if target is not None else None)
             if target is None: print(text,end="")
             return 4 if args.strict and result["status"] in {"PARTIAL","UNKNOWN"} else 0
         print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))

@@ -970,7 +970,8 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
                                                 "declares_event_transition", "declares_reactive_transition",
                                                 "crosses_async_boundary"}]
     elif view == "data-flow":
-        edges = [e for e in edges if e.kind in {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
+        from .dataflow import FORWARD, REVERSE
+        edges = [e for e in edges if e.kind in FORWARD | REVERSE | {"reads_field", "writes_field", "argument_to_parameter", "returns_to",
                                                 "maps_field", "maps_to_table", "maps_to_column", "declared_on_table",
                                                 "resolves_to_schema_table", "resolves_to_schema_column", "repository_for",
                                                 "declares_query", "defines_named_query", "uses_named_query",

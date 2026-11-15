@@ -1450,20 +1450,22 @@ obsahuje přesné příkazy a kompatibilitu; full/GH CI NOT_RUN.
 
 ### T003-S07-W09 — unified flow model
 
-Delivery IN_PROGRESS; verification VERIFIED_IN_SCOPE po integraci main9f538634.
+Delivery IN_PROGRESS; verification VERIFIED_IN_SCOPE po integraci main7bb8b8d.
 [Change128](changes/128_unifiedFlowViews.md), [capability](unified-flow-views.md).
 
 | Acceptance | Aktuální cílený důkaz |
 |---|---|
 | W09-AC01 | `test_three_formats_share_cfg_order_provenance_and_gaps`, permutation/cycle, truthful bounded truncation, Mermaid11.4.1 actual parser deep comparison |
 | W09-AC02 | legacy v1/all, v2/v3 SOURCE_ONLY UNKNOWN; current CFG/process IDs; původní W08/provider/T025/argument/return regrese |
-| W09-AC03 | invalid refs před projection; current authority/call witness/callee CFG guard; stale/nonexecution negative; atomic timeout/cancel/interrupt cleanup bez implicitních procesů |
+| W09-AC03 | invalid refs před projection; current authority/call witness/callee CFG guard; stale/nonexecution negative; exact initial index/source inventory a late binary/text mutation; atomic timeout/cancel/interrupt cleanup bez implicitních procesů |
 | W09-AC04 | `test_actual_javac_public_formats_parser_and_readonly_failures`, fixture/golden a konkrétní limity v capability; scoped native Javac, nikoli libovolný production CFG |
 
 Předintegrační349 PASS + po exact-proof doplnění221 PASS (překrývající se sady,
-nesčítají se jako unikátní testy). Finální288 PASS / 0 SKIP / 32.30 s ověřuje
-integrovaný main9f, T028 a všechny dotčené flow kontrakty. Full/GH CI NOT_RUN;
-T003-S07 stále PARTIAL.
+nesčítají se jako unikátní testy). Finální293 PASS / 0 SKIP / 46.72 s ověřuje
+integrovaný main7bb, T028, BEFE relation/cache/legacy a dotčené flow kontrakty.
+Následný R07 guard ověřuje samostatná sada **84 PASS / 0 SKIP / 9.30 s**
+(vlastní W09, provider, workbook); včetně skutečného Javac/TS/Mermaid a v1/v2/v3
+SOURCE_ONLY mutation negatives. Full/GH CI NOT_RUN; T003-S07 stále PARTIAL.
 
 ### T028 integration with MERGED PR106
 

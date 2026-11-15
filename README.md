@@ -1156,6 +1156,7 @@ current verification limits are in the delivery inventory.
 
 `kgmaker flow render --entry METHOD_ID --view process --format markdown` uses the
 same CFG model as JSON and Mermaid, with original IDs, explicit coverage gaps and
-truncation. `--output .kgmaker/flows/process.md` publishes atomically; rendering
+truncation. `--output .kgmaker/flows/process.md` publishes atomically after rechecking
+the loaded index and source snapshot; rendering
 never launches workers. See [flow formats, limits and compatibility](docs/unified-flow-views.md)
 and [change128](docs/changes/128_unifiedFlowViews.md).
