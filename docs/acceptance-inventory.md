@@ -2,9 +2,9 @@
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání IN_PROGRESS, verification PARTIAL. Baseline `9c86d29...`, vlastní diff.
+Dodání IN_PROGRESS, verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
-Aktuální doložený checkpoint 101 targeted PASS /0 SKIP; integrační kontrola následuje.
+Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
 | Acceptance | Konkrétní důkaz | Hranice |
 |---|---|---|

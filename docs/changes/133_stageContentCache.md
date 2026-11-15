@@ -3,7 +3,7 @@
 Task `T003-S10-W01`, kroky 1–5, acceptance `T003-S10-W01-AC01–04`, nadřazené
 `T003-AC10`. Datum 2026-11-15. Výchozí SHA
 `9c86d29fc267014e2bee4b197c7692f17a1cda93`. Dodání `IN_PROGRESS`, ověření
-`PARTIAL`; tento dokument netvrdí dokončení celého S10 ani T003.
+`VERIFIED_IN_SCOPE`; tento dokument netvrdí dokončení celého S10 ani T003.
 
 ## Krok 1 — source audit a nahrazení nevyhovujícího prototypu (Step 1, AC01–04)
 
@@ -120,8 +120,8 @@ README, `docs/compiler-inspection.md`, `docs/stage-content-cache.md`, progress a
 acceptance odkazují na tuto změnu. CLI zachovává argumenty, aditivně vrací `cache`
 se stage HIT/MISS/BYPASS a důvodem. Registry bez dopadu: identity/revision/deps
 beze změny. Installed instructions/templates bez dopadu: jejich chování se nemění.
-Zbývá aktuální targeted regression, integrace nového main, sémantický preservation/
-scan a samostatný PR s nezávislým review. W02–W06, selective per-file extraction,
+V tomto checkpointu zbývala integrace, semantic preservation a finální gate;
+jejich pozdější výsledky jsou samostatně níže. Následuje nezávislé PR review. W02–W06, selective per-file extraction,
 reverse dependency invalidace a crash/concurrent writer garance jsou mimo W01.
 
 ## Krok 5 — rozšířená current acceptance před integrací (Steps 3–5, AC01–04)
@@ -176,3 +176,43 @@ nezavádí žádné procesní změny. Sémantická vrstva obou rodičů obsahuje
 52 concepts /176 relations /328 immutable episodes; další vlastní capture
 a ověření preservation budou zaznamenány samostatně. Generated views z main
 se znovu vytvoří CLI po scoped update. Integrační actual gate zatím NOT_RUN.
+
+
+## Krok 8 — integrační actual gate (Steps 3–5, AC01–04)
+
+Source HEAD `1823ad2` obsahuje vlastní `c60893b` a ověřený main `84f94d4`.
+Stejný rozšířený příkaz z kroku 5: **102 PASS /0 SKIP, 121.57 s**,
+log `/tmp/kgmaker-w01-integrated-tests.log`. Všechny změny Python source a testů
+jsou v tomto běhu; následné kroky upravují pouze docs/semantic/generated views.
+JDK21/Javac/K1/K2 a TypeScript5.7.3 jsou skutečné, prepared JAR hash stále
+`651468ee0743057ead245e57c2d36cc1b20633655853079a25f33d3bc05cc3fb`.
+Dočasné symlinky na read-only distribuce odstraněny před capture/commitem.
+Full suite, GH CI a jiné platformy NOT_RUN dle rozsahu a pokynu uživatele.
+Žádné nové build/runtime/data availability tvrzení. README/CLI/capability
+a acceptance/progress odpovídají bounded W01; celý S10 zůstává PARTIAL.
+
+
+## Krok 9 — scoped semantic maintenance a workflow handoff (Step 5, AC02/04)
+
+Baseline `84f94d4`, implementace `1823ad2`. `kgmaker semantic update --base
+84f94d4462437fe1228f07d0ba8f51071224952e` vytvořil skutečný scoped packet.
+Source audit všech 13 affected concepts /73 relations zachoval obsah; ověřil
+jedinou posunutou citation React `inspection.py:570` → `:613`. Starý endpoint
+`save_graph::38` již nemá SOURCE_ONLY function node, protože nový podpis je víceřádkový.
+Vztah ze zdrojově stejného `docs/architecture.md:19` proto odkazuje na existující
+file node `store.py`. První apply s odhadnutým function endpointem `::59` skončil
+FAIL unknown node bez mutace; endpoint opraven podle skutečného scanner inventory.
+Scanner se nemění. Žádná historická relace se obsahově neztratila.
+
+Přidán 1 koncept Validated extraction stage cache a 5 zdrojově doložených vazeb
+na inspection/cache/store/unit/actual testy. Apply PASS: **53 concepts /181 relations**;
+validate PASS. Historical union obou rodičů zůstává: 52 concepts, 176 relations
+(včetně uvedených source reanchors) a všech 328 episodes beze změny.
+`kgmaker memory capture --base 84f94d4462437fe1228f07d0ba8f51071224952e
+--validation w01_integrated_102=passed --validation full_suite=unknown` přidal skutečný
+episode `171b66681d553b9a09cdb90741a747f73f45d1cf7e85f11ca9603efeec2c92c8`;
+celkem **329 immutable episodes**. Capture pozoroval existující stale lokální graph
+a aktuální source, netvrdí retroaktivně čistý pre-change graph. Graph views se
+obnovují jen CLI scan. Test artifact `df4f84e0e91dc0bc30f5f1d796a5e82effc10a1ce398db2d417167adceda7ed0`
+zachytil přesný 102 PASS checkpoint a NOT_RUN. Task je ve fázi review; implementer
+nevytváří vlastní approval ani merge. Finální docs mění pouze evidenci výsledků.
