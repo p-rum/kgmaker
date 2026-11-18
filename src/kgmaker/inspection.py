@@ -537,6 +537,49 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
     return graph
 
 
+def _stage_response(response, selected):
+    """A matching digest does not substitute for worker/context validation."""
+    validate_response(response, selected)
+    worker = selected['worker']
+    if (response.get('status') not in {'COMPLETE', 'PARTIAL'}
+            or not isinstance(response.get('coverage'), dict)
+            or any(response.get(key) != worker.get(key)
+                   for key in ('protocol_version', 'worker', 'compiler_version'))
+            or any(symbol.get('context_id') != selected['id'] for symbol in response['symbols'])):
+        raise WorkerError('Cached response does not match selected worker/context', 'INVALID_PROTOCOL')
+
+
+def _stage_graph(payload, base, selected, response):
+    graph = KnowledgeGraph.from_dict(payload)
+    expected_ids = {c['id'] for c in base.contexts} | {selected['id']}
+    if (graph.schema_version != 3 or graph.extraction_cache or graph.files != base.files
+            or {c.get('id') for c in graph.contexts} != expected_ids
+            or any(s.get('context_id') != selected['id'] for s in
+                   [*graph.symbols, *graph.call_sites, *graph.cfgs])
+            or any(e.evidence_kind == 'RUNTIME_OBSERVED' for e in graph.edges)):
+        raise WorkerError('Cached graph has foreign facts/context', 'INVALID_PROTOCOL')
+    current = next(c for c in graph.contexts if c.get('id') == selected['id'])
+    derived = {'project': response.get('project'), 'coverage': response['coverage'],
+               'status': response['status'],
+               'diagnostics': selected.get('diagnostics', []) + response['diagnostics']}
+    if any(current.get(key) != value for key, value in derived.items()):
+        raise WorkerError('Cached graph differs from upstream worker result', 'INVALID_PROTOCOL')
+    if any(item not in graph.diagnostics for item in [*base.diagnostics, *derived['diagnostics']]):
+        raise WorkerError('Cached graph removed upstream diagnostic', 'INVALID_PROTOCOL')
+    for key, value in selected.items():
+        if key in {'project', 'framework_rule_versions', 'coverage', 'status', 'diagnostics'}:
+            continue  # Exact project closure is validated before this stage.
+        if current.get(key) != value:
+            raise WorkerError('Cached graph input binding differs: ' + key, 'INVALID_PROTOCOL')
+    if any(current.get('framework_rule_versions', {}).get(k) != v
+           for k, v in selected.get('framework_rule_versions', {}).items()):
+        raise WorkerError('Cached graph has different framework rules', 'INVALID_PROTOCOL')
+    if any(c not in graph.contexts for c in base.contexts):
+        raise WorkerError('Cached graph replaced source context', 'INVALID_PROTOCOL')
+    graph.generated_at = base.generated_at
+    return graph
+
+
 def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production", repo_id="local",
                      module="frontend", source_set="main", ui_framework=None, home=None,
                      timeout=120, cancel_file=None, publish=True, strict=False) -> dict:
@@ -573,8 +616,12 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     selected = context(root, before, "typescript", meta, repo_id=repo_id, module=module, source_set=source_set, scope=scope,
                        build_context={"project": preflight["project"], "tsconfig": tsconfig, "ui_framework": ui_framework,
                                       "framework_rule_versions": {"react": UI_RULE_VERSION} if ui_framework == "react" else {}})
-    response = request_worker(argv, {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
-        "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout, cancel_file=cancel_file)
+    from .extraction_cache import InspectionStages, graph_payload
+    stages = InspectionStages(root, selected, argv, timeout=timeout, cancel_file=cancel_file)
+    response = stages.run('worker-analysis', lambda: sanitize(request_worker(argv,
+        {"operation": "analyze", "root": str(root), "tsconfig": tsconfig,
+         "ui_framework": ui_framework, "context": selected}, cwd=root, timeout=timeout,
+        cancel_file=cancel_file)), lambda value: _stage_response(value, selected))
     if input_closure(response.get("project")) != preflight_inputs:
         raise WorkerError("Frontend compiler input closure changed between preflight and analysis", "STALE")
     for path, expected in preflight_inputs.items():
@@ -604,12 +651,15 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     elif before.files != after.files or before.contexts != after.contexts:
         raise WorkerError("Source/config snapshot changed during frontend analysis", "STALE")
     model_base = scan_repository(root, project_model=model, strict=strict)
-    graph = graph_from_response(root, model_base, response, selected, project_model=model)
+    graph = _stage_graph(stages.run('compiler-graph',
+        lambda: graph_payload(graph_from_response(root, model_base, response, selected, project_model=model)),
+        lambda value: _stage_graph(value, model_base, selected, response), base=model_base, upstream=response),
+        model_base, selected, response)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"],
               "diagnostics": graph.diagnostics, "graph": graph.to_dict()}
     if strict and result["status"] == "PARTIAL":
-        return {**result, "exit_code": 4}
+        return {**result, "cache": stages.report(), "exit_code": 4}
     for item in response.get("project", {}).get("input_files", []):
         if file_hash(Path(item["path"])) != item["sha256"]:
             raise WorkerError("Frontend compiler input changed before publishing", "STALE")
@@ -622,11 +672,22 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
         raise WorkerError("Source/config snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
+    def final_guard():
+        stages.guard()
+        from .graph_provider import validate_context_snapshot
+        validate_context_snapshot(root, selected)
+        if (distribution('typescript', home) != meta['distribution']
+                or graph_payload(scan_repository(root, project_model=model, strict=strict)) != graph_payload(model_base)):
+            raise WorkerError('Worker distribution or source-stage inputs changed before commit', 'STALE')
+        for captured in graph.contexts:
+            if captured.get('analyzer_version') and captured.get('freshness') != 'STALE':
+                validate_context_snapshot(root, captured)
+    final_guard()
     if publish:
         from .graph_provider import merge_compiler_context
-        graph = merge_compiler_context(root, graph, selected)
-        save_graph(graph, root)
-    return {**result, "graph": graph.to_dict(), "exit_code": 0}
+        graph = merge_compiler_context(root, stages.attach(graph), selected)
+        save_graph(graph, root, before_replace=final_guard)
+    return {**result, "graph": graph.to_dict(), "cache": stages.report(), "exit_code": 0}
 
 
 def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: list | None = None,
@@ -689,10 +750,13 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
                                       "compiler_inputs": sources, "java_release": java_release,
                                       "kotlin_backend": kotlin_backend, "kotlin_version": kotlin_version,
                                       "bytecode_artifacts": [{"path": str(Path(p if isinstance(p, str) else p["path"]).resolve()), "sha256": artifact_hash(Path(p if isinstance(p, str) else p["path"]))} for p in bytecode_roots or []]})
-    response = request_worker(argv, {"operation": "analyze", "root": str(root), "context": selected,
-        "sources": sources, "classpath": entries, "bytecode_roots": bytecode_roots or [], "java_release": java_release,
-        "kotlin_backend": kotlin_backend, "kotlin_version": kotlin_version},
-        cwd=root, timeout=timeout, cancel_file=cancel_file)
+    from .extraction_cache import InspectionStages, graph_payload
+    stages = InspectionStages(root, selected, argv, timeout=timeout, cancel_file=cancel_file)
+    response = stages.run('worker-analysis', lambda: sanitize(request_worker(argv,
+        {"operation": "analyze", "root": str(root), "context": selected,
+         "sources": sources, "classpath": entries, "bytecode_roots": bytecode_roots or [], "java_release": java_release,
+         "kotlin_backend": kotlin_backend, "kotlin_version": kotlin_version},
+        cwd=root, timeout=timeout, cancel_file=cancel_file)), lambda value: _stage_response(value, selected))
     if (kotlin_backend == "k2" or response.get("kotlin_backend")) and response.get("kotlin_backend") != expected_backend:
         raise WorkerError("Worker analysis backend differs from selected context", "INVALID_PROTOCOL")
     after = scan_repository(root, project_model=project_model)
@@ -701,24 +765,29 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
             or base.contexts != after.contexts
             or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
             raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
-    graph = graph_from_response(root, base, response, selected, project_model=project_model)
+    graph = _stage_graph(stages.run('compiler-graph',
+        lambda: graph_payload(graph_from_response(root, base, response, selected, project_model=project_model)),
+        lambda value: _stage_graph(value, base, selected, response), base=base, upstream=response), base, selected, response)
     # Framework rules consume the compiler-resolved graph; they never replace
     # or upgrade a worker fact.  Keep this phase in the explicit inspection
     # workflow so scan/build/feature commands remain offline and source-only.
-    from .framework import augment_framework_graph
-    graph = augment_framework_graph(root, graph, selected)
-    from .http_execution import augment_http_graph
-    graph = augment_http_graph(graph, sanitize(response["bodies"]), selected)
-    from .kafka_code import augment_kafka_graph
-    graph = augment_kafka_graph(root, graph, sanitize(response["bodies"]), selected)
-    from .kafka_retry import augment_retry_graph
-    selected_retry = next(c for c in graph.contexts if c.get("id") == selected["id"])
-    graph = augment_retry_graph(root, graph, selected_retry)
+    def augment():
+        from .framework import augment_framework_graph
+        from .http_execution import augment_http_graph
+        from .kafka_code import augment_kafka_graph
+        from .kafka_retry import augment_retry_graph
+        augmented = augment_framework_graph(root, graph, selected)
+        augmented = augment_http_graph(augmented, response["bodies"], selected)
+        augmented = augment_kafka_graph(root, augmented, response["bodies"], selected)
+        selected_retry = next(c for c in augmented.contexts if c.get("id") == selected["id"])
+        return graph_payload(augment_retry_graph(root, augmented, selected_retry))
+    graph = _stage_graph(stages.run('framework-graph', augment,
+        lambda value: _stage_graph(value, base, selected, response), base=graph, upstream=response), base, selected, response)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
     if strict and result["status"] == "PARTIAL":
-        return {**result, "exit_code": 4}
+        return {**result, "cache": stages.report(), "exit_code": 4}
     from .kafka_code import validate_analysis
     for captured in graph.contexts:
         if captured.get("id") == selected["id"]:
@@ -731,8 +800,19 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         raise WorkerError("Source/config/classpath snapshot changed before publishing", "STALE")
     if any(file_hash(Path(item["path"])) != item["sha256"] for item in meta["distribution"]):
         raise WorkerError("Worker distribution changed before publishing", "STALE")
+    def final_guard():
+        stages.guard()
+        from .graph_provider import validate_context_snapshot
+        validate_context_snapshot(root, selected)
+        if (distribution('jvm', home, kotlin_backend=kotlin_backend) != meta['distribution']
+                or graph_payload(scan_repository(root, project_model=project_model, strict=strict)) != graph_payload(base)):
+            raise WorkerError('Worker distribution or source-stage inputs changed before commit', 'STALE')
+        for captured in graph.contexts:
+            if captured.get('analyzer_version') and captured.get('freshness') != 'STALE':
+                validate_context_snapshot(root, captured)
+    final_guard()
     if publish:
         from .graph_provider import merge_compiler_context
-        graph = merge_compiler_context(root, graph, selected)
-        save_graph(graph, root)
-    return {**result, "graph": graph.to_dict(), "exit_code": 0}
+        graph = merge_compiler_context(root, stages.attach(graph), selected)
+        save_graph(graph, root, before_replace=final_guard)
+    return {**result, "graph": graph.to_dict(), "cache": stages.report(), "exit_code": 0}

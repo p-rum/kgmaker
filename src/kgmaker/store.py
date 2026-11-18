@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
+import tempfile
 from pathlib import Path
 
 from .model import KnowledgeGraph
@@ -37,20 +40,97 @@ def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str =
     return [(nodes[identity], scores[identity]) for identity in ranked[:max(0, limit)]]
 
 
-def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True) -> tuple[Path, Path]:
+def _graph_target(root, relative):
+    from .analysis_model import safe_path
+    path = safe_path(root, relative.as_posix())
+    if path.exists():
+        info = path.stat()
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError('Unsafe graph output target')
+    return path
+
+
+def _file_state(path):
+    if not path.exists(): return None
+    info = path.stat()
+    return (info.st_dev, info.st_ino, path.read_bytes())
+
+
+def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True, *,
+               before_replace=None) -> tuple[Path, Path]:
+    """Publish one graph/cache generation after preparing every derived output.
+
+    Graph JSON is the sole authoritative commit and is replaced last. Within a
+    single writer, ordinary exceptions restore only generated files this call
+    still owns. This is not a multi-writer transaction or crash-recovery journal.
+    """
+    root = Path(root)
     state_dir = root / STATE_DIR
-    state_dir.mkdir(parents=True, exist_ok=True)
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
     mermaid_path = root / MERMAID_FILE
-    from .analysis_model import atomic_write
-    # Serialize and validate before replacing the last readable index.
-    payload = json.dumps(graph.to_dict(), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    # Serialization, validation and both renders happen before the first write.
+    payload = json.dumps(graph.to_dict(include_cache=True), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     KnowledgeGraph.from_dict(json.loads(payload))
-    atomic_write(graph_path, payload)
+    outputs = []
     if generate_docs:
-        atomic_write(mermaid_path, render_mermaid(graph))
-        atomic_write(markdown_path, render_markdown(graph))
+        outputs.extend([(MERMAID_FILE, render_mermaid(graph)), (MARKDOWN_FILE, render_markdown(graph))])
+    outputs.append((GRAPH_FILE, payload))
+    targets = [(relative, _graph_target(root, relative), text.encode('utf-8')) for relative, text in outputs]
+    originals = {path: _file_state(path) for _, path, _ in targets}
+    prepared, backups, replaced, created = {}, {}, {}, []
+    def guard():
+        if before_replace is not None: before_replace()
+        for relative, path, _ in targets:
+            _graph_target(root, relative)
+            expected = replaced.get(path, originals[path])
+            if _file_state(path) != expected:
+                raise ValueError('Graph output changed during publication')
+    def temporary(data):
+        fd, name = tempfile.mkstemp(prefix='.kgmaker-', dir=state_dir)
+        path = Path(name)
+        try:
+            with os.fdopen(fd, 'wb') as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        return path
+    try:
+        guard()
+        directory = state_dir
+        while not directory.exists():
+            created.append(directory)
+            directory = directory.parent
+        state_dir.mkdir(parents=True, exist_ok=True)
+        for _, path, data in targets:
+            prepared[path] = temporary(data)
+            if originals[path] is not None:
+                backups[path] = temporary(originals[path][2])
+        for _, path, _ in targets:
+            guard()
+            # Capture ownership before the commit operation: no fallible read
+            # may turn a successful final graph replacement into an exception.
+            owned = _file_state(prepared[path])
+            os.replace(prepared[path], path)
+            replaced[path] = owned
+    except BaseException:
+        for path, owned in reversed(list(replaced.items())):
+            # A concurrently changed file is not ours to restore or delete.
+            if _file_state(path) != owned: continue
+            if originals[path] is None:
+                path.unlink()
+            else:
+                os.replace(backups[path], path)
+        raise
+    finally:
+        for path in [*prepared.values(), *backups.values()]:
+            path.unlink(missing_ok=True)
+        for directory in created:
+            try: directory.rmdir()
+            except OSError: pass
     return graph_path, markdown_path
 
 

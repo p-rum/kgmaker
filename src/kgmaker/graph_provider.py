@@ -345,6 +345,16 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
         symbols=[*fresh.symbols, *old_symbols], call_sites=[*fresh.call_sites, *old_sites],
         cfgs=[*fresh.cfgs, *old_cfgs], analysis_annotations=annotations,
     )
+    from .extraction_cache import retain, decode, MAX_ENTRIES
+    eligible = {c['id'] for c in contexts if c.get('analyzer_version') and c.get('freshness') != 'STALE'}
+    candidates = (retain(fresh.extraction_cache, eligible).get('entries', [])
+                  + retain(stored.extraction_cache, eligible).get('entries', []))
+    entries = list({entry['key_sha256']: entry for entry in reversed(candidates)}.values())[::-1]
+    # Prefer this selected generation. Oversized optimization metadata never
+    # prevents publication of valid graph facts.
+    while entries and not decode({'schema_version': 1, 'entries': entries[:MAX_ENTRIES]}):
+        entries.pop()
+    result.extraction_cache = ({'schema_version': 1, 'entries': entries[:MAX_ENTRIES]} if entries else {})
     KnowledgeGraph.from_dict(result.to_dict())
     return result
 
