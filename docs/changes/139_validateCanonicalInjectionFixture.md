@@ -71,3 +71,25 @@ API, CLI příklady a registr zadání jsou bez dopadu, protože se mění pouze
 syntetický vstup existujícího testu a jeho přesné assertion. Úplný samostatný
 běh na této revizi, review nového publikovaného páru a GitHub Actions
 zůstávají NOT_RUN. Reprodukované selhání T025 blokuje úplnou merge kontrolu.
+
+### Kontroly grafu / T003-S05-W04-AC04
+
+Při přípravě headu `5f4bb2436c54e12f2f0aa2237e17681590068a34` na uvedeném
+main proběhly v izolovaném snapshotu tyto příkazy s `PYTHONPATH=src`
+a Pythonem z testovacího venv.
+
+- `python -m kgmaker semantic apply` — **PASS**. Zachoval tři dotčené
+  vztahy a přesměroval jedinou existující hranu na aktuální ID Javac JPA
+  testu `test_ac06_real_javac_embedded_id_and_association_roles`
+  z `::461` na `::473`. Výsledek měl 55 konceptů a 185 uložených vztahů.
+- `python -m kgmaker semantic validate` — **PASS**. Ověřil 384 konceptů
+  a 33 253 vztahů včetně projekce zachovaných epizod.
+- `python -m kgmaker memory capture --base HEAD --validation baseline-spring=failed --validation compiler-workers=passed --validation k1-k2-coexistence=passed --validation existing-t025=failed --validation full=unknown`
+  — **PASS**. V lokálním snapshotu `HEAD` odpovídal výchozímu Git tree
+  `c869302cdc2a7d9982d64058b6267ae603382e06`. Zůstalo zachováno 329
+  starších epizod a vznikla
+  `episode:075dc502a5c638d642b732f31e1cae0bdfedbbbd3f81c41603d1b621e0ae9dc7`.
+- `python -m kgmaker scan`, `python -m kgmaker status` a
+  `python -m kgmaker check` — **PASS**. Scan obnovil zdrojový graf
+  a dokumentaci. Obě následné kontroly potvrdily aktuálnost.
+- `git diff --check` a `git diff --cached --check` — **PASS**.

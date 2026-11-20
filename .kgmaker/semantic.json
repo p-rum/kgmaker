@@ -39,7 +39,7 @@
     "docs/changes/131_completeAnalysisReport.md": "3837a3938b542d76749b12097af5f969a99e0be4a4554eb644752717c117d977",
     "docs/changes/133_stageContentCache.md": "c7d7214861f898f96e373684921195d0c22289445c7d1906261bb9eab49cf3db",
     "docs/changes/134_addCompletionOrchestrator.md": "7b1378f34f556e05409bb660bc1ddef595cbae335a26dcc3ec058606ead5d7a8",
-    "docs/changes/139_validateCanonicalInjectionFixture.md": "fd4dbbe21fa0bcf45df88aa3bfa4ef613177eea9b080e2bb60e6a130047efe8f",
+    "docs/changes/139_validateCanonicalInjectionFixture.md": "e141e8f4a695b474a0b3918d8896279f4b441bfa94c1726a02c11c58c6488dda",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/140_validateAdditionalDatasetFields.md": "0079cf6018ca0ed631e2d512f78f9196fd203dac549f64d1e9a8528280f5d139",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
