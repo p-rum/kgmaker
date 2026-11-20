@@ -1,8 +1,17 @@
 # Inventář acceptance T001 a T002
 
+## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
+
+T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
+3 RED na výchozím zdroji a 103 cílených PASS / 0 SKIP po opravě a review.
+Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
+Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
+VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125).
+[Change140](changes/140_validateAdditionalDatasetFields.md).
+
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS a 8 Spring fail-closed PASS. Úplné integrační ověření čeká. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -13,6 +22,18 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+
+## T052 — completion orchestration 2026-11-19
+
+Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+[per-step evidence](changes/134_addCompletionOrchestrator.md).
+
+| Acceptance | Ověření | Důkaz a zbývající krok |
+|---|---|---|
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
+| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
@@ -873,9 +894,12 @@ After origin and proof-retention corrections,39purePASS and bounded actual K1
 workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
 T026 or whole T025/T003/T004 completion is implied by this row.
 
-T025-AC04/05/08/09: the five malformed block-reference cases in
-`test_scope_projection_preserves_invalid_operation_shape_for_fail_closed_validation`
-reproduce the projection regression and verify that malformed metadata cannot retain evidence. The final real K1/K2 run passed 113 tests with zero skips.
+T025-AC04/05/08/09. Five malformed block-reference variants verify that scope
+projection preserves the source metadata without retaining its evidence. The
+scoped process and graph suite passed 113 tests with zero skips using actual
+K1/K2 on main `8ff2529`. The original delivery remains MERGED, the fix in
+[#122](https://github.com/p-rum/kgmaker/pull/122) remains a draft, and broader
+acceptance remains PARTIAL.
 [Per-step evidence](changes/136_preserveMalformedCfgEvidence.md).
 
 ## T026 — lossless business-step projection (candidate)
