@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "5bc349d71d82099d5b9df9966c99869af8ce59cb64830cbb9144916017a5c209",
-    "docs/acceptance-inventory.md": "6a2fabab50f8db4fb28a2fe64b4899e2c65839462a958cfaa66bc7fbd7c60871",
+    "README.md": "8e709abb0adef6b1c4cab9efc25f30308b54f69131e9b51ba36ebe68c773be49",
+    "docs/acceptance-inventory.md": "ac4b6f560d9541ab2846cf5830d11bc026bb670a75b6c7b456bdf205affc0509",
     "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "5d4709ade64a9e84f83cf121a8d4013ad4c6ba6014c30337cb2543cc2c117563",
     "docs/architecture.md": "7a813f58d47b66422155e45e9cf6b97373d945556c473283f347da4bdde25df1",
@@ -38,8 +38,10 @@
     "docs/changes/130_projectProcessFailures.md": "2351d1ea69cdeea1512a7137187ad70049aa6ddc1547c6af099f8afcc447f7d6",
     "docs/changes/131_completeAnalysisReport.md": "3837a3938b542d76749b12097af5f969a99e0be4a4554eb644752717c117d977",
     "docs/changes/133_stageContentCache.md": "c7d7214861f898f96e373684921195d0c22289445c7d1906261bb9eab49cf3db",
+    "docs/changes/134_addCompletionOrchestrator.md": "7b1378f34f556e05409bb660bc1ddef595cbae335a26dcc3ec058606ead5d7a8",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/140_validateAdditionalDatasetFields.md": "0079cf6018ca0ed631e2d512f78f9196fd203dac549f64d1e9a8528280f5d139",
+    "docs/changes/141_handleInvalidKafkaPolicyContext.md": "cbab25df0a3dcc17200e28820009b3227c15d9bcfded5553f6b20fe04daf3637",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
@@ -119,8 +121,9 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "d6cfdf6083361c135e00bd8753d4f963def3a4d145b231fca5fe1f5b83f1f6db",
+    "docs/compiler-inspection.md": "07cfdb6f5ca080aec4450162e2eeb59cd392092bef45d4546feba7635adf7f30",
     "docs/complete-analysis-report.md": "dcdbc01d104d078c12376845c84e84f735d3476dadada0fa156656ceb76a7ac9",
+    "docs/completion-orchestrator.md": "802d99ab1890d13ad817f8d81e03ce9730df63852147ee8901d0d1766ef43259",
     "docs/delivery-workflow.md": "98ec8adc96c0b1f167b0e9f501ec08d33ae76579bd370355d27ccdb36bd7bced",
     "docs/evidence-ranking.md": "7b062d4aaf261999dcafb9050ec3e293575d13bfa968e44075f30755dbd2515f",
     "docs/feature-analysis.md": "16759fe1dd2d72c613cd2c168e873cb752621d4ce472b9fb9d0aade68763519c",
@@ -131,7 +134,7 @@
     "docs/interface-contracts.md": "14849f403c97c1892790be1f8be01b9ac118a75e7d9846137912be40986d3cf2",
     "docs/interface-markdown.md": "81fc59054a8c7cec1c0fcbcc05781d5aecdacbfe62c6728df7b300d626d7a50d",
     "docs/kafka-interfaces.md": "48923af2e957c7f5ecaca5736bd87aee2e4adb11ad380e3b12a6d7b25628ea71",
-    "docs/kafka-retry-dlt.md": "afd661cfc4696b3b0c9836d50b901c230fa785890a00ff55cc1e39f8182523b0",
+    "docs/kafka-retry-dlt.md": "d91c52139e0b65222d75cddc69f0d259a080d11835b97d804a669ee153c9a07f",
     "docs/process-annotations.md": "c46b291fe54d974daf4a3c69cd660c468590e3f36fa0e80a47ac997ee4649881",
     "docs/process-catalog.md": "5e6f33aac65297e4980ca4ccbe7c4dbc22e5c7b2e80c5f0367e6c4d008cca9e5",
     "docs/process-label-packets.md": "61a2609a7f5b0e958a4fe1c5f729bca5221f2af7762a57c678576996f86b0744",
@@ -139,7 +142,7 @@
     "docs/process-paths.md": "6a8d715f8302e0e771445052b48578729a05be59b80dfe84bc4a7f195c67af52",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "828b33da90e04067f1afe246c9d466031ad533eef5fd4f6e30bb2e11b227086b",
+    "docs/production-analysis-progress.md": "30ab65600f7142b1825ad23d80cdda28bf7e41588561058641d0d69c2206ec60",
     "docs/production-scope.md": "5ae70daad7ae15c4fc136b3313f22dca2bb257aac201c8ca130f6d1ecc8734c4",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
@@ -169,7 +172,8 @@
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
     "docs/tasks/50_addTargetProjectSkills.md": "179d18be56a4c77c337212fac92c7fac643423d63b184e89b785e5c26681ac6b",
     "docs/tasks/51_connectProjectWorkflows.md": "6dee419ded0bbf1a9fa487ade39473d507565560b4b689cc09c73eef995dbc7c",
-    "docs/tasks/README.md": "4d45230f3c22eefe88a5dcd56ca128bb69187db95cd7a442cfc1bbf5f7fef302",
+    "docs/tasks/52_addCompletionOrchestrator.md": "bb6edf1f37962e43dfdcc6ff21219b371a133e98e08d90a36ba642456a6f63cd",
+    "docs/tasks/README.md": "7df1ca5d436e974c69e31aa3ffcaed142867a35e633879bb9fc95663c9fcb805",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "9e3c464290037669f322eb3c0ab51c37d9979299174966b7da21c6c3b45ed8f2",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -403,11 +407,14 @@
     "src/kgmaker/business_process.py": "b68737537b534cef8bf121415bf6ce49093550d89630ec8e0f05cefee3d1ef0f",
     "src/kgmaker/callgraph.py": "1cb5674f25ebb6e5889de41dfa1e04beb91b249ae2539d2ffe7c5aab24709729",
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
-    "src/kgmaker/cli.py": "b0791010ffb887327baa584f8e84c397bb8017cafce7de05d2ecedf678381c26",
+    "src/kgmaker/cli.py": "142db24e6aa5389610c0451b20665206420edc26f82d10b7703ed975194a313f",
+    "src/kgmaker/completion.py": "9c350ad74181da6b809875ac01d90c00bf6843ca22f4d07bac834bf10f30588b",
+    "src/kgmaker/completion_handoff.py": "d94b72b602c8127729e308866e9fc4c193a8cba4df4e9e0ebc7a0729cacfc42d",
+    "src/kgmaker/completion_review.py": "2f35f32570bd74c6ec22fa55c46aac2a9c3c8f234ca9ebaa805e357c205d23e0",
     "src/kgmaker/confluence.py": "381d2f48afd854bdc57d4eb1feeba14f509b61280d0754b564a1b70bcd88f6ce",
     "src/kgmaker/confluence_sync.py": "e76df309595a33c70aeed77c06d2fb9fad11425e3b5a7d354e9b2fe923c8e3c8",
     "src/kgmaker/confluence_sync_config.py": "9d7f26485ac1fde54898accb9b789c60243edcca8aee553931130fa31c55e0c0",
-    "src/kgmaker/context.py": "8781ae906b3e13d22011fd6fbd0738e0e77e74755f1adeb3ccda6d421d0add8b",
+    "src/kgmaker/context.py": "2270144272e74904c286b9256cb56bfd1a71d7255669970fc7ba2d1a5d48f362",
     "src/kgmaker/context_roles.py": "2496e42aee60377e14561d45af2da2cbda6ac95db5155cab726b84b70c923764",
     "src/kgmaker/contract_inputs.py": "d52da75e99ac66472364eb2697918d52f58ae0c3ebf8ccfbb56bb966f52072b2",
     "src/kgmaker/control_flow.py": "c996692b8389620e5703216a6569d76c1da235b65384969e9ef07a9a51bc5c73",
@@ -470,10 +477,10 @@
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
     "src/kgmaker/view_cache.py": "ca5c374c556a55d9d7cc559cf0951610af0396072cb5ca15aa7de1648dd3134d",
     "src/kgmaker/view_explanation.py": "3be4dd4169065ed054b9cd9162c479020631e30962c2eb31443e638e00aa1563",
-    "src/kgmaker/views.py": "0c894edaaa5c43d672080d880db16d61e059e159e274a225a059942fbcd72b2b",
+    "src/kgmaker/views.py": "278cfeb68d70b962f344d9c73b35cdc4737555b91559e416a8b25f2cdcee3ce4",
     "src/kgmaker/workbooks.py": "5948059379f7aec6c8b88fd4a76a829ddbfd17c4e44a1ced057a79529de5f23a",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
-    "src/kgmaker/workflow.py": "b7113fc41664e9d2d0927219c2d2a27918cd72cc9cd049d6331badc4858214a6",
+    "src/kgmaker/workflow.py": "d4b9620a2e76311cbe97664ae25fb66cc989a49d7e80d2401324e2d692efa93a",
     "src/kgmaker/workflow_profiles.py": "43d6e56ebba2b9f31e8b86674b0c54269c05d5d38f2f5e1a9f0d52bf8803edbb",
     "src/kgmaker/workspace.py": "012b3a749212e6044ddac052e1e1f2311fa6a40b4f2699ef3ec692f29ae78068",
     "src/kgmaker/workspace_cli.py": "15dca0ac815b6b0e466d7f6aab426c47172d7853d30113f9e971e8a7b177c501",
@@ -504,6 +511,8 @@
     "tests/test_compiler_workers.py": "086d17064cb2eb86246dd9d0d9436015ebf855191c6e64f8861f9ac60a051703",
     "tests/test_complete_analysis_report.py": "324eafd882506d320da46f291bf3c4375c347e1a2be30924f91991debd572e62",
     "tests/test_complete_analysis_report_actual.py": "1b3425972384e8f85325254592ab82f280c783eeea68146318dcd012e0074f86",
+    "tests/test_completion.py": "6b7078cb122457eadc5a2baefb0a0040379e9cd83fa8ece88375908f8dc3ddbd",
+    "tests/test_completion_handoff.py": "52cb2040169e40d96d4329599f678d80220df9a80d3f0ca8bb5b822d8e4fe144",
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_context_roles.py": "8061d8edf4e51f8405483cef00d26fbd608c8c194672a9360531a2173d49095a",
@@ -536,7 +545,7 @@
     "tests/test_k2_backend.py": "c412a9848486eb05491eabe25841e37482f8f623eddf38f99cd0cf457f92c2dd",
     "tests/test_kafka_bindings.py": "32f1fa4da22ea3eec4149229e854448abe9d693baecc17c1759112e2e9e20e85",
     "tests/test_kafka_code_bindings.py": "6167612b77001ba016c3a90f804751bb19f8abf3ba8bb82274c4705a80953b60",
-    "tests/test_kafka_retry_dlt.py": "f741db86e53b689a13b38f0ff90ee38fbb2d09a15e9add1233c4d1f954046430",
+    "tests/test_kafka_retry_dlt.py": "02d3a3d554460073c6d69dbe7776ac52e02a92fb2b39cefcd62090f66f36b1b8",
     "tests/test_kotlin_build_options.py": "5cc92558d4af44b33e9b1e0c89cb31f3c4171f8723d15500a326ceaf47806507",
     "tests/test_local_operation_proofs.py": "370560aea9d41bf68517f340329392cd99bc366b698dd67b709a287db590ed40",
     "tests/test_mandatory_worker_ci.py": "0de809bc8cb7228b3ff4fcb1575c02462e1362c1bb7cc5b30c759831ce06bbc7",
@@ -680,13 +689,6 @@
       "source_file": "docs/schema-compatibility.md",
       "source_line": 23,
       "summary": "Bounded pure ORM/replay compatibility over exact compiler and migration identities; unsupported contracts remain UNKNOWN and do not prove availability or deployment."
-    },
-    {
-      "id": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "name": "Bounded Kafka retry policy declarations",
-      "source_file": "docs/kafka-retry-dlt.md",
-      "source_line": 1,
-      "summary": "Pinned static annotation policy and exact canonical proof replay preserve async intent without execution or delivery claims; strict full on647 passed1908/10; current schema-parent composition preserves tested policy/native source and passes bounded pure checks."
     },
     {
       "id": "concept:docs/process-label-packets.md:pure_process_label_packets",
@@ -906,6 +908,34 @@
       "summary": "Failure projection preserves catch/finally topology, retains bounded declared retry/DLT evidence and separates local transaction scope and proposed compensation from remote rollback."
     },
     {
+      "id": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "name": "Validated extraction stage cache",
+      "source_file": "docs/stage-content-cache.md",
+      "source_line": 3,
+      "summary": "Bounded content-addressed replay of explicit JVM/TypeScript extraction stages embedded in the existing graph generation; no evidence promotion."
+    },
+    {
+      "id": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "name": "Typed extra synthetic properties",
+      "source_file": "docs/delivery-workflow.md",
+      "source_line": 131,
+      "summary": "Schema-valued additionalProperties validates declared-type constraints on each extra synthetic data value."
+    },
+    {
+      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "name": "Repository completion workflow",
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
+    },
+    {
+      "id": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "name": "Bounded Kafka retry policy declarations",
+      "source_file": "docs/kafka-retry-dlt.md",
+      "source_line": 1,
+      "summary": "Pinned static annotation policy and exact canonical proof replay preserve async intent without execution or delivery claims; strict full on647 passed1908/10; current schema-parent composition preserves tested policy/native source and passes bounded pure checks."
+    },
+    {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
@@ -990,25 +1020,11 @@
       "summary": "Consuming bounded JPQL/HQL grammar validates complete clauses and scalar/predicate expressions, uses lexical query-block alias scopes, and publishes only compiler-owned static persistence intent; invalid bindings are UNKNOWN and unsupported syntax is localized PARTIAL."
     },
     {
-      "id": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "name": "Validated extraction stage cache",
-      "source_file": "docs/stage-content-cache.md",
-      "source_line": 3,
-      "summary": "Bounded content-addressed replay of explicit JVM/TypeScript extraction stages embedded in the existing graph generation; no evidence promotion."
-    },
-    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
       "source_line": 211,
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
-    },
-    {
-      "id": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
-      "name": "Typed extra synthetic properties",
-      "source_file": "docs/delivery-workflow.md",
-      "source_line": 131,
-      "summary": "Schema-valued additionalProperties validates declared-type constraints on each extra synthetic data value."
     }
   ],
   "edges": [
@@ -1111,26 +1127,6 @@
       "source_file": "docs/schema-compatibility.md",
       "source_line": 23,
       "evidence": "The documented public schema_compatibility function in the existing Replay module compares explicit compiler-owned mappings and selected migration snapshots without executing a database."
-    },
-    {
-      "source": "file:src/kgmaker/kafka_retry.py:kafka_retry.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/kafka_retry.py",
-      "source_line": 126,
-      "evidence": "The adapter binds pinned API resources and canonical listener/handler compiler facts to static retry policy declarations; unsupported configurations remain UNKNOWN."
-    },
-    {
-      "source": "file:tests/test_kafka_retry_dlt.py:test_kafka_retry_dlt.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_kafka_retry_dlt.py",
-      "source_line": 352,
-      "evidence": "Captured compiler snapshots and public flow/CLI mutations verify localized UNKNOWN boundaries, preserving unrelated policies and all input records."
     },
     {
       "source": "concept:docs/process-label-packets.md:pure_process_label_packets",
@@ -1313,26 +1309,6 @@
       "evidence": "Accepted007v2 first ordinary public interface render denies Python file/filesystem/process/network operations, preserves exact parent expected output and input inventory; pure parser proof, not native runtime evidence."
     },
     {
-      "source": "file:src/kgmaker/flow.py:flow.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/flow.py",
-      "source_line": 67,
-      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
-    },
-    {
-      "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
-      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/inspection_cli.py",
-      "source_line": 132,
-      "evidence": "The process CLI preserves its validated context selector without pruning contradictory policy proofs before integrity checks."
-    },
-    {
       "source": "function:src/kgmaker/service_topology.py:capture_topology_inputs::34",
       "target": "concept:docs/service-topology.md:captured_service_resource_channel_topology",
       "kind": "coordinates",
@@ -1381,16 +1357,6 @@
       "source_file": "src/kgmaker/architecture_cli.py",
       "source_line": 307,
       "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:main::1039",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1043,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
     },
     {
       "source": "file:src/kgmaker/view_cache.py:view_cache.py",
@@ -1541,46 +1507,6 @@
       "source_file": "docs/typescript-callbacks.md",
       "source_line": 47,
       "evidence": "Callback documentation identifies the reused candidate navigation contract instead of a parallel callgraph model."
-    },
-    {
-      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 203,
-      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
-    },
-    {
-      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
-      "target": "file:src/kgmaker/views.py:views.py",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/architecture.md",
-      "source_line": 182,
-      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
-    },
-    {
-      "source": "file:src/kgmaker/views.py:views.py",
-      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/views.py",
-      "source_line": 198,
-      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
-    },
-    {
-      "source": "function:src/kgmaker/views.py:rank::1117",
-      "target": "concept:docs/evidence-ranking.md:evidence_bound_execution_and_impact_priority",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/views.py",
-      "source_line": 1118,
-      "evidence": "rank computes versioned evidence contributions, deterministic paths and localized incompleteness penalties without store mutation."
     },
     {
       "source": "function:tests/test_evidence_ranking.py:test_actual_javac_ranking_fixture_and_public_cli::199",
@@ -2071,6 +1997,186 @@
       "evidence": "Explicit compiler inspection invokes field projection only after worker response validation and before atomic graph publication.",
       "confidence": "EXTRACTED",
       "confidence_score": 1
+    },
+    {
+      "source": "file:src/kgmaker/extraction_cache.py:extraction_cache.py",
+      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/extraction_cache.py",
+      "source_line": 136,
+      "evidence": "InspectionStages reads and validates bounded replay candidates without publishing a separate store."
+    },
+    {
+      "source": "file:src/kgmaker/inspection.py:inspection.py",
+      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/inspection.py",
+      "source_line": 619,
+      "evidence": "Explicit frontend inspection creates stage replay with the captured selected context after the real project preflight."
+    },
+    {
+      "source": "file:src/kgmaker/store.py:store.py",
+      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/store.py",
+      "source_line": 59,
+      "evidence": "The existing graph store prepares all outputs and publishes graph JSON containing cache metadata last."
+    },
+    {
+      "source": "file:tests/test_stage_content_cache.py:test_stage_content_cache.py",
+      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_stage_content_cache.py",
+      "source_line": 1,
+      "evidence": "Public inspection, provider and store regressions exercise cold/warm stage calls, invalid provenance and zero-mutation abort boundaries."
+    },
+    {
+      "source": "file:tests/test_stage_content_cache_actual.py:test_stage_content_cache_actual.py",
+      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_stage_content_cache_actual.py",
+      "source_line": 1,
+      "evidence": "Explicit real-worker fixtures count analyze operations and exercise selected JVM classpath, worker-byte/rule and TypeScript configuration changes."
+    },
+    {
+      "source": "file:src/kgmaker/testgen.py:testgen.py",
+      "target": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/testgen.py",
+      "source_line": 368,
+      "evidence": "Testgen recursively applies the typed additional property schema to each undeclared object value."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:main::1041",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1045,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
+      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "target": "function:src/kgmaker/completion.py:plan::169",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "evidence": "The completion plan uses existing delivery inventory and task links."
+    },
+    {
+      "source": "function:src/kgmaker/completion_handoff.py:handoff::129",
+      "target": "file:src/kgmaker/workflow.py:workflow.py",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/completion_handoff.py",
+      "source_line": 162,
+      "evidence": "A completion handoff advances the existing workflow with observed task, source and journal state."
+    },
+    {
+      "source": "function:src/kgmaker/completion_review.py:attribute::80",
+      "target": "function:src/kgmaker/provenance.py:event::143",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/completion_review.py",
+      "source_line": 129,
+      "evidence": "Review attribution registers a submitted event in the existing local provenance journal."
+    },
+    {
+      "source": "file:src/kgmaker/kafka_retry.py:kafka_retry.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/kafka_retry.py",
+      "source_line": 126,
+      "evidence": "The adapter binds pinned API resources and canonical listener/handler compiler facts to static retry policy declarations; unsupported configurations remain UNKNOWN."
+    },
+    {
+      "source": "file:tests/test_kafka_retry_dlt.py:test_kafka_retry_dlt.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_kafka_retry_dlt.py",
+      "source_line": 314,
+      "evidence": "Captured compiler snapshots and public flow/CLI mutations verify localized UNKNOWN boundaries, preserving unrelated policies and all input records."
+    },
+    {
+      "source": "file:src/kgmaker/flow.py:flow.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/flow.py",
+      "source_line": 67,
+      "evidence": "Process retains the original snapshot for exact policy proof validation while the selected context scopes only executable CFG traversal."
+    },
+    {
+      "source": "file:src/kgmaker/inspection_cli.py:inspection_cli.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/inspection_cli.py",
+      "source_line": 132,
+      "evidence": "The process CLI preserves its validated context selector without pruning contradictory policy proofs before integrity checks."
+    },
+    {
+      "source": "concept:docs/architecture.md:explicit_service_inventory_projection",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 203,
+      "evidence": "Architecture identifies views.project_service_inventory as the topology projection that composes explicit ownership and selected provider contexts."
+    },
+    {
+      "source": "concept:docs/architecture.md:view_evidence_and_coverage",
+      "target": "file:src/kgmaker/views.py:views.py",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture.md",
+      "source_line": 182,
+      "evidence": "Architecture identifies project_service_inventory as a read-only topology projection using explicit ownership and selected contexts."
+    },
+    {
+      "source": "file:src/kgmaker/views.py:views.py",
+      "target": "concept:docs/architecture.md:workspace_derived_context_role_boundary",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 198,
+      "evidence": "Views applies the shared role boundary before T008 ownership and T006 compiler selection without changing the supplied graph."
+    },
+    {
+      "source": "function:src/kgmaker/views.py:rank::1120",
+      "target": "concept:docs/evidence-ranking.md:evidence_bound_execution_and_impact_priority",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 1121,
+      "evidence": "rank computes versioned evidence contributions, deterministic paths and localized incompleteness penalties without store mutation."
     },
     {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
@@ -2733,56 +2839,6 @@
       "evidence": "The configuration view exposes policy, canonically injected FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
     },
     {
-      "source": "file:src/kgmaker/extraction_cache.py:extraction_cache.py",
-      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/extraction_cache.py",
-      "source_line": 136,
-      "evidence": "InspectionStages reads and validates bounded replay candidates without publishing a separate store."
-    },
-    {
-      "source": "file:src/kgmaker/inspection.py:inspection.py",
-      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/inspection.py",
-      "source_line": 619,
-      "evidence": "Explicit frontend inspection creates stage replay with the captured selected context after the real project preflight."
-    },
-    {
-      "source": "file:src/kgmaker/store.py:store.py",
-      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/store.py",
-      "source_line": 59,
-      "evidence": "The existing graph store prepares all outputs and publishes graph JSON containing cache metadata last."
-    },
-    {
-      "source": "file:tests/test_stage_content_cache.py:test_stage_content_cache.py",
-      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_stage_content_cache.py",
-      "source_line": 1,
-      "evidence": "Public inspection, provider and store regressions exercise cold/warm stage calls, invalid provenance and zero-mutation abort boundaries."
-    },
-    {
-      "source": "file:tests/test_stage_content_cache_actual.py:test_stage_content_cache_actual.py",
-      "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/test_stage_content_cache_actual.py",
-      "source_line": 1,
-      "evidence": "Explicit real-worker fixtures count analyze operations and exercise selected JVM classpath, worker-byte/rule and TypeScript configuration changes."
-    },
-    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
@@ -2823,14 +2879,14 @@
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
-      "source": "file:src/kgmaker/testgen.py:testgen.py",
-      "target": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
-      "kind": "implements",
+      "source": "file:src/kgmaker/views.py:views.py",
+      "target": "concept:docs/kafka-retry-dlt.md:bounded_kafka_retry_policy_declarations",
+      "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/testgen.py",
-      "source_line": 368,
-      "evidence": "Testgen recursively applies the typed additional property schema to each undeclared object value."
+      "source_file": "src/kgmaker/views.py",
+      "source_line": 943,
+      "evidence": "The selected compiler view excludes a policy with a non-null non-string owner while the original graph remains available to policy validation."
     }
   ],
   "episodes": [

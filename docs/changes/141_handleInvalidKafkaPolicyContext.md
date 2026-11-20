@@ -42,3 +42,15 @@ Init a spravované instrukce nemají dopad.
   artifact/POM vstupy — 240 PASS / 0 SKIP, 87.81 s.
 - `git diff --check` PASS. Úplná sada a externí T045 review pro tuto
   revizi jsou NOT_RUN. Kafka delivery a runtime zůstávají nepozorované.
+
+## Integrace worktree proti main po #120
+
+Přenesený zdroj vychází z ověřeného main
+`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` s tree
+`c869302cdc2a7d9982d64058b6267ae603382e06`. Zachovává schválené W05 chování
+a nový T052 workflow. Stejná striktní Java/Kotlin a HTTP sada v tomto
+integrovaném checkoutu má **240 PASS / 0 SKIP**, 92.03 s.
+Obě kontroly diffu prošly. Úplná sada a T045 review nového publikovaného páru
+jsou před integrací stále povinné.
+`kgmaker semantic apply`, `semantic validate`, `scan`, `status` a `check`
+prošly. Generovaný graf je součástí integrované revize.
