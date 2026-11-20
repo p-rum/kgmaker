@@ -540,12 +540,13 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
 def _stage_response(response, selected):
     """A matching digest does not substitute for worker/context validation."""
     validate_response(response, selected)
+    if any(symbol.get('context_id') != selected['id'] for symbol in response['symbols']):
+        raise WorkerError('Dangling/duplicate compiler symbol or context', 'INVALID_PROTOCOL')
     worker = selected['worker']
     if (response.get('status') not in {'COMPLETE', 'PARTIAL'}
             or not isinstance(response.get('coverage'), dict)
             or any(response.get(key) != worker.get(key)
-                   for key in ('protocol_version', 'worker', 'compiler_version'))
-            or any(symbol.get('context_id') != selected['id'] for symbol in response['symbols'])):
+                   for key in ('protocol_version', 'worker', 'compiler_version'))):
         raise WorkerError('Stage response does not match selected worker/context', 'INVALID_PROTOCOL')
 
 
