@@ -1,5 +1,9 @@
 # Aktuální stav a zbývající práce
 
+## T003-S05-W04 — doplnění skutečné fixture
+
+Historické W04 ověření zachováno. Lokální korekce zastaralé testovací fixture je IN_PROGRESS / PARTIAL, 2 PASS / 0 SKIP v připraveném Javac/TypeScript běhu. [Záznam](changes/139_validateCanonicalInjectionFixture.md).
+
 ## Post-merge integrace PR97 — 2026-11-15
 
 W05 je MERGED v `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea`; skutečný první merge parent je `6eb755ec1d4e777abe8d34dea7bee9477c90692f`.

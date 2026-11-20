@@ -1,5 +1,9 @@
 # Inventář acceptance T001 a T002
 
+## T003-S05-W04 — doplnění skutečné fixture
+
+T003-AC05 / T003-S05-W04-AC01, AC03. 2 PASS / 0 SKIP pro cílenou dvojici Spring a React s připravenými workery a fixture závislostmi. Kanonický marker je součástí kladných Spring případů, bez něj chybí injection proof. [Přesné kontroly](changes/139_validateCanonicalInjectionFixture.md).
+
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
 Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.

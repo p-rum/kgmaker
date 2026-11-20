@@ -322,6 +322,9 @@ object Singleton {
                 'org/springframework/context/annotation/Bean.java': '''package org.springframework.context.annotation;
                   import java.lang.annotation.*; @Target(ElementType.METHOD) @Retention(RetentionPolicy.RUNTIME)
                   public @interface Bean { String[] value() default {}; String[] name() default {}; }''',
+                'org/springframework/beans/factory/annotation/Autowired.java': '''package org.springframework.beans.factory.annotation;
+                  import java.lang.annotation.*; @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME)
+                  public @interface Autowired {}''',
                 'org/springframework/beans/factory/annotation/Qualifier.java': '''package org.springframework.beans.factory.annotation;
                   import java.lang.annotation.*; @Target({ElementType.TYPE,ElementType.FIELD}) @Retention(RetentionPolicy.RUNTIME)
                   public @interface Qualifier { String value(); }''',
@@ -357,6 +360,7 @@ object Singleton {
                   import org.springframework.context.annotation.Import;
                   import org.springframework.context.annotation.Bean;
                   import org.springframework.beans.factory.annotation.Qualifier;
+                  import org.springframework.beans.factory.annotation.Autowired;
                   import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
                   import org.springframework.transaction.annotation.Transactional;
                   import org.springframework.beans.factory.ObjectProvider;
@@ -372,10 +376,16 @@ object Singleton {
                   @DomainService class MetaBean {}
                   @Configuration @Import({ImportedConfig.class,PlainImported.class}) class MainConfig {}
                   class InvalidFactory { @Bean ImportedProduct falseBean() { return new ImportedProduct(); } }
-                  @Service class Consumer { Gateway gateway; @Qualifier("blueGateway") Gateway qualified;
-                    List<Gateway> gateways; Map<String,Gateway> gatewayMap;
-                    Optional<Gateway> optionalGateway; ObjectProvider<Gateway> gatewayProvider;
-                    ImportedProduct importedProduct;
+                  @Service class Consumer {
+                    @Autowired Gateway gateway;
+                    @Autowired @Qualifier("blueGateway") Gateway qualified;
+                    @Autowired List<Gateway> gateways;
+                    @Autowired Map<String,Gateway> gatewayMap;
+                    @Autowired Optional<Gateway> optionalGateway;
+                    @Autowired ObjectProvider<Gateway> gatewayProvider;
+                    @Autowired ImportedProduct importedProduct;
+                    Gateway unannotated;
+                    @Qualifier("blueGateway") Gateway qualifierOnly;
                     @Transactional void advised() {} void local() { advised(); } }
                   @fake.Service class NotSpringBean {}
                 ''',
@@ -395,6 +405,8 @@ object Singleton {
             self.assertEqual(SPRING_RULE_VERSION, selected_context['framework_analysis']['spring'])
             beans={node.name:node.id for node in blue.nodes if node.kind=='spring_bean'}
             injections={node.name:node.id for node in blue.nodes if node.kind=='spring_injection'}
+            self.assertNotIn('Consumer.unannotated',injections)
+            self.assertNotIn('Consumer.qualifierOnly',injections)
             selected={(edge.source,edge.target) for edge in blue.edges if edge.kind=='injects_bean'}
             self.assertIn((injections['Consumer.gateway'],beans['blueGateway']),selected,
                           {'beans':beans,'selected':selected,
