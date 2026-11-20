@@ -170,6 +170,7 @@ kgmaker status [--root PATH]
 kgmaker check [--root PATH]
 kgmaker docs [check|report] [--root PATH] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
+kgmaker impact [--root PATH] --evidence-only --format json FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
 kgmaker semantic extract [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
 kgmaker semantic update [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
@@ -1212,3 +1213,12 @@ compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+
+### Selektivní dopad změněných souborů (T003-S10-W02)
+
+`kgmaker impact --evidence-only --format json src/main/java/Api.java` použijte
+po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
+uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
+callers, migračních vazeb a OpenAPI deklarací. U souhrnů použité revize feature
+uvádí zastaralé přímé citace. Operace pouze čte a uvádí `PARTIAL` s diagnostikou
+hranic. [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).

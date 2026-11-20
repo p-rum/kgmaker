@@ -22,6 +22,18 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+## T003-S10-W02 — reverse dependency indexy
+
+Dodání `IN_PROGRESS`. [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
+[režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
+[kontroly](changes/145_buildReverseDependencyIndexes.md).
+
+| Acceptance | Ověření | Důkaz a hranice |
+|---|---|---|
+| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje replay Flyway, zachycenou deklaraci OpenAPI a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
+| T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
+| T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | Fixture vylučuje shodu jména a nesouvisející metodu. `test_malformed_stored_compiler_graph_keys_fail_closed_in_public_cli` ověřuje chybný Javac graf v3, `test_changed_source_swapped_to_fifo_is_unavailable` nedostupný zdroj při záměně a `test_feature_record_fifos_do_not_block_or_publish` čtyři FIFO vstupy revize na POSIX. Report zachovává bajty store a sám nespouští proces. Pro úplnou coverage platí samostatná acceptance. |
+| T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |
 
 ## T052 — completion orchestration 2026-11-19
 

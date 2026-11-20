@@ -77,3 +77,42 @@ NOT_RUN kontroly jsou v [change133](changes/133_stageContentCache.md). Celý T00
 zůstává PARTIAL; cache není inkrementální build compileru ani production latency slib.
 
 Aktuální ověřený scope opravy a zbývající práce jsou v [change135](changes/135_bindCachedCompilerEvidence.md).
+
+## Selektivní dopad změn
+
+Uložte výchozí graf pomocí `kgmaker scan` nebo explicitní inspekce, proveďte
+změnu a spusťte report ještě před obnovením indexu.
+
+```bash
+kgmaker impact --root ./service --evidence-only --format json \
+  src/main/java/Api.java src/main/resources/db/migration/V1__schema.sql openapi.json
+```
+
+Režim pokrývá všechny uložené kontexty lokálního repozitáře. Vstupy jsou relativní
+cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přijímá
+`all`, kombinace s `--context`, `--entity` nebo `--include-data-flow` vrátí chybu.
+
+JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
+s předchozím a zjištěným hashem (při odstranění `after_sha256: null`), pole
+`affected` a `diagnostics`. Každý dotčený záznam má stávající identitu `id`, druh,
+cestu (u závěru feature `null`), stav a seznam `reasons`:
+
+| Druh | Stav | Důvod |
+|---|---|---|
+| `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
+| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Report uvádí grafovou vazbu, identitu objektu a řádek migrace. |
+| `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se shodným hashem zdroje, použitelnou variantou a jejím fingerprintem. |
+| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace z požadavku na vstup, capability match, impact path nebo test plan v existující použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. |
+
+Výstup má `coverage: PARTIAL`. Obsahuje pozitivní historické vazby a může uvést
+diagnostiku pro chybějící nebo nečitelný zdroj, starší graph, neověřenou compiler
+vrstvu či nedostupnou revizi feature. Záznamy revizí se čtou pouze z běžných souborů.
+Při nečitelném nebo nesprávně strukturovaném uloženém grafu příkaz skončí kódem
+1 a bez výstupu JSON. Nečitelný změněný zdroj vrací `DEPENDENCY_PATH_UNAVAILABLE`.
+Nové soubory mimo zachycený rozsah, negativní
+lookupy, dynamický dispatch, cross-workspace vazby, aktuální platnost starého
+compiler rozlišení a nasazení nebo dostupnost dat vyžadují vlastní důkaz.
+Report je vodítko k revalidaci. Uložený graf, stav feature a pravidla jejího
+`apply` ani `revise` se příkazem nemění. Příkaz nespouští workery, buildy, instalaci,
+migrace ani aplikaci. Graph/store nadále čte v1/v2/v3 bez migrace. Dosavadní
+formáty příkazu `impact` se používají stejně. [Ověření a limity](changes/145_buildReverseDependencyIndexes.md).

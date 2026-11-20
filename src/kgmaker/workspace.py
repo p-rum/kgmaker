@@ -557,7 +557,7 @@ def _regular_file_hash(path: Path) -> str | None:
     before = path.lstat()
     if not stat.S_ISREG(before.st_mode):
         return None
-    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0)
     descriptor = os.open(path, flags)
     with os.fdopen(descriptor, 'rb') as stream:
         opened = os.fstat(stream.fileno())

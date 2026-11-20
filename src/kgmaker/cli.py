@@ -1017,6 +1017,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact_parser.add_argument("files", nargs="*", help="changed repository-relative file paths")
     impact_parser.add_argument("--root", type=Path, default=Path.cwd())
     impact_parser.add_argument("--entity", help="existing graph ID for directional value impact")
+    impact_parser.add_argument("--evidence-only", action="store_true", help="plan file revalidation from saved positive evidence")
     impact_parser.add_argument("--include-data-flow", action="store_true")
     impact_parser.add_argument("--format", choices=("text", "json"), default="text")
     impact_parser.add_argument("--scope", choices=("production", "test", "test_fixture", "development", "unknown", "all"), default="all")
@@ -1112,7 +1113,20 @@ def main() -> None:
     elif args.command == "semantic" and args.semantic_command == "apply":
         code = semantic_apply(root)
     elif args.command == "impact":
-        if args.entity:
+        if args.evidence_only:
+            if not args.files or args.entity or args.include_data_flow or args.format != "json" or args.scope != "all" or args.context:
+                parser.error("--evidence-only needs file paths and --format json and uses all published contexts")
+            from .analysis_model import AnalysisError
+            from .graph_provider import dependency_impact
+            try:
+                result = dependency_impact(root, args.files)
+            except AnalysisError as error:
+                print(str(error), file=sys.stderr)
+                code = error.code
+            else:
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+                code = 0
+        elif args.entity:
             if args.files or not args.include_data_flow:
                 parser.error("--entity requires --include-data-flow and cannot be combined with file arguments")
             code = feature_cli.impact_entity(root, args.entity, args.format, args.scope, args.context)

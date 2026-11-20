@@ -1,9 +1,11 @@
 """Offline graph refresh preserving validated compiler evidence in the shared store."""
+from collections import defaultdict, deque
 from pathlib import Path
+import re
 import shlex
 
 from .model import KnowledgeGraph
-from .store import load_graph
+from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
 
 
@@ -401,3 +403,169 @@ def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
             published.append(context)
             active_ids.add(context["id"])
     return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids)
+
+
+def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
+    """Derive positive relationships from one already-published generation."""
+    from .schema_replay import persistence_pair
+
+    index = defaultdict(list)
+    if graph.schema_version == 1:
+        return index
+    files = {path: checksum for path, checksum in graph.files.items()
+             if re.fullmatch(r"[a-f0-9]{64}", checksum)}
+    nodes = {node.id: node for node in graph.nodes}
+    contexts = {c.get("id"): c for c in graph.contexts
+                if isinstance(c.get("id"), str) and c.get("analyzer_version")
+                and c.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
+                and c.get("freshness") == "CONTENT_VERIFIED" and isinstance(c.get("source_files"), dict)}
+    symbols = {item["id"]: item for item in graph.symbols} if graph.schema_version == 3 else {}
+    proofs = {item["id"]: item for item in graph.evidence}
+    compiler_edges = defaultdict(set)
+
+    def add(path, dependent_path, target, kind, **witness):
+        if path in files and dependent_path in files:
+            index[path].append({"kind": kind, "id": target, "path": dependent_path,
+                                "reason": {"dependency_path": path, "before_sha256": files[path], **witness}})
+
+    def realm(node):
+        record = node.metadata.get("persistence_realm") if isinstance(node.metadata, dict) else None
+        return persistence_pair(record.get("database_id"), record.get("stream_id")) if isinstance(record, dict) else None
+
+    for edge in graph.edges:
+        source, target = nodes[edge.source], nodes[edge.target]
+        if edge.kind in {"declares_call", "declares_reference", "resolves_to"} and edge.evidence_kind == "SYMBOL_RESOLVED":
+            if len(edge.context_ids) != 1 or edge.context_ids[0] not in contexts or edge.source_file not in files:
+                continue
+            context_id = edge.context_ids[0]
+            for identity in edge.evidence_ids:
+                proof = proofs[identity]
+                if (proof.get("source") == edge.source and proof.get("target") == edge.target
+                        and proof.get("relation") == edge.kind and proof.get("kind") == "SYMBOL_RESOLVED"
+                        and proof.get("context_ids") == [context_id] and proof.get("freshness") == "CONTENT_VERIFIED"
+                        and proof.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
+                        and proof.get("source_file") == edge.source_file and proof.get("sha256") == files[edge.source_file]
+                        and contexts[context_id]["source_files"].get(edge.source_file) == proof["sha256"]):
+                    compiler_edges[(edge.source, edge.target, edge.kind, context_id, edge.source_file)].add(identity)
+        elif (edge.kind, source.kind, target.kind) in {
+            ("foreign_key_to", "db_constraint", "db_table"),
+            ("derived_from", "db_view_field", "db_column"),
+        }:
+            left = realm(source)
+            if (left and left == realm(target) and edge.source_file == source.path
+                    and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"
+                    and type(edge.source_line) is int and edge.source_line > 0):
+                add(target.path, source.path, source.id, "SCHEMA_DEPENDENT", relation=edge.kind,
+                    source_line=edge.source_line, evidence_kind="MIGRATION_DERIVED", dependency_id=target.id)
+        elif edge.kind == "declares_endpoint" and source.kind == "file" and target.kind == "api_endpoint":
+            registrations = target.metadata.get("http_registrations") if isinstance(target.metadata, dict) else None
+            if source.path not in files or edge.source_file != source.path or not isinstance(registrations, list):
+                continue
+            for record in registrations:
+                if (isinstance(record, dict) and record.get("provider") in ("openapi-json", "openapi-yaml")
+                        and record.get("source_path") == source.path and record.get("source_sha256") == files[source.path]
+                        and not record.get("unresolved_reasons") and isinstance(record.get("variant_fingerprint"), str)):
+                    add(source.path, source.path, target.id, "CONTRACT_DECLARATION", relation=edge.kind,
+                        evidence_kind="OPENAPI_DECLARATION", variant_fingerprint=record["variant_fingerprint"])
+
+    for site in graph.call_sites if graph.schema_version == 3 else ():
+        context_id, caller_id, target_id = site.get("context_id"), site.get("caller"), site.get("declared_target")
+        if (site.get("evidence_kind") != "SYMBOL_RESOLVED" or context_id not in contexts
+                or caller_id not in symbols or target_id not in symbols):
+            continue
+        caller, target = nodes[caller_id], nodes[target_id]
+        if (site.get("path") != caller.path or caller.path not in files or target.path not in files
+                or any(symbols[identity].get("context_id") != context_id for identity in (caller_id, target_id))
+                or any(contexts[context_id]["source_files"].get(path) != files[path] for path in (caller.path, target.path))):
+            continue
+        relation = "declares_reference" if site.get("invocation_kind") == "METHOD_REFERENCE" else "declares_call"
+        ids = set(site.get("evidence_ids", []))
+        declaration = ids & compiler_edges[(caller_id, site["id"], relation, context_id, caller.path)]
+        resolution = ids & compiler_edges[(site["id"], target_id, "resolves_to", context_id, caller.path)]
+        if declaration and resolution:
+            add(target.path, caller.path, caller_id, "COMPILER_CALLER", relation=relation, dependency_id=target_id,
+                call_site_id=site["id"], context_id=context_id, evidence_ids=sorted(declaration | resolution))
+    return index
+
+
+def dependency_impact(root: Path, changed_files: list[str]) -> dict:
+    """Plan revalidation of evidenced dependents, without modifying a store or running workers."""
+    from .analysis_model import AnalysisError, canonical, safe_path
+    from .feature import applied_dependency_citations
+    from .workspace import _regular_file_hash
+
+    root = root.resolve()
+    targets = {safe_path(root, value).relative_to(root).as_posix() for value in changed_files}
+    if not targets or "." in targets:
+        raise AnalysisError("Supply at least one repository-relative file")
+    generation = load_graph_generation(root)
+    if generation is None:
+        raise AnalysisError("No readable graph found. Run kgmaker scan before recording the changed files.", 1)
+    graph, fingerprint = generation
+    index = _reverse_dependency_index(graph)
+    citations, diagnostics = applied_dependency_citations(root, targets)
+    citation_paths = {item["path"] for item in citations}
+    diagnostics.append({"code": "POSITIVE_HISTORICAL_EVIDENCE_ONLY",
+                        "reason": "Negative lookups, uncaptured relationships and cross-workspace bindings are outside this index."})
+    if graph.schema_version < 3:
+        diagnostics.append({"code": "LEGACY_COMPILER_INDEX_UNAVAILABLE", "graph_schema_version": graph.schema_version})
+    elif not any(c.get("freshness") == "CONTENT_VERIFIED" for c in _compiler_contexts(graph)):
+        diagnostics.append({"code": "VERIFIED_COMPILER_LAYER_UNAVAILABLE"})
+    observed, changed, seeds = {}, [], set()
+    for path in sorted(targets):
+        if path not in graph.files and path not in citation_paths:
+            diagnostics.append({"code": "DEPENDENCY_PATH_NOT_CAPTURED", "path": path})
+            continue
+        try:
+            target = safe_path(root, path)
+            try:
+                target.lstat()
+            except FileNotFoundError:
+                if safe_path(root, path).exists():
+                    raise OSError("Unstable source path") from None
+                after = None
+            else:
+                # Disappearance after the initial stat is an unavailable read.
+                after = _regular_file_hash(target)
+                if after is None:
+                    raise OSError("Expected stable regular file")
+        except (ValueError, OSError):
+            diagnostics.append({"code": "DEPENDENCY_PATH_UNAVAILABLE", "path": path})
+            continue
+        observed[path] = after
+        before = graph.files.get(path)
+        if before is not None and before != after:
+            changed.append({"path": path, "before_sha256": before, "after_sha256": after})
+            seeds.add((path, None))
+
+    affected = {}
+
+    def add(kind, path, identity, status, reason):
+        record = affected.setdefault((kind, path, identity), {"kind": kind, "path": path, "id": identity,
+                                                              "status": status, "reasons": {}})
+        record["reasons"][canonical(reason)] = reason
+
+    seen = set(seeds)
+    queue = deque(sorted(seeds))
+    while queue:
+        path, identity = queue.popleft()
+        for item in index.get(path, ()):
+            reason = item["reason"]
+            if identity is not None and reason.get("dependency_id") != identity:
+                continue
+            dependent = item["path"], item["id"]
+            add(item["kind"], *dependent, "RECHECK", reason)
+            if dependent not in seen:
+                seen.add(dependent)
+                queue.append(dependent)
+    for item in citations:
+        path = item["path"]
+        if path in observed and item["before_sha256"] != observed[path]:
+            add("FEATURE_CONCLUSION", None, item["conclusion_id"], "STALE",
+                {**item, "after_sha256": observed[path]})
+    values = []
+    for _, record in sorted(affected.items()):
+        record["reasons"] = [value for _, value in sorted(record["reasons"].items())]
+        values.append(record)
+    return {"schema_version": 1, "graph_sha256": fingerprint, "coverage": "PARTIAL",
+            "changed_sources": changed, "affected": values, "diagnostics": diagnostics}
