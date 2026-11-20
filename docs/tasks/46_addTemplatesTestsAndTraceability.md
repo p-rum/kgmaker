@@ -1,8 +1,8 @@
 # T046 — Šablony, testovací návrhy a dohledatelnost změn
 
 - Task ID: T046
-- Revision: 5
-- Datum: 2026-11-06
+- Revision: 6
+- Datum: 2026-11-20
 - Stav zadání: SPECIFICATION; skutečná implementace a kontroly jsou v change notes a stavové matici.
 - Baseline: `33dc239a6d2eca2f42364a7b314aeb377e4b441a`.
 - Zadavatel: uživatel této relace; osobní identita nebyla poskytnuta. Schvalovatel implementace: UNKNOWN.
@@ -113,3 +113,13 @@ Zachovává architecture registration/early dispatch a delivery CLI současně. 
 ## Revize 5 — kumulativní předání
 
 Každá T046 stage zachovává celé integrační dodatky předchozích change notes. Nová main governance a T046 delivery instrukce se zachovávají současně ve zdrojových templates i spravovaných kopiích. Acceptance a runtime identity zůstávají stejné; skutečné ověření a stav předání jsou odděleny v notes56–61.
+
+## Revize 6 — schéma dalších syntetických hodnot
+
+T046-S03 a navazující T046-S04 / T046-AC04 ověřují ve stávajícím JSON schema
+subsetu další vlastnosti podle `additionalProperties`. Vedle obou booleanů může
+obsahovat objekt s podporovaným `type`, který validuje každou další hodnotu
+rekurzivně. Chyby uvádějí konkrétní cestu. Nepodporované keywordy v použitém
+schématu se hlásí v `unchecked_constraints`. Chybný kandidát podle T046-AC07
+nesmí měnit soubory. Zdrojová baseline tohoto dodatku je
+`465b121992aad50c2885acef0fd038531a31293a`.

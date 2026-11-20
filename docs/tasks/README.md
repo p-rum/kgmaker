@@ -37,7 +37,7 @@ T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #4
 T047 číslo T046 nerecykluje a execution evidence navazuje na obsahové
 reference a workflow T046. Aktuální stav dodání ověřuj ve stavové matici.
 
-| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION, revize 5; implementace viz stavová matice |
+| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION, revize 6; implementace viz stavová matice |
 
 ## High-level zobrazení projektu — T004
 
