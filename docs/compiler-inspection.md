@@ -1475,7 +1475,11 @@ capture revisions are separate, and original IDs survive workspace qualification
 Public context privacy and freshness checks remain mandatory. This is static
 provenance, without delivery, broker, activation or data availability evidence.
 
-### T003-S07-W05 — bounded retry/DLT policy draft
+### T003-S07-W05 — bounded retry/DLT policy
+
+An explicit context projection excludes a policy node with a non-null,
+non-string owner identity. The original proof is still available to report an UNKNOWN boundary
+for the caller. [Regression evidence](changes/141_handleInvalidKafkaPolicyContext.md).
 
 `kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
 Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded
@@ -1559,13 +1563,8 @@ for context/proof guards, atomic output and exact bounded native verification.
 
 ## Obsahová cache inspekčních stupňů (T003-S10-W01)
 
-Explicitní JVM/TS inspekce vrací navíc `cache` se stavem jednotlivých stages.
-Stejný úplný captured context a obsah upstream vstupů umožňuje vynechat analyze,
-compiler graph a u JVM framework augmentation. Handshake/TS project preflight
-zůstávají skutečné; implicitní worker ani build se nepřidává. Metadata jsou uvnitř
-existujícího graph indexu a public/scoped graph je nevypisuje. Stará v1/v2/v3
-metadata jsou čitelná, neúplná či poškozená cache je pouze MISS/BYPASS.
+Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
+Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
+Graph/store v1/v2/v3 a interní envelope v1 zůstávají čitelné.
 [Detaily, příklady a single-writer limity](stage-content-cache.md),
-[per-step evidence](changes/133_stageContentCache.md). Jde o replay celých
-inspekčních stupňů; historické tvrzení o nepodporované incremental compilation
-cache ve výše uvedeném S08 kontraktu se nepovyšuje na per-file compiler reuse.
+[ověření #116](changes/135_bindCachedCompilerEvidence.md).

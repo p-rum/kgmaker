@@ -33,7 +33,7 @@ project, using its existing canonical method ID:
 
 ```sh
 PYTHONPATH=src python -m kgmaker flow render --root /path/to/project \
-  --entry 'CANONICAL_METHOD_ID' --view process --format json
+  --entry 'CANONICAL_METHOD_ID' --context CONTEXT_ID --view process --format json
 ```
 
 A policy declaration is FRAMEWORK_DERIVED only for the supported API. Unknown API
@@ -45,6 +45,10 @@ Each boundary rechecks canonical public Node/symbol/selected realm/source hashes
 original compiler annotation/containment proof, W04 listener identity and proof,
 DLT's own declaration proof, and exact policy edge/proof tuples. A relevant forged
 edge produces a local unresolved policy boundary; unrelated policies remain valid.
+A non-null, non-string context identity such as an array or object excludes the
+policy node from the focused projection. The process validator uses the original evidence
+and reports a local UNKNOWN row without evidence references. See
+[current regression evidence](changes/141_handleInvalidKafkaPolicyContext.md).
 Legacy graphs without policy facts gain no inferred retry policy. Version and
 ordered-classpath stamps participate in context identity/freshness checks.
 

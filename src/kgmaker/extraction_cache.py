@@ -1,7 +1,8 @@
 """Bounded replay candidates embedded in the existing graph generation.
 
-This module performs no publication. Inspection validates every decoded hit and
-the graph store publishes candidates only with the resulting validated graph.
+Inspection validates fresh stage results. The graph store can retain version 1
+metadata alongside the validated graph, with replay disabled until provenance can
+be verified independently of the cached payload.
 """
 from __future__ import annotations
 
@@ -111,8 +112,11 @@ def engine_fingerprint():
 
 def launch_inputs(argv):
     """Capture the selected executable/platform, without starting a process."""
-    executable = Path(argv[0]).resolve(strict=True)
-    files = {str(executable): file_hash(executable)}
+    try:
+        executable = Path(argv[0]).resolve(strict=True)
+        files = {str(executable): file_hash(executable)}
+    except FileNotFoundError:
+        return None
     if executable.name in {'java', 'java.exe'}:
         for relative in ('release', 'lib/modules'):
             target = executable.parent.parent / relative
@@ -136,10 +140,9 @@ def retain(metadata, context_ids):
 
 
 class InspectionStages:
-    """Read/build candidates in memory; never write or promote evidence."""
+    """Execute live stages and retain bounded metadata without authorizing replay."""
 
     def __init__(self, root, selected, argv, *, timeout, cancel_file):
-        from .store import load_graph
         self.root, self.selected = Path(root), deepcopy(selected)
         self.argv = list(argv)
         self.cancel_file = Path(cancel_file) if cancel_file is not None else None
@@ -154,8 +157,6 @@ class InspectionStages:
                          and selected.get('freshness') != 'STALE'
                          and selected.get('source_snapshot_version') in
                              {'selected-source-set-2', 'typescript-input-discovery-1'})
-        stored = load_graph(root)
-        self.saved = decode(stored.extraction_cache) if stored is not None else {}
         self.entries = []
         self.statistics = []
 
@@ -175,31 +176,19 @@ class InspectionStages:
                'base': digest(graph_payload(base)) if base is not None else None,
                'upstream': digest(upstream) if upstream is not None else None}
         identity = digest(key)
-        status, reason, payload = 'MISS', 'NO_MATCH', None
-        if self.eligible:
-            for entry in self.saved.get('entries', []):
-                if entry['key_sha256'] == identity and entry['key'] == key:
-                    try:
-                        candidate = deepcopy(entry['payload'])
-                        validator(candidate)
-                    except (ValueError, TypeError, KeyError, AttributeError, WorkerError):
-                        reason = 'INVALID_CACHED_PAYLOAD'
-                    else:
-                        payload, status, reason = candidate, 'HIT', 'COMPLETE_KEY_MATCH'
-                    break
-        else:
-            status, reason = 'BYPASS', 'INCOMPLETE_INPUT_CLOSURE'
-        if payload is None:
-            payload = builder()
-            validator(payload)
+        # Both the digest and payload are stored together. Structural validation
+        # alone cannot authenticate a concrete worker or graph claim from them.
+        reason = 'UNVERIFIED_REPLAY' if self.eligible else 'INCOMPLETE_INPUT_CLOSURE'
+        payload = builder()
+        validator(payload)
         self.guard()
         entry = {'key': key, 'key_sha256': identity,
                  'payload': payload, 'payload_sha256': digest(payload)}
         if self.eligible and _bounded({'schema_version': 1, 'entries': [*self.entries, entry]}):
             self.entries.append(deepcopy(entry))
         elif self.eligible:
-            status, reason = 'BYPASS', 'CACHE_SIZE_LIMIT'
-        self.statistics.append({'stage': stage, 'status': status, 'reason': reason})
+            reason = 'CACHE_SIZE_LIMIT'
+        self.statistics.append({'stage': stage, 'status': 'BYPASS', 'reason': reason})
         return payload
 
     def attach(self, graph):
