@@ -182,10 +182,20 @@ def render_topology_mermaid(value):
             _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
         contexts = criteria.get('context_ids')
         selected = set(_refs(contexts)) if contexts is not None else None
+        visible_evidence_refs = set()
         for item in (*view.nodes, *view.edges):
             if item.attributes.get('scope', view.scope) not in (view.scope, 'unknown'):
                 _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
             if selected is not None and not selected.issuperset(_contexts(item)):
+                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
+            visible_evidence_refs.update(item.evidence_refs)
+        for proof in view.provenance:
+            if proof['id'] not in visible_evidence_refs:
+                # T017 retains proof records for the omitted frontier as well.
+                continue
+            if proof.get('scope') not in (None, view.scope, 'unknown'):
+                _topology_fail('TOPOLOGY_MERMAID_FOREIGN_SCOPE')
+            if selected is not None and not selected.issuperset(_refs(proof.get('context_ids', []))):
                 _topology_fail('TOPOLOGY_MERMAID_FOREIGN_CONTEXT')
         normalized=view.to_dict(include_generation_metadata=False)
         envelope={**raw,'document':normalized}

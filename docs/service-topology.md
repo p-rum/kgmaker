@@ -67,6 +67,10 @@ read/write relations have distinct text labels. Kafka publish/consume is marked
 `ASYNC; delivery UNKNOWN`. An unrecognized relation remains `UNKNOWN` and unresolved
 edges say execution is unknown. Node/edge status, evidence kinds, IDs, context,
 provenance and T017 omission inventories are retained in Mermaid-safe JSON comments.
+Before rendering, the selected scope and any explicit context filter are checked
+for each displayed claim and its directly cited provenance. Absent or unknown
+scope and absent context metadata stay eligible. Provenance cited only by omitted
+frontier entries remains available in the metadata.
 
 The diagram title carries scope, evidence kinds, coverage and truncation, plus the
 `runtime/data availability: UNKNOWN` and `ordering/delivery: NOT_OBSERVED` limits.

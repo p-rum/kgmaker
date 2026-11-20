@@ -1,5 +1,6 @@
 """T021 public contract tests; fixtures are hand-labelled model inputs, not runtime proof."""
 from copy import deepcopy
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -225,5 +226,70 @@ def test_t021_selector_preserves_unknown_scope_and_context_free_claims():
     text = render_topology_mermaid(value)
     prefix = '  %% topology-meta '
     meta = next(line for line in text.splitlines() if line.startswith(prefix))
+    assert json.loads(meta.removeprefix(prefix)) == before
+    assert value == before
+
+
+@pytest.mark.parametrize('proof_id', ['proof:service', 'proof:http'])
+@pytest.mark.parametrize('form', ['envelope', 'serialized', 'object'])
+def test_t021_rejects_foreign_scope_in_visible_provenance(proof_id, form):
+    envelope = golden_topology()
+    document = envelope['document']
+    proof = next(proof for proof in document['provenance'] if proof['id'] == proof_id)
+    proof['scope'] = 'test'
+    value = envelope if form == 'envelope' else document
+    if form == 'object':
+        value = ViewDocument.from_dict(document)
+    before = deepcopy(value)
+    with pytest.raises(TopologyMermaidError, match='TOPOLOGY_MERMAID_FOREIGN_SCOPE'):
+        render_topology_mermaid(value)
+    assert value == before
+
+
+@pytest.mark.parametrize('proof_id', ['proof:service', 'proof:http'])
+def test_t021_rejects_foreign_context_in_visible_provenance(proof_id):
+    value = golden_topology()
+    value['filtering']['criteria']['context_ids'] = ['ctx:prod']
+    proof = next(proof for proof in value['document']['provenance'] if proof['id'] == proof_id)
+    proof['context_ids'] = ['ctx:prod', 'ctx:foreign']
+    before = deepcopy(value)
+    with pytest.raises(TopologyMermaidError, match='TOPOLOGY_MERMAID_FOREIGN_CONTEXT'):
+        render_topology_mermaid(value)
+    assert value == before
+
+
+def test_t021_selected_scope_preserves_unknown_and_absent_visible_provenance():
+    value = golden_topology()
+    value['filtering']['criteria']['context_ids'] = ['ctx:prod']
+    proofs = {proof['id']: proof for proof in value['document']['provenance']}
+    proofs['proof:service']['scope'] = 'unknown'
+    proofs['proof:channel'].pop('scope')
+    proofs['proof:http']['scope'] = None
+    proofs['proof:resource']['context_ids'] = ['ctx:prod']
+    before = deepcopy(value)
+    prefix = '  %% topology-meta '
+    meta = next(line for line in render_topology_mermaid(value).splitlines() if line.startswith(prefix))
+    rendered = json.loads(meta.removeprefix(prefix))
+    assert {proof['id']: proof for proof in rendered['document']['provenance']} == proofs
+    assert rendered['filtering'] == before['filtering']
+    assert value == before
+
+
+def test_t021_preserves_provenance_only_referenced_by_omitted_frontier():
+    view = ViewDocument.from_dict(golden_topology()['document'])
+    edges = tuple(replace(edge, attributes={**edge.attributes, 'context_ids': ['ctx:foreign']})
+                  if edge.id == 'edge:http' else edge for edge in view.edges)
+    proofs = tuple({**proof, 'scope': 'test', 'context_ids': ['ctx:foreign']}
+                   if proof['id'] == 'proof:http' else proof for proof in view.provenance)
+    value = filter_topology(replace(view, rules_version='service-topology-view-1',
+                                    edges=edges, provenance=proofs), context_ids=['ctx:prod'])
+    assert value['filtering']['omitted_edge_ids'] == ['edge:http']
+    frontier = [item for item in value['filtering']['frontier'] if 'proof:http' in item.get('evidence_refs', [])]
+    assert frontier and all(item['reason'] == 'CONTEXT_FILTER' for item in frontier)
+    assert not any('proof:http' in item['evidence_refs']
+                   for kind in ('nodes', 'edges') for item in value['document'][kind])
+    before = deepcopy(value)
+    prefix = '  %% topology-meta '
+    meta = next(line for line in render_topology_mermaid(value).splitlines() if line.startswith(prefix))
     assert json.loads(meta.removeprefix(prefix)) == before
     assert value == before

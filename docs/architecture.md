@@ -191,8 +191,10 @@ from ranking and does not infer execution priority. See
 
 The captured service/resource/channel topology can be rendered as Mermaid through
 the T019 architecture CLI's `--format mermaid` output. This pure T021 renderer
-preserves model evidence, scope, contexts, realm identity and truncation metadata;
-it does not add runtime or delivery evidence. See the [topology rendering contract](service-topology.md#mermaid-rendering-t021)
+preserves model evidence, scope, contexts, realm identity and truncation metadata.
+It checks displayed claims and their directly cited provenance against the captured
+scope and any explicit context selection. Runtime and delivery evidence stay at the
+captured level. See the [topology rendering contract](service-topology.md#mermaid-rendering-t021)
 and [CLI example](architecture-json-cli.md#architecture-topology-mermaid-t021).
 
 Workspace v1 optionally accepts a separate `service_ownership` schema v1.

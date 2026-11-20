@@ -103,7 +103,12 @@ T021 parser/render coverage is in `tests/test_t021_render_topology_mermaid.py` a
 `tests/rendering/validate_t021_topology.mjs`. Current delivery and test results are
 recorded in [change132](changes/132_renderTopologyMermaid.md).
 
-The pure renderer checks the captured scope and the explicit T017 context selector before rendering. Claims with unknown scope or absent context metadata stay eligible. [Scope validation evidence](changes/138_rejectForeignTopologyEvidence.md).
+Before rendering, the renderer checks the captured scope and any explicit T017
+context selector against displayed nodes and edges and the provenance they
+cite directly. Conflicts return `TOPOLOGY_MERMAID_FOREIGN_SCOPE` or
+`TOPOLOGY_MERMAID_FOREIGN_CONTEXT`. Unknown scope and absent context metadata
+stay eligible. Provenance cited only by an omitted frontier entry remains in
+the metadata. [Scope validation evidence](changes/138_rejectForeignTopologyEvidence.md).
 
 ## Historical validation checkpoint
 

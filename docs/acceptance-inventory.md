@@ -1,8 +1,17 @@
 # Inventář acceptance T001 a T002
 
+## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
+
+T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
+3 RED na výchozím zdroji a 103 cílených PASS / 0 SKIP po opravě a review.
+Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
+Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
+VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125).
+[Change140](changes/140_validateAdditionalDatasetFields.md).
+
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS a 8 Spring fail-closed PASS. Úplné integrační ověření čeká. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -13,6 +22,18 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+
+## T052 — completion orchestration 2026-11-19
+
+Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+[per-step evidence](changes/134_addCompletionOrchestrator.md).
+
+| Acceptance | Ověření | Důkaz a zbývající krok |
+|---|---|---|
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
+| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
@@ -1577,11 +1598,13 @@ records actual commands/results and separate fixes. No whole S06 completion.
 | T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
 
 
-## T021 — topology Mermaid (PR #113 checkpoint)
+## T021 — topology Mermaid (PR #123)
 
-Pokrytí lokální opravy T021-AC04/05 je 181 PASS / 0 SKIP. [Záznam](changes/138_rejectForeignTopologyEvidence.md).
+Rozšířený rozsah T021-AC01–05 po review má 191 PASS / 0 SKIP se skutečným
+Mermaid 11.4.1 nad base `8ff2529ffb50b42ed2209d97478ea3e4cbf46042`.
+[Testy a scope ověření](changes/138_rejectForeignTopologyEvidence.md).
 
-Integration base `84f94d4462437fe1228f07d0ba8f51071224952e` (ordinary merge after report main); original renderer base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
+Historický checkpoint #113. Integration base `84f94d4462437fe1228f07d0ba8f51071224952e` (ordinary merge after report main); original renderer base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
 T017 merge `64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
 `0dcbf4a0fb23cc5d860f93aeee8da9b86bab4e40`, and W09 `cceb1109`. The combined
 targeted run `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q
@@ -1592,7 +1615,7 @@ reported 129 PASS / 0 SKIP / 5.69s after current main integration. The T021-spec
 reported 9 PASS / 0 SKIP / 1.70s, including actual T016 HTTP and Kafka diagrams.
 Mermaid 11.4.1 and jsdom 26.0.0 parse/render ran under Node v24.22.1; full suite remains NOT_RUN per package-level targeted-only
 sequencing. The selected compatibility case also confirms graph schema 1/2/3 loading. The report source identity integration check was attempted and SKIP because its trusted prebuilt JVM worker is unavailable; see change132.
-PR [#113](https://github.com/p-rum/kgmaker/pull/113) is open for independent review. Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
+Původní [#113](https://github.com/p-rum/kgmaker/pull/113) má konflikt. Samostatnou aktuální větev obsahuje [#123](https://github.com/p-rum/kgmaker/pull/123). Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
 
 | Acceptance | Current evidence | Status |
 |---|---|---|
@@ -1600,5 +1623,5 @@ PR [#113](https://github.com/p-rum/kgmaker/pull/113) is open for independent rev
 | T021-AC02 | `test_t021_hashes_logical_identity_with_realm_and_keeps_provenance`, same logical resource ID in two realms | PASS |
 | T021-AC03 | Malicious labels plus actual T016 HTTP/Kafka topology; Mermaid 11.4.1 parse/render in jsdom 26.0.0 | PASS |
 | T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
-| T021-AC05 | Envelope round-trip retains scope/context/provenance/omission; visible PARTIAL/TRUNCATED/UNKNOWN and async delivery boundary | PASS |
+| T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, status matrix, this inventory and change132 updated; review/PR checks pending | IN_PROGRESS |
