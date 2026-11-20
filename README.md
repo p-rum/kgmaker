@@ -1025,6 +1025,9 @@ agent proposes cases, synthetic data and code, then kgmaker validates citations,
 constraints and freshness before an explicit export. It never calls a model API
 or runs the proposed tests. Code-derived expectations are characterizations,
 not independent business correctness proofs.
+In synthetic object schemas, `additionalProperties` accepts a boolean or a
+supported nested schema. For example, `{"type":"integer","minimum":1}` checks
+each undeclared property and reports violations at its value path.
 
 ```bash
 kgmaker template list

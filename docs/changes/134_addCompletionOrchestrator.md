@@ -85,11 +85,33 @@ a T003-S13-W02. [Dokumentace CLI a postupu](../completion-orchestrator.md),
 [README](../../README.md), [registr](../tasks/README.md) a [acceptance](../acceptance-inventory.md)
 popisují stejný kontrakt.
 
+### T052-S03/S04 / T052-AC02–AC04 — ověřená integrace prvního follow-up
+
+T052 zpracoval skutečný retry opravy T046-S03/S04 a při opakovaném načtení
+zachoval nález na stejném task ID. Dvě nezávislá review pak schválila stejný
+packet. Úloha `task:91472f36fd41997e71b5739345417f392add792bf467a51dc5730665a8fc1c62`
+dosáhla `awaiting_pr_review` a po ověřené integraci `done`.
+[Projektový reviewer T045](https://github.com/p-rum/kgmaker/pull/125#issuecomment-7040630121)
+nezávisle ověřil 103 PASS, připravené PR, statický graf a obě SHA. GitHub
+odmítl formální self-review s HTTP 422, proto je explicitní přesný verdikt
+v komentáři. Merge použil očekávaný head `17739888492d56ee813aed3d1c0b203ff6e8420f`.
+[Sloučený #125](https://github.com/p-rum/kgmaker/pull/125) má merge commit
+`1532f1725f2cbe0d76685c273adc32c2e0d239e0` se skutečnými rodiči
+`8f362471a8254ff9a0e44870c490a1dcb6b067b1` a `17739888492d56ee813aed3d1c0b203ff6e8420f`.
+Ověřený cílový tree `3f840cd64bcfad9ed049aa274f1b46f76b16ea3a` je
+nová integrační baseline tohoto PR. Běh hostitele prokázal skutečné delegování,
+obnovu a integraci tohoto rozsahu. W01 stále čeká na úplný integrační důkaz.
+
 ## Kontroly
 
 - `python -m pytest -p no:cacheprovider -q tests/test_completion_handoff.py tests/test_completion.py tests/test_workflow.py tests/test_workflow_profiles.py tests/test_delivery.py tests/test_provenance.py tests/test_context_roles.py`
   — 129 PASS v Pythonu 3.12 po opravách z correctness a steelman review.
   Původní #120 průchod měl 117 PASS.
+- Stejná zaměřená sada na zdrojově přesném main po #125 a integrovaném T052
+  — 134 PASS / 0 SKIP. Obsahuje dalších pět T046 regresí. `git diff --check`
+  ověřuje integrované zdroje i dokumentaci.
+- `kgmaker semantic apply`, `semantic validate`, `scan`, `status` a `check`
+  — PASS na stejném integrovaném T052 checkoutu. Předchozí #125 vrstva je zachována.
 - `python -m kgmaker completion plan --jobs 4` — PASS na 119 položkách.
 - `python -m pytest -p no:cacheprovider -q` — FAIL, 2326 PASS, 1230 SKIP,
   21 FAIL a 27 ERROR. Mezi příčinami nepřipravený JVM toolchain a build exporter.
