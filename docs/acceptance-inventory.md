@@ -2,7 +2,7 @@
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #118](https://github.com/p-rum/kgmaker/pull/118) čeká na ověřený diff. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -13,6 +13,18 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+
+## T052 — completion orchestration 2026-11-19
+
+Dodání IN_PROGRESS, [zadání revize 1](tasks/52_addCompletionOrchestrator.md),
+[per-step evidence](changes/134_addCompletionOrchestrator.md).
+
+| Acceptance | Ověření | Důkaz a zbývající krok |
+|---|---|---|
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC02 | PARTIAL | Handoff ve stávajícím workflow, obnova packetu, omezený retry, předání findings a ochrana proti race/stale ve 117 zaměřených testech. Celý publikovaný retry a merge NOT_RUN. |
+| T052-AC03 | PARTIAL | Nezávislé lokální correctness a steelman review vedly ke skutečným opravám. Publikovaný HEAD a autorizovaný integrační běh zůstávají neověřené. |
+| T052-AC04 | PARTIAL | Skutečné stavy T029, W01 a T021, prioritizovaný výběr a worktree/task checkpoint. Úplná sada hlásí FAIL. Žádný merge z tohoto běhu. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 

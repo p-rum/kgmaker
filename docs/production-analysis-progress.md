@@ -1,5 +1,26 @@
 # Aktuální stav a zbývající práce
 
+## T052 — první běh dokončení 2026-11-19
+
+Remote `main` ověřený přes GitHub `8f362471a8254ff9a0e44870c490a1dcb6b067b1`.
+Lokální worktree jsou založené na `465b121992aad50c2885acef0fd038531a31293a`,
+tedy obsahu sloučené cache před přidáním `.github/workflows/pr-review.yml`.
+Původní checkout a lokální změny T021 nebyly použity pro zápis.
+
+| Položka | Worktree nebo PR | Obnova a další krok |
+|---|---|---|
+| T052 | `/tmp/kgmaker-t052-completion` | `task:058150b3297f150a629c14290f22e6cd269c757cbf5c20bb09720786fdb78189`. Plánovač a host skill v lokálním diffu. Nezávislé review a publikace vyžadují nový přesný pár SHA. [Záznam změny](changes/134_addCompletionOrchestrator.md). |
+| T003-S10-W01 | `/tmp/kgmaker-cache-replay`, [#116](https://github.com/p-rum/kgmaker/issues/116), [#118](https://github.com/p-rum/kgmaker/pull/118) | `task:0353f35d68c7fae0847bb8ae1ac29a40205ba47986cddee556a10b1eac1e3798`. Oprava [draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 PASS / 0 SKIP se skutečnými K1/K2/TS workery. Head `db323d8729690bafabadd076b34c177f046e8e61`. Dokončit audit úplné sady a exact-pair T045 review. W02/W06 čekají na uzavření W01. |
+| T021 | [#113](https://github.com/p-rum/kgmaker/pull/113), [#117](https://github.com/p-rum/kgmaker/pull/117) | Původní PR má blokující nález z review a konflikt. Lokální worktree `/tmp/kgmaker-t021-fix` má 181 PASS / 0 SKIP včetně skutečného Mermaid parseru. Zbývá integrace s main a publikované review. |
+| T047-S01 | `/tmp/kgmaker-t047-oracle` | `task:1d18ec54c8fcb1789affd668fe217b6e739d542917b3a8d7a88060718e62c804`. Fixture 100 PASS / 2 SKIP / 1 XFAIL; lokální re-review APPROVE pro SOURCE_ONLY subset. Další práce je vydání scoped dodávky a úplná mutační matice. |
+| T025 | `/tmp/kgmaker-t025-projection` | Regrese `views.project` pro null potvrzena na baseline. Minimální lokální oprava připravena; 137 PASS, 22 SKIP. Přidělit nezávislé review. |
+| T046-S03 / #91 | [#91](https://github.com/p-rum/kgmaker/issues/91) | Stávající subset dokumentuje additionalProperties=false. Objektová varianta vrací pro neplatnou hodnotu prázdné chyby i omezení. Ověřit schéma kontraktu a evidenci potřebnou k opravě. |
+
+Otevřený [#4](https://github.com/p-rum/kgmaker/pull/4) je historický draft bez
+unikátního patche. [#90](https://github.com/p-rum/kgmaker/issues/90) odkazuje na
+již sloučený #42 a vyžaduje samostatné ověření před uzavřením. GitHub draft #119 je první publikovaná změna tohoto běhu. Při obnově čti worktree a task přes `kgmaker task show`, ověř
+current refs přes GitHub connector, spusť nový plán a doplň výsledky.
+
 ## Post-merge integrace PR97 — 2026-11-15
 
 W05 je MERGED v `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea`; skutečný první merge parent je `6eb755ec1d4e777abe8d34dea7bee9477c90692f`.
@@ -61,14 +82,14 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 47 | 13 | 0 | 60 |
-| T004 / T005–T044 | 27 | 12 | 1 | 40 |
+| T003 work packages | 48 | 12 | 0 | 60 |
+| T004 / T005–T044 | 28 | 11 | 1 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
 | T047 kroky | 0 | 13 | 0 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 80 | 38 | 1 | 119 |
+| Celkem (včetně sdílených kontraktů T047) | 82 | 36 | 1 | 119 |
 
-T003/T004 mají podle níže uvedených atomických řádků 26 položek bez sloučené
-dodávky: 25 PLANNED a 1 PR_OPEN. W09 a S09-W05 jsou MERGED; tento součet je inventář
+T003/T004 mají podle níže uvedených atomických řádků 24 položek bez sloučené
+dodávky: 23 PLANNED a 1 PR_OPEN. W09 a S09-W05 jsou MERGED; tento součet je inventář
 řádků, nikoli nové nezávislé ověření všech dodávek.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
@@ -81,8 +102,7 @@ testový receipt.
 
 Po baseline T048 `250e7c1` byly kromě dokumentačních instrukcí sloučeny také
 T046-S01 až S06 a přibylo zadání T049; jejich přesné SHA jsou v atomických řádcích.
-T020 zůstává MERGED v PR87; topology/explain nadále přijímají jen JSON. T021 je
-nyní má upstream T003-S07-W09 sloučený v PR109; vlastní dodávka T021 zůstává PLANNED. T031 a T032 jsou sloučené;
+T020 zůstává MERGED v PR87; topology/explain v main přijímají JSON. T021 má upstream T003-S07-W09 v PR109 a otevřený PR113. T031 a T032 jsou sloučené;
 T034 procesní CLI zůstává PLANNED.
 
 ### Atomické položky
@@ -130,7 +150,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S09-W03](tasks/T003-S09-03-templateDialectExpansion.md) | MERGED | PARTIAL | `2b0cf353c31f88c0c0226cf415585433843187f2` | [src/kgmaker/templates.py](../src/kgmaker/templates.py), [src/kgmaker/framework.py](../src/kgmaker/framework.py), [tests/test_templates.py](../tests/test_templates.py) | [# 38](https://github.com/p-rum/kgmaker/pull/38) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W04](tasks/T003-S09-04-approvedMethodologyConflicts.md) | MERGED | PARTIAL | `aa9e64bbec0bfea4bf143824dcc3d8ddf5cd6533` | [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py), [src/kgmaker/analysis_report.py](../src/kgmaker/analysis_report.py), [tests/test_methodology_conflicts.py](../tests/test_methodology_conflicts.py) | [# 8](https://github.com/p-rum/kgmaker/pull/8) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S09-W05](tasks/T003-S09-05-completeAnalysisReport.md) | MERGED | VERIFIED_IN_SCOPE | `9c86d29fc267014e2bee4b197c7692f17a1cda93` (approved `edb5cff`) | [Report capability/CLI](complete-analysis-report.md), [actual fixture](../tests/test_complete_analysis_report_actual.py) | [PR112](https://github.com/p-rum/kgmaker/pull/112) | Independent overlapping facets, declared business/tool blockers, explicit delivery/acceptance/test links and pinned atomic publication. 73 integration PASS with actual Javac21/TS5.7.3/React; subsequent publication audit151 PASS / 2 DESELECTED + actual5 PASS / 0 SKIP; compiler BEFE artifact and SOURCE_ONLY template/PDF capability remain separate. Single-context feature selection, runtime/data UNKNOWN; [change131](changes/131_completeAnalysisReport.md). |
-| [T003-S10-W01](tasks/T003-S10-01-stageContentCache.md) | PR_OPEN | VERIFIED_IN_SCOPE | `1823ad2` nad main `84f94d4` | [inspection](../src/kgmaker/inspection.py), [store](../src/kgmaker/store.py), [cache](../src/kgmaker/extraction_cache.py), [unit](../tests/test_stage_content_cache.py), [actual](../tests/test_stage_content_cache_actual.py) | [PR114](https://github.com/p-rum/kgmaker/pull/114) | Embedded stage cache; integrační gate 102 targeted PASS /0 SKIP včetně actual JDK21 K1/K2/TS. Bounded W01 acceptance ověřena; nezávislé review je samostatný gate. W02–06 a full suite NOT_RUN. [Kontrakt](stage-content-cache.md), [change133](changes/133_stageContentCache.md). |
+| [T003-S10-W01](tasks/T003-S10-01-stageContentCache.md) | MERGED | FAIL | merge `7c6a3dda821b55a4de6718f09504de4a861f47ae` | [inspection](../src/kgmaker/inspection.py), [store](../src/kgmaker/store.py), [cache](../src/kgmaker/extraction_cache.py), [unit](../tests/test_stage_content_cache.py), [actual](../tests/test_stage_content_cache_actual.py) | [#114](https://github.com/p-rum/kgmaker/pull/114), [#118](https://github.com/p-rum/kgmaker/pull/118) | Historický běh 102 PASS v [change133](changes/133_stageContentCache.md). CPU/compiler cache replay nedokládá autoritu cíle při změně uloženého payloadu a přepočtu digestu; P1 ve [#116](https://github.com/p-rum/kgmaker/issues/116). Oprava #118 je draft. W02/W06 čekají na opravu. |
 | [T003-S10-W02](tasks/T003-S10-02-reverseDependencyIndexes.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W03](tasks/T003-S10-03-negativeLookupInvalidation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S10-W04](tasks/T003-S10-04-filesystemMutationEquivalence.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/scanner.py](../src/kgmaker/scanner.py), [src/kgmaker/semantic.py](../src/kgmaker/semantic.py), [src/kgmaker/store.py](../src/kgmaker/store.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
@@ -165,15 +185,15 @@ T034 procesní CLI zůstává PLANNED.
 | [T018](tasks/T-018_explain-view-elements.md) | MERGED | PARTIAL | `1005b9f950102d2d5fd0e74735bc0577c2e30c0b` | [src/kgmaker/view_explanation.py](../src/kgmaker/view_explanation.py), [tests/test_t018_explain_view_elements.py](../tests/test_t018_explain_view_elements.py) | [#83](https://github.com/p-rum/kgmaker/pull/83) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T019](tasks/T-019_add-architecture-json-cli.md) | MERGED | PARTIAL | `a60f02d2a36f0d826ea340541966028d818efd5d` | [src/kgmaker/architecture_cli.py](../src/kgmaker/architecture_cli.py), [src/kgmaker/cli.py](../src/kgmaker/cli.py), [tests/test_t019_add_architecture_json_cli.py](../tests/test_t019_add_architecture_json_cli.py) | [#84](https://github.com/p-rum/kgmaker/pull/84) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T020](tasks/T-020_render-interface-markdown.md) | MERGED | PARTIAL | `250e7c16250a97b9f8df5256b9894c8119dc64d9` | [src/kgmaker/architecture_cli.py](../src/kgmaker/architecture_cli.py), [src/kgmaker/architecture_render.py](../src/kgmaker/architecture_render.py), [src/kgmaker/architecture_render_common.py](../src/kgmaker/architecture_render_common.py), [tests/test_t020_render_interface_markdown.py](../tests/test_t020_render_interface_markdown.py) | [#87](https://github.com/p-rum/kgmaker/pull/87) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
-| [T021](tasks/T-021_render-topology-mermaid.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Nejprve T003-S07-W09; T017/T019 již MERGED. |
+| [T021](tasks/T-021_render-topology-mermaid.md) | PR_OPEN | PARTIAL | head `52e8e25b3378ebe0f2dfc5acba81edf8a90c725c` | [Renderer](https://github.com/p-rum/kgmaker/pull/113/files) | [#113](https://github.com/p-rum/kgmaker/pull/113), [#117](https://github.com/p-rum/kgmaker/pull/117) | #113 není mergeable a má otevřený nález foreign scope/context. Opravný #117 je draft. Historické testy #113 nepokrývají opravu; T022 čeká na T021. |
 | [T022](tasks/T-022_render-topology-markdown.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
 | [T023](tasks/T-023_define-business-process-model.md) | MERGED | PARTIAL | `b78d2e62148f225be7ba8c53c839f8b052ee269d` | [src/kgmaker/process_model.py](../src/kgmaker/process_model.py), [tests/test_t023_define_business_process_model.py](../tests/test_t023_define_business_process_model.py) | [#56](https://github.com/p-rum/kgmaker/pull/56) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T024](tasks/T-024_discover-process-triggers.md) | MERGED | PARTIAL | `c98ae1ea85934674eac743d60489b37b322f8fc9` | [src/kgmaker/process_triggers.py](../src/kgmaker/process_triggers.py), [tests/test_t024_discover_process_triggers.py](../tests/test_t024_discover_process_triggers.py) | [#59](https://github.com/p-rum/kgmaker/pull/59) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
-| [T025](tasks/T-025_build-local-process-path.md) | MERGED | PARTIAL | `32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6` | [src/kgmaker/control_flow.py](../src/kgmaker/control_flow.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_t025_build_local_process_path.py](../tests/test_t025_build_local_process_path.py) | [#65](https://github.com/p-rum/kgmaker/pull/65), [#60](https://github.com/p-rum/kgmaker/pull/60) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
+| [T025](tasks/T-025_build-local-process-path.md) | MERGED | FAIL | `465b121992aad50c2885acef0fd038531a31293a` | [src/kgmaker/control_flow.py](../src/kgmaker/control_flow.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_t025_build_local_process_path.py](../tests/test_t025_build_local_process_path.py) | [#65](https://github.com/p-rum/kgmaker/pull/65), [#60](https://github.com/p-rum/kgmaker/pull/60) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. Historický merge `32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6`. Regrese optional CFG refs potvrzena na baseline W01; oprava v samostatném worktree, viz checkpoint výše. |
 | [T026](tasks/T-026_collapse-business-steps.md) | MERGED | PARTIAL | `9442114d169b84e6c9f98dd097faafd80eff0d48` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t026_collapse_business_steps.py](../tests/test_t026_collapse_business_steps.py) | [#66](https://github.com/p-rum/kgmaker/pull/66) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T027](tasks/T-027_cross-http-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `93c52d338ea273175b9c0ed5a7a5477ae6bf2de0` | [src/kgmaker/business_process.py](../src/kgmaker/business_process.py), [tests/test_t027_cross_http_process_boundary.py](../tests/test_t027_cross_http_process_boundary.py) | [PR105](https://github.com/p-rum/kgmaker/pull/105), independent APPROVE and verified two-parent merge | Historical integration 200 PASS / 0 SKIP, 10.76 s; independent review 200 PASS / 0 SKIP, 13.00 s. Source/semantic preservation verified. Status reconciled in change127; full suite remains NOT_RUN. |
 | [T028](tasks/T-028_cross-async-process-boundary.md) | MERGED | VERIFIED_IN_SCOPE | `9f538634807957abe1004dde43450271b77f1bb5` | [business_process.py](../src/kgmaker/business_process.py), [test_t028_cross_async_process_boundary.py](../tests/test_t028_cross_async_process_boundary.py) | [PR108](https://github.com/p-rum/kgmaker/pull/108), [change127 steps 7–10](changes/127_crossAsyncProcessBoundary.md) | New context/projection/T025/T028 integration: 158 PASS / 0 SKIP, 28.09 s, actual JDK21/Javac/K1/K2 and 4 reviewer repros; both parent source/test trees preserved. Historical review-fix run 264 PASS / 0 SKIP. Independent APPROVE/merge and317 targeted PASS are recorded in [merge audit](https://github.com/p-rum/kgmaker/pull/108#issuecomment-6899650441); full suite NOT_RUN. |
-| [T029](tasks/T-029_project-process-failures.md) | PR_OPEN | VERIFIED_IN_SCOPE | `9c86d29fc267014e2bee4b197c7692f17a1cda93` + T029 | [test_t029_project_process_failures.py](../tests/test_t029_project_process_failures.py), actual Java/K1 positive and K2 UNKNOWN | [change130](changes/130_projectProcessFailures.md) | Pure failure projection, per-occurrence canonical Kafka entry and exact T014 membership tuple after the second PR110 review; current report-main integration 203 PASS / 0 SKIP (74.02 s), T014/T028/T029 + all 3 reviewer reproductions + report projection/publication; historical345 in step11; change130 steps9–12. Finally paths preserved, static retry/DLT, no remote rollback, PROPOSED compensation only. Full/actual Kafka3.2.0/runtime NOT_RUN. |
+| [T029](tasks/T-029_project-process-failures.md) | MERGED | VERIFIED_IN_SCOPE | merge `84f94d4462437fe1228f07d0ba8f51071224952e` | [test_t029_project_process_failures.py](../tests/test_t029_project_process_failures.py), actual Java/K1 positive and K2 UNKNOWN | [#110](https://github.com/p-rum/kgmaker/pull/110) | Pure failure projection, per-occurrence canonical Kafka entry and exact T014 membership tuple after the second PR110 review; current report-main integration 203 PASS / 0 SKIP (74.02 s), T014/T028/T029 + all 3 reviewer reproductions + report projection/publication; historical345 in step11; change130 steps9–12. Finally paths preserved, static retry/DLT, no remote rollback, PROPOSED compensation only. Full/actual Kafka3.2.0/runtime NOT_RUN. |
 | [T030](tasks/T-030_prepare-process-label-packet.md) | MERGED | PARTIAL | `9eec41a403b4e6601fe3addac168bf39d37f31b6` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t030_prepare_process_label_packet.py](../tests/test_t030_prepare_process_label_packet.py) | [#75](https://github.com/p-rum/kgmaker/pull/75) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T031](tasks/T-031_validate-process-annotations.md) | MERGED | PARTIAL | `2c7b38ea2dc7b5ad08009eefa276c4dc41a5b1a9` | [src/kgmaker/process_semantics.py](../src/kgmaker/process_semantics.py), [tests/test_t031_validate_process_annotations.py](../tests/test_t031_validate_process_annotations.py) | [#77](https://github.com/p-rum/kgmaker/pull/77) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T032](tasks/T-032_persist-process-review.md) | MERGED | PARTIAL | `7e6c838342ba9e59609d420f3387a05625290fcf` | [src/kgmaker/process_store.py](../src/kgmaker/process_store.py), [tests/test_t032_persist_process_review.py](../tests/test_t032_persist_process_review.py) | [#78](https://github.com/p-rum/kgmaker/pull/78) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -209,7 +229,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T047-S12](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/cli.py](../src/kgmaker/cli.py), [src/kgmaker/feature_cli.py](../src/kgmaker/feature_cli.py) | — | Upstream owner: T047-S12; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S13](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S13 + T003-S11; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 
-### Otevřené PR — přesné base/head páry
+### Historické PR checkpointy — 2026-11-07
 
 GitHub GET dne 2026-11-07: T046 PR41/42/43/44/45/40 jsou ready (`draft=false`),
 `mergeable=true`, `mergeable_state=unstable`. To není PASS CI ani approval.
@@ -236,7 +256,7 @@ předkovi. PR4 `feat/evidence-production-scope` má dva takové merge commity
 `compiler-workers` vracejí prázdný diff. Nejde o prázdný rozdíl main proti celému
 starému checkoutu: main obsahuje novější změny. Žádný původní patch PR4 nezůstává
 k integraci; doporučení je samostatně uzavřít historický draft, zde nebyl změněn.
-Všech šest T046 větví má otevřené PR a jejich kód není v main.
+Ke dni historického auditu mělo všech šest T046 větví otevřená PR. Aktuální sloučení je zachyceno v atomických řádcích.
 
 ### Ověření tohoto auditu a pokračování
 
@@ -1660,7 +1680,7 @@ preservation are recorded in [change125 step11](changes/125_backendFrontendValue
 
 ## T029 — Static failure projection (2026-11-15)
 
-Delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `9c86d29`. New integration: **203 PASS / 0 SKIP, 74.02 s**, T014/T028/T029 + three actual reviewer reproductions + report projection/publication (change130 step12). Source byte identity preserved. Historical integration on main `83999fb`: 345 PASS / 0 SKIP, 83.01 s (T014 + T025–T029 and all three actual reviewer reproductions); change130 step11. The former 301 PASS checkpoint predates the second membership correction.
+Historical pre-merge delivery PR_OPEN; verification VERIFIED_IN_SCOPE on actual main `9c86d29`. New integration: **203 PASS / 0 SKIP, 74.02 s**, T014/T028/T029 + three actual reviewer reproductions + report projection/publication (change130 step12). Source byte identity preserved. Historical integration on main `83999fb`: 345 PASS / 0 SKIP, 83.01 s (T014 + T025–T029 and all three actual reviewer reproductions); change130 step11. The former 301 PASS checkpoint predates the second membership correction.
 [Change130](changes/130_projectProcessFailures.md) separates RED, actual fixture
 repairs, implementation, final diagnostics fix and real test runs. The pure API
 preserves all catch/finally CFG paths and only attaches validated static retry/DLT
