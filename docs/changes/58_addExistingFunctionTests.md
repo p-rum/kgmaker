@@ -141,5 +141,5 @@ Po opravě cíleně **106 passed + 37 subtests**, full **1625 passed /1055 skipp
 
 [Issue #91](https://github.com/p-rum/kgmaker/issues/91) je reprodukované na
 sloučeném zdroji. [Change140](140_validateAdditionalDatasetFields.md) eviduje
-rekurzivní validaci schématu dodatečných vlastností, původní RED a 102 cílených
+rekurzivní validaci schématu dodatečných vlastností, původní RED a 103 cílených
 PASS. Starší výsledky výše patří jejich původním revizím.

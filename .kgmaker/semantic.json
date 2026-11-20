@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "580306155885a8f323ad430c78a012d538d0c42b06f016b94e40c37aca1fea61",
-    "docs/acceptance-inventory.md": "42046311c47ceb1e45a30472cf4c3f9fec3c9b26db87f540db734183485160e5",
+    "README.md": "5bc349d71d82099d5b9df9966c99869af8ce59cb64830cbb9144916017a5c209",
+    "docs/acceptance-inventory.md": "6a2fabab50f8db4fb28a2fe64b4899e2c65839462a958cfaa66bc7fbd7c60871",
     "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "5d4709ade64a9e84f83cf121a8d4013ad4c6ba6014c30337cb2543cc2c117563",
     "docs/architecture.md": "7a813f58d47b66422155e45e9cf6b97373d945556c473283f347da4bdde25df1",
@@ -39,6 +39,7 @@
     "docs/changes/131_completeAnalysisReport.md": "3837a3938b542d76749b12097af5f969a99e0be4a4554eb644752717c117d977",
     "docs/changes/133_stageContentCache.md": "c7d7214861f898f96e373684921195d0c22289445c7d1906261bb9eab49cf3db",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
+    "docs/changes/140_validateAdditionalDatasetFields.md": "0079cf6018ca0ed631e2d512f78f9196fd203dac549f64d1e9a8528280f5d139",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
@@ -76,7 +77,7 @@
     "docs/changes/55_expandThymeleafFragments.md": "8d4fd7cb5d5cb155c2780aa0f1054e51e2bc9bd071c012bb4b6f06a062a6568b",
     "docs/changes/56_addDeliveryReferences.md": "f641e7176c37df8b48e35221a9fa5c3bda3966417fcc38ed13dddb36b68d110a",
     "docs/changes/57_addArtifactTemplates.md": "aa7190aab1851d4c582c6b27ed8e3c99fd657ab5ccc1636c80592e68cff6b9e8",
-    "docs/changes/58_addExistingFunctionTests.md": "c2079e12f2f1df8cc7100b42c039b63cfcc8e18303bdbfe962ce16160a3d1e88",
+    "docs/changes/58_addExistingFunctionTests.md": "29c1899d82be48ef4c6e0dd0f17711143cd2a2651c850e6b6e392c27e62a1595",
     "docs/changes/59_verifySyntheticTestData.md": "ebe95022d4a2a6d9f2e2113568e778de844a5854929c74915f65acaa963fec6b",
     "docs/changes/5_preserveCompilerRefresh.md": "e8c5ff31a00cf5b764c1707357f3ed1c7f2bd8f10159ec4dbe48ed731a9da9db",
     "docs/changes/60_enforceOptionalLocalApprovals.md": "ea51fdfad5253a1dcb101cd47059d7e0a328ed8c9c36779250deddcf0a424d72",
@@ -120,7 +121,7 @@
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "d6cfdf6083361c135e00bd8753d4f963def3a4d145b231fca5fe1f5b83f1f6db",
     "docs/complete-analysis-report.md": "dcdbc01d104d078c12376845c84e84f735d3476dadada0fa156656ceb76a7ac9",
-    "docs/delivery-workflow.md": "3ca834a925aed4e77589aa703d80ad0ae95bfda35b64354780095815d29eaa6e",
+    "docs/delivery-workflow.md": "98ec8adc96c0b1f167b0e9f501ec08d33ae76579bd370355d27ccdb36bd7bced",
     "docs/evidence-ranking.md": "7b062d4aaf261999dcafb9050ec3e293575d13bfa968e44075f30755dbd2515f",
     "docs/feature-analysis.md": "16759fe1dd2d72c613cd2c168e873cb752621d4ce472b9fb9d0aade68763519c",
     "docs/field-mapping.md": "d15c90195ecd70fe6cf8fce592ae8383d56e50a5d3cc090c710de9696446b479",
@@ -138,7 +139,7 @@
     "docs/process-paths.md": "6a8d715f8302e0e771445052b48578729a05be59b80dfe84bc4a7f195c67af52",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "c8e60079c39be33cb1ddf4c3269e5966ac8b6809c635b16aae34959c9671ff96",
+    "docs/production-analysis-progress.md": "828b33da90e04067f1afe246c9d466031ad533eef5fd4f6e30bb2e11b227086b",
     "docs/production-scope.md": "5ae70daad7ae15c4fc136b3313f22dca2bb257aac201c8ca130f6d1ecc8734c4",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
@@ -161,14 +162,14 @@
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
     "docs/tasks/45_addCodeReviewAgent.md": "f58ff7405cca873bfa5ec39cd1aebe998070cdba4b53d8b67408787b6d958905",
-    "docs/tasks/46_addTemplatesTestsAndTraceability.md": "3efd77732dde11721a763fb41cde5fb3c811a35766b0b0a4ef592f5fcadad5bc",
+    "docs/tasks/46_addTemplatesTestsAndTraceability.md": "837d93ae6000fa8d2a01272302864d9f96adc3a36bccd426eb36c28feade9c89",
     "docs/tasks/47_addReliableIncrementalContext.md": "18762dbe09718a419093557fcc8ae87f8f9ab6f450989fd91690c89654298fb7",
     "docs/tasks/48_completeImplementationHandoff.md": "28b1bb841cc8dcbfd8b942cc7ca20fc36685f59c5c6c7d9a15f855a98de06b76",
     "docs/tasks/49_separateTargetAgents.md": "749af4a85574f36b6dc5585828bb8fcb9f6c5398c4e3bc56c5d7a728dc66395f",
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
     "docs/tasks/50_addTargetProjectSkills.md": "179d18be56a4c77c337212fac92c7fac643423d63b184e89b785e5c26681ac6b",
     "docs/tasks/51_connectProjectWorkflows.md": "6dee419ded0bbf1a9fa487ade39473d507565560b4b689cc09c73eef995dbc7c",
-    "docs/tasks/README.md": "32b55c5396ec7cb8813cebfcd3665ffbf36762fea61ae57892662eb017eb7b88",
+    "docs/tasks/README.md": "4d45230f3c22eefe88a5dcd56ca128bb69187db95cd7a442cfc1bbf5f7fef302",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "9e3c464290037669f322eb3c0ab51c37d9979299174966b7da21c6c3b45ed8f2",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -457,14 +458,14 @@
     "src/kgmaker/schema_replay.py": "aede1ab2ccac6d93b294c8a4aa1afea426ba1d4b7024d91c3d1ac42cfb24e24b",
     "src/kgmaker/semantic.py": "df646556cfde391bead20c03822a787ac02c7d9b64a3b812836f927503a21e88",
     "src/kgmaker/service_topology.py": "0dbfaa07a97a7840717f59e7651f32c1e23fcfdc3f2cf07602c0cd6345ed8487",
-    "src/kgmaker/skills.py": "1f942a5e262b4d94c9c4ab6f1cda02a43816b66b9924455a48da73f8ddd5d469",
+    "src/kgmaker/skills.py": "9fb36c7528f1950bde01fa4237db3b24304dd55e8759bc2faad09fb335688d1f",
     "src/kgmaker/spring_beans.py": "3578bff2781501216031c60493f6737fd1b6a4e703294cd499f43c3e6544fd13",
     "src/kgmaker/spring_conditions.py": "70788d9310a8b41d954d91fc0ef52a13608fa1da23ae52cd791c6021e5c76ac8",
     "src/kgmaker/spring_imports.py": "7147ac065c5fd7c97edaa6483712837183071b16feaa2c34ac2e1fd23c73579c",
     "src/kgmaker/store.py": "95d449ef1dd6abcbae434d2d1fe3d3477fae204006cc17ef708fc1dea91d6aa4",
     "src/kgmaker/templates.py": "609db10e9bdd41eebeeea97036105b6c5d088ab492e1ab6d7b0e68464633d327",
     "src/kgmaker/test_analysis.py": "7b35d7217fe8fda5557a556ca1b3f03f7376d7b8dd5e0d8b1cb878acccc8c505",
-    "src/kgmaker/testgen.py": "5fd071949a141cf8ad6abb9171e540e370f29383ecebc928cb3bc49847416688",
+    "src/kgmaker/testgen.py": "c4e529174f925c64e65f70e20c1499d11d4561a27bde767236169ae38d0fd9de",
     "src/kgmaker/topology_filter.py": "2a0816b27564811331ce03d49cd9c8ca59eb9a290d9a8334d03d39b0051461f3",
     "src/kgmaker/typescript_snapshot.py": "a40df7851342c4c5b760c696129d2e62aebbe91a0b621efc80f71e5566d8b9c4",
     "src/kgmaker/view_cache.py": "ca5c374c556a55d9d7cc559cf0951610af0396072cb5ca15aa7de1648dd3134d",
@@ -514,7 +515,7 @@
     "tests/test_data_check.py": "156e1d9cd477887743201fb5ebc8b1774781587d1dcc427814fbcf174998160b",
     "tests/test_dataflow.py": "5dfb650ced21cade17b6ada4b71c53a19e9386af989beb4acbee7eb23d83b937",
     "tests/test_default_body_mapping.py": "1ed57c51b7183bfdd603574eeaef9bb365271c5dbe320644cdbc7fd34fcfb54c",
-    "tests/test_delivery.py": "9cb28c9a38483025971cb860434af05660af43c1284dfd2b1c950606efe4ac73",
+    "tests/test_delivery.py": "d488c6041e3c1ac2f3b53ecdd131f86ceb2e203c4a0643378ef84c3e72b013a3",
     "tests/test_dependency_dispatch.py": "03a29b0bf6d4d3bbd5134953e672ca620af5df0cafc483e28c7c2f5424ec9fee",
     "tests/test_evidence_ranking.py": "ce5f8e698a2f0882fecb82a6c6be8e2781a2b90d37710fe405de680f6ae95467",
     "tests/test_exporter_distribution.py": "8554fe18fbc568ef79090a466585e7e879d5c5386f8614adec62ae27cefadaa6",
@@ -989,6 +990,13 @@
       "summary": "Consuming bounded JPQL/HQL grammar validates complete clauses and scalar/predicate expressions, uses lexical query-block alias scopes, and publishes only compiler-owned static persistence intent; invalid bindings are UNKNOWN and unsupported syntax is localized PARTIAL."
     },
     {
+      "id": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
+      "name": "Validated extraction stage cache",
+      "source_file": "docs/stage-content-cache.md",
+      "source_line": 3,
+      "summary": "Bounded content-addressed replay of explicit JVM/TypeScript extraction stages embedded in the existing graph generation; no evidence promotion."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
@@ -996,11 +1004,11 @@
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
-      "id": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
-      "name": "Validated extraction stage cache",
-      "source_file": "docs/stage-content-cache.md",
-      "source_line": 3,
-      "summary": "Bounded content-addressed replay of explicit JVM/TypeScript extraction stages embedded in the existing graph generation; no evidence promotion."
+      "id": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "name": "Typed extra synthetic properties",
+      "source_file": "docs/delivery-workflow.md",
+      "source_line": 131,
+      "summary": "Schema-valued additionalProperties validates declared-type constraints on each extra synthetic data value."
     }
   ],
   "edges": [
@@ -2725,46 +2733,6 @@
       "evidence": "The configuration view exposes policy, canonically injected FIELD-bound proxy eligibility and transition relations without adding them to execution ranking."
     },
     {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
-      "kind": "part_of",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 211,
-      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
-      "kind": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 442,
-      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
-    },
-    {
-      "source": "concept:README.md:optional_agent_authored_semantic_layer",
-      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
-      "kind": "validates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "src/kgmaker/semantic.py",
-      "source_line": 102,
-      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:semantic_update::507",
-      "target": "concept:README.md:optional_agent_authored_semantic_layer",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1,
-      "source_file": "README.md",
-      "source_line": 213,
-      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
       "source": "file:src/kgmaker/extraction_cache.py:extraction_cache.py",
       "target": "concept:docs/stage-content-cache.md:validated_extraction_stage_cache",
       "kind": "implements",
@@ -2813,6 +2781,56 @@
       "source_file": "tests/test_stage_content_cache_actual.py",
       "source_line": 1,
       "evidence": "Explicit real-worker fixtures count analyze operations and exercise selected JVM classpath, worker-byte/rule and TypeScript configuration changes."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
+      "kind": "part_of",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 211,
+      "evidence": "The README describes the local stable-ID inventory used for optional agent-authored semantic extraction."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:apply_semantic_patch::440",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 442,
+      "evidence": "apply_semantic_patch applies a scoped agent patch while preserving semantic facts outside the change impact."
+    },
+    {
+      "source": "concept:README.md:optional_agent_authored_semantic_layer",
+      "target": "function:src/kgmaker/semantic.py:validate_semantic_data::100",
+      "kind": "validates",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "src/kgmaker/semantic.py",
+      "source_line": 102,
+      "evidence": "validate_semantic_data validates IDs, provenance, confidence, and graph freshness before merging semantic entries."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:semantic_update::507",
+      "target": "concept:README.md:optional_agent_authored_semantic_layer",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1,
+      "source_file": "README.md",
+      "source_line": 213,
+      "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
+    },
+    {
+      "source": "file:src/kgmaker/testgen.py:testgen.py",
+      "target": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/testgen.py",
+      "source_line": 368,
+      "evidence": "Testgen recursively applies the typed additional property schema to each undeclared object value."
     }
   ],
   "episodes": [

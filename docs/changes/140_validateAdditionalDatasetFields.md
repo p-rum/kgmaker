@@ -31,6 +31,11 @@ Nezávislé review reprodukovalo shodnou chybovou cestu pro doslovný klíč
 `"x.y"` a vnořené `x → y` uvnitř typované dodatečné hodnoty. Druhá úprava
 rozlišuje `$.extra["x.y"]` od `$.extra.x.y` a zachovává starší formát mimo
 typovanou část. Vnořené nepoužité podsložky jsou mimo validační průchod.
+Steelman našel stejnou záměnu v předchozích rodičích. T052 předal nález
+`artifact:04c51fcfc91e0f034b8ed59fbeda493d67afbd110706a4621e4a768475fa015c`
+v iteraci 1. Finální formát uchovává přesný prefix s indexy až ke kořeni,
+například `$["a.b"][0].extra:type`. Klasické diagnostiky mimo typovanou větev
+stále používají svůj původní formát.
 
 [README](../../README.md), [CLI a dataset příklady](../delivery-workflow.md),
 [spravovaná reference](../../.agents/skills/kgmaker-testgen/references/candidate.md)
@@ -43,7 +48,7 @@ a historický [change58](58_addExistingFunctionTests.md) evidují tento follow-u
 - `pytest -p no:cacheprovider -q --tb=short tests/test_delivery.py -k additional_properties`
   na původním zdroji — RED, 3 FAIL, 21 deselected.
 - `pytest -p no:cacheprovider -q --tb=short tests/test_delivery.py tests/test_synthetic_data.py tests/test_skills.py tests/test_workflow.py tests/test_workflow_profiles.py tests/test_provenance.py`
-  — 102 PASS, 0 SKIP, Python 3.12. Testy ověřují typ, minimum, vnořenou cestu,
+  — 103 PASS, 0 SKIP, Python 3.12. Testy ověřují typ, minimum, vnořenou cestu,
   oba booleany, nepodporovaný tvar a nulovou mutaci apply.
 - `git diff --check` — PASS. Úplná sada, GitHub Actions a externí T045 review
   pro nový pár jsou NOT_RUN. Validace kandidáta probíhá staticky a rozsah

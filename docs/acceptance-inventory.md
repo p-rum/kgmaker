@@ -3,7 +3,7 @@
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
 T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
-3 RED na výchozím zdroji a 102 cílených PASS / 0 SKIP po opravě a review.
+3 RED na výchozím zdroji a 103 cílených PASS / 0 SKIP po opravě a review.
 Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
 Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
 VERIFIED_IN_SCOPE. Stav integračního důkazu uvádí [Change140](changes/140_validateAdditionalDatasetFields.md).

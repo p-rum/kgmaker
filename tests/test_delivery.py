@@ -154,6 +154,16 @@ class GeneratedTest(unittest.TestCase):
                          (['$.extra.x.y:type'], []))
         self.assertEqual(t.schema_errors(literal, child), (['$.x.y:type'], []))
 
+    def test_additional_properties_retain_precise_prefix_through_legacy_parents(self):
+        extra_map = {'type': 'object', 'additionalProperties': {'type': 'integer'}}
+        array = {'type': 'array', 'items': extra_map}
+        schema = {'type': 'object', 'properties': {'a.b': array,
+                  'a': {'type': 'object', 'properties': {'b': array}}}}
+        literal = {'a.b': [{'extra': 'bad'}], 'a': {'b': [{'extra': 1}]}}
+        nested = {'a.b': [{'extra': 1}], 'a': {'b': [{'extra': 'bad'}]}}
+        self.assertEqual(t.schema_errors(literal, schema), (['$["a.b"][0].extra:type'], []))
+        self.assertEqual(t.schema_errors(nested, schema), (['$.a.b[0].extra:type'], []))
+
     def test_export_collision_preflight(self):
         packet=self.prepare();candidate=self.candidate(packet);t.apply(self.root,'double',candidate)
         (self.root/'tests/test_generated.py').write_text('keep')

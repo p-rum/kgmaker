@@ -309,14 +309,20 @@ def _schema_kind(schema, *, label='Dataset schema'):
     return kind
 
 
-def _schema_property_path(path, name, *, quote_keys):
-    if quote_keys and not name.isidentifier():
-        return f'{path}[{json.dumps(name, ensure_ascii=False)}]'
-    return path + '.' + name
+def _schema_property_paths(path, precise, name, *, quote_keys):
+    if name.isidentifier():
+        child = precise + '.' + name
+    else:
+        child = f'{precise}[{json.dumps(name, ensure_ascii=False)}]'
+    return (child if quote_keys else path + '.' + name), child
 
 
-def schema_errors(value,schema,path='$', *, _quote_keys=False):
+def schema_errors(value,schema,path='$'):
     """Supported JSON-schema subset, returning concrete violation paths."""
+    return _schema_errors(value, schema, path, path, quote_keys=False)
+
+
+def _schema_errors(value, schema, path, precise, *, quote_keys):
     kind = _schema_kind(schema)
     errors,unchecked = [],[]
     known = {'type','properties','required','items','enum','minimum','maximum','minLength','maxLength','nullable','additionalProperties'}
@@ -347,26 +353,28 @@ def schema_errors(value,schema,path='$', *, _quote_keys=False):
     if kind == 'object':
         for name in schema.get('required',[]):
             if name not in value:
-                errors.append(_schema_property_path(path, name, quote_keys=_quote_keys) + ':required')
+                child, _ = _schema_property_paths(path, precise, name, quote_keys=quote_keys)
+                errors.append(child + ':required')
         for name,item in value.items():
+            child, precise_child = _schema_property_paths(path, precise, name, quote_keys=quote_keys)
             if name in schema.get('properties',{}):
-                child = _schema_property_path(path, name, quote_keys=_quote_keys)
-                e,u = schema_errors(item,schema['properties'][name],child,_quote_keys=_quote_keys)
+                e,u = _schema_errors(item, schema['properties'][name], child, precise_child,
+                                     quote_keys=quote_keys)
                 errors.extend(e)
                 unchecked.extend(u)
             elif additional is False:
-                child = _schema_property_path(path, name, quote_keys=_quote_keys)
                 errors.append(child + ':additionalProperties')
             elif isinstance(additional, dict):
-                child = _schema_property_path(path, name, quote_keys=True)
-                extra_errors, extra_unchecked = schema_errors(item, additional, child, _quote_keys=True)
+                extra_errors, extra_unchecked = _schema_errors(item, additional, precise_child, precise_child,
+                                                               quote_keys=True)
                 errors.extend(extra_errors)
                 unchecked.extend(extra_unchecked)
     if kind == 'array':
         if 'items' not in schema: unchecked.append(path+':items-unspecified')
         for i,item in enumerate(value):
             if 'items' in schema:
-                e,u = schema_errors(item,schema['items'],f'{path}[{i}]',_quote_keys=_quote_keys)
+                e,u = _schema_errors(item, schema['items'], f'{path}[{i}]', f'{precise}[{i}]',
+                                     quote_keys=quote_keys)
                 errors.extend(e)
                 unchecked.extend(u)
     return errors,unchecked

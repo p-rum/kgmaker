@@ -134,8 +134,9 @@ vynechaný klíč povolí další vlastnosti, `false` je odmítne. Objekt s podp
 `"additionalProperties":{"type":"integer","minimum":1}` vytvoří `{"extra":0}`
 důkaz `$.extra:minimum`. Nestandardní název mapy se ve vnořené cestě uvozuje
 jako `$["metrics.v2"][0].count:minimum`. Uvnitř typované dodatečné hodnoty se
-tento zápis používá i pro deklarované vlastnosti. Okolní starší cesty zachovávají
-dosavadní formát. Tvar `additionalProperties` a bezprostřední typ jeho schématu
+tento zápis používá pro všechny segmenty cesty, včetně rodičů před typovanou
+hodnotou. Ostatní diagnostiky ve starších větvích zachovávají dosavadní formát.
+Tvar `additionalProperties` a bezprostřední typ jeho schématu
 se kontrolují i u objektu bez dalších hodnot. Vnořené podsložky se kontrolují
 tam, kde mají odpovídající datovou hodnotu.
 Foreign keys mají
