@@ -1,8 +1,8 @@
 # T052 — Completion Orchestrator
 
 - Task ID: T052
-- Revision: 1
-- Datum: 2026-11-19
+- Revision: 2
+- Datum: 2026-11-20
 - Stav: SPECIFICATION
 - Baseline: GitHub main `8f362471a8254ff9a0e44870c490a1dcb6b067b1`.
 - Zdroj požadavku: zadání KGMAKER Completion Orchestrator z 2026-11-19.
@@ -24,7 +24,7 @@ Git oprávnění nebo serverových pravidel.
 |---|---|---|
 | T052-S01 | T052-R01. `kgmaker completion plan` odvodí prioritní výběr a dependency graph ze stávajících atomických řádků a zadání. Výstup odděluje delivery a verification a obsahuje identitu vstupů. | T052-AC01. Test priorit, nejvýše N kandidátů, chybných vstupů bez zápisu, cyklů aktivní práce, selhání závislostí a skutečného inventáře. |
 | T052-S02 | T052-R02. Host skill volí specializované agenty, nezávislé položky běží v oddělených worktree a každý handoff používá T051 packet a artefakt. Uložené task ID obnovuje stav a retry vrací přesné nálezy. | T052-AC02. Reálné worktree a task ID, zaznamenaný test, nezávislé review, alespoň jeden retry a ověřená obnova. Sekvenční varianta na hostiteli bez paralelních slotů. |
-| T052-S03 | T052-R03. Správnost a steelman hodnotí dva různí aktéři mimo implementaci proti stejné revizi. T045 ověřuje lokální důkazy, závislosti, ready/mergeable a aktuální base/head, respektuje branch protection a po merge ověřuje cílovou větev. | T052-AC03. Doložit odmítnuté vlastní nebo stale review a blokaci změněného páru, chybějících testů či otevřeného nálezu. Ověřit autorizovanou integraci skutečné schválené změny. |
+| T052-S03 | T052-R03. Správnost a steelman hodnotí dva různí aktéři mimo implementaci proti stejné revizi. `completion attribute` váže hostitelské ID na běžný artefakt a existující T046 journal. `awaiting_pr_review` vyžaduje oba připsané aktuální výsledky. T045 ověřuje lokální důkazy, závislosti, ready/mergeable a aktuální base/head, respektuje branch protection a po merge ověřuje cílovou větev. | T052-AC03. Doložit odmítnuté vlastní, duplicitní nebo stale review a blokaci změněného páru, chybějících testů či otevřeného nálezu. Ověřit autorizovanou integraci skutečné schválené změny. |
 | T052-S04 | T052-R04. Koordinátor udržuje T048 inventář a obnovitelný checkpoint, spustí aktuální backlog od compiler cache a inkrementální integrity. | T052-AC04. Inventář reprodukovatelně odráží zdroj, PR a skutečné výsledky. Checkpoint drží stavy a další krok po přerušení. Alespoň první položka projde celým cyklem nebo je konkrétně zablokovaná. |
 
 ## Migrace a Definition of Done

@@ -12,6 +12,7 @@ kgmaker task list --root /path/to/item-worktree
 kgmaker task show "$KGMAKER_TASK_ID" --root /path/to/item-worktree
 kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree
 kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree --apply
+kgmaker completion attribute "$KGMAKER_TASK_ID" "$ARTIFACT_ID" --actor "$HOST_AGENT_ID" --root /path/to/item-worktree
 ```
 
 `--jobs` je 1 až 32 a výchozí hodnota je 1. Výstup JSON obsahuje
@@ -35,8 +36,20 @@ před obnovením zápisu.
 Před dispatchí ověř aktuální refs, acceptance předchůdců, zdroj, stav PR a
 překryv zapisovaných cest. Hostitel použije samostatný worktree a stávající
 workflow s omezenou kapacitou skutečných agentů. Test a review patří konkrétní
-revizi. Skill vede hostitele ke dvěma odděleným review a k předání nevyřešených
-nálezů přes existující retry. Skutečné GitHub schválení a merge vykonává role
+revizi. Koordinátor připojí skutečná hostitelská ID k implementačním
+artefaktům a ke dvěma review artefaktům, které mají packet ID a disposition
+`correctness` a `steelman`. Příkaz `completion attribute` používá existující
+lineage journal s `LOCAL_DECLARED` identitou. Opakování stejného přiřazení
+je idempotentní. Aktuální otevřený major/blocker má přednost před schválením.
+Výstup `completion handoff` uvádí `reviews.pending` a `reviews.approved`.
+V `reviews.feedback` vrací všechny aktuální blokující nálezy obou tracků i
+při obnovení implementace. Znovu otevřené review dostane stejný aktuální společný
+packet. Platnost se kontroluje proti hashi, profilu a obsahu zdroje.
+Při ztrátě packetu po prvním připsaném rozhodnutí obnov jeho původní soubor
+nebo zahaj novou review iteraci. Přechod po review používá i revizi journalu,
+aby souběžně připsaný nález vyvolal nové posouzení před zápisem.
+Akce `awaiting_pr_review` vyžaduje dvě aktuální nezávislá připsaná schválení.
+Skutečné GitHub schválení a merge vykonává role
 `code_review` podle [T045](tasks/45_addCodeReviewAgent.md).
 
 Po přerušení vyhledej worktree a v něm existující task ID. Před pokračováním

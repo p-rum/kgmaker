@@ -4,10 +4,11 @@ from argparse import ArgumentParser
 import pytest
 
 from kgmaker import completion_handoff as coordinator
+from kgmaker.completion_review import attribute
 from kgmaker.analysis_model import read_json, write_json
-from kgmaker.context import ContextError
+from kgmaker.context import ContextError, prepare_task_packet
 from kgmaker.workflow import (WorkflowError, add_task, advance_task, load_task,
-                              packet_path, record_artifact)
+                              packet_id, packet_path, record_artifact)
 from kgmaker.workflow_profiles import CONFIG_PATH
 
 
@@ -46,8 +47,12 @@ def _fail(root, task):
     if task['status'] == 'test':
         return _record(root, task, status='failed', validations=[
             {'label': 'unit', 'command': 'python -m unittest', 'status': 'failed'}])
-    return _record(root, task, overall='request_changes', findings=[
+    _attributed_change(root, task)
+    task = _record(root, task, overall='request_changes', disposition='correctness',
+                   packet_id=_review_packet(root, task), findings=[
         {'severity': 'major', 'path': 'app.py', 'summary': 'Return value lost', 'disposition': 'open'}])
+    attribute(root, task['id'], task['artifacts'][-1]['id'], 'reviewer')
+    return task
 
 
 def test_preview_apply_and_reissue_after_interruption(tmp_path):
@@ -117,13 +122,226 @@ def test_stale_failure_requests_current_checks_without_retry(tmp_path, phase):
     assert load_task(tmp_path, task['id'])['iteration'] == 0
 
 
-def test_approved_review_requires_explicit_decision(tmp_path):
+def test_unattributed_generic_approval_does_not_complete_review(tmp_path):
     task = _record(tmp_path, _reach(tmp_path, 'review'))
     before = _files(tmp_path)
-    response = coordinator.handoff(tmp_path, task['id'], apply=True)
-    assert response['action'] == 'hold' and response['role'] is None
+    response = coordinator.handoff(tmp_path, task['id'])
+    assert response['action'] == 'dispatch' and response['role'] == 'review'
+    assert response['reviews']['pending'] == ['correctness', 'steelman']
     assert not response['applied'] and _files(tmp_path) == before
     assert load_task(tmp_path, task['id'])['status'] == 'review'
+
+
+def _review_packet(root, task):
+    return coordinator.handoff(root, task['id'], apply=True)['packet']['packet_id']
+
+
+def _attributed_change(root, task):
+    change = next(item for item in task['artifacts'] if item['role'] == 'implementation')
+    attribute(root, task['id'], change['id'], 'implementer')
+
+
+def test_two_current_independent_approvals_are_ready_for_t045(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = _review_packet(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=packet)
+    correctness = task['artifacts'][-1]['id']
+    task = _record(tmp_path, task, disposition='steelman', packet_id=packet)
+    steelman = task['artifacts'][-1]['id']
+    receipt = attribute(tmp_path, task['id'], correctness, 'correctness-agent')
+    assert receipt['identity_trust'] == 'LOCAL_DECLARED'
+    before = _files(tmp_path)
+    assert attribute(tmp_path, task['id'], correctness, 'correctness-agent') == receipt
+    assert _files(tmp_path) == before
+    partial = coordinator.handoff(tmp_path, task['id'])
+    assert partial['action'] == 'dispatch' and partial['reviews']['pending'] == ['steelman']
+    attribute(tmp_path, task['id'], steelman, 'steelman-agent')
+    before = _files(tmp_path)
+    ready = coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert ready['action'] == 'awaiting_pr_review'
+    assert ready['reviews']['approved']['correctness']['artifact_id'] == correctness
+    assert ready['reviews']['approved']['steelman']['artifact_id'] == steelman
+    assert not ready['applied'] and _files(tmp_path) == before
+    assert load_task(tmp_path, task['id'])['status'] == 'review'
+    for overall in ('request_changes', 'block'):
+        task = _record(tmp_path, task, overall=overall, disposition='legacy-vote')
+        response = coordinator.handoff(tmp_path, task['id'])
+        assert response['action'] == 'awaiting_pr_review'
+
+
+def test_resumed_parallel_review_reuses_the_first_source_bound_packet(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    original = coordinator.handoff(tmp_path, task['id'], apply=True)['packet']
+    task = _record(tmp_path, task, disposition='correctness', packet_id=original['packet_id'])
+    attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'correctness-agent')
+    before = _files(tmp_path)
+    for apply in (False, True):
+        pending = coordinator.handoff(tmp_path, task['id'], apply=apply)
+        assert pending['reviews']['pending'] == ['steelman']
+        assert pending['packet'] == original and _files(tmp_path) == before
+    task = _record(tmp_path, task, disposition='steelman', packet_id=original['packet_id'])
+    attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'steelman-agent')
+    assert coordinator.handoff(tmp_path, task['id'])['action'] == 'awaiting_pr_review'
+
+
+def test_corrupt_review_packet_does_not_advance_or_replace_files(tmp_path):
+    task = _record(tmp_path, _reach(tmp_path, 'test'))
+    path = packet_path(tmp_path, task, 'review', task['iteration'])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{}')
+    before = _files(tmp_path)
+    with pytest.raises(WorkflowError, match='Persisted review packet'):
+        coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert _files(tmp_path) == before
+
+
+def test_missing_review_packet_cannot_split_existing_review_tracks(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    original = _review_packet(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=original)
+    attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'correctness-agent')
+    path = packet_path(tmp_path, task, 'review', task['iteration'])
+    path.unlink()
+    before = _files(tmp_path)
+    for apply in (False, True):
+        with pytest.raises(WorkflowError, match='Original review packet unavailable'):
+            coordinator.handoff(tmp_path, task['id'], apply=apply)
+        assert _files(tmp_path) == before
+    replacement = prepare_task_packet(tmp_path, task['id'], 'review')['packet_id']
+    assert replacement != original
+    task = _record(tmp_path, task, disposition='steelman', packet_id=replacement)
+    before = _files(tmp_path)
+    with pytest.raises(WorkflowError, match='same source-bound packet'):
+        attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'steelman-agent')
+    assert _files(tmp_path) == before
+
+
+def test_reject_self_review_duplicate_actor_and_duplicate_track(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = _review_packet(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=packet)
+    first = task['artifacts'][-1]['id']
+    before = _files(tmp_path)
+    with pytest.raises(WorkflowError, match='their own review'):
+        attribute(tmp_path, task['id'], first, 'implementer')
+    assert _files(tmp_path) == before
+    attribute(tmp_path, task['id'], first, 'reviewer')
+    task = _record(tmp_path, task, disposition='correctness', summary='Different result', packet_id=packet)
+    duplicate = task['artifacts'][-1]['id']
+    task = _record(tmp_path, task, disposition='steelman', packet_id=packet)
+    second = task['artifacts'][-1]['id']
+    before = _files(tmp_path)
+    for candidate, actor, diagnostic in (
+        (first, 'someone-else', 'different actor'),
+        (duplicate, 'someone-else', 'already has an attributed artifact'),
+        (second, 'reviewer', 'distinct actors'),
+    ):
+        with pytest.raises(WorkflowError, match=diagnostic):
+            attribute(tmp_path, task['id'], candidate, actor)
+        assert _files(tmp_path) == before
+
+
+def test_stale_attribution_cannot_authorize_review(tmp_path):
+    source = tmp_path / 'app.py'
+    source.write_text('value = 1\n')
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=_review_packet(tmp_path, task))
+    receipt = task['artifacts'][-1]['id']
+    source.write_text('value = 2\n')
+    before = _files(tmp_path)
+    with pytest.raises(WorkflowError, match='current iteration and source'):
+        attribute(tmp_path, task['id'], receipt, 'reviewer')
+    response = coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert response['action'] == 'hold' and 'Test evidence is stale' in response['diagnostic']
+    assert _files(tmp_path) == before
+
+
+def test_legacy_unbound_packet_cannot_be_attributed(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = coordinator.handoff(tmp_path, task['id'], apply=True)['packet']
+    del packet['workflow']['source_binding']
+    packet['packet_id'] = packet_id(packet)
+    write_json(packet_path(tmp_path, task, 'review', task['iteration']), packet)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=packet['packet_id'])
+    before = _files(tmp_path)
+    with pytest.raises(WorkflowError, match='original current source-bound packet'):
+        attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'reviewer')
+    assert _files(tmp_path) == before
+    assert coordinator.handoff(tmp_path, task['id'])['reviews']['pending'] == ['correctness', 'steelman']
+
+
+@pytest.mark.parametrize(('overall', 'severity', 'expected'), [
+    ('request_changes', 'minor', 'retry'),
+    ('approve', 'major', 'retry'),
+    ('block', 'note', 'hold'),
+])
+def test_later_approval_cannot_hide_current_review_findings(tmp_path, overall, severity, expected):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = _review_packet(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=packet,
+                   overall=overall, findings=[{'severity': severity, 'path': 'app.py',
+                   'summary': 'A real finding', 'disposition': 'open'}])
+    negative = task['artifacts'][-1]['id']
+    task = _record(tmp_path, task, disposition='steelman', packet_id=packet)
+    attribute(tmp_path, task['id'], negative, 'correctness-agent')
+    attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'steelman-agent')
+    result = coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert result['action'] == expected and result['feedback']['id'] == negative
+    assert result['feedback']['findings'][0]['summary'] == 'A real finding'
+    if expected == 'retry':
+        resumed = coordinator.handoff(tmp_path, task['id'])
+        assert resumed['phase'] == 'implement' and resumed['feedback']['id'] == negative
+
+
+def test_retry_and_resume_return_findings_from_both_tracks(tmp_path):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = _review_packet(tmp_path, task)
+    negatives = []
+    for track in ('correctness', 'steelman'):
+        task = _record(tmp_path, task, disposition=track, packet_id=packet, overall='request_changes',
+                       findings=[{'severity': 'major', 'path': 'app.py',
+                                  'summary': f'{track} finding', 'disposition': 'open'}])
+        negatives.append(task['artifacts'][-1]['id'])
+        attribute(tmp_path, task['id'], negatives[-1], f'{track}-agent')
+    retry = coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert retry['action'] == 'retry'
+    resumed = coordinator.handoff(tmp_path, task['id'])
+    for response in (retry, resumed):
+        assert response['feedback']['id'] == negatives[0]
+        assert [item['id'] for item in response['reviews']['feedback']] == negatives
+        assert [item['findings'][0]['summary'] for item in response['reviews']['feedback']] == [
+            'correctness finding', 'steelman finding']
+
+
+def test_late_attributed_block_prevents_stale_review_retry(tmp_path, monkeypatch):
+    task = _reach(tmp_path, 'review')
+    _attributed_change(tmp_path, task)
+    packet = _review_packet(tmp_path, task)
+    task = _record(tmp_path, task, disposition='correctness', packet_id=packet, overall='request_changes')
+    change = task['artifacts'][-1]['id']
+    task = _record(tmp_path, task, disposition='steelman', packet_id=packet, overall='block')
+    blocker = task['artifacts'][-1]['id']
+    attribute(tmp_path, task['id'], change, 'correctness-agent')
+
+    def competing_attribution(root, identifier, target, **kwargs):
+        attribute(root, identifier, blocker, 'steelman-agent')
+        return advance_task(root, identifier, target, **kwargs)
+
+    monkeypatch.setattr(coordinator, 'advance_task', competing_attribution)
+    with pytest.raises(WorkflowError, match='Stale journal revision'):
+        coordinator.handoff(tmp_path, task['id'], apply=True)
+    assert load_task(tmp_path, task['id']) == task
+    assert not packet_path(tmp_path, task, 'implementation', 1).exists()
+    blocked = coordinator.handoff(tmp_path, task['id'])
+    assert blocked['action'] == 'hold' and blocked['feedback']['id'] == blocker
 
 
 def test_skipped_test_cannot_advance(tmp_path):

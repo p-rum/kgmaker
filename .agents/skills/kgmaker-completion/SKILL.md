@@ -37,6 +37,10 @@ Check and reconcile the canonical inventory before relying on changed statuses.
    after the persisted artifact and transition gates validate. Use trace links
    for requirement, change and test evidence. Verify current source freshness
    when packaging context. Keep missing toolchains and unrun checks explicit.
+   Once implementation has been recorded, the coordinator attributes its
+   artifact with `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_ID`.
+   Take the stable agent identifier from the host's dispatch. Attribute every
+   implementation artifact of the current source.
    If parallel execution is unavailable, continue sequentially. If distinct
    review agents are unavailable, leave the task awaiting independent review.
 4. In review, independently delegate a correctness/acceptance review and a
@@ -45,14 +49,20 @@ Check and reconcile the canonical inventory before relying on changed statuses.
    unrelated changes and the cost of new abstractions. Ask both to inspect the
    same exact base, head and, for dirty local work, source fingerprint. Keep
    stable IDs, source locations and concrete impacts for all open findings.
-   Reject a self-review, stale receipt, missing evidence or duplicate actor.
-   Record one existing workflow review artifact containing the combined decision
-   and references to both actual host reviews. An unresolved blocking finding
-   from either review prevents approval. Agents' role labels and text alone
-   are local evidence, not authenticated identities.
+   Use the same prepared review packet for both requests. Record separate
+   `task record` artifacts using their typed review payloads, the packet ID
+   and disposition `correctness` or `steelman`. Attribute each artifact using
+   its actual distinct host ID. Reject a self-review, stale receipt, missing
+   evidence or duplicate actor. An unresolved major or blocker finding from
+   either review takes precedence over approval. The local journal records
+   `LOCAL_DECLARED` identity. Authentication depends on the host.
+   Once the handoff returns `awaiting_pr_review`, proceed through T045.
 5. On failed tests or REQUEST_CHANGES, use the existing bounded transition back
-   to implement. The handoff returns exact findings or validation entries from
-   the persisted artifact. Send that feedback alongside the new implementation packet.
+   to implement. Collect the return from both dispatched reviewers before applying
+   the next handoff. Send all `reviews.feedback` entries with the implementation
+   packet. For a failed test, send the exact persisted validation entries from
+   `feedback`. Restarting a pending review reuses its valid packet so the second
+   reviewer can still report against the original dispatch.
    Test and review the new revision again. Once the cap is reached, record the
    failure or blocker with its reason. Read the latest task before retrying an
    interrupted handoff. If a process died while holding the shared journal lock,

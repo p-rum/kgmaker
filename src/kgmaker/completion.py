@@ -219,7 +219,9 @@ def register(sub) -> None:
     command.add_argument("--root", type=Path, default=Path.cwd())
     command.add_argument("--jobs", type=int, default=1)
     from .completion_handoff import register as register_handoff
+    from .completion_review import register as register_review
     register_handoff(commands)
+    register_review(commands)
 
 
 def run(args) -> int:

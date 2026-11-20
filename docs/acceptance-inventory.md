@@ -16,14 +16,14 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 
 ## T052 — completion orchestration 2026-11-19
 
-Dodání IN_PROGRESS, [zadání revize 1](tasks/52_addCompletionOrchestrator.md),
+Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
 [per-step evidence](changes/134_addCompletionOrchestrator.md).
 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
 | T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
-| T052-AC02 | PARTIAL | Handoff ve stávajícím workflow, obnova packetu, omezený retry, předání findings a ochrana proti race/stale ve 117 zaměřených testech. Celý publikovaný retry a merge NOT_RUN. |
-| T052-AC03 | PARTIAL | Nezávislé lokální correctness a steelman review vedly ke skutečným opravám. Publikovaný HEAD a autorizovaný integrační běh zůstávají neověřené. |
+| T052-AC02 | PARTIAL | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný nezávislý REQUEST_CHANGES přešel do iterace 2 a obnovený proces načetl shodné findings. |
+| T052-AC03 | PARTIAL | Lokální dvojí review, kontrola odlišných aktérů, aktuální vazby a přednosti otevřeného nálezu. Publikovaný pár a autorizovaná integrace čekají na T045. |
 | T052-AC04 | PARTIAL | Skutečné stavy T029, W01 a T021, prioritizovaný výběr a worktree/task checkpoint. Úplná sada hlásí FAIL. Žádný merge z tohoto běhu. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
