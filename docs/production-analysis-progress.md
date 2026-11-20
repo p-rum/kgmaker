@@ -81,9 +81,9 @@ testový receipt.
 
 Po baseline T048 `250e7c1` byly kromě dokumentačních instrukcí sloučeny také
 T046-S01 až S06 a přibylo zadání T049; jejich přesné SHA jsou v atomických řádcích.
-T020 zůstává MERGED v PR87; topology/explain nadále přijímají jen JSON. T021 je
-nyní má upstream T003-S07-W09 sloučený v PR109; vlastní dodávka T021 zůstává PLANNED. T031 a T032 jsou sloučené;
-T034 procesní CLI zůstává PLANNED.
+T020 zůstává MERGED v PR87; T021 přidává topology Mermaid nad T017 envelope a je
+ve vlastní větvi IN_PROGRESS/PR pending. Explain zůstává JSON-only a T022 topology
+Markdown je samostatné. T031 a T032 jsou sloučené; T034 procesní CLI zůstává PLANNED.
 
 ### Atomické položky
 
@@ -165,8 +165,20 @@ T034 procesní CLI zůstává PLANNED.
 | [T018](tasks/T-018_explain-view-elements.md) | MERGED | PARTIAL | `1005b9f950102d2d5fd0e74735bc0577c2e30c0b` | [src/kgmaker/view_explanation.py](../src/kgmaker/view_explanation.py), [tests/test_t018_explain_view_elements.py](../tests/test_t018_explain_view_elements.py) | [#83](https://github.com/p-rum/kgmaker/pull/83) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T019](tasks/T-019_add-architecture-json-cli.md) | MERGED | PARTIAL | `a60f02d2a36f0d826ea340541966028d818efd5d` | [src/kgmaker/architecture_cli.py](../src/kgmaker/architecture_cli.py), [src/kgmaker/cli.py](../src/kgmaker/cli.py), [tests/test_t019_add_architecture_json_cli.py](../tests/test_t019_add_architecture_json_cli.py) | [#84](https://github.com/p-rum/kgmaker/pull/84) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T020](tasks/T-020_render-interface-markdown.md) | MERGED | PARTIAL | `250e7c16250a97b9f8df5256b9894c8119dc64d9` | [src/kgmaker/architecture_cli.py](../src/kgmaker/architecture_cli.py), [src/kgmaker/architecture_render.py](../src/kgmaker/architecture_render.py), [src/kgmaker/architecture_render_common.py](../src/kgmaker/architecture_render_common.py), [tests/test_t020_render_interface_markdown.py](../tests/test_t020_render_interface_markdown.py) | [#87](https://github.com/p-rum/kgmaker/pull/87) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
-| [T021](tasks/T-021_render-topology-mermaid.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Nejprve T003-S07-W09; T017/T019 již MERGED. |
+| [T021](tasks/T-021_render-topology-mermaid.md) | PR_OPEN | PARTIAL | `84f94d4462437fe1228f07d0ba8f51071224952e` | [architecture_render.py](../src/kgmaker/architecture_render.py), [architecture_cli.py](../src/kgmaker/architecture_cli.py), [targeted tests](../tests/test_t021_render_topology_mermaid.py) | [#113](https://github.com/p-rum/kgmaker/pull/113) | 129 focused dependency/render/legacy-schema tests PASS; 9 T021 tests PASS including hostile labels and actual T016 HTTP/Kafka Mermaid parse/render. Report JVM identity fixture SKIP (trusted worker unavailable); full suite deferred per user. Independent review pending. |
 | [T022](tasks/T-022_render-topology-markdown.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Nedodaný kontrakt; historický combined checkpoint není current dodávka. Implementovat po uvedených upstream závislostech. |
+
+### T021 implementation checkpoint — 2026-11-15
+
+Lokální oprava #115 v odděleném worktree je IN_PROGRESS / PARTIAL. 181 PASS / 0 SKIP, včetně skutečné Mermaid validace. [Záznam](changes/138_rejectForeignTopologyEvidence.md).
+
+T021 is `IN_PROGRESS` / `PARTIAL` on `feat/t021-render-topology-mermaid`, integrated
+through report main `9c86d29` and current T029 main `84f94d4462437fe1228f07d0ba8f51071224952e`.
+Dependencies T017/T019/W09 are verified ancestors. The pure renderer hashes node IDs;
+edge IDs remain in escaped model metadata while parser tests prove exact edge endpoints.
+Post-integration focused commands, semantic scan, and current limitations are in
+[change132](changes/132_renderTopologyMermaid.md). Full package suite and GH CI are not run.
+
 | [T023](tasks/T-023_define-business-process-model.md) | MERGED | PARTIAL | `b78d2e62148f225be7ba8c53c839f8b052ee269d` | [src/kgmaker/process_model.py](../src/kgmaker/process_model.py), [tests/test_t023_define_business_process_model.py](../tests/test_t023_define_business_process_model.py) | [#56](https://github.com/p-rum/kgmaker/pull/56) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T024](tasks/T-024_discover-process-triggers.md) | MERGED | PARTIAL | `c98ae1ea85934674eac743d60489b37b322f8fc9` | [src/kgmaker/process_triggers.py](../src/kgmaker/process_triggers.py), [tests/test_t024_discover_process_triggers.py](../tests/test_t024_discover_process_triggers.py) | [#59](https://github.com/p-rum/kgmaker/pull/59) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
 | [T025](tasks/T-025_build-local-process-path.md) | MERGED | PARTIAL | `32a3bca46d62f3715d1fb2d96dd6f0e92f941dc6` | [src/kgmaker/control_flow.py](../src/kgmaker/control_flow.py), [src/kgmaker/graph_provider.py](../src/kgmaker/graph_provider.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_t025_build_local_process_path.py](../tests/test_t025_build_local_process_path.py) | [#65](https://github.com/p-rum/kgmaker/pull/65), [#60](https://github.com/p-rum/kgmaker/pull/60) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |

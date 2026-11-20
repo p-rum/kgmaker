@@ -1575,3 +1575,30 @@ records actual commands/results and separate fixes. No whole S06 completion.
 | T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; old intent v1 replay rejected pending explicit reinspection; invalid/timeout/cancel preserve last valid generation |
 | T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases; `test_actual_review_query_state_and_callable_boundaries` (6 cases), immutable field/override replay checks | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
 | T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
+
+
+## T021 — topology Mermaid (PR #113 checkpoint)
+
+Pokrytí lokální opravy T021-AC04/05 je 181 PASS / 0 SKIP. [Záznam](changes/138_rejectForeignTopologyEvidence.md).
+
+Integration base `84f94d4462437fe1228f07d0ba8f51071224952e` (ordinary merge after report main); original renderer base `83999fb2e08c6d9d67449687c95b2217eee08b09`; dependencies verified as ancestors:
+T017 merge `64e56d0efaa20830e7ecc3dbd86779a5a05c84f3`, T019 merge
+`0dcbf4a0fb23cc5d860f93aeee8da9b86bab4e40`, and W09 `cceb1109`. The combined
+targeted run `PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest -q
+tests/test_t017_filter_topology_scope.py tests/test_t019_add_architecture_json_cli.py
+tests/test_t020_render_interface_markdown.py tests/test_t021_render_topology_mermaid.py
+tests/test_t005_add_view_model.py::test_existing_graph_loader_still_accepts_legacy_schema_versions`
+reported 129 PASS / 0 SKIP / 5.69s after current main integration. The T021-specific file
+reported 9 PASS / 0 SKIP / 1.70s, including actual T016 HTTP and Kafka diagrams.
+Mermaid 11.4.1 and jsdom 26.0.0 parse/render ran under Node v24.22.1; full suite remains NOT_RUN per package-level targeted-only
+sequencing. The selected compatibility case also confirms graph schema 1/2/3 loading. The report source identity integration check was attempted and SKIP because its trusted prebuilt JVM worker is unavailable; see change132.
+PR [#113](https://github.com/p-rum/kgmaker/pull/113) is open for independent review. Exact commands/results are in [change132](changes/132_renderTopologyMermaid.md).
+
+| Acceptance | Current evidence | Status |
+|---|---|---|
+| T021-AC01 | Golden T016/T017 envelope, exact Mermaid parser node/edge endpoint comparison, no synthetic node/edge | PASS |
+| T021-AC02 | `test_t021_hashes_logical_identity_with_realm_and_keeps_provenance`, same logical resource ID in two realms | PASS |
+| T021-AC03 | Malicious labels plus actual T016 HTTP/Kafka topology; Mermaid 11.4.1 parse/render in jsdom 26.0.0 | PASS |
+| T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
+| T021-AC05 | Envelope round-trip retains scope/context/provenance/omission; visible PARTIAL/TRUNCATED/UNKNOWN and async delivery boundary | PASS |
+| T021-AC06 | README, architecture, CLI, service topology, status matrix, this inventory and change132 updated; review/PR checks pending | IN_PROGRESS |

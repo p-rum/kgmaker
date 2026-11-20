@@ -45,7 +45,8 @@ def _configure(parser):
         child.add_argument('--scope',choices=('production','test','test_fixture','development','unknown'),help='assert snapshot scope; local capture defaults to production')
         child.add_argument('--context-selection',type=Path,help='versioned capture pins; exact assertion in snapshot replay')
         child.add_argument('--strict',action='store_true')
-        child.add_argument('--format',choices=('json','markdown') if name=='interfaces' else ('json',),default='json')
+        formats=('json','markdown') if name=='interfaces' else ('json','mermaid') if name=='topology' else ('json',)
+        child.add_argument('--format',choices=formats,default='json')
         child.add_argument('--expected-fingerprint')
         child.add_argument('--cancel-file',type=Path)
         if name=='interfaces':
@@ -318,6 +319,9 @@ def run(argv):
         if args.format=='markdown':
             from .architecture_render import render_interface_markdown
             payload=render_interface_markdown(result)
+        elif args.architecture_command=='topology' and args.format=='mermaid':
+            from .architecture_render import render_topology_mermaid
+            payload=render_topology_mermaid(result)
         else:payload=canonical(result)+'\n'
         if len(payload)>_MAX_OUTPUT_CHARS:_fail('OUTPUT_LIMIT')
         code=4 if args.strict and _incomplete(result) else 0
