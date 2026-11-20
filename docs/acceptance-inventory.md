@@ -11,7 +11,7 @@ VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Historické dodání [#114](https://github.com/p-rum/kgmaker/pull/114) a regrese baseline [#116](https://github.com/p-rum/kgmaker/issues/116). Dílčí [oprava #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS na main po T052 a 8 Spring fail-closed PASS z dřívějšího scope. Oprava s W05 vstupuje do [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md) v rozsahu PR_OPEN / PARTIAL. Následující tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
+Historické dodání [#114](https://github.com/p-rum/kgmaker/pull/114) a regrese baseline [#116](https://github.com/p-rum/kgmaker/issues/116). Dílčí [oprava #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS na main po T052 a 8 Spring fail-closed PASS z dřívějšího scope. Oprava s W05 je sloučená v [#127](https://github.com/p-rum/kgmaker/pull/127). Stav je MERGED / PARTIAL, protože návrat výkonového HIT má vlastní acceptance. Viz [výsledek integrace](changes/143_recordCompilerIntegrationMerge.md). Následující tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -164,8 +164,8 @@ opravy prošly čistým exact-pair review na finálním headu
 
 ### Opravná Spring fixture v #124, 2026-11-20
 
-T003-S05-W04-AC01/AC03/AC04 a T003-AC05. Dílčí oprava [#124](https://github.com/p-rum/kgmaker/pull/124) je součástí
-[společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). Skutečný Javac v `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard`
+T003-S05-W04-AC01/AC03/AC04 a T003-AC05. Dílčí oprava [#124](https://github.com/p-rum/kgmaker/pull/124) je sloučena
+v [#127](https://github.com/p-rum/kgmaker/pull/127). Skutečný Javac v `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard`
 na base `8ff2529` před opravou nedoložil `Consumer.gateway`. Po opravě
 prošlo všech 15 testů v `tests/test_compiler_workers.py` bez SKIP.
 Kladná pole mají kanonické `@Autowired` a negativní případy ověřují chybějící
@@ -909,8 +909,8 @@ T025-AC04/05/08/09. Five malformed block-reference variants verify that scope
 projection preserves the source metadata without retaining its evidence. The
 scoped process and graph suite passed 113 tests with zero skips using actual
 K1/K2 on main `8ff2529`. The original delivery remains in history. Fix
-[#122](https://github.com/p-rum/kgmaker/pull/122) is part of the
-[joint integration](changes/142_integrateCompilerEvidenceRepairs.md). Broader
+[#122](https://github.com/p-rum/kgmaker/pull/122) was merged in
+[#127](https://github.com/p-rum/kgmaker/pull/127). Broader
 acceptance remains PARTIAL.
 [Per-step evidence](changes/136_preserveMalformedCfgEvidence.md).
 
@@ -1020,7 +1020,7 @@ network or input/store mutation. Common runtime/test are exact in combined desce
 Aktualizace 2026-11-20 pro AC01 a AC03. Seznam nebo objekt v identitě kontextu
 vykázaly čtyři TypeError na baseline. Opravená projekce vyloučí vadný uzel a
 process report vrátí neprázdné UNKNOWN. Java, Kotlin a související HTTP testy
-mají 240 PASS / 0 SKIP. Oprava je součástí [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). Plný scope zůstává PARTIAL.
+mají 240 PASS / 0 SKIP. Oprava je sloučena v [#127](https://github.com/p-rum/kgmaker/pull/127). Širší rozsah zůstává PARTIAL. Viz [výsledek integrace](changes/143_recordCompilerIntegrationMerge.md).
 [Přesné důkazy](changes/141_handleInvalidKafkaPolicyContext.md).
 
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
