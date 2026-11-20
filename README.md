@@ -905,7 +905,7 @@ process_id="process:caller-selected", max_nodes=200)` adapts existing source CFG
 topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
-inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md). Incomplete or malformed optional local-operation metadata cannot supply proof during scope projection.
 
 ### Kafka interface catalogue
 

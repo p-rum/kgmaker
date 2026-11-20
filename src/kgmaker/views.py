@@ -1011,19 +1011,20 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
     for cfg in graph.cfgs:
         if cfg.get('method') not in ids or (context_id is not None and cfg.get('context_id') != context_id):
             continue
-        refs = list(cfg.get('evidence_ids', []))
-        refs += [i for block in cfg.get('blocks', []) for i in block.get('local_operation_evidence_ids', [])]
+        operation_refs = []
+        for block in cfg.get('blocks', []):
+            version = block.get('local_operation_version')
+            block_refs = block.get('local_operation_evidence_ids', [])
+            if (type(version) is int and version == 1 and isinstance(block_refs, list)
+                    and len(block_refs) == 1 and isinstance(block_refs[0], str)):
+                operation_refs.extend(block_refs)
+        refs = [*cfg.get('evidence_ids', []), *operation_refs]
         if any(not isolated_proof(i) or i in omitted_proofs for i in refs):
             boundary_diagnostics.append({'code':'COMPILER_CONTEXT_BOUNDARY_UNKNOWN', 'context_id':context_id,
                 'method':cfg['method'], 'reason':'CFG omitted with its cross-variant evidence.'})
             continue
         selected_cfgs.append(cfg)
-    selected_evidence.update(identity for cfg in selected_cfgs for identity in cfg.get("evidence_ids", []))
-    selected_evidence.update(identity for cfg in selected_cfgs for block in cfg.get('blocks', [])
-        if type(block.get('local_operation_version')) is int and block['local_operation_version'] == 1
-        for refs in [block.get('local_operation_evidence_ids', [])]
-        if isinstance(refs, list) and all(isinstance(identity, str) for identity in refs)
-        for identity in refs)
+        selected_evidence.update(refs)
     selected_symbols = [symbol for symbol in graph.symbols if symbol.get('id') in ids
                         and (context_id is None or symbol.get('context_id') == context_id)]
     # Retained structural/source edges still need their original provenance

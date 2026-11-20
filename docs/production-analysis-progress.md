@@ -1,5 +1,9 @@
 # Aktuální stav a zbývající práce
 
+## T025 — scope projekce optional compiler evidence
+
+Oprava zůstává lokálně IN_PROGRESS, 113 PASS / 0 SKIP s K1/K2. Doklad reprodukce a ověření je v [change136](changes/136_preserveMalformedCfgEvidence.md).
+
 ## Post-merge integrace PR97 — 2026-11-15
 
 W05 je MERGED v `2bebab00c2ca368e3e5a6a4d7daa47fce2addcea`; skutečný první merge parent je `6eb755ec1d4e777abe8d34dea7bee9477c90692f`.

@@ -873,6 +873,11 @@ After origin and proof-retention corrections,39purePASS and bounded actual K1
 workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
 T026 or whole T025/T003/T004 completion is implied by this row.
 
+T025-AC04/05/08/09: the five malformed block-reference cases in
+`test_scope_projection_preserves_invalid_operation_shape_for_fail_closed_validation`
+reproduce the projection regression and verify that malformed metadata cannot retain evidence. The final real K1/K2 run passed 113 tests with zero skips.
+[Per-step evidence](changes/136_preserveMalformedCfgEvidence.md).
+
 ## T026 — lossless business-step projection (candidate)
 
 | AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
