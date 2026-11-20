@@ -1192,11 +1192,8 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 
 ### Obsahová cache explicitní inspekce (T003-S10-W01)
 
-Opakované `kgmaker inspect code --root ./service --module core --source-set main`
-nebo `kgmaker inspect frontend --root ./ui --tsconfig tsconfig.json` může při úplné
-shodě vstupů vynechat worker analyze a compiler/framework projekce. JSON výsledek
-obsahuje `cache.stages` s HIT/MISS/BYPASS a důvodem. Handshake a frontend project
-preflight zůstávají explicitní; scan/hook/feature žádný worker nespustí.
-Cache sdílí autoritativní graph generation a nemění evidence, IDs ani dostupnost dat.
-[Kontrakt, limity a CLI](docs/stage-content-cache.md),
-[provedené kontroly](docs/changes/133_stageContentCache.md).
+Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
+compiler evidence znovu. JSON hlásí `cache.stages`
+se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+[Příkazy a omezení](docs/stage-content-cache.md),
+[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).

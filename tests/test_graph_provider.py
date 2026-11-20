@@ -224,3 +224,23 @@ def test_invalid_second_module_does_not_publish_over_first(tmp_path):
     with pytest.raises(WorkerError, match='Dangling'):
         graph_from_response(tmp_path, base, response, selected)
     assert (tmp_path / '.kgmaker/graph.json').read_bytes() == before
+
+
+def test_explicit_context_refresh_replaces_same_id_stored_evidence(tmp_path):
+    from dataclasses import replace
+
+    from kgmaker.model import Edge
+
+    graph, _ = indexed(tmp_path)
+    context = next(item for item in graph.contexts if item.get("analyzer_version"))
+    method = graph.symbols[0]["id"]
+    target = next(node.id for node in graph.nodes if node.id != method)
+    evidence = {"id": "proof:stable", "kind": "SYMBOL_RESOLVED", "context_id": context["id"],
+                "source_path": "src/main/java/Example.java"}
+    edge = Edge(method, target, "calls", evidence_kind="SYMBOL_RESOLVED",
+                context_ids=(context["id"],), evidence_ids=(evidence["id"],))
+    fresh = replace(graph, edges=[*graph.edges, edge], evidence=[*graph.evidence, evidence])
+    stored = replace(fresh, evidence=[*graph.evidence, {**evidence, "source_path": "wrong.java"}])
+    save_graph(stored, tmp_path)
+    merged = merge_compiler_context(tmp_path, fresh, context)
+    assert next(item for item in merged.evidence if item["id"] == evidence["id"]) == evidence

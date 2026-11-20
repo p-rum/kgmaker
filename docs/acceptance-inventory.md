@@ -2,7 +2,7 @@
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114); aktuální odpovědnost za [#116](https://github.com/p-rum/kgmaker/issues/116) zůstává otevřená. Oprava má lokální ověření 97 PASS / 0 SKIP s JDK21 K1/K2 a TS. [Aktuální důkaz a limity](changes/135_bindCachedCompilerEvidence.md). Historický stav před nálezem byl VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
