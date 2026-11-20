@@ -416,7 +416,9 @@ def prepare_packet(
     }
     if 'workflow' in task:
         snapshot = task['workflow']
+        from .workflow import source_binding
         packet['workflow'] = {
+            'source_binding': source_binding(root),
             'name': snapshot['name'], 'sha256': snapshot['sha256'],
             'phase': task['status'], 'instructions': snapshot['profile']['instructions'][role],
             'validations': snapshot['profile']['validations'],

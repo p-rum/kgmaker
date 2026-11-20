@@ -527,7 +527,15 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
     return path
 
 
-def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None = None) -> Path:
+def source_binding(root: Path) -> dict[str, str | None]:
+    from .analysis_model import digest
+    from .feature import source_inventory
+    return {'head_commit': _git_head(root), 'source_fingerprint': digest(source_inventory(root)[0])}
+
+
+def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None = None,
+              expected_binding: dict[str, str | None] | None = None,
+              expected_journal_revision: int | None = None) -> Path:
     """Atomically persist a validated task with optimistic concurrency checks."""
     import copy
     from .provenance import transaction
@@ -535,8 +543,10 @@ def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None
     validated = validate_task(copy.deepcopy(task))
     path = task_path(root, validated['id'])
     try:
-        with transaction(root):
+        with transaction(root, expected_revision=expected_journal_revision):
             existing = load_task(root, validated['id']) if path.exists() else None
+            if expected_binding is not None and source_binding(root) != expected_binding:
+                raise WorkflowError('stale workflow source evidence; reload and verify the current revision')
             return _persist_task_locked(root, validated, path, existing, expected_revision)
     except AnalysisError as exc:
         raise WorkflowError(str(exc)) from exc
@@ -591,11 +601,16 @@ def add_task(
     return task
 
 
-def advance_task(root: Path, task_id_value: str, target: str) -> dict[str, Any]:
+def advance_task(root: Path, task_id_value: str, target: str, *,
+                 expected_revision: str | None = None,
+                 expected_binding: dict[str, str | None] | None = None,
+                 expected_journal_revision: int | None = None) -> dict[str, Any]:
     """Move a task to a legally reachable status and persist the result."""
     task = load_task(root, task_id_value)
     from .analysis_model import digest
-    expected_revision = digest(task)
+    current_revision = digest(task)
+    if expected_revision is not None and expected_revision != current_revision:
+        raise WorkflowError("stale workflow task; load and plan the handoff again")
     if target not in STATUSES:
         raise WorkflowError("status is unsupported")
     allowed = legal_transitions(task)
@@ -610,7 +625,8 @@ def advance_task(root: Path, task_id_value: str, target: str) -> dict[str, Any]:
         task["stop_reason"] = task["stop_reason"] or "advanced to blocked"
     elif target == "done":
         task["stop_reason"] = None
-    save_task(root, task, expected_revision=expected_revision)
+    save_task(root, task, expected_revision=current_revision, expected_binding=expected_binding,
+              expected_journal_revision=expected_journal_revision)
     return task
 
 
@@ -670,6 +686,7 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
         return task
     if artifact['phase'] != task['status']:
         raise WorkflowError('Artifact phase must match the current task phase')
+    artifact_binding = None
     if artifact["packet_id"] is not None:
         prepared = packet_path(root, task, artifact["role"], artifact["iteration"])
         try:
@@ -682,11 +699,16 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
             raise WorkflowError("artifact packet does not belong to this task role")
         if packet.get("iteration") != artifact["iteration"]:
             raise WorkflowError("artifact packet iteration does not match the artifact")
+        packet_workflow = packet.get('workflow')
+        binding = packet_workflow.get('source_binding') if isinstance(packet_workflow, dict) else None
+        if binding is not None and artifact['phase'] in {'test', 'review'}:
+            if packet_id(packet) != artifact['packet_id'] or binding != source_binding(root):
+                raise WorkflowError('artifact packet is stale relative to current source evidence')
+            artifact_binding = binding
     if artifact['phase'] in ({'implement', 'test', 'review'} if task['schema_version'] == 3 else {'implement', 'review'}):
-        from .feature import source_inventory
-        from .analysis_model import digest
-        task['head_commit'] = _git_head(root)
-        task['worktree_fingerprint'] = digest(source_inventory(root)[0])
+        binding = artifact_binding or source_binding(root)
+        task['head_commit'] = binding['head_commit']
+        task['worktree_fingerprint'] = binding['source_fingerprint']
         task['schema_version'] = max(2, task['schema_version'])
         task.setdefault('delivery', {'schema_version':1, 'bindings':{}})
         task['delivery']['bindings'][artifact['id']] = {
@@ -699,5 +721,5 @@ def record_artifact(root: Path, task_id_value: str, role: str, payload: dict[str
         task["accepted_paths"] = _merge_paths(task["accepted_paths"], step_paths)
     elif artifact["role"] == "implementation":
         task["accepted_paths"] = _merge_paths(task["accepted_paths"], artifact["changed_paths"])
-    save_task(root, task, expected_revision=expected_revision)
+    save_task(root, task, expected_revision=expected_revision, expected_binding=artifact_binding)
     return task

@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "5bc349d71d82099d5b9df9966c99869af8ce59cb64830cbb9144916017a5c209",
-    "docs/acceptance-inventory.md": "6a2fabab50f8db4fb28a2fe64b4899e2c65839462a958cfaa66bc7fbd7c60871",
+    "README.md": "50358a1089bc3620335c3fc798bef7c3c6f16d84de44589c3db9b626108dcd2b",
+    "docs/acceptance-inventory.md": "c2bf689d3b4218bc18f01cf06f4473458119dc8b5a9f201c97f026b13b5ffe6a",
     "docs/agent-skills.md": "66e348375e176f6e28bb0378cecc89fb1378cb7f7147850c1aba0530487435e2",
     "docs/architecture-json-cli.md": "5d4709ade64a9e84f83cf121a8d4013ad4c6ba6014c30337cb2543cc2c117563",
     "docs/architecture.md": "7a813f58d47b66422155e45e9cf6b97373d945556c473283f347da4bdde25df1",
@@ -38,6 +38,7 @@
     "docs/changes/130_projectProcessFailures.md": "2351d1ea69cdeea1512a7137187ad70049aa6ddc1547c6af099f8afcc447f7d6",
     "docs/changes/131_completeAnalysisReport.md": "3837a3938b542d76749b12097af5f969a99e0be4a4554eb644752717c117d977",
     "docs/changes/133_stageContentCache.md": "c7d7214861f898f96e373684921195d0c22289445c7d1906261bb9eab49cf3db",
+    "docs/changes/134_addCompletionOrchestrator.md": "7b1378f34f556e05409bb660bc1ddef595cbae335a26dcc3ec058606ead5d7a8",
     "docs/changes/13_importGradleSourceSetScopes.md": "924ab1bd436d13365b2e980db119479db0e1d4d928e411b7f8cb453384dd7fb3",
     "docs/changes/140_validateAdditionalDatasetFields.md": "0079cf6018ca0ed631e2d512f78f9196fd203dac549f64d1e9a8528280f5d139",
     "docs/changes/14_configureLunaAgents.md": "894c6fddd32d6f9102379090ce36282245af1500714d78ba24d5bbe52b1f5e22",
@@ -121,6 +122,7 @@
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
     "docs/compiler-inspection.md": "d6cfdf6083361c135e00bd8753d4f963def3a4d145b231fca5fe1f5b83f1f6db",
     "docs/complete-analysis-report.md": "dcdbc01d104d078c12376845c84e84f735d3476dadada0fa156656ceb76a7ac9",
+    "docs/completion-orchestrator.md": "802d99ab1890d13ad817f8d81e03ce9730df63852147ee8901d0d1766ef43259",
     "docs/delivery-workflow.md": "98ec8adc96c0b1f167b0e9f501ec08d33ae76579bd370355d27ccdb36bd7bced",
     "docs/evidence-ranking.md": "7b062d4aaf261999dcafb9050ec3e293575d13bfa968e44075f30755dbd2515f",
     "docs/feature-analysis.md": "16759fe1dd2d72c613cd2c168e873cb752621d4ce472b9fb9d0aade68763519c",
@@ -139,7 +141,7 @@
     "docs/process-paths.md": "6a8d715f8302e0e771445052b48578729a05be59b80dfe84bc4a7f195c67af52",
     "docs/process-review-store.md": "2373d00c5a3e842e94d328776d747ae365445299d43f7e2d285688805d699259",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "828b33da90e04067f1afe246c9d466031ad533eef5fd4f6e30bb2e11b227086b",
+    "docs/production-analysis-progress.md": "0114bfde47980bf32a165e12149dc0f259b061ab2ebf07ba6b43b6c01246db93",
     "docs/production-scope.md": "5ae70daad7ae15c4fc136b3313f22dca2bb257aac201c8ca130f6d1ecc8734c4",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-scope.md": "d802a179ffa4ef7d1805e459085ab5ed9a311291b67e93ce5e1b19733dde4592",
@@ -169,7 +171,8 @@
     "docs/tasks/4_addHighLevelProjectViews.md": "a53e6f70885aa0751dfb1e32726579b6bf760dd3201b898532a32c94d6c0bb3b",
     "docs/tasks/50_addTargetProjectSkills.md": "179d18be56a4c77c337212fac92c7fac643423d63b184e89b785e5c26681ac6b",
     "docs/tasks/51_connectProjectWorkflows.md": "6dee419ded0bbf1a9fa487ade39473d507565560b4b689cc09c73eef995dbc7c",
-    "docs/tasks/README.md": "4d45230f3c22eefe88a5dcd56ca128bb69187db95cd7a442cfc1bbf5f7fef302",
+    "docs/tasks/52_addCompletionOrchestrator.md": "bb6edf1f37962e43dfdcc6ff21219b371a133e98e08d90a36ba642456a6f63cd",
+    "docs/tasks/README.md": "7df1ca5d436e974c69e31aa3ffcaed142867a35e633879bb9fc95663c9fcb805",
     "docs/tasks/T-005_add-view-model.md": "73df2e64fd73a89be2c61d538fe78d073c0974dcc40edc204b36bcc35570dd95",
     "docs/tasks/T-006_select-service-contexts.md": "9e3c464290037669f322eb3c0ab51c37d9979299174966b7da21c6c3b45ed8f2",
     "docs/tasks/T-007_define-service-ownership.md": "872b6576efdca621009e95dc0c2104d14b6150c93060fd08243f0cb04513a916",
@@ -403,11 +406,14 @@
     "src/kgmaker/business_process.py": "b68737537b534cef8bf121415bf6ce49093550d89630ec8e0f05cefee3d1ef0f",
     "src/kgmaker/callgraph.py": "1cb5674f25ebb6e5889de41dfa1e04beb91b249ae2539d2ffe7c5aab24709729",
     "src/kgmaker/classification.py": "bf4be942e0af395e6092f84dc69be878a2aeaa72f9e031cf89acb4c2ced9bd1a",
-    "src/kgmaker/cli.py": "b0791010ffb887327baa584f8e84c397bb8017cafce7de05d2ecedf678381c26",
+    "src/kgmaker/cli.py": "142db24e6aa5389610c0451b20665206420edc26f82d10b7703ed975194a313f",
+    "src/kgmaker/completion.py": "9c350ad74181da6b809875ac01d90c00bf6843ca22f4d07bac834bf10f30588b",
+    "src/kgmaker/completion_handoff.py": "d94b72b602c8127729e308866e9fc4c193a8cba4df4e9e0ebc7a0729cacfc42d",
+    "src/kgmaker/completion_review.py": "2f35f32570bd74c6ec22fa55c46aac2a9c3c8f234ca9ebaa805e357c205d23e0",
     "src/kgmaker/confluence.py": "381d2f48afd854bdc57d4eb1feeba14f509b61280d0754b564a1b70bcd88f6ce",
     "src/kgmaker/confluence_sync.py": "e76df309595a33c70aeed77c06d2fb9fad11425e3b5a7d354e9b2fe923c8e3c8",
     "src/kgmaker/confluence_sync_config.py": "9d7f26485ac1fde54898accb9b789c60243edcca8aee553931130fa31c55e0c0",
-    "src/kgmaker/context.py": "8781ae906b3e13d22011fd6fbd0738e0e77e74755f1adeb3ccda6d421d0add8b",
+    "src/kgmaker/context.py": "2270144272e74904c286b9256cb56bfd1a71d7255669970fc7ba2d1a5d48f362",
     "src/kgmaker/context_roles.py": "2496e42aee60377e14561d45af2da2cbda6ac95db5155cab726b84b70c923764",
     "src/kgmaker/contract_inputs.py": "d52da75e99ac66472364eb2697918d52f58ae0c3ebf8ccfbb56bb966f52072b2",
     "src/kgmaker/control_flow.py": "c996692b8389620e5703216a6569d76c1da235b65384969e9ef07a9a51bc5c73",
@@ -473,7 +479,7 @@
     "src/kgmaker/views.py": "0c894edaaa5c43d672080d880db16d61e059e159e274a225a059942fbcd72b2b",
     "src/kgmaker/workbooks.py": "5948059379f7aec6c8b88fd4a76a829ddbfd17c4e44a1ced057a79529de5f23a",
     "src/kgmaker/worker_protocol.py": "ec4ba05329def43c48b9aac1fd41867390ea577e431f6c17bb37bb9c81d4952f",
-    "src/kgmaker/workflow.py": "b7113fc41664e9d2d0927219c2d2a27918cd72cc9cd049d6331badc4858214a6",
+    "src/kgmaker/workflow.py": "d4b9620a2e76311cbe97664ae25fb66cc989a49d7e80d2401324e2d692efa93a",
     "src/kgmaker/workflow_profiles.py": "43d6e56ebba2b9f31e8b86674b0c54269c05d5d38f2f5e1a9f0d52bf8803edbb",
     "src/kgmaker/workspace.py": "012b3a749212e6044ddac052e1e1f2311fa6a40b4f2699ef3ec692f29ae78068",
     "src/kgmaker/workspace_cli.py": "15dca0ac815b6b0e466d7f6aab426c47172d7853d30113f9e971e8a7b177c501",
@@ -504,6 +510,8 @@
     "tests/test_compiler_workers.py": "086d17064cb2eb86246dd9d0d9436015ebf855191c6e64f8861f9ac60a051703",
     "tests/test_complete_analysis_report.py": "324eafd882506d320da46f291bf3c4375c347e1a2be30924f91991debd572e62",
     "tests/test_complete_analysis_report_actual.py": "1b3425972384e8f85325254592ab82f280c783eeea68146318dcd012e0074f86",
+    "tests/test_completion.py": "6b7078cb122457eadc5a2baefb0a0040379e9cd83fa8ece88375908f8dc3ddbd",
+    "tests/test_completion_handoff.py": "52cb2040169e40d96d4329599f678d80220df9a80d3f0ca8bb5b822d8e4fe144",
     "tests/test_confluence_configuration.py": "d1a198d7d454eba67b1940d45300bea20894c95e8ad1b364a781e2e10d0d1c0e",
     "tests/test_confluence_sync.py": "58e974aa91821f12890afea797aa50d3083ecdef5137e4f16bf379365e785d83",
     "tests/test_context_roles.py": "8061d8edf4e51f8405483cef00d26fbd608c8c194672a9360531a2173d49095a",
@@ -997,6 +1005,13 @@
       "summary": "Bounded content-addressed replay of explicit JVM/TypeScript extraction stages embedded in the existing graph generation; no evidence promotion."
     },
     {
+      "id": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "name": "Typed extra synthetic properties",
+      "source_file": "docs/delivery-workflow.md",
+      "source_line": 131,
+      "summary": "Schema-valued additionalProperties validates declared-type constraints on each extra synthetic data value."
+    },
+    {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
       "name": "Optional agent-authored semantic layer",
       "source_file": "README.md",
@@ -1004,11 +1019,11 @@
       "summary": "The extraction workflow keeps agent-authored semantic relationships scoped and separate from deterministic graph extraction."
     },
     {
-      "id": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
-      "name": "Typed extra synthetic properties",
-      "source_file": "docs/delivery-workflow.md",
-      "source_line": 131,
-      "summary": "Schema-valued additionalProperties validates declared-type constraints on each extra synthetic data value."
+      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "name": "Repository completion workflow",
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
     }
   ],
   "edges": [
@@ -1381,16 +1396,6 @@
       "source_file": "src/kgmaker/architecture_cli.py",
       "source_line": 307,
       "evidence": "The interfaces-only Markdown adapter renders the same validated result while JSON stays default."
-    },
-    {
-      "source": "function:src/kgmaker/cli.py:main::1039",
-      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/kgmaker/cli.py",
-      "source_line": 1043,
-      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
     },
     {
       "source": "file:src/kgmaker/view_cache.py:view_cache.py",
@@ -2783,6 +2788,26 @@
       "evidence": "Explicit real-worker fixtures count analyze operations and exercise selected JVM classpath, worker-byte/rule and TypeScript configuration changes."
     },
     {
+      "source": "file:src/kgmaker/testgen.py:testgen.py",
+      "target": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
+      "kind": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/testgen.py",
+      "source_line": 368,
+      "evidence": "Testgen recursively applies the typed additional property schema to each undeclared object value."
+    },
+    {
+      "source": "function:src/kgmaker/cli.py:main::1041",
+      "target": "concept:docs/architecture-json-cli.md:read_only_architecture_json_adapter",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/cli.py",
+      "source_line": 1045,
+      "evidence": "The architecture command dispatches to its safe JSON adapter before legacy argument parsing, while other commands retain their existing path."
+    },
+    {
       "source": "concept:README.md:optional_agent_authored_semantic_layer",
       "target": "concept:docs/project-scope.md:repository_local_knowledge_graph",
       "kind": "part_of",
@@ -2823,14 +2848,34 @@
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
     },
     {
-      "source": "file:src/kgmaker/testgen.py:testgen.py",
-      "target": "concept:docs/delivery-workflow.md:typed_extra_synthetic_properties",
-      "kind": "implements",
+      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "target": "function:src/kgmaker/completion.py:plan::169",
+      "kind": "uses",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/kgmaker/testgen.py",
-      "source_line": 368,
-      "evidence": "Testgen recursively applies the typed additional property schema to each undeclared object value."
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "evidence": "The completion plan uses existing delivery inventory and task links."
+    },
+    {
+      "source": "function:src/kgmaker/completion_handoff.py:handoff::129",
+      "target": "file:src/kgmaker/workflow.py:workflow.py",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/completion_handoff.py",
+      "source_line": 162,
+      "evidence": "A completion handoff advances the existing workflow with observed task, source and journal state."
+    },
+    {
+      "source": "function:src/kgmaker/completion_review.py:attribute::80",
+      "target": "function:src/kgmaker/provenance.py:event::143",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/kgmaker/completion_review.py",
+      "source_line": 129,
+      "evidence": "Review attribution registers a submitted event in the existing local provenance journal."
     }
   ],
   "episodes": [

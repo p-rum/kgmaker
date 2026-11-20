@@ -281,6 +281,15 @@ Konkrétní pravidla a hranice jsou v [T045](docs/tasks/45_addCodeReviewAgent.md
 
 The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. The architect, implementation, test-expert, review, and orchestrator agents use the durable `task` workflow and role-specific context packets. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. Host-neutral Agent Skills are installed alongside them under `.agents/skills/`; automatic discovery depends on the host. kgmaker makes no model API calls itself.
 
+## Repository completion workflow
+
+In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
+current task inventory and emits dependency, verification and dispatch candidates as JSON.
+The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
+Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
+to record the implementer and each independent reviewer's local attribution.
+See [the local completion workflow and its limits](docs/completion-orchestrator.md).
+
 ## Implementation memory and workflow
 
 Configurable profiles connect analysis, planning, implementation, testing and review:

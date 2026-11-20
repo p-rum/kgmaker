@@ -914,6 +914,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     from .workflow_profiles import register as register_workflow
     register_workflow(sub)
+    from .completion import register as register_completion
+    register_completion(sub)
 
     init_parser = sub.add_parser("init", help="add Agent Skills, Copilot hooks and instructions")
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -1067,6 +1069,9 @@ def main() -> None:
         code = run(args)
     elif args.command == "workflow":
         from .workflow_profiles import run
+        code = run(args)
+    elif args.command == "completion":
+        from .completion import run
         code = run(args)
     elif args.command == "init":
         code = init(root, args.force)
