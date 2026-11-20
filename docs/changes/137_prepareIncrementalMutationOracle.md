@@ -81,3 +81,46 @@ zadání zůstávají kompatibilní.
 - NOT_RUN — úplná projektová sada nad tímto kandidátem, nové exact-pair review,
   GitHub Actions, širší compiler a pozitivní Kafka/release matice, inkrementální
   ekvivalence. T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — source-only mezistavy, 2026-11-20
+
+Výchozí head [#121](https://github.com/p-rum/kgmaker/pull/121)
+`856a16c1d2aa751d01fb5952ffdf9589101ffae9`, tree
+`2f01e280cfc8879a2ad3017ad004be77b417b774`. Dřívější replay ověřoval hash
+stromu po každé mutaci a graf až po celé sekvenci. Následné smazání tak
+mohlo zakrýt chybnou deklaraci bezprostředně po přesunu.
+
+[Regrese](../../tests/test_incremental_equivalence.py) kontroluje snapshot po
+každé z devíti stávajících mutací. Porovnává přesné změny položek `graph.files`
+a ruční predikce z [oracle](../../fixtures/incremental-integrity/oracle.json).
+Příklad po `add` je `missingScore` v `Added.kt` a po `move` oba původní
+`score` overloady výhradně v `Renamed.kt`. Po `delete` overloady chybějí,
+nezměněný caller a přidaná deklarace zůstávají. SOURCE_ONLY snapshot nevytvoří
+compiler call sites. Změněný Kafka topic má stále `UNKNOWN` s
+`CONFIG_SCOPE_UNPROVEN`. Replayer přidá až po V11 `table:public.extra` v
+konfigurovaném Flyway streamu jako `MIGRATION_DERIVED` s `UNASSESSED`
+dostupností dat. Změna verze kontraktu a `tsconfig` se ověřuje na hashi
+příslušného souboru. Produkční zdroj, veřejné CLI, grafové schéma, init a
+pracovní tok se nemění. Aktualizovány [README](../../README.md),
+[návod fixture](../../fixtures/incremental-integrity/README.md),
+[acceptance](../acceptance-inventory.md) a [stav](../production-analysis-progress.md).
+
+- RED s lokálním diagnostickým pytest pluginem `alter_overload_at_move`.
+  Plugin hned po přesunu v izolovaném testovacím workspace mění signaturu
+  `score(value: Int)` na `score(value: Long)` a aktualizuje checksum.
+  Původní `test_mutation_replay_and_reset` v přesném výchozím tree s touto
+  záměnou prošel. Se stejnou záměnou měl `python -m pytest -p no:cacheprovider -p alter_overload_at_move -q --tb=short tests/test_incremental_equivalence.py -k 'source_only_mutation_states or mutation_replay_and_reset'`
+  1 očekávaný FAIL v nové kontrole ve stavu `move` a 1 PASS v reset/replay.
+  Jde o záměrně poškozenou fixture pro ověření detekce, plugin není součástí PR.
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-intermediate-strict tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`.
+  105 PASS, 0 SKIP a 1 strict XFAIL za 26.83 s se skutečným JDK 21.0.13.1 a
+  Kotlin 2.1.10 K1/K2. XFAIL zůstává dokladem potíže T047-S02 s identitou
+  při posunu deklarace.
+- PASS — `git diff --check`, `git diff --cached --check`, `kgmaker semantic update`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`, `kgmaker memory capture`,
+  `kgmaker scan`, `kgmaker status` a `kgmaker check` v izolovaném kandidátu.
+- NOT_RUN — úplná projektová sada, GitHub Actions, externí review této revize,
+  pozitivní Kafka a release binding, zbývající compiler mutace a inkrementální
+  ekvivalence. Pozitivní Kafka binding vyžaduje prokázaný scope konfigurace.
+  Release binding vyžaduje bajtovou shodu zachyceného artefaktu s compiler classpath.
+  T047-AC01 zůstává PARTIAL.

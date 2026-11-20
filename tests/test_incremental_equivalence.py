@@ -20,7 +20,8 @@ TARGET, CALLER, INDEPENDENT = (HARNESS[key] for key in ("TARGET", "CALLER", "IND
 
 def load_oracle(path):
     value = read_json(path)
-    fields = {"overloads", "caller", "independent", "dto", "endpoint_field", "ui", "missing_call", "kafka"}
+    fields = {"overloads", "caller", "independent", "dto", "endpoint_field", "ui", "missing_call", "kafka",
+              "added_declaration_path", "moved_overload_path", "flyway_mutation_object"}
     if (type(value) is not dict or set(value) != fields
             or any(not isinstance(value[key], str) or not value[key] for key in fields - {"overloads", "kafka"})
             or type(value["overloads"]) is not list or len(value["overloads"]) != 2
@@ -73,22 +74,65 @@ def test_malformed_oracle_is_rejected(tmp_path):
 
 def test_mutation_replay_and_reset(tmp_path):
     root = tmp_path / "workspace"
-    manifest = make_workspace(root)
+    make_workspace(root)
     original = snapshot(root)
     first = list(mutations(root))
-    assert len(first) == 9
+    assert [label for label, _, _, _ in first] == [
+        "comment", "body", "add", "move", "delete", "contract", "kafka", "flyway", "tsconfig",
+    ]
     for label, _, changed, expected in first:
         assert changed == expected, label
-    _, coverage, _, graph, _ = snapshot_workspace(manifest)
-    consumer = next(item for item in coverage["kafka_bindings"]["bindings"]
-                    if item["direction"] == "consumer")
-    assert consumer["topic"] == load_oracle(FIXTURE / "oracle.json")["kafka"]["mutated_consumer_topic"]
-    assert not any(edge.kind == "kafka_binding_match" for edge in graph.edges)
-    assert not any(node.name == "score" for node in graph.nodes)
     shutil.rmtree(root)
     make_workspace(root)
     assert snapshot(root) == original
     assert list(mutations(root)) == first
+
+
+def test_source_only_mutation_states_match_manual_oracle(tmp_path):
+    oracle = load_oracle(FIXTURE / "oracle.json")
+    manifest = make_workspace(tmp_path)
+    previous_files = snapshot_workspace(manifest)[3].files
+    applied = set()
+
+    for label, _, _, expected_paths in mutations(tmp_path):
+        applied.add(label)
+        _, coverage, _, graph, _ = snapshot_workspace(manifest)
+        functions = [node for node in graph.nodes if node.kind == "function"]
+        overload_path = oracle["moved_overload_path"] if "move" in applied else TARGET
+        expected_overloads = [] if "delete" in applied else [
+            ("@backend/" + overload_path, signature) for signature in oracle["overloads"]
+        ]
+        overloads = sorted((node.path, node.signature) for node in functions if node.name == "score")
+        assert overloads == sorted(expected_overloads), label
+        missing_call = oracle["missing_call"]
+        expected_added = [
+            ("@backend/" + oracle["added_declaration_path"], missing_call)
+        ] if "add" in applied else []
+        added = [(node.path, node.signature) for node in functions if node.name == missing_call]
+        assert added == expected_added, label
+        assert [(node.path, node.signature) for node in functions if node.name == oracle["caller"]] == [
+            ("@backend/" + CALLER, oracle["caller"]),
+        ], label
+        assert not graph.call_sites, label
+
+        kafka = oracle["kafka"]
+        consumer_topic = kafka["mutated_consumer_topic"] if "kafka" in applied else kafka["initial_topic"]
+        bindings = coverage["kafka_bindings"]["bindings"]
+        assert sorted((item["direction"], item["topic"], item["status"]) for item in bindings) == [
+            ("consumer", consumer_topic, "UNKNOWN"), ("producer", kafka["initial_topic"], "UNKNOWN"),
+        ], label
+        assert all(kafka["reason"] in item["reasons"] for item in bindings), label
+        assert not any(edge.kind in {"kafka_binding_match", "supplies_classpath"} for edge in graph.edges), label
+
+        schema = coverage["schemas"]["backend"][0]
+        assert schema["provenance"] == "MIGRATION_DERIVED", label
+        assert (oracle["flyway_mutation_object"] in schema["objects"]) == ("flyway" in applied), label
+        assert schema["deployment_verified"] is False and schema["data_availability"] == "UNASSESSED", label
+
+        graph_changed = {path for path in previous_files.keys() | graph.files.keys()
+                         if previous_files.get(path) != graph.files.get(path)}
+        assert graph_changed == {"@" + path for path in expected_paths}, label
+        previous_files = graph.files
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])

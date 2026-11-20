@@ -37,12 +37,14 @@ Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání 
 
 ## T047-S01 — source-only mutations and cold Kotlin oracle
 
-T047-AC01 PARTIAL. Fixture dvou repozitářů a devíti mutací má nad base
-`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` 104 PASS, 0 SKIP a 1 strict
-XFAIL. Skutečné K1 a K2 ověřily po přidání
-`Added.kt` rozlišení dříve neznámého volání s nezměněným callerem. Zbývá
-širší compiler a release/Kafka matice, S02 logical key a inkrementální
-ekvivalence. [Přesné kontroly](changes/137_prepareIncrementalMutationOracle.md).
+T047-AC01 PARTIAL. Kontrola všech devíti mezistavů porovnává změny
+souborových hashů, deklarace Kotlinu, `UNKNOWN` Kafka scope a
+offline Flyway V11 s ručním oracle. Při záměně overloadu po přesunu
+nová kontrola selhala tam, kde dřívější replay test prošel. Cílená sada
+rozšíření draftu #121 (`856a16c1d2aa751d01fb5952ffdf9589101ffae9`) má
+105 PASS, 0 SKIP a 1 strict XFAIL. Zahrnuje skutečné cold K1/K2 add. Zbývá
+širší compiler matice, kladný Kafka a release doklad, S02 logical key
+a inkrementální ekvivalence. [Přesné kontroly](changes/137_prepareIncrementalMutationOracle.md).
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 

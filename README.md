@@ -293,8 +293,9 @@ See [the local completion workflow and its limits](docs/completion-orchestrator.
 ## Incremental integrity fixtures
 
 The [T047-S01 mutation workspace](fixtures/incremental-integrity/README.md) replays
-source-only edits against a handwritten oracle. A separate cold K1/K2 test
-checks that adding one Kotlin declaration resolves a previously missing call.
+source-only edits against a handwritten oracle. It checks the changed file
+hashes and relevant graph facts after each mutation. A separate cold K1/K2
+test checks that adding one Kotlin declaration resolves a previously missing call.
 The fixture reports the remaining compiler and workspace evidence gaps.
 
 ## Implementation memory and workflow

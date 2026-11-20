@@ -9,6 +9,9 @@
   "endpoint_field": "workspace:service:exposure-api:endpoint:GET:/exposure:field:decline",
   "ui": "ui_element:src/page.tsx:decline",
   "missing_call": "missingScore",
+  "added_declaration_path": "api/src/main/kotlin/Added.kt",
+  "moved_overload_path": "api/src/main/kotlin/Renamed.kt",
+  "flyway_mutation_object": "table:public.extra",
   "kafka": {
     "initial_topic": "orders-blue",
     "mutated_consumer_topic": "isolated",
