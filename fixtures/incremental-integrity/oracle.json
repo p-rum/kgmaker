@@ -1,0 +1,17 @@
+{
+  "overloads": [
+    "score(value: Int)",
+    "score(value: String)"
+  ],
+  "caller": "callScore",
+  "independent": "independent",
+  "dto": "data_field:src/model.kt:ExposureOutput.decline",
+  "endpoint_field": "workspace:service:exposure-api:endpoint:GET:/exposure:field:decline",
+  "ui": "ui_element:src/page.tsx:decline",
+  "missing_call": "missingScore",
+  "kafka": {
+    "initial_topic": "orders-blue",
+    "mutated_consumer_topic": "isolated",
+    "reason": "CONFIG_SCOPE_UNPROVEN"
+  }
+}
