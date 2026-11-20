@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 536
+- Scope: production; omitted files: 537
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `a32f41606f0dd93d18a442d1e1ea5a0fb0f8ad776312994257cc0e363ac2eaf0`; content: `79334a1a422ea8b6b51645a3e3f996cff9781b9c616f1edb314ef27cb239003e`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 330
+- Implementation episodes: 331
 - Inferred/ambiguous relationships: 8392/0
 
 ## Architecture diagram
@@ -2306,6 +2306,7 @@ flowchart LR
 - **feat(t010): catalog scoped HTTP provider declarations** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/67_catalogHttpProviders.md; validation: resumed-pure=passed, historical-raw-receipts=unknown
 - **Change 2 passed, 364 passed, 24 skipped, Aktualizace stavu** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused_k2_jpa=passed, framework_java_regression=passed, full_pytest_364_pass_24_skip=passed, explicit_k2_build=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, maven-effective-model=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/143_recordCompilerIntegrationMerge.md, docs/production-analysis-progress.md; validation: completion-plan-and-tests=passed
 - **Integrate current governance and preserve T046 step history (S06)** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-implementation.agent.md, .github/agents/kgmaker-orchestrator.agent.md, .github/agents/kgmaker-review.agent.md, .github/agents/kgmaker-test-expert.agent.md; validation: targeted-tests=passed
 - **Import explicit Gradle custom source-set scopes** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/13_importGradleSourceSetScopes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: mandatory206=passed, gradle813=passed, semantic=passed
 - **Project explicit datasource resources from scoped upstream evidence** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md, docs/compiler-inspection.md; validation: focused115=passed, target_scope_guard=passed, strict_full=unknown, semantic=passed
@@ -2446,7 +2447,7 @@ flowchart LR
 - **Record Spring selector validation and semantic evidence** — changed; files: docs/changes/42_resolveBoundedSpringImports.md; validation: semantic=passed, graphCheck=passed, diffCheck=passed, full402=passed, optionalBuilds9=skipped
 - **merge: preserve Spring selector facts with source mapping ABI guards** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/46_mapDefaultBodySources.md, docs/compiler-inspection.md; validation: spring_mapping_34_pass=passed, views_integration=passed, windows=skipped, semantic=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s07-09-unified-flow-views** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/128_unifiedFlowViews.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: publication-84=passed, integrated-293-checkpoint=passed, full=skipped
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/135_bindCachedCompilerEvidence.md, docs/changes/136_preserveMalformedCfgEvidence.md, docs/changes/139_validateCanonicalInjectionFixture.md; validation: two-jdk-preflight=passed, exact-full=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/135_bindCachedCompilerEvidence.md, docs/changes/136_preserveMalformedCfgEvidence.md, docs/changes/139_validateCanonicalInjectionFixture.md; validation: two-jdk-preflight=passed, exact-full=unknown
 - **Integrate explicit PR32 compiler-facts dependency for Kotlin conditions** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/50_expandSpringConditions.md, docs/compiler-inspection.md; validation: conditions-focused40=passed, variants=passed, full=unknown, github-actions=skipped
 - **Verify owner-bound project reference targets and fail-closed redirect limits** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: integration10=passed, ts-runtime-byte-identical=passed, readme-evidence=passed, prior-strict302=passed
 - **fix(worker): bound inherited-pipe cleanup and integrate service contexts** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: linux-strict=passed, inherited-pipe-regression=passed, windows-actual-smoke=skipped
