@@ -16,7 +16,7 @@ from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
-from .analysis_model import AnalysisError, read_json
+from .analysis_model import AnalysisError, atomic_write, read_json
 from .model import Edge, KnowledgeGraph, Node
 
 CONFLUENCE_CACHE_FILE = Path(".kgmaker/confluence-index.json")
@@ -278,17 +278,19 @@ def _load_cache(root: Path) -> dict[str, Any]:
         return {}
 
 
+def _cache_text(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+
 def _write_cache(root: Path, payload: dict[str, Any]) -> None:
-    target = root / CONFLUENCE_CACHE_FILE
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    atomic_write(root / CONFLUENCE_CACHE_FILE, _cache_text(payload))
 
 
 def discover_export(export_root: Path) -> list[Path]:
     return sorted(path for path in export_root.rglob("*") if path.is_file() and path.suffix.casefold() in {".html", ".htm"})
 
 
-def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[ConfluenceDocument], list[dict[str, Any]], dict[str, Any]]:
+def ingest_export(export_root: Path, repository_root: Path, *, persist_cache: bool = True) -> tuple[list[ConfluenceDocument], list[dict[str, Any]], dict[str, Any]]:
     """Parse/reuse a local export and return documents, diagram relations and cache."""
     export_root = export_root.resolve()
     if not export_root.is_dir():
@@ -363,7 +365,8 @@ def ingest_export(export_root: Path, repository_root: Path) -> tuple[list[Conflu
         _assertions_from_document(document)
     cache = {"approvals_sha256": _sha(approvals_path) if approvals_path.is_file() else None,
              "schema_version": 1, "directory": str(export_root), "pages": {doc.file: asdict(doc) for doc in documents}, "attachments": attachments}
-    _write_cache(repository_root, cache)
+    if persist_cache:
+        _write_cache(repository_root, cache)
     return documents, attachments, cache
 
 
@@ -551,7 +554,7 @@ def merge_into_graph(graph: KnowledgeGraph, documents: list[ConfluenceDocument],
     return replace(graph, nodes=nodes, edges=edges)
 
 
-def render_report(assertions: list[DocumentationAssertion], report_path: Path, export_root: Path, revision: str = "working tree") -> str:
+def report_text(assertions: list[DocumentationAssertion], export_root: Path, revision: str = "working tree") -> str:
     groups: dict[str, list[DocumentationAssertion]] = {}
     for assertion in assertions:
         if assertion.status in {"VERIFIED_BY_CODE"}:
@@ -580,20 +583,30 @@ def render_report(assertions: list[DocumentationAssertion], report_path: Path, e
                 lines.append("Authority: UNAPPROVED_OR_UNKNOWN")
                 action = "Review the documented section and update it if the current code is intentional."
             lines.extend(["Suggested action: " + action, ""])
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_report(assertions: list[DocumentationAssertion], report_path: Path, export_root: Path, revision: str = "working tree") -> str:
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    report_path.write_text(report_text(assertions, export_root, revision), encoding="utf-8")
     return report_path.as_posix()
 
 
-def persist_validation_index(root: Path, assertions: list[DocumentationAssertion]) -> None:
+def validation_index_text(assertions: list[DocumentationAssertion], cache: dict[str, Any]) -> str:
+    return _cache_text({
+        **cache,
+        "assertions": [asdict(item) for item in assertions],
+        "reverse_index": {
+            entity_id: [item.id for item in assertions if entity_id in item.matched_code_entities]
+            for entity_id in sorted({entity_id for item in assertions for entity_id in item.matched_code_entities})
+        },
+    })
+
+
+def persist_validation_index(root: Path, assertions: list[DocumentationAssertion], *, cache: dict[str, Any] | None = None) -> None:
     """Persist assertion evidence and the reverse code-entity index for revalidation."""
-    cache = _load_cache(root)
-    cache["assertions"] = [asdict(item) for item in assertions]
-    cache["reverse_index"] = {
-        entity_id: [item.id for item in assertions if entity_id in item.matched_code_entities]
-        for entity_id in sorted({entity_id for item in assertions for entity_id in item.matched_code_entities})
-    }
-    _write_cache(root, cache)
+    cache = _load_cache(root) if cache is None else cache
+    atomic_write(root / CONFLUENCE_CACHE_FILE, validation_index_text(assertions, cache))
 
 
 def resolve_confluence_dir(root: Path, cli_value: str | None) -> Path | None:

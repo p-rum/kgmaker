@@ -1210,5 +1210,11 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Graph publication reserves the checkout before writing and rejects a stale
+candidate if a newer graph was published during capture, import or migration.
+A Confluence-enabled scan stages its report and validation index with the graph.
+A failed graph replacement restores both outputs. A runtime import with an
+explicit graph object requires it to match the stored generation, when present.
+Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).

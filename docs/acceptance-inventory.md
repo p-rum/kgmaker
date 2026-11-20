@@ -1622,3 +1622,16 @@ records actual commands/results and separate fixes. No whole S06 completion.
 | T003-S06-W07-AC02 | `test_old_graph_and_worker_protocol_remain_readable`, offline scan/hook/store error tests | Schema1/2/3 and legacy payloads; old intent v1 replay rejected pending explicit reinspection; invalid/timeout/cancel preserve last valid generation |
 | T003-S06-W07-AC03 | invalid IR/replay parametrizations, source-shadow/ambiguity, unused selector/projection, generated Qfield mismatch, inherited access conflict and selected XML persistence-unit cases; `test_actual_review_query_state_and_callable_boundaries` (6 cases), immutable field/override replay checks | Dynamic/ambiguous/stale facts cannot create stronger ORM evidence |
 | T003-S06-W07-AC04 | [versioned matrix](programmatic-queries.md), [fixture](../fixtures/criteria-queries/README.md), [change129](changes/129_criteriaSpecificationQuerydsl.md) | Kotlin, additional operators/provider grammar and runtime NOT_RUN; full postponed per user |
+
+
+## T003-S10-W06 — souběh publikace a poškozená cache
+
+W06 má cílené ověření nad opravou série publikací. Deterministické regrese
+dokládají odmítnutí druhého zapisovače mezi výměnami souborů, ochranu
+novějšího grafu při scan, runtime importu, migraci a workspace scan a
+ochranu souvisejících Confluence výstupů. Chyba poslední výměny grafu vrací
+obsah nebo nepřítomnost Confluence indexu a reportu. Runtime import odmítá
+odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 PASS / 0 SKIP se skutečnými workery a JDK 21/22. Ověření zahrnuje
+neplatný cache envelope a původní graph/store schéma v1/v2/v3.
+[Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
+a samostatný úplný gate. Replay HIT se zatím nepovoluje.
