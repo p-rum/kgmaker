@@ -8,6 +8,11 @@ FIXTURES = Path(__file__).resolve().parents[1]
 TARGET = "api/src/main/kotlin/Scoring.kt"
 CALLER = "api/src/main/kotlin/Caller.kt"
 INDEPENDENT = "independent/src/main/kotlin/Other.kt"
+KAFKA_CONFIG = "independent/src/main/resources/application-blue.properties"
+CONTRACT = "contracts/exposure.json"
+CLIENT = "generated/exposure.ts"
+PAGE = "src/page.tsx"
+GENERATION = "generation.json"
 
 
 def make_workspace(root):
@@ -67,23 +72,62 @@ def snapshot(root):
             for path in sorted(root.rglob("*")) if path.is_file()}
 
 
+def declare_typed_client(root, origin):
+    contract = root / "backend" / CONTRACT
+    document = read_json(contract)
+    response = document["paths"]["/exposure"]["get"]["responses"]["200"]
+    field = response["content"]["application/json"]["schema"]["properties"]["decline"]
+    field.update({"x-kgmaker-source": origin["id"], "x-kgmaker-source-sha256": origin["sha256"]})
+    write_json(contract, document)
+
+    frontend = root / "frontend"
+    client = frontend / CLIENT
+    client.parent.mkdir()
+    client.write_text(
+        "export interface Exposure { decline: number; }\n"
+        "declare global { namespace JSX { interface IntrinsicElements {\n"
+        "    span: { 'data-testid': string; children?: number };\n"
+        "} } }\n", encoding="utf-8")
+    page = frontend / PAGE
+    page.write_text(
+        "import type { Exposure } from '../generated/exposure';\n\n"
+        + page.read_text(encoding="utf-8").replace("const data =", "const data: Exposure ="),
+        encoding="utf-8")
+    write_json(frontend / "tsconfig.json", {"compilerOptions": {"strict": True, "jsx": "preserve"}})
+    write_json(frontend / GENERATION, {
+        "source_contract": {"repo_id": "backend", "path": CONTRACT, "sha256": file_hash(contract)},
+        "generated_files": [CLIENT], "generated_sha256": {CLIENT: file_hash(client)},
+        "release": document["info"]["version"],
+    })
+    manifest = root / "workspace.json"
+    workspace = read_json(manifest)
+    service = next(item for item in workspace["services"] if item["id"] == "exposure-api")
+    service["generated_clients"] = [{"repo_id": "frontend", "path": CLIENT,
+                                     "metadata_path": GENERATION, "consumers": [PAGE]}]
+    write_json(manifest, workspace)
+
+
+def change_contract_version(root):
+    path = root / "backend" / CONTRACT
+    document = read_json(path)
+    document["info"]["version"] = "2"
+    write_json(path, document)
+
+
+def change_kafka_topic(root):
+    (root / "backend" / KAFKA_CONFIG).write_text("orders.topic=isolated\n", encoding="utf-8")
+
+
 def mutations(root):
     backend = root / "backend"
     target = backend / TARGET
     added = target.with_name("Added.kt")
     moved = target.with_name("Renamed.kt")
-    contract = backend / "contracts/exposure.json"
-    kafka = backend / "independent/src/main/resources/application-blue.properties"
     flyway = backend / "src/main/resources/db/migration/V11__optional.sql"
     tsconfig = root / "frontend/tsconfig.json"
 
     def write(path, content):
         path.write_text(content, encoding="utf-8")
-
-    def change_contract():
-        value = read_json(contract)
-        value["info"]["version"] = "2"
-        write_json(contract, value)
 
     steps = [
         ("comment", lambda: write(target, "// comment\n" + target.read_text(encoding="utf-8")),
@@ -93,8 +137,8 @@ def mutations(root):
         ("add", lambda: write(added, "package fixture\nfun missingScore(): Int = 0\n"), (added,)),
         ("move", lambda: target.rename(moved), (target, moved)),
         ("delete", moved.unlink, (moved,)),
-        ("contract", change_contract, (contract,)),
-        ("kafka", lambda: write(kafka, "orders.topic=isolated\n"), (kafka,)),
+        ("contract", lambda: change_contract_version(root), (backend / CONTRACT,)),
+        ("kafka", lambda: change_kafka_topic(root), (backend / KAFKA_CONFIG,)),
         ("flyway", lambda: write(flyway, "CREATE TABLE extra (id integer);\n"), (flyway,)),
         ("tsconfig", lambda: write_json(tsconfig, {"compilerOptions": {"strict": True}}),
          (tsconfig,)),

@@ -124,3 +124,93 @@ pracovní tok se nemění. Aktualizovány [README](../../README.md),
   ekvivalence. Pozitivní Kafka binding vyžaduje prokázaný scope konfigurace.
   Release binding vyžaduje bajtovou shodu zachyceného artefaktu s compiler classpath.
   T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — Kafka a Kotlin → TypeScript, 2026-11-20
+
+Lokální kandidát pro [#121](https://github.com/p-rum/kgmaker/pull/121) vychází
+z jeho draft headu `e57369521f91ab5d81456fe7516f10237b4b569e` a z cílového
+`main` `17e9e7368e6cc2d6550983c3039eb39debd65424`, tree
+`dfb0a247ec329196190a3db182b5d1e8c549b3db`. Stanovuje ruční očekávání pro dva
+protipříklady k předchozím mezerám, aby samotná přítomnost deklarací
+nepostačovala pro kladný výsledek.
+
+- Kafka oracle explicitně klasifikuje konfiguraci `api` a `independent` pod
+  dva compiler kontexty profilu `blue`. Před mutací `orders-blue` prokáže
+  jednu hranu `kafka_binding_match` pro přesný pár, cluster, hash kontraktu a
+  release. Po změně topicu konzumenta na `isolated` znovu zachytí compiler
+  evidence obou modulů v čistém indexu. Obě vazby zůstávají RESOLVED a jejich match
+  zmizí. Během vývoje první pokus se starým indexem dostal STALE v obou
+  variantách. Cold oracle proto pracuje výhradně s novou generací.
+- BE–FE oracle používá skutečný compiler field `ExposureOutput.decline:D`,
+  cestu `GET /exposure` a typovaného klienta z fixture. Přesná cesta je
+  `serialized_as`, `maps_to`, `displayed_in`. Projekce na stránce odkazuje
+  na deklaraci `decline` a přesný hash souboru klienta. Všechny hrany zachovají
+  dostupnost UNKNOWN. Doklad klienta má důvěru `LOCAL_DECLARED`, release `1`
+  a přesné hashe OpenAPI a klienta. Změna OpenAPI na release `2` současně
+  změní hash souboru. Při této kombinované změně stará provenance propadne
+  na `VALUE_FLOW_GENERATION_OR_RELEASE_UNKNOWN`. Kontrola sleduje všechny
+  příchozí compiler hrany `serialized_as` a odchozí `maps_to` daného endpointu
+  bez ohledu na ID druhého konce. SOURCE_ONLY hrany jsou mimo tuto kontrolu.
+  Jde o statický doklad hran ze zdroje. Nasazení a běh Spring controlleru
+  zde nejsou ověřené.
+
+Upraveny [testy](../../tests/test_incremental_equivalence.py),
+[oracle](../../fixtures/incremental-integrity/oracle.json) a
+[fixture builder](../../fixtures/incremental-integrity/workspace_fixture.py).
+[README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a
+[stavová matice](../production-analysis-progress.md) odkazují na dodaný rozsah.
+Runtime, CLI, init, registr zadání ani veřejná schémata se nemění. Stávající
+[kontrakt BE–FE](../backend-frontend-value-flow.md) zůstává stejný. Kafka
+transport, aktivace listeneru a dostupnost dat nemají nový runtime důkaz.
+
+- PASS — samostatná pozitivní a negativní Kafka oracle, 2 PASS s reálným K1/K2
+  za 36,39 s. Příkaz `python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py -k kafka`.
+- PASS — samostatná BE–FE oracle, 2 PASS s reálným K1/K2 a TypeScript 5.7.3
+  za 21,54 s před dodatečným zpřísněním důkazu. Příkaz
+  `python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py -k typescript`.
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-final tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py`.
+  127 PASS, 0 SKIP a 1 strict XFAIL za 89,62 s. JDK 21.0.13.1, Kotlin
+  2.1.10 K1/K2, Node 22.22.1 a TypeScript 5.7.3. JVM zdroj a TypeScript
+  worker soubory odpovídají připraveným distribucím. Před finálním během dvě
+  FAIL odhalily souběh SOURCE_ONLY a compiler hran `maps_to`. Oracle vybírá
+  jedinou přesnou `FRAMEWORK_DERIVED` hranu z příslušného kontextu.
+- Graf a diff — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base HEAD`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --check`.
+  Platný README koncept a jeho čtyři vazby zůstaly zachované s aktuálním hashem.
+- NOT_RUN — externí review této revize, úplná projektová sada a GitHub Actions.
+  JVM artefakt `supplies_classpath` zůstává PARTIAL při absenci manifestu.
+  Pozitivní artefakt vyžaduje skutečný execution-bound output a shodný soubor
+  v aktuálním JVM classpath kontextu konzumenta. TypeScript takový classpath
+  nevystavuje. Plný §7 corpus a inkrementální ekvivalence zůstávají otevřené.
+
+## T047-S01 / T047-R01 a T047-AC01 — nálezy review BE–FE oracle, 2026-11-20
+
+Výchozí lokální tree `4da4a89822d58ec111a2b21c2e35ff985d75894d` nad
+`main` `17e9e7368e6cc2d6550983c3039eb39debd65424`. Předchozí negativní
+assertion v [testu](../../tests/test_incremental_equivalence.py) připouštěla
+chybný `maps_to` k novému ID. Kontrola nyní zakáže compiler `maps_to` z
+endpointu a `serialized_as` do endpointu pro libovolný druhý konec. Legitimní
+SOURCE_ONLY hrany zůstávají dostupné. [Oracle](../../fixtures/incremental-integrity/oracle.json)
+očekává release `2` a test ověřuje i změnu hashe. Kladná část testu ověřuje
+occurrence v `src/page.tsx`, její odkaz na compiler symbol deklarovaný v
+`generated/exposure.ts` a hash klientského zdroje. Návod popisuje zachycení
+compiler evidence v čistém indexu. Produkční kód, CLI a schémata nemají dopad.
+
+- RED — lokální pytest plugin `inject_retargeted_contract` vložil stale
+  `FRAMEWORK_DERIVED maps_to` k jinému ID klienta. Předchozí predikát vloženou
+  hranu propustil. Nový test K1 dal 1 očekávaný FAIL na `stale_contract_edges`
+  za 9,49 s při `python -m pytest -p no:cacheprovider -p inject_retargeted_contract -q --tb=short tests/test_incremental_equivalence.py -k 'typescript and k1'`.
+  Diagnostický plugin je lokální a není součástí PR.
+- PASS — aktualizovaná negativní kontrola a okolní sada v
+  `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-review tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py`.
+  127 PASS, 0 SKIP a 1 strict XFAIL za 92,99 s se skutečnými K1/K2 a TypeScript.
+- PASS — finální změněná BE–FE varianta s kontrolou deklarace, 2 PASS, 0 SKIP
+  a 9 DESELECTED za 14,98 s. Stejné prostředí a `python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-review-client tests/test_incremental_equivalence.py -k typescript`.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check` a `git diff --cached --check`.
+  Review oprava nezavádí nové ruční sémantické vazby.
+- NOT_RUN — nová úplná projektová sada a GitHub Actions. T047-AC01 zůstává
+  PARTIAL kvůli otevřenému artefaktovému mapování a širší mutační matici.

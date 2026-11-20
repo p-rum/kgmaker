@@ -300,8 +300,12 @@ def test_policy_markdown_keeps_framework_intent_separate_from_cfg(captured):
     before=copy.deepcopy(captured.to_dict())
     with patch('subprocess.Popen',side_effect=AssertionError('flow executed process')),patch('socket.socket',side_effect=AssertionError('flow used network')):
         report=process(captured,policy.metadata['origin_id']);text=markdown(report)
-    assert 'Kafka retry/DLT policy declarations (execution NOT_OBSERVED)' in text
-    assert 'delivery NOT_OBSERVED; runtime/data availability UNKNOWN' in text
+    heading = 'Kafka retry/DLT policy declarations (execution NOT_OBSERVED)'
+    assert heading in text
+    json_block = text.split(heading, 1)[1].split('```json\n', 1)[1].split('\n```', 1)[0]
+    rows = json.loads(json_block)
+    assert rows and rows == report['kafka_policy_boundaries']
+    assert all(row['delivery'] == 'NOT_OBSERVED' and row['runtime_availability'] == 'UNKNOWN' for row in rows)
     assert captured.to_dict()==before
 
 
@@ -320,7 +324,14 @@ def test_primitive_policy_fields_fail_closed_as_public_unknown(captured,field,va
     from kgmaker.flow import process
     report=process(graph,origin)
     if value==original:assert all(r['status']=='DECLARED' for r in report['kafka_policy_boundaries'])
-    else:assert report['status']=='PARTIAL' and all(r['status']=='UNKNOWN' for r in report['kafka_policy_boundaries'])
+    else:
+        report_rows = report['kafka_policy_boundaries']
+        assert report['status'] == 'PARTIAL' and report_rows
+        assert all(row['status'] == 'UNKNOWN' and not row['evidence_ids'] for row in report_rows)
+    if field == 'context_id' and isinstance(value, (list, dict)):
+        from kgmaker.views import project
+        projected_ids = {node.id for node in project(graph, 'production', context_id=original).nodes}
+        assert origin in projected_ids and policy.id not in projected_ids
     assert graph.to_dict()==before
 
 
@@ -374,18 +385,20 @@ def test_cli_process_keeps_full_proof_input_and_exact_context_pin(captured,tmp_p
         validate.assert_called_once_with(tmp_path.resolve(),graph)
     rows=process(loaded,policy.metadata['origin_id'],context_id=args._flow_context_id)['kafka_policy_boundaries']
     assert rows and all(r['status']=='UNKNOWN' for r in rows)
-    with pytest.raises(AnalysisError,match='Source CFG unavailable'):
+    with pytest.raises(AnalysisError,match='Flow entry is absent from selected scope/context'):
         process(loaded,policy.metadata['origin_id'],context_id='foreign-context')
     assert graph.to_dict()==before
 
 
 def test_cli_strict_process_does_not_hide_foreign_policy_proof(captured,tmp_path,capsys):
     from types import SimpleNamespace
+    from kgmaker.cli import build_parser
     from kgmaker.inspection_cli import run,indexed
     from kgmaker.analysis_model import AnalysisError
     graph,policy=foreign_edge_graph(captured)
-    args=SimpleNamespace(root=tmp_path,scope='production',context=policy.metadata['context_id'],command='flow',view='process',
-        entry=policy.metadata['origin_id'],max_depth=3,max_nodes=500,format='json',strict=True,flow_command='render')
+    args = build_parser().parse_args(['flow', 'render', '--root', str(tmp_path),
+        '--context', policy.metadata['context_id'], '--view', 'process',
+        '--entry', policy.metadata['origin_id'], '--format', 'json', '--strict'])
     with patch('kgmaker.inspection_cli.load_graph',return_value=graph),patch('kgmaker.graph_provider.validate_compiler_snapshot'):
         assert run(args)==4
         report=json.loads(capsys.readouterr().out)

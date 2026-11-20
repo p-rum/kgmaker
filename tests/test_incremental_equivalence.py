@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from kgmaker.analysis_model import AnalysisError, read_json, write_json
+from kgmaker.analysis_model import AnalysisError, file_hash, read_json, write_json
 from kgmaker.dataflow import impact_paths
-from kgmaker.inspection import command, inspect_jvm
+from kgmaker.inspection import command, inspect_frontend, inspect_jvm
 from kgmaker.worker_protocol import WorkerError
 from kgmaker.workspace import qualified, snapshot_workspace
 
@@ -16,19 +16,31 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/incremental-integrity"
 HARNESS = runpy.run_path(str(FIXTURE / "workspace_fixture.py"))
 make_workspace, snapshot, mutations = (HARNESS[key] for key in ("make_workspace", "snapshot", "mutations"))
 TARGET, CALLER, INDEPENDENT = (HARNESS[key] for key in ("TARGET", "CALLER", "INDEPENDENT"))
+KAFKA_CONFIG, change_kafka_topic = (HARNESS[key] for key in ("KAFKA_CONFIG", "change_kafka_topic"))
+CONTRACT, CLIENT, PAGE, GENERATION = (HARNESS[key] for key in ("CONTRACT", "CLIENT", "PAGE", "GENERATION"))
+declare_typed_client, change_contract_version = (
+    HARNESS[key] for key in ("declare_typed_client", "change_contract_version"))
 
 
 def load_oracle(path):
     value = read_json(path)
     fields = {"overloads", "caller", "independent", "dto", "endpoint_field", "ui", "missing_call", "kafka",
-              "added_declaration_path", "moved_overload_path", "flyway_mutation_object"}
+              "added_declaration_path", "moved_overload_path", "flyway_mutation_object", "befe"}
     if (type(value) is not dict or set(value) != fields
-            or any(not isinstance(value[key], str) or not value[key] for key in fields - {"overloads", "kafka"})
+            or any(not isinstance(value[key], str) or not value[key] for key in fields - {"overloads", "kafka", "befe"})
             or type(value["overloads"]) is not list or len(value["overloads"]) != 2
             or any(not isinstance(row, str) or not row for row in value["overloads"])
             or value["overloads"][0] == value["overloads"][1]
+            or type(value["befe"]) is not dict
+            or set(value["befe"]) != {"backend_path", "owner", "field", "descriptor", "relations",
+                                      "consumer_role", "release", "mutated_release"}
+            or any(not isinstance(row, str) or not row for key, row in value["befe"].items()
+                   if key != "relations")
+            or type(value["befe"]["relations"]) is not list or len(value["befe"]["relations"]) != 3
+            or any(not isinstance(row, str) or not row for row in value["befe"]["relations"])
             or type(value["kafka"]) is not dict
-            or set(value["kafka"]) != {"initial_topic", "mutated_consumer_topic", "reason"}
+            or set(value["kafka"]) != {"initial_topic", "mutated_consumer_topic", "reason",
+                                        "cluster", "producer", "consumer", "release"}
             or any(not isinstance(row, str) or not row for row in value["kafka"].values())):
         raise AnalysisError("Invalid T047 oracle")
     return value
@@ -135,8 +147,7 @@ def test_source_only_mutation_states_match_manual_oracle(tmp_path):
         previous_files = graph.files
 
 
-@pytest.mark.parametrize("backend", ["k1", "k2"])
-def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backend):
+def require_jvm_worker(backend):
     home = FIXTURE.parents[1] / "workers"
     try:
         command("jvm", home, kotlin_backend=backend)
@@ -146,7 +157,12 @@ def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backe
         if required:
             raise
         pytest.skip(str(error))
+    return home
 
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backend):
+    home = require_jvm_worker(backend)
     make_workspace(tmp_path)
     replay = mutations(tmp_path)
     assert [next(replay)[0] for _ in range(2)] == ["comment", "body"]
@@ -196,6 +212,139 @@ def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backe
     assert not unresolved
     assert before_context != after_context
     assert not (kotlin / ".kgmaker").exists()
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_cold_module_evidence_matches_kafka_binding_until_consumer_topic_changes(tmp_path, backend):
+    home = require_jvm_worker(backend)
+    manifest = make_workspace(tmp_path)
+    root = tmp_path / "backend"
+    oracle = load_oracle(FIXTURE / "oracle.json")["kafka"]
+    sources_by_module = {"api": [TARGET], "independent": [INDEPENDENT]}
+    project_model = {"source_sets": [
+        {"module": module, "id": "main", "scope": "production", "roots": [f"{module}/src/main"]}
+        for module in sources_by_module
+    ]}
+
+    def cold_snapshot(consumer_topic):
+        captured = {}
+        for module, sources in sources_by_module.items():
+            result = inspect_jvm(root, repo_id="backend", module=module, sources=sources,
+                                 home=home, kotlin_backend=backend, project_model=project_model,
+                                 build_context={"spring_profiles": ["blue"]})
+            assert result["exit_code"] == 0
+            captured[module] = qualified("backend", result["context"]["id"])
+        store = root / ".kgmaker/graph.json"
+        prior = store.read_bytes()
+        _, coverage, _, graph, _ = snapshot_workspace(manifest)
+        assert store.read_bytes() == prior
+        contexts = {item["id"]: item for item in graph.contexts}
+        rows = {item["binding_id"]: item for item in coverage["kafka_bindings"]["bindings"]}
+        assert set(rows) == {oracle["producer"], oracle["consumer"]}
+        producer, consumer = rows[oracle["producer"]], rows[oracle["consumer"]]
+        assert (producer["topic"], consumer["topic"]) == (oracle["initial_topic"], consumer_topic)
+        for row, module in [(producer, "api"), (consumer, "independent")]:
+            assert row["status"] == "RESOLVED" and row["reasons"] == []
+            assert row["cluster_id"] == oracle["cluster"] and row["release"] == oracle["release"]
+            assert row["contract_sha256"] == file_hash(root / "contracts/Order.json")
+            assert row["delivery"] == "NOT_OBSERVED"
+            assert contexts[row["context_id"]]["selected_compiler_context"] == captured[module]
+        assert consumer["input_files"]["@backend/" + KAFKA_CONFIG] == file_hash(root / KAFKA_CONFIG)
+        matches = [edge for edge in graph.edges if edge.kind == "kafka_binding_match"]
+        return producer, consumer, matches
+
+    producer, consumer, matches = cold_snapshot(oracle["initial_topic"])
+    assert [(edge.source, edge.target, edge.evidence_kind, edge.context_ids) for edge in matches] == [
+        (producer["id"], consumer["id"], "FRAMEWORK_DERIVED", (producer["context_id"], consumer["context_id"]))
+    ]
+    before = snapshot(tmp_path)
+    change_kafka_topic(tmp_path)
+    after = snapshot(tmp_path)
+    assert {path for path in before.keys() | after if before.get(path) != after.get(path)} == {"backend/" + KAFKA_CONFIG}
+    shutil.rmtree(root / ".kgmaker")
+    _, updated, matches = cold_snapshot(oracle["mutated_consumer_topic"])
+    assert updated["input_files"] != consumer["input_files"]
+    assert not matches
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_cold_kotlin_typescript_contract_path_rejects_stale_client_release(tmp_path, backend):
+    home = require_jvm_worker(backend)
+    try:
+        command("typescript", home)
+    except WorkerError as error:
+        if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
+            raise
+        pytest.skip(str(error))
+
+    manifest = make_workspace(tmp_path)
+    oracle = load_oracle(FIXTURE / "oracle.json")
+    befe = oracle["befe"]
+    kotlin = tmp_path / "backend"
+    frontend = tmp_path / "frontend"
+    capture = inspect_jvm(kotlin, repo_id="backend", sources=[befe["backend_path"]],
+                          home=home, kotlin_backend=backend)
+    assert capture["exit_code"] == 0
+    origins = [item for item in capture["graph"]["symbols"]
+               if item.get("kind") == "field" and item.get("owner") == befe["owner"]
+               and item.get("name") == befe["field"] and item.get("descriptor") == befe["descriptor"]]
+    assert len(origins) == 1
+    origin = origins[0]
+    assert origin["path"] == befe["backend_path"] and origin["sha256"] == file_hash(kotlin / origin["path"])
+    declare_typed_client(tmp_path, origin)
+    ts = inspect_frontend(frontend, repo_id="frontend", home=home)
+    assert ts["exit_code"] == 0
+    assert not any(d.get("code") == "TS_DIAGNOSTIC" and d.get("category") == "Error" for d in ts["diagnostics"])
+
+    _, coverage, _, graph, _ = snapshot_workspace(manifest)
+    assert coverage["release_mapping"]["mappings"][0]["diagnostic"] == "RELEASE_MANIFEST_UNAVAILABLE"
+    assert not any(edge.kind == "supplies_classpath" for edge in graph.edges)
+    field = qualified("backend", origin["id"])
+    end = oracle["endpoint_field"]
+    displays = [item for item in graph.symbols if item.get("value_role") == befe["consumer_role"]
+                and item.get("path") == "@frontend/" + PAGE]
+    assert len(displays) == 1
+    display = displays[0]["id"]
+    serialized, mapping, shown = befe["relations"]
+    first, = [edge for edge in graph.edges if (edge.source, edge.target, edge.kind) == (field, end, serialized)]
+    second, = [edge for edge in graph.edges
+               if (edge.source, edge.kind, edge.evidence_kind) == (end, mapping, "FRAMEWORK_DERIVED")]
+    projection = next(item for item in graph.symbols if item["id"] == second.target)
+    declaration = projection["field_declaration"]
+    client_symbol = next(item for item in graph.symbols if item["id"] == declaration["symbol"])
+    assert projection["path"] == "@frontend/" + PAGE
+    assert declaration["path"] == client_symbol["path"] == "@frontend/" + CLIENT
+    assert declaration["sha256"] == client_symbol["sha256"] == file_hash(frontend / CLIENT)
+    assert client_symbol["name"] == befe["field"] and client_symbol["kind"] == "PropertySignature"
+    third, = [edge for edge in graph.edges
+              if (edge.source, edge.target, edge.kind) == (second.target, display, shown)]
+    assert (first.evidence_kind, second.evidence_kind, third.evidence_kind) == (
+        "FRAMEWORK_DERIVED", "FRAMEWORK_DERIVED", "SYMBOL_RESOLVED")
+    assert first.context_ids == second.context_ids == (
+        qualified("backend", capture["context"]["id"]), qualified("frontend", ts["context"]["id"]))
+    evidence = {item["id"]: item for item in graph.evidence}
+    for edge in (first, second, third):
+        assert edge.evidence_ids and all(evidence[item]["availability"] == "UNKNOWN" for item in edge.evidence_ids)
+    generation = evidence[second.evidence_ids[0]]["generation"]
+    assert generation["trust"] == "LOCAL_DECLARED"
+    assert generation["release"] == befe["release"]
+    assert generation["metadata_path"] == "@frontend/" + GENERATION
+    assert generation["generated_path"] == "@frontend/" + CLIENT
+    assert generation["contract_sha256"] == file_hash(kotlin / CONTRACT)
+    assert generation["generated_sha256"] == file_hash(frontend / CLIENT)
+
+    before = snapshot(tmp_path)
+    change_contract_version(tmp_path)
+    after = snapshot(tmp_path)
+    assert {path for path in before.keys() | after if before.get(path) != after.get(path)} == {"backend/" + CONTRACT}
+    assert read_json(kotlin / CONTRACT)["info"]["version"] == befe["mutated_release"] != generation["release"]
+    assert file_hash(kotlin / CONTRACT) != generation["contract_sha256"]
+    _, coverage, _, updated, _ = snapshot_workspace(manifest)
+    assert any("VALUE_FLOW_GENERATION_OR_RELEASE_UNKNOWN" in item for item in coverage["limitations"])
+    stale_contract_edges = [edge for edge in updated.edges if edge.evidence_kind == "FRAMEWORK_DERIVED"
+                            and ((edge.target, edge.kind) == (end, serialized)
+                                 or (edge.source, edge.kind) == (end, mapping))]
+    assert not stale_contract_edges
 
 
 @pytest.mark.xfail(strict=True, raises=AssertionError,

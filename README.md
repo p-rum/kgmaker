@@ -293,10 +293,11 @@ See [the local completion workflow and its limits](docs/completion-orchestrator.
 ## Incremental integrity fixtures
 
 The [T047-S01 mutation workspace](fixtures/incremental-integrity/README.md) replays
-source-only edits against a handwritten oracle. It checks the changed file
-hashes and relevant graph facts after each mutation. A separate cold K1/K2
-test checks that adding one Kotlin declaration resolves a previously missing call.
-The fixture reports the remaining compiler and workspace evidence gaps.
+source-only edits against a handwritten oracle and checks the exact file changes
+and graph facts. Separate cold Kotlin K1/K2 and TypeScript tests cover resolution
+of a newly introduced Kotlin declaration, a declared Kafka match across modules,
+and a backend-to-frontend value path tied to a generated client's contract
+checksum and release. The fixture records the remaining integrity gaps.
 
 ## Implementation memory and workflow
 
@@ -922,7 +923,8 @@ process_id="process:caller-selected", max_nodes=200)` adapts existing source CFG
 topology into a typed T023 ProcessView. Branches, call-sites and exception paths
 are preserved; root budgets, recursion, uncertain dispatch and missing/async
 bodies stay explicit boundaries. No business identity or runtime execution is
-inferred. See [API, selected-snapshot proof and limits](docs/process-paths.md).
+inferred. Incomplete or malformed optional local-operation metadata cannot supply
+proof during scope projection. See [API, selected-snapshot proof and limits](docs/process-paths.md).
 
 ### Kafka interface catalogue
 
@@ -1000,6 +1002,8 @@ its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
 declarations as separate async boundaries, without executing listeners or brokers.
 Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+A policy with a non-null, non-string context is excluded from the selected
+graph projection. The process report retains an unresolved boundary for the caller.
 See [scope and historical validation](docs/kafka-retry-dlt.md). The bounded
 implementation merged as `3e5ef0f`; broader production acceptance remains PARTIAL.
 
@@ -1212,11 +1216,8 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 
 ### Obsahová cache explicitní inspekce (T003-S10-W01)
 
-Opakované `kgmaker inspect code --root ./service --module core --source-set main`
-nebo `kgmaker inspect frontend --root ./ui --tsconfig tsconfig.json` může při úplné
-shodě vstupů vynechat worker analyze a compiler/framework projekce. JSON výsledek
-obsahuje `cache.stages` s HIT/MISS/BYPASS a důvodem. Handshake a frontend project
-preflight zůstávají explicitní; scan/hook/feature žádný worker nespustí.
-Cache sdílí autoritativní graph generation a nemění evidence, IDs ani dostupnost dat.
-[Kontrakt, limity a CLI](docs/stage-content-cache.md),
-[provedené kontroly](docs/changes/133_stageContentCache.md).
+Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
+compiler evidence znovu. JSON hlásí `cache.stages`
+se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+[Příkazy a omezení](docs/stage-content-cache.md),
+[ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
