@@ -983,6 +983,8 @@ its PARTIAL/UNKNOWN boundary. See [context-role boundaries](docs/architecture.md
 The bounded `kafka-retry-1` adapter records pinned Spring Kafka3.3.2 policy
 declarations as separate async boundaries, without executing listeners or brokers.
 Unsupported/custom policy stays UNKNOWN; execution/delivery remain NOT_OBSERVED.
+A policy with a non-null, non-string context is excluded from the selected
+graph projection. The process report retains an unresolved boundary for the caller.
 See [scope and historical validation](docs/kafka-retry-dlt.md). The bounded
 implementation merged as `3e5ef0f`; broader production acceptance remains PARTIAL.
 

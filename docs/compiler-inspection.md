@@ -1475,7 +1475,11 @@ capture revisions are separate, and original IDs survive workspace qualification
 Public context privacy and freshness checks remain mandatory. This is static
 provenance, without delivery, broker, activation or data availability evidence.
 
-### T003-S07-W05 — bounded retry/DLT policy draft
+### T003-S07-W05 — bounded retry/DLT policy
+
+An explicit context projection excludes a policy node with a non-null,
+non-string owner identity. The original proof is still available to report an UNKNOWN boundary
+for the caller. [Regression evidence](changes/141_handleInvalidKafkaPolicyContext.md).
 
 `kafka-retry-1` reuses captured Kafka listener and compiler annotation proof.
 Java/K1 explicit literal policy and exact3.3.2 API provenance are the bounded

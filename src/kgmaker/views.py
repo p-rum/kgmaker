@@ -939,8 +939,11 @@ def project(graph: KnowledgeGraph, scope: str = "production", *, view: str = "ar
         selected_ids.update(item.get("id") for item in graph.call_sites if item.get("context_id") == context_id)
         selected_ids.update(item.get("method") for item in graph.cfgs if item.get("context_id") == context_id)
         for node in graph.nodes:
-            owner = (node.metadata or {}).get('context_id')
-            if owner in context_index and owner not in provenance_contexts:
+            owner = node.metadata.get('context_id') if isinstance(node.metadata, Mapping) else None
+            if owner is not None and not isinstance(owner, str):
+                compiler_ids.add(node.id)
+                selected_ids.discard(node.id)
+            elif isinstance(owner, str) and owner in context_index and owner not in provenance_contexts:
                 compiler_ids.add(node.id)
                 if owner == context_id:
                     selected_ids.add(node.id)
