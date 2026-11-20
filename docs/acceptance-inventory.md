@@ -14,9 +14,13 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
 
-## T047-S01 — source-only mutation oracle
+## T047-S01 — source-only mutations and cold Kotlin oracle
 
-T047-AC01 PARTIAL. Lokální fixture dvou repozitářů a devíti replay změn má 100 PASS, 2 SKIP a 1 XFAIL v cílené sadě. Compiler-verified stav, celý soubor mutací a S02 logical key zůstávají otevřené. [Přesné kontroly](changes/137_prepareIncrementalMutationOracle.md).
+T047-AC01 PARTIAL. Lokální fixture dvou repozitářů a devíti replay změn má
+104 PASS / 0 SKIP a 1 strict XFAIL. Skutečné K1 a K2 ověřily po přidání
+`Added.kt` rozlišení dříve neznámého volání s nezměněným callerem. Zbývá
+širší compiler a release/Kafka matice, S02 logical key a inkrementální
+ekvivalence. [Přesné kontroly](changes/137_prepareIncrementalMutationOracle.md).
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 

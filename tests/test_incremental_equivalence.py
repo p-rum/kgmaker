@@ -1,4 +1,5 @@
-"""T047-S01 source-only reproduction and independent oracle."""
+"""T047-S01 source-only workspace and explicit cold compiler oracle."""
+import os
 import runpy
 import shutil
 from pathlib import Path
@@ -7,6 +8,8 @@ import pytest
 
 from kgmaker.analysis_model import AnalysisError, read_json, write_json
 from kgmaker.dataflow import impact_paths
+from kgmaker.inspection import command, inspect_jvm
+from kgmaker.worker_protocol import WorkerError
 from kgmaker.workspace import qualified, snapshot_workspace
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures/incremental-integrity"
@@ -86,6 +89,69 @@ def test_mutation_replay_and_reset(tmp_path):
     make_workspace(root)
     assert snapshot(root) == original
     assert list(mutations(root)) == first
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backend):
+    home = FIXTURE.parents[1] / "workers"
+    try:
+        command("jvm", home, kotlin_backend=backend)
+    except WorkerError as error:
+        required = os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1"
+        required |= backend == "k2" and os.environ.get("KGMAKER_REQUIRE_K2") == "1"
+        if required:
+            raise
+        pytest.skip(str(error))
+
+    make_workspace(tmp_path)
+    replay = mutations(tmp_path)
+    assert [next(replay)[0] for _ in range(2)] == ["comment", "body"]
+    kotlin = tmp_path / "backend"
+    added = Path(TARGET).with_name("Added.kt").as_posix()
+    inputs = [CALLER, TARGET]
+    caller_before = (kotlin / CALLER).read_bytes()
+    missing = load_oracle(FIXTURE / "oracle.json")["missing_call"]
+
+    def calls_for(sources):
+        result = inspect_jvm(kotlin, repo_id="backend", module="api", sources=sources,
+                             home=home, kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        graph = result["graph"]
+        symbols = {symbol["id"]: symbol for symbol in graph["symbols"]}
+        assert {symbol["descriptor"] for symbol in symbols.values()
+                if symbol.get("owner") == "fixture.ScoringKt" and symbol.get("name") == "score"} == {
+                    "(I)I", "(Ljava/lang/String;)I"}
+        calls = [site for site in graph["call_sites"] if site["path"] == CALLER]
+        assert len(calls) == 2
+        context_id = calls[0]["context_id"]
+        context = next(value for value in graph["contexts"] if value["id"] == context_id)
+        assert context["module"] == "api"
+        resolved, unresolved = set(), []
+        for site in calls:
+            caller = symbols[site["caller"]]
+            assert caller["name"] == "callScore" and caller["path"] == CALLER
+            assert site["context_id"] == caller["context_id"] == context_id
+            if site["evidence_kind"] == "UNRESOLVED":
+                assert site["declared_target"] is None and not site["dispatch_candidates"]
+                unresolved.append(site)
+            else:
+                assert site["evidence_kind"] == "SYMBOL_RESOLVED"
+                target = symbols[site["declared_target"]]
+                assert target["context_id"] == context_id
+                resolved.add((target["owner"], target["name"], target["descriptor"], target["path"]))
+        return resolved, unresolved, context_id
+
+    score = ("fixture.ScoringKt", "score", "(I)I", TARGET)
+    before, unresolved, before_context = calls_for(inputs)
+    assert before == {score} and len(unresolved) == 1
+    label, _, changed, _ = next(replay)
+    assert label == "add" and changed == ["backend/" + added]
+    assert (kotlin / CALLER).read_bytes() == caller_before
+    after, unresolved, after_context = calls_for([*inputs, added])
+    assert after == {score, ("fixture.AddedKt", missing, "()I", added)}
+    assert not unresolved
+    assert before_context != after_context
+    assert not (kotlin / ".kgmaker").exists()
 
 
 @pytest.mark.xfail(strict=True, raises=AssertionError,
