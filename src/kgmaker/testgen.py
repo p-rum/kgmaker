@@ -23,6 +23,10 @@ from .memory import is_sensitive_path
 BASE = '.kgmaker/workflow/testgen'
 MAX_BYTES = 1_000_000
 FRAMEWORKS = {'unittest', 'pytest', 'junit', 'jest', 'vitest', 'playwright'}
+_SCHEMA_TYPES = {
+    'object': dict, 'array': list, 'string': str, 'integer': int,
+    'number': (int, float), 'boolean': bool, 'null': type(None),
+}
 
 
 def directory(root, suite):
@@ -296,19 +300,41 @@ def _output_path(root, value):
     return target
 
 
+def _schema_kind(schema, *, label='Dataset schema'):
+    if not isinstance(schema,dict):
+        raise AnalysisError(f'{label} must be an object')
+    kind = schema.get('type')
+    if not isinstance(kind, str) or kind not in _SCHEMA_TYPES:
+        raise AnalysisError(f'{label} requires a supported type')
+    return kind
+
+
+def _schema_property_paths(path, precise, name, *, quote_keys):
+    if name.isidentifier():
+        child = precise + '.' + name
+    else:
+        child = f'{precise}[{json.dumps(name, ensure_ascii=False)}]'
+    return (child if quote_keys else path + '.' + name), child
+
+
 def schema_errors(value,schema,path='$'):
     """Supported JSON-schema subset, returning concrete violation paths."""
+    return _schema_errors(value, schema, path, path, quote_keys=False)
+
+
+def _schema_errors(value, schema, path, precise, *, quote_keys):
+    kind = _schema_kind(schema)
     errors,unchecked = [],[]
-    if not isinstance(schema,dict):
-        raise AnalysisError('Dataset schema must be an object')
     known = {'type','properties','required','items','enum','minimum','maximum','minLength','maxLength','nullable','additionalProperties'}
     unchecked += [path+':'+k for k in schema if k not in known]
-    kind = schema.get('type')
-    types = {'object':dict,'array':list,'string':str,'integer':int,'number':(int,float),'boolean':bool,'null':type(None)}
-    if kind not in types:
-        raise AnalysisError('Dataset schema requires a supported type')
+    additional = schema.get('additionalProperties', True)
+    if kind == 'object':
+        if isinstance(additional, dict):
+            _schema_kind(additional, label=f'{path}:additionalProperties schema')
+        elif type(additional) is not bool:
+            raise AnalysisError(f'{path}:additionalProperties requires a boolean or supported schema')
     nullable = value is None and schema.get('nullable') is True
-    if not nullable and (not isinstance(value, types[kind]) or
+    if not nullable and (not isinstance(value, _SCHEMA_TYPES[kind]) or
                          kind in {'integer', 'number'} and isinstance(value, bool)):
         return [path + ':type'], unchecked
     if 'enum' in schema:
@@ -326,17 +352,31 @@ def schema_errors(value,schema,path='$'):
             if field in schema and op(len(value),schema[field]): errors.append(path+':'+field)
     if kind == 'object':
         for name in schema.get('required',[]):
-            if name not in value: errors.append(path+'.'+name+':required')
+            if name not in value:
+                child, _ = _schema_property_paths(path, precise, name, quote_keys=quote_keys)
+                errors.append(child + ':required')
         for name,item in value.items():
+            child, precise_child = _schema_property_paths(path, precise, name, quote_keys=quote_keys)
             if name in schema.get('properties',{}):
-                e,u = schema_errors(item,schema['properties'][name],path+'.'+name); errors+=e;unchecked+=u
-            elif schema.get('additionalProperties') is False:
-                errors.append(path+'.'+name+':additionalProperties')
+                e,u = _schema_errors(item, schema['properties'][name], child, precise_child,
+                                     quote_keys=quote_keys)
+                errors.extend(e)
+                unchecked.extend(u)
+            elif additional is False:
+                errors.append(child + ':additionalProperties')
+            elif isinstance(additional, dict):
+                extra_errors, extra_unchecked = _schema_errors(item, additional, precise_child, precise_child,
+                                                               quote_keys=True)
+                errors.extend(extra_errors)
+                unchecked.extend(extra_unchecked)
     if kind == 'array':
         if 'items' not in schema: unchecked.append(path+':items-unspecified')
         for i,item in enumerate(value):
             if 'items' in schema:
-                e,u = schema_errors(item,schema['items'],f'{path}[{i}]');errors+=e;unchecked+=u
+                e,u = _schema_errors(item, schema['items'], f'{path}[{i}]', f'{precise}[{i}]',
+                                     quote_keys=quote_keys)
+                errors.extend(e)
+                unchecked.extend(u)
     return errors,unchecked
 
 

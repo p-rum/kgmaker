@@ -1,12 +1,17 @@
 # Inventář acceptance T001 a T002
 
-## T003-S05-W04 — doplnění skutečné fixture
+## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
-T003-AC05 / T003-S05-W04-AC01, AC03. 2 PASS / 0 SKIP pro cílenou dvojici Spring a React s připravenými workery a fixture závislostmi. Kanonický marker je součástí kladných Spring případů, bez něj chybí injection proof. [Přesné kontroly](changes/139_validateCanonicalInjectionFixture.md).
+T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
+3 RED na výchozím zdroji a 103 cílených PASS / 0 SKIP po opravě a review.
+Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
+Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
+VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125).
+[Change140](changes/140_validateAdditionalDatasetFields.md).
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS a 8 Spring fail-closed PASS. Úplné integrační ověření čeká. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -17,6 +22,18 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+
+## T052 — completion orchestration 2026-11-19
+
+Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+[per-step evidence](changes/134_addCompletionOrchestrator.md).
+
+| Acceptance | Ověření | Důkaz a zbývající krok |
+|---|---|---|
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
+| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
 ## T003-S13-W01 — synchronní JDK21/POSIX runtime capture, 2026-11-15
 
@@ -144,6 +161,17 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v9-proxy-provenance`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v8, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
+
+### Opravná Spring fixture v #124, 2026-11-20
+
+T003-S05-W04-AC01/AC03/AC04 a T003-AC05. Draft [#124](https://github.com/p-rum/kgmaker/pull/124)
+je PR_OPEN / PARTIAL. Skutečný Javac v `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard`
+na base `8ff2529` před opravou nedoložil `Consumer.gateway`. Po opravě
+prošlo všech 15 testů v `tests/test_compiler_workers.py` bez SKIP.
+Kladná pole mají kanonické `@Autowired` a negativní případy ověřují chybějící
+anotaci i samotné `@Qualifier`. Oprava se týká této fixture. Nadřazená
+acceptance proxy/Async a aplikační runtime mají vlastní důkazy.
+[Postup, kontroly a otevřená merge brána](changes/139_validateCanonicalInjectionFixture.md).
 
 ## T003-S06-W05 — rozšířená JPQL/HQL gramatika — MERGED / LOCAL_VERIFIED_IN_SCOPE
 

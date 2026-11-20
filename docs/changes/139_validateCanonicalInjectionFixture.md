@@ -33,3 +33,41 @@ zaznamenávají nový ověřený případ. Příklad je `@Autowired @Qualifier("
   potřebovala pouze připravené lokální prostředí.
 - `git diff --check` PASS. Nový úplný běh a publikované exact-pair review
   zůstávají NOT_RUN. Runtime chování Spring aplikace z tohoto testu nevzniká.
+
+## Přenos kroku 4 / T003-S05-W04-AC01 a AC03, 2026-11-20
+
+Cílový main při ověření `8ff2529ffb50b42ed2209d97478ea3e4cbf46042`,
+Git tree `c869302cdc2a7d9982d64058b6267ae603382e06`. Testovací soubor je
+bajtově shodný s původním headem [#124](https://github.com/p-rum/kgmaker/pull/124)
+`3eaf793af7b578ffc566d4548ff24be87894cb97`. Celý produkční zdrojový
+strom byl převzat z tohoto main. Rozsah příkladu s kanonickou anotací ani
+kontrakt testu se při přenosu nerozšiřují.
+
+V izolovaném snapshotu běžel připravený Python test venv, JDK
+21.0.13.1, Kotlin 2.1.10, Node 22.22.1 a TypeScript 5.7.3 s lokální
+Maven fixture a fyzickou kopií React závislostí. Proměnné
+`KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1` a
+`JAVA_TOOL_OPTIONS=-XX:-UsePerfData` platily pro všechny následující výběry.
+Příkazy používaly oddělený lokální `--basetemp` pro každý výběr.
+
+- `python -m pytest -p no:cacheprovider -q --tb=short tests/test_compiler_workers.py::CompilerWorkerTests::test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard`
+  na samotném main **1 FAIL** za 9,27 s s `KeyError: 'Consumer.gateway'`.
+- `python -m pytest -p no:cacheprovider -q --tb=short tests/test_compiler_workers.py`
+  na přenesené fixture **15 PASS / 0 SKIP** za 55,49 s.
+- `python -m pytest -p no:cacheprovider -q --tb=short tests/test_k2_backend.py::test_k1_and_k2_contexts_accumulate_without_replacement`
+  na kandidátu **1 PASS / 0 SKIP** za 13,55 s. Tento samostatný případ
+  dokládá skutečné K1/K2 oba v izolovaném testu.
+- `python -m pytest -p no:cacheprovider -q --tb=short 'tests/test_local_operation_proofs.py::test_scope_projection_preserves_invalid_operation_shape_for_fail_closed_validation[None]'`
+  na standalone kandidátu **1 FAIL** za 0,10 s. Při projekci evidence
+  je `local_operation_evidence_ids=null` neiterovatelný v `views.project`.
+  Oprava je samostatný rozsah T025 v [#122](https://github.com/p-rum/kgmaker/pull/122).
+
+## Přenos kroku 5 / T003-S05-W04-AC04, 2026-11-20
+
+[Acceptance inventář](../acceptance-inventory.md) a
+[stavová matice](../production-analysis-progress.md) aktualizují nový
+cílený výsledek a zachovávají původní stav #95. README, veřejná capability,
+API, CLI příklady a registr zadání jsou bez dopadu, protože se mění pouze
+syntetický vstup existujícího testu a jeho přesné assertion. Úplný samostatný
+běh na této revizi, review nového publikovaného páru a GitHub Actions
+zůstávají NOT_RUN. Reprodukované selhání T025 blokuje úplnou merge kontrolu.
