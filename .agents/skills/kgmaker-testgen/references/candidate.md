@@ -42,7 +42,9 @@ Supported proposal frameworks are unittest, pytest, junit, jest, vitest and
 playwright. Detected configuration does not prove a runner is installed.
 
 Supported dataset schema keywords: type, properties, required, items, enum,
-minimum, maximum, minLength, maxLength, nullable, additionalProperties=false.
+minimum, maximum, minLength, maxLength, nullable, and additionalProperties.
+For object schemas, use true to allow extra values, false to reject them, or
+a supported typed schema to validate each extra value recursively.
 Unknown keywords remain unchecked_constraints. Negative datasets must declare
 the exact expected violations (for example `$[0].amount:type`); positive datasets
 must pass checked constraints. Foreign keys use field, dataset_id and target_field

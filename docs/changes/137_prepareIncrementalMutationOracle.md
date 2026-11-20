@@ -59,3 +59,25 @@ než plánovanou mutací a nevzniká publikovaný index.
 - `git diff --check` — PASS. Plný T047 inkrementální replay, pozitivní Kafka
   a release varianty, zbytek compiler mutací, úplná sada a externí CI jsou
   NOT_RUN. Stávající command API a graph schéma jsou kompatibilní.
+
+## T047-S01 / T047-AC01 — přenos na main po T052, 2026-11-20
+
+Draft [#121](https://github.com/p-rum/kgmaker/pull/121) z head
+`bbfa92ce659dfbac4245e5f795df3ada00fb53ea` byl připraven nad `main`
+`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` s Git tree
+`c869302cdc2a7d9982d64058b6267ae603382e06`. Soubory v
+[corpus](../../fixtures/incremental-integrity/) a
+[regresní test](../../tests/test_incremental_equivalence.py) zůstaly bajtově
+shodné. Přeneseny byly související části [README](../../README.md),
+[acceptance](../acceptance-inventory.md) a [stavové matice](../production-analysis-progress.md).
+Jde o testy a jejich návod. Kontrakt CLI, init, grafové schéma a registry
+zadání zůstávají kompatibilní.
+
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-after-t052 tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`.
+  JDK 21.0.13.1, Kotlin 2.1.10, skutečný K1 i K2. Výsledek 104 PASS,
+  0 SKIP a 1 strict XFAIL v `test_comment_does_not_change_logical_identity`
+  za 24.82 s. XFAIL dokumentuje závislost ID na řádku v T047-S02.
+- PASS — `git diff --check` při přenosu dokumentace, testů a fixture.
+- NOT_RUN — úplná projektová sada nad tímto kandidátem, nové exact-pair review,
+  GitHub Actions, širší compiler a pozitivní Kafka/release matice, inkrementální
+  ekvivalence. T047-AC01 zůstává PARTIAL.

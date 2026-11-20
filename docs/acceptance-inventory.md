@@ -1,8 +1,17 @@
 # Inventář acceptance T001 a T002
 
+## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
+
+T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
+3 RED na výchozím zdroji a 103 cílených PASS / 0 SKIP po opravě a review.
+Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
+Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
+VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125).
+[Change140](changes/140_validateAdditionalDatasetFields.md).
+
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.
+Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS a 8 Spring fail-closed PASS. Úplné integrační ověření čeká. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -14,10 +23,23 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
 
+## T052 — completion orchestration 2026-11-19
+
+Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+[per-step evidence](changes/134_addCompletionOrchestrator.md).
+
+| Acceptance | Ověření | Důkaz a zbývající krok |
+|---|---|---|
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
+| T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
+
 ## T047-S01 — source-only mutations and cold Kotlin oracle
 
-T047-AC01 PARTIAL. Lokální fixture dvou repozitářů a devíti replay změn má
-104 PASS / 0 SKIP a 1 strict XFAIL. Skutečné K1 a K2 ověřily po přidání
+T047-AC01 PARTIAL. Fixture dvou repozitářů a devíti mutací má nad base
+`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` 104 PASS, 0 SKIP a 1 strict
+XFAIL. Skutečné K1 a K2 ověřily po přidání
 `Added.kt` rozlišení dříve neznámého volání s nezměněným callerem. Zbývá
 širší compiler a release/Kafka matice, S02 logical key a inkrementální
 ekvivalence. [Přesné kontroly](changes/137_prepareIncrementalMutationOracle.md).
