@@ -1188,7 +1188,8 @@ current verification limits are in the delivery inventory.
 
 Renderer ověřuje vybraný scope a explicitní kontext prvků diagramu i jejich
 přímo citovaných důkazů. Neznámé hodnoty a doklady k vynechaným hranám
-zůstávají v metadatech. [Oprava #115](docs/changes/138_rejectForeignTopologyEvidence.md).
+zůstávají v metadatech. [Oprava #115](docs/changes/138_rejectForeignTopologyEvidence.md)
+a [ověřená integrace](docs/changes/146_recordTopologyMerge.md).
 
 `kgmaker architecture topology --capture-snapshot topology-inputs.json --format mermaid`
 renders the existing T017 filtered topology without recapturing sources. Node renderer IDs are SHA-256 hashes of captured logical IDs plus realm/scope/context identity; model edge IDs remain in JSON metadata;
