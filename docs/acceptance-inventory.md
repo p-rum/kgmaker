@@ -1,5 +1,13 @@
 # Inventář acceptance T001 a T002
 
+## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
+
+T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
+3 RED na výchozím zdroji a 102 cílených PASS / 0 SKIP po opravě a review.
+Objektové `additionalProperties` ověřuje typ, rozsah a vnořenou cestu.
+Nepodporovaná omezení zůstávají explicitní. Oprava má scoped
+VERIFIED_IN_SCOPE. Stav integračního důkazu uvádí [Change140](changes/140_validateAdditionalDatasetFields.md).
+
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
 Dodání [PR_OPEN #114](https://github.com/p-rum/kgmaker/pull/114), verification VERIFIED_IN_SCOPE. Integrovaný source `1823ad2` nad main `84f94d4`.

@@ -99,6 +99,61 @@ class GeneratedTest(unittest.TestCase):
         data['foreign_keys']=[{'field':'input','dataset_id':'numbers','target_field':'expected'}]
         with self.assertRaises(AnalysisError):t.validate(self.root,'double',candidate)
 
+    def test_schema_valued_additional_properties_validate_and_apply(self):
+        candidate = self.candidate(self.prepare())
+        dataset = candidate['datasets'][0]
+        schema = {'type': 'object', 'properties': {'input': {'type': 'integer'}},
+                  'additionalProperties': {'type': 'integer', 'minimum': 1}}
+        dataset.update(schema=schema, data={'input': 0, 'extra': 1})
+        self.assertTrue(t.validate(self.root, 'double', candidate)['valid'])
+        before = self.tree()
+        for value, expected in (('bad', '$.extra:type'), (0, '$.extra:minimum')):
+            dataset['data']['extra'] = value
+            with self.subTest(value=value), self.assertRaises(AnalysisError) as error:
+                t.apply(self.root, 'double', candidate)
+            self.assertIn(expected, str(error.exception))
+            self.assertEqual(self.tree(), before)
+        dataset.update(negative=True, expected_violations=['$.extra:minimum'])
+        self.assertTrue(t.validate(self.root, 'double', candidate)['valid'])
+
+    def test_additional_properties_nested_unchecked_constraints(self):
+        candidate = self.candidate(self.prepare())
+        dataset = candidate['datasets'][0]
+        dataset.update(schema={'type': 'object', 'additionalProperties': {
+            'type': 'array', 'items': {'type': 'object', 'properties': {
+                'name': {'type': 'string', 'pattern': '^a'},
+                'count': {'type': 'integer', 'minimum': 1}}}}},
+            data={'metrics.v2': [{'name': 'example', 'count': 1}]})
+        result = t.validate(self.root, 'double', candidate)
+        self.assertEqual(result['unchecked_constraints'], ['numbers:$["metrics.v2"][0].name:pattern'])
+        self.assertEqual(result['execution'], 'NOT_RUN')
+        dataset['data']['metrics.v2'][0]['count'] = 0
+        with self.assertRaises(AnalysisError) as error:
+            t.validate(self.root, 'double', candidate)
+        self.assertIn('$["metrics.v2"][0].count:minimum', str(error.exception))
+
+    def test_additional_properties_booleans_and_malformed_values(self):
+        data = {'extra': 0}
+        self.assertEqual(t.schema_errors(data, {'type': 'object'}), ([], []))
+        self.assertEqual(t.schema_errors(data, {'type': 'object', 'additionalProperties': True}), ([], []))
+        self.assertEqual(t.schema_errors(data, {'type': 'object', 'additionalProperties': False}),
+                         (['$.extra:additionalProperties'], []))
+        for malformed in (None, 1, 'integer', [], {}, {'type': ['integer']}):
+            with self.subTest(malformed=malformed), self.assertRaisesRegex(AnalysisError, 'additionalProperties'):
+                t.schema_errors({}, {'type': 'object', 'additionalProperties': malformed})
+
+    def test_additional_properties_distinguish_literal_dotted_keys_from_nested_properties(self):
+        child = {'type': 'object', 'properties': {'x.y': {'type': 'integer'},
+                 'x': {'type': 'object', 'properties': {'y': {'type': 'integer'}}}}}
+        schema = {'type': 'object', 'additionalProperties': child}
+        literal = {'x.y': 'bad', 'x': {'y': 1}}
+        nested = {'x.y': 1, 'x': {'y': 'bad'}}
+        self.assertEqual(t.schema_errors({'extra': literal}, schema),
+                         (['$.extra["x.y"]:type'], []))
+        self.assertEqual(t.schema_errors({'extra': nested}, schema),
+                         (['$.extra.x.y:type'], []))
+        self.assertEqual(t.schema_errors(literal, child), (['$.x.y:type'], []))
+
     def test_export_collision_preflight(self):
         packet=self.prepare();candidate=self.candidate(packet);t.apply(self.root,'double',candidate)
         (self.root/'tests/test_generated.py').write_text('keep')

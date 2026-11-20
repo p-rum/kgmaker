@@ -128,7 +128,17 @@ již zapsané soubory odstraní. Existující soubory se nikdy nepřepíší.
 
 Data jsou SYNTHETIC. Podporovaný schema subset: type (object/array/string/integer/
 number/boolean/null), properties, required, items, enum, minimum, maximum,
-minLength, maxLength, nullable, additionalProperties=false. Foreign keys mají
+minLength, maxLength, nullable a additionalProperties. Hodnota `true` nebo
+vynechaný klíč povolí další vlastnosti, `false` je odmítne. Objekt s podporovaným
+`type` rekurzivně ověří každou další hodnotu stejným subsetem. Například s
+`"additionalProperties":{"type":"integer","minimum":1}` vytvoří `{"extra":0}`
+důkaz `$.extra:minimum`. Nestandardní název mapy se ve vnořené cestě uvozuje
+jako `$["metrics.v2"][0].count:minimum`. Uvnitř typované dodatečné hodnoty se
+tento zápis používá i pro deklarované vlastnosti. Okolní starší cesty zachovávají
+dosavadní formát. Tvar `additionalProperties` a bezprostřední typ jeho schématu
+se kontrolují i u objektu bez dalších hodnot. Vnořené podsložky se kontrolují
+tam, kde mají odpovídající datovou hodnotu.
+Foreign keys mají
 `field`, `dataset_id`, `target_field` a porovnávají skutečné hodnoty v řádcích.
 Neznámé keywords jsou `unchecked_constraints`. Negativní dataset musí uvést
 přesně nalezené violations, např. `$[0].amount:type`. Pozitivní dataset nesmí mít
