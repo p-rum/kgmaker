@@ -31,13 +31,14 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 1 |
 | T050 | [50_addTargetProjectSkills.md](50_addTargetProjectSkills.md) | Samostatné skilly pro kontext, semantic, feature/data audit a testgen v cílovém projektu | SPECIFICATION, revize 1; dodání a ověření viz stavová matice |
 | T051 | [51_connectProjectWorkflows.md](51_connectProjectWorkflows.md) | Konfigurovatelné workflow profily, snapshoty a návaznosti rolí | SPECIFICATION, revize 1; ověření viz stavová matice |
+| T052 | [52_addCompletionOrchestrator.md](52_addCompletionOrchestrator.md) | Lokální plánování a koordinace dokončení existující funkcionality | SPECIFICATION, revize 2; dodání viz stavová matice |
 
 T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #42,
 #43, #44, #45 a #40.
 T047 číslo T046 nerecykluje a execution evidence navazuje na obsahové
 reference a workflow T046. Aktuální stav dodání ověřuj ve stavové matici.
 
-| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION, revize 5; implementace viz stavová matice |
+| T046 | [46_addTemplatesTestsAndTraceability.md](46_addTemplatesTestsAndTraceability.md) | Šablony, testovací návrhy, syntetická data, lokální schválení a dohledatelnost | SPECIFICATION, revize 6; implementace viz stavová matice |
 
 ## High-level zobrazení projektu — T004
 

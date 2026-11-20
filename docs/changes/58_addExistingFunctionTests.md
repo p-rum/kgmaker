@@ -135,3 +135,11 @@ je nekanonické. Při pozdní chybě zápisu odstraňuje také všechny nově vy
 adresáře. Přímé regrese sledují celý strom a injektují selhání druhého výstupu.
 Po opravě cíleně **106 passed + 37 subtests**, full **1625 passed /1055 skipped
 + 59 subtests**; nové exact-pair review je NOT_RUN do skutečného provedení.
+
+
+## T046-S03/S04 — navazující oprava 2026-11-20
+
+[Issue #91](https://github.com/p-rum/kgmaker/issues/91) je reprodukované na
+sloučeném zdroji. [Change140](140_validateAdditionalDatasetFields.md) eviduje
+rekurzivní validaci schématu dodatečných vlastností, původní RED a 103 cílených
+PASS. Starší výsledky výše patří jejich původním revizím.

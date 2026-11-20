@@ -84,3 +84,19 @@ Zdrojový diff úplného běhu odpovídá původnímu GitHub HEAD
   — 55 PASS, 4 ERROR mixed Maven, 143 deselected se skutečnými workery,
   Kotlin 2.1.10 a Mermaid 11.4.1. Před integrační regresí byla mixed fixture
   znovu zkompilována lokálně příkazem `mvn -o -DskipTests compile` (BUILD SUCCESS).
+
+## Integrace po T052 / T003-S10-W01-AC03 a AC04
+
+Zdroj pouze této opravy byl přenesen na ověřený main
+`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` s tree
+`c869302cdc2a7d9982d64058b6267ae603382e06`. Zaměřený čtyřsouborový
+běh z výše uvedeného ověření prošel znovu s **97 PASS / 0 SKIP**, 75.11 s.
+Použité byly skutečné K1/K2, TypeScript 5.7.3 a přesné
+`JAVA_TOOL_OPTIONS=-XX:-UsePerfData`. Samostatný běh 50 stage cache testů
+potvrdil stejný konzervativní kontrakt. Další launche s nepokrytými volbami
+zůstávají `BYPASS/INCOMPLETE_INPUT_CLOSURE`.
+
+Nový source má vlastní graph/semantic ověření. T003-S07-W05
+[#126](https://github.com/p-rum/kgmaker/pull/126) je nepřímá závislost. Úplná
+sada a nezávislé T045 review tohoto nového publikovaného páru zůstávají
+otevřené. Výkonový cache HIT je podmíněný novým nezávislým důkazem.
