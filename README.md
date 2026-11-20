@@ -81,9 +81,10 @@ context ID when variants are ambiguous and reports SOURCE_ONLY and deployment
 limits. `project_service_inventory` provides a read-only service-only topology
 projection using that selection and explicit ownership. The CLI exposes `architecture interfaces`, `architecture topology` and
 `architecture explain` over explicit captured inputs. Interfaces also support
-`--format markdown`; topology and explain remain JSON-only. See
-[the CLI contract](docs/architecture-json-cli.md) and
-[interface Markdown](docs/interface-markdown.md). Evidence ranking now exposes `execution-2`/`impact-2` with witness paths, localized
+`--format markdown`, and topology supports `--format mermaid`; explain remains
+JSON-only. See [the CLI contract](docs/architecture-json-cli.md),
+[interface Markdown](docs/interface-markdown.md) and
+[topology Mermaid](docs/service-topology.md#mermaid-rendering-t021). Evidence ranking now exposes `execution-2`/`impact-2` with witness paths, localized
 penalties and `graph rank --format markdown`; see [ranking scope](docs/evidence-ranking.md)
 and [change126](docs/changes/126_evidenceRanking.md). Scores are priorities, not runtime availability. Stale proof records contribute
 no weight; execution requires a captured compiler inspection context, and a reference
@@ -1164,8 +1165,8 @@ See [cache API and limits](docs/view-cache.md) and
 explicit snapshots and preserves the full filtering envelope. Interfaces and explain
 commands share fixed safe JSON diagnostics; local capture/source checks require
 explicit flags. See [commands and boundaries](docs/architecture-json-cli.md).
-Merged in PR84 (`a60f02d`). T020 interface Markdown is also merged;
-T021 topology Mermaid remains planned.
+Merged in PR84 (`a60f02d`). T020 interface Markdown and T021 topology Mermaid
+are also available as explicit formats over these same captured inputs.
 
 The W07 resolver and T014 projection also preserve the no-I/O contract on their
 first call after normal API import. The cold-process regression is protocol-only;
@@ -1179,8 +1180,25 @@ contract revisions and internal evidence links. Generated/unclassified rows,
 unknowns and diagnostics stay visible; no current source or runtime proof is added.
 JSON stays default. See [contract and parser checks](docs/interface-markdown.md);
 Merged in PR87 (`250e7c1`) with the first-call purity correction.
-Topology/explain remain JSON-only; T021/T022 are planned. Historical checks and
+Topology Mermaid is available as `--format mermaid` under T021; explain remains
+JSON-only and T022 topology Markdown remains separate. Historical checks and
 current verification limits are in the delivery inventory.
+
+### T021 topology Mermaid
+
+Renderer ověřuje vybraný scope a explicitní kontext prvků diagramu i jejich
+přímo citovaných důkazů. Neznámé hodnoty a doklady k vynechaným hranám
+zůstávají v metadatech. [Oprava #115](docs/changes/138_rejectForeignTopologyEvidence.md).
+
+`kgmaker architecture topology --capture-snapshot topology-inputs.json --format mermaid`
+renders the existing T017 filtered topology without recapturing sources. Node renderer IDs are SHA-256 hashes of captured logical IDs plus realm/scope/context identity; model edge IDs remain in JSON metadata;
+labels retain relation, evidence, resolution and freshness text. The title reports
+scope, evidence, coverage and truncation, while the complete input envelope remains
+in safe JSON Mermaid comments. Async Kafka relations explicitly say `ASYNC; delivery
+UNKNOWN`; runtime/data availability and ordering are not inferred. The renderer
+creates no legend or truncation vertices and publishes no files itself. See the
+[topology CLI contract](docs/architecture-json-cli.md#architecture-topology-mermaid-t021)
+and [topology model](docs/service-topology.md#mermaid-rendering-t021).
 
 The [T029 failure projection API](docs/process-paths.md#static-failure-projection-t029)
 retains catch/finally paths through business-step collapse and adds bounded static
