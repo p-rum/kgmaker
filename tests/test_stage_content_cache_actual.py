@@ -59,21 +59,21 @@ def test_actual_jvm_cold_warm_context_isolation_and_classpath_change(tmp_path, m
                'module': 'core', 'source_set': 'main'}
     cold = inspection.inspect_jvm(root, **options)
     warm = inspection.inspect_jvm(root, **options)
-    assert calls == ['analyze']
-    assert {s['status'] for s in warm['cache']['stages']} == {'HIT'}
+    assert calls == ['analyze'] * 2
+    assert {s['status'] for s in warm['cache']['stages']} == {'BYPASS'}
     assert comparable(cold['graph']) == comparable(warm['graph'])
     assert any(s['path'].endswith('ExampleKt.kt') for s in warm['graph']['symbols'])
     assert warm['graph']['call_sites'] and warm['graph']['cfgs']
     library.write_text('package dep; public class Library { public static int value() { return 2; } }\n')
     subprocess.run(['javac', '-d', str(classes), str(library)], check=True, capture_output=True)
     changed = inspection.inspect_jvm(root, **options)
-    assert calls == ['analyze', 'analyze']
-    assert {s['status'] for s in changed['cache']['stages']} == {'MISS'}
+    assert calls == ['analyze'] * 3
+    assert {s['status'] for s in changed['cache']['stages']} == {'BYPASS'}
     assert changed['context']['id'] != cold['context']['id']
     assert len([c for c in load_graph(root).contexts if c.get('analyzer_version')]) == 1
 
 
-def test_actual_typescript_preflight_stays_explicit_but_analysis_and_graph_are_cached(tmp_path, monkeypatch):
+def test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspection(tmp_path, monkeypatch):
     ready('typescript')
     root = tmp_path / 'frontend'
     (root / 'src').mkdir(parents=True)
@@ -89,14 +89,14 @@ def test_actual_typescript_preflight_stays_explicit_but_analysis_and_graph_are_c
     options = {'home': ROOT / 'workers', 'repo_id': 'frontend', 'module': 'ui'}
     cold = inspection.inspect_frontend(root, **options)
     warm = inspection.inspect_frontend(root, **options)
-    assert calls == ['project', 'analyze', 'project']
-    assert {s['status'] for s in warm['cache']['stages']} == {'HIT'}
+    assert calls == ['project', 'analyze'] * 2
+    assert {s['status'] for s in warm['cache']['stages']} == {'BYPASS'}
     assert comparable(cold['graph']) == comparable(warm['graph'])
     assert warm['graph']['call_sites'] and warm['graph']['cfgs']
     config.write_text(json.dumps({'compilerOptions': {'strict': False}, 'files': ['src/main.ts']}))
     changed = inspection.inspect_frontend(root, **options)
-    assert calls == ['project', 'analyze', 'project', 'project', 'analyze']
-    assert {s['status'] for s in changed['cache']['stages']} == {'MISS'}
+    assert calls == ['project', 'analyze'] * 3
+    assert {s['status'] for s in changed['cache']['stages']} == {'BYPASS'}
     assert len([c for c in load_graph(root).contexts if c.get('analyzer_version')]) == 1
 
 
@@ -122,17 +122,17 @@ def test_actual_worker_bytes_and_analyzer_rule_change_force_reanalysis(tmp_path,
     monkeypatch.setattr(inspection, 'request_worker', counted)
     home = tmp_path / 'worker-home'
     inspection.inspect_jvm(root, home=home)
-    assert {s['status'] for s in inspection.inspect_jvm(root, home=home)['cache']['stages']} == {'HIT'}
-    assert calls == ['analyze']
+    assert {s['status'] for s in inspection.inspect_jvm(root, home=home)['cache']['stages']} == {'BYPASS'}
+    assert calls == ['analyze'] * 2
     # This is a valid local copy of the real executable JAR with different
     # content. Never modify the shared worker artifact or rebuild it implicitly.
     with zipfile.ZipFile(jar, 'a') as archive:
         archive.comment = b'W01 explicit content identity mutation'
     changed = inspection.inspect_jvm(root, home=home)
-    assert {s['status'] for s in changed['cache']['stages']} == {'MISS'}
+    assert {s['status'] for s in changed['cache']['stages']} == {'BYPASS'}
     monkeypatch.setattr(inspection, 'VERSION', 'inspection-rule-change-for-fixture')
     changed_rule = inspection.inspect_jvm(root, home=home)
-    assert {s['status'] for s in changed_rule['cache']['stages']} == {'MISS'}
-    assert calls == ['analyze', 'analyze', 'analyze']
+    assert {s['status'] for s in changed_rule['cache']['stages']} == {'BYPASS'}
+    assert calls == ['analyze'] * 4
     assert changed_rule['graph']['call_sites']
     assert file_hash(shared / jar.name) == original_hash

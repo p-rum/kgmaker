@@ -80,7 +80,7 @@ Labels encode Mermaid metacharacters and JSON comments escape HTML/script delimi
 characters. There are no click directives, raw HTML labels or remote resources.
 
 See the [T021 CLI contract and example](architecture-json-cli.md#architecture-topology-mermaid-t021)
-and [change132](changes/132_renderTopologyMermaid.md) for acceptance and current
+and [change138](changes/138_rejectForeignTopologyEvidence.md) for acceptance and current
 parser/render results. T022's topology Markdown remains a separate renderer.
 
 ## Historical validation checkpoint

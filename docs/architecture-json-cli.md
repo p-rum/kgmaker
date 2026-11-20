@@ -75,9 +75,11 @@ Legacy `graph view`, `flow render`, and global version behavior remain available
 
 ## Architecture topology Mermaid (T021)
 
-`--format mermaid` renders the existing topology result after T017 filtering. It
-does not call capture, filter again, reopen source files, or write an artifact. The
-diagram node IDs are SHA-256 hashes of the model logical ID; where a node supplies
+`--format mermaid` renders the existing topology result after T017 filtering. The
+renderer reads the supplied result and returns a diagram without I/O. With
+`--capture-snapshot` the CLI reads the explicit capture. An explicit `--view-cache`
+uses the existing publication path after successful rendering. Diagram node IDs
+are SHA-256 hashes of the model logical ID; where a node supplies
 `attributes.logical_id`, the identity also includes its realm facets, scope, selected
 contexts and owner. This keeps equal display/logical names in separate realms distinct.
 Each edge uses the corresponding hashed endpoint IDs; model edge IDs and complete
@@ -101,7 +103,7 @@ API accepts a topology `ViewDocument`, its serialized document, or the T017 filt
 result. It does not spawn processes, use the network, mutate input, or publish files.
 T021 parser/render coverage is in `tests/test_t021_render_topology_mermaid.py` and
 `tests/rendering/validate_t021_topology.mjs`. Current delivery and test results are
-recorded in [change132](changes/132_renderTopologyMermaid.md).
+recorded in [change138](changes/138_rejectForeignTopologyEvidence.md).
 
 Before rendering, the renderer checks the captured scope and any explicit T017
 context selector against displayed nodes and edges and the provenance they

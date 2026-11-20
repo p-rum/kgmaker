@@ -93,3 +93,57 @@ Rozsah přímých důkazů a omitted frontier doplněn v [README](../../README.m
 a [stavové matici](../production-analysis-progress.md). Dokumentovaný CLI
 příkaz a formát výstupu zůstávají kompatibilní. Registr a instalované
 instrukce nemají změnu, protože jde o opravu už registrovaného T021-AC05.
+
+## Přenos na main po #127 a #128
+
+Výchozí GitHub main `17e9e7368e6cc2d6550983c3039eb39debd65424`, tree
+`dfb0a247ec329196190a3db182b5d1e8c549b3db`. Dva zdrojové a dva testovací
+bloby jsou shodné s ověřeným headem [#123](https://github.com/p-rum/kgmaker/pull/123)
+`3446a3153a6fd3df168e8b50e996635363bb32b8`. GitHub Compare potvrdil jako předky
+T017 `4e4fcd65e94b855ac4aee2e76fa4a25084940da7`, T019
+`a60f02d2a36f0d826ea340541966028d818efd5d` a W09
+`cceb1109df6d88e4f46107f9f9ad12f5e563c0d3`.
+
+- **T021-S01 / AC01, AC05.** `architecture_render.py` zachovává model uzlů a hran,
+  scope a kontext u zobrazených tvrzení i přímo citovaných důkazů. Testy
+  `test_t021_golden_projects_exact_http_kafka_and_db_model_without_fake_vertices`,
+  `test_t021_rejects_foreign_scope_in_visible_provenance` a
+  `test_t021_preserves_provenance_only_referenced_by_omitted_frontier` ověřily
+  počet prvků, odmítnutí cizího důkazu a zachování omitted frontier.
+- **T021-S02 / AC02, AC03.** `test_t021_hashes_logical_identity_with_realm_and_keeps_provenance`
+  ověřuje různé hashe pro stejnou logickou identitu ve dvou realmech.
+  `test_t021_real_mermaid_114_parser_and_renderer_accepts_malicious_labels` a
+  `test_t021_real_t016_http_kafka_topology_parses_and_renders` používají skutečný
+  Mermaid parser i renderer přes `tests/rendering/validate_t021_topology.mjs`.
+- **T021-S03 / AC05.** Golden test ověřuje text `ASYNC; delivery UNKNOWN`,
+  `PARTIAL`, truncation a celý serializovaný provenance envelope. Jde o výstup
+  ze statického modelu, runtime a dostupnost dat zůstávají nedoložené.
+- **T021-S04 / AC04.** `architecture_cli.py` volí formát nad filtrovaným výsledkem.
+  `test_t021_cli_render_failure_preserves_last_valid_artifact_and_skips_publish`,
+  `test_t021_invalid_inputs_are_read_only_and_rejected` a
+  `test_t021_pure_renderer_never_starts_process_or_network` ověřují zachování
+  artefaktu, nulovou mutaci hodnoty a absenci procesů a sítě v rendereru.
+- **T021-S05 / AC06.** Aktualizovány [README](../../README.md),
+  [CLI a API příklady](../architecture-json-cli.md#architecture-topology-mermaid-t021),
+  [architektura](../architecture.md), [topologie](../service-topology.md),
+  [stavová matice](../production-analysis-progress.md) a
+  [acceptance](../acceptance-inventory.md#t021--topology-mermaid-pr-123).
+  Původní [change132](132_renderTopologyMermaid.md) zachovává historické kroky.
+  Registr a init šablony nemění dříve evidované zadání ani instalační chování.
+  JSON zůstává výchozí. Schéma není rozšířené a test ověřil čtení grafů v1/v2/v3.
+  Výstup Mermaid vzniká na stdout a zápis cache je výslovný přes `--view-cache`.
+
+Cílená sada **194 PASS / 0 SKIP**, 6,85 s, Node 22.22.1, Mermaid 11.4.1,
+jsdom 26.0.0 a markdown-it-py 3.0.0:
+
+```sh
+KGMAKER_REQUIRE_MARKDOWN_PARSER=1 PYTHONPATH=src /tmp/kgmaker-test-venv/bin/python -m pytest \
+  -p no:cacheprovider -q --tb=short -r fEs --basetemp .kgmaker/workflow/scoped-t021-pytest \
+  tests/test_t021_render_topology_mermaid.py tests/test_t017_filter_topology_scope.py \
+  tests/test_t016_aggregate_service_topology.py tests/test_t019_add_architecture_json_cli.py \
+  tests/test_t020_render_interface_markdown.py \
+  tests/test_t005_add_view_model.py::test_existing_graph_loader_still_accepts_legacy_schema_versions
+```
+
+Úplná sada nad tímto kandidátem, GitHub Actions a nové T045 review mají pro
+přenos stav NOT_RUN. T022 a produkční runtime acceptance mají vlastní rozsahy.

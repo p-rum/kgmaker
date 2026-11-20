@@ -335,7 +335,9 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
     annotations = list({item["id"]: item for item in selected_annotations}.values())
     for item in annotations:
         evidence_ids.update(item.get("evidence_ids", []))
-    evidence = {item["id"]: item for item in [*fresh.evidence, *stored.evidence]
+    # A refreshed context owns its regenerated evidence, even if an earlier
+    # stored record has the same identifier.
+    evidence = {item["id"]: item for item in [*stored.evidence, *fresh.evidence]
                 if item["id"] in evidence_ids}
     result = replace(
         fresh, schema_version=3,

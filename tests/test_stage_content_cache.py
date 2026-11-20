@@ -63,14 +63,15 @@ def facts(value):
     return value
 
 
-def test_public_inspect_cold_warm_skips_actual_stage_functions(transport):
+def test_public_inspect_cold_warm_reexecutes_all_stages(transport):
     root, _, _, _, calls, _ = transport
     cold = inspection.inspect_jvm(root)
     warm = inspection.inspect_jvm(root)
-    assert calls == {'analyze': 1, 'graph': 1, 'framework': 1}
+    assert calls == {'analyze': 2, 'graph': 2, 'framework': 2}
     assert facts(cold['graph']) == facts(warm['graph'])
-    assert {s['status'] for s in warm['cache']['stages']} == {'HIT'}
+    assert {s['status'] for s in warm['cache']['stages']} == {'BYPASS'}
     saved = store.load_graph(root)
+    assert {s['reason'] for s in warm['cache']['stages']} == {'UNVERIFIED_REPLAY'}
     assert len(saved.extraction_cache['entries']) == 3
     assert all('extraction_cache' not in e['payload'] for e in saved.extraction_cache['entries'])
 
@@ -235,13 +236,64 @@ def test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt(transport, mutation)
     assert calls['graph' if mutation == 'foreign-scope' else 'analyze'] == 2
 
 
+
+def test_rehashed_worker_payload_cannot_alter_live_coverage(transport):
+    from kgmaker.analysis_model import digest
+
+    root, _, _, _, calls, _ = transport
+    original = inspection.inspect_jvm(root)
+    path = root / ".kgmaker/graph.json"
+    document = json.loads(path.read_text())
+    entry = next(e for e in document["extraction_cache"]["entries"]
+                 if e["key"]["stage"] == "worker-analysis")
+    entry["payload"]["coverage"] = {"calls_resolved": 100}
+    entry["payload_sha256"] = digest(entry["payload"])
+    path.write_text(json.dumps(document))
+    before = snapshot(root)
+    result = inspection.inspect_jvm(root, publish=False)
+    assert result["coverage"] == original["coverage"]
+    assert calls["analyze"] == 2
+    assert snapshot(root) == before
+
+
+@pytest.mark.parametrize("stage", ["compiler-graph", "framework-graph"])
+def test_rehashed_cached_graph_cannot_create_resolved_call(transport, stage):
+    from dataclasses import asdict
+
+    from kgmaker.analysis_model import digest
+    from kgmaker.model import Edge
+
+    root, source, _, _, calls, _ = transport
+    source.write_text("class Example {\n void run() {}\n void other() {}\n}\n")
+    original = inspection.inspect_jvm(root)
+    path = root / ".kgmaker/graph.json"
+    document = json.loads(path.read_text())
+    entry = next(e for e in document["extraction_cache"]["entries"] if e["key"]["stage"] == stage)
+    payload = entry["payload"]
+    node_ids = {node["name"]: node["id"] for node in payload["nodes"]}
+    context = original["context"]["id"]
+    proof = "cache-only-proof"
+    payload["evidence"].append({"id": proof, "kind": "SYMBOL_RESOLVED", "context_id": context})
+    payload["edges"].append(asdict(Edge(
+        source=node_ids["run"], target=node_ids["other"], kind="calls", confidence="resolved",
+        context_ids=(context,), evidence_ids=(proof,), evidence_kind="SYMBOL_RESOLVED")))
+    entry["payload_sha256"] = digest(payload)
+    path.write_text(json.dumps(document))
+    before = snapshot(root)
+    result = inspection.inspect_jvm(root, publish=False)
+    assert not any(proof in edge.get("evidence_ids", []) for edge in result["graph"]["edges"])
+    assert facts(result["graph"]) == facts(original["graph"])
+    assert calls == {"analyze": 2, "graph": 2, "framework": 2}
+    assert snapshot(root) == before
+
+
 def test_scope_variant_retention_and_offline_refresh_do_not_launch_worker(transport, monkeypatch):
     from kgmaker.graph_provider import retain_compiler_layer
     root, _, _, _, calls, _ = transport
     inspection.inspect_jvm(root, build_context={'spring_profiles': ['a']})
     inspection.inspect_jvm(root, build_context={'spring_profiles': ['b']})
     warm = inspection.inspect_jvm(root, build_context={'spring_profiles': ['a']})
-    assert calls['analyze'] == 2
+    assert calls['analyze'] == 3
     assert len(store.load_graph(root).extraction_cache['entries']) == 6
     assert len([c for c in warm['graph']['contexts'] if c.get('analyzer_version')]) == 2
     def forbidden(*a, **kw): raise AssertionError('implicit worker')
@@ -308,12 +360,12 @@ def test_cached_graph_context_is_bound_to_validated_upstream_response(transport,
         entry['payload_sha256'] = digest(entry['payload'])
     path.write_text(json.dumps(raw))
     result = inspection.inspect_jvm(root)
-    assert calls == {'analyze': 1, 'graph': 2, 'framework': 2}
+    assert calls == {'analyze': 2, 'graph': 2, 'framework': 2}
     assert facts(result['graph']) == facts(original['graph'])
 
 
 @pytest.mark.parametrize('mode', ['cancel', 'timeout'])
-def test_warm_hit_honors_abort_before_publication(transport, mode):
+def test_warm_inspection_honors_abort_before_publication(transport, mode):
     root, _, _, _, calls, _ = transport
     inspection.inspect_jvm(root)
     options = {'timeout': 0} if mode == 'timeout' else {'cancel_file': root / '.cancel'}
@@ -333,8 +385,8 @@ def test_entry_count_cap_preserves_other_context_facts(transport):
     assert len(graph.extraction_cache['entries']) == MAX_ENTRIES
     assert len([c for c in graph.contexts if c.get('analyzer_version')]) == MAX_ENTRIES // 3 + 1
     warm = inspection.inspect_jvm(root, build_context={'spring_profiles': [str(MAX_ENTRIES // 3)]})
-    assert {s['status'] for s in warm['cache']['stages']} == {'HIT'}
-    assert calls['analyze'] == MAX_ENTRIES // 3 + 1
+    assert {s['status'] for s in warm['cache']['stages']} == {'BYPASS'}
+    assert calls['analyze'] == MAX_ENTRIES // 3 + 2
 
 
 def test_late_source_mutation_during_store_preparation_does_not_publish(transport, monkeypatch):

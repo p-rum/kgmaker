@@ -16,25 +16,16 @@ kgmaker inspect frontend --root ./ui --repo-id ui --module app --source-set main
 ```
 
 Připravené workery a jejich toolchain musí být dostupné podle
-[compiler inspection](compiler-inspection.md). Každý explicitní příkaz nadále
-ověří handshake; frontend rovněž skutečný project preflight. Warm cache neznamená
-nulový počet procesů v explicitní inspekci, ale vynechání worker `analyze` a
-příslušných graph/framework projekcí. `scan`, hook, feature a data-check workery
-nezapínají; zachovávají jejich dosavadní offline freshness kontrakt.
+[compiler inspection](compiler-inspection.md). Každý explicitní příkaz ověří
+handshake a provede skutečný worker analyze a compiler projekci. Frontend
+provede project preflight, JVM framework augmentation. Příkazy scan, hook,
+feature a data-check zachovávají dosavadní offline chování.
 
-JSON výsledek má aditivní `cache.version = extraction-stages-1` a `cache.stages`:
-
-| Stage | Cesta | Co hit přeskočí |
-|---|---|---|
-| worker-analysis | JVM, TypeScript | worker analyze; protocol, exact context a worker metadata se znovu validují |
-| compiler-graph | JVM, TypeScript | existující compiler/CFG/return/field/typed-operation projekci |
-| framework-graph | JVM | existující Spring/JPA/HTTP/Kafka/retry augmentation |
-
-Každý záznam má `stage`, `status` (`HIT`, `MISS`, `BYPASS`) a konkrétní `reason`.
-`COMPLETE_KEY_MATCH` pouze potvrzuje obsahovou shodu cache. Missing entry má
-`NO_MATCH`, odmítnutý decoded payload `INVALID_CACHED_PAYLOAD`, neúplná closure
-`INCOMPLETE_INPUT_CLOSURE`, nadlimitní payload `CACHE_SIZE_LIMIT`. Ostatní inspection
-status, coverage, diagnostics a exit code si zachovávají svůj význam.
+Výsledek JSON obsahuje `cache.version = extraction-stages-1`
+a `cache.stages`. Každá fáze hlásí `BYPASS` s důvodem
+`UNVERIFIED_REPLAY`, `INCOMPLETE_INPUT_CLOSURE`
+nebo `CACHE_SIZE_LIMIT`. Coverage, diagnostics a exit code
+zachovávají svůj význam.
 
 ## Úplný klíč a kontrola odvozených údajů
 
@@ -46,22 +37,20 @@ launcher a JDK platform bytes, verze/obsah lokálních extractorů, stage, norma
 base graph a konkrétní upstream response. Stejná zobrazovaná jména nenahrazují
 identity varianty. Z base graph se vynechávají pouze cache a generation timestamp.
 
-Hit znovu validuje payload vůči vybranému contextu, scope a workeru. Cached graph
-má shodné odvozené project/coverage/status/diagnostics s validated response.
-Přepočtený hash cizího payloadu proto nestačí. Celá použitá closure se ověří také
-před commit; late source/config/worker/classpath drift vrací STALE.
+Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému
+kontextu, scope, upstream odpovědi a workeru. Digest uložený vedle cache je
+kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
+aktuální worker a projekce. Celá použitá closure se ověří před commit.
+Změna source/config/worker/classpath během inspekce vrací STALE.
 
-Nepodporované dodatečné runtime options, neúplná legacy closure nebo nadlimitní
-cache znamenají BYPASS. Explicitní inspekce může stále provést původní cestu;
-cache neodhaduje chybějící inputs. Cache používá konzervativní celý base graph:
-změna jiného zdroje může zneplatnit graph stage, i když compiler stage vybrané
-source-set zůstane shodný. Selective per-file extraction není W01.
+Předchozí uložené kontexty vyžadují pro obnovu evidence explicitní inspekci
+konkrétního kontextu. Při jejím sloučení má čerstvý důkaz stejné identity
+přednost před uloženým. Replay je pozastavený i při úplné closure.
 
 ## Store, kompatibilita a limity
 
 Index `graph.json` má aditivní `extraction_cache` envelope v1; nejsou to graph facts.
-V1/v2/v3 bez cache zůstávají čitelné. Unknown/corrupt envelope se ignoruje jako
-cache miss, bez povýšení či smazání validních facts. Public `KnowledgeGraph.to_dict()`
+V1/v2/v3 bez cache zůstávají čitelné. Unknown/corrupt envelope se ignoruje a graph facts se čtou samostatně. Public `KnowledgeGraph.to_dict()`
 a scoped graph outputs metadata neobsahují. Store používá explicitní
 `to_dict(include_cache=True)` a cache se publikuje spolu s graph JSON.
 
@@ -82,7 +71,9 @@ commit, reverse dependencies, negative lookup invalidaci, selective revise ani
 W02–W06. Zachovává existující provider omezení: nový rule selector nelze publikovat
 vedle zachovaného stale selectoru bez jeho vyřešení. Cache to neobchází.
 
-Ověřený actual scope: Java+Kotlin přes připravené JDK21/K1/K2 workery a TypeScript
+Historický scope před konzervativní opravou: Java+Kotlin přes připravené JDK21/K1/K2 workery a TypeScript
 5.7.3; explicitní classpath/config mutace a warm callcounts. Konkrétní běhy a
 NOT_RUN kontroly jsou v [change133](changes/133_stageContentCache.md). Celý T003-S10
 zůstává PARTIAL; cache není inkrementální build compileru ani production latency slib.
+
+Aktuální ověřený scope opravy a zbývající práce jsou v [change135](changes/135_bindCachedCompilerEvidence.md).
