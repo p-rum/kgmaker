@@ -115,6 +115,9 @@ and remain UNRESOLVED. Entry/exit, call and boundary nodes are not upgraded.
 Workspace wrapping qualifies the new references without rewriting their original
 content hash. Missing, stale, foreign, borrowed or tampered operation evidence
 cannot authorize a resolved node or mutate the last valid store.
+Scope projection retains malformed optional block metadata for validation. Only
+version 1 metadata with a single string reference can contribute an operation
+reference to evidence selection, subject to the existing scope and context checks.
 
 Existing read-only usage is unchanged:
 

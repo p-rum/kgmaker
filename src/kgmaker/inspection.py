@@ -540,13 +540,14 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
 def _stage_response(response, selected):
     """A matching digest does not substitute for worker/context validation."""
     validate_response(response, selected)
+    if any(symbol.get('context_id') != selected['id'] for symbol in response['symbols']):
+        raise WorkerError('Dangling/duplicate compiler symbol or context', 'INVALID_PROTOCOL')
     worker = selected['worker']
     if (response.get('status') not in {'COMPLETE', 'PARTIAL'}
             or not isinstance(response.get('coverage'), dict)
             or any(response.get(key) != worker.get(key)
-                   for key in ('protocol_version', 'worker', 'compiler_version'))
-            or any(symbol.get('context_id') != selected['id'] for symbol in response['symbols'])):
-        raise WorkerError('Cached response does not match selected worker/context', 'INVALID_PROTOCOL')
+                   for key in ('protocol_version', 'worker', 'compiler_version'))):
+        raise WorkerError('Stage response does not match selected worker/context', 'INVALID_PROTOCOL')
 
 
 def _stage_graph(payload, base, selected, response):
@@ -557,25 +558,25 @@ def _stage_graph(payload, base, selected, response):
             or any(s.get('context_id') != selected['id'] for s in
                    [*graph.symbols, *graph.call_sites, *graph.cfgs])
             or any(e.evidence_kind == 'RUNTIME_OBSERVED' for e in graph.edges)):
-        raise WorkerError('Cached graph has foreign facts/context', 'INVALID_PROTOCOL')
+        raise WorkerError('Stage graph has foreign facts/context', 'INVALID_PROTOCOL')
     current = next(c for c in graph.contexts if c.get('id') == selected['id'])
     derived = {'project': response.get('project'), 'coverage': response['coverage'],
                'status': response['status'],
                'diagnostics': selected.get('diagnostics', []) + response['diagnostics']}
     if any(current.get(key) != value for key, value in derived.items()):
-        raise WorkerError('Cached graph differs from upstream worker result', 'INVALID_PROTOCOL')
+        raise WorkerError('Stage graph differs from upstream worker result', 'INVALID_PROTOCOL')
     if any(item not in graph.diagnostics for item in [*base.diagnostics, *derived['diagnostics']]):
-        raise WorkerError('Cached graph removed upstream diagnostic', 'INVALID_PROTOCOL')
+        raise WorkerError('Stage graph removed upstream diagnostic', 'INVALID_PROTOCOL')
     for key, value in selected.items():
         if key in {'project', 'framework_rule_versions', 'coverage', 'status', 'diagnostics'}:
             continue  # Exact project closure is validated before this stage.
         if current.get(key) != value:
-            raise WorkerError('Cached graph input binding differs: ' + key, 'INVALID_PROTOCOL')
+            raise WorkerError('Stage graph input binding differs: ' + key, 'INVALID_PROTOCOL')
     if any(current.get('framework_rule_versions', {}).get(k) != v
            for k, v in selected.get('framework_rule_versions', {}).items()):
-        raise WorkerError('Cached graph has different framework rules', 'INVALID_PROTOCOL')
+        raise WorkerError('Stage graph has different framework rules', 'INVALID_PROTOCOL')
     if any(c not in graph.contexts for c in base.contexts):
-        raise WorkerError('Cached graph replaced source context', 'INVALID_PROTOCOL')
+        raise WorkerError('Stage graph replaced source context', 'INVALID_PROTOCOL')
     graph.generated_at = base.generated_at
     return graph
 

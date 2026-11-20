@@ -11,7 +11,7 @@ VERIFIED_IN_SCOPE a je [MERGED v #125](https://github.com/p-rum/kgmaker/pull/125
 
 ## T003-S10-W01 — obsahová cache explicitních inspekčních stupňů
 
-Dodání [MERGED #114](https://github.com/p-rum/kgmaker/pull/114), aktuální ověření FAIL kvůli [#116](https://github.com/p-rum/kgmaker/issues/116). [Opravný draft #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS a 8 Spring fail-closed PASS. Úplné integrační ověření čeká. Tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
+Historické dodání [#114](https://github.com/p-rum/kgmaker/pull/114) a regrese baseline [#116](https://github.com/p-rum/kgmaker/issues/116). Dílčí [oprava #119](https://github.com/p-rum/kgmaker/pull/119) má 97 cílených PASS na main po T052 a 8 Spring fail-closed PASS z dřívějšího scope. Oprava s W05 vstupuje do [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md) v rozsahu PR_OPEN / PARTIAL. Následující tabulka zachovává historickou scoped acceptance `1823ad2` nad main `84f94d4`.
 [Kontrakt/API/CLI a limity](stage-content-cache.md), [přesné běhy](changes/133_stageContentCache.md).
 Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1/K2 a TS5.7.3.
 
@@ -161,6 +161,17 @@ opravy prošly čistým exact-pair review na finálním headu
 | T003-S05-W04-AC02 | LOCAL_VERIFIED_IN_SCOPE | `SPRING_RULE_VERSION=annotation-source-v9-proxy-provenance`; `test_legacy_spring_rules_remain_readable_but_require_reinspection` zahrnuje v8, graph/store schema v1/v2/v3 zůstává beze změny a framework výsledek prochází round-trip validací |
 | T003-S05-W04-AC03 | LOCAL_VERIFIED_IN_SCOPE | `test_aspectj_declaration_without_weaving_proof_stays_unknown`, `test_ambiguous_interface_injection_never_creates_stronger_proxy_evidence`, `test_local_or_non_injected_field_never_reuses_injected_proxy_evidence`, `test_same_owner_parameter_receiver_is_not_self_invocation` a incompatible JDK/CGLIB receiver assertions nevytvářejí `may_apply_advice`; lokalizují UNKNOWN důvod |
 | T003-S05-W04-AC04 | LOCAL_VERIFIED_IN_SCOPE / TOOLCHAIN_SKIP | `test_actual_javac_proxy_async_event_fixture` má JDK/CGLIB, Async a EventListener parametry, ale bez připraveného JVM workeru je lokálně explicitní SKIP, nikoli PASS; [change114](changes/114_modelSpringProxyAsyncSemantics.md), README a compiler-inspection uvádějí tuto hranici; T003-S05 zůstává PARTIAL |
+
+### Opravná Spring fixture v #124, 2026-11-20
+
+T003-S05-W04-AC01/AC03/AC04 a T003-AC05. Dílčí oprava [#124](https://github.com/p-rum/kgmaker/pull/124) je součástí
+[společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). Skutečný Javac v `test_ac05_spring_profiles_conditions_qualifier_primary_and_short_name_guard`
+na base `8ff2529` před opravou nedoložil `Consumer.gateway`. Po opravě
+prošlo všech 15 testů v `tests/test_compiler_workers.py` bez SKIP.
+Kladná pole mají kanonické `@Autowired` a negativní případy ověřují chybějící
+anotaci i samotné `@Qualifier`. Oprava se týká této fixture. Nadřazená
+acceptance proxy/Async a aplikační runtime mají vlastní důkazy.
+[Postup, kontroly a otevřená merge brána](changes/139_validateCanonicalInjectionFixture.md).
 
 ## T003-S06-W05 — rozšířená JPQL/HQL gramatika — MERGED / LOCAL_VERIFIED_IN_SCOPE
 
@@ -894,6 +905,15 @@ After origin and proof-retention corrections,39purePASS and bounded actual K1
 workspace/process1PASS4.69s; corrected complete matrix/full remain pending. No
 T026 or whole T025/T003/T004 completion is implied by this row.
 
+T025-AC04/05/08/09. Five malformed block-reference variants verify that scope
+projection preserves the source metadata without retaining its evidence. The
+scoped process and graph suite passed 113 tests with zero skips using actual
+K1/K2 on main `8ff2529`. The original delivery remains in history. Fix
+[#122](https://github.com/p-rum/kgmaker/pull/122) is part of the
+[joint integration](changes/142_integrateCompilerEvidenceRepairs.md). Broader
+acceptance remains PARTIAL.
+[Per-step evidence](changes/136_preserveMalformedCfgEvidence.md).
+
 ## T026 — lossless business-step projection (candidate)
 
 | AC | Concrete public-contract test in `tests/test_t026_collapse_business_steps.py` | Evidence |
@@ -995,7 +1015,13 @@ The coalesced existing T005–T010/T015/Kafka/trigger regressions passed294/0SKI
 (9actual deselected). A separate pure replay of the actual current-parent Kafka
 capture retained2CURRENT compiler contexts across5projections with no process,
 network or input/store mutation. Common runtime/test are exact in combined descendant `2df55ff`: strict full 2587 PASS / 10 exact optional SKIP, 2042.93 s, all 4897 hashes and five member inventories unchanged. All 1966 Common-parent IDs occur in that one XML: 1956 PASS / 10 optional SKIP. Current-parent actual focus 217 PASS / 0 SKIP. This is descendant superset evidence, not a standalone Common full or T016/runtime availability acceptance; final exact-pair review/merge is separate.
-## T003-S07-W05 — retry/DLT policy draft
+## T003-S07-W05 — retry/DLT policy
+
+Aktualizace 2026-11-20 pro AC01 a AC03. Seznam nebo objekt v identitě kontextu
+vykázaly čtyři TypeError na baseline. Opravená projekce vyloučí vadný uzel a
+process report vrátí neprázdné UNKNOWN. Java, Kotlin a související HTTP testy
+mají 240 PASS / 0 SKIP. Oprava je součástí [společné integrace](changes/142_integrateCompilerEvidenceRepairs.md). Plný scope zůstává PARTIAL.
+[Přesné důkazy](changes/141_handleInvalidKafkaPolicyContext.md).
 
 AC01–04 map to `tests/test_kafka_retry_dlt.py` and [note87](changes/87_captureKafkaRetryDlt.md).
 Current-parent coalesced actual/pure470PASS/0SKIP186.44s preserves1620input hashes.

@@ -142,7 +142,7 @@ def test_explicit_protocol_preserves_two_distinct_operation_occurrences(origin):
     assert (response, context) == before
 
 
-@pytest.mark.parametrize('refs', [None, 'proof', [None], ['proof', 1]])
+@pytest.mark.parametrize('refs', [None, 'proof', [None], ['proof', 1], ['proof', 'other-proof']])
 def test_scope_projection_preserves_invalid_operation_shape_for_fail_closed_validation(refs):
     from kgmaker.model import KnowledgeGraph, Node
     from kgmaker.views import project
