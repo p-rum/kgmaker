@@ -3,10 +3,10 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 542
+- Scope: production; omitted files: 543
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `b9c0d00314278d5d3192f1715985d568acebeb9c6ca824bb13f1a9eda8f0778c`; content: `a5987bcf9c70b1eb8e5fdacfa200c7e46865ddc75f9570fab579ff095f4b886c`; freshness: CONTENT_VERIFIED
+- Context: `66e930bf3a77316b634ca1bfefee0649c1250536514cf481a912c7965fdad6a8`; content: `85d087ec2517905e54e4ac54f09e3ac56daeb38fa373c2fc30b9865429638851`; freshness: CONTENT_VERIFIED
 - Files indexed: 106
 - Symbols and sections: 1484
 - Internal imports: 457
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 333
+- Implementation episodes: 334
 - Inferred/ambiguous relationships: 8430/0
 
 ## Architecture diagram
@@ -876,7 +876,7 @@ flowchart LR
 - **function** `_prior_failure` line 58 — `_prior_failure(journal, task, iteration)`
 - **function** `_next` line 68 — `_next(root, task, review_state, journal)`
 - **function** `_review_packet` line 121 — `_review_packet(root, task, reviews)`
-- **function** `handoff` line 129 — `handoff(root: Path, task_id: str, *, apply: bool = False)`
+- **function** `handoff` line 129 — `handoff(root: Path, task_id: str, *, apply: bool = False, token_budget: int | None = None)`
 - **function** `_run` line 178 — `_run(args)`
 - **function** `register` line 182 — `register(commands)`
 
@@ -2329,7 +2329,7 @@ flowchart LR
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/123_crossHttpProcessBoundary.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: t027-review-repros=passed, semantic-preservation=passed, diff-check=passed, full-suite=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/69_versionReactUiEvents.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: ui_matrix43=passed, full624_pass10_skip=passed, semantic=passed, candidate_remote_ci_not_run=unknown
 - **Record verified current-parent Kafka acceptance and full evidence** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/77_scopeKafkaCodeBindings.md, docs/compiler-inspection.md; validation: historical-full19b=passed, parent-pure43=passed, available-case-equivalence=passed, new-parent-full=unknown
-- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/146_recordTopologyMerge.md, docs/production-analysis-progress.md; validation: planner=passed, semantic=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/146_recordTopologyMerge.md, docs/production-analysis-progress.md; validation: planner=passed, semantic=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed, full_suite=unknown, semantic_validate=passed, scan=passed, kgmaker_check=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest191=passed
 - **Change Advanced, Advanced.consume(value: String), Advanced.consume(value: String):value** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/57_verifyJvmGoldenCorpus.md, docs/compiler-inspection.md; validation: corpus_21_in_full=passed, full_setup_disk_failure=failed, installed_repair_9=passed, semantic=passed, remote_ci=unknown
@@ -2636,6 +2636,7 @@ flowchart LR
 - **docs(flow): record PR109 and final scoped verification** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/128_unifiedFlowViews.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: review-fix-429=passed, binding-38=passed, t028-59=passed, full=skipped
 - **fix(ci): isolate restricted Windows smoke desktop access** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: integration-focused=passed, actual-offline-k1-build=passed, actual-windows-startup=skipped
 - **merge: preserve HTTP intent and finally-safe process path boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/73_buildLocalProcessPath.md, docs/process-paths.md; validation: corrected_full_1104=passed, optional_10=skipped, frozen_246=passed, http_focus_127=passed, ui_parent_pure_130=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/148_resumeCompletionPacketBudget.md, docs/completion-orchestrator.md, docs/production-analysis-progress.md; validation: workflow-and-role-context=passed, semantic=passed
 - **Integrate current parent and validate shared context-role boundary** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/77_scopeKafkaCodeBindings.md; validation: pure295=passed, current-parent-pure43=passed, source-review49d=passed, strict-full=unknown
 
 ## Internal relationships

@@ -128,7 +128,7 @@ def _review_packet(root, task, reviews):
     return packet
 
 
-def handoff(root: Path, task_id: str, *, apply: bool = False) -> dict:
+def handoff(root: Path, task_id: str, *, apply: bool = False, token_budget: int | None = None) -> dict:
     """Preview or persist one handoff. Specialist execution stays with the host."""
     task = load_task(root, task_id)
     if task['schema_version'] != 3:
@@ -151,13 +151,13 @@ def handoff(root: Path, task_id: str, *, apply: bool = False) -> dict:
             packet = _review_packet(root, projected, reviews)
         if not apply:
             if packet is None:
-                packet = prepare_packet(root, projected, role, persist=False)
+                packet = prepare_packet(root, projected, role, token_budget=token_budget, persist=False)
         else:
             current = task
             if target != phase:
                 # Validate that the next packet can be prepared before advancing.
                 if packet is None:
-                    prepare_packet(root, projected, role, persist=False)
+                    prepare_packet(root, projected, role, token_budget=token_budget, persist=False)
                 binding = task['delivery']['bindings'][feedback['id']] if action == 'retry' else None
                 current = advance_task(root, task['id'], target, expected_revision=digest(task),
                                        expected_binding=binding, expected_journal_revision=journal_revision)
@@ -170,7 +170,7 @@ def handoff(root: Path, task_id: str, *, apply: bool = False) -> dict:
                 if target == 'review':
                     packet = _review_packet(root, current, reviews)
                 if packet is None:
-                    packet = prepare_task_packet(root, task['id'], role)
+                    packet = prepare_task_packet(root, task['id'], role, token_budget=token_budget)
     return {'task_id': task['id'], 'from_phase': phase, 'phase': target or phase,
             'iteration': iteration, 'role': role, 'action': action, 'feedback': feedback,
             'diagnostic': diagnostic, 'packet': packet, 'applied': bool(apply and role),
@@ -178,7 +178,7 @@ def handoff(root: Path, task_id: str, *, apply: bool = False) -> dict:
 
 
 def _run(args):
-    return handoff(args.root, args.task_id, apply=args.apply)
+    return handoff(args.root, args.task_id, apply=args.apply, token_budget=args.token_budget)
 
 
 def register(commands) -> None:
@@ -186,4 +186,5 @@ def register(commands) -> None:
     parser.add_argument('task_id')
     parser.add_argument('--root', type=Path, default=Path.cwd())
     parser.add_argument('--apply', action='store_true', help='persist one phase and its role packet')
+    parser.add_argument('--token-budget', type=int, help='override the token budget for a new role packet')
     parser.set_defaults(handler=_run)

@@ -287,6 +287,8 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
 current task inventory and emits dependency, verification and dispatch candidates as JSON.
 The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
+If the profile budget cannot fit the required context, retry that handoff with
+`kgmaker completion handoff TASK_ID --apply --token-budget 12000`.
 Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
 to record the implementer and each independent reviewer's local attribution.
 See [the local completion workflow and its limits](docs/completion-orchestrator.md).

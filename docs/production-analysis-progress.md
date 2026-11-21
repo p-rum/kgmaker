@@ -7,6 +7,11 @@ je main `1532f1725f2cbe0d76685c273adc32c2e0d239e0`. T052 runtime zaznamenal
 skutečný retry, dvojí nezávislé schválení a dokončený merge podle T045.
 [Záznam workflow a evidence](changes/134_addCompletionOrchestrator.md).
 
+T052-S02 / AC02 má lokální opravu obnovy dlouhého packetu pro T047-S01.
+Předání lze zopakovat s explicitním rozpočtem bez změny uloženého profilu
+nebo review packetu. Dodání IN_PROGRESS, ověření PARTIAL do úplné sady.
+[Regresní důkazy](changes/148_resumeCompletionPacketBudget.md).
+
 Při zahájení běhu měl GitHub `main` ref `8f362471a8254ff9a0e44870c490a1dcb6b067b1`.
 První lokální worktree používaly `465b121992aad50c2885acef0fd038531a31293a`,
 tedy obsahu sloučené cache před přidáním `.github/workflows/pr-review.yml`.
