@@ -1733,3 +1733,9 @@ odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 
 neplatný cache envelope a původní graph/store schéma v1/v2/v3.
 [Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
 a samostatný úplný gate. Replay HIT se zatím nepovoluje.
+
+## T047-S10 — Záznam ověření z jednoho checkoutu
+
+| Acceptance | Ověření | Důkaz |
+|---|---|---|
+| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Zápis deklarovaného a importovaného výsledku zůstává odlišen. Změny během běhu, změny POSIX režimu souboru, nesoulad dokladu s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Po integraci s `main` na `e155cbdc7e5d708920d7632df7bd1ee792d8ebc8` má cílená sada 133 PASS / 2 SKIP a kontrola T032 s plánovačem 50 PASS / 0 SKIP. Skutečný Gradle v integrační sadě, doklad přes více checkoutů a širší import zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |
