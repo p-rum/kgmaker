@@ -512,6 +512,11 @@ zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
 
+Opakovaný `runtime import` uchovává doklady pro jednotlivé běhy ve shodném
+compiler kontextu. `callgraph callers` a `callees` je zobrazí jako
+`RUNTIME_OBSERVED`. `callgraph path` používá statické compiler vazby.
+[Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
+
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
 a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě

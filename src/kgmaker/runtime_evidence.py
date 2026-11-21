@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -330,7 +331,11 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
         raise AnalysisError("Runtime import requires a stored schema 3 compiler graph")
     manifest, context = validate_manifest(graph, root, manifest)
     evidence = {item["id"]: item for item in graph.evidence}
-    edges = {(edge.source, edge.target, edge.kind): edge for edge in graph.edges}
+    edges = list(graph.edges)
+    observed_edges = {(edge.source, edge.target, edge.kind, edge.context_ids): index
+                      for index, edge in enumerate(edges) if edge.evidence_kind == "RUNTIME_OBSERVED"}
+    context_ids = (context["id"],)
+    imported = {}
     for item in manifest["observations"]:
         source, target = item["caller"], item["target"]
         relation = "observed_dispatch_to" if item.get("kind", "call") in {"dispatch", "call"} else "runtime_framework_observation"
@@ -338,15 +343,27 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
                   "runtime_id": manifest["runtime_id"], "context_id": manifest["context_id"],
                   "build_id": manifest["build_id"], "scenario": item.get("scenario", ""),
                   "async": bool(item.get("async", False)), "observation_source": item.get("source")}
+        if manifest["schema_version"] == 2:
+            record.update({key: manifest[key] for key in (
+                "config_fingerprint", "service_id", "service_version", "source_identity",
+            )})
         evidence_id = "evidence:" + digest(record)
         evidence.setdefault(evidence_id, {"id": evidence_id, **record})
-        edges[(source, target, relation)] = Edge(
+        imported.setdefault((source, target, relation), set()).add(evidence_id)
+    for (source, target, relation), evidence_ids in imported.items():
+        # Keep each edge in a single context so scoped views can retain its proof.
+        key = (source, target, relation, context_ids)
+        index = observed_edges.get(key)
+        if index is not None:
+            edge = edges[index]
+            edges[index] = replace(edge, evidence_ids=tuple(sorted(evidence_ids.union(edge.evidence_ids))))
+            continue
+        edges.append(Edge(
             source, target, relation,
             "Observed in supplied runtime export; scope is limited to this runtime/configuration.",
-            evidence_kind="RUNTIME_OBSERVED", context_ids=(manifest["context_id"],), evidence_ids=(evidence_id,))
-    from dataclasses import replace
+            evidence_kind="RUNTIME_OBSERVED", context_ids=context_ids, evidence_ids=tuple(sorted(evidence_ids))))
     updated = replace(graph,
-        edges=sorted(edges.values(), key=lambda edge: (edge.source, edge.kind, edge.target)),
+        edges=sorted(edges, key=lambda edge: (edge.source, edge.kind, edge.target, edge.context_ids)),
         evidence=sorted(evidence.values(), key=lambda item: item["id"]),
         diagnostics=graph.diagnostics + [{"code": "RUNTIME_IMPORT_SCOPED", "runtime_id": manifest["runtime_id"],
                                           "observations": len(manifest["observations"]), "context_id": context["id"]}])

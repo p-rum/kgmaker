@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from kgmaker.analysis_model import AnalysisError, digest, file_hash
-from kgmaker.model import KnowledgeGraph, Node
+from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.runtime_evidence import import_manifest, produce_manifest, validate_manifest
 from kgmaker.store import load_graph, save_graph
 
@@ -76,6 +76,86 @@ def test_capture_status_is_preserved_without_availability_claim(project, status)
         result = import_manifest(project, manifest)
     assert result["status"] == status and result["observations_imported"] == 0
     assert not load_graph(project).evidence  # W01 facts are not W02 import evidence.
+
+
+def test_runtime_import_retains_same_edge_observations_and_v2_variant_identity(project):
+    manifest = produce(project)
+    observation = {"caller": "main", "target": "greet", "kind": "dispatch"}
+    manifest["observations"] = [observation]
+    legacy = {"schema_version": 1, "runtime_id": "legacy-run", "context_id": "ctx",
+              "build_id": "build-7", "config_fingerprint": "cfg-7",
+              "observations": [{**observation, "scenario": "legacy"}]}
+    other_service = {**manifest, "service_id": "fixture-other", "service_version": "2.0.0"}
+    graph = load_graph(project)
+    snapshot = graph.contexts[0]
+    graph.contexts.append({**snapshot, "id": "other-ctx", "build_id": "other-build",
+                           "config_fingerprint": "other-config"})
+    other_context = {**legacy, "context_id": "other-ctx", "build_id": "other-build",
+                     "config_fingerprint": "other-config"}
+    static_edges = [Edge("main", "predicate", "calls", source_line=line) for line in (4, 8)]
+    graph.edges.extend(static_edges)
+    save_graph(graph, project)
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        for supplied in (legacy, manifest, other_context, other_service, other_service):
+            assert import_manifest(project, supplied)["observations_imported"] == 1
+        before = saved(project)
+        with pytest.raises(AnalysisError, match="configuration fingerprint differs"):
+            import_manifest(project, {**other_service, "config_fingerprint": "wrong"})
+        assert saved(project) == before
+
+    graph = load_graph(project)
+    assert set(static_edges) <= set(graph.edges)
+    observations = [edge for edge in graph.edges if edge.kind == "observed_dispatch_to"]
+    assert {edge.context_ids for edge in observations} == {("ctx",), ("other-ctx",)}
+    records = {item["id"]: item for item in graph.evidence}
+    observed_ids = {edge.context_ids[0]: edge.evidence_ids for edge in observations}
+    assert len(observed_ids["other-ctx"]) == 1
+    assert records[observed_ids["other-ctx"][0]]["context_id"] == "other-ctx"
+    proofs = [records[identity] for identity in observed_ids["ctx"]]
+    assert len(proofs) == 3
+    expected_legacy = {"kind": "RUNTIME_OBSERVED", "source": "main", "target": "greet",
+                       "relation": "observed_dispatch_to", "runtime_id": "legacy-run",
+                       "context_id": "ctx", "build_id": "build-7", "scenario": "legacy",
+                       "async": False, "observation_source": None}
+    assert {"id": "evidence:" + digest(expected_legacy), **expected_legacy} in proofs
+    variants = [proof for proof in proofs if proof["runtime_id"] == OPTIONS["runtime_id"]]
+    assert {(proof["service_id"], proof["service_version"]) for proof in variants} == {
+        ("fixture-app", "1.2.3"), ("fixture-other", "2.0.0"),
+    }
+    assert all(proof["config_fingerprint"] == "cfg-7" and proof["build_id"] == "build-7"
+               and proof["context_id"] == "ctx" and proof["source_identity"] == manifest["source_identity"]
+               for proof in variants)
+    from kgmaker.views import project as select_graph
+    selected = select_graph(graph, "production", context_id="ctx")
+    assert {item["id"] for item in selected.evidence} == set(observed_ids["ctx"])
+
+
+def test_runtime_observation_stays_visible_without_creating_static_path_or_cycle(project):
+    from kgmaker import callgraph
+
+    manifest = produce(project)
+    manifest["observations"] = [{"caller": "main", "target": "greet", "kind": "dispatch"}]
+    graph = load_graph(project)
+    graph.nodes.append(Node("site", "call_site", "site", "src/App.java", scope="production"))
+    graph.call_sites.append({"id": "site", "caller": "greet", "declared_target": "main",
+                             "dispatch_candidates": [], "context_id": "ctx",
+                             "evidence_kind": "SYMBOL_RESOLVED", "resolution_reason": "static-fixture"})
+    save_graph(graph, project)
+    import_manifest(project, manifest)
+    graph = load_graph(project)
+
+    assert callgraph.path(graph, "main", "greet")["status"] == "UNKNOWN"
+    result = callgraph.path(graph, "greet", "main")
+    assert result["status"] == "STATIC_PATH"
+    assert [step["kind"] for step in result["steps"]] == ["DECLARED_TARGET"]
+    assert not callgraph.strongly_connected(graph)
+    incoming, = callgraph.callers(graph, "greet")["results"]
+    outgoing, = callgraph.callees(graph, "main")["results"]
+    assert incoming["caller"] == "main"
+    assert incoming["kind"] == outgoing["kind"] == "RUNTIME_OBSERVED"
+    assert incoming["evidence_ids"] == outgoing["evidence_ids"]
+    assert outgoing["target"] == "greet" and outgoing["dispatch_complete"] is False
 
 
 @pytest.mark.parametrize("raw", [

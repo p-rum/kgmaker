@@ -1575,3 +1575,15 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
+
+## Pozorované hrany a statické cesty
+
+`callgraph callers` a `callees` zobrazí doložené importované hrany jako
+`RUNTIME_OBSERVED`. `callgraph path` a statické cykly používají compiler
+call sites. Původ dokladů opakovaného importu uvádí
+[kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).
+
+```bash
+kgmaker callgraph callers --root PROJECT --context CONTEXT_ID --symbol TARGET_ID
+kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
+```

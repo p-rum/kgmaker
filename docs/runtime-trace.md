@@ -111,6 +111,30 @@ pro předem sanitizované exporty se svým původním kontraktem; nemá záruky 
 v2 formátu. Dřívější nevalidované v2 z této implementační větve je nutné vytvořit
 znovu. Schema v3 manifestu se odmítá; graph/store schema v3 se nemění.
 
+## Opakovaný import a navigace
+
+Opakovaný import pro stejnou dvojici symbolů a přesný compiler kontext uchová
+připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i shodné
+`runtime_id` pro rozdílné
+`service_id` nebo `service_version`. Ukládá také `build_id`,
+`config_fingerprint` a původní `source_identity`. Doklady v jiném compiler
+kontextu mají vlastní hranu. Shodný doklad se připojí jen jednou. Existující
+záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
+
+```bash
+kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json
+kgmaker callgraph callees --root PROJECT --context CONTEXT_ID --symbol CALLER_ID
+kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
+```
+
+`callers` a `callees` vracejí připojená pozorování jako `RUNTIME_OBSERVED`
+s odkazy na důkazy a `dispatch_complete: false`. `callgraph path` a statické
+cykly flow grafu sledují compiler call sites. Volba
+`--include-dispatch-candidates` zahrne při hledání cesty také statické kandidáty.
+Pro dvojici spojenou výhradně runtime dokladem hlásí statická cesta
+`UNKNOWN`. Statické vazby se uchovají i bez pozorování.
+[Rozsah opravy importu](changes/151_preserveRuntimeObservationEvidence.md).
+
 ## Ověřená hranice
 
 [`TraceApplication.java`](../tests/fixtures/runtime-trace/TraceApplication.java)

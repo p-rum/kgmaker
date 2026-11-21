@@ -51,6 +51,18 @@ běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
 
+## T003-S13-W02 — více dokladů stejné pozorované hrany
+
+[Zadání](tasks/T003-S13-02-runtimeRtaImport.md) a
+[záznam opravy](changes/151_preserveRuntimeObservationEvidence.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje opakovaný import, oddělené kontexty a versioned service doklady. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
+| T003-S13-W02-AC02 | VERIFIED_IN_SCOPE | Stejný test ověřuje původní v1 identitu vedle nových v2 metadat v graph/store v3. Formát manifestu ani grafu se nemění. |
+| T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | Změněná konfigurace nepublikuje nový graf. `test_runtime_observation_stays_visible_without_creating_static_path_or_cycle` ověřuje hranici statické navigace, existující producer a W06 testy pokrývají validaci a souběžnou publikaci. |
+| T003-S13-W02-AC04 | PARTIAL | Návod, stavová matice a change151 popisují omezenou opravu. Celá T003-AC13 má širší rozsah. |
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
