@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from .analysis_model import AnalysisError, digest, safe_path
 from .memory import is_sensitive_path
-from .workflow import _git_head
+from .workflow import STATUSES, _git_head
 
 KIND = 'verification'
 INVENTORY = 'ALL_BUILD_INPUTS_V1'
@@ -152,11 +152,16 @@ def _hex(value, size):
 
 
 def validate_record(record):
-    if (not isinstance(record, dict) or set(record) != {
+    if not isinstance(record, dict):
+        raise AnalysisError('Invalid verification record')
+    version = record.get('schema_version')
+    fields = {
             'schema_version', 'record_type', 'run_id', 'task_id', 'task_reference', 'runner', 'command_sha256',
             'before', 'after', 'scope', 'exit_code', 'build_status', 'counts', 'reports',
             'report_coverage', 'copied_unchanged', 'result', 'origin'}
-            or type(record['schema_version']) is not int or record['schema_version'] != 1
+    if version == 2:
+        fields |= {'task_iteration', 'task_phase'}
+    if (type(version) is not int or version not in (1, 2) or set(record) != fields
             or record['record_type'] != KIND or record['origin'] != 'RUNNER_CAPTURED'
             or record['scope'] != INVENTORY or not _hex(record['run_id'], 32)
             or not isinstance(record['task_id'], str) or not record['task_id'].startswith('task:')
@@ -168,6 +173,9 @@ def validate_record(record):
             or type(record['copied_unchanged']) is not bool
             or (record['exit_code'] is not None and type(record['exit_code']) is not int)):
         raise AnalysisError('Invalid verification record')
+    if version == 2 and (type(record['task_iteration']) is not int or record['task_iteration'] < 0
+                         or not isinstance(record['task_phase'], str) or record['task_phase'] not in STATUSES):
+        raise AnalysisError('Invalid verification task observation')
     runner = record['runner']
     if (not isinstance(runner, dict) or set(runner) != {'build_system', 'plan_version', 'executable_sha256'}
             or runner['build_system'] not in ('maven', 'gradle') or runner['plan_version'] != 'build-plan-1'
@@ -179,6 +187,14 @@ def validate_record(record):
                 or not _hex(snapshot['inputs_sha256'], 64) or not isinstance(snapshot['at'], str)
                 or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{6})?\+00:00', snapshot['at'])):
             raise AnalysisError('Invalid verification input observation')
+    if version == 2:
+        try:
+            before = datetime.fromisoformat(record['before']['at'])
+            after = datetime.fromisoformat(record['after']['at'])
+        except ValueError as error:
+            raise AnalysisError('Invalid verification input observation') from error
+        if after < before:
+            raise AnalysisError('Verification run ended before its start')
     counts, reports = record['counts'], record['reports']
     if (record['before']['head'] is None
             or not isinstance(counts, dict) or set(counts) != set(COUNTS)
@@ -198,8 +214,9 @@ def record_execution(root, task, plan, before, after, result, reports, copied_un
 
     tests = result['tests']
     record = {
-        'schema_version': 1, 'record_type': KIND, 'run_id': plan['build_id'], 'task_id': task['id'],
+        'schema_version': 2, 'record_type': KIND, 'run_id': plan['build_id'], 'task_id': task['id'],
         'task_reference': provenance.task_references(task)[1]['key'],
+        'task_iteration': task['iteration'], 'task_phase': task['status'],
         'runner': {'build_system': plan['build_system'], 'plan_version': plan['version'],
                    'executable_sha256': plan['executable']['sha256']},
         'command_sha256': digest(plan['argv']), 'before': before, 'after': after, 'scope': INVENTORY,
@@ -218,9 +235,24 @@ def record_execution(root, task, plan, before, after, result, reports, copied_un
     return {'reference': key, 'result': record['result'], 'freshness': freshness(root, record)}
 
 
-def freshness(root, record):
+def _input_freshness(root, observed):
     from .build_runner import snapshot
 
+    try:
+        head = _git_head(root)
+        if head is None:
+            return 'UNKNOWN'
+        if head != observed['head'] or input_fingerprint(root, snapshot(root)) != observed['inputs_sha256']:
+            return 'STALE'
+        final_head = _git_head(root)
+    except (AnalysisError, OSError):
+        return 'UNKNOWN'
+    if final_head is None:
+        return 'UNKNOWN'
+    return 'CURRENT' if final_head == head else 'STALE'
+
+
+def freshness(root, record):
     before, after = record['before'], record['after']
     if after['head'] is None:
         return 'UNKNOWN'
@@ -228,14 +260,9 @@ def freshness(root, record):
         return 'STALE'
     if not record['copied_unchanged'] or record['report_coverage'] != 'SUPPORTED_XML_REPORTS':
         return 'UNKNOWN'
-    try:
-        head = _git_head(root)
-        if head is None:
-            return 'UNKNOWN'
-        if head != before['head'] or input_fingerprint(root, snapshot(root)) != before['inputs_sha256']:
-            return 'STALE'
-    except (AnalysisError, OSError):
-        return 'UNKNOWN'
+    state = _input_freshness(root, before)
+    if state != 'CURRENT':
+        return state
     try:
         work = safe_path(root, '.kgmaker/build-runs/' + record['run_id'] + '/snapshot')
         observed, reports = capture_reports(work)
@@ -246,4 +273,52 @@ def freshness(root, record):
     if observed['coverage'] != record['report_coverage'] or any(
             observed[key] != record['counts'][key] for key in COUNTS):
         return 'UNKNOWN'
-    return 'CURRENT'
+    # Report validation may take time while the original checkout is writable.
+    return _input_freshness(root, before)
+
+
+def summary(root, journal, task, *, observed_freshness=None):
+    """Evaluate the newest local test/review receipt for the exact task selection."""
+    from .provenance import is_verification, task_references
+
+    result = {'status': 'UNVERIFIED', 'result': None, 'freshness': 'UNKNOWN',
+              'reference': None, 'reason': 'NO_ELIGIBLE_RUN'}
+    plan_count = sum(artifact['phase'] == 'plan' and artifact['role'] == 'architect'
+                     for artifact in task['artifacts'])
+    if task['plan_revision'] != plan_count:
+        return {**result, 'reason': 'PLAN_REVISION_UNBOUND'}
+    target = task_references(task)[1]['key']
+    latest, ambiguous = None, False
+    for link in journal['links']:
+        if link['target'] != target or link['relation'] != 'verifies':
+            continue
+        ref = journal['references'][link['source']]
+        if not is_verification(ref):
+            continue
+        record = ref['payload']
+        if (record['schema_version'] != 2 or record['task_iteration'] != task['iteration']
+                or record['task_phase'] not in {'test', 'review'}):
+            continue
+        started = datetime.fromisoformat(record['before']['at'])
+        if latest is None or started > latest[0]:
+            latest, ambiguous = (started, ref), False
+        elif started == latest[0] and ref['key'] != latest[1]['key']:
+            ambiguous = True
+    if latest is None:
+        return result
+    if ambiguous:
+        return {**result, 'reason': 'AMBIGUOUS_LATEST_RUN'}
+    ref = latest[1]
+    record = ref['payload']
+    state = observed_freshness.get(ref['key']) if observed_freshness is not None else None
+    if state is None:
+        state = freshness(root, record)
+    if state == 'STALE':
+        result.update(status='STALE', reason='STALE_RUN')
+    elif state != 'CURRENT':
+        result.update(reason='UNVERIFIED_RUN')
+    elif record['result'] == 'PASS':
+        result.update(status='VERIFIED', reason='CURRENT_PASS')
+    else:
+        result.update(reason='LATEST_RUN_NOT_PASS')
+    return {**result, 'result': record['result'], 'freshness': state, 'reference': ref['key']}
