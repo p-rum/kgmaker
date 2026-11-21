@@ -324,6 +324,10 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 
 ## Development
 
+The repository's [automated PR review](.github/workflows/pr-review.yml) reports
+pytest coverage and the test step's outcome. The [T045 reviewer](docs/tasks/45_addCodeReviewAgent.md)
+checks the current base and head before deciding approval.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # POSIX; on Windows activate the venv from Scripts

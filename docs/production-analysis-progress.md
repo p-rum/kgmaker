@@ -489,6 +489,12 @@ Jde o nakonfigurovaný proces; skutečné review a merge jednotlivých PR se
 dokládají jejich GitHub stavem a nejsou tímto odstavcem prohlášeny za hotové.
 Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kandidáty.
 
+Automatický PR Review měl na #137 chybnou syntaxi vloženého Pythonu a
+chybějící adaptér `pytest-cov`. Kandidát opravy je IN_PROGRESS /
+VERIFIED_IN_SCOPE pro lokální kontrolu syntaxe a běh testovacího kroku.
+GitHub Actions pro tento kandidát zůstávají NOT_RUN.
+[Záznam a reprodukce](changes/154_fixPrReviewPythonAndCoverage.md).
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |

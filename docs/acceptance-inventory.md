@@ -23,6 +23,13 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
 
+## T045 — doplňující automatická kontrola PR
+
+T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
+zachovává návratový kód pytestu po uložení reportu. Samostatný lokální
+smoke ověřuje také syntaxi vloženého Pythonu. GitHub Actions pro opravu
+jsou NOT_RUN. [Change154](changes/154_fixPrReviewPythonAndCoverage.md).
+
 ## T052 — completion orchestration 2026-11-19
 
 Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
