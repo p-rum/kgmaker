@@ -141,3 +141,26 @@ Stejný osmisouborový výběr se skutečným Surefire a Maven 3.9.9 na JDK 21 m
 `f203861e67b0c308e85c4dee92e6cddb97e065a1ce68ed6bbab22da67c996f6d`.
 Vstupní i výstupní manifest změněných zdrojů a testů má shodný SHA-256
 `e7a15dfe2b0ecc4b85bbd9650a2d68e05da0b42bb339303d0a22e798a2597689`.
+
+## Přenos kandidáta na main po #121
+
+Aktuální `main` je `b3bbba43304f499f96950ea4ecc2a2467919e616`, tree
+`61211b7dd68414dadea322c1b7364c66207cb3e6`. S11 větev před přenosem byla
+`45d9ccb5cd30f605bce3543ee6c9c0caeda026de`, tree
+`8c10b8604bfd099ae0a3f912d9a2f65c6f8a9039`. Přenos používá oba rodiče v tomto
+pořadí s S11 jako prvním rodičem. Konflikty měly pouze graf a sémantická
+vrstva. README, acceptance a stavová matice přijaly oba věcné příspěvky.
+Zdrojové a testovací soubory S11 i fixture a test #121 zachovávají přesné
+bajty svého rodiče. Sémantika zachovává původní hodnoty epizod obou rodičů.
+
+Stejný osmisouborový výběr s reálným Maven 3.9.9, Surefire 3.5.2 a Temurin
+JDK 21.0.6+7 má **179 PASS, 0 SKIP, 0 FAIL a 0 ERROR**. SHA-256 JUnit je
+`bdb3719f7b3e505d2def8ac02c5dc075f79df59c8ac994d46eb3fb1d5b5ce3b4`.
+Vstupní i výstupní manifest 354 cest v `src`, `tests` a `fixtures` má SHA-256
+`fdcedeb147a9523d6ad9632882408d90cffe2e96a973dd66a1c5d455bfbadd6e`.
+
+T047-AC11 zůstává `PARTIAL`. Úplná sada, samostatný Gradle smoke na této
+integraci a nezávislé review mají vlastní ověření. Sloučený #121 dodal
+samostatnou oracle fixture pro T047-S01 s T047-AC01 `PARTIAL`. Přenos
+zachovává záznam #121 pro jeho následné stavové srovnání.
+[PR #121](https://github.com/p-rum/kgmaker/pull/121) · [Merge na main](https://github.com/p-rum/kgmaker/commit/b3bbba43304f499f96950ea4ecc2a2467919e616)
