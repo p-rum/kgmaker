@@ -109,3 +109,6 @@ Výchozí kandidát má tree `19446b42442e44b03a796cd276e74fef671f7af5` nad
   `kgmaker semantic apply`, `kgmaker memory capture --base HEAD`,
   `kgmaker semantic validate`, `kgmaker scan`, `kgmaker status`,
   `kgmaker check`, `git diff --check` a `git diff --cached --check`.
+
+[Ověření integrovaného rozsahu v #129](149_recordGraphPublicationMerge.md). Výsledky výše
+patří k dříve označeným stromům a zůstávají historické.
