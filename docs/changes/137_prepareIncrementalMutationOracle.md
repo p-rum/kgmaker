@@ -214,3 +214,57 @@ compiler evidence v čistém indexu. Produkční kód, CLI a schémata nemají d
   Review oprava nezavádí nové ruční sémantické vazby.
 - NOT_RUN — nová úplná projektová sada a GitHub Actions. T047-AC01 zůstává
   PARTIAL kvůli otevřenému artefaktovému mapování a širší mutační matici.
+
+## T047-S01 / T047-R01 a T047-AC01 — skutečný JVM release artefakt, 2026-11-21
+
+Výchozí [draft #121](https://github.com/p-rum/kgmaker/pull/121) měl head
+`7ed11dae00e966ae814b5f1caf4f7da2b7f9d773` a tree
+`33eb10b309b0273ce40798dcea23d44d59fb7ebd`. Přenos vychází z `main`
+`fad4fc63c76f0f9ef5a1a292e279d1269bd84540`, tree
+`999b5ef61989bf91ce3df58e4d3bcc84c074eb31`. Záznam sloučeného T021 je
+převzat z cílové větve. Workflow ponechalo předchozí doklady s jejich původní
+vazbou, odmítlo použít zastaralý test v `review/1` a výslovný retry přešel do
+`implement/2`.
+
+[Test](../../tests/test_incremental_equivalence.py) znovu používá původní dva
+checkouty. Explicitní offline Gradle build zkompiluje `ExposureContract` a
+dodá JAR i skutečný execution-bound `BuildManifest`. Připravený JVM worker
+v samostatném modulu `release-verifier` uvnitř frontendového checkoutu
+rozliší volání `fixture.release.ExposureContract.decline()D` s tímto JARem
+na classpath. Workspace projde ruční oracle jediné hrany `supplies_classpath`
+s `CONTENT_HASH_MATCH_V1`, oběma vybranými kontexty a přesným hashem. Chybný
+selektor skončí `RELEASE_OUTPUT_HASH_MISMATCH`. Po změně bajtů JARu skončí
+dřívější compiler kontext `RELEASE_CONSUMER_CONTEXT_STALE`. Oba negativní
+scénáře mají `PARTIAL` bez hrany a snapshot nemění checkout. Variantě
+SOURCE_ONLY stále schází build manifest. JVM důkaz je doplňkem S01 a
+TypeScript evidence používá svůj stávající kontrakt bez JVM classpath.
+
+Upraveny [README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md).
+Produktový kód, CLI příznaky, registry, veřejná schémata a init nemají dopad.
+Úplná projektová sada a nové externí review této revize jsou NOT_RUN.
+Celá matice §7 a inkrementální ekvivalence zůstávají otevřené.
+
+- PASS — 128 PASS, 0 SKIP a 1 strict XFAIL za 91,26 s na skutečném
+  JDK 21.0.13.1, Gradle 8.13, Kotlin 2.1.10 K1/K2, Node 22.22.1 a
+  TypeScript 5.7.3. Známý XFAIL je T047-S02 identita po posunu deklarace.
+  SHA-256 producer JARu `2a6d4bea507112e41b339905f44b489e913f1e9015ad4f0f6ef96d893c563e9a`
+  se shoduje s prvním scratch ověřením. Offline Gradle potřebuje v tomto
+  prostředí přístup k lokálnímu socketu pro zámky. Příkaz:
+
+  ```bash
+  KGMAKER_TEST_GRADLE=/tmp/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp .kgmaker/workflow/pytest-t047-fad4fc6 \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+  Použito `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`, stejný `bin`
+  první v `PATH` a samostatná lokální `GRADLE_USER_HOME`.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker memory capture --base HEAD`, `kgmaker semantic validate`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`, `git diff --check` a
+  `git diff --cached --check`. Zachovány doklady a ruční sémantika T021 v main.

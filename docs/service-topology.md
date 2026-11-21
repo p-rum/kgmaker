@@ -51,6 +51,38 @@ fail instead of dropping candidates silently. Unsafe required credential/userinf
 IDs or malformed data have fixed nonsecret errors, no mutation/publication.
 Output uses safe typed summaries and hashes of omitted prose/payloads.
 
+## Mermaid rendering (T021)
+
+`kgmaker.architecture_render.render_topology_mermaid` is a pure projection of a
+topology `ViewDocument` or T017 filter result. The architecture CLI also accepts
+`--format mermaid` for topology snapshots. It consumes the already filtered
+document and does not recapture, refilter, perform I/O or publish files.
+
+Renderer node IDs are SHA-256 hashes of each captured logical model identity. An
+explicit `logical_id` is combined with realm, scope, context selection and owner;
+without it the model node ID is hashed. Therefore repeated labels and even repeated
+logical names in distinct realms remain separate. Edge direction and relation names
+come from the model; HTTP request/response, Kafka publish/consume and resource
+read/write relations have distinct text labels. Kafka publish/consume is marked
+`ASYNC; delivery UNKNOWN`. An unrecognized relation remains `UNKNOWN` and unresolved
+edges say execution is unknown. Node/edge status, evidence kinds, IDs, context,
+provenance and T017 omission inventories are retained in Mermaid-safe JSON comments.
+Before rendering, the selected scope and any explicit context filter are checked
+for each displayed claim and its directly cited provenance. Absent or unknown
+scope and absent context metadata stay eligible. Provenance cited only by omitted
+frontier entries remains available in the metadata.
+
+The diagram title carries scope, evidence kinds, coverage and truncation, plus the
+`runtime/data availability: UNKNOWN` and `ordering/delivery: NOT_OBSERVED` limits.
+The renderer does not add legend or truncation nodes, so displayed model nodes and
+edges remain in one-to-one correspondence with the supplied filtered document.
+Labels encode Mermaid metacharacters and JSON comments escape HTML/script delimiter
+characters. There are no click directives, raw HTML labels or remote resources.
+
+See the [T021 CLI contract and example](architecture-json-cli.md#architecture-topology-mermaid-t021)
+and [change138](changes/138_rejectForeignTopologyEvidence.md) for acceptance and current
+parser/render results. T022's topology Markdown remains a separate renderer.
+
 ## Historical validation checkpoint
 
 Current parent is verified main ec6a127 with T014/T015/Common/T012/T013/W07v2

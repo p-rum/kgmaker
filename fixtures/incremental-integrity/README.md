@@ -10,7 +10,7 @@ python -m pytest -q tests/test_incremental_equivalence.py
 
 The oracle records independent expectations for the initial source graph,
 workspace contract path, missing compiler-backed frontend path, and Kafka proof
-gap. The JVM build release manifest is intentionally absent. The mutations report exact
+gap. The source-only baseline leaves the JVM build release manifest absent. The mutations report exact
 changed paths and a SHA-256 digest of the resulting file map. The tests rebuild
 the fixture in an isolated directory and compare both runs byte for byte.
 
@@ -48,12 +48,18 @@ With both stale inputs, the old client provenance is rejected with
 `VALUE_FLOW_GENERATION_OR_RELEASE_UNKNOWN`. The endpoint has no remaining
 compiler-backed bindings to any client target.
 
-An exact artifact `supplies_classpath` edge requires an execution-bound producer
-manifest and matching JVM consumer artifact bytes. The TypeScript context has no
-JVM classpath. Positive artifact mapping, the rest of the mutation matrix and
-incremental equivalence remain open. See [the recorded verification](../../docs/changes/137_prepareIncrementalMutationOracle.md).
+The JVM artifact variant uses an explicit offline Gradle 8.13 build to publish a
+real Java 21 JAR and an execution-bound producer manifest. A dedicated JVM
+verifier inside the frontend repository records the same JAR bytes and resolves
+its exact method. The workspace reports one `supplies_classpath` edge when all
+hashes and context selectors agree. A wrong output hash or changed JAR bytes in
+the consumer classpath produces `PARTIAL` and removes the edge. The TypeScript
+context has no JVM classpath and keeps its separate API contract evidence.
+The rest of the mutation matrix and incremental equivalence remain open.
+See [the recorded verification](../../docs/changes/137_prepareIncrementalMutationOracle.md).
 
 ```bash
+KGMAKER_TEST_GRADLE=/path/to/gradle-8.13/bin/gradle \
 KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 python -m pytest -q \
   tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py \
   tests/test_cross_repo_artifacts.py

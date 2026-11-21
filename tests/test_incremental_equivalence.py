@@ -365,3 +365,107 @@ def test_comment_does_not_change_logical_identity(tmp_path):
     if next(mutations(tmp_path))[0] != "comment":
         pytest.fail("the first mutation no longer tests line movement")
     assert score_ids() == before
+
+
+def test_actual_jvm_release_artifact_is_bound_to_matching_consumer_classpath(tmp_path):
+    """The TypeScript repo can host a separate JVM contract verifier."""
+    from zipfile import ZipFile
+
+    from kgmaker.build_runner import create_plan, run_plan
+
+    gradle = os.environ.get("KGMAKER_TEST_GRADLE")
+    if not gradle or not Path(gradle).is_file():
+        pytest.skip("BLOCKED: set KGMAKER_TEST_GRADLE to supported Gradle 8.13")
+    home = require_jvm_worker("k1")
+    workspace = make_workspace(tmp_path)
+    backend, frontend = tmp_path / "backend", tmp_path / "frontend"
+    (backend / "settings.gradle").write_text("rootProject.name = 'exposure-contract'\n")
+    (backend / "build.gradle").write_text("""plugins { id 'java-library' }
+version = '1.0'
+tasks.withType(JavaCompile).configureEach { options.release = 21 }
+tasks.withType(Jar).configureEach { preserveFileTimestamps = false; reproducibleFileOrder = true }
+tasks.matching { it.name == 'kgmakerExport' }.configureEach { dependsOn(tasks.named('jar')) }
+""")
+    producer = backend / "src/main/java/fixture/release/ExposureContract.java"
+    producer.parent.mkdir(parents=True)
+    producer.write_text("""package fixture.release;
+public class ExposureContract { public static double decline() { return 1.0; } }
+""")
+    plan = create_plan(backend, phase="compile", executable=gradle, home=home, offline=True,
+                       environment=["PATH", "JAVA_HOME", "GRADLE_USER_HOME", "JAVA_TOOL_OPTIONS"], timeout=120)
+    build = run_plan(plan)
+    assert build["result"]["status"] == "SUCCESS", Path(build["result"]["log_path"]).read_text()
+    build_manifest = Path(build["manifest_path"])
+    manifest = read_json(build_manifest)
+    assert manifest["origin_trust"] == "HOST_EXECUTION"
+    production, = [item for item in manifest["contexts"] if item["scope"] == "production"]
+    output, = [item for item in production["outputs"] if Path(item["path"]).suffix == ".jar"]
+    assert output["freshness"] == "EXECUTION_BOUND"
+    assert output["execution_id"] == build["build_id"]
+    actual_jar = Path(output["path"])
+    with ZipFile(actual_jar) as archive:
+        assert archive.read("fixture/release/ExposureContract.class").startswith(b"\xca\xfe\xba\xbe")
+
+    artifact = frontend / ".kgmaker/classpath" / actual_jar.name
+    artifact.parent.mkdir(parents=True)
+    shutil.copyfile(actual_jar, artifact)
+    assert file_hash(artifact) == file_hash(actual_jar) == output["sha256"]
+    verifier = frontend / "tools/release-verifier/VerificationClient.java"
+    verifier.parent.mkdir(parents=True)
+    verifier.write_text("""import fixture.release.ExposureContract;
+class VerificationClient { double verify() { return ExposureContract.decline(); } }
+""")
+    captured = inspect_jvm(frontend, home=home, repo_id="frontend", module="release-verifier",
+                           sources=[verifier.relative_to(frontend).as_posix()], classpath=[str(artifact)],
+                           project_model={"source_sets": [{"module": "release-verifier", "id": "main",
+                                                          "scope": "production", "roots": ["tools/release-verifier"]}]})
+    symbols = {item["id"]: item for item in captured["graph"]["symbols"]}
+    decline, = [symbols[site["declared_target"]] for site in captured["graph"]["call_sites"]
+                if site["evidence_kind"] == "SYMBOL_RESOLVED"
+                and symbols[site["declared_target"]].get("name") == "decline"]
+    assert (decline["owner"], decline["descriptor"]) == ("fixture.release.ExposureContract", "()D")
+
+    config = read_json(workspace)
+    release, = config["release_mapping"]["mappings"]
+    release["producer"].update(manifest_path=build_manifest.relative_to(backend).as_posix(),
+                               context_id=production["id"])
+    release["consumer"]["context_id"] = captured["context"]["id"]
+    release["output_sha256"] = output["sha256"]
+    write_json(workspace, config)
+
+    def release_snapshot():
+        previous = snapshot(tmp_path)
+        _, coverage, _, graph, _ = snapshot_workspace(workspace)
+        assert snapshot(tmp_path) == previous
+        report = coverage["release_mapping"]
+        edges = [edge for edge in graph.edges if edge.kind == "supplies_classpath"]
+        return report, edges, graph
+
+    report, edges, graph = release_snapshot()
+    assert report["status"] == "COMPLETE"
+    row, = report["mappings"]
+    assert (row["id"], row["status"], row["sha256"]) == ("exposure-release", "CONTENT_VERIFIED", output["sha256"])
+    edge, = edges
+    assert (edge.source, edge.target) == ("workspace:release-output:exposure-release",
+                                          "workspace:classpath-artifact:exposure-release")
+    assert edge.evidence_kind == "SYMBOL_RESOLVED" and edge.confidence == "CONTENT_VERIFIED"
+    assert edge.context_ids == (qualified("frontend", captured["context"]["id"]),)
+    proof, = [item for item in graph.evidence if item["id"] in edge.evidence_ids]
+    assert (proof["method"], proof["sha256"]) == ("CONTENT_HASH_MATCH_V1", output["sha256"])
+
+    release["output_sha256"] = "0" * 64
+    write_json(workspace, config)
+    report, edges, _ = release_snapshot()
+    assert report["status"] == "PARTIAL"
+    assert report["mappings"][0]["diagnostic"] == "RELEASE_OUTPUT_HASH_MISMATCH"
+    assert not edges
+
+    release["output_sha256"] = output["sha256"]
+    write_json(workspace, config)
+    with ZipFile(artifact, "a") as archive:
+        archive.comment = b"Same class, changed JAR bytes"
+    assert file_hash(artifact) != output["sha256"]
+    report, edges, _ = release_snapshot()
+    assert report["status"] == "PARTIAL"
+    assert report["mappings"][0]["diagnostic"] == "RELEASE_CONSUMER_CONTEXT_STALE"
+    assert not edges
