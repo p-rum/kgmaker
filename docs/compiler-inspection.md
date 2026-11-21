@@ -1575,3 +1575,19 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
+
+## Klasifikace vstupů ORM XML
+
+Snapshot `jpa_xml_inputs` zachycuje chybějící soubor i symbolický odkaz na
+chybějící cíl uvnitř projektu jako `missing` s rozlišenou cestou. Smyčku
+odkazů, chybu rozlišení nebo cíl mimo projekt zachytí jako `invalid`.
+Stejná pravidla platí pro Python 3.12 a 3.13. Změna uložené klasifikace
+označí odpovídající compiler kontext jako `STALE` při kontrole čerstvosti.
+[Ověřovací matice](changes/153_classifyLoopedJpaXmlInputs.md).
+
+```bash
+kgmaker inspect code --root ./service --scope production --format json
+kgmaker status --root ./service
+```
+
+Výsledek inspekce obsahuje jednotlivé záznamy v `context.jpa_xml_inputs.inputs`.

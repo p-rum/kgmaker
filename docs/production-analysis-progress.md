@@ -325,6 +325,11 @@ context. JPA context rule v2 marks legacy XML-bearing contexts stale while
 XML-free legacy contexts remain readable. Shared inherited XML columns survive
 an override in only one entity; the final strict full suite passed 652 tests and
 skipped 10 explicit Maven/Gradle/Windows gates.
+
+Lokální oprava klasifikace snapshotu pro Python 3.13 má 46 PASS / 0 SKIP
+na Pythonu 3.12.14 i 3.13.5 se skutečným Javac/K1/K2. Smyčka odkazu se
+zachytí jako `invalid`, chybějící cíl v projektu jako `missing`.
+[Samostatný záznam opravy](changes/153_classifyLoopedJpaXmlInputs.md).
 Viz [acceptance inventář](acceptance-inventory.md) a
 [change note 65](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
 

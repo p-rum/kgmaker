@@ -650,6 +650,8 @@ pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML 
 omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
 namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
 soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
+Snapshot ORM XML označí smyčku symbolických odkazů jako `invalid`
+a chybějící cíl uvnitř projektu jako `missing`.
 Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
 entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
 zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
