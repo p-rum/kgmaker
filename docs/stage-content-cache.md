@@ -130,9 +130,19 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 | Druh | Stav | Důvod |
 |---|---|---|
 | `COMPILER_CALLER` | `RECHECK` | Přímý lokální `declared_target` s dvojicí compiler důkazů ze stejného obsahově ověřeného kontextu. Report uvádí identitu kontextu, call site a obou důkazů. Přenos dopadu sleduje přesnou identitu zasaženého symbolu přes volání uvnitř souboru i mezi soubory. |
-| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Report uvádí grafovou vazbu, identitu objektu a řádek migrace. |
-| `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se shodným hashem zdroje, použitelnou variantou a jejím fingerprintem. |
-| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace z požadavku na vstup, capability match, impact path nebo test plan v existující použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. |
+| `SCHEMA_DEPENDENT` | `RECHECK` | Cizí klíč k tabulce nebo explicitní projekce view k jeho zdrojovému sloupci ve stejném deterministicky přehrávaném Flyway streamu. Report uvádí grafovou vazbu a identitu objektu. Je-li dostupná uložená vazba `operation_targets` k tomuto objektu, uvádí také identitu a řádek příslušné migrační operace, včetně zachycených operací před poslední změnou objektu. |
+| `CONTRACT_DECLARATION` | `RECHECK` | Doložená deklarace endpointu v zachycené OpenAPI JSON/YAML se zdrojovou grafovou vazbou, použitelnou variantou a jejím fingerprintem. Porovnává se hash původních bajtů z registrace. |
+| `FEATURE_CONCLUSION` | `STALE` | Přímá platná citace souboru z požadavku na vstup, capability match, impact path nebo test plan v použité lokální revizi. Report uvádí identitu citace, revizi a starý i aktuální hash původních bajtů. Použitá revize vyžaduje souhlas kandidáta, receipt a původního packetu. Lidské rozhodnutí odkazuje na odpověď v packetu. |
+
+`changed_sources` porovnává soubory stejným způsobem jako uložený graf.
+U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.
+Samotná změna konců řádků se proto může projevit jen v `affected` u evidence
+svázané s původními bajty. Cesta požadavku se pro porovnání normalizuje,
+původní packet a jeho identita se zachovávají.
+Compiler caller je doložený, když hash uloženého compiler důkazu souhlasí
+s grafem i vybraným kontextem. Pokud worker uložil hash bajtů s CRLF a
+graf hash normalizovaného textu, report takového callera vynechá a zůstane
+`PARTIAL`.
 
 Výstup má `coverage: PARTIAL`. Obsahuje pozitivní historické vazby a může uvést
 diagnostiku pro chybějící nebo nečitelný zdroj, starší graph, neověřenou compiler

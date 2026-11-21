@@ -453,6 +453,7 @@ def status(root: Path, analysis_id: str) -> dict:
 def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict], list[dict]]:
     """Return file-bound conclusion citations from recorded, prior local revisions."""
     from .analysis_model import FeatureAnalysis, ID_PATTERN
+    from .analysis_validation import FILE_EVIDENCE_KINDS
 
     citations, diagnostics = [], []
     try:
@@ -491,12 +492,22 @@ def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict
             manifest = packet["source_manifest"]
             evidence = {}
             for item in candidate["evidence"]:
-                path = packet["requirement_path"] if item.get("kind") == "REQUIREMENT" else item.get("path")
-                if path not in paths or item.get("validity") != "VALID" or item.get("repo_id") is not None:
+                if item.get("validity") != "VALID" or item.get("repo_id") is not None:
                     continue
-                entry = manifest.get(path, {})
-                expected_hash = packet["requirement_file_hash"] if item.get("kind") == "REQUIREMENT" else entry.get("sha256")
-                if isinstance(expected_hash, str) and item.get("sha256") == expected_hash:
+                kind = item.get("kind")
+                if kind == "REQUIREMENT":
+                    # Compare canonical paths without changing the original packet identity.
+                    path = Path(packet["requirement_path"]).as_posix()
+                    expected_hash = packet["requirement_file_hash"]
+                elif kind in FILE_EVIDENCE_KINDS:
+                    path = item.get("path")
+                    entry = manifest.get(path, {})
+                    if entry.get("kind") != kind:
+                        continue
+                    expected_hash = entry.get("sha256")
+                else:
+                    continue
+                if path in paths and isinstance(expected_hash, str) and item.get("sha256") == expected_hash:
                     evidence[item["id"]] = (path, expected_hash)
             selected = []
             for collection in ("input_requirements", "capability_matches", "impact_paths", "test_plan"):

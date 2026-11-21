@@ -1246,6 +1246,7 @@ Retry the original command after the other writer finishes.
 `kgmaker impact --evidence-only --format json src/main/java/Api.java` použijte
 po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
 uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
-callers, migračních vazeb a OpenAPI deklarací. U souhrnů použité revize feature
-uvádí zastaralé přímé citace. Operace pouze čte a uvádí `PARTIAL` s diagnostikou
+callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
+migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
+porovnává podle původních bajtů. Operace pouze čte a uvádí `PARTIAL` s diagnostikou
 hranic. [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).

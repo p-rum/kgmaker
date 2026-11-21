@@ -7,8 +7,8 @@ Ověření po #134 použilo `main` `d5a0b236716fd31dc1db11d9e6ae3c4f692f2d7e` se
 Aktuální lokální kandidát vychází z potvrzeného `main` `c2885a6f8daf0281967e3bc5386a69f1647718e0`
 s tree `17c36c142ed5cdffa0d712f961e463bdfe77a9aa`. Zachovává [#134](https://github.com/p-rum/kgmaker/pull/134)
 a [#133](https://github.com/p-rum/kgmaker/pull/133).
-Zdrojové a testové změny se
-shodují s dříve schváleným kandidátem `da9d0fd334f59f2ef7aa0b0589db2a2ca5e84e46`.
+Před níže uvedenou opravou z review se zdrojové a testové změny
+shodovaly s dříve schváleným kandidátem `da9d0fd334f59f2ef7aa0b0589db2a2ca5e84e46`.
 Změna pokrývá čtecí část [T003-S10-W02](../tasks/T003-S10-02-reverseDependencyIndexes.md)
 pod nadřazenou `T003-AC10`. Dodání je `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130)
 a ověření `PARTIAL`. Kandidát zachovává sloučené T021 a W06.
@@ -120,3 +120,54 @@ kgmaker impact --root ./service --evidence-only --format json src/main/java/Api.
 Výpočet plánuje opětovné ověření. Způsob zápisu selektivní invalidace do grafu a
 revizí, změny mimo uložený rozsah, zda se vazba po změně stále rozliší, a plný
 workspace contract mají samostatnou evidenci. Celý T003-S10 zůstává `PARTIAL`.
+
+## Opakované předání po review — kroky 3 až 5, AC01–AC04
+
+Výchozí head #130 byl `9a676a0e7cba148a375f1516dc06f909ac03e5a8` nad
+`c2885a6f8daf0281967e3bc5386a69f1647718e0`. Nezávislé correctness a steelman
+review vrátily nálezy do T052 iterace 1.
+
+- **Krok 3, AC01 a AC03.** Předchozí index Flyway sledoval jen poslední cestu
+  objektu. `src/kgmaker/graph_provider.py` používá také zachycené
+  `operation_targets` ze stejného streamu se shodnou cestou a řádkem operace.
+  Uvedený důvod obsahuje ID a řádek operace. Vadný záznam operace nemůže nahradit
+  doloženou vazbu. Starší graf bez záznamu operace může doložit poslední cestu.
+- **Krok 3, AC01 a AC03.** `src/kgmaker/feature.py` porovnává normalizovanou
+  cestu požadavku a zachovává původní packet. Druhy souborových citací sdílí
+  s `src/kgmaker/analysis_validation.py`. Citace lidské odpovědi se váže
+  na rozhodnutí v packetu a nevyvolá souborovou revalidaci.
+- **Krok 3, AC01–AC03.** `src/kgmaker/workspace.py` může z jediného stabilního
+  čtení vypočítat hash bajtů i hash s normalizovanými konci řádků.
+  `src/kgmaker/graph_provider.py` používá druhý hash pro `changed_sources`
+  u textů scanneru. Doložená OpenAPI deklarace používá raw hash původní
+  registrace. Compiler caller zůstává mimo výčet, když hash jeho worker
+  důkazu s CRLF nesouhlasí s hashem normalizovaného textu grafu. Pokrytí
+  je v tomto případě `PARTIAL`. Formát graph/store a JSON reportu zůstává
+  kompatibilní.
+- **Krok 4, AC01–AC03.** Cílená regrese v `tests/test_reverse_dependency_index.py`
+  ověřuje změnu počátečního CREATE po ALTER, nezávislou migraci a chybný řádek
+  uložené operace. Skutečný feature workflow pokrývá cestu
+  `./req//requirement.md` a platnou lidskou odpověď s vedlejším údajem o souboru.
+  Fixture pro OpenAPI zahrnuje nezměněné CRLF, změnu jen konců řádků a změnu
+  operace, včetně rozdělení CRLF mezi čtené bloky. Citace feature v původním
+  kombinovaném scénáři používá hash OpenAPI souboru s CRLF. Například
+  `kgmaker impact --evidence-only --format json openapi.json` po úpravě pouze
+  konců řádků může uvést `CONTRACT_DECLARATION` v `affected` při prázdném
+  `changed_sources`.
+- **Krok 5, AC04.** [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02),
+  [kontrakt CLI](../stage-content-cache.md#selektivní-dopad-změn),
+  [acceptance](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+  a [stav](../production-analysis-progress.md) popisují aktualizovaný rozsah.
+  Registr a init nemají dopad. Automatická selektivní invalidace, negativní
+  lookup a cross-workspace práce zůstávají samostatné.
+
+- RED — `python -m pytest -p no:cacheprovider -q --tb=short tests/test_reverse_dependency_index.py -k 'prior_migration_operations or file_authority or normalized_hashes'`
+  na původním kódu 6 FAIL a 12 DESELECTED.
+- GREEN — cílený příkaz pro šest souborů z kroku 4 s Javac/JDK 21.0.6,
+  `KGMAKER_REQUIRE_WORKERS=1` a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`
+  má 83 PASS / 0 SKIP (19,40 s).
+- `git diff --check` PASS. Pokrytí po úpravě dokumentace ověřují
+  `kgmaker semantic apply`, `kgmaker semantic validate`, `kgmaker scan`,
+  `kgmaker status` a `kgmaker check`.
+- Úplná sada, GitHub Actions, nezávislé review opraveného kandidáta a merge
+  zůstávají při předání NOT_RUN.

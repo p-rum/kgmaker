@@ -97,9 +97,11 @@ def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(
     _write(tmp_path, migrations + "V2__independent.sql", "CREATE TABLE other (balance INTEGER);")
     _write(tmp_path, migrations + "R__views.sql", "CREATE OR REPLACE VIEW balances AS SELECT balance FROM customer;")
     _write(tmp_path, "requirement.md", "Validate the published API contract.")
-    api = _write(tmp_path, "openapi.json", json.dumps({
+    api = tmp_path / "openapi.json"
+    original_api = json.dumps({
         "openapi": "3.0.3", "paths": {"/balance": {"get": {"operationId": "getBalance"}}},
-    }))
+    }, indent=2).replace("\n", "\r\n").encode("utf-8")
+    api.write_bytes(original_api)
     assert scan(tmp_path, generate_docs=False) == 0
     packet = feature.prepare(tmp_path, "requirement.md", "contracts")
     candidate = inventory_candidate(packet)
@@ -115,7 +117,7 @@ def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(
                                "entity_ids": [], "evidence_ids": [evidence_id]}]
     assert feature.apply(tmp_path, "contracts", candidate)["valid"]
     base.write_text("CREATE TABLE customer (balance BIGINT);", encoding="utf-8")
-    api.write_text(api.read_text(encoding="utf-8").replace("getBalance", "fetchBalance"), encoding="utf-8")
+    api.write_bytes(original_api.replace(b"getBalance", b"fetchBalance"))
     # A newly prepared revision leaves the previously applied revision and its receipt readable.
     assert feature.prepare(tmp_path, "requirement.md", "contracts")["revision"] == 2
     expected_store = _store_bytes(tmp_path)
@@ -140,6 +142,7 @@ def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(
     assert stale["id"] == conclusion and stale["status"] == "STALE"
     assert stale["reasons"][0]["revision"] == 1
     assert stale["reasons"][0]["evidence_id"] == evidence_id
+    assert stale["reasons"][0]["before_sha256"] == hashlib.sha256(original_api).hexdigest()
     assert _store_bytes(tmp_path) == expected_store
     assert dependency_impact(tmp_path, ["openapi.json", migrations + "V1__customers.sql"]) == report
 
@@ -153,6 +156,126 @@ def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(
     assert [item["kind"] for item in report["affected"]] == ["CONTRACT_DECLARATION"]
     assert {"code": "FEATURE_REVISION_UNAVAILABLE", "analysis_id": "contracts"} in report["diagnostics"]
     assert _store_bytes(tmp_path) == expected_store
+
+
+def test_schema_dependency_follows_prior_migration_operations(tmp_path):
+    migrations = "src/main/resources/db/migration/"
+    created = _write(tmp_path, migrations + "V1__customers.sql", "CREATE TABLE customer (balance INTEGER);")
+    altered = _write(tmp_path, migrations + "V2__default.sql", "ALTER TABLE customer ALTER COLUMN balance SET DEFAULT 0;")
+    other = _write(tmp_path, migrations + "V3__other.sql", "CREATE TABLE other (balance INTEGER);")
+    _write(tmp_path, migrations + "R__views.sql",
+           "CREATE VIEW balances AS SELECT balance FROM customer;")
+    assert scan(tmp_path, generate_docs=False) == 0
+    store = _store_bytes(tmp_path)
+    created.write_text("CREATE TABLE customer (balance BIGINT);", encoding="utf-8")
+    altered.write_text("ALTER TABLE customer ALTER COLUMN balance SET DEFAULT 1;", encoding="utf-8")
+    other.write_text("CREATE TABLE other (balance BIGINT);", encoding="utf-8")
+    paths = [path.relative_to(tmp_path).as_posix() for path in (created, altered, other)]
+
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        report = dependency_impact(tmp_path, paths)
+    assert report["coverage"] == "PARTIAL"
+    assert len(report["affected"]) == 1
+    dependent = report["affected"][0]
+    assert (dependent["kind"], dependent["status"], dependent["path"]) == (
+        "SCHEMA_DEPENDENT", "RECHECK", migrations + "R__views.sql",
+    )
+    assert {reason["dependency_path"] for reason in dependent["reasons"]} == set(paths[:2])
+    assert all(reason["operation_id"] and reason["operation_line"] == 1 for reason in dependent["reasons"])
+    assert _store_bytes(tmp_path) == store
+
+    # A malformed earlier operation cannot stand in for the saved replay trace.
+    stored = read_json(tmp_path / GRAPH_FILE)
+    target_id = dependent["reasons"][0]["dependency_id"]
+    operation = next(edge for edge in stored["edges"] if edge["kind"] == "operation_targets"
+                     and edge["target"] == target_id and edge["source_file"] == paths[0])
+    operation["source_line"] += 1
+    write_json(tmp_path / GRAPH_FILE, stored)
+    store = _store_bytes(tmp_path)
+    report = dependency_impact(tmp_path, paths)
+    assert [reason["dependency_path"] for item in report["affected"] for reason in item["reasons"]] == [paths[1]]
+    assert _store_bytes(tmp_path) == store
+
+
+@pytest.mark.parametrize("changed_path", ["req/requirement.md", "context.md"])
+def test_applied_feature_dependency_requires_a_file_authority(tmp_path, changed_path):
+    requirement_path = "req/requirement.md"
+    _write(tmp_path, requirement_path, "Review the input definition.")
+    _write(tmp_path, "context.md", "Context supplied alongside the decision.")
+    assert scan(tmp_path, generate_docs=False) == 0
+    packet = feature.prepare(tmp_path, "./req//requirement.md", "proof")
+    candidate = inventory_candidate(packet)
+    requirement_id = candidate["requirements"][0]["id"]
+    question = {"id": "analysis:proof:question:definition", "text": "How should input be defined?",
+                "status": "OPEN", "blocking": True, "owner_role": "Business",
+                "requirement_ids": [requirement_id]}
+    candidate["questions"] = [question]
+    assert feature.apply(tmp_path, "proof", candidate)["valid"]
+    answer = {"question_id": question["id"], "decision_id": "definition", "answer": "User-supplied definition",
+              "revision": 1, "approval_status": "APPROVED"}
+    packet = feature.revise(tmp_path, "proof", {"answers": [answer]})
+    assert packet["requirement_path"] == "./req//requirement.md"
+    candidate = inventory_candidate(packet)
+    candidate["questions"] = [{**question, "status": "ANSWERED"}]
+    requirement_evidence = "analysis:proof:evidence:requirement"
+    decision_evidence = "analysis:proof:evidence:decision"
+    shared = {"supports": "Review the supplied input.", "method": "EXTRACTED", "confidence": 1,
+              "validity": "VALID"}
+    candidate["evidence"] = [
+        {**shared, "id": requirement_evidence, "source_id": requirement_id, "kind": "REQUIREMENT",
+         "quote": packet["requirement"], "sha256": packet["requirement_file_hash"]},
+        {**shared, **answer, "id": decision_evidence, "source_id": answer["decision_id"], "kind": "HUMAN_DECISION",
+         "path": "context.md", "sha256": packet["source_manifest"]["context.md"]["sha256"]},
+    ]
+    candidate["test_plan"] = [
+        {"id": "analysis:proof:test:" + name, "text": "Check the " + name, "state": "TO_BE",
+         "requirement_ids": [requirement_id], "entity_ids": [], "evidence_ids": [evidence_id]}
+        for name, evidence_id in (("requirement", requirement_evidence), ("decision", decision_evidence))
+    ]
+    assert feature.apply(tmp_path, "proof", candidate)["valid"]
+    store = _store_bytes(tmp_path)
+    (tmp_path / changed_path).write_text("Content changed.", encoding="utf-8")
+
+    report = dependency_impact(tmp_path, [changed_path])
+    if changed_path == requirement_path:
+        assert [item["id"] for item in report["affected"]] == ["analysis:proof:test:requirement"]
+        reason, = report["affected"][0]["reasons"]
+        assert (reason["evidence_id"], reason["path"], reason["revision"]) == (requirement_evidence, requirement_path, 2)
+    else:
+        assert not report["affected"]
+    assert _store_bytes(tmp_path) == store
+
+
+@pytest.mark.parametrize("edit", ["none", "line_endings", "operation"])
+def test_openapi_reverse_dependency_distinguishes_raw_and_normalized_hashes(tmp_path, edit):
+    # Split a CRLF pair across the reader's chunk boundary.
+    raw = b" " * 65535 + b'\r\n{"openapi":"3.0.3","paths":{"/item":{"get":{"operationId":"getItem"}}}}\r\n'
+    api = tmp_path / "openapi.json"
+    api.write_bytes(raw)
+    assert scan(tmp_path, generate_docs=False) == 0
+    store = _store_bytes(tmp_path)
+    changed = {"none": raw, "line_endings": raw.replace(b"\r\n", b"\n"),
+               "operation": raw.replace(b"getItem", b"fetchItem")}[edit]
+    api.write_bytes(changed)
+
+    report = dependency_impact(tmp_path, ["openapi.json"])
+    normalized_hash = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+    if edit == "operation":
+        assert report["changed_sources"] == [{
+            "path": "openapi.json", "before_sha256": normalized_hash,
+            "after_sha256": hashlib.sha256(changed.replace(b"\r\n", b"\n")).hexdigest(),
+        }]
+    else:
+        assert not report["changed_sources"]
+    if edit == "none":
+        assert not report["affected"]
+    else:
+        dependent, = report["affected"]
+        assert (dependent["kind"], dependent["status"], dependent["path"]) == (
+            "CONTRACT_DECLARATION", "RECHECK", "openapi.json",
+        )
+        assert dependent["reasons"][0]["before_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert _store_bytes(tmp_path) == store
 
 
 @pytest.mark.parametrize("version", [1, 2, 3])

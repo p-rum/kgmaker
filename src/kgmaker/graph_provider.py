@@ -430,7 +430,23 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
 
     def realm(node):
         record = node.metadata.get("persistence_realm") if isinstance(node.metadata, dict) else None
-        return persistence_pair(record.get("database_id"), record.get("stream_id")) if isinstance(record, dict) else None
+        if isinstance(record, dict) and record.get("derivation") == "MIGRATION_DERIVED":
+            return persistence_pair(record.get("database_id"), record.get("stream_id"))
+        return None
+
+    migration_operations = defaultdict(list)
+    for edge in graph.edges:
+        if edge.kind != "operation_targets" or nodes[edge.target].kind not in {"db_table", "db_column"}:
+            continue
+        operations = migration_operations[edge.target]
+        operation = nodes[edge.source]
+        stream = realm(operation)
+        if (operation.kind == "migration_operation" and operation.summary is None
+                and stream and stream == realm(nodes[edge.target]) and operation.path in files
+                and edge.source_file == operation.path and edge.source_line == operation.line
+                and type(edge.source_line) is int and edge.source_line > 0
+                and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"):
+            operations.append(operation)
 
     for edge in graph.edges:
         source, target = nodes[edge.source], nodes[edge.target]
@@ -455,18 +471,39 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
             if (left and left == realm(target) and edge.source_file == source.path
                     and edge.confidence == "EXTRACTED" and edge.evidence_kind == "SYNTAX_CANDIDATE"
                     and type(edge.source_line) is int and edge.source_line > 0):
-                add(target.path, source.path, source.id, "SCHEMA_DEPENDENT", relation=edge.kind,
-                    source_line=edge.source_line, evidence_kind="MIGRATION_DERIVED", dependency_id=target.id)
+                witness = {"relation": edge.kind, "source_line": edge.source_line,
+                           "evidence_kind": "MIGRATION_DERIVED", "dependency_id": target.id}
+                operations = migration_operations.get(target.id)
+                if operations is None:
+                    add(target.path, source.path, source.id, "SCHEMA_DEPENDENT", **witness)
+                else:
+                    for operation in operations:
+                        add(operation.path, source.path, source.id, "SCHEMA_DEPENDENT",
+                            operation_id=operation.id, operation_line=operation.line, **witness)
         elif edge.kind == "declares_endpoint" and source.kind == "file" and target.kind == "api_endpoint":
             registrations = target.metadata.get("http_registrations") if isinstance(target.metadata, dict) else None
             if source.path not in files or edge.source_file != source.path or not isinstance(registrations, list):
                 continue
+            # Source graph evidence covers normalized text. Registration records bind raw bytes.
+            binding = {"source": source.id, "target": target.id, "relation": edge.kind,
+                       "kind": "SYNTAX_CANDIDATE", "extractor": "source-patterns-2",
+                       "source_file": source.path, "sha256": files[source.path],
+                       "freshness": "CONTENT_VERIFIED", "origin_trust": "LOCAL_SOURCE",
+                       "context_ids": list(edge.context_ids)}
+            if not any(all(proofs[identity].get(key) == value for key, value in binding.items())
+                       for identity in edge.evidence_ids):
+                continue
             for record in registrations:
-                if (isinstance(record, dict) and record.get("provider") in ("openapi-json", "openapi-yaml")
-                        and record.get("source_path") == source.path and record.get("source_sha256") == files[source.path]
-                        and not record.get("unresolved_reasons") and isinstance(record.get("variant_fingerprint"), str)):
+                if not isinstance(record, dict):
+                    continue
+                checksum = record.get("source_sha256")
+                if (record.get("provider") in ("openapi-json", "openapi-yaml")
+                        and record.get("source_path") == source.path and isinstance(checksum, str)
+                        and re.fullmatch(r"[a-f0-9]{64}", checksum)
+                        and record.get("unresolved_reasons") == [] and isinstance(record.get("variant_fingerprint"), str)):
                     add(source.path, source.path, target.id, "CONTRACT_DECLARATION", relation=edge.kind,
-                        evidence_kind="OPENAPI_DECLARATION", variant_fingerprint=record["variant_fingerprint"])
+                        evidence_kind="OPENAPI_DECLARATION", variant_fingerprint=record["variant_fingerprint"],
+                        before_sha256=checksum)
 
     for site in graph.call_sites if graph.schema_version == 3 else ():
         context_id, caller_id, target_id = site.get("context_id"), site.get("caller"), site.get("declared_target")
@@ -492,7 +529,8 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
     """Plan revalidation of evidenced dependents, without modifying a store or running workers."""
     from .analysis_model import AnalysisError, canonical, safe_path
     from .feature import applied_dependency_citations
-    from .workspace import _regular_file_hash
+    from .scanner import EXTENSIONS
+    from .workspace import _regular_file_hashes
 
     root = root.resolve()
     targets = {safe_path(root, value).relative_to(root).as_posix() for value in changed_files}
@@ -523,19 +561,20 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
             except FileNotFoundError:
                 if safe_path(root, path).exists():
                     raise OSError("Unstable source path") from None
-                after = None
+                raw_after = graph_after = None
             else:
                 # Disappearance after the initial stat is an unavailable read.
-                after = _regular_file_hash(target)
-                if after is None:
+                hashes = _regular_file_hashes(target, normalize_newlines=target.suffix.lower() in EXTENSIONS)
+                if hashes is None:
                     raise OSError("Expected stable regular file")
+                raw_after, graph_after = hashes
         except (ValueError, OSError):
             diagnostics.append({"code": "DEPENDENCY_PATH_UNAVAILABLE", "path": path})
             continue
-        observed[path] = after
+        observed[path] = raw_after
         before = graph.files.get(path)
-        if before is not None and before != after:
-            changed.append({"path": path, "before_sha256": before, "after_sha256": after})
+        if before is not None and before != graph_after:
+            changed.append({"path": path, "before_sha256": before, "after_sha256": graph_after})
             seeds.add((path, None))
 
     affected = {}
@@ -550,6 +589,8 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
     while queue:
         path, identity = queue.popleft()
         for item in index.get(path, ()):
+            if item["kind"] == "CONTRACT_DECLARATION":
+                continue
             reason = item["reason"]
             if identity is not None and reason.get("dependency_id") != identity:
                 continue
@@ -558,6 +599,11 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
             if dependent not in seen:
                 seen.add(dependent)
                 queue.append(dependent)
+    for path, current_hash in observed.items():
+        for item in index.get(path, ()):
+            reason = item["reason"]
+            if item["kind"] == "CONTRACT_DECLARATION" and reason["before_sha256"] != current_hash:
+                add(item["kind"], path, item["id"], "RECHECK", reason)
     for item in citations:
         path = item["path"]
         if path in observed and item["before_sha256"] != observed[path]:
