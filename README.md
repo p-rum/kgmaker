@@ -1091,6 +1091,8 @@ See [the Python contract](docs/process-annotations.md). T034 CLI remains pending
 `kgmaker.process_store` adds prepare/persist/read APIs for bounded immutable semantic
 review history and explicit APPROVE/REJECT, with cooperating POSIX process/thread
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
+Stored context selections retain the exact coverage and diagnostic hashes from the
+packet. An invalid initial predecessor fails before creating coordination state.
 See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
 
 ### Explicit process catalog (T033; merged PR79)

@@ -1156,6 +1156,19 @@ Source `tests/test_t032_persist_process_review.py`:36PASS1.93s. Combined inherit
 pure regression269PASS94SKIP8.74s; compiler cases SKIPPED without native execution.
 The separately frozen T030/T031 full is not evidence of T032 full validation.
 
+### Oprava opakovaného čtení kontextu T032
+
+Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Kandidát na
+`fad4fc63c76f0f9ef5a1a292e279d1269bd84540` čeká na nové nezávislé review.
+[Change147](changes/147_replayNormalizedProcessContext.md).
+
+| Acceptance | Ověření | Důkaz |
+|---|---|---|
+| T032-AC01/03 | VERIFIED_IN_SCOPE | Skutečný Javac/JDK21 graf přes T024/T025/T027–T029 dříve vyvolal `UNSUPPORTED_SELECTION_SHAPE`. Po opravě T032 zaznamenal revizi 1 a načetl `APPROVED`. Test `test_public_persists_normalized_capture_and_rechecks_raw_binding` ověřuje idempotenci, zachované hashe a `NEEDS_REVALIDATION` po změně. |
+| T032-AC02/04 | VERIFIED_IN_SCOPE | Cílená sada zachovává CAS dvou procesů a vláken. `test_invalid_candidate_and_stale_initial_head_leave_no_coordination_state` ověřuje prázdný adresář po neplatném kandidátu i konfliktu prvního headu. |
+| T032-AC05 | VERIFIED_IN_SCOPE | `test_review_store_rejects_modified_normalized_context_bindings` odmítá změny i po přepočtu řetězce hashů. `test_forged_hash_binding_is_not_a_raw_context_capture` zachovává vstupní kontrakt T030. |
+| T032-AC06 | PARTIAL | 272 cílených PASS / 0 SKIP a přímý běh reálného Javac grafu. Úplná sada, GitHub Actions a nezávislé review aktuální opravy čekají. |
+
 ## T033 — read-only process catalog (final review candidate)
 
 | AC | Concrete public evidence | Result |
