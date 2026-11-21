@@ -23,6 +23,11 @@ with `MIGRATION_DERIVED` provenance and `UNASSESSED` data availability. The
 contract and tsconfig edits are checked as input changes in this source-only
 run. [Test evidence](../../docs/changes/137_prepareIncrementalMutationOracle.md).
 
+An isolated source-only case puts byte-identical `fixture.shared.Twin`
+declarations in both repositories at `src/Twin.kt`. Each declaration belongs
+to its own repository file. Moving the entire fixture to a different absolute
+directory changes its reported roots and preserves the source map and graph.
+
 Logical identity across line movement currently fails under strict XFAIL.
 The explicit Kotlin oracle compares two cold inspections around the addition of
 `Added.kt`. With prepared JDK21 and pinned Kotlin 2.1.10 K1/K2 workers it proves

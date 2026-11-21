@@ -297,7 +297,9 @@ See [the local completion workflow and its limits](docs/completion-orchestrator.
 
 The [T047-S01 mutation workspace](fixtures/incremental-integrity/README.md) replays
 source-only edits against a handwritten oracle and checks the exact file changes
-and graph facts. Separate cold Kotlin K1/K2 and TypeScript tests cover resolution
+and graph facts. A source-only test also keeps identical declarations separate
+across repositories and verifies the graph after moving the workspace. Separate
+cold Kotlin K1/K2 and TypeScript tests cover resolution
 of a newly introduced Kotlin declaration, a signature change that leaves an
 incompatible call unresolved, a declared Kafka match across modules,
 and a backend-to-frontend value path tied to a generated client's contract

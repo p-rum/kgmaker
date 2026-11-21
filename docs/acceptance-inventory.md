@@ -91,7 +91,9 @@ Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 be
 MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
 T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
-Integrační kandidát po #132 přenáší fixture a ruční oracle z draftu `a20cfa1` na `main` `4011825`. Zachovává tyto scénáře.
+Lokální pokračování nad draftem `6333c0a` ověřuje odlišné identity stejného
+Kotlin FQN v obou repo a shodný SOURCE_ONLY graf po přesunu workspace.
+Přenos z draftu `a20cfa1` na `main` `4011825` již ověřil tyto scénáře.
 SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, změna signatury bez přesměrování
 nekompatibilního volání, statický Kafka match a jeho
 zamezení při změně topicu, Kotlin DTO → OpenAPI → typovaný TS klient → JSX a

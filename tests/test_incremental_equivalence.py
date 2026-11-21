@@ -1,4 +1,5 @@
 """T047-S01 source-only workspace and explicit cold compiler oracle."""
+import hashlib
 import os
 import runpy
 import shutil
@@ -82,6 +83,49 @@ def test_source_only_clean_workspace_matches_manual_oracle(tmp_path):
     assert coverage["release_mapping"]["status"] == "PARTIAL"
     assert coverage["release_mapping"]["mappings"][0]["diagnostic"] == "RELEASE_MANIFEST_UNAVAILABLE"
     assert not any(edge.kind == "supplies_classpath" for edge in graph.edges)
+
+
+def test_source_only_repo_isolation_survives_workspace_relocation(tmp_path):
+    original_root = tmp_path / "original"
+    manifest = make_workspace(original_root)
+    source = b"package fixture.shared\nclass Twin\n"
+    expected = {
+        "backend": ("@backend/src/Twin.kt", "repo:backend:file%3Asrc%2FTwin.kt%3ATwin.kt",
+                    "repo:backend:type%3Asrc%2FTwin.kt%3ATwin%3A%3A2"),
+        "frontend": ("@frontend/src/Twin.kt", "repo:frontend:file%3Asrc%2FTwin.kt%3ATwin.kt",
+                     "repo:frontend:type%3Asrc%2FTwin.kt%3ATwin%3A%3A2"),
+    }
+    for repo in expected:
+        (original_root / repo / "src/Twin.kt").write_bytes(source)
+
+    _, _, sources, graph, metadata = snapshot_workspace(manifest)
+    expected_digest = hashlib.sha256(source).hexdigest()
+    assert {key: checksum for key, checksum in graph.files.items() if key.endswith("/src/Twin.kt")} == {
+        key: expected_digest for key, _, _ in expected.values()
+    }
+    assert {(node.path, node.id) for node in graph.nodes if node.path.endswith("/src/Twin.kt")} == {
+        (key, identity) for key, *identities in expected.values() for identity in identities
+    }
+    assert {context["mode"] for context in graph.contexts} == {"SOURCE_ONLY"}
+    assert not graph.symbols and not graph.call_sites
+
+    edges = {(edge.source, edge.kind, edge.target) for edge in graph.edges}
+    for repo, (_, file_id, declaration_id) in expected.items():
+        assert (file_id, "contains", declaration_id) in edges
+        local_ids = {file_id, declaration_id}
+        prefix = f"repo:{repo}:"
+        assert all(start.startswith(prefix) and end.startswith(prefix)
+                   for start, _, end in edges if {start, end} & local_ids)
+
+    original_path = original_root.resolve()
+    relocated = original_root.rename(tmp_path / "relocated")
+    relocated_path = relocated.resolve()
+    assert relocated_path != original_path and not original_root.exists()
+    _, _, moved_sources, moved_graph, moved_metadata = snapshot_workspace(relocated / manifest.name)
+    assert metadata["roots"] == {repo: str(original_path / repo) for repo in expected}
+    assert moved_metadata["roots"] == {repo: str(relocated_path / repo) for repo in expected}
+    assert moved_sources == sources
+    assert moved_graph.to_dict() == graph.to_dict()
 
 
 def test_malformed_oracle_is_rejected(tmp_path):

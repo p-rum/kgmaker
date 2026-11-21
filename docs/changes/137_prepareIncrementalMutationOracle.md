@@ -437,3 +437,61 @@ případy §7 zůstávají otevřené.
   `git diff --check 4011825` a `git diff --cached --check`.
 - NOT_RUN — úplná projektová sada, nezávislé review tohoto kandidáta,
   GitHub Actions a Windows. Celé T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — izolace repozitářů a přesun workspace
+
+Výchozí [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`6333c0a477ca38eed9e791549085f2338bbb9d5a` nad
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`.
+V §7 zbývala samostatná kontrola stejné deklarace ve dvou repozitářích
+a vlivu absolutního kořene na federovaný graf.
+
+[Test SOURCE_ONLY](../../tests/test_incremental_equivalence.py) přidává
+do obou izolovaných checkoutů shodné bajty deklarace `fixture.shared.Twin`
+na relativní cestě `src/Twin.kt`. Ručně zapsaná očekávání ověřují oba
+repo-kvalifikované file keys a ID souborů i deklarací, shodné SHA-256,
+vlastní hrany `contains` a absenci cizích hran u těchto entit. Test fyzicky
+přejmenuje celý kořen fixture na jinou absolutní cestu. Diagnostické kořeny
+repozitářů se změní. Mapa zdrojů a celý serializovaný graf jsou shodné.
+
+[README](../../README.md#incremental-integrity-fixtures), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+uvádějí pokrytý scénář. Změna je test a doklad pro stávající SOURCE_ONLY API.
+T047-AC01 zůstává PARTIAL. Stabilita logických klíčů při změnách zdroje,
+compiler vazby, persistovaný store a úplná inkrementální ekvivalence mají
+vlastní navazující ověření.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --junitxml=/workspace/kgmaker-evidence/t047-relocation-focused.xml tests/test_incremental_equivalence.py -k source_only_repo_isolation_survives_workspace_relocation`.
+  1 PASS, 14 DESELECTED a 0 SKIP.
+- První cílený běh se skutečnými workery měl 131 PASS, 0 SKIP a 1 strict
+  XFAIL. Samostatná kontrola manifestu skončila chybou, protože se během
+  běhu změnil pouze `fixtures/incremental-integrity/README.md`. Následující
+  ověření používá manifest po dokončení této dokumentace.
+- PASS — samostatný opakovaný pytest běh 131 PASS, 0 SKIP a 1 očekávaný
+  strict XFAIL pro T047-S02 za 157,64 s. Použity Temurin JDK/Javac 21.0.6,
+  Kotlin 2.1.10 K1/K2, Node 24.22.3, TypeScript 5.7.3 a offline Gradle 8.13.
+  SHA-256 JUnit `aa8260aa92c826f0e8bf8046cf0cd5b1ed48f543c9d4a6667dcead6e46b27d2a`.
+- PASS — `sha256sum -c` a `cmp` ověřily shodné manifesty sledovaných
+  zdrojů, workerů, testů a fixture včetně návodu před a po běhu.
+  SHA-256 manifestu `83facf4af20d1473d6eab92f1a19be0db02f57bfc8a060bae7588dedecce9ec0`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-relocation
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/t047-relocation-frozen-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-relocation-frozen.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base HEAD`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`,
+  `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.
