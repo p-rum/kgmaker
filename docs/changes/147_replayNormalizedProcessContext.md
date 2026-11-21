@@ -1,5 +1,8 @@
 # Čtení normalizovaného výběru kontextu v review procesu
 
+Tento předslučovací záznam z 2026-11-21 zachovává výchozí reprodukce, přenos
+a jejich ověření. [Záznam merge a výsledků úplné sady](152_recordNormalizedProcessReviewMerge.md).
+
 Výchozí reprodukce používá `main` `17e9e7368e6cc2d6550983c3039eb39debd65424`
 s tree `dfb0a247ec329196190a3db182b5d1e8c549b3db`. Aktuální kandidát vychází
 z `main` `fad4fc63c76f0f9ef5a1a292e279d1269bd84540` s tree
@@ -7,7 +10,7 @@ z `main` `fad4fc63c76f0f9ef5a1a292e279d1269bd84540` s tree
 posouzenému kandidátu `2801ddc0a5ce03e86d99e0a9a9a79e76f04379b9`. Integrace
 zachovala sloučený T021. Tento výchozí kandidát navazuje na sloučené
 [T030](../tasks/T-030_prepare-process-label-packet.md) a
-[T032](../tasks/T-032_persist-process-review.md). Přenos otevřeného [PR #132](https://github.com/p-rum/kgmaker/pull/132) je zaznamenán níže.
+[T032](../tasks/T-032_persist-process-review.md). Přenos tehdy otevřeného [PR #132](https://github.com/p-rum/kgmaker/pull/132) je zaznamenán níže.
 
 ## T032-S01 a T032-S03 · AC01, AC03, AC05
 
@@ -73,10 +76,10 @@ závislosti a workflow. CLI příklady se tímto krokem nemění.
 
 Při opakování standardního příkladu T032 použijte packet z aktuálního ProcessView
 a původní `operation_id` s původním `expected_head`. Vrácený receipt zachová stejnou
-revizi i head. Pravidla T034, Windows podpora, plná sada, GitHub Actions, nezávislé
-review této změny a merge gate čekají.
+revizi i head. V této předslučovací fázi ještě čekaly T034, Windows podpora,
+plná sada, GitHub Actions, nezávislé review této změny a merge gate.
 
-## T032-S05 · AC06 — přenos #132 na aktuální main
+## T032-S05 · AC06 — přenos #132 na main `c2885a6` dne 2026-11-21
 
 Místní přenos spojuje původní PR head
 `2a5921a5f4fc95e8343a510f5604e4c7988a00db` a cílový
@@ -110,6 +113,6 @@ dopad z přenosu.
   `memory capture --base c2885a6`, `scan`, `status`, `check`,
   `git diff --check c2885a6` a `git diff --cached --check`. Sémantika zachovala
   všech 336 epizod z obou výchozích revizí a přidala doklad tohoto přenosu.
-- NOT_RUN — Úplná sada, nové nezávislé review T045, GitHub Actions a Windows.
-  Doplněk je lokální podklad pro review. T034 zůstává samostatná dodávka a čeká na
-  integraci opravy.
+- NOT_RUN v této fázi — úplná sada, nové nezávislé review T045, GitHub Actions
+  a Windows. Doplněk sloužil jako lokální podklad pro review před integrací.
+  T034 zůstává samostatná dodávka.

@@ -300,7 +300,8 @@ source-only edits against a handwritten oracle and checks the exact file changes
 and graph facts. A source-only test also keeps identical declarations separate
 across repositories and verifies the graph after moving the workspace. Separate
 cold Kotlin K1/K2 and TypeScript tests cover resolution
-of a newly introduced Kotlin declaration, a signature change that leaves an
+of a newly introduced Kotlin declaration, stable bindings after a Kotlin
+body-only edit, a signature change that leaves an
 incompatible call unresolved, deletion of a moved declaration with its caller
 unchanged, a declared Kafka match across modules,
 and a backend-to-frontend value path tied to a generated client's contract
@@ -1121,7 +1122,9 @@ review history and explicit APPROVE/REJECT, with cooperating POSIX process/threa
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
 Stored context selections retain the exact coverage and diagnostic hashes from the
 packet. An invalid initial predecessor fails before creating coordination state.
-See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
+See [API, limits and recovery](docs/process-review-store.md) and the
+[verified merge of the normalized-context repair](docs/changes/152_recordNormalizedProcessReviewMerge.md).
+The T034 lifecycle CLI remains planned. Reviewer identity is locally declared.
 
 ### Explicit process catalog (T033; merged PR79)
 
@@ -1267,3 +1270,11 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+
+### Doklad skutečného testovacího běhu (T047-S10)
+
+`kgmaker project build-run --plan /tmp/plan.json --record-verification TASK_ID`
+přidá doklad explicitního běhu Maven/Gradle ve fázi `test` do lineage dané úlohy.
+`kgmaker trace show REF --format json` zobrazí výsledek a aktuálnost zvlášť. Editace
+testu, konfigurace, lockfile nebo POSIX režimu souboru může vést ke stavu
+`STALE` při stejném Git HEAD. [Příkazy a podporovaný rozsah](docs/delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).

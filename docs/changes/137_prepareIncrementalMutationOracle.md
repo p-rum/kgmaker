@@ -613,3 +613,80 @@ kg_evidence=/workspace/kgmaker-evidence/t047-cold-delete-after142
   `kgmaker status`, `kgmaker check` a `git diff --cached --check MERGE_HEAD`.
 - NOT_RUN — úplná projektová sada, nezávislé review tohoto přenosu,
   GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — cold oracle změny těla
+
+Původní [head #121](https://github.com/p-rum/kgmaker/pull/121)
+`c5b62855c4be8d987eca1df9526713e1b452bbad` používá změnu těla jako přípravu
+testů cold add, změny signatury a smazání. Přenos na `main`
+`34591e2f45814838dd8b21390cdc43c84530f648` se stromem
+`648cf13b0492286439a3cda0bc2f083879d1532d` zachovává společnou historii
+rodičů a vrací samostatný důkaz pro tento mezistav.
+
+Nový [test](../../tests/test_incremental_equivalence.py) použije při offline
+inspekcích skutečné K1 a K2. Ze stávajícího deterministického replay vezme dvě
+sousední verze. V celém workspace se změní pouze obsah `Scoring.kt`, konkrétně
+`return value` na `return value + 1` v `score(Int)`. Soubor `Caller.kt` i přetížení
+`score(String)` mají stejné byty. Obě volání se v obou snapshotech přesně vážou
+na `fixture.ScoringKt.score` s deskriptory `(I)I` a `(Ljava/lang/String;)I`.
+Test porovnává source hashe v kontextu se skutečnými soubory, vyžaduje nový
+compiler context a po každé inspekci ověřuje shodnou souborovou mapu bez
+publikace do `.kgmaker`. Doplňuje pokrytí stávajícího chování bez změny
+produkčního kódu, CLI, API nebo schémat. [Návod k fixture](../../fixtures/incremental-integrity/README.md),
+[stav](../production-analysis-progress.md), [acceptance](../acceptance-inventory.md).
+
+Samostatná cold sonda nad stejnými zdroji pozorovala u K1 po úpravě nový
+literálový blok `1` v CFG celého `score(Int)`. K2 v obou snapshotech vrátil
+0 CFG a handshake uvádí chybějící Kotlin source CFG. T047-S01 dokládá
+reprodukovatelný corpus a scoped cold kontroly. Scénáře §7 pro body-dependent
+inkrementální přepočet (AC04/AC06) a Windows case-only rename a symlinky
+(AC02/AC05) zůstávají otevřené společně s úplným porovnáním inkrementálního
+a cold běhu. T047-AC01 zůstává PARTIAL.
+
+Příklad cíleného běhu v Cloud Environment s připravenými distribucemi
+JDK/Javac 21.0.6 a Kotlin 2.1.10 K1/K2:
+
+```bash
+kg_evidence=/workspace/kgmaker-evidence/t047-cold-body
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  --basetemp "$kg_evidence-focus-pytest" --junitxml="$kg_evidence-focus.xml" \
+  tests/test_incremental_equivalence.py \
+  -k 'changed_kotlin_body or added_kotlin or changed_kotlin_signature or deleted_kotlin_target'
+```
+
+Širší sada používá stejný JDK a Kotlin, Node 24.22.3, TypeScript 5.7.3 a
+připravenou offline distribuci Gradle 8.13. Build konfigurace fixture používá
+`offline=True`.
+
+```bash
+KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+  --basetemp "$kg_evidence-strict-pytest" --junitxml="$kg_evidence-strict.xml" \
+  tests/test_incremental_equivalence.py tests/test_workspace.py \
+  tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+```
+
+- PASS — 8 cílených PASS, 0 SKIP a 11 DESELECTED za 104,03 s. Exit 0
+  a SHA-256 `t047-cold-body-focus.xml`
+  `c6bc3455d8800fd9ee190f889aee33678c886774f19ad1c82b6bb83c60c32721`.
+- PASS — 135 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  257,57 s. Exit 0 a SHA-256 `t047-cold-body-strict.xml`
+  `b417556467fbb8104aa7066d261bb6aaa4b07d7d3fc976eb6297dba3092a16ce`.
+  Oba manifesty zdrojů, testů, fixture a JVM JARů mají shodný SHA-256
+  `eb6f307981887b22ad70c14748bdf7e259d9900ff79fa449926e9f50b9245314`.
+- SHA-256 samostatné cold sondy `t047-cold-body-native-scope.txt`
+  `0ab2d5c849a848d0f486767200d1e1e04fd7377a17d77e25a455b23686f3f34c`.
+- PASS — `python -m pytest -p no:cacheprovider --assert=plain -q --tb=short tests/test_completion.py tests/test_t032_persist_process_review.py`.
+  50 PASS, 0 SKIP za 2,60 s. SHA-256 `t047-cold-body-t032.xml`
+  `89a34367ccb9c6a2aef6d61ed769e5343e2f93bbca044c48d134faaaf1ccba43`.
+- `kgmaker completion plan --jobs 3` uvádí T047-S01 jako PR_OPEN/PARTIAL,
+  T047-S10 jako MERGED/PARTIAL, T047-S11 jako PLANNED/NOT_RUN a T032 jako
+  MERGED/VERIFIED_IN_SCOPE.
+- Ověření grafu a změn používá `kgmaker semantic update --base MERGE_HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`, `kgmaker memory capture
+  --base MERGE_HEAD`, `kgmaker scan`, `kgmaker status`, `kgmaker check`
+  a `git diff --cached --check MERGE_HEAD`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.

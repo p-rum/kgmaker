@@ -223,6 +223,57 @@ def require_jvm_worker(backend):
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_changed_kotlin_body_preserves_overload_bindings_cold(tmp_path, backend):
+    home = require_jvm_worker(backend)
+    make_workspace(tmp_path)
+    replay = mutations(tmp_path)
+    assert next(replay)[0] == "comment"
+    kotlin = tmp_path / "backend"
+    caller_bytes = (kotlin / CALLER).read_bytes()
+    caller_text = caller_bytes.decode("utf-8")
+    target_before = (kotlin / TARGET).read_bytes()
+    bindings = load_oracle(FIXTURE / "oracle.json")["signature_mutation"]
+
+    def check_snapshot():
+        before = snapshot(tmp_path)
+        result = inspect_jvm(kotlin, repo_id="backend", module="api", sources=[CALLER, TARGET],
+                             home=home, kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        context = result["context"]
+        assert (context["repo_id"], context["module"], context["source_set"]) == ("backend", "api", "main")
+        assert context["compiler_inputs"] == [CALLER, TARGET]
+        for path in (CALLER, TARGET):
+            assert context["source_files"][path] == before["backend/" + path]
+        graph = result["graph"]
+        symbols = {symbol["id"]: symbol for symbol in graph["symbols"]}
+        for expression, descriptor, caller_name in (
+                (bindings["changed_call"], bindings["prior_descriptor"], "callScore"),
+                (bindings["stable_call"], bindings["stable_descriptor"], "callStringScore")):
+            site, = [site for site in graph["call_sites"] if site["path"] == CALLER
+                     and caller_text[site["range"]["start"]:site["range"]["end"]] == expression]
+            caller = symbols[site["caller"]]
+            assert (caller["name"], caller["path"], caller["context_id"]) == (caller_name, CALLER, context["id"])
+            assert site["context_id"] == context["id"] and site["evidence_kind"] == "SYMBOL_RESOLVED"
+            target = symbols[site["declared_target"]]
+            assert (target["owner"], target["name"], target["descriptor"],
+                    target["path"], target["context_id"]) == (
+                        bindings["owner"], "score", descriptor, TARGET, context["id"])
+        assert snapshot(tmp_path) == before
+        assert not (kotlin / ".kgmaker").exists()
+        return context["id"]
+
+    before_context = check_snapshot()
+    label, _, changed, _ = next(replay)
+    assert label == "body" and changed == ["backend/" + TARGET]
+    int_body = b"fun score(value: Int): Int { return value }"
+    assert target_before.count(int_body) == 1
+    assert (kotlin / TARGET).read_bytes() == target_before.replace(
+        int_body, b"fun score(value: Int): Int { return value + 1 }", 1)
+    assert (kotlin / CALLER).read_bytes() == caller_bytes
+    assert check_snapshot() != before_context
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
 def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backend):
     home = require_jvm_worker(backend)
     make_workspace(tmp_path)

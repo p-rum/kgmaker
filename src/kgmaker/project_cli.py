@@ -42,6 +42,8 @@ def register(sub):
     common(p)
     p.add_argument("--plan", type=Path, required=True)
     p.add_argument("--cancel-file", type=Path)
+    p.add_argument("--record-verification", metavar="TASK_ID",
+                   help="record a local, file-bound test receipt in the plan checkout's existing task journal")
     for action in ("inspect", "classify"):
         p = actions.add_parser(action)
         common(p)
@@ -98,7 +100,10 @@ def run(args):
                     write_json(args.output, result)
                 code = 0
             else:
-                result = run_plan(read_json(args.plan), cancel_file=args.cancel_file)
+                if args.record_verification is not None and args.workspace is not None:
+                    raise AnalysisError("Verification capture supports a single plan checkout")
+                result = run_plan(read_json(args.plan), cancel_file=args.cancel_file,
+                                  verification_task=args.record_verification)
                 code = 0 if result["result"]["status"] == "SUCCESS" else 3
                 if args.strict and result["status"] == "PARTIAL":
                     code = 4

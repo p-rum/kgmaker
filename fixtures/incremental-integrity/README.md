@@ -29,7 +29,13 @@ to its own repository file. Moving the entire fixture to a different absolute
 directory changes its reported roots and preserves the source map and graph.
 
 Logical identity across line movement currently fails under strict XFAIL.
-The explicit Kotlin oracle compares two cold inspections around the addition of
+A cold Kotlin test changes only the body of `score(Int)`. Offline K1 and K2
+inspections independently bind the unchanged caller to `fixture.ScoringKt.score`
+with `(I)I` and `(Ljava/lang/String;)I` in both snapshots. The target hash and
+compiler context change. The caller and String overload keep their exact bytes,
+and neither inspection publishes a compiler graph.
+
+The cold add test compares two inspections around the addition of
 `Added.kt`. With prepared JDK21 and pinned Kotlin 2.1.10 K1/K2 workers it proves
 the previously unresolved `missingScore()` resolves in a new compiler context.
 The caller bytes stay identical and the integer overload remains the selected
@@ -72,8 +78,11 @@ its exact method. The workspace reports one `supplies_classpath` edge when all
 hashes and context selectors agree. A wrong output hash or changed JAR bytes in
 the consumer classpath produces `PARTIAL` and removes the edge. The TypeScript
 context has no JVM classpath and keeps its separate API contract evidence.
-The rest of the mutation matrix and incremental equivalence remain open.
-See [the recorded verification](../../docs/changes/137_prepareIncrementalMutationOracle.md).
+These checks establish the S01 replay corpus and its scoped cold controls. The
+§7 checks for incremental refresh of body-dependent evidence (AC04 and AC06),
+Windows case-only rename and symlink handling (AC02 and AC05), and the full
+incremental-versus-cold comparison remain open. The prepared K2 worker emits no
+Kotlin source CFG for this fixture. See [the recorded verification](../../docs/changes/137_prepareIncrementalMutationOracle.md).
 
 ```bash
 KGMAKER_TEST_GRADLE=/path/to/gradle-8.13/bin/gradle \
