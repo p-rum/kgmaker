@@ -47,7 +47,9 @@ recognized Bearer/Basic auth tokens) in required IDs are rejected with fixed non
 codes; IDs are never renamed. This is not authentication or universal secret
 recognition for opaque caller-declared identifiers. Mandatory selection supports
 existing service context-list, explicit-row and service-inventory shapes. Raw
-selection coverage/diagnostics are hash-bound instead of copied.
+selection coverage/diagnostics are hash-bound instead of copied. The review store
+validates those normalized hash fields when it replays a recorded selection. Use
+raw coverage and diagnostics captures when preparing a packet from a ProcessView.
 
 Captured documents use exactly `ref`, `format` (HTML/MARKDOWN/TEXT/STRUCTURED),
 `content_hash` (SHA256), `scope`, `context_ids`, `selection_provenance` and optional

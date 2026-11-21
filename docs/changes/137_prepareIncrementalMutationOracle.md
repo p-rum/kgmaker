@@ -321,8 +321,10 @@ inkrementální ekvivalence a úplná matice §7 zůstávají otevřené.
 
 ## T047-S01 / T047-R01 a T047-AC01 — změna signatury Kotlin overloadu, 2026-11-21
 
-Výchozí [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+Před změnou signatury měl [#121](https://github.com/p-rum/kgmaker/pull/121) head
 `2b8a04cd22fff23b22e6149e1b485b9d777e509c` nad `main` `c2885a6`.
+Historický běh 130 PASS a 1 strict XFAIL dokládá následný publikovaný
+head `a20cfa1ec39d2b1143323f7b3368801756e10b96` na stejném základu.
 Předchozí corpus pokrýval přidání, přesun a odstranění deklarace. Explicitní
 změna signatury z §7 chyběla. Stejný
 [harness](../../fixtures/incremental-integrity/workspace_fixture.py) vkládá
@@ -383,3 +385,55 @@ a důkaz inkrementální ekvivalence zůstávají otevřené.
   `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
 - NOT_RUN — úplná projektová sada, nezávislé review tohoto kandidáta,
   GitHub Actions a Windows. Stav T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — integrace po #132, 2026-11-21
+
+Výchozí draft [#121](https://github.com/p-rum/kgmaker/pull/121) má v okamžiku
+obnovy head `a20cfa1ec39d2b1143323f7b3368801756e10b96`. Přenos přidává
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`, skutečný merge [#132](https://github.com/p-rum/kgmaker/pull/132).
+Produkční kód a workery odpovídají novému main. Všechny čtyři bloby
+fixture a testu odpovídají headu draftu. Dřívější doklady mají v této
+poznámce své původní páry revizí.
+
+Konflikt v generovaném grafu se řeší regenerací. Oprava #132 dodává
+sémantiku pro přesnou vazbu normalizovaného kontextu. Sémantický graf zachovává
+její existující koncepty a vztahy z main i všechny historické epizody z obou
+větví. Doplňuje jednu epizodu aktuálního přenosu. Nový autorovaný vztah tento
+krok nepotřebuje.
+
+[Inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+uvádějí aktuální pár a zachovávají `PR_OPEN / PARTIAL`.
+[README](../../README.md) a [návod fixture](../../fixtures/incremental-integrity/README.md)
+už odpovídají přenesenému corpus. Registry, CLI, API, schémata, instalované
+instrukce a příklady běhu fixture mají stejný kontrakt. T047-S02 a další
+případy §7 zůstávají otevřené.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp /workspace/kgmaker-evidence/pr121-after132-t032 --junitxml=/workspace/kgmaker-evidence/pr121-after132-t032.xml tests/test_t032_persist_process_review.py`
+  43 PASS, 0 SKIP na přeneseném zdroji #132.
+- PASS — 130 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  155,96 s. Použity Temurin JDK/Javac 21.0.6, Kotlin 2.1.10 K1/K2,
+  Node 24.22.3, TypeScript 5.7.3 a offline Gradle 8.13.
+  SHA-256 JUnit `5be338805bb0648db2e7d283f1101f48c1cca099a7778d7deb7cbbf97cf32986`.
+  Manifesty sledovaných zdrojů, workerů, testů a fixture před a po běhu
+  jsou shodné, SHA-256 `7db90806c1be1140e60f064988a0cc6cb5b369359bd724fa7586feff102f4c06`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-after132
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/pr121-after132-pytest \
+    --junitxml=/workspace/kgmaker-evidence/pr121-after132-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS — `kgmaker semantic update --base 4011825`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base 4011825`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`,
+  `git diff --check 4011825` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review tohoto kandidáta,
+  GitHub Actions a Windows. Celé T047-AC01 zůstává PARTIAL.
