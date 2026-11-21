@@ -495,3 +495,75 @@ vlastní navazující ověření.
   `git diff --check HEAD` a `git diff --cached --check`.
 - NOT_RUN — úplná projektová sada, nezávislé review této revize,
   GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — odstranění přesunutého Kotlin cíle
+
+Výchozí [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`547ad673eae17f9a17dea6682e94ef000f5ffef8` nad
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`. Dosavadní mutační
+sekvence zachycovala odstranění Kotlin cíle v SOURCE_ONLY. Nový test
+ověřuje stejnou mutaci s čerstvými compiler daty K1 a K2.
+
+Po mutaci `move` se nezměněné `score("xy")` v `Caller.kt` váže na
+`fixture.RenamedKt.score(Ljava/lang/String;)I` z `Renamed.kt`. Následující
+mutace odstraní jen `Renamed.kt`. V novém compiler kontextu je stejné
+volání `UNRESOLVED` bez deklarovaného cíle a kandidátů dispatch. Symbol
+odstraněného cíle v tomto kontextu chybí. Kontrolní `missingScore()` se
+v obou kontextech váže na přesný `fixture.AddedKt.missingScore()I`.
+Obě explicitní inspekce volají stávající API s `publish=False`.
+`Caller.kt` má před a po odstranění shodné bajty a `.kgmaker` nevznikne.
+
+[Test](../../tests/test_incremental_equivalence.py) používá [ruční oracle](../../fixtures/incremental-integrity/oracle.json)
+a stávající deterministické mutace. Scénář uvádí [README](../../README.md#incremental-integrity-fixtures),
+[návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md).
+Test ověřuje stávající compiler API a uloženou sekvenci fixture. T047-AC01
+zůstává PARTIAL. Publikovaná invalidace a inkrementální ekvivalence mají
+vlastní acceptance v navazujících krocích.
+
+- PASS — cílený výběr `deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset`
+  měl 4 PASS, 0 SKIP a 13 DESELECTED za 29,38 s. Obě varianty `deleted_kotlin_target`
+  použily JDK/Javac 21.0.6 a skutečný Kotlin 2.1.10 K1 nebo K2.
+  SHA-256 JUnit `ea069efc31f28a75721465a00145dba1a1331662f38e730fc41474b5f3b9fa34`.
+- První zaměřená sada skončila 15 PASS, 1 očekávaným strict XFAIL a 1 FAIL
+  známé Gradle fixture. Výchozí sandbox neposkytl použitelnou lokální IP pro
+  `FileLockContentionHandler`. Vstupní manifest zůstal shodný. Pro další běh
+  dostal Gradle přístup k místnímu socketu, plán sestavení zůstal offline.
+
+  ```bash
+  export JAVA_HOME=/workspace/kgmaker-tools/jdk-21.0.6+7
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-relocation
+  export KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle
+  export KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+  export JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/t047-cold-delete-final-focus-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-cold-delete-focus.xml \
+    tests/test_incremental_equivalence.py \
+    -k 'deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset'
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/t047-cold-delete-final-strict-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-cold-delete-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS v JUnit — 133 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro
+  T047-S02 za 201,58 s. Gradle 8.13 v existujícím offline scénáři zaznamenal
+  `BUILD SUCCESSFUL`. JVM workery běžely s JDK 21.0.6 a Kotlinem 2.1.10,
+  TypeScript 5.7.3 s Node 24.22.3. SHA-256 JUnit
+  `d6857e1a69a5a0c11984cad4b043fbf77988072827fdd5c28062bae4a19cb852`.
+  Hostitelský wrapper s povolenou sítí vrátil 1. Krátký kontrolní běh
+  se stejným wrapperem zachytil návratový kód pytestu 0 a wrapper opět
+  vrátil 1. Výsledek širšího běhu zde dokládají souhrn, JUnit a build log.
+- PASS — `cmp` a `sha256sum` potvrdily stejné manifesty testovaných
+  zdrojů, fixture, JVM JARů a nástrojů před a po širším běhu.
+  SHA-256 obou manifestů
+  `d4ca6431efc03f444b0e20619deb706d35bc66efce1c2f88e225dc09a2961bd7`.
+- Ověření grafu a změn používá `kgmaker semantic update --base HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.

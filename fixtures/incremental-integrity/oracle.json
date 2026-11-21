@@ -20,6 +20,12 @@
     "replacement_descriptor": "(Z)I",
     "stable_descriptor": "(Ljava/lang/String;)I"
   },
+  "delete_mutation": {
+    "prior_owner": "fixture.RenamedKt",
+    "control_call": "missingScore()",
+    "control_owner": "fixture.AddedKt",
+    "control_descriptor": "()I"
+  },
   "flyway_mutation_object": "table:public.extra",
   "befe": {
     "backend_path": "src/model.kt",

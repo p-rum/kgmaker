@@ -41,6 +41,12 @@ workers report `score(2)` as unresolved without a declared target or dispatch
 candidate. The unchanged `score("xy")` still resolves to the String overload in
 the new compiler context. The check publishes no compiler graph.
 
+The cold deletion check uses the existing move and delete mutations to remove
+`Renamed.kt`. K1 and K2 report the byte-identical caller's `score("xy")` as
+unresolved in a new context, with no target or dispatch candidate. The control
+call still resolves to `Added.kt` in both contexts. Both inspections use
+`publish=False` and leave the fixture without a persisted compiler graph.
+
 The Kafka test captures each backend module with JDK21, K1 or K2 and an explicit
 resource source-set mapping for profile `blue`. The matching graph contains one
 `kafka_binding_match` edge between the resolved producer and consumer. After

@@ -301,7 +301,8 @@ and graph facts. A source-only test also keeps identical declarations separate
 across repositories and verifies the graph after moving the workspace. Separate
 cold Kotlin K1/K2 and TypeScript tests cover resolution
 of a newly introduced Kotlin declaration, a signature change that leaves an
-incompatible call unresolved, a declared Kafka match across modules,
+incompatible call unresolved, deletion of a moved declaration with its caller
+unchanged, a declared Kafka match across modules,
 and a backend-to-frontend value path tied to a generated client's contract
 checksum and release. An explicit offline Gradle build and JVM verifier check
 that workspace release mapping requires matching JAR bytes and a current consumer

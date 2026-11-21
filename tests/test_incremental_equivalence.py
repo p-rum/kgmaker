@@ -27,8 +27,8 @@ def load_oracle(path):
     value = read_json(path)
     fields = {"overloads", "caller", "independent", "dto", "endpoint_field", "ui", "missing_call", "kafka",
               "added_declaration_path", "moved_overload_path", "flyway_mutation_object", "befe",
-              "signature_mutation"}
-    objects = {"kafka", "befe", "signature_mutation"}
+              "signature_mutation", "delete_mutation"}
+    objects = {"kafka", "befe", "signature_mutation", "delete_mutation"}
     if (type(value) is not dict or set(value) != fields
             or any(not isinstance(value[key], str) or not value[key]
                    for key in fields - objects - {"overloads"})
@@ -41,6 +41,11 @@ def load_oracle(path):
                 "prior_descriptor", "replacement_descriptor", "stable_descriptor",
             }
             or any(not isinstance(row, str) or not row for row in value["signature_mutation"].values())
+            or type(value["delete_mutation"]) is not dict
+            or set(value["delete_mutation"]) != {
+                "prior_owner", "control_call", "control_owner", "control_descriptor",
+            }
+            or any(not isinstance(row, str) or not row for row in value["delete_mutation"].values())
             or type(value["befe"]) is not dict
             or set(value["befe"]) != {"backend_path", "owner", "field", "descriptor", "relations",
                                       "consumer_role", "release", "mutated_release"}
@@ -322,6 +327,70 @@ def test_changed_kotlin_signature_cannot_rebind_unchanged_caller_cold(tmp_path, 
     assert string_line in (kotlin / TARGET).read_bytes().splitlines(keepends=True)
     assert check_snapshot(signature["replacement_descriptor"], None) != before_context
     assert not (kotlin / ".kgmaker").exists()
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_deleted_kotlin_target_leaves_unchanged_caller_unresolved_cold(tmp_path, backend):
+    home = require_jvm_worker(backend)
+    make_workspace(tmp_path)
+    oracle = load_oracle(FIXTURE / "oracle.json")
+    deletion = oracle["delete_mutation"]
+    target_call = oracle["signature_mutation"]["stable_call"]
+    control_call = deletion["control_call"]
+    moved = oracle["moved_overload_path"]
+    added = oracle["added_declaration_path"]
+    replay = mutations(tmp_path)
+    assert [next(replay)[0] for _ in range(5)] == ["comment", "body", "add", "signature", "move"]
+    kotlin = tmp_path / "backend"
+    caller_bytes = (kotlin / CALLER).read_bytes()
+    caller_text = caller_bytes.decode("utf-8")
+
+    def inspect(sources):
+        result = inspect_jvm(kotlin, repo_id="backend", module="api", sources=sources,
+                             home=home, kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        assert not (kotlin / ".kgmaker").exists()
+        context = result["context"]["id"]
+        graph = result["graph"]
+        symbols = {symbol["id"]: symbol for symbol in graph["symbols"]}
+        sites = {}
+        for expression in (target_call, control_call):
+            site, = [site for site in graph["call_sites"] if site["path"] == CALLER
+                     and caller_text[site["range"]["start"]:site["range"]["end"]] == expression]
+            assert site["context_id"] == symbols[site["caller"]]["context_id"] == context
+            sites[expression] = site
+        return context, symbols, sites
+
+    before_context, before_symbols, before_sites = inspect([CALLER, moved, added])
+    prior_site = before_sites[target_call]
+    assert prior_site["evidence_kind"] == "SYMBOL_RESOLVED"
+    prior_target = before_symbols[prior_site["declared_target"]]
+    assert (prior_target["owner"], prior_target["name"], prior_target["descriptor"],
+            prior_target["path"], prior_target["context_id"]) == (
+                deletion["prior_owner"], "score", oracle["signature_mutation"]["stable_descriptor"],
+                moved, before_context)
+
+    label, _, changed, _ = next(replay)
+    assert label == "delete" and changed == ["backend/" + moved]
+    assert not (kotlin / moved).exists()
+    after_context, after_symbols, after_sites = inspect([CALLER, added])
+    assert (kotlin / CALLER).read_bytes() == caller_bytes
+    assert after_context != before_context
+    current_site = after_sites[target_call]
+    assert current_site["evidence_kind"] == "UNRESOLVED"
+    assert current_site["declared_target"] is None and not current_site["dispatch_candidates"]
+    assert prior_target["id"] not in after_symbols
+    assert all(symbol["path"] != moved for symbol in after_symbols.values())
+
+    for context, symbols, sites in ((before_context, before_symbols, before_sites),
+                                    (after_context, after_symbols, after_sites)):
+        control = sites[control_call]
+        assert control["evidence_kind"] == "SYMBOL_RESOLVED"
+        target = symbols[control["declared_target"]]
+        assert (target["owner"], target["name"], target["descriptor"],
+                target["path"], target["context_id"]) == (
+                    deletion["control_owner"], oracle["missing_call"],
+                    deletion["control_descriptor"], added, context)
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])

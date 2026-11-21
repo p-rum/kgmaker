@@ -102,6 +102,9 @@ Varianta s reálným JVM
 `release_mapping` ověřuje přesný `supplies_classpath` a odmítá chybný selektor
 i zastaralý JAR. SOURCE_ONLY varianta bez manifestu zůstává PARTIAL. Strict XFAIL eviduje identitu závislou
 na řádku pro T047-S02. Přesné testy a rozsah viz [change137](changes/137_prepareIncrementalMutationOracle.md).
+Lokální pokračování nad draftem `547ad67` přidává samostatný cold K1/K2 test.
+Po odstranění `Renamed.kt` přejde volání v bajtově shodném `Caller.kt` na
+`UNRESOLVED` a kontrolní volání do `Added.kt` zůstane rozlišené.
 Úplná matice §7 a inkrementální ekvivalence zůstávají otevřené.
 
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
