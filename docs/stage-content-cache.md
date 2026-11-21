@@ -37,6 +37,11 @@ launcher a JDK platform bytes, verze/obsah lokálních extractorů, stage, norma
 base graph a konkrétní upstream response. Stejná zobrazovaná jména nenahrazují
 identity varianty. Z base graph se vynechávají pouze cache a generation timestamp.
 
+Klíč aktuální JVM inspekce svazuje přesné bajty vstupů v `source_files` a
+normalizovaný otisk odlišných souborů z `normalized_source_files`. Samotnou
+změnu konců řádků zjistí offline kontrola compiler kontextu.
+[JVM source byte fingerprints](compiler-inspection.md#jvm-source-byte-fingerprints).
+
 Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému
 kontextu, scope, upstream odpovědi a workeru. Digest uložený vedle cache je
 kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje

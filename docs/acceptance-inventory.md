@@ -539,6 +539,13 @@ varianty a content změnu classpath. Focused worker/provider/workspace/feature/d
 běh: **68 passed in 20.07 s**. Rozšíření jazykových, buildových a framework variant
 patří do S03–S10 a není součástí tohoto VERIFIED tvrzení.
 
+T003-S02 / AC02 zahrnuje ověřený Javac výběr pro LF a CRLF. Nová JVM inspekce
+publikuje otisk bajtů odděleně od normalizovaného otisku strukturálního grafu.
+Ověřeny byly konkrétní a abstraktní deklarace, local computation, Criteria filtr,
+odmítnutí nesouhlasících otisků a offline zastarání po změně konců
+řádků. Vybraný Kotlin vstup s normalizovanými PSI souřadnicemi mimo shodu
+s bajty je odmítnut. [Přesná evidence a hranice](changes/160_bindJvmSourceBytes.md).
+
 Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
 v T003; zelený souhrnný běh jejich chybějící varianty nedokládá.

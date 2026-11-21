@@ -525,6 +525,11 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
 | T003-S13 runtime | PARTIAL / OPTIONAL | V1 import + strict v2 export/import; explicitní JDK21/POSIX synchronní producer s call/factory/condition/map capture a negativními testy. [change122](changes/122_runtimeTraceProducer.md), [kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, RTA/value flow, async/reflective capture a deployment/data availability; celý milník neověřen |
 
+Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
+bajty zdrojů s normalizovanou strukturální projekcí. Ověřeny byly local operations,
+Criteria filtr a offline invalidace po změně konců řádků. W02 selektivní
+invalidace má vlastní acceptance. [Doklad přesného rozsahu](changes/160_bindJvmSourceBytes.md).
+
 Revize T003-S03-W04: Maven exporter označuje nerozřešené implicitní
 language/API defaults jako PARTIAL s diagnostikou místo invalidního placeholderu;
 plugin descriptor classpath včetně skutečného `all-open` JAR nese SHA-256 a

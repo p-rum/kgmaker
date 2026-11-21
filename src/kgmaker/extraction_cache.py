@@ -12,6 +12,7 @@ from pathlib import Path
 import time
 
 from .analysis_model import canonical, digest, file_hash
+from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT
 from .worker_protocol import WorkerError
 
 VERSION = 'extraction-stages-1'
@@ -156,7 +157,7 @@ class InspectionStages:
                          and bool(worker.get('distribution'))
                          and selected.get('freshness') != 'STALE'
                          and selected.get('source_snapshot_version') in
-                             {'selected-source-set-2', 'typescript-input-discovery-1'})
+                             {'selected-source-set-2', JVM_RAW_SOURCE_SNAPSHOT, 'typescript-input-discovery-1'})
         self.entries = []
         self.statistics = []
 

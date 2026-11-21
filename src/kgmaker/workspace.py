@@ -89,9 +89,9 @@ def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False)
     else:
         result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
-    if isinstance(result.get('source_files'), dict):
-        result['source_files'] = {source_key(repo, path): checksum
-                                  for path, checksum in result['source_files'].items()}
+    for field in ('source_files', 'normalized_source_files'):
+        if isinstance(result.get(field), dict):
+            result[field] = {source_key(repo, path): checksum for path, checksum in result[field].items()}
     return result
 
 

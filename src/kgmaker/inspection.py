@@ -14,6 +14,10 @@ from pathlib import Path
 
 from .analysis_model import AnalysisError, digest, file_hash, read_json, safe_path
 from .classification import Classifier
+from .compiler_sources import (
+    JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
+    normalized_source_projection, unsupported_kotlin_source,
+)
 from .control_flow import from_body
 from .model import Edge, KnowledgeGraph, Node
 from .scanner import scan_repository
@@ -168,14 +172,19 @@ def sanitize(value, *, key="", semantic=False):
 
 def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
     """One capture/replay policy; legacy contexts retain their original scope gate."""
-    if selected.get("source_snapshot_version") == "typescript-input-discovery-1":
+    version = selected.get("source_snapshot_version")
+    if version == "typescript-input-discovery-1":
         from .typescript_snapshot import captured_sources
         return captured_sources(root, selected.get("project"))
+    source_hashes = graph.files
+    if version == JVM_RAW_SOURCE_SNAPSHOT:
+        if graph.raw_file_hashes is None:
+            raise WorkerError("JVM byte snapshot requires a fresh source scan", "STALE")
+        source_hashes = graph.files | graph.raw_file_hashes
     files = [node for node in graph.nodes if node.kind == "file"]
-    if (selected.get("source_snapshot_version") not in {"selected-source-set-1", "selected-source-set-2"}
-            or (selected.get("source_snapshot_version") == "selected-source-set-2"
-                and not (selected.get("project_model") or {}).get("source_sets"))):
-        return dict(sorted((node.path, graph.files[node.path]) for node in files
+    if (version not in JVM_SOURCE_SNAPSHOTS
+            or (version in JVM_JPA_SOURCE_SNAPSHOTS and not (selected.get("project_model") or {}).get("source_sets"))):
+        return dict(sorted((node.path, source_hashes[node.path]) for node in files
                            if node.scope == selected["scope"] or (node.scope == "unknown" and node.role == "configuration")))
     source_sets = [item for item in (selected.get("project_model") or {}).get("source_sets", [])
                    if item["module"] == selected["module"] and
@@ -191,14 +200,17 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
                  and node.scope == "unknown")
              or (not node.build_membership and node.role == "configuration"
                  and any(node.path.startswith((parent / "gradle").as_posix() + "/") for parent in parents))}
-    result = {path: graph.files[path] for path in paths}
+    result = {path: source_hashes[path] for path in paths}
     # Groovy build scripts are not scanner source languages, but remain shared inputs.
     for parent in parents:
         for name in ("build.gradle", "settings.gradle", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "pom.xml"):
             relative = (parent / name).as_posix()
             target = safe_path(root, relative)
             if target.is_file():
-                result[relative] = file_hash(target)
+                if version == JVM_RAW_SOURCE_SNAPSHOT and relative in source_hashes:
+                    result[relative] = source_hashes[relative]
+                else:
+                    result[relative] = file_hash(target)
     return dict(sorted(result.items()))
 
 
@@ -262,11 +274,13 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if language == "jvm":
         from .schema_replay import persistence_selection
         value["persistence_selection_hash"] = digest(persistence_selection(value))
-        value["source_snapshot_version"] = "selected-source-set-2"
+        value["source_snapshot_version"] = JVM_RAW_SOURCE_SNAPSHOT
         value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
         value["source_snapshot_version"] = "typescript-input-discovery-1"
     value["source_files"] = source_snapshot(root, base, value)
+    if language == "jvm":
+        value["normalized_source_files"] = normalized_source_projection(base.files, value["source_files"])
     from .framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
     # and selection identity, including its pre-existing React overwrite behavior.
@@ -732,6 +746,10 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     if sources is not None and (not isinstance(sources, list) or any(p not in available for p in sources)):
         raise AnalysisError("Compiler inputs absent from selected source-set scope")
     sources = sorted(available if sources is None else sources)
+    unsupported = unsupported_kotlin_source(base.raw_file_hashes, sources)
+    if unsupported is not None:
+        raise WorkerError("Selected Kotlin source uses unsupported raw byte coordinates: " + unsupported,
+                          "INVALID_PROTOCOL")
     if type(java_release) is not int or not 8 <= java_release <= 21:
         raise AnalysisError("Unsupported Java release; worker accepts release 8 through 21; only release 21 integration fixture is verified")
     entries = []
