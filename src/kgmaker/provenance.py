@@ -15,6 +15,7 @@ from .analysis_model import AnalysisError, digest, read_json, safe_path, write_j
 from .memory import is_sensitive_path
 
 JOURNAL = '.kgmaker/workflow/lineage.json'
+VERIFICATION_POLICY = 'verification_before_done'
 KINDS = {'requirement', 'analysis', 'task', 'plan', 'change', 'test_suite', 'test_case',
          'dataset', 'test_run', 'review', 'document'}
 RELATIONS = {'analyzes', 'implements', 'verifies', 'uses_dataset', 'depends_on', 'supersedes'}
@@ -84,8 +85,11 @@ def _validate_data(data):
         if event['subject'] not in data['references'] or event['action'] not in ACTIONS:
             raise AnalysisError('Invalid audit subject or action')
         previous = event['key']
-    if (set(data['policy']) != {'before_implement', 'before_done'}
-            or any(type(v) is not bool for v in data['policy'].values())):
+    policy = data['policy']
+    approvals = {'before_implement', 'before_done'}
+    if (not isinstance(policy, dict) or not approvals <= policy.keys()
+            or not policy.keys() <= approvals | {VERIFICATION_POLICY}
+            or any(type(v) is not bool for v in policy.values())):
         raise AnalysisError('Invalid approval policy')
     return data
 
@@ -226,8 +230,9 @@ def sync_task(data, task):
     return refs
 
 
-def enforce_gate(root, task, target):
-    data = load(root)
+def enforce_gate(root, task, target, *, data=None):
+    if data is None:
+        data = load(root)
     policy = 'before_implement' if target == 'implement' else 'before_done' if target == 'done' else None
     if policy is None or not data['policy'][policy]:
         return
@@ -255,8 +260,9 @@ def enforce_gate(root, task, target):
         raise AnalysisError('Approval gate: current requirement, plan or review lacks local approval')
 
 
-def trace(root, selector=None):
-    data = load(root)
+def trace(root, selector=None, *, data=None):
+    if data is None:
+        data = load(root)
     refs = data['references']
     if selector:
         seeds = {key for key,r in refs.items() if key == selector or r['id'] == selector}
@@ -303,6 +309,19 @@ def trace(root, selector=None):
             else:
                 verification = {'origin': 'IMPORTED' if ref['locator'] else 'AGENT_DECLARED',
                                 'freshness': 'STALE' if stale else 'UNKNOWN'}
+        if ref['kind'] == 'task' and ref['repo_id'] == 'local':
+            from .verification import summary
+            from .workflow import WorkflowError, load_task
+
+            try:
+                task = load_task(root, ref['id'])
+            except WorkflowError:
+                pass  # A registered task reference may have no local task state.
+            else:
+                if task_references(task)[1]['key'] == key:
+                    verification = {'workflow_status': task['status'],
+                                    'workflow_iteration': task['iteration'],
+                                    'verification_summary': summary(root, data, task)}
         events = [e for e in data['events'] if e['subject'] == key]
         result.append({**ref, 'stale': stale, 'approved': approved(data,key) and not stale,
                        **verification,
@@ -338,6 +357,14 @@ def markdown(report):
         cells = [r['kind'], r['id'], r['revision'], who, str(r['approved']),
                  r.get('freshness', 'STALE' if r['stale'] else 'CURRENT')]
         lines.append('| ' + ' | '.join(str(c).replace('|','\\|').replace('\n',' ') for c in cells) + ' |')
+    tasks = [row for row in report['references'] if 'verification_summary' in row]
+    if tasks:
+        lines += ['', '## Ověření úloh', '']
+        for row in tasks:
+            verification = row['verification_summary']
+            lines.append(f"- `{row['id']}` — workflow `{row['workflow_status']}`, iterace "
+                         f"{row['workflow_iteration']}, ověření `{verification['status']}` "
+                         f"(`{verification['reason']}`).")
     lines += ['', '## Vazby', '']
     lines += [f"- `{l['source']}` — {l['relation']} → `{l['target']}`" for l in report['links']]
     lines += ['', '## Rozhodnutí', '']

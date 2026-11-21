@@ -1262,3 +1262,8 @@ přidá doklad explicitního běhu Maven/Gradle ve fázi `test` do lineage dané
 `kgmaker trace show REF --format json` zobrazí výsledek a aktuálnost zvlášť. Editace
 testu, konfigurace, lockfile nebo POSIX režimu souboru může vést ke stavu
 `STALE` při stejném Git HEAD. [Příkazy a podporovaný rozsah](docs/delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
+
+Volitelná kontrola před `done` vyžaduje aktuální PASS pro stejnou revizi a
+iteraci tasku. Zapíná se pomocí `kgmaker trace policy --verification-before-done on
+--expected-revision REVISION`. `kgmaker trace show TASK_ID` v registrované
+lineage ukáže stav tasku a ověření zvlášť. [Příklad a rozsah](docs/delivery-workflow.md#aktuální-ověření-před-dokončením-t047-s11).

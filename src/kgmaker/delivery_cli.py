@@ -48,6 +48,7 @@ def register(sub):
         elif action=='policy':
             child.add_argument('--before-implement',choices=('on','off'))
             child.add_argument('--before-done',choices=('on','off'))
+            child.add_argument('--verification-before-done', choices=('on', 'off'))
         elif action=='register':
             child.add_argument('--kind',choices=sorted(provenance.KINDS),required=True)
             child.add_argument('--id',required=True);child.add_argument('--revision',required=True)
@@ -128,6 +129,10 @@ def run(args):
                     elif action=='policy':
                         if args.before_implement is not None: data['policy']['before_implement']=args.before_implement=='on'
                         if args.before_done is not None: data['policy']['before_done']=args.before_done=='on'
+                        if args.verification_before_done is not None:
+                            if args.expected_revision is None:
+                                raise AnalysisError('Verification policy changes require --expected-revision')
+                            data['policy'][provenance.VERIFICATION_POLICY] = args.verification_before_done == 'on'
                         result=data['policy']
                     elif action=='link':
                         provenance.connect(data,args.source,args.target,args.relation);result={'linked':True}
