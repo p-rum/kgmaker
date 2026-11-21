@@ -1661,6 +1661,21 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 
 ## T003-S10-W06 — souběh publikace a poškozená cache
 
+Dodání MERGED v [#129](https://github.com/p-rum/kgmaker/pull/129), merge `c067f9c3c7b3266842fc4f2230b4eaf65182e4df`. Lokální úplné
+ověření přesného tree `570a6590eda49cdb2b8b8c1168f0c78655af7aca` má 3692 PASS / 1 SKIP se skutečnými workery.
+GitHub Actions NEOVĚŘENO a samostatný Windows běh NOT_RUN.
+[Doklad aktuálního ověření](changes/149_recordGraphPublicationMerge.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S10-W06-AC01 | VERIFIED_IN_SCOPE | `test_competing_publisher_cannot_cross_the_first_graph_commit`, `test_overlapping_real_workers_do_not_overwrite_newer_publication`, `test_confluence_graph_commit_failure_rolls_back_related_outputs`. Platná generace zůstává zachována. |
+| T003-S10-W06-AC02 | VERIFIED_IN_SCOPE | Podporovaný legacy store v1/v2/v3 v úplné sadě. Současný runtime import kontroluje shodu explicitního schema 3. |
+| T003-S10-W06-AC03 | VERIFIED_IN_SCOPE | Neplatné cache payloady a odmítnutý stale import nepovyšují evidence. Replay HIT má samostatný rozsah #116. |
+| T003-S10-W06-AC04 | VERIFIED_IN_SCOPE | Přesný base/head, Linux toolchainy, JUnit a hranice další práce v [dokladu](changes/149_recordGraphPublicationMerge.md). |
+
+Předchozí cílené ověření:
+
+
 W06 má cílené ověření nad opravou série publikací. Deterministické regrese
 dokládají odmítnutí druhého zapisovače mezi výměnami souborů, ochranu
 novějšího grafu při scan, runtime importu, migraci a workspace scan a
