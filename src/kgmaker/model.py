@@ -164,6 +164,18 @@ class KnowledgeGraph:
                     if symbol.get("id") not in ids or symbol.get("id") in symbol_ids or symbol.get("context_id") not in context_ids:
                         raise ValueError("Dangling/duplicate compiler symbol or context")
                     symbol_ids.add(symbol["id"])
+                symbols = data.get("symbols", [])
+                if any("logical_key" in symbol or "kotlin_declaration" in symbol for symbol in symbols):
+                    from .symbol_identity import occurrence_keys, valid_declaration
+                    if any("kotlin_declaration" in s and not valid_declaration(s["kotlin_declaration"]) for s in symbols):
+                        raise ValueError("Invalid Kotlin declaration identity witness")
+                    if sum(isinstance(c.get("id"), str) for c in contexts) != len(context_ids):
+                        raise ValueError("Ambiguous Kotlin logical symbol context")
+                    keyed = occurrence_keys(symbols, {node.id: node for node in nodes},
+                                            {context.get("id"): context for context in contexts if "id" in context})
+                    if any("logical_key" in s and (s["id"] not in keyed or s["logical_key"] != keyed[s["id"]])
+                           for s in symbols):
+                        raise ValueError("Invalid Kotlin logical symbol key")
                 site_ids = set()
                 for site in data.get("call_sites", []):
                     if site.get("id") not in ids or site["id"] in site_ids or site.get("caller") not in ids:

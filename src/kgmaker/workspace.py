@@ -728,7 +728,13 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
                           source_file=source_key(identity, e.source_file) if e.source_file else None) for e in local.edges]
-        symbols += [_qualified_symbol(identity, item) for item in local.symbols]
+        realm_by_context = {context.get('id'): context.get('repo_id') for context in local.contexts}
+        for item in local.symbols:
+            symbol = _qualified_symbol(identity, item)
+            if realm_by_context.get(item['context_id']) != identity:
+                symbol.pop('logical_key', None)
+                symbol.pop('kotlin_declaration', None)
+            symbols.append(symbol)
         call_sites += [_qualified_call_site(identity, item) for item in local.call_sites]
         cfgs += [_qualified_cfg(identity, item) for item in local.cfgs]
         annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]

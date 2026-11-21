@@ -1599,3 +1599,30 @@ kořeni Git checkoutu. Přidejte `--record-verification TASK_ID` k `project buil
 Funkce používá jeho existující snapshot a reporty Maven/Gradle. Vypočtený výsledek
 a freshness se čtou pomocí `trace show`.
 [Příklad a omezení dokladu](delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
+
+## Logické klíče deklarací Kotlinu
+
+Výstup `graph.symbols` může obsahovat `logical_key` s prefixem
+`logical:kotlin-function-v1:`. Klíč spojuje výskyty mezi snapshoty a zahrnuje
+repozitář, jazyk, modul, source set, scope, Kotlin package, druh deklarace,
+jméno, typy parametrů a návratový typ. Pro volání a evidenci používejte konkrétní
+`id` a `context_id`, které označují výskyt v jeho snapshotu.
+
+Podporovaný rozsah vyžaduje dohledatelný ručně psaný `.kt` zdroj ve výslovně
+vybraném produkčním nebo testovacím source setu. Workery K1 a K2 ověřují
+veřejnou pojmenovanou funkci na úrovni souboru v package s konkrétní JVM deklarací a
+s konkrétními ne-null typy `Int`, `String` nebo `Boolean`. Verze 1 vyžaduje
+explicitní návratový typ a aktuální lokální compiler kontext nebo kontext z
+doloženého buildu. Výběr musí být bez specifického build nebo Spring profilu.
+Další typy, generické, anotované, lokální, anonymní a nejednoznačné deklarace
+vracejí původní informace o výskytu bez logického klíče. SOURCE_ONLY grafy
+dodávají pouze syntaktické výskyty. Workspace klíč přebírá od compiler kontextu se
+stejným repozitářem jako v manifestu; náhradní repo označení stačí pro kvalifikaci
+výskytu, ale neposkytuje důkaz jeho logické identity.
+
+```bash
+kgmaker inspect code --root ./service --build-id BUILD_ID --context CONTEXT_ID \
+  --scope production --format json
+```
+
+[Přesný rozsah a skutečná ověření](changes/162_addKotlinLogicalSymbolKeys.md).

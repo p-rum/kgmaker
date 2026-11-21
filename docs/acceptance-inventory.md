@@ -126,6 +126,13 @@ signatury bez publikace grafu. Otevřené zůstávají inkrementální přepoče
 body-dependent důkazů, scénáře Windows a úplná matice §7.
 [Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
 
+T047-S02 / T047-R02 a T047-AC02 — IN_PROGRESS / PARTIAL.
+Skutečné K1 a K2 dokládají logické klíče přetížení `score(Int)` a
+`score(String)` s neměnným klíčem a novým ID výskytu po komentáři. Výslovně
+vybrané produkční a testovací source sety a různé repozitáře mají vlastní
+klíče. Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
+rozsah popisuje [záznam ověření](changes/162_addKotlinLogicalSymbolKeys.md).
+
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
 T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,

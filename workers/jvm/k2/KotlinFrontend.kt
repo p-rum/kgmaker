@@ -11,10 +11,14 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSourceModule
@@ -59,6 +63,27 @@ class KotlinFrontend(private val state: State) {
         return ClassUtil.getJVMClassName(klass)?.let { "L" + it.replace('.', '/') + ";" }
     }
 
+    private fun declaredType(type: KaType): String? {
+        val klass = type as? KaClassType ?: return null
+        if (klass.nullability != KaTypeNullability.NON_NULLABLE || klass.abbreviation != null ||
+            klass.typeArguments.isNotEmpty()) return null
+        return klass.classId.asSingleFqName().asString()
+    }
+
+    private fun declaration(symbol: KaNamedFunctionSymbol, function: KtNamedFunction, name: String): Map<String, Any>? {
+        if (!function.isTopLevel || function.name != name || function.typeReference == null ||
+            function.annotationEntries.isNotEmpty() || function.containingKtFile.fileAnnotationList != null ||
+            function.contextReceivers.isNotEmpty() || symbol.typeParameters.isNotEmpty() ||
+            symbol.receiverParameter != null || symbol.isSuspend || symbol.isExternal ||
+            symbol.visibility != KaSymbolVisibility.PUBLIC || symbol.isExpect || symbol.isActual ||
+            symbol.valueParameters.any { it.isVararg }) return null
+        val pkg = symbol.callableId?.packageName ?: return null
+        if (pkg != function.containingKtFile.packageFqName || symbol.name.asString() != name) return null
+        val parameters = symbol.valueParameters.map { declaredType(it.returnType) ?: return null }
+        val result = declaredType(symbol.returnType) ?: return null
+        return State.kotlinDeclaration(pkg.asString(), name, parameters, result)
+    }
+
     private fun method(symbol: KaFunctionSymbol, source: PsiElement? = null): String? {
         // Local and synthesized signatures do not have a unique declaration ABI.
         // Light constructors omit JVM synthetic enclosing-instance parameters.
@@ -96,6 +121,8 @@ class KotlinFrontend(private val state: State) {
             "default_arguments", symbol.valueParameters.map { it.hasDefaultValue },
             "suspend", (symbol as? KaNamedFunctionSymbol)?.isSuspend ?: false,
             "inline", (symbol as? KaNamedFunctionSymbol)?.isInline ?: false)
+        if (source is KtNamedFunction && source == psi && symbol is KaNamedFunctionSymbol)
+            declaration(symbol, source, name)?.let { metadata["kotlin_declaration"] = it }
         return state.method(owner, name, signature, location, metadata)
     }
 

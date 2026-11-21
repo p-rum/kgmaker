@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionOrKFunctionTypeWithAnySuspendability
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.AbbreviatedType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -86,6 +87,26 @@ class KotlinFrontend(private val state: State) {
         }
         return runCatching { DescriptorAsmUtil.isStaticMethod(kind, descriptor) }.getOrNull()
     }
+    private fun declaredType(type: KotlinType): String? {
+        if (type.isMarkedNullable || type.arguments.isNotEmpty() ||
+            type.unwrap() is FlexibleType || type.unwrap() is AbbreviatedType) return null
+        val klass = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+        return DescriptorUtils.getFqNameSafe(klass).asString()
+    }
+    private fun declaration(descriptor: FunctionDescriptor, function: KtNamedFunction, name: String): Map<String, Any>? {
+        if (!function.isTopLevel || function.name != name || function.typeReference == null ||
+            function.annotationEntries.isNotEmpty() || function.containingKtFile.fileAnnotationList != null ||
+            function.contextReceivers.isNotEmpty() || descriptor.typeParameters.isNotEmpty() ||
+            descriptor.extensionReceiverParameter != null || descriptor.isSuspend || descriptor.isExternal ||
+            descriptor.visibility != DescriptorVisibilities.PUBLIC || descriptor.isExpect || descriptor.isActual ||
+            descriptor.valueParameters.any { it.varargElementType != null }) return null
+        val pkg = (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName ?: return null
+        if (pkg != function.containingKtFile.packageFqName ||
+            binding[BindingContext.FUNCTION, function]?.original != descriptor.original) return null
+        val parameters = descriptor.valueParameters.map { declaredType(it.type) ?: return null }
+        val result = descriptor.returnType?.let(::declaredType) ?: return null
+        return State.kotlinDeclaration(pkg.asString(), name, parameters, result)
+    }
     private fun method(descriptor: FunctionDescriptor, element: PsiElement? = null): String {
         val signature=mapper.mapAsmMethod(descriptor)
         val name=if(descriptor is ConstructorDescriptor) "<init>" else signature.name
@@ -97,6 +118,8 @@ class KotlinFrontend(private val state: State) {
                 if(descriptor.modality==Modality.FINAL)"final" else null,
                 if(descriptor.modality==Modality.ABSTRACT)"abstract" else null,
                 if(descriptor.dispatchReceiverParameter==null && descriptor !is ConstructorDescriptor)"static" else null))
+        if (element is KtNamedFunction)
+            declaration(descriptor, element, name)?.let { meta["kotlin_declaration"] = it }
         return state.method(owner(descriptor),name,signature.descriptor,element?.let(::loc),meta)
     }
     private fun property(descriptor: PropertyDescriptor, element: PsiElement?=null): String {
