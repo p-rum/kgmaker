@@ -3,7 +3,9 @@ from copy import deepcopy
 from pathlib import Path
 import json
 import pytest
-from kgmaker.process_semantics import prepare_process_label_packet
+from kgmaker.analysis_model import digest
+from kgmaker.process_model import ProcessDefinition
+from kgmaker.process_semantics import ProcessLabelPacketError, prepare_process_label_packet
 from test_t023_define_business_process_model import sample_process
 from test_t031_validate_process_annotations import proposed
 
@@ -36,6 +38,98 @@ def test_public_approve_is_explicit_separate_and_immutable(tmp_path):
     assert report['identity_assurance']=='LOCAL_DECLARATION_NOT_AUTHENTICATED'
     assert (p,packet,candidate)==before
     assert not (tmp_path/'.kgmaker/graph.json').exists()
+
+
+def captured_process(coverage):
+    process = sample_process()
+    selection = {'services': {'orders': {'scope': 'production', 'status': 'CURRENT', 'contexts': [
+        {'scope': 'production', 'context_id': 'ctx-prod', 'module': 'orders', 'repo_id': 'backend',
+         'status': 'CURRENT', 'coverage': coverage, 'diagnostics': [{'code': 'UNCAPTURED_PROVIDER'}]},
+    ]}}}
+    process['definition']['context_selection'] = selection
+    process['technical_view']['context_selection'] = deepcopy(selection)
+    process['definition_fingerprint'] = ProcessDefinition.from_dict(process['definition']).content_fingerprint
+    return process
+
+
+def test_public_persists_normalized_capture_and_rechecks_raw_binding(tmp_path):
+    coverage = {'status': 'PARTIAL', 'reason': 'private capture text'}
+    process = captured_process(coverage)
+    packet = prepare_process_label_packet(process)['packet']
+    candidate = proposed(packet)
+    before = deepcopy((process, packet, candidate))
+    receipt = write(tmp_path, process, packet, candidate)
+    assert receipt['status'] == 'COMMITTED'
+    path, = (tmp_path / '.kgmaker/process-reviews').glob('*.json')
+    snapshot = path.read_bytes(), path.stat().st_mtime_ns
+    assert b'private capture text' not in snapshot[0]
+    assert write(tmp_path, process, packet, candidate)['idempotent']
+    result = api().read_process_reviews(tmp_path, process)
+    assert result['effective_status'] == 'APPROVED'
+    identity = result['history'][0]['prepared']['identity']
+    row, = identity['context_selection']['services']['orders']['contexts']
+    assert row['coverage_binding'] == {'content_hash': digest(coverage)}
+    assert row['diagnostics_binding'] == {'content_hash': digest([{'code': 'UNCAPTURED_PROVIDER'}])}
+    assert identity == packet['identity']
+    changed = captured_process({'status': 'PARTIAL', 'reason': 'changed content'})
+    stale = api().read_process_reviews(tmp_path, changed)
+    assert stale['effective_status'] == 'NEEDS_REVALIDATION' and not stale['active_annotations']
+    assert stale['history'] == result['history']
+    assert (process, packet, candidate) == before
+    assert (path.read_bytes(), path.stat().st_mtime_ns) == snapshot
+
+
+@pytest.mark.parametrize('damage', ['unknown', 'bad_hash', 'mixed', 'changed_hash'])
+def test_review_store_rejects_modified_normalized_context_bindings(tmp_path, damage):
+    process = captured_process({'status': 'PARTIAL'})
+    packet = prepare_process_label_packet(process)['packet']
+    write(tmp_path, process, packet, proposed(packet))
+    path, = (tmp_path / '.kgmaker/process-reviews').glob('*.json')
+    stored = json.loads(path.read_bytes())
+    entry, = stored['history']
+    prepared = entry['prepared']
+    row, = prepared['identity']['context_selection']['services']['orders']['contexts']
+    if damage == 'unknown':
+        row['coverage_binding']['extra'] = 'unexpected'
+    elif damage == 'bad_hash':
+        row['coverage_binding']['content_hash'] = 'not-a-hash'
+    elif damage == 'mixed':
+        row['coverage'] = {'status': 'PARTIAL'}
+    else:
+        row['coverage_binding']['content_hash'] = '0' * 64
+    prepared['baseline']['identity'] = deepcopy(prepared['identity'])
+    prepared['baseline_hash'] = digest(prepared['baseline'])
+    entry['operation_hash'] = digest({key: entry[key] for key in ('operation_id', 'action', 'reviewer', 'previous_head')}
+                                     | {key: prepared[key] for key in ('payload_hash', 'baseline_hash')})
+    entry['head'] = stored['head'] = digest({key: value for key, value in entry.items() if key != 'head'})
+    path.write_text(json.dumps(stored), encoding='utf-8')
+    before = path.read_bytes()
+    with pytest.raises(api().ProcessReviewError, match='INVALID_STORE'):
+        api().read_process_reviews(tmp_path, process)
+    assert path.read_bytes() == before
+
+
+def test_invalid_candidate_and_stale_initial_head_leave_no_coordination_state(tmp_path):
+    process = captured_process({'status': 'PARTIAL'})
+    packet = prepare_process_label_packet(process)['packet']
+    candidate = proposed(packet)
+    with pytest.raises(api().ProcessReviewError, match='INVALID_REVIEW_INPUT'):
+        write(tmp_path, process, packet, {**candidate, 'technical_view': {}})
+    assert not list(tmp_path.iterdir())
+    with pytest.raises(api().ProcessReviewError, match='CAS_CONFLICT'):
+        write(tmp_path, process, packet, candidate, expected_head='0' * 64)
+    assert not list(tmp_path.iterdir())
+
+
+def test_forged_hash_binding_is_not_a_raw_context_capture():
+    process = captured_process({'status': 'PARTIAL'})
+    selection = process['definition']['context_selection']
+    row, = selection['services']['orders']['contexts']
+    row['coverage_binding'] = {'content_hash': digest(row.pop('coverage'))}
+    process['technical_view']['context_selection'] = deepcopy(selection)
+    process['definition_fingerprint'] = ProcessDefinition.from_dict(process['definition']).content_fingerprint
+    with pytest.raises(ProcessLabelPacketError, match='UNSUPPORTED_SELECTION_SHAPE'):
+        prepare_process_label_packet(process)
 
 
 def test_public_same_operation_retry_does_not_rewrite(tmp_path):

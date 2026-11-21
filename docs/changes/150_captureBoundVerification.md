@@ -1,8 +1,8 @@
 # Doklad skutečného testu v lokálním checkoutu
 
-T047-S10 / T047-R10 / T047-AC10 (§5.6). Výchozí `main`
+T047-S10 / T047-R10 / T047-AC10 (§5.6). Původní výchozí `main`
 `c2885a6f8daf0281967e3bc5386a69f1647718e0`. T046-S01 z #41 je sloučen
-a poskytuje společný journal. Dodání IN_PROGRESS, ověření PARTIAL.
+a poskytuje společný journal. Dodání PR_OPEN, ověření PARTIAL.
 
 ## Zachycení a ověření výsledku
 
@@ -128,3 +128,40 @@ zůstávají mimo ověřený rozsah.
 [stav](../production-analysis-progress.md) a [acceptance](../acceptance-inventory.md)
 uvádějí aktuální rozsah. Build model, task registry, graph schema a
 instalované instrukce nemají dopad z této iterace.
+
+## T047-S10 / T047-AC10 — místní integrace po #132, 2026-11-21
+
+Výchozí draft [#135](https://github.com/p-rum/kgmaker/pull/135) má HEAD
+`206a2bfb325db87701223a726b991273b08e7527`. Kandidát jej místně spojuje
+s `main` po [#132](https://github.com/p-rum/kgmaker/pull/132) na
+`4011825b15e4b65e1f57576a0986ca05b3cf810e`. Kolize se týkaly
+`.kgmaker/GRAPH.md` a `.kgmaker/semantic.json`. Graf je znovu vygenerován,
+sémantická historie obou rodičů zachována a odkaz na `provenance.event`
+odpovídá jeho aktuální kotvě. Zdroje a testy T047-S10 a replay T032 zůstávají
+bajtově shodné se svými rodiči. Tento krok má dopad na change note, stavovou
+matici, acceptance a graf. README, veřejné API/CLI, formát dokladu, zadání
+a instalované instrukce mají stejný kontrakt jako v předchozí iteraci.
+
+- PASS — v Cloud Environment s Mavenem 3.9.9, JDK 21.0.6, připraveným
+  offline Maven repozitářem a `KGMAKER_REQUIRE_EXPORTERS=1`:
+
+  ```bash
+  PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    tests/test_verification_records.py tests/test_build_runner.py \
+    tests/test_provenance.py tests/test_delivery.py tests/test_workflow_profiles.py \
+    tests/test_completion_handoff.py
+  ```
+
+  132 PASS / 2 SKIP za 14,71 s. Prošel i skutečný Maven/Surefire 3.5.2
+  se sekvencí PASS, STALE při editaci na stejném HEAD a skutečný FAIL.
+  Přeskočeny byly dva starší scénáře `tests/test_build_runner.py`, které
+  vyžadují exporter pod checkoutem a JDK na pevných cestách. SHA-256 JUnit
+  `467a6aa6a144f40b91b14086ca89cc9fe368e3dd149cd26f9888c3e6464bb782`.
+- PASS — `PYTHONPATH=src python -m pytest -p no:cacheprovider --assert=plain
+  -q --tb=short tests/test_t032_persist_process_review.py tests/test_completion.py`
+  ověřil replay T032 a plánovač po integraci. 50 PASS / 0 SKIP za 1,44 s.
+  SHA-256 JUnit
+  `7cc7588930e871dd0babc5aa8aaf1243d632250d44ea6c5012a7cc87647cc305`.
+- NOT_RUN — úplná sada, GitHub Actions a nezávislé review pro tuto integraci.
+  T047-AC10 zůstává PARTIAL. Skutečný Gradle v integrační sadě, více checkoutů,
+  nezávislé ověření importovaných dokladů a samostatná brána T047-S11 čekají.
