@@ -28,7 +28,7 @@ for entry in selected:
         url = "https://repo.maven.apache.org/maven2/com/github/ben-manes/caffeine/caffeine/2.9.3/" + name
     else:
         artifact = name.removesuffix("-2.1.10.jar")
-        url = ("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/"
+        url = ("https://packages.jetbrains.team/maven/p/kt/kotlin-ide-plugin-dependencies/"
                "org/jetbrains/kotlin/" + artifact + "/2.1.10/" + name)
     with urllib.request.urlopen(url, timeout=60) as response:
         content = response.read(32 * 1024 * 1024 + 1)
