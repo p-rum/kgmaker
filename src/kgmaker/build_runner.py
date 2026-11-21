@@ -6,6 +6,7 @@ No analytical command calls this module implicitly.
 """
 from __future__ import annotations
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -191,13 +192,28 @@ def tests_report(work: Path, phase: str) -> dict:
     return {'status':status,**totals,'reports':records,'coverage':'PARTIAL' if any('total' not in r for r in records) or (phase=='test' and not valid) else 'SUPPORTED_XML_REPORTS'}
 
 
-def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
+def run_plan(plan: dict, *, cancel_file: Path | None=None, verification_task: str | None = None) -> dict:
     if not _BUILD_EXECUTE_SUPPORTED:
         raise AnalysisError('UNSUPPORTED_PLATFORM: Windows BUILD_EXECUTE is not supported; use BUILD_IMPORT with verified local artifacts', 3)
     original={k:v for k,v in plan.items() if k!='plan_hash'}
     if plan.get('schema_version')!=1 or plan.get('plan_hash')!=digest(original):raise AnalysisError('BuildPlan content binding mismatch')
     if plan.get('execution_policy',{}).get('mode')!='LOCAL_TRUSTED':raise AnalysisError('Host execution policy unavailable; use BUILD_IMPORT')
     root=Path(plan['root']).resolve();run=Path(plan['run_root']);work=Path(plan['cwd']);adapter=Path(plan['adapter']['path'])
+    task = None
+    if verification_task is not None:
+        from . import verification
+        from .workflow import _git_head, load_task
+
+        if plan['phase'] != 'test' or plan['snapshot'].get('inventory') != verification.INVENTORY:
+            raise AnalysisError('Verification capture requires a full build inventory and test phase')
+        if not re.fullmatch('[0-9a-f]{32}', plan['build_id']) or plan.get('version') != VERSION:
+            raise AnalysisError('Verification capture requires a current BuildPlan')
+        if (not isinstance(plan.get('argv'), list) or not plan['argv']
+                or plan['argv'][0] != plan['executable']['path']):
+            raise AnalysisError('Verification command does not match its bound executable')
+        if _git_head(root) is None:
+            raise AnalysisError('Verification capture requires a Git checkout root with a commit')
+        task = load_task(root, verification_task)
     # Paths cannot be changed independently of the root and build identity.
     expected=safe_path(root,'.kgmaker/build-runs/'+plan['build_id'])
     if run!=expected or work!=run/'snapshot' or Path(plan['export_path'])!=run/'export.json':raise AnalysisError('Invalid plan output containment')
@@ -252,6 +268,11 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
         if file_hash(target)!=expected_hash:raise AnalysisError('Mixed snapshot during copy',3)
     shutil.copy2(adapter,run/adapter.name)
     if snapshot(root)!=plan['snapshot']['sources']:raise AnalysisError('Source changed while capturing snapshot',3)
+    if task is not None:
+        before = verification.observation(root, plan['snapshot']['sources'])
+        if before['head'] is None:
+            raise AnalysisError('Verification capture lost the Git checkout before execution', 3)
+        copied_before = verification.input_fingerprint(work, plan['snapshot']['sources'])
     start=time.monotonic();state='SUCCESS';return_code=None;log=run/'build.log'
     if cancel_file and cancel_file.exists():state='CANCELLED'
     else:
@@ -289,8 +310,12 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
             state='TOOLCHAIN_UNAVAILABLE'
             diagnostics.append({'code':'EXPLICIT_TOOLCHAIN_MISMATCH','expected_java_home':str(expected_home),
                                 'contexts':mismatches})
+    if task is not None:
+        tests, report_artifacts = verification.capture_reports(work)
+    else:
+        tests = tests_report(work, plan['phase'])
     result={'status':state,'execution_id':plan['build_id'],'return_code':return_code,'duration_seconds':round(time.monotonic()-start,3),
-        'tests':tests_report(work,plan['phase']),'modules':export.get('modules',{}) if export else {},'log_path':str(log),
+        'tests':tests,'modules':export.get('modules',{}) if export else {},'log_path':str(log),
         'log_sha256':file_hash(log) if log.exists() else None,'snapshot_hash':plan['snapshot']['content_hash']}
     # A changed original snapshot does not invalidate the copied build, but it is
     # stale for indexing the current checkout and cannot be imported as fresh.
@@ -343,4 +368,14 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
     if not copied_unchanged:manifest['diagnostics'].append({'code':'BUILD_INPUTS_CHANGED_DURING_EXECUTION'})
     write_json(run/'result.json',result);write_json(run/'manifest.json',manifest)
     report_status='PARTIAL' if state=='SUCCESS' and (manifest['diagnostics'] or any(c.get('diagnostics') for c in contexts)) else state
-    return {'status':report_status,'build_id':plan['build_id'],'result':result,'manifest_path':str(run/'manifest.json'),'diagnostics':manifest['diagnostics']}
+    report = {'status':report_status,'build_id':plan['build_id'],'result':result,'manifest_path':str(run/'manifest.json'),'diagnostics':manifest['diagnostics']}
+    if task is not None:
+        after = verification.observation(root, current)
+        try:
+            copied_after = verification.input_fingerprint(work, snapshot(work))
+            full_copy_matches = copied_before == before['inputs_sha256'] == copied_after
+        except (AnalysisError, OSError):
+            full_copy_matches = False
+        report['verification'] = verification.record_execution(
+            root, task, plan, before, after, result, report_artifacts, full_copy_matches)
+    return report

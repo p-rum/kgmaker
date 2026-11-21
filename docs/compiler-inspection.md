@@ -636,12 +636,12 @@ kgmaker inspect code --root project --kotlin-backend k2 --kotlin-version 2.1.10 
   --classpath /opt/kgmaker/workers/jvm/target-k2/lib/kotlin-stdlib.jar
 ```
 
-`fetch_k2.py` je oddělený explicitní síťový příkaz. Stahuje sedm JetBrains
-Analysis API JARů 2.1.10 a Caffeine 2.9.3 z pevných repository URL a ověřuje
-SHA-256 z `dependencies-k2.lock.json` před publikací; builder pracuje offline
-a ověřuje všechny připnuté compiler/API/Jackson vstupy. Neplatné bytes
-nepřepíší platný soubor. JDK ani compiler se automaticky nestahují. Volitelný
-`target-k2` se balí pouze po explicitní přípravě; core wheel zůstává bez runtime.
+`fetch_k2.py` je explicitní síťový příkaz. Stahuje sedm Analysis API JARů 2.1.10
+z [JetBrains Packages](https://packages.jetbrains.team/maven/p/kt/kotlin-ide-plugin-dependencies) a Caffeine 2.9.3 z Maven Central.
+Před zápisem ověří SHA-256 z `dependencies-k2.lock.json` a limit 32 MiB na
+stažený JAR. Vadná data ponechají původní soubor. Offline builder ověřuje
+compiler/API/Jackson a používá již připravený JDK a compiler. Volitelný `target-k2`
+se balí po explicitní přípravě. Core wheel zůstává bez runtime. [Change 156](changes/156_restorePinnedK2Download.md).
 
 Podporovaná konfigurace je compiler 2.1.10, language/API 2.1 a JVM target 21.
 Importovaná jiná compiler/language/API/JVM verze nebo flags/plugins/opt-ins
@@ -1575,3 +1575,27 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
+
+## Klasifikace vstupů ORM XML
+
+Snapshot `jpa_xml_inputs` zachycuje chybějící soubor i symbolický odkaz na
+chybějící cíl uvnitř projektu jako `missing` s rozlišenou cestou. Smyčku
+odkazů, chybu rozlišení nebo cíl mimo projekt zachytí jako `invalid`.
+Stejná pravidla platí pro Python 3.12 a 3.13. Změna uložené klasifikace
+označí odpovídající compiler kontext jako `STALE` při kontrole čerstvosti.
+[Ověřovací matice](changes/153_classifyLoopedJpaXmlInputs.md).
+
+```bash
+kgmaker inspect code --root ./service --scope production --format json
+kgmaker status --root ./service
+```
+
+Výsledek inspekce obsahuje jednotlivé záznamy v `context.jpa_xml_inputs.inputs`.
+
+## Explicitní lokální build
+
+Při plánované fázi `test` lze požádat o navázání výsledku na existující task v
+kořeni Git checkoutu. Přidejte `--record-verification TASK_ID` k `project build-run`.
+Funkce používá jeho existující snapshot a reporty Maven/Gradle. Vypočtený výsledek
+a freshness se čtou pomocí `trace show`.
+[Příklad a omezení dokladu](delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).

@@ -263,3 +263,34 @@ python -m pytest -p no:cacheprovider -q --tb=short \
 W02-AC01 je `PARTIAL`. Prvotní compiler capture souborů s CRLF, zápis
 selektivní invalidace a negativní lookup vyžadují vlastní kroky. Úplná sada,
 nezávislé review této revize a GitHub Actions mají při předání `NOT_RUN`.
+
+## Přenos na main po #135 — kroky 4 a 5, AC01–AC04
+
+Rodiče kandidáta jsou lokální oprava `90ca0e78b92a764395ee636aa723f8347bf18d1b`
+a ověřený `main` `52af545bfc97396a0001432abc5d58ab7c3663af` po
+[#135](https://github.com/p-rum/kgmaker/pull/135), tree
+`b765680f96b23fdaa887e4901d9fbbba80e52592`. Osm zdrojových a testových
+souborů W02 i deset integračních souborů základu mají přesné bajty svých
+rodičů. Manifesty před a po testu jsou shodné, SHA-256
+`9b4409a88005ee09ba551072b3c6459aeb2b756b2571696f7daadbcc7561d054`.
+README obsahuje návody čtecího reportu i dokladu skutečného testovacího běhu.
+Oba vygenerované grafy vycházejí ze společného zdroje a původní semantické
+epizody obou rodičů mají samostatné identity.
+
+Použit byl JDK/Javac 21.0.6, připravená distribuce workerů, `PYTHONPATH=src`,
+`KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1` a
+`JAVA_TOOL_OPTIONS=-XX:-UsePerfData`.
+
+- Cílený `test_actual_javac_line_ending_change_rechecks_proven_caller`
+  má 3 PASS / 0 SKIP za 15,59 s. JUnit SHA-256
+  `94e7559db9d990f1227569c9d14491781d9f7f4952634503d4c7303f5f7576e8`.
+- Výběr osmi souborů W02/W06/T032 uvedený výše má 147 PASS / 0 SKIP za
+  36,04 s. JUnit SHA-256
+  `8fd3eecc9d0d9ae0eadd8004f4ede99d7f3250971d6f7310a2814c51d382cf43`.
+
+Čtecí kontrakt reportu, graph/store v1/v2/v3 a postupy dokladu testovacího běhu
+mají uvedený rozsah. W02-AC01 je `PARTIAL`. Prvotní sběr compiler evidence pro
+CRLF, zápis selektivní invalidace a negativní lookup mají vlastní ověření.
+Úplná sada, nezávislé review integrační revize a její GitHub Actions mají při
+předání stav `NOT_RUN`. [Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy),
+[stavová matice](../production-analysis-progress.md).

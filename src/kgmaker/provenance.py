@@ -52,10 +52,24 @@ def _validate_data(data):
                              repo_id=item['repo_id'], locator=item['locator'])
         if key != expected['key'] or item != expected:
             raise AnalysisError('Reference integrity mismatch')
+        if is_verification(item):
+            from .verification import validate_record
+            payload = item['payload']
+            validate_record(payload)
+            if (item['id'] != 'verification:' + payload['run_id'] or item['revision'] != '1'
+                    or item['repo_id'] != 'local' or item['locator'] is not None):
+                raise AnalysisError('Invalid verification reference')
+            task = data['references'].get(payload['task_reference'])
+            if not task or task['kind'] != 'task' or task['id'] != payload['task_id']:
+                raise AnalysisError('Verification requires its exact captured task reference')
     for link in data['links']:
         if (set(link) != {'source', 'target', 'relation'} or link['relation'] not in RELATIONS
                 or link['source'] not in data['references'] or link['target'] not in data['references']):
             raise AnalysisError('Dangling or malformed lineage link')
+        if link['relation'] == 'verifies':
+            source = data['references'][link['source']]
+            if is_verification(source) and link['target'] != source['payload']['task_reference']:
+                raise AnalysisError('Verification must link to its exact captured task reference')
     previous = None
     for event in data['events']:
         if not isinstance(event,dict) or set(event)!={'subject','action','actor','identity_trust','reason','timestamp','previous','key'}:
@@ -74,6 +88,11 @@ def _validate_data(data):
             or any(type(v) is not bool for v in data['policy'].values())):
         raise AnalysisError('Invalid approval policy')
     return data
+
+
+def is_verification(ref):
+    payload = ref['payload']
+    return ref['kind'] == 'test_run' and isinstance(payload, dict) and payload.get('record_type') == 'verification'
 
 
 def _load(root):
@@ -256,6 +275,7 @@ def trace(root, selector=None):
     for key in sorted(selected):
         ref = refs[key]
         stale = False
+        verification = {}
         if ref['locator']:
             try:
                 stale = file_hash(safe_path(root, ref['locator']['path'])) != ref['locator']['sha256']
@@ -274,8 +294,18 @@ def trace(root, selector=None):
                 stale = stale or bool(testgen.freshness(root,packet))
             except (ImportError, AnalysisError, OSError, StopIteration, KeyError, TypeError):
                 stale = True
+        if ref['kind'] == 'test_run':
+            if is_verification(ref):
+                from .verification import freshness
+                state = freshness(root, ref['payload'])
+                verification = {'origin': 'RUNNER_CAPTURED', 'freshness': state}
+                stale = state == 'STALE'
+            else:
+                verification = {'origin': 'IMPORTED' if ref['locator'] else 'AGENT_DECLARED',
+                                'freshness': 'STALE' if stale else 'UNKNOWN'}
         events = [e for e in data['events'] if e['subject'] == key]
         result.append({**ref, 'stale': stale, 'approved': approved(data,key) and not stale,
+                       **verification,
                        'requested_by': next((e['actor'] for e in events if e['action']=='requested'), 'UNKNOWN'),
                        'decisions': events})
     links = [l for l in data['links'] if l['source'] in selected and l['target'] in selected]
@@ -305,7 +335,8 @@ def markdown(report):
     for r in report['references']:
         who = r['requested_by']
         who = who['id'] if isinstance(who,dict) else who
-        cells = [r['kind'],r['id'],r['revision'],who,str(r['approved']), 'STALE' if r['stale'] else 'CURRENT']
+        cells = [r['kind'], r['id'], r['revision'], who, str(r['approved']),
+                 r.get('freshness', 'STALE' if r['stale'] else 'CURRENT')]
         lines.append('| ' + ' | '.join(str(c).replace('|','\\|').replace('\n',' ') for c in cells) + ' |')
     lines += ['', '## Vazby', '']
     lines += [f"- `{l['source']}` — {l['relation']} → `{l['target']}`" for l in report['links']]
