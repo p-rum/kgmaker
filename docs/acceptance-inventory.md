@@ -101,10 +101,21 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 bez ní; [post-merge evidence](changes/119_reconcileJpqlDelivery.md). T046-S01 až S06 jsou
-MERGED,
-T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
-T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
+Historický stav k 2026-11-15 měl v T003/T004 63 položek se sloučenou prací
+a 37 bez ní. T046-S01 až S06 byly MERGED a T047 bylo PLANNED se sdílenými
+upstream vlastníky. Úplná produkční acceptance všech variant byla NOT_RUN.
+[Dobové testy sloučeného main](changes/119_reconcileJpqlDelivery.md).
+
+**T047-S01 / T047-R01 a T047-AC01 — MERGED / PARTIAL.** Korpus byl
+2026-11-21 sloučen do `main` jako `b3bbba43304f499f96950ea4ecc2a2467919e616`.
+Na přesném headu prošlo 135 testů se skutečnými K1/K2, TypeScriptem a offline
+Gradle. Výběr na sloučeném stromu má 7 PASS a stejný očekávaný strict XFAIL
+pro T047-S02. Merge pokrývá dodání reprodukčního korpusu. Inkrementální
+přepočet důkazů závislých na těle, scénáře Windows a celá matice §7
+zůstávají otevřené. [Doklad integrace](changes/161_recordMutationCorpusMerge.md) · [#121](https://github.com/p-rum/kgmaker/pull/121)
+
+Historie kandidátů #121 do merge 2026-11-21:
+
 Lokální pokračování nad draftem `6333c0a` ověřuje odlišné identity stejného
 Kotlin FQN v obou repo a shodný SOURCE_ONLY graf po přesunu workspace.
 Přenos z draftu `a20cfa1` na `main` `4011825` již ověřil tyto scénáře.

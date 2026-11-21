@@ -690,3 +690,9 @@ KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
   a `git diff --cached --check MERGE_HEAD`.
 - NOT_RUN — úplná projektová sada, nezávislé review této revize,
   GitHub Actions a Windows.
+
+## Sloučení reprodukčního korpusu 2026-11-21
+
+[#121](https://github.com/p-rum/kgmaker/pull/121) je v `main` jako
+`b3bbba43304f499f96950ea4ecc2a2467919e616`. T047-S01 má dodání MERGED
+a T047-AC01 ověření PARTIAL. [Přesný pár, nezávislé review a ověření sloučeného stromu](161_recordMutationCorpusMerge.md).

@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 561
+- Scope: production; omitted files: 562
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `e409f0a11fbe2ef88752fc1cd2613f499800541b2b1abd3c0bc59ff7d49eb078`; content: `80f49974f52c9bd13b4a3a1f45c8be9102c47061e265414233b8e393fce80542`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 362
+- Implementation episodes: 363
 - Inferred/ambiguous relationships: 8500/0
 
 ## Architecture diagram
@@ -2457,6 +2457,7 @@ flowchart LR
 - **merge: compose coroutine boundaries with selected-classpath dispatch** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/51_mapCoroutineSourceBoundaries.md, docs/compiler-inspection.md; validation: member_extension_regression=unknown, fresh_build_focus=unknown, fresh_full=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: hosted-collection=failed, schema-test-22=passed, review-smoke=passed, updated-hosted-review=unknown
 - **Merge approved argument and template parent into Kafka bindings** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/54_scopeKafkaBindingIdentity.md, docs/compiler-inspection.md; validation: kafka_arg_actual205=passed, disjoint_t025_pure117=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/changes/161_recordMutationCorpusMerge.md, docs/production-analysis-progress.md; validation: t048_inventory_planner=passed, t032_planner_50=passed, source_evidence_integrity=passed
 - **fix(ci): launch Windows smoke with an explicit restricted token** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: linux-strict-final=passed, cleanup-init-regressions=passed, actual-corrected-windows=skipped
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest195=passed, focused51=passed, spring-collection-injection=passed, spring-provider-boundary=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/46_mapDefaultBodySources.md, docs/compiler-inspection.md; validation: focused16=passed, full410=passed, actualK1K2=passed, optional9=skipped, semantic=passed
@@ -2631,7 +2632,7 @@ flowchart LR
 - **merge: integrate reviewed Criteria main into T029 membership fix** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/130_projectProcessFailures.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: report-main-integration=passed, semantic-union=passed, full-suite=skipped
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/45_scopeTypeScriptConfigFreshness.md; validation: integration_view_core=passed, actual_ts_freshness=passed, semantic_validate=passed, remote_ci=unknown
 - **docs: document clean-install test prerequisites and CI evidence** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/30_packageWorkerResources.md, docs/compiler-inspection.md; validation: strict242=passed, actual_maven_fixture=passed
-- **Refresh T047 oracle with cold target deletion after CI integration** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: real_k1_k2_cold=passed, strict_oracle_regression=passed, t032_completion=passed, semantic=passed
+- **Refresh T047 oracle with cold target deletion after CI integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/137_prepareIncrementalMutationOracle.md, docs/production-analysis-progress.md, fixtures/incremental-integrity/README.md; validation: real_k1_k2_cold=passed, strict_oracle_regression=passed, t032_completion=passed, semantic=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — changed; files: docs/acceptance-inventory.md, docs/changes/34_diagnoseBinaryXls.md, docs/feature-analysis.md, docs/production-analysis-progress.md, src/kgmaker/feature.py; validation: focused100=passed, full274=passed, toolchain23=skipped
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/130_projectProcessFailures.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: targeted=passed, semantic-preservation=passed, full-suite=skipped
 - **fix(t008): retain root-owned source inventory** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/41_projectServiceInventory.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, toolchain_skips=skipped, semantic=passed, scan=passed
