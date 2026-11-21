@@ -171,3 +171,41 @@ review vrátily nálezy do T052 iterace 1.
   `kgmaker status` a `kgmaker check`.
 - Úplná sada, GitHub Actions, nezávislé review opraveného kandidáta a merge
   zůstávají při předání NOT_RUN.
+
+## Přenos po sloučení #132 — kroky 4 a 5, AC01–AC04
+
+Lokální merge připravený z publikovaného headu #130
+`7f174807d34a2d87ce8d7948b537cb28f7b29f30` a aktuálního `main`
+`4011825b15e4b65e1f57576a0986ca05b3cf810e` zachovává historii obou větví.
+Při porovnání před a po přenosu mělo všech osm zdrojových a testovacích cest
+W02 i všechny tři cesty změněné v [#132](https://github.com/p-rum/kgmaker/pull/132)
+identické bajty. Přenos vyřešil konflikty v generovaném grafu a sémantické vrstvě.
+Třícestné sloučení zachovalo 56 konceptů, 191 vztahů a všech 339 dřívějších
+epizod obou větví.
+
+- **Krok 4, AC01–AC03.** JDK/Javac 21.0.6 a připravený worker, spuštěno s
+  `PYTHONPATH=src`, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1` a
+  `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`. Příkaz níže má **144 PASS / 0 SKIP**
+  za 26,60 s. Obsahuje 83 testů W02, 18 testů souběžné publikace W06 a 43
+  procesních regresí T032. JUnit SHA-256 je
+  `88aea8dbb5c64accd3974591a9faca67ba6d7501d6ef83f2671b8d2f2c6e31ed`.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  tests/test_reverse_dependency_index.py tests/test_graph_provider.py \
+  tests/test_feature.py tests/test_feature_fixture.py tests/test_flyway.py \
+  tests/test_workspace.py tests/test_graph_publication_concurrency.py \
+  tests/test_t032_persist_process_review.py \
+  --junitxml=/workspace/kgmaker-evidence/pr130-after132-scoped.xml
+```
+
+- **Krok 5, AC04.** [Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+  a [stav](../production-analysis-progress.md) uvádějí nový základ.
+  [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02)
+  a [kontrakt CLI](../stage-content-cache.md#selektivní-dopad-změn) dál
+  popisují zachovaný čtecí režim včetně použitého příkladu. Formáty grafu,
+  stávající příkazy a registr odpovídají předchozímu dodání.
+
+AC01 zůstává `PARTIAL`. Zápis selektivní invalidace, negativní lookupy a
+cross-workspace projektové vazby mají samostatné ověření. Úplná sada W02,
+review tohoto integračního stromu a GitHub Actions jsou při předání `NOT_RUN`.
