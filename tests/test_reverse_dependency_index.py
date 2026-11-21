@@ -10,7 +10,7 @@ import pytest
 from kgmaker import feature, workspace
 from kgmaker.analysis_model import AnalysisError, inventory_candidate, read_json, write_json
 from kgmaker.cli import main, scan
-from kgmaker.graph_provider import dependency_impact
+from kgmaker.graph_provider import dependency_impact, validate_context_snapshot
 from kgmaker.inspection import command, inspect_jvm
 from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.store import GRAPH_FILE, save_graph
@@ -88,6 +88,68 @@ def test_actual_javac_signature_change_reaches_transitive_callers_without_worker
     assert all(item["kind"] == "COMPILER_CALLER" and item["status"] == "RECHECK" for item in affected)
     assert all(len(reason["evidence_ids"]) == 2 and reason["call_site_id"]
                for item in affected for reason in item["reasons"])
+    assert _store_bytes(tmp_path) == expected_store
+
+
+@pytest.mark.parametrize("locator", ["verified", "unknown", "mismatched"])
+def test_actual_javac_line_ending_change_rechecks_proven_caller(tmp_path, locator):
+    _require_javac_worker()
+    api = "src/main/java/Api.java"
+    caller = "src/main/java/Caller.java"
+    other_api = "src/main/java/Other.java"
+    other_caller = "src/main/java/OtherCaller.java"
+    original = b"class Api { static int value(int x) { return x; } }\n"
+    _write(tmp_path, caller, "class Caller { static int read() { return Api.value(1); } }")
+    _write(tmp_path, other_api, "class Other { static int value(int x) { return -x; } }")
+    _write(tmp_path, other_caller, "class OtherCaller { static int read() { return Other.value(1); } }")
+    target = tmp_path / api
+    target.write_bytes(original)
+    inputs = [api, caller, other_api, other_caller]
+    model = {"source_sets": [{"module": "app", "id": "main", "scope": "production", "files": inputs}]}
+    inspection = inspect_jvm(tmp_path, module="app", sources=inputs, project_model=model)
+    assert inspection["exit_code"] == 0
+    resolved = {site["path"]: site for site in inspection["graph"]["call_sites"]
+                if site.get("declared_target")}
+    assert set(resolved) == {caller, other_caller}
+    assert resolved[caller]["declared_target"] != resolved[other_caller]["declared_target"]
+    context = inspection["context"]
+    before_sha256 = hashlib.sha256(original).hexdigest()
+    assert context["source_files"][api] == before_sha256
+    stored_graph = read_json(tmp_path / GRAPH_FILE)
+    target_symbol = next(item for item in stored_graph["symbols"]
+                         if item["id"] == resolved[caller]["declared_target"])
+    assert (target_symbol["path"], target_symbol["sha256"]) == (api, before_sha256)
+    if locator == "unknown":
+        target_symbol.pop("sha256")
+    elif locator == "mismatched":
+        target_symbol["sha256"] = "f" * 64
+    if locator != "verified":
+        write_json(tmp_path / GRAPH_FILE, stored_graph)
+    expected_store = _store_bytes(tmp_path)
+
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
+        validate_context_snapshot(tmp_path, context)
+        assert dependency_impact(tmp_path, [api])["affected"] == []
+        target.write_bytes(original.replace(b"\n", b"\r\n"))
+        with pytest.raises(WorkerError, match="STALE_INDEX: source/config changed"):
+            validate_context_snapshot(tmp_path, context)
+        report = dependency_impact(tmp_path, [api])
+        target.write_bytes(original.replace(b"return x;", b"return x + 1;"))
+        normal_change = dependency_impact(tmp_path, [api])
+
+    assert report["coverage"] == "PARTIAL"
+    assert report["changed_sources"] == []
+    assert [entry["path"] for entry in normal_change["changed_sources"]] == [api]
+    affected, = normal_change["affected"]
+    assert (affected["kind"], affected["status"], affected["path"], affected["id"]) == (
+        "COMPILER_CALLER", "RECHECK", caller, resolved[caller]["caller"],
+    )
+    reason, = affected["reasons"]
+    assert reason["before_sha256"] == before_sha256
+    assert reason["dependency_id"] == resolved[caller]["declared_target"]
+    assert reason["call_site_id"] == resolved[caller]["id"]
+    assert report["affected"] == (normal_change["affected"] if locator == "verified" else [])
+    assert report["graph_sha256"] == hashlib.sha256(expected_store[GRAPH_FILE]).hexdigest()
     assert _store_bytes(tmp_path) == expected_store
 
 

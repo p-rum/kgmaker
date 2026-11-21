@@ -137,8 +137,12 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 `changed_sources` porovnává soubory stejným způsobem jako uložený graf.
 U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.
 Samotná změna konců řádků se proto může projevit jen v `affected` u evidence
-svázané s původními bajty. Cesta požadavku se pro porovnání normalizuje,
-původní packet a jeho identita se zachovávají.
+svázané s původními bajty. U dříve doloženého compiler cíle s odlišným hashem
+nových bajtů projde report uloženou identitu cíle a označí doložené callery
+jako `RECHECK`, pokud uložený lokátor cíle váže cestu a hash původních bajtů
+ke stejnému grafu i kontextu. Starší cíl bez tohoto důkazu lze revalidovat
+při změně normalizovaného textu. Cesta požadavku se pro porovnání normalizuje,
+původní packet drží původní identitu.
 Compiler caller je doložený, když hash uloženého compiler důkazu souhlasí
 s grafem i vybraným kontextem. Pokud worker uložil hash bajtů s CRLF a
 graf hash normalizovaného textu, report takového callera vynechá a zůstane

@@ -1250,5 +1250,7 @@ po úpravě souboru před dalším scanem nebo inspekcí. Report používá jedn
 uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
 callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
 migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
-porovnává podle původních bajtů. Operace pouze čte a uvádí `PARTIAL` s diagnostikou
-hranic. [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
+porovnává podle původních bajtů. Pouhá změna konců řádků označí k revalidaci
+i callery dříve doloženého compiler cíle s uloženým důkazem původních bajtů.
+Operace pouze čte a uvádí `PARTIAL` s diagnostikou hranic.
+[Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).

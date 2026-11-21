@@ -26,15 +26,15 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 
 Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Lokální
 integrační kandidát přebírá ověřený `main` `4011825` po
-[#132](https://github.com/p-rum/kgmaker/pull/132). Cílená sada má 144 PASS
-bez přeskočení a s reálným Javac.
+[#132](https://github.com/p-rum/kgmaker/pull/132). Cílená sada po doplnění
+revalidace po změně konců řádků má 147 PASS bez přeskočení a s reálným Javac.
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
 [kontroly](changes/145_buildReverseDependencyIndexes.md).
 
 | Acceptance | Ověření | Důkaz a hranice |
 |---|---|---|
-| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_schema_dependency_follows_prior_migration_operations` pokrývá předchozí CREATE i novější ALTER pro tentýž sloupec. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje replay Flyway, deklaraci OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
+| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_actual_javac_line_ending_change_rechecks_proven_caller` po změně pouze LF na CRLF označí doloženého callera s přesným lokátorem cíle. Pokrývá i chybějící a neshodný hash lokátoru, běžnou změnu textu a nezávislé resolved volání stejnojmenné metody. `test_schema_dependency_follows_prior_migration_operations` pokrývá předchozí CREATE i novější ALTER pro tentýž sloupec. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje replay Flyway, deklaraci OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
 | T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
 | T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | Fixture vylučuje shodu jména a nesouvisející metodu. Pokrývá chybnou vazbu migrační operace, přímou citaci požadavku s relativní cestou, lidské rozhodnutí s vedlejším údajem o souboru a stabilní CRLF OpenAPI. `test_malformed_stored_compiler_graph_keys_fail_closed_in_public_cli` ověřuje chybný Javac graf v3, `test_changed_source_swapped_to_fifo_is_unavailable` nedostupný zdroj při záměně a `test_feature_record_fifos_do_not_block_or_publish` čtyři FIFO vstupy revize na POSIX. Report zachovává bajty store a sám nespouští proces. Pro úplnou coverage platí samostatná acceptance. |
 | T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |

@@ -209,3 +209,57 @@ python -m pytest -p no:cacheprovider -q --tb=short -ra \
 AC01 zůstává `PARTIAL`. Zápis selektivní invalidace, negativní lookupy a
 cross-workspace projektové vazby mají samostatné ověření. Úplná sada W02,
 review tohoto integračního stromu a GitHub Actions jsou při předání `NOT_RUN`.
+
+## Dříve doložený Javac cíl po změně konců řádků — kroky 3–5, AC01, AC03 a AC04
+
+Výchozí head #130 je `cbf82d9c1b4164589592982d3ffafa4996aee603`.
+Změna LF na CRLF v dříve analyzovaném `Api.java` označila uložený JVM kontext
+při offline ověření jako zastaralý. Report porovnal normalizovaný text a
+vynechal dříve doloženého callera.
+
+`src/kgmaker/graph_provider.py` porovnává i hash z jednoho stabilního čtení
+původních bajtů. Při shodném normalizovaném textu a rozdílných bajtech
+zařadí do stávajícího průchodu přesné identity compiler cílů z již doložených
+vazeb, pokud původní lokátor cíle uvádí přesnou cestu a hash shodný s grafem
+i kontextem. Samotná shoda normalizovaného hashe grafu a kontextu k tomu nestačí.
+Report pro tuto úpravu má prázdné `changed_sources` a označí dotčené
+`COMPILER_CALLER` v `affected` jako `RECHECK`. Používá graph/store v1/v2/v3
+a JSON v1. Použití a hranice jsou v [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02),
+[capability](../stage-content-cache.md#selektivní-dopad-změn),
+[inventáři](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavové matici](../production-analysis-progress.md).
+
+Nový skutečný Javac test ve `tests/test_reverse_dependency_index.py` zachytí
+volání `Api.value` i nezávislé `Other.value`. Mění pouze konce řádků prvního
+cíle. Ověřuje `STALE_INDEX` provideru, původní identitu callera, cíle a call
+site, jediný dotčený výsledek, hash grafu a shodu bajtů store. Varianty s
+chybějícím či neshodným hashem lokátoru vyřazují čistě bajtovou změnu. Běžnou
+změnu normalizovaného textu směrují ke stejnému callerovi všechny tři varianty.
+Offline ověření a report běží se zakázaným spouštěním podprocesů.
+
+Běhy použily JDK/Javac 21.0.6, připravený worker, `PYTHONPATH=src`,
+`KGMAKER_REQUIRE_WORKERS=1` a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short \
+  tests/test_reverse_dependency_index.py::test_actual_javac_line_ending_change_rechecks_proven_caller
+```
+
+- RED na `cbf82d9` má 1 FAIL za 5,39 s kvůli chybějícímu callerovi.
+  JUnit SHA-256 `32ebfdc3d1f8cee6587c288eea046d0c7290ee9659e6d7bcae842245eeb2b480`.
+- Předběžné GREEN s ověřeným lokátorem má 1 PASS / 0 SKIP za 5,21 s.
+  JUnit SHA-256 `a8af7dfcf07664ca6f87d8959c681ff20aec2a126a92212fd923165fcc4d71de`.
+- Předběžné rozšíření bez ověření lokátoru mělo 2 FAIL / 1 DESELECTED
+  za 10,28 s pro `-k 'unknown or mismatched'`. Obě varianty chybně
+  označily callera po čistě bajtové změně. JUnit SHA-256
+  `8766029e4c2f8b86de285e5fa6c9b3e22bb5d8603df7d2cad8edfd7cecc21e2b`.
+- GREEN pro všechny tři varianty po ověření lokátoru má 3 PASS / 0 SKIP
+  za 14,48 s. JUnit SHA-256
+  `6b312ad5b2283f05c46416f047f74a69e4918c9829961529621bd676a7bf68f7`.
+- Širší výběr osmi souborů z předchozího přenosu s `KGMAKER_REQUIRE_K2=1`
+  má 147 PASS / 0 SKIP za 35,47 s. JUnit SHA-256
+  `1818c0f8ac7ce90b92439a98786db8fc1f08ce2e407caee1b748cb40c4aef00e`.
+
+W02-AC01 je `PARTIAL`. Prvotní compiler capture souborů s CRLF, zápis
+selektivní invalidace a negativní lookup vyžadují vlastní kroky. Úplná sada,
+nezávislé review této revize a GitHub Actions mají při předání `NOT_RUN`.

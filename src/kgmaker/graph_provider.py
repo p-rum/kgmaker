@@ -423,9 +423,10 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
     proofs = {item["id"]: item for item in graph.evidence}
     compiler_edges = defaultdict(set)
 
-    def add(path, dependent_path, target, kind, **witness):
+    def add(path, dependent_path, target, kind, *, target_raw_sha256=None, **witness):
         if path in files and dependent_path in files:
             index[path].append({"kind": kind, "id": target, "path": dependent_path,
+                                "target_raw_sha256": target_raw_sha256,
                                 "reason": {"dependency_path": path, "before_sha256": files[path], **witness}})
 
     def realm(node):
@@ -520,8 +521,13 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
         declaration = ids & compiler_edges[(caller_id, site["id"], relation, context_id, caller.path)]
         resolution = ids & compiler_edges[(site["id"], target_id, "resolves_to", context_id, caller.path)]
         if declaration and resolution:
+            target_locator = symbols[target_id]
+            target_raw_sha256 = target_locator.get("sha256")
+            if target_locator.get("path") != target.path or target_raw_sha256 != files[target.path]:
+                target_raw_sha256 = None
             add(target.path, caller.path, caller_id, "COMPILER_CALLER", relation=relation, dependency_id=target_id,
-                call_site_id=site["id"], context_id=context_id, evidence_ids=sorted(declaration | resolution))
+                call_site_id=site["id"], context_id=context_id, evidence_ids=sorted(declaration | resolution),
+                target_raw_sha256=target_raw_sha256)
     return index
 
 
@@ -576,6 +582,10 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
         if before is not None and before != graph_after:
             changed.append({"path": path, "before_sha256": before, "after_sha256": graph_after})
             seeds.add((path, None))
+        elif before is not None and raw_after != before:
+            # A matching compiler locator proves the target's historical raw bytes.
+            seeds.update((path, item["reason"]["dependency_id"])
+                         for item in index.get(path, ()) if item["target_raw_sha256"] == before)
 
     affected = {}
 
