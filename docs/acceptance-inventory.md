@@ -1685,3 +1685,9 @@ odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 
 neplatný cache envelope a původní graph/store schéma v1/v2/v3.
 [Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
 a samostatný úplný gate. Replay HIT se zatím nepovoluje.
+
+## T047-S10 — Záznam ověření z jednoho checkoutu
+
+| Acceptance | Ověření | Důkaz |
+|---|---|---|
+| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Zápis deklarovaného a importovaného výsledku zůstává odlišen. Změny během běhu, změny POSIX režimu souboru, nesoulad dokladu s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. Skutečný Gradle, více checkoutů a širší import zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |

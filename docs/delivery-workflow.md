@@ -187,8 +187,55 @@ Hash řetězce dokládá lokální integritu, není podpis ani ochrana proti př
 
 `trace show` prochází oběma směry. `trace check` odhaluje neaktuální evidence,
 osiřelé objekty, chybějící zadavatele a neúplný řetězec tasku. Zastaralá/odvolaná
-schválení se nezobrazují jako platná. Běh testu evidujte odděleně přes stávající
-`task record --role test_expert`: testgen report zůstává návrhem NOT_RUN.
+schválení se nezobrazují jako platná. Výsledek v `task record --role test_expert`
+zůstává deklarovaný. Testgen report zůstává návrhem NOT_RUN.
+
+### Dokumentace skutečného testovacího běhu
+
+Připravte existující Maven nebo Gradle projekt, jeho exporter a závislosti.
+Použijte kořen jednoho checkoutu s Git commitem a existující task ID
+z tohoto checkoutu.
+
+```bash
+kgmaker project build-plan --root /repo --phase test --offline --output /tmp/plan.json
+kgmaker project build-run --plan /tmp/plan.json --record-verification TASK_ID
+kgmaker trace show REF --root /repo --format json
+```
+
+`REF` je vrácené `verification.reference`. Vrácený stav buildu zůstává stávající
+kontrakt. Výsledek testů je v `verification.result`. PASS vyžaduje úspěšně ukončený
+proces a alespoň jeden vykonaný případ v podporovaném Surefire nebo Gradle JUnit
+XML. Nesoulad mezi chybou procesu a reportem se eviduje jako ERROR. SKIP
+popisuje běh s pouze přeskočenými testy. Prázdná sada nemá PASS. Report musí
+obsahovat právě jeden kořen `testsuite` s konzistentními počty a přímo
+vypsanými jednotlivými případy. Agregovaný `testsuites` vrací neúplné pokrytí.
+
+Doklad typu `test_run` vzniká v existujícím journalu a má relaci `verifies`
+k přesné referenci tasku. Obsahuje čas a Git HEAD před i po běhu, digest všech
+deklarovaných vstupů z existujícího `ALL_BUILD_INPUTS_V1` včetně jejich POSIX režimových
+bitů, hash příkazu, obsahovou identitu skutečně volaného executable
+a kontrolní součty reportů. Vazba `verifies` je omezena na tutéž revizi úlohy. Zaznamenává výsledek i aktuálnost samostatně.
+
+- `CURRENT` vyžaduje shodu původního checkoutu a jeho HEAD před a po testu,
+  shodu úplného inventáře kopie po běhu, shodu aktuálních souborů a stejné reporty
+  s odpovídajícími přepočtenými výsledky.
+- `STALE` označuje neshodu zdrojů či HEAD anebo chybějící či změněný report.
+  Dřívější výsledek v historii zůstává.
+- `UNKNOWN` označuje například nečitelný snapshot, změnu vstupu uvnitř pracovní
+  kopie nebo neúplný report. Sběr limituje počet navštívených položek na
+  20 000 a ukládá nejvýše 100 reportů po maximálně 4 MiB.
+
+`RUNNER_CAPTURED` je lokální pozorování procesu a XML z důvěryhodného checkoutu.
+Import textového souboru zůstává `IMPORTED`. Existující testovací artefakt
+`task record` je `AGENT_DECLARED`. Samotný obsahový hash neověřuje identitu,
+pravdivost XML vytvořeného projektem ani izolaci procesu. Journal ukládá hashe
+a souhrnné počty. Stávající build-run výstupy včetně lokálního build logu
+se řídí původním kontraktem.
+
+Rozsah se omezuje na explicitně inventarizované vstupy jednotlivého checkoutu
+plus zaznamenaný report. Externí závislosti, další Git checkouty, libovolné
+importované testovací reporty a brány T047-S11 vyžadují další práci.
+[Build runner a jeho hranice](compiler-inspection.md#explicitní-lokální-build).
 
 ## Volitelné brány a kompatibilita
 

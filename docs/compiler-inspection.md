@@ -1575,3 +1575,11 @@ there is no store. A Confluence-enabled scan keeps the report and validation ind
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
+
+## Explicitní lokální build
+
+Při plánované fázi `test` lze požádat o navázání výsledku na existující task v
+kořeni Git checkoutu. Přidejte `--record-verification TASK_ID` k `project build-run`.
+Funkce používá jeho existující snapshot a reporty Maven/Gradle. Vypočtený výsledek
+a freshness se čtou pomocí `trace show`.
+[Příklad a omezení dokladu](delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
