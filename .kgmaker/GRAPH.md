@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 547
+- Scope: production; omitted files: 548
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `4b5c39444aaf1af165213dc4a76c6a869eac90c2377ec70e91eb3bde504c7eb6`; content: `b74fdf1d37fec12243916a3936be305d5184b4f41d3df118783160a05d4a5715`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 337
+- Implementation episodes: 338
 - Inferred/ambiguous relationships: 8452/0
 
 ## Architecture diagram
@@ -2357,7 +2357,7 @@ flowchart LR
 - **merge Factory and current main into typed Spring conditions** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/50_expandSpringConditions.md, docs/compiler-inspection.md; validation: integrated-actual=passed, integrated-pure=passed, required-prerequisites=passed
 - **Record Kafka privacy and context compatibility validation** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/54_scopeKafkaBindingIdentity.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: privacy-t006-full-656=passed, actual-k1k2-2=passed, offline-114=passed, optional-10=skipped
 - **Refresh operation-proof graph on final HTTP catalogue parent** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/79_certifyLocalOperations.md, docs/process-paths.md; validation: actual-focus-341=passed, descendant-superset-full-1566=passed, external-prerequisites-10=skipped
-- **Replay normalized process review context with exact bindings** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/147_replayNormalizedProcessContext.md, docs/process-label-packets.md, docs/process-review-store.md; validation: t032-scoped=passed, javac-captured-review=passed, full-suite=unknown
+- **Replay normalized process review context with exact bindings** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/147_replayNormalizedProcessContext.md, docs/process-label-packets.md, docs/process-review-store.md; validation: t032-scoped=passed, javac-captured-review=passed, full-suite=unknown
 - **Integrate current governance and preserve T046 step history (S04)** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md, docs/changes/58_addExistingFunctionTests.md; validation: targeted-tests=passed
 - **Merge commit 'ec333966e657896382f310ef018835e3d696513e' into feat/t003-s07-01-argument-parameter-flow** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/52_bindArgumentParameterFlow.md, docs/compiler-inspection.md; validation: combined_focused=passed, combined_strict_full=passed, optional_toolchain_gates=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed
@@ -2583,6 +2583,7 @@ flowchart LR
 - **Merge HTTP catalog parent and preserve factory acceptance workflow** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: integration=passed
 - **Change 2 passed, 36 passed, 379 passed, 9 skipped in 144.12s (final suite after canonical JPA package guard)** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: Full pytest 379 pass 9 skip=passed, Actual Javac AC06 and K2 JPA=passed, Semantic validate=passed, kgmaker check=passed, review_registry=passed
 - **fix: redact credentials in unsupported URI inputs** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/56_classifyHttpClientExecution.md; validation: focused_113=passed, full_646_skip10=passed, k1_k2_build=passed, uri_privacy=passed, semantic=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/156_restorePinnedK2Download.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: clean-k2-fetch=passed, pinned-k2-build=passed, k2-test-scope=passed, github-actions=unknown, full-suite=unknown
 - **fix(T003-S06-W05): preserve contextual entity identifiers** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/116_parseExtendedJpqlHql.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: bounded-jpql=passed, actual-javac=passed, full-pytest=failed
 - **Add bounded compiler-derived Spring import selections** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/42_resolveBoundedSpringImports.md, docs/compiler-inspection.md; validation: full402=passed, actualSpringK1K2=passed, apiGuards=passed, tsContextCompatibility=passed, optionalBuilds9=skipped
 - **merge: integrate reviewed Criteria main into T029 membership fix** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/130_projectProcessFailures.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: report-main-integration=passed, semantic-union=passed, full-suite=skipped

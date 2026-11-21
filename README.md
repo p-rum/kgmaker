@@ -340,6 +340,8 @@ with `python -m pytest -q tests/test_mandatory_worker_ci.py`: an absent worker,
 JDK or mixed fixture fails a required gate and skips an optional local gate,
 without starting a process. The separate exporter job requires actual Maven and
 Gradle exports. Exploratory tests needing a second JDK remain optional.
+Explicit K2 setup fetches the pinned Analysis API 2.1.10 JARs from JetBrains
+Packages. See the separate download and build commands in the [worker setup example](docs/compiler-inspection.md#t003-s04-w01--explicitní-k2-analysis-api).
 
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without

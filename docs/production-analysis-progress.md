@@ -643,6 +643,12 @@ kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný whee
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
 
+Po dvou selháních DNS v hostovaném `compiler-workers` je pro 2.1.10 ověřeno
+explicitní stažení osmi připnutých JARů z JetBrains Packages a Maven Central
+a skutečný lokální build K2. Cílené kontroly mají 51 PASS / 0 SKIP.
+Ověření nové adresy na GitHub Actions čeká.
+[Change 156](changes/156_restorePinnedK2Download.md).
+
 K2 source CFG, constructor ABI, širší Kotlin annotation/framework metadata,
 property/operator/reference/initializer call sites a local/lambda execution nejsou
 dodány; konkrétní diagnostiky zachovávají PARTIAL. Kotlin JPA use-site annotation

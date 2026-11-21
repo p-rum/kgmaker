@@ -545,6 +545,11 @@ Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
 | AC03 | Unsupported version/config rejected before processes; missing/ambiguous unresolved; no implicit K1 fallback, strict no-mutation | `test_unsupported_backend_or_version_never_runs_or_mutates`, `test_unsupported_captured_k2_options_are_not_silently_ignored`, `test_unresolved_and_ambiguous_k2_calls_remain_partial`, `test_direct_worker_rejects_unsupported_version_and_backend`, `test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph`, `test_explicit_k2_fetch_rejects_wrong_bytes_without_publishing` |
 | AC04 | Actual pinned K2/JDK fixture, honest PARTIAL boundaries | [change note35](changes/35_addK2AnalysisBackend.md), `tests/test_k2_backend.py`, required compiler CI K2 gate |
 
+Obnovení explicitní přípravy K2 (2026-11-21) ověřilo osm připnutých JARů
+a skutečný build K2 v Cloud Environmentu. K2 a kontroly předpokladů CI mají
+51 PASS / 0 SKIP. Hostovaný běh pro novou adresu má stav NOT_RUN.
+[Change 156](changes/156_restorePinnedK2Download.md).
+
 T003-AC04/S04 není tím uzavřen. K2 CFG, property/lambda execution, default-body
 a coroutine source mapping, další compiler verze a širší corpus zůstávají samostatné.
 
