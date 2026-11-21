@@ -43,12 +43,20 @@ CAS requires the exact predecessor `head` (None for empty), payload hash and bas
 hash. Operation IDs bind reviewer/action/payload/baseline/predecessor. Exact retries
 return the immutable receipt without rewriting bytes/mtime; historical retries
 have `is_current=False`. Reusing an operation ID differently is an error.
+An invalid candidate or stale predecessor against an empty store fails before
+coordination state is created.
 
 Reads rederive the current packet with saved validated budgets. A changed explicit
 baseline, document/conflict capture, rule, source context or technical/presentation
 content gives `NEEDS_REVALIDATION` and no active labels; the historical APPROVE stays
 readable. Another scope has a different namespace. Explicit snapshots do not prove
 physical freshness of a separately changing checkout.
+
+A stored selection preserves each `coverage_binding` and `diagnostics_binding`
+as an exact SHA-256 reference to its capture. Review validates the normalized
+fields during admission and replay. A matching packet hash with inconsistent
+identity or input binding fails as `INVALID_STORE` before labels can be activated.
+This applies to composed HTTP and asynchronous ProcessViews as well as local ones.
 
 Storage is a single authoritative JSON under `.kgmaker/process-reviews`, named by
 a hash of exact process ID and scope. Format1 caps history at128 entries and encoded
