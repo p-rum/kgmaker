@@ -471,6 +471,12 @@ def test_xml_input_capture_detects_default_appearance_deletion_and_symlink_retar
     (root / "META-INF/orm.xml").symlink_to("b.xml")
     second_link = jpa_xml_input_snapshot(root, selected)
     assert first_link != second_link
+    (root / "META-INF/orm.xml").unlink()
+    broken_target = root / "META-INF/absent.xml"
+    (root / "META-INF/orm.xml").symlink_to(broken_target.name)
+    dangling = jpa_xml_input_snapshot(root, selected)
+    assert {"path": "META-INF/orm.xml", "status": "missing",
+            "resolved": str(broken_target.resolve())} in dangling["inputs"]
 
 
 def test_legacy_jvm_context_is_readable_without_xml_and_stale_with_xml(tmp_path):
@@ -524,7 +530,9 @@ def test_external_persistence_descriptor_symlink_is_captured_as_invalid(tmp_path
 
 def test_looped_persistence_descriptor_symlink_is_captured_without_exception(tmp_path):
     from kgmaker.framework import _safe_jpa_xml
+    from kgmaker.graph_provider import validate_context_snapshot
     from kgmaker.inspection import jpa_xml_input_snapshot
+    from kgmaker.worker_protocol import WorkerError
     (tmp_path / "META-INF").mkdir()
     first = tmp_path / "loop-a.xml"
     second = tmp_path / "loop-b.xml"
@@ -538,6 +546,10 @@ def test_looped_persistence_descriptor_symlink_is_captured_without_exception(tmp
     assert document is None and error["code"] == "ORM_XML_FILE_INVALID"
     captured = jpa_xml_input_snapshot(tmp_path, {"language": "jvm", "persistence_unit": "orders"})
     assert next(item for item in captured["inputs"] if item["path"] == "META-INF/persistence.xml")["status"] == "invalid"
+    legacy = {"language": "jvm", "scope": "production", "source_snapshot_version": "selected-source-set-1",
+              "source_files": {}, "worker": {}}
+    with pytest.raises(WorkerError, match="uncaptured persistence XML"):
+        validate_context_snapshot(tmp_path, legacy)
 
 
 def test_entity_override_does_not_delete_sibling_inherited_xml_column(tmp_path):

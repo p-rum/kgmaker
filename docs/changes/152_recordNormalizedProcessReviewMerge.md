@@ -100,3 +100,17 @@ ověření se skutečnými vstupy více repozitářů. [T034](../tasks/T-034_add
   `git diff --check` a `git diff --cached --check`.
 - Úplná sada pro samotnou dokumentační změnu je NOT_RUN. Zdroj, testy,
   schémata a nainstalované instrukce odpovídají sloučenému #132.
+
+### Přenos #137 po integraci oprav CI
+
+Dokumentační revize `1705305922c48551fd780139fd3cf8414920b2db` přebírá
+nový `main` `024334a22f4269fa5cbc720b73e429688069464c` s tree
+`f877aecde09278020ab2a8b507360486fc699c55`. Tento základ obsahuje opravy CI
+ze společné integrace. Přenos zachovává doklady obou větví a znovu ověřuje
+inventář T032 a návaznost T034. [Sloučené #142](https://github.com/p-rum/kgmaker/pull/142)
+
+- PASS — `PYTHONPATH=src python -m pytest -p no:cacheprovider --assert=plain -q --tb=short tests/test_completion.py tests/test_t032_persist_process_review.py`.
+  50 PASS / 0 SKIP. Ověřený kontrakt T032 zahrnuje explicitní POSIX review.
+- PASS — `kgmaker completion plan --jobs 3` vrací pro T032 stav
+  `MERGED / VERIFIED_IN_SCOPE` a akci `none`. Čtecí krok T034 má stav
+  `PLANNED / NOT_RUN` a akci `implement`.
