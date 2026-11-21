@@ -112,3 +112,32 @@ odmítnuté přechody zachovaly bajty tasku a journalu. První pokus se zastavil
 na omezení lokálních socketů Gradle. Druhý pokus zpřístupnil sockety a Gradle
 zůstal v offline režimu. SHA-256 souhrnu je
 `a6428039a87190078883cb367a84a6c9b1edc3a9743117077dcb1b41799b2a2f`.
+
+## Oprava po nezávislém review kandidáta `2b4b558`
+
+Prázdný Git commit během závěrečného výpočtu otisku mohl změnit HEAD při
+stejných souborech a stejném Git tree. Předchozí kontrola porovnala HEAD před
+výpočtem a přijala dřívější hodnotu. Opakované čtení po úspěšném otisku v
+`verification.py` ověřuje, že obě pozorování HEAD souhlasí. Rozdílný HEAD
+vrací `STALE`. Chybějící nebo nečitelný HEAD vrací `UNKNOWN`.
+
+Regrese `test_done_rechecks_head_after_final_input_snapshot` provede skutečný
+`git commit --allow-empty` během druhého snapshotu. Ověřuje odlišné SHA HEAD,
+shodné Git tree, obsah i POSIX režimy úplného inventáře, odmítnutí v
+`advance_task` a `save_task` a shodný obsah úlohy i journalu. Na přesném
+`2b4b5583a5b37d0493e9151b0bce3fc66f7cfccc` oba vstupy chybně dokončily úlohu.
+Zůstávají pokryty také editace při čtení XML a společné pozorování v trace.
+Kontrola sleduje Git a soubory projektu při zápisu. Ostatní zapisovače do
+checkoutu mohou běžet mimo zámek workflow.
+
+Výběr `tests/test_verification_records.py -k 'rechecks_head_after_final'`
+na výchozím commitu zaznamenal dvě očekávaná selhání. SHA-256 jeho JUnit je
+`f301f3cb56c8e04cd4c7f540c181e3817cc694edd3c13a8aa8e8d34f94e88dbc`.
+Po opravě pět cílených scénářů (`rechecks_head_after_final`,
+`rechecks_inputs_after` a `shares_its_single`) prošlo s JUnit SHA-256
+`372b65773fff3be72a191aacc1447c695665002890bb5d10478551dc2927da2e`.
+Stejný osmisouborový výběr se skutečným Surefire a Maven 3.9.9 na JDK 21 má
+179 PASS, 0 SKIP, 0 FAIL a 0 ERROR. SHA-256 JUnit je
+`f203861e67b0c308e85c4dee92e6cddb97e065a1ce68ed6bbab22da67c996f6d`.
+Vstupní i výstupní manifest změněných zdrojů a testů má shodný SHA-256
+`e7a15dfe2b0ecc4b85bbd9650a2d68e05da0b42bb339303d0a22e798a2597689`.

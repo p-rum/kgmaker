@@ -363,6 +363,52 @@ def test_done_rechecks_inputs_after_bound_report_validation(fixture, entrypoint)
     assert traced(fixture, receipt)['freshness'] == 'STALE'
 
 
+@pytest.mark.parametrize('entrypoint', ['advance', 'save'])
+def test_done_rechecks_head_after_final_input_snapshot(fixture, entrypoint):
+    from kgmaker.build_runner import snapshot
+    from kgmaker.verification import input_fingerprint
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    task = move(root, task, 'review')
+    task_file = task_path(root, task['id'])
+    journal = root / provenance.JOURNAL
+    saved = task_file.read_bytes(), journal.read_bytes()
+    git = ['git', '-C', str(root)]
+    original_head = subprocess.check_output([*git, 'rev-parse', 'HEAD'])
+    original_tree = subprocess.check_output([*git, 'rev-parse', 'HEAD^{tree}'])
+    original_sources = snapshot(root)
+    original_digest = input_fingerprint(root, original_sources)
+    observations = 0
+
+    def snapshot_with_head_move(checkout_root):
+        nonlocal observations
+        sources = snapshot(checkout_root)
+        observations += 1
+        if observations == 2:
+            subprocess.run([*git, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test',
+                            'commit', '--allow-empty', '-qm', 'Move HEAD during final snapshot'], check=True)
+        return sources
+
+    with patch('kgmaker.build_runner.snapshot', side_effect=snapshot_with_head_move), \
+            pytest.raises(WorkflowError, match='STALE_RUN'):
+        if entrypoint == 'advance':
+            advance_task(root, task['id'], 'done')
+        else:
+            save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+
+    assert observations == 2
+    assert subprocess.check_output([*git, 'rev-parse', 'HEAD']) != original_head
+    assert subprocess.check_output([*git, 'rev-parse', 'HEAD^{tree}']) == original_tree
+    assert snapshot(root) == original_sources
+    assert input_fingerprint(root, original_sources) == original_digest
+    assert (task_file.read_bytes(), journal.read_bytes()) == saved
+    assert traced(fixture, receipt)['freshness'] == 'STALE'
+
+
 def test_trace_shares_its_single_receipt_observation_with_task_summary(fixture):
     root, task, _, _ = fixture
     task = move(root, task, 'analyze', 'plan', 'implement', 'test')

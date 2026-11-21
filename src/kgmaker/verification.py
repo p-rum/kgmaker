@@ -244,9 +244,12 @@ def _input_freshness(root, observed):
             return 'UNKNOWN'
         if head != observed['head'] or input_fingerprint(root, snapshot(root)) != observed['inputs_sha256']:
             return 'STALE'
+        final_head = _git_head(root)
     except (AnalysisError, OSError):
         return 'UNKNOWN'
-    return 'CURRENT'
+    if final_head is None:
+        return 'UNKNOWN'
+    return 'CURRENT' if final_head == head else 'STALE'
 
 
 def freshness(root, record):
