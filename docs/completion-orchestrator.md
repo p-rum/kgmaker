@@ -12,6 +12,7 @@ kgmaker task list --root /path/to/item-worktree
 kgmaker task show "$KGMAKER_TASK_ID" --root /path/to/item-worktree
 kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree
 kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree --apply
+kgmaker completion handoff "$KGMAKER_TASK_ID" --root /path/to/item-worktree --apply --token-budget 12000
 kgmaker completion attribute "$KGMAKER_TASK_ID" "$ARTIFACT_ID" --actor "$HOST_AGENT_ID" --root /path/to/item-worktree
 ```
 
@@ -26,7 +27,10 @@ Známý FAIL má přednost a blokuje přímé i nepřímé závislé položky. P
 
 `completion handoff` je určený pro profilované úlohy. Bez `--apply` čte stav a
 vrací náhled. S `--apply` uloží nejvýše jeden přechod a standardní packet pro
-vrácenou roli. Po selhání testu nebo `REQUEST_CHANGES` vrátí `feedback` s původními
+vrácenou roli. Při chybě `token budget cannot fit required workflow context`
+použij vyšší `--token-budget` pro přípravu tohoto packetu. Rozpočet profilu
+zůstává stejný. Existující platný společný review packet se použije znovu
+v původním rozsahu. Po selhání testu nebo `REQUEST_CHANGES` vrátí `feedback` s původními
 nálezy do implementace, pokud platí source fingerprint a zbývá další iterace.
 Při souběžné změně úlohy nebo zdroje je potřeba načíst aktuální stav. Příkaz
 nevykonává validační příkazy a schválenou úlohu ponechá pro explicitní T045
@@ -56,3 +60,4 @@ Po přerušení vyhledej worktree a v něm existující task ID. Před pokračov
 načti jeho stav, přepočítej plán pro aktuální inventář a ověř zdrojovou revizi.
 Po integraci aktualizuj existující stavové dokumenty skutečnými výsledky.
 [První běh a neověřené kroky](changes/134_addCompletionOrchestrator.md).
+[Obnova dlouhého kontextu](changes/148_resumeCompletionPacketBudget.md).

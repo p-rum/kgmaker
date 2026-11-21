@@ -3,10 +3,10 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 545
+- Scope: production; omitted files: 546
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `0baeec13cf5a3d0741fc15ecffe1c065dd51312b716c40f73f92320aa677fb08`; content: `f62c04791ad4b0588d1e5687ffd08b6c9f90f0b92b9fa3816a385da2a17555ea`; freshness: CONTENT_VERIFIED
+- Context: `ee28e9eefb9a78e7e8585ad1a996ec6a4e5122e129bf32f159f64dd5161fb541`; content: `18042b4dc5f0661d26f096bfa0ef49246dbd8ef27509a6db4070fdee44f1fe53`; freshness: CONTENT_VERIFIED
 - Files indexed: 106
 - Symbols and sections: 1495
 - Internal imports: 457
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 334
+- Implementation episodes: 335
 - Inferred/ambiguous relationships: 8450/0
 
 ## Architecture diagram
@@ -876,7 +876,7 @@ flowchart LR
 - **function** `_prior_failure` line 58 — `_prior_failure(journal, task, iteration)`
 - **function** `_next` line 68 — `_next(root, task, review_state, journal)`
 - **function** `_review_packet` line 121 — `_review_packet(root, task, reviews)`
-- **function** `handoff` line 129 — `handoff(root: Path, task_id: str, *, apply: bool = False)`
+- **function** `handoff` line 129 — `handoff(root: Path, task_id: str, *, apply: bool = False, token_budget: int | None = None)`
 - **function** `_run` line 178 — `_run(args)`
 - **function** `register` line 182 — `register(commands)`
 
@@ -2317,6 +2317,7 @@ flowchart LR
 
 - **feat: map bounded coroutine source boundaries and continuations** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/51_mapCoroutineSourceBoundaries.md, docs/compiler-inspection.md; validation: combined_build_focus=unknown, combined_full=unknown
 - **feat(t033): catalog explicit current and historical process snapshots** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/96_catalogBusinessProcesses.md, docs/process-catalog.md, docs/production-analysis-progress.md; validation: pure306=passed, compiler94=unknown, source_review=unknown, strict_full=unknown
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/148_resumeCompletionPacketBudget.md, docs/completion-orchestrator.md, docs/production-analysis-progress.md; validation: none
 - **Integrate Windows main with bounded Spring imports** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/42_resolveBoundedSpringImports.md, docs/compiler-inspection.md; validation: integration38=passed, actualSpring24=passed, sourceIdentity=passed, semantic=passed, graphCheck=passed
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest193=passed, kotlin-operator-cfg=passed, jvm-construction-matrix=passed
 - **merge verified T016 main into T017 bounded topology filtering** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/97_filterTopologyScope.md, docs/production-analysis-progress.md, docs/tasks/README.md; validation: accepted2dfOwn33=passed, current2504IDSourceTransfer=passed, newCurrentHeadFull=unknown, architectFinalPairReview=unknown, secondIndependentFinalReview=unknown
