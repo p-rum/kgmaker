@@ -567,3 +567,49 @@ vlastní acceptance v navazujících krocích.
   `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
 - NOT_RUN — úplná projektová sada, nezávislé review této revize,
   GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — ověření po integraci #142
+
+Lokální cold-delete kandidát má revizi
+`8ba2f14f930817c49519ed0641d2dd2ca254ea1a`. Ověřovaný přenos zahrnuje nový
+`main` `024334a22f4269fa5cbc720b73e429688069464c` se stromem
+`f877aecde09278020ab2a8b507360486fc699c55`. [Sloučené opravy CI](https://github.com/p-rum/kgmaker/pull/142).
+
+S [novým testem](../../tests/test_incremental_equivalence.py) a celou fixture
+souhlasí přesné bloby z `8ba2f14`. S novým `main` souhlasí všech pět
+zdrojových, testovacích a workflow souborů z #142. Tři aktualizované
+citace na `inspection.py` pocházejí z nového `main` a odpovídají řádkům
+538, 619 a 625. Unie dokladů obou rodičů obsahuje 350 shodných původních
+epizod podle jejich ID a obsahu. T047-AC01 zůstává PARTIAL.
+
+Zopakoval jsem oba výběry se stejným JDK/Javac 21.0.6, Kotlinem 2.1.10
+K1 a K2, Node 24.22.3, TypeScriptem 5.7.3, offline Gradlem 8.13 a
+proměnnými prostředí z předchozí sekce. Artefakty mají nový prefix.
+
+```bash
+kg_evidence=/workspace/kgmaker-evidence/t047-cold-delete-after142
+/workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  --basetemp "$kg_evidence-focus-pytest" --junitxml="$kg_evidence-focus.xml" \
+  tests/test_incremental_equivalence.py \
+  -k 'deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset'
+/workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+  --basetemp "$kg_evidence-strict-pytest" --junitxml="$kg_evidence-strict.xml" \
+  tests/test_incremental_equivalence.py tests/test_workspace.py \
+  tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+```
+
+- PASS — cíleně 4 PASS, 0 SKIP a 13 DESELECTED za 17,92 s. Samostatný
+  `focus_pytest_exit=0` a SHA-256 JUnit
+  `1d620b428682b4af1ecf01dd43a1c3ccabeddf2d2ed555a2f5fb9ced1b06d5ec`.
+- PASS — 133 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  157,78 s. Samostatný `strict_pytest_exit=0` a SHA-256 JUnit
+  `f99242ae038e9fa42a2c34e01203a697e53e3da0044d03fa83e634934f5d0872`.
+- PASS — `after_manifest_exit=0`, `manifest_compare_exit=0`. SHA-256
+  shodných manifestů zdrojů, testů, fixture, JVM JARů a launcherů
+  `585c417ad9874dd0491cde5a92ac77bb16551e0b75070c93dc3563b710babb63`.
+- Strukturu ověřují `kgmaker semantic update --base MERGE_HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base MERGE_HEAD`, `kgmaker scan`,
+  `kgmaker status`, `kgmaker check` a `git diff --cached --check MERGE_HEAD`.
+- NOT_RUN — úplná projektová sada, nezávislé review tohoto přenosu,
+  GitHub Actions a Windows.
