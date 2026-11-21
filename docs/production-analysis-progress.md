@@ -97,15 +97,14 @@ sloučených funkcí. SPECIFICATION je stav zadání a zůstává oddělený od 
 
 | Skupina | MERGED | PLANNED | PR_OPEN | Celkem |
 |---|---:|---:|---:|---:|
-| T003 work packages | 48 | 12 | 0 | 60 |
-| T004 / T005–T044 | 28 | 11 | 1 | 40 |
+| T003 work packages | 49 | 11 | 0 | 60 |
+| T004 / T005–T044 | 29 | 11 | 0 | 40 |
 | T046 etapy | 6 | 0 | 0 | 6 |
-| T047 kroky | 0 | 12 | 1 | 13 |
-| Celkem (včetně sdílených kontraktů T047) | 82 | 35 | 2 | 119 |
+| T047 kroky | 1 | 11 | 1 | 13 |
+| Celkem (včetně sdílených kontraktů T047) | 85 | 33 | 1 | 119 |
 
-T003/T004 mají podle níže uvedených atomických řádků 24 položek bez sloučené
-dodávky: 23 PLANNED a 1 PR_OPEN. W09 a S09-W05 jsou MERGED; tento součet je inventář
-řádků, nikoli nové nezávislé ověření všech dodávek.
+T003/T004 mají podle níže uvedených atomických řádků 22 položek v `PLANNED`.
+W09 a S09-W05 jsou `MERGED`. Součet vyjadřuje evidovaný stav dodání.
 T047 není dalších 13 nezávislých
 implementací; sloupec omezení určuje upstream vlastníky. `PARTIAL` znamená nalezený
 kód/testy a historicky doložený subset; celý dnešní rozsah nebyl znovu spuštěn.
@@ -240,7 +239,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T047-S07](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/framework.py](../src/kgmaker/framework.py), [src/kgmaker/spring_beans.py](../src/kgmaker/spring_beans.py) | — | Upstream owner: T047-S07; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S08](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/context.py](../src/kgmaker/context.py), [src/kgmaker/feature.py](../src/kgmaker/feature.py) | — | Upstream owner: T047-S08; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S09](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/contract_inputs.py](../src/kgmaker/contract_inputs.py), [src/kgmaker/interfaces.py](../src/kgmaker/interfaces.py) | — | Upstream owner: T047-S09 + T037; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
-| [T047-S10](tasks/47_addReliableIncrementalContext.md) | PR_OPEN | PARTIAL | `e155cbdc7e5d708920d7632df7bd1ee792d8ebc8` | [capture](../src/kgmaker/verification.py), [runner](../src/kgmaker/build_runner.py), [journal](../src/kgmaker/provenance.py), [test](../tests/test_verification_records.py) | [#135](https://github.com/p-rum/kgmaker/pull/135) | Doklad explicitního Maven/Gradle testu v jednom checkoutu. Místní integrace po #142 a #137 má 133 cílených PASS / 2 SKIP včetně skutečného Maven/Surefire PASS → STALE → FAIL a odmítnutí zápisu dokladu z workspace před spuštěním buildu. T032 a plánovač mají 50 PASS. Doklad přes více checkoutů, nezávislý import a plná matice zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |
+| [T047-S10](tasks/47_addReliableIncrementalContext.md) | MERGED | PARTIAL | `52af545bfc97396a0001432abc5d58ab7c3663af` | [capture](../src/kgmaker/verification.py), [runner](../src/kgmaker/build_runner.py), [journal](../src/kgmaker/provenance.py), [test](../tests/test_verification_records.py) | [#135](https://github.com/p-rum/kgmaker/pull/135) | Souborově vázaný doklad explicitního Maven/Gradle testu v jednom checkoutu. Ověřený head má 133 cílených PASS / 2 SKIP a merge má 27 PASS / 0 SKIP v sadě dokladů se skutečným Maven/Surefire. Workspace se dvěma checkouty vrací chybu před spuštěním buildu. Vícerepozitářový doklad, ověřitelné importy a širší ověřovací matice zůstávají otevřené. T047-S11 má samostatnou acceptance. [Change158](changes/158_recordFileBoundVerificationMerge.md). |
 | [T047-S11](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/workflow.py](../src/kgmaker/workflow.py), [src/kgmaker/context.py](../src/kgmaker/context.py) | — | Upstream owner: T047-S11 + T046-S05/S06; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S12](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/cli.py](../src/kgmaker/cli.py), [src/kgmaker/feature_cli.py](../src/kgmaker/feature_cli.py) | — | Upstream owner: T047-S12; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
 | [T047-S13](tasks/47_addReliableIncrementalContext.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Upstream owner: T047-S13 + T003-S11; sdílené části se nepočítají znovu. Splnit explicitní Depends on a původní AC; nevytvářet paralelní infrastrukturu. |
