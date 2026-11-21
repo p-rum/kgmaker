@@ -19,14 +19,15 @@ from .analysis_agent import ANALYST_FILE, ANALYST_CONTENT, JUNIE_FILE, JUNIE_CON
 from .context import DEFAULT_TOKEN_BUDGET as DEFAULT_CONTEXT_TOKEN_BUDGET, prepare_task_packet
 from .data_agent import DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT, DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT
 from .confluence import (
+    CONFLUENCE_CACHE_FILE,
     DEFAULT_REPORT_FILE,
     documentation_check,
     ingest_export,
     merge_into_graph,
-    render_report,
+    report_text,
     resolve_confluence_dir,
-    persist_validation_index,
     validate_documents,
+    validation_index_text,
 )
 from .scanner import scan_repository
 from .memory import CaptureError, build_capture_episode, parse_validations, recall
@@ -47,6 +48,10 @@ from .semantic import (
     validate_semantic_data,
 )
 from .store import (
+    GRAPH_FILE,
+    PUBLICATION_LOCK,
+    GraphPublicationConflict,
+    graph_revision,
     query_nodes,
     MARKDOWN_FILE,
     MERMAID_FILE,
@@ -312,20 +317,37 @@ def init(root: Path, force: bool = False) -> int:
 
 def scan(root: Path, generate_docs: bool = True, confluence_dir: str | None = None, report: str | None = None) -> int:
     from .feature import current_graph
+    previous = graph_revision(root)
     graph, semantic_counts, semantic_error = current_graph(root)
     export_root = resolve_confluence_dir(root, confluence_dir)
+    side_outputs = ()
     if export_root is not None:
-        documents, attachments, _ = ingest_export(export_root, root)
-        assertions = validate_documents(documents, graph)
-        persist_validation_index(root, assertions)
-        graph = merge_into_graph(graph, documents, attachments, assertions)
         report_path = Path(report or DEFAULT_REPORT_FILE)
         if not report_path.is_absolute():
             report_path = root / report_path
-        render_report(assertions, report_path, export_root)
+        reserved = (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, PUBLICATION_LOCK, CONFLUENCE_CACHE_FILE)
+        report_target = report_path.resolve()
+        if any(report_target.is_relative_to(path) or path.is_relative_to(report_target)
+               for path in ((root / value).resolve() for value in reserved)):
+            print("Confluence report path overlaps KGMAKER graph state", file=sys.stderr)
+            return 2
+        documents, attachments, cache = ingest_export(export_root, root, persist_cache=False)
+        assertions = validate_documents(documents, graph)
+        graph = merge_into_graph(graph, documents, attachments, assertions)
+
+        side_outputs = ((report_path.absolute(), report_text(assertions, export_root)),
+                        (CONFLUENCE_CACHE_FILE, validation_index_text(assertions, cache)))
+
+    try:
+        graph_path, markdown_path = save_graph(graph, root, generate_docs=generate_docs,
+                                               expected_revision=previous,
+                                               side_outputs=side_outputs)
+    except GraphPublicationConflict as error:
+        print(str(error), file=sys.stderr)
+        return error.code
+    if export_root is not None:
         report_label = report_path.relative_to(root) if report_path.is_relative_to(root) else report_path
         print(f"Confluence: {len(documents)} pages, {len(attachments)} attachments, report {report_label}")
-    graph_path, markdown_path = save_graph(graph, root, generate_docs=generate_docs)
     file_count = sum(node.kind == "file" for node in graph.nodes)
     symbol_count = len(graph.nodes) - file_count
     print(f"Indexed {file_count} files, {symbol_count} declarations/sections, and {len(graph.edges)} relationships.")
@@ -881,10 +903,11 @@ def hook_context(root: Path, token_budget: int | None = None) -> int:
         if token_budget is not None and (isinstance(token_budget, bool) or not isinstance(token_budget, int) or token_budget < 1):
             raise ValueError("token budget must be a positive integer")
         from .feature import current_graph
+        previous = graph_revision(root)
         graph, _, semantic_error = current_graph(root)
         if semantic_error:
             print(f"kgmaker omitted stale semantic entries: {semantic_error}", file=sys.stderr)
-        save_graph(graph, root)
+        save_graph(graph, root, expected_revision=previous)
         context_limit = max(80, token_budget * CHARS_PER_TOKEN_ESTIMATE) if token_budget else 8_000
         context = render_bootstrap(graph, limit=context_limit)
         sys.stdout.write(json.dumps({"additionalContext": context}, ensure_ascii=False) + "\n")

@@ -75,16 +75,20 @@ def schema_command(args):
 
 def workspace_command(args):
     from .workspace import snapshot_workspace
-    from .store import save_graph, load_graph, query_nodes
+    from .store import graph_revision, save_graph, load_graph, query_nodes
     from .dataflow import impact_paths
     try:
         command = args.command
-        baseline, coverage, sources, graph, metadata = snapshot_workspace(args.workspace, cache_root=args.root.resolve(),
+        root = args.root.resolve()
+        publishes = command in {'scan', 'build', 'update', 'docs'}
+        previous = graph_revision(root) if publishes else None
+        baseline, coverage, sources, graph, metadata = snapshot_workspace(args.workspace, cache_root=root,
                                                                           persist_cache=command in {'scan', 'build', 'update'})
-        if command in {'scan', 'build', 'update', 'docs'}:
+        if publishes:
             if command == 'docs' and (args.confluence_dir or args.action):
                 raise AnalysisError('Workspace docs renders federated graph only; Confluence checks are per-repo')
-            save_graph(graph, args.root.resolve(), generate_docs=not getattr(args, 'no_docs', False))
+            save_graph(graph, root, generate_docs=not getattr(args, 'no_docs', False),
+                       expected_revision=previous)
             result = {'baseline': baseline, 'coverage': coverage, 'output_root': str(args.root.resolve())}
         elif command == 'status':
             old = load_graph(args.root.resolve())

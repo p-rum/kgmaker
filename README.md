@@ -288,6 +288,8 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
 current task inventory and emits dependency, verification and dispatch candidates as JSON.
 The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
+If the profile budget cannot fit the required context, retry that handoff with
+`kgmaker completion handoff TASK_ID --apply --token-budget 12000`.
 Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
 to record the implementer and each independent reviewer's local attribution.
 See [the local completion workflow and its limits](docs/completion-orchestrator.md).
@@ -1230,6 +1232,12 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Graph publication reserves the checkout before writing and rejects a stale
+candidate if a newer graph was published during capture, import or migration.
+A Confluence-enabled scan stages its report and validation index with the graph.
+A failed graph replacement restores both outputs. A runtime import with an
+explicit graph object requires it to match the stored generation, when present.
+Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
 

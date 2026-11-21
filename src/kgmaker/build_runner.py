@@ -242,8 +242,11 @@ def run_plan(plan: dict, *, cancel_file: Path | None=None) -> dict:
     if selected:
         current_path=env.get('PATH','')
         env['PATH']=str(Path(selected['java_home'])/'bin')+(os.pathsep+current_path if current_path else '')
-    if run.exists():raise AnalysisError('BuildPlan already executed; create a new plan')
-    work.mkdir(parents=True)
+    try:
+        run.mkdir(parents=True)
+    except FileExistsError as error:
+        raise AnalysisError('BuildPlan already executed; create a new plan') from error
+    work.mkdir()
     for relative,expected_hash in plan['snapshot']['sources'].items():
         source=safe_path(root,relative);target=safe_path(work,relative);target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,target)
         if file_hash(target)!=expected_hash:raise AnalysisError('Mixed snapshot during copy',3)

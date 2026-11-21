@@ -178,7 +178,7 @@ def test_resumed_parallel_review_reuses_the_first_source_bound_packet(tmp_path):
     attribute(tmp_path, task['id'], task['artifacts'][-1]['id'], 'correctness-agent')
     before = _files(tmp_path)
     for apply in (False, True):
-        pending = coordinator.handoff(tmp_path, task['id'], apply=apply)
+        pending = coordinator.handoff(tmp_path, task['id'], apply=apply, token_budget=8000)
         assert pending['reviews']['pending'] == ['steelman']
         assert pending['packet'] == original and _files(tmp_path) == before
     task = _record(tmp_path, task, disposition='steelman', packet_id=original['packet_id'])
@@ -361,6 +361,20 @@ def test_packet_budget_failure_leaves_phase_intact(tmp_path):
     with pytest.raises(ContextError, match='token budget'):
         coordinator.handoff(tmp_path, task['id'], apply=True)
     assert _files(tmp_path) == before
+
+    parser = ArgumentParser()
+    coordinator.register(parser.add_subparsers(required=True))
+    args = parser.parse_args(['handoff', task['id'], '--root', str(tmp_path),
+                              '--token-budget', '8000'])
+    draft = args.handler(args)
+    assert draft['packet']['token_budget'] == 8000 and _files(tmp_path) == before
+
+    args.apply = True
+    applied = args.handler(args)
+    assert applied['packet'] == draft['packet']
+    current = load_task(tmp_path, task['id'])
+    assert current['status'] == 'analyze' and current['workflow'] == task['workflow']
+    assert read_json(packet_path(tmp_path, current, 'architect', 0)) == applied['packet']
 
 
 def test_competing_test_artifact_prevents_retry_on_superseded_failure(tmp_path, monkeypatch):
