@@ -23,6 +23,7 @@ _SHA256 = re.compile(r"[a-f0-9]{64}\Z")
 STATUSES = {"COMPLETE", "PARTIAL", "UNKNOWN"}
 DIAGNOSTICS = {"INSTRUMENTED_SCOPE_ONLY", "NO_FACTS", "CAPTURE_INCOMPLETE", "CAPTURE_UNKNOWN", "FACT_LIMIT"}
 METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+_CALLABLE_KINDS = ("method", "function", "constructor")
 _FACT_FIELDS = {
     "call": {"kind", "caller", "target", "outcome"},
     "bean": {"kind", "factory", "bean_type", "outcome"},
@@ -77,25 +78,24 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict) -> No
         kind = fact.get("kind") if isinstance(fact, dict) else None
         if not isinstance(kind, str) or kind not in _FACT_FIELDS or set(fact) != _FACT_FIELDS[kind]:
             raise AnalysisError(f"Runtime facts[{index}] has missing or unsupported fields")
-        methods = {"method", "function", "constructor"}
         if kind == "call":
-            symbol(fact["caller"], methods)
-            symbol(fact["target"], methods)
+            symbol(fact["caller"], _CALLABLE_KINDS)
+            symbol(fact["target"], _CALLABLE_KINDS)
             if fact["outcome"] not in ("RETURNED", "THREW"):
                 raise AnalysisError("Runtime call outcome is invalid")
         elif kind == "bean":
-            symbol(fact["factory"], methods)
+            symbol(fact["factory"], _CALLABLE_KINDS)
             symbol(fact["bean_type"], {"class", "interface", "object"})
             if fact["outcome"] not in ("CREATED", "NULL", "THREW"):
                 raise AnalysisError("Runtime bean outcome is invalid")
         elif kind == "condition":
-            symbol(fact["owner"], methods | {"class"})
-            symbol(fact["predicate"], methods)
+            symbol(fact["owner"], _CALLABLE_KINDS + ("class",))
+            symbol(fact["predicate"], _CALLABLE_KINDS)
             if type(fact["matched"]) is not bool:
                 raise AnalysisError("Runtime condition matched must be boolean")
         else:
-            symbol(fact["owner"], methods | {"class"})
-            symbol(fact["handler"], methods)
+            symbol(fact["owner"], _CALLABLE_KINDS + ("class",))
+            symbol(fact["handler"], _CALLABLE_KINDS)
             if (not isinstance(fact["method"], str) or fact["method"] not in METHODS
                     or not isinstance(fact["route_sha256"], str)
                     or not _SHA256.fullmatch(fact["route_sha256"])):
@@ -297,6 +297,10 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
     if v2 and manifest["status"] == "UNKNOWN" and observations:
         raise AnalysisError("Runtime UNKNOWN cannot establish observed call evidence")
     ids = {node.id for node in graph.nodes}
+    selected = {
+        symbol["id"]: symbol.get("kind") for symbol in graph.symbols
+        if symbol.get("context_id") == context["id"]
+    } if v2 else {}
     for index, item in enumerate(observations):
         allowed = {"caller", "target", "kind"} if v2 else {"caller", "target", "kind", "scenario", "async", "source"}
         if not isinstance(item, dict) or set(item) - allowed:
@@ -305,14 +309,17 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
             raise AnalysisError(f"Runtime observations[{index}] requires caller and target IDs")
         if item["caller"] not in ids or item["target"] not in ids:
             raise AnalysisError(f"Runtime observations[{index}] references an unknown graph symbol")
-        if item.get("kind", "call") not in ("call", "dispatch", "framework"):
+        kind = item.get("kind", "call")
+        if kind not in ("call", "dispatch", "framework"):
             raise AnalysisError(f"Runtime observations[{index}] has unsupported kind")
         if not isinstance(item.get("scenario", ""), str) or len(item.get("scenario", "")) > 200:
             raise AnalysisError(f"Runtime observations[{index}].scenario is invalid")
         if v2:
-            selected = {s["id"] for s in graph.symbols if s.get("context_id") == context["id"]}
             if item["caller"] not in selected or item["target"] not in selected:
                 raise AnalysisError("Runtime observation references an out-of-context symbol")
+            if kind != "framework" and (selected[item["caller"]] not in _CALLABLE_KINDS
+                                        or selected[item["target"]] not in _CALLABLE_KINDS):
+                raise AnalysisError("Runtime call and dispatch observations require callable symbols")
     return manifest, context
 
 

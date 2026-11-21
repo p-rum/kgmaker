@@ -428,3 +428,44 @@ def test_v2_observation_kind_type_is_rejected_without_store_write(project, kind)
     with pytest.raises(AnalysisError):
         import_manifest(project, manifest)
     assert saved(project) == before
+
+
+@pytest.mark.parametrize(("endpoint", "kind"), [("caller", "dispatch"), ("target", None)])
+def test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols(jdk_application, endpoint, kind):
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **opts, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    bean = next(fact for fact in manifest["facts"] if fact["kind"] == "bean")
+    symbols = {symbol["id"]: symbol for symbol in load_graph(root).symbols}
+    assert symbols[bean["bean_type"]]["kind"] == "class"
+    observation = {key: call[key] for key in ("caller", "target")}
+    observation[endpoint] = bean["bean_type"]
+    if kind is not None:
+        observation["kind"] = kind
+    manifest["observations"] = [observation]
+    before = saved(root)
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        with pytest.raises(AnalysisError, match="require callable symbols"):
+            import_manifest(root, manifest)
+    assert saved(root) == before
+
+
+def test_runtime_keeps_callable_and_framework_observations_and_legacy_import(project):
+    manifest = produce(project)
+    manifest["observations"] = [
+        {"caller": "main", "target": "greet"},
+        {"caller": "factory", "target": "service", "kind": "framework"},
+    ]
+    legacy = {"schema_version": 1, "runtime_id": "legacy-run", "context_id": "ctx",
+              "build_id": "build-7", "config_fingerprint": "cfg-7",
+              "observations": [{"caller": "main", "target": "predicate", "scenario": "legacy"}]}
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        assert import_manifest(project, manifest)["observations_imported"] == 2
+        assert import_manifest(project, legacy)["observations_imported"] == 1
+
+    assert {(edge.source, edge.target, edge.kind) for edge in load_graph(project).edges} == {
+        ("main", "greet", "observed_dispatch_to"),
+        ("factory", "service", "runtime_framework_observation"),
+        ("main", "predicate", "observed_dispatch_to"),
+    }

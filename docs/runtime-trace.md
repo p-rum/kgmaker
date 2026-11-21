@@ -104,8 +104,11 @@ Label identity jsou neprázdné, do 200 znaků, znaky ASCII alfanumerické plus
 
 Import v2 kontroluje celý envelope, facts a identity před zápisem. Facts zatím
 nepřevádí na graph evidence. Původní `observations` může v2 obsahovat jen jako
-caller/target/kind se symboly ve vybraném kontextu, bez volného scenario/source;
-UNKNOWN nesmí vytvořit observation evidence. Návratový status importu zachová
+caller/target/kind se symboly ve vybraném kontextu. Pro `call` a `dispatch`
+musí být volající i cíl metoda, funkce nebo konstruktor. Vynechaný `kind`
+znamená `call`. Typ `framework` zachovává vlastní typově vázaná pozorování.
+Volný `scenario` a `source` v2 nepřijímá. UNKNOWN nesmí vytvořit
+observation evidence. Návratový status importu zachová
 status v2, ani prázdný import jej nepovýší. Historický v1 import zůstává kompatibilní
 pro předem sanitizované exporty se svým původním kontraktem; nemá záruky uzavřeného
 v2 formátu. Dřívější nevalidované v2 z této implementační větve je nutné vytvořit

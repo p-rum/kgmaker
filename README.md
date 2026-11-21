@@ -34,11 +34,11 @@ criterion or every production variant. The remaining delivery order is in T048.
 
 ## Install
 
-Windows user-space installation passed an actual restricted-user CI smoke with
-paths containing spaces (43 passed, 2 scoped skips). It covers the core, Java/K1
-Kotlin and TypeScript workers. K2 on Windows remains unverified; Windows
-`BUILD_EXECUTE` reports an explicit unsupported-platform error. See
-[Windows prerequisites and verification evidence](docs/windows-install.md).
+The 2026-11-21 Windows restricted-user smoke passed with paths containing
+spaces (44 passed, 1 skipped, 1 deselected). The smoke covers core, Java, K1
+Kotlin and TypeScript. The K2 wheel test runs in the required Linux compiler
+job. Windows K2 still awaits verification, and Windows `BUILD_EXECUTE` reports
+an unsupported-platform error. [Windows prerequisites and verification evidence](docs/windows-install.md)
 
 From the repository root:
 
@@ -324,6 +324,13 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 
 ## Development
 
+The repository's [automated PR review](.github/workflows/pr-review.yml) reports
+pytest coverage and the test step's outcome. Requirements analysis compares the
+base and head commits recorded in the pull request event and reads files from the
+head commit. Coverage is shown as unavailable when the test step has no measurement.
+The [T045 reviewer](docs/tasks/45_addCodeReviewAgent.md) checks the current base
+and head before deciding approval.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # POSIX; on Windows activate the venv from Scripts
@@ -340,6 +347,8 @@ with `python -m pytest -q tests/test_mandatory_worker_ci.py`: an absent worker,
 JDK or mixed fixture fails a required gate and skips an optional local gate,
 without starting a process. The separate exporter job requires actual Maven and
 Gradle exports. Exploratory tests needing a second JDK remain optional.
+Explicit K2 setup fetches the pinned Analysis API 2.1.10 JARs from JetBrains
+Packages. See the separate download and build commands in the [worker setup example](docs/compiler-inspection.md#t003-s04-w01--explicitní-k2-analysis-api).
 
 Wheels include trusted worker scripts and pinned build inputs in the
 `kgmaker_workers` resource package. A source-only installation works without
@@ -515,6 +524,8 @@ nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 Opakovaný `runtime import` uchovává doklady pro jednotlivé běhy ve shodném
 compiler kontextu. `callgraph callers` a `callees` je zobrazí jako
 `RUNTIME_OBSERVED`. `callgraph path` používá statické compiler vazby.
+V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
+na obou koncích.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
@@ -655,6 +666,8 @@ pořadí; `metadata-complete` potlačí nevyjmenovaný annotation fallback. XML 
 omezeno na přesné compiler class identity a podporovaný scalar subset. Neznámý
 namespace/verze, nepodporovaný construct, neúplný override, DTD/entity nebo
 soubor mimo repository root zůstává UNKNOWN bez fyzického annotation fallbacku.
+Snapshot ORM XML označí smyčku symbolických odkazů jako `invalid`
+a chybějící cíl uvnitř projektu jako `missing`.
 Mapped-superclass persistent fields/methods jsou projektovány na každou ověřenou
 entitu se samostatným `declaring_owner` a `effective_owner`; `inherits_attribute`
 zachovává deklarující uzel. Compiler identity určuje přesný parent type a ID
@@ -1100,7 +1113,9 @@ review history and explicit APPROVE/REJECT, with cooperating POSIX process/threa
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
 Stored context selections retain the exact coverage and diagnostic hashes from the
 packet. An invalid initial predecessor fails before creating coordination state.
-See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
+See [API, limits and recovery](docs/process-review-store.md) and the
+[verified merge of the normalized-context repair](docs/changes/152_recordNormalizedProcessReviewMerge.md).
+The T034 lifecycle CLI remains planned. Reviewer identity is locally declared.
 
 ### Explicit process catalog (T033; merged PR79)
 
@@ -1246,3 +1261,11 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+
+### Doklad skutečného testovacího běhu (T047-S10)
+
+`kgmaker project build-run --plan /tmp/plan.json --record-verification TASK_ID`
+přidá doklad explicitního běhu Maven/Gradle ve fázi `test` do lineage dané úlohy.
+`kgmaker trace show REF --format json` zobrazí výsledek a aktuálnost zvlášť. Editace
+testu, konfigurace, lockfile nebo POSIX režimu souboru může vést ke stavu
+`STALE` při stejném Git HEAD. [Příkazy a podporovaný rozsah](docs/delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).

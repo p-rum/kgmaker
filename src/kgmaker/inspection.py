@@ -210,7 +210,7 @@ def jpa_xml_input_snapshot(root: Path, selected: dict) -> dict:
     candidate_paths = {"META-INF/persistence.xml", "META-INF/orm.xml"}
     descriptor = "META-INF/persistence.xml"
     try:
-        descriptor_target = (root / descriptor).resolve(strict=False)
+        descriptor_target = (root / descriptor).resolve(strict=True)
         descriptor_is_confined_file = descriptor_target.is_relative_to(root.resolve()) and descriptor_target.is_file()
     except (OSError, RuntimeError, ValueError):
         descriptor_is_confined_file = False
@@ -226,8 +226,13 @@ def jpa_xml_input_snapshot(root: Path, selected: dict) -> dict:
                         candidate_paths.add(child.text.strip())
     captured = []
     for relative in sorted(candidate_paths):
+        path = root / relative
         try:
-            target = (root / relative).resolve(strict=False)
+            try:
+                target = path.resolve(strict=True)
+            except FileNotFoundError:
+                # Keep the resolved locator for missing files and dangling links.
+                target = path.resolve(strict=False)
             if not target.is_relative_to(root.resolve()):
                 captured.append({"path": relative, "status": "invalid", "resolved": str(target)})
             elif target.is_file():

@@ -114,3 +114,34 @@ python -m pytest -p no:cacheprovider -q --tb=short -ra \
 Starší výsledek 315 PASS patří k původnímu základu. Úplná sada, nové
 review integračního stromu a GitHub Actions jsou při předání `NOT_RUN`.
 Odvození receiver/type ze surových facts a celá T003-AC13 zůstávají otevřené.
+
+## V2 volatelné symboly po přenosu na `34591e2` — kroky 1–5, AC01–AC04
+
+Přenos #136 spojuje head `4d4529304d5d311e94395208c1f3c91de0c5b162`
+s `main` `34591e2f45814838dd8b21390cdc43c84530f648`. Import v2 přijímal
+symbol třídy z vybraného compiler kontextu jako volajícího nebo cíl.
+`runtime_evidence.py` teď pro `call` a `dispatch` používá stejnou klasifikaci
+metody, funkce a konstruktoru jako capture. Vynechaný `kind` znamená `call`.
+Odmítnutí proběhne v validaci před publikací. Manifest v1, v2 `framework`
+a graph/store v3 používají dosavadní kontrakty bez migrace.
+[Runtime import a CLI](../runtime-trace.md#opakovaný-import-a-navigace) · [Compiler příklady](../compiler-inspection.md#pozorované-hrany-a-statické-cesty)
+
+- RED — `python -m pytest -p no:cacheprovider -q --tb=short tests/test_runtime_trace_producer.py -k 'requires_callable_endpoints or keeps_callable_and_framework'`
+  na `4d45293` s novými testy má 2 FAIL, 1 PASS, 73 DESELECTED.
+  Oba záporné případy získaly třídu z reálného compiler kontextu skutečné
+  JDK21 aplikace. Původní import třídu přijal. JUnit SHA-256
+  `66925698578b9ec6b93b85501bcc6872bba2a6beb75636c71ae806192ec69a23`.
+- GREEN — `python -m pytest -p no:cacheprovider -q --tb=short -ra tests/test_runtime_trace_producer.py tests/test_t032_persist_process_review.py tests/test_graph_publication_concurrency.py`
+  má 137 PASS / 0 SKIP s JDK/Javac 21.0.6 a připraveným JVM workerem.
+  Použil `PYTHONPATH=src`, `KGMAKER_REQUIRE_WORKERS=1`,
+  `KGMAKER_REQUIRE_K2=1` a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`.
+  Záporné testy zakazují spuštění procesu při importu a srovnávají
+  uložený graf i runtime artefakt po bajtech. Kladná kontrola zahrnuje
+  v2 `call`, v2 `framework` a historický v1 import.
+- NOT_RUN — úplná sada, GitHub Actions a nezávislé review tohoto přenosu.
+  Odvození receiver/type a přesné call-site vazby ze surových facts mají
+  separátní rozsah. T003-S13-W02 a T003-AC13 zůstávají `PARTIAL`.
+
+Stav i ověřené hranice uvádějí také [README](../../README.md),
+[acceptance inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+a [stavová matice](../production-analysis-progress.md).
