@@ -493,8 +493,10 @@ Automatický PR Review měl na #137 chybnou syntaxi vloženého Pythonu a
 chybějící adaptér `pytest-cov`. Po nezávislém nálezu kandidát používá
 SHA obou commitů z události PR, čte soubory z Git objektů headu a předává
 coverage i stav testů jako data. Chybějící měření se zobrazí jako nedostupné.
-Dodání je IN_PROGRESS. Syntaxe, čtení Git snapshotu a místní testovací krok
-jsou VERIFIED_IN_SCOPE. GitHub Actions zůstávají NOT_RUN.
+Hostovaný běh `07c49d1` dokončil kroky review a zaznamenal selhání sběru
+testů kvůli chybějícímu `jsonschema`. Kandidát doplňuje verzi `4.23.0` z
+workflow Test. Dodání je PR_OPEN ([#140](https://github.com/p-rum/kgmaker/pull/140)).
+Lokální sběr a smoke jsou VERIFIED_IN_SCOPE. Nový hostovaný běh je NOT_RUN.
 [Záznam a reprodukce](changes/154_fixPrReviewPythonAndCoverage.md).
 
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |

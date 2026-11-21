@@ -30,7 +30,10 @@ zachovává návratový kód pytestu po uložení reportu. Requirements Analysis
 porovnává base a head SHA z události PR a čte obsah z Git objektů headu.
 Lokální smoke ověřuje syntaxi vloženého Pythonu, skutečný Git diff,
 odolnost analýzy vůči následné změně checkoutu a zobrazení coverage.
-GitHub Actions pro opravu jsou NOT_RUN. [Change154](changes/154_fixPrReviewPythonAndCoverage.md).
+Hostovaný běh na `07c49d1` zaznamenal chybu sběru kvůli chybějícímu
+`jsonschema`. Instalace přebírá verzi `4.23.0` z workflow Test.
+Hostované ověření této změny je NOT_RUN.
+[Change154](changes/154_fixPrReviewPythonAndCoverage.md).
 
 ## T052 — completion orchestration 2026-11-19
 

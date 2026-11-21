@@ -104,5 +104,41 @@ kroku. Výpis lint kroků je dostupný v jejich logu.
 - PASS — `kgmaker semantic update --base HEAD`, `semantic apply`,
   `semantic validate`, `memory capture --base HEAD`, `scan`, `status`,
   `check`, `git diff --check HEAD` a `git diff --cached --check`.
-- NOT_RUN — skutečný běh workflow na GitHubu, publikace komentáře,
-  úplná projektová sada a schválení konečné revize.
+- Při lokálním předání byly GitHub Actions, publikace komentáře a úplná
+  projektová sada NOT_RUN. Pozdější hostovaný běh je doložen níže.
+
+## T045-S03 / T045-R01 a T045-AC04 — závislost odhalená hostovaným během
+
+[PR #140](https://github.com/p-rum/kgmaker/pull/140) na headu
+`07c49d1eb0163f80b1ff89db29b18ec4696cb07e` spustil
+[hostovaný PR Review](https://github.com/p-rum/kgmaker/actions/runs/44931259227/job/136928177656).
+Checkout, analýza požadavků, komentář i závěrečný souhrn se provedly.
+Log zaznamenal `Test step outcome: failure`. Pytest skončil při sběru
+`tests/test_t005_add_view_model.py` s `ModuleNotFoundError: No module named 'jsonschema'`.
+Workflow Review nyní instaluje stejnou závislost `jsonschema==4.23.0`
+jako job `unittest` ve [workflow Test](../../.github/workflows/test.yml).
+[Návod](../../README.md#development) dál popisuje coverage a stav testů.
+[Inventář](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+zachycují konkrétní omezení ověření.
+
+- RED — `PYTHONPATH=src /workspace/kgmaker-tools/pr-review-venv311/bin/python -m pytest -p no:cacheprovider --collect-only -q tests/test_t005_add_view_model.py`
+  v původním prostředí bez `jsonschema` reprodukoval chybu, exit 2.
+- PASS — po instalaci `jsonschema==4.23.0` stejný příkaz sesbíral
+  22 testů, exit 0. Cílený běh má 22 PASS a 0 SKIP s reálným
+  pytest-cov v CPythonu 3.11.18. SHA-256 JUnit `abd58e904b99e4641ad81f0fd005529fbbc885ba2292509bf1062c75237e6da4`.
+
+  ```bash
+  export COVERAGE_FILE=/workspace/kgmaker-evidence/pr140-jsonschema.coverage
+  PYTHONPATH=src /workspace/kgmaker-tools/pr-review-venv311/bin/python -m pytest -p no:cacheprovider -q --cov=src \
+    --cov-report=xml:/workspace/kgmaker-evidence/pr140-jsonschema-coverage.xml \
+    --junitxml=/workspace/kgmaker-evidence/pr140-jsonschema.xml tests/test_t005_add_view_model.py
+  ```
+
+- PASS — `/workspace/kgmaker-tools/pr-review-venv311/bin/python /workspace/kgmaker-evidence/pr-review-ci-retry.py`
+  zopakoval offline kontrolu přesných kroků Review. Log má SHA-256
+  `0f2ef53650048f2d7b1583b4cb62cef2b586dfe4e3fc4d835f8a15cf4170c556`. Oba workflow deklarují ověřenou verzi balíčku.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — hostovaný běh nové revize, úplná projektová sada a schválení
+  této změny.
