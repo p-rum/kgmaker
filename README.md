@@ -1106,7 +1106,9 @@ review history and explicit APPROVE/REJECT, with cooperating POSIX process/threa
 CAS. The technical ProcessView stays unchanged; documentary citations stay separate.
 Stored context selections retain the exact coverage and diagnostic hashes from the
 packet. An invalid initial predecessor fails before creating coordination state.
-See [API, limits and recovery](docs/process-review-store.md) and its verified descendant proof; there is no T034 CLI or authenticated reviewer identity.
+See [API, limits and recovery](docs/process-review-store.md) and the
+[verified merge of the normalized-context repair](docs/changes/152_recordNormalizedProcessReviewMerge.md).
+The T034 lifecycle CLI remains planned. Reviewer identity is locally declared.
 
 ### Explicit process catalog (T033; merged PR79)
 
