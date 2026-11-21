@@ -79,3 +79,38 @@ python -m pytest -p no:cacheprovider -q --tb=short -ra \
 a [stavová matice](../production-analysis-progress.md) zachycují stejný
 podporovaný rozsah. Registr používá stávající identitu i závislosti zadání.
 Instalované instrukce `init` používají dosavadní příkazy.
+
+## Přenos po sloučení #132 — kroky 4 a 5, AC01–AC04
+
+Lokální merge pro [#136](https://github.com/p-rum/kgmaker/pull/136) připravený
+z publikovaného headu `92d1506be7cd8e325819647c48a4574c6b5ae57b` a aktuálního
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e` zachovává obě historie.
+Všechny tři zdrojové a testovací cesty W02 i všechny tři cesty T032 mají
+stejné bajty jako v příslušných rodičích. Konflikty se týkaly generovaného
+grafu a sémantické vrstvy. Třícestný přenos zachoval 55 konceptů, 188 vztahů
+a všech 338 dřívějších epizod obou větví.
+
+- **Krok 4, AC01–AC03.** Cílený Linux běh má **134 PASS / 0 SKIP** za
+  19,56 s. Zahrnul 73 runtime testů včetně skutečné JDK21 aplikace,
+  43 procesních regresí T032 a 18 testů W06. Použil JDK/Javac 21.0.6,
+  připravený JVM worker, `PYTHONPATH=src`, `KGMAKER_REQUIRE_WORKERS=1`,
+  `KGMAKER_REQUIRE_K2=1` a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`.
+  JUnit má SHA-256
+  `d456c62c19fbff5a4c2505bed799ed9612bfd35114feb49486b28846429f8ca9`.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  tests/test_runtime_trace_producer.py tests/test_t032_persist_process_review.py \
+  tests/test_graph_publication_concurrency.py \
+  --junitxml=/workspace/kgmaker-evidence/pr136-after132-scoped.xml
+```
+
+- **Krok 5, AC04.** [Inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+  a [stavová matice](../production-analysis-progress.md) uvádějí nový základ.
+  [Runtime příklady](../runtime-trace.md#opakovaný-import-a-navigace),
+  [compiler příklady](../compiler-inspection.md#pozorované-hrany-a-statické-cesty)
+  a README dál popisují ověřený rozsah importu a statické navigace.
+
+Starší výsledek 315 PASS patří k původnímu základu. Úplná sada, nové
+review integračního stromu a GitHub Actions jsou při předání `NOT_RUN`.
+Odvození receiver/type ze surových facts a celá T003-AC13 zůstávají otevřené.

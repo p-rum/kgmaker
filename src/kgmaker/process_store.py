@@ -119,7 +119,8 @@ def _validate_prepared(p):
     for ref in identity['context_ids']: _id(ref)
     for name in ('context_selection_hash','definition_fingerprint','technical_fingerprint','process_content_hash'):
         _hash(identity[name])
-    _context_selection(identity['context_selection'],identity['scope'],identity['context_ids'])
+    selection = _context_selection(identity['context_selection'], identity['scope'], identity['context_ids'], replay=True)
+    if selection != identity['context_selection']: _fail('INVALID_STORE')
     if p['baseline']['packet_rules_version']!=PACKET_VERSION: _fail('INVALID_STORE')
     if (p['baseline_hash']!=digest(p['baseline']) or p['payload_hash']!=digest({
             'packet_hash':p['baseline']['packet_hash'],'annotations':p['annotations']})):
@@ -271,8 +272,13 @@ def persist_process_review(root,process,packet,candidate,*,action,reviewer,opera
     if (_hash(expected_payload_hash)!=prepared['payload_hash']
             or _hash(expected_baseline_hash)!=prepared['baseline_hash']): _fail('REVIEW_TOKEN_MISMATCH')
     if action=='APPROVE' and prepared['review_status']=='CONFLICT': _fail('CONFLICT_REQUIRES_REVISION')
+    try:
+        _validate_prepared(prepared)
+    except ProcessLabelPacketError:
+        _fail('INVALID_REVIEW_INPUT')
     _cancel(cancelled)
     directory,path,lock=_paths(root,prepared['identity'])
+    if expected_head is not None and not path.exists(): _fail('CAS_CONFLICT')
     with _locked(directory,lock):
         # Recheck ordinary confinement after initialization; no hostile-root claim.
         _paths(root,prepared['identity'])
@@ -323,6 +329,9 @@ def read_process_reviews(root,process,*,documents=(),conflicts=()):
     baseline=current_for['prepared']['baseline']
     matches=(current_packet['packet_hash']==baseline['packet_hash']
         and baseline['validation_rules_version']==ANNOTATION_VALIDATION_VERSION)
+    if matches and (current_packet['identity'] != baseline['identity']
+                    or current_packet['input_binding_hash'] != baseline['input_binding_hash']):
+        _fail('INVALID_STORE')
     effective=('NEEDS_REVALIDATION' if not matches else 'APPROVED' if approved else 'REJECTED')
     return {'schema_version':1,'head':value['head'],'history':deepcopy(value['history']),
         'effective_status':effective,'active_annotations':deepcopy(approved['prepared']['annotations'])

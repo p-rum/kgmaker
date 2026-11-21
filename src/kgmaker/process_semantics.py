@@ -88,19 +88,20 @@ def _identifiers(values):
     return sorted({_identifier(value) for value in values})
 
 
-def _context_selection(value, scope, contexts):
-    """Known process/service selection structures, not arbitrary JSON prose."""
+def _context_selection(value, scope, contexts, *, replay=False):
+    """Normalize declared selections or validate replay of their exact hash bindings."""
     if type(value) is not dict: _fail('INVALID_SELECTION')
     allowed_ids = {'service_id', 'repo_id', 'module', 'context_id',
                    'context_fingerprint', 'context_selection_key'}
     lists = {'candidate_context_ids', 'candidate_owner_ids', 'profile'}
     enums = {'mode', 'status', 'freshness', 'evidence_kind', 'module_coverage'}
+    capture_fields = {'coverage_binding', 'diagnostics_binding'} if replay else {'coverage', 'diagnostics'}
     enum_values = EVIDENCE_KINDS | FRESHNESS_STATUSES | {
         'BUILD_IMPORT', 'BUILD_EXECUTE', 'COMPILER', 'CONTENT_VERIFIED', 'EXECUTION_BOUND',
         'PARTIAL', 'AMBIGUOUS', 'COMPLETE', 'COMPLETE_WITHIN_SELECTED_SCOPE',
         'COMPLETE_WITHIN_SUPPORTED_SYNTAX', 'COMPLETE_WITHIN_SUPPORTED_MATRIX'}
     def row(item):
-        if type(item) is not dict or set(item) - allowed_ids - lists - enums - {'scope', 'coverage', 'diagnostics'}:
+        if type(item) is not dict or set(item) - allowed_ids - lists - enums - {'scope'} - capture_fields:
             _fail('UNSUPPORTED_SELECTION_SHAPE')
         result = {}
         for key, child in item.items():
@@ -119,9 +120,16 @@ def _context_selection(value, scope, contexts):
             elif key == 'scope':
                 if child != scope: _fail('SELECTION_SCOPE_MISMATCH')
                 result[key] = scope
-            elif key in {'coverage', 'diagnostics'}:
-                # These are captured payloads, not identity references or labels.
-                result[key + '_binding'] = {'content_hash': digest(child)}
+            elif key in capture_fields:
+                if replay:
+                    if (type(child) is not dict or set(child) != {'content_hash'}
+                            or type(child['content_hash']) is not str
+                            or re.fullmatch('[0-9a-f]{64}', child['content_hash']) is None):
+                        _fail('INVALID_SELECTION_BINDING')
+                    result[key] = {'content_hash': child['content_hash']}
+                else:
+                    # Preserve the capture binding without copying its prose.
+                    result[key + '_binding'] = {'content_hash': digest(child)}
         return result
     def service(item):
         if type(item) in (list, tuple):
