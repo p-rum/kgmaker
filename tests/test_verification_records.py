@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -195,6 +196,46 @@ def test_opt_in_requires_test_plan_and_does_not_start_process(fixture):
     with pytest.raises(AnalysisError, match='requires a full build inventory and test phase'):
         run_plan(plan, verification_task=task['id'])
     assert not Path(plan['run_root']).exists()
+
+
+def test_workspace_verification_is_rejected_before_build_or_journal_writes(fixture, tmp_path, monkeypatch, capsys):
+    from kgmaker.cli import main
+
+    root, task, tools, launcher = fixture
+    other = tmp_path / 'other'
+    other.mkdir()
+    (other / 'README.md').write_text('Separate checkout\n')
+    checkout(other)
+    other_task = add_task(other, 'Keep the second checkout journal unchanged')
+    manifest = tmp_path / 'workspace.json'
+    manifest.write_text(json.dumps({'schema_version': 1, 'workspace_id': 'verification', 'repositories': [
+        {'id': 'selected', 'role': 'backend', 'path': root.name},
+        {'id': 'other', 'role': 'shared', 'path': other.name},
+    ]}))
+    plan = create_plan(root, phase='test', home=tools, executable=str(launcher), offline=True)
+    plan_file = tmp_path / 'plan.json'
+    plan_file.write_text(json.dumps(plan))
+    for repo, existing_task in ((root, task), (other, other_task)):
+        with provenance.transaction(repo) as journal:
+            provenance.sync_task(journal, existing_task)
+    journals = {repo / provenance.JOURNAL: (repo / provenance.JOURNAL).read_bytes()
+                for repo in (root, other)}
+
+    monkeypatch.setattr(sys, 'argv', ['kgmaker', 'project', 'build-run', '--root', str(tmp_path),
+                                    '--workspace', str(manifest), '--repo', 'selected', '--plan', str(plan_file),
+                                    '--record-verification', task['id']])
+    with patch('kgmaker.build_runner.run_plan', side_effect=AssertionError('Unexpected build runner')), \
+            patch('subprocess.Popen', side_effect=AssertionError('Unexpected subprocess')), \
+            pytest.raises(SystemExit) as failure:
+        main()
+
+    assert failure.value.code == 2
+    assert json.loads(capsys.readouterr().out) == {
+        'status': 'INVALID_INPUT', 'diagnostics': ['Verification capture supports a single plan checkout'],
+    }
+    assert not any((repo / '.kgmaker/build-runs').exists() for repo in (root, other))
+    assert not (tmp_path / '.kgmaker').exists()
+    assert all(path.read_bytes() == before for path, before in journals.items())
 
 
 def test_actual_maven_surefire_pass_and_fail(tmp_path, monkeypatch):

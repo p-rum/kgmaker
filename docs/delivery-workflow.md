@@ -194,7 +194,8 @@ zůstává deklarovaný. Testgen report zůstává návrhem NOT_RUN.
 
 Připravte existující Maven nebo Gradle projekt, jeho exporter a závislosti.
 Použijte kořen jednoho checkoutu s Git commitem a existující task ID
-z tohoto checkoutu.
+z tohoto checkoutu. Kombinace `--workspace` a `--record-verification` vrátí
+`INVALID_INPUT` před spuštěním buildu a zápisem výsledku.
 
 ```bash
 kgmaker project build-plan --root /repo --phase test --offline --output /tmp/plan.json

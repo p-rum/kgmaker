@@ -165,3 +165,30 @@ a instalované instrukce mají stejný kontrakt jako v předchozí iteraci.
 - NOT_RUN — úplná sada, GitHub Actions a nezávislé review pro tuto integraci.
   T047-AC10 zůstává PARTIAL. Skutečný Gradle v integrační sadě, více checkoutů,
   nezávislé ověření importovaných dokladů a samostatná brána T047-S11 čekají.
+
+## T047-S10 / T047-AC10 — integrace po #142 a #137
+
+Výchozí head #135 `97d3f2c8440a8184c5c8429205c8ae452bb3a645` se spojuje
+s `main` `e155cbdc7e5d708920d7632df7bd1ee792d8ebc8`. Příručka compiler
+inspection zachovává oddíly pro klasifikaci ORM XML i explicitní build.
+Graf vychází ze sjednocené historie obou rodičů.
+[Sloučené #142](https://github.com/p-rum/kgmaker/pull/142) · [Sloučené #137](https://github.com/p-rum/kgmaker/pull/137)
+
+Regrese `test_workspace_verification_is_rejected_before_build_or_journal_writes`
+volá veřejné `project build-run` s platným workspace dvou Git checkoutů,
+vybraným repozitářem, lokálním testovacím plánem a existující úlohou.
+Ověřuje `INVALID_INPUT` s exitem 2 před voláním runneru, vznikem adresáře
+buildu nebo změnou journalů. Veřejný kontrakt podporuje jeden checkout.
+[Příručka](../delivery-workflow.md#dokumentace-skutečného-testovacího-běhu)
+
+- PASS — cílený scénář 1 PASS / 26 DESELECTED. Výběr
+  `PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra tests/test_verification_records.py tests/test_build_runner.py tests/test_provenance.py tests/test_delivery.py tests/test_workflow_profiles.py tests/test_completion_handoff.py`
+  má 133 PASS / 2 SKIP v Cloud Environment s Mavenem 3.9.9, JDK 21.0.6 a
+  offline Maven repozitářem. Skutečný Surefire 3.5.2 zachytil PASS, STALE
+  po editaci testu při stejném HEAD a následný FAIL. Dva starší případy
+  mají SKIP kvůli chybějícímu exporteru pod checkoutem a pevným JDK cestám.
+- PASS — `PYTHONPATH=src python -m pytest -p no:cacheprovider --assert=plain -q --tb=short tests/test_t032_persist_process_review.py tests/test_completion.py`.
+  50 PASS / 0 SKIP.
+- NOT_RUN — plná sada, GitHub Actions a nezávislé review integračního headu.
+  T047-AC10 zůstává PARTIAL. Vícerepozitářový doklad, ověření importované
+  evidence a brána T047-S11 zůstávají otevřené.

@@ -23,6 +23,20 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
 
+## T045 — doplňující automatická kontrola PR
+
+T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
+zachovává návratový kód pytestu po uložení reportu. Requirements Analysis
+porovnává base a head SHA z události PR a čte obsah z Git objektů headu.
+Lokální smoke ověřuje syntaxi vloženého Pythonu, skutečný Git diff,
+odolnost analýzy vůči následné změně checkoutu a zobrazení coverage.
+Hostovaný běh na `07c49d1` zaznamenal chybu sběru kvůli chybějícímu
+`jsonschema`. Instalace přebírá verzi `4.23.0` z workflow Test.
+Hostovaný job na `11c59015675774013fdd8cd9055292a11b045079` vykázal
+2 371 PASS, 1 280 SKIP, 84 úspěšných subtestů a report 74 % pokrytí.
+[Opravený job](https://github.com/p-rum/kgmaker/actions/runs/44932000190/job/136930443327),
+[Change154](changes/154_fixPrReviewPythonAndCoverage.md).
+
 ## T052 — completion orchestration 2026-11-19
 
 Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
@@ -228,7 +242,7 @@ full receipt nulový FAIL/ERROR; původní branch evidence níže je odlišná o
 |---|---|---|
 | T003-S06-W03-AC01 | VERIFIED_IN_SCOPE | `tests/test_orm_xml_overrides.py`: actual Javac entity fixture proves selected persistence-unit mapping-file order, XML table/column precedence, XML path/SHA/persistence-unit/order evidence, annotation fallback for untouched partial mappings, and owner-isolated shared mapped-superclass columns |
 | T003-S06-W03-AC02 | VERIFIED_IN_SCOPE | Same fixture proves standard nested `xml-mapping-metadata-complete` and `persistence-unit-defaults/access`, annotation suppression, XML-only field mapping, mapped-superclass inherited projection and `exclude-unlisted-classes`; XML freshness replay binds selected paths, content and target identities |
-| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, namespace reset, unsupported encoding, bounded input, UTF-8/UTF-16 DTD/entity rejection, unsupported mapping constructs and offline stale replay for changed/appeared/deleted/retargeted inputs; unsupported targets remain UNKNOWN without annotation physical fallback |
+| T003-S06-W03-AC03 | VERIFIED_IN_SCOPE | Same fixture covers invalid class reference with strict last-valid-store preservation, namespace reset, unsupported encoding, bounded input, UTF-8/UTF-16 DTD/entity rejection, unsupported mapping constructs and offline stale replay for changed/appeared/deleted/retargeted inputs; unsupported targets remain UNKNOWN without annotation physical fallback. Python 3.12/3.13 regressions cover looped, out-of-root and dangling XML inputs. [Test evidence](changes/153_classifyLoopedJpaXmlInputs.md). |
 | T003-S06-W03-AC04 | VERIFIED_IN_SCOPE | README, compiler capability documentation, this matrix and [change note65](changes/65_ormXmlOverrides.md) state source precedence, provenance and unsupported boundaries; graph/store schema v3 is unchanged and T003-S06 remains PARTIAL |
 ## T003-S08-W02 — selected config freshness — LOCAL_VERIFIED_IN_SCOPE / CI_PENDING
 
@@ -271,9 +285,19 @@ callback/generic rozsah zůstává samostatný nedokončený úkol.
 | T003-S11-W03-AC03 | VERIFIED_IN_SCOPE_WINDOWS | Source-only/no-process, missing/ambiguous distribution a JRE/JDK17 negatives; timeout/cancel inherited pipes, thread/stream cleanup a zachování posledního grafu; Windows BUILD_EXECUTE je explicitní unsupported před procesem/zápisem |
 | T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md), skutečný [run40351407076/job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333): 43 PASS / 2 SKIP, 50.23s; K2 Windows a celý T003-S11 nejsou dokončené |
 
-Evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`; následný metadata
-commit vyžaduje vlastní checks/review před merge. Dva SKIP: POSIX-only setup fault
-test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly skipped.
+Historická evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`.
+Dva SKIP odpovídají POSIX-only setup fault testu a nepřipravenému K2 workeru.
+Deklarované Windows workery prošly. [Původní záznam](changes/40_supportWindowsUserInstall.md)
+
+Aktualizace 2026-11-21 pro AC01 a AC04. Skutečný Windows job
+`136921503216` měl 44 PASS / 1 SKIP / 1 FAIL. Selhal K2 test při host
+preflightu před spuštěním instalovaného K2 workeru. Oprava omezuje smoke
+na deklarovaný rozsah core, Java, K1 a TypeScript. Opravený head `0329c5d`
+prošel skutečným omezeným tokenem Windows. Výsledky 44 PASS / 1 SKIP /
+1 DESELECTED potvrzují běh právě v tomto rozsahu.
+[Job](https://github.com/p-rum/kgmaker/actions/runs/44929074862/job/136921503216),
+[opravený job](https://github.com/p-rum/kgmaker/actions/runs/44930369173/job/136925458350),
+[záznam opravy](changes/155_scopeWindowsWorkerSmoke.md)
 
 ## T003-S11-W02 — distribuce build exporterů
 
@@ -544,6 +568,14 @@ Current full evidence is recorded in change note13; T003-S03 remains PARTIAL.
 | AC02 | Protocol v1; graph loader v1/v2/v3; explicit K1 compatibility | `test_existing_graph_loader_is_unchanged`, `test_k1_distribution_stays_explicitly_limited` |
 | AC03 | Unsupported version/config rejected before processes; missing/ambiguous unresolved; no implicit K1 fallback, strict no-mutation | `test_unsupported_backend_or_version_never_runs_or_mutates`, `test_unsupported_captured_k2_options_are_not_silently_ignored`, `test_unresolved_and_ambiguous_k2_calls_remain_partial`, `test_direct_worker_rejects_unsupported_version_and_backend`, `test_k2_store_refresh_is_offline_and_strict_failure_preserves_graph`, `test_explicit_k2_fetch_rejects_wrong_bytes_without_publishing` |
 | AC04 | Actual pinned K2/JDK fixture, honest PARTIAL boundaries | [change note35](changes/35_addK2AnalysisBackend.md), `tests/test_k2_backend.py`, required compiler CI K2 gate |
+
+Obnovení explicitní přípravy K2 (2026-11-21) ověřilo osm připnutých JARů
+a skutečný build K2 v Cloud Environmentu. K2 a kontroly předpokladů CI mají
+51 PASS / 0 SKIP. Hostovaný `compiler-workers` na `7345f02` znovu připravil
+osm kontrolovaných JARů, sestavil K2, vykázal 1 441 PASS / 1 SKIP a dokončil
+explicitní Maven plan/runner/export.
+[Hostovaný job](https://github.com/p-rum/kgmaker/actions/runs/44934058014/job/136936734963),
+[Change 156](changes/156_restorePinnedK2Download.md).
 
 T003-AC04/S04 není tím uzavřen. K2 CFG, property/lambda execution, default-body
 a coroutine source mapping, další compiler verze a širší corpus zůstávají samostatné.
@@ -1136,7 +1168,7 @@ See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unveri
 Explicit stack T030070. Its47tests and complete original module AST/byte prefix
 are unchanged; full proof is pending, not inferred from these pure results.
 
-## T032 — explicit local semantic review (final review candidate)
+## T032 — explicit local semantic review (historical checkpoint, 2026-11-07)
 
 | AC | Concrete public evidence | Result |
 |---|---|---|
@@ -1158,17 +1190,19 @@ The separately frozen T030/T031 full is not evidence of T032 full validation.
 
 ### Oprava opakovaného čtení kontextu T032
 
-Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Otevřené [PR #132](https://github.com/p-rum/kgmaker/pull/132) má původní ověření na
-`fad4fc63c76f0f9ef5a1a292e279d1269bd84540` a místní přenos na
-`c2885a6f8daf0281967e3bc5386a69f1647718e0`. Nový přenos čeká na nezávislé review.
-[Change147](changes/147_replayNormalizedProcessContext.md).
+[PR #132](https://github.com/p-rum/kgmaker/pull/132) je od 2026-11-21 MERGED do main
+jako `4011825b15e4b65e1f57576a0986ca05b3cf810e`. Výsledný tree
+`d8021d4f2eefe3b1576c75ed66e7e5f71d642fbd` odpovídá ověřenému kandidátu.
+[Záznam integrace](changes/152_recordNormalizedProcessReviewMerge.md) obsahuje SHA a výsledky.
+[Předslučovací záznam](changes/147_replayNormalizedProcessContext.md) zachovává reprodukci
+na `17e9e736`, původní ověření na `fad4fc6` a přenos na `c2885a6`.
 
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
 | T032-AC01/03 | VERIFIED_IN_SCOPE | Skutečný Javac/JDK21 graf přes T024/T025/T027–T029 dříve vyvolal `UNSUPPORTED_SELECTION_SHAPE`. Po opravě T032 zaznamenal revizi 1 a načetl `APPROVED`. Test `test_public_persists_normalized_capture_and_rechecks_raw_binding` ověřuje idempotenci, zachované hashe a `NEEDS_REVALIDATION` po změně. |
 | T032-AC02/04 | VERIFIED_IN_SCOPE | Cílená sada zachovává CAS dvou procesů a vláken. `test_invalid_candidate_and_stale_initial_head_leave_no_coordination_state` ověřuje prázdný adresář po neplatném kandidátu i konfliktu prvního headu. |
 | T032-AC05 | VERIFIED_IN_SCOPE | `test_review_store_rejects_modified_normalized_context_bindings` odmítá změny i po přepočtu řetězce hashů. `test_forged_hash_binding_is_not_a_raw_context_capture` zachovává vstupní kontrakt T030. |
-| T032-AC06 | PARTIAL | Přenos na `c2885a6`: 272 cílených PASS / 0 SKIP. Lokální kontrola uloženého kontextu z Javac 21.0.6 (K1): 1 PASS / 1 DESELECTED (K2). Úplná sada, GitHub Actions a nezávislé review tohoto přenosu čekají. |
+| T032-AC06 | VERIFIED_IN_SCOPE | Sloučený POSIX rozsah. 3698 PASS / 2 SKIP / 0 FAIL / 0 ERROR v úplné cloudové sadě, z toho 43 T032 PASS. Reálný uložený Javac 21.0.6/K1 kontext prošel. T045 APPROVE je doložené pro přesný pár. GitHub Actions NEOVĚŘENO. Windows zápis a T034 zůstávají mimo tento rozsah. |
 
 ## T033 — read-only process catalog (final review candidate)
 
@@ -1704,4 +1738,4 @@ a samostatný úplný gate. Replay HIT se zatím nepovoluje.
 
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
-| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Zápis deklarovaného a importovaného výsledku zůstává odlišen. Změny během běhu, změny POSIX režimu souboru, nesoulad dokladu s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. Po místní integraci s `main` na `4011825b15e4b65e1f57576a0986ca05b3cf810e` má cílená sada 132 PASS / 2 SKIP a kontrola T032 s plánovačem 50 PASS / 0 SKIP. Skutečný Gradle v integrační sadě, více checkoutů a širší import zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |
+| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Zápis deklarovaného a importovaného výsledku zůstává odlišen. Změny během běhu, změny POSIX režimu souboru, nesoulad dokladu s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Po integraci s `main` na `e155cbdc7e5d708920d7632df7bd1ee792d8ebc8` má cílená sada 133 PASS / 2 SKIP a kontrola T032 s plánovačem 50 PASS / 0 SKIP. Skutečný Gradle v integrační sadě, doklad přes více checkoutů a širší import zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |
