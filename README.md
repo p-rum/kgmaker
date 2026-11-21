@@ -293,6 +293,22 @@ Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
 to record the implementer and each independent reviewer's local attribution.
 See [the local completion workflow and its limits](docs/completion-orchestrator.md).
 
+## Incremental integrity fixtures
+
+The [T047-S01 mutation workspace](fixtures/incremental-integrity/README.md) replays
+source-only edits against a handwritten oracle and checks the exact file changes
+and graph facts. A source-only test also keeps identical declarations separate
+across repositories and verifies the graph after moving the workspace. Separate
+cold Kotlin K1/K2 and TypeScript tests cover resolution
+of a newly introduced Kotlin declaration, stable bindings after a Kotlin
+body-only edit, a signature change that leaves an
+incompatible call unresolved, deletion of a moved declaration with its caller
+unchanged, a declared Kafka match across modules,
+and a backend-to-frontend value path tied to a generated client's contract
+checksum and release. An explicit offline Gradle build and JVM verifier check
+that workspace release mapping requires matching JAR bytes and a current consumer
+context. The fixture records the remaining integrity gaps.
+
 ## Implementation memory and workflow
 
 Configurable profiles connect analysis, planning, implementation, testing and review:

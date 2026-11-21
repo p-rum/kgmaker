@@ -104,6 +104,28 @@ krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
 Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 bez ní; [post-merge evidence](changes/119_reconcileJpqlDelivery.md). T046-S01 až S06 jsou
 MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
+T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
+Lokální pokračování nad draftem `6333c0a` ověřuje odlišné identity stejného
+Kotlin FQN v obou repo a shodný SOURCE_ONLY graf po přesunu workspace.
+Přenos z draftu `a20cfa1` na `main` `4011825` již ověřil tyto scénáře.
+SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, změna signatury bez přesměrování
+nekompatibilního volání, statický Kafka match a jeho
+zamezení při změně topicu, Kotlin DTO → OpenAPI → typovaný TS klient → JSX a
+zneplatnění generation provenance při současné změně verze a hashe kontraktu.
+Varianta s reálným JVM
+`release_mapping` ověřuje přesný `supplies_classpath` a odmítá chybný selektor
+i zastaralý JAR. SOURCE_ONLY varianta bez manifestu zůstává PARTIAL. Strict XFAIL eviduje identitu závislou
+na řádku pro T047-S02. Přesné testy a rozsah viz [change137](changes/137_prepareIncrementalMutationOracle.md).
+Lokální pokračování nad draftem `547ad67` přidává samostatný cold K1/K2 test.
+Po odstranění `Renamed.kt` přejde volání v bajtově shodném `Caller.kt` na
+`UNRESOLVED` a kontrolní volání do `Added.kt` zůstane rozlišené.
+Přenos na `main` `024334a` zachovává přesný test i ruční oracle.
+Přenos na `main` `34591e2` přidává cílené offline porovnání K1 a K2 po změně
+pouze těla `score(Int)`. Nový kontext váže stejný `Caller.kt` na přesné dvě
+signatury bez publikace grafu. Otevřené zůstávají inkrementální přepočet
+body-dependent důkazů, scénáře Windows a úplná matice §7.
+[Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
+
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
 T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,
