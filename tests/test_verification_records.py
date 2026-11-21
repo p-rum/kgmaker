@@ -12,7 +12,8 @@ import pytest
 from kgmaker import provenance
 from kgmaker.analysis_model import AnalysisError, digest
 from kgmaker.build_runner import create_plan, run_plan
-from kgmaker.workflow import add_task
+from kgmaker.workflow import (WorkflowError, add_task, advance_task, load_task,
+                              record_artifact, save_task, task_path)
 
 
 pytestmark = pytest.mark.skipif(os.name != 'posix', reason='BUILD_EXECUTE requires POSIX')
@@ -95,6 +96,334 @@ def traced(fixture, receipt):
     row = next(row for row in trace['references'] if row['key'] == reference)
     assert any(link['source'] == reference and link['relation'] == 'verifies' for link in trace['links'])
     return row
+
+
+def move(root, task, *phases):
+    for phase in phases:
+        task = advance_task(root, task['id'], phase)
+    return task
+
+
+def enable_gate(root):
+    revision = provenance.load(root)['revision']
+    with provenance.transaction(root, expected_revision=revision) as journal:
+        journal['policy'][provenance.VERIFICATION_POLICY] = True
+
+
+def workflow_trace(root, task):
+    return next(row for row in provenance.trace(root, task['id'])['references']
+                if 'verification_summary' in row)
+
+
+def assert_gate_rejects(root, task, reason):
+    task_file = task_path(root, task['id'])
+    journal = root / provenance.JOURNAL
+    before = task_file.read_bytes(), journal.read_bytes()
+    with pytest.raises(WorkflowError, match=reason):
+        advance_task(root, task['id'], 'done')
+    with pytest.raises(WorkflowError, match=reason):
+        save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+    assert (task_file.read_bytes(), journal.read_bytes()) == before
+
+
+def record_plan(root, task):
+    return record_artifact(root, task['id'], 'architect', {
+        'task_id': task['id'], 'role': 'architect', 'phase': 'plan', 'iteration': 0,
+        'summary': 'Plan', 'status': 'completed', 'cited_paths': [], 'cited_node_ids': [],
+        'packet_id': None, 'disposition': None, 'out_of_scope': [],
+        'steps': [{'id': 'build', 'intent': 'Exercise the build', 'paths': [], 'tests': ['suite.py']}],
+    })
+
+
+def test_same_head_retry_requires_receipt_from_current_iteration(fixture):
+    from kgmaker.context import prepare_packet
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    original = traced(fixture, receipt)
+    assert original['payload']['task_iteration'] == 0
+    assert original['payload']['task_phase'] == 'test'
+    task = move(root, task, 'review', 'implement', 'test', 'review')
+    assert task['iteration'] == 1
+    assert traced(fixture, receipt)['freshness'] == 'CURRENT'
+    assert_gate_rejects(root, task, 'NO_ELIGIBLE_RUN')
+    with pytest.raises(WorkflowError, match='iteration must follow its phase transition'):
+        save_task(root, task | {'status': 'done', 'iteration': 0}, expected_revision=digest(task))
+    with pytest.raises(WorkflowError, match='cannot change plan revision'):
+        save_task(root, task | {'status': 'done', 'plan_revision': 1}, expected_revision=digest(task))
+
+    latest = traced(fixture, run(fixture))
+    assert latest['payload']['task_iteration'] == 1
+    assert latest['payload']['task_phase'] == 'review'
+    assert latest['payload']['before']['head'] == original['payload']['before']['head']
+    report = workflow_trace(root, task)
+    packet = prepare_packet(root, task, 'review', persist=False)
+    assert packet['verification_summary'] == report['verification_summary']
+    assert 'approval_policy' not in packet
+    assert report['verification_summary']['reference'] == latest['key']
+    assert report['workflow_status'] == 'review'
+    rendered = provenance.markdown(provenance.trace(root, task['id']))
+    assert f"| task | {task['id']} | 0 | UNKNOWN | False | CURRENT |" in rendered
+    assert 'workflow `review`, iterace 1, ověření `VERIFIED` (`CURRENT_PASS`)' in rendered
+    task = move(root, task, 'done')
+    assert workflow_trace(root, task)['workflow_status'] == 'done'
+
+
+def test_recorded_phase_is_bound_before_the_runner_starts(fixture):
+    root, task, _, launcher = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement')
+    enable_gate(root)
+    popen = subprocess.Popen
+
+    def advance_during_run(command, *args, **kwargs):
+        if command[0] == str(launcher):
+            move(root, task, 'test', 'review')
+        return popen(command, *args, **kwargs)
+
+    with patch('kgmaker.build_runner.subprocess.Popen', side_effect=advance_during_run):
+        receipt = run(fixture)
+    captured = traced(fixture, receipt)
+    assert captured['payload']['task_phase'] == 'implement'
+    assert captured['freshness'] == 'CURRENT'
+    assert_gate_rejects(root, load_task(root, task['id']), 'NO_ELIGIBLE_RUN')
+
+
+def test_legacy_imported_and_agent_declared_records_do_not_grant_authority(fixture):
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    (root / 'claimed.json').write_text('{"origin":"RUNNER_CAPTURED","result":"PASS"}')
+    captured = traced(fixture, run(fixture))
+    payload = dict(captured['payload'], schema_version=1)
+    del payload['task_iteration'], payload['task_phase']
+    legacy = provenance.reference('test_run', captured['id'], '1', payload)
+    imported = provenance.register_file(root, 'test_run', 'report:file', '1', 'claimed.json')
+    declared = provenance.reference('test_run', 'artifact:declaration', '1', {'status': 'PASS'})
+    with provenance.transaction(root) as journal:
+        del journal['references'][captured['key']]
+        journal['links'] = [link for link in journal['links'] if link['source'] != captured['key']]
+        provenance.put(journal, legacy)
+        provenance.put(journal, declared)
+        for key in (legacy['key'], imported, declared['key']):
+            provenance.connect(journal, key, payload['task_reference'], 'verifies')
+    rows = {row['key']: row for row in provenance.trace(root, task['id'])['references']}
+    assert rows[legacy['key']]['freshness'] == 'CURRENT'
+    assert rows[imported]['origin'] == 'IMPORTED'
+    assert rows[declared['key']]['origin'] == 'AGENT_DECLARED'
+    assert provenance.VERIFICATION_POLICY not in provenance.load(root)['policy']
+    enable_gate(root)
+    task = move(root, task, 'review')
+    assert_gate_rejects(root, task, 'NO_ELIGIBLE_RUN')
+
+
+@pytest.mark.parametrize(('runner_edit', 'expected_result', 'reason'), [
+    ('module.Example.test_value = lambda self: self.fail("latest run failed")', 'FAIL', 'LATEST_RUN_NOT_PASS'),
+    ('if False:', 'NOT_RUN', 'UNVERIFIED_RUN'),
+])
+def test_newest_run_cannot_fall_back_to_an_earlier_pass(fixture, runner_edit, expected_result, reason):
+    root, task, _, launcher = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    original = traced(fixture, run(fixture))
+    script = launcher.read_text()
+    if expected_result == 'FAIL':
+        script = script.replace('result = unittest.', runner_edit + '\nresult = unittest.')
+    else:
+        script = script.replace("if not (work / 'omit-report').is_file():", runner_edit)
+    launcher.write_text(script)
+    latest = traced(fixture, run(fixture))
+    assert latest['payload']['result'] == expected_result
+    assert latest['payload']['before']['inputs_sha256'] == original['payload']['before']['inputs_sha256']
+    task = move(root, task, 'review')
+    assert_gate_rejects(root, task, reason)
+    assert workflow_trace(root, task)['verification_summary']['reference'] == latest['key']
+
+
+def test_direct_save_cannot_restore_authority_by_rewriting_plan_revision(fixture):
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan')
+    task = record_plan(root, task)
+    assert task['plan_revision'] == 1
+    task = move(root, task, 'implement', 'test')
+    enable_gate(root)
+    rewritten = task | {'plan_revision': 0}
+    save_task(root, rewritten, expected_revision=digest(task))
+    assert traced(fixture, run(fixture))['freshness'] == 'CURRENT'
+    task = move(root, rewritten, 'review')
+    assert_gate_rejects(root, task, 'PLAN_REVISION_UNBOUND')
+
+
+def test_current_verification_does_not_override_revoked_approval(fixture):
+    root, task, _, _ = fixture
+    task = record_plan(root, move(root, task, 'analyze', 'plan'))
+    task = move(root, task, 'implement', 'test')
+    enable_gate(root)
+    assert traced(fixture, run(fixture))['freshness'] == 'CURRENT'
+    task = move(root, task, 'review')
+    task = record_artifact(root, task['id'], 'review', {
+        'task_id': task['id'], 'role': 'review', 'phase': 'review', 'iteration': 0,
+        'summary': 'Reviewed', 'status': 'completed', 'cited_paths': [], 'cited_node_ids': [],
+        'packet_id': None, 'disposition': None, 'findings': [], 'overall': 'approve',
+    })
+    with provenance.transaction(root) as journal:
+        refs = provenance.sync_task(journal, task)
+        journal['identity'] = {'id': 'reviewer', 'kind': 'human'}
+        journal['policy']['before_done'] = True
+        for ref in refs:
+            if ref['kind'] in {'requirement', 'plan', 'review'}:
+                provenance.event(journal, ref['key'], 'approved', 'Reviewed exact content')
+        review = refs[-1]['key']
+        provenance.event(journal, review, 'revoked', 'Approval withdrawn')
+    assert workflow_trace(root, task)['verification_summary']['status'] == 'VERIFIED'
+    assert_gate_rejects(root, task, 'lacks local approval')
+    with provenance.transaction(root) as journal:
+        provenance.event(journal, review, 'approved', 'Approval restored')
+    assert move(root, task, 'done')['status'] == 'done'
+
+
+def test_legacy_policy_off_preserves_done_history_without_a_receipt(fixture):
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test', 'review', 'done')
+    with provenance.transaction(root) as journal:
+        provenance.sync_task(journal, task)
+    payload = task_path(root, task['id']).read_bytes()
+    assert provenance.VERIFICATION_POLICY not in provenance.load(root)['policy']
+    enable_gate(root)
+    report = workflow_trace(root, task)
+    assert report['workflow_status'] == 'done'
+    assert report['verification_summary']['status'] == 'UNVERIFIED'
+    assert task_path(root, task['id']).read_bytes() == payload
+
+
+def test_verification_policy_cli_requires_current_journal_revision(fixture):
+    root, _, _, _ = fixture
+    command = [sys.executable, '-m', 'kgmaker', 'trace', 'policy', '--root', str(root),
+               '--verification-before-done', 'on']
+    journal = root / provenance.JOURNAL
+    missing = subprocess.run(command, capture_output=True)
+    assert missing.returncode != 0
+    assert '--expected-revision' in json.loads(missing.stdout)['error']
+    assert not journal.exists()
+    subprocess.run([*command, '--expected-revision', '0'], check=True, capture_output=True)
+    assert provenance.load(root)['policy'] == {
+        'before_implement': False, 'before_done': False, provenance.VERIFICATION_POLICY: True,
+    }
+    previous = journal.read_bytes()
+    stale = subprocess.run([*command, '--expected-revision', '0'], capture_output=True)
+    assert stale.returncode != 0
+    assert 'Stale journal revision' in json.loads(stale.stdout)['error']
+    assert journal.read_bytes() == previous
+
+
+def test_equal_run_start_times_fail_closed(fixture, monkeypatch):
+    from datetime import datetime
+
+    class FixedStart(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 11, 21, tzinfo=tz)
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    monkeypatch.setattr('kgmaker.verification.datetime', FixedStart)
+    assert run(fixture)['verification']['result'] == 'PASS'
+    assert run(fixture)['verification']['result'] == 'PASS'
+    task = move(root, task, 'review')
+    assert_gate_rejects(root, task, 'AMBIGUOUS_LATEST_RUN')
+
+
+@pytest.mark.parametrize('entrypoint', ['advance', 'save'])
+def test_done_rechecks_inputs_after_bound_report_validation(fixture, entrypoint):
+    from kgmaker.verification import capture_reports
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    task = move(root, task, 'review')
+    task_file = task_path(root, task['id'])
+    journal = root / provenance.JOURNAL
+    before = task_file.read_bytes(), journal.read_bytes()
+
+    def capture_then_edit(work):
+        result = capture_reports(work)
+        (root / '.test-config').write_text('changed while checking the XML at the same HEAD')
+        return result
+
+    with patch('kgmaker.verification.capture_reports', side_effect=capture_then_edit), \
+            pytest.raises(WorkflowError, match='STALE_RUN'):
+        if entrypoint == 'advance':
+            advance_task(root, task['id'], 'done')
+        else:
+            save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+    assert (task_file.read_bytes(), journal.read_bytes()) == before
+    assert traced(fixture, receipt)['freshness'] == 'STALE'
+
+
+@pytest.mark.parametrize('entrypoint', ['advance', 'save'])
+def test_done_rechecks_head_after_final_input_snapshot(fixture, entrypoint):
+    from kgmaker.build_runner import snapshot
+    from kgmaker.verification import input_fingerprint
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    task = move(root, task, 'review')
+    task_file = task_path(root, task['id'])
+    journal = root / provenance.JOURNAL
+    saved = task_file.read_bytes(), journal.read_bytes()
+    git = ['git', '-C', str(root)]
+    original_head = subprocess.check_output([*git, 'rev-parse', 'HEAD'])
+    original_tree = subprocess.check_output([*git, 'rev-parse', 'HEAD^{tree}'])
+    original_sources = snapshot(root)
+    original_digest = input_fingerprint(root, original_sources)
+    observations = 0
+
+    def snapshot_with_head_move(checkout_root):
+        nonlocal observations
+        sources = snapshot(checkout_root)
+        observations += 1
+        if observations == 2:
+            subprocess.run([*git, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test',
+                            'commit', '--allow-empty', '-qm', 'Move HEAD during final snapshot'], check=True)
+        return sources
+
+    with patch('kgmaker.build_runner.snapshot', side_effect=snapshot_with_head_move), \
+            pytest.raises(WorkflowError, match='STALE_RUN'):
+        if entrypoint == 'advance':
+            advance_task(root, task['id'], 'done')
+        else:
+            save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+
+    assert observations == 2
+    assert subprocess.check_output([*git, 'rev-parse', 'HEAD']) != original_head
+    assert subprocess.check_output([*git, 'rev-parse', 'HEAD^{tree}']) == original_tree
+    assert snapshot(root) == original_sources
+    assert input_fingerprint(root, original_sources) == original_digest
+    assert (task_file.read_bytes(), journal.read_bytes()) == saved
+    assert traced(fixture, receipt)['freshness'] == 'STALE'
+
+
+def test_trace_shares_its_single_receipt_observation_with_task_summary(fixture):
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    key = receipt['verification']['reference']
+
+    with patch('kgmaker.verification.freshness', side_effect=['CURRENT', 'STALE']) as observed:
+        references = provenance.trace(root, task['id'])['references']
+    observed.assert_called_once()
+    run_row = next(row for row in references if row['key'] == key)
+    summary = next(row['verification_summary'] for row in references if row['id'] == task['id'])
+    assert run_row['freshness'] == summary['freshness'] == 'CURRENT'
+    assert summary['status'] == 'VERIFIED'
 
 
 @pytest.mark.parametrize('changed', ['suite.py', '.test-config', 'deps.lock', 'untracked-input'])
@@ -275,8 +604,12 @@ class CapturedTest {
 }
 '''
     test.write_text(source.replace('ACTUAL', '1'))
+    policy = root / '.test-config'
+    policy.write_text('initial test configuration')
     checkout(root)
     task = add_task(root, 'Use actual Maven/Surefire test process')
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
     fixture = root, task, tools, maven
 
     passing = run(fixture)
@@ -284,14 +617,35 @@ class CapturedTest {
     assert row['payload']['result'] == 'PASS', passing
     assert row['freshness'] == 'CURRENT'
     assert row['payload']['counts']['executed'] == 1
-    test.write_text(source.replace('ACTUAL', '2'))
+    task = move(root, task, 'review')
+    policy.write_text('changed at the same HEAD')
     assert traced(fixture, passing)['freshness'] == 'STALE'
+    assert_gate_rejects(root, task, 'STALE_RUN')
 
+    test.write_text(source.replace('ACTUAL', '2'))
     failing = run(fixture)
     row = traced(fixture, failing)
     assert row['payload']['result'] == 'FAIL', failing
     assert row['freshness'] == 'CURRENT'
     assert row['payload']['counts']['failed'] == 1
+    assert_gate_rejects(root, task, 'LATEST_RUN_NOT_PASS')
+
+    test.write_text(source.replace('ACTUAL', '1'))
+    assert_gate_rejects(root, task, 'STALE_RUN')
+    repeated = run(fixture)
+    row = traced(fixture, repeated)
+    assert row['payload']['result'] == 'PASS', repeated
+    assert row['payload']['before']['head'] == traced(fixture, passing)['payload']['before']['head']
+    save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+    task = load_task(root, task['id'])
+    completed = task_path(root, task['id']).read_bytes()
+    assert workflow_trace(root, task)['verification_summary']['status'] == 'VERIFIED'
+    policy.write_text('changed after completion')
+    report = workflow_trace(root, task)
+    assert report['workflow_status'] == 'done'
+    assert report['verification_summary']['status'] == 'STALE'
+    assert task_path(root, task['id']).read_bytes() == completed
+    assert traced(fixture, repeated)['payload'] == row['payload']
 
 
 def test_chmod_alone_invalidates_prior_pass_and_real_rerun_fails(fixture):

@@ -1776,3 +1776,16 @@ schválenému pro první souborově vázaný rozsah. [Doklad integrace](changes/
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
 | T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Evidence rozlišuje výsledek skutečného runneru, deklaraci a import. Změny během běhu, změny POSIX režimu, nesoulad s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Přesný head má 133 PASS / 2 SKIP v cílené Maven sadě, merge má 27 PASS / 0 SKIP v sadě dokladů se skutečným Maven/Surefire. Vícerepozitářový doklad, ověřitelné importy a širší matice zůstávají otevřené. T047-S11 má vlastní acceptance. [Doklad integrace](changes/158_recordFileBoundVerificationMerge.md) · [Historie kandidátů](changes/150_captureBoundVerification.md) |
+
+## T047-S11 — Aktuální lokální ověření před dokončením
+
+**T047-S11 / T047-R11 a T047-AC11 — MERGED / PARTIAL.** Volitelná brána
+pro jeden lokální checkout je v `main` jako `47807742a07c4a4fb92a590479fbfa0b558bf7fe`.
+Přesný head i sloučený strom mají 179 PASS a 0 SKIP v sadě se skutečným
+Mavenem a Surefire. Na přesném headu skutečný offline Gradle potvrdil
+cyklus PASS, FAIL a nový PASS i šest odmítnutých přechodů se zachovaným
+taskem a journalem. [Doklad integrace](changes/161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01) · [#144](https://github.com/p-rum/kgmaker/pull/144)
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T047-AC11 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` pokrývá PASS, editaci při stejném HEAD, odmítnutí v `save_task` i `advance_task`, skutečný FAIL, nový PASS a oddělené historické `done` a pozdější `STALE`. Regrese pro oba vstupy dokládají úpravu zdroje během kontroly XML a posun HEAD při závěrečném výpočtu úplného inventáře se stejným obsahem. Trace pozoruje aktuálnost dokladu jednou pro řádek i souhrn. Testy téže sady ověřují retry, zachycení fáze před spuštěním, ochranu revize plánu, čitelnost v1, neautoritativní import a deklarace, novější FAIL či neúplný report, shodu času zahájení, default-off a odvolané review. Scope je jeden explicitní běh lokálního checkoutu. Mapování jednotlivých požadovaných testů, selektivní dopad, širší matice a samostatná projekce v paměti zůstávají otevřené. [Change159](changes/159_gateCompletionOnCurrentVerification.md). |
