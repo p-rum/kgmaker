@@ -1294,7 +1294,7 @@ Explicit stack on T030070 retains all47T030tests and32original module AST nodes.
 PublicRED6FAIL0.40s, currentcoalesced229PASS0SKIP6.22s (76new+153inherited). Required
 full, independent exact source review and root publication remain pending.
 
-## T032 — explicit local review (historical initial delivery, 2026-11-07)
+## T032 — explicit local review (historical checkpoint, 2026-11-07)
 
 Currentbase2c7b38 has mergedT030/T031 prerequisites. Separate bounded immutable
 semantic envelope, POSIX cooperating process/thread CAS, exact operation identity,

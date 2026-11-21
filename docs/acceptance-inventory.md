@@ -1136,7 +1136,7 @@ See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unveri
 Explicit stack T030070. Its47tests and complete original module AST/byte prefix
 are unchanged; full proof is pending, not inferred from these pure results.
 
-## T032 — explicit local semantic review (historical initial delivery, 2026-11-07)
+## T032 — explicit local semantic review (historical checkpoint, 2026-11-07)
 
 | AC | Concrete public evidence | Result |
 |---|---|---|
