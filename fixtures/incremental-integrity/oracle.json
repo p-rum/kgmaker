@@ -11,6 +11,15 @@
   "missing_call": "missingScore",
   "added_declaration_path": "api/src/main/kotlin/Added.kt",
   "moved_overload_path": "api/src/main/kotlin/Renamed.kt",
+  "signature_mutation": {
+    "replacement_signature": "score(value: Boolean)",
+    "owner": "fixture.ScoringKt",
+    "changed_call": "score(2)",
+    "stable_call": "score(\"xy\")",
+    "prior_descriptor": "(I)I",
+    "replacement_descriptor": "(Z)I",
+    "stable_descriptor": "(Ljava/lang/String;)I"
+  },
   "flyway_mutation_object": "table:public.extra",
   "befe": {
     "backend_path": "src/model.kt",

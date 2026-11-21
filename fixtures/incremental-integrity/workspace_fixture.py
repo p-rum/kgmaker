@@ -23,7 +23,8 @@ def make_workspace(root):
     for path, source in {
         TARGET: "package fixture\nfun score(value: Int): Int { return value }\n"
                 "fun score(value: String): Int { return value.length }\n",
-        CALLER: "package fixture\nfun callScore(): Int {\n    return score(2) + missingScore()\n}\n",
+        CALLER: "package fixture\nfun callScore(): Int {\n    return score(2) + missingScore()\n}\n"
+                'fun callStringScore(): Int { return score("xy") }\n',
         INDEPENDENT: "package other\nfun independent(): Int { return 3 }\n",
     }.items():
         path = backend / path
@@ -135,6 +136,9 @@ def mutations(root):
         ("body", lambda: write(target, target.read_text(encoding="utf-8").replace(
             "return value }", "return value + 1 }")), (target,)),
         ("add", lambda: write(added, "package fixture\nfun missingScore(): Int = 0\n"), (added,)),
+        ("signature", lambda: write(target, target.read_text(encoding="utf-8").replace(
+            "fun score(value: Int): Int { return value + 1 }",
+            "fun score(value: Boolean): Int { return 0 }")), (target,)),
         ("move", lambda: target.rename(moved), (target, moved)),
         ("delete", moved.unlink, (moved,)),
         ("contract", lambda: change_contract_version(root), (backend / CONTRACT,)),

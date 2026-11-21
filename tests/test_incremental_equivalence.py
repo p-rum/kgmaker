@@ -25,12 +25,21 @@ declare_typed_client, change_contract_version = (
 def load_oracle(path):
     value = read_json(path)
     fields = {"overloads", "caller", "independent", "dto", "endpoint_field", "ui", "missing_call", "kafka",
-              "added_declaration_path", "moved_overload_path", "flyway_mutation_object", "befe"}
+              "added_declaration_path", "moved_overload_path", "flyway_mutation_object", "befe",
+              "signature_mutation"}
+    objects = {"kafka", "befe", "signature_mutation"}
     if (type(value) is not dict or set(value) != fields
-            or any(not isinstance(value[key], str) or not value[key] for key in fields - {"overloads", "kafka", "befe"})
+            or any(not isinstance(value[key], str) or not value[key]
+                   for key in fields - objects - {"overloads"})
             or type(value["overloads"]) is not list or len(value["overloads"]) != 2
             or any(not isinstance(row, str) or not row for row in value["overloads"])
             or value["overloads"][0] == value["overloads"][1]
+            or type(value["signature_mutation"]) is not dict
+            or set(value["signature_mutation"]) != {
+                "replacement_signature", "owner", "changed_call", "stable_call",
+                "prior_descriptor", "replacement_descriptor", "stable_descriptor",
+            }
+            or any(not isinstance(row, str) or not row for row in value["signature_mutation"].values())
             or type(value["befe"]) is not dict
             or set(value["befe"]) != {"backend_path", "owner", "field", "descriptor", "relations",
                                       "consumer_role", "release", "mutated_release"}
@@ -90,7 +99,7 @@ def test_mutation_replay_and_reset(tmp_path):
     original = snapshot(root)
     first = list(mutations(root))
     assert [label for label, _, _, _ in first] == [
-        "comment", "body", "add", "move", "delete", "contract", "kafka", "flyway", "tsconfig",
+        "comment", "body", "add", "signature", "move", "delete", "contract", "kafka", "flyway", "tsconfig",
     ]
     for label, _, changed, expected in first:
         assert changed == expected, label
@@ -111,8 +120,12 @@ def test_source_only_mutation_states_match_manual_oracle(tmp_path):
         _, coverage, _, graph, _ = snapshot_workspace(manifest)
         functions = [node for node in graph.nodes if node.kind == "function"]
         overload_path = oracle["moved_overload_path"] if "move" in applied else TARGET
+        overload_signatures = oracle["overloads"]
+        if "signature" in applied:
+            overload_signatures = [oracle["signature_mutation"]["replacement_signature"],
+                                   oracle["overloads"][1]]
         expected_overloads = [] if "delete" in applied else [
-            ("@backend/" + overload_path, signature) for signature in oracle["overloads"]
+            ("@backend/" + overload_path, signature) for signature in overload_signatures
         ]
         overloads = sorted((node.path, node.signature) for node in functions if node.name == "score")
         assert overloads == sorted(expected_overloads), label
@@ -181,7 +194,8 @@ def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backe
         assert {symbol["descriptor"] for symbol in symbols.values()
                 if symbol.get("owner") == "fixture.ScoringKt" and symbol.get("name") == "score"} == {
                     "(I)I", "(Ljava/lang/String;)I"}
-        calls = [site for site in graph["call_sites"] if site["path"] == CALLER]
+        calls = [site for site in graph["call_sites"]
+                 if site["path"] == CALLER and symbols[site["caller"]]["name"] == "callScore"]
         assert len(calls) == 2
         context_id = calls[0]["context_id"]
         context = next(value for value in graph["contexts"] if value["id"] == context_id)
@@ -211,6 +225,58 @@ def test_added_kotlin_declaration_resolves_unchanged_caller_cold(tmp_path, backe
     assert after == {score, ("fixture.AddedKt", missing, "()I", added)}
     assert not unresolved
     assert before_context != after_context
+    assert not (kotlin / ".kgmaker").exists()
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_changed_kotlin_signature_cannot_rebind_unchanged_caller_cold(tmp_path, backend):
+    home = require_jvm_worker(backend)
+    make_workspace(tmp_path)
+    oracle = load_oracle(FIXTURE / "oracle.json")
+    signature = oracle["signature_mutation"]
+    replay = mutations(tmp_path)
+    assert [next(replay)[0] for _ in range(3)] == ["comment", "body", "add"]
+    kotlin = tmp_path / "backend"
+    caller_bytes = (kotlin / CALLER).read_bytes()
+    caller_text = caller_bytes.decode("utf-8")
+    string_signature = oracle["overloads"][1].encode("utf-8")
+    string_line, = [line for line in (kotlin / TARGET).read_bytes().splitlines(keepends=True)
+                    if string_signature in line]
+
+    def check_snapshot(active_descriptor, changed_call_descriptor):
+        result = inspect_jvm(kotlin, repo_id="backend", module="api",
+                             sources=[CALLER, TARGET, oracle["added_declaration_path"]],
+                             home=home, kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        graph = result["graph"]
+        symbols = {symbol["id"]: symbol for symbol in graph["symbols"]}
+        context = result["context"]["id"]
+        assert {symbol["descriptor"] for symbol in symbols.values()
+                if (symbol.get("owner"), symbol["name"], symbol["path"], symbol["context_id"])
+                == (signature["owner"], "score", TARGET, context)} == {
+                    active_descriptor, signature["stable_descriptor"]}
+        for expression, descriptor in ((signature["changed_call"], changed_call_descriptor),
+                                       (signature["stable_call"], signature["stable_descriptor"])):
+            site, = [site for site in graph["call_sites"] if site["path"] == CALLER
+                     and caller_text[site["range"]["start"]:site["range"]["end"]] == expression]
+            assert site["context_id"] == symbols[site["caller"]]["context_id"] == context
+            if descriptor is None:
+                assert site["evidence_kind"] == "UNRESOLVED"
+                assert site["declared_target"] is None and not site["dispatch_candidates"]
+            else:
+                assert site["evidence_kind"] == "SYMBOL_RESOLVED"
+                target = symbols[site["declared_target"]]
+                assert (target["owner"], target["name"], target["descriptor"],
+                        target["path"], target["context_id"]) == (
+                            signature["owner"], "score", descriptor, TARGET, context)
+        return context
+
+    before_context = check_snapshot(signature["prior_descriptor"], signature["prior_descriptor"])
+    label, _, changed, _ = next(replay)
+    assert label == "signature" and changed == ["backend/" + TARGET]
+    assert (kotlin / CALLER).read_bytes() == caller_bytes
+    assert string_line in (kotlin / TARGET).read_bytes().splitlines(keepends=True)
+    assert check_snapshot(signature["replacement_descriptor"], None) != before_context
     assert not (kotlin / ".kgmaker").exists()
 
 

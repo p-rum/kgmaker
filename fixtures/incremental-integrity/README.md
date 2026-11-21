@@ -14,9 +14,9 @@ gap. The source-only baseline leaves the JVM build release manifest absent. The 
 changed paths and a SHA-256 digest of the resulting file map. The tests rebuild
 the fixture in an isolated directory and compare both runs byte for byte.
 
-The test suite also checks a workspace snapshot after each of the nine mutations.
+The test suite also checks a workspace snapshot after each of the ten mutations.
 Only the expected qualified file hashes change. The hand-written oracle follows
-the original overloads through move and delete, the new declaration after add,
+the overloads through signature change, move and delete, the new declaration after add,
 and its unchanged caller. Kafka topic changes retain `UNKNOWN` and
 `CONFIG_SCOPE_UNPROVEN`. V11 adds `public.extra` in the offline Flyway schema
 with `MIGRATION_DERIVED` provenance and `UNASSESSED` data availability. The
@@ -29,6 +29,12 @@ The explicit Kotlin oracle compares two cold inspections around the addition of
 the previously unresolved `missingScore()` resolves in a new compiler context.
 The caller bytes stay identical and the integer overload remains the selected
 call target. This check publishes no compiler graph.
+
+A second cold Kotlin test changes `score(Int)` to `score(Boolean)` while
+`Caller.kt` and the declaration of `score(String)` keep the same bytes. Both
+workers report `score(2)` as unresolved without a declared target or dispatch
+candidate. The unchanged `score("xy")` still resolves to the String overload in
+the new compiler context. The check publishes no compiler graph.
 
 The Kafka test captures each backend module with JDK21, K1 or K2 and an explicit
 resource source-set mapping for profile `blue`. The matching graph contains one

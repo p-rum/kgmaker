@@ -92,7 +92,8 @@ MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
 T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
 Integrační kandidát nad `c2885a6` přenáší deterministickou cold fixture a ruční oracle:
-SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, statický Kafka match a jeho
+SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, změna signatury bez přesměrování
+nekompatibilního volání, statický Kafka match a jeho
 zamezení při změně topicu, Kotlin DTO → OpenAPI → typovaný TS klient → JSX a
 zneplatnění generation provenance při současné změně verze a hashe kontraktu.
 Varianta s reálným JVM
