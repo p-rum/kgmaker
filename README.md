@@ -325,8 +325,11 @@ The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To re
 ## Development
 
 The repository's [automated PR review](.github/workflows/pr-review.yml) reports
-pytest coverage and the test step's outcome. The [T045 reviewer](docs/tasks/45_addCodeReviewAgent.md)
-checks the current base and head before deciding approval.
+pytest coverage and the test step's outcome. Requirements analysis compares the
+base and head commits recorded in the pull request event and reads files from the
+head commit. Coverage is shown as unavailable when the test step has no measurement.
+The [T045 reviewer](docs/tasks/45_addCodeReviewAgent.md) checks the current base
+and head before deciding approval.
 
 ```bash
 python -m venv .venv

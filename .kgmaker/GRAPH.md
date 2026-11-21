@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 338
+- Implementation episodes: 339
 - Inferred/ambiguous relationships: 8452/0
 
 ## Architecture diagram
@@ -2373,6 +2373,7 @@ flowchart LR
 - **Change --target přijímá přesné existující entity ID, soubor nebo jednoznačný textový výběr., Acceptance a ověření, Agent reads packet.json and candidate-template.json, writes candidate.json.** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-implementation.agent.md, .github/agents/kgmaker-orchestrator.agent.md, .github/agents/kgmaker-review.agent.md, .github/agents/kgmaker-test-expert.agent.md; validation: focused52=passed, available-pytest=passed, unavailable-toolchains=skipped
 - **merge current main 5430388 into S06 JPA W01** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: parent_only_integration79=passed, unchanged_JPA_source_actual35=passed, current_remote_ci=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/116_parseExtendedJpqlHql.md, docs/production-analysis-progress.md; validation: publication=passed, runtime-unchanged=passed, full-pytest=failed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, README.md, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: immutable-git-evidence=passed, coverage-smoke=passed, scoped-64=passed, hosted-review=unknown
 - **fix(data-resources): validate actual framework query provenance** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md; validation: actual_focused=passed, strict_full=passed, toolchain_gates=skipped
 - **merge: integrate current Criteria main into complete report** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/131_completeAnalysisReport.md, docs/complete-analysis-report.md, docs/feature-analysis.md; validation: scoped-report-integration=passed, actual-javac-typescript=passed, full-suite=unknown
 - **Implement next steps from implementation plan** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker-implementation.agent.md; validation: pytest197=passed, focused53=passed, jpa-embedded-id=passed, jpa-association-roles=passed, jpa-property-access=passed

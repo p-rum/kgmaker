@@ -26,9 +26,11 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 ## T045 — doplňující automatická kontrola PR
 
 T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
-zachovává návratový kód pytestu po uložení reportu. Samostatný lokální
-smoke ověřuje také syntaxi vloženého Pythonu. GitHub Actions pro opravu
-jsou NOT_RUN. [Change154](changes/154_fixPrReviewPythonAndCoverage.md).
+zachovává návratový kód pytestu po uložení reportu. Requirements Analysis
+porovnává base a head SHA z události PR a čte obsah z Git objektů headu.
+Lokální smoke ověřuje syntaxi vloženého Pythonu, skutečný Git diff,
+odolnost analýzy vůči následné změně checkoutu a zobrazení coverage.
+GitHub Actions pro opravu jsou NOT_RUN. [Change154](changes/154_fixPrReviewPythonAndCoverage.md).
 
 ## T052 — completion orchestration 2026-11-19
 

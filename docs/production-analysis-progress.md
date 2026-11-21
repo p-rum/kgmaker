@@ -490,9 +490,11 @@ dokládají jejich GitHub stavem a nejsou tímto odstavcem prohlášeny za hotov
 Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kandidáty.
 
 Automatický PR Review měl na #137 chybnou syntaxi vloženého Pythonu a
-chybějící adaptér `pytest-cov`. Kandidát opravy je IN_PROGRESS /
-VERIFIED_IN_SCOPE pro lokální kontrolu syntaxe a běh testovacího kroku.
-GitHub Actions pro tento kandidát zůstávají NOT_RUN.
+chybějící adaptér `pytest-cov`. Po nezávislém nálezu kandidát používá
+SHA obou commitů z události PR, čte soubory z Git objektů headu a předává
+coverage i stav testů jako data. Chybějící měření se zobrazí jako nedostupné.
+Dodání je IN_PROGRESS. Syntaxe, čtení Git snapshotu a místní testovací krok
+jsou VERIFIED_IN_SCOPE. GitHub Actions zůstávají NOT_RUN.
 [Záznam a reprodukce](changes/154_fixPrReviewPythonAndCoverage.md).
 
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
