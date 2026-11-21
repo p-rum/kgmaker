@@ -271,9 +271,17 @@ callback/generic rozsah zůstává samostatný nedokončený úkol.
 | T003-S11-W03-AC03 | VERIFIED_IN_SCOPE_WINDOWS | Source-only/no-process, missing/ambiguous distribution a JRE/JDK17 negatives; timeout/cancel inherited pipes, thread/stream cleanup a zachování posledního grafu; Windows BUILD_EXECUTE je explicitní unsupported před procesem/zápisem |
 | T003-S11-W03-AC04 | VERIFIED_IN_SCOPE | [Note40](changes/40_supportWindowsUserInstall.md), [Windows guide](windows-install.md), skutečný [run40351407076/job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333): 43 PASS / 2 SKIP, 50.23s; K2 Windows a celý T003-S11 nejsou dokončené |
 
-Evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`; následný metadata
-commit vyžaduje vlastní checks/review před merge. Dva SKIP: POSIX-only setup fault
-test a nepřipravený K2 worker. Povinné deklarované Windows workery nebyly skipped.
+Historická evidence platí pro `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`.
+Dva SKIP odpovídají POSIX-only setup fault testu a nepřipravenému K2 workeru.
+Deklarované Windows workery prošly. [Původní záznam](changes/40_supportWindowsUserInstall.md)
+
+Aktualizace 2026-11-21 pro AC01 a AC04. Skutečný Windows job
+`136921503216` měl 44 PASS / 1 SKIP / 1 FAIL. Selhal K2 test při host
+preflightu před spuštěním instalovaného K2 workeru. Oprava omezuje smoke
+na deklarovaný rozsah core, Java, K1 a TypeScript. K2 je DESELECTED
+v lokálním výběru a nový skutečný Windows běh je NOT_RUN.
+[Job](https://github.com/p-rum/kgmaker/actions/runs/44929074862/job/136921503216),
+[záznam opravy](changes/155_scopeWindowsWorkerSmoke.md)
 
 ## T003-S11-W02 — distribuce build exporterů
 

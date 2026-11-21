@@ -34,11 +34,11 @@ criterion or every production variant. The remaining delivery order is in T048.
 
 ## Install
 
-Windows user-space installation passed an actual restricted-user CI smoke with
-paths containing spaces (43 passed, 2 scoped skips). It covers the core, Java/K1
-Kotlin and TypeScript workers. K2 on Windows remains unverified; Windows
-`BUILD_EXECUTE` reports an explicit unsupported-platform error. See
-[Windows prerequisites and verification evidence](docs/windows-install.md).
+The 2026-10-26 Windows restricted-user smoke passed with paths containing
+spaces (43 passed, 2 scoped skips). The smoke covers core, Java, K1 Kotlin and
+TypeScript. The K2 wheel test runs in the required compiler-worker job, and K2
+on Windows remains unverified. Windows `BUILD_EXECUTE` reports an explicit
+unsupported-platform error. [Windows prerequisites and verification evidence](docs/windows-install.md)
 
 From the repository root:
 

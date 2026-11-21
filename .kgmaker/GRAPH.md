@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 547
+- Scope: production; omitted files: 548
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `4b5c39444aaf1af165213dc4a76c6a869eac90c2377ec70e91eb3bde504c7eb6`; content: `b74fdf1d37fec12243916a3936be305d5184b4f41d3df118783160a05d4a5715`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 337
+- Implementation episodes: 338
 - Inferred/ambiguous relationships: 8452/0
 
 ## Architecture diagram
@@ -2333,6 +2333,7 @@ flowchart LR
 - **Change Agent reads packet.json and candidate-template.json, writes candidate.json., Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-architect.agent.md, .github/agents/kgmaker-data-auditor.agent.md, .github/agents/kgmaker-extract.agent.md, .github/agents/kgmaker.agent.md; validation: pytest192=passed, maven-effective-model=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/143_recordCompilerIntegrationMerge.md, docs/production-analysis-progress.md; validation: completion-plan-and-tests=passed
 - **Integrate current governance and preserve T046 step history (S06)** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-implementation.agent.md, .github/agents/kgmaker-orchestrator.agent.md, .github/agents/kgmaker-review.agent.md, .github/agents/kgmaker-test-expert.agent.md; validation: targeted-tests=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/155_scopeWindowsWorkerSmoke.md, docs/production-analysis-progress.md, docs/windows-install.md; validation: windows-scope-linux=passed, powershell-ast=passed, native-windows=unknown
 - **Import explicit Gradle custom source-set scopes** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/13_importGradleSourceSetScopes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: mandatory206=passed, gradle813=passed, semantic=passed
 - **Project explicit datasource resources from scoped upstream evidence** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/68_projectDataResources.md, docs/compiler-inspection.md; validation: focused115=passed, target_scope_guard=passed, strict_full=unknown, semantic=passed
 - **Change 2 passed, 36 passed, 364 passed, 24 skipped** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: Full pytest=passed, Actual Javac AC06 and K2=passed, Focused Java and K2 JPA=passed, Semantic validate=passed, kgmaker check=passed
@@ -2357,7 +2358,7 @@ flowchart LR
 - **merge Factory and current main into typed Spring conditions** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/50_expandSpringConditions.md, docs/compiler-inspection.md; validation: integrated-actual=passed, integrated-pure=passed, required-prerequisites=passed
 - **Record Kafka privacy and context compatibility validation** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/54_scopeKafkaBindingIdentity.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: privacy-t006-full-656=passed, actual-k1k2-2=passed, offline-114=passed, optional-10=skipped
 - **Refresh operation-proof graph on final HTTP catalogue parent** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/79_certifyLocalOperations.md, docs/process-paths.md; validation: actual-focus-341=passed, descendant-superset-full-1566=passed, external-prerequisites-10=skipped
-- **Replay normalized process review context with exact bindings** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/147_replayNormalizedProcessContext.md, docs/process-label-packets.md, docs/process-review-store.md; validation: t032-scoped=passed, javac-captured-review=passed, full-suite=unknown
+- **Replay normalized process review context with exact bindings** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/147_replayNormalizedProcessContext.md, docs/process-label-packets.md, docs/process-review-store.md; validation: t032-scoped=passed, javac-captured-review=passed, full-suite=unknown
 - **Integrate current governance and preserve T046 step history (S04)** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md, docs/changes/58_addExistingFunctionTests.md; validation: targeted-tests=passed
 - **Merge commit 'ec333966e657896382f310ef018835e3d696513e' into feat/t003-s07-01-argument-parameter-flow** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/52_bindArgumentParameterFlow.md, docs/compiler-inspection.md; validation: combined_focused=passed, combined_strict_full=passed, optional_toolchain_gates=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Architecture** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/33_defineServiceOwnership.md, docs/production-analysis-progress.md; validation: focused-tests=passed, full-pytest=passed, toolchain-gates=skipped, semantic-validation=passed, docs-check=passed

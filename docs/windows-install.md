@@ -1,12 +1,20 @@
 # Windows instalace do uživatelských adresářů
 
-Stav T003-S11-W03: VERIFIED_IN_SCOPE skutečným Windows restricted-user během
-[40351407076 / job121672139333](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333)
-na kandidátu `d311231ed4e199ee0c19d9d5037ccfcdcdce199b`: **43 PASS / 2 SKIP**, 50.23s.
-PowerShell i Python potvrdily non-admin token. Dva SKIP jsou POSIX-only setup
-fault test a nepřipravený K2 worker; core/Java/K1/TS povinné runtime nebyly skipped.
-Review/merge PR24 ještě následují; celý T003-S11 zůstává PARTIAL.
-Podrobnosti a historická selhání uvádí [change note40](changes/40_supportWindowsUserInstall.md).
+T003-S11-W03 má historické ověření ze skutečného Windows restricted-user
+běhu na `d311231ed4e199ee0c19d9d5037ccfcdcdce199b` dne 2026-10-26.
+PowerShell i Python potvrdily non-admin token. Výsledek byl **43 PASS / 2 SKIP**
+za 50,23 s. Přeskočený byl POSIX test a test nepřipraveného K2 workeru.
+[Běh 40351407076](https://github.com/p-rum/kgmaker/actions/runs/40351407076/job/121672139333),
+[původní záznam](changes/40_supportWindowsUserInstall.md)
+
+Dne 2026-11-21 Windows job s přísným výběrem workerů zkusil i K2 a skončil
+**44 PASS / 1 SKIP / 1 FAIL** už při kontrole nepřipravené K2 distribuce.
+Windows smoke výběr nyní výslovně vyjímá jediný K2 wheel test. Povinné kontroly
+core, Java, K1 a TypeScript i požadavek na non-admin token zůstávají zapnuté.
+K2 je DESELECTED v této sadě. Opravený výběr je ověřený lokálně na Linuxu
+a jeho nový skutečný Windows běh čeká.
+[Běh 44929074862](https://github.com/p-rum/kgmaker/actions/runs/44929074862/job/136921503216),
+[záznam opravy](changes/155_scopeWindowsWorkerSmoke.md)
 
 ## Prerequisites a ověřená matice
 
