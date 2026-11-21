@@ -31,7 +31,7 @@ Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
 | T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
-| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
 | T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
@@ -91,7 +91,7 @@ Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 be
 MERGED,
 T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
 T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
-Lokální kandidát nad `fad4fc63` má deterministickou cold fixture a ruční oracle:
+Integrační kandidát nad `c2885a6` přenáší deterministickou cold fixture a ruční oracle:
 SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, statický Kafka match a jeho
 zamezení při změně topicu, Kotlin DTO → OpenAPI → typovaný TS klient → JSX a
 zneplatnění generation provenance při současné změně verze a hashe kontraktu.
@@ -1669,3 +1669,30 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 | T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
 | T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, stavová a acceptance matice, [historická změna](changes/132_renderTopologyMermaid.md), [aktuální ověření](changes/138_rejectForeignTopologyEvidence.md), úplná sada a [T045 merge doklad](changes/146_recordTopologyMerge.md). | PASS |
+
+## T003-S10-W06 — souběh publikace a poškozená cache
+
+Dodání MERGED v [#129](https://github.com/p-rum/kgmaker/pull/129), merge `c067f9c3c7b3266842fc4f2230b4eaf65182e4df`. Lokální úplné
+ověření přesného tree `570a6590eda49cdb2b8b8c1168f0c78655af7aca` má 3692 PASS / 1 SKIP se skutečnými workery.
+GitHub Actions NEOVĚŘENO a samostatný Windows běh NOT_RUN.
+[Doklad aktuálního ověření](changes/149_recordGraphPublicationMerge.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S10-W06-AC01 | VERIFIED_IN_SCOPE | `test_competing_publisher_cannot_cross_the_first_graph_commit`, `test_overlapping_real_workers_do_not_overwrite_newer_publication`, `test_confluence_graph_commit_failure_rolls_back_related_outputs`. Platná generace zůstává zachována. |
+| T003-S10-W06-AC02 | VERIFIED_IN_SCOPE | Podporovaný legacy store v1/v2/v3 v úplné sadě. Současný runtime import kontroluje shodu explicitního schema 3. |
+| T003-S10-W06-AC03 | VERIFIED_IN_SCOPE | Neplatné cache payloady a odmítnutý stale import nepovyšují evidence. Replay HIT má samostatný rozsah #116. |
+| T003-S10-W06-AC04 | VERIFIED_IN_SCOPE | Přesný base/head, Linux toolchainy, JUnit a hranice další práce v [dokladu](changes/149_recordGraphPublicationMerge.md). |
+
+Předchozí cílené ověření:
+
+
+W06 má cílené ověření nad opravou série publikací. Deterministické regrese
+dokládají odmítnutí druhého zapisovače mezi výměnami souborů, ochranu
+novějšího grafu při scan, runtime importu, migraci a workspace scan a
+ochranu souvisejících Confluence výstupů. Chyba poslední výměny grafu vrací
+obsah nebo nepřítomnost Confluence indexu a reportu. Runtime import odmítá
+odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 PASS / 0 SKIP se skutečnými workery a JDK 21/22. Ověření zahrnuje
+neplatný cache envelope a původní graph/store schéma v1/v2/v3.
+[Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
+a samostatný úplný gate. Replay HIT se zatím nepovoluje.

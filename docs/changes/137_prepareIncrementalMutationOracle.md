@@ -268,3 +268,53 @@ Celá matice §7 a inkrementální ekvivalence zůstávají otevřené.
   `kgmaker memory capture --base HEAD`, `kgmaker semantic validate`,
   `kgmaker scan`, `kgmaker status`, `kgmaker check`, `git diff --check` a
   `git diff --cached --check`. Zachovány doklady a ruční sémantika T021 v main.
+
+## T047-S01 / T047-R01 a T047-AC01 — integrace po #129 a #133, 2026-11-21
+
+Výchozí draft [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`616ece73c7242dfbfe0ab9ca23bb991eb029b1d7`. Lokální integrace přidává
+`main` `c2885a6f8daf0281967e3bc5386a69f1647718e0` se zachováním historie
+draftu. Konflikty se týkaly generovaného grafu a sémantického souboru.
+Lokální kandidát zachovává sémantiku main i původní epizodu T047,
+beze změny testu a všech tří blobů ve fixture oproti headu draftu.
+
+[README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+popisují stejný rozsah. Produktový kód, registry, CLI, API, schémata a
+instalované instrukce nepřebírají z draftu žádnou změnu. Samostatná
+inkrementální ekvivalence a úplná matice §7 zůstávají otevřené.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp /workspace/kgmaker-evidence/t047-pytest-source --junitxml=/workspace/kgmaker-evidence/t047-source.xml tests/test_incremental_equivalence.py -k 'source_only or malformed_oracle or mutation_replay or logical_identity'`:
+  4 PASS, 7 DESELECTED a 1 strict XFAIL pro identitu T047-S02.
+- PASS — 128 PASS, 0 SKIP a 1 strict XFAIL za 130,29 s se skutečným
+  Temurin JDK/Javac 21.0.6, Kotlin 2.1.10 K1/K2, Gradle 8.13, Node 24.22.3
+  a TypeScript 5.7.3. Známý XFAIL ověřuje mezeru T047-S02 při posunu řádku.
+  SHA-256 JUnit `003b9fbf738cc7f880b48f4b21645c10cba8e6fe4baa9788e15287cd467d53b7`. Vstupní a výstupní manifest sledovaných
+  zdrojů, workerů, testů a fixture se shoduje, SHA-256 `904eb999717c9ff1da409d80650d38d2f3bd24c917f6746d226b484e82007f0b`.
+  Produkovaný JAR má SHA-256 `32c12cbaac7d8524efe54ef9f12b81023ef5b05308066c96420ebbf8378d6da3`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/t047-pytest-strict \
+    --junitxml=/workspace/kgmaker-evidence/t047-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+  Použito `JAVA_HOME` JDK 21 s jeho `bin` na začátku `PATH` a oddělené
+  `GRADLE_USER_HOME`. Gradle build fixture běží offline.
+- PASS — `kgmaker semantic update --base c2885a6`, `kgmaker semantic apply`
+  a `kgmaker semantic validate`. Převzata jedna doložená README položka
+  a čtyři existující vztahy z packetu. Žádné nové ruční vztahy.
+- PASS — `kgmaker memory capture --base c2885a6`, `kgmaker scan`,
+  `kgmaker status`, `kgmaker check`, `git diff --check c2885a6` a
+  `git diff --cached --check`. Obsah fixture a testu je shodný s headem
+  draftu, produkční zdroje a workery jsou shodné s main.
+- NOT_RUN — úplná projektová sada, nezávislé review integračního kandidáta
+  a GitHub Actions. Historické testy na `fad4fc63` mají vlastní doklad výše.

@@ -66,10 +66,40 @@ graph/cache generace zůstává čitelná. `publish=False`, strict PARTIAL, inva
 payload, STALE, timeout či cancellation nic nepublikují. Změny uživatelských
 zdrojů způsobující abort se samy nevracejí.
 
-Jde o single-writer exception safety. W01 netvrdí crash-recovery, vícewriterový
-commit, reverse dependencies, negative lookup invalidaci, selective revise ani
-W02–W06. Zachovává existující provider omezení: nový rule selector nelze publikovat
-vedle zachovaného stale selectoru bez jeho vyřešení. Cache to neobchází.
+## Souběžná publikace grafu a build snapshotu
+
+T003-S10-W06 vyhrazuje publikaci grafu atomickým vytvořením
+`.kgmaker/workflow/graph-publication.lock`. Souběžný zapisovač končí kódem 3
+a jeho graf se neuloží. `scan`, `inspect code` / `inspect frontend`, runtime
+import, `graph migrate` a zapisující workspace příkazy odmítnou výsledek,
+pokud se během práce změnila generace `graph.json`. Explicitní inspekce
+hlásí `STALE`. Session hook při konfliktu vrátí bezpečný prázdný kontext.
+Zastaralý `scan` nezmění Confluence index ani report. `scan --confluence-dir export
+--confluence-report /path/to/report.md` připraví oba výstupy se stejnou publikací
+grafu. Při chybě výměny grafu se vrátí jejich předchozí obsah nebo stav bez souboru.
+Report lze zadat relativně k repozitáři i absolutně. Temp a rollback kopie leží
+v adresáři cíle. Přímé i zanořené kolize s indexem, reporty grafu nebo značkou
+zapisovače se odmítají. Explicitní schema 3 objekt pro runtime import musí
+odpovídat čitelné uložené generaci, pokud store existuje. Při prvním importu
+bez store funguje jako seed. Workspace může zapsat
+samostatné cache záznamy podle jejich obsahového klíče i při odmítnutém grafu.
+Čtení a offline analýzy workery nespouštějí.
+
+Autoritativní `graph.json` se nadále vyměňuje jako poslední a při běžné
+výjimce se odvoditelné pohledy a výstupy Confluence z `scan` vrátí pouze tehdy,
+pokud je stále vlastní tento zapisovač. Značka ponechaná po tvrdém přerušení zápis bezpečně
+zablokuje. Po ověření, že žádný zapisovač neběží, lze značku odstranit a
+zopakovat příkaz. Běžný souběh spolupracujících zapisovačů nespoléhá na
+ruční úklid. Obnova po pádu mezi zápisy lidských pohledů má samostatný
+rozsah. Build runner obsadí adresář konkrétního plánu atomicky před
+vytvořením jeho snapshotu. Druhý pokus se stejným `build_id` dostane
+diagnostiku jako při opakovaném spuštění.
+
+[Změna a kontroly W06](changes/144_serializeGraphPublication.md).
+W01 a W06 nadále zachovávají existující provider omezení: nový rule selector
+nelze publikovat vedle zachovaného stale selectoru bez jeho vyřešení.
+Reverse dependencies, negative lookup invalidace a selective revise mají
+samostatná zadání.
 
 Historický scope před konzervativní opravou: Java+Kotlin přes připravené JDK21/K1/K2 workery a TypeScript
 5.7.3; explicitní classpath/config mutace a warm callcounts. Konkrétní běhy a

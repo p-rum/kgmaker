@@ -106,12 +106,13 @@ def run(args):
             return code
         model = read_json(args.model) if getattr(args, "model", None) else None
         if args.command == "graph" and args.graph_command == "migrate":
-            from .store import save_graph
+            from .store import graph_revision, save_graph
+            previous = graph_revision(root)
             stored = load_graph(root)
             if stored is None:
                 raise AnalysisError("missing or invalid graph index")
             migrated = stored.migrate_legacy()
-            save_graph(migrated, root, generate_docs=False)
+            save_graph(migrated, root, generate_docs=False, expected_revision=previous)
             print(json.dumps({"status": "PARTIAL", "schema_version": migrated.schema_version, "contexts": migrated.contexts,
                               "diagnostics": migrated.diagnostics}))
             return 4 if args.strict else 0
