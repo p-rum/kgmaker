@@ -173,7 +173,7 @@ T034 procesní CLI zůstává PLANNED.
 | [T003-S10-W06](tasks/T003-S10-06-cacheCorruptionConcurrency.md) | MERGED | VERIFIED_IN_SCOPE | [#129](https://github.com/p-rum/kgmaker/pull/129) `c067f9c3c7b3266842fc4f2230b4eaf65182e4df` | [src/kgmaker/store.py](../src/kgmaker/store.py), [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [src/kgmaker/build_runner.py](../src/kgmaker/build_runner.py) | — | Výhradní publikace a rollback Confluence, kontrola runtime generace a atomický build claim. Linux 3692 PASS / 1 SKIP se skutečnými workery, GH CI NEOVĚŘENO. Obnova po pádu a warm replay mají samostatný rozsah. [Doklad](changes/149_recordGraphPublicationMerge.md). |
 | [T003-S11-W01](tasks/T003-S11-01-workerCleanInstall.md) | MERGED | PARTIAL | `3b7329284b376c83e20fe1a4ae3ea57a57131a90` | [src/kgmaker/inspection.py](../src/kgmaker/inspection.py), [tests/test_worker_install.py](../tests/test_worker_install.py) | [# 18](https://github.com/p-rum/kgmaker/pull/18) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S11-W02](tasks/T003-S11-02-buildExporterPackaging.md) | MERGED | PARTIAL | `e656b8ef4c174d3d60600037d7c0d78fc514e39d` | [src/kgmaker/build_runner.py](../src/kgmaker/build_runner.py), [tests/test_exporter_distribution.py](../tests/test_exporter_distribution.py) | [# 22](https://github.com/p-rum/kgmaker/pull/22) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
-| [T003-S11-W03](tasks/T003-S11-03-windowsNoAdminInstall.md) | MERGED | PARTIAL | `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` | [tests/test_k2_backend.py](../tests/test_k2_backend.py), [tests/test_windows_install.py](../tests/test_windows_install.py) | [# 24](https://github.com/p-rum/kgmaker/pull/24) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
+| [T003-S11-W03](tasks/T003-S11-03-windowsNoAdminInstall.md) | MERGED | PARTIAL | `a83dbab6263eb2fe225f0da51f2f2549c0ab162e` | [Windows harness](../tests/windows/no_admin_smoke.ps1), [testy](../tests/test_windows_install.py) | [# 24](https://github.com/p-rum/kgmaker/pull/24) | Původní core/Java/K1/TS Windows smoke 43 PASS / 2 SKIP. Po selhání na nepřipraveném K2 mimo rozsah prošel opravený `0329c5d` s omezeným Windows tokenem, 44 PASS / 1 SKIP / 1 DESELECTED. [Opravený job](https://github.com/p-rum/kgmaker/actions/runs/44930369173/job/136925458350), [Change155](changes/155_scopeWindowsWorkerSmoke.md). |
 | [T003-S11-W04](tasks/T003-S11-04-mandatoryWorkerCi.md) | MERGED | PARTIAL | `e9027e9a14e048c891aec01ca5af812fc8cf46c7` | [tests/test_mandatory_worker_ci.py](../tests/test_mandatory_worker_ci.py) | [# 33](https://github.com/p-rum/kgmaker/pull/33) | Omezený kontrakt; úplná AC/toolchain matice nově NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S11-W05](tasks/T003-S11-05-benchmarkCorpus.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S11-W06](tasks/T003-S11-06-regressionBudgets.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
@@ -325,6 +325,13 @@ context. JPA context rule v2 marks legacy XML-bearing contexts stale while
 XML-free legacy contexts remain readable. Shared inherited XML columns survive
 an override in only one entity; the final strict full suite passed 652 tests and
 skipped 10 explicit Maven/Gradle/Windows gates.
+
+Lokální oprava klasifikace snapshotu pro Python 3.13 má 46 PASS / 0 SKIP
+na Pythonu 3.12.14 i 3.13.5 se skutečným Javac/K1/K2. Smyčka odkazu se
+zachytí jako `invalid`, chybějící cíl v projektu jako `missing`.
+Hostovaný Python 3.13 na `d977f18` vykázal 2 421 PASS / 1 279 SKIP.
+[Hostovaný job](https://github.com/p-rum/kgmaker/actions/runs/44930359814/job/136925433122),
+[samostatný záznam opravy](changes/153_classifyLoopedJpaXmlInputs.md).
 Viz [acceptance inventář](acceptance-inventory.md) a
 [change note 65](changes/65_ormXmlOverrides.md). T003-S06 zůstává PARTIAL.
 
@@ -489,6 +496,19 @@ Jde o nakonfigurovaný proces; skutečné review a merge jednotlivých PR se
 dokládají jejich GitHub stavem a nejsou tímto odstavcem prohlášeny za hotové.
 Historický draft PR #4 a měnící se draft PR #8 nejsou schválené merge kandidáty.
 
+Automatický PR Review měl na #137 chybnou syntaxi vloženého Pythonu a
+chybějící adaptér `pytest-cov`. Po nezávislém nálezu kandidát používá
+SHA obou commitů z události PR, čte soubory z Git objektů headu a předává
+coverage i stav testů jako data. Chybějící měření se zobrazí jako nedostupné.
+Hostovaný běh `07c49d1` dokončil kroky review a zaznamenal selhání sběru
+testů kvůli chybějícímu `jsonschema`. Kandidát doplňuje verzi `4.23.0` z
+workflow Test. Hostovaný `11c5901` vykázal 2 371 PASS, 1 280 SKIP,
+84 úspěšných subtestů a report 74 % pokrytí. Dodání je PR_OPEN a ověření
+lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
+[#140](https://github.com/p-rum/kgmaker/pull/140),
+[opravený job](https://github.com/p-rum/kgmaker/actions/runs/44932000190/job/136930443327),
+[záznam a reprodukce](changes/154_fixPrReviewPythonAndCoverage.md).
+
 | Oblast / etapa dokončení | Stav baseline | Implementováno a evidence | Zbývá |
 |---|---|---|---|
 | T003-S01 acceptance inventář | VERIFIED_IN_SCOPE | [řádkový inventář T001/T002](acceptance-inventory.md) uvádí stav, verzi, konkrétní test a běh; chybějící varianty jsou PARTIAL/NOT_IMPLEMENTED | Udržovat při každé změně scope/verze/běhu; implementační mezery řádků nejsou splněním jejich etap |
@@ -642,6 +662,15 @@ vlastní context selection a evidence; K1 compatibility zůstává oddělená ce
 kompatibilitu, scope, offline refresh a strict no-publication. Instalovaný wheel
 K2 ověřuje `tests/test_worker_install.py`. Skutečné běhy a verze jsou v
 [change note35](changes/35_addK2AnalysisBackend.md).
+
+Po dvou selháních DNS v hostovaném `compiler-workers` je pro 2.1.10 ověřeno
+explicitní stažení osmi připnutých JARů z JetBrains Packages a Maven Central
+a skutečný lokální build K2. Cílené kontroly mají 51 PASS / 0 SKIP.
+Hostovaný `compiler-workers` na `7345f02` ověřil novou adresu stejnými
+kontrolními součty a skutečným buildem, zaznamenal 1 441 PASS / 1 SKIP
+a dokončil explicitní Maven plan/runner/export.
+[Hostovaný job](https://github.com/p-rum/kgmaker/actions/runs/44934058014/job/136936734963),
+[Change 156](changes/156_restorePinnedK2Download.md).
 
 K2 source CFG, constructor ABI, širší Kotlin annotation/framework metadata,
 property/operator/reference/initializer call sites a local/lambda execution nejsou

@@ -72,7 +72,11 @@ try {
     $env:KGMAKER_REQUIRE_WINDOWS_SMOKE = '1'
     $env:KGMAKER_WORKERS_HOME = Join-Path $source 'workers'
     $env:PYTHONPATH = Join-Path $source 'src'
-    Invoke-Tool $developerPython @('-m', 'pytest', '-q', 'tests/test_worker_protocol.py', 'tests/test_worker_install.py', 'tests/test_windows_install.py', 'tests/test_t005_add_view_model.py')
+    # W03 builds the K1 distribution. The compiler-workers job owns mandatory K2.
+    Invoke-Tool $developerPython @('-m', 'pytest', '-q',
+        '--deselect=tests/test_worker_install.py::InstalledWorkerTests::test_packaged_k2_analyzes_outside_checkout',
+        'tests/test_worker_protocol.py', 'tests/test_worker_install.py',
+        'tests/test_windows_install.py', 'tests/test_t005_add_view_model.py')
     $code = 0
     $message = 'Actual Windows restricted-user core / Java / K1 Kotlin / TypeScript smoke passed'
 } catch {
