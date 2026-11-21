@@ -1,10 +1,13 @@
 # Explicit local process review (T032)
 
-Delivery status (2026-11-07): T032 is MERGED in [PR78](https://github.com/p-rum/kgmaker/pull/78) (`7e6c838`).
-Current full acceptance is NOT_RUN in this documentation audit. Historical
-checkpoint results and pre-merge review gates below describe their stated SHA.
-Use the [current delivery inventory](production-analysis-progress.md) and
-[change111](changes/111_reconcileDeliveryStatus.md) for present status.
+T032 was first merged in [PR78](https://github.com/p-rum/kgmaker/pull/78) (`7e6c838`).
+The normalized-context repair merged on 2026-11-21 in
+[PR132](https://github.com/p-rum/kgmaker/pull/132) (`4011825`). In the verified POSIX
+scope, the saved coverage and diagnostic hashes replay against the current
+explicit snapshot and an invalid initial predecessor is rejected before lock
+initialization. See the [merge evidence](changes/152_recordNormalizedProcessReviewMerge.md)
+and the [current delivery inventory](production-analysis-progress.md).
+The historical checkpoint below applies to its stated revision.
 
 The Python API in `kgmaker.process_store` persists a semantic review envelope;
 it never changes the technical `ProcessView`, graph, source checkout, evidence or

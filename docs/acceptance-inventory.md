@@ -1136,7 +1136,7 @@ See [bounded proof](validation/t031-descendant-proof.json). GHCI optional/unveri
 Explicit stack T030070. Its47tests and complete original module AST/byte prefix
 are unchanged; full proof is pending, not inferred from these pure results.
 
-## T032 — explicit local semantic review (final review candidate)
+## T032 — explicit local semantic review (historical initial delivery, 2026-11-07)
 
 | AC | Concrete public evidence | Result |
 |---|---|---|
@@ -1158,17 +1158,19 @@ The separately frozen T030/T031 full is not evidence of T032 full validation.
 
 ### Oprava opakovaného čtení kontextu T032
 
-Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Otevřené [PR #132](https://github.com/p-rum/kgmaker/pull/132) má původní ověření na
-`fad4fc63c76f0f9ef5a1a292e279d1269bd84540` a místní přenos na
-`c2885a6f8daf0281967e3bc5386a69f1647718e0`. Nový přenos čeká na nezávislé review.
-[Change147](changes/147_replayNormalizedProcessContext.md).
+[PR #132](https://github.com/p-rum/kgmaker/pull/132) je od 2026-11-21 MERGED do main
+jako `4011825b15e4b65e1f57576a0986ca05b3cf810e`. Výsledný tree
+`d8021d4f2eefe3b1576c75ed66e7e5f71d642fbd` odpovídá ověřenému kandidátu.
+[Záznam integrace](changes/152_recordNormalizedProcessReviewMerge.md) obsahuje SHA a výsledky.
+[Předslučovací záznam](changes/147_replayNormalizedProcessContext.md) zachovává reprodukci
+na `17e9e736`, původní ověření na `fad4fc6` a přenos na `c2885a6`.
 
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
 | T032-AC01/03 | VERIFIED_IN_SCOPE | Skutečný Javac/JDK21 graf přes T024/T025/T027–T029 dříve vyvolal `UNSUPPORTED_SELECTION_SHAPE`. Po opravě T032 zaznamenal revizi 1 a načetl `APPROVED`. Test `test_public_persists_normalized_capture_and_rechecks_raw_binding` ověřuje idempotenci, zachované hashe a `NEEDS_REVALIDATION` po změně. |
 | T032-AC02/04 | VERIFIED_IN_SCOPE | Cílená sada zachovává CAS dvou procesů a vláken. `test_invalid_candidate_and_stale_initial_head_leave_no_coordination_state` ověřuje prázdný adresář po neplatném kandidátu i konfliktu prvního headu. |
 | T032-AC05 | VERIFIED_IN_SCOPE | `test_review_store_rejects_modified_normalized_context_bindings` odmítá změny i po přepočtu řetězce hashů. `test_forged_hash_binding_is_not_a_raw_context_capture` zachovává vstupní kontrakt T030. |
-| T032-AC06 | PARTIAL | Přenos na `c2885a6`: 272 cílených PASS / 0 SKIP. Lokální kontrola uloženého kontextu z Javac 21.0.6 (K1): 1 PASS / 1 DESELECTED (K2). Úplná sada, GitHub Actions a nezávislé review tohoto přenosu čekají. |
+| T032-AC06 | VERIFIED_IN_SCOPE | Sloučený POSIX rozsah. 3698 PASS / 2 SKIP / 0 FAIL / 0 ERROR v úplné cloudové sadě, z toho 43 T032 PASS. Reálný uložený Javac 21.0.6/K1 kontext prošel. T045 APPROVE je doložené pro přesný pár. GitHub Actions NEOVĚŘENO. Windows zápis a T034 zůstávají mimo tento rozsah. |
 
 ## T033 — read-only process catalog (final review candidate)
 
