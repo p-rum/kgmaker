@@ -40,3 +40,10 @@ Zdroj a testy této opravy mají shodný diff s dříve recenzovaným krokem.
 Stejný cílený příkaz výše má 99 PASS / 0 SKIP na novém základu.
 Graf, sémantika a diff prošly po přepočtu. Stav #129 i jeho přesný doklad
 zůstávají v existujícím inventáři.
+
+### Doplnění po nezávislém review T052-S02 / AC02
+
+Inventář a stavová matice uvádějí 99 zaměřených PASS / 0 SKIP a stav
+úplné sady NOT_RUN. [Specifikace T052](../tasks/52_addCompletionOrchestrator.md)
+pro tento krok vyžaduje zaměřené testy a obnovu workflow. Příkaz z prvního
+ověření i graph/status a diff kontroly prošly po doplnění evidenčních textů.
