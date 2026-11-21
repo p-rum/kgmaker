@@ -62,7 +62,7 @@
     "docs/changes/155_scopeWindowsWorkerSmoke.md": "948eb2bc15f23ef5145616e158e662ac73064fe55dfa19609d6aa9aba10e08f8",
     "docs/changes/156_restorePinnedK2Download.md": "30a1357e1d9d89708e908bdbab33a16b5bdbeda424761281bb1618af607fc55b",
     "docs/changes/157_integrateCiAcceptanceRepairs.md": "39e917115b12954811809c977698b694e20236e0978a8d49bbccd825f5d2fd53",
-    "docs/changes/158_recordFileBoundVerificationMerge.md": "2715abf3063a3413a39deb0f0322dedbccfb9fb7e901b8f02192cd29f176fce4",
+    "docs/changes/158_recordFileBoundVerificationMerge.md": "e51c1a08e79e8b2ff16f9e140f1d22c30dc8dd0ef1afb5cdcf90cff2c38f62c3",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -170994,6 +170994,46 @@
         }
       ],
       "id": "episode:2c7eb9b0ecd9c042521eeb6b5a1572d6692df5d18bafc2516ea8cebcd3b62e67"
+    },
+    {
+      "base_commit": "ffef84c8fbd1187ba834f855d84d83d008cac042",
+      "head_commit": "ffef84c8fbd1187ba834f855d84d83d008cac042",
+      "worktree_fingerprint": "f78436940b7624b9984a596ba3c27b09e2856ec418f9200d5de18ab2ed5b3250",
+      "title": "Change Doložený merge souborově vázaného ověření T047-S10, Kontroly dokumentačního kroku, Ověření kandidáta a merge",
+      "changed_files": [
+        {
+          "path": "docs/changes/158_recordFileBoundVerificationMerge.md",
+          "status": "M",
+          "sha256": "e51c1a08e79e8b2ff16f9e140f1d22c30dc8dd0ef1afb5cdcf90cff2c38f62c3"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/changes/158_recordFileBoundVerificationMerge.md:158_recordFileBoundVerificationMerge.md",
+        "section:docs/changes/158_recordFileBoundVerificationMerge.md:Doložený merge souborově vázaného ověření T047-S10::1",
+        "section:docs/changes/158_recordFileBoundVerificationMerge.md:Kontroly dokumentačního kroku::57",
+        "section:docs/changes/158_recordFileBoundVerificationMerge.md:Ověření kandidáta a merge::23",
+        "section:docs/changes/158_recordFileBoundVerificationMerge.md:T047-S10 / T047-R10 / T047-AC10 a T048-S01 / T048-AC01::3"
+      ],
+      "graph_delta": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "literal_receipt_digests",
+          "status": "passed"
+        },
+        {
+          "label": "t032_targeted",
+          "status": "passed"
+        },
+        {
+          "label": "completion_plan",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:c84ed013c4baff2ab7fb665196b773960b4b1e31c9c85b499e2e4cd6307aa26f"
     }
   ]
 }

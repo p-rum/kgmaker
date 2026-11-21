@@ -47,7 +47,7 @@ a journal v1 lze dál používat bez migrace.
   [Test](https://github.com/p-rum/kgmaker/actions/runs/44952133817) · [PR Review](https://github.com/p-rum/kgmaker/actions/runs/44952133850)
 - **Sloučený `main`:** `PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short tests/test_verification_records.py`
   se skutečným Mavenem a Surefire má 27 PASS / 0 SKIP. JUnit SHA-256
-  `d5f27612448dca6c4ea6d42a9a2051565cf29f8aa7d4901a16e10fede70fd4`.
+  `d5f27612448dca6c4ea6d42a9a2051565cf29f8aa8a7d4901a16e10fede70fd4`.
 
 T047-AC10 zůstává `PARTIAL`. Vícerepozitářové spuštění, ověřitelné
 importované doklady a širší ověřovací matice mají samostatný rozsah. T047-S11
