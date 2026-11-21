@@ -128,3 +128,41 @@ entitu. [Cache](../../src/kgmaker/extraction_cache.py) zachovává režim
 
 Ověření širších CRLF projekcí, parity Kotlin/Java a selektivní invalidace
 W02-AC01 zůstává otevřené. Výkonový warm HIT má samostatnou acceptance.
+
+## T003-S02 / AC02 — přenos na main po #121
+
+Lokální revize opravy `4af8f12818fbb0a6d99b2e645060235b847cefaf` se
+spojuje s `main` `b3bbba43304f499f96950ea4ecc2a2467919e616`.
+Produktové soubory i testy JVM opravy mají stejné bloby jako `4af8f12`.
+Test, fixture a změnový záznam T047-S01 souhlasí s přesným `main`. Změnový
+záznam #121 popisuje oracle a další otevřené části inkrementální integrity.
+[Sloučené #121](https://github.com/p-rum/kgmaker/pull/121).
+
+Sémantické důkazy opravné větve mají ověřené souřadnice v aktuálním zdroji.
+Sloučený index navazuje na historii obou rodičů se 363 jedinečnými původními
+epizodami. Nová epizoda eviduje přesný přenos.
+
+- PASS — 16 PASS, 0 SKIP a 59 DESELECTED za 67,71 s. Výběr zahrnuje
+  skutečné Javac, K1, K2 a Criteria kontroly a pět rychlých scénářů
+  `SOURCE_ONLY`, reset a odmítnutí neplatného oracle z #121. Pytest a obě
+  kontroly manifestu vrátily kód 0. JUnit SHA-256
+  `b994dbe08767e63f9c5803c9664e68276d5450c30239c8556916aaedc05b9f30`.
+  Shodný SHA-256 vstupního a výstupního manifestu je
+  `f593e0f542656a1acdf23785904640c3cc70455bea072162cdddb5d2fd9285c0`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/jvm-raw-source-after121-focus-pytest \
+    --junitxml=/workspace/kgmaker-evidence/jvm-raw-source-after121-focus.xml \
+    tests/test_jvm_raw_source_snapshot.py tests/test_criteria_queries.py \
+    tests/test_incremental_equivalence.py \
+    -k 'jvm_raw_source_snapshot or raw_provenance_in_crlf_source or (incremental_equivalence and (source_only or malformed_oracle or mutation_replay_and_reset))'
+  ```
+
+- Strukturu a historii obou rodičů ověřuje `kgmaker semantic update --base HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check` a kontrola diffu.
+- NOT_RUN — nový úplný běh, úplná toolchain matice, Windows a vzdálené CI
+  pro tuto přesnou integrační revizi. Výše uvedený striktní běh 300 případů
+  je doklad produktu na parentu `4af8f12`.
