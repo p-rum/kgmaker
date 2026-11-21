@@ -1566,5 +1566,12 @@ for context/proof guards, atomic output and exact bounded native verification.
 Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
 Graph/store v1/v2/v3 a interní envelope v1 zůstávají čitelné.
-[Detaily, příklady a single-writer limity](stage-content-cache.md),
+A competing graph publication or intervening generation yields `STALE`
+and exit 3. The next explicit inspection can read the newly committed graph
+without mixing contexts from stale candidates. A runtime import with an explicit
+schema 3 object compares its persisted content to the authoritative stored graph
+and rejects a mismatch as `STALE`. An explicit graph remains a valid seed when
+there is no store. A Confluence-enabled scan keeps the report and validation index
+in the graph publication rollback scope.
+[Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).

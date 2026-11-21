@@ -1658,3 +1658,15 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 | T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
 | T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, stavová a acceptance matice, [historická změna](changes/132_renderTopologyMermaid.md), [aktuální ověření](changes/138_rejectForeignTopologyEvidence.md), úplná sada a [T045 merge doklad](changes/146_recordTopologyMerge.md). | PASS |
+
+## T003-S10-W06 — souběh publikace a poškozená cache
+
+W06 má cílené ověření nad opravou série publikací. Deterministické regrese
+dokládají odmítnutí druhého zapisovače mezi výměnami souborů, ochranu
+novějšího grafu při scan, runtime importu, migraci a workspace scan a
+ochranu souvisejících Confluence výstupů. Chyba poslední výměny grafu vrací
+obsah nebo nepřítomnost Confluence indexu a reportu. Runtime import odmítá
+odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 PASS / 0 SKIP se skutečnými workery a JDK 21/22. Ověření zahrnuje
+neplatný cache envelope a původní graph/store schéma v1/v2/v3.
+[Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
+a samostatný úplný gate. Replay HIT se zatím nepovoluje.

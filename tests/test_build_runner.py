@@ -399,3 +399,26 @@ def test_external_toolchain_two_real_jdks(tmp_path):
         manifests.append(manifest)
     assert manifests[0]['toolchain_selection']['fingerprint'] != manifests[1]['toolchain_selection']['fingerprint']
     assert manifests[0]['contexts'][0]['toolchain']['java_version'] != manifests[1]['contexts'][0]['toolchain']['java_version']
+
+
+def test_one_time_build_claim_rejects_an_existing_concurrent_owner(tmp_path, monkeypatch):
+    (tmp_path / 'build.gradle').write_text('')
+    adapter = tmp_path / 'tools/build/gradle/export.gradle'
+    adapter.parent.mkdir(parents=True)
+    adapter.write_text('')
+    plan = create_plan(tmp_path, executable='/bin/true', home=tmp_path / 'tools')
+    run = Path(plan['run_root'])
+    work = Path(plan['cwd'])
+    create = Path.mkdir
+
+    def concurrent_claim(path, *args, **kwargs):
+        if path in {run, work} and not run.exists():
+            create(run, parents=True)
+            (run / 'owner').write_text('first writer')
+        return create(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'mkdir', concurrent_claim)
+    with pytest.raises(AnalysisError, match='already executed'):
+        run_plan(plan)
+    assert (run / 'owner').read_text() == 'first writer'
+    assert not work.exists()
