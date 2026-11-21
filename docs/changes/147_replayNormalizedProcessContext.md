@@ -5,9 +5,9 @@ s tree `dfb0a247ec329196190a3db182b5d1e8c549b3db`. Aktuální kandidát vycház�
 z `main` `fad4fc63c76f0f9ef5a1a292e279d1269bd84540` s tree
 `999b5ef61989bf91ce3df58e4d3bcc84c074eb31`. Zdrojové a testové změny odpovídají
 posouzenému kandidátu `2801ddc0a5ce03e86d99e0a9a9a79e76f04379b9`. Integrace
-zachovává sloučený T021. Oprava navazuje na sloučené
+zachovala sloučený T021. Tento výchozí kandidát navazuje na sloučené
 [T030](../tasks/T-030_prepare-process-label-packet.md) a
-[T032](../tasks/T-032_persist-process-review.md). Kandidát je `IN_PROGRESS`.
+[T032](../tasks/T-032_persist-process-review.md). Přenos otevřeného [PR #132](https://github.com/p-rum/kgmaker/pull/132) je zaznamenán níže.
 
 ## T032-S01 a T032-S03 · AC01, AC03, AC05
 
@@ -75,3 +75,41 @@ Při opakování standardního příkladu T032 použijte packet z aktuálního P
 a původní `operation_id` s původním `expected_head`. Vrácený receipt zachová stejnou
 revizi i head. Pravidla T034, Windows podpora, plná sada, GitHub Actions, nezávislé
 review této změny a merge gate čekají.
+
+## T032-S05 · AC06 — přenos #132 na aktuální main
+
+Místní přenos spojuje původní PR head
+`2a5921a5f4fc95e8343a510f5604e4c7988a00db` a cílový
+`c2885a6f8daf0281967e3bc5386a69f1647718e0`. Zachovává obsah
+`src/kgmaker/process_semantics.py`, `src/kgmaker/process_store.py` a
+`tests/test_t032_persist_process_review.py` beze změny proti původnímu PR.
+Dokumentační sloučení zachovává i doklady T021, W06 a T052 z cílové větve.
+[Inventář acceptance](../acceptance-inventory.md) a
+[stavová matice](../production-analysis-progress.md) odkazují na #132 a nové
+zaměřené ověření. [README](../../README.md#explicit-local-process-review-t032-merged-pr78),
+[T030 packet](../process-label-packets.md) a [T032 store](../process-review-store.md)
+zachovávají popis opravy. Kontrakt API, formát úložiště, CLI a registr zadání nemají
+dopad z přenosu.
+
+- PASS — Příkaz s `--assert=plain` z T032-S04 v Pythonu 3.12.14 a pytest 8.3.4
+  vykázal 272 PASS / 0 SKIP za 4,11 s. JUnit byl zapsán mimo checkout.
+- PASS — Místní doplňkový pytest scénář spustil stejný uložený workspace fixture
+  z `tests/test_local_operation_proofs.py` s reálným Javac 21.0.6 a JVM workerem K1.
+  Spouštěcí výběr `-k k1` vykázal 1 PASS a 1 DESELECTED (K2), 7,08 s. Vstupní
+  závislosti odpovídají kontrolním součtům `fixtures/process-triggers/dependencies.lock.json`.
+  Výsledný uložený kontext měl `CONTENT_VERIFIED` a nesl normalizované vazby.
+  Zápis vrátil `COMMITTED` pro revizi 1, čtení vrátilo `APPROVED`, opakování
+  zachovalo stejné rozhodnutí a soubory testovaného repository zůstaly shodné.
+- RED — Stejné regresní případy v `tests/test_t032_persist_process_review.py`
+  proti archivovanému `src` z `c2885a6` vykázaly 6 FAIL / 1 PASS, 36 DESELECTED.
+  Pět případů skončilo `UNSUPPORTED_SELECTION_SHAPE` a jeden vytvořil
+  koordinační stav po konfliktu prvního headu. Použit byl samostatný
+  `PYTHONPATH`, `pytest -c /dev/null -p no:cacheprovider --assert=plain -q --tb=short`
+  a výběr `-k 'public_persists_normalized_capture or review_store_rejects_modified_normalized_context_bindings or invalid_candidate_and_stale_initial_head or forged_hash_binding_is_not_a_raw_context_capture'`.
+- PASS — `semantic update --base c2885a6`, `semantic apply`, `semantic validate`,
+  `memory capture --base c2885a6`, `scan`, `status`, `check`,
+  `git diff --check c2885a6` a `git diff --cached --check`. Sémantika zachovala
+  všech 336 epizod z obou výchozích revizí a přidala doklad tohoto přenosu.
+- NOT_RUN — Úplná sada, nové nezávislé review T045, GitHub Actions a Windows.
+  Doplněk je lokální podklad pro review. T034 zůstává samostatná dodávka a čeká na
+  integraci opravy.

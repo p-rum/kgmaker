@@ -31,7 +31,7 @@ Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
 | T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
-| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
 | T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
@@ -1158,8 +1158,9 @@ The separately frozen T030/T031 full is not evidence of T032 full validation.
 
 ### Oprava opakovaného čtení kontextu T032
 
-Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Kandidát na
-`fad4fc63c76f0f9ef5a1a292e279d1269bd84540` čeká na nové nezávislé review.
+Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Otevřené [PR #132](https://github.com/p-rum/kgmaker/pull/132) má původní ověření na
+`fad4fc63c76f0f9ef5a1a292e279d1269bd84540` a místní přenos na
+`c2885a6f8daf0281967e3bc5386a69f1647718e0`. Nový přenos čeká na nezávislé review.
 [Change147](changes/147_replayNormalizedProcessContext.md).
 
 | Acceptance | Ověření | Důkaz |
@@ -1167,7 +1168,7 @@ Reprodukce na `17e9e7368e6cc2d6550983c3039eb39debd65424`. Kandidát na
 | T032-AC01/03 | VERIFIED_IN_SCOPE | Skutečný Javac/JDK21 graf přes T024/T025/T027–T029 dříve vyvolal `UNSUPPORTED_SELECTION_SHAPE`. Po opravě T032 zaznamenal revizi 1 a načetl `APPROVED`. Test `test_public_persists_normalized_capture_and_rechecks_raw_binding` ověřuje idempotenci, zachované hashe a `NEEDS_REVALIDATION` po změně. |
 | T032-AC02/04 | VERIFIED_IN_SCOPE | Cílená sada zachovává CAS dvou procesů a vláken. `test_invalid_candidate_and_stale_initial_head_leave_no_coordination_state` ověřuje prázdný adresář po neplatném kandidátu i konfliktu prvního headu. |
 | T032-AC05 | VERIFIED_IN_SCOPE | `test_review_store_rejects_modified_normalized_context_bindings` odmítá změny i po přepočtu řetězce hashů. `test_forged_hash_binding_is_not_a_raw_context_capture` zachovává vstupní kontrakt T030. |
-| T032-AC06 | PARTIAL | 272 cílených PASS / 0 SKIP a přímý běh reálného Javac grafu. Úplná sada, GitHub Actions a nezávislé review aktuální opravy čekají. |
+| T032-AC06 | PARTIAL | Přenos na `c2885a6`: 272 cílených PASS / 0 SKIP. Lokální kontrola uloženého kontextu z Javac 21.0.6 (K1): 1 PASS / 1 DESELECTED (K2). Úplná sada, GitHub Actions a nezávislé review tohoto přenosu čekají. |
 
 ## T033 — read-only process catalog (final review candidate)
 
@@ -1671,3 +1672,30 @@ Příkazy a výsledky tohoto historického checkpointu jsou v [change132](change
 | T021-AC04 | Invalid/dangling input equality; CLI render failure preserves existing artifact and skips cache publish | PASS |
 | T021-AC05 | Cizí scope a explicitní kontext u přímé provenance viditelných uzlů/hran vyvolá chybu. Neznámé hodnoty, omitted-only provenance, PARTIAL/TRUNCATED/UNKNOWN a async delivery boundary jsou zachované. | PASS |
 | T021-AC06 | README, architecture, CLI, service topology, stavová a acceptance matice, [historická změna](changes/132_renderTopologyMermaid.md), [aktuální ověření](changes/138_rejectForeignTopologyEvidence.md), úplná sada a [T045 merge doklad](changes/146_recordTopologyMerge.md). | PASS |
+
+## T003-S10-W06 — souběh publikace a poškozená cache
+
+Dodání MERGED v [#129](https://github.com/p-rum/kgmaker/pull/129), merge `c067f9c3c7b3266842fc4f2230b4eaf65182e4df`. Lokální úplné
+ověření přesného tree `570a6590eda49cdb2b8b8c1168f0c78655af7aca` má 3692 PASS / 1 SKIP se skutečnými workery.
+GitHub Actions NEOVĚŘENO a samostatný Windows běh NOT_RUN.
+[Doklad aktuálního ověření](changes/149_recordGraphPublicationMerge.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S10-W06-AC01 | VERIFIED_IN_SCOPE | `test_competing_publisher_cannot_cross_the_first_graph_commit`, `test_overlapping_real_workers_do_not_overwrite_newer_publication`, `test_confluence_graph_commit_failure_rolls_back_related_outputs`. Platná generace zůstává zachována. |
+| T003-S10-W06-AC02 | VERIFIED_IN_SCOPE | Podporovaný legacy store v1/v2/v3 v úplné sadě. Současný runtime import kontroluje shodu explicitního schema 3. |
+| T003-S10-W06-AC03 | VERIFIED_IN_SCOPE | Neplatné cache payloady a odmítnutý stale import nepovyšují evidence. Replay HIT má samostatný rozsah #116. |
+| T003-S10-W06-AC04 | VERIFIED_IN_SCOPE | Přesný base/head, Linux toolchainy, JUnit a hranice další práce v [dokladu](changes/149_recordGraphPublicationMerge.md). |
+
+Předchozí cílené ověření:
+
+
+W06 má cílené ověření nad opravou série publikací. Deterministické regrese
+dokládají odmítnutí druhého zapisovače mezi výměnami souborů, ochranu
+novějšího grafu při scan, runtime importu, migraci a workspace scan a
+ochranu souvisejících Confluence výstupů. Chyba poslední výměny grafu vrací
+obsah nebo nepřítomnost Confluence indexu a reportu. Runtime import odmítá
+odlišný explicitní schema 3 graf a zachová novější kontext. Cíleně 250 PASS / 0 SKIP se skutečnými workery a JDK 21/22. Ověření zahrnuje
+neplatný cache envelope a původní graph/store schéma v1/v2/v3.
+[Change 144](changes/144_serializeGraphPublication.md) eviduje přesné kontroly
+a samostatný úplný gate. Replay HIT se zatím nepovoluje.

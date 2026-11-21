@@ -17,7 +17,7 @@ from .classification import Classifier
 from .control_flow import from_body
 from .model import Edge, KnowledgeGraph, Node
 from .scanner import scan_repository
-from .store import save_graph
+from .store import graph_revision, save_graph
 from .worker_protocol import WorkerError, handshake, request_worker
 from .http_execution import redact_uri_text
 
@@ -686,8 +686,9 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     final_guard()
     if publish:
         from .graph_provider import merge_compiler_context
+        previous = graph_revision(root)
         graph = merge_compiler_context(root, stages.attach(graph), selected)
-        save_graph(graph, root, before_replace=final_guard)
+        save_graph(graph, root, before_replace=final_guard, expected_revision=previous)
     return {**result, "graph": graph.to_dict(), "cache": stages.report(), "exit_code": 0}
 
 
@@ -814,6 +815,7 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
     final_guard()
     if publish:
         from .graph_provider import merge_compiler_context
+        previous = graph_revision(root)
         graph = merge_compiler_context(root, stages.attach(graph), selected)
-        save_graph(graph, root, before_replace=final_guard)
+        save_graph(graph, root, before_replace=final_guard, expected_revision=previous)
     return {**result, "graph": graph.to_dict(), "cache": stages.report(), "exit_code": 0}
