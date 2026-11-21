@@ -334,6 +334,52 @@ def test_equal_run_start_times_fail_closed(fixture, monkeypatch):
     assert_gate_rejects(root, task, 'AMBIGUOUS_LATEST_RUN')
 
 
+@pytest.mark.parametrize('entrypoint', ['advance', 'save'])
+def test_done_rechecks_inputs_after_bound_report_validation(fixture, entrypoint):
+    from kgmaker.verification import capture_reports
+
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    task = move(root, task, 'review')
+    task_file = task_path(root, task['id'])
+    journal = root / provenance.JOURNAL
+    before = task_file.read_bytes(), journal.read_bytes()
+
+    def capture_then_edit(work):
+        result = capture_reports(work)
+        (root / '.test-config').write_text('changed while checking the XML at the same HEAD')
+        return result
+
+    with patch('kgmaker.verification.capture_reports', side_effect=capture_then_edit), \
+            pytest.raises(WorkflowError, match='STALE_RUN'):
+        if entrypoint == 'advance':
+            advance_task(root, task['id'], 'done')
+        else:
+            save_task(root, task | {'status': 'done'}, expected_revision=digest(task))
+    assert (task_file.read_bytes(), journal.read_bytes()) == before
+    assert traced(fixture, receipt)['freshness'] == 'STALE'
+
+
+def test_trace_shares_its_single_receipt_observation_with_task_summary(fixture):
+    root, task, _, _ = fixture
+    task = move(root, task, 'analyze', 'plan', 'implement', 'test')
+    enable_gate(root)
+    receipt = run(fixture)
+    assert receipt['verification']['freshness'] == 'CURRENT'
+    key = receipt['verification']['reference']
+
+    with patch('kgmaker.verification.freshness', side_effect=['CURRENT', 'STALE']) as observed:
+        references = provenance.trace(root, task['id'])['references']
+    observed.assert_called_once()
+    run_row = next(row for row in references if row['key'] == key)
+    summary = next(row['verification_summary'] for row in references if row['id'] == task['id'])
+    assert run_row['freshness'] == summary['freshness'] == 'CURRENT'
+    assert summary['status'] == 'VERIFIED'
+
+
 @pytest.mark.parametrize('changed', ['suite.py', '.test-config', 'deps.lock', 'untracked-input'])
 def test_existing_cli_binds_real_exit_and_stales_same_head_inputs(fixture, tmp_path, changed):
     root, task, tools, launcher = fixture

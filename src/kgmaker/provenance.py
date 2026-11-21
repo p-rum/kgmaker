@@ -261,6 +261,8 @@ def enforce_gate(root, task, target, *, data=None):
 
 
 def trace(root, selector=None, *, data=None):
+    from .verification import freshness, summary
+
     if data is None:
         data = load(root)
     refs = data['references']
@@ -277,8 +279,11 @@ def trace(root, selector=None, *, data=None):
         if extra <= selected:
             break
         selected |= extra
+    keys = sorted(selected)
+    observed_freshness = {key: freshness(root, refs[key]['payload'])
+                          for key in keys if is_verification(refs[key])}
     result = []
-    for key in sorted(selected):
+    for key in keys:
         ref = refs[key]
         stale = False
         verification = {}
@@ -301,16 +306,14 @@ def trace(root, selector=None, *, data=None):
             except (ImportError, AnalysisError, OSError, StopIteration, KeyError, TypeError):
                 stale = True
         if ref['kind'] == 'test_run':
-            if is_verification(ref):
-                from .verification import freshness
-                state = freshness(root, ref['payload'])
+            if key in observed_freshness:
+                state = observed_freshness[key]
                 verification = {'origin': 'RUNNER_CAPTURED', 'freshness': state}
                 stale = state == 'STALE'
             else:
                 verification = {'origin': 'IMPORTED' if ref['locator'] else 'AGENT_DECLARED',
                                 'freshness': 'STALE' if stale else 'UNKNOWN'}
         if ref['kind'] == 'task' and ref['repo_id'] == 'local':
-            from .verification import summary
             from .workflow import WorkflowError, load_task
 
             try:
@@ -321,7 +324,8 @@ def trace(root, selector=None, *, data=None):
                 if task_references(task)[1]['key'] == key:
                     verification = {'workflow_status': task['status'],
                                     'workflow_iteration': task['iteration'],
-                                    'verification_summary': summary(root, data, task)}
+                                    'verification_summary': summary(
+                                        root, data, task, observed_freshness=observed_freshness)}
         events = [e for e in data['events'] if e['subject'] == key]
         result.append({**ref, 'stale': stale, 'approved': approved(data,key) and not stale,
                        **verification,

@@ -235,9 +235,21 @@ def record_execution(root, task, plan, before, after, result, reports, copied_un
     return {'reference': key, 'result': record['result'], 'freshness': freshness(root, record)}
 
 
-def freshness(root, record):
+def _input_freshness(root, observed):
     from .build_runner import snapshot
 
+    try:
+        head = _git_head(root)
+        if head is None:
+            return 'UNKNOWN'
+        if head != observed['head'] or input_fingerprint(root, snapshot(root)) != observed['inputs_sha256']:
+            return 'STALE'
+    except (AnalysisError, OSError):
+        return 'UNKNOWN'
+    return 'CURRENT'
+
+
+def freshness(root, record):
     before, after = record['before'], record['after']
     if after['head'] is None:
         return 'UNKNOWN'
@@ -245,14 +257,9 @@ def freshness(root, record):
         return 'STALE'
     if not record['copied_unchanged'] or record['report_coverage'] != 'SUPPORTED_XML_REPORTS':
         return 'UNKNOWN'
-    try:
-        head = _git_head(root)
-        if head is None:
-            return 'UNKNOWN'
-        if head != before['head'] or input_fingerprint(root, snapshot(root)) != before['inputs_sha256']:
-            return 'STALE'
-    except (AnalysisError, OSError):
-        return 'UNKNOWN'
+    state = _input_freshness(root, before)
+    if state != 'CURRENT':
+        return state
     try:
         work = safe_path(root, '.kgmaker/build-runs/' + record['run_id'] + '/snapshot')
         observed, reports = capture_reports(work)
@@ -263,10 +270,11 @@ def freshness(root, record):
     if observed['coverage'] != record['report_coverage'] or any(
             observed[key] != record['counts'][key] for key in COUNTS):
         return 'UNKNOWN'
-    return 'CURRENT'
+    # Report validation may take time while the original checkout is writable.
+    return _input_freshness(root, before)
 
 
-def summary(root, journal, task):
+def summary(root, journal, task, *, observed_freshness=None):
     """Evaluate the newest local test/review receipt for the exact task selection."""
     from .provenance import is_verification, task_references
 
@@ -299,7 +307,9 @@ def summary(root, journal, task):
         return {**result, 'reason': 'AMBIGUOUS_LATEST_RUN'}
     ref = latest[1]
     record = ref['payload']
-    state = freshness(root, record)
+    state = observed_freshness.get(ref['key']) if observed_freshness is not None else None
+    if state is None:
+        state = freshness(root, record)
     if state == 'STALE':
         result.update(status='STALE', reason='STALE_RUN')
     elif state != 'CURRENT':

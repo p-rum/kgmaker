@@ -263,7 +263,10 @@ druhy evidence.
 
 `trace show` v existující lineage zobrazuje pro aktuální referenci tasku
 `workflow_status` a `verification_summary` zvlášť. Při zapnuté politice má
-stejný odvozený souhrn i `task context`. Po nové editaci může ověření přejít na
+stejný odvozený souhrn i `task context`. V jednom výstupu `trace show` sdílí
+řádek dokladu a souhrn stejné pozorování jeho aktuálnosti. Brána pozoruje
+checkout sama při zápisu a znovu ověří HEAD a úplný inventář po validaci XML.
+Po nové editaci může ověření přejít na
 `STALE`, zatímco historické `done` a doklad o původním běhu zůstávají uložené.
 Politiku lze vypnout stejným příkazem s `off` a poslední revizí journalu.
 Nastavení se týká jednoho explicitního běhu lokálního checkoutu. Schválení
