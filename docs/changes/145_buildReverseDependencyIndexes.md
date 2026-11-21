@@ -1,8 +1,12 @@
 # Index doložených závislostí pro revalidaci
 
-Výchozí `main` je `17e9e7368e6cc2d6550983c3039eb39debd65424`. Změna pokrývá
-čtecí část [T003-S10-W02](../tasks/T003-S10-02-reverseDependencyIndexes.md)
-pod nadřazenou `T003-AC10`. Dodání je `IN_PROGRESS` a ověření `PARTIAL`.
+Výchozí reprodukce používá `main` `17e9e7368e6cc2d6550983c3039eb39debd65424`.
+Integrační kandidát vychází z `main` `fad4fc63c76f0f9ef5a1a292e279d1269bd84540`
+s tree `999b5ef61989bf91ce3df58e4d3bcc84c074eb31`. Zdrojové a testové změny se
+shodují s dříve schváleným kandidátem `da9d0fd334f59f2ef7aa0b0589db2a2ca5e84e46`.
+Změna pokrývá čtecí část [T003-S10-W02](../tasks/T003-S10-02-reverseDependencyIndexes.md)
+pod nadřazenou `T003-AC10`. Dodání je `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130)
+a ověření `PARTIAL`. Samostatný kandidát nad `fad4fc6` zachovává sloučený T021.
 
 ## Krok 1 — výchozí kontrakt, AC01 a AC03
 
@@ -88,8 +92,9 @@ python -m pytest -p no:cacheprovider -q --tb=short tests/test_reverse_dependency
   tests/test_workspace.py
 ```
 
-Výsledek **77 PASS, 0 SKIP**. Úplná sada, GitHub Actions a merge gate jsou
-`NOT_RUN`. Opravený kandidát čeká na nezávislé review.
+Původní i integrační běh nad `fad4fc6` mají **77 PASS, 0 SKIP**. Integrační běh
+znovu použil skutečný Javac/JDK21. Úplná sada, GitHub Actions a merge gate jsou
+`NOT_RUN`. Integrační kandidát čeká na nové nezávislé review.
 
 ## Krok 5 — návod a stav, AC04
 
