@@ -136,3 +136,41 @@ def test_actual_worker_bytes_and_analyzer_rule_change_force_reanalysis(tmp_path,
     assert calls == ['analyze'] * 4
     assert changed_rule['graph']['call_sites']
     assert file_hash(shared / jar.name) == original_hash
+
+
+def test_overlapping_real_workers_do_not_overwrite_newer_publication(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    from kgmaker import graph_provider, store
+
+    ready('jvm', 'k1')
+    root = tmp_path / 'app'
+    source = root / 'src/main/java/Example.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('class Example { int run() { return 1; } }\n')
+    captured, release = Event(), Event()
+    merge = graph_provider.merge_compiler_context
+
+    def interleave(root, graph, selected):
+        candidate = merge(root, graph, selected)
+        if selected['module'] == 'first':
+            captured.set()
+            assert release.wait(50)
+        return candidate
+
+    monkeypatch.setattr(graph_provider, 'merge_compiler_context', interleave)
+    options = {'home': ROOT / 'workers', 'kotlin_backend': 'k1'}
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = pool.submit(inspection.inspect_jvm, root, module='first', **options)
+        try:
+            assert captured.wait(50)
+            second = inspection.inspect_jvm(root, module='second', **options)
+            assert second['exit_code'] == 0
+            saved = (root / store.GRAPH_FILE).read_bytes()
+        finally:
+            release.set()
+        with pytest.raises(store.GraphPublicationConflict, match='Graph generation changed'):
+            first.result(timeout=10)
+    assert (root / store.GRAPH_FILE).read_bytes() == saved
+    assert [c['module'] for c in load_graph(root).contexts if c.get('analyzer_version')] == ['second']

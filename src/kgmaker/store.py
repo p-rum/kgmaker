@@ -6,14 +6,27 @@ import json
 import os
 import stat
 import tempfile
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
+from .analysis_model import AnalysisError, safe_path
 from .model import KnowledgeGraph
 
 STATE_DIR = Path(".kgmaker")
 GRAPH_FILE = STATE_DIR / "graph.json"
 MARKDOWN_FILE = STATE_DIR / "GRAPH.md"
 MERMAID_FILE = STATE_DIR / "GRAPH.mmd"
+PUBLICATION_LOCK = STATE_DIR / "workflow" / "graph-publication.lock"
+_ANY_REVISION = object()
+
+
+class GraphPublicationConflict(AnalysisError):
+    """Publication lost its generation or another writer currently owns it."""
+
+    status = "STALE"
+
+    def __init__(self, message):
+        super().__init__(message, 3)
 
 
 def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str = "all",
@@ -40,32 +53,103 @@ def query_nodes(graph: KnowledgeGraph, terms: str, limit: int = 10, scope: str =
     return [(nodes[identity], scores[identity]) for identity in ranked[:max(0, limit)]]
 
 
-def _graph_target(root, relative):
-    from .analysis_model import safe_path
-    path = safe_path(root, relative.as_posix())
+def _file_target(path):
     if path.exists():
-        info = path.stat()
+        info = path.lstat()
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             raise ValueError('Unsafe graph output target')
     return path
 
 
+def _graph_target(root, relative):
+    return _file_target(safe_path(root, relative.as_posix()))
+
+
 def _file_state(path):
     if not path.exists(): return None
     info = path.stat()
-    return (info.st_dev, info.st_ino, path.read_bytes())
+    return (info.st_dev, info.st_ino, stat.S_IMODE(info.st_mode), path.read_bytes())
+
+
+def graph_revision(root: Path):
+    """Identify the authoritative graph read by an optimistic publisher."""
+    target = _graph_target(Path(root), GRAPH_FILE)
+    try:
+        info = target.stat()
+    except FileNotFoundError:
+        return None
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _create_parents(directory, created):
+    missing = []
+    while not directory.exists():
+        missing.append(directory)
+        directory = directory.parent
+    for directory in reversed(missing):
+        try:
+            directory.mkdir()
+        except FileExistsError:
+            continue
+        created.append(directory)
+
+
+@contextmanager
+def _publication_lock(root: Path):
+    # The lock lives in the existing ignored workflow area and is shared by
+    # every cooperating publisher of this checkout. Exclusive creation also
+    # fails closed after an interrupted process leaves its marker behind.
+    lock = safe_path(root, PUBLICATION_LOCK.as_posix())
+    created = []
+    try:
+        _create_parents(lock.parent, created)
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError as error:
+            raise GraphPublicationConflict("Graph publication is already in progress") from error
+        try:
+            owned = os.fstat(fd)
+        except OSError:
+            os.close(fd)
+            raise
+        try:
+            yield
+        finally:
+            with suppress(OSError):
+                os.close(fd)
+            # Failure to clean a coordination marker must not turn a finished
+            # graph commit into a reported failure. A surviving marker blocks
+            # the next writer until it can be inspected.
+            try:
+                if os.path.samestat(owned, lock.lstat()):
+                    lock.unlink()
+            except OSError:
+                pass
+    finally:
+        for directory in reversed(created):
+            try:
+                directory.rmdir()
+            except OSError:
+                pass
 
 
 def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True, *,
-               before_replace=None) -> tuple[Path, Path]:
-    """Publish one graph/cache generation after preparing every derived output.
+               before_replace=None, expected_revision=_ANY_REVISION,
+               side_outputs: tuple[tuple[Path, str], ...] = ()) -> tuple[Path, Path]:
+    """Publish a validated graph/cache generation, rejecting stale writers.
 
-    Graph JSON is the sole authoritative commit and is replaced last. Within a
-    single writer, ordinary exceptions restore only generated files this call
-    still owns. This is not a multi-writer transaction or crash-recovery journal.
+    Side outputs supply prepared text. Relative paths stay within the repository;
+    absolute paths allow caller-selected destinations outside it.
     """
     root = Path(root)
-    state_dir = root / STATE_DIR
+    with _publication_lock(root):
+        if expected_revision is not _ANY_REVISION and graph_revision(root) != expected_revision:
+            raise GraphPublicationConflict("Graph generation changed before publication")
+        return _save_graph(graph, root, generate_docs, before_replace, side_outputs)
+
+
+def _save_graph(graph, root, generate_docs, before_replace, side_outputs):
+    # Graph JSON is the sole authoritative commit and is replaced last.
     graph_path = root / GRAPH_FILE
     markdown_path = root / MARKDOWN_FILE
     mermaid_path = root / MERMAID_FILE
@@ -75,40 +159,55 @@ def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True, *,
     outputs = []
     if generate_docs:
         outputs.extend([(MERMAID_FILE, render_mermaid(graph)), (MARKDOWN_FILE, render_markdown(graph))])
-    outputs.append((GRAPH_FILE, payload))
-    targets = [(relative, _graph_target(root, relative), text.encode('utf-8')) for relative, text in outputs]
+    def target_for(path):
+        if path.is_absolute():
+            return _file_target(path.resolve())
+        return _graph_target(root, path)
+
+    targets = [(destination, target_for(destination), text.encode('utf-8')) for destination, text in outputs]
+    reserved = {(root / path).resolve() for path in (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, PUBLICATION_LOCK)}
+    for destination, text in side_outputs:
+        target = target_for(destination)
+        if any(target.is_relative_to(path) or path.is_relative_to(target) for path in reserved):
+            raise ValueError('Graph side output overlaps a publication target')
+        reserved.add(target)
+        targets.append((destination, target, text.encode('utf-8')))
+    targets.append((GRAPH_FILE, _graph_target(root, GRAPH_FILE), payload.encode('utf-8')))
     originals = {path: _file_state(path) for _, path, _ in targets}
-    prepared, backups, replaced, created = {}, {}, {}, []
+    prepared, backups, replaced = {}, {}, {}
+    created = []
+
     def guard():
-        if before_replace is not None: before_replace()
-        for relative, path, _ in targets:
-            _graph_target(root, relative)
+        if before_replace is not None:
+            before_replace()
+        for destination, path, _ in targets:
             expected = replaced.get(path, originals[path])
-            if _file_state(path) != expected:
+            if target_for(destination) != path or _file_state(path) != expected:
                 raise ValueError('Graph output changed during publication')
-    def temporary(data):
-        fd, name = tempfile.mkstemp(prefix='.kgmaker-', dir=state_dir)
+
+    def temporary(parent, data, mode):
+        fd, name = tempfile.mkstemp(prefix='.kgmaker-', dir=parent)
         path = Path(name)
         try:
             with os.fdopen(fd, 'wb') as stream:
                 stream.write(data)
                 stream.flush()
+                if mode is not None:
+                    path.chmod(mode)
                 os.fsync(stream.fileno())
         except BaseException:
             path.unlink(missing_ok=True)
             raise
         return path
+
     try:
         guard()
-        directory = state_dir
-        while not directory.exists():
-            created.append(directory)
-            directory = directory.parent
-        state_dir.mkdir(parents=True, exist_ok=True)
         for _, path, data in targets:
-            prepared[path] = temporary(data)
-            if originals[path] is not None:
-                backups[path] = temporary(originals[path][2])
+            _create_parents(path.parent, created)
+            original = originals[path]
+            prepared[path] = temporary(path.parent, data, original[2] if original is not None else None)
+            if original is not None:
+                backups[path] = temporary(path.parent, original[3], original[2])
         for _, path, _ in targets:
             guard()
             # Capture ownership before the commit operation: no fallible read
@@ -128,9 +227,9 @@ def save_graph(graph: KnowledgeGraph, root: Path, generate_docs: bool = True, *,
     finally:
         for path in [*prepared.values(), *backups.values()]:
             path.unlink(missing_ok=True)
-        for directory in created:
-            try: directory.rmdir()
-            except OSError: pass
+        for directory in reversed(created):
+            with suppress(OSError):
+                directory.rmdir()
     return graph_path, markdown_path
 
 

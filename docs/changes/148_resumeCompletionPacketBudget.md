@@ -32,3 +32,11 @@ Test se sdíleným review packetem pokrývá opakování s větším rozpočtem.
 [README](../../README.md), [příručka](../completion-orchestrator.md),
 [acceptance](../acceptance-inventory.md) a [stav](../production-analysis-progress.md)
 popisují předání, omezení a zbývající ověření.
+
+## Ověření po integraci W06 a jeho evidence
+
+Base `d5a0b236716fd31dc1db11d9e6ae3c4f692f2d7e` obsahuje #129 i #134.
+Zdroj a testy této opravy mají shodný diff s dříve recenzovaným krokem.
+Stejný cílený příkaz výše má 99 PASS / 0 SKIP na novém základu.
+Graf, sémantika a diff prošly po přepočtu. Stav #129 i jeho přesný doklad
+zůstávají v existujícím inventáři.

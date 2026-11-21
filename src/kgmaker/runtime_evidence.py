@@ -316,10 +316,16 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
 
 
 def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGraph | None = None) -> dict[str, Any]:
+    from .store import GraphPublicationConflict, graph_revision, load_graph, save_graph
+
     root = root.resolve()
-    if graph is None:
-        from .store import load_graph
-        graph = load_graph(root)
+    previous = graph_revision(root)
+    if previous is not None or graph is None:
+        stored = load_graph(root)
+        if graph is not None and (stored is None or
+                digest(graph.to_dict(include_cache=True)) != digest(stored.to_dict(include_cache=True))):
+            raise GraphPublicationConflict("Explicit runtime graph does not match stored graph generation")
+        graph = stored
     if graph is None or graph.schema_version != 3:
         raise AnalysisError("Runtime import requires a stored schema 3 compiler graph")
     manifest, context = validate_manifest(graph, root, manifest)
@@ -344,8 +350,7 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
         evidence=sorted(evidence.values(), key=lambda item: item["id"]),
         diagnostics=graph.diagnostics + [{"code": "RUNTIME_IMPORT_SCOPED", "runtime_id": manifest["runtime_id"],
                                           "observations": len(manifest["observations"]), "context_id": context["id"]}])
-    from .store import save_graph
-    save_graph(updated, root)
+    save_graph(updated, root, expected_revision=previous)
     return {"status": manifest.get("status", "COMPLETE"), "mode": "RUNTIME_IMPORT", "runtime_id": manifest["runtime_id"],
             "context_id": context["id"], "observations_imported": len(manifest["observations"]),
             "limitations": ["Observed calls are scoped to the supplied run; absent calls prove nothing.",
