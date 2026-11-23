@@ -182,7 +182,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T003-S11-W08](tasks/T003-S11-08-releaseDocumentation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S12-W01](tasks/T003-S12-01-liveConfluenceConnector.md) | MERGED | PARTIAL | `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9` | [src/kgmaker/confluence.py](../src/kgmaker/confluence.py), [src/kgmaker/confluence_sync.py](../src/kgmaker/confluence_sync.py), [tests/test_confluence_configuration.py](../tests/test_confluence_configuration.py) | [# 25](https://github.com/p-rum/kgmaker/pull/25) | Pouze offline konfigurace; live adapter DEFERRED, live acceptance NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S13-W01](tasks/T003-S13-01-runtimeTraceProducer.md) | MERGED | PARTIAL; JDK21/POSIX subset VERIFIED_IN_SCOPE | `d2507ef465c9b4844830520de68629a3b577c0d2`, `385943e48d2d2e60cec541f1f0db78beda83de22` | [tests/test_runtime_trace_producer.py](../tests/test_runtime_trace_producer.py), [JDK fixture](../tests/fixtures/runtime-trace/TraceApplication.java) | [PR101](https://github.com/p-rum/kgmaker/pull/101) MERGED · [#148](https://github.com/p-rum/kgmaker/pull/148) MERGED | Skutečný synchronní opt-in SDK capture call/factory/condition/map registration, strict v2, pre/postflight a POSIX cleanup. #148 dodalo veřejné předání deklarovaného SHA-256 z vybrané varianty BuildManifestu. Ověření W01 zůstává PARTIAL v rozsahu JDK21/POSIX. Okolní runtime prostředí, automatický Spring capture, Windows a dostupnost dat mají vlastní rozsah. Historický přenos PR102 zahrnul 88 runtime testů v sadě 205 PASS / 0 SKIP. [Ověření PR102](changes/120_namedQueryContainers.md) · [Kontrakt](runtime-trace.md) · [Change122](changes/122_runtimeTraceProducer.md) · [Change165](changes/165_forwardBuildConfiguration.md). |
-| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | PR_OPEN | PARTIAL | `385943e48d2d2e60cec541f1f0db78beda83de22` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Statické cesty a cykly používají compiler call sites. #147 je sloučené a při publikaci ověřuje zdroje, worker a u v2 bytecode. Závislé W01 předává deklarovaný otisk z #148. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md). |
+| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | PR_OPEN | PARTIAL | `1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Statické cesty a cykly používají compiler call sites. #147 je sloučené a při publikaci ověřuje zdroje, worker a u v2 bytecode. Závislé W01 předává deklarovaný otisk z #148. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md). |
 | [T003-S13-W03](tasks/T003-S13-03-runtimeValueFlow.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S13-W04](tasks/T003-S13-04-runtimeAsyncReflection.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T005](tasks/T-005_add-view-model.md) | MERGED | PARTIAL | `c0a10261c2ff1f83291125ec838bbaeea8723532` | [src/kgmaker/architecture_model.py](../src/kgmaker/architecture_model.py), [tests/test_t005_add_view_model.py](../tests/test_t005_add_view_model.py) | [#11](https://github.com/p-rum/kgmaker/pull/11) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |
@@ -525,6 +525,12 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 | T003-S11 release/acceptance | PARTIAL | Sedm CI jobů; worker/exporter clean install na Linuxu a skutečný Windows non-admin core/Java/K1/TS smoke (43 PASS / 2 scoped SKIP) | K2 Windows, Windows BUILD_EXECUTE, immutable publikace, celá acceptance a benchmark budgets |
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
 | T003-S13 runtime | PARTIAL / OPTIONAL | V1 import + strict v2 export/import; explicitní JDK21/POSIX synchronní producer s call/factory/condition/map capture a negativními testy. [change122](changes/122_runtimeTraceProducer.md), [kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, RTA/value flow, async/reflective capture a deployment/data availability; celý milník neověřen |
+
+Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
+přesný výběr compiler vstupů a bajty zdrojů s normalizovanou strukturální projekcí.
+Ověřeny byly replay T025 local operations, Criteria filtr, rozvinutí source CFG, statické
+deklarace Kafka retry/DLT a offline invalidace po změně konců řádků. W02 selektivní
+invalidace má vlastní acceptance. [Doklad přesného rozsahu](changes/160_bindJvmSourceBytes.md).
 
 Revize T003-S03-W04: Maven exporter označuje nerozřešené implicitní
 language/API defaults jako PARTIAL s diagnostikou místo invalidního placeholderu;
@@ -1092,6 +1098,9 @@ merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
 IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
 actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
 review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
+Oprava #145 ověřuje shodu T012 a T019 na skutečných Javac zdrojích s LF a CRLF.
+Katalog porovnává bajtový otisk s kvalifikovaným workspace inventářem.
+[Doklad a hranice opravy](changes/160_bindJvmSourceBytes.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
@@ -1193,6 +1202,9 @@ ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return compositio
 review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
 constraints/naming/converters/composite FK remain UNKNOWN. No availability,
 deployment/population promotion or whole-milestone completion inferred.
+Oprava #145 ověřuje shodné W08 výsledky po explicitní inspekci téhož Javac
+zdroje s LF a CRLF. Flyway snapshot i dostupnost dat mají stejné výsledky.
+[Doklad cíleného ověření](changes/160_bindJvmSourceBytes.md).
 
 ## T010 normalized variant correction (2026-11-03)
 

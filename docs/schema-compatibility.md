@@ -66,6 +66,12 @@ Legacy physical nodes without this binding stay readable but produce UNKNOWN.
 Compiler→ORM declaration edges bind exact field/getter identity, scope/context,
 source SHA and canonical descriptor; proof tuple/digest is checked, including
 canonical repository qualification in workspace snapshots.
+For a freshly inspected LF or CRLF Javac source, W08 checks the original byte
+hash against the compiler witness and the normalized hash against the local
+scanner inventory. The workspace provider validates the original capture before
+qualifying its paths and context ID. Replay then checks the qualified byte
+inventory. After an LF/CRLF-only edit, explicitly inspect the JVM sources again
+before reading the compatibility report. [Verified scope](changes/160_bindJvmSourceBytes.md).
 
 The same projection is included in existing schema coverage and analysis reports.
 Compatibility adds no value-path edge and never sets AVAILABLE, FIT or deployment

@@ -9,6 +9,7 @@ import re
 from typing import Mapping
 
 from .analysis_model import AnalysisError, digest
+from .compiler_sources import compiler_source_digest
 from .domain import normalize_api_path
 from .framework import HTTP_ANNOTATIONS
 from .model import KnowledgeGraph
@@ -992,7 +993,8 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         if not validate_code_fact(roots[repo],local,context,authority):
             fail('Canonical compiler code proof is not valid')
         expected = _qualified_node(repo,authority)
-        if expected != fact or graph.files.get(fact.path)!=local.files.get(authority.path):
+        source_sha = compiler_source_digest(local.files, context, authority.path)
+        if expected != fact or source_sha is None or graph.files.get(fact.path) != source_sha:
             fail('Public code fact differs from canonical captured authority')
         # Public Nodes are independent mirrors too: validating symbol/site records
         # alone must not authorize a forged kind, owner scope or declaration Node.

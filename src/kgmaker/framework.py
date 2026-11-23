@@ -18,6 +18,9 @@ from pathlib import Path
 from typing import Any
 
 from .analysis_model import AnalysisError, digest
+from .compiler_sources import (
+    JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, compiler_source_digest, jvm_raw_capture_id,
+)
 from .model import Edge, KnowledgeGraph, Node
 from .named_queries import (declarations as named_query_declarations,
                             mask_query_noncode, parameters as query_parameter_names)
@@ -1197,9 +1200,17 @@ def augment_framework_graph(root: Path, graph: KnowledgeGraph, context: dict[str
                and isinstance(item.get("id"), str) and (item.get('context_id') == context_id
                or item.get('context_id') is None and compiler_contexts == {context_id})}
     captured = context.get('source_files')
-    source_text = {path: _path_text(root, path) for path in graph.files
-                   if Path(path).suffix.lower() in {".java", ".kt", ".kts"}
-                   and (not isinstance(captured, dict) or captured.get(path) == graph.files[path])}
+    raw_capture = (context.get('source_snapshot_version') == JVM_RAW_SOURCE_SNAPSHOT
+                   or context_id.startswith(JVM_RAW_CAPTURE_PREFIX))
+    if not raw_capture:
+        paths = (path for path in graph.files
+                 if not isinstance(captured, dict) or captured.get(path) == graph.files[path])
+    elif jvm_raw_capture_id(context) == context_id:
+        paths = (path for path in graph.files if compiler_source_digest(graph.files, context, path) is not None)
+    else:
+        paths = ()
+    source_text = {path: _path_text(root, path) for path in paths
+                   if Path(path).suffix.lower() in {".java", ".kt", ".kts"}}
     evidence = {item["id"]: item for item in graph.evidence if isinstance(item, dict)
                 and isinstance(item.get("id"), str) and item['id'] not in owned_proofs}
     edges = {(item.source, item.target, item.kind): item for item in other_edges}

@@ -410,3 +410,51 @@ změnu pořadí od skutečných přírůstků v historii.
 
 Windows a GitHub Actions mají pro tuto revizi stav `NOT_RUN`.
 Rozsah receiver/type a skutečného call site zůstává `PARTIAL`.
+
+## Přenos po sloučení #145 — T003-S13-W02-AC01 a AC03
+
+První rodič je `eb943c0c1d413eebca46c45afaa171e7a0498fbe`, druhý rodič
+`1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4` se sloučeným #145.
+Oprava identity a importu z prvního rodiče i bajtové otisky JVM z
+druhého rodiče mají stejné zdrojové soubory a testy jako v rodičích.
+Příručka compiler inspekce obsahuje obě části samostatně.
+[Bajtové otisky JVM](160_bindJvmSourceBytes.md) · [Compiler příručka](../compiler-inspection.md)
+
+Obnova sémantického souboru zachovává pořadí 381 epizod z main, plus
+sedm jedinečných dřívějších epizod z #136. Ověřené citace používají
+aktuální definice z #145. Pořadí 55 konceptů a 199 vztahů z main se zachovává.
+Úplná sada 2 482 PASS, 1 301 SKIP a jeden očekávaný XFAIL v předchozí
+sekci patří prvnímu rodiči.
+
+Nový přesný výběr se skutečným Mavenem 3.9.9, Temurin JDK 21.0.6+7
+a připravenými workery má 16 PASS a 0 SKIP. Ověřil stáří a typ
+pozorování, udržení více dokladů, shodu uložené identity s ID dokladu
+při změně vstupního slovníku, jednu validaci manifestu, CAS a obnovu
+po změně zdroje, workeru a bytecode. Zahrnul veřejný v2 capture ze
+zvoleného BuildManifestu, skutečnou Javac CRLF fixture s raw autoritou
+a kompatibilitu starých grafů. JUnit SHA-256 je
+`a7ad5be31684a7fb0c8526ba233650dea9f51371a528e9b52fc6af0c4caf7b6e`.
+Shodné manifesty před a po běhu mají pro zdroje, fixture a testy SHA-256
+`86ff137852280dd07ed5cbb187ff507c4759f7919897f0c04066e6f69b3b0ca4`
+a pro připravené nástroje
+`6fceeb1dd1d54531cca968ec9a0f8919d7fab40035838a6845c99ed8c41dffb5`.
+
+```bash
+runtime=tests/test_runtime_trace_producer.py
+python -m pytest -n 2 --dist loadfile -p no:cacheprovider -q --tb=short \
+  "$runtime::test_real_jdk21_v2_import_detaches_identity_before_publication" \
+  "$runtime::test_runtime_import_retains_same_edge_observations_and_v2_variant_identity" \
+  "$runtime::test_runtime_observation_stays_visible_without_creating_static_path_or_cycle" \
+  "$runtime::test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols" \
+  "$runtime::test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step" \
+  "$runtime::test_real_jdk21_runtime_import_rejects_source_edit_after_validation" \
+  "$runtime::test_real_jdk21_v2_cli_rechecks_bytecode_before_graph" \
+  "$runtime::test_v1_cli_rechecks_worker_before_graph" \
+  "$runtime::test_actual_maven_public_runtime_uses_selected_build_configuration" \
+  tests/test_graph_publication_concurrency.py::test_runtime_import_cannot_overwrite_generation_published_during_validation \
+  'tests/test_jvm_raw_source_snapshot.py::test_javac_capture_preserves_raw_and_normalized_authority[crlf-return]' \
+  tests/test_schema_compatibility.py::test_legacy_graph_versions_without_snapshot_proof_remain_unknown
+```
+
+Úplná sada, Windows a GitHub Actions mají pro nový spojený strom stav
+`NOT_RUN`. W02 zůstává `PARTIAL`.
