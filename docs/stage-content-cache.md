@@ -37,6 +37,12 @@ launcher a JDK platform bytes, verze/obsah lokálních extractorů, stage, norma
 base graph a konkrétní upstream response. Stejná zobrazovaná jména nenahrazují
 identity varianty. Z base graph se vynechávají pouze cache a generation timestamp.
 
+Klíč aktuální JVM inspekce obsahuje identitu výběru compiler vstupů, přesné
+bajty v `source_files` a normalizovaný otisk odlišných souborů z
+`normalized_source_files`. Offline kontrola compiler kontextu zjistí změnu
+samotných konců řádků i změnu uloženého výběru bez odpovídající nové inspekce.
+[JVM source byte fingerprints](compiler-inspection.md#jvm-source-byte-fingerprints).
+
 Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému
 kontextu, scope, upstream odpovědi a workeru. Digest uložený vedle cache je
 kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
@@ -136,17 +142,15 @@ cestu (u závěru feature `null`), stav a seznam `reasons`:
 
 `changed_sources` porovnává soubory stejným způsobem jako uložený graf.
 U textových zdrojů scanneru je to hash textu s normalizovanými konci řádků.
-Samotná změna konců řádků se proto může projevit jen v `affected` u evidence
-svázané s původními bajty. U dříve doloženého compiler cíle s odlišným hashem
-nových bajtů projde report uloženou identitu cíle a označí doložené callery
-jako `RECHECK`, pokud uložený lokátor cíle váže cestu a hash původních bajtů
-ke stejnému grafu i kontextu. Starší cíl bez tohoto důkazu lze revalidovat
-při změně normalizovaného textu. Cesta požadavku se pro porovnání normalizuje,
-původní packet drží původní identitu.
-Compiler caller je doložený, když hash uloženého compiler důkazu souhlasí
-s grafem i vybraným kontextem. Pokud worker uložil hash bajtů s CRLF a
-graf hash normalizovaného textu, report takového callera vynechá a zůstane
-`PARTIAL`.
+Při samotné změně LF↔CRLF může report označit v `affected` přímé i tranzitivní
+callery. Uložený lokátor cíle musí uvádět přesnou cestu a hash
+původních bajtů. V raw JVM kontextu report ověří identitu capture a zvlášť
+porovná normalizovaný grafový otisk a bajtový otisk obou compiler důkazů callera.
+Při shodném normalizovaném textu porovná aktuální bajty s uloženým bajtovým
+otiskem cíle. Běžná změna textu dál použije dříve doložené vazby také při
+chybějícím nebo neshodném lokátoru cíle. Report načítá bajty jen zadaných cest.
+Cesta požadavku se pro porovnání normalizuje a původní packet drží svou identitu.
+[Ověřená regrese po #145](changes/145_buildReverseDependencyIndexes.md).
 
 Výstup má `coverage: PARTIAL`. Obsahuje pozitivní historické vazby a může uvést
 diagnostiku pro chybějící nebo nečitelný zdroj, starší graph, neověřenou compiler

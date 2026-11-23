@@ -91,34 +91,57 @@ def test_actual_javac_signature_change_reaches_transitive_callers_without_worker
     assert _store_bytes(tmp_path) == expected_store
 
 
-@pytest.mark.parametrize("locator", ["verified", "unknown", "mismatched"])
-def test_actual_javac_line_ending_change_rechecks_proven_caller(tmp_path, locator):
+@pytest.mark.parametrize(("target_ending", "caller_ending", "locator"), [
+    pytest.param(b"\n", b"\n", "verified", id="lf-to-crlf-lf-caller"),
+    pytest.param(b"\r\n", b"\n", "verified", id="crlf-to-lf-lf-caller"),
+    pytest.param(b"\n", b"\r\n", "verified", id="lf-to-crlf-crlf-caller"),
+    pytest.param(b"\r\n", b"\r\n", "verified", id="crlf-to-lf-crlf-caller"),
+    pytest.param(b"\n", b"\n", "unknown", id="unknown-locator"),
+    pytest.param(b"\n", b"\n", "mismatched", id="mismatched-locator"),
+])
+def test_actual_javac_line_ending_change_rechecks_proven_caller(tmp_path, target_ending, caller_ending, locator):
     _require_javac_worker()
     api = "src/main/java/Api.java"
     caller = "src/main/java/Caller.java"
+    outer = "src/main/java/Outer.java"
     other_api = "src/main/java/Other.java"
     other_caller = "src/main/java/OtherCaller.java"
-    original = b"class Api { static int value(int x) { return x; } }\n"
-    _write(tmp_path, caller, "class Caller { static int read() { return Api.value(1); } }")
+    api_lf = b"class Api {\n    static int value(int x) { return x; }\n}\n"
+    caller_lf = b"class Caller {\n    static int read() { return Api.value(1); }\n}\n"
+    original = api_lf.replace(b"\n", target_ending)
+    caller_bytes = caller_lf.replace(b"\n", caller_ending)
     _write(tmp_path, other_api, "class Other { static int value(int x) { return -x; } }")
     _write(tmp_path, other_caller, "class OtherCaller { static int read() { return Other.value(1); } }")
+    _write(tmp_path, outer, "class Outer { static int read() { return Caller.read(); } }")
     target = tmp_path / api
     target.write_bytes(original)
-    inputs = [api, caller, other_api, other_caller]
+    (tmp_path / caller).write_bytes(caller_bytes)
+    inputs = [api, caller, outer, other_api, other_caller]
     model = {"source_sets": [{"module": "app", "id": "main", "scope": "production", "files": inputs}]}
     inspection = inspect_jvm(tmp_path, module="app", sources=inputs, project_model=model)
     assert inspection["exit_code"] == 0
-    resolved = {site["path"]: site for site in inspection["graph"]["call_sites"]
-                if site.get("declared_target")}
-    assert set(resolved) == {caller, other_caller}
+    graph = inspection["graph"]
+    resolved = {site["path"]: site for site in graph["call_sites"] if site.get("declared_target")}
+    assert set(resolved) == {caller, outer, other_caller}
     assert resolved[caller]["declared_target"] != resolved[other_caller]["declared_target"]
+    assert resolved[outer]["declared_target"] == resolved[caller]["caller"]
     context = inspection["context"]
-    before_sha256 = hashlib.sha256(original).hexdigest()
-    assert context["source_files"][api] == before_sha256
+    target_raw_sha256 = hashlib.sha256(original).hexdigest()
+    caller_raw_sha256 = hashlib.sha256(caller_bytes).hexdigest()
+    lexical_sha256 = hashlib.sha256(api_lf).hexdigest()
+    assert context["source_snapshot_version"] == "selected-source-set-raw-1"
+    assert context["source_files"][api] == target_raw_sha256
+    assert context["source_files"][caller] == caller_raw_sha256
+    assert graph["files"][api] == lexical_sha256
+    evidence = {item["id"]: item for item in graph["evidence"]}
+    direct_proofs = [evidence[identity] for identity in resolved[caller]["evidence_ids"]]
+    assert {(proof["relation"], proof["source_file"], proof["sha256"]) for proof in direct_proofs} == {
+        ("declares_call", caller, caller_raw_sha256), ("resolves_to", caller, caller_raw_sha256),
+    }
     stored_graph = read_json(tmp_path / GRAPH_FILE)
     target_symbol = next(item for item in stored_graph["symbols"]
                          if item["id"] == resolved[caller]["declared_target"])
-    assert (target_symbol["path"], target_symbol["sha256"]) == (api, before_sha256)
+    assert (target_symbol["path"], target_symbol["sha256"]) == (api, target_raw_sha256)
     if locator == "unknown":
         target_symbol.pop("sha256")
     elif locator == "mismatched":
@@ -127,30 +150,74 @@ def test_actual_javac_line_ending_change_rechecks_proven_caller(tmp_path, locato
         write_json(tmp_path / GRAPH_FILE, stored_graph)
     expected_store = _store_bytes(tmp_path)
 
+    def impact():
+        with patch("kgmaker.scanner.scan_repository", side_effect=AssertionError("implicit rescan")):
+            result = dependency_impact(tmp_path, [api])
+        assert _store_bytes(tmp_path) == expected_store
+        assert result["graph_sha256"] == hashlib.sha256(expected_store[GRAPH_FILE]).hexdigest()
+        return result
+
+    next_ending = b"\n" if target_ending == b"\r\n" else b"\r\n"
+    edit = api_lf.replace(b"return x;", b"return x + 1;")
     with patch("subprocess.Popen", side_effect=AssertionError("implicit process")):
         validate_context_snapshot(tmp_path, context)
-        assert dependency_impact(tmp_path, [api])["affected"] == []
-        target.write_bytes(original.replace(b"\n", b"\r\n"))
-        with pytest.raises(WorkerError, match="STALE_INDEX: source/config changed"):
+        unchanged = impact()
+        target.write_bytes(api_lf.replace(b"\n", next_ending))
+        with pytest.raises(WorkerError, match="STALE_INDEX: source/config") as stale:
             validate_context_snapshot(tmp_path, context)
-        report = dependency_impact(tmp_path, [api])
-        target.write_bytes(original.replace(b"return x;", b"return x + 1;"))
-        normal_change = dependency_impact(tmp_path, [api])
+        assert stale.value.status == "STALE"
+        report = impact()
+        target.write_bytes(edit.replace(b"\n", target_ending))
+        normal_change = impact()
 
     assert report["coverage"] == "PARTIAL"
+    assert unchanged["changed_sources"] == unchanged["affected"] == []
     assert report["changed_sources"] == []
-    assert [entry["path"] for entry in normal_change["changed_sources"]] == [api]
-    affected, = normal_change["affected"]
-    assert (affected["kind"], affected["status"], affected["path"], affected["id"]) == (
-        "COMPILER_CALLER", "RECHECK", caller, resolved[caller]["caller"],
-    )
-    reason, = affected["reasons"]
-    assert reason["before_sha256"] == before_sha256
-    assert reason["dependency_id"] == resolved[caller]["declared_target"]
-    assert reason["call_site_id"] == resolved[caller]["id"]
+    assert normal_change["changed_sources"] == [
+        {"path": api, "before_sha256": lexical_sha256, "after_sha256": hashlib.sha256(edit).hexdigest()},
+    ]
+    assert [item["path"] for item in normal_change["affected"]] == [caller, outer]
+    for affected, dependency_path in zip(normal_change["affected"], (api, caller)):
+        site = resolved[affected["path"]]
+        assert (affected["kind"], affected["status"], affected["id"]) == (
+            "COMPILER_CALLER", "RECHECK", site["caller"],
+        )
+        reason, = affected["reasons"]
+        assert reason["before_sha256"] == graph["files"][dependency_path]
+        assert reason["dependency_path"] == dependency_path
+        assert reason["dependency_id"] == site["declared_target"]
+        assert reason["call_site_id"] == site["id"]
+        assert reason["context_id"] == context["id"]
+        assert reason["evidence_ids"] == sorted(site["evidence_ids"])
     assert report["affected"] == (normal_change["affected"] if locator == "verified" else [])
-    assert report["graph_sha256"] == hashlib.sha256(expected_store[GRAPH_FILE]).hexdigest()
-    assert _store_bytes(tmp_path) == expected_store
+
+
+def test_actual_javac_tampered_capture_cannot_ground_reverse_impact(tmp_path):
+    _require_javac_worker()
+    api, caller = "src/main/java/Api.java", "src/main/java/Caller.java"
+    source = _write(tmp_path, api, "class Api { static int value() { return 1; } }\n")
+    _write(tmp_path, caller, "class Caller { static int read() { return Api.value(); } }\n")
+    inputs = [api, caller]
+    model = {"source_sets": [{"module": "app", "id": "main", "scope": "production", "files": inputs}]}
+    inspection = inspect_jvm(tmp_path, module="app", sources=inputs, project_model=model)
+    assert inspection["exit_code"] == 0
+    graph = read_json(tmp_path / GRAPH_FILE)
+    context = next(row for row in graph["contexts"] if row["id"] == inspection["context"]["id"])
+    context["compiler_inputs"] = [caller]
+    assert context["source_files"][api] == hashlib.sha256(source.read_bytes()).hexdigest()
+
+    with patch("subprocess.Popen", side_effect=AssertionError("implicit process")), \
+            patch("kgmaker.scanner.scan_repository", side_effect=AssertionError("implicit rescan")):
+        with pytest.raises(WorkerError, match="JVM compiler input capture identity changed"):
+            validate_context_snapshot(tmp_path, context)
+        source.write_bytes(source.read_bytes().replace(b"\n", b"\r\n"))
+        assert [item["path"] for item in dependency_impact(tmp_path, [api])["affected"]] == [caller]
+        write_json(tmp_path / GRAPH_FILE, graph)
+        before = _store_bytes(tmp_path)
+        rejected = dependency_impact(tmp_path, [api])
+    assert rejected["changed_sources"] == rejected["affected"] == []
+    assert rejected["graph_sha256"] == hashlib.sha256(before[GRAPH_FILE]).hexdigest()
+    assert _store_bytes(tmp_path) == before
 
 
 def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(tmp_path, monkeypatch, capsys):

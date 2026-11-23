@@ -1,9 +1,14 @@
 """Offline graph refresh preserving validated compiler evidence in the shared store."""
 from collections import defaultdict, deque
+from functools import cache
 from pathlib import Path
 import re
 import shlex
 
+from .compiler_sources import (
+    JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
+    compiler_source_digest, jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
+)
 from .model import KnowledgeGraph
 from .store import load_graph, load_graph_generation
 from .worker_protocol import WorkerError
@@ -193,12 +198,18 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     snapshot_version = context.get("source_snapshot_version")
     if context.get("language") == "jvm" and snapshot_version is not None \
             and (not isinstance(snapshot_version, str)
-                 or snapshot_version not in {"selected-source-set-1", "selected-source-set-2"}):
+                 or snapshot_version not in JVM_SOURCE_SNAPSHOTS):
         raise WorkerError("STALE_INDEX: unsupported JVM source snapshot version", "STALE")
-    if isinstance(snapshot_version, str) and snapshot_version in {"selected-source-set-1", "selected-source-set-2"} \
+    if isinstance(snapshot_version, str) and snapshot_version in JVM_SOURCE_SNAPSHOTS \
             and context.get("language") != "jvm":
         raise WorkerError("STALE_INDEX: JVM source snapshot on a non-JVM context", "STALE")
-    if context.get("source_snapshot_version") == "selected-source-set-2":
+    identity = context.get("id")
+    if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT or (
+            isinstance(identity, str) and identity.startswith(JVM_RAW_CAPTURE_PREFIX)):
+        expected = jvm_raw_capture_id(context)
+        if expected is None or identity != expected:
+            raise WorkerError("STALE_INDEX: JVM compiler input capture identity changed; inspect again", "STALE")
+    if isinstance(snapshot_version, str) and snapshot_version in JVM_JPA_SOURCE_SNAPSHOTS:
         from .inspection import jpa_xml_input_snapshot
         if context.get("jpa_xml_inputs") != jpa_xml_input_snapshot(root, context):
             raise WorkerError("STALE_INDEX: selected persistence XML inputs changed; inspect again", "STALE")
@@ -230,13 +241,20 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         from .analysis_model import digest
         if digest(Classifier(root).config) != context["classification_override_hash"]:
             raise WorkerError("STALE_INDEX: classifier override changed", "STALE")
-    if context.get("analyzer_version") and not scoped_typescript:
+    if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT or (context.get("analyzer_version") and not scoped_typescript):
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
         from .inspection import source_snapshot
         current_files = source_snapshot(root, current, context)
         if current_files != context.get("source_files", {}):
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
+        if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT:
+            if normalized_source_projection(current.files, current_files) != context.get("normalized_source_files"):
+                raise WorkerError("STALE_INDEX: normalized JVM source projection changed; inspect again", "STALE")
+            unsupported = unsupported_kotlin_source(current.raw_file_hashes, context["compiler_inputs"])
+            if unsupported is not None:
+                raise WorkerError("STALE_INDEX: selected Kotlin source uses unsupported raw byte coordinates: "
+                                  + unsupported, "STALE")
     for path, expected in context.get("source_files", {}).items():
         target = safe_path(root, path)
         if not target.is_file() or file_hash(target) != expected:
@@ -418,10 +436,17 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
     contexts = {c.get("id"): c for c in graph.contexts
                 if isinstance(c.get("id"), str) and c.get("analyzer_version")
                 and c.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
-                and c.get("freshness") == "CONTENT_VERIFIED" and isinstance(c.get("source_files"), dict)}
+                and c.get("freshness") == "CONTENT_VERIFIED" and isinstance(c.get("source_files"), dict)
+                and ((c.get("source_snapshot_version") != JVM_RAW_SOURCE_SNAPSHOT
+                      and not c["id"].startswith(JVM_RAW_CAPTURE_PREFIX))
+                     or jvm_raw_capture_id(c) == c["id"])}
     symbols = {item["id"]: item for item in graph.symbols} if graph.schema_version == 3 else {}
     proofs = {item["id"]: item for item in graph.evidence}
     compiler_edges = defaultdict(set)
+
+    @cache
+    def source_digest(context_id, path):
+        return compiler_source_digest(files, contexts[context_id], path)
 
     def add(path, dependent_path, target, kind, *, target_raw_sha256=None, **witness):
         if path in files and dependent_path in files:
@@ -455,14 +480,16 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
             if len(edge.context_ids) != 1 or edge.context_ids[0] not in contexts or edge.source_file not in files:
                 continue
             context_id = edge.context_ids[0]
+            checksum = source_digest(context_id, edge.source_file)
+            if checksum is None:
+                continue
             for identity in edge.evidence_ids:
                 proof = proofs[identity]
                 if (proof.get("source") == edge.source and proof.get("target") == edge.target
                         and proof.get("relation") == edge.kind and proof.get("kind") == "SYMBOL_RESOLVED"
                         and proof.get("context_ids") == [context_id] and proof.get("freshness") == "CONTENT_VERIFIED"
                         and proof.get("origin_trust") == "LOCAL_COMPILER_INPUTS"
-                        and proof.get("source_file") == edge.source_file and proof.get("sha256") == files[edge.source_file]
-                        and contexts[context_id]["source_files"].get(edge.source_file) == proof["sha256"]):
+                        and proof.get("source_file") == edge.source_file and proof.get("sha256") == checksum):
                     compiler_edges[(edge.source, edge.target, edge.kind, context_id, edge.source_file)].add(identity)
         elif (edge.kind, source.kind, target.kind) in {
             ("foreign_key_to", "db_constraint", "db_table"),
@@ -514,7 +541,10 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
         caller, target = nodes[caller_id], nodes[target_id]
         if (site.get("path") != caller.path or caller.path not in files or target.path not in files
                 or any(symbols[identity].get("context_id") != context_id for identity in (caller_id, target_id))
-                or any(contexts[context_id]["source_files"].get(path) != files[path] for path in (caller.path, target.path))):
+                or source_digest(context_id, caller.path) is None):
+            continue
+        target_checksum = source_digest(context_id, target.path)
+        if target_checksum is None:
             continue
         relation = "declares_reference" if site.get("invocation_kind") == "METHOD_REFERENCE" else "declares_call"
         ids = set(site.get("evidence_ids", []))
@@ -523,7 +553,7 @@ def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:
         if declaration and resolution:
             target_locator = symbols[target_id]
             target_raw_sha256 = target_locator.get("sha256")
-            if target_locator.get("path") != target.path or target_raw_sha256 != files[target.path]:
+            if target_locator.get("path") != target.path or target_raw_sha256 != target_checksum:
                 target_raw_sha256 = None
             add(target.path, caller.path, caller_id, "COMPILER_CALLER", relation=relation, dependency_id=target_id,
                 call_site_id=site["id"], context_id=context_id, evidence_ids=sorted(declaration | resolution),
@@ -582,10 +612,11 @@ def dependency_impact(root: Path, changed_files: list[str]) -> dict:
         if before is not None and before != graph_after:
             changed.append({"path": path, "before_sha256": before, "after_sha256": graph_after})
             seeds.add((path, None))
-        elif before is not None and raw_after != before:
+        elif before is not None and raw_after is not None:
             # A matching compiler locator proves the target's historical raw bytes.
             seeds.update((path, item["reason"]["dependency_id"])
-                         for item in index.get(path, ()) if item["target_raw_sha256"] == before)
+                         for item in index.get(path, ()) if item["target_raw_sha256"] is not None
+                         and item["target_raw_sha256"] != raw_after)
 
     affected = {}
 

@@ -24,19 +24,20 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 
 ## T003-S10-W02 — reverse dependency indexy
 
-Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Lokální
-integrační kandidát vychází z ověřeného `main` `52af545` po
-[#135](https://github.com/p-rum/kgmaker/pull/135). Cílená sada na této revizi
-má 147 PASS bez přeskočení a s reálným Javac.
+Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Aktuální
+integrační kandidát vychází z ověřeného `main` `1569d5d` po
+[#145](https://github.com/p-rum/kgmaker/pull/145). Aktuální cílená sada má
+162 PASS bez přeskočení a se skutečným Javac/K1/K2. Historický výběr nad
+základem po #135 měl 147 PASS.
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
 [kontroly](changes/145_buildReverseDependencyIndexes.md).
 
 | Acceptance | Ověření | Důkaz a hranice |
 |---|---|---|
-| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_actual_javac_line_ending_change_rechecks_proven_caller` po změně pouze LF na CRLF označí doloženého callera s přesným lokátorem cíle. Pokrývá i chybějící a neshodný hash lokátoru, běžnou změnu textu a nezávislé resolved volání stejnojmenné metody. `test_schema_dependency_follows_prior_migration_operations` pokrývá předchozí CREATE i novější ALTER pro tentýž sloupec. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje replay Flyway, deklaraci OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
+| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_actual_javac_line_ending_change_rechecks_proven_caller` při LF↔CRLF ověří přímé i tranzitivní callery, LF i CRLF volající zdroj, přesný lokátor cíle, chybějící a neshodný hash lokátoru, změnu textu a nezávislé volání. `test_schema_dependency_follows_prior_migration_operations` pokrývá CREATE i ALTER. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje Flyway, OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
 | T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
-| T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | Fixture vylučuje shodu jména a nesouvisející metodu. Pokrývá chybnou vazbu migrační operace, přímou citaci požadavku s relativní cestou, lidské rozhodnutí s vedlejším údajem o souboru a stabilní CRLF OpenAPI. `test_malformed_stored_compiler_graph_keys_fail_closed_in_public_cli` ověřuje chybný Javac graf v3, `test_changed_source_swapped_to_fifo_is_unavailable` nedostupný zdroj při záměně a `test_feature_record_fifos_do_not_block_or_publish` čtyři FIFO vstupy revize na POSIX. Report zachovává bajty store a sám nespouští proces. Pro úplnou coverage platí samostatná acceptance. |
+| T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | `test_actual_javac_tampered_capture_cannot_ground_reverse_impact` odmítá změněný výběr compiler vstupů pod stejným raw ID. Zůstávají kontroly jmenné shody, chybných migračních vazeb, relativní citace, lidského rozhodnutí a stabilní CRLF OpenAPI. `test_malformed_stored_compiler_graph_keys_fail_closed_in_public_cli` ověřuje chybný graf v3, `test_changed_source_swapped_to_fifo_is_unavailable` nedostupný zdroj a `test_feature_record_fifos_do_not_block_or_publish` čtyři FIFO vstupy na POSIX. Report zachovává bajty store a sám nespouští proces. |
 | T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |
 
 ## T045 — doplňující automatická kontrola PR
@@ -74,12 +75,25 @@ ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
 Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
 běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
+Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1 je
+samostatná oprava W01 v dodání `IN_PROGRESS`. Skutečný běh Maven 3.9.9 a JDK 21
+ověřil vznik v2 trace i odmítnutí chybějícího, neplatného či cizího digestu před
+dalším procesem a zápisem. [Záznam ověření](changes/165_forwardBuildConfiguration.md).
+
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T003-S13-W01-AC01 | VERIFIED_IN_SCOPE (JDK21/POSIX) | `tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values` + `test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch`: skutečný javac, JVM compiler worker, aplikace a source-bound IDs; povinné identity, žádné raw credentials. `tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes` a import pod zákazem Popen. Žádný automatický Spring capture ani deployment proof. |
 | T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
+
+## T003-S13-W02 — čerstvost při publikaci runtime evidence, 2026-11-23
+
+| Acceptance | Ověření | Důkaz a rozsah |
+|---|---|---|
+| T003-S13-W02-AC01, AC03 | VERIFIED_IN_SCOPE (publikace importu) | Oprava ověřuje manifest jednou a měnitelné vstupy při každém kroku publikace. Skutečný JDK 21 capture pokrývá změnu zdroje i zachyceného bytecode. Fixture v1 pokrývá změnu workeru. Při odmítnutí zůstanou graf, odvozené pohledy a capture stejné po bajtech a import nespustí proces. [Test a příkazy](changes/163_revalidateRuntimeImportPublication.md). |
+
+Ověření širšího kontraktu W02 včetně receiver/type evidence zůstává PARTIAL.
 
 ## T051 — projektové workflows, 2026-11-15
 
@@ -117,9 +131,42 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 bez ní; [post-merge evidence](changes/119_reconcileJpqlDelivery.md). T046-S01 až S06 jsou
-MERGED,
-T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
+Historický stav k 2026-11-15 měl v T003/T004 63 položek se sloučenou prací
+a 37 bez ní. T046-S01 až S06 byly MERGED a T047 bylo PLANNED se sdílenými
+upstream vlastníky. Úplná produkční acceptance všech variant byla NOT_RUN.
+[Dobové testy sloučeného main](changes/119_reconcileJpqlDelivery.md).
+
+**T047-S01 / T047-R01 a T047-AC01 — MERGED / PARTIAL.** Korpus byl
+2026-11-21 sloučen do `main` jako `b3bbba43304f499f96950ea4ecc2a2467919e616`.
+Na přesném headu prošlo 135 testů se skutečnými K1/K2, TypeScriptem a offline
+Gradle. Výběr na sloučeném stromu má 7 PASS a stejný očekávaný strict XFAIL
+pro T047-S02. Merge pokrývá dodání reprodukčního korpusu. Inkrementální
+přepočet důkazů závislých na těle, scénáře Windows a celá matice §7
+zůstávají otevřené. [Doklad integrace](changes/161_recordMutationCorpusMerge.md) · [#121](https://github.com/p-rum/kgmaker/pull/121)
+
+Historie kandidátů #121 do merge 2026-11-21:
+
+Lokální pokračování nad draftem `6333c0a` ověřuje odlišné identity stejného
+Kotlin FQN v obou repo a shodný SOURCE_ONLY graf po přesunu workspace.
+Přenos z draftu `a20cfa1` na `main` `4011825` již ověřil tyto scénáře.
+SOURCE_ONLY mezistavy, Kotlin K1/K2 cold add, změna signatury bez přesměrování
+nekompatibilního volání, statický Kafka match a jeho
+zamezení při změně topicu, Kotlin DTO → OpenAPI → typovaný TS klient → JSX a
+zneplatnění generation provenance při současné změně verze a hashe kontraktu.
+Varianta s reálným JVM
+`release_mapping` ověřuje přesný `supplies_classpath` a odmítá chybný selektor
+i zastaralý JAR. SOURCE_ONLY varianta bez manifestu zůstává PARTIAL. Strict XFAIL eviduje identitu závislou
+na řádku pro T047-S02. Přesné testy a rozsah viz [change137](changes/137_prepareIncrementalMutationOracle.md).
+Lokální pokračování nad draftem `547ad67` přidává samostatný cold K1/K2 test.
+Po odstranění `Renamed.kt` přejde volání v bajtově shodném `Caller.kt` na
+`UNRESOLVED` a kontrolní volání do `Added.kt` zůstane rozlišené.
+Přenos na `main` `024334a` zachovává přesný test i ruční oracle.
+Přenos na `main` `34591e2` přidává cílené offline porovnání K1 a K2 po změně
+pouze těla `score(Int)`. Nový kontext váže stejný `Caller.kt` na přesné dvě
+signatury bez publikace grafu. Otevřené zůstávají inkrementální přepočet
+body-dependent důkazů, scénáře Windows a úplná matice §7.
+[Ověření a omezení](changes/137_prepareIncrementalMutationOracle.md).
+
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají
 původní SHA a výsledky. Již proběhlý merge není čekající gate: T020 PR87,
 T014/16/17/18/19 PR80–84, T030/31/32/33 PR75/77/78/79, W05 PR71,
@@ -554,6 +601,16 @@ navíc provádí celý inspect/refresh/query/impact/feature/report sled, dvě pr
 varianty a content změnu classpath. Focused worker/provider/workspace/feature/dataflow
 běh: **68 passed in 20.07 s**. Rozšíření jazykových, buildových a framework variant
 patří do S03–S10 a není součástí tohoto VERIFIED tvrzení.
+
+T003-S02 / AC02 zahrnuje ověřený Javac výběr pro LF a CRLF. Nová JVM inspekce
+publikuje otisk bajtů odděleně od normalizovaného otisku strukturálního grafu.
+Ověřeny byly konkrétní a abstraktní deklarace, replay T025 local operations, Criteria filtr,
+odmítnutí nesouhlasících otisků a offline zastarání po změně konců
+řádků. `test_selected_kotlin_coordinate_guard_preserves_mixed_jvm_scope` hlídá
+identitu seznamu compiler vstupů a odmítá vybraný Kotlin s nesouhlasícími bajty.
+`test_process_flow_preserves_javac_cfg_edges_across_line_endings` a
+`test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations` ověřují CFG, T025 a
+statické deklarace Kafka retry/DLT. [Přesná evidence a hranice](changes/160_bindJvmSourceBytes.md).
 
 Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
@@ -1024,7 +1081,7 @@ is integrated; final independent exact-pair review/ready/merge remain separate.
 
 | Acceptance | Supported proof / tests | Actual evidence |
 |---|---|---|
-| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; Return67 matrix174PASS/0SKIP. Local, CLI and workspace parity after LF/CRLF refresh is recorded separately. [Change160](changes/160_bindJvmSourceBytes.md) |
 | W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
 | W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
 | W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
@@ -1089,6 +1146,11 @@ all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selecti
 10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
 preserved failures/limits are in note81. Main/Common dependencies merged; exact
 finalpair review/merge separate. No standalone parent full or transport observation.
+
+T012-AC01/02/04/05 and T019-AC01/03 use actual Javac LF and CRLF catalogues
+from the same source text. Both groups and broker realms survive in the API
+and CLI. A workspace inventory with a substituted normalized digest fails
+closed. [Exact regression and evidence](changes/160_bindJvmSourceBytes.md).
 
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)
@@ -1752,6 +1814,23 @@ a samostatný úplný gate. Replay HIT se zatím nepovoluje.
 
 ## T047-S10 — Záznam ověření z jednoho checkoutu
 
+[PR #135](https://github.com/p-rum/kgmaker/pull/135) je `MERGED` do `main` jako
+`52af545bfc97396a0001432abc5d58ab7c3663af`. Tree merge odpovídá kandidátu
+schválenému pro první souborově vázaný rozsah. [Doklad integrace](changes/158_recordFileBoundVerificationMerge.md)
+
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
-| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Zápis deklarovaného a importovaného výsledku zůstává odlišen. Změny během běhu, změny POSIX režimu souboru, nesoulad dokladu s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Po integraci s `main` na `e155cbdc7e5d708920d7632df7bd1ee792d8ebc8` má cílená sada 133 PASS / 2 SKIP a kontrola T032 s plánovačem 50 PASS / 0 SKIP. Skutečný Gradle v integrační sadě, doklad přes více checkoutů a širší import zůstávají otevřené. [Change150](changes/150_captureBoundVerification.md). |
+| T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Evidence rozlišuje výsledek skutečného runneru, deklaraci a import. Změny během běhu, změny POSIX režimu, nesoulad s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Přesný head má 133 PASS / 2 SKIP v cílené Maven sadě, merge má 27 PASS / 0 SKIP v sadě dokladů se skutečným Maven/Surefire. Vícerepozitářový doklad, ověřitelné importy a širší matice zůstávají otevřené. T047-S11 má vlastní acceptance. [Doklad integrace](changes/158_recordFileBoundVerificationMerge.md) · [Historie kandidátů](changes/150_captureBoundVerification.md) |
+
+## T047-S11 — Aktuální lokální ověření před dokončením
+
+**T047-S11 / T047-R11 a T047-AC11 — MERGED / PARTIAL.** Volitelná brána
+pro jeden lokální checkout je v `main` jako `47807742a07c4a4fb92a590479fbfa0b558bf7fe`.
+Přesný head i sloučený strom mají 179 PASS a 0 SKIP v sadě se skutečným
+Mavenem a Surefire. Na přesném headu skutečný offline Gradle potvrdil
+cyklus PASS, FAIL a nový PASS i šest odmítnutých přechodů se zachovaným
+taskem a journalem. [Doklad integrace](changes/161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01) · [#144](https://github.com/p-rum/kgmaker/pull/144)
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T047-AC11 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` pokrývá PASS, editaci při stejném HEAD, odmítnutí v `save_task` i `advance_task`, skutečný FAIL, nový PASS a oddělené historické `done` a pozdější `STALE`. Regrese pro oba vstupy dokládají úpravu zdroje během kontroly XML a posun HEAD při závěrečném výpočtu úplného inventáře se stejným obsahem. Trace pozoruje aktuálnost dokladu jednou pro řádek i souhrn. Testy téže sady ověřují retry, zachycení fáze před spuštěním, ochranu revize plánu, čitelnost v1, neautoritativní import a deklarace, novější FAIL či neúplný report, shodu času zahájení, default-off a odvolané review. Scope je jeden explicitní běh lokálního checkoutu. Mapování jednotlivých požadovaných testů, selektivní dopad, širší matice a samostatná projekce v paměti zůstávají otevřené. [Change159](changes/159_gateCompletionOnCurrentVerification.md). |

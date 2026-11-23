@@ -113,7 +113,9 @@ proof as resolution evidence. Its original CFG refs remain in
 `attributes.cfg_evidence_refs`; transitions include these original syntax refs
 and remain UNRESOLVED. Entry/exit, call and boundary nodes are not upgraded.
 Workspace wrapping qualifies the new references without rewriting their original
-content hash. Missing, stale, foreign, borrowed or tampered operation evidence
+content hash. Javac LF and CRLF proofs retain their original byte hash during
+T025 replay. Local graphs check the normalized scanner hash alongside it.
+Missing, stale, foreign, borrowed or tampered operation evidence
 cannot authorize a resolved node or mutate the last valid store.
 Scope projection retains malformed optional block metadata for validation. Only
 version 1 metadata with a single string reference can contribute an operation

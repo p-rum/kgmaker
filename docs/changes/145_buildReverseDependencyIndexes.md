@@ -4,7 +4,7 @@ Výchozí reprodukce používá `main` `17e9e7368e6cc2d6550983c3039eb39debd65424
 První integrační ověření proběhlo nad `main` `fad4fc63c76f0f9ef5a1a292e279d1269bd84540`.
 Následné ověření vycházelo z merge W06 `c067f9c3c7b3266842fc4f2230b4eaf65182e4df`.
 Ověření po #134 použilo `main` `d5a0b236716fd31dc1db11d9e6ae3c4f692f2d7e` se záznamem sloučeného W06.
-Aktuální lokální kandidát vychází z potvrzeného `main` `c2885a6f8daf0281967e3bc5386a69f1647718e0`
+Tehdejší lokální kandidát vycházel z potvrzeného `main` `c2885a6f8daf0281967e3bc5386a69f1647718e0`
 s tree `17c36c142ed5cdffa0d712f961e463bdfe77a9aa`. Zachovává [#134](https://github.com/p-rum/kgmaker/pull/134)
 a [#133](https://github.com/p-rum/kgmaker/pull/133).
 Před níže uvedenou opravou z review se zdrojové a testové změny
@@ -294,3 +294,56 @@ CRLF, zápis selektivní invalidace a negativní lookup mají vlastní ověřen�
 Úplná sada, nezávislé review integrační revize a její GitHub Actions mají při
 předání stav `NOT_RUN`. [Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy),
 [stavová matice](../production-analysis-progress.md).
+
+## Přenos po #145 a raw JVM lokátory — kroky 3–5, AC01–AC04
+
+Výchozí head #130 `d3cb64f957f0dd0c1d0bb2f60b6bbd6e7f238dbe` navazuje na ověřený
+`main` `1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4`. Po spojení zdrojů tři
+skutečné Javac varianty vynechaly Caller.java i Outer.java. Report zároveň
+přijal doložené volání ze snapshotu s pozměněným výběrem compiler vstupů pod
+stejným raw ID.
+
+`src/kgmaker/graph_provider.py` ověří identitu původního raw capture jednou na
+kontext. `compiler_source_digest` ověřuje strukturální inventář a vrací bajtový
+otisk pro oba důkazy callera i přesný lokátor cíle. Pro stejný normalizovaný
+text report porovná aktuální bajtový otisk s uloženým bajtovým otiskem cíle.
+`changed_sources` dál porovnává normalizovaný text a běžná změna textu zachovává
+průchod doloženými vazbami při neúplném lokátoru. JSON v1 a graph/store v1–v3
+si zachovávají formát. Report používá dříve uloženou generaci a nedělá zápisy.
+
+`test_actual_javac_line_ending_change_rechecks_proven_caller` pokrývá oba směry
+LF↔CRLF i oba styly volajícího. Ověřuje nezměněný vstup, textovou změnu, přesné
+identity přímého a tranzitivního callera, chybějící a neshodný lokátor a nulovou
+mutaci. `test_actual_javac_tampered_capture_cannot_ground_reverse_impact`
+ověřuje odmítnutí změněného výběru. Přímý replay uchovaného Javac grafu načetl
+jen zadaný Api.java, použil každý uložený pár kontext/cesta jednou a zachoval
+zdrojové soubory i graf. Doklad `pr130-after145-read-scope.json`, SHA-256
+`714d794831f11c42fec523fed1d8ddcf9d7bdf0150daa29d2c96b992e1bbfad7`.
+
+- RED — 4 FAIL, 7 PASS, 0 SKIP s Javac/JDK 21.0.6 nad spojeným produktem před
+  opravou, exit 1 za 55,18 s. JUnit `pr130-after145-native-red.xml`, SHA-256
+  `4855e801f61b7ba53c9b729de1dad84903928901bf61b4addc92f8662b0fee43`.
+- GREEN — 162 PASS, 0 FAIL, 0 ERROR, 0 SKIP v Cloud Environmentu za 120,55 s.
+  Prošly všechny 25 W02 případy včetně čtyř FIFO variant s původním limitem,
+  18 W06, 43 T032 a 11 raw JVM případů. Python u T032 dvakrát upozornil na
+  `fork()` ve vícevláknovém procesu. JUnit `pr130-after145-strict.xml`, SHA-256
+  `1b8e680aa40027f7acf259a6141b5a11b5220319a33a0d81601123f6774b7643`.
+  Oba manifesty mají SHA-256
+  `8af2ca7b905c8bc0aea515fc6539248b44d95ee3df95d9cc6a71b0b314f61646`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist load -p no:cacheprovider \
+    -q --tb=short -ra --junitxml=/workspace/kgmaker-evidence/pr130-after145-strict.xml \
+    tests/test_reverse_dependency_index.py tests/test_graph_provider.py tests/test_feature.py \
+    tests/test_feature_fixture.py tests/test_flyway.py tests/test_workspace.py \
+    tests/test_graph_publication_concurrency.py tests/test_t032_persist_process_review.py \
+    tests/test_jvm_raw_source_snapshot.py
+  ```
+
+Obnovená sémantická vrstva zachovává 386 jedinečných epizod obou rodičů a
+záznam o tomto přenosu. [Návod](../stage-content-cache.md#selektivní-dopad-změn)
+a [inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+popisují čtecí kontrakt. W02-AC01 zůstává `PARTIAL`. Publikace selektivní
+invalidace, negativní lookupy a cross-workspace vazby mají samostatný rozsah.
+Úplná sada, Windows, vzdálené CI a nové nezávislé review jsou při tomto
+lokálním předání `NOT_RUN`.

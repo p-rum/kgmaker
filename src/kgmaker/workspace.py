@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote
 
 from .analysis_model import AnalysisError, ID_PATTERN, digest, file_hash, read_json, safe_path
+from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT
 from .model import Edge, KnowledgeGraph, Node
 
 _REPO_CACHE = {}
@@ -89,9 +90,13 @@ def _qualified_context(repo: str, value: dict, *, redact_kafka_properties=False)
     else:
         result = copy.deepcopy(value)
     result['id'] = qualified(repo, value['id'])
-    if isinstance(result.get('source_files'), dict):
-        result['source_files'] = {source_key(repo, path): checksum
-                                  for path, checksum in result['source_files'].items()}
+    for field in ('source_files', 'normalized_source_files'):
+        if isinstance(result.get(field), dict):
+            result[field] = {source_key(repo, path): checksum for path, checksum in result[field].items()}
+    inputs = result.get('compiler_inputs')
+    if (result.get('source_snapshot_version') == JVM_RAW_SOURCE_SNAPSHOT
+            and isinstance(inputs, list) and all(isinstance(path, str) for path in inputs)):
+        result['compiler_inputs'] = [source_key(repo, path) for path in inputs]
     return result
 
 
