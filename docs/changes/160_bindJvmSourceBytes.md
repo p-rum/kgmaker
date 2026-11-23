@@ -246,3 +246,66 @@ Běhy používají JDK 21.0.6, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=
 Úplná projektová sada, Windows a GitHub Actions jsou pro tuto revizi NOT_RUN.
 Selektivní invalidace W02, warm HIT a oprava PSI souřadnic Kotlinu mají
 samostatné otevřené hranice.
+
+## T003-S02 / AC02 a T025-S07 / AC07–09 — replay lokálních operací
+
+Výchozí revize je `48318921b98925cbd21b94180a84952648348d09`. Skutečný Javac
+v obou variantách publikoval tři local operation důkazy. T025 přijal všechny
+tři u LF a hned u prvního CRLF důkazu vrátil `selected operation
+source/CFG/proof tuple mismatch`. Kontrola očekávala, že raw otisk zdroje bude
+roven normalizovanému otisku v lokálním grafu.
+
+[T025 kontrola zdroje](../../src/kgmaker/process_paths.py) používá existující
+`compiler_source_digest`. Pro lokální raw JVM kontext ověří strukturální
+projekci a vrátí raw otisk pro porovnání s důkazem. Workspace dál používá
+repo-kvalifikovaný raw inventář a legacy kontexty požadují shodu s uloženým
+otiskem. Kontext, rozsahy a identity důkazů zůstávají vazbou na skutečné bajty.
+[Použití a hranice T025](../process-paths.md#compiler-bound-local-operations).
+
+Rozšířený `test_process_flow_preserves_javac_cfg_edges_across_line_endings`
+načte dva uložené Javac grafy ze shodného LF/CRLF fixture, ověří stejné CFG
+tvary a tři přesné identity operací v každém grafu. Záměna raw otisku v CRLF
+operation důkazu za normalizovaný otisk vyvolá chybu. Při replay test blokuje
+spuštění procesu a porovnává bajty obou zdrojů a všech tří výstupů grafu.
+
+- RED — skutečný Javac/JDK 21.0.6, 1 FAIL za 9,65 s, exit 1.
+  `pr145-retry2-t025-red.xml` má SHA-256
+  `c4bb05cb924370622b3ba06a97601ad2fb9ac6db17daf72cb64bb75b5cdae3cc`.
+- PASS — nezávislý offline replay na stejných uchovaných Javac LF/CRLF
+  grafech na opraveném produktu přijme 3 a 3 původní důkazy, exit 0, se
+  shodnými hashi zdrojů a grafů. `pr145-retry2-t025-retained-green.json`
+  má SHA-256 `af076f40bbc660395c712a15a26e626d2ec7a9580673015642d972e1c2132646`.
+  Záznam obsahuje společnou výchozí revizi `4831892`; oprava při běhu byla
+  v pracovním stromu. Původní běh na čisté revizi vrátil exit 1 a SHA-256
+  `158cc466e7096718ac91699ce3be8844e1d7db554107775509dfd28adfe3ab46`.
+
+  ```bash
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
+    /workspace/kgmaker-venv/bin/python \
+    /workspace/kgmaker-evidence/pr145-4831892-local-operation-probe.py
+  ```
+
+- GREEN — 164 PASS, 0 FAIL, 0 ERROR, 0 SKIP za 202,46 s v Cloud
+  Environmentu. JUnit `pr145-retry2-t025-green.xml` má SHA-256
+  `31b66dd99007665259b6c6a07247c69ed382bf2b787c76c5d1ae4e9bc2ec1cde`.
+  Shodné manifesty zdrojů, testů, fixture a distribucí workerů mají SHA-256
+  `4662f3f1330144da663abc90329ab102224fbe5054c71d584a3e8491ba84490c`.
+
+  ```bash
+  export JAVA_HOME=/workspace/kgmaker-tools/jdk-21.0.6+7
+  export PATH=/workspace/kgmaker-tools/full-launchers:$JAVA_HOME/bin:$PATH
+  export KGMAKER_WORKERS_HOME=/workspace/kgmaker-tools/worker-dist
+  export KGMAKER_TEST_MAVEN_REPOSITORY=/workspace/kgmaker-tools/maven-repository
+  export KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+  export JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src
+  /workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist loadfile \
+    -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/pr145-retry2-t025-green-pytest \
+    --junitxml=/workspace/kgmaker-evidence/pr145-retry2-t025-green.xml \
+    tests/test_jvm_raw_source_snapshot.py tests/test_local_operation_proofs.py \
+    tests/test_t025_build_local_process_path.py tests/test_t024_discover_process_triggers.py \
+    tests/test_control_flow.py
+  ```
+
+Úplná projektová sada, Windows a GitHub Actions jsou pro tuto opravnou revizi
+NOT_RUN. Kotlin PSI souřadnice a širší acceptance T025 mají vlastní otevřený rozsah.

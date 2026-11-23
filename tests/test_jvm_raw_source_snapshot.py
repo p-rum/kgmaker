@@ -14,7 +14,8 @@ from kgmaker.compiler_sources import jvm_raw_capture_id
 from kgmaker.feature import current_graph
 from kgmaker.flow import process
 from kgmaker.graph_provider import validate_context_snapshot
-from kgmaker.store import GRAPH_FILE, load_graph
+from kgmaker.local_operations import validated_cfg_operations
+from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, load_graph
 from kgmaker.views import execution_authority_gaps, select_service_contexts
 from kgmaker.worker_protocol import WorkerError
 from kgmaker.workspace import qualified, snapshot_workspace
@@ -97,9 +98,21 @@ def test_process_flow_preserves_javac_cfg_edges_across_line_endings(tmp_path, wo
         owner, = [s for s in graph.symbols if s.get('name') == 'invoke' and s.get('path') == CALLER]
         callee, = [s for s in graph.symbols if s.get('name') == 'value' and s.get('path') == TARGET]
         assert owner['context_id'] == callee['context_id'] == result['context']['id']
-        before = (root / GRAPH_FILE).read_bytes()
+        context, = [row for row in graph.contexts if row['id'] == owner['context_id']]
+        proofs = {p['id'] for p in graph.evidence if p.get('relation') == 'local_computation'}
+        assert len(proofs) == 3
+        before = {path: (root / path).read_bytes()
+                  for path in (TARGET, CALLER, GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE)}
         with patch('subprocess.Popen', side_effect=AssertionError('process flow spawned a worker')):
             report = process(graph, owner['id'])
+            assert {p['id'] for p in validated_cfg_operations(graph, context).values()} == proofs
+            if ending == b'\r\n':
+                damaged_operation = deepcopy(graph)
+                operation = next(p for p in damaged_operation.evidence
+                                 if p['id'] in proofs and p['source_file'] == TARGET)
+                operation['sha256'] = damaged_operation.files[TARGET]
+                with pytest.raises(ValueError, match='selected operation source/CFG/proof tuple mismatch'):
+                    validated_cfg_operations(damaged_operation, context)
         assert not report['boundaries']
         assert any(block.get('method') == callee['id'] for block in report['cfg']['blocks'])
         structures.append(([b['kind'] for b in report['cfg']['blocks']],
@@ -111,7 +124,7 @@ def test_process_flow_preserves_javac_cfg_edges_across_line_endings(tmp_path, wo
             proof['sha256'] = damaged.files[TARGET]
             assert process(damaged, owner['id'])['boundaries'][0]['reason'] == (
                 'callee CFG owner/source proof mismatch or unavailable')
-        assert (root / GRAPH_FILE).read_bytes() == before
+        assert {path: (root / path).read_bytes() for path in before} == before
     assert sorted(structures[0][0]) == sorted(structures[1][0])
     assert structures[0][1] == structures[1][1]
 

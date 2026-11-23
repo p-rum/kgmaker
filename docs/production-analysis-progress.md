@@ -527,7 +527,7 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 
 Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
 přesný výběr compiler vstupů a bajty zdrojů s normalizovanou strukturální projekcí.
-Ověřeny byly local operations, Criteria filtr, rozvinutí source CFG, statické
+Ověřeny byly replay T025 local operations, Criteria filtr, rozvinutí source CFG, statické
 deklarace Kafka retry/DLT a offline invalidace po změně konců řádků. W02 selektivní
 invalidace má vlastní acceptance. [Doklad přesného rozsahu](changes/160_bindJvmSourceBytes.md).
 

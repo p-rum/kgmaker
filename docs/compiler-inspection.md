@@ -1618,7 +1618,7 @@ readable.
 An LF/CRLF-only edit makes the affected JVM context stale. To refresh it, run
 `kgmaker inspect code --root ./service --module app --source-set main`. The
 verified Javac fixtures cover return and void bodies, abstract declarations,
-local computation evidence, a Criteria filter, source CFG call expansion and static
+T025 local operation replay, a Criteria filter, source CFG call expansion and static
 Kafka retry/DLT declarations on CRLF input.
 Kotlin workers currently report PSI coordinates over normalized text. Explicit
 JVM inspection rejects a selected Kotlin file whose line endings change those
