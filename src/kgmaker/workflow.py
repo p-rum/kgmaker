@@ -449,10 +449,10 @@ def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
         raise
 
 
-def _persist_task_locked(root, validated, path, existing, expected_revision):
+def _persist_task_locked(root, validated, path, existing, expected_revision, journal):
     """Persist under the shared workflow lock, preserving immutable history."""
     from .analysis_model import digest
-    from .provenance import enforce_gate
+    from .provenance import VERIFICATION_POLICY, enforce_gate
     if existing is None:
         if expected_revision is not None:
             raise WorkflowError('Task changed concurrently; reload before writing')
@@ -520,9 +520,18 @@ def _persist_task_locked(root, validated, path, existing, expected_revision):
         from .workflow_profiles import enforce_handoff
         enforce_handoff(root, existing, validated)
     if validated['status'] in {'implement', 'done'}:
-        enforce_gate(root, validated, validated['status'])
+        enforce_gate(root, validated, validated['status'], data=journal)
     elif any(artifact['phase'] == 'implement' for artifact in added):
-        enforce_gate(root, validated, 'implement')
+        enforce_gate(root, validated, 'implement', data=journal)
+    if (journal['policy'].get(VERIFICATION_POLICY) and existing is not None
+            and existing['status'] != 'done' and validated['status'] == 'done'):
+        from .verification import summary
+
+        if validated['plan_revision'] != existing['plan_revision']:
+            raise WorkflowError('Verification gate: cannot change plan revision while completing a task')
+        verification = summary(root, journal, existing)
+        if verification['status'] != 'VERIFIED':
+            raise WorkflowError('Verification gate: ' + verification['reason'])
     _atomic_write(path, validated)
     return path
 
@@ -543,11 +552,11 @@ def save_task(root: Path, task: dict[str, Any], *, expected_revision: str | None
     validated = validate_task(copy.deepcopy(task))
     path = task_path(root, validated['id'])
     try:
-        with transaction(root, expected_revision=expected_journal_revision):
+        with transaction(root, expected_revision=expected_journal_revision) as journal:
             existing = load_task(root, validated['id']) if path.exists() else None
             if expected_binding is not None and source_binding(root) != expected_binding:
                 raise WorkflowError('stale workflow source evidence; reload and verify the current revision')
-            return _persist_task_locked(root, validated, path, existing, expected_revision)
+            return _persist_task_locked(root, validated, path, existing, expected_revision, journal)
     except AnalysisError as exc:
         raise WorkflowError(str(exc)) from exc
 
@@ -592,10 +601,10 @@ def add_task(
     from .provenance import transaction
     from .analysis_model import AnalysisError
     try:
-        with transaction(root):
+        with transaction(root) as journal:
             if path.exists():
                 return load_task(root, task['id'])
-            _persist_task_locked(root, task, path, None, None)
+            _persist_task_locked(root, task, path, None, None, journal)
     except AnalysisError as exc:
         raise WorkflowError(str(exc)) from exc
     return task

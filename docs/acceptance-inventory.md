@@ -101,10 +101,21 @@ ověření uvedené níže je lokální a neprokazuje automatickou discovery hos
 T048-S01 / T048-AC01: [119 atomických řádků](production-analysis-progress.md)
 odděluje delivery, verification, evidence SHA, zdroje/testy, PR, omezení a další
 krok; [change111](changes/111_reconcileDeliveryStatus.md) uvádí kontroly.
-Aktualizace 2026-11-15: T003/T004 mají 63 položek se sloučenou prací a 37 bez ní; [post-merge evidence](changes/119_reconcileJpqlDelivery.md). T046-S01 až S06 jsou
-MERGED,
-T047 PLANNED se sdílenými upstream vlastníky. Úplná produkční acceptance všech variant zůstává NOT_RUN; dostupný lokální pytest full merged main je doložen v change119 a není jejím ekvivalentem.
-T047-S01 / T047-R01 a T047-AC01 — PR_OPEN / PARTIAL, [#121](https://github.com/p-rum/kgmaker/pull/121).
+Historický stav k 2026-11-15 měl v T003/T004 63 položek se sloučenou prací
+a 37 bez ní. T046-S01 až S06 byly MERGED a T047 bylo PLANNED se sdílenými
+upstream vlastníky. Úplná produkční acceptance všech variant byla NOT_RUN.
+[Dobové testy sloučeného main](changes/119_reconcileJpqlDelivery.md).
+
+**T047-S01 / T047-R01 a T047-AC01 — MERGED / PARTIAL.** Korpus byl
+2026-11-21 sloučen do `main` jako `b3bbba43304f499f96950ea4ecc2a2467919e616`.
+Na přesném headu prošlo 135 testů se skutečnými K1/K2, TypeScriptem a offline
+Gradle. Výběr na sloučeném stromu má 7 PASS a stejný očekávaný strict XFAIL
+pro T047-S02. Merge pokrývá dodání reprodukčního korpusu. Inkrementální
+přepočet důkazů závislých na těle, scénáře Windows a celá matice §7
+zůstávají otevřené. [Doklad integrace](changes/161_recordMutationCorpusMerge.md) · [#121](https://github.com/p-rum/kgmaker/pull/121)
+
+Historie kandidátů #121 do merge 2026-11-21:
+
 Lokální pokračování nad draftem `6333c0a` ověřuje odlišné identity stejného
 Kotlin FQN v obou repo a shodný SOURCE_ONLY graf po přesunu workspace.
 Přenos z draftu `a20cfa1` na `main` `4011825` již ověřil tyto scénáře.
@@ -1775,3 +1786,16 @@ schválenému pro první souborově vázaný rozsah. [Doklad integrace](changes/
 | Acceptance | Ověření | Důkaz |
 |---|---|---|
 | T047-AC10 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` prokázal skutečný Maven/Surefire PASS, STALE po editaci při stejném HEAD a následný skutečný FAIL. Evidence rozlišuje výsledek skutečného runneru, deklaraci a import. Změny během běhu, změny POSIX režimu, nesoulad s XML, nesprávná revize tasku, neshoda executable a chybějící či vadný report mají samostatné testy. `test_workspace_verification_is_rejected_before_build_or_journal_writes` ověřuje odmítnutí záznamu z platného workspace se dvěma checkouty. Přesný head má 133 PASS / 2 SKIP v cílené Maven sadě, merge má 27 PASS / 0 SKIP v sadě dokladů se skutečným Maven/Surefire. Vícerepozitářový doklad, ověřitelné importy a širší matice zůstávají otevřené. T047-S11 má vlastní acceptance. [Doklad integrace](changes/158_recordFileBoundVerificationMerge.md) · [Historie kandidátů](changes/150_captureBoundVerification.md) |
+
+## T047-S11 — Aktuální lokální ověření před dokončením
+
+**T047-S11 / T047-R11 a T047-AC11 — MERGED / PARTIAL.** Volitelná brána
+pro jeden lokální checkout je v `main` jako `47807742a07c4a4fb92a590479fbfa0b558bf7fe`.
+Přesný head i sloučený strom mají 179 PASS a 0 SKIP v sadě se skutečným
+Mavenem a Surefire. Na přesném headu skutečný offline Gradle potvrdil
+cyklus PASS, FAIL a nový PASS i šest odmítnutých přechodů se zachovaným
+taskem a journalem. [Doklad integrace](changes/161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01) · [#144](https://github.com/p-rum/kgmaker/pull/144)
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T047-AC11 | PARTIAL | `test_actual_maven_surefire_pass_and_fail` pokrývá PASS, editaci při stejném HEAD, odmítnutí v `save_task` i `advance_task`, skutečný FAIL, nový PASS a oddělené historické `done` a pozdější `STALE`. Regrese pro oba vstupy dokládají úpravu zdroje během kontroly XML a posun HEAD při závěrečném výpočtu úplného inventáře se stejným obsahem. Trace pozoruje aktuálnost dokladu jednou pro řádek i souhrn. Testy téže sady ověřují retry, zachycení fáze před spuštěním, ochranu revize plánu, čitelnost v1, neautoritativní import a deklarace, novější FAIL či neúplný report, shodu času zahájení, default-off a odvolané review. Scope je jeden explicitní běh lokálního checkoutu. Mapování jednotlivých požadovaných testů, selektivní dopad, širší matice a samostatná projekce v paměti zůstávají otevřené. [Change159](changes/159_gateCompletionOnCurrentVerification.md). |

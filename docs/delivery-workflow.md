@@ -235,8 +235,45 @@ se řídí původním kontraktem.
 
 Rozsah se omezuje na explicitně inventarizované vstupy jednotlivého checkoutu
 plus zaznamenaný report. Externí závislosti, další Git checkouty, libovolné
-importované testovací reporty a brány T047-S11 vyžadují další práci.
+importované testovací reporty a širší ověřovací matice vyžadují další práci.
 [Build runner a jeho hranice](compiler-inspection.md#explicitní-lokální-build).
+
+### Aktuální ověření před dokončením (T047-S11)
+
+Lokální verification policy je standardně vypnutá. Hodnotu `REVISION` opište
+z pole `revision` ve výstupu `kgmaker trace show --format json`. Stejné číslo
+chrání změnu politiky před souběžným zápisem do journalu.
+
+```bash
+kgmaker trace policy --verification-before-done on --expected-revision REVISION
+kgmaker project build-run --plan /tmp/plan.json --record-verification TASK_ID
+kgmaker trace show TASK_ID --format json
+```
+
+Příkaz spusťte s explicitně připraveným testovacím plánem a taskem ve stavu
+`test` nebo `review`. Doklad v2 zaznamená stav a iteraci uloženého tasku před
+spuštěním runneru. Při přechodu do `done` se vyhodnotí nejpozději zahájený
+doklad v2 pro přesnou současnou revizi a iteraci tasku. Dva různé doklady se
+shodným časem zahájení vyžadují nový jednoznačný běh. Doklad musí být
+`RUNNER_CAPTURED`, mít výsledek `PASS` a aktuálnost `CURRENT`. Novější
+neúspěšný nebo neověřitelný výsledek vyžaduje nový běh. Návrat do `implement`
+začne novou iteraci i při stejném Git HEAD. Doklady v1 zůstávají čitelné jako
+historie bez údaje o iteraci a fázi. Deklarace agenta a import jsou samostatné
+druhy evidence.
+
+`trace show` v existující lineage zobrazuje pro aktuální referenci tasku
+`workflow_status` a `verification_summary` zvlášť. Při zapnuté politice má
+stejný odvozený souhrn i `task context`. V jednom výstupu `trace show` sdílí
+řádek dokladu a souhrn stejné pozorování jeho aktuálnosti. Brána pozoruje
+checkout sama při zápisu. Po validaci XML čte Git HEAD před ověřením i po
+úspěšném ověření úplného inventáře. Posun HEAD zneplatní doklad i při stejném
+obsahu projektu. Po nové editaci může ověření přejít na `STALE`, zatímco
+historické `done` a doklad o původním běhu zůstávají uložené.
+Politiku lze vypnout stejným příkazem s `off` a poslední revizí journalu.
+Nastavení se týká jednoho explicitního běhu lokálního checkoutu. Schválení
+review a pravidla aktivního workflow profilu se vyhodnocují samostatně.
+Přiřazení běhů k jednotlivým požadovaným testům a selektivní dopad mají další
+rozsah. [Změna a kontroly](changes/159_gateCompletionOnCurrentVerification.md).
 
 ## Volitelné brány a kompatibilita
 

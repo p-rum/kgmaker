@@ -309,3 +309,34 @@ spuštění procesu a porovnává bajty obou zdrojů a všech tří výstupů gr
 
 Úplná projektová sada, Windows a GitHub Actions jsou pro tuto opravnou revizi
 NOT_RUN. Kotlin PSI souřadnice a širší acceptance T025 mají vlastní otevřený rozsah.
+
+## T003-S02 / AC02 a T025-S07 / AC07–09 — přenos po #146
+
+Oprava `f2b684f0c359a1ebf6b422040e59f56694e82862` je přenesena na
+`main` `0dbe9a754f06cf67f5fe40db0aaa31944497fe19`. Zdrojové soubory a testy
+opravy mají stejné bloby jako první rodič. Druhý rodič dodává shodné bloby
+implementace ověřovací brány i aktualizaci inventáře T047 po #146.
+Sémantický index zachovává 372 jedinečných záznamů z obou rodičů. Lokální
+obnova přidává doklad o přenosu.
+
+Cílený běh v Cloud Environmentu se skutečným Javac, K1 a K2 měl 97 PASS,
+0 FAIL, 0 ERROR a 0 SKIP za 71,01 s. Ověřil 11 JVM scénářů, 43 T032
+scénářů, plánování a workflow profily i tři kontroly aktuálního dokladu.
+Python při T032 dvakrát upozornil na `fork()` ve vícevláknovém procesu.
+JUnit `pr145-retry2-forward-focus.xml` má SHA-256
+`54456c689ca87d169bff5f61b53f9011bc039c4452e9cba5f596a65a652296cd`.
+Shodné vstupní manifesty zdrojů, testů, fixture a distribucí workerů mají
+SHA-256 `d723b1e9e650de1e5c5c80dedff08a9f01d8efb91218f8bac2c23023bc338f3c`.
+
+```bash
+/workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist loadfile \
+  -p no:cacheprovider -q --tb=short -ra \
+  --junitxml=/workspace/kgmaker-evidence/pr145-retry2-forward-focus.xml \
+  tests/test_jvm_raw_source_snapshot.py tests/test_t032_persist_process_review.py \
+  tests/test_workflow.py tests/test_workflow_profiles.py \
+  tests/test_verification_records.py::test_same_head_retry_requires_receipt_from_current_iteration \
+  tests/test_verification_records.py::test_done_rechecks_head_after_final_input_snapshot
+```
+
+Rozšířená sada na sloučeném stromu, úplná matice, Windows, vzdálené CI a
+aktuální nezávislé review mají vlastní kontroly mimo tento cílený běh.
