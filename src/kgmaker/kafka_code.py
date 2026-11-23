@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 
 from .analysis_model import digest, safe_path
+from .compiler_sources import compiler_source_digest
 from .model import Edge, KnowledgeGraph, Node
 
 VERSION = 'kafka-code-1'
@@ -180,9 +181,9 @@ class _Capture:
                     self.issue('KAFKA_SOURCE_BUDGET'); return None
             self.files[path] = (text, checksum, _file_digest(text) if text is not None else None)
         text, checksum, captured = self.files[path]
-        sources = self.context.get('source_files')
-        if (text is None or checksum != symbol['sha256'] or not isinstance(sources, dict)
-                or sources.get(path) != captured or self.graph.files.get(path) != captured):
+        if (text is None or checksum != symbol['sha256']
+                or compiler_source_digest(self.graph.files, self.context, path) != checksum
+                or self.graph.files.get(path) != captured):
             return None
         return node
 

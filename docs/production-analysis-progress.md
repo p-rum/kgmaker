@@ -525,6 +525,12 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 | T003-S12 Confluence boundary | VERIFIED_IN_SCOPE / LIVE NOT_RUN | Adapter protocol, `FAKE_TEST_ONLY`, explicit pull, managed-section diff, hash+base-version approval, optimistic concurrency, TO_BE re-import and audit; `test_confluence_sync` covers FA-28–30/AC12 | Live connector requires a documented host/API/auth contract and remains separately NOT_RUN |
 | T003-S13 runtime | PARTIAL / OPTIONAL | V1 import + strict v2 export/import; explicitní JDK21/POSIX synchronní producer s call/factory/condition/map capture a negativními testy. [change122](changes/122_runtimeTraceProducer.md), [kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, RTA/value flow, async/reflective capture a deployment/data availability; celý milník neověřen |
 
+Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
+přesný výběr compiler vstupů a bajty zdrojů s normalizovanou strukturální projekcí.
+Ověřeny byly replay T025 local operations, Criteria filtr, rozvinutí source CFG, statické
+deklarace Kafka retry/DLT a offline invalidace po změně konců řádků. W02 selektivní
+invalidace má vlastní acceptance. [Doklad přesného rozsahu](changes/160_bindJvmSourceBytes.md).
+
 Revize T003-S03-W04: Maven exporter označuje nerozřešené implicitní
 language/API defaults jako PARTIAL s diagnostikou místo invalidního placeholderu;
 plugin descriptor classpath včetně skutečného `all-open` JAR nese SHA-256 a
@@ -1091,6 +1097,9 @@ merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
 IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
 actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
 review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
+Oprava #145 ověřuje shodu T012 a T019 na skutečných Javac zdrojích s LF a CRLF.
+Katalog porovnává bajtový otisk s kvalifikovaným workspace inventářem.
+[Doklad a hranice opravy](changes/160_bindJvmSourceBytes.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,
@@ -1192,6 +1201,9 @@ ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return compositio
 review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
 constraints/naming/converters/composite FK remain UNKNOWN. No availability,
 deployment/population promotion or whole-milestone completion inferred.
+Oprava #145 ověřuje shodné W08 výsledky po explicitní inspekci téhož Javac
+zdroje s LF a CRLF. Flyway snapshot i dostupnost dat mají stejné výsledky.
+[Doklad cíleného ověření](changes/160_bindJvmSourceBytes.md).
 
 ## T010 normalized variant correction (2026-11-03)
 

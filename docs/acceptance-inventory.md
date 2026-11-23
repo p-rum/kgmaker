@@ -585,6 +585,16 @@ varianty a content změnu classpath. Focused worker/provider/workspace/feature/d
 běh: **68 passed in 20.07 s**. Rozšíření jazykových, buildových a framework variant
 patří do S03–S10 a není součástí tohoto VERIFIED tvrzení.
 
+T003-S02 / AC02 zahrnuje ověřený Javac výběr pro LF a CRLF. Nová JVM inspekce
+publikuje otisk bajtů odděleně od normalizovaného otisku strukturálního grafu.
+Ověřeny byly konkrétní a abstraktní deklarace, replay T025 local operations, Criteria filtr,
+odmítnutí nesouhlasících otisků a offline zastarání po změně konců
+řádků. `test_selected_kotlin_coordinate_guard_preserves_mixed_jvm_scope` hlídá
+identitu seznamu compiler vstupů a odmítá vybraný Kotlin s nesouhlasícími bajty.
+`test_process_flow_preserves_javac_cfg_edges_across_line_endings` a
+`test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations` ověřují CFG, T025 a
+statické deklarace Kafka retry/DLT. [Přesná evidence a hranice](changes/160_bindJvmSourceBytes.md).
+
 Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené
 v T003; zelený souhrnný běh jejich chybějící varianty nedokládá.
@@ -1054,7 +1064,7 @@ is integrated; final independent exact-pair review/ready/merge remain separate.
 
 | Acceptance | Supported proof / tests | Actual evidence |
 |---|---|---|
-| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; current Return67 matrix174PASS/0SKIP |
+| W08-AC01 | `tests/test_schema_compatibility.py`: actual Javac FIELD/PROPERTY/inherited, canonical descriptors, null/decimal, PK/UK, explicit ManyToOne FK, current target rename/drop/incarnation | Both K1/K2 distributions; strict full ced1591PASS/10optionalSKIP; Return67 matrix174PASS/0SKIP. Local, CLI and workspace parity after LF/CRLF refresh is recorded separately. [Change160](changes/160_bindJvmSourceBytes.md) |
 | W08-AC02 | Legacy graphv1/v2/v3 readable; absent fingerprint/canonical witness UNKNOWN | Included own public matrix and full; no migration guessed |
 | W08-AC03 | Exact selected realm/context/SHA/snapshot, custom same-name types/SQLdomain UNKNOWN, malformed member and unknown version negatives, no mutation/availability promotion | P1/P2 source findings closed, actual guard29PASS and current matrix; full1471 inputs unchanged |
 | W08-AC04 | README, capability/CLI, note78, current state and exact source evidence | Final parent pure HTTP ambiguity4PASS/0SKIP0.56s; no repeated full/build solely for parent |
@@ -1119,6 +1129,11 @@ all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selecti
 10PASS/0SKIP36.89s; current-parent coalesced444PASS/0SKIP370.90s. AC06 docs and
 preserved failures/limits are in note81. Main/Common dependencies merged; exact
 finalpair review/merge separate. No standalone parent full or transport observation.
+
+T012-AC01/02/04/05 and T019-AC01/03 use actual Javac LF and CRLF catalogues
+from the same source text. Both groups and broker realms survive in the API
+and CLI. A workspace inventory with a substituted normalized digest fails
+closed. [Exact regression and evidence](changes/160_bindJvmSourceBytes.md).
 
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)
