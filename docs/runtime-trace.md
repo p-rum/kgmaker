@@ -65,6 +65,13 @@ source/worker/classpath snapshot a cancellation. Po procesu se znovu kontroluje
 uložený graf i snapshot a až potom se artefakt atomicky nahradí. Producer sám
 nezapisuje graph store; import je oddělená operace.
 
+Import pracuje s načteným manifestem a před nahrazením každého výstupu
+grafu znovu ověřuje uložené zdrojové hashe a distribuci workeru. U v2
+ověřuje také vazbu manifestu na compiler kontext a jeho zachycené vstupy.
+Zjištěný zastaralý vstup zastaví publikaci. Store obnoví dříve nahrazené
+výstupy téže publikace. Současné publikace do grafu hlídá kontrola
+očekávané generace. [Regresní ověření](changes/163_revalidateRuntimeImportPublication.md).
+
 Limit je 50 000 facts, 8 MiB stdout a timeout `(0, 900]` sekund. Chybný JSON,
 exit, neplatný fact, stale stav, timeout nebo cancellation nepublikuje nový
 artefakt. Existující cancel soubor zabrání spuštění; jeho vytvoření během běhu

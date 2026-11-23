@@ -1576,6 +1576,12 @@ in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
 
+Při publikaci runtime importu store společně s kontrolou očekávané
+generace znovu kontroluje zdroje a distribuci workeru z vybraného kontextu.
+U v2 opakuje i validaci zachycených vstupů compiler kontextu. Zjištěná
+změna zastaví publikaci a store obnoví již nahrazené výstupy.
+[Regrese runtime importu](changes/163_revalidateRuntimeImportPublication.md).
+
 ## Klasifikace vstupů ORM XML
 
 Snapshot `jpa_xml_inputs` zachycuje chybějící soubor i symbolický odkaz na

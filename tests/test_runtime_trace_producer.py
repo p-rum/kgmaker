@@ -348,3 +348,45 @@ def test_v2_observation_kind_type_is_rejected_without_store_write(project, kind)
     with pytest.raises(AnalysisError):
         import_manifest(project, manifest)
     assert saved(project) == before
+
+
+@pytest.mark.parametrize("edit_at", ["before_save", "after_first_view"])
+def test_real_jdk21_runtime_import_rejects_source_edit_after_validation(jdk_application, monkeypatch, edit_at):
+    from kgmaker import store
+
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **opts, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    manifest["observations"] = [{"caller": call["caller"], "target": call["target"], "kind": "dispatch"}]
+    outputs = [root / path for path in (store.GRAPH_FILE, store.MARKDOWN_FILE, store.MERMAID_FILE, ARTIFACT)]
+    before = {path: path.read_bytes() for path in outputs}
+    source = root / "src/main/java/TraceApplication.java"
+    original = source.read_bytes()
+    edited = original + b"// edited after runtime validation\n"
+
+    if edit_at == "before_save":
+        def save_after_edit(*args, **kwargs):
+            source.write_bytes(edited)
+            return save_graph(*args, **kwargs)
+
+        monkeypatch.setattr(store, "save_graph", save_after_edit)
+    else:
+        real_replace = store.os.replace
+
+        def replace_and_edit(temporary, destination):
+            real_replace(temporary, destination)
+            if destination == root / store.MERMAID_FILE and source.read_bytes() == original:
+                source.write_bytes(edited)
+
+        monkeypatch.setattr(store.os, "replace", replace_and_edit)
+
+    try:
+        with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+            with pytest.raises(AnalysisError, match="STALE_RUNTIME: source changed"):
+                import_manifest(root, manifest)
+        assert source.read_bytes() == edited
+        assert {path: path.read_bytes() for path in outputs} == before
+        assert not (root / store.PUBLICATION_LOCK).exists()
+        assert not list((root / store.STATE_DIR).rglob(".kgmaker-*"))
+    finally:
+        source.write_bytes(original)
