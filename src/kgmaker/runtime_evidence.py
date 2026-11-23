@@ -236,18 +236,20 @@ def produce_manifest(root: Path, command: list[str], *, context_id: str, runtime
     return manifest
 
 
-def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any]) -> None:
+def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any] | None = None) -> None:
+    """Check captured files and bind supplied declarations during initial validation."""
     expected = context.get("source_files", {})
-    supplied = manifest.get("source_hashes", expected)
-    if not isinstance(supplied, dict) or supplied != expected:
-        raise AnalysisError("STALE_RUNTIME: runtime source snapshot does not match compiler context", 3)
+    if manifest is not None:
+        supplied = manifest.get("source_hashes", expected)
+        if not isinstance(supplied, dict) or supplied != expected:
+            raise AnalysisError("STALE_RUNTIME: runtime source snapshot does not match compiler context", 3)
     for path, checksum in expected.items():
         target = safe_path(root, path)
         if not target.is_file() or file_hash(target) != checksum:
             raise AnalysisError("STALE_RUNTIME: source changed", 3)
     worker = context.get("worker", {})
     expected_distribution = worker.get("distribution", []) if isinstance(worker, dict) else []
-    if manifest.get("worker_distribution", expected_distribution) != expected_distribution:
+    if manifest is not None and manifest.get("worker_distribution", expected_distribution) != expected_distribution:
         raise AnalysisError("STALE_RUNTIME: worker distribution does not match compiler context", 3)
     for item in expected_distribution:
         path = Path(item["path"])
@@ -350,7 +352,16 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
         evidence=sorted(evidence.values(), key=lambda item: item["id"]),
         diagnostics=graph.diagnostics + [{"code": "RUNTIME_IMPORT_SCOPED", "runtime_id": manifest["runtime_id"],
                                           "observations": len(manifest["observations"]), "context_id": context["id"]}])
-    save_graph(updated, root, expected_revision=previous)
+
+    def revalidate_inputs():
+        # The generation check serializes graph writers. Source and worker inputs
+        # can still change while the store prepares and replaces individual outputs.
+        _check_hashes(root, context)
+        if manifest["schema_version"] == 2:
+            from .graph_provider import validate_context_snapshot
+            validate_context_snapshot(root, context)
+
+    save_graph(updated, root, before_replace=revalidate_inputs, expected_revision=previous)
     return {"status": manifest.get("status", "COMPLETE"), "mode": "RUNTIME_IMPORT", "runtime_id": manifest["runtime_id"],
             "context_id": context["id"], "observations_imported": len(manifest["observations"]),
             "limitations": ["Observed calls are scoped to the supplied run; absent calls prove nothing.",

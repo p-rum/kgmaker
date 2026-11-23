@@ -54,6 +54,8 @@ class KnowledgeGraph:
     cfgs: list[dict[str, Any]] = field(default_factory=list)
     analysis_annotations: list[dict[str, Any]] = field(default_factory=list)
     extraction_cache: dict[str, Any] = field(default_factory=dict)
+    # Scanner-only byte hashes for inputs whose normalized text hash differs.
+    raw_file_hashes: dict[str, str] | None = field(default=None, repr=False, compare=False)
 
     def migrate_legacy(self) -> "KnowledgeGraph":
         """Keep original IDs as legacy identities; do not claim JVM/TS resolution."""

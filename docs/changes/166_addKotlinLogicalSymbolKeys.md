@@ -1,4 +1,4 @@
-# Logické klíče doložených funkcí Kotlinu
+# 166 — Logické klíče doložených funkcí Kotlinu
 
 [T047](../tasks/47_addReliableIncrementalContext.md), krok T047-S02,
 požadavek T047-R02 a acceptance T047-AC02. Výchozí `main`
@@ -218,10 +218,58 @@ python -m pytest -n 2 -p no:cacheprovider -q --tb=short -ra \
   tests/test_symbol_identity.py -k 'isolate_realms_and_unsupported_declarations or legacy_graphs'
 ```
 
-Po začlenění #145 se ověří přesný společný strom, včetně průchodu zahřátou
-cache. Nezávislé review tohoto checkpointu, úplná projektová sada, GitHub
-Actions a Windows mají stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+Před sloučením #145 se čekalo na ověření přesného společného stromu, včetně
+průchodu zahřátou cache. Nezávislé review tohoto checkpointu, úplná projektová
+sada, GitHub Actions a Windows měly stav NOT_RUN. T047-AC02 zůstalo PARTIAL.
 
 Graf ověřují `kgmaker semantic update --base 1cc422b`, `kgmaker semantic apply`,
 `kgmaker semantic validate`, `kgmaker memory capture --base 1cc422b`,
 `kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --cached --check`.
+
+## T047-S02 / T047-AC02 — přenos po sloučení #145
+
+Prvním rodičem je `0fb789f1eccc9a943a0df149402f4afc3baed42e`, druhým
+`1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4` se sloučeným #145. Společný
+strom používá raw zdrojové hashe compileru v jejich existujícím schématu.
+Identitu Kotlin deklarace určuje původní S02 doklad a úplný zachycený výběr.
+Kód a testy odpovídají zdrojovým změnám obou rodičů. Tři sdílené soubory
+`inspection.py`, `model.py` a `workspace.py` mají čisté třícestné spojení.
+[Kontrakt raw hashů](160_bindJvmSourceBytes.md) · [Stav T047](../production-analysis-progress.md).
+
+Cílený výběr používá připnuté K1 a K2 z převzatých, již přeložených zdrojů S02
+a JDK 21.0.6+7. Samostatná fixture nejprve uloží skutečný legacy kontext z
+archivu prvního rodiče. Poté změní Java vstup na CRLF, provede raw inspekci a
+znovu načte workspace. Opakovaná inspekce stejného raw stavu ověřuje klíč a ID
+výskytu i kontextu ze zahřátého uloženého grafu. Běžný mechanismus etap nadále
+hlásí `BYPASS`.
+
+Na společných zdrojích prošlo 13 testů za 244,35 s (13 PASS, 0 SKIP).
+Sada obsahuje všech 11 případů logické identity a dvě skutečné migrace z
+`selected-source-set-2` na `selected-source-set-raw-1`. K1 i K2 zachovaly
+logický klíč při změně ID kontextu a výskytu, ověřily raw a normalizovaný hash
+CRLF vstupu, zachovaly výsledky po opakovaném načtení a odmítly cizí repo
+prefix. Případy pro neúplný výběr, kolizi dvou strukturovaných source setů
+a čtení starších grafů zůstaly zelené.
+
+- JUnit `native.xml`, SHA-256
+  `2df756813be9da8bdbff0114f1f549b46927f7655f8caf5aa108acd45d3ffec2`.
+- Shodné manifesty vstupů před a po běhu, SHA-256
+  `c9364a9f55961c04359db66d7e2abee5ef1485baffc4110736eb5f3b23c2a13a`.
+- Pomocná fixture `test_real_qualified_transition.py`, SHA-256
+  `ba0ffe6a707632b00f0c7906d5c8e32ca170ee1bf2791eff89dbd764dc17f619`.
+- Porovnání rodičovských změn `parent-deltas-before.json`, SHA-256
+  `b1b2e3b6d8e54288932fd980d0dac4815f1d8de34f85a2e6d5fa43e102eb1c94`.
+
+Běh použil CPython 3.12, hodnoty prostředí z předchozích K1/K2 zkoušek
+a `KGMAKER_WORKERS_HOME` nastavené na adresář `workers` společného stromu.
+Proměnná `evidence` v příkazu označuje adresář s pomocnou fixture a archivem
+`legacy-s02/src` z prvního rodiče.
+
+```bash
+python -m pytest -c pyproject.toml -n 2 -p no:cacheprovider -q --tb=short -ra \
+  --junitxml "$evidence/native.xml" --basetemp "$evidence/native-pytest" \
+  tests/test_symbol_identity.py "$evidence/test_real_qualified_transition.py"
+```
+
+Nezávislé review, úplná projektová sada, GitHub Actions a Windows mají pro
+tento společný stav zatím status NOT_RUN. T047-AC02 zůstává PARTIAL.

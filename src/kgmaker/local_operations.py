@@ -8,6 +8,7 @@ import re
 import struct
 
 from .analysis_model import digest
+from .compiler_sources import compiler_source_digest
 
 VERSION = 'java-local-operations-1'
 _INTERNAL_REF = '_verified_local_operation'
@@ -238,7 +239,8 @@ def materialize_operations(graph, records, context):
                     or context.get('mode') not in {'BUILD_IMPORT', 'SYMBOL_RESOLVED'}
                     or not isinstance(context.get('analyzer_version'), str)
                     or not _canonical_symbol(symbol, method, context) or method.scope != context['scope']
-                    or graph.files.get(method.path) != record['sha256'] or block['kind'] != 'basic_block'
+                    or compiler_source_digest(graph.files, context, method.path) != record['sha256']
+                    or block['kind'] != 'basic_block'
                     or block.get('call_site_ids') or block.get('source_file') != method.path
                     or block.get('sha256') != record['sha256'] or block.get('source_range') != record['source_range']):
                 _fail('operation does not match its canonical CFG block')

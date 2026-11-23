@@ -419,4 +419,6 @@ def scan_repository(root: Path, *, project_model: dict | None = None, strict: bo
         contexts=contexts,
         diagnostics=classifier.diagnostics,
         evidence=[evidence[i] for i in sorted(evidence)],
+        raw_file_hashes={path: checksum for path, checksum in raw_source_hashes.items()
+                         if checksum != file_hashes[path]},
     )

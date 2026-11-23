@@ -53,7 +53,7 @@ def api_inputs():
     return result
 
 
-def inspect_capture(root,language,scenario='supported'):
+def inspect_capture(root,language,scenario='supported',*,ending=None):
     jars=actual_prerequisites('k1')+extra_api_jars();apis=api_inputs()
     if scenario=='unsupported':jars=[str(apis['3.2.0']) if '/spring-kafka/3.3.2/' in jar else jar for jar in jars]
     folder=root/('src/main/java/demo' if language=='java' else 'src/main/kotlin/demo');folder.mkdir(parents=True)
@@ -70,7 +70,11 @@ def inspect_capture(root,language,scenario='supported'):
         second=second[second.index('public class' if language=='java' else 'class Retry' if 'class Retry' in second else 'class Other'):]
         if language=='java':second=second.replace('public class','class',1)
         text+='\n'+second
-    (folder/('RetryEntries.java' if language=='java' else 'RetryEntries.kt')).write_text(text)
+    source=folder/('RetryEntries.java' if language=='java' else 'RetryEntries.kt')
+    if ending is None:
+        source.write_text(text)
+    else:
+        source.write_bytes(text.replace('\n',ending).encode())
     result=inspect_jvm(root,home=ROOT/'workers',kotlin_backend='k1',repo_id='retry-fixture',classpath=jars,publish=False)
     assert not any('.err.' in str(d.get('code','')) or str(d.get('reason','')).startswith('ERROR:') for d in result['diagnostics'])
     out=os.environ.get('KGMAKER_RETRY_CAPTURE_DIR')
@@ -106,6 +110,20 @@ def test_actual_two_groups_keep_separate_static_retry_dlt_boundaries(captured):
         report=process(captured,policy.metadata['origin_id'])
         assert report['kafka_policy_boundaries']==rows
         assert all(e['kind'] not in {'declares_retry_boundary','declares_dlt_boundary'} for e in report['cfg']['edges'])
+
+
+def test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations(tmp_path):
+    graph=inspect_capture(tmp_path,'java',ending='\r\n')
+    declarations=policies(graph)
+    assert len(declarations)==2
+    for policy in declarations:
+        raw=(tmp_path/policy.path).read_bytes()
+        assert b'\r\n' in raw
+        assert graph.files[policy.path]==hashlib.sha256(raw.replace(b'\r\n',b'\n')).hexdigest()
+        assert policy.metadata['source_sha256']==hashlib.sha256(raw).hexdigest()!=graph.files[policy.path]
+        rows=policy_boundaries(graph,{policy.metadata['origin_id']})
+        assert {r['kind'] for r in rows}=={'declares_retry_boundary','declares_dlt_boundary'}
+        assert all(r['status']=='DECLARED' and r['execution']=='NOT_OBSERVED' for r in rows)
 
 
 @pytest.mark.parametrize('language',['java','kotlin'])

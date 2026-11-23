@@ -381,18 +381,29 @@ def prepare_packet(
             unique_warnings.append(warning)
             seen_warnings.add(warning)
 
-    from .provenance import trace, load as load_lineage
+    from .provenance import VERIFICATION_POLICY, task_references, trace, load as load_lineage
+    from .verification import summary as summarize_verification
     from .analysis_model import AnalysisError
     lineage = []
+    verification_summary = None
     approval_policy = {'before_implement': False, 'before_done': False}
     try:
-        approval_policy = load_lineage(root)['policy']
+        journal = load_lineage(root)
+        approval_policy = {key: journal['policy'][key] for key in approval_policy}
+        verification_required = journal['policy'].get(VERIFICATION_POLICY, False)
         try:
-            report = trace(root, task['id'])
+            report = trace(root, task['id'], data=journal)
             lineage = [{k:r[k] for k in ('key','kind','id','revision','approved','stale','requested_by')}
                        for r in report['references'][:12]]
+            if verification_required:
+                task_reference = task_references(task)[1]['key']
+                verification_summary = next((row['verification_summary'] for row in report['references']
+                                             if row['key'] == task_reference
+                                             and row.get('workflow_iteration') == task['iteration']), None)
         except AnalysisError:
             pass  # A legacy task may have no registered lineage.
+        if verification_required and verification_summary is None:
+            verification_summary = summarize_verification(root, journal, task)
     except (AnalysisError, OSError) as exc:
         unique_warnings.append('Lineage unavailable: ' + str(exc))
     packet = {
@@ -428,6 +439,8 @@ def prepare_packet(
         packet['lineage'] = lineage
     if any(approval_policy.values()):
         packet['approval_policy'] = approval_policy
+    if verification_summary is not None:
+        packet['verification_summary'] = verification_summary
     packet["packet_id"] = "packet:" + ("0" * 64)
     packet = _truncate(packet, token_budget)
     if 'workflow' in task and _token_estimate(packet) > token_budget:
@@ -472,6 +485,9 @@ def _render_markdown(packet: dict[str, Any], task: dict[str, Any]) -> str:
     if 'workflow' in packet:
         lines.extend(['', '## Workflow data (not authorization)', '',
                       json.dumps(packet['workflow'], ensure_ascii=False, indent=2)])
+    if 'verification_summary' in packet:
+        verification = packet['verification_summary']
+        lines.extend(['', '## Verification', '', f"- {verification['status']} ({verification['reason']})"])
     lines.extend(["", "## Nodes", ""])
     if packet["nodes"]:
         for node in packet["nodes"]:

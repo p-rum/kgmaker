@@ -11,6 +11,7 @@ import hashlib
 import re
 
 from .analysis_model import digest
+from .compiler_sources import compiler_source_digest
 from .return_flow import _children, _range
 
 VERSION = 'programmatic-query-2'
@@ -437,7 +438,7 @@ def project_queries(root, graph, context, nodes, symbols, edges, entity_nodes,
         if not isinstance(proof, dict):
             return False
         path = proof.get('path')
-        if not _source(proof, context) or graph.files.get(path) != proof.get('sha256'):
+        if not _source(proof, context) or compiler_source_digest(graph.files, context, path) != proof.get('sha256'):
             return False
         if path not in hashes:
             try:

@@ -6,6 +6,7 @@ import re
 import zipfile
 
 from .analysis_model import digest
+from .compiler_sources import compiler_source_digest
 from .model import Node, Edge, KnowledgeGraph
 from .kafka_code import _Capture, validate_code_fact, _range, VERSION as CODE_VERSION
 
@@ -281,8 +282,7 @@ def _declaration(graph,identity,context,repo):
             or not all(isinstance(symbol.get(k),str) and symbol[k] for k in ('id','owner','name','descriptor','path','sha256','context_id'))
             or re.fullmatch('[0-9a-f]{64}',symbol.get('sha256','')) is None
             or not _range(symbol.get('range')) or node.line!=symbol['range'].get('start_line')
-            or not isinstance(context.get('source_files'),dict)
-            or graph.files.get(node.path) is None or context['source_files'].get(node.path)!=graph.files[node.path]):return None
+            or symbol['sha256']!=compiler_source_digest(graph.files,context,node.path)):return None
     refs=[]
     for edge in graph.edges:
         if edge.kind!='contains' or edge.target!=identity:continue

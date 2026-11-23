@@ -10,6 +10,7 @@ import json
 
 from .analysis_model import digest
 from .architecture_model import ViewDocument, ViewNode, ViewEdge
+from .compiler_sources import compiler_source_digest
 from .control_flow import VERSION as CFG_VERSION
 from .flow import process
 from .model import KnowledgeGraph
@@ -33,12 +34,7 @@ def _fail(code, message):
 
 
 def _source_checksum(graph, context, path):
-    captured=context.get('source_files')
-    if not isinstance(captured,Mapping) or path not in captured or path not in graph.files:
-        return None
-    checksum=graph.files[path]
-    return checksum if (isinstance(checksum,str) and len(checksum)==64
-        and all(c in '0123456789abcdef' for c in checksum) and captured[path]==checksum) else None
+    return compiler_source_digest(graph.files, context, path)
 
 
 def _selected_trigger(graph, inventory, trigger_id):

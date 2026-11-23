@@ -493,7 +493,8 @@ def test_legacy_jvm_context_is_readable_without_xml_and_stale_with_xml(tmp_path)
 
 @pytest.mark.parametrize("language,version", [("jvm", "selected-source-set-3"),
                                                 ("jvm", []), ("jvm", {}),
-                                                ("typescript", "selected-source-set-2")])
+                                                ("typescript", "selected-source-set-2"),
+                                                ("typescript", "selected-source-set-raw-1")])
 def test_unsupported_or_mismatched_jvm_snapshot_versions_fail_closed(tmp_path, language, version):
     from kgmaker.graph_provider import validate_context_snapshot
     from kgmaker.worker_protocol import WorkerError

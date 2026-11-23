@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from .analysis_model import AnalysisError, digest
 from .callgraph import strongly_connected
+from .compiler_sources import compiler_source_digest
 from .views import project
 from .dataflow import argument_parameter_bindings
 from .flow_report import ordered_cfg
@@ -244,11 +245,12 @@ def _cfg_admission(graph, cfg):
     contexts={c['id']:c for c in graph.contexts}; proofs={p['id']:p for p in graph.evidence}
     owner=nodes.get(cfg.get('method')); symbol=symbols.get(cfg.get('method'),{})
     context=contexts.get(cfg.get('context_id'),{}); refs=cfg.get('evidence_ids',[])
+    source_digest=compiler_source_digest(graph.files,context,owner.path) if owner is not None else None
     if (not is_execution_entity(owner) or symbol.get('context_id')!=cfg.get('context_id')
             or context.get('scope')!=owner.scope
             or ('scope' in symbol and symbol['scope']!=owner.scope)
             or ('path' in symbol and symbol['path']!=owner.path)
-            or ('sha256' in symbol and symbol['sha256']!=graph.files.get(owner.path))):
+            or ('sha256' in symbol and symbol['sha256']!=source_digest)):
         return 'CFG owner/context/scope unavailable'
     if (not refs or execution_authority_gaps(contexts,graph.files,proofs,[cfg.get('context_id')],refs)
             or evidence_freshness_gaps(proofs,refs)):
@@ -260,8 +262,7 @@ def _cfg_admission(graph, cfg):
                 or proof.get('representation')!='SOURCE'
                 or set(proof.get('context_ids',[]))!={cfg['context_id']}
                 or proof.get('source_file')!=owner.path
-                or not proof.get('sha256') or proof['sha256']!=graph.files.get(owner.path)
-                or context.get('source_files',{}).get(owner.path)!=proof['sha256']
+                or not source_digest or proof.get('sha256')!=source_digest
                 or not _source_span(proof.get('source_range'))):
             return 'CFG owner/source proof mismatch or unavailable'
     return None
@@ -276,10 +277,11 @@ def _site_occurrence(graph, site, cfg, block):
         return 'call-site context differs from expanded CFG'
     owner=nodes.get(cfg['method'])
     span=block.get('source_range'); occurrence=site.get('range')
+    context=next((c for c in graph.contexts if c.get('id')==cfg['context_id']),{})
     if (owner is None or block.get('source_file')!=owner.path or site.get('path')!=owner.path
             or nodes.get(site['id']) is None or nodes[site['id']].path!=owner.path
             or not block.get('sha256') or block['sha256']!=site.get('sha256')
-            or block['sha256']!=graph.files.get(owner.path)
+            or block['sha256']!=compiler_source_digest(graph.files,context,owner.path)
             or not _source_span(span) or not _source_span(occurrence) or span!=occurrence):
         return 'call-site source occurrence differs from CFG block'
     proofs={p['id']:p for p in graph.evidence}

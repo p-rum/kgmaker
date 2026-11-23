@@ -529,6 +529,11 @@ SDK nevypisuje argumenty ani návratové hodnoty a z URL odstraní credentials/q
 před hashováním cesty. Jeho výsledek zůstává `PARTIAL / INSTRUMENTED_SCOPE_ONLY`.
 Build/config/source/worker identity a výstupní cesta se ověří před procesem i po
 něm; timeout/cancel ukončí POSIX procesní skupinu a nepřepíše platný artefakt.
+V BuildManifestu v1 uveďte volitelný `contexts[].config_fingerprint` ve variantě,
+kterou vyberete při `inspect code`. Pole přijímá SHA-256 netajné deklarované
+konfigurace jako 64 malých hexadecimálních znaků. Pro `runtime produce` použijte
+stejnou hodnotu jako v uloženém compiler kontextu.
+[Import, inspekce a příklad](docs/runtime-trace.md#spuštění).
 
 ```text
 kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \
@@ -542,6 +547,9 @@ Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
 zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
+Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí zastaralý vstup
+po zahájení publikace, obnoví předchozí uložené výstupy.
+[Ověření publikace runtime importu](docs/changes/163_revalidateRuntimeImportPublication.md).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
@@ -753,6 +761,13 @@ Compiler freshness for an imported source set uses its module/source-set members
 and shared root/module configuration, including Gradle scripts and catalogs.
 An edit to a sibling source set with the same scope does not invalidate the selected
 variant. Changing selected resources or shared configuration still requires inspection.
+Fresh JVM contexts bind the exact compiler input list and source bytes and retain
+the corresponding normalized scanner hashes for proof checks. A line-ending-only
+edit requires a new explicit inspection of the selected JVM context. The verified
+Javac scope includes CRLF source CFG, T025 local operation proofs, JPA schema
+compatibility, the Kafka interface catalogue and static retry declarations.
+Selected Kotlin source files require matching byte and PSI coordinates.
+[Source snapshot details](docs/compiler-inspection.md#jvm-source-byte-fingerprints).
 `scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
 testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.
 
@@ -1284,3 +1299,8 @@ přidá doklad explicitního běhu Maven/Gradle ve fázi `test` do lineage dané
 `kgmaker trace show REF --format json` zobrazí výsledek a aktuálnost zvlášť. Editace
 testu, konfigurace, lockfile nebo POSIX režimu souboru může vést ke stavu
 `STALE` při stejném Git HEAD. [Příkazy a podporovaný rozsah](docs/delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
+
+Volitelná kontrola před `done` vyžaduje aktuální PASS pro stejnou revizi a
+iteraci tasku. Zapíná se pomocí `kgmaker trace policy --verification-before-done on
+--expected-revision REVISION`. `kgmaker trace show TASK_ID` v registrované
+lineage ukáže stav tasku a ověření zvlášť. [Příklad a rozsah](docs/delivery-workflow.md#aktuální-ověření-před-dokončením-t047-s11).
