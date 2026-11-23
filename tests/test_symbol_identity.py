@@ -19,9 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = runpy.run_path(str(ROOT / "fixtures/incremental-integrity/workspace_fixture.py"))
 
 
-def expected_key(repo, module, source_set, scope, parameter):
+def expected_key(repo, module, source_set, scope, parameter, *, name="score"):
     key = [1, repo, "kotlin", module, source_set, scope, "fixture", "top_level_function",
-           "score", [parameter], "kotlin.Int"]
+           name, [parameter], "kotlin.Int"]
     encoded = json.dumps(key, separators=(",", ":")).encode("utf-8")
     return "logical:kotlin-function-v1:" + hashlib.sha256(encoded).hexdigest()
 
@@ -36,6 +36,75 @@ def require_worker(backend):
             raise
         pytest.skip(str(error))
     return home
+
+
+def kotlin_file(root, name, declarations):
+    path = f"src/main/kotlin/{name}.kt"
+    target = root / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(f"package fixture\n{declarations}\n", encoding="utf-8")
+    return path
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_native_incomplete_kotlin_selection_cannot_prove_realm_uniqueness(tmp_path, backend):
+    home = require_worker(backend)
+    first = kotlin_file(tmp_path, "First", "fun score(value: Int): Int = value + 1\n"
+                                          "fun control(value: Int): Int = value")
+    second = kotlin_file(tmp_path, "Second", "fun score(value: Int): Int = value + 2")
+    model = {"source_sets": [{"module": "api", "id": "main", "scope": "production",
+                              "roots": ["src/main/kotlin"]}]}
+
+    def capture(inputs):
+        result = inspect_jvm(tmp_path, repo_id="backend", module="api", source_set="main", sources=inputs,
+                             project_model=model, home=home, kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        assert {first, second} <= result["context"]["source_files"].keys()
+        graph = KnowledgeGraph.from_dict(result["graph"])
+        symbols = {(s["path"], s["name"]): s for s in graph.symbols if s["name"] in {"score", "control"}}
+        assert set(symbols) == {(path, name) for path in inputs
+                                for name in (("score", "control") if path == first else ("score",))}
+        assert all(s.get("kotlin_declaration") and s["context_id"] == result["context"]["id"]
+                   for s in symbols.values())
+        assert not (tmp_path / ".kgmaker").exists()
+        return symbols
+
+    first_only, second_only, complete = capture([first]), capture([second]), capture([first, second])
+    assert first_only[(first, "score")]["owner"] == "fixture.FirstKt"
+    assert second_only[(second, "score")]["owner"] == "fixture.SecondKt"
+    assert not any("logical_key" in symbol for symbols in (first_only, second_only) for symbol in symbols.values())
+    assert "logical_key" not in complete[(first, "score")] and "logical_key" not in complete[(second, "score")]
+    assert complete[(first, "control")]["logical_key"] == expected_key(
+        "backend", "api", "main", "production", "kotlin.Int", name="control")
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_native_structured_source_sets_do_not_share_flattened_membership(tmp_path, backend):
+    home = require_worker(backend)
+    own = kotlin_file(tmp_path, "Own", "fun score(value: Int): Int = value")
+    foreign = kotlin_file(tmp_path, "Foreign", "fun other(value: Int): Int = value")
+    model = {"source_sets": [
+        {"module": "left:right", "id": "main", "scope": "production", "files": [own]},
+        {"module": "left", "id": "right:main", "scope": "production", "files": [foreign]},
+    ]}
+
+    def capture(module, source_set, accepted_name, rejected_name):
+        result = inspect_jvm(tmp_path, repo_id="backend", module=module, source_set=source_set,
+                             sources=[own, foreign], project_model=model, home=home,
+                             kotlin_backend=backend, publish=False)
+        assert result["exit_code"] == 0
+        graph = KnowledgeGraph.from_dict(result["graph"])
+        symbols = {s["name"]: s for s in graph.symbols if s.get("kotlin_declaration")}
+        assert set(symbols) == {accepted_name, rejected_name}
+        assert {node.build_membership for node in graph.nodes
+                if node.id in {s["id"] for s in symbols.values()}} == {("left:right:main",)}
+        assert symbols[accepted_name]["logical_key"] == expected_key(
+            "backend", module, source_set, "production", "kotlin.Int", name=accepted_name)
+        assert "logical_key" not in symbols[rejected_name]
+
+    capture("left:right", "main", "score", "other")
+    capture("left", "right:main", "other", "score")
+    assert not (tmp_path / ".kgmaker").exists()
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])
@@ -150,6 +219,21 @@ private fun hidden(value: Int): Int = value
                         ("backend", test_target, "test", "test"), ("frontend", target, "main", "production"))
                     for param in ("kotlin.Int", "kotlin.String")}
     assert {(s["path"], s["logical_key"]) for s in symbols} == expectations
+
+    # Exercise the proposed raw workspace wire shape before the producer lands.
+    raw_wire = deepcopy(round_trip.to_dict())
+    for context in raw_wire["contexts"]:
+        if "compiler_inputs" in context:
+            context["source_snapshot_version"] = "selected-source-set-raw-1"
+            context["compiler_inputs"] = [f"@{context['repo_id']}/{path}" for path in context["compiler_inputs"]]
+    raw_symbols = KnowledgeGraph.from_dict(raw_wire).symbols
+    assert {(s["path"], s["logical_key"]) for s in raw_symbols if s.get("name") == "score"
+            and s.get("logical_key")} == expectations
+    foreign_inputs = deepcopy(raw_wire)
+    selected = next(c for c in foreign_inputs["contexts"] if c["id"] == symbols[0]["context_id"])
+    selected["compiler_inputs"] = [f"@different/{path.split('/', 1)[1]}" for path in selected["compiler_inputs"]]
+    with pytest.raises(ValueError, match="Invalid Kotlin logical symbol key"):
+        KnowledgeGraph.from_dict(foreign_inputs)
 
     alias_manifest = tmp_path / "alias-workspace.json"
     alias_manifest.write_text(json.dumps({"schema_version": 1, "workspace_id": "alias-fixture", "repositories": [

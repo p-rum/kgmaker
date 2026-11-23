@@ -1614,6 +1614,11 @@ veřejnou pojmenovanou funkci na úrovni souboru v package s konkrétní JVM dek
 s konkrétními ne-null typy `Int`, `String` nebo `Boolean`. Verze 1 vyžaduje
 explicitní návratový typ a aktuální lokální compiler kontext nebo kontext z
 doloženého buildu. Výběr musí být bez specifického build nebo Spring profilu.
+Kompilátor musí dostat všechny zachycené Kotlin soubory zvoleného source setu
+včetně zachycených vstupů jeho generované varianty. Členství každé deklarace
+se ověřuje proti samostatným hodnotám modulu, source setu a scope z modelu
+buildu. Při částečném výběru souborů nebo nejednoznačném členství graf dál
+poskytuje výskyt a jeho compiler doklad.
 Další typy, generické, anotované, lokální, anonymní a nejednoznačné deklarace
 vracejí původní informace o výskytu bez logického klíče. SOURCE_ONLY grafy
 dodávají pouze syntaktické výskyty. Workspace klíč přebírá od compiler kontextu se

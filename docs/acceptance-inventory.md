@@ -130,7 +130,9 @@ T047-S02 / T047-R02 a T047-AC02 — IN_PROGRESS / PARTIAL.
 Skutečné K1 a K2 dokládají logické klíče přetížení `score(Int)` a
 `score(String)` s neměnným klíčem a novým ID výskytu po komentáři. Výslovně
 vybrané produkční a testovací source sety a různé repozitáře mají vlastní
-klíče. Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
+klíče. Kontroly vyžadují úplný zachycený výběr Kotlin souborů a ověřují
+strukturované členství deklarace i při shodném textovém označení dvou source setů.
+Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/162_addKotlinLogicalSymbolKeys.md).
 
 Historické VERIFIED_IN_SCOPE/CI_PENDING/review pending řádky níže zachovávají

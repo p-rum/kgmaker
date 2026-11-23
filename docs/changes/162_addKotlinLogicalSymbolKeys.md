@@ -100,3 +100,69 @@ Graf a diff ověřují `kgmaker semantic update --base b3bbba4`, `kgmaker semant
 `kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --cached --check`.
 
 Úplná projektová sada, GitHub Actions, Windows a nezávislé review NOT_RUN.
+
+## T047-S02 / T047-AC02 — úplný Kotlin výběr a přesné členství
+
+Oprava navazuje na `a48914a4ef88984acced036a69550feadab15e56`. Skutečné K1 a K2
+při dvou oddělených inspekcích souborů s kolidující deklarací vydaly stejný
+logický klíč pro různé výskyty. Při společné inspekci oba klíče správně
+potlačily. Dále získala deklarace z modulu `left` se source setem `right:main`
+klíč modulu `left:right` se source setem `main`. Dvojice měly shodné textové
+označení `left:right:main`.
+
+`symbol_identity.py` ověří úplnou množinu zachycených Kotlin vstupů výslovně
+zvoleného source setu a jeho zachycené generované varianty. Současně použije
+stejné pravidlo členství v souboru a kořenu jako `classification.py`, se
+samostatnými hodnotami modulu, source setu a scope. Při neúplném výběru
+zůstane dostupný výskyt s compiler dokladem. Kolizní kandidáti ze stejné
+zachycené množiny se započítají i tehdy, kdy sami klíč získat nemohou.
+Stávající ID výskytů, textové označení v existujících výstupech a starší
+grafy bez klíčů zůstávají kompatibilní.
+
+Test načítání grafu ověřuje relativní seznam vstupů ve stávajícím workspace
+a kvalifikovaný seznam pro serializovanou verzi `selected-source-set-raw-1`.
+Případný cizí repo prefix klíč zneplatní. Skutečné vydávání této verze při
+spojené inspekci po #145 vyžaduje samostatnou integrační zkoušku.
+[Návod](../compiler-inspection.md#logické-klíče-deklarací-kotlinu),
+[stav](../production-analysis-progress.md), [acceptance](../acceptance-inventory.md).
+
+- RED — oba případy s původním produktem selhaly se skutečnými K1 a K2.
+  4 FAIL, 0 SKIP. JUnit `t047-s02-retry1-red.xml`, SHA-256
+  `d9091f8da7124871034480ccd5c54d1297862ce9df4edf5320a0d6e8ddf62fd8`.
+- PASS — 138 testů, 0 SKIP za 272,19 s. Výběr zahrnuje 11 testů
+  logických klíčů, obě nové regrese na skutečných K1 i K2, kvalifikaci
+  workspace, čtení starších grafů, cache, provider, T052 a T032. Testy obou
+  oprav ověřují i pozitivní případy úplného výběru a přesného členství.
+  Dvě varování Pythonu doprovázela test souběžných procesů.
+  JUnit `t047-s02-retry1-green.xml`, SHA-256
+  `ea154d8ce08789daf0694bfc8fbc8a7866a47fcc30e307ef9349e652816a2bc9`.
+  Shodné manifesty vstupů a JARů před a po běhu mají SHA-256
+  `6cbaf7b48f836c58139cc6f76df10ce6ef5ba91e2a658efbad935236c3514930`.
+- PASS — S01 cold delty a skutečná stage cache, 13 PASS, 0 SKIP za 224,76 s.
+  Původní strict XFAIL pro SOURCE_ONLY ID zůstává. Dalších 10 případů výběr
+  nezahrnuje. JUnit `t047-s02-retry1-occurrences-and-cache.xml`, SHA-256
+  `95b4cdcd39df1b00327327ec9e69c923ada76b1faa2d59269eb6aefd10e65af5`.
+
+```bash
+kg_tools=/workspace/kgmaker-tools
+export JAVA_HOME="$kg_tools/jdk-21.0.6+7"
+export PATH="$JAVA_HOME/bin:$kg_tools/kotlinc/bin:$PATH"
+export PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData
+export KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+python -m pytest -n 3 -p no:cacheprovider -q --tb=short -ra \
+  tests/test_symbol_identity.py tests/test_stage_content_cache.py \
+  tests/test_graph_provider.py tests/test_workspace.py tests/test_completion.py \
+  tests/test_t032_persist_process_review.py
+python -m pytest -n 2 -p no:cacheprovider -q --tb=short -ra \
+  tests/test_incremental_equivalence.py tests/test_stage_content_cache_actual.py \
+  -k 'changed_kotlin or deleted_kotlin_target or added_kotlin or comment_does_not_change_logical_identity or stage_content_cache_actual'
+```
+
+Graf opravy ověřují `kgmaker semantic update --base a48914a`, `kgmaker semantic apply`,
+`kgmaker semantic validate`, `kgmaker memory capture --base a48914a`, `kgmaker scan`,
+`kgmaker status`, `kgmaker check` a `git diff --cached --check`.
+Worker zdroje ani připnuté JARy oprava nemění.
+Pro spojený stav po #145 ověřit skutečnou raw inspekci a workspace projekci
+na K1/K2, včetně úplného i neúplného výběru a opakovaného načtení po zahřátí cache.
+Společný běh s #145, nezávislé review, úplná projektová sada, GitHub Actions
+a Windows mají stav NOT_RUN. T047-AC02 zůstává PARTIAL.

@@ -310,8 +310,9 @@ that workspace release mapping requires matching JAR bytes and a current consume
 context. The fixture records the remaining integrity gaps.
 
 K1 and K2 also expose a `logical_key` for supported top-level Kotlin declarations
-with explicit source-set membership. It can join occurrences across snapshots
-after line movement. A call site still resolves through its compiler context and
+when the compiler receives the complete captured Kotlin namespace for an explicitly
+declared source set. The key can join occurrences across snapshots after line movement.
+A call site still resolves through its compiler context and
 occurrence ID. [Supported types and source-set requirements](docs/compiler-inspection.md#logické-klíče-deklarací-kotlinu).
 
 ## Implementation memory and workflow
