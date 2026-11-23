@@ -282,6 +282,18 @@ SHA-256 výsledné sondy je
 
 GitHub Actions a Windows na spojeném stromu mají stav `NOT_RUN`.
 
+Sémantické vrstvy z obou rodičů uchovávají 55 konceptů, 192 vztahů
+a 374 jedinečných dřívějších epizod. Stejný vztah k funkci
+`provenance.event` používá aktuální deklaraci na řádku 166.
+
+Oprava zachovává manifesty v1/v2, graph/store v3 a dosavadní CLI.
+Import přijímá explicitní pozorování a surové facts ověřuje.
+Skutečný JDK 21 audit ukázal, že štítek `main → greet` z fixture nemá
+přímou odpovídající compiler call site. Volání se vykoná uvnitř lambdy.
+Odvození typu příjemce a vazby na konkrétní call site z takového štítku
+vyžaduje další důkaz. W02 a T003-AC13 zůstávají `PARTIAL`.
+[README](../../README.md) · [Runtime příklady](../runtime-trace.md#opakovaný-import-a-navigace) · [Compiler navigace](../compiler-inspection.md#pozorované-hrany-a-statické-cesty) · [Acceptance](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany) · [Stav](../production-analysis-progress.md)
+
 ## Přenos po sloučení #148 — T003-S13-W01-AC01 a T003-S13-W02-AC01–AC04
 
 První rodič je `c2e95614cf9d0b924aa0c390281617746a65ba49` se stromem
@@ -341,14 +353,60 @@ epizod z rodičů. Citace 12 konceptů a 26 vztahů v compiler příručce
 ukazují po vložení textu #148 na přesně stejný text o sedm řádků níž.
 Úplná sada, Windows a GitHub Actions na tomto novém stromu mají stav `NOT_RUN`.
 
-Sémantické vrstvy z obou rodičů uchovávají 55 konceptů, 192 vztahů
-a 374 jedinečných dřívějších epizod. Stejný vztah k funkci
-`provenance.event` používá aktuální deklaraci na řádku 166.
+## Revize po steelman review — T003-S13-W02, kroky 3–5, AC01 a AC03
 
-Oprava zachovává manifesty v1/v2, graph/store v3 a dosavadní CLI.
-Import přijímá explicitní pozorování a surové facts ověřuje.
-Skutečný JDK 21 audit ukázal, že štítek `main → greet` z fixture nemá
-přímou odpovídající compiler call site. Volání se vykoná uvnitř lambdy.
-Odvození typu příjemce a vazby na konkrétní call site z takového štítku
-vyžaduje další důkaz. W02 a T003-AC13 zůstávají `PARTIAL`.
-[README](../../README.md) · [Runtime příklady](../runtime-trace.md#opakovaný-import-a-navigace) · [Compiler navigace](../compiler-inspection.md#pozorované-hrany-a-statické-cesty) · [Acceptance](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany) · [Stav](../production-analysis-progress.md)
+Výchozí commit je `2f4cfad7d3d327d2a9627f57db22bd25549f32a1` a
+ověřený základ `385943e48d2d2e60cec541f1f0db78beda83de22`.
+Nezávislé review zjistilo, že v2 import držel odkaz na vstupní slovník
+`source_identity`. Změna slovníku po výpočtu ID a před zápisem vedla
+k uložení jiného otisku, než z jakého vzniklo ID dokladu.
+
+`runtime_evidence.py` používá pro ověřený manifest v2 vlastní slovník
+ze dvou již vypočtených otisků compiler kontextu. Oba jeho řetězce
+prošly existujícím porovnáním v původní validaci. Doklad a jeho ID
+vycházejí z týchž hodnot. Publikační callback dál opakuje jen kontrolu
+měnitelných vstupů. Formáty v1/v2 a graph/store v3 zůstávají čitelné
+stávajícím CLI. [Kontrakt runtime](../runtime-trace.md) · [Acceptance](../acceptance-inventory.md)
+
+Regrese `test_real_jdk21_v2_import_detaches_identity_before_publication`
+vyvolá změnu vnořeného slovníku přímo na vstupu do `save_graph`.
+Ověří původní otisky, soulad ID s obsahem uloženého dokladu, nezměněný
+capture a nespouštění procesů během importu.
+Na výchozím kódu skončil tento test s JDK 21 kódem 1. Uložený doklad
+převzal nulový otisk vložený po validaci. SHA-256 JUnit je
+`0e4e97569d7fa59a778e1d2efa31b579a0d0f335d244f3833d5dc0d1960d0564`.
+
+Obnova sémantického souboru zachovává pořadí záznamů z main a navazuje
+chybějícími historickými epizodami i novým záznamem. Hodnoty původních
+objektů se zachovávají při regeneraci grafu. Obsahová kontrola odděluje
+změnu pořadí od skutečných přírůstků v historii.
+
+- **Opravený kód, Maven 3.9.9 a JDK 21.** Příkaz cílené sady z
+  předchozího kroku ověřil 161 PASS a 0 SKIP, včetně nové regrese,
+  veřejné konfigurace a publikačních kontrol W06. JUnit SHA-256
+  `292a5cf8d4bd9762d3fb6983b95520fc249f1b0adf428a36dd822c51b49ac091`.
+  SHA-256 shodných manifestů před i po běhu je pro zdroj, fixture a testy
+  `98d5d4d6cbdb57178c0e773e9902b2009e5171a47955afcb8424a3eddfcd238b`
+  a pro externí nástroje
+  `6fceeb1dd1d54531cca968ec9a0f8919d7fab40035838a6845c99ed8c41dffb5`.
+- **Sonda z review.** `PYTHONPATH=src:tests python probe.py FIXTURE_DIR`
+  proběhla s JDK 21 a nezměněným skriptem SHA-256
+  `6e28dd6f0219b8af3c13fb68c6ac0fef5e3e0de4c4d05709fa8aeb0340d2f3b6`.
+  Po změně vstupního slovníku se očekávaný a uložený otisk shodovaly
+  a souhlasil i digest dokladu. Počty dokladů byly 1, 2 a 2.
+  Statická cesta hlásila `UNKNOWN`, původní capture měl stejné bajty.
+  Výsledný JSON má SHA-256
+  `bd9976704aaae8f03e0d1510c7d5cdfbce762c82d3da16d1cf2e7940ddbce998`.
+- **Úplná standardní sada.**
+  `PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short`
+  v čistém archivu s testovanými zdroji a CPython 3.13.18 měla
+  2 482 PASS, 1 301 SKIP a jeden očekávaný strict XFAIL T047-S02.
+  JUnit SHA-256 `1e41aa57a5ff114e3b64a0feb77381bc2a35401301e2f65b0f53a5996e0a354b`.
+  Manifest sledovaných vstupů se shoduje s cílenou sadou.
+- **Příprava testgen.**
+  `kgmaker testgen prepare --id pr136-source-identity --target src/kgmaker/runtime_evidence.py --scope production --framework pytest --token-budget 100000`
+  na archivu výchozího commitu skončila kódem 2 s důvodem
+  `Token budget cannot hold target evidence`. Regrese používá existující JDK fixture.
+
+Windows a GitHub Actions mají pro tuto revizi stav `NOT_RUN`.
+Rozsah receiver/type a skutečného call site zůstává `PARTIAL`.

@@ -151,6 +151,8 @@ připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i sh
 `config_fingerprint` a původní `source_identity`. Doklady v jiném compiler
 kontextu mají vlastní hranu. Shodný doklad se připojí jen jednou. Existující
 záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
+V2 doklad uchová otisky zdrojů a kontextu ověřené při importu. Jeho ID
+odpovídá uloženým hodnotám i při pozdější změně vstupního slovníku v Pythonu.
 
 ```bash
 kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json

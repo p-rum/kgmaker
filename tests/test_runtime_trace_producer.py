@@ -765,3 +765,32 @@ def test_v1_cli_rechecks_worker_before_graph(project, monkeypatch, capsys):
     assert_runtime_import_rolls_back_before_graph(
         root, root / "worker.jar", "STALE_RUNTIME: worker distribution changed", monkeypatch, capsys,
     )
+
+
+def test_real_jdk21_v2_import_detaches_identity_before_publication(jdk_application, monkeypatch):
+    from kgmaker import store
+
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **{**opts, "runtime_id": "identity-race"}, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    manifest["observations"] = [{"caller": call["caller"], "target": call["target"], "kind": "dispatch"}]
+    caller_identity = manifest["source_identity"]
+    validated_identity = dict(caller_identity)
+    capture_bytes = (root / ARTIFACT).read_bytes()
+
+    def save_after_caller_edit(candidate, destination, **kwargs):
+        caller_identity["context_fingerprint"] = "0" * 64
+        return save_graph(candidate, destination, **kwargs)
+
+    monkeypatch.setattr(store, "save_graph", save_after_caller_edit)
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        outcome = import_manifest(root, manifest)
+
+    assert outcome["status"] == "PARTIAL" and outcome["observations_imported"] == 1
+    assert caller_identity["context_fingerprint"] == "0" * 64
+    assert (root / ARTIFACT).read_bytes() == capture_bytes
+    graph = load_graph(root)
+    proof, = [item for item in graph.evidence if item.get("runtime_id") == "identity-race"]
+    record_id = "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
+    assert (proof["source_identity"], record_id) == (validated_identity, proof["id"])
+    assert any(edge.kind == "observed_dispatch_to" and proof["id"] in edge.evidence_ids for edge in graph.edges)

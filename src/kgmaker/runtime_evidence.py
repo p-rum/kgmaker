@@ -282,9 +282,12 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
             _label(manifest[key], key)
         if not context.get("source_files") or not context.get("config_fingerprint"):
             raise AnalysisError("RuntimeManifest v2 requires captured source/config/context identity", 3)
-        if manifest["source_identity"] != {"context_fingerprint": digest(context),
-                                          "source_manifest_fingerprint": digest(context["source_files"])}:
+        source_identity = {"context_fingerprint": digest(context),
+                           "source_manifest_fingerprint": digest(context["source_files"])}
+        if manifest["source_identity"] != source_identity:
             raise AnalysisError("STALE_RUNTIME: source identity differs from compiler context", 3)
+        # Keep the verified identity independent of the caller's mapping.
+        manifest = {**manifest, "source_identity": source_identity}
         producer = manifest["producer"]
         if (not isinstance(producer, dict) or set(producer) != {"command_fingerprint", "opt_in"}
                 or producer["opt_in"] is not True or not isinstance(producer["command_fingerprint"], str)
