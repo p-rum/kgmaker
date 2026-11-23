@@ -65,6 +65,13 @@ source/worker/classpath snapshot a cancellation. Po procesu se znovu kontroluje
 uložený graf i snapshot a až potom se artefakt atomicky nahradí. Producer sám
 nezapisuje graph store; import je oddělená operace.
 
+Import ověří načtený manifest jednou před publikací. Před nahrazením
+každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2
+znovu ověří i zachycené vstupy vybraného compiler kontextu včetně bytecode.
+Zjištěný zastaralý vstup zastaví publikaci. Store obnoví dříve nahrazené
+výstupy téže publikace. Současné publikace do grafu hlídá kontrola
+očekávané generace. [Regresní ověření](changes/163_revalidateRuntimeImportPublication.md).
+
 Limit je 50 000 facts, 8 MiB stdout a timeout `(0, 900]` sekund. Chybný JSON,
 exit, neplatný fact, stale stav, timeout nebo cancellation nepublikuje nový
 artefakt. Existující cancel soubor zabrání spuštění; jeho vytvoření během běhu
@@ -123,11 +130,6 @@ připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i sh
 `config_fingerprint` a původní `source_identity`. Doklady v jiném compiler
 kontextu mají vlastní hranu. Shodný doklad se připojí jen jednou. Existující
 záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
-
-Import před každou výměnou výstupu znovu ověří zdrojové otisky a distribuci
-workeru. U v2 zkontroluje také čerstvost vybraného compiler kontextu. Pokud
-kontrola odhalí změnu vstupu, import skončí chybou a obnoví případné již
-vyměněné grafové pohledy. Dodaný runtime artefakt zůstane zachovaný.
 
 ```bash
 kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json

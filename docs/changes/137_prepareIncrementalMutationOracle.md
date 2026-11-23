@@ -1,0 +1,698 @@
+# První mutační workspace a ruční oracle T047-S01
+
+Zadání [T047](../tasks/47_addReliableIncrementalContext.md), krok T047-S01 /
+T047-AC01. Lokální výchozí SHA `465b121992aad50c2885acef0fd038531a31293a`.
+První lokální checkpoint měl dodání IN_PROGRESS, ověření PARTIAL.
+
+## T047-S01 / T047-AC01 — reprodukční corpus
+
+Dřívější testy workspace, Kafka a Flyway pokrývaly jednotlivé vstupy. Nová
+[fixture](../../fixtures/incremental-integrity/workspace_fixture.py) je skládá do
+dvou repozitářů s Kotlin API, samostatným callerem, dvěma overloady a nezávislým
+Kotlin modulem. Frontend obsahuje TypeScript klienta, komponentu a explicitní
+API kontrakt. Kafka témata, release mapping a Flyway stream mají oddělené
+zdrojové záznamy. Zdrojové soubory fixture se sestaví v izolovaném pytest workspace.
+
+[Ruční oracle](../../fixtures/incremental-integrity/oracle.json) kontroluje
+pozitivní cestu DTO → endpoint, očekávané overloady a hranici do frontendu bez
+compiler evidence. Kafka deklarace mají bez prokázaného členství modulů UNKNOWN.
+Explicitní release map vrací PARTIAL s `RELEASE_MANIFEST_UNAVAILABLE`.
+Flyway evidence je migration-derived. Test nic nenavozuje v běžící databázi.
+
+Devět mutací ověřuje komentář, změnu těla, přidání symbolu, přesun a smazání
+souboru, změnu verze kontraktu, Kafka topic, Flyway skript a změnu tsconfig.
+Každá vrací hash výsledného souborového stromu a přesné cesty změny. Reset
+obnoví stejné bytes, opakovaný běh má stejné výsledky. Test oracle odmítá
+duplicitní overload. Současné source ID se po posunu deklarace mění, kontrola
+T047-S02 je proto explicitně strict XFAIL.
+
+Příklad ověření `python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`
+— 100 PASS, 2 SKIP, 1 XFAIL. Původní první běh 99 PASS, 2 SKIP, 1 XFAIL
+a 1 FAIL odhalil předpoklad pozitivní Kafka hrany bez scope proof. Oracle byl
+opraven podle existujícího capability kontraktu.
+`git diff --check` PASS. Skutečný compiler, Windows, úplná mutační matice,
+inkrementální ekvivalence a publikované PR review NOT_RUN.
+
+Aktualizovány [README](../../README.md), [dokumentace fixture](../../fixtures/incremental-integrity/README.md),
+[acceptance](../acceptance-inventory.md) a [stav](../production-analysis-progress.md).
+Veřejné CLI, graf, worker formáty a init nemají změnu. Zbývá doložit zbývající
+varianty a provést review. T047-S02 až S06 na tuto scoped fixture navazují.
+
+## T047-S01 / T047-AC01 — skutečná cold mutace add, 2026-11-20
+
+Výchozí HEAD [#121](https://github.com/p-rum/kgmaker/pull/121)
+`6c210b5b58624234c6b0f91a301628df76c49e57`. Změna je jen v
+[testu](../../tests/test_incremental_equivalence.py) a jeho dokumentaci.
+Explicitní `inspect_jvm(..., module="api", publish=False)` před a po mutaci
+`Added.kt` porovná skutečný Kotlin K1 a K2 kontext. Caller má stejné bajty.
+Výchozí `missingScore()` je UNRESOLVED bez kandidátů. Poté je
+SYMBOL_RESOLVED v novém kontextu na `fixture.AddedKt.missingScore()I` a
+`score(2)` stále vybírá `score(I)I`. Druhý overload zůstává samostatný.
+Test sleduje konkrétní kontext vybraný voláním. Graf může současně obsahovat
+další kontexty, což odhalil první běh fixture. Vstupní projekt se nemění jinak
+než plánovanou mutací a nevzniká publikovaný index.
+
+- `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`
+  — 104 PASS, 0 SKIP, 1 strict XFAIL, 24.31 s. JDK21, Kotlin 2.1.10,
+  reálné K1/K2. Během vývoje dvě FAIL ukázaly nadbytečný požadavek na jediný
+  kontext a další FAIL odhalil neúplná metadata nesouvisejícího K1 symbolu.
+- `git diff --check` — PASS. Plný T047 inkrementální replay, pozitivní Kafka
+  a release varianty, zbytek compiler mutací, úplná sada a externí CI jsou
+  NOT_RUN. Stávající command API a graph schéma jsou kompatibilní.
+
+## T047-S01 / T047-AC01 — přenos na main po T052, 2026-11-20
+
+Draft [#121](https://github.com/p-rum/kgmaker/pull/121) z head
+`bbfa92ce659dfbac4245e5f795df3ada00fb53ea` byl připraven nad `main`
+`8ff2529ffb50b42ed2209d97478ea3e4cbf46042` s Git tree
+`c869302cdc2a7d9982d64058b6267ae603382e06`. Soubory v
+[corpus](../../fixtures/incremental-integrity/) a
+[regresní test](../../tests/test_incremental_equivalence.py) zůstaly bajtově
+shodné. Přeneseny byly související části [README](../../README.md),
+[acceptance](../acceptance-inventory.md) a [stavové matice](../production-analysis-progress.md).
+Jde o testy a jejich návod. Kontrakt CLI, init, grafové schéma a registry
+zadání zůstávají kompatibilní.
+
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-after-t052 tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`.
+  JDK 21.0.13.1, Kotlin 2.1.10, skutečný K1 i K2. Výsledek 104 PASS,
+  0 SKIP a 1 strict XFAIL v `test_comment_does_not_change_logical_identity`
+  za 24.82 s. XFAIL dokumentuje závislost ID na řádku v T047-S02.
+- PASS — `git diff --check` při přenosu dokumentace, testů a fixture.
+- NOT_RUN — úplná projektová sada nad tímto kandidátem, nové exact-pair review,
+  GitHub Actions, širší compiler a pozitivní Kafka/release matice, inkrementální
+  ekvivalence. T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — source-only mezistavy, 2026-11-20
+
+Výchozí head [#121](https://github.com/p-rum/kgmaker/pull/121)
+`856a16c1d2aa751d01fb5952ffdf9589101ffae9`, tree
+`2f01e280cfc8879a2ad3017ad004be77b417b774`. Dřívější replay ověřoval hash
+stromu po každé mutaci a graf až po celé sekvenci. Následné smazání tak
+mohlo zakrýt chybnou deklaraci bezprostředně po přesunu.
+
+[Regrese](../../tests/test_incremental_equivalence.py) kontroluje snapshot po
+každé z devíti stávajících mutací. Porovnává přesné změny položek `graph.files`
+a ruční predikce z [oracle](../../fixtures/incremental-integrity/oracle.json).
+Příklad po `add` je `missingScore` v `Added.kt` a po `move` oba původní
+`score` overloady výhradně v `Renamed.kt`. Po `delete` overloady chybějí,
+nezměněný caller a přidaná deklarace zůstávají. SOURCE_ONLY snapshot nevytvoří
+compiler call sites. Změněný Kafka topic má stále `UNKNOWN` s
+`CONFIG_SCOPE_UNPROVEN`. Replayer přidá až po V11 `table:public.extra` v
+konfigurovaném Flyway streamu jako `MIGRATION_DERIVED` s `UNASSESSED`
+dostupností dat. Změna verze kontraktu a `tsconfig` se ověřuje na hashi
+příslušného souboru. Produkční zdroj, veřejné CLI, grafové schéma, init a
+pracovní tok se nemění. Aktualizovány [README](../../README.md),
+[návod fixture](../../fixtures/incremental-integrity/README.md),
+[acceptance](../acceptance-inventory.md) a [stav](../production-analysis-progress.md).
+
+- RED s lokálním diagnostickým pytest pluginem `alter_overload_at_move`.
+  Plugin hned po přesunu v izolovaném testovacím workspace mění signaturu
+  `score(value: Int)` na `score(value: Long)` a aktualizuje checksum.
+  Původní `test_mutation_replay_and_reset` v přesném výchozím tree s touto
+  záměnou prošel. Se stejnou záměnou měl `python -m pytest -p no:cacheprovider -p alter_overload_at_move -q --tb=short tests/test_incremental_equivalence.py -k 'source_only_mutation_states or mutation_replay_and_reset'`
+  1 očekávaný FAIL v nové kontrole ve stavu `move` a 1 PASS v reset/replay.
+  Jde o záměrně poškozenou fixture pro ověření detekce, plugin není součástí PR.
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-intermediate-strict tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py`.
+  105 PASS, 0 SKIP a 1 strict XFAIL za 26.83 s se skutečným JDK 21.0.13.1 a
+  Kotlin 2.1.10 K1/K2. XFAIL zůstává dokladem potíže T047-S02 s identitou
+  při posunu deklarace.
+- PASS — `git diff --check`, `git diff --cached --check`, `kgmaker semantic update`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`, `kgmaker memory capture`,
+  `kgmaker scan`, `kgmaker status` a `kgmaker check` v izolovaném kandidátu.
+- NOT_RUN — úplná projektová sada, GitHub Actions, externí review této revize,
+  pozitivní Kafka a release binding, zbývající compiler mutace a inkrementální
+  ekvivalence. Pozitivní Kafka binding vyžaduje prokázaný scope konfigurace.
+  Release binding vyžaduje bajtovou shodu zachyceného artefaktu s compiler classpath.
+  T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — Kafka a Kotlin → TypeScript, 2026-11-20
+
+Lokální kandidát pro [#121](https://github.com/p-rum/kgmaker/pull/121) vychází
+z jeho draft headu `e57369521f91ab5d81456fe7516f10237b4b569e` a z cílového
+`main` `17e9e7368e6cc2d6550983c3039eb39debd65424`, tree
+`dfb0a247ec329196190a3db182b5d1e8c549b3db`. Stanovuje ruční očekávání pro dva
+protipříklady k předchozím mezerám, aby samotná přítomnost deklarací
+nepostačovala pro kladný výsledek.
+
+- Kafka oracle explicitně klasifikuje konfiguraci `api` a `independent` pod
+  dva compiler kontexty profilu `blue`. Před mutací `orders-blue` prokáže
+  jednu hranu `kafka_binding_match` pro přesný pár, cluster, hash kontraktu a
+  release. Po změně topicu konzumenta na `isolated` znovu zachytí compiler
+  evidence obou modulů v čistém indexu. Obě vazby zůstávají RESOLVED a jejich match
+  zmizí. Během vývoje první pokus se starým indexem dostal STALE v obou
+  variantách. Cold oracle proto pracuje výhradně s novou generací.
+- BE–FE oracle používá skutečný compiler field `ExposureOutput.decline:D`,
+  cestu `GET /exposure` a typovaného klienta z fixture. Přesná cesta je
+  `serialized_as`, `maps_to`, `displayed_in`. Projekce na stránce odkazuje
+  na deklaraci `decline` a přesný hash souboru klienta. Všechny hrany zachovají
+  dostupnost UNKNOWN. Doklad klienta má důvěru `LOCAL_DECLARED`, release `1`
+  a přesné hashe OpenAPI a klienta. Změna OpenAPI na release `2` současně
+  změní hash souboru. Při této kombinované změně stará provenance propadne
+  na `VALUE_FLOW_GENERATION_OR_RELEASE_UNKNOWN`. Kontrola sleduje všechny
+  příchozí compiler hrany `serialized_as` a odchozí `maps_to` daného endpointu
+  bez ohledu na ID druhého konce. SOURCE_ONLY hrany jsou mimo tuto kontrolu.
+  Jde o statický doklad hran ze zdroje. Nasazení a běh Spring controlleru
+  zde nejsou ověřené.
+
+Upraveny [testy](../../tests/test_incremental_equivalence.py),
+[oracle](../../fixtures/incremental-integrity/oracle.json) a
+[fixture builder](../../fixtures/incremental-integrity/workspace_fixture.py).
+[README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a
+[stavová matice](../production-analysis-progress.md) odkazují na dodaný rozsah.
+Runtime, CLI, init, registr zadání ani veřejná schémata se nemění. Stávající
+[kontrakt BE–FE](../backend-frontend-value-flow.md) zůstává stejný. Kafka
+transport, aktivace listeneru a dostupnost dat nemají nový runtime důkaz.
+
+- PASS — samostatná pozitivní a negativní Kafka oracle, 2 PASS s reálným K1/K2
+  za 36,39 s. Příkaz `python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py -k kafka`.
+- PASS — samostatná BE–FE oracle, 2 PASS s reálným K1/K2 a TypeScript 5.7.3
+  za 21,54 s před dodatečným zpřísněním důkazu. Příkaz
+  `python -m pytest -p no:cacheprovider -q --tb=short tests/test_incremental_equivalence.py -k typescript`.
+- PASS — `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-final tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py`.
+  127 PASS, 0 SKIP a 1 strict XFAIL za 89,62 s. JDK 21.0.13.1, Kotlin
+  2.1.10 K1/K2, Node 22.22.1 a TypeScript 5.7.3. JVM zdroj a TypeScript
+  worker soubory odpovídají připraveným distribucím. Před finálním během dvě
+  FAIL odhalily souběh SOURCE_ONLY a compiler hran `maps_to`. Oracle vybírá
+  jedinou přesnou `FRAMEWORK_DERIVED` hranu z příslušného kontextu.
+- Graf a diff — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base HEAD`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --check`.
+  Platný README koncept a jeho čtyři vazby zůstaly zachované s aktuálním hashem.
+- NOT_RUN — externí review této revize, úplná projektová sada a GitHub Actions.
+  JVM artefakt `supplies_classpath` zůstává PARTIAL při absenci manifestu.
+  Pozitivní artefakt vyžaduje skutečný execution-bound output a shodný soubor
+  v aktuálním JVM classpath kontextu konzumenta. TypeScript takový classpath
+  nevystavuje. Plný §7 corpus a inkrementální ekvivalence zůstávají otevřené.
+
+## T047-S01 / T047-R01 a T047-AC01 — nálezy review BE–FE oracle, 2026-11-20
+
+Výchozí lokální tree `4da4a89822d58ec111a2b21c2e35ff985d75894d` nad
+`main` `17e9e7368e6cc2d6550983c3039eb39debd65424`. Předchozí negativní
+assertion v [testu](../../tests/test_incremental_equivalence.py) připouštěla
+chybný `maps_to` k novému ID. Kontrola nyní zakáže compiler `maps_to` z
+endpointu a `serialized_as` do endpointu pro libovolný druhý konec. Legitimní
+SOURCE_ONLY hrany zůstávají dostupné. [Oracle](../../fixtures/incremental-integrity/oracle.json)
+očekává release `2` a test ověřuje i změnu hashe. Kladná část testu ověřuje
+occurrence v `src/page.tsx`, její odkaz na compiler symbol deklarovaný v
+`generated/exposure.ts` a hash klientského zdroje. Návod popisuje zachycení
+compiler evidence v čistém indexu. Produkční kód, CLI a schémata nemají dopad.
+
+- RED — lokální pytest plugin `inject_retargeted_contract` vložil stale
+  `FRAMEWORK_DERIVED maps_to` k jinému ID klienta. Předchozí predikát vloženou
+  hranu propustil. Nový test K1 dal 1 očekávaný FAIL na `stale_contract_edges`
+  za 9,49 s při `python -m pytest -p no:cacheprovider -p inject_retargeted_contract -q --tb=short tests/test_incremental_equivalence.py -k 'typescript and k1'`.
+  Diagnostický plugin je lokální a není součástí PR.
+- PASS — aktualizovaná negativní kontrola a okolní sada v
+  `KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-review tests/test_incremental_equivalence.py tests/test_workspace.py tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py`.
+  127 PASS, 0 SKIP a 1 strict XFAIL za 92,99 s se skutečnými K1/K2 a TypeScript.
+- PASS — finální změněná BE–FE varianta s kontrolou deklarace, 2 PASS, 0 SKIP
+  a 9 DESELECTED za 14,98 s. Stejné prostředí a `python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp .kgmaker/workflow/pytest-t047-s01-review-client tests/test_incremental_equivalence.py -k typescript`.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check` a `git diff --cached --check`.
+  Review oprava nezavádí nové ruční sémantické vazby.
+- NOT_RUN — nová úplná projektová sada a GitHub Actions. T047-AC01 zůstává
+  PARTIAL kvůli otevřenému artefaktovému mapování a širší mutační matici.
+
+## T047-S01 / T047-R01 a T047-AC01 — skutečný JVM release artefakt, 2026-11-21
+
+Výchozí [draft #121](https://github.com/p-rum/kgmaker/pull/121) měl head
+`7ed11dae00e966ae814b5f1caf4f7da2b7f9d773` a tree
+`33eb10b309b0273ce40798dcea23d44d59fb7ebd`. Přenos vychází z `main`
+`fad4fc63c76f0f9ef5a1a292e279d1269bd84540`, tree
+`999b5ef61989bf91ce3df58e4d3bcc84c074eb31`. Záznam sloučeného T021 je
+převzat z cílové větve. Workflow ponechalo předchozí doklady s jejich původní
+vazbou, odmítlo použít zastaralý test v `review/1` a výslovný retry přešel do
+`implement/2`.
+
+[Test](../../tests/test_incremental_equivalence.py) znovu používá původní dva
+checkouty. Explicitní offline Gradle build zkompiluje `ExposureContract` a
+dodá JAR i skutečný execution-bound `BuildManifest`. Připravený JVM worker
+v samostatném modulu `release-verifier` uvnitř frontendového checkoutu
+rozliší volání `fixture.release.ExposureContract.decline()D` s tímto JARem
+na classpath. Workspace projde ruční oracle jediné hrany `supplies_classpath`
+s `CONTENT_HASH_MATCH_V1`, oběma vybranými kontexty a přesným hashem. Chybný
+selektor skončí `RELEASE_OUTPUT_HASH_MISMATCH`. Po změně bajtů JARu skončí
+dřívější compiler kontext `RELEASE_CONSUMER_CONTEXT_STALE`. Oba negativní
+scénáře mají `PARTIAL` bez hrany a snapshot nemění checkout. Variantě
+SOURCE_ONLY stále schází build manifest. JVM důkaz je doplňkem S01 a
+TypeScript evidence používá svůj stávající kontrakt bez JVM classpath.
+
+Upraveny [README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md).
+Produktový kód, CLI příznaky, registry, veřejná schémata a init nemají dopad.
+Úplná projektová sada a nové externí review této revize jsou NOT_RUN.
+Celá matice §7 a inkrementální ekvivalence zůstávají otevřené.
+
+- PASS — 128 PASS, 0 SKIP a 1 strict XFAIL za 91,26 s na skutečném
+  JDK 21.0.13.1, Gradle 8.13, Kotlin 2.1.10 K1/K2, Node 22.22.1 a
+  TypeScript 5.7.3. Známý XFAIL je T047-S02 identita po posunu deklarace.
+  SHA-256 producer JARu `2a6d4bea507112e41b339905f44b489e913f1e9015ad4f0f6ef96d893c563e9a`
+  se shoduje s prvním scratch ověřením. Offline Gradle potřebuje v tomto
+  prostředí přístup k lokálnímu socketu pro zámky. Příkaz:
+
+  ```bash
+  KGMAKER_TEST_GRADLE=/tmp/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp .kgmaker/workflow/pytest-t047-fad4fc6 \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+  Použito `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64`, stejný `bin`
+  první v `PATH` a samostatná lokální `GRADLE_USER_HOME`.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker memory capture --base HEAD`, `kgmaker semantic validate`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`, `git diff --check` a
+  `git diff --cached --check`. Zachovány doklady a ruční sémantika T021 v main.
+
+## T047-S01 / T047-R01 a T047-AC01 — integrace po #129 a #133, 2026-11-21
+
+Výchozí draft [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`616ece73c7242dfbfe0ab9ca23bb991eb029b1d7`. Lokální integrace přidává
+`main` `c2885a6f8daf0281967e3bc5386a69f1647718e0` se zachováním historie
+draftu. Konflikty se týkaly generovaného grafu a sémantického souboru.
+Lokální kandidát zachovává sémantiku main i původní epizodu T047,
+beze změny testu a všech tří blobů ve fixture oproti headu draftu.
+
+[README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+popisují stejný rozsah. Produktový kód, registry, CLI, API, schémata a
+instalované instrukce nepřebírají z draftu žádnou změnu. Samostatná
+inkrementální ekvivalence a úplná matice §7 zůstávají otevřené.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp /workspace/kgmaker-evidence/t047-pytest-source --junitxml=/workspace/kgmaker-evidence/t047-source.xml tests/test_incremental_equivalence.py -k 'source_only or malformed_oracle or mutation_replay or logical_identity'`:
+  4 PASS, 7 DESELECTED a 1 strict XFAIL pro identitu T047-S02.
+- PASS — 128 PASS, 0 SKIP a 1 strict XFAIL za 130,29 s se skutečným
+  Temurin JDK/Javac 21.0.6, Kotlin 2.1.10 K1/K2, Gradle 8.13, Node 24.22.3
+  a TypeScript 5.7.3. Známý XFAIL ověřuje mezeru T047-S02 při posunu řádku.
+  SHA-256 JUnit `003b9fbf738cc7f880b48f4b21645c10cba8e6fe4baa9788e15287cd467d53b7`. Vstupní a výstupní manifest sledovaných
+  zdrojů, workerů, testů a fixture se shoduje, SHA-256 `904eb999717c9ff1da409d80650d38d2f3bd24c917f6746d226b484e82007f0b`.
+  Produkovaný JAR má SHA-256 `32c12cbaac7d8524efe54ef9f12b81023ef5b05308066c96420ebbf8378d6da3`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/t047-pytest-strict \
+    --junitxml=/workspace/kgmaker-evidence/t047-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+  Použito `JAVA_HOME` JDK 21 s jeho `bin` na začátku `PATH` a oddělené
+  `GRADLE_USER_HOME`. Gradle build fixture běží offline.
+- PASS — `kgmaker semantic update --base c2885a6`, `kgmaker semantic apply`
+  a `kgmaker semantic validate`. Převzata jedna doložená README položka
+  a čtyři existující vztahy z packetu. Žádné nové ruční vztahy.
+- PASS — `kgmaker memory capture --base c2885a6`, `kgmaker scan`,
+  `kgmaker status`, `kgmaker check`, `git diff --check c2885a6` a
+  `git diff --cached --check`. Obsah fixture a testu je shodný s headem
+  draftu, produkční zdroje a workery jsou shodné s main.
+- NOT_RUN — úplná projektová sada, nezávislé review integračního kandidáta
+  a GitHub Actions. Historické testy na `fad4fc63` mají vlastní doklad výše.
+
+## T047-S01 / T047-R01 a T047-AC01 — změna signatury Kotlin overloadu, 2026-11-21
+
+Před změnou signatury měl [#121](https://github.com/p-rum/kgmaker/pull/121) head
+`2b8a04cd22fff23b22e6149e1b485b9d777e509c` nad `main` `c2885a6`.
+Historický běh 130 PASS a 1 strict XFAIL dokládá následný publikovaný
+head `a20cfa1ec39d2b1143323f7b3368801756e10b96` na stejném základu.
+Předchozí corpus pokrýval přidání, přesun a odstranění deklarace. Explicitní
+změna signatury z §7 chyběla. Stejný
+[harness](../../fixtures/incremental-integrity/workspace_fixture.py) vkládá
+desátou mutaci mezi přidání a přesun. Pouze ve `Scoring.kt` mění
+`score(Int)` na `score(Boolean)`. Obsah `Caller.kt` i deklarace
+`score(String)` zůstává přes mutaci bajtově shodný.
+
+[Ručně zapsaný oracle](../../fixtures/incremental-integrity/oracle.json)
+obsahuje očekávané signatury, obě call expressions a JVM deskriptory.
+[Test](../../tests/test_incremental_equivalence.py) porovnává dva explicitní
+cold kontexty. V obou variacích Kotlin workeru má po změně přesný rozsah
+`score(2)` stav `UNRESOLVED` bez cíle a dispatch kandidátů. `score("xy")`
+zůstává `SYMBOL_RESOLVED` s deskriptorem `(Ljava/lang/String;)I` v novém
+kontextu. SOURCE_ONLY replay zaznamená změnu jediného file hashe a novou
+deklaraci podle oracle. Běhy nepublikují compiler graf.
+
+[README](../../README.md), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+zahrnují tento scénář. Jde o rozšíření fixture a testů. Produktový kód, CLI,
+API, registry, schémata ani instalované instrukce se nemění. Úplná matice §7
+a důkaz inkrementální ekvivalence zůstávají otevřené.
+
+- RED — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short --basetemp /workspace/kgmaker-evidence/t047-signature-red tests/test_incremental_equivalence.py -k mutation_replay_and_reset`
+  bez nové operace v harnessu selhal v seznamu kroků, 1 FAIL.
+- První zaměřený běh se skutečnými K1/K2 s výběrem
+  `-k 'signature or added_kotlin_declaration or mutation_replay_and_reset or source_only_mutation_states'`
+  měl 4 PASS a 2 FAIL. Základní scanner vyčetl na jednom řádku i závorku
+  z těla Boolean overloadu. Tělo fixture nyní vrací konstantu. K1 vystavil
+  nesouvisející symbol bez `owner`; výběr deklarací jej bezpečně pomíjí.
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp /workspace/kgmaker-evidence/t047-signature-source tests/test_incremental_equivalence.py -k 'mutation_replay_and_reset or source_only_mutation_states'`
+  2 PASS, 0 SKIP.
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`
+  a `kgmaker semantic validate` zachovaly doložený README koncept a jeho
+  čtyři existující vazby.
+- PASS — 130 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  253,50 s. Obě varianty změny signatury prošly se skutečnými Temurin
+  JDK/Javac 21.0.6 a Kotlin 2.1.10 K1/K2. Okolní sada použila Node 24.22.3,
+  TypeScript 5.7.3 a offline Gradle 8.13.
+  SHA-256 JUnit `26e557edaa8ff70699e4af8a7db6999ba2870d54d5669647d3f7166a66bbff1a`.
+  Vstupní a výstupní manifesty sledovaných zdrojů, workerů, testů a fixture
+  se shodují, SHA-256 `10b06a93cf2ee7934e8d1d9c34fa56c1a5de7d9a1f62e645a80631fb23272e79`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-signature
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/t047-signature-strict \
+    --junitxml=/workspace/kgmaker-evidence/t047-signature-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS — `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review tohoto kandidáta,
+  GitHub Actions a Windows. Stav T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — integrace po #132, 2026-11-21
+
+Výchozí draft [#121](https://github.com/p-rum/kgmaker/pull/121) má v okamžiku
+obnovy head `a20cfa1ec39d2b1143323f7b3368801756e10b96`. Přenos přidává
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`, skutečný merge [#132](https://github.com/p-rum/kgmaker/pull/132).
+Produkční kód a workery odpovídají novému main. Všechny čtyři bloby
+fixture a testu odpovídají headu draftu. Dřívější doklady mají v této
+poznámce své původní páry revizí.
+
+Konflikt v generovaném grafu se řeší regenerací. Oprava #132 dodává
+sémantiku pro přesnou vazbu normalizovaného kontextu. Sémantický graf zachovává
+její existující koncepty a vztahy z main i všechny historické epizody z obou
+větví. Doplňuje jednu epizodu aktuálního přenosu. Nový autorovaný vztah tento
+krok nepotřebuje.
+
+[Inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+uvádějí aktuální pár a zachovávají `PR_OPEN / PARTIAL`.
+[README](../../README.md) a [návod fixture](../../fixtures/incremental-integrity/README.md)
+už odpovídají přenesenému corpus. Registry, CLI, API, schémata, instalované
+instrukce a příklady běhu fixture mají stejný kontrakt. T047-S02 a další
+případy §7 zůstávají otevřené.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --basetemp /workspace/kgmaker-evidence/pr121-after132-t032 --junitxml=/workspace/kgmaker-evidence/pr121-after132-t032.xml tests/test_t032_persist_process_review.py`
+  43 PASS, 0 SKIP na přeneseném zdroji #132.
+- PASS — 130 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  155,96 s. Použity Temurin JDK/Javac 21.0.6, Kotlin 2.1.10 K1/K2,
+  Node 24.22.3, TypeScript 5.7.3 a offline Gradle 8.13.
+  SHA-256 JUnit `5be338805bb0648db2e7d283f1101f48c1cca099a7778d7deb7cbbf97cf32986`.
+  Manifesty sledovaných zdrojů, workerů, testů a fixture před a po běhu
+  jsou shodné, SHA-256 `7db90806c1be1140e60f064988a0cc6cb5b369359bd724fa7586feff102f4c06`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-after132
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/pr121-after132-pytest \
+    --junitxml=/workspace/kgmaker-evidence/pr121-after132-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS — `kgmaker semantic update --base 4011825`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base 4011825`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`,
+  `git diff --check 4011825` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review tohoto kandidáta,
+  GitHub Actions a Windows. Celé T047-AC01 zůstává PARTIAL.
+
+## T047-S01 / T047-R01 a T047-AC01 — izolace repozitářů a přesun workspace
+
+Výchozí [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`6333c0a477ca38eed9e791549085f2338bbb9d5a` nad
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`.
+V §7 zbývala samostatná kontrola stejné deklarace ve dvou repozitářích
+a vlivu absolutního kořene na federovaný graf.
+
+[Test SOURCE_ONLY](../../tests/test_incremental_equivalence.py) přidává
+do obou izolovaných checkoutů shodné bajty deklarace `fixture.shared.Twin`
+na relativní cestě `src/Twin.kt`. Ručně zapsaná očekávání ověřují oba
+repo-kvalifikované file keys a ID souborů i deklarací, shodné SHA-256,
+vlastní hrany `contains` a absenci cizích hran u těchto entit. Test fyzicky
+přejmenuje celý kořen fixture na jinou absolutní cestu. Diagnostické kořeny
+repozitářů se změní. Mapa zdrojů a celý serializovaný graf jsou shodné.
+
+[README](../../README.md#incremental-integrity-fixtures), [návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md)
+uvádějí pokrytý scénář. Změna je test a doklad pro stávající SOURCE_ONLY API.
+T047-AC01 zůstává PARTIAL. Stabilita logických klíčů při změnách zdroje,
+compiler vazby, persistovaný store a úplná inkrementální ekvivalence mají
+vlastní navazující ověření.
+
+- PASS — `PYTHONPATH=src /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --junitxml=/workspace/kgmaker-evidence/t047-relocation-focused.xml tests/test_incremental_equivalence.py -k source_only_repo_isolation_survives_workspace_relocation`.
+  1 PASS, 14 DESELECTED a 0 SKIP.
+- První cílený běh se skutečnými workery měl 131 PASS, 0 SKIP a 1 strict
+  XFAIL. Samostatná kontrola manifestu skončila chybou, protože se během
+  běhu změnil pouze `fixtures/incremental-integrity/README.md`. Následující
+  ověření používá manifest po dokončení této dokumentace.
+- PASS — samostatný opakovaný pytest běh 131 PASS, 0 SKIP a 1 očekávaný
+  strict XFAIL pro T047-S02 za 157,64 s. Použity Temurin JDK/Javac 21.0.6,
+  Kotlin 2.1.10 K1/K2, Node 24.22.3, TypeScript 5.7.3 a offline Gradle 8.13.
+  SHA-256 JUnit `aa8260aa92c826f0e8bf8046cf0cd5b1ed48f543c9d4a6667dcead6e46b27d2a`.
+- PASS — `sha256sum -c` a `cmp` ověřily shodné manifesty sledovaných
+  zdrojů, workerů, testů a fixture včetně návodu před a po běhu.
+  SHA-256 manifestu `83facf4af20d1473d6eab92f1a19be0db02f57bfc8a060bae7588dedecce9ec0`.
+
+  ```bash
+  export JAVA_HOME='/workspace/kgmaker-tools/jdk-21.0.6+7'
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-relocation
+  KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src \
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/t047-relocation-frozen-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-relocation-frozen.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS — `kgmaker semantic update --base HEAD`, `kgmaker semantic apply`,
+  `kgmaker semantic validate`, `kgmaker memory capture --base HEAD`,
+  `kgmaker scan`, `kgmaker status`, `kgmaker check`,
+  `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — odstranění přesunutého Kotlin cíle
+
+Výchozí [#121](https://github.com/p-rum/kgmaker/pull/121) má head
+`547ad673eae17f9a17dea6682e94ef000f5ffef8` nad
+`main` `4011825b15e4b65e1f57576a0986ca05b3cf810e`. Dosavadní mutační
+sekvence zachycovala odstranění Kotlin cíle v SOURCE_ONLY. Nový test
+ověřuje stejnou mutaci s čerstvými compiler daty K1 a K2.
+
+Po mutaci `move` se nezměněné `score("xy")` v `Caller.kt` váže na
+`fixture.RenamedKt.score(Ljava/lang/String;)I` z `Renamed.kt`. Následující
+mutace odstraní jen `Renamed.kt`. V novém compiler kontextu je stejné
+volání `UNRESOLVED` bez deklarovaného cíle a kandidátů dispatch. Symbol
+odstraněného cíle v tomto kontextu chybí. Kontrolní `missingScore()` se
+v obou kontextech váže na přesný `fixture.AddedKt.missingScore()I`.
+Obě explicitní inspekce volají stávající API s `publish=False`.
+`Caller.kt` má před a po odstranění shodné bajty a `.kgmaker` nevznikne.
+
+[Test](../../tests/test_incremental_equivalence.py) používá [ruční oracle](../../fixtures/incremental-integrity/oracle.json)
+a stávající deterministické mutace. Scénář uvádí [README](../../README.md#incremental-integrity-fixtures),
+[návod fixture](../../fixtures/incremental-integrity/README.md),
+[inventář acceptance](../acceptance-inventory.md) a [stavová matice](../production-analysis-progress.md).
+Test ověřuje stávající compiler API a uloženou sekvenci fixture. T047-AC01
+zůstává PARTIAL. Publikovaná invalidace a inkrementální ekvivalence mají
+vlastní acceptance v navazujících krocích.
+
+- PASS — cílený výběr `deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset`
+  měl 4 PASS, 0 SKIP a 13 DESELECTED za 29,38 s. Obě varianty `deleted_kotlin_target`
+  použily JDK/Javac 21.0.6 a skutečný Kotlin 2.1.10 K1 nebo K2.
+  SHA-256 JUnit `ea069efc31f28a75721465a00145dba1a1331662f38e730fc41474b5f3b9fa34`.
+- První zaměřená sada skončila 15 PASS, 1 očekávaným strict XFAIL a 1 FAIL
+  známé Gradle fixture. Výchozí sandbox neposkytl použitelnou lokální IP pro
+  `FileLockContentionHandler`. Vstupní manifest zůstal shodný. Pro další běh
+  dostal Gradle přístup k místnímu socketu, plán sestavení zůstal offline.
+
+  ```bash
+  export JAVA_HOME=/workspace/kgmaker-tools/jdk-21.0.6+7
+  export PATH="$JAVA_HOME/bin:$PATH"
+  export GRADLE_USER_HOME=/workspace/kgmaker-tools/gradle-home-pr121-relocation
+  export KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle
+  export KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+  export JAVA_TOOL_OPTIONS=-XX:-UsePerfData PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    --basetemp /workspace/kgmaker-evidence/t047-cold-delete-final-focus-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-cold-delete-focus.xml \
+    tests/test_incremental_equivalence.py \
+    -k 'deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset'
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+    --basetemp /workspace/kgmaker-evidence/t047-cold-delete-final-strict-pytest \
+    --junitxml=/workspace/kgmaker-evidence/t047-cold-delete-strict.xml \
+    tests/test_incremental_equivalence.py tests/test_workspace.py \
+    tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+  ```
+
+- PASS v JUnit — 133 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro
+  T047-S02 za 201,58 s. Gradle 8.13 v existujícím offline scénáři zaznamenal
+  `BUILD SUCCESSFUL`. JVM workery běžely s JDK 21.0.6 a Kotlinem 2.1.10,
+  TypeScript 5.7.3 s Node 24.22.3. SHA-256 JUnit
+  `d6857e1a69a5a0c11984cad4b043fbf77988072827fdd5c28062bae4a19cb852`.
+  Hostitelský wrapper s povolenou sítí vrátil 1. Krátký kontrolní běh
+  se stejným wrapperem zachytil návratový kód pytestu 0 a wrapper opět
+  vrátil 1. Výsledek širšího běhu zde dokládají souhrn, JUnit a build log.
+- PASS — `cmp` a `sha256sum` potvrdily stejné manifesty testovaných
+  zdrojů, fixture, JVM JARů a nástrojů před a po širším běhu.
+  SHA-256 obou manifestů
+  `d4ca6431efc03f444b0e20619deb706d35bc66efce1c2f88e225dc09a2961bd7`.
+- Ověření grafu a změn používá `kgmaker semantic update --base HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base HEAD`, `kgmaker scan`, `kgmaker status`,
+  `kgmaker check`, `git diff --check HEAD` a `git diff --cached --check`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — ověření po integraci #142
+
+Lokální cold-delete kandidát má revizi
+`8ba2f14f930817c49519ed0641d2dd2ca254ea1a`. Ověřovaný přenos zahrnuje nový
+`main` `024334a22f4269fa5cbc720b73e429688069464c` se stromem
+`f877aecde09278020ab2a8b507360486fc699c55`. [Sloučené opravy CI](https://github.com/p-rum/kgmaker/pull/142).
+
+S [novým testem](../../tests/test_incremental_equivalence.py) a celou fixture
+souhlasí přesné bloby z `8ba2f14`. S novým `main` souhlasí všech pět
+zdrojových, testovacích a workflow souborů z #142. Tři aktualizované
+citace na `inspection.py` pocházejí z nového `main` a odpovídají řádkům
+538, 619 a 625. Unie dokladů obou rodičů obsahuje 350 shodných původních
+epizod podle jejich ID a obsahu. T047-AC01 zůstává PARTIAL.
+
+Zopakoval jsem oba výběry se stejným JDK/Javac 21.0.6, Kotlinem 2.1.10
+K1 a K2, Node 24.22.3, TypeScriptem 5.7.3, offline Gradlem 8.13 a
+proměnnými prostředí z předchozí sekce. Artefakty mají nový prefix.
+
+```bash
+kg_evidence=/workspace/kgmaker-evidence/t047-cold-delete-after142
+/workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  --basetemp "$kg_evidence-focus-pytest" --junitxml="$kg_evidence-focus.xml" \
+  tests/test_incremental_equivalence.py \
+  -k 'deleted_kotlin_target or malformed_oracle or mutation_replay_and_reset'
+/workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+  --basetemp "$kg_evidence-strict-pytest" --junitxml="$kg_evidence-strict.xml" \
+  tests/test_incremental_equivalence.py tests/test_workspace.py \
+  tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+```
+
+- PASS — cíleně 4 PASS, 0 SKIP a 13 DESELECTED za 17,92 s. Samostatný
+  `focus_pytest_exit=0` a SHA-256 JUnit
+  `1d620b428682b4af1ecf01dd43a1c3ccabeddf2d2ed555a2f5fb9ced1b06d5ec`.
+- PASS — 133 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  157,78 s. Samostatný `strict_pytest_exit=0` a SHA-256 JUnit
+  `f99242ae038e9fa42a2c34e01203a697e53e3da0044d03fa83e634934f5d0872`.
+- PASS — `after_manifest_exit=0`, `manifest_compare_exit=0`. SHA-256
+  shodných manifestů zdrojů, testů, fixture, JVM JARů a launcherů
+  `585c417ad9874dd0491cde5a92ac77bb16551e0b75070c93dc3563b710babb63`.
+- Strukturu ověřují `kgmaker semantic update --base MERGE_HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`,
+  `kgmaker memory capture --base MERGE_HEAD`, `kgmaker scan`,
+  `kgmaker status`, `kgmaker check` a `git diff --cached --check MERGE_HEAD`.
+- NOT_RUN — úplná projektová sada, nezávislé review tohoto přenosu,
+  GitHub Actions a Windows.
+
+## T047-S01 / T047-R01 a T047-AC01 — cold oracle změny těla
+
+Původní [head #121](https://github.com/p-rum/kgmaker/pull/121)
+`c5b62855c4be8d987eca1df9526713e1b452bbad` používá změnu těla jako přípravu
+testů cold add, změny signatury a smazání. Přenos na `main`
+`34591e2f45814838dd8b21390cdc43c84530f648` se stromem
+`648cf13b0492286439a3cda0bc2f083879d1532d` zachovává společnou historii
+rodičů a vrací samostatný důkaz pro tento mezistav.
+
+Nový [test](../../tests/test_incremental_equivalence.py) použije při offline
+inspekcích skutečné K1 a K2. Ze stávajícího deterministického replay vezme dvě
+sousední verze. V celém workspace se změní pouze obsah `Scoring.kt`, konkrétně
+`return value` na `return value + 1` v `score(Int)`. Soubor `Caller.kt` i přetížení
+`score(String)` mají stejné byty. Obě volání se v obou snapshotech přesně vážou
+na `fixture.ScoringKt.score` s deskriptory `(I)I` a `(Ljava/lang/String;)I`.
+Test porovnává source hashe v kontextu se skutečnými soubory, vyžaduje nový
+compiler context a po každé inspekci ověřuje shodnou souborovou mapu bez
+publikace do `.kgmaker`. Doplňuje pokrytí stávajícího chování bez změny
+produkčního kódu, CLI, API nebo schémat. [Návod k fixture](../../fixtures/incremental-integrity/README.md),
+[stav](../production-analysis-progress.md), [acceptance](../acceptance-inventory.md).
+
+Samostatná cold sonda nad stejnými zdroji pozorovala u K1 po úpravě nový
+literálový blok `1` v CFG celého `score(Int)`. K2 v obou snapshotech vrátil
+0 CFG a handshake uvádí chybějící Kotlin source CFG. T047-S01 dokládá
+reprodukovatelný corpus a scoped cold kontroly. Scénáře §7 pro body-dependent
+inkrementální přepočet (AC04/AC06) a Windows case-only rename a symlinky
+(AC02/AC05) zůstávají otevřené společně s úplným porovnáním inkrementálního
+a cold běhu. T047-AC01 zůstává PARTIAL.
+
+Příklad cíleného běhu v Cloud Environment s připravenými distribucemi
+JDK/Javac 21.0.6 a Kotlin 2.1.10 K1/K2:
+
+```bash
+kg_evidence=/workspace/kgmaker-evidence/t047-cold-body
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  --basetemp "$kg_evidence-focus-pytest" --junitxml="$kg_evidence-focus.xml" \
+  tests/test_incremental_equivalence.py \
+  -k 'changed_kotlin_body or added_kotlin or changed_kotlin_signature or deleted_kotlin_target'
+```
+
+Širší sada používá stejný JDK a Kotlin, Node 24.22.3, TypeScript 5.7.3 a
+připravenou offline distribuci Gradle 8.13. Build konfigurace fixture používá
+`offline=True`.
+
+```bash
+KGMAKER_TEST_GRADLE=/workspace/kgmaker-tools/gradle-8.13/bin/gradle \
+  KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra --maxfail=1 \
+  --basetemp "$kg_evidence-strict-pytest" --junitxml="$kg_evidence-strict.xml" \
+  tests/test_incremental_equivalence.py tests/test_workspace.py \
+  tests/test_kafka_bindings.py tests/test_cross_repo_artifacts.py
+```
+
+- PASS — 8 cílených PASS, 0 SKIP a 11 DESELECTED za 104,03 s. Exit 0
+  a SHA-256 `t047-cold-body-focus.xml`
+  `c6bc3455d8800fd9ee190f889aee33678c886774f19ad1c82b6bb83c60c32721`.
+- PASS — 135 PASS, 0 SKIP a 1 očekávaný strict XFAIL pro T047-S02 za
+  257,57 s. Exit 0 a SHA-256 `t047-cold-body-strict.xml`
+  `b417556467fbb8104aa7066d261bb6aaa4b07d7d3fc976eb6297dba3092a16ce`.
+  Oba manifesty zdrojů, testů, fixture a JVM JARů mají shodný SHA-256
+  `eb6f307981887b22ad70c14748bdf7e259d9900ff79fa449926e9f50b9245314`.
+- SHA-256 samostatné cold sondy `t047-cold-body-native-scope.txt`
+  `0ab2d5c849a848d0f486767200d1e1e04fd7377a17d77e25a455b23686f3f34c`.
+- PASS — `python -m pytest -p no:cacheprovider --assert=plain -q --tb=short tests/test_completion.py tests/test_t032_persist_process_review.py`.
+  50 PASS, 0 SKIP za 2,60 s. SHA-256 `t047-cold-body-t032.xml`
+  `89a34367ccb9c6a2aef6d61ed769e5343e2f93bbca044c48d134faaaf1ccba43`.
+- `kgmaker completion plan --jobs 3` uvádí T047-S01 jako PR_OPEN/PARTIAL,
+  T047-S10 jako MERGED/PARTIAL, T047-S11 jako PLANNED/NOT_RUN a T032 jako
+  MERGED/VERIFIED_IN_SCOPE.
+- Ověření grafu a změn používá `kgmaker semantic update --base MERGE_HEAD`,
+  `kgmaker semantic apply`, `kgmaker semantic validate`, `kgmaker memory capture
+  --base MERGE_HEAD`, `kgmaker scan`, `kgmaker status`, `kgmaker check`
+  a `git diff --cached --check MERGE_HEAD`.
+- NOT_RUN — úplná projektová sada, nezávislé review této revize,
+  GitHub Actions a Windows.
+
+## Sloučení reprodukčního korpusu 2026-11-21
+
+[#121](https://github.com/p-rum/kgmaker/pull/121) je v `main` jako
+`b3bbba43304f499f96950ea4ecc2a2467919e616`. T047-S01 má dodání MERGED
+a T047-AC01 ověření PARTIAL. [Přesný pár, nezávislé review a ověření sloučeného stromu](161_recordMutationCorpusMerge.md).

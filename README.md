@@ -293,6 +293,22 @@ Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
 to record the implementer and each independent reviewer's local attribution.
 See [the local completion workflow and its limits](docs/completion-orchestrator.md).
 
+## Incremental integrity fixtures
+
+The [T047-S01 mutation workspace](fixtures/incremental-integrity/README.md) replays
+source-only edits against a handwritten oracle and checks the exact file changes
+and graph facts. A source-only test also keeps identical declarations separate
+across repositories and verifies the graph after moving the workspace. Separate
+cold Kotlin K1/K2 and TypeScript tests cover resolution
+of a newly introduced Kotlin declaration, stable bindings after a Kotlin
+body-only edit, a signature change that leaves an
+incompatible call unresolved, deletion of a moved declaration with its caller
+unchanged, a declared Kafka match across modules,
+and a backend-to-frontend value path tied to a generated client's contract
+checksum and release. An explicit offline Gradle build and JVM verifier check
+that workspace release mapping requires matching JAR bytes and a current consumer
+context. The fixture records the remaining integrity gaps.
+
 ## Implementation memory and workflow
 
 Configurable profiles connect analysis, planning, implementation, testing and review:
@@ -520,13 +536,15 @@ Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
 zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
+Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí zastaralý vstup
+po zahájení publikace, obnoví předchozí uložené výstupy.
+[Ověření publikace runtime importu](docs/changes/163_revalidateRuntimeImportPublication.md).
 
 Opakovaný `runtime import` uchovává doklady pro jednotlivé běhy ve shodném
 compiler kontextu. `callgraph callers` a `callees` je zobrazí jako
 `RUNTIME_OBSERVED`. `callgraph path` používá statické compiler vazby.
 V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
-na obou koncích. Import znovu ověřuje vstupy při publikaci. Pokud se zdroj
-mezitím změní, zůstane uložený graf i runtime artefakt zachovaný.
+na obou koncích.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
@@ -1270,3 +1288,8 @@ přidá doklad explicitního běhu Maven/Gradle ve fázi `test` do lineage dané
 `kgmaker trace show REF --format json` zobrazí výsledek a aktuálnost zvlášť. Editace
 testu, konfigurace, lockfile nebo POSIX režimu souboru může vést ke stavu
 `STALE` při stejném Git HEAD. [Příkazy a podporovaný rozsah](docs/delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
+
+Volitelná kontrola před `done` vyžaduje aktuální PASS pro stejnou revizi a
+iteraci tasku. Zapíná se pomocí `kgmaker trace policy --verification-before-done on
+--expected-revision REVISION`. `kgmaker trace show TASK_ID` v registrované
+lineage ukáže stav tasku a ověření zvlášť. [Příklad a rozsah](docs/delivery-workflow.md#aktuální-ověření-před-dokončením-t047-s11).

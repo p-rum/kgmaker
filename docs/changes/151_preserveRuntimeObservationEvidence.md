@@ -151,11 +151,12 @@ a [stavová matice](../production-analysis-progress.md).
 Výchozí revize [#136](https://github.com/p-rum/kgmaker/pull/136) je
 `a980b753981da99505434d53b40931d7f40d6996`. Po úvodní validaci manifestu mohl
 import publikovat runtime hranu i ze zdroje upraveného během přípravy zápisu.
-`src/kgmaker/runtime_evidence.py` používá při publikaci existující kontrolu
-`before_replace`. Pod zámkem znovu prověří předané runtime doklady a příslušné
-vstupy včetně zdrojů, v2 compiler kontextu a distribuce workeru. Při odhalené
-změně uložený graf a jeho pohledy zůstanou ve stavu před importem. Manifesty
-v1/v2 a graph/store v3 používají stávající schémata a příkazy.
+Tehdejší `src/kgmaker/runtime_evidence.py` při publikaci použil existující
+kontrolu `before_replace`. Pod zámkem znovu prověřil celý manifest a
+příslušné vstupy včetně zdrojů, v2 compiler kontextu a distribuce workeru.
+Při odhalené změně se uložený graf a jeho pohledy vrátily do stavu před
+importem. Manifesty v1/v2 a graph/store v3 použily stávající schémata a
+příkazy. Následující přenos převzal omezenou kontrolu z #147.
 
 `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` sestaví
 a spustí skutečnou JDK21 aplikaci, vezme její volatelné symboly a předá platné
@@ -196,3 +197,99 @@ PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
 popisují kontrolu a zachování výstupů. GitHub Actions a nezávislé review této
 revize dosud čekají. Odvození receiver/type, přesná vazba na call site
 a širší T003-AC13 zůstávají `PARTIAL`.
+
+## Dopředný přenos po #147 — T003-S13-W02, kroky 4–5, AC01–AC04
+
+První rodič připraveného přenosu je `ea7b815c4115e37ab31f5a7cada2a3da191f2e13`,
+druhý je ověřený `main` `2db5c4931bfd832908158900b2823b6c122bc3a7`.
+Úplná validace každého importovaného manifestu proběhne jednou před zámkem.
+Při publikaci store nejprve ověří očekávanou generaci grafu. Existující
+callback znovu kontroluje zdroje a distribuci workeru a u v2 zachycené
+vstupy compiler kontextu včetně bytecode. Změna vstupu vyvolá odmítnutí
+a obnovu již nahrazených výstupů.
+
+`src/kgmaker/runtime_evidence.py` současně zachovává doklady jednotlivých
+běhů na hraně téhož compiler kontextu, idempotentní import a kontrolu
+volatelných symbolů v2 `call` a `dispatch`. `src/kgmaker/callgraph.py`
+zobrazuje pozorované doklady v `callers` a `callees`, statické cesty
+a cykly vycházejí z compiler call sites. Oba rodiče mají shodné dva případy
+změny JDK 21 zdroje při publikaci. `tests/test_runtime_trace_producer.py`
+obsahuje tuto fixture jednou, vedle počtů validací z #147, kontroly
+skutečného v2 bytecode a kontrolního případu workeru v1.
+[Change163](163_revalidateRuntimeImportPublication.md) · [Testy](../../tests/test_runtime_trace_producer.py)
+
+V odděleném auditu obou rodičů skutečné běhy JDK 21 připojily na main
+k téže hraně postupně 1, 1, 1 a 1 doklad a na #136 1, 2, 3 a 4.
+Totožný import počet nezvýšil. #136 odmítla třídu coby volajícího
+bez zápisu a `callgraph path` u pouze runtime hrany vrátil `UNKNOWN`.
+Na main byl výsledek `STATIC_PATH` s krokem `RUNTIME_OBSERVED`.
+SHA-256 rodičovské sondy #136 je
+`151a579f9d2ff93d8f0afd870b569c65b809b24365847fb1cc2ae5b949e76f71`,
+main `0cf8494411bd9cb394415396e352c957f5edd6653bd12309630e5faa9d2b653a`.
+
+Sonda `PYTHONPATH=src python probe.py perf --count 8500` na spojeném
+kódu napočítala jednu plnou validaci před zámkem. Stejný nástroj
+s příkazem `python probe.py compat` ověřil čtyři kombinace v1/v2
+s předchozími pohledy i bez nich. Po změně workeru publikaci odmítly
+a po jeho obnově přijaly platný import. SHA-256 měření je
+`480c0ad645c82dfdf3a9e989332d7cf7d27f7caef95009ebc80b1a1486368be3`
+a SHA-256 kontroly kompatibility
+`a6801622c54c6614c5917592521defbca837db6b1869f428fcf4804d35e8eb2d`.
+
+Úplná standardní sada `PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short`
+na čistém archivu spojeného stromu běžela s CPython 3.13.18 a skončila
+kódem 0. Výsledek je 2 471 PASS, 1 299 SKIP a jeden očekávaný strict
+XFAIL T047-S02. SHA-256 JUnit je
+`c5200bacbb23a41508169ec1d542cc54a9c91c0f282325ad81758bfd0f137e1e`.
+Manifest sledovaného kódu, nástrojů a testů má před i po běhu SHA-256
+`4282e32565efd55139897cde60c27b63d394daa16440f2c1673d70f7c414ff4e`.
+
+Cílený běh s Temurin JDK 21.0.6+7, připravenými workery,
+`PYTHONPATH=src:tests`, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`
+a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData` skončil kódem 0.
+Výsledek je 426 PASS a 1 SKIP. Přeskočil pouze volitelný
+`test_actual_maven_surefire_pass_and_fail` v rozšířené části sady, kde
+nebyla nastavená explicitní cesta k offline Maven repozitáři.
+Runtime, W06 a T032 prošly bez přeskočení. SHA-256 JUnit je
+`fb1000ae17d6af568a514e25ea21b3f7d8b99b7b7616b43e1ed387e33941064f`.
+Manifest sledovaných vstupů před a po běhu se shoduje s úplnou sadou.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short \
+  tests/test_runtime_trace_producer.py tests/test_build_aware.py tests/test_graph_provider.py \
+  tests/test_t032_persist_process_review.py tests/test_graph_publication_concurrency.py \
+  tests/test_evidence_ranking.py tests/test_return_consumer_flow.py tests/test_completion.py \
+  tests/test_verification_records.py runtime-publication-main-current-test.py
+```
+
+Poslední soubor je doplňková kontrola skutečného platného capture z #147,
+jehož SHA-256 a příprava jsou uvedeny v [Change163](163_revalidateRuntimeImportPublication.md).
+
+Samostatný
+`python -m pytest -p no:cacheprovider -q --tb=short tests/test_verification_records.py::test_actual_maven_surefire_pass_and_fail`
+s offline Maven repozitářem, Maven 3.9.9, Surefire 3.5.2 a JDK 21
+ověřil dříve přeskočený případ s výsledkem 1 PASS a 0 SKIP.
+SHA-256 JUnit je `678bc31d70facc42f82bd179e97703cd8abbf723dae70454c28a088010f05373`.
+
+`PYTHONPATH=src python pr136-multiproof-forward-multirun.py PATH_TO_TRACE`
+následně zopakoval čtyři spouštění skutečné JDK 21 fixture na spojeném kódu.
+Na původním místě zachyceného kontextu se k hraně připojily 1, 2, 3 a 4
+doklady, opakování bylo idempotentní. Třída coby volající byla odmítnuta
+bez změny grafu. Import nespustil žádný proces. Přípravný pokus s přemístěnou
+kopií fixture skončil odmítnutím zastaralého snapshotu persistence XML.
+SHA-256 výsledné sondy je
+`73ffb4c14293e35f728596b0a96acc6db13d92e6fc4a1b26c9b6977db737db5d`.
+
+GitHub Actions a Windows na spojeném stromu mají stav `NOT_RUN`.
+
+Sémantické vrstvy z obou rodičů uchovávají 55 konceptů, 192 vztahů
+a 374 jedinečných dřívějších epizod. Stejný vztah k funkci
+`provenance.event` používá aktuální deklaraci na řádku 166.
+
+Oprava zachovává manifesty v1/v2, graph/store v3 a dosavadní CLI.
+Import přijímá explicitní pozorování a surové facts ověřuje.
+Skutečný JDK 21 audit ukázal, že štítek `main → greet` z fixture nemá
+přímou odpovídající compiler call site. Volání se vykoná uvnitř lambdy.
+Odvození typu příjemce a vazby na konkrétní call site z takového štítku
+vyžaduje další důkaz. W02 a T003-AC13 zůstávají `PARTIAL`.
+[README](../../README.md) · [Runtime příklady](../runtime-trace.md#opakovaný-import-a-navigace) · [Compiler navigace](../compiler-inspection.md#pozorované-hrany-a-statické-cesty) · [Acceptance](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany) · [Stav](../production-analysis-progress.md)
