@@ -64,7 +64,7 @@
     "docs/changes/156_restorePinnedK2Download.md": "30a1357e1d9d89708e908bdbab33a16b5bdbeda424761281bb1618af607fc55b",
     "docs/changes/157_integrateCiAcceptanceRepairs.md": "39e917115b12954811809c977698b694e20236e0978a8d49bbccd825f5d2fd53",
     "docs/changes/158_recordFileBoundVerificationMerge.md": "e51c1a08e79e8b2ff16f9e140f1d22c30dc8dd0ef1afb5cdcf90cff2c38f62c3",
-    "docs/changes/162_addKotlinLogicalSymbolKeys.md": "e88a7b2296cacb827e8686b6b3af5f2c3bed6e50c4bacdfaeb6e9a9ee3d9262c",
+    "docs/changes/162_addKotlinLogicalSymbolKeys.md": "78cc4b228239a35540a367b0c48a2e11cbfaaa560b37a2ae47d1ec4a84b89662",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -599,7 +599,7 @@
     "tests/test_spring_registrations.py": "2d9b5b656ab3cf9dc362edf86f4d8d849e9e4635b2622cafcaf155053c4c5ab9",
     "tests/test_stage_content_cache.py": "b88b414cb1a8b78f673d676a43b26bdddcbd6d74fc01467843baf299f5eac4cc",
     "tests/test_stage_content_cache_actual.py": "d055038a068cd893376af905a44cd8faf21703136dbfa544d0ff87a31060b56f",
-    "tests/test_symbol_identity.py": "8e6904b41bca8467366f854a8cef64a3b6154fc0f9191731e55d4b53b701e943",
+    "tests/test_symbol_identity.py": "1e95450e38494bd084796a1a0aaceac7f17c141496341be7365000a40d2ddd51",
     "tests/test_synthetic_data.py": "471db7f1cdfeb63b16da9a7b09ba5188dbc5f79fb3f36e037773eb3281722d81",
     "tests/test_t005_add_view_model.py": "b9b241f71803c99d1f9626871f2d48a5fbce54e521ae62b17922b18e278300dd",
     "tests/test_t006_select_service_contexts.py": "464f78e848104daec15c304f8e21122fe3b9e5d47efdaf3720fd6f95404bee4b",
@@ -179724,6 +179724,69 @@
         }
       ],
       "id": "episode:2266997908fa236c3f3febbebf009b4332f99cfdcb925a8640acca20e5298a8d"
+    },
+    {
+      "base_commit": "1cc422b7473d12f6e8d14d454c8bf8b7859310e6",
+      "head_commit": "1cc422b7473d12f6e8d14d454c8bf8b7859310e6",
+      "worktree_fingerprint": "4cfccf4783ac7d5da56a7ee6fbe14441f0bd7f11af160a89dc650bc16eb95f0c",
+      "title": "Change Logické klíče doložených funkcí Kotlinu, Skutečné ověření, T047-S02 / T047-AC02 — fixture workspace vůči kandidátu #145",
+      "changed_files": [
+        {
+          "path": "docs/changes/162_addKotlinLogicalSymbolKeys.md",
+          "status": "M",
+          "sha256": "78cc4b228239a35540a367b0c48a2e11cbfaaa560b37a2ae47d1ec4a84b89662"
+        },
+        {
+          "path": "tests/test_symbol_identity.py",
+          "status": "M",
+          "sha256": "1e95450e38494bd084796a1a0aaceac7f17c141496341be7365000a40d2ddd51"
+        }
+      ],
+      "affected_node_ids": [
+        "file:docs/changes/162_addKotlinLogicalSymbolKeys.md:162_addKotlinLogicalSymbolKeys.md",
+        "file:tests/test_symbol_identity.py:test_symbol_identity.py",
+        "function:tests/test_symbol_identity.py:capture::118",
+        "function:tests/test_symbol_identity.py:capture::57",
+        "function:tests/test_symbol_identity.py:capture::90",
+        "function:tests/test_symbol_identity.py:expected_key::20",
+        "function:tests/test_symbol_identity.py:kotlin_file::39",
+        "function:tests/test_symbol_identity.py:require_worker::27",
+        "function:tests/test_symbol_identity.py:test_legacy_graphs_read_without_logical_proof::262",
+        "function:tests/test_symbol_identity.py:test_legacy_graphs_read_without_logical_proof::263",
+        "function:tests/test_symbol_identity.py:test_native_incomplete_kotlin_selection_cannot_prove_realm_uniqueness::50",
+        "function:tests/test_symbol_identity.py:test_native_logical_keys_isolate_realms_and_unsupported_declarations::159",
+        "function:tests/test_symbol_identity.py:test_native_named_callables_preserve_logical_keys_across_range_change::111",
+        "function:tests/test_symbol_identity.py:test_native_structured_source_sets_do_not_share_flattened_membership::82",
+        "section:docs/changes/162_addKotlinLogicalSymbolKeys.md:Logické klíče doložených funkcí Kotlinu::1",
+        "section:docs/changes/162_addKotlinLogicalSymbolKeys.md:Skutečné ověření::35",
+        "section:docs/changes/162_addKotlinLogicalSymbolKeys.md:T047-S02 / T047-AC02 — fixture workspace vůči kandidátu #145::171",
+        "section:docs/changes/162_addKotlinLogicalSymbolKeys.md:T047-S02 / T047-AC02 — úplný Kotlin výběr a přesné členství::104"
+      ],
+      "graph_delta": {
+        "added": [
+          "function:tests/test_symbol_identity.py:test_legacy_graphs_read_without_logical_proof::263",
+          "section:docs/changes/162_addKotlinLogicalSymbolKeys.md:T047-S02 / T047-AC02 — fixture workspace vůči kandidátu #145::171"
+        ],
+        "removed": [
+          "function:tests/test_symbol_identity.py:test_legacy_graphs_read_without_logical_proof::262"
+        ],
+        "changed": []
+      },
+      "validations": [
+        {
+          "label": "legacy-fixture",
+          "status": "passed"
+        },
+        {
+          "label": "composite-fixture",
+          "status": "passed"
+        },
+        {
+          "label": "semantic-validate",
+          "status": "passed"
+        }
+      ],
+      "id": "episode:dea2887ba486339e4b85b9aa1c88ab85cc2c18a3364c27e711e569667f4e5edd"
     }
   ]
 }

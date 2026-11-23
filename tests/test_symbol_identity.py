@@ -220,11 +220,12 @@ private fun hidden(value: Int): Int = value
                     for param in ("kotlin.Int", "kotlin.String")}
     assert {(s["path"], s["logical_key"]) for s in symbols} == expectations
 
-    # Exercise the proposed raw workspace wire shape before the producer lands.
+    # Adapt legacy inputs to the raw wire shape. Keep native raw inputs as captured.
+    raw_version = "selected-source-set-raw-1"
     raw_wire = deepcopy(round_trip.to_dict())
     for context in raw_wire["contexts"]:
-        if "compiler_inputs" in context:
-            context["source_snapshot_version"] = "selected-source-set-raw-1"
+        if "compiler_inputs" in context and context.get("source_snapshot_version") != raw_version:
+            context["source_snapshot_version"] = raw_version
             context["compiler_inputs"] = [f"@{context['repo_id']}/{path}" for path in context["compiler_inputs"]]
     raw_symbols = KnowledgeGraph.from_dict(raw_wire).symbols
     assert {(s["path"], s["logical_key"]) for s in raw_symbols if s.get("name") == "score"

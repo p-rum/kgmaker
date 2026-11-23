@@ -164,5 +164,64 @@ Graf opravy ověřují `kgmaker semantic update --base a48914a`, `kgmaker semant
 Worker zdroje ani připnuté JARy oprava nemění.
 Pro spojený stav po #145 ověřit skutečnou raw inspekci a workspace projekci
 na K1/K2, včetně úplného i neúplného výběru a opakovaného načtení po zahřátí cache.
-Společný běh s #145, nezávislé review, úplná projektová sada, GitHub Actions
-a Windows mají stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+V tomto původním checkpointu měly společný běh s #145, nezávislé review,
+úplná projektová sada, GitHub Actions a Windows stav NOT_RUN.
+T047-AC02 zůstává PARTIAL.
+
+## T047-S02 / T047-AC02 — fixture workspace vůči kandidátu #145
+
+Výchozí S02 je `1cc422b7473d12f6e8d14d454c8bf8b7859310e6`. Předběžný
+izolovaný strom kombinuje jeho soubory s raw kandidátem #145
+`ee0c69db36524b31c16f5d6611753dcc6d4816b7`, tree `773300512fe01b120b7e98d9c495110438633032`.
+Workspace producer v tomto kandidátu vydává `compiler_inputs` s repo prefixem.
+Původní fixture přidala prefix podruhé, takže její vlastní přepsaný graf
+odmítl logický klíč i v platném případě.
+
+`tests/test_symbol_identity.py` dál převádí relativní seznam staré inspekce na
+tvar raw workspace pro zkoušku čtení. Vstupy, které už zachytil raw producer,
+čte v jejich původním tvaru. Zkouška následně záměrně nasadí cizí repo prefix
+a ověří jeho odmítnutí. Ověřuje také rozdílné klíče mezi repozitáři a source sety.
+Čtení starších grafů v1–v3 dál ověřují dosavadní případy.
+
+- Předběžná kombinace s původní fixture měla 12 PASS a 2 FAIL bez přeskočení.
+  Oba případy K1/K2 selhaly při čtení grafu s dvakrát přidaným prefixem.
+  JUnit `native.xml`, SHA-256
+  `e55a5cd054123d576878ebccd9ebff599ddc796a40e80e04a5e6bce87536a65f`.
+- Samostatná předběžná adaptace fixture měla 2 PASS, 0 SKIP. JUnit
+  `adapted.xml`, SHA-256
+  `d2159c0972ca08694a5608489f33942f3f55dd267b04bea66aa4c06c868acd0b`.
+- Skutečný přechod z `selected-source-set-2` na `selected-source-set-raw-1`
+  zachoval klíč Kotlin deklarace a vytvořil nová ID výskytu a kontextu.
+  K1 i K2 ověřily raw SHA-256 souvisejícího Java vstupu s CRLF, jeho
+  normalizovaný hash a odmítnutí cizího repo prefixu. JUnit `transition.xml`
+  má 2 PASS, 0 SKIP, SHA-256
+  `4ba70dc2018a169c282875eebb7046065a06eff007bd52924eea052603e17982`.
+- Opravená fixture se skutečnými K1 i K2 na původním S02 měla 5 PASS, 0 SKIP
+  za 165,20 s. JUnit `legacy.xml` má SHA-256
+  `cd4409333edad260ac0519923146c11e43079a1859398de2d817e2fd8d1b6d57`.
+  Shodné manifesty před a po běhu mají SHA-256
+  `21b2e0c86d0807b23cb18abc55c2e87b15d7bebd6c605a5cdd008f5630ee19ab`.
+- Opravená fixture v izolované kombinaci s raw kandidátem měla se stejnými
+  K1/K2 workery 5 PASS, 0 SKIP za 158,33 s. JUnit `composite.xml` má SHA-256
+  `2f34e8dc17da4330ea2f6d2037d5c2f6f4cb7a3a4ed07018c47b7296f2a01f47`.
+  Shodné manifesty před a po běhu mají SHA-256
+  `67c46a272b2ea2e9b6c0c2de7902715009ab13f6e2a4a8dbad5c741e517aee54`.
+  Oba běhy použily shodný soubor testu se SHA-256
+  `1e95450e38494bd084796a1a0aaceac7f17c141496341be7365000a40d2ddd51`.
+
+Opravená fixture používá v obou stromech stejný výběr. Běhy mají nastavené
+`PYTHONPATH=src`, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`,
+`JAVA_TOOL_OPTIONS=-XX:-UsePerfData` a JDK 21.0.6+7.
+
+```bash
+python -m pytest -n 2 -p no:cacheprovider -q --tb=short -ra \
+  tests/test_symbol_identity.py -k 'isolate_realms_and_unsupported_declarations or legacy_graphs'
+```
+
+Po začlenění #145 se ověří přesný společný strom, včetně průchodu zahřátou
+cache. Nezávislé review tohoto checkpointu, úplná projektová sada, GitHub
+Actions a Windows mají stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+
+Graf ověřují `kgmaker semantic update --base 1cc422b`, `kgmaker semantic apply`,
+`kgmaker semantic validate`, `kgmaker memory capture --base 1cc422b`,
+`kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --cached --check`.
