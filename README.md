@@ -536,7 +536,7 @@ Spring capture, RTA/value-flow/async, nasazení ani dostupnost dat. V1 import
 zůstává kompatibilní; v2 musí mít všechny identity a `PARTIAL/UNKNOWN` se
 nepovýší. Výstupy jsou omezeny na `.kgmaker/runtime/*.json` a stdout.
 [Změna a provedené kontroly](docs/changes/122_runtimeTraceProducer.md).
-Import znovu ověřuje vstupy při ukládání grafu. Když zjistí zastaralý vstup
+Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí zastaralý vstup
 po zahájení publikace, obnoví předchozí uložené výstupy.
 [Ověření publikace runtime importu](docs/changes/163_revalidateRuntimeImportPublication.md).
 

@@ -1576,9 +1576,10 @@ in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md).
 
-Při publikaci runtime importu store společně s kontrolou očekávané
-generace znovu kontroluje zdroje a distribuci workeru z vybraného kontextu.
-U v2 opakuje i validaci zachycených vstupů compiler kontextu. Zjištěná
+Runtime import ověří obálku před publikací. Pod zámkem store hlídá
+očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje
+zdroje a distribuci workeru z vybraného kontextu. U v2 opakuje i validaci
+zachycených vstupů compiler kontextu včetně classpath a bytecode. Zjištěná
 změna zastaví publikaci a store obnoví již nahrazené výstupy.
 [Regrese runtime importu](changes/163_revalidateRuntimeImportPublication.md).
 

@@ -69,7 +69,7 @@ běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
 | Acceptance | Ověření | Důkaz a rozsah |
 |---|---|---|
-| T003-S13-W02-AC01, AC03 | VERIFIED_IN_SCOPE (publikace importu) | Skutečný JDK 21 capture. Změna zdroje po prvním ověření buď zastaví zápis, nebo obnoví výstupy po nahrazení prvního odvozeného souboru. Zachová hodnoty graph.json, odvozených pohledů i uloženého capture po bajtech a nespustí proces. [Test a příkazy](changes/163_revalidateRuntimeImportPublication.md). |
+| T003-S13-W02-AC01, AC03 | VERIFIED_IN_SCOPE (publikace importu) | Oprava ověřuje manifest jednou a měnitelné vstupy při každém kroku publikace. Skutečný JDK 21 capture pokrývá změnu zdroje i zachyceného bytecode. Fixture v1 pokrývá změnu workeru. Při odmítnutí zůstanou graf, odvozené pohledy a capture stejné po bajtech a import nespustí proces. [Test a příkazy](changes/163_revalidateRuntimeImportPublication.md). |
 
 Ověření širšího kontraktu W02 včetně receiver/type evidence zůstává PARTIAL.
 

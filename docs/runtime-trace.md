@@ -65,9 +65,9 @@ source/worker/classpath snapshot a cancellation. Po procesu se znovu kontroluje
 uložený graf i snapshot a až potom se artefakt atomicky nahradí. Producer sám
 nezapisuje graph store; import je oddělená operace.
 
-Import pracuje s načteným manifestem a před nahrazením každého výstupu
-grafu znovu ověřuje uložené zdrojové hashe a distribuci workeru. U v2
-ověřuje také vazbu manifestu na compiler kontext a jeho zachycené vstupy.
+Import ověří načtený manifest jednou před publikací. Před nahrazením
+každého výstupu znovu ověří zdrojové hashe a distribuci workeru. U v2
+znovu ověří i zachycené vstupy vybraného compiler kontextu včetně bytecode.
 Zjištěný zastaralý vstup zastaví publikaci. Store obnoví dříve nahrazené
 výstupy téže publikace. Současné publikace do grafu hlídá kontrola
 očekávané generace. [Regresní ověření](changes/163_revalidateRuntimeImportPublication.md).

@@ -390,3 +390,120 @@ def test_real_jdk21_runtime_import_rejects_source_edit_after_validation(jdk_appl
         assert not list((root / store.STATE_DIR).rglob(".kgmaker-*"))
     finally:
         source.write_bytes(original)
+
+
+def test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step(project, monkeypatch):
+    from kgmaker import graph_provider, runtime_evidence, store
+
+    class CountedObservations(list):
+        walks = 0
+
+        def __iter__(self):
+            self.walks += 1
+            return super().__iter__()
+
+    manifest = produce(project)
+    observations = CountedObservations([{"caller": "main", "target": "greet", "kind": "dispatch"}])
+    manifest["observations"] = observations
+    checked = {project / "src/App.java": [], project / "worker.jar": []}
+    context_checks, replaced = [], []
+    actual_replace = store.os.replace
+    actual_snapshot = graph_provider.validate_context_snapshot
+
+    def publication_step():
+        return (project / store.PUBLICATION_LOCK).exists(), tuple(replaced)
+
+    def hash_tracked_input(path):
+        if path in checked:
+            checked[path].append(publication_step())
+        return file_hash(path)
+
+    def check_context_snapshot(root, context):
+        context_checks.append(publication_step())
+        return actual_snapshot(root, context)
+
+    def replace_output(source, destination):
+        actual_replace(source, destination)
+        replaced.append(destination.relative_to(project))
+
+    monkeypatch.setattr(runtime_evidence, "file_hash", hash_tracked_input)
+    monkeypatch.setattr(graph_provider, "validate_context_snapshot", check_context_snapshot)
+    monkeypatch.setattr(store.os, "replace", replace_output)
+    with (
+        patch.object(runtime_evidence, "validate_manifest", wraps=validate_manifest) as validate,
+        patch.object(runtime_evidence, "_validate_capture", wraps=runtime_evidence._validate_capture) as capture_check,
+        patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")),
+    ):
+        assert import_manifest(project, manifest)["observations_imported"] == 1
+
+    # Initial validation, before preparing outputs, and before each replacement.
+    expected = [
+        (False, ()),
+        (True, ()),
+        (True, ()),
+        (True, (store.MERMAID_FILE,)),
+        (True, (store.MERMAID_FILE, store.MARKDOWN_FILE)),
+    ]
+    assert all(checks == expected for checks in checked.values())
+    assert context_checks == expected
+    assert replaced == [store.MERMAID_FILE, store.MARKDOWN_FILE, store.GRAPH_FILE]
+    assert (validate.call_count, capture_check.call_count, observations.walks) == (1, 1, 2)
+
+
+def assert_runtime_import_rolls_back_before_graph(root, changed_input, diagnostic, monkeypatch, capsys):
+    from kgmaker import inspection_cli, store
+    from kgmaker.cli import build_parser
+
+    paths = [root / path for path in (store.GRAPH_FILE, store.MERMAID_FILE, store.MARKDOWN_FILE, ARTIFACT)]
+    before = {path: path.read_bytes() for path in paths}
+    original = changed_input.read_bytes()
+    edited = original + b"changed after replacing both reports"
+    actual_replace = store.os.replace
+    views = [store.MERMAID_FILE, store.MARKDOWN_FILE]
+    replaced = []
+
+    def replace_output(source, destination):
+        actual_replace(source, destination)
+        replaced.append(destination.relative_to(root))
+        if replaced == views:
+            changed_input.write_bytes(edited)
+
+    args = build_parser().parse_args(["runtime", "import", "--root", str(root), "--manifest", str(root / ARTIFACT)])
+    monkeypatch.setattr(store.os, "replace", replace_output)
+    try:
+        with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+            assert inspection_cli.run(args) == 3
+        assert any(diagnostic in text for text in json.loads(capsys.readouterr().out)["diagnostics"])
+        assert changed_input.read_bytes() == edited
+        assert replaced == views + views[::-1]
+        assert {path: path.read_bytes() for path in paths} == before
+        assert not (root / store.PUBLICATION_LOCK).exists()
+        assert not list((root / store.STATE_DIR).rglob(".kgmaker-*"))
+    finally:
+        changed_input.write_bytes(original)
+
+
+def test_real_jdk21_v2_cli_rechecks_bytecode_before_graph(jdk_application, monkeypatch, capsys):
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **opts, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    manifest["observations"] = [{"caller": call["caller"], "target": call["target"], "kind": "dispatch"}]
+    (root / ARTIFACT).write_text(json.dumps(manifest))
+    context = next(item for item in load_graph(root).contexts if item["id"] == manifest["context_id"])
+    assert context["bytecode_artifacts"]
+    assert_runtime_import_rolls_back_before_graph(
+        root, root / "classes/fixture/TraceApplication.class", "STALE_INDEX: classpath",
+        monkeypatch, capsys,
+    )
+
+
+def test_v1_cli_rechecks_worker_before_graph(project, monkeypatch, capsys):
+    root = project
+    save_graph(load_graph(root), root)
+    manifest = {"schema_version": 1, "runtime_id": "runtime-v1", "context_id": "ctx",
+                "build_id": "build-7", "config_fingerprint": "cfg-7",
+                "observations": [{"caller": "main", "target": "greet", "kind": "dispatch"}]}
+    (root / ARTIFACT).write_text(json.dumps(manifest))
+    assert_runtime_import_rolls_back_before_graph(
+        root, root / "worker.jar", "STALE_RUNTIME: worker distribution changed", monkeypatch, capsys,
+    )

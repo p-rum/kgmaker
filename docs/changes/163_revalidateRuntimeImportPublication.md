@@ -20,11 +20,11 @@ stejné bajty v uloženém grafu, Mermaid, Markdown a v capture artefaktu,
 
 ## Oprava
 
-`runtime import` používá stávající validaci manifestu při vstupu
-a prostřednictvím `save_graph(before_replace=…)` také při publikaci.
-Obě verze manifestu znovu kontrolují zdrojové hashe a distribuci workeru.
-Import v2 ověřuje i vazbu načteného capture na compiler kontext a
-čerstvost zachycených vstupů. Store ověřuje očekávanou generaci pod
+`runtime import` ověří načtený manifest při vstupu. Prostřednictvím
+`save_graph(before_replace=…)` znovu kontroluje zdrojové hashe a
+distribuci workeru u obou verzí manifestu. U v2 kontroluje i čerstvost
+zachycených vstupů vybraného compiler kontextu včetně bytecode.
+Store ověřuje očekávanou generaci pod
 zámkem, při chybě obnoví již nahrazené soubory a zachová dříve publikovaný
 graf. Import pracuje s manifestem načteným do paměti. Schémata zůstávají
 v1 a v2 pro manifest a v3 pro graf.
@@ -37,7 +37,11 @@ generace. Pokryta je publikační část AC01 a AC03. Receiver/type
 dispatch a celková acceptance T003-S13-W02 zůstávají otevřené.
 [Příklad příkazu](../runtime-trace.md#spuštění) · [README](../../README.md) · [Compiler kontext](../compiler-inspection.md) · [Zadání](../tasks/T003-S13-02-runtimeRtaImport.md) · [Acceptance](../acceptance-inventory.md) · [Stav](../production-analysis-progress.md)
 
-## Lokální ověření
+## Lokální ověření první revize
+
+Výsledky po prvním kroku patří ke stromu
+`7a722c2d490d7d136dbe767c4e3eff40b2e7d1a5`, commit
+`193614a5ae0d65bc7d22572ece44b9c593408440`.
 
 Pro výběr s reálným workerem používalo prostředí `PYTHONPATH=src`,
 `JAVA_HOME` s Temurin JDK 21.0.6+7, distribuované workery z
@@ -77,3 +81,65 @@ Pro výběr s reálným workerem používalo prostředí `PYTHONPATH=src`,
 GitHub Actions, Windows a úplné scénáře receiver/type dispatch jsou
 `NOT_RUN`. Dalším krokem W02 je ověření zbývajícího kontraktu
 ve [specifikaci](../tasks/T003-S13-02-runtimeRtaImport.md).
+
+## Jedna validace manifestu při publikaci
+
+Revize `193614a5ae0d65bc7d22572ece44b9c593408440` kromě čerstvosti
+zdrojů čtyřikrát opakovala i validaci obálky, facts a observations
+pod publikačním zámkem. Nezávislé steelman review u 8 500 platných
+pozorování naměřilo 29,399 s ve čtyřech opakovaných validacích.
+
+`runtime_evidence.py` provede plnou validaci před vstupem do store.
+Ve stávajících publikačních kontrolách načítá jen soubory zdrojů
+a distribuce workeru, u v2 ověří i zachycené vstupy compiler kontextu.
+Kontrola očekávané generace a obnova výstupů probíhají ve stejném store.
+Test počítá volání celé validace, validaci facts a průchody observations.
+Zaznamenává stav zámku a nahrazené výstupy při každé kontrole zdrojů,
+workeru a snapshotu v2. Další CLI testy mění skutečný JDK 21 bytecode
+nebo testovací worker v1 po nahrazení obou odvozených výstupů. Ověří
+odmítnutí s kódem 3, obnovu obou výstupů, stejné bajty grafu a capture
+a nulové spuštění procesů.
+[Kód](../../src/kgmaker/runtime_evidence.py) · [Testy](../../tests/test_runtime_trace_producer.py)
+
+- **Před opravou.**
+  `python -m pytest -p no:cacheprovider -q --tb=short tests/test_runtime_trace_producer.py::test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step`
+  skončil kódem 1. Test naměřil `(5, 5, 6)`, očekává `(1, 1, 2)`.
+  JUnit SHA-256 `115b2b7383dcf34390512ca9d6f7cfaba8ffc4ef3e7045644f18ca6e66546f7e`.
+- **První návrh revize.** V obou sadách selhal test generačního
+  konfliktu W06. Kontrola verze proběhla před kontrolou generace a
+  testovací náhrada validátoru neposkytovala verzi manifestu.
+  Výběr v2 při opakované kontrole se nyní provádí v callbacku
+  po store CAS. Samostatně znovu prošel test generačního konfliktu
+  i nový test počtů volání. JUnit SHA-256 prvního návrhu s JDK 21 je
+  `60f5b191d9aef9fec474c201e981ae63c6c21e7c8e07b48056f466289f21ddc3`.
+  JUnit standardní sady prvního návrhu má SHA-256
+  `82c2557461270ae6e32337480622593885011e184dc11beb2812e5c4011f303d`.
+- **Opravená revize s reálným JDK 21.0.6+7.**
+  `PYTHONPATH=src:tests python -m pytest -p no:cacheprovider -q --tb=short tests/test_runtime_trace_producer.py tests/test_build_aware.py tests/test_graph_provider.py tests/test_t032_persist_process_review.py tests/test_graph_publication_concurrency.py runtime-publication-main-current-test.py`
+  skončil kódem 0, 154 PASS a 0 SKIP. Poslední soubor je výše popsaný
+  lokální test platného capture se stejným SHA-256.
+  JUnit SHA-256 `8762be7c4d8555a9e00ba15155399126b90107f2a102b5da77b587b53d9a1798`.
+  SHA-256 manifestu sledovaného kódu, testů a nástrojů před i po běhu
+  je `cfd724210cdde8330c36413c2d06503841ac7d3a00f776d3302c195399120a76`.
+- **Úplná standardní sada opravené revize, Python 3.13.18.**
+  `PYTHONPATH=src python -m pytest -p no:cacheprovider -q --tb=short`
+  skončil kódem 0, 2 468 PASS, 1 297 SKIP a jeden očekávaný strict XFAIL
+  T047-S02. Případy se skutečným JDK 21 ověřil výběr výše.
+  JUnit SHA-256 `20087500259acc8f0293ffe290a2c1c33548f2d79b47ccff606833819eeeeb75`.
+  Manifest sledovaných vstupů má stejný SHA-256 jako výběr s JDK 21.
+- **Měření a kompatibilita.** Lokální `PYTHONPATH=src python probe.py perf --count 8500`
+  na opravené revizi změřil 9,507 s celkem. Zaznamenal jednu plnou
+  validaci před zámkem. `python probe.py compat` ověřil čtyři kombinace
+  v1/v2 s předchozími odvozenými pohledy i bez nich. V každé zastaralý
+  worker odmítl publikaci a po obnově workeru prošel platný import.
+  SHA-256 původní sondy review je
+  `f58a18f76ff67872108d75cad38dd27d76f85efa1f785cfeaef5db36a7f33785`,
+  měření `c0be62bb0cd2d539ed10fe6d8b78729ba4c8ee071b721b3d38fe02d16c54de68`
+  a kontroly kompatibility `a6801622c54c6614c5917592521defbca837db6b1869f428fcf4804d35e8eb2d`.
+- **Testgen na archivu `193614a`.**
+  `kgmaker testgen prepare --id runtime-publication-retry1 --target src/kgmaker/runtime_evidence.py --scope production --framework pytest --token-budget 100000`
+  vrátil kód 2 `Token budget cannot hold target evidence`.
+  Cílené testy používají existující fixture a skutečné výsledky běhů výše.
+
+GitHub Actions a Windows mají v této revizi stav `NOT_RUN`.
+Zbývající receiver/type kontrakt W02 zůstává otevřený.
