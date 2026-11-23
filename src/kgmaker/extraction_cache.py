@@ -112,12 +112,15 @@ def engine_fingerprint():
 
 def launch_inputs(argv):
     """Capture the selected executable/platform, without starting a process."""
+    launcher = Path(argv[0])
     try:
-        executable = Path(argv[0]).resolve(strict=True)
+        executable = launcher.resolve(strict=True)
         files = {str(executable): file_hash(executable)}
-    except FileNotFoundError:
+    except OSError:
         return None
-    is_java = executable.name in {'java', 'java.exe'}
+    java_names = {'java', 'java.exe'}
+    is_java = (os.path.normcase(launcher.name) in java_names
+               or os.path.normcase(executable.name) in java_names)
     if is_java:
         try:
             for relative in ('release', 'lib/modules', 'lib/ct.sym'):

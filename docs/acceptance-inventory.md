@@ -27,6 +27,8 @@ Dílčí ověření [#116](https://github.com/p-rum/kgmaker/issues/116) nad
 `test_java_launch_capture_binds_exact_locale` a `test_java_launch_capture_binds_ct_sym_contents`
 ověřují změny klíče. `test_actual_jvm_locale_drift_preserves_published_generation`
 ověřuje odmítnutí po živé analýze a rollback po výměně prvního výstupu.
+Samostatné regrese pokrývají alias `java` a spustitelný launcher bez práva
+čtení na JDK 21/POSIX.
 AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
 rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.

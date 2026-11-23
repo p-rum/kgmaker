@@ -1567,6 +1567,8 @@ Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
 Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
+Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
+binárky a platformních souborů jejího JDK.
 Chybějící vstup otisku ponechá případný živý výsledek v režimu
 `BYPASS/INCOMPLETE_INPUT_CLOSURE`. Změna zachyceného otisku během běhu
 vyvolá `STALE` před dokončením publikace.

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from kgmaker import inspection, store
+from kgmaker import extraction_cache, inspection, store
 from kgmaker.analysis_model import file_hash
 from kgmaker.extraction_cache import launch_inputs
 from kgmaker.model import KnowledgeGraph
@@ -113,6 +113,42 @@ def test_java_launch_capture_binds_ct_sym_contents(java_launch):
     assert changed['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
     platform_symbols.unlink()
     assert launch_inputs(argv) is None
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher alias')
+def test_requested_java_alias_keeps_platform_and_locale_capture(java_launch, monkeypatch):
+    argv, platform_symbols = java_launch
+    launcher = Path(argv[0])
+    executable = launcher.with_name('java-real')
+    launcher.rename(executable)
+    launcher.symlink_to(executable.name)
+    monkeypatch.setenv('LC_ALL', 'C')
+    captured = launch_inputs(argv)
+    assert captured['argv'] == argv
+    assert captured['files'][str(executable)] == file_hash(executable)
+    assert captured['files'][str(platform_symbols)] == file_hash(platform_symbols)
+    monkeypatch.setenv('LC_ALL', 'POSIX')
+    assert launch_inputs(argv)['environment_sha256'] != captured['environment_sha256']
+
+
+def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport, java_launch, monkeypatch):
+    root, _, _, _, calls, _ = transport
+    argv, _ = java_launch
+    monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
+
+    def hash_readable(path):
+        if path == Path(argv[0]).resolve():
+            raise PermissionError('launcher bytes unavailable')
+        return file_hash(path)
+
+    monkeypatch.setattr(extraction_cache, 'file_hash', hash_readable)
+    result = inspection.inspect_jvm(root)
+    assert result['exit_code'] == 0
+    assert calls == {'analyze': 1, 'graph': 1, 'framework': 1}
+    assert {(stage['status'], stage['reason']) for stage in result['cache']['stages']} == {
+        ('BYPASS', 'INCOMPLETE_INPUT_CLOSURE'),
+    }
+    assert not store.load_graph(root).extraction_cache
 
 
 def test_public_inspect_cold_warm_reexecutes_all_stages(transport):

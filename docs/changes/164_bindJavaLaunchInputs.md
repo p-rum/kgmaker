@@ -95,3 +95,32 @@ rollback po změně zdroje, workeru či bytecode a kontroly uložené generace.
 JUnit SHA-256 je `832ae55300c9f61dd89b0a059ba5ee6619b254121cfe7994a7499843142ac8d7`.
 SHA-256 shodného manifestu 269 zdrojových a testovacích vstupů před i po
 běhu je `ea1d48c243b541e6e2eb28b11e457a6322edc522d9c84c3058e08ce987a7db85`.
+
+## Oprava po nezávislém review #149
+
+Na revizi `8dbe48a85539fff5f8eca250859bf7c73b4227de` dvě nezávislá review
+prokázala dvě chyby. Při `bin/java → java-real` chyběly v otisku platformní
+soubory i locale. Spustitelná binárka bez práva čtení ukončila inspekci
+výjimkou `PermissionError` po úspěšném handshake.
+
+`launch_inputs` rozpozná jméno `java` nebo `java.exe` v požadované i
+rozřešené cestě. Otisk zahrnuje bajty rozřešené binárky a soubory jejího
+JDK. Chyba `OSError` při rozřešení nebo čtení binárky označí otisk jako
+nedostupný. Živá inspekce pak může proběhnout s `BYPASS/INCOMPLETE_INPUT_CLOSURE`.
+[Příkazy a význam výstupu](../stage-content-cache.md) platí i pro tyto případy.
+
+Obě nové regrese nad původním kódem selhaly (**2 FAIL**, exit 1), JUnit
+`275628fb4300d20b6a8bea4d29f1170f17e73c54267f0aa1bafb6d12aaf2ac98`.
+Po opravě prošly (**2 PASS / 0 SKIP**, exit 0), JUnit
+`f2cf537760650048bd0166d898cd6911cf8a383adf52dc7e339df8283b2c9145`.
+`tests/test_stage_content_cache.py` a oba případy skutečného Javac driftu z
+`tests/test_stage_content_cache_actual.py` daly **59 PASS / 0 SKIP**, exit 0,
+JUnit `1ec9a849637116964ed91761f01b0c8686d8b043898d898e0548ec7b7e40540b`.
+
+Dvě izolované kopie Temurinu 21.0.6+7 potvrdily výsledek bez náhrady workeru.
+U aliasu změna `LC_ALL` po skutečném `analyze` vrátila `STALE` a všechny
+uložené výstupy zachovaly původní bajty. Druhý běh s právem `0111` dokončil
+analýzu, vyřešil jedno volání a uložil graf s prázdnými cache metadaty.
+Všechny tři fáze hlásily `BYPASS/INCOMPLETE_INPUT_CLOSURE`. SHA-256 obou
+dokladů je `1ed82101e21ca9655539d35f858e0a69922a99ef7989eda96795cdee877a9207`
+a `ee06f28b3cc608fc11e2984f47a8b371ed9c1337eb8c08807c4834bbb9518456`.
