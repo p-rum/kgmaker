@@ -35,6 +35,27 @@ artefakty se kontrolují pomocí sdílené validace snapshotu. Identita buildu a
 konfigurace musí přesně odpovídat kontextu; service/version jsou povinné deklarované
 identifikátory. Nejde o ověření nasazené verze, úplného prostředí procesu nebo dat.
 
+Před importem doplňte `config_fingerprint` do zvolené položky `contexts[]`
+BuildManifestu v1. Hodnota je 64 malých hexadecimálních znaků SHA-256
+deklarované netajné konfigurace. Níže je výřez položky pro `root:main`.
+
+```json
+{
+  "id": "root:main",
+  "config_fingerprint": "c3516db82491fcad01be61b4de37706d372452cd15fb93fb22452dc285ab1662"
+}
+```
+
+```sh
+kgmaker project build-import --root PROJECT --manifest /path/to/configured-manifest.json
+kgmaker inspect code --root PROJECT --build-id BUILD_ID --context root:main
+```
+
+Inspekce přebírá digest výhradně z vybrané položky. Build import označuje dodaný
+export jako `SUPPLIED_EXPORT_UNVERIFIED`. Manifest bez pole funguje pro
+build import a compiler inspekci. Runtime v2 vyžaduje shodnou deklarovanou
+hodnotu v uloženém kontextu a v `--config-fingerprint`.
+
 Příklad explicitní kompilace SDK a aplikace:
 
 ```sh

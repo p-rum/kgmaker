@@ -282,6 +282,65 @@ SHA-256 výsledné sondy je
 
 GitHub Actions a Windows na spojeném stromu mají stav `NOT_RUN`.
 
+## Přenos po sloučení #148 — T003-S13-W01-AC01 a T003-S13-W02-AC01–AC04
+
+První rodič je `c2e95614cf9d0b924aa0c390281617746a65ba49` se stromem
+`d88229d3ccfb9249a0868a714eea7acbd7f75366`. Druhý rodič je
+`385943e48d2d2e60cec541f1f0db78beda83de22` se sloučeným #148.
+Předchozí úplná sada a sonda čtyř dokladů patří prvnímu rodiči.
+
+Veřejný build-import a compiler inspekce z #148 předávají otisk
+deklarované konfigurace vybrané varianty do v2 capture. Původ
+BuildManifestu a hranice deklarovaného otisku mají stávající kontrakt.
+`build_model.py` a `test_build_runner.py` se shodují s druhým rodičem.
+Obsah `runtime_evidence.py` a `callgraph.py` se shoduje s prvním rodičem.
+Zachovává doklady více běhů, typovou kontrolu, oddělení statického
+průchodu od runtime pozorování a jednu plnou validaci před zámkem
+s opakovanými kontrolami čerstvosti při publikaci. Testovací modul
+uchovává všech 31 definic testů a fixture z obou rodičů.
+[BuildManifest a příklad](165_forwardBuildConfiguration.md) · [Publikace](163_revalidateRuntimeImportPublication.md) · [Runtime CLI](../runtime-trace.md)
+
+Společný kandidát s reálným Mavenem 3.9.9, Temurin JDK 21.0.6+7
+a připravenými JVM/build workery má 160 PASS a 0 SKIP. Zahrnuje skutečný
+veřejný Maven build → inspekce → v2 capture, typované a opakované importy,
+kontrolu generačního konfliktu W06, rollback po změně zdroje i bytecode
+a procesní regresi T032. JUnit SHA-256
+`bace4b68f0ea1e3448c86bf2ca9fedeffa70e5063924ff4e3d3a4e8ce620cdb1`.
+Před a po běhu se shoduje manifest sledovaného kódu, fixture a testů
+`954b6830bee984ed0f1a57aa9c636748a1d868b67be3b4a110eec91e750fcb4d`
+i manifest instalovaných nástrojů
+`6fceeb1dd1d54531cca968ec9a0f8919d7fab40035838a6845c99ed8c41dffb5`.
+Provozní nástroje nastavuje stejný Maven launcher jako [Change165](165_forwardBuildConfiguration.md).
+
+```bash
+python -m pytest -n 2 -p no:cacheprovider -q --tb=short \
+  tests/test_runtime_trace_producer.py tests/test_build_aware.py tests/test_graph_publication_concurrency.py \
+  tests/test_t032_persist_process_review.py \
+  tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes \
+  tests/test_build_runner.py::test_build_context_config_fingerprint_comes_from_selected_context \
+  tests/test_build_runner.py::test_build_manifest_rejects_invalid_context_config_fingerprint
+```
+
+Inventář eviduje přenos deklarovaného otisku W01 jako sloučený
+v [#148](https://github.com/p-rum/kgmaker/pull/148). Ověření W01 zůstává
+`PARTIAL`. W02 zůstává `PARTIAL` v rozsahu importu doložených pozorování.
+Odvození skutečného typu příjemce, vazba ke konkrétnímu call site a úplná
+identita okolního runtime prostředí mají další vlastní rozsah.
+[Stav](../production-analysis-progress.md) · [Acceptance](../acceptance-inventory.md)
+
+Sonda `PYTHONPATH=src python pr136-after148-multirun.py PATH_TO_TRACE`
+použila skutečný v2 capture z veřejné Maven/JDK fixture výše. K hraně
+připojila postupně 1, 2, 3 a 4 doložené běhy. Opakovaný import počet
+nezvýšil a třídu v roli volajícího odmítl bez změny grafu. Při importu
+neběžel žádný proces. Uložený BuildManifest i původní v2 capture
+zůstaly po bajtech shodné. SHA-256 sondy je
+`fcdd1bd10711e1629c232bacff07218a69165b1fe0aa02f243185517a1441d09`.
+
+Sémantická vrstva uchovala 55 konceptů, 192 vztahů a 377 jedinečných
+epizod z rodičů. Citace 12 konceptů a 26 vztahů v compiler příručce
+ukazují po vložení textu #148 na přesně stejný text o sedm řádků níž.
+Úplná sada, Windows a GitHub Actions na tomto novém stromu mají stav `NOT_RUN`.
+
 Sémantické vrstvy z obou rodičů uchovávají 55 konceptů, 192 vztahů
 a 374 jedinečných dřívějších epizod. Stejný vztah k funkci
 `provenance.event` používá aktuální deklaraci na řádku 166.

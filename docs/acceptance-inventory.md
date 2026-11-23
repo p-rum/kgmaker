@@ -58,6 +58,12 @@ ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
 Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
 běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
+Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1
+je sloučené v `385943e48d2d2e60cec541f1f0db78beda83de22`.
+Skutečný běh Maven 3.9.9 a JDK 21 ověřil vznik v2 trace i odmítnutí
+chybějícího, neplatného či cizího digestu před dalším procesem a zápisem.
+Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pull/148) · [Záznam ověření](changes/165_forwardBuildConfiguration.md).
+
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T003-S13-W01-AC01 | VERIFIED_IN_SCOPE (JDK21/POSIX) | `tests/test_runtime_trace_producer.py::test_actual_jdk21_application_observes_all_four_kinds_and_no_values` + `test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch`: skutečný javac, JVM compiler worker, aplikace a source-bound IDs; povinné identity, žádné raw credentials. `tests/test_graph_provider.py::test_scan_hook_and_feature_retain_compiler_layer_without_processes` a import pod zákazem Popen. Žádný automatický Spring capture ani deployment proof. |

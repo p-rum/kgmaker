@@ -376,6 +376,143 @@ def test_actual_jdk21_capture_is_opt_in_and_records_only_executed_branch(jdk_app
     assert next(f for f in manifest["facts"] if f["kind"] == "condition")["matched"] is False
 
 
+@pytest.mark.skipif(os.name != "posix", reason="Explicit Maven and runtime execution require POSIX")
+def test_actual_maven_public_runtime_uses_selected_build_configuration(tmp_path, capsys, monkeypatch):
+    from kgmaker.cli import main
+    from kgmaker.inspection import command as compiler_command
+    from kgmaker.worker_protocol import WorkerError
+
+    java_home = Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/java-21-openjdk-amd64"))
+    java, javac = java_home / "bin/java", java_home / "bin/javac"
+    workers = Path(os.environ.get("KGMAKER_WORKERS_HOME", ROOT / "workers"))
+    maven = shutil.which("mvn")
+    if not maven or not java.is_file() or not javac.is_file() or not (
+            workers / "build/maven/target/kgmaker-build-export.jar").is_file():
+        pytest.skip("Requires Maven, JDK 21 and a trusted Maven exporter")
+    version = subprocess.run([str(javac), "-version"], capture_output=True, text=True, check=True)
+    if not version.stdout.startswith(("javac 21.", "javac 21\n")):
+        pytest.skip("Requires JDK 21")
+    try:
+        compiler_command("jvm", workers)
+    except WorkerError as error:
+        if os.environ.get("KGMAKER_REQUIRE_WORKERS") == "1":
+            raise
+        pytest.skip(str(error))
+
+    def cli(*args, expected=(0,)):
+        with patch("sys.argv", ["kgmaker", *map(str, args)]), pytest.raises(SystemExit) as result:
+            main()
+        out, err = capsys.readouterr()
+        assert result.value.code in expected, out + err
+        return json.loads(out)
+
+    root = tmp_path / "project"
+    source = root / "src/main/java/fixture"
+    source.mkdir(parents=True)
+    shutil.copy(ROOT / "tests/fixtures/runtime-trace/TraceApplication.java", source)
+    shutil.copy(ROOT / "tooling/runtime/java/org/kgmaker/runtime/RuntimeTrace.java", source)
+    (root / "pom.xml").write_text(
+        """<project xmlns="http://maven.apache.org/POM/4.0.0">
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>fixture</groupId><artifactId>runtime-config</artifactId><version>1</version>
+          <properties><maven.compiler.release>21</maven.compiler.release></properties>
+          <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId><version>3.13.0</version>
+          </plugin></plugins></build>
+        </project>""", encoding="utf-8")
+    plan, supplied = tmp_path / "plan.json", tmp_path / "supplied.json"
+    cli("project", "build-plan", "--root", root, "--phase", "compile", "--offline", "--executable", maven,
+        "--java-home", java_home, "--worker-home", workers, "--output", plan)
+    execution = cli("project", "build-run", "--root", root, "--plan", plan, expected=(0, 3))
+    result = execution["result"]
+    if result["status"] != "SUCCESS":
+        log = Path(result["log_path"]).read_text(encoding="utf-8")
+        if (os.environ.get("KGMAKER_REQUIRE_WORKERS") != "1"
+                and "offline mode" in log and "has not been downloaded" in log):
+            pytest.skip("Maven fixture dependencies are unavailable offline")
+        pytest.fail(log)
+    manifest = json.loads(Path(execution["manifest_path"]).read_text(encoding="utf-8"))
+    selected = next(context for context in manifest["contexts"] if context["id"] == "root:main")
+    sibling = next(context for context in manifest["contexts"] if context["id"] == "root:test")
+    assert "config_fingerprint" not in selected and "config_fingerprint" not in sibling
+    build_id = manifest["build_id"]
+    configured = hashlib.sha256(b"fixture-mode=enabled").hexdigest()
+    manifest["config_fingerprint"] = hashlib.sha256(b"top-level-only").hexdigest()
+    sibling["config_fingerprint"] = hashlib.sha256(b"different-source-set").hexdigest()
+    output = root / ARTIFACT
+    output.parent.mkdir(parents=True)
+    output.write_bytes(b"previously published artifact\n")
+
+    import_args = ("project", "build-import", "--root", root, "--manifest", supplied)
+    inspect_args = ("inspect", "code", "--root", root, "--build-id", build_id, "--context", selected["id"],
+                    "--worker-home", workers)
+
+    def import_and_inspect():
+        supplied.write_text(json.dumps(manifest), encoding="utf-8")
+        with patch("subprocess.Popen", side_effect=AssertionError("Build import launched a process")):
+            imported = cli(*import_args)
+        path = Path(imported["manifest_path"])
+        result = cli(*inspect_args)
+        context = result["context"]
+        assert context["build_context_id"] == selected["id"]
+        assert context["manifest_hash"] == digest(json.loads(path.read_text(encoding="utf-8")))
+        assert context["origin_trust"] == imported["origin_trust"] == "SUPPLIED_EXPORT_UNVERIFIED"
+        assert context["freshness"] == "EXECUTION_BOUND"
+        symbols = {symbol["name"]: symbol["id"] for symbol in result["graph"]["symbols"]
+                   if symbol["context_id"] == context["id"]
+                   and (symbol.get("path") or "").endswith("TraceApplication.java")}
+        names = ("main", "createService", "TraceApplication$Service", "enabled", "greet")
+        argv = [java, "-cp", selected["outputs"][0]["path"], "fixture.TraceApplication", *(symbols[name] for name in names)]
+        return context, argv, path
+
+    def produce(context, fingerprint, argv, *, expected=(0,)):
+        return cli("runtime", "produce", "--root", root, "--context", context["id"], "--runtime-id", "declared-config",
+                   "--build-id", build_id, "--config-fingerprint", fingerprint, "--service-id", "fixture-app",
+                   "--service-version", "1", "--output", ARTIFACT, "--", *argv, expected=expected)
+
+    context, argv, stored_manifest = import_and_inspect()
+    assert "config_fingerprint" not in context
+    initial = saved(root), stored_manifest.read_bytes()
+    with patch("subprocess.Popen", side_effect=AssertionError("Missing configuration launched a process")):
+        missing = produce(context, configured, argv, expected=(3,))
+    assert missing["diagnostics"] == ["RuntimeManifest v2 requires captured source/config/context identity"]
+    assert (saved(root), stored_manifest.read_bytes()) == initial
+
+    selected["config_fingerprint"] = configured
+    configured_context, argv, stored_manifest = import_and_inspect()
+    assert configured_context["config_fingerprint"] == configured and configured_context["id"] != context["id"]
+    initial = saved(root), stored_manifest.read_bytes()
+    with patch("subprocess.Popen", side_effect=AssertionError("Mismatched configuration launched a process")):
+        mismatched = produce(configured_context, sibling["config_fingerprint"], argv, expected=(3,))
+    assert mismatched["diagnostics"] == ["STALE_RUNTIME: configuration fingerprint differs"]
+    assert (saved(root), stored_manifest.read_bytes()) == initial
+
+    monkeypatch.setenv("FIXTURE_MODE", "enabled")
+    trace = produce(configured_context, configured, argv)
+    assert trace["schema_version"] == 2 and trace["config_fingerprint"] == configured
+    stored_context = next(context for context in load_graph(root).contexts if context["id"] == trace["context_id"])
+    assert stored_context["config_fingerprint"] == configured
+    assert trace["source_identity"]["context_fingerprint"] == digest(stored_context)
+    assert trace["source_hashes"] == stored_context["source_files"]
+    assert trace["status"] == "PARTIAL" and {fact["kind"] for fact in trace["facts"]} == {
+        "bean", "call", "condition", "mapping",
+    }
+    assert json.loads(output.read_text(encoding="utf-8")) == trace
+    assert (saved(root)[0], stored_manifest.read_bytes()) == (initial[0][0], initial[1])
+
+    selected["config_fingerprint"] = "invalid-config-value"
+    supplied.write_text(json.dumps(manifest), encoding="utf-8")
+    initial = saved(root), stored_manifest.read_bytes()
+    with patch("subprocess.Popen", side_effect=AssertionError("Invalid manifest launched a process")):
+        invalid = cli(*import_args, expected=(2,))
+        invalid_inspection = cli("inspect", "code", "--root", root, "--manifest", supplied,
+                                 "--context", selected["id"], "--worker-home", workers, expected=(2,))
+    assert invalid["diagnostics"] == invalid_inspection["diagnostics"]
+    assert "config_fingerprint" in invalid["diagnostics"][0]
+    assert "invalid-config-value" not in invalid["diagnostics"][0]
+    assert (saved(root), stored_manifest.read_bytes()) == initial
+
+
 @pytest.mark.parametrize("field", ["service_id", "service_version", "source_identity", "schema_version", "observations", "foreign_symbol"])
 def test_v2_import_rejects_empty_forged_and_unknown_evidence(project, field):
     manifest = produce(project, capture("UNKNOWN"))
