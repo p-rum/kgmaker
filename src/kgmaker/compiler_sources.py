@@ -1,9 +1,12 @@
 """Source hashes shared by compiler capture, replay and proof consumers."""
 from collections.abc import Mapping
+from pathlib import PurePosixPath
 import re
 
+from .analysis_model import digest
 
 JVM_RAW_SOURCE_SNAPSHOT = "selected-source-set-raw-1"
+JVM_RAW_CAPTURE_PREFIX = "jvm-raw-1:"
 JVM_JPA_SOURCE_SNAPSHOTS = frozenset({"selected-source-set-2", JVM_RAW_SOURCE_SNAPSHOT})
 JVM_SOURCE_SNAPSHOTS = JVM_JPA_SOURCE_SNAPSHOTS | {"selected-source-set-1"}
 _SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -20,6 +23,34 @@ def unsupported_kotlin_source(raw_file_hashes, compiler_inputs):
     return next((path for path in compiler_inputs if path.endswith('.kt') and path in raw_file_hashes), None)
 
 
+def jvm_raw_capture_id(context):
+    """Bind replayable source inputs to the original, pre-augmentation capture."""
+    original = context.get("source_capture_base")
+    raw = context.get("source_files")
+    normalized = context.get("normalized_source_files")
+    inputs = context.get("compiler_inputs")
+    if (context.get("source_snapshot_version") != JVM_RAW_SOURCE_SNAPSHOT
+            or context.get("language") != "jvm"
+            or not isinstance(original, str) or not _SHA256.fullmatch(original)
+            or not isinstance(raw, dict) or not isinstance(normalized, dict)
+            or not normalized.keys() <= raw.keys()
+            or not isinstance(inputs, list) or any(not isinstance(path, str) for path in inputs)):
+        return None
+    if inputs != sorted(set(inputs)) or any(
+            path not in raw or not path.endswith((".java", ".kt"))
+            or path.startswith("/") or "\\" in path or ":" in path
+            or ".." in PurePosixPath(path).parts or PurePosixPath(path).as_posix() != path
+            for path in inputs):
+        return None
+    return JVM_RAW_CAPTURE_PREFIX + digest({
+        "capture": original,
+        "source_snapshot_version": context["source_snapshot_version"],
+        "compiler_inputs": inputs,
+        "source_files": raw,
+        "normalized_source_files": normalized,
+    })
+
+
 def compiler_source_digest(files, context, path):
     """Admit a captured digest against the file inventory for its graph kind."""
     captured = context.get("source_files")
@@ -33,9 +64,12 @@ def compiler_source_digest(files, context, path):
             return None
         context_id = context.get('id')
         if isinstance(context_id, str) and context_id.startswith('repo:'):
-            repo = context.get('repo_id')
-            if not isinstance(repo, str) or not repo or not context_id.startswith(f'repo:{repo}:') \
-                    or not path.startswith(f'@{repo}/'):
+            from .workspace import split_id
+            try:
+                repo, _ = split_id(context_id)
+            except ValueError:
+                return None
+            if not repo or not path.startswith(f'@{repo}/'):
                 return None
             # Federated workspace graphs carry an inventory of raw file hashes.
         else:

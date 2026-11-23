@@ -16,7 +16,7 @@ from .analysis_model import AnalysisError, digest, file_hash, read_json, safe_pa
 from .classification import Classifier
 from .compiler_sources import (
     JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
-    normalized_source_projection, unsupported_kotlin_source,
+    jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
 )
 from .control_flow import from_body
 from .model import Edge, KnowledgeGraph, Node
@@ -170,6 +170,11 @@ def sanitize(value, *, key="", semantic=False):
     return value
 
 
+def _selected_jvm_source_sets(project_model, module, source_set):
+    return [item for item in (project_model or {}).get("source_sets", [])
+            if item["module"] == module and item["id"] in {source_set, source_set + ":generated"}]
+
+
 def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
     """One capture/replay policy; legacy contexts retain their original scope gate."""
     version = selected.get("source_snapshot_version")
@@ -186,9 +191,7 @@ def source_snapshot(root: Path, graph: KnowledgeGraph, selected: dict) -> dict:
             or (version in JVM_JPA_SOURCE_SNAPSHOTS and not (selected.get("project_model") or {}).get("source_sets"))):
         return dict(sorted((node.path, source_hashes[node.path]) for node in files
                            if node.scope == selected["scope"] or (node.scope == "unknown" and node.role == "configuration")))
-    source_sets = [item for item in (selected.get("project_model") or {}).get("source_sets", [])
-                   if item["module"] == selected["module"] and
-                   item["id"] in {selected["source_set"], selected["source_set"] + ":generated"}]
+    source_sets = _selected_jvm_source_sets(selected.get("project_model"), selected["module"], selected["source_set"])
     memberships = {item["module"] + ":" + item["id"] for item in source_sets}
     # Root/module build configuration is shared; sibling source-set resources are not.
     parents = {Path(".")}
@@ -264,6 +267,7 @@ def jpa_xml_input_snapshot(root: Path, selected: dict) -> dict:
 
 def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, repo_id: str,
             module: str, source_set: str, scope: str, build_context: dict | None = None) -> dict:
+    raw_jvm_snapshot = language == "jvm" and "compiler_inputs" in (build_context or {})
     value = {"mode": "BUILD_IMPORT", "repo_id": repo_id, "module": module, "source_set": source_set,
              "scope": scope, "language": language, "origin_trust": "LOCAL_COMPILER_INPUTS", "coverage": "PARTIAL",
              "freshness": "CONTENT_VERIFIED",
@@ -274,12 +278,12 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     if language == "jvm":
         from .schema_replay import persistence_selection
         value["persistence_selection_hash"] = digest(persistence_selection(value))
-        value["source_snapshot_version"] = JVM_RAW_SOURCE_SNAPSHOT
+        value["source_snapshot_version"] = JVM_RAW_SOURCE_SNAPSHOT if raw_jvm_snapshot else "selected-source-set-2"
         value["jpa_xml_inputs"] = jpa_xml_input_snapshot(root, value)
     if language == "typescript" and isinstance(value.get("project"), dict) and "input_discovery" in value["project"]:
         value["source_snapshot_version"] = "typescript-input-discovery-1"
     value["source_files"] = source_snapshot(root, base, value)
-    if language == "jvm":
+    if raw_jvm_snapshot:
         value["normalized_source_files"] = normalized_source_projection(base.files, value["source_files"])
     from .framework import JPA_RULE_VERSION, SPRING_RULE_VERSION
     # Spring augmentation is JVM-only. Preserve the legacy TS context metadata
@@ -306,7 +310,13 @@ def context(root: Path, base: KnowledgeGraph, language: str, metadata: dict, *, 
     from .graph_provider import _selection_key
     value["selection_key"] = _selection_key({key: item for key, item in value.items()
                                               if key != "selection_key"})
-    value["id"] = digest(value)
+    identity = digest(value)
+    if raw_jvm_snapshot:
+        value["source_capture_base"] = identity
+        identity = jvm_raw_capture_id(value)
+        if identity is None:
+            raise WorkerError("Invalid selected JVM compiler input snapshot", "INVALID_PROTOCOL")
+    value["id"] = identity
     return value
 
 
@@ -742,10 +752,17 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         raise WorkerError("Worker Kotlin backend differs from explicit selection", "INVALID_PROTOCOL")
     meta["distribution"] = distribution("jvm", home, kotlin_backend=kotlin_backend)
     base = scan_repository(root, project_model=project_model, strict=strict)
-    available = {n.path for n in base.nodes if n.kind == "file" and n.scope == scope and Path(n.path).suffix in {".java", ".kt"}}
-    if sources is not None and (not isinstance(sources, list) or any(p not in available for p in sources)):
+    memberships = None
+    if (project_model or {}).get("source_sets"):
+        memberships = {item["module"] + ":" + item["id"]
+                       for item in _selected_jvm_source_sets(project_model, module, source_set)}
+    available = {n.path for n in base.nodes if n.kind == "file" and n.scope == scope
+                 and Path(n.path).suffix in {".java", ".kt"}
+                 and (memberships is None or memberships.intersection(n.build_membership))}
+    if sources is not None and (not isinstance(sources, list)
+                                or any(not isinstance(p, str) or p not in available for p in sources)):
         raise AnalysisError("Compiler inputs absent from selected source-set scope")
-    sources = sorted(available if sources is None else sources)
+    sources = sorted(available if sources is None else set(sources))
     unsupported = unsupported_kotlin_source(base.raw_file_hashes, sources)
     if unsupported is not None:
         raise WorkerError("Selected Kotlin source uses unsupported raw byte coordinates: " + unsupported,

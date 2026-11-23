@@ -747,11 +747,12 @@ Compiler freshness for an imported source set uses its module/source-set members
 and shared root/module configuration, including Gradle scripts and catalogs.
 An edit to a sibling source set with the same scope does not invalidate the selected
 variant. Changing selected resources or shared configuration still requires inspection.
-Fresh JVM contexts bind the exact source bytes and retain their corresponding
-normalized scanner hashes for proof checks. A line-ending-only edit requires a
-new explicit inspection of the selected JVM context. The verified Javac scope
-includes CRLF files. Selected Kotlin source files require matching byte and PSI
-coordinates. [Source snapshot details](docs/compiler-inspection.md#jvm-source-byte-fingerprints).
+Fresh JVM contexts bind the exact compiler input list and source bytes and retain
+the corresponding normalized scanner hashes for proof checks. A line-ending-only
+edit requires a new explicit inspection of the selected JVM context. The verified
+Javac scope includes CRLF files and their source CFG and static Kafka retry
+declarations. Selected Kotlin source files require matching byte and PSI coordinates.
+[Source snapshot details](docs/compiler-inspection.md#jvm-source-byte-fingerprints).
 `scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
 testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.
 

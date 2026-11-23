@@ -526,8 +526,9 @@ lokálního sběru, smoke i hostované opravy je VERIFIED_IN_SCOPE.
 | T003-S13 runtime | PARTIAL / OPTIONAL | V1 import + strict v2 export/import; explicitní JDK21/POSIX synchronní producer s call/factory/condition/map capture a negativními testy. [change122](changes/122_runtimeTraceProducer.md), [kontrakt](runtime-trace.md). | Automatický Spring capture, Windows, RTA/value flow, async/reflective capture a deployment/data availability; celý milník neověřen |
 
 Dílčí ověření T003-S02 / AC02 pokrývá Javac LF/CRLF. Nový JVM snapshot svazuje
-bajty zdrojů s normalizovanou strukturální projekcí. Ověřeny byly local operations,
-Criteria filtr a offline invalidace po změně konců řádků. W02 selektivní
+přesný výběr compiler vstupů a bajty zdrojů s normalizovanou strukturální projekcí.
+Ověřeny byly local operations, Criteria filtr, rozvinutí source CFG, statické
+deklarace Kafka retry/DLT a offline invalidace po změně konců řádků. W02 selektivní
 invalidace má vlastní acceptance. [Doklad přesného rozsahu](changes/160_bindJvmSourceBytes.md).
 
 Revize T003-S03-W04: Maven exporter označuje nerozřešené implicitní

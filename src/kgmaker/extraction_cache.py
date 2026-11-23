@@ -12,7 +12,7 @@ from pathlib import Path
 import time
 
 from .analysis_model import canonical, digest, file_hash
-from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT
+from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT, jvm_raw_capture_id
 from .worker_protocol import WorkerError
 
 VERSION = 'extraction-stages-1'
@@ -33,7 +33,12 @@ def _key_shape(key):
             or not _sha(key['engine']) or type(key['context']) is not dict
             or type(key['launch']) is not dict): return False
     context, launch = key['context'], key['launch']
-    if (not _sha(context.get('id')) or any(not isinstance(context.get(k), str) or not context[k]
+    identity = context.get('id')
+    if context.get('source_snapshot_version') == JVM_RAW_SOURCE_SNAPSHOT:
+        valid_id = isinstance(identity, str) and jvm_raw_capture_id(context) == identity
+    else:
+        valid_id = _sha(identity)
+    if (not valid_id or any(not isinstance(context.get(k), str) or not context[k]
             for k in ('repo_id', 'module', 'source_set', 'scope', 'language', 'selection_key'))
             or type(context.get('source_files')) is not dict
             or type(context.get('worker')) is not dict

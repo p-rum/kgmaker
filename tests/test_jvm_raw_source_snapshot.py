@@ -10,7 +10,9 @@ import pytest
 
 from kgmaker import inspection
 from kgmaker.analysis_model import write_json
+from kgmaker.compiler_sources import jvm_raw_capture_id
 from kgmaker.feature import current_graph
+from kgmaker.flow import process
 from kgmaker.graph_provider import validate_context_snapshot
 from kgmaker.store import GRAPH_FILE, load_graph
 from kgmaker.views import execution_authority_gaps, select_service_contexts
@@ -42,10 +44,10 @@ def worker_home():
     return home
 
 
-def write_sources(root, target, caller, ending):
+def write_sources(root, target, caller, ending, caller_ending=b'\n'):
     (root / TARGET).parent.mkdir(parents=True, exist_ok=True)
     (root / TARGET).write_bytes(target.encode() + ending)
-    (root / CALLER).write_bytes(caller.encode() + b'\n')
+    (root / CALLER).write_bytes(caller.encode() + caller_ending)
 
 
 def capture(root, home, explicit_model=True):
@@ -83,6 +85,37 @@ def test_javac_capture_preserves_raw_and_normalized_authority(tmp_path, worker_h
     assert (tmp_path / GRAPH_FILE).read_bytes() == before
 
 
+def test_process_flow_preserves_javac_cfg_edges_across_line_endings(tmp_path, worker_home):
+    target, caller, _ = CASES[0]
+    structures = []
+    for ending in (b'\n', b'\r\n'):
+        root = tmp_path / ('lf' if ending == b'\n' else 'crlf')
+        write_sources(root, target.replace('{ static', '{' + ending.decode() + ' static'),
+                      caller.replace('{ static', '{' + ending.decode() + ' static'), ending, caller_ending=ending)
+        result = capture(root, worker_home)
+        graph = load_graph(root)
+        owner, = [s for s in graph.symbols if s.get('name') == 'invoke' and s.get('path') == CALLER]
+        callee, = [s for s in graph.symbols if s.get('name') == 'value' and s.get('path') == TARGET]
+        assert owner['context_id'] == callee['context_id'] == result['context']['id']
+        before = (root / GRAPH_FILE).read_bytes()
+        with patch('subprocess.Popen', side_effect=AssertionError('process flow spawned a worker')):
+            report = process(graph, owner['id'])
+        assert not report['boundaries']
+        assert any(block.get('method') == callee['id'] for block in report['cfg']['blocks'])
+        structures.append(([b['kind'] for b in report['cfg']['blocks']],
+                           sorted(e['kind'] for e in report['cfg']['edges'])))
+        if ending == b'\r\n':
+            damaged = deepcopy(graph)
+            cfg, = [row for row in damaged.cfgs if row['method'] == callee['id']]
+            proof, = [p for p in damaged.evidence if p['id'] in cfg['evidence_ids']]
+            proof['sha256'] = damaged.files[TARGET]
+            assert process(damaged, owner['id'])['boundaries'][0]['reason'] == (
+                'callee CFG owner/source proof mismatch or unavailable')
+        assert (root / GRAPH_FILE).read_bytes() == before
+    assert sorted(structures[0][0]) == sorted(structures[1][0])
+    assert structures[0][1] == structures[1][1]
+
+
 def test_eol_edit_and_tampered_raw_capture_require_explicit_refresh(tmp_path, worker_home, monkeypatch):
     target, caller, _ = CASES[0]
     write_sources(tmp_path, target, caller, b'\n')
@@ -93,8 +126,13 @@ def test_eol_edit_and_tampered_raw_capture_require_explicit_refresh(tmp_path, wo
     legacy = deepcopy(original)
     legacy.pop('normalized_source_files')
     legacy['source_snapshot_version'] = 'selected-source-set-2'
+    downgraded = {**legacy}
+    downgraded.pop('source_capture_base')
+    legacy['id'] = legacy.pop('source_capture_base')
     with patch('subprocess.Popen', side_effect=AssertionError('offline replay spawned a process')):
         validate_context_snapshot(tmp_path, legacy)
+        with pytest.raises(WorkerError, match='JVM compiler input capture identity changed'):
+            validate_context_snapshot(tmp_path, downgraded)
         (tmp_path / TARGET).write_bytes(target.encode() + b'\r\n')
         with pytest.raises(WorkerError, match='STALE_INDEX'):
             validate_context_snapshot(tmp_path, original)
@@ -177,8 +215,23 @@ def test_selected_kotlin_coordinate_guard_preserves_mixed_jvm_scope(tmp_path, wo
     damaged['source_files'][kotlin] = hashlib.sha256(raw).hexdigest()
     damaged['normalized_source_files'][kotlin] = hashlib.sha256(text).hexdigest()
     with patch('subprocess.Popen', side_effect=AssertionError('offline replay spawned a process')):
-        with pytest.raises(WorkerError, match='STALE_INDEX: selected Kotlin source uses unsupported raw byte coordinates'):
+        with pytest.raises(WorkerError, match='JVM compiler input capture identity changed'):
             validate_context_snapshot(tmp_path, damaged)
+        for forged in ([TARGET, CALLER], [], ['src/test/java/Absent.java'],
+                       [*selected, kotlin], list(reversed(selected)), ['../Outside.java'], [other]):
+            with pytest.raises(WorkerError, match='JVM compiler input capture identity changed'):
+                validate_context_snapshot(tmp_path, {**damaged, 'compiler_inputs': forged})
+        with pytest.raises(WorkerError, match='selected Kotlin source uses unsupported raw byte coordinates'):
+            validate_context_snapshot(tmp_path, {**damaged, 'id': jvm_raw_capture_id(damaged)})
+        forged_graph = graph.to_dict()
+        forged_graph['contexts'] = [{**row, **damaged, 'compiler_inputs': [TARGET, CALLER]}
+                                    if row['id'] == context['id'] else row for row in forged_graph['contexts']]
+        write_json(store, forged_graph)
+        forged_bytes = store.read_bytes()
+        live, _, _ = current_graph(tmp_path)
+        assert not any(s.get('path') == kotlin for s in live.call_sites)
+        assert store.read_bytes() == forged_bytes
+        store.write_bytes(before)
     assert store.read_bytes() == before
 
 
@@ -206,6 +259,7 @@ def test_workspace_qualified_jvm_snapshot_validates_both_hashes(tmp_path, worker
     assert selected['services'][0]['status'] == 'CURRENT'
     context, = [c for c in graph.contexts if c.get('id') == context_id]
     target_key = '@local/' + TARGET
+    assert context['compiler_inputs'] == ['@local/' + path for path in result['context']['compiler_inputs']]
     assert graph.files[target_key] == context['source_files'][target_key]
     assert graph.files[target_key] != context['normalized_source_files'][target_key]
     symbol_ids = {s['id']: s for s in graph.symbols}

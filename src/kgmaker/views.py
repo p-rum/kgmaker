@@ -10,7 +10,7 @@ from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, Mapping
 
-from .compiler_sources import compiler_source_digest
+from .compiler_sources import JVM_RAW_SOURCE_SNAPSHOT, compiler_source_digest
 from .model import KnowledgeGraph
 from .architecture_model import EVIDENCE_KINDS, EVIDENCE_POLARITIES, FRESHNESS_STATUSES, aggregate_view_edges
 
@@ -785,7 +785,11 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
                     if context.get("id", "").startswith("repo:"):
                         # Workspace contexts qualify source paths as @repo/path.
                         # The provider validator consumes a single checkout.
+                        from .workspace import split_id
                         prefix = "@" + repo + "/"
+                        context_repo, validation_context["id"] = split_id(context["id"])
+                        if context_repo != repo:
+                            raise ValueError("STALE_INDEX: workspace context belongs to another repository")
                         for field in ("source_files", "normalized_source_files"):
                             if field == "normalized_source_files" and field not in context:
                                 continue
@@ -795,6 +799,12 @@ def select_service_contexts(graph: KnowledgeGraph, requests: list[dict], *,
                                 raise ValueError("STALE_INDEX: workspace source snapshot has invalid repo-qualified paths")
                             validation_context[field] = {path[len(prefix):]: checksum
                                                          for path, checksum in captured.items()}
+                        if context.get("source_snapshot_version") == JVM_RAW_SOURCE_SNAPSHOT:
+                            inputs = context.get("compiler_inputs")
+                            if not isinstance(inputs, list) or any(
+                                    not isinstance(path, str) or not path.startswith(prefix) for path in inputs):
+                                raise ValueError("STALE_INDEX: workspace compiler inputs have invalid repo-qualified paths")
+                            validation_context["compiler_inputs"] = [path[len(prefix):] for path in inputs]
                     validate_context_snapshot(Path(repo_roots[repo]), validation_context)
             except (ValueError, OSError) as error:
                 raise ContextSelectionError({"code": "STALE_CONTEXT", "service_id": service,

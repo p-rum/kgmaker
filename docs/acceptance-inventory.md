@@ -565,8 +565,11 @@ T003-S02 / AC02 zahrnuje ověřený Javac výběr pro LF a CRLF. Nová JVM inspe
 publikuje otisk bajtů odděleně od normalizovaného otisku strukturálního grafu.
 Ověřeny byly konkrétní a abstraktní deklarace, local computation, Criteria filtr,
 odmítnutí nesouhlasících otisků a offline zastarání po změně konců
-řádků. Vybraný Kotlin vstup s normalizovanými PSI souřadnicemi mimo shodu
-s bajty je odmítnut. [Přesná evidence a hranice](changes/160_bindJvmSourceBytes.md).
+řádků. `test_selected_kotlin_coordinate_guard_preserves_mixed_jvm_scope` hlídá
+identitu seznamu compiler vstupů a odmítá vybraný Kotlin s nesouhlasícími bajty.
+`test_process_flow_preserves_javac_cfg_edges_across_line_endings` a
+`test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations` ověřují CFG a
+statické deklarace Kafka retry/DLT. [Přesná evidence a hranice](changes/160_bindJvmSourceBytes.md).
 
 Povinné mezery pro T003-S11 zůstávají viditelné zejména v T001-FA-14/15/24/73
 a T002-HB-02. Řádky PARTIAL vyžadují rozšíření fixture/matice uvedené

@@ -3,8 +3,8 @@ from pathlib import Path
 import shlex
 
 from .compiler_sources import (
-    JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
-    normalized_source_projection, unsupported_kotlin_source,
+    JVM_JPA_SOURCE_SNAPSHOTS, JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, JVM_SOURCE_SNAPSHOTS,
+    jvm_raw_capture_id, normalized_source_projection, unsupported_kotlin_source,
 )
 from .model import KnowledgeGraph
 from .store import load_graph
@@ -200,6 +200,12 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     if isinstance(snapshot_version, str) and snapshot_version in JVM_SOURCE_SNAPSHOTS \
             and context.get("language") != "jvm":
         raise WorkerError("STALE_INDEX: JVM source snapshot on a non-JVM context", "STALE")
+    identity = context.get("id")
+    if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT or (
+            isinstance(identity, str) and identity.startswith(JVM_RAW_CAPTURE_PREFIX)):
+        expected = jvm_raw_capture_id(context)
+        if expected is None or identity != expected:
+            raise WorkerError("STALE_INDEX: JVM compiler input capture identity changed; inspect again", "STALE")
     if isinstance(snapshot_version, str) and snapshot_version in JVM_JPA_SOURCE_SNAPSHOTS:
         from .inspection import jpa_xml_input_snapshot
         if context.get("jpa_xml_inputs") != jpa_xml_input_snapshot(root, context):
@@ -242,10 +248,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         if snapshot_version == JVM_RAW_SOURCE_SNAPSHOT:
             if normalized_source_projection(current.files, current_files) != context.get("normalized_source_files"):
                 raise WorkerError("STALE_INDEX: normalized JVM source projection changed; inspect again", "STALE")
-            compiler_inputs = context.get("compiler_inputs", list(current_files))
-            if not isinstance(compiler_inputs, list) or any(not isinstance(path, str) for path in compiler_inputs):
-                raise WorkerError("STALE_INDEX: invalid JVM compiler input selection; inspect again", "STALE")
-            unsupported = unsupported_kotlin_source(current.raw_file_hashes, compiler_inputs)
+            unsupported = unsupported_kotlin_source(current.raw_file_hashes, context["compiler_inputs"])
             if unsupported is not None:
                 raise WorkerError("STALE_INDEX: selected Kotlin source uses unsupported raw byte coordinates: "
                                   + unsupported, "STALE")

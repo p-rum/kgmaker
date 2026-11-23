@@ -1607,15 +1607,19 @@ The scanner captures raw and normalized hashes from the same bounded UTF-8 read.
 `source_files` holds selected raw SHA-256 fingerprints. A checkout's `graph.files`
 represents normalized scanner text. `normalized_source_files` carries the
 structural hash for scanned paths where the two digests differ. The workspace
-graph uses raw file inventory hashes. It qualifies both source maps with the
-owning repository. The offline provider validates both maps and the selected
-persistence XML inventory. It recognizes legacy JVM snapshot versions and the
-separate TypeScript input-discovery protocol.
+graph uses raw file inventory hashes. It qualifies both source maps and the
+compiler inputs with the owning repository. The `jvm-raw-1:` capture ID binds
+the snapshot version, canonical compiler input list, raw hashes and their sparse
+normalized projection to the pre-augmentation inspection digest. Offline replay
+checks that identity, the current inputs and the selected persistence XML inventory.
+Legacy JVM snapshots and the separate TypeScript input-discovery protocol remain
+readable.
 
 An LF/CRLF-only edit makes the affected JVM context stale. To refresh it, run
 `kgmaker inspect code --root ./service --module app --source-set main`. The
 verified Javac fixtures cover return and void bodies, abstract declarations,
-local computation evidence, and a Criteria filter edge on CRLF input.
+local computation evidence, a Criteria filter, source CFG call expansion and static
+Kafka retry/DLT declarations on CRLF input.
 Kotlin workers currently report PSI coordinates over normalized text. Explicit
 JVM inspection rejects a selected Kotlin file whose line endings change those
 coordinates. Offline replay applies the same guard to the captured compiler

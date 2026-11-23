@@ -166,3 +166,83 @@ epizodami. Nová epizoda eviduje přesný přenos.
 - NOT_RUN — nový úplný běh, úplná toolchain matice, Windows a vzdálené CI
   pro tuto přesnou integrační revizi. Výše uvedený striktní běh 300 případů
   je doklad produktu na parentu `4af8f12`.
+
+## T003-S02 / AC02 — oprava po nezávislém ověření #145
+
+Výchozí revize opravy je `4c4973e9cd79ba6c2dc66ab1a554f03282465a32`.
+Přehrání přijalo upravenou mapu bajtů a výběr, ze kterého zmizel skutečně
+přeložený Kotlin vstup, se stejným ID kontextu. Ve veřejném source CFG
+vypadlo rozvinutí volání s CRLF zdrojem. Skutečná Javac fixture také prokázala
+vynechání dvou statických deklarací Kafka retry/DLT.
+
+- `compiler_sources.py`, `inspection.py` a `graph_provider.py` používají ID
+  s prefixem `jvm-raw-1:`. ID váže původní digest inspekce před augmentací
+  na verzi snapshotu, seřazený jedinečný seznam skutečných vstupů `.java` a
+  `.kt`, uloženou raw mapu a normalizovanou projekci odlišných otisků.
+  Offline ověření porovná ID a aktuální stav. Samostatný `selection_key`
+  dál identifikuje stejný výběr modulu a varianty pro explicitní refresh.
+  Kontexty sestavené bez zaznamenaného výběru compiler vstupů dál používají
+  původní formát.
+- `workspace.py` a `views.py` kvalifikují výběr spolu s oběma mapami.
+  Odvození source CFG, Kafka code a Kafka retry ověřuje přesný raw otisk
+  k uložené strukturální projekci. Zachovává vazby na kontext, scope,
+  cestu a rozsah důkazu. Kafka výstup je statická deklarace.
+- Stávající formát graph/store v1–v3, legacy JVM snapshoty a samostatný
+  TypeScript snapshot zůstávají čitelné. Metadata cache v1 používají nový
+  tvar ID pro raw snapshot a zachovávají živý `BYPASS`.
+
+Nezávislý replay nad původní revizí vytiskl identický záznam ze skutečných
+artefaktů s exit 1 a SHA-256
+`3fd787a16d3b87b28df1b371080afcba944efe4279df774473bb8e6745eb9ea8`.
+Po opravě stejné porovnání z čerstvých Javac a Kotlin artefaktů odmítlo
+všechny upravené výběry. LF a CRLF měly shodně 13 bloků a 11 hran CFG.
+Exit 0, SHA-256 výsledku
+`07f18dd4d0b4dc1286f0fd82dafdde356c5255018cffe6dd2d113b5564a6cfa4`.
+
+- RED — čtyři cílené případy nad původním produktem měly 4 FAIL / 208
+  DESELECTED za 30,44 s. Šlo o Javac CFG a Kafka retry/DLT a o každou z
+  variant K1/K2 upraveného výběru. JUnit SHA-256
+  `f283ddf4c0d68111a92e5934d76c2f2b00ef8cc3d31344ccc3029024d17bfe82`.
+- První cílený GREEN — 12 PASS / 0 SKIP / 200 DESELECTED za 74,73 s.
+  Skutečný Javac, K1, K2 a připnuté Kafka API. Testy zahrnují změnu konců řádků
+  u callera i cíle, neplatný CFG otisk, legacy a workspace replay i původní
+  nevybraný CRLF Kotlin. Pytest a obě kontroly manifestu vrátily kód 0.
+  JUnit SHA-256
+  `68810f2f9a9797f36a01fdee37838c7a1457d1edb9b4524efb74fab2b53202e8`.
+  Shodný SHA-256 manifestu před a po
+  `c353325b80c1dff742aedeae2d186540bf5bec22c34fc833701a49351d5e91b6`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -p no:cacheprovider -q --tb=short -ra \
+    tests/test_jvm_raw_source_snapshot.py tests/test_kafka_retry_dlt.py \
+    -k 'jvm_raw_source_snapshot or actual_java_crlf'
+  ```
+
+První rozšířená sada měla 534 PASS a 17 FAIL. Opravné kroky zachovaly tvorbu
+legacy kontextů bez seznamu vstupů, původní diagnostiku neshodného jazyka a
+samostatnou kvalifikaci workspace aliasu. Pro finální běh se doplnily
+připravené fixture React a Mermaid se stejnými lockfiles.
+
+- Finální GREEN — 551 PASS / 0 SKIP za 249,65 s. Zahrnuje skutečné Javac,
+  K1/K2, JPA/Criteria, Kafka retry/DLT, TypeScript, React a parser Mermaid
+  11.4.1. Pytest, vytvoření a porovnání manifestů mají kód 0.
+  JUnit SHA-256
+  `b5237c901170b5cc7b1a106ed4134c96fb13ef62450602ce012f43afe6129a90`.
+  Oba manifesty zdrojů a toolchainu mají SHA-256
+  `06bfbc87f33f1e35086c571be30d891a6ca24cd5c8410941f53f1bb9912ae825`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist loadfile \
+    -p no:cacheprovider -q --tb=short -ra \
+    tests/test_jvm_raw_source_snapshot.py tests/test_criteria_queries.py \
+    tests/test_orm_xml_overrides.py tests/test_unified_flow_views.py \
+    tests/test_graph_provider.py tests/test_stage_content_cache.py \
+    tests/test_workspace.py tests/test_context_roles.py tests/test_t006_select_service_contexts.py \
+    tests/test_tsconfig_freshness.py tests/test_kafka_retry_dlt.py tests/test_kafka_code_bindings.py
+  ```
+
+Běhy používají JDK 21.0.6, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`,
+`JAVA_TOOL_OPTIONS=-XX:-UsePerfData` a připravené worker a Maven distribuce.
+Úplná projektová sada, Windows a GitHub Actions jsou pro tuto revizi NOT_RUN.
+Selektivní invalidace W02, warm HIT a oprava PSI souřadnic Kotlinu mají
+samostatné otevřené hranice.
