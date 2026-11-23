@@ -164,3 +164,9 @@ integraci a nezávislé review mají vlastní ověření. Sloučený #121 dodal
 samostatnou oracle fixture pro T047-S01 s T047-AC01 `PARTIAL`. Přenos
 zachovává záznam #121 pro jeho následné stavové srovnání.
 [PR #121](https://github.com/p-rum/kgmaker/pull/121) · [Merge na main](https://github.com/p-rum/kgmaker/commit/b3bbba43304f499f96950ea4ecc2a2467919e616)
+
+## Sloučení volitelné brány 2026-11-21
+
+[#144](https://github.com/p-rum/kgmaker/pull/144) je v `main` jako
+`47807742a07c4a4fb92a590479fbfa0b558bf7fe`. T047-S11 má dodání MERGED
+a T047-AC11 ověření PARTIAL. [Přesný pár, nezávislé review a ověření sloučeného stromu](161_recordMutationCorpusMerge.md#t047-s11--t047-r11--t047-ac11-a-t048-s01--t048-ac01).
