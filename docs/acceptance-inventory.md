@@ -22,6 +22,14 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+Dílčí ověření [#116](https://github.com/p-rum/kgmaker/issues/116) nad
+`0dbe9a7` pokrývá AC01/AC03 pro otisk Javac launcheru v JDK 21 na POSIX.
+`test_java_launch_capture_binds_exact_locale` a `test_java_launch_capture_binds_ct_sym_contents`
+ověřují změny klíče. `test_actual_jvm_locale_drift_preserves_published_generation`
+ověřuje odmítnutí po živé analýze a rollback po výměně prvního výstupu.
+AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
+rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
+PARTIAL a persistentní warm HIT je otevřený.
 
 ## T045 — doplňující automatická kontrola PR
 

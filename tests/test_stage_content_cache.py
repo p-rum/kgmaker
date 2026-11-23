@@ -1,12 +1,14 @@
 """W01 integration contracts; fake transport tests are separate from actual workers."""
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
 
 import pytest
 
 from kgmaker import inspection, store
 from kgmaker.analysis_model import file_hash
+from kgmaker.extraction_cache import launch_inputs
 from kgmaker.model import KnowledgeGraph
 from kgmaker.scanner import scan_repository
 from kgmaker.worker_protocol import WorkerError
@@ -61,6 +63,56 @@ def facts(value):
     value.pop('generated_at', None)
     value.pop('extraction_cache', None)
     return value
+
+
+@pytest.fixture
+def java_launch(tmp_path, monkeypatch):
+    for name in ('JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS',
+                 'NODE_OPTIONS', 'CLASSPATH'):
+        monkeypatch.delenv(name, raising=False)
+    jdk = tmp_path / 'jdk'
+    java = jdk / 'bin/java'
+    for path in (java, jdk / 'release', jdk / 'lib/modules', jdk / 'lib/ct.sym'):
+        path.parent.mkdir(exist_ok=True, parents=True)
+        path.write_text(path.name, encoding='utf-8')
+    return [str(java)], jdk / 'lib/ct.sym'
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
+@pytest.mark.parametrize('name', ['LANG', 'LC_ALL', 'LC_CTYPE'])
+def test_java_launch_capture_binds_exact_locale(java_launch, monkeypatch, name):
+    argv, _ = java_launch
+    monkeypatch.delenv(name, raising=False)
+    absent = launch_inputs(argv)
+    monkeypatch.setenv(name, '')
+    empty = launch_inputs(argv)
+    monkeypatch.setenv(name, 'C')
+    present = launch_inputs(argv)
+    assert len({capture['environment_sha256'] for capture in (absent, empty, present)}) == 3
+    monkeypatch.setenv('JDK_JAVA_OPTIONS', '-Duser.language=ja')
+    assert launch_inputs(argv) is None
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
+def test_java_launch_capture_binds_non_utf8_locale(java_launch, monkeypatch):
+    argv, _ = java_launch
+    monkeypatch.setitem(os.environb, b'LC_ALL', b'\xfe')
+    before = launch_inputs(argv)
+    monkeypatch.setitem(os.environb, b'LC_ALL', b'\xff')
+    after = launch_inputs(argv)
+    assert before['environment_sha256'] != after['environment_sha256']
+
+
+def test_java_launch_capture_binds_ct_sym_contents(java_launch):
+    argv, platform_symbols = java_launch
+    original = launch_inputs(argv)
+    assert original['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
+    platform_symbols.write_bytes(b'new platform symbols')
+    changed = launch_inputs(argv)
+    assert original != changed
+    assert changed['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
+    platform_symbols.unlink()
+    assert launch_inputs(argv) is None
 
 
 def test_public_inspect_cold_warm_reexecutes_all_stages(transport):

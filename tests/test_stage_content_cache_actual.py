@@ -9,7 +9,8 @@ import zipfile
 
 import pytest
 
-from kgmaker import inspection
+from kgmaker import inspection, store
+from kgmaker.analysis_model import file_hash
 from kgmaker.store import load_graph
 from kgmaker.worker_protocol import WorkerError
 
@@ -29,6 +30,66 @@ def comparable(value):
     value.pop('extraction_cache', None)
     value.pop('generated_at', None)
     return value
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
+@pytest.mark.parametrize('when', ['after-analyze', 'after-first-replace'])
+def test_actual_jvm_locale_drift_preserves_published_generation(tmp_path, monkeypatch, when):
+    ready('jvm')
+    for name in ('_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS', 'NODE_OPTIONS', 'CLASSPATH'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('JAVA_TOOL_OPTIONS', '-XX:-UsePerfData')
+    monkeypatch.setenv('LC_ALL', 'C')
+    root = tmp_path / 'project'
+    source = root / 'src/main/java/Example.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('class Example { int run() { return Math.abs(-1); } }\n', encoding='utf-8')
+    options = {'home': ROOT / 'workers', 'java_release': 17}
+    cold = inspection.inspect_jvm(root, **options)
+    assert cold['exit_code'] == 0 and not cold['diagnostics']
+    assert any(site['resolution_reason'] == 'JAVAC_ATTRIBUTED_SYMBOL'
+               for site in cold['graph']['call_sites'])
+    assert {stage['reason'] for stage in cold['cache']['stages']} == {'UNVERIFIED_REPLAY'}
+
+    def outputs():
+        return {path.relative_to(root): path.read_bytes()
+                for path in (root / '.kgmaker').rglob('*') if path.is_file()}
+
+    before = outputs()
+    changes = []
+    if when == 'after-analyze':
+        request = inspection.request_worker
+
+        def change_after_analyze(argv, payload, **kwargs):
+            response = request(argv, payload, **kwargs)
+            assert payload['operation'] == 'analyze'
+            assert response['status'] == 'COMPLETE'
+            changes.append(when)
+            monkeypatch.setenv('LC_ALL', 'POSIX')
+            return response
+
+        monkeypatch.setattr(inspection, 'request_worker', change_after_analyze)
+    else:
+        replace = store.os.replace
+
+        def change_after_first_replace(source, target):
+            replace(source, target)
+            if Path(target) == root / store.MERMAID_FILE and not changes:
+                changes.append(when)
+                monkeypatch.setenv('LC_ALL', 'POSIX')
+
+        monkeypatch.setattr(store.os, 'replace', change_after_first_replace)
+
+    with pytest.raises(WorkerError, match='launcher changed') as error:
+        inspection.inspect_jvm(root, **options)
+    assert error.value.status == 'STALE'
+    assert changes == [when]
+    assert outputs() == before
+    jdk = Path(inspection.command('jvm', options['home'])[0]).resolve().parent.parent
+    platform_symbols = jdk / 'lib/ct.sym'
+    worker_stage = load_graph(root).extraction_cache['entries'][0]
+    assert worker_stage['key']['stage'] == 'worker-analysis'
+    assert worker_stage['key']['launch']['files'][str(platform_symbols)] == file_hash(platform_symbols)
 
 
 @pytest.mark.parametrize('backend', ['k1', 'k2'])
@@ -101,7 +162,6 @@ def test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspecti
 
 
 def test_actual_worker_bytes_and_analyzer_rule_change_force_reanalysis(tmp_path, monkeypatch):
-    from kgmaker.analysis_model import file_hash
     ready('jvm')
     shared = ROOT / 'workers/jvm/target'
     original_hash = file_hash(shared / 'kgmaker-jvm-worker.jar')
@@ -142,7 +202,7 @@ def test_overlapping_real_workers_do_not_overwrite_newer_publication(tmp_path, m
     from concurrent.futures import ThreadPoolExecutor
     from threading import Event
 
-    from kgmaker import graph_provider, store
+    from kgmaker import graph_provider
 
     ready('jvm', 'k1')
     root = tmp_path / 'app'

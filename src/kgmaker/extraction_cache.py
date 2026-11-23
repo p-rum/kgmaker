@@ -117,11 +117,16 @@ def launch_inputs(argv):
         files = {str(executable): file_hash(executable)}
     except FileNotFoundError:
         return None
-    if executable.name in {'java', 'java.exe'}:
-        for relative in ('release', 'lib/modules'):
-            target = executable.parent.parent / relative
-            if not target.is_file(): return None
-            files[str(target)] = file_hash(target)
+    is_java = executable.name in {'java', 'java.exe'}
+    if is_java:
+        try:
+            for relative in ('release', 'lib/modules', 'lib/ct.sym'):
+                target = executable.parent.parent / relative
+                if not target.is_file():
+                    return None
+                files[str(target)] = file_hash(target)
+        except OSError:
+            return None
     environment = {name: os.environ.get(name) for name in
                    ('JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS', 'NODE_OPTIONS', 'CLASSPATH')}
     # Arbitrary runtime options may add uncaptured loaders/files. Keep explicit
@@ -129,6 +134,10 @@ def launch_inputs(argv):
     if any(value and not (name == 'JAVA_TOOL_OPTIONS' and value == '-XX:-UsePerfData')
            for name, value in environment.items()):
         return None
+    if is_java and os.name == 'posix':
+        for name in ('LANG', 'LC_ALL', 'LC_CTYPE'):
+            value = os.environ.get(name)
+            environment[name] = os.fsencode(value).hex() if value is not None else None
     return {'argv': list(argv), 'files': files, 'environment_sha256': digest(environment)}
 
 

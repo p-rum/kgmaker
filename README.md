@@ -1262,6 +1262,9 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
+`LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
+vrátí `STALE` a zachová poslední uložený graf.
 Graph publication reserves the checkout before writing and rejects a stale
 candidate if a newer graph was published during capture, import or migration.
 A Confluence-enabled scan stages its report and validation index with the graph.

@@ -13,6 +13,8 @@ captured build contextem. Nový příkaz ani automatický build není potřeba:
 kgmaker inspect code --root ./service --repo-id service --module core --source-set main --scope production
 kgmaker inspect code --root ./service --repo-id service --module core --source-set main --scope production
 kgmaker inspect frontend --root ./ui --repo-id ui --module app --source-set main --scope production --tsconfig tsconfig.json
+# Příklad s ASCII cestami na POSIX, Javac 21 a starší sadou platformních symbolů.
+LC_ALL=C kgmaker inspect code --root ./service --java-release 17
 ```
 
 Připravené workery a jejich toolchain musí být dostupné podle
@@ -27,7 +29,7 @@ a `cache.stages`. Každá fáze hlásí `BYPASS` s důvodem
 nebo `CACHE_SIZE_LIMIT`. Coverage, diagnostics a exit code
 zachovávají svůj význam.
 
-## Úplný klíč a kontrola odvozených údajů
+## Klíč a kontrola odvozených údajů
 
 Klíč obsahuje actual confined root, repo/module/source-set/variant/scope a celý
 captured selected context. Tím se váže source/JPA XML/TS config a discovery closure,
@@ -37,15 +39,24 @@ launcher a JDK platform bytes, verze/obsah lokálních extractorů, stage, norma
 base graph a konkrétní upstream response. Stejná zobrazovaná jména nenahrazují
 identity varianty. Z base graph se vynechávají pouze cache a generation timestamp.
 
+Java otisk zahrnuje `lib/ct.sym` a na POSIX přesné bajty `LANG`, `LC_ALL`
+a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdnou hodnotou. V uloženém
+klíči je jen SHA-256 prostředí. Chybějící nebo nečitelný vstup otisku
+znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně.
+Prostředí předávané workerům a compiler volby se řídí stávajícím launcherem.
+
 Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému
 kontextu, scope, upstream odpovědi a workeru. Digest uložený vedle cache je
 kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
-aktuální worker a projekce. Celá použitá closure se ověří před commit.
-Změna source/config/worker/classpath během inspekce vrací STALE.
+aktuální worker a projekce. Zaznamenané vstupy se ověří znovu před commit.
+Změna zdroje, konfigurace, workeru, classpath nebo zachyceného otisku
+launcheru během inspekce vrací `STALE`.
 
 Předchozí uložené kontexty vyžadují pro obnovu evidence explicitní inspekci
 konkrétního kontextu. Při jejím sloučení má čerstvý důkaz stejné identity
-přednost před uloženým. Replay je pozastavený i při úplné closure.
+přednost před uloženým. Replay uložených kandidátů zůstává vypnutý.
+Persistentní warm HIT vyžaduje nezávislý doklad vydavatele a úplně vymezené
+běhové vstupy. [Ověřený rozsah tohoto dílčího kroku](changes/164_bindJavaLaunchInputs.md).
 
 ## Store, kompatibilita a limity
 

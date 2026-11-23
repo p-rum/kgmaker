@@ -1565,6 +1565,11 @@ for context/proof guards, atomic output and exact bounded native verification.
 
 Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
+Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
+`--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
+Chybějící vstup otisku ponechá případný živý výsledek v režimu
+`BYPASS/INCOMPLETE_INPUT_CLOSURE`. Změna zachyceného otisku během běhu
+vyvolá `STALE` před dokončením publikace.
 Graph/store v1/v2/v3 a interní envelope v1 zůstávají čitelné.
 A competing graph publication or intervening generation yields `STALE`
 and exit 3. The next explicit inspection can read the newly committed graph
@@ -1574,7 +1579,8 @@ and rejects a mismatch as `STALE`. An explicit graph remains a valid seed when
 there is no store. A Confluence-enabled scan keeps the report and validation index
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
-[ověření #116](changes/135_bindCachedCompilerEvidence.md).
+[ověření #116](changes/135_bindCachedCompilerEvidence.md),
+[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md).
 
 ## Klasifikace vstupů ORM XML
 
