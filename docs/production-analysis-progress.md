@@ -1198,6 +1198,9 @@ ced9717:1591PASS/10optionalSKIP1646.65s,1471 hashes unchanged. Return compositio
 review/ready/merge separate. See note78 and acceptance matrix. Unsupported XML
 constraints/naming/converters/composite FK remain UNKNOWN. No availability,
 deployment/population promotion or whole-milestone completion inferred.
+Oprava #145 ověřuje shodné W08 výsledky po explicitní inspekci téhož Javac
+zdroje s LF a CRLF. Flyway snapshot i dostupnost dat mají stejné výsledky.
+[Doklad cíleného ověření](changes/160_bindJvmSourceBytes.md).
 
 ## T010 normalized variant correction (2026-11-03)
 

@@ -340,3 +340,68 @@ SHA-256 `d723b1e9e650de1e5c5c80dedff08a9f01d8efb91218f8bac2c23023bc338f3c`.
 
 Rozšířená sada na sloučeném stromu, úplná matice, Windows, vzdálené CI a
 aktuální nezávislé review mají vlastní kontroly mimo tento cílený běh.
+
+## T003-S02 / AC02 a T003-S06-W08 / AC01–04 — JPA kompatibilita po obnovení CRLF kontextu
+
+Výchozí revize `902158d3c6c362fb51233ecf2403e0549562da78`. Změna konců
+řádků v `Money.java` a následná explicitní Javac inspekce zachovaly `COMPLETE`
+Flyway snapshot a raw otisk symbolu. Lokální report, příkaz `schema compatibility`
+i workspace však ztratily 14 atributů, z toho pět s výsledkem `COMPATIBLE`.
+
+[Framework](../../src/kgmaker/framework.py) ověřuje identitu raw capture a čte
+zdroje, jejichž otisk prošel kontrolou `compiler_source_digest`. Starší kontexty
+bez mapy zdrojů si zachovávají původní čtení. [Schema replay](../../src/kgmaker/schema_replay.py)
+stejnou funkcí ověřuje zdrojový důkaz a zachovává raw hodnotu pro porovnání s
+compiler a ORM otiskem. Provider ověřuje původní raw capture před kvalifikací
+workspace kontextu a replay kontroluje kvalifikované byte otisky. Změněná
+verze u raw ID i chybějící raw mapa vedou k odmítnutí důkazu. Flyway inventář,
+otisky migrací, vazby na vybraný stream a stav dostupnosti používají své stávající
+kontroly. [Použití a ověřený rozsah](../schema-compatibility.md).
+
+Rozšířený `test_actual_compiler_type_null_decimal_keys_and_later_target_conflict`
+mění pouze konce řádků Javac zdroje. Ověří offline zastarání původního kontextu,
+shodný Flyway fingerprint po explicitním refreshi, shodu všech výsledků a
+raw SHA důkazu. Replay zachovává bajty zdroje, migrací, konfigurace a grafů.
+CLI a workspace čtou Git metadata. Test odmítne pokus spustit worker či otevřít
+síťové spojení v replay a ověří `UNASSESSED` a `deployment_verified=false`.
+
+- RED — nativní K1/Javac test na výchozím produktu, 1 FAIL za 16,92 s,
+  exit 1. `pr145-jpa-native-red.xml` má SHA-256
+  `e1e7332d665b603309ec5129c1ca8e687222dcb59766c4df72f240dec17043cb`.
+- První GREEN — celý `tests/test_schema_compatibility.py` má 25 PASS,
+  0 FAIL a 0 SKIP za 190,58 s se skutečným Javac/K1/K2. JUnit
+  `pr145-jpa-native-first-green.xml` má SHA-256
+  `9b1c3dc2f2b9285f199f72af152a0ce479d0ca95ca50aaa81c5f7a45a8fbb5ac`.
+- Nezávislé porovnání stejné fixture reprodukovalo výchozí ztrátu řádků
+  (`7da19f10c235fe44c18dee51ad93e62c40c475b509f8a3abc323eeec18f41c20`, exit 1).
+  Na opravených pracovních zdrojích měly všechny čtyři kanály 5 `COMPATIBLE` a
+  9 `UNKNOWN` v LF i CRLF, exit 0. SHA-256 výsledku
+  `bfa4d60aabc6685d9deb773cc7c7de37a4c61d1df1047078c2fb89fe45975268`.
+- Explicitní `schema compatibility --workspace ... --repo money` na uchovaných
+  CRLF artefaktech opravného běhu má stejné počty, `COMPLETE` Flyway a nezměněné
+  vstupy, exit 0. SHA-256 `fa502e69525e11a7fbab1b9f0ddfed20ad1608137a949e4be5154abfec0f051c`.
+- Přísný GREEN — 88 PASS, 0 FAIL, 0 ERROR, 0 SKIP za 285,93 s v Cloud Environmentu
+  s JDK 21.0.6 a povinnými workery K1/K2. Zahrnuje W08, raw Javac, JPA XML a
+  legacy snapshot, Criteria, persistence realms, statické Kafka retry/DLT,
+  Spring a T025. JUnit `pr145-jpa-strict.xml` má SHA-256
+  `4adcf1b00a18475170ad4e8e9b720172f45c24ea2095f47b9c2738dfe0fb40ed`.
+  Shodné manifesty testů, zdrojů, fixture a workerů mají SHA-256
+  `85b5d9ea34ac5316f88f0ecdbdb180a82f7b261c8f20808ba12602b7b81a7935`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist load \
+    -p no:cacheprovider -q --tb=short -ra \
+    --junitxml=/workspace/kgmaker-evidence/pr145-jpa-strict.xml \
+    tests/test_schema_compatibility.py tests/test_jvm_raw_source_snapshot.py \
+    tests/test_criteria_queries.py::test_actual_criteria_keeps_raw_provenance_in_crlf_source \
+    tests/test_orm_xml_overrides.py::test_orm_xml_partial_overrides_take_precedence_and_record_hashed_source \
+    tests/test_orm_xml_overrides.py::test_legacy_jvm_context_is_readable_without_xml_and_stale_with_xml \
+    tests/test_persistence_realms.py::test_actual_compiler_contexts_join_only_their_own_replay_targets \
+    tests/test_kafka_retry_dlt.py::test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations \
+    tests/test_local_operation_proofs.py::test_actual_workspace_process_resolves_only_operations_not_control_order \
+    tests/test_t025_build_local_process_path.py \
+    tests/test_spring_proxy_async.py::test_jdk_proxy_async_event_and_self_invocation_are_bounded
+  ```
+
+Úplná projektová sada a nezávislé review přesného integračního SHA mají vlastní
+doklady. Windows, vzdálené CI a širší W08 matice jsou pro tento běh NOT_RUN.

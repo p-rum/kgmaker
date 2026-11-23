@@ -750,8 +750,8 @@ variant. Changing selected resources or shared configuration still requires insp
 Fresh JVM contexts bind the exact compiler input list and source bytes and retain
 the corresponding normalized scanner hashes for proof checks. A line-ending-only
 edit requires a new explicit inspection of the selected JVM context. The verified
-Javac scope includes CRLF source CFG, T025 local operation proofs and static
-Kafka retry declarations. Selected Kotlin source files require matching byte and PSI coordinates.
+Javac scope includes CRLF source CFG, T025 local operation proofs, JPA schema
+compatibility and static Kafka retry declarations. Selected Kotlin source files require matching byte and PSI coordinates.
 [Source snapshot details](docs/compiler-inspection.md#jvm-source-byte-fingerprints).
 `scope_origin=GRADLE_CONVENTION` accepts only main→production, test→test and
 testFixtures→test_fixture; older manifests without provenance retain legacy compatibility.
