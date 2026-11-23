@@ -374,7 +374,13 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
         evidence=sorted(evidence.values(), key=lambda item: item["id"]),
         diagnostics=graph.diagnostics + [{"code": "RUNTIME_IMPORT_SCOPED", "runtime_id": manifest["runtime_id"],
                                           "observations": len(manifest["observations"]), "context_id": context["id"]}])
-    save_graph(updated, root, expected_revision=previous)
+
+    def revalidate_inputs():
+        # The generation check serializes graph writers. Source and worker inputs
+        # can still change while the store prepares and replaces individual outputs.
+        validate_manifest(graph, root, manifest)
+
+    save_graph(updated, root, before_replace=revalidate_inputs, expected_revision=previous)
     return {"status": manifest.get("status", "COMPLETE"), "mode": "RUNTIME_IMPORT", "runtime_id": manifest["runtime_id"],
             "context_id": context["id"], "observations_imported": len(manifest["observations"]),
             "limitations": ["Observed calls are scoped to the supplied run; absent calls prove nothing.",

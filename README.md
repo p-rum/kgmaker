@@ -525,7 +525,8 @@ Opakovaný `runtime import` uchovává doklady pro jednotlivé běhy ve shodném
 compiler kontextu. `callgraph callers` a `callees` je zobrazí jako
 `RUNTIME_OBSERVED`. `callgraph path` používá statické compiler vazby.
 V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
-na obou koncích.
+na obou koncích. Import znovu ověřuje vstupy při publikaci. Pokud se zdroj
+mezitím změní, zůstane uložený graf i runtime artefakt zachovaný.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
 
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,

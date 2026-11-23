@@ -145,3 +145,54 @@ a graph/store v3 používají dosavadní kontrakty bez migrace.
 Stav i ověřené hranice uvádějí také [README](../../README.md),
 [acceptance inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
 a [stavová matice](../production-analysis-progress.md).
+
+## Změna zdroje během publikace — kroky 1, 3–5, AC01–AC04
+
+Výchozí revize [#136](https://github.com/p-rum/kgmaker/pull/136) je
+`a980b753981da99505434d53b40931d7f40d6996`. Po úvodní validaci manifestu mohl
+import publikovat runtime hranu i ze zdroje upraveného během přípravy zápisu.
+`src/kgmaker/runtime_evidence.py` používá při publikaci existující kontrolu
+`before_replace`. Pod zámkem znovu prověří předané runtime doklady a příslušné
+vstupy včetně zdrojů, v2 compiler kontextu a distribuce workeru. Při odhalené
+změně uložený graf a jeho pohledy zůstanou ve stavu před importem. Manifesty
+v1/v2 a graph/store v3 používají stávající schémata a příkazy.
+
+`test_real_jdk21_runtime_import_rejects_source_edit_after_validation` sestaví
+a spustí skutečnou JDK21 aplikaci, vezme její volatelné symboly a předá platné
+v2 pozorování. V jedné variantě změní zdroj před vstupem do zápisu. Ve druhé ho
+změní po skutečné výměně prvního grafového pohledu. V obou případech očekává
+`STALE_RUNTIME`, stejné bajty grafu, pohledů i původního runtime artefaktu
+a úklid dočasných souborů. Import během kontroly nesmí spustit proces.
+
+- RED — `python -m pytest -p no:cacheprovider -q --tb=short tests/test_runtime_trace_producer.py -k runtime_import_rejects_source_edit_after_validation`
+  nad původním produktem a novými testy má 2 FAIL / 76 DESELECTED. Obě
+  varianty chybně doběhly bez výjimky. JUnit SHA-256
+  `4d7d71f03a818a9948e5ac53d61fb1afd1c94e533f9eeca6db56a58211b99008`.
+- GREEN — cílená sada nové regrese, kompatibilního importu a ochrany
+  souběžných generací má 5 PASS / 0 SKIP. JUnit SHA-256
+  `618fd01c73dbacb761e7c346197dac01a1b30d87a80a5c91e1d48f4fc3ac7c9e`.
+- GREEN — skutečný JDK/Javac 21.0.6 a připravený JVM worker ověřily
+  139 PASS / 0 SKIP pro runtime, T032 a W06. JUnit SHA-256
+  `a9feb3de280d05f620e7246a4e1c7603592d1f9e110e11de241502c96a9d8a20`,
+  shodný manifest zdrojů, nástrojů a testů
+  `d10a0028b7883c759ad0e7b4dc0911a391e7926d3fd75ad29a5a1bc47e54364c`.
+- Úplná standardní sada `python -m pytest -p no:cacheprovider -q --tb=short -ra`
+  v CPython 3.13.18 má 2 579 PASS / 1 155 SKIP. JUnit SHA-256
+  `1512f7c666e6f54e45090e1e667df4c0191743028bd3d3e4b17522ceefe48276`.
+  Manifest zdrojů, nástrojů a testů se před oběma sadami i po nich shoduje.
+
+```bash
+PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 \
+  JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  tests/test_runtime_trace_producer.py tests/test_t032_persist_process_review.py \
+  tests/test_graph_publication_concurrency.py
+```
+
+[README](../../README.md), [runtime import a CLI](../runtime-trace.md#opakovaný-import-a-navigace),
+[compiler příklady](../compiler-inspection.md#pozorované-hrany-a-statické-cesty),
+[stavová matice](../production-analysis-progress.md) a
+[acceptance inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+popisují kontrolu a zachování výstupů. GitHub Actions a nezávislé review této
+revize dosud čekají. Odvození receiver/type, přesná vazba na call site
+a širší T003-AC13 zůstávají `PARTIAL`.

@@ -6,9 +6,9 @@
 - Scope: production; omitted files: 557
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
-- Context: `a861f9c4587cbc89bb1dbe7d41fccc854fa283b58b8496b5b26f9dfd2637dc06`; content: `b78564deb73dffc402412d41f14499f035522dc52ec2c7b20e1d7778c4803018`; freshness: CONTENT_VERIFIED
+- Context: `b8d3733e25ced2471e61df1a8e7273b34d92aadeac6fb36cbd9689ba8e736289`; content: `9328508a7a48cd311419295dfb56a3165cadecd0fe5820f712f9c6623bac3a6d`; freshness: CONTENT_VERIFIED
 - Files indexed: 107
-- Symbols and sections: 1508
+- Symbols and sections: 1509
 - Internal imports: 463
 - Heuristic cross-file calls: 8505
 - PostgreSQL tables/columns: 0/0
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 357
+- Implementation episodes: 358
 - Inferred/ambiguous relationships: 8505/0
 
 ## Architecture diagram
@@ -1749,6 +1749,7 @@ flowchart LR
 - **function** `_check_hashes` line 238 — `_check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any])`
 - **function** `validate_manifest` line 257 — `validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any])`
 - **function** `import_manifest` line 324 — `import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGraph | None = None)`
+- **function** `revalidate_inputs` line 377 — `revalidate_inputs`
 
 ### `src/kgmaker/scanner.py`
 - **function** `_safe_source` line 84 — `_safe_source(path: Path)`
@@ -2633,7 +2634,7 @@ flowchart LR
 - **feat(t008): project explicit service inventory** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/41_projectServiceInventory.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, toolchain_skips=skipped, semantic=passed, scan=passed
 - **fix(ci): isolate restricted Windows smoke desktop access** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/40_supportWindowsUserInstall.md, docs/compiler-inspection.md; validation: integration-focused=passed, actual-offline-k1-build=passed, actual-installed-space-smoke=passed, actual-windows-startup=skipped
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/architecture-json-cli.md, docs/architecture.md, docs/changes/121_invalidateDerivedViews.md; validation: targeted-pytest=passed, diff-check=passed, full-suite=skipped, runtime-toolchain=skipped
-- **Refresh runtime observation repair after T032 integration** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: jdk21_runtime_w06_t032=passed, completion_plan=passed
+- **Refresh runtime observation repair after T032 integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: jdk21_runtime_w06_t032=passed, completion_plan=passed
 - **Merge remote-tracking branch 'origin/main' into feat/t003-s08-01-typescript-project-references** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/36_resolveTypeScriptProjectReferences.md, docs/compiler-inspection.md; validation: strict302=passed, owner-checker=passed, redirect-disabled=passed, real-ts-workers=passed
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Co lze nyní použít** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/13_importGradleSourceSetScopes.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused25=passed, full215=passed, negative9=passed
 - **Export snapshot-bound Gradle included build identities and realms** — removed; files: README.md, docs/acceptance-inventory.md, docs/changes/17_exportGradleIncludedBuilds.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: focused=passed, full=passed, gradle=passed
@@ -2669,6 +2670,7 @@ flowchart LR
 - **stack authoritative schema Retry and JPQL parent into contracts** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/85_attachInterfaceContracts.md, docs/interface-contracts.md, docs/production-analysis-progress.md; validation: combined-descendant2df-full2587pass10optional=passed, t013-parent2116-and-own45pass=passed, actual-currentcomposition444pass=passed
 - **Change Acceptance a ověření, Aktualizace stavu, Aktuální stav a zbývající práce** — removed; files: README.md, docs/acceptance-inventory.md, docs/architecture.md, docs/changes/58_propagateViewEvidence.md, docs/production-analysis-progress.md; validation: focused=passed
 - **Change Akceptační kritéria a způsob ověření, Aktualizace stavu, Aktuální audit dodání — 2026-11-07** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/112_specifyTargetAgentIsolation.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md; validation: targeted-tests=passed, full-tests=passed
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: README.md, docs/acceptance-inventory.md, docs/changes/151_preserveRuntimeObservationEvidence.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: source_race_regression=passed, actual_jdk21_runtime_w06_t032=passed, full_py313=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/130_projectProcessFailures.md, docs/process-paths.md, docs/production-analysis-progress.md; validation: membership-targeted=passed, semantic-preservation=passed, full-suite=skipped
 - **Change Aktualizace stavu, Aktuální stav a zbývající práce, Alternativa s vlastní kompletní distribucí, bez fallbacku:** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/30_packageWorkerResources.md, docs/compiler-inspection.md; validation: wheel7=passed, pytest244=passed, toolchain5=skipped
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/144_serializeGraphPublication.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: same-source-patch=passed, semantic=passed
@@ -9657,7 +9659,7 @@ flowchart LR
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 351; src/kgmaker/runtime_evidence.py:351; INFERRED 0.85)
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 352; src/kgmaker/runtime_evidence.py:352; INFERRED 0.85)
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 363; src/kgmaker/runtime_evidence.py:363; INFERRED 0.85)
-- `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 378; src/kgmaker/runtime_evidence.py:378; INFERRED 0.85)
+- `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 384; src/kgmaker/runtime_evidence.py:384; INFERRED 0.85)
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 41; src/kgmaker/runtime_evidence.py:41; INFERRED 0.85)
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 45; src/kgmaker/runtime_evidence.py:45; INFERRED 0.85)
 - `src/kgmaker/runtime_evidence.py` may call `236 in `src/kgmaker/schema_replay.py`` (name match at line 68; src/kgmaker/runtime_evidence.py:68; INFERRED 0.85)

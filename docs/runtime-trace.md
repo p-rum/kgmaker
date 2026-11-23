@@ -124,6 +124,11 @@ připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i sh
 kontextu mají vlastní hranu. Shodný doklad se připojí jen jednou. Existující
 záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
 
+Import před každou výměnou výstupu znovu ověří zdrojové otisky a distribuci
+workeru. U v2 zkontroluje také čerstvost vybraného compiler kontextu. Pokud
+kontrola odhalí změnu vstupu, import skončí chybou a obnoví případné již
+vyměněné grafové pohledy. Dodaný runtime artefakt zůstane zachovaný.
+
 ```bash
 kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json
 kgmaker callgraph callees --root PROJECT --context CONTEXT_ID --symbol CALLER_ID

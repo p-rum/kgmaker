@@ -1605,7 +1605,8 @@ a freshness se čtou pomocí `trace show`.
 `callgraph callers` a `callees` zobrazí doložené importované hrany jako
 `RUNTIME_OBSERVED`. `callgraph path` a statické cykly používají compiler
 call sites. V2 pozorování `call` a `dispatch` vyžadují volatelné symboly
-obou konců ve vybraném compiler kontextu. Původ dokladů opakovaného importu uvádí
+obou konců ve vybraném compiler kontextu. Import ověří jeho čerstvost také
+při publikaci grafu. Původ dokladů opakovaného importu uvádí
 [kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).
 
 ```bash
