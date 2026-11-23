@@ -46,6 +46,9 @@ znamená `INCOMPLETE_INPUT_CLOSURE`, pokud živá inspekce proběhne úspěšně
 Při výběru přes symbolický odkaz `java` tvoří otisk bajty cílové binárky
 a její JDK vstupy, i když má cílová binárka jiné jméno. Spustitelná binárka
 bez práva čtení může provést živou inspekci s `BYPASS/INCOMPLETE_INPUT_CLOSURE`.
+Výběr launcheru z relativního `PATH` se ukotví v pracovním adresáři
+KGMAKERu. Stejná absolutní cesta včetně symbolického odkazu vstupuje do
+spuštění workeru i do otisku, takže změnu cíle lze zjistit.
 Prostředí předávané workerům a compiler volby se řídí stávajícím launcherem.
 
 Worker a graph validátory kontrolují čerstvé výsledky vůči vybranému

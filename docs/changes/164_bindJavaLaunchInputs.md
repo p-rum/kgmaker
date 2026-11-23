@@ -146,3 +146,36 @@ u reálného aliasu a jedno vyřešené volání s `BYPASS/INCOMPLETE_INPUT_CLOS
 a prázdnými cache metadaty při právu `0111`. SHA-256 dokladů je
 `cccf36d972fab1bb94c494e5cdd9d09fb3d595be8dea7ac609dfce96cf143654`
 a `ee06f28b3cc608fc11e2984f47a8b371ed9c1337eb8c08807c4834bbb9518456`.
+
+## Druhá oprava po review #149
+
+Na `b19b916aecc65bce8aac2a8efcf2969467e677ae` nezávislé kontroly ukázaly, že
+relativní `PATH` vybral binárku JDK 21 v pracovním adresáři KGMAKERu pro
+otisk, zatímco worker spuštěný v kořeni projektu použil JDK 22. Přesměrování
+projektového odkazu po `analyze` v tomto případě přesto dovolilo publikaci.
+SHA-256 nativní reprodukce je
+`6194fe404d55fda8520882aeab088efa9ea7d765c963a2df78b8077a755a1e6e`.
+
+JVM `inspection.command` převádí vybranou cestu na absolutní při výběru
+launcheru. Zachovává její symbolické odkazy i složku `..` po průchodu
+odkazem. Validace JDK vychází z rozřešené cesty. Handshake, analýza a otisk
+použijí společné argv i při odlišném pracovním adresáři workeru.
+[Příkazy a rozsah klíče](../stage-content-cache.md).
+
+Dvě deterministické regrese s `tool/bin` a `tool/selected/../bin` původně
+spustily projektovou binárku (**2 FAIL**, exit 1), JUnit
+`7d46a9f229894dfa664bae76f06bb434945882b4c6467142c975b3afe7b93054`.
+Po opravě prošly ve výběru `tests/test_stage_content_cache.py` a dvou
+skutečných Javac drift případů z `tests/test_stage_content_cache_actual.py`
+celkem **61 PASS / 0 SKIP**, exit 0. JUnit má SHA-256
+`66c9a587e45bcb0013c51ae62b47d991d4c53f4365b8cdbfb2440f8b3932c213`.
+Shodný manifest 269 zdrojových, testovacích a nástrojových souborů má SHA-256
+`4639cc0d212e993f8369fa62ddcf0ead9c982f85b5df10e2d3fa1872e48ed0dc`.
+
+Pokus se skutečnými JDK 21.0.6+7 a 22.0.2+9 po opravě potvrdil Javac 21 v
+odpovědi `analyze` i v publikovaném kontextu a stejné čtyři soubory JDK 21
+v otisku. Přesměrování projektového odkazu publikaci umožnilo. Přesměrování
+skutečně zvoleného odkazu po analýze vrátilo `STALE` a zachovalo původní
+výstupy. Binárka s právy `0111` dál poskytla živou analýzu s `BYPASS` a
+prázdnými cache metadaty. SHA-256 nativního dokladu je
+`f02c46c9ee3d3241701a298287bcd4efd857c49f069e4970d75eceb8acec86c2`.

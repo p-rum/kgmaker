@@ -1274,6 +1274,7 @@ Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
 `LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
 vrátí `STALE` a zachová poslední uložený graf.
 Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
+Relativní položka `PATH` se vyhodnotí v pracovním adresáři KGMAKERu.
 Graph publication reserves the checkout before writing and rejects a stale
 candidate if a newer graph was published during capture, import or migration.
 A Confluence-enabled scan stages its report and validation index with the graph.

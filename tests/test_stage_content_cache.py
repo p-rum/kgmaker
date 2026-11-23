@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 import os
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -129,6 +130,39 @@ def test_requested_java_alias_keeps_platform_and_locale_capture(java_launch, mon
     assert captured['files'][str(platform_symbols)] == file_hash(platform_symbols)
     monkeypatch.setenv('LC_ALL', 'POSIX')
     assert launch_inputs(argv)['environment_sha256'] != captured['environment_sha256']
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX relative PATH execution')
+@pytest.mark.parametrize('relative_bin', ['tool/bin', 'tool/selected/../bin'])
+def test_relative_java_path_stays_bound_to_selection_cwd(tmp_path, monkeypatch, relative_bin):
+    controller, project = (tmp_path / name for name in ('controller', 'project'))
+    home = tmp_path / 'workers'
+    jar = home / 'jvm/target/kgmaker-jvm-worker.jar'
+    jar.parent.mkdir(parents=True)
+    jar.write_bytes(b'fake worker fixture is never executed')
+    for root in (controller, project):
+        jdk = root / 'jdk'
+        (jdk / 'bin').mkdir(parents=True)
+        binary = jdk / 'bin/java-real'
+        binary.write_text(f'#!/bin/sh\nprintf "%s\\n" {root.name}\n', encoding='utf-8')
+        binary.chmod(0o700)
+        (jdk / 'bin/java').symlink_to(binary.name)
+        (jdk / 'bin/javac').touch()
+        (jdk / 'release').write_text('JAVA_VERSION="21.0.6"\n', encoding='utf-8')
+        if relative_bin == 'tool/bin':
+            (root / 'tool').symlink_to(jdk, target_is_directory=True)
+        else:
+            (jdk / 'child').mkdir()
+            (root / 'tool').mkdir()
+            (root / 'tool/selected').symlink_to(jdk / 'child', target_is_directory=True)
+
+    monkeypatch.chdir(controller)
+    monkeypatch.setenv('PATH', relative_bin)
+    argv = inspection.command('jvm', home)
+    ran = subprocess.run(argv, cwd=project, check=True, capture_output=True, text=True)
+    assert ran.stdout == 'controller\n'
+    assert Path(argv[0]) == controller / relative_bin / 'java'
+    assert Path(argv[0]).resolve() == controller / 'jdk/bin/java-real'
 
 
 def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport, java_launch, monkeypatch):

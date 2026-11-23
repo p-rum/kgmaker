@@ -88,7 +88,9 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
         java = shutil.which("java")
         if not java:
             raise WorkerError("Optional JVM worker/JDK unavailable; scan remains usable. Build the trusted worker explicitly.", "TOOLCHAIN_UNAVAILABLE")
-        java_root = Path(java).resolve().parent.parent
+        # Anchor the lookup before the worker changes cwd and keep any selected alias.
+        java_path = Path(java).absolute()
+        java_root = java_path.resolve().parent.parent
         if not any((java_root / 'bin' / name).is_file() for name in ('javac', 'javac.exe')):
             raise WorkerError('JVM inspection requires a full JDK 21+ (javac beside java); a runtime-only JRE is unsupported. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
         release = java_root / 'release'
@@ -98,7 +100,7 @@ def command(language: str, home: Path | None = None, *, kotlin_backend="k1") -> 
             if version and int(version.group(1)) < 21:
                 raise WorkerError('JVM inspection requires JDK 21+; selected Java runtime is older. SOURCE_ONLY remains usable.', 'TOOLCHAIN_UNAVAILABLE')
         jar = _jvm_worker_jar(home, kotlin_backend=kotlin_backend)
-        return [java, "-Xmx1536m", "-jar", str(jar)]
+        return [str(java_path), "-Xmx1536m", "-jar", str(jar)]
     node = shutil.which("node")
     script = home / "typescript/worker.cjs"
     if not node or not script.is_file() or not (home / "typescript/node_modules/typescript/lib/typescript.js").is_file():

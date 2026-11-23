@@ -1576,6 +1576,8 @@ Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starš
 `--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
 Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
 binárky a platformních souborů jejího JDK.
+Relativní položku `PATH` ukotví KGMAKER při výběru launcheru a worker
+použije stejnou cestu i po přechodu do adresáře analyzovaného projektu.
 Chybějící vstup otisku ponechá případný živý výsledek v režimu
 `BYPASS/INCOMPLETE_INPUT_CLOSURE`. Změna zachyceného otisku během běhu
 vyvolá `STALE` před dokončením publikace.
