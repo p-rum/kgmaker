@@ -78,3 +78,20 @@ W01 a T003-AC10 zůstávají `PARTIAL`. Persistentní warm `HIT` stále
 vyžaduje nezávisle chráněného vydavatele compiler důkazu a úplné vymezení
 běhu. Analýza otevřela také dynamické knihovny JDK. Úplný runtime a
 prostředí launcheru zůstávají samostatným předpokladem #116.
+
+## Přenos po sloučení #147
+
+Přenos spojuje opravu otisku z `31f43e7ef13848bd311460f926bf84a37b6ef306`
+s `main` na `2db5c4931bfd832908158900b2823b6c122bc3a7`. Zdrojové a testovací
+změny obou rodičů jsou v přesném znění. Společná dokumentace zachovává
+rozsah W01 i [ověření publikace importu W02](163_revalidateRuntimeImportPublication.md).
+Konflikty ve dvou souborech grafu vyřešilo sloučení 371 historických
+epizod a regenerace grafu.
+
+Cílený běh v Cloud Environment s JDK 21.0.6+7 skončil **14 PASS / 0 SKIP**,
+exit 0. Zahrnul změny locale při analýze pro `--java-release 17` a při
+publikaci grafu, vazbu `ct.sym`, jediné úplné ověření runtime manifestu,
+rollback po změně zdroje, workeru či bytecode a kontroly uložené generace.
+JUnit SHA-256 je `832ae55300c9f61dd89b0a059ba5ee6619b254121cfe7994a7499843142ac8d7`.
+SHA-256 shodného manifestu 269 zdrojových a testovacích vstupů před i po
+běhu je `ea1d48c243b541e6e2eb28b11e457a6322edc522d9c84c3058e08ce987a7db85`.

@@ -1582,6 +1582,13 @@ in the graph publication rollback scope.
 [ověření #116](changes/135_bindCachedCompilerEvidence.md),
 [regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md).
 
+Runtime import ověří obálku před publikací. Pod zámkem store hlídá
+očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje
+zdroje a distribuci workeru z vybraného kontextu. U v2 opakuje i validaci
+zachycených vstupů compiler kontextu včetně classpath a bytecode. Zjištěná
+změna zastaví publikaci a store obnoví již nahrazené výstupy.
+[Regrese runtime importu](changes/163_revalidateRuntimeImportPublication.md).
+
 ## Klasifikace vstupů ORM XML
 
 Snapshot `jpa_xml_inputs` zachycuje chybějící soubor i symbolický odkaz na
