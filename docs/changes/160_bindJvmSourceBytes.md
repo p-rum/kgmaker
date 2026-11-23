@@ -430,3 +430,53 @@ Shodné vstupní manifesty mají SHA-256
 `b47f8d094e5cd91cf43791e1affa1de7234ce2e891495cc02e70014cdbc0e953`.
 Úplná sada je doložena pro výše uvedeného rodiče. Windows a vzdálené CI
 jsou pro tento lokální přenos NOT_RUN.
+
+## T012-S04 / AC01–02, AC04–05 a T019-S01 / AC01, AC03 — Kafka katalog pro Javac CRLF
+
+Výchozí revize `99fe4b500092b7edba2e3af6e68c6e38d7a9c6ae`. Skutečný Javac
+zachytil LF i CRLF kontext se stavem `CONTENT_VERIFIED` a potvrzené konfigurace
+`VERIFIED_STATIC`. T012 však u CRLF vyvolal `INVALID_KAFKA_INTERFACE`, protože
+porovnával kvalifikovaný bajtový otisk se strukturálním otiskem lokálního grafu.
+Vstupní chyba se promítla i do načtení katalogu T019.
+
+[Projekce katalogu](../../src/kgmaker/interfaces.py) použije
+`compiler_source_digest` nad soukromým lokálním grafem a vybraným kontextem.
+Helper ověří strukturální projekci a vrátí původní bajtový otisk. Projekce
+požaduje přesnou shodu s kvalifikovaným workspace inventářem a dál ověřuje
+kanonický uzel, důkazy, vybraný kontext, původní odkazy a vlastníka služby.
+Dodání zachovává stávající schéma výstupu a význam `delivery=NOT_OBSERVED`.
+[Katalog a příkaz T019](../kafka-interfaces.md).
+
+`test_actual_kafka_catalogue_and_t019_preserve_raw_java_authority` přehraje
+stejné producer a consumer deklarace s LF a CRLF variantou Java listeneru.
+Ověří rozdílné bajtové otisky, shodu katalogů, obě consumer groups, broker
+realms a odmítnutí normalizovaného otisku podvrženého v bajtovém inventáři.
+T012 při čtení nepouští žádný proces. CLI používá pouze lokální Git metadata.
+Test porovnává soubory, graf a předané workspace vstupy před i po čtení.
+
+- RED — nativní Javac, 1 FAIL za 79,08 s, exit 1. LF API a CLI prošly,
+  CRLF API vrátilo původní chybu. JUnit `pr145-t012-native-red.xml`, SHA-256
+  `819dc401b19dc4b333a6bf54a991cd30c8e7f1be0676c396e05ed3ba6013cd1c`.
+- PASS — na uchovaných skutečných Javac fixture oprava vrátí v API i CLI
+  pět rozhraní a obě skupiny v LF i CRLF. Oba replaye zachovaly všech 16
+  souborů a podvržený CRLF inventář byl odmítnut. Exit 0, SHA-256 dokladu
+  `bc14c03f0adf1d9bde59f6c6677d4a124255a845720709fa1bc40190b44274be`.
+- Přísný GREEN — 144 PASS, 0 FAIL, 0 ERROR a 0 SKIP za 422,27 s v Cloud
+  Environmentu s JDK 21.0.6 a povinnými workery K1/K2. Sada ověřila 106
+  případů T012, 34 případů T019 a čtyři další Kafka kontroly. JUnit
+  `pr145-t012-strict.xml`, SHA-256
+  `a502d1bbee310dde6ad90239cd89535e325f0de1a5187ae04211f0aaeaf104a3`.
+  Shodné manifesty zdrojů, testů a workerů mají SHA-256
+  `870348857a444f19389c4c0c44538cf838dfe36f9edf85fde9a81a1f8f5afdd7`.
+
+  ```bash
+  /workspace/kgmaker-venv/bin/python -m pytest -n 3 --dist loadfile \
+    -p no:cacheprovider -q --tb=short -ra \
+    --junitxml=/workspace/kgmaker-evidence/pr145-t012-strict.xml \
+    tests/test_t012_catalog_kafka_interfaces.py tests/test_t019_add_architecture_json_cli.py \
+    tests/test_t013_captured_kafka_contracts.py \
+    tests/test_kafka_code_bindings.py::test_actual_schema2_joins_source_code_and_group_without_exposing_private_capture \
+    tests/test_kafka_retry_dlt.py::test_actual_java_crlf_keeps_byte_bound_kafka_retry_declarations
+  ```
+
+Úplná sada, Windows a vzdálené CI mají pro tuto revizi stav NOT_RUN.

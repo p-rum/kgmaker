@@ -1097,6 +1097,9 @@ merged; all105 own tests PASS in combined descendant2df55 strict full2587PASS /
 IDs classified2061PASS10SKIP in that one run, not a standalone full. Corrected
 actual selection10PASS/0SKIP; current-parent coalesced444PASS/0SKIP. Final exactpair
 review/ready/merge separate. [Capability](kafka-interfaces.md), [change81](changes/81_catalogKafkaInterfaces.md).
+Oprava #145 ověřuje shodu T012 a T019 na skutečných Javac zdrojích s LF a CRLF.
+Katalog porovnává bajtový otisk s kvalifikovaným workspace inventářem.
+[Doklad a hranice opravy](changes/160_bindJvmSourceBytes.md).
 ## T011 — typed HTTP consumer catalogue
 
 Pure `interfaces.project_http_consumers` reuses merged T008/T009/W06 snapshots,

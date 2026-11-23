@@ -18,6 +18,17 @@ view = project_kafka_interfaces(workspace, graph, scope="production",
 print(view.to_json())
 ```
 
+T019 exposes the same catalogue through an explicit local capture:
+
+```bash
+kgmaker architecture interfaces --catalog kafka --capture-local --workspace workspace.json
+```
+
+For Javac LF and CRLF sources, the catalogue validates the private compiler
+capture against the local scanner inventory, then checks the original byte hash
+against the qualified workspace inventory. A line-ending edit requires explicit
+inspection before reusing those Kafka facts. [Verified scope](changes/160_bindJvmSourceBytes.md).
+
 The shared `interfaces` ViewDocument contains `kafka_interface` occurrences with
 `direction=PRODUCER/CONSUMER`, original call/listener IDs, broker realm, exact topic
 or regex selector, consumer group, and explicit message contract references when

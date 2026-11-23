@@ -1125,6 +1125,11 @@ all2071 parent IDs present there are2061PASS10SKIP. Corrected own actual selecti
 preserved failures/limits are in note81. Main/Common dependencies merged; exact
 finalpair review/merge separate. No standalone parent full or transport observation.
 
+T012-AC01/02/04/05 and T019-AC01/03 use actual Javac LF and CRLF catalogues
+from the same source text. Both groups and broker realms survive in the API
+and CLI. A workspace inventory with a substituted normalized digest fails
+closed. [Exact regression and evidence](changes/160_bindJvmSourceBytes.md).
+
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)
 
