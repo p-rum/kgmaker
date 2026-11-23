@@ -65,6 +65,14 @@ běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
 
+## T003-S13-W02 — čerstvost při publikaci runtime evidence, 2026-11-23
+
+| Acceptance | Ověření | Důkaz a rozsah |
+|---|---|---|
+| T003-S13-W02-AC01, AC03 | VERIFIED_IN_SCOPE (publikace importu) | Oprava ověřuje manifest jednou a měnitelné vstupy při každém kroku publikace. Skutečný JDK 21 capture pokrývá změnu zdroje i zachyceného bytecode. Fixture v1 pokrývá změnu workeru. Při odmítnutí zůstanou graf, odvozené pohledy a capture stejné po bajtech a import nespustí proces. [Test a příkazy](changes/163_revalidateRuntimeImportPublication.md). |
+
+Ověření širšího kontraktu W02 včetně receiver/type evidence zůstává PARTIAL.
+
 ## T051 — projektové workflows, 2026-11-15
 
 Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED

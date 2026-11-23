@@ -405,3 +405,28 @@ síťové spojení v replay a ověří `UNASSESSED` a `deployment_verified=false
 
 Úplná projektová sada a nezávislé review přesného integračního SHA mají vlastní
 doklady. Windows, vzdálené CI a širší W08 matice jsou pro tento běh NOT_RUN.
+
+## T003-S02 / AC02 a T003-S06-W08 / AC01–04 — přenos po #147
+
+Oprava `ee0c69db36524b31c16f5d6611753dcc6d4816b7` navazuje na už sloučený
+`main` `2db5c4931bfd832908158900b2823b6c122bc3a7`. Source/test bloby opravy
+odpovídají prvnímu rodiči. Implementace a testy runtime publikace odpovídají
+druhému rodiči. Obnova sémantického indexu zachovává 376 jedinečných epizod
+obou rodičů a přidává doklad integrace. [Doklad a rozsah #147](163_revalidateRuntimeImportPublication.md).
+
+Na přesném prvním rodiči prošlo 729 testů s povinnou skutečnou toolchain sadou.
+Standardní běh měl 2467 PASS, 1307 SKIP a jeden očekávaný XFAIL. Oddělená sada
+AC02 měla pět PASS pro cache a chybu přípravy Maven fixture. Samostatný běh
+skutečného JVM lifecycle s fyzicky připravenými závislostmi fixture pak prošel.
+Doklady prvního rodiče jsou `pr145-ee0c69d-native.xml`, `pr145-ee0c69d-standard.xml`,
+`pr145-ee0c69d-native-ac02-cache.xml` a `pr145-ee0c69d-native-ac02-lifecycle-materialized.xml`.
+
+Aktuální kombinovaný výběr měl 7 PASS, 0 FAIL, 0 ERROR a 0 SKIP za 66,23 s
+s povinnými workery a JDK 21. Pokryl W08 JPA LF/CRLF, T025 CFG a local proofs,
+jednorázovou validaci runtime payloadu a rollback zdroje, bytecode a distribuce
+workeru při publikaci. JUnit `pr145-jpa-forward-focus.xml` má SHA-256
+`d6caae7a10e1e97939df4ee1158e4d415c72b05299e82259244baf30b51948c8`.
+Shodné vstupní manifesty mají SHA-256
+`b47f8d094e5cd91cf43791e1affa1de7234ce2e891495cc02e70014cdbc0e953`.
+Úplná sada je doložena pro výše uvedeného rodiče. Windows a vzdálené CI
+jsou pro tento lokální přenos NOT_RUN.
