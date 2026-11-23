@@ -107,6 +107,10 @@ def validate_manifest(root: Path, manifest: dict) -> dict:
         persistence_selection(context)
         if context.get("scope") not in SCOPES or not all(isinstance(context.get(k), str) and context[k] for k in ("module", "source_set", "repo_id")):
             raise AnalysisError("Build context requires repo/module/source-set/scope")
+        if "config_fingerprint" in context:
+            fingerprint = context["config_fingerprint"]
+            if not isinstance(fingerprint, str) or not HASH.fullmatch(fingerprint):
+                raise AnalysisError("Build context config_fingerprint must be a 64-character lowercase hexadecimal SHA-256 digest")
         build_root = context.get("build_root")
         if build_root is not None:
             if not isinstance(build_root, str) or not build_root:
@@ -307,7 +311,7 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
                             "scope": selected["scope"], "roots": generated_roots,
                             "files": sorted(generated_files), "generated": True})
     model = {"source_sets": source_sets}
-    return {"sources": selected["source_files"], "java_release": int((selected.get("compiler_options") or {}).get("release", 21)),
+    options = {"sources": selected["source_files"], "java_release": int((selected.get("compiler_options") or {}).get("release", 21)),
             "repo_id": selected["repo_id"], "module": selected["module"], "source_set": selected["source_set"],
             "classpath": classpath, "bytecode_roots": [absolute(o["path"]) for o in selected.get("outputs", []) if o.get("freshness") == "EXECUTION_BOUND"],
             "project_model": model,
@@ -323,3 +327,6 @@ def inspection_inputs(root: Path, manifest: dict, *, context_id: str | None, sco
                 "persistence_unit": selected.get("persistence_unit"), "naming_strategy": selected.get("naming_strategy"),
                 "persistence_schema": selected.get("persistence_schema"), "flyway_target": selected.get("flyway_target"),
                 "manifest_hash": digest(manifest)}}
+    if "config_fingerprint" in selected:
+        options["build_context"]["config_fingerprint"] = selected["config_fingerprint"]
+    return options

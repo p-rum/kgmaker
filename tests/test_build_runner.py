@@ -242,6 +242,40 @@ def test_relative_import_artifacts_are_root_relative_not_cwd(tmp_path):
     assert inputs['sources']==['A.java'] and inputs['module']=='custom' and inputs['repo_id']=='fixture'
 
 
+@pytest.fixture
+def configuration_manifest():
+    def context(source_set, scope):
+        return {"id": "root:" + source_set, "repo_id": "local", "module": "root",
+                "source_set": source_set, "scope": scope, "source_roots": [], "source_files": [],
+                "classpath": []}
+
+    return {"schema_version": 1, "build_id": "config-fixture", "build_result": {"status": "SUCCESS"},
+            "snapshot": {"sources": {}, "content_hash": digest({})},
+            "contexts": [context("main", "production"), context("test", "test")]}
+
+
+def test_build_context_config_fingerprint_comes_from_selected_context(tmp_path, configuration_manifest):
+    manifest = configuration_manifest
+    manifest["config_fingerprint"] = "a" * 64
+    main, test = manifest["contexts"]
+    test["config_fingerprint"] = "b" * 64
+    legacy = inspection_inputs(tmp_path, manifest, context_id=main["id"], scope="production")["build_context"]
+    assert "config_fingerprint" not in legacy
+    main["config_fingerprint"] = "c" * 64
+    for selected in (main, test):
+        captured = inspection_inputs(tmp_path, manifest, context_id=selected["id"],
+                                     scope=selected["scope"])["build_context"]
+        assert captured["config_fingerprint"] == selected["config_fingerprint"]
+        assert captured["manifest_hash"] == digest(manifest)
+
+
+@pytest.mark.parametrize("value", [None, True, 1, {}, "", "a" * 63, "a" * 65, "A" * 64, "g" * 64, "a" * 64 + "\n"])
+def test_build_manifest_rejects_invalid_context_config_fingerprint(tmp_path, configuration_manifest, value):
+    configuration_manifest["contexts"][0]["config_fingerprint"] = value
+    with pytest.raises(AnalysisError, match="config_fingerprint"):
+        validate_manifest(tmp_path, configuration_manifest)
+
+
 def test_actual_xml_test_execution_is_visible_even_before_test_phase(tmp_path):
     reports=tmp_path/'target/surefire-reports';reports.mkdir(parents=True)
     (reports/'TEST-custom-phase.xml').write_text('<testsuite tests="1" failures="0" skipped="0"/>')

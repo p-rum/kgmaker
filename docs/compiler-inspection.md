@@ -227,6 +227,13 @@ kgmaker entrypoints --root fixtures/build-inspection/maven --format json
 kgmaker runtime import --root fixtures/build-inspection/maven --manifest runtime-manifest.json
 ```
 
+BuildManifest v1 přijímá volitelný `contexts[].config_fingerprint` jako SHA-256
+deklarované netajné konfigurace, přesně 64 malých hexadecimálních znaků.
+`inspect code` převezme hodnotu pouze ze zvolené varianty a uloží ji do jejího
+compiler kontextu vedle `manifest_hash` a původu exportu. Manifesty bez pole lze
+nadále importovat a použít k inspekci. Runtime v2 používá uloženou hodnotu pro
+kontrolu před spuštěním. [Příklad](runtime-trace.md#spuštění).
+
 BuildPlan obsahuje přesné argv, executable/exporter checksum, úplný inventář
 včetně dirty/untracked souborů, hash povoleného prostředí, timeout a policy
 `LOCAL_TRUSTED`. Ta dovoluje vykonání důvěryhodného projektového kódu podle

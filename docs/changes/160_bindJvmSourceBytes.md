@@ -480,3 +480,26 @@ Test porovnává soubory, graf a předané workspace vstupy před i po čtení.
   ```
 
 Úplná sada, Windows a vzdálené CI mají pro tuto revizi stav NOT_RUN.
+
+## T012 / T019 a T003-S02 / AC02 — přenos po #148
+
+Kafka oprava `f94b7f4463a9e827e7df60cdc70fce332b0be903` navazuje na sloučený
+`main` `385943e48d2d2e60cec541f1f0db78beda83de22`. Všechny bloby zdrojů a
+testů #145 odpovídají prvnímu rodiči. Implementace a testy build konfigurace
+odpovídají druhému rodiči. Obnovený index zachovává 380 jedinečných epizod
+obou rodičů. [Doklad a rozsah #148](165_forwardBuildConfiguration.md).
+
+Na přesné revizi `99fe4b5` prošlo 729 nativních testů bez skipu a standardní
+běh měl 2469 PASS, 1310 SKIP a jeden očekávaný XFAIL. Nezávislá skutečná
+Spring HTTP fixture na téže revizi ověřila shodu provider a consumer katalogů
+pro LF/CRLF, exit 0, SHA-256
+`9b0cc396e559f759ddf8015402b79a66498c2a2a15aaaa2e3c377f7ec255381a`.
+T012 sada 144 PASS a doklad čtení beze změn patří k opravě `f94b7f4`.
+
+Kombinovaný výběr na tomto stromu měl 14 PASS, 0 FAIL, 0 ERROR a 0 SKIP za
+148,86 s. Ověřil skutečný katalog T012/T019, JPA a T025 s Javac LF/CRLF i 11
+kontrol fingerprintu vybraného build kontextu. JUnit `pr145-t012-forward-focus.xml`
+má SHA-256 `0af3b4fd9225a6386a6f4bcca4800f0ccd79e999562a1398a08ef7ed93619b53`.
+Shodné manifesty mají SHA-256
+`fbf521e4e40d154cad5a114480887e2ff592e3de26da719d0655ae9d2a2fc51a`.
+Úplná sada pro tento přesný strom, Windows a vzdálené CI mají stav NOT_RUN.
