@@ -92,3 +92,31 @@ Graf ověřují `kgmaker semantic update --base 0dbe9a7`, `kgmaker semantic appl
 `kgmaker scan`, `kgmaker status`, `kgmaker check` a `git diff --cached --check`.
 GitHub Actions, Windows a nezávislé review mají stav NOT_RUN. Celý T003-S13
 zůstává PARTIAL.
+
+## Začlenění aktuálního main s #147
+
+Prvním rodičem je `6b6d8e6287c61c52d45f4b1717e8ff767f0fd58b`, druhým
+`2db5c4931bfd832908158900b2823b6c122bc3a7` se sloučeným #147.
+Předání konfigurace W01 a kontroly publikace importu W02 si zachovaly původní
+zdrojové změny i těla testů. Stavová matice zachovává oba dílčí rozsahy. [Doklad W02](163_revalidateRuntimeImportPublication.md).
+
+Na společném stromu se skutečným Mavenem 3.9.9 a JDK 21.0.6+7 prošly čtyři
+testy bez přeskočení za 60,50 s. Ověřily veřejný v2 capture se zvoleným
+digestem, jednu plnou validaci payloadu, kontrolu v1 workeru a rollback
+při změně bytecode skutečného v2 capture. JUnit `runtime-build-config-forward.xml`
+má SHA-256 `44e0c08918b3db4c8066c52d177881d3cc9b5b46e76bdaeebb4574f0a7efd1a9`.
+Shodné manifesty před a po tomto běhu mají SHA-256
+`afe1a3feb660ed03b0bf55b7ac5f42dea583497aa6879b0006da50a506057c04`.
+Manifest změn obou rodičů má SHA-256
+`6605fd503a565add69fbd3ba6e8aa3705df1a96681a87d9035b6bf40fcba7ccb`.
+
+```bash
+python -m pytest -n 2 -p no:cacheprovider -q --tb=short -ra \
+  tests/test_runtime_trace_producer.py::test_actual_maven_public_runtime_uses_selected_build_configuration \
+  tests/test_runtime_trace_producer.py::test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step \
+  tests/test_runtime_trace_producer.py::test_v1_cli_rechecks_worker_before_graph \
+  tests/test_runtime_trace_producer.py::test_real_jdk21_v2_cli_rechecks_bytecode_before_graph
+```
+
+Úplná sada uvedená výše patří prvnímu rodiči. Pro společný strom čeká úplný
+běh a nezávislé review.
