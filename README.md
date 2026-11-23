@@ -523,6 +523,11 @@ SDK nevypisuje argumenty ani návratové hodnoty a z URL odstraní credentials/q
 před hashováním cesty. Jeho výsledek zůstává `PARTIAL / INSTRUMENTED_SCOPE_ONLY`.
 Build/config/source/worker identity a výstupní cesta se ověří před procesem i po
 něm; timeout/cancel ukončí POSIX procesní skupinu a nepřepíše platný artefakt.
+V BuildManifestu v1 uveďte volitelný `contexts[].config_fingerprint` ve variantě,
+kterou vyberete při `inspect code`. Pole přijímá SHA-256 netajné deklarované
+konfigurace jako 64 malých hexadecimálních znaků. Pro `runtime produce` použijte
+stejnou hodnotu jako v uloženém compiler kontextu.
+[Import, inspekce a příklad](docs/runtime-trace.md#spuštění).
 
 ```text
 kgmaker runtime produce --root PROJECT --context CONTEXT_ID --runtime-id run-1 \

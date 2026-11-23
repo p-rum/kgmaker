@@ -124,3 +124,25 @@ analýzu, vyřešil jedno volání a uložil graf s prázdnými cache metadaty.
 Všechny tři fáze hlásily `BYPASS/INCOMPLETE_INPUT_CLOSURE`. SHA-256 obou
 dokladů je `1ed82101e21ca9655539d35f858e0a69922a99ef7989eda96795cdee877a9207`
 a `ee06f28b3cc608fc11e2984f47a8b371ed9c1337eb8c08807c4834bbb9518456`.
+
+## Přenos po sloučení #148
+
+Prvním rodičem je oprava po review `4a361ae5f16a0c8ef5662635b3304d69f9dec270`.
+Druhým je `main` na `385943e48d2d2e60cec541f1f0db78beda83de22`. Společný strom
+obsahuje šest souborů zdrojových a testovacích změn obou rodičů v původním
+znění. Historické ověření [předání konfigurace](165_forwardBuildConfiguration.md)
+patří své původní revizi a zůstává v samostatném dokladu. Konflikty ve dvou
+generovaných souborech grafu řeší regenerace se zachováním 375 epizod rodičů.
+
+Cloud Environment s JDK 21.0.6+7 a offline Mavenem 3.9.9 dal **21 PASS / 0 SKIP**,
+exit 0. Výběr pokryl alias a nedostupný otisk, skutečný locale drift při
+analýze i publikaci a veřejný přenos deklarované konfigurace vybrané Maven
+varianty včetně odmítnutí chybných hodnot. JUnit SHA-256 je
+`d202349dc7b39f3e112169c530157d2c22aca861e28845accfbb2bc81fee7c78` a shodný
+manifest 269 zdrojových, testovacích a nástrojových souborů má SHA-256
+`c05903e80f35ba5433d8563bc28d533774da6d793fdd16db50ef1b567f4d733f`.
+Dva nativní pokusy nad společným kódem znovu ověřily `STALE` a původní výstupy
+u reálného aliasu a jedno vyřešené volání s `BYPASS/INCOMPLETE_INPUT_CLOSURE`
+a prázdnými cache metadaty při právu `0111`. SHA-256 dokladů je
+`cccf36d972fab1bb94c494e5cdd9d09fb3d595be8dea7ac609dfce96cf143654`
+a `ee06f28b3cc608fc11e2984f47a8b371ed9c1337eb8c08807c4834bbb9518456`.
