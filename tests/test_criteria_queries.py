@@ -1,4 +1,5 @@
 """T003-S06-W07 acceptance through real Javac and explicit QueryDSL APT."""
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -117,6 +118,28 @@ def test_actual_criteria_specification_querydsl_and_fragment(actual):
     lambdas = [q for q in queries if symbols[q.metadata['method']]['name'] == '<lambda>']
     assert len(lambdas) == 2
     assert sorted(q.metadata['analysis_status'] for q in lambdas) == ['COMPLETE', 'PARTIAL']
+
+
+def test_actual_criteria_keeps_raw_provenance_in_crlf_source(tmp_path):
+    paths = project(tmp_path)
+    relative = 'src/main/java/demo/Queries.java'
+    source = tmp_path / relative
+    normalized = source.read_text(encoding='utf-8').encode()
+    raw = normalized.replace(b'\n', b'\r\n')
+    source.write_bytes(raw)
+    result = inspect(tmp_path, paths, publish=False)
+    assert result['exit_code'] == 0
+    graph = KnowledgeGraph.from_dict(result['graph'])
+    checksum = hashlib.sha256(raw).hexdigest()
+    assert result['context']['source_files'][relative] == checksum
+    assert graph.files[relative] == hashlib.sha256(normalized).hexdigest() != checksum
+    symbols = {s['id']: s for s in graph.symbols}
+    query, = [node for node in programmatic(graph)
+              if symbols[node.metadata['method']]['name'] == 'criteria']
+    assert symbols[query.metadata['method']]['sha256'] == checksum
+    assert query.metadata['analysis_status'] == 'COMPLETE'
+    assert any(e.source == query.id and e.kind == 'filters_by' and e.evidence_ids for e in graph.edges)
+    assert not (tmp_path / '.kgmaker').exists()
 
 
 @pytest.mark.parametrize('mutation', ['missing_version', 'unknown_version', 'bool_version', 'foreign_parameter',

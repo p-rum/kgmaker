@@ -179,3 +179,25 @@ skutečně zvoleného odkazu po analýze vrátilo `STALE` a zachovalo původní
 výstupy. Binárka s právy `0111` dál poskytla živou analýzu s `BYPASS` a
 prázdnými cache metadaty. SHA-256 nativního dokladu je
 `f02c46c9ee3d3241701a298287bcd4efd857c49f069e4970d75eceb8acec86c2`.
+
+## Přenos po sloučení #145
+
+Prvním rodičem je `369b283e5c80b03c4a0481483113713e262bd299`, druhým
+`main` na `1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4`. Společný strom
+zachovává [vazbu na bajty JVM zdroje](160_bindJvmSourceBytes.md) i výběr
+Java launcheru. Změny v `inspection.py` a `extraction_cache.py` se sloučily
+v oddělených místech. Přesné znění obou kontraktů zůstává v
+[dokumentaci cache](../stage-content-cache.md). Regenerace grafu zachovává
+386 historických epizod obou rodičů.
+
+Cílený výběr se skutečným Javacem 21.0.6+7 a Kotlin workery K1/K2 dal
+**9 PASS / 0 SKIP**, exit 0. Ověřil relativní `PATH`, alias, nedostupný
+otisk, locale drift, zastaralost po změně konců řádků a ochranu souřadnic
+vybraných Kotlin zdrojů. JUnit SHA-256 je
+`bce766b547846806a3d7c47b2aee9bf7bcf1c6fc4b6e9f7336aec1ad7875609e`.
+Manifest 271 zdrojových, testovacích a nástrojových souborů se před a po
+běhu shoduje, SHA-256 `c32b8e5dcf05b13d7031dfaa7044be5d2bff2b20024c1a22d23b14653053ad74`.
+Nativní pokus s JDK 21 a 22 nad stejným kódem znovu ověřil shodu Javacu 21
+s otiskem, `STALE` po přesměrování vybraného aliasu a živý `BYPASS` při
+právu `0111`. SHA-256 dokladu je
+`ab7137841979fd8a49435b0217b1452e66025ad1ba385b5ece38c6874f326940`.

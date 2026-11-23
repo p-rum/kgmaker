@@ -55,11 +55,11 @@ def test_source_only_legacy_mapping_is_unknown_never_available(tmp_path):
 
 @pytest.mark.parametrize('backend',['k1','k2'])
 def test_actual_compiler_type_null_decimal_keys_and_later_target_conflict(tmp_path,backend,capsys):
-    from kgmaker.schema_replay import schema_compatibility, reconstruct
+    from kgmaker.schema_replay import schema_compatibility, reconstruct, schema_snapshot_fingerprint
     from kgmaker.inspection import inspect_jvm, command
-    from kgmaker.feature import attach_schema
+    from kgmaker.feature import attach_schema, current_graph as live_graph
     from kgmaker.framework import augment_framework_graph
-    from kgmaker.store import load_graph
+    from kgmaker.store import GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE, load_graph
     from kgmaker.worker_protocol import WorkerError
     from test_t015_project_data_resources import jpa_api_jars
     from pathlib import Path
@@ -161,6 +161,92 @@ class PropertyMoney {
     _,coverage,_,workspace_graph,_=snapshot_workspace(manifest)
     workspace_report=schema_compatibility(coverage['schemas']['money'][0],workspace_graph,context_id=qualified('money',result['context']['id']))
     assert next(x for x in workspace_report['items'] if x['attribute_name']=='amount')['dimensions']['type']['status']=='COMPATIBLE'
+
+    import hashlib
+    import json
+    from contextlib import contextmanager
+    from dataclasses import replace
+    from types import SimpleNamespace
+    from kgmaker.workspace_cli import schema_command
+
+    real_popen = subprocess.Popen
+
+    def read_only_git(argv, *args, **kwargs):
+        assert Path(argv[0]).name == 'git', argv
+        return real_popen(argv, *args, **kwargs)
+
+    @contextmanager
+    def offline():
+        with patch('subprocess.Popen', side_effect=read_only_git), \
+                patch('socket.create_connection', side_effect=AssertionError('no network')):
+            yield
+
+    def outcomes(value):
+        assert value['data_availability'] == 'UNASSESSED' and value['deployment_verified'] is False
+        return sorted((item['attribute_name'], item['status'],
+                       tuple((name, check['status'], check['reason']) for name, check in sorted(item['dimensions'].items())))
+                      for item in value['items'])
+
+    paths = [source, manifest, tmp_path/'money-config.json', *migrations.iterdir(),
+             *(tmp_path/path for path in (GRAPH_FILE, MARKDOWN_FILE, MERMAID_FILE))]
+    cli = SimpleNamespace(root=tmp_path, workspace=None, repo=None, stream='main', target='1', database='money',
+                          config='money-config.json', schema_command='compatibility', context=result['context']['id'], format='json')
+    expected = outcomes(report)
+    assert len(expected) == 14 and sum(row[1] == 'COMPATIBLE' for row in expected) == 5
+    with offline():
+        assert schema_command(cli) == 0
+    assert outcomes(json.loads(capsys.readouterr().out)) == expected
+
+    lf = source.read_bytes()
+    crlf = lf.replace(b'\n', b'\r\n')
+    source.write_bytes(crlf)
+    before_refresh = {path: path.read_bytes() for path in paths}
+    with offline():
+        stale, _, _ = live_graph(tmp_path)
+    assert not any(symbol.get('context_id') == cli.context for symbol in stale.symbols)
+    assert {path: path.read_bytes() for path in paths} == before_refresh
+
+    refreshed = inspect_jvm(tmp_path, home=home, kotlin_backend=backend, classpath=[*jars, str(stdlib)], publish=True,
+        build_context=dict(database_id='money', schema_stream_id='main', persistence_schema='public', flyway_target='1'))
+    assert refreshed['exit_code'] == 0
+    crlf_context = refreshed['context']
+    assert crlf_context['id'] != cli.context
+    cli.context = crlf_context['id']
+    relative = source.relative_to(tmp_path).as_posix()
+    raw_hash = hashlib.sha256(crlf).hexdigest()
+    assert crlf_context['source_files'][relative] == raw_hash
+    assert crlf_context['normalized_source_files'][relative] == graph.files[relative] != raw_hash
+    before_replay = {path: path.read_bytes() for path in paths}
+    with offline():
+        crlf_schema = reconstruct(tmp_path, config)
+        crlf_graph, _, _ = live_graph(tmp_path)
+        with_schema = attach_schema(crlf_graph, crlf_schema, tmp_path)
+        crlf_graph = augment_framework_graph(tmp_path, with_schema, crlf_context)
+        actual = schema_compatibility(crlf_schema, crlf_graph, context_id=cli.context)
+        assert schema_command(cli) == 0
+        crlf_cli = json.loads(capsys.readouterr().out)
+        _, coverage, _, qualified_graph, _ = snapshot_workspace(manifest)
+        qualified_schema = coverage['schemas']['money'][0]
+        qualified_id = qualified('money', cli.context)
+        qualified_report = schema_compatibility(qualified_schema, qualified_graph, context_id=qualified_id)
+    assert crlf_schema['status'] == 'COMPLETE'
+    assert schema_snapshot_fingerprint(crlf_schema) == schema_snapshot_fingerprint(schema)
+    for channel in (actual, crlf_cli, qualified_schema['compatibility'], qualified_report):
+        assert outcomes(channel) == expected
+    crlf_amount = next(row for row in actual['items'] if row['attribute_name'] == 'amount')
+    witness, = [proof for proof in crlf_graph.evidence if proof['id'] in crlf_amount['evidence_refs']
+                and proof['relation'] == 'projects_persistent_attribute']
+    assert witness['source_file'] == relative and witness['sha256'] == raw_hash
+
+    for changes in ({'source_files': None}, {'source_snapshot_version': 'selected-source-set-2'}):
+        with patch('kgmaker.framework._path_text', side_effect=AssertionError('malformed raw capture read source')):
+            augment_framework_graph(tmp_path, with_schema, {**crlf_context, **changes})
+        damaged = replace(qualified_graph, contexts=[{**row, **changes} if row['id'] == qualified_id else row
+                                                     for row in qualified_graph.contexts])
+        rejected = schema_compatibility(qualified_schema, damaged, context_id=qualified_id)
+        assert len(rejected['items']) == len(expected) and all(row['status'] == 'UNKNOWN' for row in rejected['items'])
+    assert {path: path.read_bytes() for path in paths} == before_replay
+
     later=reconstruct(tmp_path,{**config,'target':'2'})
     # The context still selects target1: a different supplied target cannot borrow its proof.
     foreign=schema_compatibility(later,graph,context_id=result['context']['id'])
@@ -213,7 +299,6 @@ class PropertyMoney {
     rejected=schema_compatibility(schema,modified,context_id=result['context']['id'])
     assert next(x for x in rejected['items'] if x['attribute_name']=='parent')['status']=='UNKNOWN'
     # The same field/simple name cannot lend another attribute its proof.
-    from dataclasses import replace
     original=deepcopy(graph.to_dict())
     project=next(e for e in graph.edges if e.kind=='projects_persistent_attribute' and e.target==amount['attribute_id'])
     other=next(e for e in graph.edges if e.kind=='projects_persistent_attribute' and e.target==identifier['attribute_id'])
@@ -221,18 +306,6 @@ class PropertyMoney {
     tampered=replace(graph,edges=[altered if e==project else e for e in graph.edges])
     assert next(x for x in schema_compatibility(schema,tampered,context_id=result['context']['id'])['items'] if x['attribute_name']=='amount')['status']=='UNKNOWN'
     assert graph.to_dict()==original
-    from kgmaker.workspace_cli import schema_command
-    from types import SimpleNamespace
-    real_popen=subprocess.Popen
-    def read_only_git(argv,*args,**kwargs):
-        assert Path(argv[0]).name=='git',argv
-        return real_popen(argv,*args,**kwargs)
-    with patch('subprocess.Popen',side_effect=read_only_git),patch('socket.create_connection',side_effect=AssertionError('no network')):
-        code=schema_command(SimpleNamespace(root=tmp_path,workspace=None,repo=None,stream='main',target='1',database='money',config='money-config.json',schema_command='compatibility',context=result['context']['id'],format='json'))
-    assert code==0
-    import json
-    cli=json.loads(capsys.readouterr().out)
-    assert next(x for x in cli['items'] if x['attribute_name']=='amount')['dimensions']['type']['status']=='COMPATIBLE'
     source.write_text(source.read_text().replace('@Id @Column(name="id",nullable=false) java.lang.Long id;', '@Id @Column(name="old_id",nullable=false) java.lang.Long id;'))
     from kgmaker.scanner import scan_repository
     from kgmaker.graph_provider import retain_compiler_layer
@@ -247,7 +320,6 @@ class PropertyMoney {
     assert updated_id['column_id']==identifier['column_id'] and updated_id['dimensions']['type']['status']=='COMPATIBLE'
     # Removing an ancestor migration invalidates positive type/key provenance,
     # even when the latest rename migration is still captured.
-    from dataclasses import replace
     uncaptured=replace(updated_graph,files={k:v for k,v in updated_graph.files.items() if k!='db/V1__base.sql'})
     assert all(x['status']=='UNKNOWN' for x in schema_compatibility(missing_schema,uncaptured,context_id=updated['context']['id'])['items'])
     replacement=reconstruct(tmp_path,{**config,'target':'4'})

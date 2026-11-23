@@ -564,9 +564,9 @@ negative tests cover conflicting memberships and invalid provenance without muta
 
 ### Review fixes: source-set freshness and convention provenance
 
-New JVM contexts with a supplied source-set model use
-`source_snapshot_version=selected-source-set-1`. Capture, pre-publication checks
-and offline replay share the same helper: selected module/set membership (including
+The `selected-source-set-1` JVM snapshot introduced source-set membership for a
+supplied project model. Capture, pre-publication checks and offline replay share
+the same helper for selected module/set membership (including
 `:generated`), configuration directly in root/module ancestor directories, Gradle
 configuration under those directories, and explicit build/settings scripts. Selected
 resources remain inputs; sibling source sets/resources are excluded even with an
@@ -1623,3 +1623,31 @@ kořeni Git checkoutu. Přidejte `--record-verification TASK_ID` k `project buil
 Funkce používá jeho existující snapshot a reporty Maven/Gradle. Vypočtený výsledek
 a freshness se čtou pomocí `trace show`.
 [Příklad a omezení dokladu](delivery-workflow.md#dokumentace-skutečného-testovacího-běhu).
+
+## JVM source byte fingerprints
+
+Fresh JVM inspection uses `source_snapshot_version=selected-source-set-raw-1`.
+The scanner captures raw and normalized hashes from the same bounded UTF-8 read.
+`source_files` holds selected raw SHA-256 fingerprints. A checkout's `graph.files`
+represents normalized scanner text. `normalized_source_files` carries the
+structural hash for scanned paths where the two digests differ. The workspace
+graph uses raw file inventory hashes. It qualifies both source maps and the
+compiler inputs with the owning repository. The `jvm-raw-1:` capture ID binds
+the snapshot version, canonical compiler input list, raw hashes and their sparse
+normalized projection to the pre-augmentation inspection digest. Offline replay
+checks that identity, the current inputs and the selected persistence XML inventory.
+Legacy JVM snapshots and the separate TypeScript input-discovery protocol remain
+readable.
+
+An LF/CRLF-only edit makes the affected JVM context stale. To refresh it, run
+`kgmaker inspect code --root ./service --module app --source-set main`. The
+verified Javac fixtures cover return and void bodies, abstract declarations,
+T025 local operation replay, a Criteria filter, source CFG call expansion,
+W08 JPA schema compatibility, the T012 Kafka catalogue and static retry/DLT
+declarations on CRLF input.
+Kotlin workers currently report PSI coordinates over normalized text. Explicit
+JVM inspection rejects a selected Kotlin file whose line endings change those
+coordinates. Offline replay applies the same guard to the captured compiler
+input list. Kotlin files excluded from that list can remain in the source-set
+inventory for freshness checks.
+[Exact verification and scope](changes/160_bindJvmSourceBytes.md).

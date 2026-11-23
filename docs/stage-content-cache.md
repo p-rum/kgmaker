@@ -39,6 +39,12 @@ launcher a JDK platform bytes, verze/obsah lokálních extractorů, stage, norma
 base graph a konkrétní upstream response. Stejná zobrazovaná jména nenahrazují
 identity varianty. Z base graph se vynechávají pouze cache a generation timestamp.
 
+Klíč aktuální JVM inspekce obsahuje identitu výběru compiler vstupů, přesné
+bajty v `source_files` a normalizovaný otisk odlišných souborů z
+`normalized_source_files`. Offline kontrola compiler kontextu zjistí změnu
+samotných konců řádků i změnu uloženého výběru bez odpovídající nové inspekce.
+[JVM source byte fingerprints](compiler-inspection.md#jvm-source-byte-fingerprints).
+
 Java otisk zahrnuje `lib/ct.sym` a na POSIX přesné bajty `LANG`, `LC_ALL`
 a `LC_CTYPE` včetně hodnot mimo UTF-8 a rozdílu mezi nepřítomnou a prázdnou hodnotou. V uloženém
 klíči je jen SHA-256 prostředí. Chybějící nebo nečitelný vstup otisku

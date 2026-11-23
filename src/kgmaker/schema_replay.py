@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from .analysis_model import AnalysisError, digest, file_hash, read_json, safe_path
+from .compiler_sources import JVM_RAW_CAPTURE_PREFIX, JVM_RAW_SOURCE_SNAPSHOT, compiler_source_digest
 from .flyway import migration_plan
 from .model import Edge, Node
 
@@ -805,9 +806,11 @@ def schema_compatibility(schema, graph, *, context_id=None):
         return proof
 
     def current_source(path, context, checksum=None):
-        captured = context.get('source_files', {}).get(path)
-        return (isinstance(captured, str) and re.fullmatch(r'[0-9a-f]{64}', captured)
-                and graph.files.get(path) == captured and (checksum is None or checksum == captured))
+        if (local_id(context['id']).startswith(JVM_RAW_CAPTURE_PREFIX)
+                and context.get('source_snapshot_version') != JVM_RAW_SOURCE_SNAPSHOT):
+            return False
+        captured = compiler_source_digest(graph.files, context, path)
+        return captured is not None and (checksum is None or checksum == captured)
 
     def proven(edge, context, physical=False):
         if edge.evidence_kind != 'FRAMEWORK_DERIVED' or list(edge.context_ids) != [context['id']] or not edge.evidence_ids:

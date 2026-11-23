@@ -1,7 +1,10 @@
 """Captured public Kafka catalogue fixtures; compiler runs only in explicit setup."""
 import copy
+from dataclasses import replace
+from hashlib import sha256
 import json
 from pathlib import Path
+import subprocess
 from unittest.mock import patch
 
 import pytest
@@ -19,7 +22,10 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.fixture(scope='module', params=['k1', 'k2'])
 def capture(tmp_path_factory, request):
     backend = request.param
-    root = tmp_path_factory.mktemp('t012-' + backend)
+    return capture_workspace(tmp_path_factory.mktemp('t012-' + backend), backend)
+
+
+def capture_workspace(root, backend, *, consumer_ending='\n'):
     root, manifest, document = kafka_workspace.__wrapped__(root)
     jars = actual_prerequisites(backend) + extra_api_jars()
     bodies = {
@@ -43,7 +49,9 @@ public class Code {
     facts = {}
     for repo, body in bodies.items():
         source = root / repo / 'src/main/java/demo/Code.java'
-        source.parent.mkdir(parents=True); source.write_text(body)
+        source.parent.mkdir(parents=True)
+        ending = consumer_ending if repo == 'consumer' else '\n'
+        source.write_bytes(body.replace('\n', ending).encode())
         if repo=='consumer':
             kotlin=root/repo/'src/main/kotlin/demo/Listener.kt';kotlin.parent.mkdir(parents=True)
             kotlin.write_text('''package demo
@@ -79,6 +87,63 @@ def project(capture):
     from kgmaker.interfaces import project_kafka_interfaces
     workspace, graph, coverage = capture
     return project_kafka_interfaces(workspace, graph, source_coverage=coverage)
+
+
+def test_actual_kafka_catalogue_and_t019_preserve_raw_java_authority(tmp_path, capsys):
+    from kgmaker.architecture_cli import run
+    from kgmaker.interfaces import InterfaceProjectionError
+    from kgmaker.scanner import scan_repository
+    from kgmaker.store import load_graph, save_graph
+
+    def catalogue(view):
+        return sorted((attrs['direction'], attrs.get('consumer_group') or '', attrs.get('broker_realm') or '',
+                       tuple(attrs['topics']), node['resolution_status'], attrs['code_binding'], attrs['delivery'])
+                      for node in view['nodes'] if node['kind'] == 'kafka_interface'
+                      for attrs in (node['attributes'],))
+
+    launch = subprocess.Popen
+
+    def allow_git(argv, *args, **kwargs):
+        assert Path(argv[0]).name == 'git', argv
+        return launch(argv, *args, **kwargs)
+
+    expected = None
+    for name, ending in (('lf', '\n'), ('crlf', '\r\n')):
+        root = tmp_path / name
+        root.mkdir()
+        workspace, graph, coverage = capture_workspace(root, 'k1', consumer_ending=ending)
+        schemas = root / 'schemas'
+        save_graph(scan_repository(schemas), schemas, generate_docs=False)
+        local_path = 'src/main/java/demo/Code.java'
+        qualified_path = '@consumer/' + local_path
+        consumer_root = root / 'consumer'
+        raw = sha256((consumer_root / local_path).read_bytes()).hexdigest()
+        lexical = load_graph(consumer_root).files[local_path]
+        assert graph.files[qualified_path] == raw
+        assert (raw == lexical) is (ending == '\n')
+        before = {path: path.read_bytes() for path in root.rglob('*') if path.is_file()}
+        supplied = copy.deepcopy((workspace, graph.to_dict(), coverage))
+        with patch('subprocess.Popen', side_effect=AssertionError('implicit process')), \
+                patch('socket.socket', side_effect=AssertionError('network')):
+            direct = catalogue(project((workspace, graph, coverage)).to_dict())
+            if ending == '\r\n':
+                damaged = replace(graph, files={**graph.files, qualified_path: lexical})
+                with pytest.raises(InterfaceProjectionError, match='Public code fact differs from canonical captured authority'):
+                    project((workspace, damaged, coverage))
+        with patch('subprocess.Popen', side_effect=allow_git), \
+                patch('socket.socket', side_effect=AssertionError('network')):
+            assert run(['interfaces', '--catalog', 'kafka', '--capture-local', '--workspace',
+                        workspace['_manifest_path']]) == 0
+        cli = json.loads(capsys.readouterr().out)
+        assert catalogue(cli) == direct
+        assert {row[1] for row in direct if row[2]} >= {'group-one', 'group-two'}
+        assert all(row[-1] == 'NOT_OBSERVED' for row in direct)
+        if expected is None:
+            expected = direct
+        else:
+            assert direct == expected
+        assert (workspace, graph.to_dict(), coverage) == supplied
+        assert {path: path.read_bytes() for path in root.rglob('*') if path.is_file()} == before
 
 
 def test_actual_ac01_ac02_realms_groups_original_ids_and_regex(capture):
