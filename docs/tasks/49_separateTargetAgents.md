@@ -117,7 +117,7 @@ Návrhy větví níže odpovídají jednotlivým předáním. Před zahájením 
 
 - Baseline: `edb65e57ca4de1743c810689c78e069cd86b2b41` (main, 2026-11-24).
 - Závislosti: pouze baseline; nezávisí na nedodaných S01–S07.
-- Dodání: IN_PROGRESS; ověření VERIFIED_IN_SCOPE, přesné kontroly v change169 a stavové matici.
+- Dodání: PR_OPEN ([#153](https://github.com/p-rum/kgmaker/pull/153)); ověření VERIFIED_IN_SCOPE, přesné kontroly v change169 a stavové matici.
 - T049-R08: Odstraň vlastní session hook, cílové Copilot/Junie agenty a commands,
   aktivní skilly včetně completion, verzované grafy a povinnost `kgmaker check`
   v CI. Vývojové profily mají číst zdroje, testy a Git bez KGMAKER runtime.

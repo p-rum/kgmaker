@@ -79,9 +79,27 @@ git diff --check
   implementace zůstaly nedotčené. `git diff --check` prošel.
 - **PASS:** kontrola čísla změny proti lokálnímu registru, `origin/main`,
   vzdálenému main a souborům otevřených PR: maximum 168, přiděleno 169.
-- **NOT_RUN:** úplná testovací sada, skutečné compiler/build/Windows joby,
-  hostované GitHub Actions a živý restart hostitelů. Změna jejich implementace
-  nebyla součástí kroku. Self-use příkazy nebyly použity k ověření ani předání.
+- **NOT_RUN:** úplná testovací sada, skutečné compiler/build/Windows ověření
+  a živý restart hostitelů. Změna jejich implementace nebyla součástí kroku.
+  Self-use příkazy nebyly použity k ověření ani předání.
+- **FAIL / příčina neověřená:** GitHub Actions na prvním PR headu `04f75ed`
+  evidují neúspěšný [Test](https://github.com/p-rum/kgmaker/actions/runs/45457427415)
+  a [PR Review](https://github.com/p-rum/kgmaker/actions/runs/45457427303).
+  Joby skončily bez dostupných kroků; log vracel BlobNotFound. Z tohoto stavu
+  nelze vyvozovat výsledek testů ani fakturační příčinu.
+
+### Předání a nezávislá kontrola
+
+[PR #153](https://github.com/p-rum/kgmaker/pull/153), větev
+`chore/t049-disable-repository-self-use`. První publikovaný head
+`04f75edbcb260a72f9d96992cc150b941cb5b25d`, tree
+`c4f171c6127cda53903aea59db3f28da3b625337`, odpovídá přesně ověřenému lokálnímu
+obsahu bez cizí změny verze. JUnit SHA-256:
+`29adf66a5a8aa42949165c9101efad96178edf3915b75279f67b579fac4f18f8`.
+Nezávislý code_review pro tento head a uvedenou base vydal obsahové APPROVE,
+ověřil všech 148 publikovaných cest, JUnit, metadata 101 profilů a izolaci
+cílových instalací. V tomto checkpointu byl PR draft; merge neproběhl.
+Následující dokumentační oprava aktualizuje pouze stav PR a pozorované CI.
 
 ### Zbývající omezení
 

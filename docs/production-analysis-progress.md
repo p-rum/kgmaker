@@ -2,7 +2,7 @@
 
 ## Vývoj bez vlastního KGMAKERu — 2026-11-24
 
-T049-S08 je IN_PROGRESS / VERIFIED_IN_SCOPE: 111 cílených testů PASS / 0 SKIP,
+T049-S08 je PR_OPEN ([#153](https://github.com/p-rum/kgmaker/pull/153)) / VERIFIED_IN_SCOPE: 111 cílených testů PASS / 0 SKIP,
 101 TOML profilů validních, kontrola odstraněných vstupů a čistoty diffu PASS.
 Aktivní self-use instrukce, hook, cílové agenty/skilly, verzované grafy a CI
 kontrola vlastního indexu jsou odstraněny. Vývoj používá zdroje, Git a testy.
