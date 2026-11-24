@@ -220,6 +220,60 @@ def test_actual_javac_tampered_capture_cannot_ground_reverse_impact(tmp_path):
     assert _store_bytes(tmp_path) == before
 
 
+@pytest.mark.parametrize("digest_map", ["source_files", "normalized_source_files"])
+def test_actual_javac_malformed_capture_digest_is_ignored_in_public_impact(tmp_path, monkeypatch, capsys, digest_map):
+    _require_javac_worker()
+    targets = {module: f"{module}/src/main/java/Api.java" for module in ("app", "service")}
+    callers = {module: f"{module}/src/main/java/Caller.java" for module in targets}
+    model = {"source_sets": [
+        {"module": module, "id": "main", "scope": "production", "files": [target, callers[module]]}
+        for module, target in targets.items()
+    ]}
+    original = b"class Api {\r\n    static int value() { return 1; }\r\n}\r\n"
+    for module, target in targets.items():
+        _write(tmp_path, callers[module], "class Caller { static int read() { return Api.value(); } }")
+        (tmp_path / target).write_bytes(original)
+    captures = {module: inspect_jvm(tmp_path, module=module, sources=[target, callers[module]], project_model=model)
+                for module, target in targets.items()}
+    assert all(result["exit_code"] == 0 for result in captures.values())
+    for target in targets.values():
+        (tmp_path / target).write_bytes(original.replace(b"return 1;", b"return 2;"))
+
+    stored = tmp_path / GRAPH_FILE
+    graph = read_json(stored)
+    context = next(row for row in graph["contexts"] if row["id"] == captures["app"]["context"]["id"])
+    assert context[digest_map][targets["app"]] == captures["app"]["context"][digest_map][targets["app"]]
+    monkeypatch.setattr("sys.argv", ["kgmaker", "impact", "--root", str(tmp_path), "--evidence-only",
+                                   "--format", "json", *targets.values()])
+    capsys.readouterr()
+
+    def impact():
+        before = _store_bytes(tmp_path)
+        with patch("subprocess.Popen", side_effect=AssertionError("implicit process")), \
+                patch("kgmaker.scanner.scan_repository", side_effect=AssertionError("implicit rescan")), \
+                pytest.raises(SystemExit) as outcome:
+            main()
+        assert outcome.value.code == 0
+        output = capsys.readouterr()
+        assert output.err == ""
+        report = json.loads(output.out)
+        assert report["coverage"] == "PARTIAL"
+        assert report["graph_sha256"] == hashlib.sha256(before[GRAPH_FILE]).hexdigest()
+        assert _store_bytes(tmp_path) == before
+        return report
+
+    control = impact()
+    assert [item["path"] for item in control["affected"]] == list(callers.values())
+    context[digest_map][targets["app"]] = "invalid test digest"
+    stored.write_text(json.dumps(graph).replace('"invalid test digest"', "1e400"), encoding="utf-8")
+    malformed = next(row for row in read_json(stored)["contexts"] if row["id"] == context["id"])
+    assert malformed[digest_map][targets["app"]] == float("inf")
+
+    report = impact()
+    assert report["changed_sources"] == control["changed_sources"]
+    assert report["affected"] == [control["affected"][1]]
+
+
 def test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents(tmp_path, monkeypatch, capsys):
     migrations = "src/main/resources/db/migration/"
     base = _write(tmp_path, migrations + "V1__customers.sql", "CREATE TABLE customer (balance INTEGER);")

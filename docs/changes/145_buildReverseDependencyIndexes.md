@@ -347,3 +347,53 @@ popisují čtecí kontrakt. W02-AC01 zůstává `PARTIAL`. Publikace selektivní
 invalidace, negativní lookupy a cross-workspace vazby mají samostatný rozsah.
 Úplná sada, Windows, vzdálené CI a nové nezávislé review jsou při tomto
 lokálním předání `NOT_RUN`.
+
+## Oprava po review — kontrola otisků raw JVM capture, kroky 3–5 a AC01–AC04
+
+Výchozí #130 `090ef9fa6dfdd57048d1bb8418f95bfb23890060`, cílový `main`
+`1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4`. Nezávislá review reprodukovala
+číselnou hodnotu `1e400` v `source_files` skutečného Javac capture.
+Python ji načetl jako nekonečno a kanonická serializace přerušila výpočet
+identity. Veřejný `impact --evidence-only --format json` selhal výjimkou.
+
+`src/kgmaker/compiler_sources.py` před výpočtem identity ověří hodnoty v
+`source_files` i `normalized_source_files` existujícím pravidlem pro SHA-256.
+Poškozený kontext se vyřadí z compiler evidence. Čtecí report zachová
+výsledky z nezávislého platného kontextu, `changed_sources`, `PARTIAL`
+a bajty uloženého grafu. Formát JSON v1 a čtení graph/store v1–v3 zůstávají
+kompatibilní. Test při obou variantách zakazuje podprocesy a automatický scan.
+Příklad zůstává `kgmaker impact --evidence-only --format json app/src/main/java/Api.java`.
+Chování je uvedeno v [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02),
+[návodu k výstupu](../stage-content-cache.md#selektivní-dopad-změn),
+[inventáři](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavové matici](../production-analysis-progress.md).
+
+Lokální Cloud Environment použil Javac/JDK 21.0.6, připravené JVM workery,
+`PYTHONPATH=src`, `KGMAKER_REQUIRE_WORKERS=1`, `KGMAKER_REQUIRE_K2=1`
+a `JAVA_TOOL_OPTIONS=-XX:-UsePerfData`.
+
+- RED s produktem `090ef9f` — 2 FAIL / 0 SKIP za 38,80 s. V obou mapách
+  vyvolal poškozený otisk `ValueError`. JUnit `pr130-090ef9f-retry2-red.xml`,
+  SHA-256 `0a42b6bb0895fa3d2f9fe3673cb4af362e21d5135f76d35606084c73563e246a`.
+- GREEN — 164 PASS / 0 SKIP za 106,45 s. Prošly obě nové varianty i původní
+  kontroly LF↔CRLF, lokátorů, starších schémat, W06 a T032. T032 vypsal dvě
+  varování Pythonu o `fork()` ve vícevláknovém procesu. JUnit
+  `pr130-090ef9f-retry2-native.xml`, SHA-256
+  `bc7965f32111b881804c59ec8a3a1e4a02ca94dbc1f95fe4c3e9bee94e4c2aa5`.
+  Shodný manifest zdrojů, testů a nástrojů před a po měl SHA-256
+  `fcc13ba6fcc6d0c4710c5bc9261a8f98db771d15d60c2967f0113a9540387ba7`.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short -ra \
+  tests/test_reverse_dependency_index.py::test_actual_javac_malformed_capture_digest_is_ignored_in_public_impact
+python -m pytest -n 3 --dist load -p no:cacheprovider -q --tb=short -ra \
+  tests/test_reverse_dependency_index.py tests/test_graph_provider.py tests/test_feature.py \
+  tests/test_feature_fixture.py tests/test_flyway.py tests/test_workspace.py \
+  tests/test_graph_publication_concurrency.py tests/test_t032_persist_process_review.py \
+  tests/test_jvm_raw_source_snapshot.py
+```
+
+W02-AC01 zůstává `PARTIAL`. Publikace selektivní invalidace, negativní
+lookupy a cross-workspace vazby mají vlastní rozsah. Úplná sada na nové
+revizi, GitHub Actions a opakované nezávislé review mají při lokálním předání
+stav `NOT_RUN`.

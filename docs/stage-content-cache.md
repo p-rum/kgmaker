@@ -155,6 +155,9 @@ Cesta požadavku se pro porovnání normalizuje a původní packet drží svou i
 Výstup má `coverage: PARTIAL`. Obsahuje pozitivní historické vazby a může uvést
 diagnostiku pro chybějící nebo nečitelný zdroj, starší graph, neověřenou compiler
 vrstvu či nedostupnou revizi feature. Záznamy revizí se čtou pouze z běžných souborů.
+Každá hodnota raw i normalizované mapy JVM capture musí být 64 malých
+hexadecimálních znaků SHA-256. Při neplatném otisku report vynechá compiler
+důkazy poškozeného kontextu a zachová doložené výsledky z ostatních kontextů.
 Při nečitelném nebo nesprávně strukturovaném uloženém grafu příkaz skončí kódem
 1 a bez výstupu JSON. Nečitelný změněný zdroj vrací `DEPENDENCY_PATH_UNAVAILABLE`.
 Nové soubory mimo zachycený rozsah, negativní

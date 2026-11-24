@@ -1296,8 +1296,10 @@ callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
 migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
 porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
 callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
-`changed_sources` dál porovnává normalizovaný text. Operace pouze čte
-a uvádí `PARTIAL` s diagnostikou hranic.
+`changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
+důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
+z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
+s diagnostikou hranic.
 [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
