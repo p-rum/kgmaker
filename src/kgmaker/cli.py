@@ -251,68 +251,32 @@ from .delivery_instructions import DELIVERY_INSTRUCTIONS
 INSTRUCTIONS_CONTENT += DELIVERY_INSTRUCTIONS
 
 
-def _write_if_missing(path: Path, text: str, force: bool = False) -> bool:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() and not force:
-        return False
-    path.write_text(text, encoding="utf-8")
-    return True
+def bundled_init_files() -> dict[Path, str]:
+    """Single inventory shared by initialization, upgrade and uninstall."""
+    from .skills import SKILL_FILES
+
+    return dict((
+        (HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
+        (AGENT_FILE, AGENT_CONTENT),
+        (ANALYST_FILE, ANALYST_CONTENT),
+        (JUNIE_FILE, JUNIE_CONTENT),
+        (DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT),
+        (DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT),
+        (ARCHITECT_AGENT_FILE, ARCHITECT_AGENT_CONTENT),
+        (EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
+        (ORCHESTRATOR_AGENT_FILE, ORCHESTRATOR_AGENT_CONTENT),
+        (IMPLEMENTATION_AGENT_FILE, IMPLEMENTATION_AGENT_CONTENT),
+        (REVIEW_AGENT_FILE, REVIEW_AGENT_CONTENT),
+        (TEST_EXPERT_AGENT_FILE, TEST_EXPERT_AGENT_CONTENT),
+        (COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
+        (NOTES_FILE, NOTES_CONTENT),
+        *SKILL_FILES.items(),
+    ))
 
 
 def init(root: Path, force: bool = False) -> int:
-    from .analysis_model import AnalysisError
-    from .skills import planned_skill_files
-
-    try:
-        skill_files = planned_skill_files(root)
-    except AnalysisError as error:
-        print(f"Cannot initialize kgmaker skills: {error}", file=sys.stderr)
-        return error.code
-    written = []
-    for path, text in (
-        (root / HOOK_CONFIG, json.dumps(HOOK_CONTENT, indent=2) + "\n"),
-        (root / AGENT_FILE, AGENT_CONTENT),
-        (root / ANALYST_FILE, ANALYST_CONTENT),
-        (root / JUNIE_FILE, JUNIE_CONTENT),
-        (root / DATA_AUDITOR_FILE, DATA_AUDITOR_CONTENT),
-        (root / DATA_AUDITOR_JUNIE_FILE, DATA_AUDITOR_JUNIE_CONTENT),
-        (root / ARCHITECT_AGENT_FILE, ARCHITECT_AGENT_CONTENT),
-        (root / EXTRACT_AGENT_FILE, EXTRACT_AGENT_CONTENT),
-        (root / ORCHESTRATOR_AGENT_FILE, ORCHESTRATOR_AGENT_CONTENT),
-        (root / IMPLEMENTATION_AGENT_FILE, IMPLEMENTATION_AGENT_CONTENT),
-        (root / REVIEW_AGENT_FILE, REVIEW_AGENT_CONTENT),
-        (root / TEST_EXPERT_AGENT_FILE, TEST_EXPERT_AGENT_CONTENT),
-        (root / COPILOT_INSTRUCTIONS, INSTRUCTIONS_CONTENT),
-        (root / NOTES_FILE, NOTES_CONTENT),
-        *skill_files,
-    ):
-        if _write_if_missing(path, text, force=force):
-            written.append(path.relative_to(root).as_posix())
-
-    from .artifact_templates import install
-    written.extend(install(root))
-
-    ignore_entries = [
-        ".kgmaker/analyses/", ".kgmaker/graph.json", ".kgmaker/semantic-input.json",
-        ".kgmaker/semantic-update.json", ".kgmaker/semantic-update.md",
-        ".kgmaker/semantic-patch.json", ".kgmaker/semantic-extract.md",
-        ".kgmaker/confluence-index.json", ".kgmaker/workflow/",
-    ]
-    gitignore_path = root / GITIGNORE
-    if not gitignore_path.exists():
-        gitignore_path.write_text("\n".join(ignore_entries) + "\n", encoding="utf-8")
-        written.append(".gitignore")
-    else:
-        existing = gitignore_path.read_text(encoding="utf-8")
-        missing = [entry for entry in ignore_entries if entry not in existing.splitlines()]
-        if missing:
-            gitignore_path.write_text(existing.rstrip() + "\n\n# Local kgmaker index\n" + "\n".join(missing) + "\n", encoding="utf-8")
-            written.append(".gitignore")
-
-    print("Initialized kgmaker in this repository.")
-    print("Created: " + (", ".join(written) if written else "nothing; existing files were preserved"))
-    print("Next: kgmaker scan")
-    return 0
+    from .installation import run
+    return run(root, "init", force=force)
 
 
 def scan(root: Path, generate_docs: bool = True, confluence_dir: str | None = None, report: str | None = None) -> int:
@@ -944,6 +908,15 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--root", type=Path, default=Path.cwd())
     init_parser.add_argument("--force", action="store_true", help="overwrite kgmaker-managed instructions and skills")
 
+    for command, help_text in (
+        ("upgrade", "upgrade project integration files to the installed kgmaker version"),
+        ("uninstall", "remove project integration and all .kgmaker data"),
+    ):
+        lifecycle = sub.add_parser(command, help=help_text)
+        lifecycle.add_argument("--root", type=Path, default=Path.cwd())
+        lifecycle.add_argument("--dry-run", action="store_true", help="show changes without writing")
+        lifecycle.add_argument("--force", action="store_true", help="replace/remove modified managed files")
+
     memory_parser = sub.add_parser("memory", help="capture or recall Git-backed implementation episodes")
     memory_sub = memory_parser.add_subparsers(dest="memory_command", required=True)
     memory_capture_parser = memory_sub.add_parser("capture", help="record the current implementation change")
@@ -1096,6 +1069,9 @@ def main() -> None:
     elif args.command == "completion":
         from .completion import run
         code = run(args)
+    elif args.command in {"upgrade", "uninstall"}:
+        from .installation import run
+        code = run(root, args.command, force=args.force, dry_run=args.dry_run)
     elif args.command == "init":
         code = init(root, args.force)
     elif args.command == "memory" and args.memory_command == "capture":
