@@ -913,8 +913,10 @@ nový K1/K2 běh prochází.
 - AC03: structural/path/ownership and context ambiguity fail closed; missing
   evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
   publish no cache/source/store changes. Actual K1/K2 captured context test verifies
-  precedence/freshness without implicit repair. Password sentinel is absent from
-  graph; offline source-only checks allow only existing Git baseline reads.
+  precedence/freshness without implicit repair. It compares the canonical
+  workspace reference as the exact repository and original JVM context ID.
+  Password sentinel is absent from graph; offline source-only checks allow
+  only existing Git baseline reads. [Current native check](changes/168_assertQualifiedKafkaContext.md).
 - AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
   compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
 
@@ -1093,7 +1095,7 @@ remain UNKNOWN; no whole S06/T003/T004 completion claim.
 AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
 two service realms, method/sibling separation, deterministic order and duplicate
 records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
-### T003-S07-W04 revize2 — draft code/group acceptance
+### T003-S07-W04 revize2 — historické code/group ověření před integrací
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
 backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
@@ -1103,9 +1105,10 @@ Schema2 public snapshot ověřuje explicitní původní code refs, group propert
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
-změny; source composition má nezávislé root APPROVE. Finální metadata-head review
-a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
-metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+změny; source composition má nezávislé root APPROVE. Revize2 byla sloučena
+v [#69](https://github.com/p-rum/kgmaker/pull/69). Tento historický běh zůstává
+vázaný na uvedenou revizi. K2 listener metadata zůstávají PARTIAL a runtime/data
+availability UNASSESSED. Viz note77.
 
 ## T006/T008 revision2 — derived context role boundary
 

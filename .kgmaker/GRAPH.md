@@ -3,7 +3,7 @@
 > Generated locally by kgmaker. Structural edges come from source text; name-based call edges are heuristic.
 > Review semantic conclusions with the repository's Copilot knowledge-graph agent.
 
-- Scope: production; omitted files: 568
+- Scope: production; omitted files: 569
 - Mode: SOURCE_ONLY; coverage: PARTIAL; no build/test/runtime result is implied.
 - Freshness below describes the captured snapshot; use `kgmaker status` to compare current inputs.
 - Context: `fac860e0f58066c62aeeeeb9b530e86f8028e7c4cee13094c15d41bf272fe7e8`; content: `0d1dea8f99cbc604294a133041ce83c6bc7a486d0123c73d1ce7404ea115a996`; freshness: CONTENT_VERIFIED
@@ -18,7 +18,7 @@
 - Workbooks/cells: 0/0
 - Templates/fragments/variables/conditions: 0/0/0/0
 - Semantic concepts: 0
-- Implementation episodes: 388
+- Implementation episodes: 389
 - Inferred/ambiguous relationships: 8563/0
 
 ## Architecture diagram
@@ -2436,6 +2436,7 @@ flowchart LR
 - **merge current coroutine main into validated XML and Spring evidence composition** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/65_ormXmlOverrides.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: combined-actual=passed, parent-pure=passed, semantic=passed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/160_bindJvmSourceBytes.md, docs/compiler-inspection.md, docs/kafka-interfaces.md; validation: t012-native-lf-to-crlf-baseline=failed, t012-kafka-t019-native-strict=passed
 - **Change --target přijímá přesné existující entity ID, soubor nebo jednoznačný textový výběr., Acceptance a ověření, Agent reads packet.json and candidate-template.json, writes candidate.json.** — removed; files: .github/agents/kgmaker-analyst.agent.md, .github/agents/kgmaker-implementation.agent.md, .github/agents/kgmaker-orchestrator.agent.md, .github/agents/kgmaker-review.agent.md, .github/agents/kgmaker-test-expert.agent.md; validation: focused52=passed, available-pytest=passed, unavailable-toolchains=skipped
+- **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/168_assertQualifiedKafkaContext.md, docs/production-analysis-progress.md, tests/test_kafka_bindings.py; validation: test-kafka-native=passed
 - **merge current main 5430388 into S06 JPA W01** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: parent_only_integration79=passed, unchanged_JPA_source_actual35=passed, current_remote_ci=unknown
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/116_parseExtendedJpqlHql.md, docs/production-analysis-progress.md; validation: publication=passed, runtime-unchanged=passed, full-pytest=failed
 - **Change Aktualizace stavu, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — removed; files: .github/workflows/pr-review.yml, README.md, docs/acceptance-inventory.md, docs/changes/154_fixPrReviewPythonAndCoverage.md, docs/production-analysis-progress.md; validation: immutable-git-evidence=passed, coverage-smoke=passed, scoped-64=passed, hosted-review=unknown
@@ -2627,7 +2628,7 @@ flowchart LR
 - **Change --target přijímá přesné existující entity ID, soubor nebo jednoznačný textový výběr., Acceptance a ověření, Aktualizace stavu** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/56_addDeliveryReferences.md, docs/changes/57_addArtifactTemplates.md, docs/changes/58_addExistingFunctionTests.md; validation: review-regressions=passed, stdlib-209=passed, pytest-local=unknown, independent-local-review=passed
 - **feat: trace bounded compiler field and mapper transfers** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/124_fieldAndMappingFlow.md, docs/compiler-inspection.md, docs/field-mapping.md; validation: w03-integration166=passed, semantic-preservation=passed, source-identity=passed, full-suite=skipped
 - **Merge current main worker distribution into methodology integration** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/9_bindMethodologyApproval.md, docs/feature-analysis.md, docs/production-analysis-progress.md; validation: strict274=passed, packet_freshness=passed
-- **Change 164 — Doplnění otisku spuštění Javac, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — current; files: docs/acceptance-inventory.md, docs/changes/164_bindJavaLaunchInputs.md, docs/stage-content-cache.md, src/kgmaker/extraction_cache.py, tests/test_stage_content_cache_actual.py; validation: actual-javac-cyclic-red-green=passed, python313-javac-cyclic=passed, prior-launcher-guards=passed, semantic=passed
+- **Change 164 — Doplnění otisku spuštění Javac, Aktuální audit dodání — 2026-11-14, Aktuální oddělený T020 checkpoint — 2026-11-06** — changed; files: docs/acceptance-inventory.md, docs/changes/164_bindJavaLaunchInputs.md, docs/stage-content-cache.md, src/kgmaker/extraction_cache.py, tests/test_stage_content_cache_actual.py; validation: actual-javac-cyclic-red-green=passed, python313-javac-cyclic=passed, prior-launcher-guards=passed, semantic=passed
 - **Record strict registrar validation and corrected producer boundaries** — removed; files: .github/workflows/test.yml, README.md, docs/acceptance-inventory.md, docs/changes/47_declareSpringRegistrations.md, docs/compiler-inspection.md; validation: strict-full-558=passed, actual-focused-57=passed, optional-10=skipped
 - **Integrate merged callback main into Kotlin JPA access** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: parent_T015_integration124=passed, unchanged_JPA_source_actual35=passed, current_remote_ci=unknown
 - **Change 2 passed, 36 passed, 364 passed, 24 skipped** — changed; files: README.md, docs/acceptance-inventory.md, docs/changes/43_kotlinJpaUseSiteAccess.md, docs/compiler-inspection.md, docs/production-analysis-progress.md; validation: Final K2 and Javac JPA tests=passed, K2 and build-aware scoped suites=passed, Full pytest baseline=passed, Semantic validate=passed
