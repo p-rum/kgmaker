@@ -201,3 +201,32 @@ Nativní pokus s JDK 21 a 22 nad stejným kódem znovu ověřil shodu Javacu 21
 s otiskem, `STALE` po přesměrování vybraného aliasu a živý `BYPASS` při
 právu `0111`. SHA-256 dokladu je
 `ab7137841979fd8a49435b0217b1452e66025ad1ba385b5ece38c6874f326940`.
+
+## Cyklický odkaz na zvolený launcher
+
+Na `e8c51804fb3d1e87b51a6919977f8ab823813c34` se při nové kontrole
+cyklického odkazu `Path.resolve(strict=True)` v Pythonu 3.12.14 ukončil
+`RuntimeError`. Kontrola se proto nedostala k obvyklému výsledku `STALE`.
+Python 3.13.18 hlásí stejný stav jako `OSError` s `ELOOP`.
+
+`launch_inputs` nyní při obou chybách rozřešení cesty vrátí nedostupný
+otisk. Změnu dříve dostupného otisku pak zachytí dosavadní guard a store
+při přerušené publikaci obnoví nahrazené soubory. Rozsah zachycení launcheru
+a platformních souborů vymezuje [kontrakt cache](../stage-content-cache.md).
+
+`test_actual_jvm_cyclic_launcher_is_stale_and_preserves_generation` mění
+zvolený odkaz po skutečném Javac `analyze` nebo bezprostředně po nahrazení
+obsahově odlišného `GRAPH.mmd`. Oba případy vyžadují `STALE` a stejné bajty
+všech původních výstupů. S JDK 21.0.6+7 v Cloud Environment byly výsledky:
+
+- Python 3.12.14 před opravou **2 FAIL**, exit 1, oba `RuntimeError`.
+  JUnit `5c17340c25a26155df091744ebb7b0511c24482445f48b1c0d693d92bed40b63`.
+- Python 3.12.14 po opravě **8 PASS / 0 SKIP**, exit 0, včetně cyklu,
+  locale driftu, relativní cesty, aliasu a nedostupných bajtů launcheru.
+  JUnit `da4abe9c88023305ef18114647968c7524033d6a2409cbc064093c7b0fef1b90`.
+- Python 3.13.18 po opravě **2 PASS / 0 SKIP**, exit 0, oba případy cyklu.
+  JUnit `27ef67040a9f1a5daad6ac5d04f32e68064a9c1954c1ba59e7e66f1f5659d25d`.
+
+Manifest 271 zdrojových, testovacích a nástrojových souborů obou běhů po
+opravě se před a po testech shoduje. SHA-256
+`6fc9ac6b1f8f5f606073bdc92c442e201b93fdaba2996d706532e70b9a2dcb75`.

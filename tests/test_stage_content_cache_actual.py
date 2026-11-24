@@ -92,6 +92,78 @@ def test_actual_jvm_locale_drift_preserves_published_generation(tmp_path, monkey
     assert worker_stage['key']['launch']['files'][str(platform_symbols)] == file_hash(platform_symbols)
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher symlink')
+@pytest.mark.parametrize('when', ['after-analyze', 'after-first-replace'])
+def test_actual_jvm_cyclic_launcher_is_stale_and_preserves_generation(tmp_path, monkeypatch, when):
+    ready('jvm')
+    home = ROOT / 'workers'
+    java = Path(inspection.command('jvm', home)[0]).resolve()
+    alias = tmp_path / 'selected'
+    alias.symlink_to(java.parent.parent / 'lib', target_is_directory=True)
+    selected_bin = alias / '..' / 'bin'
+    monkeypatch.setenv('PATH', str(selected_bin) + os.pathsep + os.environ['PATH'])
+    for name in ('_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS', 'NODE_OPTIONS', 'CLASSPATH'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('JAVA_TOOL_OPTIONS', '-XX:-UsePerfData')
+    root = tmp_path / 'project'
+    java_sources = root / 'src/main/java'
+    source = java_sources / 'demo/Sample.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('package demo; public class Sample { int value() { return Math.abs(-3); } }\n',
+                      encoding='utf-8')
+    options = {'home': home, 'java_release': 17}
+    cold = inspection.inspect_jvm(root, **options)
+    assert cold['exit_code'] == 0
+    assert any(site['resolution_reason'] == 'JAVAC_ATTRIBUTED_SYMBOL'
+               for site in cold['graph']['call_sites'])
+
+    def outputs():
+        return {path.relative_to(root): path.read_bytes()
+                for path in (root / '.kgmaker').rglob('*') if path.is_file()}
+
+    before = outputs()
+    extra = java_sources / 'other/Additional.java'
+    extra.parent.mkdir()
+    extra.write_text('package other;\nimport demo.Sample;\npublic class Additional extends Sample {}\n',
+                     encoding='utf-8')
+    events = []
+
+    def make_cycle():
+        alias.unlink()
+        alias.symlink_to(alias.name)
+        events.append(when)
+
+    request = inspection.request_worker
+
+    def after_analyze(argv, payload, **kwargs):
+        assert Path(argv[0]) == selected_bin / 'java'
+        response = request(argv, payload, **kwargs)
+        assert payload['operation'] == 'analyze' and response['status'] == 'COMPLETE'
+        events.append('analyze')
+        if when == 'after-analyze':
+            make_cycle()
+        return response
+
+    monkeypatch.setattr(inspection, 'request_worker', after_analyze)
+    if when == 'after-first-replace':
+        replace = store.os.replace
+
+        def after_replace(source, target):
+            replace(source, target)
+            if Path(target) == root / store.MERMAID_FILE and when not in events:
+                updated = Path(target).read_bytes()
+                assert updated != before[store.MERMAID_FILE] and b'Additional.java' in updated
+                make_cycle()
+
+        monkeypatch.setattr(store.os, 'replace', after_replace)
+
+    with pytest.raises(WorkerError, match='launcher changed') as error:
+        inspection.inspect_jvm(root, **options)
+    assert error.value.status == 'STALE'
+    assert events == ['analyze', when]
+    assert outputs() == before
+
+
 @pytest.mark.parametrize('backend', ['k1', 'k2'])
 def test_actual_jvm_cold_warm_context_isolation_and_classpath_change(tmp_path, monkeypatch, backend):
     ready('jvm', backend)

@@ -63,6 +63,9 @@ kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
 aktuální worker a projekce. Zaznamenané vstupy se ověří znovu před commit.
 Změna zdroje, konfigurace, workeru, classpath nebo zachyceného otisku
 launcheru během inspekce vrací `STALE`.
+Cyklický odkaz při další kontrole launcheru zneplatní dříve dostupný otisk.
+Pokud už publikace nahradila některý odvozený výstup, store obnoví jeho
+předchozí bajty.
 
 Předchozí uložené kontexty vyžadují pro obnovu evidence explicitní inspekci
 konkrétního kontextu. Při jejím sloučení má čerstvý důkaz stejné identity

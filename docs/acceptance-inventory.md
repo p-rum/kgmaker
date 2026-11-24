@@ -31,6 +31,8 @@ Samostatné regrese pokrývají alias `java` a spustitelný launcher bez práva
 čtení na JDK 21/POSIX.
 Ověření s JDK 21 a 22 pokrývá také relativní `PATH` při odlišném pracovním
 adresáři workeru.
+Regrese s cyklickým odkazem ověřuje `STALE` po Javac analýze i rollback
+po nahrazení obsahově odlišného pohledu.
 AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
 rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.

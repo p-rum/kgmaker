@@ -121,6 +121,10 @@ def launch_inputs(argv):
     launcher = Path(argv[0])
     try:
         executable = launcher.resolve(strict=True)
+    except (OSError, RuntimeError):
+        # Python 3.12 pathlib reports symlink loops as RuntimeError.
+        return None
+    try:
         files = {str(executable): file_hash(executable)}
     except OSError:
         return None
