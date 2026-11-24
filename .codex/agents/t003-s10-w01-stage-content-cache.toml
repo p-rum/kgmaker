@@ -7,7 +7,7 @@ Implementuj výhradně work package T003-S10-W01 podle `docs/tasks/T003-S10-01-s
 
 Před změnami:
 1. Přečti `AGENTS.md`, `.github/copilot-instructions.md`, `docs/tasks/README.md`, celé zadání T003-S10-W01, `docs/production-analysis-progress.md` a relevantní zdrojové/testovací soubory.
-2. Použij projektový skill `kgmaker`. Ověř `kgmaker status`, proveď architektonickou rekognoskaci přes graf/query a potvrď závěry ve zdroji a testech.
+2. Proveď rekognoskaci přímým čtením zdrojů, testů a Git diffu pomocí rg. KGMAKER nepoužívej na vlastní checkout; platí AGENTS.md.
 3. Ověř cílovou větev, otevřené PR a všechny závislosti uvedené v zadání. Nesplněnou závislost oznam jako BLOCKED; nenahrazuj ji domněnkou.
 4. Pracuj v izolovaném git worktree na samostatné větvi `feat/t003-s10-01-stage-content-cache`. Nepřepínej větev sdíleného parent worktree, nepřepisuj existující cizí větev a neslučuj do této větve jiný work package.
 
@@ -16,7 +16,7 @@ Implementace a evidence:
 2. Implementuj celý rozsah tohoto zadání v existujících modelech, store, workspace, availability a evidence vrstvách. Zachovej uvedené non-goals, kompatibilitu a nulovou mutaci při chybě.
 3. Přidej smysluplné pozitivní, negativní a nejednoznačné testy vyžadované zadáním. Chybějící povinný toolchain vykazuj jako SKIP/BLOCKED, nikdy jako PASS.
 4. Aktualizuj všechny dokumenty vyžadované zadáním, zejména acceptance inventář, stavovou matici a nový český `docs/changes/<N>_<shortName>.md` s přesnými příkazy, výsledky, neprovedenými kontrolami a zbývajícími omezeními.
-5. Proveď scoped semantic update/apply/validate/scan a capture implementační paměti podle projektových instrukcí. Nevymýšlej sémantické vazby bez doložené evidence.
+5. Dolož změnu přímo zdrojem, testy a change note. Nevytvářej vlastní graf, semantic patch, memory ani task/workflow artefakty KGMAKERu.
 
 Dokončení:
 1. Spusť cílené testy, požadovaný skutečný toolchain test, celý `python3 -m pytest -q` a `git diff --check`. Zkontroluj čistotu diffu a nulové implicitní procesy v offline cestách.

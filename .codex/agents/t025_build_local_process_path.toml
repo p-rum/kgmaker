@@ -15,7 +15,7 @@ Implementace a evidence:
 1. Mapuj změny na AC ze zadání; nejprve vytvoř nebo identifikuj reprodukční failing testy. Implementuj celý specifikovaný rozsah se zachováním non-goals, kompatibility a nulové mutace při chybě.
 2. Přidej požadované pozitivní, negativní a nejednoznačné testy. Chybějící toolchain či dependency gate vykazuj SKIP/BLOCKED, nikdy PASS.
 3. Aktualizuj dokumentaci požadovanou zadáním, acceptance inventář/stavovou matici a český change note s přesnými příkazy, výsledky, NOT_RUN kontrolami a omezeními.
-4. Proveď pouze doložené semantic/memory aktualizace dle projektových pravidel; nevymýšlej vazby ani ručně neupravuj generované výstupy.
+4. Dolož změnu přímo zdrojem, testy a change note. Nevytvářej vlastní graf, semantic patch, memory ani task/workflow artefakty KGMAKERu.
 
 Dokončení:
 1. Spusť cílené testy, python3 -m pytest -q, požadované skutečné toolchain/render testy a git diff --check; uveď přesné výsledky a případné blokace.

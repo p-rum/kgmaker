@@ -28,8 +28,8 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T047 | [47_addReliableIncrementalContext.md](47_addReliableIncrementalContext.md) | Inkrementální integrita, bezpečnostní kontext, hranice dopadu a platnost ověření; 13 kroků | SPECIFICATION, revize 1 |
 
 | T048 | [48_completeImplementationHandoff.md](48_completeImplementationHandoff.md) | Předávací plán dokončení, závislosti T003/T004/T046/T047 a dokumentační gate každého kroku | SPECIFICATION, revize 1 |
-| T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 1 |
-| T050 | [50_addTargetProjectSkills.md](50_addTargetProjectSkills.md) | Samostatné skilly pro kontext, semantic, feature/data audit a testgen v cílovém projektu | SPECIFICATION, revize 1; dodání a ověření viz stavová matice |
+| T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 2; T049-S08 vypíná vlastní integraci |
+| T050 | [50_addTargetProjectSkills.md](50_addTargetProjectSkills.md) | Samostatné skilly pro kontext, semantic, feature/data audit a testgen v cílovém projektu | SPECIFICATION, revize 2; parita v izolovaném cílovém projektu, viz T049-S08 |
 | T051 | [51_connectProjectWorkflows.md](51_connectProjectWorkflows.md) | Konfigurovatelné workflow profily, snapshoty a návaznosti rolí | SPECIFICATION, revize 1; ověření viz stavová matice |
 | T052 | [52_addCompletionOrchestrator.md](52_addCompletionOrchestrator.md) | Lokální plánování a koordinace dokončení existující funkcionality | SPECIFICATION, revize 2; dodání viz stavová matice |
 

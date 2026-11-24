@@ -1,5 +1,16 @@
 # Aktuální stav a zbývající práce
 
+## Vývoj bez vlastního KGMAKERu — 2026-11-24
+
+T049-S08 je IN_PROGRESS / VERIFIED_IN_SCOPE: 111 cílených testů PASS / 0 SKIP,
+101 TOML profilů validních, kontrola odstraněných vstupů a čistoty diffu PASS.
+Aktivní self-use instrukce, hook, cílové agenty/skilly, verzované grafy a CI
+kontrola vlastního indexu jsou odstraněny. Vývoj používá zdroje, Git a testy.
+Historické T052 runtime checkpointy níže se neobnovují jako vývojové workflow.
+Distribuované funkce a templates zůstávají zachované; T049-S01–S07 nedokončené.
+[Záznam kroku a kontroly](changes/169_removeRepositorySelfUse.md).
+
+
 ## T052 — první běh dokončení 2026-11-19
 
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)

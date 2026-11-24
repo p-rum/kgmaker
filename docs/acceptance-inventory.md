@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+## T049-S08 — odstranění vlastní integrace, 2026-11-24
+
+| Acceptance | Ověření | Rozsah |
+|---|---|---|
+| T049-AC13 | VERIFIED_IN_SCOPE | Inventář odstraněných vstupů, 101 TOML profilů, CI bez vlastní indexové brány a diff PASS |
+| T049-AC14; T050-R04 | VERIFIED_IN_SCOPE | 111 testů PASS / 0 SKIP pro instalaci/templates/workflow/completion a scanner v izolovaných cílech |
+
+[Přesné kontroly a omezení](changes/169_removeRepositorySelfUse.md).
+Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k obnově.
+
+
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
 T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má

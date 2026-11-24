@@ -68,8 +68,9 @@ without new package-data rules. `init` preflights all skill paths using the exis
 `analysis_model.safe_path` symlink/containment contract before writing any output,
 then uses its existing preserve/explicit-force writer. `scan` does not install
 skills. This preflight is not transactional installation or concurrent-write
-protection for historical outputs; T049 remains separate. Repository copies under
-`.agents/skills/kgmaker-*/` are byte-checked against templates.
+protection for historical outputs; T049 remains separate. Installation tests
+compare files in temporary target projects against the templates. The development
+checkout has no installed skill copies ([T049-S08](changes/169_removeRepositorySelfUse.md)).
 See [the installation and CLI guide](agent-skills.md) and
 [change117](changes/117_addTargetProjectSkills.md) for scope and verification.
 

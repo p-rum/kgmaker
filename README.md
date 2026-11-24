@@ -40,13 +40,17 @@ Kotlin and TypeScript. The K2 wheel test runs in the required Linux compiler
 job. Windows K2 still awaits verification, and Windows `BUILD_EXECUTE` reports
 an unsupported-platform error. [Windows prerequisites and verification evidence](docs/windows-install.md)
 
-From the repository root:
+Install from the package checkout, then initialize the project you want to analyze:
 
 ```bash
-python -m pip install -e .
+python -m pip install -e /path/to/kgmaker
+cd /path/to/target-project
 kgmaker init
 kgmaker scan
 ```
+
+The KGMAKER development repository itself does not use these hooks or workflows.
+Use the [development procedure](#development) to work on KGMAKER.
 
 `kgmaker init` creates Agent Skills under `.agents/skills/`, repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed instructions and skills.
 
@@ -284,14 +288,11 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 
 ## Repository completion workflow
 
-In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
-current task inventory and emits dependency, verification and dispatch candidates as JSON.
-The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
-If the profile budget cannot fit the required context, retry that handoff with
-`kgmaker completion handoff TASK_ID --apply --token-budget 12000`.
-Use `kgmaker completion attribute TASK_ID ARTIFACT_ID --actor HOST_AGENT_ID`
-to record the implementer and each independent reviewer's local attribution.
-See [the local completion workflow and its limits](docs/completion-orchestrator.md).
+Development of KGMAKER uses source files, Git, tests and PR review directly.
+Its own completion skill, graph hooks and runtime task workflow are disabled
+by the 2026-11-24 repository policy. The completion command implementation and
+isolated regression tests remain available; the [historical capability contract](docs/completion-orchestrator.md)
+does not instruct agents to run it on this checkout. See [change169](docs/changes/169_removeRepositorySelfUse.md).
 
 ## Incremental integrity fixtures
 
@@ -339,6 +340,15 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 
 ## Development
+
+This repository is developed without running KGMAKER on itself. Read source,
+tests and specifications directly with ordinary search and Git tools. Record
+validation in change notes and PRs; do not initialize this checkout, maintain
+its graph, or require its own task/semantic/memory/completion commands.
+Product behavior, including installed hooks and skills, is tested in isolated
+fixture projects. CI runs those tests without a self-index `kgmaker check` gate.
+Local historical `.kgmaker/` data is ignored and is not development evidence.
+[T049-S08 and validation](docs/changes/169_removeRepositorySelfUse.md).
 
 The repository's [automated PR review](.github/workflows/pr-review.yml) reports
 pytest coverage and the test step's outcome. Requirements analysis compares the

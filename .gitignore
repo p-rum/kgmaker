@@ -1,4 +1,5 @@
-.kgmaker/graph.json
+# Self-use is disabled; retain any local historical data without tracking it.
+/.kgmaker/
 __pycache__/
 *.py[cod]
 *.egg-info/

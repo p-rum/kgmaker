@@ -77,10 +77,10 @@ SKIP/blocked. Přehled CLI je přímo v instalovaných skillech a v `kgmaker --h
 
 ## Zdroj templates a ověření
 
-Zdroj je `src/kgmaker/skills.py`, spravované kopie jsou `.agents/skills/kgmaker-*/`.
-Po změně templates obnov jen jejich explicitní cesty a ověř paritu pomocí
-`python -m pytest -q tests/test_skills.py`. Nespouštěj `init --force` nad checkoutem
-KGMakeru kvůli synchronizaci skillů: přepsal by i jiné upravené instrukce.
+Zdroj je `src/kgmaker/skills.py`. Checkout KGMakeru nemá aktivní cílové skilly.
+`python -m pytest -q tests/test_skills.py` ověřuje vygenerovaný obsah a relativní
+reference v dočasném cílovém projektu. Parita nevyžaduje vlastní instalaci.
+Nespouštěj init nad checkoutem KGMakeru. [Změna T049-S08](changes/169_removeRepositorySelfUse.md).
 Konkrétní příkazy, výsledky a neprovedené kontroly jsou v [change117](changes/117_addTargetProjectSkills.md).
 
 ## Návaznost analýzy, implementace a testů

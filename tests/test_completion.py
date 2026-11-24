@@ -55,9 +55,14 @@ def test_cycle_rejected_without_dispatch(tmp_path):
         plan(tmp_path)
 
 
-def test_real_inventory_is_readable_without_a_network_or_a_graph():
+def test_real_inventory_is_readable_without_a_network_or_a_graph(tmp_path):
+    import shutil
     root = Path(__file__).resolve().parents[1]
-    result = plan(root, jobs=4)
+    # Exercise the real inventory as input data in an isolated target. Do not
+    # run completion planning against the development checkout itself.
+    shutil.copytree(root / 'docs/tasks', tmp_path / 'docs/tasks')
+    shutil.copy2(root / INVENTORY, tmp_path / INVENTORY)
+    result = plan(tmp_path, jobs=4)
     assert len(result["items"]) >= 119
     assert "T003-S09-W05" in result["items"]["T003-S10-W01"]["dependencies"]
     assert result["items"]["T047-S01"]["dependencies"] == ()
