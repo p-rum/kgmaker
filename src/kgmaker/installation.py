@@ -128,6 +128,8 @@ def plan(root: Path, operation: str, *, force: bool = False):
         if operation == 'upgrade' and not old and not (root / '.kgmaker').exists():
             raise AnalysisError('Project is not initialized; run kgmaker init first')
 
+    legacy_installation = manifest is None and bool(old)
+
     for name in sorted(allowed):
         content, wanted = contents[name], current.get(name)
         if operation == 'init':
@@ -195,7 +197,7 @@ def plan(root: Path, operation: str, *, force: bool = False):
             existing = ignore_content or b''
             # With legacy installations, old generated rules have no ownership
             # metadata. Adopt just those exact lines, preserving everything else.
-            if operation == 'upgrade':
+            if operation == 'upgrade' or legacy_installation:
                 existing = _legacy_ignore(existing)
             missing = [line for line in IGNORE_ENTRIES if line.encode() not in existing.splitlines()]
             added = ((b'\n' if existing and not existing.endswith(b'\n') else b'')

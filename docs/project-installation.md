@@ -42,6 +42,8 @@ na baseline `edb65e5` a aktuální templates. Neznámé historické verze či vl
 Explicitní force u legacy instalace může přepsat/smazat kolidující soubor na
 známé integrační cestě, včetně `.github/copilot-instructions.md`; nejprve zkontroluj
 náhled. Staré ignore záznamy se přebírají pouze po celých přesně známých řádcích.
+Převzetí probíhá i při opakovaném `init`, pokud instalaci rozpozná podle
+známého obsahu; následující uninstall pak odstraní i historická ignore pravidla.
 
 ## Kompletní odstranění z projektu
 

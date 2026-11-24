@@ -87,3 +87,35 @@ kgmaker uninstall --root /cesta/k/projektu
 
 Zbývá nezávislé review a případný merge. Uživatelské rozpracované odstranění
 self-use integrace (change169) není součástí tohoto PR a nebylo přepsáno.
+
+## Oprava po nezávislém review — T053-S01 / AC01, AC03
+
+Výchozí SHA: `84d92228b2a31e890a5ca26b3dad0afe7c999d96`, review 2026-11-24.
+Opakovaný init staré instalace bez manifestu převzal soubory, ale nepřevzal
+historická ignore pravidla. Následný uninstall ponechal všech devět pravidel
+KGMAKERu, přestože hlásil úspěch. `installation.plan` nyní zachytí rozpoznání
+legacy instalace před plánováním a převede její známé ignore řádky do vlastněného
+bloku také při init. Nová instalace s cizími ignore pravidly je nadále zachová.
+Dotčené soubory: `src/kgmaker/installation.py`, `tests/test_installation.py`,
+`docs/project-installation.md`, tato změna, stavová matice a acceptance inventář.
+README/API příkazy, templates a registry: bez další změny kontraktu či identity;
+odkazy na tento záznam zůstávají platné. Nejde o novou revizi zadání.
+
+Regresní důkaz: čtyři varianty `test_legacy_init_adopts_ignore_rules_for_uninstall`
+(s/bez upgrade, s/bez cizího CRLF pravidla) měly na původním kódu 4 FAIL.
+Po opravě cílená sada installation/init/skills/artifact_templates má 91 PASS.
+Přesné příkazy: `TMPDIR=/home/petra/wrk/tepsivo/kgmaker/.pytest_cache
+/tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_installation.py
+-k legacy_init_adopts --basetemp=.pytest_cache/lifecycle-review-red
+--junitxml=.pytest_cache/lifecycle-review-red.xml` (FAIL před opravou); stejný
+runner s `tests/test_installation.py tests/test_init.py tests/test_skills.py
+tests/test_artifact_templates.py --basetemp=.pytest_cache/lifecycle-review-green
+--junitxml=.pytest_cache/lifecycle-review-green.xml` (91 PASS / 0 SKIP po opravě).
+Kompatibilita: první init rozpoznané legacy instalace může normalizovat pouze
+známé ignore řádky; cizí bajty zachová. Limity starých otisků a crash atomicity
+zůstávají. Nezávislé opakované review a merge se vyhodnocují nad opraveným HEAD.
+
+Opravená samostatná PR větev: PASS `TMPDIR=/home/petra/wrk/tepsivo/kgmaker/.pytest_cache /tmp/kgmaker-test-venv/bin/python -m pytest -q tests/test_installation.py tests/test_installation_distribution.py tests/test_init.py tests/test_skills.py tests/test_artifact_templates.py tests/test_workflow.py tests/test_workflow_profiles.py --basetemp=/home/petra/wrk/tepsivo/kgmaker/.pytest_cache/lifecycle-revised-branch --junitxml=/home/petra/wrk/tepsivo/kgmaker/.pytest_cache/lifecycle-revised-branch.xml` — **133 PASS / 0 SKIP**, včetně wheelu. `git diff --check` PASS.
+GH CI původního HEAD: failure bez spuštěných kroků; logy nedostupné, příčina
+neověřena, není to PASS. Formální self-review GitHub odmítl, původní
+REQUEST_CHANGES je zveřejněn jako [komentář PR](https://github.com/p-rum/kgmaker/pull/154#issuecomment-7141150885).

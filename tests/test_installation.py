@@ -311,3 +311,17 @@ def test_init_preserves_half_installed_artifact_pair(tmp_path):
     assert init(tmp_path, force=True) == 0
     assert not path.with_suffix('.json').exists()
     assert path.read_bytes() == b'custom'
+
+
+@pytest.mark.parametrize('prefix', [b'', b'user-rule\r\n'])
+@pytest.mark.parametrize('upgrade', [False, True])
+def test_legacy_init_adopts_ignore_rules_for_uninstall(tmp_path, prefix, upgrade):
+    assert init(tmp_path) == 0
+    (tmp_path / install.MANIFEST).unlink()
+    ignore = tmp_path / '.gitignore'
+    ignore.write_bytes(prefix + ('\n'.join(install.IGNORE_ENTRIES) + '\n').encode())
+    assert init(tmp_path) == 0
+    if upgrade:
+        assert install.run(tmp_path, 'upgrade') == 0
+    assert install.run(tmp_path, 'uninstall') == 0
+    assert ignore.read_bytes() == prefix

@@ -3,7 +3,10 @@
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
 Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:
-Samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
+Původní samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
+Review našlo ztracené vlastnictví legacy ignore při opakovaném init; oprava má
+4 regresní RED → GREEN a 133 PASS / 0 SKIP na opravené PR větvi včetně wheelu,
+viz doplnění change170.
 Lokální integrační sada s připravenými T049-S08 fixture: 134 PASS / 0 SKIP. Init eviduje vlastnictví, `upgrade` aktualizuje
 nezměněné templates a `uninstall` odstraňuje integraci i `.kgmaker/`.
 Konflikty/dry-run/invalidní manifest a symlinky nezapisují; zachytitelná chyba
