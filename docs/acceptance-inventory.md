@@ -76,12 +76,15 @@ Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pul
 [Zadání](tasks/T003-S13-02-runtimeRtaImport.md) a
 [záznam opravy](changes/151_preserveRuntimeObservationEvidence.md).
 Dodání sleduje [#136](https://github.com/p-rum/kgmaker/pull/136). Lokální
-přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení,
-včetně skutečné JDK21 runtime fixture a regresí T032 a W06.
+přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
+`31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
+přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto
+ověření nebyla spuštěna. Přesné příkazy a stav dříve zveřejněných dokladů
+jsou v [change151](changes/151_preserveRuntimeObservationEvidence.md).
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
-| T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje opakovaný import, oddělené kontexty a versioned service doklady. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
+| T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje deduplikaci shodného dokladu stejné hrany, oddělené kontexty a doklady variant služby. Opakování stále projde publikací grafu. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
 | T003-S13-W02-AC02 | VERIFIED_IN_SCOPE | Test opakovaného importu ověřuje původní v1 identitu vedle v2 metadat v graph/store v3. `test_runtime_keeps_callable_and_framework_observations_and_legacy_import` ověřuje v1 import i podporované v2 `call` a `framework`. Formáty manifestu v1/v2 a graph/store v3 zůstávají použitelné bez migrace. |
 | T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | `test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols` na skutečných symbolech odmítne třídu jako volajícího `dispatch` i jako cíl výchozího `call`. `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` odmítne změnu zdroje před zápisem i po výměně prvního pohledu. Import nespustí proces a při odmítnutí zachová bajty grafu, jeho pohledů i runtime artefaktu. Test statické navigace a W06 pokrývají oddělení cest a souběžné zapisovače. `test_real_jdk21_v2_import_detaches_identity_before_publication` ověří shodu uložených otisků s ID dokladu po změně vstupního slovníku. |
 | T003-S13-W02-AC04 | PARTIAL | Návod, stavová matice a change151 popisují omezenou opravu. Celá T003-AC13 má širší rozsah. |

@@ -456,5 +456,60 @@ python -m pytest -n 2 --dist loadfile -p no:cacheprovider -q --tb=short \
   tests/test_schema_compatibility.py::test_legacy_graph_versions_without_snapshot_proof_remain_unknown
 ```
 
-Úplná sada, Windows a GitHub Actions mají pro nový spojený strom stav
-`NOT_RUN`. W02 zůstává `PARTIAL`.
+Při tomto 16případovém ověření měly úplná sada, Windows a GitHub Actions
+stav `NOT_RUN`. W02 zůstává `PARTIAL`.
+
+## Lokální ověření #136 na `31271aa` — kroky 4 a 5, AC01–AC04
+
+Výchozí `main` má SHA `1569d5d1f3133360bb0c29d9cedf9b7cd1778ae4`. Testovaný
+head je `31271aa645cd52d169a9ce27ba6b8d2e1f26828a`, tree
+`25b61b464f34e72cf4c22c8f37c679c87e6951ce`. Ověření a dokumentační doplnění
+zachovávají kód, testy, CLI a schémata manifestu v1/v2 a grafu v3.
+
+- **Krok 4, AC01–AC03.** **88 PASS / 0 SKIP**, 33,23 s, návratový kód 0.
+  Celý soubor regrese runtime produceru a importu doplnily tři kontroly
+  publikační generace, Javac CRLF a starších grafů. Běh zahrnul skutečný
+  Maven build a runtime capture vybrané konfigurace. Použil CPython 3.12.0,
+  Ubuntu JDK/Javac 21.0.13.1 a Apache Maven 3.9.9. Worker K1 z tohoto headu
+  byl explicitně sestaven offline z připnutých závislostí. SHA-256 workeru
+  a připraveného Maven exporteru se před testy a po nich shodovaly. JUnit
+  `runtime.xml` má SHA-256
+  `c276797338727d776cf5484aed8e30ced0931504b94b6fab5ffe421b8cb57f6c`.
+
+```bash
+# EVIDENCE je samostatný dočasný adresář v /dev/shm.
+# JAVA_HOME a PATH vybírají uvedené JDK a Maven.
+export PYTHONPATH=src KGMAKER_WORKERS_HOME="$PWD/workers" KGMAKER_REQUIRE_WORKERS=1
+export JAVA_TOOL_OPTIONS="-XX:-UsePerfData -XX:ActiveProcessorCount=2 -Djava.io.tmpdir=$EVIDENCE/javatmp"
+python -m pytest --basetemp "$EVIDENCE/pytest" -o tmp_path_retention_policy=failed \
+  -p no:cacheprovider -q --tb=short -ra --maxfail=1 --junitxml="$EVIDENCE/runtime.xml" \
+  tests/test_runtime_trace_producer.py \
+  tests/test_graph_publication_concurrency.py::test_runtime_import_cannot_overwrite_generation_published_during_validation \
+  'tests/test_jvm_raw_source_snapshot.py::test_javac_capture_preserves_raw_and_normalized_authority[crlf-return]' \
+  tests/test_schema_compatibility.py::test_legacy_graph_versions_without_snapshot_proof_remain_unknown
+```
+
+- **Krok 5, AC04.** [Runtime příručka](../runtime-trace.md#opakovaný-import-a-navigace)
+  upřesňuje, že opakování pouze deduplikuje doklad na hraně. Import při
+  opakování znovu ověřuje vstupy a publikuje graf s další diagnostikou.
+  [Inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+  a [stavová matice](../production-analysis-progress.md) uvádějí aktuální
+  cílený doklad. [README](../../README.md) a
+  [compiler příklady](../compiler-inspection.md#pozorované-hrany-a-statické-cesty)
+  už popisují uchování dokladů a stejnou navigaci. Registr a instalované
+  instrukce používají dosavadní identitu a příkazy.
+
+[Text #136](https://github.com/p-rum/kgmaker/pull/136) pro stejný head uvádí
+dřívější cílený běh 23 PASS / 0 SKIP, JUnit SHA-256
+`a50449341801620566061807d39b2ca5b30fb8e4ae61cf55569c22f0f5d83fe7`,
+a standardní CPython 3.13 sadu 2 483 PASS / 1 315 SKIP / 1 očekávaný strict
+XFAIL, JUnit SHA-256
+`9c143d6ed618050449d31cf365bbeb9e96f9e2127ca188bf5c78f292e0ef80f7`.
+Původní XML těchto dvou běhů nebyla v dostupném prostředí nalezena.
+První lokální sestavení zastavila kvóta dočasného úložiště při zápisu JAR.
+Opakování použilo Java temp v `/dev/shm` a dosáhlo výsledku uvedeného výše.
+`kgmaker scan`, `kgmaker status`, `kgmaker check`, `kgmaker semantic validate`
+a `git diff --check` nad doplněnou dokumentací prošly.
+V novém ověření mají úplná sada a Windows stav `NOT_RUN`. GitHub Actions
+jsou `UNVERIFIED`, v kontrolovaných jobech chybí zaznamenané kroky.
+Receiver/type, přesné volací místo a celá W02 zůstávají otevřené.

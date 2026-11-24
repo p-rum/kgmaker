@@ -149,8 +149,9 @@ připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i sh
 `runtime_id` pro rozdílné
 `service_id` nebo `service_version`. Ukládá také `build_id`,
 `config_fingerprint` a původní `source_identity`. Doklady v jiném compiler
-kontextu mají vlastní hranu. Shodný doklad se připojí jen jednou. Existující
-záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
+kontextu mají vlastní hranu. Shodný doklad se k hraně připojí jen jednou.
+Opakovaný import znovu ověří vstupy, přidá diagnostiku a publikuje graf.
+Existující záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
 V2 doklad uchová otisky zdrojů a kontextu ověřené při importu. Jeho ID
 odpovídá uloženým hodnotám i při pozdější změně vstupního slovníku v Pythonu.
 
