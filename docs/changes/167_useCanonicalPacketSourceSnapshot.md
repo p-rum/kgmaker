@@ -44,3 +44,33 @@ Index měl před a po bězích SHA-256 `5e741d9365da150a49d3eab9cfacffb974f4d939
 Cílený příkaz výše na tomto základu má 149 PASS / 0 SKIP, JUnit SHA-256
 `a217d97423bad03454acf2bbcb2af4697783bec3b702ba72dff3c993f44aa954`. Mění se pouze shoda indikátoru s inventurou scanu.
 Úplná sada, GitHub Actions a T045 jsou pro tento krok NOT_RUN.
+
+
+## T051-S02 / T052-S02 — kontrola po sloučení #149
+
+Výchozí SHA `16f2ba8c4d109957edc295feea80db86da7093f1`. Zkouška XLSX
+používá stávající fixture s listem a buňkami. Po úvodním scanu mění pouze
+deklaraci kódování ve vlastní části sešitu. Výstup role packetu zůstává
+`stale`, uložený graf zůstává beze změny. Produkční implementace opravy
+se při tomto přenosu nemění.
+
+Cílený příkaz výše má 149 PASS / 0 SKIP, JUnit SHA-256
+`72dbf9ac5eae5ac6a949e4c8f550c13dc27f34b456757bd373535278c34f901e`.
+Read-only probe nad 677 cestami ve stejném grafu vrací `stale` před
+opravou a `current` po opravě při blokovaných procesech. SHA-256 grafu
+před i po je
+`fae9c724ac36b5dcb83fd6619a6634baeb56e079e0951d9f03ec5a6be914b1b2`.
+
+Windows, úplná sada, GitHub Actions a nové T045 zůstávají NOT_RUN.
+
+
+## T051-S02 / T052-S02 — kontrola po sloučení #152
+
+Výchozí SHA `edb65e57ca4de1743c810689c78e069cd86b2b41`. Tentýž cílený
+příkaz má 149 PASS / 0 SKIP, JUnit SHA-256
+`536c659f4034b0d84dbbe6e73a8cf3f30a3dafe167bea7af1b4815f5aeb8fdd2`.
+Znovu ověřený read-only probe nad 678 cestami vrací `stale` před opravou a
+`current` po opravě při blokovaných procesech. SHA-256 grafu před i po
+je `a517a440cfbbb4fe88cbddb6414e5cb03006864c811ab1c6eae2c47a7079749c`. Windows, úplná standardní sada, GitHub Actions a nové
+T045 pro tento pár zůstávají NOT_RUN. T051-AC02 je doloženo v rozsahu
+čerstvosti paketu.

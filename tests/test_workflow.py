@@ -238,20 +238,26 @@ class WorkflowContextTests(unittest.TestCase):
     def test_packet_freshness_handles_unparseable_workbook_edit(self) -> None:
         from kgmaker.cli import scan
         from kgmaker.store import GRAPH_FILE, load_graph
+        from test_workbooks import write_xlsx
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             workbook = root / "model.xlsx"
-            with ZipFile(workbook, "w") as archive:
-                archive.writestr("xl/workbook.xml", "<workbook/>")
+            write_xlsx(workbook)
             with redirect_stdout(io.StringIO()):
                 self.assertEqual(scan(root, generate_docs=False), 0)
-            self.assertIn(workbook.name, load_graph(root).files)
+            graph = load_graph(root)
+            self.assertIn(workbook.name, graph.files)
+            self.assertTrue(any(node.kind == "workbook_cell" for node in graph.nodes))
             task = add_task(root, "check workbook drift")
             stored = root / GRAPH_FILE
             before = stored.read_bytes()
+            with ZipFile(workbook) as archive:
+                parts = {part: archive.read(part) for part in archive.namelist()}
+            parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace(b'UTF-8', b'invalid-encoding', 1)
             with ZipFile(workbook, "w") as archive:
-                archive.writestr("xl/workbook.xml", '<?xml version="1.0" encoding="invalid-encoding"?><workbook/>')
+                for part, content in parts.items():
+                    archive.writestr(part, content)
             with patch("subprocess.Popen", side_effect=AssertionError("offline packet launched a process")):
                 stale = prepare_packet(root, task, "architect", persist=False)
             self.assertEqual(stale["graph_status"], "stale")
