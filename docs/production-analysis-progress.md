@@ -1,5 +1,19 @@
 # Aktuální stav a zbývající práce
 
+## T053 — správa instalace v cílovém projektu, 2026-11-24
+
+Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:
+Samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
+Lokální integrační sada s připravenými T049-S08 fixture: 134 PASS / 0 SKIP. Init eviduje vlastnictví, `upgrade` aktualizuje
+nezměněné templates a `uninstall` odstraňuje integraci i `.kgmaker/`.
+Konflikty/dry-run/invalidní manifest a symlinky nezapisují; zachytitelná chyba
+publikace obnoví původní soubory. Cizí soubory a ignore pravidla zůstávají.
+Legacy rozpoznání má explicitní seznam otisků; Windows, reload hostitelů a crash
+atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
+[Kontrakty a příklady](project-installation.md), [záznam kroků](changes/170_manageProjectInstallation.md).
+
+
+
 ## T052 — první běh dokončení 2026-11-19
 
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)
