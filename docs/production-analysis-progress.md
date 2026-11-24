@@ -59,6 +59,10 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
 
+Oprava rozdílu zdrojové čerstvosti v T051-S02 používané T052 je lokálně
+`IN_PROGRESS / PARTIAL`. Skutečný legacy XLS odlišuje neshodu inventáře od
+změněného hashe. [Rozsah a cílené ověření](changes/167_useCanonicalPacketSourceSnapshot.md).
+
 
 ## Skilly v cílovém projektu T050 — 2026-11-15
 
