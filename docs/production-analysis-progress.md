@@ -5,7 +5,9 @@
 
 Dodání PR_OPEN. Ověřena instalace a upgrade skillu, lokální příprava a
 Jira CSV výstup na reálném Java 17 workeru. Syntetický XLSM se načetl
-staticky bez spuštění maker nebo IP spojení. Živý Copilot a Jira import mají
+staticky bez spuštění maker nebo IP spojení. Review zpřesnilo rozsah souhlasu s
+předáním dat a ochranu při souběžné výměně výstupu, 172 cílených PASS. Živý
+Copilot a Jira import mají
 stav NOT_RUN. [Zadání](tasks/55_automateExcelMigration.md) · [Návod](excel-migration.md#jeden-pokyn-pro-copilot) · [Doklady](changes/172_automateExcelMigration.md).
 
 ## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25

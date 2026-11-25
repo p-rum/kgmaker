@@ -29,3 +29,12 @@ Výsledek cílené sady je 168 PASS. Plná sada `python -m pytest -q -rs` má 2 
 ## Předání T055-S01–S03 k review
 
 Aktuální `main` `5809e84932b1910bfc3f17c72e2a2005283389b1` byl integrován bez konfliktů. Ověřený integrační commit `13559f6a55f89785b4e142bf6b6aab10b8ab6da6` zachovává rozsah AC01–AC03. Cílená sada ze záznamu výše znovu prošla se skutečným Java 17 workerem a instalovaným Linux wheelem, 168 PASS. `python workers/excel/verify_distribution.py` ověřil 16 runtime závislostí. `git diff --check origin/main...HEAD` prošel. Živý Copilot, Windows a Jira import zůstávají NOT_RUN.
+
+## Opravy review T055-S02 a T055-S03
+
+Výchozí HEAD `8904bde87b38c0771b2e91e3189e30e3b02f6207`. Kontrola odhalila, že příklad umožňoval předat celé `--include-source` po povolení dílčího obsahu a že výměna cesty mohla po chybě přesměrovat úklid na cizí soubor.
+
+- **T055-S02 / AC02.** Publikace ověřuje identitu vytvořených souborů i adresáře a při výměně cesty hlásí chybu. Úklid při chybě zachovává cizí náhrady a přemístěné výstupy.
+- **T055-S03 / AC03.** Distribuovaný skill i spravovaná kopie výslovně uvádějí všechny části rozšířeného packetu. Částečný souhlas ponechává redigovaný režim. Ukázkový pokyn používá výchozí redigovaný režim.
+
+**PASS** Čtyři regresní scénáře úklidu, kontrola instrukcí a parity instalace a cílená sada z T055-S03 nad opravenými zdroji. Celkem 172 PASS s Java 17 a instalovaným Linux wheelem. `git diff --check` prošel. **NOT_RUN** Živý Copilot, Windows a Jira import.

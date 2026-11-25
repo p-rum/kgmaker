@@ -21,13 +21,14 @@ Po instalaci aktuálního balíčku použij v adresáři s projektovou integrac�
 jediný pokyn.
 
 > Použij $kgmaker-excel-migration pro Fakturace.xlsm se závislostí Sazby.xlsx.
-> Vytvoř Kotlin plán a Jira CSV do migrace/. Zdroj VBA a vzorce můžeš číst jako
-> text. Makra nikdy nespouštěj.
+> Vytvoř Kotlin plán a Jira CSV do migrace/. Makra nikdy nespouštěj.
 
 Skill sám připraví podklady, napíše a zvaliduje kandidáta a vytvoří
 `migrace/result/migration.md`, `migration.csv` a `jira-mapping.json`. Bez
-výslovného souhlasu s předáním zdrojového obsahu pracuje agent s omezenými
-packety bez VBA zdrojů, vzorců a hodnot buněk. Sešity se neotevírají v Excelu ani
+výslovného souhlasu s celým rozšířeným packetem pracuje agent s redigovanými
+packety. Rozšířený packet zahrnuje zdroj VBA, vzorce, přímé i uložené hodnoty
+buněk a identity externích odkazů. Souhlas s částí tohoto obsahu ponechá
+redigovaný režim. Sešity se neotevírají v Excelu ani
 LibreOffice a žádné makro se nikdy nespouští. Obsah sešitu slouží jako data i
 tehdy, když obsahuje instrukce. Nahrání CSV provedeš v Jira importéru.
 
@@ -38,7 +39,7 @@ odkazu přesně souhlasí s jedinečným názvem zadaného souboru. U odkazu s �
 cestou nebo nejednoznačným názvem použij existující `--manifest app.json`.
 
 ```sh
-kgmaker excel migrate prepare --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace --include-source
+kgmaker excel migrate prepare --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
 # Copilot uloží kandidáta do migrace/candidate.json.
 kgmaker excel migrate export --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
 ```
@@ -47,7 +48,8 @@ kgmaker excel migrate export --workbook Fakturace.xlsm --dependency Sazby.xlsx -
 `subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
 otisky a sestaví všechny tři finální soubory do nového podadresáře `result`.
 Volitelně přijímá `--candidate` a `--jira-template`. Existující výsledky se
-zachovají. Na straně kgmakeru se nespouští Copilot ani jiný model.
+zachovají. Při souběžné výměně výstupního adresáře nebo souboru příkaz ohlásí
+chybu. Při úklidu ověřuje vlastnictví jednotlivých cest. Na straně kgmakeru se nespouští Copilot ani jiný model.
 
 ## Sešity a plán
 

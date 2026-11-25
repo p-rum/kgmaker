@@ -548,3 +548,42 @@ def test_direct_workbook_selection_only_maps_unique_exact_basenames(tmp_path):
     assert ("main", "rates.xlsx") not in selection.links
     assert ("main", "c/Lookup.xlsx") not in selection.links
     assert workbook_selection(main, [unique, one, two]).sha256 == selection.sha256
+
+
+@pytest.mark.parametrize(("replacement", "changed_inputs"), [
+    (None, True), ("directory", True), ("file", True), ("directory", False),
+])
+def test_migration_bundle_rollback_only_removes_owned_paths(tmp_path, replacement, changed_inputs):
+    from kgmaker.excel.migration import _write_bundle
+
+    parent = tmp_path / "out"
+    parent.mkdir()
+    bundle = parent / "bundle"
+    other = tmp_path / "other"
+    (other / "bundle").mkdir(parents=True)
+    (other / "bundle/migration.md").write_text("unrelated", encoding="utf-8")
+
+    def check():
+        output = bundle / "migration.md"
+        if not output.exists():
+            return
+        if replacement == "directory":
+            parent.rename(tmp_path / "moved")
+            other.rename(parent)
+        elif replacement == "file":
+            output.rename(tmp_path / "moved.md")
+            output.write_text("unrelated", encoding="utf-8")
+        if changed_inputs:
+            raise AnalysisError("inputs changed during publication")
+
+    reason = "inputs changed" if changed_inputs else "output changed"
+    with pytest.raises(AnalysisError, match=reason):
+        _write_bundle(bundle, {"migration.md": "ours"}, check)
+    if replacement == "directory":
+        assert (tmp_path / "moved/bundle/migration.md").read_text(encoding="utf-8") == "ours"
+    elif replacement == "file":
+        assert (tmp_path / "moved.md").read_text(encoding="utf-8") == "ours"
+    if replacement:
+        assert (bundle / "migration.md").read_text(encoding="utf-8") == "unrelated"
+    else:
+        assert not bundle.exists()

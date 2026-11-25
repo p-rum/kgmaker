@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import suppress
 from pathlib import Path
 
@@ -46,6 +47,18 @@ def _check_destination(directory: Path, *, new: bool):
         raise AnalysisError(f"Migration output directory is missing: {directory}")
 
 
+def _identity(info: os.stat_result) -> tuple[int, int]:
+    return info.st_dev, info.st_ino
+
+
+def _owns_path(path: Path, identity: tuple[int, int]) -> bool:
+    try:
+        return bool(identity[1] and _identity(path.lstat()) == identity
+                    and not any(part.is_symlink() for part in (path, *path.parents)))
+    except OSError:
+        return False
+
+
 def _write_bundle(directory, documents, check):
     for content in documents.values():
         if len(content.encode("utf-8")) > MAX_ARTIFACT_BYTES:
@@ -53,20 +66,29 @@ def _write_bundle(directory, documents, check):
     _check_destination(directory, new=True)
     check()
     directory.mkdir(mode=0o700, parents=True, exist_ok=False)
+    directory_identity = _identity(directory.lstat())
     created = []
     try:
         for filename, content in documents.items():
             path = directory / filename
             with path.open("x", encoding="utf-8", newline="") as stream:
-                created.append(path)
+                created.append((path, _identity(os.fstat(stream.fileno()))))
                 stream.write(content)
         check()
+        if not _owns_path(directory, directory_identity) or any(
+            not _owns_path(path, identity) for path, identity in created
+        ):
+            raise AnalysisError("Migration output changed during publication")
     except BaseException:
-        for path in created:
+        # A concurrent rename can put another directory or file at this path.
+        # Preserve replacements and any bundle that was moved elsewhere.
+        for path, identity in created:
+            if _owns_path(directory, directory_identity) and _owns_path(path, identity):
+                with suppress(OSError):
+                    path.unlink()
+        if _owns_path(directory, directory_identity):
             with suppress(OSError):
-                path.unlink()
-        with suppress(OSError):
-            directory.rmdir()
+                directory.rmdir()
         raise
 
 
