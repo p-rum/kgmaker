@@ -109,3 +109,45 @@ ani globální nastavení hostitelů se automaticky nepřepisují. Při integrac
 otevřených PR je nutné zachovat odstranění vlastních grafů a integrace.
 CLI obecně neblokuje manuální init libovolné cesty; toto je změna vývojové
 konfigurace repozitáře, nikoli nový runtime zákaz v produktu.
+
+## Integrace aktuálního main — T049-S08 / AC13–AC14, T050-R04
+
+Výchozí head `7c49c136e991df9c8fab2b9a24bccbc612a34d23`, společná base
+`edb65e57ca4de1743c810689c78e069cd86b2b41`, integrovaný main
+`782ac6ac0287550084e9afadbd6182756fdd2730`. Main mezitím převzal T053
+([#154](https://github.com/p-rum/kgmaker/pull/154)) a T054
+([#155](https://github.com/p-rum/kgmaker/pull/155)).
+
+Konflikty v `docs/acceptance-inventory.md` a
+`docs/production-analysis-progress.md` zachovávají sekce T049, T053 i T054;
+stav T053/T054 odpovídá jejich merge. Automatické sloučení zachovává nový
+Excel CI job a současně odstranění self-use `kgmaker check`. Ostatní změny
+main, včetně instalačního lifecycle, Excelu, jejich testů, dokumentace a
+distribuovaných templates, zůstávají zachovány. Veřejné změny T053/T054 jsou
+popsány v jejich návodech a change170/171; tato integrace nemění jejich API
+ani příklady. README, registr zadání a `docs/agent-skills.md` zachovávají
+automaticky sloučený obsah obou větví. Příklad izolovaného ověření je níže.
+
+Provedené kontroly na sloučeném pracovním stromu (CPython 3.12.3, pytest 8.3.4):
+
+- **FAIL, opraveno:** první dva běhy měly chybějící rodič `--basetemp`:
+  self-use/instalace 22 PASS / 148 ERROR a Excel 1 SKIP / 18 ERROR.
+  Po `mkdir -p /tmp/kgmaker-merge-tests` byly spuštěny znovu:
+
+  ```bash
+  PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-validation/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-tests/self-use tests/test_init.py tests/test_skills.py tests/test_workflow_profiles.py tests/test_completion.py tests/test_completion_handoff.py tests/test_scanner.py tests/test_installation.py
+  PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-validation/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-tests/excel tests/test_excel_migration.py
+  PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-validation/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-tests/distribution tests/test_installation_distribution.py
+  ```
+
+- **PASS:** první příkaz 170 PASS / 0 SKIP; třetí 1 PASS, včetně wheelu a
+  instalace do odděleného projektu. Druhý: 8 PASS / 11 SKIP (worker není
+  sestaven, wheel smoke nebyl vyžádán).
+- **PASS:** 101 profilů načteno `tomllib`; `git ls-files` nepotvrdil návrat
+  odstraněných aktivních hooků, skillů, agentů, Junie commands ani grafů.
+  `git diff --check` a `git diff --cached --check` bez chyb.
+- **NOT_RUN:** úplná sada, Excel worker/wheel smoke, Windows, compiler/build
+  matice a živý restart hostitelů. Dosavadní review se vztahuje k původnímu
+  headu, nikoli k tomuto merge; nové nezávislé review a kontrola CI zbývají.
+- Historické Actions Test a PR Review vracely při novém dotazu logů HTTP 404;
+  jejich příčina nadále není ověřená.

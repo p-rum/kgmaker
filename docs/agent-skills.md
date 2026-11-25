@@ -41,19 +41,17 @@ ověření; lokální testy dokazují soubory a nástrojové kontrakty, nikoli h
 
 ## Údržba a ochrana existujících souborů
 
-Opakovaný běžný `init` zachová existující skilly i reference včetně vlastních úprav
-a nezmění jejich mtime. Nedoplňuje novou verzi do již existujícího souboru. Pro
-aktualizaci porovnej distribuci v dočasném projektu s místními úpravami. Explicitní
-`--force` přepíše deklarované templates; nikdy jej nepoužívej automaticky. Cizí
-skilly mimo explicitní seznam výstupů zůstávají nedotčené. Dřívější ručně dodaný
-skill `kgmaker` se nemigruje ani neobnovuje.
+Opakovaný běžný `init` zachovává existující obsah i mtime. Po aktualizaci Python
+balíčku spusť `kgmaker upgrade`: obnoví nezměněné skilly, reference, agenty i další
+inicializační soubory na instalovanou verzi. Místní změny blokují celý plán;
+`--dry-run` ho vypíše bez zápisu a explicitní `--force` zahodí změny spravovaných
+souborů. Cizí soubory zachované při init upgrade nepřebírá.
 
-Nové skill cesty mají preflight před zápisy init: symlink v cestě, adresář místo
-výstupního souboru nebo soubor místo rodičovského adresáře vrací chybu 2 bez zápisu
-init, také s `--force`. Preflight není transakce celého historického instalátoru
-ani ochrana proti souběžné změně cest. Úplná migrace a izolace starých profilů jsou
-samostatným plánem [T049](tasks/49_separateTargetAgents.md); jejich implementace se
-touto dodávkou nemění.
+`kgmaker uninstall` odstraní projektovou integraci a celý `.kgmaker/` s daty.
+Oba příkazy podporují `--root`. Manifest vlastnictví, migraci starších instalací,
+rollback i limity popisuje [návod](project-installation.md).
+[Záznam T053](changes/170_manageProjectInstallation.md). Úplné hostitelské profily
+T049 zůstávají samostatným rozsahem.
 
 ## Hranice jednotlivých workflow
 

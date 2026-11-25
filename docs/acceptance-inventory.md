@@ -5,11 +5,35 @@
 | Acceptance | Ověření | Rozsah |
 |---|---|---|
 | T049-AC13 | VERIFIED_IN_SCOPE | Inventář odstraněných vstupů, 101 TOML profilů, CI bez vlastní indexové brány a diff PASS |
-| T049-AC14; T050-R04 | VERIFIED_IN_SCOPE | 111 testů PASS / 0 SKIP pro instalaci/templates/workflow/completion a scanner v izolovaných cílech |
+| T049-AC14; T050-R04 | VERIFIED_IN_SCOPE | 111 testů PASS / 0 SKIP na původním headu; po integraci main 170 testů PASS / 0 SKIP včetně instalace v izolovaných cílech |
 
 [Přesné kontroly a omezení](changes/169_removeRepositorySelfUse.md).
 Historické self-use kroky níže jsou doklady svých revizí, nikoli pokyny k obnově.
 
+## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. |
+| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. |
+| T054-AC03 | VERIFIED_IN_SCOPE | Kandidát plánu, citace, pokrytí, závislosti, invalidace po změně vstupu a opětovné načtení vazby s více než tisícem důkazů. |
+| T054-AC04 | PARTIAL | Ověřené Jira CSV, vlastní pole a reference. Živý import NOT_RUN. |
+| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Windows NOT_RUN. |
+
+[Postup a kontroly po krocích](changes/171_addExcelMigration.md).
+
+
+## T053 — upgrade a uninstall, 2026-11-24
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry |
+| T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek |
+| T053-AC03 | VERIFIED_IN_SCOPE | Odstranění integrace a dat, opakovaný uninstall, přesné zachování cizích souborů a ignore bajtů; po review opravené převzetí legacy ignore při init (4 RED → GREEN) |
+| T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root; Windows a crash scénáře NOT_RUN |
+
+Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
+Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154); SPECIFICATION T053 není označení dodání.
 
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
