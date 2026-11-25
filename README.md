@@ -559,6 +559,13 @@ Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí 
 po zahájení publikace, obnoví předchozí uložené výstupy.
 [Ověření publikace runtime importu](docs/changes/163_revalidateRuntimeImportPublication.md).
 
+Opakovaný `runtime import` uchovává různé ověřené doklady v jednom compiler
+kontextu. `callgraph callers` a `callees` je zobrazí jako `RUNTIME_OBSERVED`.
+`callgraph path` používá statické compiler vazby.
+V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
+na obou koncích.
+[Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
+
 Explicitní build plan přijímá `--java-home`. Plán uloží kanonický JDK home,
 SHA-256 `java` a `javac` a fingerprint volby, při spuštění nastaví `JAVA_HOME`
 a JDK `bin` na začátek `PATH`. Změněná či chybějící binárka zneplatní plán ještě

@@ -1651,3 +1651,17 @@ coordinates. Offline replay applies the same guard to the captured compiler
 input list. Kotlin files excluded from that list can remain in the source-set
 inventory for freshness checks.
 [Exact verification and scope](changes/160_bindJvmSourceBytes.md).
+
+## Pozorované hrany a statické cesty
+
+`callgraph callers` a `callees` zobrazí doložené importované hrany jako
+`RUNTIME_OBSERVED`. `callgraph path` a statické cykly používají compiler
+call sites. V2 pozorování `call` a `dispatch` vyžadují volatelné symboly
+obou konců ve vybraném compiler kontextu. Import ověří jeho čerstvost také
+při publikaci grafu. Původ dokladů opakovaného importu uvádí
+[kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).
+
+```bash
+kgmaker callgraph callers --root PROJECT --context CONTEXT_ID --symbol TARGET_ID
+kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
+```
