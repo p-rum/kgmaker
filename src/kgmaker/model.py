@@ -126,6 +126,7 @@ class KnowledgeGraph:
             if version == 1:
                 item["evidence_kind"] = "SYNTAX_CANDIDATE"
             edges.append(Edge(**item))
+        symbols = data.get("symbols", [])
         if version in {2, 3}:
             from .classification import SCOPES, ROLES, ORIGINS
             ids = {n.id for n in nodes}
@@ -166,6 +167,27 @@ class KnowledgeGraph:
                     if symbol.get("id") not in ids or symbol.get("id") in symbol_ids or symbol.get("context_id") not in context_ids:
                         raise ValueError("Dangling/duplicate compiler symbol or context")
                     symbol_ids.add(symbol["id"])
+                if any("logical_key" in symbol or "kotlin_declaration" in symbol for symbol in symbols):
+                    from .symbol_identity import (kotlin_source_omissions, occurrence_keys,
+                                                  valid_declaration, without_logical_key)
+                    if any("kotlin_declaration" in s and not valid_declaration(s["kotlin_declaration"]) for s in symbols):
+                        raise ValueError("Invalid Kotlin declaration identity witness")
+                    incomplete = {c["id"] for c in contexts if isinstance(c.get("id"), str)
+                                  and kotlin_source_omissions(c, data.get("diagnostics", []))}
+                    # Keep old occurrences readable without admitting optional
+                    # keys from draft witnesses or an incomplete source realm.
+                    symbols = [without_logical_key(symbol)
+                               if "logical_key" in symbol and (
+                                   symbol["context_id"] in incomplete or
+                                   symbol.get("kotlin_declaration", {}).get("schema_version") == 1) else symbol
+                               for symbol in symbols]
+                    if sum(isinstance(c.get("id"), str) for c in contexts) != len(context_ids):
+                        raise ValueError("Ambiguous Kotlin logical symbol context")
+                    keyed = occurrence_keys(symbols, {node.id: node for node in nodes},
+                                            {context.get("id"): context for context in contexts if "id" in context})
+                    if any("logical_key" in s and (s["id"] not in keyed or s["logical_key"] != keyed[s["id"]])
+                           for s in symbols):
+                        raise ValueError("Invalid Kotlin logical symbol key")
                 site_ids = set()
                 for site in data.get("call_sites", []):
                     if site.get("id") not in ids or site["id"] in site_ids or site.get("caller") not in ids:
@@ -207,7 +229,7 @@ class KnowledgeGraph:
             contexts=list(data.get("contexts", [])),
             diagnostics=list(data.get("diagnostics", [])),
             evidence=list(data.get("evidence", [])),
-            symbols=list(data.get("symbols", [])),
+            symbols=list(symbols),
             call_sites=list(data.get("call_sites", [])),
             cfgs=list(data.get("cfgs", [])),
             analysis_annotations=list(data.get("analysis_annotations", [])),

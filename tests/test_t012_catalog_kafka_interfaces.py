@@ -25,7 +25,7 @@ def capture(tmp_path_factory, request):
     return capture_workspace(tmp_path_factory.mktemp('t012-' + backend), backend)
 
 
-def capture_workspace(root, backend, *, consumer_ending='\n'):
+def capture_workspace(root, backend, *, consumer_ending='\n', consumer_helper=False):
     root, manifest, document = kafka_workspace.__wrapped__(root)
     jars = actual_prerequisites(backend) + extra_api_jars()
     bodies = {
@@ -59,6 +59,9 @@ import org.springframework.kafka.annotation.KafkaListener
 class KotlinListener { @KafkaListener(topics=["kotlin-orders"],groupId="kotlin-group")
 fun kotlinConsume(value: String) {} }
 ''')
+            if consumer_helper:
+                kotlin.with_name('Helper.kt').write_text(
+                    'package demo\nfun idleUtility(value: Int): Int = value\n', encoding='utf-8')
         result = inspect_jvm(root / repo, home=ROOT / 'workers', kotlin_backend=backend,
             repo_id='local', classpath=jars, build_context={'spring_profiles': ['blue']})
         assert not any('.err.' in str(d.get('code', '')) for d in result['diagnostics'])
@@ -159,6 +162,39 @@ def test_actual_ac01_ac02_realms_groups_original_ids_and_regex(capture):
     assert len(regex)==1 and regex[0]['attributes']['topic_pattern']=='orders[.].*'
     assert regex[0]['attributes']['topics']==[]
     assert regex[0]['attributes']['broker_realm'] is None
+
+
+def test_actual_kafka_catalogue_preserves_kotlin_compiler_symbol_alias(tmp_path):
+    from kgmaker.interfaces import InterfaceProjectionError
+    from kgmaker.store import load_graph
+    from kgmaker.workspace import qualified
+
+    workspace, graph, coverage = capture_workspace(tmp_path, 'k1', consumer_helper=True)
+    local = load_graph(tmp_path / 'consumer')
+    helper, = [symbol for symbol in local.symbols if symbol.get('name') == 'idleUtility']
+    context, = [item for item in local.contexts if item['id'] == helper['context_id']]
+    assert context['repo_id'] == 'local'
+    assert helper.get('kotlin_declaration')
+    identity = qualified('consumer', helper['id'])
+    public, = [symbol for symbol in graph.symbols if symbol['id'] == identity]
+    assert 'kotlin_declaration' not in public and 'logical_key' not in public
+    before = {path: sha256(path.read_bytes()).hexdigest()
+              for path in tmp_path.rglob('*') if path.is_file()}
+    supplied = copy.deepcopy((workspace, graph.to_dict(), coverage))
+    with patch('subprocess.Popen', side_effect=AssertionError('implicit process')), \
+            patch('socket.socket', side_effect=AssertionError('network')):
+        view = project((workspace, graph, coverage)).to_dict()
+        interfaces = [node['attributes'] for node in view['nodes'] if node['kind'] == 'kafka_interface']
+        assert {item.get('consumer_group') for item in interfaces
+                if item['code_binding'] == 'VERIFIED_STATIC'} >= {'group-one', 'group-two'}
+        damaged = replace(graph, symbols=[
+            {**symbol, 'descriptor': '(Z)I'} if symbol['id'] == identity else symbol
+            for symbol in graph.symbols])
+        with pytest.raises(InterfaceProjectionError, match='Original compiler declaration tuple is changed'):
+            project((workspace, damaged, coverage))
+    assert (workspace, graph.to_dict(), coverage) == supplied
+    assert {path: sha256(path.read_bytes()).hexdigest()
+            for path in tmp_path.rglob('*') if path.is_file()} == before
 
 
 def test_actual_ac03_ac04_no_infrastructure_publisher_offline_immutable(capture):

@@ -157,6 +157,16 @@ def _qualified_symbol(repo: str, value: dict) -> dict:
     return result
 
 
+def _qualified_compiler_symbol(repo: str, value: dict, compiler_repo: str | None, *,
+                               omit_logical_key: bool = False) -> dict:
+    result = _qualified_symbol(repo, value)
+    if compiler_repo != repo:
+        result.pop('kotlin_declaration', None)
+    if omit_logical_key or compiler_repo != repo:
+        result.pop('logical_key', None)
+    return result
+
+
 def _qualified_evidence(repo: str, value: dict) -> dict:
     result = copy.deepcopy(value)
     result.update(repo_id=repo, id=qualified(repo, value['id']),
@@ -686,6 +696,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             # Compiler inputs include excluded dependencies and the external worker
             # distribution. A source/index cache key alone cannot prove freshness.
             from .graph_provider import validate_context_snapshot
+            from .symbol_identity import kotlin_source_omissions
             from .worker_protocol import WorkerError
             try:
                 for captured_context in cached[0].contexts:
@@ -696,7 +707,10 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                         if captured_context.get('freshness') == 'STALE':
                             cached = None
                             break
-                        validate_context_snapshot(root, captured_context)
+                        omitted = validate_context_snapshot(root, captured_context) or ()
+                        if omitted != kotlin_source_omissions(captured_context, cached[0].diagnostics):
+                            cached = None
+                            break
             except (WorkerError, ValueError, OSError):
                 cached = None
         if cached is not None:
@@ -746,7 +760,9 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                           context_ids=tuple(qualified(identity, c) for c in e.context_ids),
                           evidence_ids=tuple(qualified(identity, c) for c in e.evidence_ids),
                           source_file=source_key(identity, e.source_file) if e.source_file else None) for e in local.edges]
-        symbols += [_qualified_symbol(identity, item) for item in local.symbols]
+        realm_by_context = {context.get('id'): context.get('repo_id') for context in local.contexts}
+        symbols += [_qualified_compiler_symbol(identity, item, realm_by_context.get(item['context_id']))
+                    for item in local.symbols]
         call_sites += [_qualified_call_site(identity, item) for item in local.call_sites]
         cfgs += [_qualified_cfg(identity, item) for item in local.cfgs]
         annotations += [_qualified_annotation(identity, item) for item in local.analysis_annotations]

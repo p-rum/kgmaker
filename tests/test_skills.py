@@ -39,12 +39,6 @@ def test_init_installs_complete_skills_and_local_references(tmp_path, capsys):
     assert not (tmp_path / ".agents/skills/kgmaker").exists()
 
 
-def test_repository_skill_copies_match_distributed_templates():
-    root = Path(__file__).resolve().parents[1]
-    for path, text in SKILL_FILES.items():
-        assert (root / path).read_text(encoding="utf-8") == text, str(path)
-
-
 def test_upgrade_adds_excel_migration_skill_to_existing_installation(tmp_path, monkeypatch):
     from kgmaker.installation import run
 

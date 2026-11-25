@@ -131,3 +131,54 @@ python -m pytest -n 2 --dist load -p no:cacheprovider -q --tb=short -ra \
 
 Úplná sada společného stromu, Windows a GitHub Actions mají v tomto
 předání stav NOT_RUN.
+
+## Přenos po sloučení #150 a #157 — kroky 4 a 5
+
+T003-S10-W01-AC01–AC04 a T003-AC10. První rodič je publikovaný kandidát
+`999f35695c486d2dae1583487013b912c28258cb`, druhý je `main`
+`5d067f152522442fa4cff22c2e69e1b9b6fcef86` se stromem
+`449db27267880bf61a44518f4e5abe0c2921540a`. `inspection.py` je přesné
+sloučení obou rodičů. Kroky živého ověření i výběr Kotlin vstupů a omezení
+logických klíčů se sešly v oddělených úsecích souboru. Zbylé tři soubory
+W01 mají stejné bajty jako první rodič. Soubory Kotlin identity a změny
+repozitářového CI mají bajty druhého rodiče. Úpravy #150 a #157 byly
+přeneseny podle [change166](166_addKotlinLogicalSymbolKeys.md) a
+[change173](173_removeRepositorySelfCheck.md). Regenerace grafu zachovala
+429 předchozích epizod obou rodičů.
+
+Úplná standardní sada původního `999f356` má **2 595 PASS, 1 345 SKIP
+a 1 očekávaný strict XFAIL** za 137,11 s v CPython 3.13.18, exit 0.
+Tento XFAIL je historický `test_comment_does_not_change_logical_identity`.
+JUnit SHA-256 `0b1ea01061fe3d391d5bbbdecbcc67f38eabed5019f68a50a286394ad6e40083`.
+Shodné manifesty mají SHA-256
+`ce9307add2b1b3391e7f15b1ab0bc4f08fa2c6d3106a4abe686d94d05256ba3c`.
+
+Cílená sada společného stromu má **34 PASS / 0 SKIP** za 103,71 s
+v Cloud Environment. Použila Javac 21.0.6+7, skutečné K1/K2 JARy z #150,
+TypeScript 5.7.3 a připravený Maven repozitář. Pokryla opakovanou živou
+inspekci s BYPASS, paritu dat grafu, neplatný přepočítaný cache payload,
+typovaný stale, souběžnou publikaci, výběr Kotlin vstupů v jednom i jiném
+rozsahu, Kafka alias a instalaci a upgrade cílových skills. Pytest,
+vytvoření manifestu a porovnání mají exit 0. JUnit SHA-256
+`49363ece01e7b36bd255c37e30ed449b89c23681eff4d654efa585bf30c70a63`.
+Shodné 570řádkové manifesty zdrojů a nástrojů mají SHA-256
+`30a7eddbe568ed83f009e69b3628e95252c0da1771276aa1f067badb6bf925d7`.
+Kontrola W03 má exit 0. Skutečný W02 je `MERGED/PARTIAL` a blokuje W03.
+Jen v dočasné kontrolní kopii plánovač vybral W03 po změně jediného pole
+W02 na `VERIFIED_IN_SCOPE`. Výsledek má SHA-256
+`895c4c708b80bf84f14a5eba7891e16530fe5dd33f4d72c35d1e0d546f19fbdf`.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 python -m pytest -n 2 \
+  --dist load -p no:cacheprovider -o tmp_path_retention_policy=failed \
+  -q --tb=short -ra tests/test_stage_content_cache.py \
+  tests/test_stage_content_cache_actual.py tests/test_completion.py \
+  tests/test_symbol_identity.py tests/test_t012_catalog_kafka_interfaces.py \
+  tests/test_skills.py \
+  -k 'test_completion or launch_capture_hashes_without_materializing or invalid_live_graph_stage or rehashed_cached_graph or late_source_mutation or actual_jvm_cold_warm or actual_typescript_preflight or actual_jvm_cyclic_launcher or actual_jvm_locale_drift or overlapping_real_workers or omitted_kotlin_files_withhold or structured_source_sets or kotlin_compiler_symbol_alias or init_installs_complete_skills or upgrade_adds_excel_migration_skill'
+```
+
+Použití CLI, formáty, inventář W01 a rozsah podpory jsou zdokumentované
+ve stejných odkazech kroku 5. Cílený výsledek ověřuje živou inspekci.
+Úplná sada společného stromu, Windows a GitHub Actions mají v tomto
+předání stav NOT_RUN. Warm HIT zůstává otevřený v #116.
