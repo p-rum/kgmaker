@@ -31,9 +31,10 @@ níže uvedených zadání. Pravidla jsou závazná v [AGENTS.md](../../AGENTS.m
 | T049 | [49_separateTargetAgents.md](49_separateTargetAgents.md) | Oddělení vývojových a cílových agentů, šablony init a přímý souhlas pro Git | SPECIFICATION, revize 1 |
 | T050 | [50_addTargetProjectSkills.md](50_addTargetProjectSkills.md) | Samostatné skilly pro kontext, semantic, feature/data audit a testgen v cílovém projektu | SPECIFICATION, revize 1; dodání a ověření viz stavová matice |
 | T051 | [51_connectProjectWorkflows.md](51_connectProjectWorkflows.md) | Konfigurovatelné workflow profily, snapshoty a návaznosti rolí | SPECIFICATION, revize 1; ověření viz stavová matice |
-| T052 | [52_addCompletionOrchestrator.md](52_addCompletionOrchestrator.md) | Lokální plánování a koordinace dokončení existující funkcionality | SPECIFICATION, revize 2; dodání viz stavová matice |
+| T052 | [52_addCompletionOrchestrator.md](52_addCompletionOrchestrator.md) | Lokální plánování a koordinace dokončení existující funkcionality | SPECIFICATION, revize 3; dodání viz stavová matice |
 | T053 | [53_manageProjectInstallation.md](53_manageProjectInstallation.md) | Upgrade a úplné odstranění integrace v cílovém projektu | SPECIFICATION, revize 1; ověření viz stavová matice |
 | T054 | [54_addExcelMigration.md](54_addExcelMigration.md) | Analýza VBA a sešitů, Kotlin/JVM plán a ruční Jira Cloud import | SPECIFICATION, revize 1 |
+| T055 | [55_automateExcelMigration.md](55_automateExcelMigration.md) | Copilot skill pro přípravu Kotlin plánu a Jira CSV ze sešitů | SPECIFICATION, revize 1 |
 
 T046 je již registrováno v `main`: kroky S01–S06 byly sloučeny v PR #41, #42,
 #43, #44, #45 a #40.

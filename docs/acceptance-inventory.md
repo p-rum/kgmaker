@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
+| T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade, parita a pravidla předání dat ve skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+
+[Doklady po krocích](changes/172_automateExcelMigration.md).
+
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -80,13 +91,13 @@ Hostovaný job na `11c59015675774013fdd8cd9055292a11b045079` vykázal
 
 ## T052 — completion orchestration 2026-11-19
 
-Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+Dodání `MERGED` ([#120](https://github.com/p-rum/kgmaker/pull/120), [#133](https://github.com/p-rum/kgmaker/pull/133)), [zadání revize 3](tasks/52_addCompletionOrchestrator.md),
 [per-step evidence](changes/134_addCompletionOrchestrator.md).
 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
-| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. Povinně ověřené přímé závislosti mají samostatný [doklad](changes/174_requireVerifiedDependencies.md). |
-| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). |
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. Povinně ověřené přímé závislosti mají samostatný [doklad](changes/175_requireVerifiedDependencies.md). |
+| T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). [Regrese T051-AC02](changes/167_useCanonicalPacketSourceSnapshot.md) ověřuje shodu hlášené čerstvosti se soubory zahrnutými do grafu. |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
 | T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
 
@@ -150,7 +161,7 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`; dodání MERGED
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T051-AC01 | VERIFIED_IN_SCOPE | tests/test_workflow_profiles.py: strict config, duplicate JSON, symlink, null mutation, commands data-only |
-| T051-AC02 | VERIFIED_IN_SCOPE | Legacy ID/regrese, v3 immutable snapshot, konfigurace smazána bez změny tasku, role packet |
+| T051-AC02 | VERIFIED_IN_SCOPE | Legacy ID/regrese, v3 immutable snapshot, konfigurace smazána bez změny tasku a role packet. Kontrola čerstvosti ověřuje skutečné XLSX a XLS přes SHA-256 bez parsování a zápisu. [Důkaz](changes/167_useCanonicalPacketSourceSnapshot.md). |
 | T051-AC03 | VERIFIED_IN_SCOPE | Persistence gates, required label/command, skipped/unknown/failed, stale binding, retry, review major; lokálně deklarované artefakty |
 | T051-AC04 | PARTIAL | Init parity/preservation a CLI handoffs PASS; wheel mimo checkout PASS; živý hostitel NOT_RUN |
 | T051-AC05 | PARTIAL | 103 testů PASS a dokumentace po krocích; GH CI a review publikovaného HEAD NOT_RUN |

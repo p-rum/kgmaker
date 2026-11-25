@@ -437,7 +437,10 @@ class Inventory:
 
 
 def analyze(manifest_path: Path, *, selection=None) -> dict:
-    selection = selection or manifest(manifest_path)
+    return analyze_selection(selection or manifest(manifest_path))
+
+
+def analyze_selection(selection) -> dict:
     inventory = Inventory(selection)
     command = None
     total = 0
@@ -462,6 +465,11 @@ def analyze(manifest_path: Path, *, selection=None) -> dict:
 
 def assert_fresh(manifest_path: Path, inventory: dict):
     selection = manifest(manifest_path)
+    assert_selection_fresh(selection, inventory)
+    return selection
+
+
+def assert_selection_fresh(selection, inventory: dict) -> None:
     if selection.sha256 != inventory["manifest_sha256"]:
         raise AnalysisError("Excel inventory is stale: manifest changed")
     captured = {row["id"]: row["sha256"] for row in inventory["workbooks"]}
@@ -469,4 +477,3 @@ def assert_fresh(manifest_path: Path, inventory: dict):
         sha = capture(book)[0] if book.path.exists() else None
         if book.id not in captured or captured[book.id] != sha:
             raise AnalysisError(f"Excel inventory is stale: workbook {book.id} changed")
-    return selection

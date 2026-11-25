@@ -30,7 +30,7 @@ Položka může v zadání označit část svých přímých závislostí řádk
 `verification_dependencies` a vyžaduje u nich `MERGED/VERIFIED_IN_SCOPE`.
 U běžné závislosti stačí dosavadní vydané pokrytí a výslovný FAIL dál blokuje.
 Plán je read-only a funguje bez sítě, grafu a Actions.
-[Záznam ověřování závislostí](changes/174_requireVerifiedDependencies.md).
+[Záznam ověřování závislostí](changes/175_requireVerifiedDependencies.md).
 
 `completion handoff` je určený pro profilované úlohy. Bez `--apply` čte stav a
 vrací náhled. S `--apply` uloží nejvýše jeden přechod a standardní packet pro

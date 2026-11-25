@@ -1,8 +1,18 @@
 # Aktuální stav a zbývající práce
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+Dodání PR_OPEN. Ověřena instalace a upgrade skillu, lokální příprava a
+Jira CSV výstup na reálném Java 17 workeru. Syntetický XLSM se načetl
+staticky bez spuštění maker nebo IP spojení. Review zpřesnilo rozsah souhlasu s
+předáním dat a ochranu při souběžné výměně výstupu, 172 cílených PASS. Živý
+Copilot a Jira import mají
+stav NOT_RUN. [Zadání](tasks/55_automateExcelMigration.md) · [Návod](excel-migration.md#jeden-pokyn-pro-copilot) · [Doklady](changes/172_automateExcelMigration.md).
+
 ## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
 
-Dodání PR_OPEN. T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
+Dodání MERGED v [PR #155](https://github.com/p-rum/kgmaker/pull/155). T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
 BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
 instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
 NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
@@ -30,7 +40,7 @@ atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
 Dílčí oprava T052-S01/AC01 je místně ověřená a čeká integrační review.
 W03 čeká na skutečně ověřený selektivní zápis ve W02 i po sloučení jeho
 čtecího rozsahu. Běžné závislosti mají dosavadní pravidlo.
-[Change174](changes/174_requireVerifiedDependencies.md).
+[Change175](changes/175_requireVerifiedDependencies.md).
 
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)
 je main `1532f1725f2cbe0d76685c273adc32c2e0d239e0`. T052 runtime zaznamenal
@@ -88,6 +98,12 @@ Baseline `6790b0e0a930089924c61c3f8a6b3aef1d44121c`,
 
 Pevné fáze, bez runneru/DAG/automatických trace vazeb. Fingerprint používá existující
 source_inventory s jeho výlukami; viz příručka. T049 a produkční acceptance nejsou uzavřené.
+
+Oprava zdrojové čerstvosti T051-S02 používané T052 je v [PR #151](https://github.com/p-rum/kgmaker/pull/151)
+`PR_OPEN / PARTIAL`. Po #136 prošlo 208 cílených testů bez přeskočení.
+Skutečné XLSX, šifrované XLSX a legacy XLS z fixture T054 ověřují shodu
+inventáře a indikátoru čerstvosti po změně bajtů.
+[Rozsah a důkazy](changes/167_useCanonicalPacketSourceSnapshot.md).
 
 
 ## Skilly v cílovém projektu T050 — 2026-11-15

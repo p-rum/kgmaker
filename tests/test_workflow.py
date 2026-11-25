@@ -3,6 +3,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+from zipfile import ZipFile
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
@@ -209,6 +210,58 @@ class WorkflowContextTests(unittest.TestCase):
             packet = prepare_packet(root, task, "implementation", token_budget=200)
             self.assertEqual(packet["graph_status"], "stale")
             self.assertEqual((root / ".kgmaker/graph.json").read_bytes(), before)
+
+    def test_packet_freshness_uses_same_workbook_inputs_as_scan(self) -> None:
+        from kgmaker.cli import scan
+        from kgmaker.store import load_graph
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = Path(__file__).resolve().parents[1] / "fixtures/workbooks/legacy-biff2.xls"
+            workbook = root / fixture.name
+            workbook.write_bytes(fixture.read_bytes())
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(scan(root, generate_docs=False), 0)
+            self.assertIn(workbook.name, load_graph(root).files)
+            task = add_task(root, "check workbook evidence")
+            stored = root / ".kgmaker/graph.json"
+            before = stored.read_bytes()
+            with patch("subprocess.Popen", side_effect=AssertionError("offline packet launched a process")):
+                current = prepare_packet(root, task, "architect", persist=False)
+                self.assertEqual(current["graph_status"], "current")
+                workbook.write_bytes(workbook.read_bytes() + b"\x00")
+                stale = prepare_packet(root, task, "architect", persist=False)
+                self.assertEqual(stale["graph_status"], "stale")
+            self.assertEqual(stored.read_bytes(), before)
+            self.assertFalse((root / ".kgmaker/workflow/packets").exists())
+
+    def test_packet_freshness_handles_unparseable_workbook_edit(self) -> None:
+        from kgmaker.cli import scan
+        from kgmaker.store import GRAPH_FILE, load_graph
+        from test_workbooks import write_xlsx
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workbook = root / "model.xlsx"
+            write_xlsx(workbook)
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(scan(root, generate_docs=False), 0)
+            graph = load_graph(root)
+            self.assertIn(workbook.name, graph.files)
+            self.assertTrue(any(node.kind == "workbook_cell" for node in graph.nodes))
+            task = add_task(root, "check workbook drift")
+            stored = root / GRAPH_FILE
+            before = stored.read_bytes()
+            with ZipFile(workbook) as archive:
+                parts = {part: archive.read(part) for part in archive.namelist()}
+            parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace(b'UTF-8', b'invalid-encoding', 1)
+            with ZipFile(workbook, "w") as archive:
+                for part, content in parts.items():
+                    archive.writestr(part, content)
+            with patch("subprocess.Popen", side_effect=AssertionError("offline packet launched a process")):
+                stale = prepare_packet(root, task, "architect", persist=False)
+            self.assertEqual(stale["graph_status"], "stale")
+            self.assertEqual(stored.read_bytes(), before)
 
 
 class WorkflowCliTests(unittest.TestCase):

@@ -12,7 +12,7 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from ..analysis_model import ID_PATTERN, AnalysisError, decode_json, read_json, safe_path
+from ..analysis_model import ID_PATTERN, AnalysisError, canonical, decode_json, read_json, safe_path
 from ..worker_protocol import WorkerError, request_worker
 from ..workbooks import MAX_ENTRIES, MAX_EXPANDED_BYTES, MAX_XML_BYTES, binary_format
 
@@ -34,7 +34,7 @@ class Book:
 
 @dataclass(frozen=True)
 class Manifest:
-    path: Path
+    path: Path | None
     sha256: str
     main: str
     books: tuple[Book, ...]
@@ -61,7 +61,38 @@ def manifest(path: Path) -> Manifest:
         raw = stream.read(262_145)
     if len(raw) > 262_144:
         raise AnalysisError("Excel manifest exceeds 256 KiB")
-    config = decode_json(raw.decode("utf-8"), path.name)
+    return _manifest_data(raw, path.absolute().parent, path=path)
+
+
+def workbook_selection(main: Path, dependencies: list[Path]) -> Manifest:
+    paths = [main, *dependencies]
+    if len(paths) > 16:
+        raise AnalysisError("Select at most 16 workbooks including the main workbook")
+    for path in paths:
+        _regular(path)
+    paths = [paths[0].resolve(), *sorted(path.resolve() for path in paths[1:])]
+    try:
+        base = Path(os.path.commonpath([path.parent for path in paths]))
+    except ValueError as exc:
+        raise AnalysisError("Selected workbooks must share a drive. Use a workbook manifest if needed.") from exc
+    books = [{"id": "main" if index == 0 else f"dependency-{index}",
+              "path": path.relative_to(base).as_posix()} for index, path in enumerate(paths)]
+    aliases = {}
+    for path in paths:
+        name = path.name.casefold()
+        aliases[name] = aliases.get(name, 0) + 1
+    links = [
+        {"from": source["id"], "reference": target_path.name, "to": target["id"]}
+        for source in books
+        for target, target_path in zip(books, paths)
+        if source != target and aliases[target_path.name.casefold()] == 1
+    ]
+    raw = canonical({"schema_version": 1, "main": "main", "workbooks": books, "links": links})
+    return _manifest_data(raw.encode("utf-8"), base)
+
+
+def _manifest_data(raw: bytes, base: Path, *, path: Path | None = None) -> Manifest:
+    config = decode_json(raw.decode("utf-8"), path.name if path else "selected workbooks")
     if (not isinstance(config, dict) or config.get("schema_version") != 1
             or not {"main", "workbooks"} <= config.keys()
             or config.keys() - {"schema_version", "main", "workbooks", "links"}):
@@ -69,7 +100,6 @@ def manifest(path: Path) -> Manifest:
     rows = config["workbooks"]
     if not isinstance(rows, list) or not 1 <= len(rows) <= 16:
         raise AnalysisError("The manifest must declare 1–16 workbooks")
-    base = path.absolute().parent
     books = {}
     paths = set()
     for row in rows:
