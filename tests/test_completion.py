@@ -90,6 +90,42 @@ def test_t003_umbrella_blocks_only_until_all_documented_packages_are_delivered(t
     assert plan(tmp_path)["dispatch"] == ["T025"]
 
 
+def test_explicit_verified_dependency_blocks_only_when_proof_is_missing(tmp_path):
+    def inventory(status):
+        write_inventory(tmp_path, [
+            ("T003-S10-W02", "MERGED", status, "baseline", "read-only scope"),
+            ("T003-S10-W03", "PLANNED", "NOT_RUN", "T003-S10-W02", "negative evidence"),
+            ("T004", "PLANNED", "NOT_RUN", "T003-S10-W02", "ordinary contract"),
+        ])
+        spec = tmp_path / "docs/tasks/T003-S10-W03.md"
+        with spec.open("a", encoding="utf-8") as stream:
+            stream.write("- Verified dependencies: [T003-S10-W02](./T003-S10-W02.md)\n")
+        return plan(tmp_path, jobs=4)
+
+    partial = inventory("PARTIAL")
+    assert partial["items"]["T003-S10-W03"]["verification_dependencies"] == ("T003-S10-W02",)
+    assert partial["items"]["T003-S10-W03"]["blockers"] == [
+        "T003-S10-W02: MERGED/PARTIAL; VERIFIED_IN_SCOPE required",
+    ]
+    assert "T003-S10-W03" not in partial["dispatch"]
+    assert partial["items"]["T004"]["blockers"] == []
+    verified = inventory("VERIFIED_IN_SCOPE")
+    assert verified["items"]["T003-S10-W03"]["blockers"] == []
+    assert "T003-S10-W03" in verified["dispatch"]
+
+
+def test_explicit_verified_dependency_must_be_declared(tmp_path):
+    write_inventory(tmp_path, [
+        ("T001", "MERGED", "PARTIAL", "baseline", "history"),
+        ("T002", "PLANNED", "NOT_RUN", "baseline", "pending"),
+    ])
+    spec = tmp_path / "docs/tasks/T002.md"
+    with spec.open("a", encoding="utf-8") as stream:
+        stream.write("- Povinně ověřené závislosti: T001\n")
+    with pytest.raises(ValueError, match="invalid verified dependencies for T002"):
+        plan(tmp_path)
+
+
 def test_cli_reports_invalid_inventory_without_payload(tmp_path, capsys):
     from types import SimpleNamespace
 

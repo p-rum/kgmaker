@@ -27,6 +27,11 @@ atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
 
 ## T052 — první běh dokončení 2026-11-19
 
+Dílčí oprava T052-S01/AC01 je místně ověřená a čeká integrační review.
+W03 čeká na skutečně ověřený selektivní zápis ve W02 i po sloučení jeho
+čtecího rozsahu. Běžné závislosti mají dosavadní pravidlo.
+[Change174](changes/174_requireVerifiedDependencies.md).
+
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)
 je main `1532f1725f2cbe0d76685c273adc32c2e0d239e0`. T052 runtime zaznamenal
 skutečný retry, dvojí nezávislé schválení a dokončený merge podle T045.
