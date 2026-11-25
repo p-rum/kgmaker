@@ -188,6 +188,7 @@ kgmaker status [--root PATH]
 kgmaker check [--root PATH]
 kgmaker docs [check|report] [--root PATH] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
+kgmaker impact [--root PATH] --evidence-only --format json FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
 kgmaker semantic extract [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
 kgmaker semantic update [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
@@ -303,6 +304,8 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 
 In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
 current task inventory and emits dependency, verification and dispatch candidates as JSON.
+A specification can require `MERGED/VERIFIED_IN_SCOPE` for selected prerequisites,
+for example before dispatching work that depends on selective invalidation writes.
 The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
 If the profile budget cannot fit the required context, retry that handoff with
 `kgmaker completion handoff TASK_ID --apply --token-budget 12000`.
@@ -1325,6 +1328,22 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+
+### Selektivní dopad změněných souborů (T003-S10-W02)
+
+`kgmaker impact --evidence-only --format json src/main/java/Api.java` použijte
+po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
+uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
+callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
+migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
+porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
+callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
+`changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
+důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
+z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
+s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
+Kombinace `--evidence-only` s `--workspace` končí chybou použití.
+[Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
 

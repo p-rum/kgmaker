@@ -450,6 +450,80 @@ def status(root: Path, analysis_id: str) -> dict:
             "applied": path.exists(), "coverage": packet["coverage"], "answers": packet["answers"]}
 
 
+def applied_dependency_citations(root: Path, paths: set[str]) -> tuple[list[dict], list[dict]]:
+    """Return file-bound conclusion citations from recorded, prior local revisions."""
+    from .analysis_model import FeatureAnalysis, ID_PATTERN
+    from .analysis_validation import FILE_EVIDENCE_KINDS
+
+    citations, diagnostics = [], []
+    try:
+        analyses = safe_path(root, ".kgmaker/analyses")
+        known = sorted(analyses.iterdir()) if analyses.exists() else []
+    except (AnalysisError, OSError):
+        return [], [{"code": "FEATURE_STORE_UNAVAILABLE"}]
+    for analysis_dir_path in known:
+        analysis_id = analysis_dir_path.name
+        if not ID_PATTERN.fullmatch(analysis_id):
+            continue
+        base = f".kgmaker/analyses/{analysis_id}"
+        try:
+            target = safe_path(root, f"{base}/analysis.json")
+            if not target.exists():
+                continue
+            candidate = FeatureAnalysis.from_dict(read_json(target, regular_only=True)).to_dict()
+            revision = candidate["revision"]
+            if type(revision) is not int or revision < 1:
+                raise AnalysisError("Invalid feature revision")
+            receipt = read_json(safe_path(root, f"{base}/receipts/{revision}.json"), regular_only=True)
+            expected = {"candidate_hash": digest(candidate), "packet_id": candidate["packet_id"], "revision": revision}
+            if receipt != expected or candidate["analysis_id"] != analysis_id:
+                raise AnalysisError("Candidate receipt mismatch")
+            old_packet = safe_path(root, f"{base}/history/packet-{revision}.json")
+            packet = read_json(old_packet if old_packet.exists() else safe_path(root, f"{base}/packet.json"),
+                               regular_only=True)
+            if (packet.get("schema_version") != SCHEMA_VERSION or packet.get("analysis_id") != analysis_id
+                    or packet.get("revision") != revision or packet.get("packet_id") != candidate["packet_id"]
+                    or packet_identity(packet) != packet["packet_id"]
+                    or any(candidate[key] != packet[key] for key in ("baseline", "requirement_hash"))):
+                raise AnalysisError("Candidate packet mismatch")
+            if packet.get("workspace"):
+                diagnostics.append({"code": "WORKSPACE_FEATURE_NOT_INDEXED", "analysis_id": analysis_id})
+                continue
+            manifest = packet["source_manifest"]
+            evidence = {}
+            for item in candidate["evidence"]:
+                if item.get("validity") != "VALID" or item.get("repo_id") is not None:
+                    continue
+                kind = item.get("kind")
+                if kind == "REQUIREMENT":
+                    # Compare canonical paths without changing the original packet identity.
+                    path = Path(packet["requirement_path"]).as_posix()
+                    expected_hash = packet["requirement_file_hash"]
+                elif kind in FILE_EVIDENCE_KINDS:
+                    path = item.get("path")
+                    entry = manifest.get(path, {})
+                    if entry.get("kind") != kind:
+                        continue
+                    expected_hash = entry.get("sha256")
+                else:
+                    continue
+                if path in paths and isinstance(expected_hash, str) and item.get("sha256") == expected_hash:
+                    evidence[item["id"]] = (path, expected_hash)
+            selected = []
+            for collection in ("input_requirements", "capability_matches", "impact_paths", "test_plan"):
+                for conclusion in candidate[collection]:
+                    for identity in conclusion.get("evidence_ids", []):
+                        if identity in evidence:
+                            path, checksum = evidence[identity]
+                            selected.append({"path": path, "before_sha256": checksum, "analysis_id": analysis_id,
+                                             "revision": revision, "collection": collection,
+                                             "conclusion_id": conclusion["id"], "evidence_id": identity})
+            citations.extend(selected)
+        except (KeyError, AttributeError, OSError, TypeError, ValueError):
+            diagnostics.append({"code": "FEATURE_REVISION_UNAVAILABLE", "analysis_id": analysis_id})
+    return citations, diagnostics
+
+
 def revise(root: Path, analysis_id: str, answers: dict) -> dict:
     """Prepare a new immutable revision; do not silently rebind old conclusions."""
     packet = load_packet(root, analysis_id)

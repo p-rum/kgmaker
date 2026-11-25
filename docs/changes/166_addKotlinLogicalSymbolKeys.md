@@ -469,3 +469,35 @@ Důkazy platí pro tuto opravu před přenosem po #130.
 
 T047-AC02 zůstává PARTIAL. Rozsah dalších signatur, TypeScript, Windows
 a explicitní legacy reindex zůstávají otevřené.
+
+## Přenos opravy po #130 a #160
+
+T047-S02, T047-R02 a T047-AC02. První rodič
+`83134d91ae6dbef47e0d020d4926799e405e792b` obsahuje opravu opomenutého
+zdroje. Druhý rodič `61cd97d90d7a342396da79e7c3c7401c3df2560e` přidává
+[čtecí report dopadu](145_buildReverseDependencyIndexes.md)
+a [kontrolu ověřených závislostí](175_requireVerifiedDependencies.md).
+Sloučení zachovává offline zadržení logického klíče v provideru a připojuje
+nezměněný reverse index z #130. Workspace používá ověření pravidelných
+souborů z #130 a při načtení z cache kontroluje opomenuté Kotlin zdroje.
+Oba příkazy a formáty uloženého grafu zůstávají kompatibilní. Porovnání
+428 produktových cest potvrdilo oba rodiče včetně dvou společně upravených
+souborů. Sémantická aktualizace zachovala 426 různých historických epizod,
+56 konceptů a 206 vztahů.
+
+Diagnostika z původního ověření. Kafka fixture se shodným repo ID a výslovným
+modelem zdrojů měla už v původní zkoušce odlišné členství compiler a source-only
+uzlu souboru. Katalog skončil před porovnáním symbolů. Zkouška repo aliasu
+a změněného deskriptoru používá samostatný funkční vstup.
+
+Cílený běh na JDK 21 v Cloud Environment má 57 PASS, 0 SKIP a exit 0.
+Ověřil skutečné K1 a K2, offline provider, workspace, Kafka katalog,
+reverse index se skutečným Javac i podmínku ověřené závislosti. Příkaz
+`kgmaker completion plan --root . --jobs 3` ponechal W03 mimo dispatch,
+protože W02 má ověření PARTIAL. JUnit `native.xml` má SHA-256
+`b08bd5a8a2827fd454a99e5ea64f2f65bb7e3921de709fae6a3ad8a0ef501523`.
+Produktový manifest před a po testech má SHA-256
+`eb7a78b0c2af2061f83b2f0bbadea187e0cf57c26d560ba28aff82a23d26e70d`.
+JARy obou workerů mají stejné otisky jako před přenosem. Úplná standardní
+sada, Windows, GitHub Actions a nezávislé review mají při předání této
+revize stav NOT_RUN. T047-AC02 zůstává PARTIAL.

@@ -23,7 +23,16 @@ dodání, ověření, priority, příslušné PR, deklarované závislosti, vlas
 navrženou akci a blokery. Oddělené podmíněné závislosti patří k širším variantám, které host vyhodnotí z původního zadání. Historické evidence SHA jsou součást inventáře.
 Chybný inventář nebo cyklus aktivní práce končí návratovým kódem 2. Souhrnný milník T003 se rozvine na jeho evidované work packages. Samostatný offline kontrakt vyžaduje ověření zdroje. Neznámé
 deklarované závislosti vyžadují posouzení zdroje. Historické výsledky platí pro zdokumentovanou revizi.
-Známý FAIL má přednost a blokuje přímé i nepřímé závislé položky. Plán je read-only a funguje bez sítě, grafu a Actions.
+Známý FAIL má přednost a blokuje přímé i nepřímé závislé položky.
+Položka může v zadání označit část svých přímých závislostí řádkem
+`- Povinně ověřené závislosti: T003-S10-W02.` (anglicky
+`- Verified dependencies: T003-S10-W02.`). Plán je vypíše v
+`verification_dependencies` a vyžaduje u nich `MERGED/VERIFIED_IN_SCOPE`.
+Každý krok má nejvýše jeden neprázdný řádek s touto deklarací.
+Prázdný nebo opakovaný řádek je chybou zadání a zastaví plánování.
+U běžné závislosti stačí dosavadní vydané pokrytí a výslovný FAIL dál blokuje.
+Plán je read-only a funguje bez sítě, grafu a Actions.
+[Záznam ověřování závislostí](changes/175_requireVerifiedDependencies.md).
 
 `completion handoff` je určený pro profilované úlohy. Bez `--apply` čte stav a
 vrací náhled. S `--apply` uloží nejvýše jeden přechod a standardní packet pro

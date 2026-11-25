@@ -75,6 +75,26 @@ AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
 rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.
 
+## T003-S10-W02 — reverse dependency indexy
+
+Čtecí rozsah má stav `MERGED` po [#130](https://github.com/p-rum/kgmaker/pull/130)
+v commitu `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. W02-AC01 je `PARTIAL`.
+Na sloučeném produktu prošlo 44 cílených testů bez přeskočení na JDK 21
+a v úplné sadě CPython 3.13 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+[Povinně ověřená závislost W03](changes/175_requireVerifiedDependencies.md)
+vyžaduje doložit selektivní zápis W02-AC01.
+Předchozí běhy a omezení Excel workeru jsou zachovány v change145.
+[Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
+[režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
+[kontroly](changes/145_buildReverseDependencyIndexes.md).
+
+| Acceptance | Ověření | Důkaz a hranice |
+|---|---|---|
+| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_actual_javac_line_ending_change_rechecks_proven_caller` při LF↔CRLF ověří přímé i tranzitivní callery, LF i CRLF volající zdroj, přesný lokátor cíle, chybějící a neshodný hash lokátoru, změnu textu a nezávislé volání. `test_schema_dependency_follows_prior_migration_operations` pokrývá CREATE i ALTER. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje Flyway, OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
+| T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
+| T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | `test_actual_javac_tampered_capture_cannot_ground_reverse_impact` odmítá změněný výběr compiler vstupů pod stejným raw ID. `test_actual_javac_malformed_capture_digest_is_ignored_in_public_impact` ověřuje obě uložené mapy otisků. CLI vynechá vazby poškozeného kontextu a zachová vazby druhého skutečného Javac capture. Testy pokrývají také chybný graf v3, nedostupný zdroj, čtyři FIFO vstupy na POSIX, chybné migrační vazby, relativní citaci, lidské rozhodnutí a stabilní CRLF OpenAPI. Smíšené `--workspace --evidence-only` vrací chybu použití před načtením manifestu. Report zachovává bajty store a sám nespouští proces. |
+| T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |
+
 ## T045 — doplňující automatická kontrola PR
 
 T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a
@@ -91,12 +111,12 @@ Hostovaný job na `11c59015675774013fdd8cd9055292a11b045079` vykázal
 
 ## T052 — completion orchestration 2026-11-19
 
-Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+Dodání `MERGED` ([#120](https://github.com/p-rum/kgmaker/pull/120), [#133](https://github.com/p-rum/kgmaker/pull/133)), [zadání revize 3](tasks/52_addCompletionOrchestrator.md),
 [per-step evidence](changes/134_addCompletionOrchestrator.md).
 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
-| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. Povinně ověřené přímé závislosti mají samostatný [doklad](changes/175_requireVerifiedDependencies.md). |
 | T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). [Regrese T051-AC02](changes/167_useCanonicalPacketSourceSnapshot.md) ověřuje shodu hlášené čerstvosti se soubory zahrnutými do grafu. |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
 | T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
@@ -247,6 +267,8 @@ Pokud skener hlásí `SOURCE_NOT_ANALYZED` u vybraného souboru Kotlinu,
 chybí důkaz úplnosti source setu. Přímá inspekce, offline čtení a opakované
 načtení workspace v takovém případě zadrží volitelný klíč. Ostatní platné
 compiler údaje a klíče v jiném repozitáři nebo source setu zůstávají dostupné.
+Po přenosu na `61cd97d9` prošlo 57 cílených testů se skutečnými K1, K2
+a Javac bez přeskočení.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
 
