@@ -62,3 +62,49 @@ odmítne před výběrem kandidátů. Ostatní závislosti mají původní rozsa
 
 W02-AC01 zůstává `PARTIAL`. Úplná sada, samostatný Windows běh, aktuální
 GitHub Actions a nezávislé review mají při lokálním předání samostatný stav.
+
+## Přenos po #130 — T052-S01, T052-R01 a T052-AC01
+
+První rodič `8ce8b21d13de85ab87478b40dcb1257bb5cae75a` nese ověřené přímé
+závislosti. Druhý rodič `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3` je skutečný
+merge čtecího reportu #130. Dva produktové a testové soubory #160
+a deset souborů #130 jsou ve společném stromu shodné se svými rodiči.
+Sémantická vrstva zachovala 418 historických epizod a přidala záznam
+přenosu.
+
+Inventář uvádí W02 jako `MERGED/PARTIAL` v commitu #130. Čtecí report
+pokryl původní prokázané vztahy. W02-AC01 stále vyžaduje selektivní
+zápis. W03 je v plánu podmíněná stavem `VERIFIED_IN_SCOPE` pro W02.
+
+Příkaz `kgmaker completion plan --root . --jobs 32` nad skutečným
+inventářem vrátil W03 s důvodem
+`T003-S10-W02: MERGED/PARTIAL; VERIFIED_IN_SCOPE required` a vynechal
+ji z `dispatch`. Otisk výstupu je
+`591a88178d79863cc2511fd708d04a6cf54e751b6682a6f577d5bc0f1a6ac3ab`.
+Kontrolní kopie se změněným jediným polem ověření W02 na
+`VERIFIED_IN_SCOPE` zařadila W03 mezi kandidáty a neměla blocker.
+Otisk kontrolního výstupu je
+`6bbd349222ff548d6978759813d1dab43a17bdb04d2ed137cac8796e6809d27f`.
+Oba běhy skončily kódem 0 a ponechaly vstupní soubory s původními
+bajty.
+
+```bash
+python -m pytest -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_completion.py tests/test_completion_handoff.py tests/test_workflow.py \
+  tests/test_workflow_profiles.py tests/test_skills.py
+python -m pytest -n 2 --dist load -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_workspace.py tests/test_reverse_dependency_index.py
+```
+
+Cílená sada v Cloud Environment na CPythonu 3.12.14 má **109 PASS / 0 SKIP**,
+exit 0, JUnit SHA-256 `e84f551784bb152d69da24d21629ba17e725c30034123ea95857c4493294fab1`.
+Druhý výběr se skutečným Temurin JDK 21.0.6+7 a Javac workerem
+má **44 PASS / 0 SKIP**, exit 0, JUnit SHA-256
+`bd3de9514e9433e979d5c4ed4d229bea2d456a933e3c66755fcb526bad324542`. Oba běhy mají shodný manifest produktu
+`945ac13d3686e21284854382d0199a8d83837822421f0f7e0af1faf10da6a99c`.
+Úplná sada po tomto přenosu, samostatný Windows běh a aktuální
+GitHub Actions mají při lokálním předání stav `NOT_RUN`. Dřívější
+ověření #130 drží [Change145](145_buildReverseDependencyIndexes.md).
+[Inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy),
+[stavová matice](../production-analysis-progress.md) a
+[návod plánovače](../completion-orchestrator.md) uvádějí hranice dodání.
