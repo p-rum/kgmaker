@@ -157,11 +157,13 @@ def _qualified_symbol(repo: str, value: dict) -> dict:
     return result
 
 
-def _qualified_compiler_symbol(repo: str, value: dict, compiler_repo: str | None) -> dict:
+def _qualified_compiler_symbol(repo: str, value: dict, compiler_repo: str | None, *,
+                               omit_logical_key: bool = False) -> dict:
     result = _qualified_symbol(repo, value)
     if compiler_repo != repo:
-        result.pop('logical_key', None)
         result.pop('kotlin_declaration', None)
+    if omit_logical_key or compiler_repo != repo:
+        result.pop('logical_key', None)
     return result
 
 
@@ -681,6 +683,7 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
             # Compiler inputs include excluded dependencies and the external worker
             # distribution. A source/index cache key alone cannot prove freshness.
             from .graph_provider import validate_context_snapshot
+            from .symbol_identity import kotlin_source_omissions
             from .worker_protocol import WorkerError
             try:
                 for captured_context in cached[0].contexts:
@@ -691,7 +694,10 @@ def snapshot_workspace(manifest: Path, *, cache_root: Path | None = None, persis
                         if captured_context.get('freshness') == 'STALE':
                             cached = None
                             break
-                        validate_context_snapshot(root, captured_context)
+                        omitted = validate_context_snapshot(root, captured_context) or ()
+                        if omitted != kotlin_source_omissions(captured_context, cached[0].diagnostics):
+                            cached = None
+                            break
             except (WorkerError, ValueError, OSError):
                 cached = None
         if cached is not None:

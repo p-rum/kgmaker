@@ -56,34 +56,81 @@ def _source_sets(context):
     return [{**source, "files": set(source.get("files", []))} for source in entries]
 
 
+def _source_selection(context, realm):
+    _, module, source_set, scope = realm
+    entries = _source_sets(context)
+    selected = [entry for entry in entries if entry["module"] == module and entry["scope"] == scope
+                and (entry["id"] == source_set or
+                     (entry["id"] == source_set + ":generated" and entry.get("generated") is True))]
+    return entries, selected
+
+
+def _namespace_prefix(context, repo):
+    identity = context.get("id")
+    if not isinstance(identity, str) or not identity.startswith("repo:"):
+        return ""
+    from .workspace import split_id
+    try:
+        projected_repo, _ = split_id(identity)
+    except ValueError:
+        return None
+    return f"@{repo}/" if projected_repo == repo else None
+
+
+def kotlin_source_omissions(context, diagnostics):
+    """Return scanner omissions that prevent a complete Kotlin namespace proof."""
+    realm = _selected_realm(context)
+    if realm is None:
+        return ()
+    repo = realm[0]
+    prefix = _namespace_prefix(context, repo)
+    if prefix is None:
+        return ()
+    _, selected = _source_selection(context, realm)
+    if not selected:
+        return ()
+    omitted = []
+    for item in diagnostics:
+        if not isinstance(item, dict) or item.get("code") != "SOURCE_NOT_ANALYZED":
+            continue
+        path = item.get("path")
+        if not isinstance(path, str) or not path.endswith(".kt"):
+            continue
+        owner = item.get("repo_id")
+        if (prefix or owner is not None) and owner != repo:
+            continue
+        if prefix and path.startswith(prefix):
+            path = path[len(prefix):]
+        if any(source_set_contains(entry, path) for entry in selected):
+            omitted.append(item)
+    return tuple(omitted)
+
+
+def without_logical_key(symbol):
+    return ({key: value for key, value in symbol.items() if key != "logical_key"}
+            if "logical_key" in symbol else symbol)
+
+
 def _complete_kotlin_namespace(context, realm):
     """Map captured Kotlin paths to whether their exact owner can receive a key."""
-    repo, module, source_set, scope = realm
+    repo, _, source_set, _ = realm
     files, inputs = context.get("source_files"), context.get("compiler_inputs")
     if (not isinstance(files, dict) or any(not isinstance(path, str) for path in files)
             or not isinstance(inputs, list) or any(not isinstance(path, str) for path in inputs)):
         return {}
 
-    prefix = ""
-    context_id = context.get("id")
-    if isinstance(context_id, str) and context_id.startswith("repo:"):
-        from .workspace import split_id
-        try:
-            projected_repo, _ = split_id(context_id)
-        except ValueError:
-            return {}
-        prefix = f"@{repo}/"
-        if projected_repo != repo or any(not path.startswith(prefix) for path in files):
+    prefix = _namespace_prefix(context, repo)
+    if prefix is None:
+        return {}
+    if prefix:
+        if any(not path.startswith(prefix) for path in files):
             return {}
         if context.get("source_snapshot_version") == _RAW_JVM_SNAPSHOT:
             if any(not path.startswith(prefix) for path in inputs):
                 return {}
             inputs = [path[len(prefix):] for path in inputs]
 
-    entries = _source_sets(context)
-    selected = [entry for entry in entries if entry["module"] == module and entry["scope"] == scope
-                and (entry["id"] == source_set or
-                     (entry["id"] == source_set + ":generated" and entry.get("generated") is True))]
+    entries, selected = _source_selection(context, realm)
     selected_paths = {path for entry in selected for path in entry["files"] if path.endswith(".kt")}
     captured_paths = {path[len(prefix):] for path in files if path.endswith(".kt")}
     if not selected_paths <= captured_paths:

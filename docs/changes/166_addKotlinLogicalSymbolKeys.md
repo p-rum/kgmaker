@@ -432,3 +432,40 @@ Produktový manifest před a po obou bězích má SHA-256
 
 Nová nativní sada K1/K2, úplná standardní sada, Windows, GitHub Actions
 a nezávislé review mají pro tento pár stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+
+## Doplnění důkazu o úplnosti vybraného Kotlin source setu
+
+Review kandidáta `adf0c73aa63a601926724d31ad7fb1b6928e4d37` odhalilo, že
+skener mohl přeskočit vybraný soubor Kotlinu a nahlásit `SOURCE_NOT_ANALYZED`,
+zatímco kontrola kolizí pracovala pouze se zachycenými soubory. Stejná mezera
+umožňovala při offline načtení zachovat starý klíč po přidání přeskočeného
+souboru. Reprodukce se skutečnými K1 a K2 selhala v obou případech. JUnit
+`red.xml` má SHA-256
+`25acc0ad35f529c8fbe475e74a01914406081468f9c912347d6031b57bc2283c`.
+
+Přímá projekce inspekce, offline provider a workspace cache používají známé
+diagnostiky skeneru spolu s přesným členstvím podle zachyceného modelu.
+Opomenutí vybraného `.kt` ve stejném source setu včetně jeho generované
+varianty zadrží volitelný klíč i v dříve publikovaném grafu s touto
+diagnostikou. Platné ostatní compiler údaje a klíče nezasažených source
+setů a repozitářů zůstávají dostupné. Offline načtení používá existující
+ověření bez čtení nadlimitního souboru nebo přepisu uložených důkazů.
+Po odstranění opomenutého souboru může workspace znovu načíst původní jinak
+platný klíč. Kafka katalog při ověření přesné compiler projekce zohledňuje
+stejnou podmínku pro klíč a nadále porovnává všechny ostatní položky.
+
+Na původním základu `adf0c73` prošlo 48 cílených testů se skutečnými
+K1 a K2, včetně nové regrese, offline provideru, workspace a Kafka
+katalogu. V celém souboru testů stage cache prošlo 59 testů. Rozsahy
+mají jeden společný test, celkem ověřily 106 různých případů bez
+selhání a přeskočení. Oba běhy měly exit 0 a shodný produktový manifest
+před a po testech se SHA-256
+`e1ed4f23abcb76fd9509fccc87b6fd3a428189efa8f238a7bd1c160222a9a104`.
+JUnit `final-exact.xml` má SHA-256
+`eddb1a8c2d6b83d580d5dd465a69264881b26c20ee9c37f3f64fa67fe79adcc3`.
+JUnit `final-exact-cache.xml` má SHA-256
+`da75b2c3cb2e9d046db5a4faeb4f7eeb5a2a88f26aa72e811b48c6ccfe3d9611`.
+Důkazy platí pro tuto opravu před přenosem po #130.
+
+T047-AC02 zůstává PARTIAL. Rozsah dalších signatur, TypeScript, Windows
+a explicitní legacy reindex zůstávají otevřené.

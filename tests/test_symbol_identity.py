@@ -6,13 +6,17 @@ import json
 import os
 from pathlib import Path
 import runpy
+import subprocess
+from unittest.mock import patch
 
 import pytest
 
 from kgmaker.inspection import command, inspect_jvm
+from kgmaker.feature import current_graph
 from kgmaker.model import KnowledgeGraph
+from kgmaker.scanner import MAX_FILE_BYTES
 from kgmaker.worker_protocol import WorkerError
-from kgmaker.workspace import snapshot_workspace
+from kgmaker.workspace import _qualified_compiler_symbol, snapshot_workspace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +79,101 @@ def test_native_incomplete_kotlin_selection_cannot_prove_realm_uniqueness(tmp_pa
     assert "logical_key" not in complete[(first, "score")] and "logical_key" not in complete[(second, "score")]
     assert complete[(first, "control")]["logical_key"] == expected_key(
         "backend", "api", "main", "production", "kotlin.Int", name="control")
+
+
+@pytest.mark.parametrize("backend", ["k1", "k2"])
+def test_native_omitted_kotlin_files_withhold_only_selected_realm_keys(tmp_path, backend):
+    home = require_worker(backend)
+    root = tmp_path / "backend"
+    source = kotlin_file(root, "First", "fun score(value: Int): Int = value")
+    candidates = ("src/test/kotlin/Peer.kt", "src/main/kotlin/Peer.kt", ".generated/kotlin/Peer.kt")
+    omitted = ("package fixture\nfun score(value: Int): Int = value + 1\n//" + "a" * MAX_FILE_BYTES)
+
+    def add_peer(directory, path):
+        target = directory / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(omitted, encoding="utf-8")
+        over_limit.add(target)
+        return target
+
+    over_limit = set()
+    add_peer(root, candidates[0])
+    add_peer(tmp_path / "other", candidates[1])
+    model = {"source_sets": [
+        {"module": "api", "id": "main", "scope": "production", "roots": ["src/main/kotlin"]},
+        {"module": "api", "id": "test", "scope": "test", "roots": ["src/test/kotlin"]},
+        {"module": "api", "id": "main:generated", "scope": "production", "generated": True,
+         "roots": [".generated/kotlin"]},
+    ]}
+    manifest = tmp_path / "workspace.json"
+    manifest.write_text(json.dumps({"schema_version": 1, "workspace_id": "omission",
+        "repositories": [{"id": "backend", "role": "backend", "path": "backend"},
+                         {"id": "other", "role": "backend", "path": "other"}]}))
+
+    def inspect(publish=False):
+        result = inspect_jvm(root, repo_id="backend", module="api", project_model=model, home=home,
+                             kotlin_backend=backend, publish=publish)
+        assert result["exit_code"] == 0 and result["context"]["compiler_inputs"] == [source]
+        return KnowledgeGraph.from_dict(result["graph"]), result["context"]["id"]
+
+    def score(graph, path=source):
+        value, = [s for s in graph.symbols if s.get("name") == "score" and s.get("path") == path]
+        assert value["descriptor"] == "(I)I" and value["kotlin_declaration"]["schema_version"] == 2
+        return value
+
+    def omitted_in(graph, path):
+        assert any(d.get("path") == path and d.get("code") == "SOURCE_NOT_ANALYZED"
+                   for d in graph.diagnostics)
+
+    native_path_open = Path.open
+
+    def no_oversize_read(path, *args, **kwargs):
+        assert path not in over_limit
+        return native_path_open(path, *args, **kwargs)
+
+    launch = subprocess.Popen
+
+    def allow_git_only(argv, *args, **kwargs):
+        assert Path(argv[0]).name == "git"
+        return launch(argv, *args, **kwargs)
+
+    with patch.object(Path, "open", no_oversize_read):
+        initial, context_id = inspect(publish=True)
+        omitted_in(initial, candidates[0])
+        key = expected_key("backend", "api", "main", "production", "kotlin.Int")
+        assert score(initial)["logical_key"] == key
+        qualified_source = "@backend/" + source
+        indexes = {path: path.read_bytes() for path in (root / ".kgmaker").glob("*") if path.is_file()}
+        assert indexes
+        with patch("subprocess.Popen", side_effect=allow_git_only):
+            warm = snapshot_workspace(manifest)[3]
+            assert score(warm, qualified_source)["logical_key"] == key
+        for path in candidates[1:]:
+            peer = add_peer(root, path)
+            direct, _ = inspect()
+            omitted_in(direct, path)
+            observed = score(direct)
+            keys = {"direct": observed.get("logical_key")}
+            older_capture = deepcopy(direct.to_dict())
+            next(s for s in older_capture["symbols"] if s["id"] == observed["id"])["logical_key"] = key
+            assert "logical_key" not in score(KnowledgeGraph.from_dict(older_capture))
+            with patch("subprocess.Popen", side_effect=allow_git_only):
+                live, _, _ = current_graph(root)
+                retained, = [c for c in live.contexts if c["id"] == context_id]
+                assert retained["freshness"] == "CONTENT_VERIFIED"
+                keys["offline"] = score(live).get("logical_key")
+                for label in ("workspace", "warm_workspace"):
+                    projected = snapshot_workspace(manifest)[3]
+                    qualified = score(projected, qualified_source)
+                    keys[label] = qualified.get("logical_key")
+                    assert qualified == _qualified_compiler_symbol("backend", score(initial), "backend",
+                                                                  omit_logical_key=True)
+                peer.unlink()
+                restored = snapshot_workspace(manifest)[3]
+                assert score(restored, qualified_source)["logical_key"] == key
+            assert {path: path.read_bytes() for path in indexes} == indexes
+            assert keys == dict.fromkeys(("direct", "offline", "workspace", "warm_workspace"))
+            omitted_in(live, path)
 
 
 @pytest.mark.parametrize("backend", ["k1", "k2"])

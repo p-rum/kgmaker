@@ -44,8 +44,9 @@ relevant tuple raises `InterfaceProjectionError`; no fact is rebuilt from mirror
 Node/symbol fields. Unselected contexts cannot supply current code evidence.
 With a workspace repository alias, the catalogue compares compiler symbols as
 projected into that workspace. Optional Kotlin identity proof is omitted when
-the capture repository differs from the alias. Other symbol fields still require
-an exact match. [Change 166](changes/166_addKotlinLogicalSymbolKeys.md)
+the capture repository differs from the alias. A scanner omission in the selected
+Kotlin source set can withhold the optional logical key during offline projection.
+Other symbol fields still require an exact match. [Change 166](changes/166_addKotlinLogicalSymbolKeys.md)
 
 Supported upstream subset: Java listeners with explicit group and canonical
 annotation in both JVM backends; Kotlin K1 listeners; Java canonical

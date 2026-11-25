@@ -243,6 +243,10 @@ testů porovnalo otisky sešitů a čtení grafů v1–v3, nový nativní běh j
 pro tuto revizi NOT_RUN. Přenos na `3a6b97fc` převzal T055, zachoval stejné
 compiler zdroje a ověřil 12 cílených případů instalace, migrace a čtení
 starších grafů.
+Pokud skener hlásí `SOURCE_NOT_ANALYZED` u vybraného souboru Kotlinu,
+chybí důkaz úplnosti source setu. Přímá inspekce, offline čtení a opakované
+načtení workspace v takovém případě zadrží volitelný klíč. Ostatní platné
+compiler údaje a klíče v jiném repozitáři nebo source setu zůstávají dostupné.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
 

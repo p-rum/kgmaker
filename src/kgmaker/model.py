@@ -168,14 +168,18 @@ class KnowledgeGraph:
                         raise ValueError("Dangling/duplicate compiler symbol or context")
                     symbol_ids.add(symbol["id"])
                 if any("logical_key" in symbol or "kotlin_declaration" in symbol for symbol in symbols):
-                    from .symbol_identity import occurrence_keys, valid_declaration
+                    from .symbol_identity import (kotlin_source_omissions, occurrence_keys,
+                                                  valid_declaration, without_logical_key)
                     if any("kotlin_declaration" in s and not valid_declaration(s["kotlin_declaration"]) for s in symbols):
                         raise ValueError("Invalid Kotlin declaration identity witness")
-                    # Draft witnesses lacked source conflict checks. Keep their
-                    # occurrences readable while requiring a fresh key proof.
-                    symbols = [{key: value for key, value in symbol.items() if key != "logical_key"}
-                               if "logical_key" in symbol and
-                               symbol.get("kotlin_declaration", {}).get("schema_version") == 1 else symbol
+                    incomplete = {c["id"] for c in contexts if isinstance(c.get("id"), str)
+                                  and kotlin_source_omissions(c, data.get("diagnostics", []))}
+                    # Keep old occurrences readable without admitting optional
+                    # keys from draft witnesses or an incomplete source realm.
+                    symbols = [without_logical_key(symbol)
+                               if "logical_key" in symbol and (
+                                   symbol["context_id"] in incomplete or
+                                   symbol.get("kotlin_declaration", {}).get("schema_version") == 1) else symbol
                                for symbol in symbols]
                     if sum(isinstance(c.get("id"), str) for c in contexts) != len(context_ids):
                         raise ValueError("Ambiguous Kotlin logical symbol context")

@@ -500,8 +500,9 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
             metadata={key: value for key, value in sanitize(symbol).items() if key != "kotlin_declaration"})
         if path in file_nodes:
             relation(file_nodes[path], symbol["id"], "contains", symbol)
-    from .symbol_identity import occurrence_keys
-    keys = occurrence_keys(metadata, nodes, {context_id: selected_context})
+    from .symbol_identity import kotlin_source_omissions, occurrence_keys
+    keys = ({} if kotlin_source_omissions(selected_context, base.diagnostics) else
+            occurrence_keys(metadata, nodes, {context_id: selected_context}))
     for symbol in metadata:
         if symbol["id"] in keys:
             symbol["logical_key"] = keys[symbol["id"]]

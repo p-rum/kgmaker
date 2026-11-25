@@ -1685,6 +1685,12 @@ včetně zachycených vstupů jeho generované varianty. Členství každé dekl
 se ověřuje proti samostatným hodnotám modulu, source setu a scope z modelu
 buildu. Při částečném výběru souborů nebo nejednoznačném členství graf dál
 poskytuje výskyt a jeho compiler doklad.
+Při `SOURCE_NOT_ANALYZED` u vybraného souboru `.kt` nelze doložit úplnost
+source setu. Klíče se zadrží pro jeho Kotlin kontext včetně deklarované
+generované varianty. Inspekce znovu nečte soubor odmítnutý kvůli limitu.
+Offline graf i workspace odeberou pouze volitelný klíč dříve uloženého
+výskytu, pokud je zbytek compiler snímku nadále aktuální. Ostatní
+repozitáře a source sety si doložené klíče ponechají.
 Oba workery kontrolují kolize zdrojových deklarací ve stejném běhu analýzy.
 Při konfliktu klíč nevzniká ani v případě, kdy kompilátor pro druhou deklaraci
 nevydá JVM symbol. Při neověřeném podpisu stejnojmenné deklarace v témže
