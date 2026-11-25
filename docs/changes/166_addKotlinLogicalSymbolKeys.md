@@ -408,3 +408,27 @@ Shodné manifesty 426 sledovaných vstupů mají SHA-256
 Historických 106 výsledků s JDK náleží předchozímu páru rodičů.
 Nový nativní běh, úplná sada a nezávislé review mají pro tento přenos
 stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+
+## Přenos po sloučení #156
+
+T047-S02, T047-R02 a T047-AC02. První rodič
+`c1b51be17d566a0d7346a3f6fc994738fd9c9f63` zachovává předchozí
+přenos po #151. Druhý rodič `3a6b97fc9c44941e68bb390772a5eb13906bf1ff`
+přidává [automatizaci migrace Excelu](172_automateExcelMigration.md).
+Přenos spojil beze změny všech 427 sledovaných produktových cest podle
+odpovídajících rodičů. Porovnání ověřilo všech sedm přidaných nebo změněných
+produktových a testovacích souborů T055 a samostatně jeho nový skill.
+Všech dvanáct zdrojových a testovacích změn T047-S02 nadále odpovídá prvnímu
+rodiči a připnuté JARy K1 a K2 mají stejný otisk.
+
+Cílený běh instalace a upgradu skillu, výběru a obnovy migrace a čtení
+grafů v1–v3 skončil 12 PASS, 0 SKIP a exit 0. JUnit `targeted.xml` má
+SHA-256 `6166006b5b77facdbc71b0e857c805c064208884d2ec6e888d38993b6212c9e9`.
+Celý krátký výběr skill testů se stejnými doplňky skončil 33 PASS,
+0 SKIP a exit 0, JUnit `smoke.xml` má SHA-256
+`546441db3d5af3510abc69a46d8f13994e05b5bb32a725647e3e676ee3f6ee5a`.
+Produktový manifest před a po obou bězích má SHA-256
+`fc9d7f2581f1f3f06022c3d465c8f4908ceeb8c5cb33844b50659b147e9984a9`.
+
+Nová nativní sada K1/K2, úplná standardní sada, Windows, GitHub Actions
+a nezávislé review mají pro tento pár stav NOT_RUN. T047-AC02 zůstává PARTIAL.

@@ -50,9 +50,10 @@ kgmaker scan
 
 `kgmaker init` creates Agent Skills under `.agents/skills/`, repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed instructions and skills.
 
-The five skills cover code navigation (`kgmaker-context`), semantic graph maintenance
+The six skills cover code navigation (`kgmaker-context`), semantic graph maintenance
 (`kgmaker-semantic`), requirement analysis (`kgmaker-feature-analysis`), data audits
-(`kgmaker-data-audit`) and test proposals (`kgmaker-testgen`). For example, ask your
+(`kgmaker-data-audit`), test proposals (`kgmaker-testgen`) and Excel migration
+(`kgmaker-excel-migration`). For example, ask your
 agent to use `$kgmaker-context` to find affected callers, or `$kgmaker-data-audit`
 to assess a requirement's inputs. Discovery and `$` invocation depend on the host;
 you can always explicitly open the installed `SKILL.md` and follow it. See the
@@ -64,6 +65,8 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 ## Excel migration
 
 `kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+
+Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
 ## Commands
 
@@ -357,7 +360,7 @@ See the [project workflow guide](docs/project-workflows.md),
 
 The `task` commands persist workflow state under ignored `.kgmaker/workflow/`. A task follows `intake → analyze → plan → implement → test → review → done`; bounded retries may return test or review to implementation. Architect, implementation, test-expert, review, and orchestrator artifacts have strict role-specific JSON contracts. `task context` assembles a bounded packet from current graph nodes, semantic hits, implementation memory, impact candidates, tests, and prior task artifacts without modifying the graph or semantic layer.
 Packet `graph_status` compares the source hashes used by `scan`, including the `.xlsx` and legacy `.xls` files that it records. See [task context freshness](docs/project-workflows.md#role-context-freshness).
-The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files are also supplied; `init` installs the analyst/data-auditor commands and all five Agent Skills listed in its output. kgmaker makes no model API calls itself.
+The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files are also supplied; `init` installs the analyst/data-auditor commands and all six Agent Skills listed in its output. kgmaker makes no model API calls itself.
 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 

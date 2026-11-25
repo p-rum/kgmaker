@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
+| T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade, parita a pravidla předání dat ve skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+
+[Doklady po krocích](changes/172_automateExcelMigration.md).
+
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -229,7 +240,9 @@ Po přenosu na `5809e849` prošlo 106 cílených testů se skutečnými K1 a K2
 bez přeskočení včetně raw JVM, workspace, cache a Kafka katalogu.
 Následující přenos na `b04d064a` zachoval compiler zdroje. Pět cílených
 testů porovnalo otisky sešitů a čtení grafů v1–v3, nový nativní běh je
-pro tuto revizi NOT_RUN.
+pro tuto revizi NOT_RUN. Přenos na `3a6b97fc` převzal T055, zachoval stejné
+compiler zdroje a ověřil 12 cílených případů instalace, migrace a čtení
+starších grafů.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
 
