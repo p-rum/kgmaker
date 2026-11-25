@@ -1,5 +1,16 @@
 # Inventář acceptance T001 a T002
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
+| T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu a přepsáním výstupu. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade a parita skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+
+[Doklady po krocích](changes/172_automateExcelMigration.md).
+
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |

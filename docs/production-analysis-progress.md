@@ -1,8 +1,16 @@
 # Aktuální stav a zbývající práce
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+Dodání PR_OPEN. Ověřena instalace a upgrade skillu, lokální příprava a
+Jira CSV výstup na reálném Java 17 workeru. Syntetický XLSM se načetl
+staticky bez spuštění maker nebo IP spojení. Živý Copilot a Jira import mají
+stav NOT_RUN. [Zadání](tasks/55_automateExcelMigration.md) · [Návod](excel-migration.md#jeden-pokyn-pro-copilot) · [Doklady](changes/172_automateExcelMigration.md).
+
 ## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
 
-Dodání PR_OPEN. T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
+Dodání MERGED v [PR #155](https://github.com/p-rum/kgmaker/pull/155). T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
 BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
 instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
 NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
