@@ -8,10 +8,10 @@ from .model import KnowledgeGraph
 from .views import is_execution_callsite, project
 
 
-def adjacency(graph: KnowledgeGraph, include_candidates=True):
+def adjacency(graph: KnowledgeGraph, include_candidates=True, *, include_runtime=True):
     result = defaultdict(list)
     for site in graph.call_sites:
-        if not is_execution_callsite(site):
+        if not is_execution_callsite(site) or site.get("evidence_kind") == "RUNTIME_OBSERVED":
             continue
         target = site.get("declared_target")
         if target:
@@ -24,18 +24,17 @@ def adjacency(graph: KnowledgeGraph, include_candidates=True):
                     result[site["caller"]].append({"target": candidate, "call_site": site["id"],
                         "kind": "DISPATCH_CANDIDATE", "evidence_ids": site.get("evidence_ids", []),
                         "dispatch_complete": site.get("dispatch_complete", False)})
-    # Runtime imports deliberately remain separate evidence.  They participate
-    # in navigation only when explicitly requested through the imported graph;
-    # callers/callees still expose their origin as RUNTIME_OBSERVED.
-    for edge in graph.edges:
-        if edge.kind != "observed_dispatch_to":
-            continue
-        result[edge.source].append({"target": edge.target,
-                                    "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
-                                    "kind": "RUNTIME_OBSERVED",
-                                    "evidence_ids": list(edge.evidence_ids),
-                                    "dispatch_complete": False,
-                                    "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"})
+    # Callers/callees label supplied runtime samples. Static analyses opt out.
+    if include_runtime:
+        for edge in graph.edges:
+            if edge.kind != "observed_dispatch_to" or edge.evidence_kind != "RUNTIME_OBSERVED":
+                continue
+            result[edge.source].append({"target": edge.target,
+                                        "call_site": edge.evidence_ids[0] if edge.evidence_ids else f"runtime:{edge.source}:{edge.target}",
+                                        "kind": "RUNTIME_OBSERVED",
+                                        "evidence_ids": list(edge.evidence_ids),
+                                        "dispatch_complete": False,
+                                        "completeness_reason": "RUNTIME_SAMPLE_NOT_STATIC_DISPATCH"})
     for key in result:
         result[key].sort(key=lambda e: (e["target"], e["call_site"], e["kind"]))
     return result
@@ -66,7 +65,7 @@ def path(graph, source, target, *, scope="production", max_depth=30, max_nodes=5
     ids = {n.id for n in graph.nodes}
     if source not in ids or target not in ids:
         raise AnalysisError("Path endpoint missing from selected scope")
-    edges = adjacency(graph, include_candidates)
+    edges = adjacency(graph, include_candidates, include_runtime=False)
     queue = deque([(source, [], [source])])
     visited, truncated = set(), False
     while queue:
@@ -90,8 +89,8 @@ def path(graph, source, target, *, scope="production", max_depth=30, max_nodes=5
 
 
 def strongly_connected(graph: KnowledgeGraph) -> list[list[str]]:
-    """Iterative Kosaraju; even deep recursion in the program cannot recurse Python."""
-    edges = adjacency(graph)
+    """Find static cycles with iterative Kosaraju."""
+    edges = adjacency(graph, include_runtime=False)
     vertices = {n.id for n in graph.nodes if n.kind in {"method", "function", "constructor", "bytecode_method"}}
     reverse = defaultdict(set)
     for source, values in edges.items():
