@@ -132,12 +132,45 @@ Label identity jsou neprázdné, do 200 znaků, znaky ASCII alfanumerické plus
 
 Import v2 kontroluje celý envelope, facts a identity před zápisem. Facts zatím
 nepřevádí na graph evidence. Původní `observations` může v2 obsahovat jen jako
-caller/target/kind se symboly ve vybraném kontextu, bez volného scenario/source;
-UNKNOWN nesmí vytvořit observation evidence. Návratový status importu zachová
+caller/target/kind se symboly ve vybraném kontextu. Pro `call` a `dispatch`
+musí být volající i cíl metoda, funkce nebo konstruktor. Vynechaný `kind`
+znamená `call`. Typ `framework` zachovává vlastní typově vázaná pozorování.
+Volný `scenario` a `source` v2 nepřijímá. UNKNOWN nesmí vytvořit
+observation evidence. Návratový status importu zachová
 status v2, ani prázdný import jej nepovýší. Historický v1 import zůstává kompatibilní
 pro předem sanitizované exporty se svým původním kontraktem; nemá záruky uzavřeného
 v2 formátu. Dřívější nevalidované v2 z této implementační větve je nutné vytvořit
 znovu. Schema v3 manifestu se odmítá; graph/store schema v3 se nemění.
+
+## Opakovaný import a navigace
+
+Opakovaný import pro stejnou dvojici symbolů a přesný compiler kontext uchová
+připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i shodné
+`runtime_id` pro rozdílné
+`service_id` nebo `service_version`. Ukládá také `build_id`,
+`config_fingerprint` a původní `source_identity`. Doklady v jiném compiler
+kontextu mají vlastní hranu. Shodný doklad se k hraně připojí jen jednou.
+Opakovaný import znovu ověří vstupy, přidá diagnostiku a publikuje graf.
+Existující záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
+V2 doklad používá ověřené konce pozorování, ověřené identity a otisky
+zdrojů a kontextu. Jeho ID odpovídá těmto hodnotám. Python API před kontrolou
+oddělí vstupní slovník manifestu a každé pozorování. Pozdější změna slovníku volajícího nemění
+uloženou konfiguraci ani cíl volání. Import projde dodaný seznam pozorování
+jednou a k sestavení grafu použije ověřené řádky.
+
+```bash
+kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json
+kgmaker callgraph callees --root PROJECT --context CONTEXT_ID --symbol CALLER_ID
+kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
+```
+
+`callers` a `callees` vracejí připojená pozorování jako `RUNTIME_OBSERVED`
+s odkazy na důkazy a `dispatch_complete: false`. `callgraph path` a statické
+cykly flow grafu sledují compiler call sites. Volba
+`--include-dispatch-candidates` zahrne při hledání cesty také statické kandidáty.
+Pro dvojici spojenou výhradně runtime dokladem hlásí statická cesta
+`UNKNOWN`. Statické vazby se uchovají i bez pozorování.
+[Rozsah opravy importu](changes/151_preserveRuntimeObservationEvidence.md).
 
 ## Ověřená hranice
 

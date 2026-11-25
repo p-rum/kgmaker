@@ -151,3 +151,34 @@ Provedené kontroly na sloučeném pracovním stromu (CPython 3.12.3, pytest 8.3
   headu, nikoli k tomuto merge; nové nezávislé review a kontrola CI zbývají.
 - Historické Actions Test a PR Review vracely při novém dotazu logů HTTP 404;
   jejich příčina nadále není ověřená.
+
+## Druhá integrace main — T049-S08 / AC13–AC14, T050-R04
+
+Výchozí head `3e22595a7ca59b960ef8ca3f46eca73f84ee858b`, integrovaný main
+`5809e84932b1910bfc3f17c72e2a2005283389b1`. Main přijal
+[#136](https://github.com/p-rum/kgmaker/pull/136) a současně změnil tři
+historické vlastní grafy. Konflikty modify/delete u `.kgmaker/GRAPH.md`,
+`.kgmaker/GRAPH.mmd` a `.kgmaker/semantic.json` řeší jejich odstranění;
+runtime zdroje, testy a návody z #136 zůstávají. Stavová matice zaznamenává
+merge #136; acceptance a README zachovávají automaticky sloučený obsah.
+Bez dalších změn veřejného API a příkladů. Nezařazené lokální Gradle soubory
+zůstávají mimo commit.
+
+- **PASS:** po druhé integraci 171 testů / 0 SKIP:
+  `PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-validation/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-tests/self-use-final tests/test_init.py tests/test_skills.py tests/test_workflow_profiles.py tests/test_completion.py tests/test_completion_handoff.py tests/test_scanner.py tests/test_installation.py tests/test_installation_distribution.py`.
+- **FAIL, opraveno nastavení prostředí:** runtime příkaz nejprve použil JDK 17
+  a skončil 73 PASS / 1 SKIP / 12 ERROR při `javac --release 21`. S `JAVA_HOME`
+  na JDK 21, avšak starým `PATH`, následovalo 73 PASS / 13 SKIP kvůli detekci
+  staršího Java. S JDK 21 i v `PATH`:
+
+  ```bash
+  JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 PATH=/usr/lib/jvm/temurin-21-jdk-amd64/bin:$PATH PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-validation/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-tests/runtime-jdk21-path tests/test_runtime_trace_producer.py
+  ```
+
+  **PASS/SKIP:** 73 PASS / 13 SKIP; chybí sestavený JVM worker a Maven exporter.
+  Aktuální integrace nedokládá jejich reálný běh, Windows ani úplnou sadu.
+- **PARTIAL:** CodeQL po první integraci nenašel Python nálezy; Actions upozornil
+  na chybějící omezení `GITHUB_TOKEN` u Excel jobu zděděného z main. Tento job
+  PR nemění; nález zůstává neopraven. Analýza dalších jazyků vypršela.
+- **NOT_RUN:** nové nezávislé review a CI nad integrovaným headem. Původní
+  APPROVE se na tento merge nepřenáší.
