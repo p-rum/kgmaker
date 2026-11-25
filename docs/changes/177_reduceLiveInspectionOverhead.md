@@ -86,5 +86,48 @@ Registr zadání používá existující T003-S10-W01 a jeho závislosti.
 Pro warm HIT zůstává potřeba nezávisle ověřitelný doklad o vydání pro
 konkrétní požadavek a přesný výsledek. Dalším předpokladem je úplný otisk
 běhových vstupů. T003-S10-W01 je částečně ověřený.
-Úplná projektová sada, Windows a GitHub Actions jsou v tomto lokálním
-předání NOT_RUN.
+V původním nativním předání měly úplná projektová sada, Windows a GitHub
+Actions stav NOT_RUN.
+
+## Přenos po sloučení #160 — kroky 4 a 5
+
+Prvním rodičem je ověřený kandidát `d9aca195058a5ac876225dd32882a8d6baf092c6`,
+druhým skutečný `main` `61cd97d90d7a342396da79e7c3c7401c3df2560e` se
+stromem `1b64d5e3e7f730582d5fab38920b6bfa4d042dbe`.
+Oba zdrojové soubory a oba testy W01 mají přesné bajty prvního rodiče.
+Zdroj, testy a deklarace ověřené závislosti z #160 mají přesné bajty
+druhého rodiče. Stav W02 je `MERGED/PARTIAL` a W03 se z plánovače
+nevybírá. Kontrolní běh v dočasné kopii plánu uvolnil W03 po změně
+jediného stavu W02 na `VERIFIED_IN_SCOPE`. [Rozsah #160](175_requireVerifiedDependencies.md).
+Přenos uchoval všech 420 předchozích epizod obou rodičů a znovu vytvořil graf.
+
+Historická úplná standardní sada patří k samostatnému `d9aca19` se
+stromem `6a3bac80627c1962b767c5b03d0d82ce67af7280`. V CPython 3.13.18
+prošlo **2 589 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL** za 100,83 s,
+exit 0. XFAIL je T047-S02
+`test_comment_does_not_change_logical_identity`. JUnit SHA-256
+`7ffe766136fcf674935a5832da4cf67a7725de74aa636b6496f209fd6ad6c1b1`.
+Oba manifesty 900 sledovaných souborů mají SHA-256
+`24ea93515c543bd81d1011ad412d0a7ec853217c84dad67f0a61431b34b84449`.
+
+Čerstvý cílený běh společného stromu v Cloud Environment měl
+**27 PASS / 0 SKIP** za 132,72 s. Použil JDK 21.0.6+7, K1/K2
+a TypeScript 5.7.3. Pokryl grafovou shodu, živé odmítnutí neplatného
+výstupu, cyklický launcher, locale, souběžnou publikaci a ověření
+závislosti #160. Pytest, vytvoření manifestu a porovnání mají exit 0.
+JUnit SHA-256 `e69062e54c0c8cbb916d49bf96d8d2e2449b06c75c99ffa21895ac4dcfb7496c`.
+Shodné manifesty 564 souborů mají SHA-256
+`556354012fb083b9bf348e0fa5c9487ce194d8677ee9b15b8b57606e0b7d2661`.
+Samostatná kontrola skutečného inventáře a jedné změny v dočasné kopii
+má exit 0 a SHA-256 výsledku
+`895c4c708b80bf84f14a5eba7891e16530fe5dd33f4d72c35d1e0d546f19fbdf`.
+
+```bash
+python -m pytest -n 2 --dist load -p no:cacheprovider -q --tb=short -ra \
+  tests/test_stage_content_cache.py tests/test_stage_content_cache_actual.py \
+  tests/test_completion.py \
+  -k 'test_completion or launch_capture_hashes_without_materializing or invalid_live_graph_stage or rehashed_cached_graph or late_source_mutation or actual_jvm_cold_warm or actual_typescript_preflight or actual_jvm_cyclic_launcher or actual_jvm_locale_drift or overlapping_real_workers'
+```
+
+Úplná sada společného stromu, Windows a GitHub Actions mají v tomto
+předání stav NOT_RUN.

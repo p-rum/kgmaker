@@ -304,6 +304,8 @@ The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph 
 
 In the KGMAKER repository, `kgmaker completion plan --root . --jobs 3` reads the
 current task inventory and emits dependency, verification and dispatch candidates as JSON.
+A specification can require `MERGED/VERIFIED_IN_SCOPE` for selected prerequisites,
+for example before dispatching work that depends on selective invalidation writes.
 The host skill runs role handoffs through the existing workflow. Use completion handoff with the persisted task ID to preview or apply one step.
 If the profile budget cannot fit the required context, retry that handoff with
 `kgmaker completion handoff TASK_ID --apply --token-budget 12000`.

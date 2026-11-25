@@ -2,16 +2,20 @@
 
 - Work package ID: `T003-S10-W03`
 - Milník: `T003-S10`
-- Revision: 1
-- Datum: 2026-10-16
+- Revision: 2
+- Datum: 2026-11-25
 - Stav: SPECIFICATION; tento soubor popisuje cílové chování, nikoli hotovou implementaci.
 - Baseline: pracovní větev nad `8ac80ca30f6f680539deb7fb3590519d3a5c1460`; před zahájením ověř aktuální cílovou větev a otevřené PR.
 - Závislosti: T003-S10-W02; průřezové požadavky `T003-R01–R10`.
+- Povinně ověřené závislosti: T003-S10-W02.
 - Nadřazená acceptance: `T003-AC10`.
 
 ## Cíl
 
 Ukládat scope dependency pro NOT_FOUND_IN_SCOPE a invalidovat ji při přidání zdroje.
+Před dispatchí musí mít W02 stav `MERGED/VERIFIED_IN_SCOPE` s ověřeným
+selektivním zápisem podle W02-AC01. Čtecí report v rozsahu `PARTIAL` tuto
+závislost neuzavírá.
 
 ## Rozsah a konkrétní kontrakty
 

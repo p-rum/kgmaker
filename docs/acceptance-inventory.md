@@ -83,10 +83,12 @@ kontroly pokrývají nevhodný živý výstup a závody při publikaci.
 
 ## T003-S10-W02 — reverse dependency indexy
 
-Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Aktuální
-kandidát vychází z `main` `3a6b97f` po #156. Po opravě nálezu T045
-prošlo 44 cílených testů bez přeskočení na JDK 21. Úplná sada
-CPython 3.13 má 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+Čtecí rozsah má stav `MERGED` po [#130](https://github.com/p-rum/kgmaker/pull/130)
+v commitu `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. W02-AC01 je `PARTIAL`.
+Na sloučeném produktu prošlo 44 cílených testů bez přeskočení na JDK 21
+a v úplné sadě CPython 3.13 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+[Povinně ověřená závislost W03](changes/175_requireVerifiedDependencies.md)
+vyžaduje doložit selektivní zápis W02-AC01.
 Předchozí běhy a omezení Excel workeru jsou zachovány v change145.
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
@@ -115,12 +117,12 @@ Hostovaný job na `11c59015675774013fdd8cd9055292a11b045079` vykázal
 
 ## T052 — completion orchestration 2026-11-19
 
-Dodání PR_OPEN ([#120](https://github.com/p-rum/kgmaker/pull/120)), [zadání revize 2](tasks/52_addCompletionOrchestrator.md),
+Dodání `MERGED` ([#120](https://github.com/p-rum/kgmaker/pull/120), [#133](https://github.com/p-rum/kgmaker/pull/133)), [zadání revize 3](tasks/52_addCompletionOrchestrator.md),
 [per-step evidence](changes/134_addCompletionOrchestrator.md).
 
 | Acceptance | Ověření | Důkaz a zbývající krok |
 |---|---|---|
-| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. |
+| T052-AC01 | VERIFIED_IN_SCOPE | Skutečný inventář, deterministická priorita, přímé a nepřímé FAIL, paralelní kandidáti, cyklus a nulový zápis. Zaměřené testy v change134. Povinně ověřené přímé závislosti mají samostatný [doklad](changes/175_requireVerifiedDependencies.md). |
 | T052-AC02 | VERIFIED_IN_SCOPE | Handoff ve stávajícím workflow, obnova společného packetu, omezený retry, předání všech findings a race/stale kontroly. Skutečný REQUEST_CHANGES, oprava a dvojí lokální re-review proběhly pro T052 a #125. Oprava dlouhého kontextu v [#133](https://github.com/p-rum/kgmaker/pull/133) má 99 zaměřených testů PASS / 0 SKIP a skutečný opakovaný handoff. Úplná sada NOT_RUN. [Regresní důkazy](changes/148_resumeCompletionPacketBudget.md). [Regrese T051-AC02](changes/167_useCanonicalPacketSourceSnapshot.md) ověřuje shodu hlášené čerstvosti se soubory zahrnutými do grafu. |
 | T052-AC03 | VERIFIED_IN_SCOPE | Oddělené correctness/steelman identity a společná revize. T045 ověřil aktuální pár, podmínky, skutečný merge a cílový ref pro [#125](https://github.com/p-rum/kgmaker/pull/125). Lokální identity mají trust LOCAL_DECLARED. |
 | T052-AC04 | VERIFIED_IN_SCOPE | Worktree/task checkpoint, kompletní 119položkový plán, W01 s doloženým blokem a dokončený #125. Širší backlog má vlastní PARTIAL/FAIL stavy. |
