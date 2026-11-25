@@ -1,5 +1,18 @@
 # Inventář acceptance T001 a T002
 
+## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. |
+| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. |
+| T054-AC03 | VERIFIED_IN_SCOPE | Kandidát plánu, citace, pokrytí, závislosti, invalidace po změně vstupu a opětovné načtení vazby s více než tisícem důkazů. |
+| T054-AC04 | PARTIAL | Ověřené Jira CSV, vlastní pole a reference. Živý import NOT_RUN. |
+| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Windows NOT_RUN. |
+
+[Postup a kontroly po krocích](changes/171_addExcelMigration.md).
+
+
 ## T053 — upgrade a uninstall, 2026-11-24
 
 | Acceptance | Ověření | Důkaz a limit |

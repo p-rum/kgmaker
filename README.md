@@ -61,6 +61,10 @@ preservation rules and limits ([T050 change117](docs/changes/117_addTargetProjec
 
 Restart Copilot CLI after installing the hook. Each new session refreshes the graph and injects a compact map as `additionalContext`.
 
+## Excel migration
+
+`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+
 ## Commands
 
 Offline production classification, graph schema v2 and scoped evidence views are
