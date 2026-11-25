@@ -5,8 +5,10 @@ values remain separate evidence with explicitly unknown freshness.
 """
 from __future__ import annotations
 
-import re
 import hashlib
+import os
+import re
+import stat
 import zipfile
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
@@ -53,7 +55,12 @@ def binary_format(header: bytes) -> str | None:
 
 def workbook_hash(path: Path) -> str:
     """Hash unsupported/oversized artifacts with a bounded streaming buffer."""
-    with path.open("rb") as stream:
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    if not stat.S_ISREG(path.lstat().st_mode):
+        raise OSError("Workbook input is not a regular file")
+    with os.fdopen(os.open(path, flags), "rb") as stream:
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            raise OSError("Workbook input is not a regular file")
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 

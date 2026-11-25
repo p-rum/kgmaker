@@ -387,3 +387,24 @@ z hlavní větve. Přenos zachoval 403 existujících epizod ze sjednocené hist
 
 Úplná původní matice, Windows, GitHub Actions a nezávislé review mají
 pro tento přenos stav NOT_RUN. T047-AC02 zůstává PARTIAL.
+
+## Přenos po sloučení #151
+
+T047-S02, T047-R02 a T047-AC02. První rodič
+`e51d75c27bcfed3f13587e01e03551d00c4c8f35` nese předchozí compiler
+ověření. Na `main` `b04d064a6147436adc751f5fffa4a219b8f8c16e` přibylo
+[porovnání otisků sešitů](167_useCanonicalPacketSourceSnapshot.md).
+Všech 426 sledovaných produktových, konfiguračních a testovacích cest ve
+spojeném stromu odpovídají přesným rodičům. Z hlavní větve jsou bajtově shodné
+`src/kgmaker/context.py`, `src/kgmaker/workbooks.py` a
+`tests/test_workflow.py`. Zdroj, workery a zkoušky logické identity
+zůstávají shodné s prvním rodičem.
+
+Cílený běh čerstvosti otisků XLS/XLSX, nečitelného sešitu a čtení grafů
+v1–v3 měl 5 PASS, 0 SKIP, 20 DESELECTED a exit 0. JUnit `smoke.xml`
+má SHA-256 `85332fb2b326e5212db928cae1aec28c50982d0b7d83c96de8fced5e63b2eaad`.
+Shodné manifesty 426 sledovaných vstupů mají SHA-256
+`2e1ca2b3ddbd27c906081ec438bc85aa67f3c674cb032cc631928be8c982af75`.
+Historických 106 výsledků s JDK náleží předchozímu páru rodičů.
+Nový nativní běh, úplná sada a nezávislé review mají pro tento přenos
+stav NOT_RUN. T047-AC02 zůstává PARTIAL.
