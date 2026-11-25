@@ -1572,6 +1572,15 @@ for context/proof guards, atomic output and exact bounded native verification.
 
 Explicitní JVM/TS inspekce vrací `cache.stages` s důvodem BYPASS.
 Každá fáze používá aktuální výpočet a znovu ověří zdroj/worker před publikací.
+Otisk spuštění Java zahrnuje `lib/ct.sym`, který Javac používá pro starší
+`--java-release`, a na POSIX přesné hodnoty `LANG`, `LC_ALL` a `LC_CTYPE`.
+Při výběru přes `bin/java` jako symbolický odkaz vychází otisk z cílové
+binárky a platformních souborů jejího JDK.
+Relativní položku `PATH` ukotví KGMAKER při výběru launcheru a worker
+použije stejnou cestu i po přechodu do adresáře analyzovaného projektu.
+Chybějící vstup otisku ponechá případný živý výsledek v režimu
+`BYPASS/INCOMPLETE_INPUT_CLOSURE`. Změna zachyceného otisku během běhu
+vyvolá `STALE` před dokončením publikace.
 Graph/store v1/v2/v3 a interní envelope v1 zůstávají čitelné.
 A competing graph publication or intervening generation yields `STALE`
 and exit 3. The next explicit inspection can read the newly committed graph
@@ -1581,7 +1590,8 @@ and rejects a mismatch as `STALE`. An explicit graph remains a valid seed when
 there is no store. A Confluence-enabled scan keeps the report and validation index
 in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
-[ověření #116](changes/135_bindCachedCompilerEvidence.md).
+[ověření #116](changes/135_bindCachedCompilerEvidence.md),
+[regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md).
 
 Runtime import ověří obálku před publikací. Pod zámkem store hlídá
 očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje
@@ -1641,6 +1651,20 @@ coordinates. Offline replay applies the same guard to the captured compiler
 input list. Kotlin files excluded from that list can remain in the source-set
 inventory for freshness checks.
 [Exact verification and scope](changes/160_bindJvmSourceBytes.md).
+
+## Pozorované hrany a statické cesty
+
+`callgraph callers` a `callees` zobrazí doložené importované hrany jako
+`RUNTIME_OBSERVED`. `callgraph path` a statické cykly používají compiler
+call sites. V2 pozorování `call` a `dispatch` vyžadují volatelné symboly
+obou konců ve vybraném compiler kontextu. Import ověří jeho čerstvost také
+při publikaci grafu. Původ dokladů opakovaného importu uvádí
+[kontrakt runtime importu](runtime-trace.md#opakovaný-import-a-navigace).
+
+```bash
+kgmaker callgraph callers --root PROJECT --context CONTEXT_ID --symbol TARGET_ID
+kgmaker callgraph path --root PROJECT --context CONTEXT_ID --from CALLER_ID --to TARGET_ID
+```
 
 ## Logické klíče deklarací Kotlinu
 

@@ -1,5 +1,32 @@
 # Inventář acceptance T001 a T002
 
+## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T054-AC01 | VERIFIED_IN_SCOPE | Skutečné XLSM, BIFF8 XLS a XLSX, makro přes dva sešity a reference z formulí i přímého VBA. Regrese review pokrývají rozsah Run, lexikální jména, Range alias a názvy listů v Unicode. |
+| T054-AC02 | VERIFIED_IN_SCOPE | Chybové vstupy, zachování souborů a trasování procesů a IP spojení. |
+| T054-AC03 | VERIFIED_IN_SCOPE | Kandidát plánu, citace, pokrytí, závislosti, invalidace po změně vstupu a opětovné načtení vazby s více než tisícem důkazů. |
+| T054-AC04 | PARTIAL | Ověřené Jira CSV, vlastní pole a reference. Živý import NOT_RUN. |
+| T054-AC05 | PARTIAL | Linux wheel s JDK 17, 137 cílených PASS a plná sada s evidovanými SKIP. Windows NOT_RUN. |
+
+[Postup a kontroly po krocích](changes/171_addExcelMigration.md).
+
+
+## T053 — upgrade a uninstall, 2026-11-24
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T053-AC01 | VERIFIED_IN_SCOPE | Manifest skutečně instalovaných souborů, zachování cizího obsahu, idempotentní init a template páry |
+| T053-AC02 | VERIFIED_IN_SCOPE | Simulovaná změna distribuce ve všech kategoriích, nové/chybějící/retired výstupy, legacy otisky, zachování grafu a poznámek |
+| T053-AC03 | VERIFIED_IN_SCOPE | Odstranění integrace a dat, opakovaný uninstall, přesné zachování cizích souborů a ignore bajtů; po review opravené převzetí legacy ignore při init (4 RED → GREEN) |
+| T053-AC04 | VERIFIED_IN_SCOPE | Dry-run a konflikty, vadný manifest, symlinky, rollback při I/O chybě, CLI s odděleným cwd/root; Windows a crash scénáře NOT_RUN |
+
+Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
+Dodání PR_OPEN; SPECIFICATION T053 není označení dodání.
+
+
+
 ## T046-S03/S04 — schéma dalších hodnot, 2026-11-20
 
 T046-AC04 a AC07. Oprava [#91](https://github.com/p-rum/kgmaker/issues/91) má
@@ -22,6 +49,20 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+Dílčí ověření [#116](https://github.com/p-rum/kgmaker/issues/116) nad
+`0dbe9a7` pokrývá AC01/AC03 pro otisk Javac launcheru v JDK 21 na POSIX.
+`test_java_launch_capture_binds_exact_locale` a `test_java_launch_capture_binds_ct_sym_contents`
+ověřují změny klíče. `test_actual_jvm_locale_drift_preserves_published_generation`
+ověřuje odmítnutí po živé analýze a rollback po výměně prvního výstupu.
+Samostatné regrese pokrývají alias `java` a spustitelný launcher bez práva
+čtení na JDK 21/POSIX.
+Ověření s JDK 21 a 22 pokrývá také relativní `PATH` při odlišném pracovním
+adresáři workeru.
+Regrese s cyklickým odkazem ověřuje `STALE` po Javac analýze i rollback
+po nahrazení obsahově odlišného pohledu.
+AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
+rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
+PARTIAL a persistentní warm HIT je otevřený.
 
 ## T045 — doplňující automatická kontrola PR
 
@@ -58,10 +99,11 @@ ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
 Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
 běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
-Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1 je
-samostatná oprava W01 v dodání `IN_PROGRESS`. Skutečný běh Maven 3.9.9 a JDK 21
-ověřil vznik v2 trace i odmítnutí chybějícího, neplatného či cizího digestu před
-dalším procesem a zápisem. [Záznam ověření](changes/165_forwardBuildConfiguration.md).
+Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1
+je sloučené v `385943e48d2d2e60cec541f1f0db78beda83de22`.
+Skutečný běh Maven 3.9.9 a JDK 21 ověřil vznik v2 trace i odmítnutí
+chybějícího, neplatného či cizího digestu před dalším procesem a zápisem.
+Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pull/148) · [Záznam ověření](changes/165_forwardBuildConfiguration.md).
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
@@ -69,6 +111,27 @@ dalším procesem a zápisem. [Záznam ověření](changes/165_forwardBuildConfi
 | T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
+
+## T003-S13-W02 — více dokladů stejné pozorované hrany
+
+[Zadání](tasks/T003-S13-02-runtimeRtaImport.md) a
+[záznam opravy](changes/151_preserveRuntimeObservationEvidence.md).
+Dodání sleduje [#136](https://github.com/p-rum/kgmaker/pull/136). Lokální
+přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
+`31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
+přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto
+ověření nebyla spuštěna. Po spojení s `edb65e5` ověřuje nová regrese také
+změny konfigurace a cíle provedené volajícím Python API v průběhu importu.
+Dopředný přenos na `782ac6a` zopakoval 173 cílených testů bez přeskočení
+se skutečnými JDK 21, Mavenem a workery K1/K2.
+Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObservationEvidence.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje deduplikaci shodného dokladu stejné hrany, oddělené kontexty a doklady variant služby. Opakování stále projde publikací grafu. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
+| T003-S13-W02-AC02 | VERIFIED_IN_SCOPE | Test opakovaného importu ověřuje původní v1 identitu vedle v2 metadat v graph/store v3. `test_runtime_keeps_callable_and_framework_observations_and_legacy_import` ověřuje v1 import i podporované v2 `call` a `framework`. Formáty manifestu v1/v2 a graph/store v3 zůstávají použitelné bez migrace. |
+| T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | `test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols` odmítne třídu jako volajícího `dispatch` i jako cíl výchozího `call`. `test_real_jdk21_v2_import_publishes_only_admitted_values` ověří původní konfiguraci, volatelný cíl a ID dokladu, i když se mění vstupní objekty Python API. Přímé odmítnutí a `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` zachovají bajty grafu, jeho pohledů i runtime artefaktu. Import nespustí proces. Test statické navigace a W06 pokrývají oddělení cest a souběžné zapisovače. `test_real_jdk21_v2_import_detaches_identity_before_publication` pokrývá změnu vnořeného otisku. |
+| T003-S13-W02-AC04 | PARTIAL | Návod, stavová matice a change151 popisují omezenou opravu. Celá T003-AC13 má širší rozsah. |
 
 ## T003-S13-W02 — čerstvost při publikaci runtime evidence, 2026-11-23
 
@@ -162,6 +225,8 @@ Doklad deklarace po kontrole kolizí zahrnuje i stejnojmenné zdrojové protěj�
 bez doložitelného JVM symbolu. Při neznámém vstupním typu protějšku se klíč
 zadrží pro stejné jméno a package. Kafka katalog při repo aliasu používá
 stejnou kvalifikaci jako snímek workspace.
+Po přenosu na `5809e849` prošlo 106 cílených testů se skutečnými K1 a K2
+bez přeskočení včetně raw JVM, workspace, cache a Kafka katalogu.
 Podporované signatury, nejednoznačné deklarace, grafy v1–v3 a zbývající
 rozsah popisuje [záznam ověření](changes/166_addKotlinLogicalSymbolKeys.md).
 
@@ -914,8 +979,10 @@ nový K1/K2 běh prochází.
 - AC03: structural/path/ownership and context ambiguity fail closed; missing
   evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
   publish no cache/source/store changes. Actual K1/K2 captured context test verifies
-  precedence/freshness without implicit repair. Password sentinel is absent from
-  graph; offline source-only checks allow only existing Git baseline reads.
+  precedence/freshness without implicit repair. It compares the canonical
+  workspace reference as the exact repository and original JVM context ID.
+  Password sentinel is absent from graph; offline source-only checks allow
+  only existing Git baseline reads. [Current native check](changes/168_assertQualifiedKafkaContext.md).
 - AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
   compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
 
@@ -1094,7 +1161,7 @@ remain UNKNOWN; no whole S06/T003/T004 completion claim.
 AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
 two service realms, method/sibling separation, deterministic order and duplicate
 records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
-### T003-S07-W04 revize2 — draft code/group acceptance
+### T003-S07-W04 revize2 — historické code/group ověření před integrací
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
 backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
@@ -1104,9 +1171,10 @@ Schema2 public snapshot ověřuje explicitní původní code refs, group propert
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
-změny; source composition má nezávislé root APPROVE. Finální metadata-head review
-a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
-metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+změny; source composition má nezávislé root APPROVE. Revize2 byla sloučena
+v [#69](https://github.com/p-rum/kgmaker/pull/69). Tento historický běh zůstává
+vázaný na uvedenou revizi. K2 listener metadata zůstávají PARTIAL a runtime/data
+availability UNASSESSED. Viz note77.
 
 ## T006/T008 revision2 — derived context role boundary
 

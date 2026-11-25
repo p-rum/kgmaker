@@ -358,3 +358,32 @@ přesným integračním stromem. Úplná standardní sada, GitHub Actions, Windo
 a nezávislé review mají pro tuto revizi stav NOT_RUN. T047-AC02 zůstává
 PARTIAL. Otevřené jsou další signatury, TypeScript, Windows a samostatný
 postup migrace historických identit a packetů.
+
+## Přenos po sloučení #136
+
+T047-S02, T047-R02 a T047-AC02. První rodič
+`2c2783f898ac1bee9d0512e093b0374f4eecb19c` přidává kontrolu zdrojových
+kolizí a repo aliasu. Druhý rodič `5809e84932b1910bfc3f17c72e2a2005283389b1`
+obsahuje opravy čerstvosti Javacu, kanonických Kafka referencí a importu
+runtime důkazů. Přenos ponechává všechny Kotlin workery s ověřenými bajty.
+Porovnání 426 produktových, konfiguračních a testovacích cest ověřilo shodu
+s odpovídajícími rodiči. Změny obou rodičů v
+[`inspection.py`](../../src/kgmaker/inspection.py) se složily bez konfliktu
+a výsledek potvrdilo samostatné třícestné porovnání blobů.
+Návod compiler inspekce zachovává obě sekce a sémantická vrstva vychází
+z hlavní větve. Přenos zachoval 403 existujících epizod ze sjednocené historie.
+
+- Cílená sada na přesných spojených produktových bajtech měla 106 PASS,
+  0 SKIP a exit 0 za 196,89 s. Použila Temurin JDK 21.0.6+7 a připnuté
+  workery K1 a K2 z předchozího kroku. K sadě uvedené výše se připojil
+  `tests/test_jvm_raw_source_snapshot.py` a
+  `tests/test_kafka_bindings.py::test_actual_captured_context_properties_and_offline_staleness`.
+- JUnit `native.xml`, SHA-256
+  `26a96e60d2f8226491d11ba6af4343a2134ebedb5c3a67967dd9aa5f9a2be801`.
+  Shodné manifesty sledovaných produktových vstupů před a po běhu mají
+  SHA-256 `d4e58ce8e651789346db582ca63d6bcfa2f9988c77b100f49642e2419be3a0eb`.
+  Doklad párování s rodiči `product-parent-proof.json` má SHA-256
+  `4e6c023510b70e83dd15b8bdad802379e49c9cee4678802387567174bab733f0`.
+
+Úplná původní matice, Windows, GitHub Actions a nezávislé review mají
+pro tento přenos stav NOT_RUN. T047-AC02 zůstává PARTIAL.

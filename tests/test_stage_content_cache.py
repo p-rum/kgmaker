@@ -1,12 +1,15 @@
 """W01 integration contracts; fake transport tests are separate from actual workers."""
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
+import subprocess
 
 import pytest
 
-from kgmaker import inspection, store
+from kgmaker import extraction_cache, inspection, store
 from kgmaker.analysis_model import file_hash
+from kgmaker.extraction_cache import launch_inputs
 from kgmaker.model import KnowledgeGraph
 from kgmaker.scanner import scan_repository
 from kgmaker.worker_protocol import WorkerError
@@ -61,6 +64,125 @@ def facts(value):
     value.pop('generated_at', None)
     value.pop('extraction_cache', None)
     return value
+
+
+@pytest.fixture
+def java_launch(tmp_path, monkeypatch):
+    for name in ('JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS', 'JDK_JAVA_OPTIONS',
+                 'NODE_OPTIONS', 'CLASSPATH'):
+        monkeypatch.delenv(name, raising=False)
+    jdk = tmp_path / 'jdk'
+    java = jdk / 'bin/java'
+    for path in (java, jdk / 'release', jdk / 'lib/modules', jdk / 'lib/ct.sym'):
+        path.parent.mkdir(exist_ok=True, parents=True)
+        path.write_text(path.name, encoding='utf-8')
+    return [str(java)], jdk / 'lib/ct.sym'
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
+@pytest.mark.parametrize('name', ['LANG', 'LC_ALL', 'LC_CTYPE'])
+def test_java_launch_capture_binds_exact_locale(java_launch, monkeypatch, name):
+    argv, _ = java_launch
+    monkeypatch.delenv(name, raising=False)
+    absent = launch_inputs(argv)
+    monkeypatch.setenv(name, '')
+    empty = launch_inputs(argv)
+    monkeypatch.setenv(name, 'C')
+    present = launch_inputs(argv)
+    assert len({capture['environment_sha256'] for capture in (absent, empty, present)}) == 3
+    monkeypatch.setenv('JDK_JAVA_OPTIONS', '-Duser.language=ja')
+    assert launch_inputs(argv) is None
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java locale capture')
+def test_java_launch_capture_binds_non_utf8_locale(java_launch, monkeypatch):
+    argv, _ = java_launch
+    monkeypatch.setitem(os.environb, b'LC_ALL', b'\xfe')
+    before = launch_inputs(argv)
+    monkeypatch.setitem(os.environb, b'LC_ALL', b'\xff')
+    after = launch_inputs(argv)
+    assert before['environment_sha256'] != after['environment_sha256']
+
+
+def test_java_launch_capture_binds_ct_sym_contents(java_launch):
+    argv, platform_symbols = java_launch
+    original = launch_inputs(argv)
+    assert original['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
+    platform_symbols.write_bytes(b'new platform symbols')
+    changed = launch_inputs(argv)
+    assert original != changed
+    assert changed['files'][str(platform_symbols.resolve())] == file_hash(platform_symbols)
+    platform_symbols.unlink()
+    assert launch_inputs(argv) is None
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX Java launcher alias')
+def test_requested_java_alias_keeps_platform_and_locale_capture(java_launch, monkeypatch):
+    argv, platform_symbols = java_launch
+    launcher = Path(argv[0])
+    executable = launcher.with_name('java-real')
+    launcher.rename(executable)
+    launcher.symlink_to(executable.name)
+    monkeypatch.setenv('LC_ALL', 'C')
+    captured = launch_inputs(argv)
+    assert captured['argv'] == argv
+    assert captured['files'][str(executable)] == file_hash(executable)
+    assert captured['files'][str(platform_symbols)] == file_hash(platform_symbols)
+    monkeypatch.setenv('LC_ALL', 'POSIX')
+    assert launch_inputs(argv)['environment_sha256'] != captured['environment_sha256']
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX relative PATH execution')
+@pytest.mark.parametrize('relative_bin', ['tool/bin', 'tool/selected/../bin'])
+def test_relative_java_path_stays_bound_to_selection_cwd(tmp_path, monkeypatch, relative_bin):
+    controller, project = (tmp_path / name for name in ('controller', 'project'))
+    home = tmp_path / 'workers'
+    jar = home / 'jvm/target/kgmaker-jvm-worker.jar'
+    jar.parent.mkdir(parents=True)
+    jar.write_bytes(b'fake worker fixture is never executed')
+    for root in (controller, project):
+        jdk = root / 'jdk'
+        (jdk / 'bin').mkdir(parents=True)
+        binary = jdk / 'bin/java-real'
+        binary.write_text(f'#!/bin/sh\nprintf "%s\\n" {root.name}\n', encoding='utf-8')
+        binary.chmod(0o700)
+        (jdk / 'bin/java').symlink_to(binary.name)
+        (jdk / 'bin/javac').touch()
+        (jdk / 'release').write_text('JAVA_VERSION="21.0.6"\n', encoding='utf-8')
+        if relative_bin == 'tool/bin':
+            (root / 'tool').symlink_to(jdk, target_is_directory=True)
+        else:
+            (jdk / 'child').mkdir()
+            (root / 'tool').mkdir()
+            (root / 'tool/selected').symlink_to(jdk / 'child', target_is_directory=True)
+
+    monkeypatch.chdir(controller)
+    monkeypatch.setenv('PATH', relative_bin)
+    argv = inspection.command('jvm', home)
+    ran = subprocess.run(argv, cwd=project, check=True, capture_output=True, text=True)
+    assert ran.stdout == 'controller\n'
+    assert Path(argv[0]) == controller / relative_bin / 'java'
+    assert Path(argv[0]).resolve() == controller / 'jdk/bin/java-real'
+
+
+def test_unreadable_java_launcher_allows_live_inspection_without_cache(transport, java_launch, monkeypatch):
+    root, _, _, _, calls, _ = transport
+    argv, _ = java_launch
+    monkeypatch.setattr(inspection, 'command', lambda *args, **kwargs: argv)
+
+    def hash_readable(path):
+        if path == Path(argv[0]).resolve():
+            raise PermissionError('launcher bytes unavailable')
+        return file_hash(path)
+
+    monkeypatch.setattr(extraction_cache, 'file_hash', hash_readable)
+    result = inspection.inspect_jvm(root)
+    assert result['exit_code'] == 0
+    assert calls == {'analyze': 1, 'graph': 1, 'framework': 1}
+    assert {(stage['status'], stage['reason']) for stage in result['cache']['stages']} == {
+        ('BYPASS', 'INCOMPLETE_INPUT_CLOSURE'),
+    }
+    assert not store.load_graph(root).extraction_cache
 
 
 def test_public_inspect_cold_warm_reexecutes_all_stages(transport):
