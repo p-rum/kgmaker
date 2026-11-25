@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import stat
@@ -238,6 +239,27 @@ def load_graph(root: Path) -> KnowledgeGraph | None:
     try:
         return KnowledgeGraph.from_dict(json.loads(graph_path.read_text(encoding="utf-8")))
     except (OSError, ValueError, TypeError, KeyError):
+        return None
+
+
+def load_graph_generation(root: Path) -> tuple[KnowledgeGraph, str] | None:
+    """Read the graph and its generation identity from the same atomic file."""
+    from .analysis_model import read_regular_bytes
+
+    try:
+        graph_path = _graph_target(root, GRAPH_FILE)
+        payload = read_regular_bytes(graph_path)
+        graph = KnowledgeGraph.from_dict(json.loads(payload.decode("utf-8")))
+        if graph.schema_version >= 2:
+            # The evidence index uses these fields as keys. Dataclass loading
+            # alone does not enforce the scalar types of stored nodes and edges.
+            if any(not all(isinstance(value, str) for value in (node.id, node.kind, node.path)) for node in graph.nodes):
+                return None
+            if any(not isinstance(edge.kind, str) or not isinstance(edge.source_file, (str, type(None)))
+                   for edge in graph.edges):
+                return None
+        return graph, hashlib.sha256(payload).hexdigest()
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
         return None
 
 

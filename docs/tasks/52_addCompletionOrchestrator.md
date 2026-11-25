@@ -7,8 +7,8 @@ fixture se zachovávají. Completion skill není aktivní vývojový vstup.
 
 
 - Task ID: T052
-- Revision: 2
-- Datum: 2026-11-20
+- Revision: 3
+- Datum: 2026-11-25
 - Stav: SPECIFICATION
 - Baseline: GitHub main `8f362471a8254ff9a0e44870c490a1dcb6b067b1`.
 - Zdroj požadavku: zadání KGMAKER Completion Orchestrator z 2026-11-19.
@@ -37,8 +37,11 @@ Git oprávnění nebo serverových pravidel.
 
 Stávající task IDs, workflow artefakty, formát stage cache, graph store a init
 zůstávají kompatibilní. Plán využívá strukturované řádky aktuální matice a
-rozpoznané deklarace v původních specifikacích. Nejasné předpoklady a aktuálnost
-důkazů ověřuje host. Lokální actor label má důvěru LOCAL_DECLARED. GitHub Actions
+rozpoznané deklarace v původních specifikacích. T052-R01 dovoluje zadání
+označit přímou závislost jako povinně ověřenou. V tom případě plánovač
+požaduje stav `MERGED/VERIFIED_IN_SCOPE` a vypíše ji v
+`verification_dependencies`. Nejasné předpoklady a aktuálnost důkazů
+ověřuje host. Lokální actor label má důvěru LOCAL_DECLARED. GitHub Actions
 jsou doplňující důkaz podle T045 revize 2.
 
 DoD vyžaduje zaměřené testy, nezávislé review, lokální kontrolu skutečné matice,

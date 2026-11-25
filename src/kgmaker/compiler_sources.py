@@ -36,6 +36,9 @@ def jvm_raw_capture_id(context):
             or not normalized.keys() <= raw.keys()
             or not isinstance(inputs, list) or any(not isinstance(path, str) for path in inputs)):
         return None
+    if any(not isinstance(checksum, str) or not _SHA256.fullmatch(checksum)
+           for source_files in (raw, normalized) for checksum in source_files.values()):
+        return None
     if inputs != sorted(set(inputs)) or any(
             path not in raw or not path.endswith((".java", ".kt"))
             or path.startswith("/") or "\\" in path or ":" in path

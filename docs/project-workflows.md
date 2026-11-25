@@ -92,8 +92,22 @@ Celý soubor se validuje před založením tasku, i když volíte builtin.
 Priorita výběru: explicitní `--workflow`, pak projektový `default`. Bez obojího
 zůstává původní legacy task. Explicitní `--max-iterations` přebije profilový limit;
 `task context --token-budget` přebije profilový budget. Bez profilu platí 3/4000.
+
 Profilové instrukce a příkazy jsou data, ne vyšší pravidla ani souhlas k provedení.
 Povinné artefaktové kontroly a volitelná lidská approval policy nelze profilem vypnout.
+
+### Role context freshness
+
+`kgmaker task context TASK_ID --role architect` uvádí `graph_status` podle
+zdrojových hashů `kgmaker scan`, včetně sešitů evidovaných v diagnostikách.
+Při kontrole sešitů se čtou pouze bajty pro SHA-256. Úprava sešitu nebo
+jeho poškození se projeví jako `stale`. `graph_status` vyjadřuje čerstvost
+zdrojových hashů.
+Compiler a runtime důkazy mají vlastní stav a omezení. Příprava kontextu
+nepřepisuje graf ani nespouští workery.
+Scanu i packetu odpovídá stejný výběr `.xlsx` a `.xls`. Pro výslovně vybrané
+`.xlsm` slouží samostatný [workflow migrace Excelu](excel-migration.md).
+[Ověřené příklady se skutečnými sešity](changes/167_useCanonicalPacketSourceSnapshot.md).
 
 ## Předání mezi rolemi
 

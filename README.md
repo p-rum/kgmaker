@@ -54,9 +54,10 @@ Use the [development procedure](#development) to work on KGMAKER.
 
 `kgmaker init` creates Agent Skills under `.agents/skills/`, repository-level Copilot hooks, knowledge-graph and read-only architecture agents, repository instructions, and a local-index ignore rule. The instructions tell Copilot to consult `kgmaker-architect` before every substantive implementation request; it checks the graph and relevant source/tests, then gives the primary agent a focused implementation brief. Existing files are preserved. Pass `--force` only when you want to replace the kgmaker-managed instructions and skills.
 
-The five skills cover code navigation (`kgmaker-context`), semantic graph maintenance
+The six skills cover code navigation (`kgmaker-context`), semantic graph maintenance
 (`kgmaker-semantic`), requirement analysis (`kgmaker-feature-analysis`), data audits
-(`kgmaker-data-audit`) and test proposals (`kgmaker-testgen`). For example, ask your
+(`kgmaker-data-audit`), test proposals (`kgmaker-testgen`) and Excel migration
+(`kgmaker-excel-migration`). For example, ask your
 agent to use `$kgmaker-context` to find affected callers, or `$kgmaker-data-audit`
 to assess a requirement's inputs. Discovery and `$` invocation depend on the host;
 you can always explicitly open the installed `SKILL.md` and follow it. See the
@@ -68,6 +69,8 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 ## Excel migration
 
 `kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+
+Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
 ## Commands
 
@@ -189,6 +192,7 @@ kgmaker status [--root PATH]
 kgmaker check [--root PATH]
 kgmaker docs [check|report] [--root PATH] [--confluence-dir PATH] [--confluence-report PATH]
 kgmaker impact [--root PATH] FILE [FILE ...]
+kgmaker impact [--root PATH] --evidence-only --format json FILE [FILE ...]
 kgmaker semantic prepare [--root PATH]
 kgmaker semantic extract [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
 kgmaker semantic update [--root PATH] [--base REF] [--note PATH] [--token-budget TOKENS]
@@ -324,6 +328,16 @@ checksum and release. An explicit offline Gradle build and JVM verifier check
 that workspace release mapping requires matching JAR bytes and a current consumer
 context. The fixture records the remaining integrity gaps.
 
+K1 and K2 also expose a `logical_key` for supported top-level Kotlin declarations
+when the compiler receives the complete captured Kotlin namespace for an explicitly
+declared source set. A compiler-reported source declaration conflict or an unknown
+signature for a competing declaration can withhold the key. A scanner omission
+within the selected Kotlin source set can also withhold keys during inspection
+and offline projection. An attested key can join occurrences across snapshots
+after line movement.
+A call site still resolves through its compiler context and
+occurrence ID. [Supported types and source-set requirements](docs/compiler-inspection.md#logické-klíče-deklarací-kotlinu).
+
 ## Implementation memory and workflow
 
 Configurable profiles connect analysis, planning, implementation, testing and review:
@@ -349,7 +363,8 @@ See the [project workflow guide](docs/project-workflows.md),
 `memory recall` ranks current graph locations and prior episodes against the implementation request. It labels changed or removed episode evidence as historical, applies result and token bounds, and reports the estimated reduction from the broad legacy graph context.
 
 The `task` commands persist workflow state under ignored `.kgmaker/workflow/`. A task follows `intake → analyze → plan → implement → test → review → done`; bounded retries may return test or review to implementation. Architect, implementation, test-expert, review, and orchestrator artifacts have strict role-specific JSON contracts. `task context` assembles a bounded packet from current graph nodes, semantic hits, implementation memory, impact candidates, tests, and prior task artifacts without modifying the graph or semantic layer.
-The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files are also supplied; `init` installs the analyst/data-auditor commands and all five Agent Skills listed in its output. kgmaker makes no model API calls itself.
+Packet `graph_status` compares the source hashes used by `scan`, including the `.xlsx` and legacy `.xls` files that it records. See [task context freshness](docs/project-workflows.md#role-context-freshness).
+The generated `.github/agents/kgmaker.agent.md` provides a specialist for graph questions. `.github/agents/kgmaker-architect.agent.md` is the read-only reconnaissance specialist that Copilot should consult before implementation. `.github/agents/kgmaker-extract.agent.md` runs the initial and incremental semantic extraction workflows. After a code change, run `kgmaker semantic update --base <merge-base>` and give the extraction agent `.kgmaker/semantic-update.md` plus `.kgmaker/semantic-update.json`; it produces a scoped patch rather than rereading the repository. These are ordinary Copilot CLI custom agents and can be edited or used alongside a repository's own agents. Verified semantic notes live in `.kgmaker/NOTES.md`. JetBrains command files are also supplied; `init` installs the analyst/data-auditor commands and all six Agent Skills listed in its output. kgmaker makes no model API calls itself.
 
 The repository hook uses the `sessionStart` event from GitHub Copilot CLI. To remove automatic integration, delete `.github/hooks/kgmaker.json`; the generated graph and CLI can still be used manually.
 
@@ -1321,6 +1336,22 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md).
+
+### Selektivní dopad změněných souborů (T003-S10-W02)
+
+`kgmaker impact --evidence-only --format json src/main/java/Api.java` použijte
+po úpravě souboru před dalším scanem nebo inspekcí. Report používá jednu
+uloženou generaci grafu a uvádí důvody pro opětovné ověření doložených compiler
+callers, migračních vazeb a OpenAPI deklarací. U Flyway sleduje zachycené
+migrační operace pro stejný objekt. OpenAPI a citace použité revize feature
+porovnává podle původních bajtů. Změna LF↔CRLF může označit i tranzitivní
+callery dříve doloženého compiler cíle s přesným lokátorem původních bajtů.
+`changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
+důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
+z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
+s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
+Kombinace `--evidence-only` s `--workspace` končí chybou použití.
+[Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
 ### Doklad skutečného testovacího běhu (T047-S10)
 

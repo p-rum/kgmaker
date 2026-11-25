@@ -15,6 +15,8 @@ from .analysis_model import (
     file_hash, read_json, safe_path,
 )
 
+FILE_EVIDENCE_KINDS = frozenset({"CODE", "CONTRACT", "SCHEMA", "CONFIG", "DOCUMENTATION", "WORKBOOK"})
+
 
 class _Anchors(HTMLParser):
     def __init__(self):
@@ -223,7 +225,7 @@ def _validate_candidate(root: Path, packet: dict, data: object) -> list[str]:
     for item in candidate["evidence"]:
         strings(item, "source_id")
         strings(item, "supports")
-        strings(item, "kind", {"CODE", "CONTRACT", "SCHEMA", "CONFIG", "DOCUMENTATION", "WORKBOOK", "REQUIREMENT", "HUMAN_DECISION"})
+        strings(item, "kind", FILE_EVIDENCE_KINDS | {"REQUIREMENT", "HUMAN_DECISION"})
         strings(item, "method", {"EXTRACTED", "INFERRED", "AMBIGUOUS"})
         strings(item, "validity", {"VALID", "STALE", "UNRESOLVED"})
         if type(item.get("confidence")) not in {int, float} or not 0 <= item["confidence"] <= 1:

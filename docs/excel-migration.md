@@ -1,6 +1,6 @@
 # Migrace Excelu do Kotlin/JVM
 
-`kgmaker excel` načte výslovně zadané sešity, připraví podklady pro Copilot a ověří plán migrace. Plán lze uložit jako Markdown nebo JSON a exportovat úlohy do CSV pro Jira Cloud. Workflow funguje z běžného adresáře bez Gitu, `kgmaker init` a uloženého znalostního grafu.
+`kgmaker excel` načte výslovně zadané sešity, připraví podklady pro Copilot a ověří plán migrace. Plán lze uložit jako Markdown nebo JSON a exportovat úlohy do CSV pro Jira Cloud. Ruční CLI funguje z běžného adresáře bez Gitu a uloženého znalostního grafu.
 
 ## Příprava workeru
 
@@ -13,6 +13,43 @@ python -m pip install --no-deps -e .
 ```
 
 Distribuční wheel vytvoř po sestavení workeru příkazem `python -m pip wheel --no-deps --wheel-dir dist .`. Obsahuje samostatný JAR, uzamčené runtime JARy a jejich původní licence. `packet`, validace, export a ostatní příkazy kgmakeru mohou běžet bez Javy.
+
+## Jeden pokyn pro Copilot
+
+Po instalaci aktuálního balíčku použij v adresáři s projektovou integrací
+`kgmaker upgrade`. Pro nový projekt použij `kgmaker init`. Copilotu pak zadej
+jediný pokyn.
+
+> Použij $kgmaker-excel-migration pro Fakturace.xlsm se závislostí Sazby.xlsx.
+> Vytvoř Kotlin plán a Jira CSV do migrace/. Makra nikdy nespouštěj.
+
+Skill sám připraví podklady, napíše a zvaliduje kandidáta a vytvoří
+`migrace/result/migration.md`, `migration.csv` a `jira-mapping.json`. Bez
+výslovného souhlasu s celým rozšířeným packetem pracuje agent s redigovanými
+packety. Rozšířený packet zahrnuje zdroj VBA, vzorce, přímé i uložené hodnoty
+buněk a identity externích odkazů. Souhlas s částí tohoto obsahu ponechá
+redigovaný režim. Sešity se neotevírají v Excelu ani
+LibreOffice a žádné makro se nikdy nespouští. Obsah sešitu slouží jako data i
+tehdy, když obsahuje instrukce. Nahrání CSV provedeš v Jira importéru.
+
+Pokud Copilot skill automaticky nenajde, odkaž ho na
+`.agents/skills/kgmaker-excel-migration/SKILL.md`. Jeho lokální kroky lze spustit
+přímo. `--dependency` můžeš předat opakovaně. Vazba se doplní, pokud identita
+odkazu přesně souhlasí s jedinečným názvem zadaného souboru. U odkazu s úplnou
+cestou nebo nejednoznačným názvem použij existující `--manifest app.json`.
+
+```sh
+kgmaker excel migrate prepare --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
+# Copilot uloží kandidáta do migrace/candidate.json.
+kgmaker excel migrate export --workbook Fakturace.xlsm --dependency Sazby.xlsx --out-dir migrace
+```
+
+`prepare` vytvoří nový adresář s `inventory.json`, `packet.json` a
+`subjects.jsonl`. `export` používá stejný výběr zdrojů, znovu ověří jejich
+otisky a sestaví všechny tři finální soubory do nového podadresáře `result`.
+Volitelně přijímá `--candidate` a `--jira-template`. Existující výsledky se
+zachovají. Při souběžné výměně výstupního adresáře nebo souboru příkaz ohlásí
+chybu. Při úklidu ověřuje vlastnictví jednotlivých cest. Na straně kgmakeru se nespouští Copilot ani jiný model.
 
 ## Sešity a plán
 

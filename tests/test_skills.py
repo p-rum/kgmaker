@@ -19,10 +19,16 @@ def test_init_installs_complete_skills_and_local_references(tmp_path, capsys):
     assert init(tmp_path) == 0
     output = capsys.readouterr().out
     entrypoints = [p for p in SKILL_FILES if p.name == "SKILL.md"]
-    assert len(entrypoints) == 5
+    assert len(entrypoints) == 6
     for path, text in SKILL_FILES.items():
         assert (tmp_path / path).read_text(encoding="utf-8") == text
         assert path.as_posix() in output
+    excel = (tmp_path / ".agents/skills/kgmaker-excel-migration/SKILL.md").read_text(encoding="utf-8")
+    assert "Never run any workbook macro or execute workbook code under any circumstances." in excel
+    assert "Do not open or preview the workbook in Excel, LibreOffice" in excel
+    assert "authorizes all of the following" in excel
+    assert "literal and cached cell values, and external link identities" in excel
+    assert "covers only part of that set, keep the default redacted packets" in excel
     # Relative Markdown references resolve in an installed project, without docs/.
     import re
     for path in entrypoints:
@@ -31,6 +37,19 @@ def test_init_installs_complete_skills_and_local_references(tmp_path, capsys):
     assert not (tmp_path / "docs").exists()
     assert not (tmp_path / ".codex").exists()
     assert not (tmp_path / ".agents/skills/kgmaker").exists()
+
+
+def test_upgrade_adds_excel_migration_skill_to_existing_installation(tmp_path, monkeypatch):
+    from kgmaker.installation import run
+
+    relative = Path(".agents/skills/kgmaker-excel-migration/SKILL.md")
+    with monkeypatch.context() as old_release:
+        old_release.delitem(SKILL_FILES, relative)
+        assert init(tmp_path) == 0
+        assert not (tmp_path / relative).exists()
+
+    assert run(tmp_path, "upgrade") == 0
+    assert (tmp_path / relative).read_text(encoding="utf-8") == SKILL_FILES[relative]
 
 
 def test_repeated_init_keeps_bytes_mtimes_and_user_edits(tmp_path):

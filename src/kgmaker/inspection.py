@@ -333,6 +333,10 @@ def validate_response(response: dict, selected_context: dict):
     ids = {s["id"] for s in response["symbols"]}
     if None in ids or len(ids) != len(response["symbols"]):
         raise WorkerError("Ambiguous/duplicate worker symbol identity", "INVALID_PROTOCOL")
+    from .symbol_identity import valid_declaration
+    if any("logical_key" in symbol or ("kotlin_declaration" in symbol and
+               not valid_declaration(symbol["kotlin_declaration"])) for symbol in response["symbols"]):
+        raise WorkerError("Invalid Kotlin declaration identity witness", "INVALID_PROTOCOL")
     sites = set()
     for site in response["call_sites"]:
         if not isinstance(site.get("id"), str) or site["id"] in sites or not isinstance(site.get("caller"), str) or site["caller"] not in ids:
@@ -493,9 +497,15 @@ def graph_from_response(root: Path, base: KnowledgeGraph, response: dict, select
             scope=scope, role=role, origin=c.origin if c is not None and c.origin != "unknown" else origin,
             build_membership=c.build_membership if c else (),
             classification_evidence=c.classification_evidence if c else ("compiler-context:" + context_id,),
-            metadata=sanitize(symbol))
+            metadata={key: value for key, value in sanitize(symbol).items() if key != "kotlin_declaration"})
         if path in file_nodes:
             relation(file_nodes[path], symbol["id"], "contains", symbol)
+    from .symbol_identity import kotlin_source_omissions, occurrence_keys
+    keys = ({} if kotlin_source_omissions(selected_context, base.diagnostics) else
+            occurrence_keys(metadata, nodes, {context_id: selected_context}))
+    for symbol in metadata:
+        if symbol["id"] in keys:
+            symbol["logical_key"] = keys[symbol["id"]]
     for site in call_sites:
         caller = nodes[site["caller"]]
         position = site.get("range") or {}

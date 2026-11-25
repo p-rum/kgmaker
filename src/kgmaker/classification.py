@@ -16,6 +16,13 @@ ROLES = {"executable_code", "configuration", "migration", "contract", "documenta
 ORIGINS = {"handwritten", "generated", "dependency", "unknown"}
 
 
+def source_set_contains(source, path):
+    """Use exact file membership or a directory boundary for a supplied source set."""
+    return path in source.get("files", []) or any(
+        path == root or path.startswith(root.rstrip("/") + "/") for root in source.get("roots", [])
+    )
+
+
 @dataclass(frozen=True)
 class Classification:
     scope: str
@@ -66,7 +73,7 @@ class Classifier:
         scopes = set()
         origin = "unknown"
         for source in self.model["source_sets"]:
-            if path in source.get("files", []) or any(path == r or path.startswith(r.rstrip("/") + "/") for r in source.get("roots", [])):
+            if source_set_contains(source, path):
                 memberships.append(source["module"] + ":" + source["id"])
                 scopes.add(source["scope"])
                 evidence.append("supplied-source-set:" + source["module"] + ":" + source["id"])

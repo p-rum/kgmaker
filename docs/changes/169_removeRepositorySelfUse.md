@@ -182,3 +182,32 @@ zůstávají mimo commit.
   PR nemění; nález zůstává neopraven. Analýza dalších jazyků vypršela.
 - **NOT_RUN:** nové nezávislé review a CI nad integrovaným headem. Původní
   APPROVE se na tento merge nepřenáší.
+
+## Třetí integrace main — T049-S08 / AC13–AC14, T050-R04
+
+Výchozí head `d52b32aeca91840c778a3af0931f8dd10b0d6305`, společná base
+`5809e84932b1910bfc3f17c72e2a2005283389b1`, integrovaný main
+`5d067f152522442fa4cff22c2e69e1b9b6fcef86`. Main přinesl mimo jiné T055,
+ověřené completion závislosti a změny compiler evidence.
+
+Konflikty v `README.md`, `docs/acceptance-inventory.md`,
+`docs/agent-skills.md`, `docs/production-analysis-progress.md` a
+`tests/test_skills.py` zachovávají zákaz self-use i nové T055 a jeho test
+instalace v odděleném projektu. Tři konfliktní vlastní grafy `.kgmaker/GRAPH.md`,
+`.kgmaker/GRAPH.mmd` a `.kgmaker/semantic.json` zůstávají odstraněné.
+Ostatní změny main se slučují bez úprav; produktové templates a nové
+completion chování zůstávají dostupné cílovým projektům. Veřejné API ani
+CLI tato integrace nemění; příslušné návody, registr a příklady přicházejí
+z main. Příklad: test upgrade Excel skillu používá `tmp_path`, nikoli checkout.
+
+Kontroly na sloučeném stromu, Python 3.12 a pytest 8.3.4 v `/tmp`:
+
+- **PASS:** `PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-153-venv/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-153-self tests/test_init.py tests/test_skills.py tests/test_workflow_profiles.py tests/test_completion.py tests/test_completion_handoff.py tests/test_scanner.py tests/test_installation.py` — 177 PASS.
+- **PARTIAL:** `PYTHONDONTWRITEBYTECODE=1 /tmp/kgmaker-merge-153-venv/bin/python -m pytest -q -p no:cacheprovider --tb=short -ra --basetemp /tmp/kgmaker-merge-153-incoming tests/test_excel_migration.py tests/test_reverse_dependency_index.py tests/test_symbol_identity.py tests/test_t012_catalog_kafka_interfaces.py tests/test_workflow.py tests/test_workspace.py` — 62 PASS / 142 SKIP; chybí Excel worker, JDK 21, některé Spring fixture a explicitní wheel smoke.
+- **PASS:** `git diff --check`, `git diff --cached --check`, načtení 101 profilů
+  pomocí `tomllib`, kontrola odstraněných self-use cest a absence `kgmaker check`
+  v test workflow.
+- **NOT_RUN:** úplná sada, skutečný Excel/compiler worker, Windows, živí hostitelé
+  a nezávislé review nového merge. Historické CI logy opět vracejí HTTP 404;
+  nové běhy pro předchozí head při kontrole probíhaly. Jejich výsledek není PASS.
+  Aktuální merge vyžaduje nové review a ověření CI; starší APPROVE se nepřenáší.
