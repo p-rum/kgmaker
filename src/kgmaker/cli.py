@@ -1045,6 +1045,8 @@ def main() -> None:
         raise SystemExit(run_architecture(sys.argv[2:]))
     parser = build_parser()
     args = parser.parse_args()
+    if args.command == "impact" and args.evidence_only and args.workspace is not None:
+        parser.error("--evidence-only cannot be combined with --workspace")
     if args.command == "excel":
         from .excel.cli import run as run_excel
         raise SystemExit(run_excel(args))

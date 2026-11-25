@@ -1329,7 +1329,8 @@ callery dříve doloženého compiler cíle s přesným lokátorem původních b
 `changed_sources` dál porovnává normalizovaný text. Report vynechá compiler
 důkazy raw JVM kontextu s neplatným uloženým otiskem a zachová výsledky
 z ostatních doložených kontextů. Operace pouze čte a uvádí `PARTIAL`
-s diagnostikou hranic.
+s diagnostikou hranic. Podporuje lokální repozitář zvolený přes `--root`.
+Kombinace `--evidence-only` s `--workspace` končí chybou použití.
 [Výstup a podporovaný rozsah](docs/stage-content-cache.md#selektivní-dopad-změn).
 
 ### Doklad skutečného testovacího běhu (T047-S10)

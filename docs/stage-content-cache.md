@@ -146,7 +146,9 @@ kgmaker impact --root ./service --evidence-only --format json \
 
 Režim pokrývá všechny uložené kontexty lokálního repozitáře. Vstupy jsou relativní
 cesty k souborům. Podporuje odstranění zachycených souborů. `--scope` přijímá
-`all`, kombinace s `--context`, `--entity` nebo `--include-data-flow` vrátí chybu.
+`all`. Kombinace s `--workspace`, `--context`, `--entity` nebo
+`--include-data-flow` vrátí chybu použití s kódem 2. Kontrola `--workspace`
+proběhne před načtením jeho manifestu.
 
 JSON v1 uvádí SHA-256 jedné uložené generace `graph_sha256`, pole `changed_sources`
 s předchozím a zjištěným hashem (při odstranění `after_sha256: null`), pole

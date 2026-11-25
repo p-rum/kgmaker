@@ -575,3 +575,60 @@ a [stavová matice](../production-analysis-progress.md) uvádějí aktuální
 základ. Veřejný [CLI kontrakt](../stage-content-cache.md#selektivní-dopad-změn)
 a formáty graph/store v1/v2/v3 zůstávají kompatibilní. W02-AC01 je
 `PARTIAL`. Selektivní zápis a negativní vyhledání mají vlastní rozsah.
+
+## Oprava po T045 — oddělení režimů CLI, kroky 3–5 a AC01–AC04
+
+Nález T045 na headu `17432ea15e44ff39ef488b1321496c63dca5ba81` nad
+`main` `3a6b97fc9c44941e68bb390772a5eb13906bf1ff` ukázal, že
+`impact --workspace … --entity … --include-data-flow --evidence-only`
+vracel běžný federovaný report a kód 0. Volba `--evidence-only` se
+vyhodnocovala až za workspace dispatch.
+
+**Krok 3, AC01 a AC03.** `src/kgmaker/cli.py` odmítne kombinaci
+`--workspace` s `--evidence-only` po parsování argumentů. Vrací chybu
+použití s kódem 2 na stderr. Manifest ani graf workspace nenačítá.
+Platný lokální `impact --evidence-only --format json FILE` i běžný
+`impact --workspace … --entity … --include-data-flow` dál používají
+svůj dosavadní režim. Schémata graph/store v1/v2/v3 a JSON reportu
+zůstávají kompatibilní.
+
+**Krok 4, AC02 a AC03.** Nová regrese v `tests/test_workspace.py` používá
+stávající vícerepozitářovou fixture. Nejprve ověří platnou cestu dopadu,
+poté oba způsoby smíchání voleb a nulové volání workspace handleru.
+Před opravou měl test očekávaný **1 FAIL** s návratovým kódem workspace 0
+místo 2, JUnit SHA-256 `85715bdcbe289b2ebd830232e81167a197cf59d42d693596f5c4e7be375e12d8`.
+Po opravě prošly **3 cílené testy bez přeskočení**, včetně platného
+lokálního evidence-only výstupu. JUnit SHA-256
+`2fa381c97d7ffa277f3ad32c9fe015ea9cf3252fbb5320c793d9ebb7c6ed7bb7`.
+
+```bash
+python -m pytest -p no:cacheprovider -q --tb=short \
+  tests/test_workspace.py::WorkspaceTests::test_cli_workspace_impact_rejects_evidence_only_before_dispatch \
+  tests/test_workspace.py::WorkspaceTests::test_cli_workspace_prepare_and_schema \
+  tests/test_reverse_dependency_index.py::test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents
+python -m pytest -n 2 --dist load -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_workspace.py tests/test_reverse_dependency_index.py
+python -m pytest -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short
+```
+
+Druhý výběr v Cloud Environment s CPythonem 3.12.14 a skutečným Temurin
+JDK 21.0.6+7 a Javac workerem má **44 PASS / 0 SKIP**, exit 0.
+JUnit SHA-256 `f36672caaa321507353b7d8666d90c5e37b74add2a55069dfd9f235b8425ab6a`.
+Úplný třetí běh s CPythonem 3.13.18, Gradle 8.13 a připraveným Mavenem
+má **2 586 PASS / 1 345 SKIP / 1 očekávaný strict XFAIL**, exit 0.
+JUnit SHA-256 `15fb9001579340e14d5bef93fa30a09d3e44f1e502ce7c8f3e730db7f9780ae5`.
+Archiv `a51b1c35f0f7359f682d42c7441a449f578666e8`
+a finální strom mají shodné `src`, `tests`, `tooling` a `workers`.
+Manifest před a po obou bězích má SHA-256
+`86223dace5545fd6630bd5efbd041e68461f7d654e3c5ffd9715956c4f1ea1fb`. Předchozí
+výsledky #156 (124 cílených a 2 585 standardních PASS), omezení Excel
+workeru a dřívější Gradle ověření zůstávají ve svých oddílech.
+Windows a GitHub Actions mají při lokálním předání stav `NOT_RUN`.
+
+**Krok 5, AC04.** [README](../../README.md#selektivní-dopad-změněných-souborů-t003-s10-w02),
+[CLI příklady](../stage-content-cache.md#selektivní-dopad-změn),
+[inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) popisují hranici
+lokálního režimu a aktuální důkaz. Identita zadání a instalované instrukce
+zůstávají beze změny. W02-AC01 zůstává `PARTIAL`, protože selektivní
+zápis a negativní vyhledání mají samostatný rozsah.

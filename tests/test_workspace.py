@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -136,6 +136,35 @@ class WorkspaceTests(unittest.TestCase):
                 with self.assertRaises(SystemExit) as code:
                     main()
             self.assertEqual(0, code.exception.code, output.getvalue())
+
+    def test_cli_workspace_impact_rejects_evidence_only_before_dispatch(self):
+        from kgmaker.workspace_cli import workspace_command
+
+        workspace = ['kgmaker', 'impact', '--workspace', str(self.manifest),
+                     '--root', str(self.coordinator), '--format', 'json']
+        entity = qualified('backend', 'data_field:src/model.kt:ExposureOutput.decline')
+        directional = [*workspace, '--entity', entity, '--include-data-flow']
+        output = io.StringIO()
+        with patch('sys.argv', directional), redirect_stdout(output), self.assertRaises(SystemExit) as code:
+            main()
+        self.assertEqual(0, code.exception.code, output.getvalue())
+        result = json.loads(output.getvalue())
+        self.assertEqual(entity, result['seed'])
+        self.assertTrue(result['paths'])
+
+        conflicting = ([*directional, '--evidence-only'],
+                       [*workspace, '--evidence-only', 'src/model.kt'])
+        for args in conflicting:
+            with self.subTest(args=args):
+                output, errors = io.StringIO(), io.StringIO()
+                with (patch('sys.argv', args), redirect_stdout(output), redirect_stderr(errors),
+                      patch('kgmaker.workspace_cli.workspace_command', wraps=workspace_command) as dispatch,
+                      self.assertRaises(SystemExit) as code):
+                    main()
+                self.assertEqual(2, code.exception.code)
+                dispatch.assert_not_called()
+                self.assertEqual('', output.getvalue())
+                self.assertIn('--evidence-only cannot be combined with --workspace', errors.getvalue())
 
     def test_overlap_duplicate_and_traversal_manifest_rejected(self):
         self.config['repositories'][1]['path'] = 'backend/src'; write_json(self.manifest, self.config)
