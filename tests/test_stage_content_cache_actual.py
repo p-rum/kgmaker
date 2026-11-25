@@ -187,6 +187,14 @@ def test_actual_jvm_cold_warm_context_isolation_and_classpath_change(tmp_path, m
         calls.append(payload['operation'])
         return request(argv, payload, **kwargs)
     monkeypatch.setattr(inspection, 'request_worker', counted)
+    validations = []
+    validate = inspection._stage_graph
+
+    def count_graph_validation(payload, base, selected, response):
+        validations.append(selected['id'])
+        return validate(payload, base, selected, response)
+
+    monkeypatch.setattr(inspection, '_stage_graph', count_graph_validation)
     options = {'home': home, 'kotlin_backend': backend,
                'classpath': [str(classes), str(stdlib)], 'repo_id': 'actual-cache',
                'module': 'core', 'source_set': 'main'}
@@ -201,6 +209,7 @@ def test_actual_jvm_cold_warm_context_isolation_and_classpath_change(tmp_path, m
     subprocess.run(['javac', '-d', str(classes), str(library)], check=True, capture_output=True)
     changed = inspection.inspect_jvm(root, **options)
     assert calls == ['analyze'] * 3
+    assert validations == [cold['context']['id']] * 4 + [changed['context']['id']] * 2
     assert {s['status'] for s in changed['cache']['stages']} == {'BYPASS'}
     assert changed['context']['id'] != cold['context']['id']
     assert len([c for c in load_graph(root).contexts if c.get('analyzer_version')]) == 1
@@ -219,6 +228,14 @@ def test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspecti
         calls.append(payload['operation'])
         return request(argv, payload, **kwargs)
     monkeypatch.setattr(inspection, 'request_worker', counted)
+    validations = []
+    validate = inspection._stage_graph
+
+    def count_graph_validation(payload, base, selected, response):
+        validations.append(selected['id'])
+        return validate(payload, base, selected, response)
+
+    monkeypatch.setattr(inspection, '_stage_graph', count_graph_validation)
     options = {'home': ROOT / 'workers', 'repo_id': 'frontend', 'module': 'ui'}
     cold = inspection.inspect_frontend(root, **options)
     warm = inspection.inspect_frontend(root, **options)
@@ -229,6 +246,7 @@ def test_actual_typescript_preflight_and_analysis_run_on_every_explicit_inspecti
     config.write_text(json.dumps({'compilerOptions': {'strict': False}, 'files': ['src/main.ts']}))
     changed = inspection.inspect_frontend(root, **options)
     assert calls == ['project', 'analyze'] * 3
+    assert validations == [cold['context']['id'], warm['context']['id'], changed['context']['id']]
     assert {s['status'] for s in changed['cache']['stages']} == {'BYPASS'}
     assert len([c for c in load_graph(root).contexts if c.get('analyzer_version')]) == 1
 

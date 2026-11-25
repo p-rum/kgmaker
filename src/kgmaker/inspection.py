@@ -589,6 +589,7 @@ def _stage_response(response, selected):
             or any(response.get(key) != worker.get(key)
                    for key in ('protocol_version', 'worker', 'compiler_version'))):
         raise WorkerError('Stage response does not match selected worker/context', 'INVALID_PROTOCOL')
+    return response
 
 
 def _stage_graph(payload, base, selected, response):
@@ -693,10 +694,9 @@ def inspect_frontend(root: Path, *, tsconfig="tsconfig.json", scope="production"
     elif before.files != after.files or before.contexts != after.contexts:
         raise WorkerError("Source/config snapshot changed during frontend analysis", "STALE")
     model_base = scan_repository(root, project_model=model, strict=strict)
-    graph = _stage_graph(stages.run('compiler-graph',
+    graph = stages.run('compiler-graph',
         lambda: graph_payload(graph_from_response(root, model_base, response, selected, project_model=model)),
-        lambda value: _stage_graph(value, model_base, selected, response), base=model_base, upstream=response),
-        model_base, selected, response)
+        lambda value: _stage_graph(value, model_base, selected, response), base=model_base, upstream=response)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"],
               "diagnostics": graph.diagnostics, "graph": graph.to_dict()}
@@ -819,9 +819,9 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
             or base.contexts != after.contexts
             or any(artifact_hash(Path(e["path"])) != e["sha256"] for e in entries + selected.get("bytecode_artifacts", []))):
             raise WorkerError("Source/config/classpath snapshot changed during JVM analysis", "STALE")
-    graph = _stage_graph(stages.run('compiler-graph',
+    graph = stages.run('compiler-graph',
         lambda: graph_payload(graph_from_response(root, base, response, selected, project_model=project_model)),
-        lambda value: _stage_graph(value, base, selected, response), base=base, upstream=response), base, selected, response)
+        lambda value: _stage_graph(value, base, selected, response), base=base, upstream=response)
     # Framework rules consume the compiler-resolved graph; they never replace
     # or upgrade a worker fact.  Keep this phase in the explicit inspection
     # workflow so scan/build/feature commands remain offline and source-only.
@@ -835,8 +835,8 @@ def inspect_jvm(root: Path, *, classpath: list | None = None, bytecode_roots: li
         augmented = augment_kafka_graph(root, augmented, response["bodies"], selected)
         selected_retry = next(c for c in augmented.contexts if c.get("id") == selected["id"])
         return graph_payload(augment_retry_graph(root, augmented, selected_retry))
-    graph = _stage_graph(stages.run('framework-graph', augment,
-        lambda value: _stage_graph(value, base, selected, response), base=graph, upstream=response), base, selected, response)
+    graph = stages.run('framework-graph', augment,
+        lambda value: _stage_graph(value, base, selected, response), base=graph, upstream=response)
     result = {"status": "PARTIAL" if graph.diagnostics or response["status"] == "PARTIAL" else "COMPLETE_WITHIN_SUPPORTED_MATRIX",
               "mode": selected["mode"], "context": selected, "coverage": response["coverage"], "diagnostics": graph.diagnostics,
               "graph": graph.to_dict()}
