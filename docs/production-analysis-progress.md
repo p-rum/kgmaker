@@ -1,5 +1,30 @@
 # Aktuální stav a zbývající práce
 
+## T054 — analýza Excelu a Kotlin/JVM plán, 2026-11-25
+
+Dodání PR_OPEN. T054-S01–S02 ověřené pro popsané fixture se skutečným XLSM,
+BIFF8 XLS a XLSX. T054-S03–S04 částečně ověřené pomocí místního CSV a
+instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
+NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
+[Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) · [Evidence](changes/171_addExcelMigration.md).
+
+## T053 — správa instalace v cílovém projektu, 2026-11-24
+
+Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:
+Původní samostatná PR větev: 129 PASS / 0 SKIP včetně instalovaného wheelu.
+Review našlo ztracené vlastnictví legacy ignore při opakovaném init; oprava má
+4 regresní RED → GREEN a 133 PASS / 0 SKIP na opravené PR větvi včetně wheelu,
+viz doplnění change170.
+Lokální integrační sada s připravenými T049-S08 fixture: 134 PASS / 0 SKIP. Init eviduje vlastnictví, `upgrade` aktualizuje
+nezměněné templates a `uninstall` odstraňuje integraci i `.kgmaker/`.
+Konflikty/dry-run/invalidní manifest a symlinky nezapisují; zachytitelná chyba
+publikace obnoví původní soubory. Cizí soubory a ignore pravidla zůstávají.
+Legacy rozpoznání má explicitní seznam otisků; Windows, reload hostitelů a crash
+atomicita nejsou ověřené. T049-S01–S07 tím nejsou uzavřené.
+[Kontrakty a příklady](project-installation.md), [záznam kroků](changes/170_manageProjectInstallation.md).
+
+
+
 ## T052 — první běh dokončení 2026-11-19
 
 Integrační baseline po ověřeném merge [#125](https://github.com/p-rum/kgmaker/pull/125)
@@ -182,7 +207,7 @@ Oprava čtení normalizovaného kontextu T032 je od 2026-11-21 v main přes [#13
 | [T003-S11-W08](tasks/T003-S11-08-releaseDocumentation.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | Implementace/test kontraktu nenalezen; viz zadání. | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S12-W01](tasks/T003-S12-01-liveConfluenceConnector.md) | MERGED | PARTIAL | `7b9a9eaecaf41c9c5bc5a6d1233cd82e2cf4f1e9` | [src/kgmaker/confluence.py](../src/kgmaker/confluence.py), [src/kgmaker/confluence_sync.py](../src/kgmaker/confluence_sync.py), [tests/test_confluence_configuration.py](../tests/test_confluence_configuration.py) | [# 25](https://github.com/p-rum/kgmaker/pull/25) | Pouze offline konfigurace; live adapter DEFERRED, live acceptance NOT_RUN. Ověřit původní AC a podporovanou matici. |
 | [T003-S13-W01](tasks/T003-S13-01-runtimeTraceProducer.md) | MERGED | PARTIAL; JDK21/POSIX subset VERIFIED_IN_SCOPE | `d2507ef465c9b4844830520de68629a3b577c0d2`, `385943e48d2d2e60cec541f1f0db78beda83de22` | [tests/test_runtime_trace_producer.py](../tests/test_runtime_trace_producer.py), [JDK fixture](../tests/fixtures/runtime-trace/TraceApplication.java) | [PR101](https://github.com/p-rum/kgmaker/pull/101) MERGED · [#148](https://github.com/p-rum/kgmaker/pull/148) MERGED | Skutečný synchronní opt-in SDK capture call/factory/condition/map registration, strict v2, pre/postflight a POSIX cleanup. #148 dodalo veřejné předání deklarovaného SHA-256 z vybrané varianty BuildManifestu. Ověření W01 zůstává PARTIAL v rozsahu JDK21/POSIX. Okolní runtime prostředí, automatický Spring capture, Windows a dostupnost dat mají vlastní rozsah. Historický přenos PR102 zahrnul 88 runtime testů v sadě 205 PASS / 0 SKIP. [Ověření PR102](changes/120_namedQueryContainers.md) · [Kontrakt](runtime-trace.md) · [Change122](changes/122_runtimeTraceProducer.md) · [Change165](changes/165_forwardBuildConfiguration.md). |
-| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | PR_OPEN | PARTIAL | `edb65e57ca4de1743c810689c78e069cd86b2b41` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Při změně vstupních objektů Python API se uloží jen ověřená konfigurace a pozorování. Statické cesty a cykly používají compiler call sites. #147 ověřuje zdroje, worker a u v2 bytecode při publikaci. #148 předává deklarovaný otisk. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md). |
+| [T003-S13-W02](tasks/T003-S13-02-runtimeRtaImport.md) | PR_OPEN | PARTIAL | `782ac6ac0287550084e9afadbd6182756fdd2730` | [import](../src/kgmaker/runtime_evidence.py), [navigace](../src/kgmaker/callgraph.py), [fixture](../tests/test_runtime_trace_producer.py) | [#136](https://github.com/p-rum/kgmaker/pull/136) | Import uchovává doklady podle compiler kontextu a variant služby. V2 `call` a `dispatch` vyžadují volatelné symboly. Při změně vstupních objektů Python API se uloží jen ověřená konfigurace a pozorování. Statické cesty a cykly používají compiler call sites. #147 ověřuje zdroje, worker a u v2 bytecode při publikaci. #148 předává deklarovaný otisk. Receiver/type dispatch, přesná vazba na call site a širší T003-AC13 zůstávají otevřené. [Ověření #136](changes/151_preserveRuntimeObservationEvidence.md) · [Ověření #147](changes/163_revalidateRuntimeImportPublication.md). |
 | [T003-S13-W03](tasks/T003-S13-03-runtimeValueFlow.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/availability.py](../src/kgmaker/availability.py), [src/kgmaker/dataflow.py](../src/kgmaker/dataflow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T003-S13-W04](tasks/T003-S13-04-runtimeAsyncReflection.md) | PLANNED | NOT_RUN | `f115aa4a1c37683f3be9e4607111d51d9c1301c1` | [src/kgmaker/runtime_evidence.py](../src/kgmaker/runtime_evidence.py), [src/kgmaker/flow.py](../src/kgmaker/flow.py) | — | Cílový kontrakt nedodán; existující moduly nejsou jeho acceptance. Implementovat dle závislostí původního zadání. |
 | [T005](tasks/T-005_add-view-model.md) | MERGED | PARTIAL | `c0a10261c2ff1f83291125ec838bbaeea8723532` | [src/kgmaker/architecture_model.py](../src/kgmaker/architecture_model.py), [tests/test_t005_add_view_model.py](../tests/test_t005_add_view_model.py) | [#11](https://github.com/p-rum/kgmaker/pull/11) | Pouze dokumentovaný subset; nová úplná acceptance NOT_RUN. Ověřit původní AC a zbývající limity. |

@@ -16,7 +16,7 @@ dependencies = []
 kgmaker = "kgmaker.cli:main"
 
 [tool.setuptools]
-packages = ["kgmaker", "kgmaker_workers"]
+packages = ["kgmaker", "kgmaker.excel", "kgmaker_workers"]
 package-dir = {"" = "src", "kgmaker_workers" = "workers"}
 include-package-data = false
 
@@ -39,6 +39,9 @@ kgmaker_workers = [
   "build/maven/BuildExport.java", "build/maven/components.xml",
   "build/maven/target/kgmaker-build-export.jar",
   "build/exporters.json", "build/LICENSE",
+  "excel/pom.xml", "excel/dependencies.lock.json", "excel/verify_distribution.py",
+  "excel/src/main/java/org/kgmaker/excel/*.java",
+  "excel/target/kgmaker-excel-worker.jar", "excel/target/lib/*.jar",
 ]
 
 [tool.pytest.ini_options]

@@ -577,3 +577,27 @@ Windows a GitHub Actions nebyly při lokálním ověření spuštěny.
 a [stavová matice](../production-analysis-progress.md) popisují rozsah opravy.
 Příklady příkazů, compiler navigace a registrační identita odpovídají
 stávajícímu kontraktu. Receiver/type a přesné volací místo zůstávají otevřené.
+
+## Dopředný přenos po #154 a #155 — kroky 4–5, AC01–AC04
+
+První rodič je `1c220d5a2fb7bc6a9d6db1a0dc7e7737d35d7dbc`, druhý
+`main` `782ac6ac0287550084e9afadbd6182756fdd2730`. Dopředné sloučení
+zachovalo všechny soubory instalace a Excel migrace ze druhého rodiče.
+Runtime import, navigace a jejich regresní test mají shodný obsah
+s prvním rodičem. Dosavadní CLI, manifesty v1/v2 a graph/store v3
+jsou kompatibilní. [Runtime příklady](../runtime-trace.md#opakovaný-import-a-navigace)
+popisují stále stejný kontrakt.
+
+**Krok 4, AC01–AC03.** Cílený Linux běh nad výslednými zdroji s CPythonem
+3.12.14, Temurin 21.0.6+7, Mavenem 3.9.9 a připravenými workery K1/K2
+má **173 PASS / 0 SKIP**, kód 0 a JUnit SHA-256
+`90565dadd6f3522df558497b0f81f59bb81c9f90ad527bd4403ca061b9be6709`.
+Použil výběr testů uvedený v předchozím oddílu. Manifesty zdrojů, testů
+a workerů se před a po běhu shodují. Windows a GitHub Actions mají stav
+`NOT_RUN`.
+
+**Krok 5, AC04.** [Inventář](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+a [stavová matice](../production-analysis-progress.md) odkazují na nový základ.
+README, CLI příklady, compiler navigace a instalační šablony už popisují
+shodné chování. Receiver/type a přesné volací místo mají samostatný rozsah.
+W02 zůstává `PARTIAL`.
