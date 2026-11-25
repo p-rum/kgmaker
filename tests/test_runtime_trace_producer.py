@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from kgmaker.analysis_model import AnalysisError, digest, file_hash
-from kgmaker.model import KnowledgeGraph, Node
+from kgmaker.model import Edge, KnowledgeGraph, Node
 from kgmaker.runtime_evidence import import_manifest, produce_manifest, validate_manifest
 from kgmaker.store import load_graph, save_graph
 
@@ -76,6 +76,86 @@ def test_capture_status_is_preserved_without_availability_claim(project, status)
         result = import_manifest(project, manifest)
     assert result["status"] == status and result["observations_imported"] == 0
     assert not load_graph(project).evidence  # W01 facts are not W02 import evidence.
+
+
+def test_runtime_import_retains_same_edge_observations_and_v2_variant_identity(project):
+    manifest = produce(project)
+    observation = {"caller": "main", "target": "greet", "kind": "dispatch"}
+    manifest["observations"] = [observation]
+    legacy = {"schema_version": 1, "runtime_id": "legacy-run", "context_id": "ctx",
+              "build_id": "build-7", "config_fingerprint": "cfg-7",
+              "observations": [{**observation, "scenario": "legacy"}]}
+    other_service = {**manifest, "service_id": "fixture-other", "service_version": "2.0.0"}
+    graph = load_graph(project)
+    snapshot = graph.contexts[0]
+    graph.contexts.append({**snapshot, "id": "other-ctx", "build_id": "other-build",
+                           "config_fingerprint": "other-config"})
+    other_context = {**legacy, "context_id": "other-ctx", "build_id": "other-build",
+                     "config_fingerprint": "other-config"}
+    static_edges = [Edge("main", "predicate", "calls", source_line=line) for line in (4, 8)]
+    graph.edges.extend(static_edges)
+    save_graph(graph, project)
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        for supplied in (legacy, manifest, other_context, other_service, other_service):
+            assert import_manifest(project, supplied)["observations_imported"] == 1
+        before = saved(project)
+        with pytest.raises(AnalysisError, match="configuration fingerprint differs"):
+            import_manifest(project, {**other_service, "config_fingerprint": "wrong"})
+        assert saved(project) == before
+
+    graph = load_graph(project)
+    assert set(static_edges) <= set(graph.edges)
+    observations = [edge for edge in graph.edges if edge.kind == "observed_dispatch_to"]
+    assert {edge.context_ids for edge in observations} == {("ctx",), ("other-ctx",)}
+    records = {item["id"]: item for item in graph.evidence}
+    observed_ids = {edge.context_ids[0]: edge.evidence_ids for edge in observations}
+    assert len(observed_ids["other-ctx"]) == 1
+    assert records[observed_ids["other-ctx"][0]]["context_id"] == "other-ctx"
+    proofs = [records[identity] for identity in observed_ids["ctx"]]
+    assert len(proofs) == 3
+    expected_legacy = {"kind": "RUNTIME_OBSERVED", "source": "main", "target": "greet",
+                       "relation": "observed_dispatch_to", "runtime_id": "legacy-run",
+                       "context_id": "ctx", "build_id": "build-7", "scenario": "legacy",
+                       "async": False, "observation_source": None}
+    assert {"id": "evidence:" + digest(expected_legacy), **expected_legacy} in proofs
+    variants = [proof for proof in proofs if proof["runtime_id"] == OPTIONS["runtime_id"]]
+    assert {(proof["service_id"], proof["service_version"]) for proof in variants} == {
+        ("fixture-app", "1.2.3"), ("fixture-other", "2.0.0"),
+    }
+    assert all(proof["config_fingerprint"] == "cfg-7" and proof["build_id"] == "build-7"
+               and proof["context_id"] == "ctx" and proof["source_identity"] == manifest["source_identity"]
+               for proof in variants)
+    from kgmaker.views import project as select_graph
+    selected = select_graph(graph, "production", context_id="ctx")
+    assert {item["id"] for item in selected.evidence} == set(observed_ids["ctx"])
+
+
+def test_runtime_observation_stays_visible_without_creating_static_path_or_cycle(project):
+    from kgmaker import callgraph
+
+    manifest = produce(project)
+    manifest["observations"] = [{"caller": "main", "target": "greet", "kind": "dispatch"}]
+    graph = load_graph(project)
+    graph.nodes.append(Node("site", "call_site", "site", "src/App.java", scope="production"))
+    graph.call_sites.append({"id": "site", "caller": "greet", "declared_target": "main",
+                             "dispatch_candidates": [], "context_id": "ctx",
+                             "evidence_kind": "SYMBOL_RESOLVED", "resolution_reason": "static-fixture"})
+    save_graph(graph, project)
+    import_manifest(project, manifest)
+    graph = load_graph(project)
+
+    assert callgraph.path(graph, "main", "greet")["status"] == "UNKNOWN"
+    result = callgraph.path(graph, "greet", "main")
+    assert result["status"] == "STATIC_PATH"
+    assert [step["kind"] for step in result["steps"]] == ["DECLARED_TARGET"]
+    assert not callgraph.strongly_connected(graph)
+    incoming, = callgraph.callers(graph, "greet")["results"]
+    outgoing, = callgraph.callees(graph, "main")["results"]
+    assert incoming["caller"] == "main"
+    assert incoming["kind"] == outgoing["kind"] == "RUNTIME_OBSERVED"
+    assert incoming["evidence_ids"] == outgoing["evidence_ids"]
+    assert outgoing["target"] == "greet" and outgoing["dispatch_complete"] is False
 
 
 @pytest.mark.parametrize("raw", [
@@ -487,6 +567,27 @@ def test_v2_observation_kind_type_is_rejected_without_store_write(project, kind)
     assert saved(project) == before
 
 
+@pytest.mark.parametrize(("endpoint", "kind"), [("caller", "dispatch"), ("target", None)])
+def test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols(jdk_application, endpoint, kind):
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **opts, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    bean = next(fact for fact in manifest["facts"] if fact["kind"] == "bean")
+    symbols = {symbol["id"]: symbol for symbol in load_graph(root).symbols}
+    assert symbols[bean["bean_type"]]["kind"] == "class"
+    observation = {key: call[key] for key in ("caller", "target")}
+    observation[endpoint] = bean["bean_type"]
+    if kind is not None:
+        observation["kind"] = kind
+    manifest["observations"] = [observation]
+    before = saved(root)
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        with pytest.raises(AnalysisError, match="require callable symbols"):
+            import_manifest(root, manifest)
+    assert saved(root) == before
+
+
 @pytest.mark.parametrize("edit_at", ["before_save", "after_first_view"])
 def test_real_jdk21_runtime_import_rejects_source_edit_after_validation(jdk_application, monkeypatch, edit_at):
     from kgmaker import store
@@ -527,6 +628,26 @@ def test_real_jdk21_runtime_import_rejects_source_edit_after_validation(jdk_appl
         assert not list((root / store.STATE_DIR).rglob(".kgmaker-*"))
     finally:
         source.write_bytes(original)
+
+
+def test_runtime_keeps_callable_and_framework_observations_and_legacy_import(project):
+    manifest = produce(project)
+    manifest["observations"] = [
+        {"caller": "main", "target": "greet"},
+        {"caller": "factory", "target": "service", "kind": "framework"},
+    ]
+    legacy = {"schema_version": 1, "runtime_id": "legacy-run", "context_id": "ctx",
+              "build_id": "build-7", "config_fingerprint": "cfg-7",
+              "observations": [{"caller": "main", "target": "predicate", "scenario": "legacy"}]}
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        assert import_manifest(project, manifest)["observations_imported"] == 2
+        assert import_manifest(project, legacy)["observations_imported"] == 1
+
+    assert {(edge.source, edge.target, edge.kind) for edge in load_graph(project).edges} == {
+        ("main", "greet", "observed_dispatch_to"),
+        ("factory", "service", "runtime_framework_observation"),
+        ("main", "predicate", "observed_dispatch_to"),
+    }
 
 
 def test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step(project, monkeypatch):
@@ -584,7 +705,7 @@ def test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publicati
     assert all(checks == expected for checks in checked.values())
     assert context_checks == expected
     assert replaced == [store.MERMAID_FILE, store.MARKDOWN_FILE, store.GRAPH_FILE]
-    assert (validate.call_count, capture_check.call_count, observations.walks) == (1, 1, 2)
+    assert (validate.call_count, capture_check.call_count, observations.walks) == (1, 1, 1)
 
 
 def assert_runtime_import_rolls_back_before_graph(root, changed_input, diagnostic, monkeypatch, capsys):
@@ -644,3 +765,113 @@ def test_v1_cli_rechecks_worker_before_graph(project, monkeypatch, capsys):
     assert_runtime_import_rolls_back_before_graph(
         root, root / "worker.jar", "STALE_RUNTIME: worker distribution changed", monkeypatch, capsys,
     )
+
+
+def test_real_jdk21_v2_import_detaches_identity_before_publication(jdk_application, monkeypatch):
+    from kgmaker import store
+
+    root, argv, opts = jdk_application
+    manifest = produce_manifest(root, argv, **{**opts, "runtime_id": "identity-race"}, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    manifest["observations"] = [{"caller": call["caller"], "target": call["target"], "kind": "dispatch"}]
+    caller_identity = manifest["source_identity"]
+    validated_identity = dict(caller_identity)
+    capture_bytes = (root / ARTIFACT).read_bytes()
+
+    def save_after_caller_edit(candidate, destination, **kwargs):
+        caller_identity["context_fingerprint"] = "0" * 64
+        return save_graph(candidate, destination, **kwargs)
+
+    monkeypatch.setattr(store, "save_graph", save_after_caller_edit)
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        outcome = import_manifest(root, manifest)
+
+    assert outcome["status"] == "PARTIAL" and outcome["observations_imported"] == 1
+    assert caller_identity["context_fingerprint"] == "0" * 64
+    assert (root / ARTIFACT).read_bytes() == capture_bytes
+    graph = load_graph(root)
+    proof, = [item for item in graph.evidence if item.get("runtime_id") == "identity-race"]
+    record_id = "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
+    assert (proof["source_identity"], record_id) == (validated_identity, proof["id"])
+    assert any(edge.kind == "observed_dispatch_to" and proof["id"] in edge.evidence_ids for edge in graph.edges)
+
+
+@pytest.mark.parametrize("edit_at", ["input_hash_check", "after_admission", "second_observation_walk"])
+def test_real_jdk21_v2_import_publishes_only_admitted_values(jdk_application, monkeypatch, edit_at):
+    from kgmaker import callgraph, runtime_evidence, store
+
+    root, argv, opts = jdk_application
+    runtime_id = "admission-" + edit_at
+    manifest = produce_manifest(root, argv, **{**opts, "runtime_id": runtime_id}, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    invalid_target = next(fact["bean_type"] for fact in manifest["facts"] if fact["kind"] == "bean")
+    symbols = {symbol["id"]: symbol for symbol in load_graph(root).symbols}
+    assert symbols[call["target"]]["kind"] == "method"
+    assert symbols[invalid_target]["kind"] == "class"
+    assert symbols[invalid_target]["context_id"] == manifest["context_id"]
+    row = {"caller": call["caller"], "target": call["target"], "kind": "dispatch"}
+    manifest["observations"] = [row]
+    invalid_config = "wrong-config-after-admission"
+    paths = (store.GRAPH_FILE, store.MARKDOWN_FILE, store.MERMAID_FILE, ARTIFACT)
+    before = {path: (root / path).read_bytes() for path in paths}
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        with pytest.raises(AnalysisError, match="configuration fingerprint differs"):
+            import_manifest(root, {**manifest, "config_fingerprint": invalid_config})
+        with pytest.raises(AnalysisError, match="require callable symbols"):
+            import_manifest(root, {**manifest, "observations": [{**row, "target": invalid_target}]})
+        assert {path: (root / path).read_bytes() for path in paths} == before
+
+    class CallerObservations(list):
+        walks = 0
+
+        def __iter__(self):
+            self.walks += 1
+            if self.walks == 2:
+                row["target"] = invalid_target
+            return super().__iter__()
+
+    if edit_at == "input_hash_check":
+        check_hashes = runtime_evidence._check_hashes
+
+        def check_hashes_then_edit(root, context, supplied=None):
+            check_hashes(root, context, supplied)
+            if supplied is not None:
+                manifest["config_fingerprint"] = invalid_config
+
+        monkeypatch.setattr(runtime_evidence, "_check_hashes", check_hashes_then_edit)
+    elif edit_at == "after_admission":
+        def validate_then_edit(*args, **kwargs):
+            admitted = validate_manifest(*args, **kwargs)
+            row["target"] = invalid_target
+            return admitted
+    else:
+        observations = CallerObservations([row])
+        manifest["observations"] = observations
+
+    validator = validate_then_edit if edit_at == "after_admission" else validate_manifest
+    with (
+        patch.object(runtime_evidence, "validate_manifest", wraps=validator) as validate,
+        patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")),
+    ):
+        outcome = import_manifest(root, manifest)
+
+    assert validate.call_count == 1
+    assert outcome["status"] == "PARTIAL" and outcome["observations_imported"] == 1
+    assert (root / ARTIFACT).read_bytes() == before[ARTIFACT]
+    graph = load_graph(root)
+    proof, = [item for item in graph.evidence if item.get("runtime_id") == runtime_id]
+    assert proof["config_fingerprint"] == opts["config_fingerprint"]
+    assert proof["target"] == call["target"]
+    assert proof["id"] == "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
+    edge, = [edge for edge in graph.edges if proof["id"] in edge.evidence_ids]
+    assert (edge.kind, edge.target) == ("observed_dispatch_to", call["target"])
+    reported, = [result for result in callgraph.callees(graph, call["caller"])["results"]
+                 if proof["id"] in result["evidence_ids"]]
+    assert (reported["kind"], reported["target"]) == ("RUNTIME_OBSERVED", call["target"])
+    if edit_at == "input_hash_check":
+        assert manifest["config_fingerprint"] == invalid_config
+    elif edit_at == "after_admission":
+        assert row["target"] == invalid_target
+    else:
+        assert observations.walks == 1

@@ -436,3 +436,54 @@ python -m pytest -p no:cacheprovider -q \
 
 W02-AC01 zůstává `PARTIAL`. Selektivní zápis při invalidaci a negativní
 vyhledání vyžadují vlastní implementaci a ověření.
+
+## Přenos po #136 — T003-S10-W02, kroky 4–5 a AC01–AC04
+
+První rodič `98755cd83597fa5191a98bd36ddfd7bacdf2ac30` obsahuje čtecí
+report W02 a předchozí ověření. Druhý rodič `5809e84932b1910bfc3f17c72e2a2005283389b1`
+přináší runtime import a navigaci z #136. Oba rozsahy mají stejné produktové
+a testové soubory jako příslušní rodiče. Sémantická vrstva zachovala všech
+408 historických epizod obou rodičů a přidala záznam integrace.
+
+**Krok 4, AC01–AC03.** Cloud Environment, CPython 3.12.14, Temurin
+JDK 21.0.6+7, Maven 3.9.9 s lokálně připravenými závislostmi a existující
+workery K1/K2. Prošlo **39 testů bez přeskočení**, exit 0. JUnit SHA-256
+`acf2d9f92ff2cd278af5ef213a27f2e276d7ca60da115429bfb3fdc009d35a4e`.
+Shodné manifesty zdrojů a nástrojů mají SHA-256
+`78ff44ae8814eb08699e7c4a2d9bf836999980f8138c4d6c48d67773d8567e2f` a
+`96e1d367d39dfaa4ed882d3de71d770337640eb68aa2f64f57713522de214167`.
+Výběr ověřil čtecí report, odpovídající compiler důkazy a souběžný runtime
+import včetně publikace ověřených hodnot, obnovy výstupu a veřejného
+výběru konfigurace Maven.
+
+```bash
+runtime=tests/test_runtime_trace_producer.py
+python -m pytest -n 2 --dist load -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_reverse_dependency_index.py \
+  "$runtime::test_runtime_import_retains_same_edge_observations_and_v2_variant_identity" \
+  "$runtime::test_runtime_observation_stays_visible_without_creating_static_path_or_cycle" \
+  "$runtime::test_runtime_keeps_callable_and_framework_observations_and_legacy_import" \
+  "$runtime::test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publication_step" \
+  "$runtime::test_real_jdk21_v2_import_detaches_identity_before_publication" \
+  "$runtime::test_real_jdk21_v2_import_publishes_only_admitted_values" \
+  "$runtime::test_real_jdk21_runtime_import_rejects_source_edit_after_validation" \
+  "$runtime::test_actual_maven_public_runtime_uses_selected_build_configuration" \
+  tests/test_graph_publication_concurrency.py::test_runtime_import_cannot_overwrite_generation_published_during_validation
+python -m pytest -p no:cacheprovider -o tmp_path_retention_policy=failed -q -ra --tb=short \
+  tests/test_graph_provider.py tests/test_workspace.py tests/test_feature.py \
+  tests/test_feature_fixture.py tests/test_flyway.py
+```
+
+Druhý příkaz v CPython 3.13.18 má **65 PASS / 0 SKIP**, exit 0, JUnit
+SHA-256 `b7acc3271239f548878713b25a1de748df34834cd108051454b61ffae7ef529b`.
+Úplná standardní sada na této dvojici, Windows a GitHub Actions mají při
+lokálním předání stav `NOT_RUN`. Předchozí chyby prostředí Gradle a Node a
+cílená obnova s 26 PASS a třemi volitelnými Mermaid SKIP mají svůj záznam
+výše.
+
+**Krok 5, AC04.** [Acceptance inventář](../acceptance-inventory.md#t003-s10-w02--reverse-dependency-indexy)
+a [stavová matice](../production-analysis-progress.md) uvádějí aktuální
+základ. [CLI příklady](../stage-content-cache.md#selektivní-dopad-změn),
+kontrakt reportu a graph/store v1/v2/v3 se tímto přenosem nemění. W02-AC01
+zůstává `PARTIAL`. Zápis selektivní invalidace a negativní vyhledání čekají
+na samostatné ověření.

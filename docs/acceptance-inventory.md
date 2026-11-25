@@ -67,9 +67,9 @@ PARTIAL a persistentní warm HIT je otevřený.
 ## T003-S10-W02 — reverse dependency indexy
 
 Dodání `PR_OPEN` v [#130](https://github.com/p-rum/kgmaker/pull/130). Aktuální
-kandidát vychází z `main` `782ac6a` po #154 a #155. Předchozí cílená kontrola
-opravy vadných otisků nad `1569d5d` měla 164 PASS bez přeskočení se skutečným
-Javac/K1/K2. Pozdější přenos má vlastní doklad v change145.
+kandidát vychází z `main` `5809e84` po #136. Cílené ověření společného
+stromu má 39 PASS / 0 SKIP se skutečným JDK 21 a Mavenem a 65 PASS / 0 SKIP
+v navazujícím výběru CPython 3.13. Předchozí běhy jsou zachovány v change145.
 [Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
 [režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
 [kontroly](changes/145_buildReverseDependencyIndexes.md).
@@ -116,10 +116,11 @@ ověření celého milníku `PARTIAL`. [Kontrakt/CLI/limity](runtime-trace.md),
 Integrace PR102 zachovává runtime source; 88 runtime testů je součástí společného
 běhu 205 PASS / 0 SKIP ([change120](changes/120_namedQueryContainers.md)).
 
-Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1 je
-samostatná oprava W01 v dodání `IN_PROGRESS`. Skutečný běh Maven 3.9.9 a JDK 21
-ověřil vznik v2 trace i odmítnutí chybějícího, neplatného či cizího digestu před
-dalším procesem a zápisem. [Záznam ověření](changes/165_forwardBuildConfiguration.md).
+Veřejné předání deklarované konfigurace vybrané varianty BuildManifestu v1
+je sloučené v `385943e48d2d2e60cec541f1f0db78beda83de22`.
+Skutečný běh Maven 3.9.9 a JDK 21 ověřil vznik v2 trace i odmítnutí
+chybějícího, neplatného či cizího digestu před dalším procesem a zápisem.
+Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pull/148) · [Záznam ověření](changes/165_forwardBuildConfiguration.md).
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
@@ -127,6 +128,27 @@ dalším procesem a zápisem. [Záznam ověření](changes/165_forwardBuildConfi
 | T003-S13-W01-AC02 | VERIFIED_IN_SCOPE | `tests/test_build_aware.py::BuildAwareContractsTest::test_runtime_import_is_bound_to_context_and_rejects_stale_source`: původní v1. V2 pozitivní roundtrip a `test_v2_import_requires_complete_bound_identity_before_store_mutation`, `test_v2_import_rejects_empty_forged_and_unknown_evidence`; v3 odmítnuto, graph/store beze změny schématu. |
 | T003-S13-W01-AC03 | VERIFIED_IN_SCOPE (bounded) | `test_invalid_or_incomplete_facts_never_publish`, `test_capture_status_is_preserved_without_availability_claim`, `test_preflight_rejects_before_spawn_and_keeps_artifact`, `test_postflight_detects_mutation_without_publishing`, `test_process_tree_cleanup_preserves_last_artifact`, `test_keyboard_interrupt_cleans_up_process_group`; běžní potomci stejné POSIX skupiny, žádná izolace odpojených daemonů. |
 | T003-S13-W01-AC04 | PARTIAL | Nové CLI/capability dokumenty a oddělené kroky v change122 odpovídají skutečným testům. Full suite dle aktuálního pokynu NOT_RUN, GH CI NOT_RUN; celé S13/T003 ani Spring/Windows/RTA/value-flow/async/reflection nejsou ověřeny. |
+
+## T003-S13-W02 — více dokladů stejné pozorované hrany
+
+[Zadání](tasks/T003-S13-02-runtimeRtaImport.md) a
+[záznam opravy](changes/151_preserveRuntimeObservationEvidence.md).
+Dodání sleduje [#136](https://github.com/p-rum/kgmaker/pull/136). Lokální
+přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
+`31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
+přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto
+ověření nebyla spuštěna. Po spojení s `edb65e5` ověřuje nová regrese také
+změny konfigurace a cíle provedené volajícím Python API v průběhu importu.
+Dopředný přenos na `782ac6a` zopakoval 173 cílených testů bez přeskočení
+se skutečnými JDK 21, Mavenem a workery K1/K2.
+Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObservationEvidence.md).
+
+| Acceptance | Ověření | Důkaz a limit |
+|---|---|---|
+| T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje deduplikaci shodného dokladu stejné hrany, oddělené kontexty a doklady variant služby. Opakování stále projde publikací grafu. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
+| T003-S13-W02-AC02 | VERIFIED_IN_SCOPE | Test opakovaného importu ověřuje původní v1 identitu vedle v2 metadat v graph/store v3. `test_runtime_keeps_callable_and_framework_observations_and_legacy_import` ověřuje v1 import i podporované v2 `call` a `framework`. Formáty manifestu v1/v2 a graph/store v3 zůstávají použitelné bez migrace. |
+| T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | `test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols` odmítne třídu jako volajícího `dispatch` i jako cíl výchozího `call`. `test_real_jdk21_v2_import_publishes_only_admitted_values` ověří původní konfiguraci, volatelný cíl a ID dokladu, i když se mění vstupní objekty Python API. Přímé odmítnutí a `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` zachovají bajty grafu, jeho pohledů i runtime artefaktu. Import nespustí proces. Test statické navigace a W06 pokrývají oddělení cest a souběžné zapisovače. `test_real_jdk21_v2_import_detaches_identity_before_publication` pokrývá změnu vnořeného otisku. |
+| T003-S13-W02-AC04 | PARTIAL | Návod, stavová matice a change151 popisují omezenou opravu. Celá T003-AC13 má širší rozsah. |
 
 ## T003-S13-W02 — čerstvost při publikaci runtime evidence, 2026-11-23
 
