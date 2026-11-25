@@ -79,3 +79,40 @@ Identita zadání a jeho závislosti zůstávají v existujícím registru.
 předání stav `NOT_RUN`. T003-S10-W01 zůstává `PARTIAL`. Persistentní warm HIT
 vyžaduje nezávisle ověřitelný doklad vydavatele a úplné vymezení běhových
 vstupů. Toto ověření pokrývá dvě knihovny standardního rozložení JDK na Linuxu.
+
+## Přenos po sloučení #158 — kroky 4 a 5
+
+První rodič je `f70b5b4449887fa49bd6ee74d2d34e4f46a879eb` se stromem
+`b991e32a07b85b02272b3ba0c081521874081e93`. Druhý je skutečný `main`
+`e55bff02774aeee8f10d43c9e59895915311376e` se stromem
+`54033f542d824b01b8800766d84fc994c1d76281`. Všechny soubory zdrojů, testů,
+fixtures a workerů mají shodné bajty s prvním rodičem, včetně tří souborů
+ověřených v předchozí sadě s 96 PASS. Rozsah a záznam #158 mají shodné
+bajty s druhým rodičem. Jeho stavová matice a acceptance inventář přidávají
+jen odkazy a výsledky W01 v tomto rozsahu. Regenerace uchovala všech 437
+historických epizod obou rodičů. [Změny inventáře #158](174_reconcileMergedDelivery.md).
+
+Čerstvá cílená sada společného stromu má **27 PASS / 0 SKIP** za 88,99 s.
+Použila skutečné Javac 21.0.6+7, K1, K2 a TypeScript. Pokryla obsah nativních
+knihoven, nedostupný otisk, `STALE` se zachováním uložených bajtů, živou
+opakovanou inspekci s BYPASS a skutečný plánovač. Pytest, vytvoření
+manifestu a porovnání mají exit 0. JUnit SHA-256
+`91cb35dc3feb32ba88b8c9fec559951f6e956b6777c3ec32480403ce78031d25`.
+Shodné 572řádkové manifesty zdrojů, nástrojů a vstupů plánovače mají SHA-256
+`b0dfde39035fc732f545e71b74020b3f293cf8c9a9a2a79a16067e913b46ed8f`.
+Samostatná kontrola plánu má exit 0 a SHA-256
+`39edc3e9ef326dabdea5fa2fb02f83f5273bd58dd633688c07c07721bc0c1f16`.
+Načetla 119 položek, z toho 90 `MERGED` a 29 `PLANNED`. W01, W02,
+T047-S02 a import runtime T003-S13-W02 zůstávají `MERGED/PARTIAL`.
+W03 stále čeká na `VERIFIED_IN_SCOPE` pro T003-S10-W02.
+
+```bash
+KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1 JAVA_TOOL_OPTIONS=-XX:-UsePerfData \
+  python -m pytest -n 2 --dist load -q --tb=short -ra -p no:cacheprovider \
+    -o tmp_path_retention_policy=failed tests/test_stage_content_cache.py \
+    tests/test_stage_content_cache_actual.py tests/test_completion.py \
+    -k 'test_completion or launch_capture_hashes_without_materializing or launch_capture_binds_linux_native_library or non_linux_java_launch or unavailable_java_launch_input or java_native_library_change_after_analysis or actual_jvm_locale_drift_preserves_published_generation or actual_jvm_cold_warm or actual_typescript_preflight'
+```
+
+Úplná standardní sada společného stromu, skutečný běh mimo Linux a GitHub
+Actions mají v tomto předání stav `NOT_RUN`. Warm HIT zůstává otevřený v #116.

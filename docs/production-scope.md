@@ -1,8 +1,8 @@
 # Production scope a evidence v2
 
-Tato stránka popisuje offline klasifikaci a pohledy dostupné od PR #4.
-Na navazující větvi PR #5 existují také explicitní compiler workery, build exportéry
-a CFG v omezené matici; viz [compiler inspection](compiler-inspection.md).
+Tato stránka popisuje offline klasifikaci a pohledy z původního [PR #4](https://github.com/p-rum/kgmaker/pull/4), které jsou v `main`.
+V `main` jsou také navazující explicitní compiler workery, build exportéry a CFG
+v omezené matici; viz [compiler inspection](compiler-inspection.md).
 Úplné dokončení řeší [T003](tasks/3_finishProductionAnalysis.md). Přehled požadavků a stav milníků je v
 [progress dokumentu](production-analysis-progress.md).
 
