@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,6 +73,17 @@ def analysis_dir(root: Path, analysis_id: str) -> Path:
     return safe_path(root, f".kgmaker/analyses/{analysis_id}")
 
 
+def read_regular_bytes(path: Path) -> bytes:
+    """Read one open regular file, rejecting replaced symlinks and special files."""
+    if not stat.S_ISREG(path.lstat().st_mode):
+        raise OSError(f"Not a regular file: {path.name}")
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    with os.fdopen(os.open(path, flags), "rb") as stream:
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            raise OSError(f"Not a regular file: {path.name}")
+        return stream.read()
+
+
 def decode_json(raw: str | bytes, label: str) -> Any:
     def reject_constant(value: str) -> None:
         raise ValueError(f"Non-finite JSON value: {value}")
@@ -88,9 +100,10 @@ def decode_json(raw: str | bytes, label: str) -> Any:
         raise AnalysisError(f"Invalid JSON in {label}: {exc}") from exc
 
 
-def read_json(path: Path) -> Any:
+def read_json(path: Path, *, regular_only: bool = False) -> Any:
     try:
-        return decode_json(path.read_text(encoding="utf-8"), path.name)
+        text = read_regular_bytes(path).decode("utf-8") if regular_only else path.read_text(encoding="utf-8")
+        return decode_json(text, path.name)
     except UnicodeError as exc:
         raise AnalysisError(f"Invalid JSON in {path.name}: {exc}") from exc
 
