@@ -1594,7 +1594,7 @@ in the graph publication rollback scope.
 [Detaily, příklady a hranice souběhu](stage-content-cache.md),
 [ověření #116](changes/135_bindCachedCompilerEvidence.md),
 [regrese locale a platformních symbolů](changes/164_bindJavaLaunchInputs.md),
-[ověření nákladů živé inspekce](changes/177_reduceLiveInspectionOverhead.md).
+[ověření nákladů živé inspekce](changes/178_reduceLiveInspectionOverhead.md).
 
 Runtime import ověří obálku před publikací. Pod zámkem store hlídá
 očekávanou generaci a import před každým nahrazením výstupu znovu kontroluje

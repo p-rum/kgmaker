@@ -2,8 +2,8 @@
   "schema_version": 3,
   "files": {
     "AGENTS.md": "e703623cfdee92f65afec1b3b1f17563a9f47c5cecdb7811ffda2cf2e1954799",
-    "README.md": "be8a93731ef1a9b460c1ac8207e3f25fc746b1c12b0f57284e8f03f7fd6ced94",
-    "docs/acceptance-inventory.md": "d4326fa69fef0ad6490252e2d525d1b2a43ad9379739472db1b583136755ca4e",
+    "README.md": "02669cda0c914d88e02b87d4fe10275428f87c8f9f81b7155d7e85b3a98bedcc",
+    "docs/acceptance-inventory.md": "1abae1e6d4c836e103e9d26afc62fa83a3fa1b82a73c28dd45995f476cb4f802",
     "docs/agent-skills.md": "d0a1234b1ea4f30a557a9c07e4a21fdbadcf3654eaa4d5b075b8931aa12700e8",
     "docs/architecture-json-cli.md": "f75e6978d72aff985701cc093fa14e79fb6fd36d49eaeb85a2cf38e10b17808a",
     "docs/architecture.md": "e3d20f1936a0fd4f73551f51f9b890c9bbf4c3d10cffe459afa00a7b25f198cb",
@@ -78,7 +78,7 @@
     "docs/changes/171_addExcelMigration.md": "afc21c698991f950606ffb55d930dd6a99aaa26e80d75ba8164cd2f4af986aca",
     "docs/changes/172_automateExcelMigration.md": "0529e2835a682fefe02b5602b6ce9ffd507d931ebe35b735398f1c642919532e",
     "docs/changes/175_requireVerifiedDependencies.md": "5fa312b6a12f09b03f60832ccc077c14102962284696fa62ed2bbb1cc160d275",
-    "docs/changes/177_reduceLiveInspectionOverhead.md": "4a9973818aa3d5f68b423b3fa0a98dc384c6dcef9799ad8f9d4db704ba837571",
+    "docs/changes/178_reduceLiveInspectionOverhead.md": "4a9973818aa3d5f68b423b3fa0a98dc384c6dcef9799ad8f9d4db704ba837571",
     "docs/changes/17_exportGradleIncludedBuilds.md": "449c9b087f9969fa589fb6a5e9c51d917a38b89737fff6eeb5e9482ac9153f2b",
     "docs/changes/1_addProductionScope.md": "01d4001f03b21b1115d6461514f4b643d12cff3ae03bcaabfb6645bb3dd15113",
     "docs/changes/26_addCodeReviewAgent.md": "b3daa09ab9ec31c301fbaa1afe2101becde926ea5db35260c4ab7582f49a023d",
@@ -157,7 +157,7 @@
     "docs/changes/98_explainViewElements.md": "1de96c0287c4c99bfda96206d6b6cf005edf698bb3b70b04ba22c92be0bd2214",
     "docs/changes/99_addArchitectureJsonCli.md": "93107bf3869e71599834af22e99e9fecaad5c702859e9b9d189bd957d00aeba3",
     "docs/changes/9_bindMethodologyApproval.md": "9ad9fb9480a75bbe6629de98ab67c32acb5696a683c17677bce9df02f038b64f",
-    "docs/compiler-inspection.md": "dbdaf9226dcc3ce05d123e89dac97b82e1c20e8164590b08fdfa79ed825d63fc",
+    "docs/compiler-inspection.md": "a366daec6f19bcdf9562f9551806852dbd9d07e0dd07826e850e0b4e7532edaa",
     "docs/complete-analysis-report.md": "dcdbc01d104d078c12376845c84e84f735d3476dadada0fa156656ceb76a7ac9",
     "docs/completion-orchestrator.md": "b0b8eb119536550a335de387605c5c7e5a28941081821a96a0a28023ddb7789e",
     "docs/delivery-workflow.md": "bb3e1ccae15d801e84017e527aa45f07a4caa1e983a1a6073a3687031ae9892a",
@@ -179,7 +179,7 @@
     "docs/process-paths.md": "15fb5e9b42331487d208d5e4e5ce2972218d7baa81b4e90278001fcf1094d74d",
     "docs/process-review-store.md": "78c0b4144c0016ed1bb01a036d242fe8917de511c0d6f7b266727695c4687218",
     "docs/process-triggers.md": "ae17f924fcb6cfa926622d7d00d8215b73d003b075e3af03c0cbeb1e2da5594d",
-    "docs/production-analysis-progress.md": "f992859f9b0d7c8aaa85b3425c189b917036230565b5619fafdddca6be8fe0c9",
+    "docs/production-analysis-progress.md": "410201f6d2269a9d71ebe06ce750149b94d3f8cffff668719927a592dbe37284",
     "docs/production-scope.md": "5ae70daad7ae15c4fc136b3313f22dca2bb257aac201c8ca130f6d1ecc8734c4",
     "docs/programmatic-queries.md": "4f3a5ea20e58edfc9560b57429ee410b7de1850356065494a6d1fa6d8f86ab8c",
     "docs/project-installation.md": "b4da2d520b28e8106bab079aa432da32e71a8a35ca0c1cc28f0345c1c38621f3",
@@ -198,7 +198,7 @@
     "docs/schemas/worker-request-v1.schema.json": "aa2ce9c329ad76620df733fe20b4dbd213fadb1d9ddf078e050216869662bffe",
     "docs/schemas/worker-response-v1.schema.json": "95fa788d66e311cee8293b19797704fb18de53ad12ee7189ebb43a86672c9985",
     "docs/service-topology.md": "f0e57e033ed48454c0a4a2005104f7fd6b0c0f1c4a239ca1c25d14872e8743af",
-    "docs/stage-content-cache.md": "16911c0cddb5c81eab9639692b7ba26350dc488c411d5d6e1de859c3cf9abc51",
+    "docs/stage-content-cache.md": "11637a3ffb9e75a17f8fb1106b3ea8c434c3007956654a5d5e6af908ddbdad7d",
     "docs/tasks/1_featureAnalysis.md": "e714ac0c6f275c9edc7e97eb2964e78be5f2f2f9a7d2306b4b125e03b680b4aa",
     "docs/tasks/2_buildAwareInspection.md": "394bde3e2954649fa2e861f1efbbb7a10afd3873cc290133cd3fd44d9eb9d973",
     "docs/tasks/3_finishProductionAnalysis.md": "b505f37025d68234b90229d23909e98f7240d77279d231cfac2bc4bde330ccbb",
@@ -993,6 +993,13 @@
       "summary": "Failure projection preserves catch/finally topology, retains bounded declared retry/DLT evidence and separates local transaction scope and proposed compensation from remote rollback."
     },
     {
+      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "name": "Repository completion workflow",
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
+    },
+    {
       "id": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "name": "Compiler proven default and bridge declaration mapping",
       "source_file": "docs/compiler-inspection.md",
@@ -1089,13 +1096,6 @@
       "source_file": "docs/stage-content-cache.md",
       "source_line": 140,
       "summary": "Read-only impact from a single graph generation and receipt-bound local feature citations."
-    },
-    {
-      "id": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
-      "name": "Repository completion workflow",
-      "source_file": "docs/completion-orchestrator.md",
-      "source_line": 3,
-      "summary": "T052 plans repository completion from the delivery inventory and uses standard profiled task and provenance artifacts."
     },
     {
       "id": "concept:README.md:optional_agent_authored_semantic_layer",
@@ -2377,6 +2377,16 @@
       "confidence_score": 1
     },
     {
+      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
+      "target": "function:src/kgmaker/completion.py:plan::190",
+      "kind": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/completion-orchestrator.md",
+      "source_line": 3,
+      "evidence": "The completion plan uses existing delivery inventory and task links."
+    },
+    {
       "source": "file:workers/jvm/src/main/java/org/kgmaker/worker/SourceMapping.java:SourceMapping.java",
       "target": "concept:docs/compiler-inspection.md:compiler_proven_default_and_bridge_declaration_mapping",
       "kind": "implements",
@@ -3155,16 +3165,6 @@
       "source_file": "README.md",
       "source_line": 229,
       "evidence": "The README describes the bounded semantic update packet and scoped application of its patch."
-    },
-    {
-      "source": "concept:docs/completion-orchestrator.md:repository_completion_workflow",
-      "target": "function:src/kgmaker/completion.py:plan::190",
-      "kind": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/completion-orchestrator.md",
-      "source_line": 3,
-      "evidence": "The completion plan uses existing delivery inventory and task links."
     }
   ],
   "episodes": [

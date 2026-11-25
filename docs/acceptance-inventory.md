@@ -79,7 +79,7 @@ Dílčí oprava živé inspekce na `0c834c8b` ověřuje shodný otisk při průb
 čtení launcheru a jednu validaci každého živého grafového stupně. Testy s
 Javacem, K1, K2 a TypeScriptem počítají i skutečné worker operace. Negativní
 kontroly pokrývají nevhodný živý výstup a závody při publikaci.
-[Přesná evidence a hranice](changes/177_reduceLiveInspectionOverhead.md).
+[Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md).
 
 ## T003-S10-W02 — reverse dependency indexy
 

@@ -63,7 +63,7 @@ kontrola integrity formátu. Autoritu konkrétní hrany nebo coverage určuje
 aktuální worker a projekce. Zaznamenané vstupy se ověří znovu před commit.
 Otisk launcheru a platformních souborů čte při každé kontrole všechny jejich
 bajty průběžně. Grafová fáze při živém běhu použije objekt z jediné kontroly
-svého výstupu. [Měření a ověření](changes/177_reduceLiveInspectionOverhead.md).
+svého výstupu. [Měření a ověření](changes/178_reduceLiveInspectionOverhead.md).
 Změna zdroje, konfigurace, workeru, classpath nebo zachyceného otisku
 launcheru během inspekce vrací `STALE`.
 Cyklický odkaz při další kontrole launcheru zneplatní dříve dostupný otisk.

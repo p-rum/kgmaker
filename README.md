@@ -1320,7 +1320,7 @@ explicit graph object requires it to match the stored generation, when present.
 Retry the original command after the other writer finishes.
 [Příkazy a omezení](docs/stage-content-cache.md),
 [ověření opravy #116](docs/changes/135_bindCachedCompilerEvidence.md),
-[ověření nákladů živé inspekce](docs/changes/177_reduceLiveInspectionOverhead.md).
+[ověření nákladů živé inspekce](docs/changes/178_reduceLiveInspectionOverhead.md).
 
 ### Selektivní dopad změněných souborů (T003-S10-W02)
 
