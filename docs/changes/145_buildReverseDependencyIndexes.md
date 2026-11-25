@@ -397,3 +397,42 @@ W02-AC01 zůstává `PARTIAL`. Publikace selektivní invalidace, negativní
 lookupy a cross-workspace vazby mají vlastní rozsah. Úplná sada na nové
 revizi, GitHub Actions a opakované nezávislé review mají při lokálním předání
 stav `NOT_RUN`.
+
+
+## Přenos po #154 a #155 — T003-S10-W02, kroky 3–5 a AC01–AC04
+
+Přenos sjednotil změnu `beac7a80991e72a48513bb48f6e5f10d2b3c717b` s
+`main` `782ac6ac0287550084e9afadbd6182756fdd2730`. Změny instalátoru,
+migrace Excelu a opravené kanonické Kafka identity z #152 byly zachovány.
+Report zachovává čtecí kontrakt předchozího kroku. Sémantika zachovala
+396 předchozích epizod a přidala záznam integrace.
+
+- PASS — skutečné JDK 21 a oba workery K1/K2, **247 PASS / 0 SKIP**.
+  JUnit SHA-256 `41cd0df18c538f5c4daffcbfa1288bb02b277b3c0c178d0feec5dd0c14b85bcd`.
+  Shodný manifest před a po a kontroly sémantiky, grafu a diffu. Dvě
+  varování Pythonu se týkají `fork()` ve vícevláknovém testu T032.
+- PASS — nezávisle **11 PASS / 0 SKIP** na stejném kódu s JDK 21.
+  JUnit `0bb2bd2754b429a26eff2c238d577c70e8d5097b1e555fdcd3ba7a11711e6e7c`.
+  Testy ověřily čtecí report, nezměněné grafy a kompatibilitu starších formátů.
+- FAIL — první standardní běh CPython 3.13 na stejném produktu měl
+  **2 573 PASS / 1 337 SKIP / 1 očekávaný strict XFAIL / 1 FAIL**.
+  Gradle v izolovaném prostředí neměl rozhraní pro koordinaci lokálního
+  zámku. Druhý pokus měl i omezený `PATH` bez Node a skončil čtyřmi FAIL,
+  JUnit `c9270877491cd0954d6854a61c1ef45220b1ff8fb223da42bd6900991e0dc40d`.
+- PASS — po doplnění nativního prostředí Gradle a Node prošlo **26 PASS,
+  3 SKIP** v cíleném opakování modulu T021 a instalovaného offline Gradle
+  exportu. Tři volitelné Mermaid testy přeskočily kvůli chybějícím
+  závislostem rendereru. Úplná standardní sada v této konfiguraci zatím
+  neběžela. GitHub Actions a finální review nové dvojice revizí mají samostatné
+  výsledky.
+
+```bash
+python -m pytest -p no:cacheprovider -q \
+  tests/test_reverse_dependency_index.py tests/test_kafka_bindings.py \
+  tests/test_graph_provider.py tests/test_feature.py tests/test_feature_fixture.py \
+  tests/test_flyway.py tests/test_workspace.py tests/test_graph_publication_concurrency.py \
+  tests/test_t032_persist_process_review.py tests/test_jvm_raw_source_snapshot.py
+```
+
+W02-AC01 zůstává `PARTIAL`. Selektivní zápis při invalidaci a negativní
+vyhledání vyžadují vlastní implementaci a ověření.
