@@ -99,3 +99,24 @@ výstupů se nemění.
   `823f33a5cf233153a158b9c36221d3ce2ff2d56da18d5b11096a29e960bc2e07`.
 - Nový úplný běh, Windows, GitHub Actions a T045 pro tento pár jsou
   NOT_RUN. Výsledek dokládá zdrojovou čerstvost T051-AC02 a T052-AC02.
+
+
+## T051-S02 / T052-S02 — ověření po sloučení #136
+
+Základ `5809e84932b1910bfc3f17c72e2a2005283389b1` a předchozí head
+`babade34660110a62b4b88db0e902f2ba61488a5`. Přenos zachovává shodné
+`context.py`, `workbooks.py` a `test_workflow.py` z předchozího headu.
+Kód, testy a rozsah runtime importu z #136 jsou shodné s novým `main`.
+Příkazy a výstupní formáty se nemění. Součástí přenosu je obnovení
+generovaných grafů při zachování sémantických epizod z obou rodičů.
+
+- Stejný cílený výběr jako po #154 a #155 má 208 PASS, 0 SKIP a 0 FAIL
+  pod CPythonem 3.12. JUnit SHA-256
+  `5e4f31eea01523d8004711865704472a77ccfb7ddb31f49694f40048feee3ee0`.
+  Otisky zdrojů, testů, workerů a fixture se před a po shodují.
+- Opakovaná zkouška nad skutečnými sešity T054 potvrdila stejný seznam
+  zdrojů a indikátory `current` a `stale`. Přitom neproběhl parser ani
+  proces a původní graf zůstal stejný. SHA-256 výsledku
+  `f751b834055e22c98a5d69f0ee449326d1c7356d4822b3918d06420df3190ebc`.
+- Úplný běh, Windows, GitHub Actions a nové T045 zůstávají NOT_RUN.
+  Starší schválení patří předchozímu základu.

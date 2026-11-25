@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ _SHA256 = re.compile(r"[a-f0-9]{64}\Z")
 STATUSES = {"COMPLETE", "PARTIAL", "UNKNOWN"}
 DIAGNOSTICS = {"INSTRUMENTED_SCOPE_ONLY", "NO_FACTS", "CAPTURE_INCOMPLETE", "CAPTURE_UNKNOWN", "FACT_LIMIT"}
 METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+_CALLABLE_KINDS = ("method", "function", "constructor")
 _FACT_FIELDS = {
     "call": {"kind", "caller", "target", "outcome"},
     "bean": {"kind", "factory", "bean_type", "outcome"},
@@ -31,7 +33,7 @@ _FACT_FIELDS = {
 
 
 def _label(value: Any, field: str) -> None:
-    if not isinstance(value, str) or not _LABEL.fullmatch(value):
+    if type(value) is not str or not _LABEL.fullmatch(value):
         raise AnalysisError("Runtime requires a nonempty bounded non-secret identifier: " + field)
 
 
@@ -49,7 +51,7 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict) -> No
     """Closed schema: no arbitrary strings, diagnostic text, URLs or payloads."""
     if set(capture) != {"facts", "status", "diagnostics"}:
         raise AnalysisError("Runtime capture requires only facts, status and diagnostics")
-    if not isinstance(capture["status"], str) or capture["status"] not in STATUSES:
+    if type(capture["status"]) is not str or capture["status"] not in STATUSES:
         raise AnalysisError("Runtime capture requires status COMPLETE/PARTIAL/UNKNOWN")
     diagnostics = capture["diagnostics"]
     if (not isinstance(diagnostics, list) or len(diagnostics) > len(DIAGNOSTICS)
@@ -76,25 +78,24 @@ def _validate_capture(graph: KnowledgeGraph, context: dict, capture: dict) -> No
         kind = fact.get("kind") if isinstance(fact, dict) else None
         if not isinstance(kind, str) or kind not in _FACT_FIELDS or set(fact) != _FACT_FIELDS[kind]:
             raise AnalysisError(f"Runtime facts[{index}] has missing or unsupported fields")
-        methods = {"method", "function", "constructor"}
         if kind == "call":
-            symbol(fact["caller"], methods)
-            symbol(fact["target"], methods)
+            symbol(fact["caller"], _CALLABLE_KINDS)
+            symbol(fact["target"], _CALLABLE_KINDS)
             if fact["outcome"] not in ("RETURNED", "THREW"):
                 raise AnalysisError("Runtime call outcome is invalid")
         elif kind == "bean":
-            symbol(fact["factory"], methods)
+            symbol(fact["factory"], _CALLABLE_KINDS)
             symbol(fact["bean_type"], {"class", "interface", "object"})
             if fact["outcome"] not in ("CREATED", "NULL", "THREW"):
                 raise AnalysisError("Runtime bean outcome is invalid")
         elif kind == "condition":
-            symbol(fact["owner"], methods | {"class"})
-            symbol(fact["predicate"], methods)
+            symbol(fact["owner"], _CALLABLE_KINDS + ("class",))
+            symbol(fact["predicate"], _CALLABLE_KINDS)
             if type(fact["matched"]) is not bool:
                 raise AnalysisError("Runtime condition matched must be boolean")
         else:
-            symbol(fact["owner"], methods | {"class"})
-            symbol(fact["handler"], methods)
+            symbol(fact["owner"], _CALLABLE_KINDS + ("class",))
+            symbol(fact["handler"], _CALLABLE_KINDS)
             if (not isinstance(fact["method"], str) or fact["method"] not in METHODS
                     or not isinstance(fact["route_sha256"], str)
                     or not _SHA256.fullmatch(fact["route_sha256"])):
@@ -258,11 +259,17 @@ def _check_hashes(root: Path, context: dict[str, Any], manifest: dict[str, Any] 
 
 
 def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    if (not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int
-            or manifest["schema_version"] not in SUPPORTED_SCHEMA_VERSIONS):
+    if not isinstance(manifest, dict):
         raise AnalysisError("RuntimeManifest schema_version must be 1 or 2")
+    # Bind the envelope before any preflight checks can read caller-owned values.
+    manifest = dict(manifest)
+    version = manifest.get("schema_version")
+    if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
+        raise AnalysisError("RuntimeManifest schema_version must be 1 or 2")
+    v2 = version == 2
     for key in ("runtime_id", "context_id", "build_id", "config_fingerprint"):
-        if not isinstance(manifest.get(key), str) or not manifest[key]:
+        value = manifest.get(key)
+        if not isinstance(value, str) or (v2 and type(value) is not str) or not value:
             raise AnalysisError("RuntimeManifest requires " + key)
     context = _context_for(graph, manifest["context_id"])
     if context.get("build_id") != manifest["build_id"]:
@@ -270,20 +277,22 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
     if manifest["config_fingerprint"] != context.get("config_fingerprint", manifest["config_fingerprint"]):
         raise AnalysisError("STALE_RUNTIME: configuration fingerprint differs", 3)
     _check_hashes(root, context, manifest)
-    v2 = manifest["schema_version"] == 2
     if v2:
         fields = {"schema_version", "runtime_id", "context_id", "build_id", "config_fingerprint", "service_id",
                   "service_version", "source_identity", "source_hashes", "worker_distribution", "facts",
                   "observations", "status", "diagnostics", "producer"}
-        if set(manifest) != fields:
+        if set(manifest) != fields or any(type(key) is not str for key in manifest):
             raise AnalysisError("RuntimeManifest v2 has missing or unsupported fields")
         for key in ("runtime_id", "context_id", "build_id", "config_fingerprint", "service_id", "service_version"):
             _label(manifest[key], key)
         if not context.get("source_files") or not context.get("config_fingerprint"):
             raise AnalysisError("RuntimeManifest v2 requires captured source/config/context identity", 3)
-        if manifest["source_identity"] != {"context_fingerprint": digest(context),
-                                          "source_manifest_fingerprint": digest(context["source_files"])}:
+        source_identity = {"context_fingerprint": digest(context),
+                           "source_manifest_fingerprint": digest(context["source_files"])}
+        if manifest["source_identity"] != source_identity:
             raise AnalysisError("STALE_RUNTIME: source identity differs from compiler context", 3)
+        # Keep the verified identity independent of the caller's mapping.
+        manifest["source_identity"] = source_identity
         producer = manifest["producer"]
         if (not isinstance(producer, dict) or set(producer) != {"command_fingerprint", "opt_in"}
                 or producer["opt_in"] is not True or not isinstance(producer["command_fingerprint"], str)
@@ -295,25 +304,43 @@ def validate_manifest(graph: KnowledgeGraph, root: Path, manifest: dict[str, Any
     observations = manifest.get("observations")
     if not isinstance(observations, list) or len(observations) > MAX_FACTS:
         raise AnalysisError("Runtime observations must be a bounded array")
-    if v2 and manifest["status"] == "UNKNOWN" and observations:
-        raise AnalysisError("Runtime UNKNOWN cannot establish observed call evidence")
+    unknown = v2 and manifest["status"] == "UNKNOWN"
     ids = {node.id for node in graph.nodes}
-    for index, item in enumerate(observations):
-        allowed = {"caller", "target", "kind"} if v2 else {"caller", "target", "kind", "scenario", "async", "source"}
-        if not isinstance(item, dict) or set(item) - allowed:
+    selected = {
+        symbol["id"]: symbol.get("kind") for symbol in graph.symbols
+        if symbol.get("context_id") == context["id"]
+    } if v2 else {}
+    allowed = {"caller", "target", "kind"} if v2 else {"caller", "target", "kind", "scenario", "async", "source"}
+    admitted = []
+    for index, observation in enumerate(observations):
+        if unknown:
+            raise AnalysisError("Runtime UNKNOWN cannot establish observed call evidence")
+        if index >= MAX_FACTS:
+            raise AnalysisError("Runtime observations must be a bounded array")
+        if not isinstance(observation, dict):
             raise AnalysisError(f"Runtime observations[{index}] has unknown fields")
-        if not isinstance(item.get("caller"), str) or not isinstance(item.get("target"), str):
+        item = dict(observation)
+        if any((v2 and type(key) is not str) or key not in allowed for key in item):
+            raise AnalysisError(f"Runtime observations[{index}] has unknown fields")
+        caller, target = item.get("caller"), item.get("target")
+        if (not isinstance(caller, str) or not isinstance(target, str)
+                or (v2 and (type(caller) is not str or type(target) is not str))):
             raise AnalysisError(f"Runtime observations[{index}] requires caller and target IDs")
-        if item["caller"] not in ids or item["target"] not in ids:
+        if caller not in ids or target not in ids:
             raise AnalysisError(f"Runtime observations[{index}] references an unknown graph symbol")
-        if item.get("kind", "call") not in ("call", "dispatch", "framework"):
+        kind = item.get("kind", "call")
+        if (v2 and type(kind) is not str) or kind not in ("call", "dispatch", "framework"):
             raise AnalysisError(f"Runtime observations[{index}] has unsupported kind")
-        if not isinstance(item.get("scenario", ""), str) or len(item.get("scenario", "")) > 200:
-            raise AnalysisError(f"Runtime observations[{index}].scenario is invalid")
         if v2:
-            selected = {s["id"] for s in graph.symbols if s.get("context_id") == context["id"]}
-            if item["caller"] not in selected or item["target"] not in selected:
+            if caller not in selected or target not in selected:
                 raise AnalysisError("Runtime observation references an out-of-context symbol")
+            if kind != "framework" and (selected[caller] not in _CALLABLE_KINDS
+                                        or selected[target] not in _CALLABLE_KINDS):
+                raise AnalysisError("Runtime call and dispatch observations require callable symbols")
+        elif not isinstance(item.get("scenario", ""), str) or len(item.get("scenario", "")) > 200:
+            raise AnalysisError(f"Runtime observations[{index}].scenario is invalid")
+        admitted.append(item)
+    manifest["observations"] = admitted
     return manifest, context
 
 
@@ -332,7 +359,11 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
         raise AnalysisError("Runtime import requires a stored schema 3 compiler graph")
     manifest, context = validate_manifest(graph, root, manifest)
     evidence = {item["id"]: item for item in graph.evidence}
-    edges = {(edge.source, edge.target, edge.kind): edge for edge in graph.edges}
+    edges = list(graph.edges)
+    observed_edges = {(edge.source, edge.target, edge.kind, edge.context_ids): index
+                      for index, edge in enumerate(edges) if edge.evidence_kind == "RUNTIME_OBSERVED"}
+    context_ids = (context["id"],)
+    imported = {}
     for item in manifest["observations"]:
         source, target = item["caller"], item["target"]
         relation = "observed_dispatch_to" if item.get("kind", "call") in {"dispatch", "call"} else "runtime_framework_observation"
@@ -340,15 +371,27 @@ def import_manifest(root: Path, manifest: dict[str, Any], *, graph: KnowledgeGra
                   "runtime_id": manifest["runtime_id"], "context_id": manifest["context_id"],
                   "build_id": manifest["build_id"], "scenario": item.get("scenario", ""),
                   "async": bool(item.get("async", False)), "observation_source": item.get("source")}
+        if manifest["schema_version"] == 2:
+            record.update({key: manifest[key] for key in (
+                "config_fingerprint", "service_id", "service_version", "source_identity",
+            )})
         evidence_id = "evidence:" + digest(record)
         evidence.setdefault(evidence_id, {"id": evidence_id, **record})
-        edges[(source, target, relation)] = Edge(
+        imported.setdefault((source, target, relation), set()).add(evidence_id)
+    for (source, target, relation), evidence_ids in imported.items():
+        # Keep each edge in a single context so scoped views can retain its proof.
+        key = (source, target, relation, context_ids)
+        index = observed_edges.get(key)
+        if index is not None:
+            edge = edges[index]
+            edges[index] = replace(edge, evidence_ids=tuple(sorted(evidence_ids.union(edge.evidence_ids))))
+            continue
+        edges.append(Edge(
             source, target, relation,
             "Observed in supplied runtime export; scope is limited to this runtime/configuration.",
-            evidence_kind="RUNTIME_OBSERVED", context_ids=(manifest["context_id"],), evidence_ids=(evidence_id,))
-    from dataclasses import replace
+            evidence_kind="RUNTIME_OBSERVED", context_ids=context_ids, evidence_ids=tuple(sorted(evidence_ids))))
     updated = replace(graph,
-        edges=sorted(edges.values(), key=lambda edge: (edge.source, edge.kind, edge.target)),
+        edges=sorted(edges, key=lambda edge: (edge.source, edge.kind, edge.target, edge.context_ids)),
         evidence=sorted(evidence.values(), key=lambda item: item["id"]),
         diagnostics=graph.diagnostics + [{"code": "RUNTIME_IMPORT_SCOPED", "runtime_id": manifest["runtime_id"],
                                           "observations": len(manifest["observations"]), "context_id": context["id"]}])
