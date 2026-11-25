@@ -90,6 +90,23 @@ klasifikaci a důkazní vrstvy. JUnit SHA-256
 Širší acceptance P1/P8/P9 sleduje aktuální zadání T003 a stavová matice.
 [Historický záznam implementace](1_addProductionScope.md)
 
+## T051-S02 a T052-S02, zdrojová čerstvost role packetu
+
+Dopředný přenos inventáře vychází z `main`
+`b04d064a6147436adc751f5fffa4a219b8f8c16e`. [#151](https://github.com/p-rum/kgmaker/pull/151)
+je v něm skutečně sloučené se schváleným headem
+`473841773a708e259bda33e93568581b5d03464d` a výsledným stromem
+`b60ff57a1ae03ed7920bf4a23b3e88dcd54a5273`. Schválený strom má
+**208 cílených PASS / 0 SKIP**, JUnit SHA-256
+`5e4f31eea01523d8004711865704472a77ccfb7ddb31f49694f40048feee3ee0`.
+Kontrola doložila stejnou zdrojovou inventuru i reakci na změnu bajtů
+skutečných XLSX, šifrovaných XLSX a legacy XLS. Ověření proběhlo bez
+parsování sešitů, spuštění procesu či přepsání grafu. Explicitní XLSM
+má vlastní workflow T054. Ostatní ověřovací stavy T051 a T052 zůstávají
+v dosavadním rozsahu.
+[Návod a příklad packetu](../project-workflows.md#role-context-freshness) ·
+[Záznam implementace](167_useCanonicalPacketSourceSnapshot.md)
+
 ## Ověření inventáře a kompatibilita
 
 ```bash

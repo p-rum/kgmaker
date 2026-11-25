@@ -293,11 +293,16 @@ def _select_prior(task: dict[str, Any], role: str) -> list[dict[str, Any]]:
 def _graph_status(root: Path, graph: KnowledgeGraph | None) -> tuple[str, list[str]]:
     if graph is None:
         return "missing", ["stored graph is missing; run `kgmaker scan`"]
+    from .workbooks import workbook_hash, workbook_paths
+
     try:
-        live = scan_repository(root)
+        root = root.resolve()
+        files = scan_repository(root).files
+        files.update((path.relative_to(root).as_posix(), workbook_hash(path))
+                     for path in workbook_paths(root))
     except (OSError, UnicodeError, ValueError) as error:
         return "stale", [f"could not scan repository for freshness: {error}"]
-    if graph.files != live.files:
+    if graph.files != files:
         return "stale", ["graph is stale relative to current source hashes"]
     return "current", []
 
