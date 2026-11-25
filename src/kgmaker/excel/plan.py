@@ -8,7 +8,7 @@ from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 from ..analysis_model import ID_PATTERN, AnalysisError, canonical, digest
-from .source import VERSION, WORKER, bounded_json
+from .source import MAX_ARTIFACT_BYTES, VERSION, WORKER, bounded_json
 
 ARCHITECTURE = {
     "domain": "Model workbook inputs, outputs, errors and typed values.",
@@ -17,6 +17,9 @@ ARCHITECTURE = {
     "ports": "Isolate user interaction, filesystem and external integrations behind interfaces.",
     "parity": "Confirm Excel date system, empty/error values, precision and rounding as applicable.",
 }
+# Every valid inventory row is a JSON object that occupies more than 16 bytes.
+# The artifact size is the effective bound for producer and consumer alike.
+MAX_INVENTORY_ROWS = MAX_ARTIFACT_BYTES // 16
 TASK_KINDS = {"implementation", "verification"}
 TASK_FIELDS = {
     "id", "kind", "title", "target", "implementation", "inputs", "outputs",
@@ -58,7 +61,7 @@ def load_inventory(path: Path) -> dict:
             or data["inventory_id"] != digest({k: v for k, v in data.items() if k != "inventory_id"})):
         raise AnalysisError("Inventory is invalid or uses an incompatible analyzer version")
     evidence = {}
-    for item in array(data["evidence"], "Inventory evidence", 500_000):
+    for item in array(data["evidence"], "Inventory evidence", MAX_INVENTORY_ROWS):
         if not isinstance(item, dict) or not isinstance(item.get("locator"), dict) or not isinstance(item.get("kind"), str):
             raise AnalysisError("Inventory evidence item is invalid")
         key = identity(item.get("id"), "Evidence ID")
@@ -69,17 +72,17 @@ def load_inventory(path: Path) -> dict:
         if not isinstance(row, dict) or not isinstance(row.get("id"), str) or "sha256" not in row:
             raise AnalysisError("Inventory workbook row is invalid")
     seen = set()
-    for row in array(data["subjects"], "Inventory subjects", 500_000):
+    for row in array(data["subjects"], "Inventory subjects", len(evidence)):
         object_fields(row, {"id", "label"}, set(), "Coverage subject")
         key = identity(row["id"], "Coverage subject ID")
         if key not in evidence or key in seen:
             raise AnalysisError("Coverage subject is duplicated or absent from evidence")
         seen.add(key)
-    for edge in array(data["relations"], "Inventory relations", 500_000):
+    for edge in array(data["relations"], "Inventory relations", MAX_INVENTORY_ROWS):
         object_fields(edge, {"source", "target", "kind", "evidence"}, set(), "Evidence relation")
         if (identity(edge["source"], "Relation source") not in evidence
                 or identity(edge["target"], "Relation target") not in evidence
-                or set(_ids(edge["evidence"], "Relation evidence", nonempty=True)) - evidence.keys()):
+                or set(_ids(edge["evidence"], "Relation evidence", maximum=len(evidence), nonempty=True)) - evidence.keys()):
             raise AnalysisError("An evidence relation has unknown endpoints")
     return data
 

@@ -18,13 +18,17 @@ LEXEME = re.compile(r'''"(?:[^"]|"")*"|'[^\n]*''')
 CALL = re.compile(rf"^\s*Call\s+({QUALIFIED})(?!\w)", re.I)
 BARE = re.compile(rf"^\s*({QUALIFIED})(?:\s+[^\s=].*|\([^=]*\))?\s*$", re.I)
 FUNCTION_CALL = re.compile(rf"(?<![.\w])({QUALIFIED})\s*\(")
-RUN = re.compile(rf"(?:\bApplication\s*\.\s*|^\s*(?:Call\s+)?)Run\s*(?:\(\s*)?{STRING}", re.I)
+RUN = re.compile(r"(?:(?<![.\w])(?P<application>Application)\s*\.\s*|^\s*(?:Call\s+)?)Run\b", re.I)
+RUN_LITERAL = re.compile(
+    rf"\s*(?:(?P<parenthesis>\()\s*)?{STRING}"
+    r"(?=\s*(?:,|(?(parenthesis)\)\s*(?=,|\)|$)|$)))"
+)
 RANGE = re.compile(
     rf"(?<![.\w])(?:"
     rf"(?:(?:ThisWorkbook\s*\.\s*|Workbooks\s*\(\s*{STRING}\s*\)\s*\.\s*))?"
     rf"(?:Worksheets|Sheets)\s*\(\s*{STRING}\s*\)\s*\.\s*"
     rf"|(?:({IDENTIFIER})\s*\.\s*)?"
-    rf")Range\s*\(\s*{STRING}\s*\)(?:\s*\.\s*(?:Value2?|Formula2?))?\s*(?=\s|=|$|[,;)])",
+    rf")Range\s*\(\s*{STRING}\s*\)(?:\s*\.\s*(?P<property>Value2?|Formula2?))?\s*(?=\s|=|$|[,;)])",
     re.I
 )
 EVENTS = {
@@ -46,6 +50,8 @@ SIDE_EFFECTS = (
     (re.compile(r"\b(?:ActiveWorkbook|ActiveSheet|ActiveCell|Selection|Offset|Cells)\b", re.I), "VBA_DYNAMIC_RANGE"),
     (re.compile(r"\b(?:EnableEvents|Calculation|CalculateFull|Calculate)\b", re.I), "VBA_EXCEL_STATE"),
 )
+ASSIGNMENT_START = re.compile(r"(?:^|\b(?:Then|Else)\b)\s*(?:Let\s+)?$", re.I)
+SET_STATEMENT = re.compile(r"(?:^|\b(?:Then|Else)\b)\s*Set\s+", re.I)
 BARE_CONTROL = re.compile(
     r"^\s*(?:Rem|If|ElseIf|Else|End|For|Next|Do|Loop|While|Wend|Select|Case|GoTo|GoSub|"
     r"Exit|Resume|On|Dim|Redim|Set|Let|Const|Static|With|Attribute)\b", re.I
@@ -142,10 +148,21 @@ def literal(value: str | None) -> str | None:
     return None if value is None else value.replace('""', '"')
 
 
+def run_targets(text: str, statement: str, shadowed: set[str], *, project_dispatch: set[str]):
+    """Find Excel dispatch sites in masked VBA and parse the entire first argument."""
+    for site in RUN.finditer(text):
+        receiver = "application" if site["application"] else "run"
+        if receiver in shadowed:
+            yield None
+            continue
+        if receiver in project_dispatch:
+            continue
+        match = RUN_LITERAL.match(statement, site.end())
+        yield literal(match[2]) if match else None
+
+
 def dynamic_flags(text: str, statement: str) -> set[str]:
     flags = {code for pattern, code in SIDE_EFFECTS if pattern.search(text)}
-    if re.search(r"\b(?:Application\s*\.\s*)?Run\b", text, re.I) and not RUN.search(statement):
-        flags.add("VBA_DYNAMIC_DISPATCH")
     if re.search(r"\bRange\s*\(", text, re.I) and not RANGE.search(statement):
         flags.add("VBA_DYNAMIC_RANGE")
     if re.search(r"^\s*#(?:If|ElseIf|Else|End If)\b", text, re.I):

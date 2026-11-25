@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hssf.OldExcelFormatException;
 import org.apache.poi.hssf.record.Record;
@@ -24,6 +25,7 @@ import org.apache.poi.poifs.filesystem.DirectoryNode;
 import org.apache.poi.poifs.filesystem.EntryUtils;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.poifs.macros.VBAMacroReader;
+import org.apache.poi.ss.formula.WorkbookEvaluator;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -50,7 +52,7 @@ public final class ExcelWorker {
     public static void main(String[] args) throws IOException {
         ObjectNode response = JSON.createObjectNode();
         response.put("protocol_version", 1);
-        response.put("worker", "excel-poi-6.0.0-1");
+        response.put("worker", "excel-poi-6.0.0-2");
         response.putArray("capabilities").add("biff8").add("ooxml").add("vba");
         response.put("status", "OK");
         ArrayNode problems = response.putArray("diagnostics");
@@ -114,6 +116,10 @@ public final class ExcelWorker {
                 return;
             }
             ObjectNode facts = response.putObject("facts");
+            var builtinFunctions = new TreeSet<>(WorkbookEvaluator.getSupportedFunctionNames());
+            builtinFunctions.addAll(WorkbookEvaluator.getNotSupportedFunctionNames());
+            ArrayNode builtinNames = facts.putArray("builtin_functions");
+            builtinFunctions.forEach(builtinNames::add);
             ArrayNode sheets = facts.putArray("sheets");
             ArrayNode names = facts.putArray("names");
             ArrayNode cells = facts.putArray("cells");

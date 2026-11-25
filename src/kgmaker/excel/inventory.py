@@ -18,6 +18,7 @@ EXTERNAL_PREFIX = re.compile(r"(?<![\w'])\[([^\]\r\n]+)\]([\w.]+)\s*!")
 EXTERNAL_SHEET = re.compile(r"^([^\[]*)\[([^\]]+)\](.+)$")
 FORMULA_NAME = re.compile(r"(?<![\w.$])([A-Za-z_\\][\w.\\]*)(?![\w.$])")
 DYNAMIC_FORMULA = re.compile(r"\b(?:INDIRECT|OFFSET|INDIRECT\.EXT)\s*\(", re.I)
+SCOPED_FORMULA = re.compile(r"(?<![\w.])(?:_xlfn\.|_xlws\.)*(?:LET|LAMBDA)\s*\(", re.I)
 EVENT_NAME = re.compile(r"^(Workbook|Worksheet)_(\w+)$", re.I)
 RANGE_TEXT = re.compile(r"([^:]+)(?::([^:]+))?")
 KNOWN_DIAGNOSTICS = {
@@ -53,7 +54,7 @@ class Inventory:
         self.gaps = {}
         self.subjects = {}
         self.books = {}
-        self.sheets = {}
+        self.sheets = defaultdict(set)
         self.cells = {}
         self.names = defaultdict(list)
         self.procedures = defaultdict(list)
@@ -61,6 +62,7 @@ class Inventory:
         self.vba_modules = []
         self.triggers = []
         self.external = {}
+        self.builtins = {}
 
     def add(self, kind, locator, **data):
         key = f"{kind}-{digest(locator)[:24]}"
@@ -98,19 +100,20 @@ class Inventory:
             return
         self.books[book.id]["date_1904"] = facts.get("date_1904", False)
         self.external[book.id] = facts["links"]
-        sheet_codes = {}
+        self.builtins[book.id] = {name.casefold() for name in facts["builtin_functions"]}
+        sheet_codes = defaultdict(set)
         for row in facts["sheets"]:
             name = row["name"]
-            key = self.add("sheet", {**locator, "sheet": name}, visibility=row["visibility"],
-                           code_name=row.get("code_name"))
-            self.sheets[book.id, name.casefold()] = (name, key)
+            self.add("sheet", {**locator, "sheet": name}, visibility=row["visibility"],
+                     code_name=row.get("code_name"))
+            self.sheets[book.id, name.casefold()].add(name)
             if row.get("code_name"):
-                sheet_codes[row["code_name"].casefold()] = name
+                sheet_codes[row["code_name"].casefold()].add(name)
         for row in facts["cells"]:
             sheet, cell = row["sheet"], row["cell"]
             details = {key: val for key, val in row.items() if key not in {"sheet", "cell"}}
             key = self.add("cell", {**locator, "sheet": sheet, "cell": cell}, **details)
-            self.cells[book.id, sheet.casefold(), cell] = key
+            self.cells[book.id, sheet, cell] = key
             if row["type"] == "FORMULA":
                 group = self.add("formula-group", {**locator, "sheet": sheet})
                 self.require(group, f"Formula rules in {book.id}/{sheet}")
@@ -122,7 +125,7 @@ class Inventory:
             if "sheet" in row:
                 place["sheet"] = row["sheet"]
             key = self.add("defined-name", place, formula=row.get("formula"))
-            scope = row.get("sheet", "").casefold()
+            scope = row.get("sheet", "")
             self.names[book.id, scope, row["name"].casefold()].append(key)
             if row.get("formula"):
                 self.formulas.append((key, row["formula"]))
@@ -136,10 +139,19 @@ class Inventory:
     def destination(self, source, identity):
         return self.selection.links.get((source, identity))
 
+    @staticmethod
+    def sheet_for_code(sheet_codes, name):
+        candidates = sheet_codes.get(name, set())
+        return next(iter(candidates)) if len(candidates) == 1 else None
+
     def address(self, book, sheet, first, last=None):
-        if sheet is None or not (target := self.sheets.get((book, sheet.casefold()))):
+        if sheet is None:
             return None
-        sheet = target[0]
+        spellings = self.sheets.get((book, sheet.casefold()), set())
+        if sheet not in spellings:
+            if len(spellings) != 1:
+                return None
+            sheet = next(iter(spellings))
         normalized = []
         columns, rows = (256, 65536) if self.books[book]["format"] == "xls" else (16384, 1048576)
         for text in (first, last) if last else (first,):
@@ -148,7 +160,7 @@ class Inventory:
                 return None
             normalized.append(text.upper().replace("$", ""))
         if len(normalized) == 1:
-            key = self.cells.get((book, sheet.casefold(), normalized[0]))
+            key = self.cells.get((book, sheet, normalized[0]))
             if key:
                 return key
         return self.add("address", {"workbook": book, "sheet": sheet, "range": ":".join(normalized)},
@@ -161,6 +173,10 @@ class Inventory:
             syntax = _formula_syntax(expression)
             syntax = EXTERNAL_PREFIX.sub(lambda match: "'" + match.group().rstrip("!").strip() + "'!", syntax)
             calls = _formula_calls(syntax)
+            if SCOPED_FORMULA.search(calls):
+                self.gap("EXCEL_FORMULA_SCOPE_UNSUPPORTED", locator,
+                         "Excel LET and LAMBDA declarations require lexical scope analysis.")
+                continue
             if DYNAMIC_FORMULA.search(calls):
                 self.gap("EXCEL_DYNAMIC_FORMULA", locator, "The formula contains a dynamic reference.")
                 continue
@@ -211,21 +227,32 @@ class Inventory:
             remaining = "".join(remaining)
             for token in FORMULA_NAME.finditer(remaining):
                 symbol = token[1].casefold()
+                named = (self.names[book, sheet or "", symbol]
+                         or self.names[book, "", symbol])
                 if remaining[token.end():].lstrip().startswith("("):
-                    if symbol.startswith("_xludf."):
-                        symbol = symbol.removeprefix("_xludf.")
-                    targets = self.lookup(book, "", symbol, kinds={"function"}, public=True)
-                    if len(targets) == 1:
-                        self.link(key, targets[0], "calls")
-                    elif len(targets) > 1 or token[1].lower().startswith(("_xludf.", "_xll.")):
-                        self.gap("EXCEL_UDF_UNRESOLVED", locator, "VBA function binding is unresolved.")
-                    continue
-                matches = (self.names[book, (sheet or "").casefold(), symbol]
-                           or self.names[book, "", symbol])
-                if len(matches) == 1:
-                    self.link(key, matches[0], "reads")
-                elif len(matches) > 1:
+                    self.formula_call(key, locator, symbol, named)
+                elif len(named) == 1:
+                    self.link(key, named[0], "reads")
+                elif len(named) > 1:
                     self.gap("EXCEL_NAME_AMBIGUOUS", locator, "Defined name has multiple candidates.")
+
+    def formula_call(self, key, locator, symbol, named):
+        book = locator["workbook"]
+        if symbol in self.builtins[book] or symbol.startswith(("_xlfn.", "_xlws.")):
+            return
+        if named:
+            self.gap("EXCEL_FORMULA_CALL_UNRESOLVED", locator,
+                     "A defined name can shadow a workbook VBA function.")
+            return
+        if symbol.startswith("_xll."):
+            self.gap("EXCEL_UDF_UNRESOLVED", locator, "The formula calls an external XLL function.")
+            return
+        function = symbol.removeprefix("_xludf.")
+        targets = self.lookup(book, "", function, kinds={"function"}, public=True)
+        if len(targets) == 1:
+            self.link(key, targets[0], "calls")
+        elif len(targets) > 1 or symbol.startswith("_xludf."):
+            self.gap("EXCEL_UDF_UNRESOLVED", locator, "VBA function binding is unresolved.")
 
     def register_procedures(self):
         bodies = []
@@ -252,16 +279,16 @@ class Inventory:
                 lower_name = name.casefold()
                 kind = module.get("type", "").lower()
                 if event and proc.kind == "sub":
+                    sheet = self.sheet_for_code(sheet_codes, lower_name)
                     owner = event[1].casefold()
                     bound = (
                         owner == "workbook" and lower_name == (workbook_code or "ThisWorkbook").casefold()
                         and kind == "document"
-                    ) or (owner == "worksheet" and lower_name in sheet_codes and kind == "document")
+                    ) or (owner == "worksheet" and sheet is not None and kind == "document")
                     if not bound or not proc.complete or event[2].casefold() not in vba.EVENTS[owner]:
                         self.gap("VBA_EVENT_BINDING_UNRESOLVED", locator, "Event host or event type is unresolved.")
                     else:
-                        entry = self.add("entrypoint", {**locator, "event": proc.name},
-                                         sheet=sheet_codes.get(lower_name))
+                        entry = self.add("entrypoint", {**locator, "event": proc.name}, sheet=sheet)
                         self.link(entry, key, "calls")
                         self.require(entry, f"Event {book}/{name}.{proc.name}")
                 elif proc.kind == "sub" and not proc.parameters and proc.visibility == "public" and kind == "module":
@@ -317,6 +344,10 @@ class Inventory:
             original = self.evidence[key]["locator"]
             book = original["workbook"]
             shadowed = proc.shadowed_names()
+            project_dispatch = {
+                name for name, reference in (("run", "Run"), ("application", "Application.Run"))
+                if self.lookup(book, module, reference)
+            }
             if any(re.match(r"^\s*#", statement) for _, statement in proc.statements):
                 self.gap("VBA_CONDITIONAL_COMPILATION", original, "Conditional compilation context is unknown.")
                 continue
@@ -329,7 +360,14 @@ class Inventory:
                 for match in in_ranges:
                     if not text[match.start():match.start()+1].strip():
                         continue
-                    workbook_name, sheet_name, receiver, raw_range = map(vba.literal, match.groups())
+                    prefix = text[:match.start()]
+                    assignment = bool(vba.ASSIGNMENT_START.search(prefix)
+                                      and re.match(r"\s*=", text[match.end():]))
+                    if vba.SET_STATEMENT.search(prefix) or (not assignment and not match["property"]):
+                        self.gap("VBA_RANGE_OBJECT_UNRESOLVED", place,
+                                 "Range object binding or use requires manual alias analysis.")
+                        continue
+                    workbook_name, sheet_name, receiver, raw_range = map(vba.literal, match.groups()[:4])
                     target_book = book
                     if workbook_name:
                         target_book = self.destination(book, workbook_name)
@@ -338,23 +376,25 @@ class Inventory:
                     if sheet_name is None and receiver:
                         name = receiver.casefold()
                         if name not in shadowed:
-                            sheet_name = sheet_codes.get(module.casefold() if name == "me" else name)
+                            sheet_name = self.sheet_for_code(sheet_codes, module.casefold() if name == "me" else name)
                     target = None
                     if raw_range and (values := RANGE_TEXT.fullmatch(raw_range)) and target_book:
                         target = self.address(target_book, sheet_name, values[1].strip(),
                                               values[2].strip() if values[2] else None)
                     if target:
-                        assignment = re.match(r"\s*=", statement[match.end():]) and re.search(
-                            r"(?:^|\b(?:Then|Else)\b)\s*(?:Let\s+)?$", text[:match.start()], re.I)
                         self.link(key, target, "writes" if assignment else "reads", location=place)
                     else:
                         self.gap("VBA_RANGE_UNRESOLVED", place, "Workbook, sheet or VBA range is unresolved.",
                                  identity=workbook_name)
-                runs = [match for match in vba.RUN.finditer(statement) if text[match.start():match.start()+1].strip()]
-                for match in runs:
-                    self.run_target(key, place, vba.literal(match[1]))
+                runs = list(vba.run_targets(text, statement, shadowed,
+                                            project_dispatch=project_dispatch))
+                for reference in runs:
+                    if reference is None:
+                        self.gap("VBA_DYNAMIC_DISPATCH", place, "The Run macro argument is dynamic.")
+                    else:
+                        self.run_target(key, place, reference)
                 explicit = vba.CALL.match(text)
-                if explicit:
+                if explicit and not runs:
                     self.call(key, place, module, explicit[1])
                 elif not runs and not vba.BARE_CONTROL.match(text):
                     bare = vba.BARE.match(text)

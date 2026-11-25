@@ -33,3 +33,16 @@ Lokální packet a kandidát obsahují návrh Kotlin/JVM, dohledatelné podklady
 - **NOT_RUN** Lokální Windows a testovací Jira Cloud. Stav vzdálené CI se posuzuje nad hashem PR.
 
 Ukázka výstupu z testovací faktury sleduje `Workbook_Open` → `RecalculateInvoice` → `Sheet1!A1` → `Sheet1!B1`. Externí čtení sazby `Rates!B2` je dohledatelné přes druhý soubor. Samostatná portová úloha v CSV blokuje migraci výpočtu.
+
+
+## Opravy po nezávislém review T054-S01, T054-S02 a T054-S04
+
+Výchozí HEAD `e7a44d74cdd64f133ad50712126765074058cd4d`. Nezávislé review reprodukovalo vazbu z prefixu dynamického argumentu `Application.Run`, kolizi VBA funkce s Excel `SUM`, kolizi lokálního `LET` názvu a zápis přes alias po přiřazení `Set`. Inventář s více než 1 000 lokátory téže vazby jeho konzument odmítl. Opakovaná kontrola zachytila zároveň lokální proceduru jménem `Run` a dva různé Unicode názvy listů se stejným casefold klíčem.
+
+- **T054-S01 / AC01–AC02.** VBA resolver ověřuje celý literál argumentu `Run` a předává aliasy objektů `Range` k ručnímu ověření. Resolver formulí používá katalog vestavěných funkcí z POI a eviduje mezeru pro lexikální rozsahy `LET` a `LAMBDA`. Lokální procedury mají přednost před nekvalifikovaným `Run`. Přesné názvy listů zachovávají identitu buněk i lokálních názvů. Nejednoznačný alternativní zápis nebo VBA kódové jméno vytvoří mezeru.
+- **T054-S02 / AC03.** Validátor omezuje počty řádků celkovým bajtovým rozpočtem inventáře. Počet důkazů jedné vazby omezuje počet dostupných identifikátorů. Konfigurace `excel-migration-2` používá odpovídající worker `excel-poi-6.0.0-2`. Starší inventář z draftu vyžaduje novou analýzu sešitů.
+- **T054-S04 / AC05.** Sestavení a balení kompatibilního workeru ověřeno s Java 17 a Mavenem. Příkazy v README odkazují na aktuální návod. Ruční Jira Cloud import a skutečný Windows běh zůstávají NOT_RUN.
+
+**PASS** Cílený příkaz z T054-S04 na opravených zdrojích včetně instalovaného wheelu, 137 PASS. Šest nových regresí řeší reprodukce review. **PASS** Ověření hashe 16 JARů a opakované `strace` nad dvěma sešity, dva workery a nula IP spojení.
+Na původním `e7a44d7` týchž šest regresí selhaly. Plná sada na opravených zdrojích má 2 567 PASS, 1 317 SKIP a 1 XFAIL. `git diff --check` prošel.
+ **PASS** Skutečný inventář pěti XLSX s 500 005 položkami načetl příkaz `excel packet` a dodržel rozpočet 8 000 bajtů.

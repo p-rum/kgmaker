@@ -295,3 +295,178 @@ def test_installed_worker_wheel(tmp_path, sample, actual_worker):
                  env=env, executable=[str(runtime), "-m", "kgmaker.cli"])
     assert result.returncode == 0, result.stderr
     assert evidence_at(plan.load_inventory(tmp_path / "from-wheel.json"), "entrypoint", event="Workbook_Open")
+
+
+def _register_source(builder, book, *, source, formulas=(), names=(), builtins=()):
+    builder.register(book, "test-sha", 0, {
+        "links": {}, "builtin_functions": list(builtins),
+        "sheets": [{"name": "Sheet1", "visibility": "VISIBLE"}],
+        "cells": [{"sheet": "Sheet1", "cell": f"B{row}", "type": "FORMULA", "formula": formula}
+                  for row, formula in enumerate(formulas, 1)],
+        "names": list(names), "tables": [],
+        "modules": [{"name": "Module1", "type": "Module", "source": source}],
+    }, [])
+
+
+def test_vba_run_resolves_only_complete_literal_arguments(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config()))
+    builder = inventory.Inventory(selection)
+    source = '\n'.join([
+        'Public Sub Main()',
+        '    Application.Run "Rates.xlsx!Forecast" & suffix',
+        '    Application.Run ("Rates.xlsx!Forecast") & suffix',
+        '    result = Application.Run("Rates.xlsx!Forecast", 42)',
+        '    Run "Rates.xlsx!Forecast"',
+        '    Call Application.Run("Rates.xlsx!Forecast")',
+        '    MsgBox "Application.Run ""Rates.xlsx!Forecast"""',
+        'End Sub',
+    ])
+    _register_source(builder, selection.books[0], source=source)
+    _register_source(builder, selection.books[1], source="Public Sub Forecast()\nEnd Sub")
+    result = builder.document()
+    caller = evidence_at(result, "vba-procedure", procedure="Main")
+    callee = evidence_at(result, "vba-procedure", procedure="Forecast")
+    witnesses = edge_sources(result, caller, "calls", callee)
+    assert {row["locator"]["line"] for row in witnesses} == {4, 5, 6}
+    gaps = [row["locator"]["line"] for row in result["evidence"]
+            if row["kind"] == "gap" and row.get("code") == "VBA_DYNAMIC_DISPATCH"]
+    assert set(gaps) == {2, 3}
+
+
+def test_formula_binding_distinguishes_excel_builtins_and_lexical_names(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    _register_source(builder, selection.books[0], builtins=["SUM"],
+                     source="Public Function Sum()\nEnd Function\nPublic Function RoundExtra()\nEnd Function",
+                     formulas=["SUM(A1:A2)", "LET(Rate,2,Rate+1)", "_xlfn.LAMBDA(Rate,Rate+1)(2)",
+                               "RoundExtra(A1)", '"LET(Rate,2,Rate+1)"&Rate'],
+                     names=[{"name": "Rate", "formula": "0.25"}])
+    result = builder.document()
+    excel_sum = evidence_at(result, "cell", cell="B1")
+    sum_arg = evidence_at(result, "address", range="A1:A2")
+    edge_sources(result, excel_sum, "reads", sum_arg)
+    udf = evidence_at(result, "vba-procedure", procedure="RoundExtra")
+    edge_sources(result, evidence_at(result, "cell", cell="B4"), "calls", udf)
+    scoped_cells = {evidence_at(result, "cell", cell=cell)["id"] for cell in ("B2", "B3")}
+    assert not any(edge["source"] in scoped_cells or
+                   (edge["source"] == excel_sum["id"] and edge["kind"] == "calls")
+                   for edge in result["relations"])
+    assert {row["locator"]["cell"] for row in result["evidence"]
+            if row["kind"] == "gap" and row.get("code") == "EXCEL_FORMULA_SCOPE_UNSUPPORTED"} == {"B2", "B3"}
+    rate = evidence_at(result, "defined-name", name="Rate")
+    edge_sources(result, evidence_at(result, "cell", cell="B5"), "reads", rate)
+
+
+def test_repeated_vba_witnesses_round_trip_inventory(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = "Sub Main()\n" + "Call Target\n" * 1_001 + "End Sub\nSub Target()\nEnd Sub"
+    _register_source(builder, selection.books[0], source=source)
+    value = builder.document()
+    read_back = plan.load_inventory(write_json(tmp_path / "inventory.json", value))
+    source = evidence_at(read_back, "vba-procedure", procedure="Main")
+    target = evidence_at(read_back, "vba-procedure", procedure="Target")
+    assert len(edge_sources(read_back, source, "calls", target)) == 1_001
+
+
+def test_vba_range_alias_is_a_gap_and_never_a_value_read(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    _register_source(builder, selection.books[0], source="""
+Sub Main()
+    Dim target As Range
+    Set target = ThisWorkbook.Worksheets("Sheet1").Range("A1")
+    target.Value2 = 2
+    ThisWorkbook.Worksheets("Sheet1").Range("A2") = 3
+    result = ThisWorkbook.Worksheets("Sheet1").Range("A3").Value2
+End Sub
+""".strip())
+    result = builder.document()
+    macro = evidence_at(result, "vba-procedure", procedure="Main")
+    assert result["status"] == "PARTIAL"
+    assert any(row.get("code") == "VBA_RANGE_OBJECT_UNRESOLVED" and row["locator"]["line"] == 3
+               for row in result["evidence"])
+    assert not any(row["kind"] == "address" and row["locator"]["range"] == "A1"
+                   for row in result["evidence"])
+    edge_sources(result, macro, "writes", evidence_at(result, "address", range="A2"))
+    edge_sources(result, macro, "reads", evidence_at(result, "address", range="A3"))
+
+
+def test_vba_run_respects_the_project_scope(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config()))
+    builder = inventory.Inventory(selection)
+    _register_source(builder, selection.books[0], source="""
+Sub Main()
+    Run "Rates.xlsx!Forecast"
+    Call Run("Rates.xlsx!Forecast")
+    Application.Run "Rates.xlsx!Forecast"
+End Sub
+Private Sub Run(ByVal x As String)
+End Sub
+Sub Shadowed()
+    Dim Run As Object
+    Run "Rates.xlsx!Forecast"
+End Sub
+""".strip())
+    _register_source(builder, selection.books[1], source="Public Sub Forecast()\nEnd Sub")
+    value = builder.document()
+    main = evidence_at(value, "vba-procedure", procedure="Main")
+    local_run = evidence_at(value, "vba-procedure", procedure="Run")
+    forecast = evidence_at(value, "vba-procedure", procedure="Forecast")
+    shadowed = evidence_at(value, "vba-procedure", procedure="Shadowed")
+    assert {row["locator"]["line"] for row in edge_sources(value, main, "calls", local_run)} == {2, 3}
+    assert {row["locator"]["line"] for row in edge_sources(value, main, "calls", forecast)} == {4}
+    assert not any(edge["source"] == shadowed["id"] for edge in value["relations"])
+    assert any(row.get("code") == "VBA_DYNAMIC_DISPATCH" and row["locator"]["line"] == 10
+               for row in value["evidence"])
+
+
+def test_distinct_unicode_sheet_spellings_keep_cells_and_name_scopes_separate(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    builder.register(selection.books[0], "test-sha", 0, {
+        "links": {}, "builtin_functions": [],
+        "sheets": [{"name": name, "visibility": "VISIBLE", "code_name": code}
+                   for name, code in [("Straße", "Straße"), ("Strasse", "Strasse"), ("Output", "Sheet3")]],
+        "cells": [
+            {"sheet": "Straße", "cell": "A1", "type": "NUMERIC", "value": 3},
+            {"sheet": "Strasse", "cell": "A1", "type": "NUMERIC", "value": 9},
+            {"sheet": "Output", "cell": "B1", "type": "FORMULA", "formula": "'Straße'!A1*2"},
+            {"sheet": "Output", "cell": "B2", "type": "FORMULA", "formula": "'straße'!A1*2"},
+            {"sheet": "Output", "cell": "B3", "type": "FORMULA", "formula": "output!B1"},
+            {"sheet": "Strasse", "cell": "B1", "type": "FORMULA", "formula": "Rate*2"},
+            {"sheet": "Straße", "cell": "B1", "type": "FORMULA", "formula": "Rate*2"},
+        ],
+        "names": [{"sheet": "Strasse", "name": "Rate", "formula": "0.25"}],
+        "tables": [],
+        "modules": [{"name": "Straße", "type": "Document",
+                     "source": 'Sub Worksheet_Change()\nMe.Range("A1").Value2 = 5\nEnd Sub'}],
+    }, [])
+    value = builder.document()
+    right_cell = evidence_at(value, "cell", sheet="Straße", cell="A1")
+    formula_cell = evidence_at(value, "cell", sheet="Output", cell="B1")
+    edge_sources(value, formula_cell, "reads", right_cell)
+    edge_sources(value, evidence_at(value, "cell", sheet="Output", cell="B3"), "reads", formula_cell)
+    assert right_cell["value"] == 3
+    unresolved = evidence_at(value, "cell", sheet="Output", cell="B2")
+    assert not any(edge["source"] == unresolved["id"] for edge in value["relations"])
+    scoped_rate = evidence_at(value, "defined-name", sheet="Strasse", name="Rate")
+    edge_sources(value, evidence_at(value, "cell", sheet="Strasse", cell="B1"), "reads", scoped_rate)
+    other_sheet = evidence_at(value, "cell", sheet="Straße", cell="B1")
+    assert not any(edge["source"] == other_sheet["id"] for edge in value["relations"])
+    assert not any(row["kind"] == "entrypoint" for row in value["evidence"])
+    codes = {row["code"] for row in value["evidence"] if row["kind"] == "gap"}
+    assert codes == {"VBA_EVENT_BINDING_UNRESOLVED", "VBA_RANGE_UNRESOLVED",
+                     "EXCEL_FORMULA_TARGET_UNRESOLVED"}
