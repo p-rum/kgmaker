@@ -81,6 +81,12 @@ Javacem, K1, K2 a TypeScriptem počítají i skutečné worker operace. Negativn
 kontroly pokrývají nevhodný živý výstup a závody při publikaci.
 [Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md).
 
+Další dílčí ověření AC01 a AC03 na Linuxu zachycuje `lib/libjli.so`
+a `lib/server/libjvm.so`. Regrese porovnávají jejich obsah se skutečným
+JDK 21, ověřují neúplný otisk při chybějícím či nečitelném vstupu a po
+změně izolované fixture vyžadují `STALE` se zachováním grafu.
+[Provedené kontroly a hranice](changes/180_bindLinuxJdkNativeInputs.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí rozsah má stav `MERGED` po [#130](https://github.com/p-rum/kgmaker/pull/130)
