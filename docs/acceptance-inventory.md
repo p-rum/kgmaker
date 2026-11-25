@@ -83,6 +83,28 @@ rozsah v [change164](changes/164_bindJavaLaunchInputs.md). Oprava byla sloučena
 jako `16f2ba8c4d109957edc295feea80db86da7093f1`. W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.
 
+## T003-S10-W02 — reverse dependency indexy
+
+Čtecí report z [#130](https://github.com/p-rum/kgmaker/pull/130) je MERGED
+v `main` jako `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. Po opravě
+nálezu T045 prošlo 44 cílených testů bez přeskočení na JDK 21. Úplná
+sada CPython 3.13 má 2 586 PASS, 1 345 SKIP a 1 očekávaný strict XFAIL.
+W02-AC01 zůstává PARTIAL. Po čtecím reportu následuje selektivní
+publikace do grafu a revizí. W03 eviduje negativní vyhledání samostatně.
+GitHub Actions jsou pro schválený head neověřené. Předchozí běhy a
+omezení Excel workeru jsou zachovány v change145.
+[Sloučení a ověření](changes/174_reconcileMergedDelivery.md#t003-s10-w02-kroky-35-a-ac01ac04).
+[Zadání](tasks/T003-S10-02-reverseDependencyIndexes.md),
+[režim CLI a JSON](stage-content-cache.md#selektivní-dopad-změn) a
+[kontroly](changes/145_buildReverseDependencyIndexes.md).
+
+| Acceptance | Ověření | Důkaz a hranice |
+|---|---|---|
+| T003-S10-W02-AC01 | PARTIAL | `test_actual_javac_signature_change_reaches_transitive_callers_without_workers` používá skutečný Javac, řetězec přes dvě metody v témže souboru, oddělenou metodu a nezávislý compiler kontext. `test_actual_javac_line_ending_change_rechecks_proven_caller` při LF↔CRLF ověří přímé i tranzitivní callery, LF i CRLF volající zdroj, přesný lokátor cíle, chybějící a neshodný hash lokátoru, změnu textu a nezávislé volání. `test_schema_dependency_follows_prior_migration_operations` pokrývá CREATE i ALTER. `test_replayed_schema_and_openapi_citation_invalidate_only_proven_dependents` ověřuje Flyway, OpenAPI s CRLF a použitou revizi feature. Report určuje položky k revalidaci a stav citací. Publikace selektivní invalidace do grafu a revizí má vlastní kroky. |
+| T003-S10-W02-AC02 | VERIFIED_IN_SCOPE | `test_legacy_and_unproven_name_matches_never_gain_positive_evidence` ukládá a čte graf v1/v2/v3. JSON režim reportu je aditivní a nevyžaduje migraci. |
+| T003-S10-W02-AC03 | VERIFIED_IN_SCOPE | `test_actual_javac_tampered_capture_cannot_ground_reverse_impact` odmítá změněný výběr compiler vstupů pod stejným raw ID. `test_actual_javac_malformed_capture_digest_is_ignored_in_public_impact` ověřuje obě uložené mapy otisků. CLI vynechá vazby poškozeného kontextu a zachová vazby druhého skutečného Javac capture. Testy pokrývají také chybný graf v3, nedostupný zdroj, čtyři FIFO vstupy na POSIX, chybné migrační vazby, relativní citaci, lidské rozhodnutí a stabilní CRLF OpenAPI. Smíšené `--workspace --evidence-only` vrací chybu použití před načtením manifestu. Report zachovává bajty store a sám nespouští proces. |
+| T003-S10-W02-AC04 | VERIFIED_IN_SCOPE | README, capability, stavová matice a change145 odlišují skutečný Javac/JDK21 a offline replay/contract fixture od širšího verification scope. T003-S10 zůstává PARTIAL. |
+
 ## T045 — doplňující automatická kontrola PR
 
 T045-S03 / T045-AC04. Workflow PR Review používá plugin `pytest-cov` a

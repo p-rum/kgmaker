@@ -558,19 +558,31 @@ def _release_artifact_links(workspace: dict, graphs: dict[str, KnowledgeGraph]):
 
 
 def _regular_file_hash(path: Path) -> str | None:
-    """Hash one unchanged regular file without following a swapped symlink."""
+    hashes = _regular_file_hashes(path)
+    return hashes[0] if hashes is not None else None
+
+
+def _regular_file_hashes(path: Path, *, normalize_newlines: bool = False) -> tuple[str, str] | None:
+    """Hash one stable regular-file stream as raw bytes and as scanner text."""
     before = path.lstat()
     if not stat.S_ISREG(before.st_mode):
         return None
-    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+    flags = (os.O_RDONLY | getattr(os, 'O_BINARY', 0)
+             | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0))
     descriptor = os.open(path, flags)
     with os.fdopen(descriptor, 'rb') as stream:
         opened = os.fstat(stream.fileno())
         if not stat.S_ISREG(opened.st_mode):
             return None
         checksum = hashlib.sha256()
+        normalized = hashlib.sha256() if normalize_newlines else None
+        ends_with_cr = False
         for chunk in iter(lambda: stream.read(65536), b''):
             checksum.update(chunk)
+            if normalized is not None:
+                text = chunk[1:] if ends_with_cr and chunk.startswith(b'\n') else chunk
+                normalized.update(text.replace(b'\r\n', b'\n').replace(b'\r', b'\n'))
+                ends_with_cr = chunk.endswith(b'\r')
         read = os.fstat(stream.fileno())
     after = path.lstat()
     snapshots = (before, opened, read, after)
@@ -580,7 +592,8 @@ def _regular_file_hash(path: Path) -> str | None:
     content_state = {(item.st_size, item.st_mtime_ns) for item in snapshots}
     if len(identity) != 1 or len(content_state) != 1:
         return None
-    return checksum.hexdigest()
+    raw_hash = checksum.hexdigest()
+    return raw_hash, normalized.hexdigest() if normalized is not None else raw_hash
 
 
 def _validate_release_artifact_snapshot(workspace: dict, report: dict | None) -> None:

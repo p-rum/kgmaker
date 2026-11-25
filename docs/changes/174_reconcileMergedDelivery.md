@@ -129,6 +129,42 @@ a Excel pytest. Tento běh měl současně zelený pytest a selhání následné
 [Excel Windows](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362452) ·
 [Python 3.13](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362565)
 
+## T003-S10-W02, kroky 3–5 a AC01–AC04
+
+Dopředný přenos inventáře po [#130](https://github.com/p-rum/kgmaker/pull/130)
+vychází z `main` `0c834c8b2c06ca80d76f1aaf09f6f49b968e8aa3`. Merge
+má stejný strom `c59ea8c3cb12112c806f907e8a91f37d60300795` jako
+schválený head `936a3d7434bffbaaa3d36fec403d6cbe5132717b`. Čtecí report
+vrací přímé i tranzitivní závislosti doložené uloženým grafem. Neplatný
+otisk vyřadí dotčený compiler kontext. Oprava T045 odmítne kombinaci
+`--workspace` a `--evidence-only` před načtením workspace. Následuje
+selektivní publikace do grafu a dotčených revizí. W02-AC01 zůstává
+`PARTIAL` a negativní vyhledání patří k W03.
+
+- Schválený rozsah má **44 PASS / 0 SKIP** na skutečném JDK 21, exit 0.
+  Úplná CPython 3.13.18 sada má **2 586 PASS / 1 345 SKIP /
+  1 očekávaný strict XFAIL**, exit 0. JUnit nativní sady
+  `f36672caaa321507353b7d8666d90c5e37b74add2a55069dfd9f235b8425ab6a`
+  a standardní sady
+  `15fb9001579340e14d5bef93fa30a09d3e44f1e502ce7c8f3e730db7f9780ae5`.
+- Nezávislé T052 kontroly mají **18** a **3 PASS**, bez přeskočení.
+  Projektový T045 má na přesném stromu **13 PASS / 0 SKIP** se skutečným
+  JDK 21 a Javacem. JUnit
+  `e1162751e80d9bd35329fb8570fe1064fe01b37a403ea13244dcbb2bc42810fb`.
+- Po sloučení tohoto stromu prošlo na skutečném JDK 21 s Mavenem
+  **53 PASS / 0 SKIP**, exit 0. Výběr zahrnoval
+  `test_reverse_dependency_index.py`, `test_workspace.py` a
+  `test_stage_content_cache_actual.py`. Shodný otisk manifestu zdrojů
+  před a po je
+  `1597736cdd0708786d5e827433ce8cbbd264523642ac35c202b0e53c32c98eb7`,
+  JUnit `a004ba67c72261eea3e4214dddffaf295789c2a71417a02cb06583b61635bb26`.
+- GitHub Actions zůstávají pro schválený head neověřené. Nový lokální
+  build Excel workeru blokoval přístup ke Maven Central.
+
+[Příklady reportu](../stage-content-cache.md#selektivní-dopad-změn) ·
+[Záznam implementace](145_buildReverseDependencyIndexes.md) ·
+[Schválení T045](https://github.com/p-rum/kgmaker/pull/130#issuecomment-7169443480)
+
 ## Ověření inventáře a kompatibilita
 
 ```bash
@@ -138,9 +174,10 @@ PYTHONPATH=src python -m kgmaker.cli completion plan --root .
 
 - Cílené testy plánovače **7 PASS / 0 SKIP**, exit 0. JUnit SHA-256
   `6b61c3c3aa108bb86770ca04b0dce1b8bc30db5b962a45b6679ee8968561c469`.
-- Přímý běh plánovače načetl všech 119 existujících řádků. Po změně má
-  88 MERGED a 31 PLANNED. T003-S13-W02 zůstává dostupné pro další
-  ověření, doporučený první úkol je T003-S10-W02.
+- Přímý běh plánovače načetl všech 119 existujících řádků. Matice má
+  89 MERGED a 30 PLANNED. T003-S13-W02 zůstává dostupné pro další
+  ověření. U T003-S10-W02 navazuje selektivní publikace. Přehled
+  kandidátů podle dodání sám neprokazuje splnění W02-AC01 pro W03.
 - Úplná testovací sada a GitHub Actions pro tuto dokumentační změnu jsou
   NOT_RUN. Veřejné API, příklady CLI, README, ostatní capability návody a registr
   zadání mají nulový dopad, protože publikované chování, schémata a
