@@ -204,6 +204,7 @@ def test_actual_kafka_catalogue_preserves_kotlin_compiler_symbol_alias(tmp_path)
 
 def test_actual_kafka_catalogue_preserves_file_mirror_for_selected_project_model(tmp_path):
     from kgmaker.interfaces import InterfaceProjectionError
+    from kgmaker.scanner import scan_repository
     from kgmaker.store import load_graph
     from kgmaker.workspace import qualified
 
@@ -247,6 +248,29 @@ def test_actual_kafka_catalogue_preserves_file_mirror_for_selected_project_model
         with patch('kgmaker.store.load_graph', side_effect=tampered_authority), \
                 pytest.raises(InterfaceProjectionError, match='Original public compiler Node is missing or changed'):
             project((workspace, graph, coverage))
+
+        checkout = tmp_path / 'consumer'
+        source = checkout / local_file.path
+        captured_bytes = source.read_bytes()
+        edited_bytes = captured_bytes.replace(b'\n', b'\r\n')
+        assert edited_bytes != captured_bytes
+        scan_hashes = []
+
+        def scan_during_line_ending_edit(root, **options):
+            if root != checkout or options.get('project_model') is not None:
+                return scan_repository(root, **options)
+            source.write_bytes(edited_bytes)
+            try:
+                scanned = scan_repository(root, **options)
+                scan_hashes.append((scanned.files[local_file.path], scanned.raw_file_hashes[local_file.path]))
+                return scanned
+            finally:
+                source.write_bytes(captured_bytes)
+
+        with patch('kgmaker.scanner.scan_repository', side_effect=scan_during_line_ending_edit), \
+                pytest.raises(InterfaceProjectionError, match='Original public compiler Node is missing or changed'):
+            project((workspace, graph, coverage))
+        assert scan_hashes == [(sha256(captured_bytes).hexdigest(), sha256(edited_bytes).hexdigest())]
     catalogue = [node['attributes'] for node in view['nodes'] if node['kind'] == 'kafka_interface']
     assert {item.get('consumer_group') for item in catalogue
             if item['code_binding'] == 'VERIFIED_STATIC'} >= {'group-one', 'group-two'}

@@ -70,3 +70,49 @@ Uživatelský příklad je v [T019 CLI](../architecture-json-cli.md) a rozsah
 ověření v [inventáři](../acceptance-inventory.md#t012--kafka-interface-catalogue-verified-bounded-scope).
 Celé T012 zůstává PARTIAL. Úplná standardní sada, Windows, GitHub Actions
 a nezávislé review mají při lokálním předání stav NOT_RUN.
+
+## Přenos po #162 a oprava po nezávislém review
+
+První rodič `8d962d38f1c535b1c1cb0797a982a53f0a5290ae` zachovává výše
+uvedenou opravu a jejích 242 PASS. Druhý rodič
+`ec95f1ee1c3400cf90e79c45950a4da339a4998a` je sloučený [#162](https://github.com/p-rum/kgmaker/pull/162).
+Přenos zachovává [živou inspekci W01](178_reduceLiveInspectionOverhead.md)
+a [změnu ověření Excel skillu z #157](173_removeRepositorySelfCheck.md).
+Verdikty nad prvním rodičem vyžádaly porovnání skutečných bajtů přečtených
+při druhém skenu. Při změně LF na CRLF mezi ověřením capture a načtením
+veřejné reprezentace zůstal normalizovaný otisk stejný a katalog dříve
+přijal zastaralý důkaz.
+
+`project_kafka_interfaces` nyní porovná i bajtový otisk z téhož omezeného
+skenu. Kontrola využívá jeho existující `raw_file_hashes` a zachovává
+oddělené ověření normalizovaného otisku a klasifikace. Katalog odmítne
+změnu bajtů, i když se normalizovaný text shoduje. Stejné bajty CRLF
+zůstávají přípustné při odpovídající aktuální inspekci.
+
+Před opravou selhal nový řízený LF→CRLF případ na společném základu
+se skutečným K1. Katalog přijal důkaz původního snímku i při změně bajtů
+a test hlásil `DID NOT RAISE`. JUnit má 1 FAIL, 0 SKIP a SHA-256
+`0884868691be0f4be78a35c51608952b624fc058300d5a325d60bbc8b070f29e`.
+
+Na opraveném společném stromu má cílený běh v Cloud Environment 76 PASS,
+0 SKIP a exit 0. Pokryl nový LF→CRLF případ, repo alias, Javac LF/CRLF
+v T019 a aktuální Kafka bindingy. Skutečné K1 a K2 ověřily studenou
+a opakovanou inspekci W01. Změna classpath vedla k novému kontextu.
+Regrese locale a cyklu odkazu na spouštěč zachovaly předchozí publikovaný graf.
+Ověření zahrnulo také tři případy instalace skillů a scanu.
+JUnit SHA-256
+`efb03d49e2d355293de2652355db1035ab972b570581f4bda0ddc28f64ec8569`.
+Produktový manifest před testy a po nich má SHA-256
+`63e034c72b0b0d2d55fdc133a5bd3ba7c69d2875480a7496e0d2cdb425bfa9cb`.
+Samostatná kontrola platného CRLF souboru s explicitním modelem produkčního
+source setu potvrdila u skutečných K1 i K2 obě deklarované skupiny ve stavu
+`VERIFIED_STATIC` a nezměněné vstupy i uložené soubory.
+Otisk JSON důkazu je
+`45c8a533ddcce3a4f43609b52be873461e320d4feff90ab4fcce1f0e4635d489`.
+
+Z 428 sledovaných produktových cest má 426 shodné bajty s druhým
+rodičem. Odlišnosti tvoří pouze Kafka projekce a její regresní test.
+Sémantická aktualizace zachovala 431 historických epizod obou rodičů,
+56 konceptů a 206 vztahů. T012 zůstává PARTIAL. Úplná standardní sada,
+Windows, GitHub Actions a nezávislé review tohoto stromu mají při
+lokálním předání stav NOT_RUN.

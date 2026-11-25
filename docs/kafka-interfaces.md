@@ -34,7 +34,9 @@ can include build membership that the offline scanner File lacks. The catalogue
 checks the saved File against that model and the public File against a fresh
 read-only scanner result for the same path and bytes. It requires the same
 scope and role, an exact match for both File representations, and a unique
-public File. The original declarations, edges and hashes remain authoritative.
+public File. The fresh scan supplies both normalized and raw hashes. A line
+ending edit during projection invalidates the raw proof even if the normalized
+text matches. The original declarations, edges and hashes remain authoritative.
 [Verified scope and controls](changes/179_validateKafkaProjectModelFiles.md).
 
 The shared `interfaces` ViewDocument contains `kafka_interface` occurrences with

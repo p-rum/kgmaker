@@ -971,11 +971,17 @@ def project_kafka_interfaces(workspace, graph, *, scope='production', selected_c
         try:
             if repo not in scanner_files:
                 scanned = scan_repository(roots[repo])
-                scanner_files[repo] = scanned.files, {node.id: node for node in scanned.nodes if node.kind == 'file'}
-            files, nodes = scanner_files[repo]
+                if scanned.raw_file_hashes is None:
+                    return False
+                scanner_files[repo] = (
+                    scanned.files, scanned.raw_file_hashes,
+                    {node.id: node for node in scanned.nodes if node.kind == 'file'},
+                )
+            files, raw_files, nodes = scanner_files[repo]
             plain = nodes.get(original.id)
             if (plain is None or (plain.scope, plain.role) != (original.scope, original.role)
                     or files.get(original.path) != local.files.get(original.path)
+                    or raw_files.get(original.path, files.get(original.path)) != raw
                     or _qualified_node(repo, plain) != public):
                 return False
             key = repo, context['id']

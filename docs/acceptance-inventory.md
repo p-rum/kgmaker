@@ -75,6 +75,12 @@ AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
 rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
 PARTIAL a persistentní warm HIT je otevřený.
 
+Dílčí oprava živé inspekce na `0c834c8b` ověřuje shodný otisk při průběžném
+čtení launcheru a jednu validaci každého živého grafového stupně. Testy s
+Javacem, K1, K2 a TypeScriptem počítají i skutečné worker operace. Negativní
+kontroly pokrývají nevhodný živý výstup a závody při publikaci.
+[Přesná evidence a hranice](changes/178_reduceLiveInspectionOverhead.md).
+
 ## T003-S10-W02 — reverse dependency indexy
 
 Čtecí rozsah má stav `MERGED` po [#130](https://github.com/p-rum/kgmaker/pull/130)
@@ -1264,7 +1270,9 @@ T012-AC04 a AC05 mají nový případ Kafka katalogu se skutečným K1, stejným
 repo ID a výslovným modelem produkčního source setu. Katalog zachová oba
 statické consumery a odmítne chybějící, duplicitní nebo změněný veřejný
 File i pozměněnou soukromou klasifikaci. Vstup a uložené soubory zůstaly
-shodné po čtení. AC06 a meze jsou v [Change179](changes/179_validateKafkaProjectModelFiles.md).
+shodné po čtení. Opakovaná kontrola čerstvých bajtů odmítá i změnu pouze
+konců řádků mezi ověřením snímku a čtením uzlu. AC06 a meze jsou v
+[Change179](changes/179_validateKafkaProjectModelFiles.md).
 
 
 ## T013 — explicit versioned contract attachments (verified bounded scope)
