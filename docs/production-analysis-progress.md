@@ -18,6 +18,10 @@ instalovaného Linux wheelu s JDK 17. Živý Jira Cloud import a Windows jsou
 NOT_RUN. Review původního `e7a44d7` odhalilo domýšlené vazby názvů a aliasů a rozdílné limity evidence. Opravený rozsah ověřila cílená sada 137 PASS s Linux wheel a Java 17. Reprezentovaný rozsah je statický a omezený podporovanými konstrukcemi.
 [Cílové zadání](tasks/54_addExcelMigration.md) · [Návod](excel-migration.md) · [Evidence](changes/171_addExcelMigration.md).
 
+Oprava čtení VML ověřuje vazbu tlačítka na VBA i s párovou značkou `<br></br>`.
+Normalizace probíhá v proudu VML a inventář dokládá SHA-256 původního XLSM.
+[Regrese a ověření](changes/174_readVmlLineBreaks.md).
+
 ## T053 — správa instalace v cílovém projektu, 2026-11-24
 
 Dodání PR_OPEN, ověření VERIFIED_IN_SCOPE pro T053-S01–S04 / AC01–AC04:

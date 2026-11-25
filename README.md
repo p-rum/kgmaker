@@ -64,7 +64,7 @@ Restart Copilot CLI after installing the hook. Each new session refreshes the gr
 
 ## Excel migration
 
-`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
+`kgmaker excel` analyzes explicitly listed XLSM, BIFF8 XLS and XLSX workbooks with a separate Java 17+ worker. It reads VML controls with paired line breaks directly from the original workbook. Use the output with Copilot to draft and validate a Kotlin/JVM migration plan, then export Markdown, JSON or Jira Cloud CSV with a project-specific `jira-task` template. See [Excel migration and Jira import](docs/excel-migration.md).
 
 Ask Copilot `Use $kgmaker-excel-migration to prepare the Kotlin plan and Jira CSV for Fakturace.xlsm with Sazby.xlsx as a dependency.` The skill prepares the inputs, writes and validates the plan, and produces both exports. It uses static analysis only and forbids macro execution.
 
