@@ -11,7 +11,7 @@ from ..workbooks import (
     _CELL, _column_number, _formula_calls, _formula_syntax, _reference_matches,
     _unsupported_reference_form,
 )
-from . import vba
+from . import extraction, vba
 from .source import MAX_TOTAL_BYTES, VERSION, WORKER, capture, extract, manifest, worker_command
 
 EXTERNAL_PREFIX = re.compile(r"(?<![\w'])\[([^\]\r\n]+)\]([\w.]+)\s*!")
@@ -28,7 +28,8 @@ KNOWN_DIAGNOSTICS = {
     "EXCEL_FORMAT_MISMATCH": "The extension and workbook format or content type disagree.",
     "EXCEL_XLM_UNSUPPORTED": "Excel 4.0 macro sheets are outside the supported VBA analysis.",
     "EXCEL_EMBEDDED_COMPONENT": "The workbook contains an embedded control or VBA signature.",
-    "EXCEL_DATA_CONNECTION": "The workbook declares a data connection or query table.",
+    "EXCEL_DATA_CONNECTION": "Refresh behavior and returned data of declared connections require verification.",
+    "EXCEL_CONNECTION_UNREADABLE": "Connection or query-table metadata could not be read.",
     "EXCEL_DRAWING_BINDINGS_UNRESOLVED": "Legacy drawing or control bindings require manual inspection.",
     "EXCEL_EXTERNAL_LINK_UNREADABLE": "An external link table is missing or unreadable.",
     "EXCEL_NAME_UNREADABLE": "A defined name has an unreadable formula.",
@@ -132,6 +133,23 @@ class Inventory:
         for row in facts["tables"]:
             self.add("table", {**locator, "sheet": row["sheet"], "name": row["name"]},
                      range=row["range"])
+        connections = defaultdict(list)
+        for row in facts.get("connections", []):
+            place = {**locator, "part": row["part"], "connection": row["id"], "index": row["index"]}
+            source = extraction.add_source(self, None, place, row["mechanism"], row.get("reference"))
+            connections[row["id"]].append(source)
+        for row in facts.get("query_tables", []):
+            place = {**locator, "part": row["part"], "sheet": row["sheet"], "connection": row["id"]}
+            query = self.add("query-table", place)
+            sources = connections[row["id"]]
+            if len(sources) == 1:
+                self.link(query, sources[0], "source")
+            else:
+                self.gap("EXCEL_QUERY_SOURCE_UNRESOLVED", place, "Connection ID is absent or ambiguous.")
+            if bounds := RANGE_TEXT.fullmatch(row.get("range", "")):
+                target = self.address(book.id, row["sheet"], bounds[1], bounds[2])
+                if target:
+                    self.link(query, target, "writes")
         for row in facts["modules"]:
             self.vba_modules.append((book.id, row, facts.get("code_name"), sheet_codes))
         self.triggers.extend((book.id, item) for item in facts.get("triggers", []))
@@ -170,6 +188,7 @@ class Inventory:
         for key, expression in self.formulas:
             locator = self.evidence[key]["locator"]
             book, sheet = locator["workbook"], locator.get("sheet")
+            extraction.formula_observations(self, key, expression)
             syntax = _formula_syntax(expression)
             syntax = EXTERNAL_PREFIX.sub(lambda match: "'" + match.group().rstrip("!").strip() + "'!", syntax)
             calls = _formula_calls(syntax)
@@ -215,6 +234,9 @@ class Inventory:
                         else:
                             identity = external_links.get(token, token)
                         target_book = self.destination(book, identity)
+                        extraction.add_source(self, key, {**locator, "external_offset": match.start()},
+                                              "external workbook", identity or token,
+                                              mapped_workbook=target_book)
                         if not target_book:
                             self.gap("EXCEL_EXTERNAL_WORKBOOK", locator, "External workbook is not mapped.",
                                      identity=identity or token)
@@ -351,7 +373,8 @@ class Inventory:
             if any(re.match(r"^\s*#", statement) for _, statement in proc.statements):
                 self.gap("VBA_CONDITIONAL_COMPILATION", original, "Conditional compilation context is unknown.")
                 continue
-            for line, statement in proc.statements:
+            operations = extraction.vba_observations(self, key, proc)
+            for index, (line, statement) in enumerate(proc.statements, 1):
                 place = {**original, "line": line, "end_line": line}
                 text = vba.mask(statement)
                 for code in sorted(vba.dynamic_flags(text, statement)):
@@ -382,7 +405,10 @@ class Inventory:
                         target = self.address(target_book, sheet_name, values[1].strip(),
                                               values[2].strip() if values[2] else None)
                     if target:
-                        self.link(key, target, "writes" if assignment else "reads", location=place)
+                        role = "writes" if assignment else "reads"
+                        self.link(key, target, role, location=place)
+                        if operation := operations.get(index):
+                            self.link(operation, target, role)
                     else:
                         self.gap("VBA_RANGE_UNRESOLVED", place, "Workbook, sheet or VBA range is unresolved.",
                                  identity=workbook_name)

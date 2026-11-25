@@ -7,7 +7,7 @@ from contextlib import suppress
 from pathlib import Path
 
 from ..analysis_model import AnalysisError, canonical
-from . import inventory, jira, plan
+from . import behavior, inventory, jira, plan
 from .source import MAX_ARTIFACT_BYTES, bounded_json, manifest, workbook_selection
 
 
@@ -102,12 +102,14 @@ def run(args):
             "inventory.json": canonical(value) + "\n",
             "packet.json": canonical(packet) + "\n",
             "subjects.jsonl": "".join(canonical(subject) + "\n" for subject in value["subjects"]),
+            "behavior.md": behavior.markdown(value, include_source=args.include_source),
         }
         _write_bundle(directory, documents,
                       lambda: inventory.assert_selection_fresh(_selection(args), value))
         return {
             "inventory_id": value["inventory_id"], "status": value["status"],
             "output": str(directory), "subjects": len(value["subjects"]),
+            "behavior": str(directory / "behavior.md"),
             "truncated": packet["truncated"],
         }
 

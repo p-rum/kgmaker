@@ -1,5 +1,13 @@
 # Aktuální stav a zbývající práce
 
+## T056 — Funkce a toky dat v Excelu, 2026-11-25
+
+Dodání PR_OPEN. `behavior.md` zachycuje statické doklady zdrojů, vzorců a VBA
+operací, mezilistový tok a možné výstupy. Patnáctilistý syntetický sešit ověřuje
+tři cesty ke stejnému výsledku včetně vazby query tabulky, podmínky `IFERROR` a
+odděleného zobrazení listu. V provozním sešitu a v živé relaci Copilotu má stav
+NOT_RUN. [Zadání](tasks/56_extractExcelBehavior.md) · [Návod](excel-migration.md#funkce-a-tok-dat-v-sešitu) · [Doklady](changes/177_extractExcelBehavior.md).
+
 
 ## T055 — Copilot skill pro migraci Excelu, 2026-11-25
 
