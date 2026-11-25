@@ -13,7 +13,7 @@ WEB_FORMULA = re.compile(r"(?<![\w.])(?:_xlfn\.)?WEBSERVICE\s*\(", re.I)
 FORMULA_URL = re.compile(rf"\s*{vba.STRING}\s*\)")
 OPERATORS = {"+": "addition", "-": "subtraction or negation", "*": "multiplication",
              "/": "division", "\\": "integer division", "^": "power", "&": "concatenation"}
-CONTROL_FLOW = re.compile(r"^\s*(?:If|ElseIf|Else|Select|Case|For|Do|While|GoTo|GoSub|Resume|On Error)\b", re.I)
+CONTROL_FLOW = re.compile(r"^\s*(?:If|ElseIf|Else|Select|Case|For|Do|While|GoTo|GoSub|Resume|Exit|On Error)\b", re.I)
 INLINE_IF = re.compile(r"^\s*If\b.*?\bThen\s+(?=\S)", re.I)
 ASSIGN = re.compile(r"^\s*(?:(Set|Let)\s+)?(.+?)\s*(?<![:<>=])=(?!=)", re.I)
 SYMBOL = re.compile(vba.IDENTIFIER)
@@ -82,10 +82,18 @@ def _literal(expression):
     return vba.literal(match[1]) if match else None
 
 
+def _forget_opaque_writes(tokens, variables, clients, requests):
+    for token in tokens:
+        variables.pop(token, None)
+        clients.discard(token)
+        requests.pop(token, None)
+
+
 def vba_observations(inventory, owner, proc):
     """Record textual operations and possible local definitions without executing VBA."""
     definition = inventory.evidence[owner]["locator"]
     flow = any(CONTROL_FLOW.match(vba.mask(statement)) for _, statement in proc.statements)
+    local_names = proc.shadowed_names()
     variables = defaultdict(list)
     literals = {}
     clients = set()
@@ -105,11 +113,14 @@ def vba_observations(inventory, owner, proc):
         expression = action
         role = "statement"
         symbol = None
+        initializes_http = False
         if assignment:
             modifier, target, expression = assignment
             role = "display-write" if DISPLAY_MEMBER.search(target) else "assignment"
             if SYMBOL.fullmatch(target):
                 symbol = target.casefold()
+                if proc.kind == "function" and symbol == proc.name.casefold():
+                    role = "return-value"
                 if modifier and modifier.casefold() == "set":
                     created = CREATE.fullmatch(expression)
                     new = NEW_CLIENT.fullmatch(expression)
@@ -117,10 +128,12 @@ def vba_observations(inventory, owner, proc):
                     requests.pop(symbol, None)
                     if HTTP_CLASS.fullmatch(class_name):
                         clients.add(symbol)
+                        initializes_http = True
                     else:
                         clients.discard(symbol)
         elif (new := NEW_CLIENT.fullmatch(raw)) and new[1] and HTTP_CLASS.fullmatch(new[2]):
             clients.add(new[1].casefold())
+            initializes_http = True
         elif request and request[1].casefold() in clients:
             role = "http-open"
         elif send and send[1].casefold() in clients:
@@ -135,6 +148,10 @@ def vba_observations(inventory, owner, proc):
         # Ordinary declarations and comments are not functional evidence. The
         # inventory still retains the original module and call/reference edges.
         if role == "statement":
+            if not initializes_http:
+                literals.clear()
+                tokens = {match[1].casefold() for match in VALUE_TOKEN.finditer(action)}
+                _forget_opaque_writes(tokens, variables, clients, requests)
             continue
         rhs = vba.mask(expression)
         functions = sorted({match[1] for match in vba.FUNCTION_CALL.finditer(rhs)}, key=str.casefold)
@@ -143,7 +160,8 @@ def vba_observations(inventory, owner, proc):
         operations[index] = item
         inventory.link(owner, item, "contains")
         alternatives = {}
-        for token in sorted({match[1].casefold() for match in VALUE_TOKEN.finditer(rhs)}):
+        tokens = sorted({match[1].casefold() for match in VALUE_TOKEN.finditer(rhs)})
+        for token in tokens:
             definitions = variables.get(token, ())
             definitions = definitions[-MAX_ALTERNATIVES:]
             for candidate in definitions:
@@ -159,24 +177,38 @@ def vba_observations(inventory, owner, proc):
             receiver, method = request[1].casefold(), vba.literal(request[2]).upper()
             argument = VBA_URL.match(raw, request.end())
             url = None
+            binding = None
             if argument:
-                url = vba.literal(argument[1]) if argument[1] is not None else literals.get(argument[2].casefold())
+                if argument[1] is not None:
+                    url = vba.literal(argument[1])
+                elif argument[2].casefold() in literals:
+                    url, binding = literals[argument[2].casefold()]
             source = add_source(inventory, item, locator, "VBA HTTP",
                                 url if url and HTTP_URL.fullmatch(url) else None,
                                 method=method if method in HTTP_METHODS else None)
+            if binding is not None:
+                inventory.link(source, binding, "depends-on")
             if not flow:
                 requests[receiver].clear()
             requests[receiver].append(source)
         elif role == "http-send":
             for source in requests.get(send[1].casefold(), ())[-MAX_ALTERNATIVES:]:
                 inventory.link(item, source, "source")
+        elif not initializes_http and (functions or role == "unresolved-operation"):
+            _forget_opaque_writes(tokens, variables, clients, requests)
         if symbol:
             if not flow:
                 variables[symbol].clear()
-                value = _literal(expression)
-                if value is not None:
-                    literals[symbol] = value
-                else:
-                    literals.pop(symbol, None)
             variables[symbol].append(item)
+        # Only use literal bindings across statements that cannot pass a local
+        # string ByRef. An opaque call, property write, or other expression can
+        # change it. Keep the request declaration but leave its endpoint open.
+        value = _literal(expression) if not flow and symbol in local_names else None
+        if value is not None:
+            literals[symbol] = (value, item)
+        elif not initializes_http:
+            literals.clear()
+    if proc.kind == "function":
+        for result in variables.get(proc.name.casefold(), ())[-MAX_ALTERNATIVES:]:
+            inventory.link(owner, result, "returns")
     return operations

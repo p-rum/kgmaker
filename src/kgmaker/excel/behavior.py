@@ -13,7 +13,7 @@ OUTPUT_TRACE_LIMIT = 200
 OPERATION_LABELS = {
     "assignment": "Assignment", "condition": "Control-flow condition", "display-write": "Display property write",
     "message": "Possible VBA message", "http-open": "Prepare HTTP request", "http-send": "Send HTTP request",
-    "unresolved-operation": "Operation with unresolved effects",
+    "unresolved-operation": "Operation with unresolved effects", "return-value": "Return assignment",
 }
 BRANCH_NOTES = {
     "IF": "Either branch can supply the result, depending on the test.",
@@ -33,7 +33,7 @@ def _code(value):
 
 
 def _location(row):
-    place = row["locator"]
+    place = {"sheet": row["sheet"], **row["locator"]} if row.get("sheet") else row["locator"]
     parts = [str(place[field]) for field in ("workbook", "sheet", "cell", "range", "module", "procedure",
                                             "control", "name", "part") if field in place]
     if "line" in place:
@@ -110,7 +110,7 @@ class WorkbookBehavior:
     def in_scope(self, row):
         locator = row["locator"]
         return ((self.book is None or locator.get("workbook") == self.book)
-                and (self.sheet is None or locator.get("sheet") == self.sheet))
+                and (self.sheet is None or locator.get("sheet", row.get("sheet")) == self.sheet))
 
     def relevant(self, row):
         return row["id"] in self.traced or self.in_scope(row)
@@ -130,27 +130,37 @@ class WorkbookBehavior:
 
     def prerequisites(self, row):
         key = row["id"]
+        if row["kind"] == "vba-procedure":
+            # Calls and reads of a procedure describe effects of executing it,
+            # which need not contribute to its return value.
+            return self.connections(row, "returns")
         direct = self.connections(row, "reads", "depends-on", "source", "calls")
         direct.extend(self.writers.get(key, ()))
         direct.extend(self.range_writers.get(key, ()))
         if row["kind"] == "address":
             members, _ = self.members(row, FLOW_LIMIT)
             direct.extend(members)
-        elif row["kind"] == "vba-procedure" and row.get("declaration") == "function":
-            direct.extend(self.connections(row, "contains"))
         return direct
 
     def lineage(self, root):
         parents = {root["id"]: None}
+        observed = {root["id"]}
         traced = []
         pending = deque((key, root["id"]) for key in self.prerequisites(root))
         while pending and len(traced) < FLOW_LIMIT:
             key, parent = pending.popleft()
-            if key in parents:
+            row = self.rows[key]
+            if key not in observed:
+                observed.add(key)
+                traced.append(row)
+            # A VBA read observes a cell at a particular moment. A later
+            # worksheet write or recalculation cannot explain that read.
+            parent_row = self.rows[parent]
+            if (key in parents or (row["kind"] in {"cell", "address"}
+                    and parent_row["kind"] == "vba-operation"
+                    and key in self.links.get((parent, "reads"), ()))):
                 continue
             parents[key] = parent
-            row = self.rows[key]
-            traced.append(row)
             pending.extend((child, key) for child in self.prerequisites(row))
         paths = []
         for row in traced:
@@ -161,7 +171,7 @@ class WorkbookBehavior:
                 path.append(cursor)
                 cursor = parents[cursor]
             paths.append(path)
-        return traced, paths, any(key not in parents for key, _ in pending)
+        return traced, paths, any(key not in observed for key, _ in pending)
 
     def declared_sources(self, lines):
         lines.extend(("", "## Declared data sources", ""))
@@ -180,6 +190,8 @@ class WorkbookBehavior:
             if mapped := row.get("mapped_workbook"):
                 detail += f" · mapped input {_code(mapped)}"
             lines.append(f"- **Declared in source** · {detail} · {_anchor(row)}")
+            if bindings := self.connections(row, "depends-on"):
+                lines.append(f"  - Static endpoint binding from literal assignment {self.refs(bindings)}")
         for row in self.by_kind["query-table"]:
             inputs = self.connections(row, "source")
             outputs = self.connections(row, "writes")
@@ -196,7 +208,7 @@ class WorkbookBehavior:
             lines.append(f"  - Operators {', '.join(row['operators'])}")
         if functions := row.get("functions"):
             lines.append(f"  - Functions {', '.join(_code(name) for name in functions)}")
-        for kind, name in (("reads", "Reads"), ("writes", "Writes"), ("source", "Associated source"),
+        for kind, name in (("reads", "Reads"), ("writes", "Writes"), ("source", "Associated source"), ("calls", "Calls"),
                            ("depends-on", "Possible local definitions")):
             if keys := self.connections(row, kind):
                 lines.append(f"  - {name} {self.refs(keys)}")
@@ -222,8 +234,6 @@ class WorkbookBehavior:
                 if self.include_source and "cached_value" in row:
                     lines.append(f"  - Stored result {_code(row['cached_value'])} · freshness unverified")
                 self.action(row, lines)
-                if calls := self.connections(row, "calls"):
-                    lines.append(f"  - Calls {self.refs(calls)}")
                 for name in row.get("functions", ()):
                     if name in BRANCH_NOTES:
                         lines.append(f"  - **Conditional result** · {name}. {BRANCH_NOTES[name]}")
@@ -307,7 +317,8 @@ class WorkbookBehavior:
         lines.extend(("", "## Limits and remaining questions", "",
                       "Ranges in lineage are expanded only within the report's bounds. Opaque external responses, "
                       "dynamic VBA bindings and workbook-specific runtime state require independent verification. "
-                      "VBA flow shows up to eight preceding candidate definitions per variable or request."))
+                      "VBA flow shows up to eight preceding candidate definitions per variable or request. "
+                      "A VBA read stops at the observed cell or range because write order and recalculation are unverified."))
         gaps = Counter(row["code"] for row in self.by_kind["gap"] if row.get("code"))
         lines.extend(f"- {_code(code)} · {count} occurrences" for code, count in sorted(gaps.items()))
         return "\n".join(lines) + "\n"

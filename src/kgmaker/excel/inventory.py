@@ -375,6 +375,7 @@ class Inventory:
                 continue
             operations = extraction.vba_observations(self, key, proc)
             for index, (line, statement) in enumerate(proc.statements, 1):
+                operation = operations.get(index)
                 place = {**original, "line": line, "end_line": line}
                 text = vba.mask(statement)
                 for code in sorted(vba.dynamic_flags(text, statement)):
@@ -407,7 +408,7 @@ class Inventory:
                     if target:
                         role = "writes" if assignment else "reads"
                         self.link(key, target, role, location=place)
-                        if operation := operations.get(index):
+                        if operation:
                             self.link(operation, target, role)
                     else:
                         self.gap("VBA_RANGE_UNRESOLVED", place, "Workbook, sheet or VBA range is unresolved.",
@@ -433,6 +434,8 @@ class Inventory:
                         targets = self.lookup(book, module, name, kinds={"function"})
                         if len(targets) == 1:
                             self.link(key, targets[0], "calls", location=place)
+                            if operation and name in self.evidence[operation]["functions"]:
+                                self.link(operation, targets[0], "calls")
                         elif len(targets) > 1:
                             self.gap("VBA_CALL_UNRESOLVED", place, "Function call has multiple candidates.")
         for book, row in self.triggers:

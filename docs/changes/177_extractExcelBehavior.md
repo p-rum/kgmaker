@@ -20,3 +20,13 @@ Inventář dosud evidoval některé odkazy na buňky a procedury, ale integrace 
 - S03. `mvn -o -B -ntp -f workers/excel/pom.xml package` s JDK 17 a lokální Maven cache prošel. `python workers/excel/verify_distribution.py` ověřil 16 závislostí. Cílený `pytest` pro Excel, skilly, instalaci, workbooks, reference a binární XLS s `KGMAKER_REQUIRE_EXCEL_WORKER=1` a `KGMAKER_REQUIRE_EXCEL_WHEEL=1` má **174 PASS**. Ověřuje instalovaný Linux wheel, redakci, zachování XLSX a čitelnost inventáře `-2`.
 - `KGMAKER_REQUIRE_MARKDOWN_PARSER=1 python -m pytest -q` má **2 599 PASS**, **1 334 SKIP** a **1 XFAIL**. `git diff --check` prošel.
 - `strace -f -e trace=execve,execveat,connect` nad syntetickým kurzovním sešitem a dvěma existujícími fixture ověřil tři statické workery, žádné IP spojení a shodné SHA-256 vstupů. Produkční sešit, skutečný Copilot, Windows a Jira Cloud import mají stav NOT_RUN.
+
+## Integrace s `main` a opravy review
+
+Výchozí HEAD `9cabfde497deaf9ef97b1cb08a5eaa349b32a070`. Opravy jsou ověřované s `main` `61cd97d90d7a342396da79e7c3c7401c3df2560e` včetně změn T052. Integrace proběhla bez konfliktů.
+
+- **T056-S01 / AC01 a T056-S02 / AC02.** Cesta k hodnotě vzorce sleduje doložená přiřazení návratové hodnoty VBA. Aktivní definice v přímé větvi vyřadí dříve přepsané přiřazení. Podmíněné definice mohou zůstat alternativami. Samostatná operace HTTP při volání funkce se neposouvá na cestu hodnoty vzorce. Pokud neprůhledné volání může přepsat předanou proměnnou, detekce ruší dřívější vazbu hodnoty, HTTP klienta a odvozené URL.
+- **T056-S02 / AC02.** Statický průchod od VBA čtení končí u citované buňky nebo oblasti. Část o limitech uvádí neověřené pořadí zápisů a přepočtu. Výpis přestane připisovat dřívějšímu výsledku pozdější zápis do zdrojové buňky. Vzorcové a OOXML vazby se dál zobrazují.
+- **T056-S03 / AC03.** Filtrovaný výpis listu zobrazuje doloženou událost `Worksheet_Change` z dokumentového modulu. Formát inventáře a exportů zůstává kompatibilní.
+
+Po sestavení čistého výstupu workeru pomocí `mvn -o -B -ntp -f workers/excel/pom.xml package` na Java 17 potvrdil `python workers/excel/verify_distribution.py` 16 závislostí. Cílený `pytest` nad `test_excel_migration.py`, `test_skills.py`, `test_installation.py`, `test_workbooks.py`, `test_xlsx_references.py`, `test_binary_xls.py` a `test_completion.py` s povinným Excel workerem a wheelem má **190 PASS / 0 SKIP**. Plná sada s povinným Markdown parserem má **2 608 PASS / 1 334 SKIP / 1 XFAIL**. `git diff --check` prošel. Nové statické trasování `excel migrate prepare` opět ověřilo tři workery bez IP spojení a shodné vstupní SHA-256.

@@ -105,6 +105,10 @@ def test_real_multi_workbook_evidence_and_data_stays_local(tmp_path, sample, act
     edge_sources(observed, output, "reads", input_cell)
     edge_sources(observed, udf_formula, "calls", udf)
     edge_sources(observed, evidence_at(observed, "defined-name", name="InvoiceTotal"), "reads", output)
+    scoped = cli(tmp_path, "behavior", "--inventory", "inventory.json", "--sheet", "Sheet1")
+    assert scoped.returncode == 0, scoped.stderr
+    report_entries = scoped.stdout.split("## Entry points", 1)[1].split("## Declared data sources", 1)[0]
+    assert "Worksheet_Change" in report_entries and "Workbook_Open" not in report_entries
 
     base = cli(tmp_path, "packet", "--inventory", "inventory.json", "--entity", macro["id"])
     assert base.returncode == 0, base.stderr
@@ -478,6 +482,86 @@ End Sub'''
     redacted = plan.packet(value)
     assert any(row["kind"] == "vba-operation" for row in redacted["evidence"])
     assert not any(set(row) & plan.SOURCE_FIELDS for row in redacted["evidence"])
+
+
+def test_vba_function_lineage_follows_returns_instead_of_unrelated_effects(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Function Fixed()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://fixed.example.invalid/"
+    client.Send
+    unrelated = client.ResponseText
+    Fixed = CDbl(unrelated)
+    Fixed = 42
+End Function
+Public Function Quote()
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://quote.example.invalid/"
+    client.Send
+    Quote = CDbl(client.ResponseText)
+End Function
+Public Function Adjusted()
+    Adjusted = Quote() * 2
+End Function'''
+    _register_source(builder, selection.books[0], source=source, formulas=("Fixed()", "Adjusted()"))
+    value = builder.document()
+    report = behavior.markdown(value)
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert len(paths) == 1, report
+    assert "Sheet1 / B2" in paths[0] and "Adjusted" in paths[0] and "Quote" in paths[0]
+    assert "Fixed" not in paths[0] and "Sheet1 / B1" not in paths[0]
+
+
+def test_vba_keeps_endpoint_unresolved_after_opaque_call(tmp_path):
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Refresh()
+    Dim endpoint As String
+    endpoint = "https://stale.example.invalid/"
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    Call RewriteUrl(endpoint)
+    observed = endpoint
+    client.Open "GET", endpoint
+    client.Send
+End Sub
+Public Sub RewriteUrl(ByRef address As String)
+    address = "https://replacement.example.invalid/"
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+    value = builder.document()
+    request = evidence_at(value, "external-source", procedure="Refresh", line=7)
+    assert request["method"] == "GET" and request["reference"] is None
+    observed = evidence_at(value, "vba-operation", procedure="Refresh", line=6)
+    assert not any(edge["source"] == observed["id"] and edge["kind"] == "depends-on" for edge in value["relations"])
+
+
+def test_vba_read_does_not_inherit_a_later_http_write_to_the_same_cell(tmp_path):
+    from kgmaker.excel import behavior
+    from kgmaker.excel.source import manifest
+
+    selection = manifest(write_json(tmp_path / "app.json", config(dependency=None)))
+    builder = inventory.Inventory(selection)
+    source = '''Public Sub Sequence()
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = 0
+    copied = ThisWorkbook.Worksheets("Sheet1").Range("A1").Value
+    ThisWorkbook.Worksheets("Sheet1").Range("B1").Value = copied
+    Set client = CreateObject("MSXML2.XMLHTTP")
+    client.Open "GET", "https://rates.example.invalid/"
+    client.Send
+    ThisWorkbook.Worksheets("Sheet1").Range("A1").Value = client.ResponseText
+End Sub'''
+    _register_source(builder, selection.books[0], source=source)
+    report = behavior.markdown(builder.document(), sheet="Sheet1")
+    paths = [line for line in report.splitlines() if "source-to-output path" in line]
+    assert any("Sheet1 / A1" in path for path in paths), report
+    assert all("Sheet1 / B1" not in path for path in paths)
+    assert "VBA read stops at the observed cell or range" in report
 
 
 def test_vba_run_resolves_only_complete_literal_arguments(tmp_path):
