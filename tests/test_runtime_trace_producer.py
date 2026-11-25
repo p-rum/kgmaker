@@ -705,7 +705,7 @@ def test_runtime_import_validates_payload_once_and_rechecks_inputs_per_publicati
     assert all(checks == expected for checks in checked.values())
     assert context_checks == expected
     assert replaced == [store.MERMAID_FILE, store.MARKDOWN_FILE, store.GRAPH_FILE]
-    assert (validate.call_count, capture_check.call_count, observations.walks) == (1, 1, 2)
+    assert (validate.call_count, capture_check.call_count, observations.walks) == (1, 1, 1)
 
 
 def assert_runtime_import_rolls_back_before_graph(root, changed_input, diagnostic, monkeypatch, capsys):
@@ -794,3 +794,84 @@ def test_real_jdk21_v2_import_detaches_identity_before_publication(jdk_applicati
     record_id = "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
     assert (proof["source_identity"], record_id) == (validated_identity, proof["id"])
     assert any(edge.kind == "observed_dispatch_to" and proof["id"] in edge.evidence_ids for edge in graph.edges)
+
+
+@pytest.mark.parametrize("edit_at", ["input_hash_check", "after_admission", "second_observation_walk"])
+def test_real_jdk21_v2_import_publishes_only_admitted_values(jdk_application, monkeypatch, edit_at):
+    from kgmaker import callgraph, runtime_evidence, store
+
+    root, argv, opts = jdk_application
+    runtime_id = "admission-" + edit_at
+    manifest = produce_manifest(root, argv, **{**opts, "runtime_id": runtime_id}, output=ARTIFACT)
+    call = next(fact for fact in manifest["facts"] if fact["kind"] == "call")
+    invalid_target = next(fact["bean_type"] for fact in manifest["facts"] if fact["kind"] == "bean")
+    symbols = {symbol["id"]: symbol for symbol in load_graph(root).symbols}
+    assert symbols[call["target"]]["kind"] == "method"
+    assert symbols[invalid_target]["kind"] == "class"
+    assert symbols[invalid_target]["context_id"] == manifest["context_id"]
+    row = {"caller": call["caller"], "target": call["target"], "kind": "dispatch"}
+    manifest["observations"] = [row]
+    invalid_config = "wrong-config-after-admission"
+    paths = (store.GRAPH_FILE, store.MARKDOWN_FILE, store.MERMAID_FILE, ARTIFACT)
+    before = {path: (root / path).read_bytes() for path in paths}
+
+    with patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")):
+        with pytest.raises(AnalysisError, match="configuration fingerprint differs"):
+            import_manifest(root, {**manifest, "config_fingerprint": invalid_config})
+        with pytest.raises(AnalysisError, match="require callable symbols"):
+            import_manifest(root, {**manifest, "observations": [{**row, "target": invalid_target}]})
+        assert {path: (root / path).read_bytes() for path in paths} == before
+
+    class CallerObservations(list):
+        walks = 0
+
+        def __iter__(self):
+            self.walks += 1
+            if self.walks == 2:
+                row["target"] = invalid_target
+            return super().__iter__()
+
+    if edit_at == "input_hash_check":
+        check_hashes = runtime_evidence._check_hashes
+
+        def check_hashes_then_edit(root, context, supplied=None):
+            check_hashes(root, context, supplied)
+            if supplied is not None:
+                manifest["config_fingerprint"] = invalid_config
+
+        monkeypatch.setattr(runtime_evidence, "_check_hashes", check_hashes_then_edit)
+    elif edit_at == "after_admission":
+        def validate_then_edit(*args, **kwargs):
+            admitted = validate_manifest(*args, **kwargs)
+            row["target"] = invalid_target
+            return admitted
+    else:
+        observations = CallerObservations([row])
+        manifest["observations"] = observations
+
+    validator = validate_then_edit if edit_at == "after_admission" else validate_manifest
+    with (
+        patch.object(runtime_evidence, "validate_manifest", wraps=validator) as validate,
+        patch("subprocess.Popen", side_effect=AssertionError("Import spawned a process")),
+    ):
+        outcome = import_manifest(root, manifest)
+
+    assert validate.call_count == 1
+    assert outcome["status"] == "PARTIAL" and outcome["observations_imported"] == 1
+    assert (root / ARTIFACT).read_bytes() == before[ARTIFACT]
+    graph = load_graph(root)
+    proof, = [item for item in graph.evidence if item.get("runtime_id") == runtime_id]
+    assert proof["config_fingerprint"] == opts["config_fingerprint"]
+    assert proof["target"] == call["target"]
+    assert proof["id"] == "evidence:" + digest({key: value for key, value in proof.items() if key != "id"})
+    edge, = [edge for edge in graph.edges if proof["id"] in edge.evidence_ids]
+    assert (edge.kind, edge.target) == ("observed_dispatch_to", call["target"])
+    reported, = [result for result in callgraph.callees(graph, call["caller"])["results"]
+                 if proof["id"] in result["evidence_ids"]]
+    assert (reported["kind"], reported["target"]) == ("RUNTIME_OBSERVED", call["target"])
+    if edit_at == "input_hash_check":
+        assert manifest["config_fingerprint"] == invalid_config
+    elif edit_at == "after_admission":
+        assert row["target"] == invalid_target
+    else:
+        assert observations.walks == 1

@@ -22,6 +22,20 @@ Integrační gate 102 targeted PASS /0 SKIP (121.57 s), včetně actual JDK21 K1
 | T003-S10-W01-AC03 | `test_hash_rewritten_foreign_or_corrupt_cache_is_rebuilt`, `test_cached_graph_context_is_bound_to_validated_upstream_response`, `test_malformed_cache_key_is_ignored_by_public_provider`, publication-failure/abort/size matrix | Žádná evidence/availability promotion, single-writer exception safety; W06 mimo scope |
 | T003-S10-W01-AC04 | README/compiler-inspection/stage-content-cache/change133; jednotlivé skutečné checkpointy a NOT_RUN | Celé S10/T003 PARTIAL, full suite a GH CI NOT_RUN |
 
+Dílčí ověření [#116](https://github.com/p-rum/kgmaker/issues/116) nad
+`0dbe9a7` pokrývá AC01/AC03 pro otisk Javac launcheru v JDK 21 na POSIX.
+`test_java_launch_capture_binds_exact_locale` a `test_java_launch_capture_binds_ct_sym_contents`
+ověřují změny klíče. `test_actual_jvm_locale_drift_preserves_published_generation`
+ověřuje odmítnutí po živé analýze a rollback po výměně prvního výstupu.
+Samostatné regrese pokrývají alias `java` a spustitelný launcher bez práva
+čtení na JDK 21/POSIX.
+Ověření s JDK 21 a 22 pokrývá také relativní `PATH` při odlišném pracovním
+adresáři workeru.
+Regrese s cyklickým odkazem ověřuje `STALE` po Javac analýze i rollback
+po nahrazení obsahově odlišného pohledu.
+AC02 zachovává graph v1/v2/v3 a interní envelope v1. AC04 vymezuje přesný
+rozsah v [change164](changes/164_bindJavaLaunchInputs.md). W01/AC01 zůstává
+PARTIAL a persistentní warm HIT je otevřený.
 
 ## T045 — doplňující automatická kontrola PR
 
@@ -79,14 +93,15 @@ Dodání sleduje [#136](https://github.com/p-rum/kgmaker/pull/136). Lokální
 přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
 `31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
 přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto
-ověření nebyla spuštěna. Přesné příkazy a stav dříve zveřejněných dokladů
-jsou v [change151](changes/151_preserveRuntimeObservationEvidence.md).
+ověření nebyla spuštěna. Po spojení s `edb65e5` ověřuje nová regrese také
+změny konfigurace a cíle provedené volajícím Python API v průběhu importu.
+Příkazy a přesné revize uvádí [change151](changes/151_preserveRuntimeObservationEvidence.md).
 
 | Acceptance | Ověření | Důkaz a limit |
 |---|---|---|
 | T003-S13-W02-AC01 | PARTIAL | `test_runtime_import_retains_same_edge_observations_and_v2_variant_identity` ověřuje deduplikaci shodného dokladu stejné hrany, oddělené kontexty a doklady variant služby. Opakování stále projde publikací grafu. Odvození receiver/type ze surových runtime facts má vlastní ověření. |
 | T003-S13-W02-AC02 | VERIFIED_IN_SCOPE | Test opakovaného importu ověřuje původní v1 identitu vedle v2 metadat v graph/store v3. `test_runtime_keeps_callable_and_framework_observations_and_legacy_import` ověřuje v1 import i podporované v2 `call` a `framework`. Formáty manifestu v1/v2 a graph/store v3 zůstávají použitelné bez migrace. |
-| T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | `test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols` na skutečných symbolech odmítne třídu jako volajícího `dispatch` i jako cíl výchozího `call`. `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` odmítne změnu zdroje před zápisem i po výměně prvního pohledu. Import nespustí proces a při odmítnutí zachová bajty grafu, jeho pohledů i runtime artefaktu. Test statické navigace a W06 pokrývají oddělení cest a souběžné zapisovače. `test_real_jdk21_v2_import_detaches_identity_before_publication` ověří shodu uložených otisků s ID dokladu po změně vstupního slovníku. |
+| T003-S13-W02-AC03 | VERIFIED_IN_SCOPE | `test_v2_runtime_requires_callable_endpoints_for_real_jdk21_symbols` odmítne třídu jako volajícího `dispatch` i jako cíl výchozího `call`. `test_real_jdk21_v2_import_publishes_only_admitted_values` ověří původní konfiguraci, volatelný cíl a ID dokladu, i když se mění vstupní objekty Python API. Přímé odmítnutí a `test_real_jdk21_runtime_import_rejects_source_edit_after_validation` zachovají bajty grafu, jeho pohledů i runtime artefaktu. Import nespustí proces. Test statické navigace a W06 pokrývají oddělení cest a souběžné zapisovače. `test_real_jdk21_v2_import_detaches_identity_before_publication` pokrývá změnu vnořeného otisku. |
 | T003-S13-W02-AC04 | PARTIAL | Návod, stavová matice a change151 popisují omezenou opravu. Celá T003-AC13 má širší rozsah. |
 
 ## T003-S13-W02 — čerstvost při publikaci runtime evidence, 2026-11-23
@@ -918,8 +933,10 @@ nový K1/K2 běh prochází.
 - AC03: structural/path/ownership and context ambiguity fail closed; missing
   evidence creates UNKNOWN; snapshot race/cancellation and disk-cache failure
   publish no cache/source/store changes. Actual K1/K2 captured context test verifies
-  precedence/freshness without implicit repair. Password sentinel is absent from
-  graph; offline source-only checks allow only existing Git baseline reads.
+  precedence/freshness without implicit repair. It compares the canonical
+  workspace reference as the exact repository and original JVM context ID.
+  Password sentinel is absent from graph; offline source-only checks allow
+  only existing Git baseline reads. [Current native check](changes/168_assertQualifiedKafkaContext.md).
 - AC04: matrix remains PARTIAL; source contract scope/version and fixture are in
   compiler-inspection and [note54](changes/54_scopeKafkaBindingIdentity.md).
 
@@ -1098,7 +1115,7 @@ remain UNKNOWN; no whole S06/T003/T004 completion claim.
 AC03–05: `tests/test_http_provider_ambiguity.py` covers actual JSON aliases,
 two service realms, method/sibling separation, deterministic order and duplicate
 records, YAML distinct locators and immutable caller inputs. Original actual focus149PASS/0SKIP; strict full493:1605PASS/10SKIP1683.18s; Return-parent e740 composition284PASS/0SKIP219.41s. Full and focused source attribution stay distinct; no runtime/deployment or whole-milestone claim. See change88.
-### T003-S07-W04 revize2 — draft code/group acceptance
+### T003-S07-W04 revize2 — historické code/group ověření před integrací
 
 `tests/test_kafka_code_bindings.py` přidává actual Java listener/send v obou
 backendech, Kotlin K1 listener a explicitní Kotlin K2 PARTIAL negative (pinned
@@ -1108,9 +1125,10 @@ Schema2 public snapshot ověřuje explicitní původní code refs, group propert
 provenance, subscription a private-property redakci; cizí ID/context/SHA se
 nepovýší. Regex nikdy není exact-topic join. Current-parent19b focus102PASS/0SKIP
 a strict full1576PASS/10optionalSKIP v1536.69s drží1477 frozen input hashů beze
-změny; source composition má nezávislé root APPROVE. Finální metadata-head review
-a publication jsou oddělené. Historická revize1 není důkaz nové revize2; K2 listener
-metadata zůstávají PARTIAL a runtime/data availability UNASSESSED. Viz note77.
+změny; source composition má nezávislé root APPROVE. Revize2 byla sloučena
+v [#69](https://github.com/p-rum/kgmaker/pull/69). Tento historický běh zůstává
+vázaný na uvedenou revizi. K2 listener metadata zůstávají PARTIAL a runtime/data
+availability UNASSESSED. Viz note77.
 
 ## T006/T008 revision2 — derived context role boundary
 

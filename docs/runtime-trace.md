@@ -152,8 +152,11 @@ připojené doklady všech zpracovaných běhů. Nový doklad v2 rozlišuje i sh
 kontextu mají vlastní hranu. Shodný doklad se k hraně připojí jen jednou.
 Opakovaný import znovu ověří vstupy, přidá diagnostiku a publikuje graf.
 Existující záznamy v1 si uchovají svoji identitu a původní rozsah údajů.
-V2 doklad uchová otisky zdrojů a kontextu ověřené při importu. Jeho ID
-odpovídá uloženým hodnotám i při pozdější změně vstupního slovníku v Pythonu.
+V2 doklad používá ověřené konce pozorování, ověřené identity a otisky
+zdrojů a kontextu. Jeho ID odpovídá těmto hodnotám. Python API před kontrolou
+oddělí vstupní slovník manifestu a každé pozorování. Pozdější změna slovníku volajícího nemění
+uloženou konfiguraci ani cíl volání. Import projde dodaný seznam pozorování
+jednou a k sestavení grafu použije ověřené řádky.
 
 ```bash
 kgmaker runtime import --root PROJECT --manifest PROJECT/.kgmaker/runtime/trace.json

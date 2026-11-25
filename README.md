@@ -545,9 +545,9 @@ Import znovu ověřuje zdroje a artefakty při ukládání grafu. Když zjistí 
 po zahájení publikace, obnoví předchozí uložené výstupy.
 [Ověření publikace runtime importu](docs/changes/163_revalidateRuntimeImportPublication.md).
 
-Opakovaný `runtime import` uchovává doklady pro jednotlivé běhy ve shodném
-compiler kontextu. `callgraph callers` a `callees` je zobrazí jako
-`RUNTIME_OBSERVED`. `callgraph path` používá statické compiler vazby.
+Opakovaný `runtime import` uchovává různé ověřené doklady v jednom compiler
+kontextu. `callgraph callers` a `callees` je zobrazí jako `RUNTIME_OBSERVED`.
+`callgraph path` používá statické compiler vazby.
 V2 pozorování `call` a `dispatch` vyžadují metodu, funkci nebo konstruktor
 na obou koncích.
 [Příklady importu a navigace](docs/runtime-trace.md#opakovaný-import-a-navigace).
@@ -1284,6 +1284,11 @@ and [change128](docs/changes/128_unifiedFlowViews.md).
 Při opakované explicitní JVM/TS inspekci worker i projekce vypočítají aktuální
 compiler evidence znovu. JSON hlásí `cache.stages`
 se stavem BYPASS. Offline scan/hook/feature zachovávají stávající chování.
+Java launcher váže také `lib/ct.sym` a na POSIX přesné locale vstupy
+`LANG`, `LC_ALL`, `LC_CTYPE`. Změna zaznamenaného vstupu během inspekce
+vrátí `STALE` a zachová poslední uložený graf.
+Při spuštění přes symbolický odkaz `java` se otisk váže na cílový JDK.
+Relativní položka `PATH` se vyhodnotí v pracovním adresáři KGMAKERu.
 Graph publication reserves the checkout before writing and rejects a stale
 candidate if a newer graph was published during capture, import or migration.
 A Confluence-enabled scan stages its report and validation index with the graph.

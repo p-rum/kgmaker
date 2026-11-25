@@ -209,7 +209,7 @@ vstupy compiler kontextu včetně bytecode. Změna vstupu vyvolá odmítnutí
 a obnovu již nahrazených výstupů.
 
 `src/kgmaker/runtime_evidence.py` současně zachovává doklady jednotlivých
-běhů na hraně téhož compiler kontextu, idempotentní import a kontrolu
+běhů na hraně téhož compiler kontextu, deduplikaci dokladů a kontrolu
 volatelných symbolů v2 `call` a `dispatch`. `src/kgmaker/callgraph.py`
 zobrazuje pozorované doklady v `callers` a `callees`, statické cesty
 a cykly vycházejí z compiler call sites. Oba rodiče mají shodné dva případy
@@ -274,7 +274,7 @@ SHA-256 JUnit je `678bc31d70facc42f82bd179e97703cd8abbf723dae70454c28a088010f053
 `PYTHONPATH=src python pr136-multiproof-forward-multirun.py PATH_TO_TRACE`
 následně zopakoval čtyři spouštění skutečné JDK 21 fixture na spojeném kódu.
 Na původním místě zachyceného kontextu se k hraně připojily 1, 2, 3 a 4
-doklady, opakování bylo idempotentní. Třída coby volající byla odmítnuta
+doklady, opakování stejného dokladu zachovalo jejich počet. Třída coby volající byla odmítnuta
 bez změny grafu. Import nespustil žádný proces. Přípravný pokus s přemístěnou
 kopií fixture skončil odmítnutím zastaralého snapshotu persistence XML.
 SHA-256 výsledné sondy je
@@ -513,3 +513,67 @@ a `git diff --check` nad doplněnou dokumentací prošly.
 V novém ověření mají úplná sada a Windows stav `NOT_RUN`. GitHub Actions
 jsou `UNVERIFIED`, v kontrolovaných jobech chybí zaznamenané kroky.
 Receiver/type, přesné volací místo a celá W02 zůstávají otevřené.
+
+## Oprava vstupních hodnot importu po dopředném sloučení — kroky 3–5, AC01–AC04
+
+První rodič je `2be90ebe67856ced59d4514eeefd69c4717bab8a`, druhý rodič
+`edb65e57ca4de1743c810689c78e069cd86b2b41` se sloučenými #149 a #152.
+První rodič měnil dokumentaci. Kód importu a jeho testy měl shodné s
+`31271aa645cd52d169a9ce27ba6b8d2e1f26828a` (Git bloby
+`457faccd2e3cfcd6b53f5b46ee4abaaa42de5f6e` a
+`c96d695518cf04275f95aa3fe193a60507a491e1`). Před opravou mohlo Python API
+uložit konfigurační otisk vyměněný po jeho kontrole nebo třídu dosazenou
+místo schválené metody mezi validací pozorování a sestavením grafu.
+
+**Krok 3, AC01–AC03.** `src/kgmaker/runtime_evidence.py` oddělí vstupní
+slovník manifestu před první kontrolou a každý řádek pozorování před jeho
+kontrolou. Důkaz v2 používá ověřené hodnoty jednoduchých typů a
+`source_identity` odvozenou ze shodného compiler kontextu. Vnější seznam se
+projde jednou. Před jednotlivými kroky publikace zůstávají kontrola
+očekávané generace a dosavadní kontroly měnitelných souborů. Formáty
+manifestu v1/v2, identita dokladů v1, graph/store v3 a CLI používají stávající
+schémata. Opakovaný import deduplikuje doklad na hraně a může připojit další
+diagnostiku publikace.
+
+**Krok 4, AC01–AC03.** Nová regrese
+`test_real_jdk21_v2_import_publishes_only_admitted_values` má tři varianty.
+Mění konfiguraci při původní kontrole souborů, cíl po validaci nebo cíl
+při druhém čtení callerem dodaného seznamu. Přímé odmítnutí neplatné
+konfigurace i třídy zachová bajty grafu, jeho pohledů a zachyceného trace.
+Samotný import má zákaz spouštění procesů. Na spojených rodičích před
+opravou selhaly všechny tři varianty se skutečným JDK 21. JUnit má SHA-256
+`d3612ded3427ffe7e2177210803c2562151044a96c97307f8fc628c47dd911e3`.
+
+Po opravě prošlo 173 testů bez přeskočení, včetně všech tří variant regrese,
+veřejné konfigurace z Maven buildu, W06, T032, Javac CRLF, změn JVM launcheru
+z #149 a kanonické Kafka vazby v K1 i K2 z #152. Běh použil Temurin JDK
+21.0.6+7, Maven 3.9.9 s lokálním repozitářem a existující workery. JUnit má
+SHA-256 `4cd4c9d49f5da3fc711919be78b7374b9fae5a1c5bdee9b44c7a4757cb02df4e`.
+Přípravný výběr měl 167 PASS a šest FAIL kvůli chybějícím lokálním cestám
+k workerům. Opravené prostředí použilo odkazy na stejné existující workery.
+Manifesty zdrojů a testů i externích workerů se před a po testech shodují.
+
+```bash
+# JAVA_HOME, PATH a KGMAKER_WORKERS_HOME vybírají příslušné JDK, Maven a workery K1/K2.
+export PYTHONPATH=src KGMAKER_REQUIRE_WORKERS=1 KGMAKER_REQUIRE_K2=1
+python -m pytest -n 2 --dist loadfile -o tmp_path_retention_policy=failed -p no:cacheprovider -q --tb=short \
+  tests/test_runtime_trace_producer.py tests/test_build_aware.py tests/test_graph_provider.py \
+  tests/test_t032_persist_process_review.py tests/test_graph_publication_concurrency.py \
+  'tests/test_jvm_raw_source_snapshot.py::test_javac_capture_preserves_raw_and_normalized_authority[crlf-return]' \
+  tests/test_schema_compatibility.py::test_legacy_graph_versions_without_snapshot_proof_remain_unknown \
+  tests/test_stage_content_cache_actual.py::test_actual_jvm_locale_drift_preserves_published_generation \
+  tests/test_stage_content_cache_actual.py::test_actual_jvm_cyclic_launcher_is_stale_and_preserves_generation \
+  tests/test_kafka_bindings.py::test_actual_captured_context_properties_and_offline_staleness
+```
+
+Standardní `PYTHONPATH=src python -m pytest -o tmp_path_retention_policy=failed -p no:cacheprovider -q --tb=short`
+pod CPython 3.13.18 ze stejných zdrojů měla 2 492 PASS, 1 322 SKIP a jeden
+očekávaný strict XFAIL T047-S02. Návratový kód obou sad je 0. JUnit má
+SHA-256 `adfcd9fc1e1aa286e08dd84355dfdf9fd5995e193fcaf5f9f4ecc0210a7c278b`.
+Windows a GitHub Actions nebyly při lokálním ověření spuštěny.
+
+**Krok 5, AC04.** [README](../../README.md), [runtime příručka](../runtime-trace.md#opakovaný-import-a-navigace),
+[acceptance](../acceptance-inventory.md#t003-s13-w02--více-dokladů-stejné-pozorované-hrany)
+a [stavová matice](../production-analysis-progress.md) popisují rozsah opravy.
+Příklady příkazů, compiler navigace a registrační identita odpovídají
+stávajícímu kontraktu. Receiver/type a přesné volací místo zůstávají otevřené.
