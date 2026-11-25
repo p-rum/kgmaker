@@ -30,3 +30,9 @@ Výchozí HEAD `9cabfde497deaf9ef97b1cb08a5eaa349b32a070`. Opravy jsou ověřova
 - **T056-S03 / AC03.** Filtrovaný výpis listu zobrazuje doloženou událost `Worksheet_Change` z dokumentového modulu. Formát inventáře a exportů zůstává kompatibilní.
 
 Po sestavení čistého výstupu workeru pomocí `mvn -o -B -ntp -f workers/excel/pom.xml package` na Java 17 potvrdil `python workers/excel/verify_distribution.py` 16 závislostí. Cílený `pytest` nad `test_excel_migration.py`, `test_skills.py`, `test_installation.py`, `test_workbooks.py`, `test_xlsx_references.py`, `test_binary_xls.py` a `test_completion.py` s povinným Excel workerem a wheelem má **190 PASS / 0 SKIP**. Plná sada s povinným Markdown parserem má **2 608 PASS / 1 334 SKIP / 1 XFAIL**. `git diff --check` prošel. Nové statické trasování `excel migrate prepare` opět ověřilo tři workery bez IP spojení a shodné vstupní SHA-256.
+
+## Integrace s novým `main` po obnovení Actions
+
+**T056-S03 / AC03.** Výchozí HEAD `c0f0ccda0bacc47a2cb9de7a0e9f400b603b75e6`, cílový základ `5d067f152522442fa4cff22c2e69e1b9b6fcef86` s PR #150 a #157. Konflikt spravované kopie Excel skillu zachovává odstranění této kopie z vývojového checkoutu z PR #157. Distribuovaná šablona v `src/kgmaker/skills.py` si zachovává instrukce T056. Regrese `test_init_installs_complete_skills_and_local_references` ověřuje čtení `behavior.md` a příkaz `excel behavior` v dočasném cílovém projektu. Workflow a graf odpovídají novému `main`.
+
+`mvn -o -B -ntp -f workers/excel/pom.xml package` s Java 17 a `python workers/excel/verify_distribution.py` prošly včetně 16 ověřených závislostí. Cílená sada z předchozí integrace s povinným Excel workerem a instalovaným Linux wheelem má **189 PASS / 0 SKIP**. Počet odráží odstranění parity s vývojovou kopií skillu v PR #157. `git diff --check` prošel.

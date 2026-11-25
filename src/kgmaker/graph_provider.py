@@ -109,8 +109,8 @@ def _selection_key(context: dict) -> str:
     return digest(payload)
 
 
-def validate_context_snapshot(root: Path, context: dict) -> None:
-    """Validate one captured context without executing a worker or build."""
+def validate_context_snapshot(root: Path, context: dict) -> tuple[dict, ...]:
+    """Validate a capture offline and report omissions affecting optional Kotlin identity."""
     if context.get("freshness") == "STALE":
         raise WorkerError(
             "STALE_INDEX: " + str(context.get("stale_reason", "compiler context requires inspection"))
@@ -120,6 +120,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
     # Compare every captured source and classpath; timestamps never establish freshness.
     from .analysis_model import file_hash, safe_path
     from .inspection import artifact_hash
+    kotlin_omissions = ()
     if "return_flow_rule_version" in context:
         from .return_flow import VERSION as RETURN_VERSION
         if context["return_flow_rule_version"] != RETURN_VERSION:
@@ -245,6 +246,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
         from .scanner import scan_repository
         current = scan_repository(root, project_model=context.get("project_model"))
         from .inspection import source_snapshot
+        from .symbol_identity import kotlin_source_omissions
         current_files = source_snapshot(root, current, context)
         if current_files != context.get("source_files", {}):
             raise WorkerError("STALE_INDEX: source/config inputs changed; inspect again", "STALE")
@@ -255,6 +257,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
             if unsupported is not None:
                 raise WorkerError("STALE_INDEX: selected Kotlin source uses unsupported raw byte coordinates: "
                                   + unsupported, "STALE")
+        kotlin_omissions = kotlin_source_omissions(context, current.diagnostics)
     for path, expected in context.get("source_files", {}).items():
         target = safe_path(root, path)
         if not target.is_file() or file_hash(target) != expected:
@@ -265,6 +268,7 @@ def validate_context_snapshot(root: Path, context: dict) -> None:
                 raise WorkerError("STALE_INDEX: classpath changed; import/inspect again", "STALE")
         except (OSError, ValueError):
             raise WorkerError("STALE_INDEX: classpath unavailable; import/inspect again", "STALE") from None
+    return kotlin_omissions
 
 
 def validate_compiler_snapshot(root: Path, graph: KnowledgeGraph) -> None:
@@ -300,9 +304,11 @@ def resolve_context_classpath_artifact(root: Path, context: dict, sha256: str) -
 
 def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
                     preserved_contexts: list[dict], *,
-                    layer_context_ids: set[str] | None = None) -> KnowledgeGraph:
+                    layer_context_ids: set[str] | None = None,
+                    source_omissions: dict[str, tuple[dict, ...]] | None = None) -> KnowledgeGraph:
     """Merge isolated compiler layers whose IDs and snapshots remain valid."""
     from dataclasses import replace
+    from .symbol_identity import without_logical_key
     preserve_ids = ({context["id"] for context in preserved_contexts}
                     if layer_context_ids is None else layer_context_ids)
     old_edges = []
@@ -310,7 +316,9 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
         selected = tuple(context_id for context_id in edge.context_ids if context_id in preserve_ids)
         if selected:
             old_edges.append(replace(edge, context_ids=selected))
-    old_symbols = [item for item in stored.symbols if item.get("context_id") in preserve_ids]
+    omissions = source_omissions or {}
+    old_symbols = [without_logical_key(item) if item["context_id"] in omissions else item
+                   for item in stored.symbols if item.get("context_id") in preserve_ids]
     old_sites = [item for item in stored.call_sites if item.get("context_id") in preserve_ids]
     old_cfgs = [item for item in stored.cfgs if item.get("context_id") in preserve_ids]
     old_ids = {item["id"] for item in [*old_symbols, *old_sites] if isinstance(item.get("id"), str)}
@@ -347,7 +355,7 @@ def _merge_contexts(fresh: KnowledgeGraph, stored: KnowledgeGraph,
             seen_contexts.add(context.get("id"))
     diagnostics = list(fresh.diagnostics)
     for context in preserved_contexts:
-        for diagnostic in context.get("diagnostics", []):
+        for diagnostic in [*context.get("diagnostics", []), *omissions.get(context["id"], ())]:
             if diagnostic not in diagnostics:
                 diagnostics.append(diagnostic)
     selected_annotations = [item for item in [*fresh.analysis_annotations, *stored.analysis_annotations]
@@ -389,13 +397,15 @@ def merge_compiler_context(root: Path, fresh: KnowledgeGraph, selected_context: 
     selection = _selection_key(selected_context)
     preserved = [context for context in _compiler_contexts(stored)
                  if _selection_key(context) != selection]
-    active_ids = set()
+    active_ids, omissions = set(), {}
     for context in preserved:
         if context.get("freshness") == "STALE":
             continue
-        validate_context_snapshot(root, context)
+        omitted = validate_context_snapshot(root, context)
+        if omitted:
+            omissions[context["id"]] = omitted
         active_ids.add(context["id"])
-    return _merge_contexts(fresh, stored, preserved, layer_context_ids=active_ids)
+    return _merge_contexts(fresh, stored, preserved, layer_context_ids=active_ids, source_omissions=omissions)
 
 
 def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
@@ -408,19 +418,21 @@ def retain_compiler_layer(root: Path, syntax: KnowledgeGraph) -> KnowledgeGraph:
     if stored is None or not any(c.get("analyzer_version") for c in stored.contexts):
         return syntax
     contexts = _compiler_contexts(stored)
-    published, active_ids = [], set()
+    published, active_ids, omissions = [], set(), {}
     for context in contexts:
         if context.get("freshness") == "STALE":
             published.append(context)
             continue
         try:
-            validate_context_snapshot(root, context)
+            omitted = validate_context_snapshot(root, context)
         except WorkerError as error:
             published.append(_stale_context(context, str(error)))
         else:
             published.append(context)
             active_ids.add(context["id"])
-    return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids)
+            if omitted:
+                omissions[context["id"]] = omitted
+    return _merge_contexts(syntax, stored, published, layer_context_ids=active_ids, source_omissions=omissions)
 
 
 def _reverse_dependency_index(graph: KnowledgeGraph) -> dict[str, list[dict]]:

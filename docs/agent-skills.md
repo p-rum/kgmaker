@@ -78,10 +78,9 @@ SKIP/blocked. Přehled CLI je přímo v instalovaných skillech a v `kgmaker --h
 
 ## Zdroj templates a ověření
 
-Zdroj je `src/kgmaker/skills.py`, spravované kopie jsou `.agents/skills/kgmaker-*/`.
-Po změně templates obnov jen jejich explicitní cesty a ověř paritu pomocí
-`python -m pytest -q tests/test_skills.py`. Nespouštěj `init --force` nad checkoutem
-KGMakeru kvůli synchronizaci skillů: přepsal by i jiné upravené instrukce.
+Zdroj šablon je `src/kgmaker/skills.py`. Instalaci, shodu s šablonami a ochranu
+uživatelských změn ověřuje `python -m pytest -q tests/test_skills.py` v dočasných
+cílových projektech. Excel skill instaluje `init` nebo `upgrade` do cílového projektu.
 Konkrétní příkazy, výsledky a neprovedené kontroly jsou v [change117](changes/117_addTargetProjectSkills.md).
 
 ## Návaznost analýzy, implementace a testů

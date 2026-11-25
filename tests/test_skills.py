@@ -29,6 +29,8 @@ def test_init_installs_complete_skills_and_local_references(tmp_path, capsys):
     assert "authorizes all of the following" in excel
     assert "literal and cached cell values, and external link identities" in excel
     assert "covers only part of that set, keep the default redacted packets" in excel
+    assert "Read `<dir>/behavior.md` first" in excel
+    assert "kgmaker excel behavior --inventory" in excel
     # Relative Markdown references resolve in an installed project, without docs/.
     import re
     for path in entrypoints:
@@ -37,12 +39,6 @@ def test_init_installs_complete_skills_and_local_references(tmp_path, capsys):
     assert not (tmp_path / "docs").exists()
     assert not (tmp_path / ".codex").exists()
     assert not (tmp_path / ".agents/skills/kgmaker").exists()
-
-
-def test_repository_skill_copies_match_distributed_templates():
-    root = Path(__file__).resolve().parents[1]
-    for path, text in SKILL_FILES.items():
-        assert (root / path).read_text(encoding="utf-8") == text, str(path)
 
 
 def test_upgrade_adds_excel_migration_skill_to_existing_installation(tmp_path, monkeypatch):
