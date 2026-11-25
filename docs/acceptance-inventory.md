@@ -1,5 +1,19 @@
 # Inventář acceptance T001 a T002
 
+
+## T055 — Copilot skill pro migraci Excelu, 2026-11-25
+
+| Kritérium | Ověření | Důkaz |
+|---|---|---|
+| T055-AC01 | VERIFIED_IN_SCOPE | Výběr dvou skutečných sešitů, omezený packet a úplný seznam subjektů. Kolize názvů zůstává bez vazby. |
+| T055-AC02 | VERIFIED_IN_SCOPE | Export Markdown a Jira CSV s vlastním polem, mapování, ochrana před nevalidním kandidátem, změnou sešitu, přepsáním výstupu a výměnou cesty při úklidu. |
+| T055-AC03 | VERIFIED_IN_SCOPE | Instalace, upgrade, parita a pravidla předání dat ve skillu, skutečný Java 17 worker. Trasování 0 IP spojení, makra se nespustila. Živý Copilot NOT_RUN. |
+
+Dodání MERGED v [#156](https://github.com/p-rum/kgmaker/pull/156) jako
+`3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Živý Copilot a import do Jira
+Cloud zůstávají NOT_RUN.
+[Doklady po krocích](changes/172_automateExcelMigration.md) · [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
+
 ## T054 — Excel, Kotlin/JVM a Jira Cloud, 2026-11-25
 
 | Kritérium | Ověření | Důkaz |
@@ -13,7 +27,7 @@
 Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155) jako
 `782ac6ac0287550084e9afadbd6182756fdd2730`.
 [Postup a kontroly po krocích](changes/171_addExcelMigration.md) ·
-[Záznam sloučení a ověření](changes/173_reconcileMergedDelivery.md).
+[Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 
 ## T053 — upgrade a uninstall, 2026-11-24
@@ -27,7 +41,7 @@ Dodání MERGED v [#155](https://github.com/p-rum/kgmaker/pull/155) jako
 
 Opravená PR větev po review: 133 PASS / 0 SKIP včetně wheelu; [příkazy a distribuce](changes/170_manageProjectInstallation.md).
 Dodání MERGED v [#154](https://github.com/p-rum/kgmaker/pull/154) jako
-`1e782a119e5ae54d22bfc8d7c22c565ed651815a`. [Záznam sloučení a ověření](changes/173_reconcileMergedDelivery.md).
+`1e782a119e5ae54d22bfc8d7c22c565ed651815a`. [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 
 
 
@@ -124,7 +138,7 @@ Ověření W01 zůstává `PARTIAL`. [#148](https://github.com/p-rum/kgmaker/pul
 Dodání MERGED v [#136](https://github.com/p-rum/kgmaker/pull/136) jako
 `5809e84932b1910bfc3f17c72e2a2005283389b1`; ověření W02 zůstává PARTIAL.
 Po sloučení prošlo 104 cílených testů bez přeskočení se skutečným JDK 21
-a Mavenem. [Záznam sloučení a ověření](changes/173_reconcileMergedDelivery.md).
+a Mavenem. [Záznam sloučení a ověření](changes/174_reconcileMergedDelivery.md).
 Dřívější přenos na `main` `34591e2` ověřilo 137 cílených testů bez přeskočení. Na
 `31271aa` nad základem `1569d5d` prošlo dalších 88 cílených testů bez
 přeskočení se skutečným Mavenem 3.9.9 a JDK/Javac 21. Úplná sada v tomto

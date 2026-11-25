@@ -1,4 +1,4 @@
-# 173 — Doručení runtime importu, instalace a migrace Excelu
+# 174 — Doručení runtime importu, instalace a migrace Excelu
 
 Výchozí `main` `5809e84932b1910bfc3f17c72e2a2005283389b1`.
 Stavová matice a acceptance inventář evidovaly některé sloučené změny jako
@@ -106,6 +106,28 @@ má vlastní workflow T054. Ostatní ověřovací stavy T051 a T052 zůstávají
 v dosavadním rozsahu.
 [Návod a příklad packetu](../project-workflows.md#role-context-freshness) ·
 [Záznam implementace](167_useCanonicalPacketSourceSnapshot.md)
+
+## T055-S01–S03 a AC01–AC03
+
+Dopředný přenos inventáře po [#156](https://github.com/p-rum/kgmaker/pull/156)
+vychází z `main` `3a6b97fc9c44941e68bb390772a5eb13906bf1ff`. Merge má stejný
+strom `d0398fbb8b41c72e09f5fc242e1b7f255a4eecb8` jako head
+`3aae558631ac0f2e994b98b3b4a917dd2a20ef8b`. Change174 používá nové číslo,
+protože publikovaný #157 již používá Change173.
+
+Doručený rozsah je lokální příprava ze sešitů, výstup Markdown a Jira CSV
+a distribuovaný skill. Opravené zdroje a testy T055 jsou ve sloučeném stromu
+shodné s dříve ověřeným `1ab93541d89f1cfce3e873fab4fe26230e07fd1a`.
+V místním scope je doloženo **172 cílených PASS** se skutečným Java 17
+workerem a instalovaným Linux wheelem. Živý Copilot a živý Jira Cloud
+import zůstávají NOT_RUN. Na dřívějším běhu #156 uspěly samostatné
+Excel joby na Linuxu a Windows včetně balení workeru, ověření distribuce
+a Excel pytest. Tento běh měl současně zelený pytest a selhání následného
+`kgmaker check` v Python jobu 3.13. Souhrnný CI PASS pro #156 se nedokládá.
+[Záznam implementace](172_automateExcelMigration.md) ·
+[Excel Linux](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362508) ·
+[Excel Windows](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362452) ·
+[Python 3.13](https://github.com/p-rum/kgmaker/actions/runs/45617722148/job/139217362565)
 
 ## Ověření inventáře a kompatibilita
 
